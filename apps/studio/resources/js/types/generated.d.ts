@@ -29,11 +29,12 @@ statusLabel: string,
 };
 }
 namespace Enums {
+export type AutomationAction = 'notice' | 'task' | 'mail_draft';
 export type AutomationAnchor = 'per_shoot' | 'primary_shoot' | 'quote_validity' | 'installment_due' | 'gallery_expiry' | 'questionnaire_due' | 'delivered';
 export type AutomationCondition = 'payment_open' | 'questionnaire_open' | 'gallery_unopened';
 export type AutomationOffsetDirection = 'before' | 'after';
 export type AutomationRecipient = 'client' | 'crew' | 'studio';
-export type AutomationRunStatus = 'pending' | 'sent' | 'failed' | 'skipped';
+export type AutomationRunStatus = 'pending' | 'sent' | 'failed' | 'skipped' | 'awaiting_approval';
 export type AutomationTriggerType = 'event' | 'date_offset';
 }
 }

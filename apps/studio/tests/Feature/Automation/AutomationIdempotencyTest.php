@@ -6,7 +6,6 @@ use App\Automation\Enums\AutomationAnchor;
 use App\Automation\Enums\AutomationOffsetDirection;
 use App\Automation\Models\AutomationRule;
 use App\Automation\Models\AutomationRun;
-use App\Automation\Notifications\AutomationReminder;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Job;
@@ -41,8 +40,8 @@ it('fires exactly one AutomationRun when the same rule/anchor/date is processed 
     expect($first)->not->toBeNull()
         ->and($second)->toBeNull();
 
-    expect(AutomationRun::count())->toBe(1);
-    Notification::assertSentToTimes($contact, AutomationReminder::class, 1);
+    expect(AutomationRun::count())->toBe(1)
+        ->and(AutomationRun::sole()->contact_ids)->toBe([$contact->id]);
 });
 
 it('never re-fires when the daily sweep is re-run for the same day, as a redeployed scheduler would', function () {

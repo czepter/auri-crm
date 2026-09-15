@@ -2,17 +2,21 @@
 
 namespace App\Automation\Actions;
 
+use App\Automation\Enums\AutomationAction;
+use App\Automation\Enums\AutomationOffsetDirection;
 use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Enums\AutomationRunStatus;
 use App\Automation\Models\AutomationRule;
 use App\Automation\Models\AutomationRun;
 use App\Automation\Notifications\AutomationReminder;
 use App\Automation\Support\AutomationConditions;
+use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Documents\Support\DocumentMergeDataBuilder;
+use App\Documents\Support\MergeFieldResolver;
 use App\Gallery\Models\Gallery;
 use App\Models\User;
 use App\Notifications\NotificationService;
@@ -20,6 +24,7 @@ use App\Notifications\Support\StudioAudience;
 use App\Payments\Models\PaymentInstallment;
 use App\Portal\Support\ClientAudience;
 use App\Settings\Support\StudioSettingsResolver;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Collection;
@@ -28,18 +33,19 @@ use Throwable;
 /**
  * The one place an AutomationRule ever fires — both App\Automation\Actions\
  * SweepDateOffsetAutomationRules and App\Automation\Listeners\
- * FireAutomationRulesForEvent end here rather than sending a notification
- * themselves.
+ * FireAutomationRulesForEvent end here rather than acting themselves.
  *
  * The idempotency row is claimed FIRST, by a plain insert that
  * automation_runs' own unique constraint on (tenant_id, idempotency_key)
- * guards — the send only happens once that claim succeeds, so two
+ * guards — the action only happens once that claim succeeds, so two
  * overlapping callers racing the same trigger (a redeployed scheduler
  * re-running the sweep, or a retried queued listener) can only ever produce
- * one AutomationRun and one send, never two. The upfront existence check is
- * purely an optimisation that skips building a notification for a trigger
- * already on record; the unique constraint below is what actually holds
- * under a genuine race.
+ * one AutomationRun, never two. The upfront existence check is purely an
+ * optimisation; the unique constraint is what holds under a genuine race.
+ *
+ * #438: a client never receives anything from here. Their mail stops on the
+ * run as a draft (AwaitingApproval) until the studio sends it from the
+ * Posteingang; only the studio side is notified or handed a task directly.
  */
 class FireAutomationRule
 {
@@ -85,6 +91,20 @@ class FireAutomationRule
             return $run;
         }
 
+        // E-15: resolved against the anchor's own project, so "morgen ist ein
+        // Shooting" names which one.
+        $data = $project === null ? [] : $this->merge->fromProject(
+            $project,
+            $this->settings,
+            $anchor instanceof PaymentInstallment ? $anchor : null,
+        );
+        $subject = MergeFieldResolver::resolve($rule->notification_subject, $data, keepUnknown: true);
+        $body = MergeFieldResolver::resolve($rule->notification_body, $data, keepUnknown: true);
+
+        if ($rule->action === AutomationAction::Task) {
+            return $this->task($run, $rule, $project, $anchor, $triggerDate, $subject);
+        }
+
         $recipients = $this->recipientsFor($rule, $project);
 
         if ($recipients->isEmpty()) {
@@ -93,17 +113,50 @@ class FireAutomationRule
             return $run;
         }
 
-        // E-15: resolved against the anchor's own project, so "morgen ist ein
-        // Shooting" names which one. The claim above is already on record, so
-        // a second run today sends nothing even if a colleague joined the crew
-        // in between — the run answers "did this rule run", not "did everyone
-        // get their mail".
-        $data = $project === null ? [] : $this->merge->fromProject($project, $this->settings);
+        if ($rule->action === AutomationAction::MailDraft) {
+            $run->update([
+                'status' => AutomationRunStatus::AwaitingApproval,
+                'subject' => $subject,
+                'body' => $body,
+                'contact_ids' => $recipients->pluck('id')->all(),
+            ]);
 
+            return $run;
+        }
+
+        // The claim above is already on record, so a second run today sends
+        // nothing even if a colleague joined the crew in between.
         try {
             foreach ($recipients as $recipient) {
-                $this->notifications->send($recipient, new AutomationReminder($rule, $this->settings, $data));
+                $this->notifications->send($recipient, new AutomationReminder($subject, $body, $this->settings));
             }
+
+            $run->update(['status' => AutomationRunStatus::Sent]);
+        } catch (Throwable $e) {
+            $run->update(['status' => AutomationRunStatus::Failed, 'error' => $e->getMessage()]);
+        }
+
+        return $run;
+    }
+
+    /**
+     * An internal task on the anchor's project. The trigger date is the
+     * anchor's own date, so the offset lands the task on the day the rule
+     * fires; an event rule has no offset and lands on its day.
+     */
+    private function task(AutomationRun $run, AutomationRule $rule, ?Project $project, Model $anchor, string $triggerDate, string $title): AutomationRun
+    {
+        $date = CarbonImmutable::parse($triggerDate);
+        $offset = $rule->offset_days ?? 0;
+
+        try {
+            Task::create([
+                'project_id' => $project?->id,
+                'shoot_id' => $anchor instanceof Shoot ? $anchor->id : null,
+                'title' => $title,
+                'audience' => TaskAudience::Internal,
+                'due_on' => $rule->direction === AutomationOffsetDirection::Before ? $date->subDays($offset) : $date->addDays($offset),
+            ]);
 
             $run->update(['status' => AutomationRunStatus::Sent]);
         } catch (Throwable $e) {

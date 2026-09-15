@@ -55,7 +55,7 @@ it('fires a per-shoot rule once per matching shoot, anchored to that shoot', fun
 
     expect($run->anchorable_type)->toBe(Shoot::class)
         ->and($run->anchorable_id)->toBe($engagement->id)
-        ->and($run->status)->toBe(AutomationRunStatus::Sent);
+        ->and($run->status)->toBe(AutomationRunStatus::AwaitingApproval);
 });
 
 it('fires a primary-shoot rule anchored to the project, not the shoot, on a multi-shoot project', function () {

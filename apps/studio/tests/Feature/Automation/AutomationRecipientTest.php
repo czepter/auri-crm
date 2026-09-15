@@ -151,8 +151,7 @@ it('addresses the client side the portal reaches, not the bare primary contact',
 
     sweepOn();
 
-    Notification::assertSentTo($partner, AutomationReminder::class);
-    Notification::assertNotSentTo($revoked, AutomationReminder::class);
+    expect(AutomationRun::sole()->contact_ids)->toBe([$partner->id]);
 });
 
 // Wedding copy on a portrait booking is worse than silence.

@@ -2,6 +2,7 @@
 
 namespace App\Automation\Models;
 
+use App\Automation\Enums\AutomationAction;
 use App\Automation\Enums\AutomationAnchor;
 use App\Automation\Enums\AutomationCondition;
 use App\Automation\Enums\AutomationOffsetDirection;
@@ -52,14 +53,16 @@ class AutomationRule extends Model
         'recipient_type',
         'condition',
         'project_type',
+        'action',
         'is_active',
     ];
 
-    protected $attributes = ['recipient_type' => 'client'];
+    protected $attributes = ['recipient_type' => 'client', 'action' => 'mail_draft'];
 
     protected function casts(): array
     {
         return [
+            'action' => AutomationAction::class,
             'trigger_type' => AutomationTriggerType::class,
             'anchor' => AutomationAnchor::class,
             'direction' => AutomationOffsetDirection::class,
@@ -79,6 +82,13 @@ class AutomationRule extends Model
     protected static function booted(): void
     {
         static::saving(function (self $rule) {
+            // #438: the client only ever gets a draft, the studio never does.
+            $rule->action = match (true) {
+                $rule->recipient_type === AutomationRecipient::Client => AutomationAction::MailDraft,
+                $rule->action === AutomationAction::MailDraft => AutomationAction::Notice,
+                default => $rule->action,
+            };
+
             if ($rule->trigger_type === AutomationTriggerType::Event) {
                 if ($rule->event_class === null) {
                     throw new InvalidArgumentException('An event-triggered AutomationRule needs an event_class.');

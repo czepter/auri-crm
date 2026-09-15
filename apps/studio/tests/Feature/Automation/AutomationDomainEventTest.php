@@ -32,9 +32,10 @@ it('fires an event-triggered rule when its named domain event dispatches, anchor
 
     expect($run->anchorable_type)->toBe(Project::class)
         ->and($run->anchorable_id)->toBe($project->id)
-        ->and($run->status)->toBe(AutomationRunStatus::Sent);
+        ->and($run->status)->toBe(AutomationRunStatus::AwaitingApproval)
+        ->and($run->contact_ids)->toBe([$contact->id]);
 
-    Notification::assertSentTo($contact, AutomationReminder::class);
+    Notification::assertNotSentTo($contact, AutomationReminder::class);
 });
 
 it('never fires a rule for an event class it does not name', function () {
