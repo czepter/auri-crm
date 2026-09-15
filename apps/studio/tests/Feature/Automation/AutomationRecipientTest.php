@@ -155,6 +155,24 @@ it('addresses the client side the portal reaches, not the bare primary contact',
     Notification::assertNotSentTo($revoked, AutomationReminder::class);
 });
 
+// Wedding copy on a portrait booking is worse than silence.
+it('skips a project of another type than the rule names', function () {
+    Notification::fake();
+    $owner = staffMember();
+
+    shootIn(7, Project::factory()->wedding()->create());
+    shootIn(7, Project::factory()->create());
+
+    $rule = AutomationRule::factory()
+        ->dateOffset(AutomationAnchor::PerShoot, 7, AutomationOffsetDirection::Before)
+        ->create(['recipient_type' => AutomationRecipient::Studio, 'project_type' => 'wedding']);
+
+    sweepOn();
+
+    expect($rule->runs()->pluck('status')->map->value->sort()->values()->all())->toBe(['sent', 'skipped'])
+        ->and(Notification::sent($owner, AutomationReminder::class))->toHaveCount(1);
+});
+
 it('sends a crew rule to the only person in a solo studio', function () {
     Notification::fake();
     $owner = staffMember();

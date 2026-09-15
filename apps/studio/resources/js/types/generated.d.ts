@@ -18,6 +18,7 @@ eventLabel: string | null,
 anchor: string | null,
 offsetDays: number | null,
 direction: string | null,
+projectType: string | null,
 };
 export type AutomationRunData = {
 id: string,

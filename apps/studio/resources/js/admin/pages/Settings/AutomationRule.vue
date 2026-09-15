@@ -26,6 +26,7 @@ const props = defineProps<{
   anchors: Option[]
   recipients: Option[]
   conditions: Option[]
+  projectTypes: Option[]
   mergeFields: { path: string; sample: string }[]
   runs: App.Automation.Data.AutomationRunData[]
 }>()
@@ -42,6 +43,7 @@ const form = useForm({
   direction: props.rule.direction ?? 'before',
   recipient_type: props.rule.recipient,
   condition: props.rule.condition,
+  project_type: props.rule.projectType,
   notification_subject: props.rule.subject,
   notification_body: props.rule.body,
   is_active: props.rule.isActive,
@@ -153,18 +155,33 @@ function chipClass(status: string): string {
               {{ $t('automations.condition') }}
             </div>
 
-            <Select
-              :model-value="form.condition ?? NO_CONDITION"
-              @update:model-value="(v) => (form.condition = v === NO_CONDITION ? null : String(v))"
-            >
-              <SelectTrigger class="max-w-[300px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem :value="NO_CONDITION">{{ $t('automations.conditionNone') }}</SelectItem>
-                <SelectItem v-for="option in conditions" :key="option.value" :value="option.value">
-                  {{ option.label }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <div class="flex gap-6 max-[640px]:flex-col">
+              <Select
+                :model-value="form.condition ?? NO_CONDITION"
+                @update:model-value="(v) => (form.condition = v === NO_CONDITION ? null : String(v))"
+              >
+                <SelectTrigger class="max-w-[300px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem :value="NO_CONDITION">{{ $t('automations.conditionNone') }}</SelectItem>
+                  <SelectItem v-for="option in conditions" :key="option.value" :value="option.value">
+                    {{ option.label }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select
+                :model-value="form.project_type ?? NO_CONDITION"
+                @update:model-value="(v) => (form.project_type = v === NO_CONDITION ? null : String(v))"
+              >
+                <SelectTrigger class="max-w-[300px]" :aria-label="$t('automations.projectType')"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem :value="NO_CONDITION">{{ $t('automations.projectTypeAll') }}</SelectItem>
+                  <SelectItem v-for="option in projectTypes" :key="option.value" :value="option.value">
+                    {{ option.label }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             <div class="mt-8 mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
               {{ $t('automations.messageSection') }}

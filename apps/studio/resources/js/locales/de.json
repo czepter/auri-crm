@@ -800,6 +800,8 @@
     "recipient": "Empfänger",
     "condition": "Bedingung",
     "conditionNone": "Keine",
+    "projectType": "Projekttyp",
+    "projectTypeAll": "Alle Typen",
     "subject": "Betreff",
     "body": "Text",
     "active": "Aktiv",

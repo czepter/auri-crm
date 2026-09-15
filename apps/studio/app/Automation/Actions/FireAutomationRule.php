@@ -78,7 +78,8 @@ class FireAutomationRule
 
         // E-15: the rule worked, it just had nothing to say. Its own state,
         // so the history answers "why did nothing arrive".
-        if (! $this->conditions->holds($rule->condition, $project)) {
+        if (! $this->conditions->holds($rule->condition, $project)
+            || ($rule->project_type !== null && $project?->type?->key !== $rule->project_type)) {
             $run->update(['status' => AutomationRunStatus::Skipped]);
 
             return $run;

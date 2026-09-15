@@ -32,6 +32,7 @@ class AutomationRuleData extends Data
         public ?string $anchor,
         public ?int $offsetDays,
         public ?string $direction,
+        public ?string $projectType,
     ) {}
 
     public static function fromModel(AutomationRule $rule): self
@@ -53,6 +54,7 @@ class AutomationRuleData extends Data
             anchor: $rule->anchor?->value,
             offsetDays: $rule->offset_days,
             direction: $rule->direction?->value,
+            projectType: $rule->project_type,
         );
     }
 

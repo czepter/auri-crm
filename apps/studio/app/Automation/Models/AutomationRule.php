@@ -51,6 +51,7 @@ class AutomationRule extends Model
         'notification_body',
         'recipient_type',
         'condition',
+        'project_type',
         'is_active',
     ];
 

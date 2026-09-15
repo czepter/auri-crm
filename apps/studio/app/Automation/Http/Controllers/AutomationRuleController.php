@@ -11,6 +11,7 @@ use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Enums\AutomationTriggerType;
 use App\Automation\Models\AutomationRule;
 use App\Concerns\AuthorizesStaffSettings;
+use App\Crm\Models\ProjectType;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -57,6 +58,9 @@ class AutomationRuleController extends Controller
                 fn (AutomationRecipient $case) => $case !== AutomationRecipient::Crew || ! User::soloStudio(),
             ))),
             'conditions' => $this->options(AutomationCondition::cases()),
+            'projectTypes' => ProjectType::query()->active()->orderBy('sort_order')->get()
+                ->map(fn (ProjectType $type) => ['value' => $type->key, 'label' => $type->name])
+                ->all(),
             // The same vocabulary and the same sample values the document
             // templates show, so a field means one thing in both places.
             'mergeFields' => collect(MergeFieldVocabulary::samples())
@@ -120,6 +124,7 @@ class AutomationRuleController extends Controller
             'direction' => [Rule::requiredIf($dated), Rule::enum(AutomationOffsetDirection::class)],
             'recipient_type' => ['required', Rule::enum(AutomationRecipient::class)],
             'condition' => ['nullable', Rule::enum(AutomationCondition::class)],
+            'project_type' => ['nullable', 'string', Rule::exists(ProjectType::class, 'key')],
             'notification_subject' => ['required', 'string', 'max:255'],
             'notification_body' => ['required', 'string', 'max:5000'],
             'is_active' => ['required', 'boolean'],
