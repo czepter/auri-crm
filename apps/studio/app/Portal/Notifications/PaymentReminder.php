@@ -3,6 +3,7 @@
 namespace App\Portal\Notifications;
 
 use App\Concerns\AppliesStudioMailIdentity;
+use App\Concerns\AttachesInvoicePdf;
 use App\Crm\Models\Contact;
 use App\Payments\Models\PaymentInstallment;
 use App\Settings\Support\StudioSettingsResolver;
@@ -21,6 +22,7 @@ use Illuminate\Support\Number;
 class PaymentReminder extends Notification
 {
     use AppliesStudioMailIdentity;
+    use AttachesInvoicePdf;
 
     public function __construct(
         private readonly PaymentInstallment $installment,
@@ -51,6 +53,10 @@ class PaymentReminder extends Notification
             // where the bank details stand when it is not — either way the
             // client lands on the one screen that closes this.
             ->action('Zahlung ansehen', config('portal.url')."/projekte/{$project->public_id}/zahlungen");
+
+        // #415: die Rechnung liegt bei, damit die Erinnerung ohne Portal-Login
+        // alles enthält, was zum Bezahlen gebraucht wird.
+        $this->attachInvoicePdf($message, $this->installment);
 
         if ($notifiable instanceof Contact) {
             $message->line(

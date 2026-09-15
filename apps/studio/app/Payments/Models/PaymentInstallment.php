@@ -38,9 +38,11 @@ class PaymentInstallment extends Model
         'payment_plan_id', 'amount', 'due_on', 'status', 'sort_order', 'title',
         'settled_via', 'paid_on', 'payment_reference', 'paid_amount', 'overdue_notified_at',
         'overdue_reason', 'overdue_reminders_sent', 'client_reminders_sent',
+        'before_due_reminder_sent_at',
         'stripe_checkout_session_id',
         'invoice_number', 'invoiced_at', 'invoice_path', 'invoice_template_id',
         'cancelled_at', 'cancellation_kind', 'cancellation_reason',
+        'sent_at', 'viewed_at',
     ];
 
     protected $attributes = ['status' => PaymentInstallmentStatus::Scheduled, 'sort_order' => 0, 'paid_amount' => 0];
@@ -53,8 +55,11 @@ class PaymentInstallment extends Model
             'settled_via' => SettledVia::class,
             'paid_on' => 'date',
             'overdue_notified_at' => 'immutable_datetime',
+            'before_due_reminder_sent_at' => 'immutable_datetime',
             'overdue_reason' => OverdueReason::class,
             'invoiced_at' => 'immutable_datetime',
+            'sent_at' => 'immutable_datetime',
+            'viewed_at' => 'immutable_datetime',
             'cancelled_at' => 'immutable_datetime',
             'cancellation_kind' => CancellationKind::class,
         ];

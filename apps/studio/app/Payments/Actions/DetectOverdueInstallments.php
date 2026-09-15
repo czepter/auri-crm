@@ -45,6 +45,8 @@ use Illuminate\Support\Collection;
  */
 class DetectOverdueInstallments
 {
+    private const DUE_SOON_DAYS = 3;
+
     public function __construct(
         private readonly NotificationService $notifications,
         private readonly StudioAudience $audience,
@@ -70,10 +72,45 @@ class DetectOverdueInstallments
             $this->markOverdue($installment);
         }
 
+        $this->announceDueSoon();
         $this->remindStudio();
         $this->remindClients();
 
         return $installments->count();
+    }
+
+    /**
+     * #417: three days out, and only for an invoice the client has actually
+     * been handed — a `scheduled` row is a date in a plan, not a demand
+     * anyone has to act on yet. Stamped rather than counted: one rung.
+     *
+     * The window is a range and not the single date `due_on - 3`, because a
+     * day the scheduler missed would otherwise skip the rung entirely. Rows
+     * already past due belong to the ladder below.
+     */
+    private function announceDueSoon(): void
+    {
+        $today = now('UTC')->toDateString();
+
+        $soon = PaymentInstallment::query()
+            ->whereIn('status', [PaymentInstallmentStatus::Invoiced, PaymentInstallmentStatus::Partial])
+            ->whereNull('before_due_reminder_sent_at')
+            ->whereDate('due_on', '>=', $today)
+            ->whereDate('due_on', '<=', now('UTC')->addDays(self::DUE_SOON_DAYS)->toDateString())
+            ->with('plan.job.project')
+            ->get();
+
+        if ($soon->isEmpty()) {
+            return;
+        }
+
+        foreach ($this->group($soon) as [$user, $installments]) {
+            $this->notifications->send($user, new Studio\InstallmentDueSoon($installments));
+        }
+
+        foreach ($soon as $installment) {
+            $installment->forceFill(['before_due_reminder_sent_at' => now('UTC')])->save();
+        }
     }
 
     /**

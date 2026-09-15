@@ -886,7 +886,10 @@
     "settleKeep": "Behalten",
     "settleCredit": "Gutschrift",
     "settleDelete": "Löschen",
-    "settleVoid": "Storno"
+    "settleVoid": "Storno",
+    "invoice": "Rechnung",
+    "invoiceDate": "Rechnungsdatum",
+    "invoiceAmount": "Betrag"
   },
   "documentTemplates": {
     "title": "Dokumentvorlagen",
@@ -993,6 +996,7 @@
     "numberingChangeWarning": "Gilt nur für noch nicht ausgestellte Dokumente.",
     "numberingPreview": "Nächste Nummer",
     "numberingSave": "Speichern",
+    "invoiceExport": "CSV {year}",
     "documentsTitle": "Belege & Fristen",
     "documentsLayoutLabel": "Layout",
     "quoteLayoutClassic": "Klassisch",
@@ -1120,6 +1124,7 @@
       "contractSigned": "Vertrag unterschrieben",
       "questionnaireSubmitted": "Fragebogen ausgefüllt",
       "installmentPaid": "Zahlung eingegangen",
+      "installmentDueSoon": "Rate wird fällig",
     "tasksDue": "Fällige Aufgaben",
     "leadStalled": "Liegengebliebene Anfrage",
     "installmentOverdue": "Zahlungsverzug",
@@ -1390,6 +1395,7 @@
     "reachUs": "Ihr erreicht uns",
     "requestChange": "Änderung anfragen",
     "documentsTitle": "Unterlagen",
+    "invoicesTitle": "Rechnungen",
     "viewAllImages": "Alle {count} Bilder ansehen",
     "daysUntil": "Noch {days} Tage.",
     "today": "Heute ist es so weit.",

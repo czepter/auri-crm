@@ -8,6 +8,7 @@ const events = {
   contractSigned: 'digest',
   questionnaireSubmitted: 'digest',
   installmentPaid: 'digest',
+  installmentDueSoon: 'immediate',
   assetCommented: 'off',
   assetFavorited: 'off',
   tasksDue: 'briefing',
