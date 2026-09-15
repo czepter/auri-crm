@@ -101,6 +101,16 @@ it('marks the legal skeletons as a starting point, and only where the studio rea
     }
 });
 
+it('carries the Verzugshinweis on both invoices', function () {
+    // § 286 Abs. 3 S. 1 BGB: a consumer falls into Verzug 30 days after
+    // the invoice is due and received only if the invoice says so.
+    foreach (['invoice-standard', 'invoice-small-business'] as $key) {
+        $body = StarterBlockSerializer::toHtml(StarterTemplateCatalog::find($key)['blocks']);
+
+        expect($body)->toContain('Nach 30 Tagen ab Zugang und Fälligkeit tritt Verzug ein (§ 286 Abs. 3 BGB).');
+    }
+});
+
 it('contains no placeholder prose, in any entry', function () {
     // T-17's own acceptance line: a catalog of lorem ipsum is worse than an
     // empty canvas, because it has to be deleted first.
