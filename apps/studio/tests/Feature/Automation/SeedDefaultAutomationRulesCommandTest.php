@@ -1,6 +1,8 @@
 <?php
 
+use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Models\AutomationRule;
+use App\Documents\Support\MergeFieldVocabulary;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -29,7 +31,28 @@ it('writes no offset into a default rule text', function () {
         ->flatMap(fn (string|array $text) => (array) $text);
 
     foreach ($texts as $text) {
-        expect($text)->not->toMatch('/\d|\bwoche|\btage?n?\b|\bmorgen\b/iu');
+        expect($text)->not->toMatch('/\d|\bwoche|\btage?n?\b|\bmorgen\b|\bjahr/iu');
+    }
+});
+
+it('writes every client text in both registers', function () {
+    $client = collect(config('automation.rules'))
+        ->filter(fn (array $rule) => ($rule['recipient_type'] ?? AutomationRecipient::Client) === AutomationRecipient::Client);
+
+    expect($client)->not->toBeEmpty();
+
+    foreach ($client as $rule) {
+        expect($rule['notification_body'])->toHaveKeys(['formal', 'informal']);
+    }
+});
+
+it('names only merge fields the vocabulary resolves', function () {
+    $texts = collect(config('automation.rules'))
+        ->flatMap(fn (array $rule) => [$rule['notification_subject'], $rule['notification_body']])
+        ->flatMap(fn (string|array $text) => (array) $text);
+
+    foreach ($texts as $text) {
+        expect(MergeFieldVocabulary::unknownPathsIn($text))->toBe([]);
     }
 });
 
