@@ -27,6 +27,8 @@ const forms = Object.fromEntries(
 function save(rangeId: string) {
   forms[rangeId].patch(`/einstellungen/nummernkreise/${rangeId}`, { preserveScroll: true })
 }
+
+const exportYear = new Date().getFullYear()
 </script>
 
 <template>
@@ -111,6 +113,12 @@ function save(rangeId: string) {
                     <span class="chip now">{{ $t('settings.unsaved') }}</span>
                   </div>
                 </form>
+              </div>
+
+              <div class="mt-10">
+                <Button as="a" variant="outline" :href="`/einstellungen/rechnungen/export?jahr=${exportYear}`">
+                  {{ $t('settings.invoiceExport', { year: exportYear }) }}
+                </Button>
               </div>
             </div>
           </div>
