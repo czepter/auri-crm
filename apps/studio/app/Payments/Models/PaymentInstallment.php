@@ -41,6 +41,7 @@ class PaymentInstallment extends Model
         'stripe_checkout_session_id',
         'invoice_number', 'invoiced_at', 'invoice_path', 'invoice_template_id',
         'cancelled_at', 'cancellation_kind', 'cancellation_reason',
+        'sent_at', 'viewed_at',
     ];
 
     protected $attributes = ['status' => PaymentInstallmentStatus::Scheduled, 'sort_order' => 0, 'paid_amount' => 0];
@@ -55,6 +56,8 @@ class PaymentInstallment extends Model
             'overdue_notified_at' => 'immutable_datetime',
             'overdue_reason' => OverdueReason::class,
             'invoiced_at' => 'immutable_datetime',
+            'sent_at' => 'immutable_datetime',
+            'viewed_at' => 'immutable_datetime',
             'cancelled_at' => 'immutable_datetime',
             'cancellation_kind' => CancellationKind::class,
         ];

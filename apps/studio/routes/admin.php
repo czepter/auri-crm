@@ -802,6 +802,13 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/raten/{installment}/rechnung', [PaymentInstallmentController::class, 'downloadInvoice'])
             ->name('payment-installments.invoice');
 
+        // #415: the compose screen and the send, the same pair the contract
+        // has. Issuing redirects into the first; nothing sends on its own.
+        Route::get('/raten/{installment}/rechnung/versenden', [PaymentInstallmentController::class, 'sendView'])
+            ->name('payment-installments.invoice.send-view');
+        Route::post('/raten/{installment}/rechnung/versenden', [PaymentInstallmentController::class, 'send'])
+            ->name('payment-installments.invoice.send');
+
         // #408: the only way back out of an issued invoice. See CancelInvoice
         // for why the number stays where it is.
         Route::post('/raten/{installment}/storno', [PaymentInstallmentController::class, 'cancelInvoice'])

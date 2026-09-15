@@ -105,6 +105,12 @@ class PaymentController extends Controller
 
         abort_if($row === null || ! $row->isInvoiced(), 404);
 
+        // #415: the first look, and only the first — the column answers
+        // whether the client has seen the invoice, not how often.
+        if ($row->viewed_at === null) {
+            $row->update(['viewed_at' => now()]);
+        }
+
         $document = InvoiceDocument::forInvoice(
             $row,
             $mergeData->fromProject($found, $settings, $row),

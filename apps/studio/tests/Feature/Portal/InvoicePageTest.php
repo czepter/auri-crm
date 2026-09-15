@@ -111,3 +111,44 @@ it('404s the page while the payment-status switch is off', function () {
         ->get("/projekte/{$project->public_id}/zahlungen/{$installment->public_id}")
         ->assertNotFound();
 });
+
+// --- #415: die Rechnungsliste am Projekt und der erste Blick ------------
+
+it('lists only issued rates on the project page', function () {
+    [$project, $contact, $installment] = portalIssuedInvoice();
+
+    PaymentInstallment::factory()->for($installment->plan, 'plan')->create([
+        'amount' => 50_000,
+        'due_on' => now()->addMonth()->toDateString(),
+        'sort_order' => 1,
+    ]);
+
+    $props = $this->actingAs($contact, 'portal')
+        ->get("/projekte/{$project->public_id}")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect($props['project']['invoices'])->toHaveCount(1)
+        ->and($props['project']['invoices'][0]['number'])->toBe($installment->invoice_number)
+        ->and($props['project']['invoices'][0]['amount'])->toBe(100_000);
+});
+
+it('stamps viewed_at on the first look and leaves it on the second', function () {
+    [$project, $contact, $installment] = portalIssuedInvoice();
+
+    expect($installment->viewed_at)->toBeNull();
+
+    $this->actingAs($contact, 'portal')
+        ->get("/projekte/{$project->public_id}/zahlungen/{$installment->public_id}")
+        ->assertOk();
+
+    $first = $installment->fresh()->viewed_at;
+    expect($first)->not->toBeNull();
+
+    $this->travel(1)->day();
+    $this->actingAs($contact, 'portal')
+        ->get("/projekte/{$project->public_id}/zahlungen/{$installment->public_id}")
+        ->assertOk();
+
+    expect($installment->fresh()->viewed_at->equalTo($first))->toBeTrue();
+});

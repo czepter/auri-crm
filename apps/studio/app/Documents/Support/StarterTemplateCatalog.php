@@ -316,6 +316,18 @@ class StarterTemplateCatalog
                 ]],
             ],
             [
+                'key' => 'mail-invoice-sent',
+                'type' => DocumentTemplateType::Mail->value,
+                'name' => 'Rechnung verschickt',
+                'description' => 'Begleitmail zur Rechnung.',
+                'shootKind' => null,
+                'blocks' => ['blocks' => [
+                    self::paragraph('Guten Tag {{ contact.name }},'),
+                    self::paragraph('anbei die Rechnung {{ invoice.number }} über {{ invoice.gross }} für {{ project.name }}. Zahlbar bis {{ invoice.dueOn }}.'),
+                    self::paragraph('Melden Sie sich gern, wenn etwas offen ist.'),
+                ]],
+            ],
+            [
                 'key' => 'mail-payment-reminder',
                 'type' => DocumentTemplateType::Mail->value,
                 'name' => 'Zahlungserinnerung',

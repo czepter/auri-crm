@@ -880,7 +880,10 @@
     "creditNoteAmount": "Betrag",
     "creditNoteReason": "Grund",
     "creditNoteSubmit": "Ausstellen",
-    "creditNoteRow": "Gutschrift {number}"
+    "creditNoteRow": "Gutschrift {number}",
+    "invoice": "Rechnung",
+    "invoiceDate": "Rechnungsdatum",
+    "invoiceAmount": "Betrag"
   },
   "documentTemplates": {
     "title": "Dokumentvorlagen",
@@ -1384,6 +1387,7 @@
     "reachUs": "Ihr erreicht uns",
     "requestChange": "Änderung anfragen",
     "documentsTitle": "Unterlagen",
+    "invoicesTitle": "Rechnungen",
     "viewAllImages": "Alle {count} Bilder ansehen",
     "daysUntil": "Noch {days} Tage.",
     "today": "Heute ist es so weit.",

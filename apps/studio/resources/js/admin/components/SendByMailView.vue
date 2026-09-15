@@ -63,6 +63,8 @@ function send() {
 
     <div class="flex min-h-0 flex-1">
       <div class="flex w-1/2 flex-none flex-col gap-5 overflow-y-auto p-6">
+        <slot name="document" />
+
         <Field :label="$t('sendMail.recipient')" dense>
           <div class="flex flex-col gap-2">
             <div v-for="recipient in recipients" :key="recipient.email" class="flex items-center gap-2.5 rounded-md border border-border px-3 py-2.5">
