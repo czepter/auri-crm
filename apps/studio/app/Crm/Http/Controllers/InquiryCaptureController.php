@@ -29,6 +29,7 @@ class InquiryCaptureController extends Controller
             ->load(['fields' => fn ($query) => $query->active()]);
 
         return Inertia::render('Leads/Create', [
+            'date' => validator(request()->query(), ['termin' => 'date_format:Y-m-d'])->valid()['termin'] ?? null,
             'types' => $types
                 ->map(fn (ProjectType $type) => ['value' => $type->key, 'label' => $type->name])
                 ->values()->all(),
