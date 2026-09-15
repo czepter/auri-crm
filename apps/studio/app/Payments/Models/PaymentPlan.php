@@ -5,7 +5,6 @@ namespace App\Payments\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\Job;
-use App\Payments\Enums\PaymentInstallmentStatus;
 use Database\Factories\Payments\PaymentPlanFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -50,20 +49,6 @@ class PaymentPlan extends Model
     public function installments(): HasMany
     {
         return $this->hasMany(PaymentInstallment::class)->orderBy('sort_order');
-    }
-
-    /**
-     * A plan stays editable until its first installment (by sort order) is
-     * invoiced. Nothing in M-03 ever writes PaymentInstallmentStatus::Invoiced
-     * — this guard exists now, defensively, so M-04's real invoicing does not
-     * have to revisit it: the moment something sets that status, editing
-     * stops here without this method changing at all.
-     */
-    public function isEditable(): bool
-    {
-        $first = $this->installments()->orderBy('sort_order')->first();
-
-        return $first === null || $first->status !== PaymentInstallmentStatus::Invoiced;
     }
 
     protected static function newFactory(): Factory
