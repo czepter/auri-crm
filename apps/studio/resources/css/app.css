@@ -97,7 +97,6 @@
 @layer base {
   body {
     @apply bg-background text-foreground;
-    letter-spacing: 1px;
   }
 }
 
