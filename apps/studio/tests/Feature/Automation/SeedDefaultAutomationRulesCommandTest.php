@@ -17,6 +17,11 @@ it('creates one AutomationRule per config/automation.php entry', function () {
     }
 });
 
+// A thank-you the day after the wedding reads as a form letter; the studio writes that one itself.
+it('ships no automated thank-you after the wedding', function () {
+    expect(collect(config('automation.rules'))->pluck('key'))->not->toContain('thank-you-after-wedding');
+});
+
 it('does not duplicate rows when run twice', function () {
     $this->artisan('automation:seed-default-rules')->assertSuccessful();
     $this->artisan('automation:seed-default-rules')->assertSuccessful();

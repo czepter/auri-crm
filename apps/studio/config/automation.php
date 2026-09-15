@@ -38,16 +38,6 @@ return [
             ],
         ],
         [
-            'key' => 'thank-you-after-wedding',
-            'name' => 'Dankeschön — nach der Hochzeit',
-            'trigger_type' => AutomationTriggerType::DateOffset,
-            'anchor' => AutomationAnchor::PrimaryShoot,
-            'offset_days' => 1,
-            'direction' => AutomationOffsetDirection::After,
-            'notification_subject' => 'Danke, dass wir dabei sein durften',
-            'notification_body' => 'Vielen Dank für die wunderschöne Feier — es war uns eine Freude.',
-        ],
-        [
             'key' => 'quote-follow-up',
             'name' => 'Angebot — Erinnerung vor Ablauf',
             'trigger_type' => AutomationTriggerType::DateOffset,
