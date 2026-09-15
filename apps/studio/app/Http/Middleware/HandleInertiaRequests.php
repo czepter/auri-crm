@@ -145,6 +145,8 @@ class HandleInertiaRequests extends Middleware
                 // rather than passed per page. Null with nobody signed in:
                 // the sign-in screen has no navigation to draw.
                 'portalNav' => fn () => $this->portalNav($request),
+                // #439: picks the portal's Sie or ihr string set in portal/main.ts.
+                'clientRegister' => fn () => app(StudioSettingsResolver::class)->clientRegister(),
             ] : []),
         ];
     }

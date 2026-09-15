@@ -94,6 +94,8 @@ class StudioSettingsController extends Controller
             // #234: an enum, never free text — the cases are the pairs this
             // product licensed and self-hosts.
             'font_pair' => ['sometimes', 'nullable', Rule::enum(FontPair::class)],
+            // #439: the onboarding's first step asks this beside the identity.
+            'client_register' => ['sometimes', 'required', 'in:formal,informal'],
             // SVG deliberately excluded: served inline from this app's own
             // origin (logo(), below), an uploaded SVG can carry a <script>
             // and execute as this app rather than as an image.

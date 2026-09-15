@@ -32,6 +32,7 @@ const settings: App.Settings.Data.StudioSettingsData = {
   widerrufIncluded: true,
   widerrufText: null,
   quoteLayout: 'classic',
+  clientRegister: 'formal',
   documentLetterheadHtml: null,
   documentFooterHtml: null,
   timezone: 'Europe/Berlin',
