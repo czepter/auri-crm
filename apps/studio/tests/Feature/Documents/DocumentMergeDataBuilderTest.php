@@ -1,7 +1,11 @@
 <?php
 
+use App\Crm\Models\Shoot;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Gallery\Models\Gallery;
+use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Payments\Models\PaymentInstallment;
+use App\Payments\Models\PaymentPlan;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -50,4 +54,30 @@ it('points the gallery merge field at the viewer host, not this app', function (
     $data = (new DocumentMergeDataBuilder)->fromProject($project, new StudioSettingsResolver);
 
     expect($data['gallery']['link'])->toBe('http://gallery.test/g/hochzeit-meier');
+});
+
+// § 14 Abs. 4 Nr. 6 UStG: an Anzahlung the client transferred before the
+// invoice went out is taxed on receipt, so the Leistungszeitraum is the day
+// the money arrived — the shoot is still weeks away.
+it('prints the Vereinnahmungsdatum on an Anzahlung paid before it was issued', function () {
+    $project = contractProject();
+    Shoot::factory()->for($project)->primary()->on('2026-06-20')->create();
+    $plan = PaymentPlan::factory()->for($project->job()->sole())->create(['total' => 50_000]);
+    $installment = PaymentInstallment::factory()->for($plan, 'plan')->create([
+        'amount' => 50_000,
+        'status' => PaymentInstallmentStatus::Paid,
+        'paid_on' => '2026-03-02',
+        'invoiced_at' => '2026-03-05 09:00:00',
+    ]);
+
+    $data = (new DocumentMergeDataBuilder)->fromProject($project, new StudioSettingsResolver, $installment);
+
+    expect($data['invoice']['servicePeriod'])->toBe('02.03.2026');
+
+    // Paid after issue: the shoot day is the supply, as before.
+    $installment->update(['paid_on' => '2026-03-09']);
+
+    $data = (new DocumentMergeDataBuilder)->fromProject($project, new StudioSettingsResolver, $installment->fresh());
+
+    expect($data['invoice']['servicePeriod'])->toBe('20.06.2026');
 });
