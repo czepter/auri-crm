@@ -3,6 +3,7 @@
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\InternalNote;
+use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Task;
@@ -14,6 +15,7 @@ use App\Gallery\Models\GalleryPrereleaseSignup;
 use App\Media\Models\Asset;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Portal\Models\ClientAccess;
 use App\Quotes\Models\Quote;
@@ -78,6 +80,27 @@ it('erases a sole-contact project outright, including its storage objects', func
         // The row survives — never dropped outright, see EraseContactDsgvo's
         // own doc comment on why.
         ->and(Contact::query()->whereKey($contact->id)->exists())->toBeTrue();
+});
+
+it('keeps the payment plan, its issued invoices and their PDFs when erasing a booked project', function () {
+    $contact = Contact::factory()->create(['name' => 'Lena Meier']);
+    $project = dsgvoErasableProject($contact);
+    $plan = PaymentPlan::factory()->for(Job::factory()->for($project))->create(['total' => 100000]);
+    $installment = PaymentInstallment::factory()->for($plan, 'plan')->create([
+        'amount' => 100000,
+        'invoice_number' => 'RE-2026-0001',
+        'invoiced_at' => now(),
+        'invoice_path' => 'invoices/re-2026-0001.pdf',
+    ]);
+    Storage::disk('local')->put($installment->invoice_path, 'pdf');
+
+    $this->actingAs($this->owner, 'staff')->post("/kontakte/{$contact->public_id}/dsgvo/loeschen");
+
+    expect($installment->fresh()?->invoice_number)->toBe('RE-2026-0001')
+        ->and($project->fresh()->name)->toBe('[gelöscht]')
+        ->and(Quote::query()->exists())->toBeFalse();
+
+    Storage::disk('local')->assertExists($installment->invoice_path);
 });
 
 it('records one audit event naming only the opaque public_id, never PII', function () {

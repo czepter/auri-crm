@@ -33,7 +33,8 @@ use Illuminate\Support\Facades\Storage;
  * restrictOnDelete a contact who has accepted something and the database
  * enforces it, so erasure means scrubbing this row's identifying columns in
  * place, never removing it. Every table this contact's projects touch is
- * purged outright, storage objects included.
+ * purged outright, storage objects included, except a booked project's
+ * invoices (see purgeSoleContactProject).
  *
  * A project shared with another contact (a partner, a payer, a planner) is
  * never touched beyond this contact's own fingerprints on it — the other
@@ -114,12 +115,19 @@ class EraseContactDsgvo
      * quotes/items, galleries/assets/derivatives/zip builds/download events/
      * favorites/comments (and their storage objects), threads/messages,
      * form instances/fields/answers, tasks, notes, shoots and everything
-     * under one (crew, timeline, shot list), the lead, the job and its
-     * payment plan, and any automation run anchored to the project or a
-     * shoot of it, then the project row itself.
+     * under one (crew, timeline, shot list), the lead, and any automation run
+     * anchored to the project or a shoot of it, then the job and the project
+     * row itself.
+     *
+     * A job with a payment plan stays, and the project with it under a
+     * scrubbed name: the plan carries allocated invoice numbers and issued
+     * invoices, which § 147 AO requires kept (Art. 17(3)(b) DSGVO) and which
+     * UnbookProject refuses to drop for the same reason.
      */
     private function purgeSoleContactProject(Project $project): void
     {
+        $keepsInvoices = Job::where('project_id', $project->id)->whereHas('paymentPlan')->exists();
+
         $this->purgeStorageObjects($project);
 
         Quote::where('project_id', $project->id)->delete();
@@ -132,12 +140,18 @@ class EraseContactDsgvo
         $shootIds = $project->shoots()->pluck('id');
         Shoot::where('project_id', $project->id)->delete();
         Lead::where('project_id', $project->id)->delete();
-        Job::where('project_id', $project->id)->delete();
 
         AutomationRun::where(fn ($q) => $q->where('anchorable_type', Project::class)->where('anchorable_id', $project->id))
             ->orWhere(fn ($q) => $q->where('anchorable_type', Shoot::class)->whereIn('anchorable_id', $shootIds))
             ->delete();
 
+        if ($keepsInvoices) {
+            $project->forceFill(['name' => '[gelöscht]', 'type_other' => null, 'field_values' => null])->save();
+
+            return;
+        }
+
+        Job::where('project_id', $project->id)->delete();
         $project->delete();
     }
 
