@@ -49,7 +49,7 @@ class StudioOnboardingController extends Controller
 
         // Also on "später abschließen": a studio with no templates can issue
         // nothing. Idempotent, so a second pass writes nothing.
-        $seed(StarterTemplateCatalog::onboardingDefaults($settings->vatMode()), $owner);
+        $seed(StarterTemplateCatalog::onboardingDefaults($settings->vatMode()), $owner, $settings->clientRegister());
 
         $settings->set('onboarding_completed_at', now(), $owner);
 

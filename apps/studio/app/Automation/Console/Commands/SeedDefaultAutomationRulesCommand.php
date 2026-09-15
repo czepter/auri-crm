@@ -3,6 +3,7 @@
 namespace App\Automation\Console\Commands;
 
 use App\Automation\Models\AutomationRule;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Console\Command;
 
 /**
@@ -20,11 +21,14 @@ class SeedDefaultAutomationRulesCommand extends Command
 
     protected $description = 'Creates the default AutomationRule set from config/automation.php, skipping any key already seeded.';
 
-    public function handle(): int
+    public function handle(StudioSettingsResolver $settings): int
     {
         $created = 0;
 
         foreach (config('automation.rules') as $entry) {
+            // #439: a client-facing text is keyed formal/informal; the studio's register picks one.
+            $entry = array_map(fn ($value) => is_array($value) ? $value[$settings->clientRegister()] : $value, $entry);
+
             $rule = AutomationRule::query()->firstOrCreate(['key' => $entry['key']], $entry);
 
             if ($rule->wasRecentlyCreated) {

@@ -40,6 +40,11 @@ createInertiaApp({
     return page().then((module) => module.default)
   },
   setup({ el, App, props, plugin }) {
+    // #439: the portal set says "ihr"; a formal studio overlays the Sie strings.
+    if (props.initialPage.props.clientRegister === 'formal') {
+      i18n.global.mergeLocaleMessage('de', { portal: de.portalFormal })
+    }
+
     createApp({ render: () => h(App, props) })
       .use(plugin)
       .use(i18n)

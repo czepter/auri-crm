@@ -15,7 +15,9 @@ use App\Crm\Events\ProjectBooked;
  * duplicates a row and never overwrites a tenant's edit to one already seeded.
  *
  * Each entry's shape matches App\Automation\Models\AutomationRule::booted():
- * either event_class alone, or anchor/offset_days/direction alone.
+ * either event_class alone, or anchor/offset_days/direction alone. A text a
+ * client reads is keyed formal/informal (#439); the command seeds the one
+ * matching the studio's register.
  */
 return [
     'rules' => [
@@ -26,8 +28,14 @@ return [
             'anchor' => AutomationAnchor::PerShoot,
             'offset_days' => 7,
             'direction' => AutomationOffsetDirection::Before,
-            'notification_subject' => 'Ihr Shooting steht bald an',
-            'notification_body' => 'Nur eine kurze Erinnerung: Ihr Shooting findet in 7 Tagen statt.',
+            'notification_subject' => [
+                'formal' => 'Ihr Shooting steht bald an',
+                'informal' => 'Dein Shooting steht bald an',
+            ],
+            'notification_body' => [
+                'formal' => 'Nur eine kurze Erinnerung: Ihr Shooting findet in 7 Tagen statt.',
+                'informal' => 'Nur eine kurze Erinnerung: Dein Shooting findet in 7 Tagen statt.',
+            ],
         ],
         [
             'key' => 'thank-you-after-wedding',
@@ -46,8 +54,14 @@ return [
             'anchor' => AutomationAnchor::QuoteValidity,
             'offset_days' => 7,
             'direction' => AutomationOffsetDirection::Before,
-            'notification_subject' => 'Ihr Angebot läuft bald ab',
-            'notification_body' => 'Ihr Angebot gilt noch eine Woche. Melden Sie sich gern, wenn etwas offen ist.',
+            'notification_subject' => [
+                'formal' => 'Ihr Angebot läuft bald ab',
+                'informal' => 'Dein Angebot läuft bald ab',
+            ],
+            'notification_body' => [
+                'formal' => 'Ihr Angebot gilt noch eine Woche. Melden Sie sich gern, wenn etwas offen ist.',
+                'informal' => 'Dein Angebot gilt noch eine Woche. Melde dich gern, wenn etwas offen ist.',
+            ],
         ],
         // E-14: the studio's own reminder, off until somebody wants it —
         // there so it can be found rather than invented.
@@ -68,8 +82,14 @@ return [
             'name' => 'Buchungsbestätigung',
             'trigger_type' => AutomationTriggerType::Event,
             'event_class' => ProjectBooked::class,
-            'notification_subject' => 'Ihre Buchung ist bestätigt',
-            'notification_body' => 'Wir freuen uns auf Ihr Projekt und melden uns rechtzeitig mit den nächsten Schritten.',
+            'notification_subject' => [
+                'formal' => 'Ihre Buchung ist bestätigt',
+                'informal' => 'Deine Buchung ist bestätigt',
+            ],
+            'notification_body' => [
+                'formal' => 'Wir freuen uns auf Ihr Projekt und melden uns rechtzeitig mit den nächsten Schritten.',
+                'informal' => 'Wir freuen uns auf dein Projekt und melden uns rechtzeitig mit den nächsten Schritten.',
+            ],
         ],
     ],
 ];

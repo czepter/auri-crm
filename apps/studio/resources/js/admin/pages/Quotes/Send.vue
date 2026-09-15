@@ -9,13 +9,23 @@ const props = defineProps<{
   quote: App.Quotes.Data.QuoteData
   recipientName: string
   recipientEmail: string
+  address: 'sie' | 'du' | 'ihr'
   mailHtml: string
 }>()
 
 const message: EditorDocument = {
   blocks: [
     { type: 'paragraph', data: { text: `Hallo ${props.recipientName},` } },
-    { type: 'paragraph', data: { text: 'vielen Dank für euer Vertrauen — hier euer Angebot.' } },
+    {
+      type: 'paragraph',
+      data: {
+        text: {
+          sie: 'vielen Dank für Ihr Vertrauen — hier Ihr Angebot.',
+          du: 'vielen Dank für dein Vertrauen — hier dein Angebot.',
+          ihr: 'vielen Dank für euer Vertrauen — hier euer Angebot.',
+        }[props.address],
+      },
+    },
   ],
 }
 

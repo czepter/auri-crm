@@ -31,10 +31,10 @@ use Illuminate\Support\Facades\DB;
 class SeedStarterTemplates
 {
     /** @param list<string> $keys */
-    public function __invoke(array $keys, ?User $actor): int
+    public function __invoke(array $keys, ?User $actor, string $register = 'formal'): int
     {
         $entries = collect($keys)
-            ->map(fn (string $key) => StarterTemplateCatalog::find($key))
+            ->map(fn (string $key) => StarterTemplateCatalog::find($key, $register))
             ->filter()
             ->values();
 
