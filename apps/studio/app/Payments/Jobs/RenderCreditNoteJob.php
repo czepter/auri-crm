@@ -29,7 +29,7 @@ class RenderCreditNoteJob implements ShouldQueue
     {
         $creditNote = $this->creditNote->fresh(['template', 'installment.plan.job.project']);
 
-        if ($creditNote === null || $creditNote->pdf_path !== null) {
+        if ($creditNote === null) {
             return;
         }
 
@@ -37,9 +37,15 @@ class RenderCreditNoteJob implements ShouldQueue
             return;
         }
 
-        $pdf = $gotenberg->htmlToPdf($render->forCreditNote($creditNote));
-
+        // Same guard as RenderInvoiceJob's, and for the same reason (#416).
         $path = "credit-notes/{$creditNote->tenant_id}/{$creditNote->public_id}.pdf";
+
+        if (Storage::disk('local')->exists($path)) {
+            return;
+        }
+
+        $pdf = $gotenberg->htmlToPdf($render->forCreditNote($creditNote, snapshotPath: $path));
+
         Storage::disk('local')->put($path, $pdf);
 
         $creditNote->update(['pdf_path' => $path]);

@@ -987,6 +987,7 @@
     "numberingChangeWarning": "Gilt nur für noch nicht ausgestellte Dokumente.",
     "numberingPreview": "Nächste Nummer",
     "numberingSave": "Speichern",
+    "invoiceExport": "CSV {year}",
     "documentsTitle": "Belege & Fristen",
     "documentsLayoutLabel": "Layout",
     "quoteLayoutClassic": "Klassisch",
