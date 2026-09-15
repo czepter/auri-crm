@@ -1,6 +1,9 @@
 import { expect, type Page } from '@playwright/test'
 import { authenticator } from 'otplib'
 
+/** The server's clock for the whole suite, and the browser's in visual.spec.ts. */
+export const NOW = '2026-09-15T10:00:00Z'
+
 /** Matches the e2e-mfa account seeded by database/seeders/E2eSeeder.php. */
 export const MFA_SECRET = 'JBSWY3DPEHPK3PXP'
 

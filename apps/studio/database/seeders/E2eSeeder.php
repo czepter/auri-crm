@@ -319,6 +319,10 @@ class E2eSeeder extends Seeder
         $contact = Contact::create(['name' => 'E2E Kundin', 'email' => 'e2e-kundin@example.test']);
         $project->attachContact($contact, ProjectContactRole::Primary);
 
+        // A second project, or the portal's start page redirects to the only one.
+        Project::create(['name' => 'E2E Portrait', 'type' => ProjectType::Portrait, 'portal_visible' => true])
+            ->attachContact($contact, ProjectContactRole::Primary);
+
         Shoot::create([
             'project_id' => $project->id,
             'kind' => 'Hochzeitstag',
