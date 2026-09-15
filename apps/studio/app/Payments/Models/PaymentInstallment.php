@@ -125,7 +125,18 @@ class PaymentInstallment extends Model
     public function scopeOverdue(Builder $query): void
     {
         $query->whereIn('status', PaymentInstallmentStatus::open())
-            ->whereNotNull('overdue_notified_at');
+            ->whereNotNull('overdue_notified_at')
+            ->onLivePlan();
+    }
+
+    /**
+     * #418: not on a plan that has been settled. Here rather than in each
+     * caller, so the overdue scan and both reminder ladders inherit it from
+     * the one place that knows the condition.
+     */
+    public function scopeOnLivePlan(Builder $query): void
+    {
+        $query->whereHas('plan', fn (Builder $plan) => $plan->whereNull('settled_at'));
     }
 
     /** #414: what is still owed — what a reminder names and what Stripe charges. */

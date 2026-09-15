@@ -407,6 +407,7 @@ const permissions = {
     canManageQuotes: true,
     canManageContracts: true,
     canManagePaymentPlan: true,
+    primaryShootCancelled: false,
     canManageForms: true,
 }
 

@@ -15,4 +15,10 @@ return [
     'creditNoteNotPaid' => 'Nur eine bezahlte Rate lässt sich gutschreiben',
     'creditNoteTooLarge' => 'Höchstens :amount € gutschreibbar',
     'creditNoteNoStripePayment' => 'Keine Stripe-Zahlung zur Rückerstattung',
+
+    // #418: die Gründe, die auf Storno und Gutschrift landen, wenn der Plan
+    // als Ganzes abgewickelt wird.
+    'settleAlreadySettled' => 'Der Zahlungsplan ist abgewickelt',
+    'settleVoidReason' => 'Shooting abgesagt, Zahlungsplan abgewickelt',
+    'settleCreditReason' => 'Shooting abgesagt, Anzahlung erstattet',
 ];

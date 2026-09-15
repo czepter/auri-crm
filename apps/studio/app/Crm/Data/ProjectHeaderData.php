@@ -53,6 +53,9 @@ class ProjectHeaderData extends Data
         public bool $canManageQuotes,
         public bool $canManageContracts,
         public bool $canManagePaymentPlan,
+        // #418: the one condition the "Zahlungsplan abwickeln" link hangs
+        // off, beside the plan's own settled_at.
+        public bool $primaryShootCancelled,
         public bool $canManageForms,
         public ?string $leadId,
         public ?string $outcomeLabel,
@@ -95,6 +98,7 @@ class ProjectHeaderData extends Data
             canManageQuotes: $user?->can('manageQuotes', $project) ?? false,
             canManageContracts: $user?->can('manageContracts', $project) ?? false,
             canManagePaymentPlan: $user?->can('managePaymentPlan', $project) ?? false,
+            primaryShootCancelled: $project->primaryShoot?->isCancelled() ?? false,
             canManageForms: $user?->can('manageForms', $project) ?? false,
             leadId: $project->lead?->public_id,
             outcomeLabel: $project->lead?->outcome?->label(),

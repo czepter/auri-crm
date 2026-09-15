@@ -880,7 +880,13 @@
     "creditNoteAmount": "Betrag",
     "creditNoteReason": "Grund",
     "creditNoteSubmit": "Ausstellen",
-    "creditNoteRow": "Gutschrift {number}"
+    "creditNoteRow": "Gutschrift {number}",
+    "settle": "Zahlungsplan abwickeln",
+    "settleSubmit": "Abwickeln",
+    "settleKeep": "Behalten",
+    "settleCredit": "Gutschrift",
+    "settleDelete": "Löschen",
+    "settleVoid": "Storno"
   },
   "documentTemplates": {
     "title": "Dokumentvorlagen",
