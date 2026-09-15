@@ -33,8 +33,8 @@ return [
                 'informal' => 'Dein Shooting steht bald an',
             ],
             'notification_body' => [
-                'formal' => 'Nur eine kurze Erinnerung: Ihr Shooting findet in 7 Tagen statt.',
-                'informal' => 'Nur eine kurze Erinnerung: Dein Shooting findet in 7 Tagen statt.',
+                'formal' => 'Ihr Shooting steht bald an, und wir freuen uns schon darauf. Wenn vorher noch etwas zu klären ist, melden Sie sich gern.',
+                'informal' => 'Dein Shooting steht bald an, und wir freuen uns schon darauf. Wenn vorher noch etwas zu klären ist, melde dich gern.',
             ],
         ],
         [
@@ -49,8 +49,8 @@ return [
                 'informal' => 'Dein Angebot läuft bald ab',
             ],
             'notification_body' => [
-                'formal' => 'Ihr Angebot gilt noch eine Woche. Melden Sie sich gern, wenn etwas offen ist.',
-                'informal' => 'Dein Angebot gilt noch eine Woche. Melde dich gern, wenn etwas offen ist.',
+                'formal' => 'Ihr Angebot gilt bis zum {{ quote.validUntil }}. Melden Sie sich gern, wenn etwas offen ist.',
+                'informal' => 'Dein Angebot gilt bis zum {{ quote.validUntil }}. Melde dich gern, wenn etwas offen ist.',
             ],
         ],
         // E-14: the studio's own reminder, off until somebody wants it —
@@ -64,8 +64,8 @@ return [
             'direction' => AutomationOffsetDirection::Before,
             'recipient_type' => AutomationRecipient::Crew,
             'is_active' => false,
-            'notification_subject' => 'Morgen: {{ project.name }}',
-            'notification_body' => 'Morgen steht {{ project.name }} an. Ausrüstung packen, Ablauf durchgehen.',
+            'notification_subject' => 'Shooting: {{ project.name }}',
+            'notification_body' => 'Das Shooting für {{ project.name }} steht an. Ausrüstung packen, Ablauf durchgehen.',
         ],
         [
             'key' => 'booking-confirmation',

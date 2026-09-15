@@ -22,6 +22,17 @@ it('ships no automated thank-you after the wedding', function () {
     expect(collect(config('automation.rules'))->pluck('key'))->not->toContain('thank-you-after-wedding');
 });
 
+// The offset is editable on the screen; a "7 Tage" in the text goes stale the moment it is.
+it('writes no offset into a default rule text', function () {
+    $texts = collect(config('automation.rules'))
+        ->flatMap(fn (array $rule) => [$rule['notification_subject'], $rule['notification_body']])
+        ->flatMap(fn (string|array $text) => (array) $text);
+
+    foreach ($texts as $text) {
+        expect($text)->not->toMatch('/\d|\bwoche|\btage?n?\b|\bmorgen\b/iu');
+    }
+});
+
 it('does not duplicate rows when run twice', function () {
     $this->artisan('automation:seed-default-rules')->assertSuccessful();
     $this->artisan('automation:seed-default-rules')->assertSuccessful();
