@@ -123,7 +123,7 @@ class CaptureInquiry
             AuditLogger::record(
                 event: 'lead.captured',
                 actor: $actor,
-                context: ['source' => $data->source->value, 'via' => $data->captured_via->value],
+                context: ['source' => $data->source?->value, 'via' => $data->captured_via?->value],
                 subject: $lead->public_id,
                 projectId: $lead->project_id,
                 occurredAt: $data->captured_at === null ? null : CarbonImmutable::parse($data->captured_at),

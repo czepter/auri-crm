@@ -8956,10 +8956,24 @@
                         "type": "string"
                     },
                     "source": {
-                        "$ref": "#/components/schemas/LeadSource"
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/LeadSource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
                     },
                     "captured_via": {
-                        "$ref": "#/components/schemas/CaptureChannel"
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/CaptureChannel"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
                     },
                     "type_other": {
                         "type": [
@@ -9049,9 +9063,7 @@
                 },
                 "required": [
                     "project_name",
-                    "type",
-                    "source",
-                    "captured_via"
+                    "type"
                 ],
                 "title": "CaptureInquiryData"
             },

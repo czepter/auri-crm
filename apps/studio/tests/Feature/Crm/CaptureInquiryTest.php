@@ -18,6 +18,7 @@ use App\Crm\Models\ProjectType as ProjectTypeModel;
 use App\Crm\Models\Shoot;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Reporting\Support\BookingFunnel;
 use App\Settings\Models\StudioClosure;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -412,6 +413,20 @@ it('accepts a shoot ending after midnight', function () {
         ->assertRedirect('/anfragen');
 
     expect(Shoot::sole()->end_time)->toStartWith('01:00');
+});
+
+it('captures without source and channel and counts it as unknown', function () {
+    $this->actingAs($this->staff, 'staff')
+        ->post('/anfragen', payload(['source' => null, 'captured_via' => null]))
+        ->assertSessionHasNoErrors()
+        ->assertRedirect('/anfragen');
+
+    $lead = Lead::sole();
+
+    expect($lead->source)->toBeNull()
+        ->and($lead->captured_via)->toBeNull()
+        ->and(BookingFunnel::bySource(now()->subDay(), now()->addDay()))
+        ->toBe([['source' => 'unknown', 'label' => 'Unbekannt', 'captured' => 1, 'booked' => 0, 'revenue' => 0]]);
 });
 
 it('saves without times and venue', function () {
