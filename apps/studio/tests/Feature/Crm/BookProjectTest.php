@@ -66,6 +66,17 @@ it('routes the shoots through the pipeline rather than mass updating them', func
     expect(AuditLog::where('event', 'shoot.status_changed')->count())->toBe(2);
 });
 
+it('books a shoot added to an already booked project', function () {
+    $project = Project::factory()->create();
+    app(BookProject::class)($project, User::factory()->create());
+
+    $this->actingAs(User::factory()->withMfa()->create(), 'staff')
+        ->post("/auftraege/{$project->public_id}/shootings", ['kind' => 'Feier'])
+        ->assertRedirect();
+
+    expect($project->shoots()->sole()->status->key)->toBe(ShootStatus::Booked->value);
+});
+
 it('fires ProjectBooked exactly once and writes the audit row', function () {
     Event::fake([ProjectBooked::class]);
     $project = Project::factory()->create();
