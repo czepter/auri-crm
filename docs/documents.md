@@ -136,6 +136,9 @@ leaving `{{ invoice.number }}` in a PDF.
 | `invoice.vatNote`    | The §19 UStG sentence under the small-business rule; empty otherwise. |
 | `invoice.dueOn`      | The installment's due date, `dd.mm.yyyy`. |
 | `invoice.paymentTerm` | "Zahlbar bis {date} ohne Abzug." |
+| `invoice.lines`      | #411: the accepted quote's positions on an **Endrechnung** — `{title, quantity, unitPrice, discount, total, vatRate}`, formatted. The quote-level discount rides along as its own `Rabatt` line (§ 14 Abs. 4 Nr. 7: a Minderung agreed in advance is part of the Entgelt). A slider quote has one line: the hours at their rate. Empty on an Anzahlungsrechnung, which is what makes the block absent rather than blank. Not a `{{ }}` placeholder, same as `vatLines`. |
+| `invoice.deposits`   | #411: every earlier issued installment of the plan — `{number, date, net, vat, gross}` — the Teilentgelte § 14 Abs. 5 S. 2 UStG makes the Endrechnung deduct. A cancelled one is absent; a credited one is deducted net of its Gutschrift. Not a `{{ }}` placeholder. |
+| `invoice.totalNet` / `totalVat` / `totalGross` | #411: the whole Leistung, from the accepted quote rather than from the plan's total — a Nachtrag or a voided rate never described a supply. `invoice.net/vat/gross` stay the remainder this document actually charges. |
 | `invoice.vatLines`   | #412: a list of `{rate, net, vat}`, one per tax rate, all three formatted. The installment is shared out pro rata over the accepted quote's own rate lines (`Quote::vatLines()`), rounded so the shares sum to the gross exactly. **Not a `{{ }}` placeholder** — a template body cannot loop, so this one entry is read by the layouts (`App\Payments\Support\InvoiceDocument`) and is deliberately absent from `MergeFieldVocabulary`. One rate is the ordinary case and prints the single Umsatzsteuer row the summary chain always had. |
 
 § 14 Abs. 4 Nr. 7 UStG is why the list exists: the Entgelt has to appear

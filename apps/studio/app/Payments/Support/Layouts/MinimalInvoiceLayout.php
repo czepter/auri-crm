@@ -23,7 +23,7 @@ class MinimalInvoiceLayout implements InvoiceLayoutRenderer
             ->map(fn (array $row) => '<span>'.e($row[0].' '.$row[1]).'</span>')
             ->implode('');
 
-        $rows = '<tr><td>'.e($document->description).'</td><td>'.e($document->sign.$document->gross).'</td></tr>';
+        $rows = $this->positionRows($document);
 
         // Wie im Angebot: die Linie sitzt auf der ersten Summenzeile, fett
         // wird nur der Gesamtbetrag.

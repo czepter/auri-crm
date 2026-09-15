@@ -3,7 +3,6 @@
 namespace App\Payments\Support;
 
 use App\Payments\Models\PaymentInstallment;
-use App\Quotes\Models\Quote;
 use App\Quotes\Support\VatLines;
 use App\Settings\Support\StudioSettingsResolver;
 
@@ -49,7 +48,7 @@ final class InvoiceFigures
 
     public static function forInstallment(PaymentInstallment $installment, StudioSettingsResolver $settings): self
     {
-        $quote = self::acceptedQuote($installment);
+        $quote = $installment->acceptedQuote();
 
         $rate = $quote?->vat_mode === 'small_business'
             ? 0
@@ -106,18 +105,5 @@ final class InvoiceFigures
         $percent = $this->rate / 100;
 
         return rtrim(rtrim(number_format($percent, 2, ',', '.'), '0'), ',').' %';
-    }
-
-    /**
-     * The one accepted quote behind this installment's project, if any. A
-     * revision chain (Q-06) leaves at most one row in `accepted`, so this
-     * cannot silently pick between two.
-     */
-    private static function acceptedQuote(PaymentInstallment $installment): ?Quote
-    {
-        return $installment->plan?->job?->project?->quotes()
-            ->where('status', 'accepted')
-            ->latest('accepted_at')
-            ->first();
     }
 }

@@ -26,6 +26,9 @@ const props = defineProps<{
     hasDocument: boolean
     metaRows: [string, string][]
     description: string
+    lines: { title: string; quantity: string; unitPrice: string; discount: string; total: string; vatRate: string }[]
+    deposits: { number: string; date: string; net: string; vat: string; gross: string }[]
+    totalGross: string
     summaryRows: [string, string, boolean][]
     vatNote: string
     paymentLines: string[]
@@ -73,7 +76,33 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
         </table>
 
         <table class="mt-8 w-full border-collapse">
-          <tr :class="ROW">
+          <!-- #411: die ganze Leistung, wenn dies die Endrechnung ist, sonst
+               die eine Zeile dieser Rate. -->
+          <template v-if="invoice.lines.length">
+            <tr v-for="(line, index) in invoice.lines" :key="`line-${index}`" :class="ROW">
+              <td>
+                {{ line.title }}
+                <span v-if="line.unitPrice" class="block text-[13px] text-muted-foreground">
+                  {{ line.quantity }} × {{ line.unitPrice }}<template v-if="line.discount"> · {{ $t('quotes.discount') }} {{ line.discount }}</template>
+                </span>
+              </td>
+              <td>{{ line.total }}</td>
+            </tr>
+            <tr :class="[ROW, '[&>td]:border-t [&>td]:border-border [&>td]:pt-3!']">
+              <td>{{ $t('portal.invoiceServiceTotal') }}</td>
+              <td>{{ invoice.totalGross }}</td>
+            </tr>
+            <template v-if="invoice.deposits.length">
+              <tr :class="[ROW, '[&>td]:py-1! [&>td]:text-muted-foreground']">
+                <td colspan="2">{{ $t('portal.invoiceDeposits') }}</td>
+              </tr>
+              <tr v-for="deposit in invoice.deposits" :key="deposit.number" :class="[ROW, '[&>td]:py-1! [&>td]:text-muted-foreground']">
+                <td>{{ $t('portal.invoiceDeposit', { number: deposit.number, date: deposit.date }) }}</td>
+                <td>−{{ deposit.gross }}</td>
+              </tr>
+            </template>
+          </template>
+          <tr v-else :class="ROW">
             <td>{{ invoice.description }}</td>
             <td>{{ invoice.summaryRows[invoice.summaryRows.length - 1]?.[1] }}</td>
           </tr>
