@@ -1,12 +1,16 @@
 <?php
 
+use App\Automation\Actions\SweepDateOffsetAutomationRules;
 use App\Automation\Enums\AutomationAnchor;
 use App\Automation\Enums\AutomationOffsetDirection;
+use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Models\AutomationRule;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Settings\Support\StudioSettingsResolver;
+use Carbon\CarbonImmutable;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -29,6 +33,23 @@ it('runs from the artisan command, reporting how many rules it fired', function 
     $this->artisan('automation:sweep-date-offset-rules')
         ->expectsOutputToContain('Fired 1 automation rule(s).')
         ->assertSuccessful();
+});
+
+// 00:30 in Berlin is still yesterday in UTC; the sweep must count from the studio's day.
+it('counts today on the studio clock', function () {
+    Notification::fake();
+    app(StudioSettingsResolver::class)->set('timezone', 'Europe/Berlin', null);
+    $this->travelTo(CarbonImmutable::parse('2026-06-01 22:30', 'UTC'));
+
+    $project = Project::factory()->create();
+    Shoot::factory()->for($project)->create(['date' => '2026-06-09']);
+
+    AutomationRule::factory()
+        ->dateOffset(AutomationAnchor::PerShoot, 7, AutomationOffsetDirection::Before)
+        ->create(['recipient_type' => AutomationRecipient::Studio]);
+    staffMember();
+
+    expect(app(SweepDateOffsetAutomationRules::class)())->toBe(1);
 });
 
 it('registers the sweep on the daily schedule', function () {

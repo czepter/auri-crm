@@ -13,6 +13,7 @@ use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
+use App\Settings\Support\StudioSettingsResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 
@@ -39,11 +40,16 @@ use Illuminate\Database\Eloquent\Model;
  */
 class SweepDateOffsetAutomationRules
 {
-    public function __construct(private readonly FireAutomationRule $fire) {}
+    public function __construct(
+        private readonly FireAutomationRule $fire,
+        private readonly StudioSettingsResolver $settings,
+    ) {}
 
     public function __invoke(?CarbonImmutable $today = null): int
     {
-        $today = ($today ?? CarbonImmutable::now('UTC'))->startOfDay();
+        // The schedule runs at 00:00 studio time, when UTC east of Greenwich
+        // still reads yesterday.
+        $today = ($today ?? CarbonImmutable::now($this->settings->timezone()))->startOfDay();
         $fired = 0;
 
         foreach (AutomationRule::query()->active()->dateOffset()->get() as $rule) {
