@@ -9,6 +9,8 @@ export type PackageItemRow = {
   description: string
   quantity: number
   unitPrice: string
+  /** #412: Basispunkte, null = der Satz des Angebots. */
+  vatRate: number | null
   selectable: boolean
   selected: boolean
   hasImage: boolean
@@ -42,6 +44,7 @@ export function catalogItemRow(item: App.Catalog.Data.CatalogItemData): PackageI
     description: item.description ?? '',
     quantity: 1,
     unitPrice: centsToEuros(item.unitPrice),
+    vatRate: null,
     selectable: false,
     selected: false,
     hasImage: false,
@@ -49,7 +52,7 @@ export function catalogItemRow(item: App.Catalog.Data.CatalogItemData): PackageI
 }
 
 export function newPackageItemRow(title: string): PackageItemRow {
-  return { title, description: '', quantity: 1, unitPrice: '', selectable: false, selected: false, hasImage: false }
+  return { title, description: '', quantity: 1, unitPrice: '', vatRate: null, selectable: false, selected: false, hasImage: false }
 }
 
 export function lineTotal(row: PackageItemRow): number {

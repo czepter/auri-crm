@@ -28,9 +28,9 @@ const meta = {
       isActive: true,
       itemCount: 3,
       items: [
-        { id: 'i1', title: 'Begleitung, 10 Stunden', description: null, quantity: 1, unitPrice: 298000, selectable: false, selected: true, outcome: null, hasImage: false },
-        { id: 'i2', title: 'Zweitfotograf', description: 'Ab dem Empfang', quantity: 1, unitPrice: 60000, selectable: true, selected: true, outcome: null, hasImage: false },
-        { id: 'i3', title: 'Album, 30 x 30, 40 Seiten', description: null, quantity: 1, unitPrice: 68000, selectable: true, selected: true, outcome: 'Gedrucktes Album', hasImage: true },
+        { id: 'i1', title: 'Begleitung, 10 Stunden', description: null, quantity: 1, unitPrice: 298000, vatRate: null, selectable: false, selected: true, outcome: null, hasImage: false },
+        { id: 'i2', title: 'Zweitfotograf', description: 'Ab dem Empfang', quantity: 1, unitPrice: 60000, vatRate: null, selectable: true, selected: true, outcome: null, hasImage: false },
+        { id: 'i3', title: 'Album, 30 x 30, 40 Seiten', description: null, quantity: 1, unitPrice: 68000, vatRate: null, selectable: true, selected: true, outcome: 'Gedrucktes Album', hasImage: true },
       ],
       portalOffered: true,
       portalPriceMode: 'from',

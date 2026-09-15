@@ -15,7 +15,9 @@ import { DatePicker } from '@/ui/date-picker'
 import { Label } from '@/ui/label'
 import { useI18n } from 'vue-i18n'
 import QuoteActions from '@/admin/components/quote/QuoteActions.vue'
+import InstallmentPaidDialog from '@/admin/components/InstallmentPaidDialog.vue'
 import InstallmentStornoDialog from '@/admin/components/InstallmentStornoDialog.vue'
+import CreditNoteDialog from '@/admin/components/CreditNoteDialog.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -64,6 +66,7 @@ function draftOf(quote: App.Quotes.Data.QuoteData): QuoteDraft {
       quantity: item.quantity,
       unitPrice: centsToEuros(item.unitPrice),
       discount: formatDiscount(item.discountType, item.discountValue),
+      vatRate: item.vatRate,
       selectable: item.selectable,
       selected: item.selected,
       outcome: item.outcome ?? '',
@@ -137,7 +140,7 @@ function createPlan() {
  * Entwurf endet deshalb bei Gesamt oder Netto.
  */
 function summaryRows(quote: App.Quotes.Data.QuoteData) {
-  const rows = quote.discountAmount
+  const rows: { label: string; value: string; rate?: number }[] = quote.discountAmount
     ? [
         { label: 'quotes.total', value: formatEuros(quote.total) },
         { label: 'quotes.discount', value: `−${formatEuros(quote.discountAmount)}` },
@@ -146,10 +149,12 @@ function summaryRows(quote: App.Quotes.Data.QuoteData) {
     : [{ label: 'quotes.total', value: formatEuros(quote.total) }]
 
   if (quote.vatMode === 'standard') {
-    rows.push(
-      { label: 'quotes.vat', value: formatEuros(quote.vatAmount ?? 0) },
-      { label: 'quotes.total', value: formatEuros(quote.net + (quote.vatAmount ?? 0)) },
-    )
+    // #412: eine Zeile je Steuersatz, bei einem Satz genau die eine.
+    for (const line of quote.vatLines) {
+      rows.push({ label: 'quotes.vat', value: formatEuros(line.vat), rate: line.rate })
+    }
+
+    rows.push({ label: 'quotes.total', value: formatEuros(quote.net + (quote.vatAmount ?? 0)) })
   }
 
   return rows.map((row, index) => ({ ...row, last: index === rows.length - 1 }))
@@ -238,7 +243,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
           :class="row.last ? 'mt-1.5 pt-2.5 font-semibold shadow-[inset_0_1px_0_var(--line)]' : 'text-[12.5px]'"
         >
           <span class="flex-1" :class="{ 'text-[13.5px]': row.last }">
-            {{ row.label === 'quotes.vat' ? $t('quotes.vat', { rate: basisPointsToPercent(quote.vatRate) }) : $t(row.label) }}
+            {{ row.rate === undefined ? $t(row.label) : $t('quotes.vat', { rate: basisPointsToPercent(row.rate) }) }}
           </span>
           <span class="w-[110px] flex-none text-right tabular-nums" :class="{ 'text-[14px]': row.last }">{{ row.value }}</span>
         </div>
@@ -276,10 +281,36 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
       <span class="flex-1">{{ installment.label }}</span>
       <span class="text-[12px] text-ink-2">{{ installment.statusLabel }}</span>
       <span class="w-[110px] flex-none text-right font-semibold tabular-nums">{{ formatEuros(installment.amount) }}</span>
+      <InstallmentPaidDialog
+        v-if="canManagePaymentPlan && installment.status !== 'cancelled' && installment.remaining > 0"
+        :installment-id="installment.id"
+        :remaining="installment.remaining"
+      />
       <InstallmentStornoDialog
         v-if="canManagePaymentPlan && installment.status === 'invoiced'"
         :installment-id="installment.id"
       />
+      <CreditNoteDialog
+        v-if="canManagePaymentPlan && installment.status === 'paid'"
+        :installment-id="installment.id"
+        :amount="installment.amount"
+      />
+    </div>
+
+    <div
+      v-for="note in paymentPlan?.installments.flatMap((installment) => installment.creditNotes.map((note) => ({ note, installment }))) ?? []"
+      :key="note.note.id"
+      class="flex items-center gap-3 py-[9px] text-[13px] text-ink-2"
+    >
+      <span class="w-[110px] flex-none">{{ dayWithWeekday(note.note.issuedOn) }}</span>
+      <a
+        v-if="note.note.hasDocument"
+        class="flex-1"
+        :href="`/raten/${note.installment.id}/gutschrift/${note.note.id}`"
+        target="_blank"
+      >{{ $t('payments.creditNoteRow', { number: note.note.number }) }}</a>
+      <span v-else class="flex-1">{{ $t('payments.creditNoteRow', { number: note.note.number }) }}</span>
+      <span class="w-[110px] flex-none text-right tabular-nums">−{{ formatEuros(note.note.amount) }}</span>
     </div>
 
     <form v-if="!paymentPlan && canManagePaymentPlan" class="mt-2 grid grid-cols-2 gap-x-5 gap-y-4" @submit.prevent="createPlan">

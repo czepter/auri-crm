@@ -35,6 +35,7 @@ type Quote = {
   vatRate: number | null
   vatNote: string | null
   vatAmount: number | null
+  vatLines: { rate: number; net: number; vat: number }[]
   items: QuoteItem[]
   intro: string | null
   outro: string | null
@@ -171,9 +172,10 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
             <td colspan="2">{{ quote.vatNote }}</td>
           </tr>
           <template v-else-if="quote.vatMode === 'standard'">
-            <tr :class="[ROW, '[&>td]:py-1! [&>td]:text-muted-foreground']">
-              <td>{{ $t('quotes.vat', { rate: basisPointsToPercent(quote.vatRate) }) }}</td>
-              <td>{{ formatEuros(quote.vatAmount ?? 0) }}</td>
+            <!-- #412: eine Zeile je Steuersatz (§ 14 Abs. 4 Nr. 7 UStG). -->
+            <tr v-for="line in quote.vatLines" :key="line.rate" :class="[ROW, '[&>td]:py-1! [&>td]:text-muted-foreground']">
+              <td>{{ $t('quotes.vat', { rate: basisPointsToPercent(line.rate) }) }}</td>
+              <td>{{ formatEuros(line.vat) }}</td>
             </tr>
             <tr :class="[ROW, '[&>td]:pt-2! [&>td]:font-serif [&>td]:text-[22px]!']">
               <td>{{ $t('quotes.total') }}</td>

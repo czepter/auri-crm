@@ -1,5 +1,5 @@
 import { eurosToCents, parseDiscount } from '@/admin/lib/money'
-import { applyDiscount, lineAmount, subtotal, vatAmount } from './quoteTotals'
+import { applyDiscount, lineAmount, subtotal, vatLines } from './quoteTotals'
 
 export type PricingMode = 'classic' | 'choice'
 
@@ -11,6 +11,8 @@ export type QuoteRow = {
   quantity: number
   unitPrice: string
   discount: string
+  /** #412: Basispunkte, null = der Satz des Angebots. */
+  vatRate: number | null
   selectable: boolean
   selected: boolean
   outcome: string
@@ -94,6 +96,7 @@ export function buildQuotePayload(draft: QuoteDraft, options: QuotePayloadOption
       unit_price: eurosToCents(row.unitPrice),
       discount_type: discount.type || null,
       discount_value: discount.value,
+      vat_rate: row.vatRate,
       selectable: row.selectable,
       selected: row.selected,
       outcome: row.outcome || null,
@@ -153,6 +156,7 @@ export function buildPreviewQuote(draft: QuoteDraft, vat: VatSettings): App.Quot
       discountValue: line.discountValue,
       discountAmount: lineTotal - netTotal,
       netTotal,
+      vatRate: row.vatRate,
       selectable: row.selectable,
       selected: row.selected,
       outcome: row.outcome || null,
@@ -205,7 +209,8 @@ export function buildPreviewQuote(draft: QuoteDraft, vat: VatSettings): App.Quot
     vatMode: vat.mode,
     vatRate: vat.rate,
     vatNote: vat.mode === 'small_business' ? vat.note : null,
-    vatAmount: vatAmount(total, vat.rate),
+    vatAmount: vat.mode === 'small_business' ? 0 : vatLines(chargedItems, vat.rate, total).reduce((sum, line) => sum + line.vat, 0),
+    vatLines: vat.mode === 'standard' ? vatLines(chargedItems, vat.rate, total) : [],
     intro: draft.intro || null,
     outro: draft.outro || null,
     items,

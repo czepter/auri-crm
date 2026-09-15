@@ -44,7 +44,7 @@ beforeEach(function () {
 afterEach(fn () => ApiRequestor::setHttpClient(null));
 
 /** @return array{status: int, body: array} */
-function m04CheckoutSessionResponse(string $id = 'cs_test_123', string $status = 'open', string $paymentStatus = 'unpaid'): array
+function m04CheckoutSessionResponse(string $id = 'cs_test_123', string $status = 'open', string $paymentStatus = 'unpaid', int $amountTotal = 45000): array
 {
     return [
         'status' => 200,
@@ -54,6 +54,7 @@ function m04CheckoutSessionResponse(string $id = 'cs_test_123', string $status =
             'url' => "https://checkout.stripe.com/c/pay/{$id}",
             'status' => $status,
             'payment_status' => $paymentStatus,
+            'amount_total' => $amountTotal,
             'mode' => 'payment',
             'payment_intent' => 'pi_test_456',
         ],
@@ -75,7 +76,7 @@ function m04PlanWithInstallment(int $amount = 45000): array
 
 // --- App\Payments\Actions\CreateInstallmentCheckoutSession ------------------
 
-it('creates exactly one Checkout Session, in minor units, with the installment\'s public_id as the Stripe idempotency key', function () {
+it('creates exactly one Checkout Session, in minor units, keyed on the installment\'s public_id and the payable', function () {
     [, , , $installment] = m04PlanWithInstallment(45000);
 
     $fake = new FakeStripeHttpClient([m04CheckoutSessionResponse()]);
@@ -93,7 +94,7 @@ it('creates exactly one Checkout Session, in minor units, with the installment\'
         ->and($sent['params']['mode'])->toBe('payment')
         ->and($sent['params']['success_url'])->toBe('https://portal.test/success')
         ->and($sent['params']['cancel_url'])->toBe('https://portal.test/cancel')
-        ->and($sent['headers'])->toContain('Idempotency-Key: '.$installment->public_id);
+        ->and($sent['headers'])->toContain('Idempotency-Key: '.$installment->public_id.':45000');
 });
 
 it('reuses the stored session on a repeat call while it is still open, rather than creating a second one', function () {
@@ -113,6 +114,40 @@ it('reuses the stored session on a repeat call while it is still open, rather th
         ->and($fake->requests)->toHaveCount(2)
         ->and($fake->requests[0]['method'])->toBe('post')
         ->and($fake->requests[1]['method'])->toBe('get');
+});
+
+it('charges the remainder after a part payment, and keys the session on it', function () {
+    [, , , $installment] = m04PlanWithInstallment(45000);
+    $installment->update(['paid_amount' => 15000, 'status' => PaymentInstallmentStatus::Partial]);
+
+    $fake = new FakeStripeHttpClient([m04CheckoutSessionResponse(amountTotal: 30000)]);
+    ApiRequestor::setHttpClient($fake);
+
+    app(CreateInstallmentCheckoutSession::class)($installment, 'https://portal.test/success', 'https://portal.test/cancel');
+
+    $sent = $fake->requests[0];
+    expect($sent['params']['line_items'][0]['price_data']['unit_amount'])->toBe(30000)
+        ->and($sent['headers'])->toContain('Idempotency-Key: '.$installment->public_id.':30000');
+});
+
+it('creates a fresh session when the stored one no longer matches the payable', function () {
+    [, , , $installment] = m04PlanWithInstallment(45000);
+
+    $fake = new FakeStripeHttpClient([
+        m04CheckoutSessionResponse(id: 'cs_test_first'),
+        m04CheckoutSessionResponse(id: 'cs_test_first'),
+        m04CheckoutSessionResponse(id: 'cs_test_second', amountTotal: 30000),
+    ]);
+    ApiRequestor::setHttpClient($fake);
+
+    $create = app(CreateInstallmentCheckoutSession::class);
+    $create($installment, 'https://portal.test/success', 'https://portal.test/cancel');
+
+    $installment->fresh()->update(['paid_amount' => 15000, 'status' => PaymentInstallmentStatus::Partial]);
+    $second = $create($installment->fresh(), 'https://portal.test/success', 'https://portal.test/cancel');
+
+    expect($second)->toBe('https://checkout.stripe.com/c/pay/cs_test_second')
+        ->and($fake->requests[2]['params']['line_items'][0]['price_data']['unit_amount'])->toBe(30000);
 });
 
 it('creates a fresh session when the stored one is no longer open', function () {

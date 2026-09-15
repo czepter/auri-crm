@@ -2,9 +2,12 @@
 
 namespace App\Portal\Http\Controllers;
 
+use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Http\Controllers\Controller;
 use App\Payments\Actions\ConfirmInstallmentCheckoutSession;
 use App\Payments\Data\PaymentPlanData;
+use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Payments\Support\InvoiceDocument;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -46,7 +49,7 @@ class PaymentController extends Controller
 
         $found = $contact->visibleProjects()
             ->where('projects.public_id', $project)
-            ->with('job.paymentPlan.installments')
+            ->with('job.paymentPlan.installments.creditNotes')
             ->firstOrFail();
 
         $plan = $found->job?->paymentPlan;
@@ -68,7 +71,7 @@ class PaymentController extends Controller
             'contact' => ['name' => $contact->name],
             'showSwitcher' => $contact->visibleProjects()->count() > 1,
             'project' => ['id' => $found->public_id, 'name' => $found->name],
-            'plan' => $plan === null ? null : PaymentPlanData::fromModel($plan->load('installments')),
+            'plan' => $plan === null ? null : PaymentPlanData::fromModel($plan->load('installments.creditNotes')),
             'stripeEnabled' => $settings->stripeEnabled(),
             'paymentStatus' => in_array($status, ['success', 'cancelled'], true) ? $status : null,
             'bankDetails' => [
@@ -76,6 +79,68 @@ class PaymentController extends Controller
                 'iban' => $bank['bank_iban'],
                 'bic' => $bank['bank_bic'],
             ],
+        ]);
+    }
+
+    /**
+     * #419: the invoice as a page rather than only as a PDF — built like
+     * App\Portal\Http\Controllers\QuoteController's own Show, and rendering
+     * the same InvoiceDocument the five PDF layouts render, so the screen and
+     * the file cannot disagree about a figure.
+     */
+    public function show(
+        string $project,
+        string $installment,
+        StudioSettingsResolver $settings,
+        DocumentMergeDataBuilder $mergeData,
+    ): Response {
+        $contact = auth('portal')->user();
+
+        $found = $contact->visibleProjects()
+            ->where('projects.public_id', $project)
+            ->with('job.paymentPlan.installments.creditNotes')
+            ->firstOrFail();
+
+        $row = $found->job?->paymentPlan?->installments->firstWhere('public_id', $installment);
+
+        abort_if($row === null || ! $row->isInvoiced(), 404);
+
+        $document = InvoiceDocument::forInvoice(
+            $row,
+            $mergeData->fromProject($found, $settings, $row),
+            $settings,
+        );
+
+        return Inertia::render('Payments/Invoice', [
+            'contact' => ['name' => $contact->name],
+            'showSwitcher' => $contact->visibleProjects()->count() > 1,
+            'project' => ['id' => $found->public_id, 'name' => $found->name],
+            'invoice' => [
+                'id' => $row->public_id,
+                'number' => $row->invoice_number,
+                'status' => $row->status->value,
+                'statusLabel' => $row->status->label(),
+                'hasDocument' => $row->invoice_path !== null,
+                'metaRows' => $document->metaRows,
+                'description' => $document->description,
+                // #411: leer auf einer Anzahlungsrechnung — dann bleibt es
+                // bei der einen Zeile, wie bisher.
+                'lines' => $document->lines,
+                'deposits' => $document->deposits,
+                'totalGross' => $document->totalGross,
+                'summaryRows' => $document->summaryRows(),
+                'vatNote' => $document->vatNote,
+                'paymentLines' => $document->paymentLines,
+                'creditNotes' => $row->creditNotes
+                    ->filter(fn ($note) => $note->pdf_path !== null)
+                    ->map(fn ($note) => ['id' => $note->public_id, 'number' => $note->number])
+                    ->values()
+                    ->all(),
+            ],
+            // #408: a cancelled invoice stays readable and loses the button.
+            'canPay' => $settings->stripeEnabled()
+                && $row->status !== PaymentInstallmentStatus::Paid
+                && $row->status !== PaymentInstallmentStatus::Cancelled,
         ]);
     }
 
@@ -99,5 +164,23 @@ class PaymentController extends Controller
         abort_if($row === null || $row->invoice_path === null, 404);
 
         return Storage::disk('local')->response($row->invoice_path, "rechnung-{$row->invoice_number}.pdf");
+    }
+
+    /** #409, scoped exactly as invoice() is — through the project, never by id alone. */
+    public function creditNote(string $project, string $installment, string $creditNote): StreamedResponse
+    {
+        $contact = auth('portal')->user();
+
+        $found = $contact->visibleProjects()
+            ->where('projects.public_id', $project)
+            ->with('job.paymentPlan.installments.creditNotes')
+            ->firstOrFail();
+
+        $row = $found->job?->paymentPlan?->installments->firstWhere('public_id', $installment);
+        $note = $row?->creditNotes->firstWhere('public_id', $creditNote);
+
+        abort_if($note === null || $note->pdf_path === null, 404);
+
+        return Storage::disk('local')->response($note->pdf_path, "gutschrift-{$note->number}.pdf");
     }
 }

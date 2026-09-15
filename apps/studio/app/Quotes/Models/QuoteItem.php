@@ -28,7 +28,7 @@ class QuoteItem extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['title', 'description', 'quantity', 'unit_price', 'sort_order', 'discount_type', 'discount_value', 'selectable', 'selected', 'outcome', 'image_path'];
+    protected $fillable = ['title', 'description', 'quantity', 'unit_price', 'sort_order', 'discount_type', 'discount_value', 'selectable', 'selected', 'outcome', 'image_path', 'vat_rate'];
 
     protected $attributes = ['quantity' => 1, 'sort_order' => 0];
 

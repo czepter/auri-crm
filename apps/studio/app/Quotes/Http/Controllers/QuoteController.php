@@ -504,6 +504,7 @@ class QuoteController extends Controller
             'items.*.unit_price' => ['nullable', 'integer', 'min:0'],
             'items.*.discount_type' => ['nullable', 'in:percentage,amount'],
             'items.*.discount_value' => ['nullable', 'integer', 'min:1'],
+            'items.*.vat_rate' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'items.*.selectable' => ['sometimes', 'boolean'],
             'items.*.selected' => ['sometimes', 'boolean'],
             'items.*.outcome' => ['nullable', 'string', 'max:255'],
@@ -553,6 +554,7 @@ class QuoteController extends Controller
                 'unit_price' => $item['unit_price'] ?? null,
                 'discount_type' => $item['discount_type'] ?? null,
                 'discount_value' => $item['discount_value'] ?? null,
+                'vat_rate' => $item['vat_rate'] ?? null,
                 'selectable' => $item['selectable'] ?? false,
                 'selected' => $item['selected'] ?? false,
                 'outcome' => $item['outcome'] ?? null,
@@ -570,7 +572,7 @@ class QuoteController extends Controller
         ])));
 
         $preview->fill(Quote::computeTotals($items, $preview->discount_type, $preview->discount_value));
-        $preview->fill(Quote::computeVat($preview->net, $settings));
+        $preview->fill(Quote::computeVat($preview->net, $settings, $items));
 
         return response($render->html($preview), 200, ['Content-Type' => 'text/html']);
     }

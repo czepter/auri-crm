@@ -66,6 +66,7 @@ title: string,
 description: string | null,
 quantity: number,
 unitPrice: number | null,
+vatRate: number | null,
 selectable: boolean,
 selected: boolean,
 outcome: string | null,
@@ -552,7 +553,7 @@ unknownFields: string[],
 };
 }
 namespace Enums {
-export type DocumentTemplateType = 'contract' | 'quote' | 'invoice' | 'mail';
+export type DocumentTemplateType = 'contract' | 'quote' | 'invoice' | 'credit_note' | 'mail';
 }
 }
 namespace Engagement {
@@ -850,7 +851,7 @@ export type NotificationMode = 'immediate' | 'briefing' | 'digest' | 'off';
 }
 namespace Numbering {
 namespace Enums {
-export type DocumentType = 'quote' | 'contract' | 'invoice';
+export type DocumentType = 'quote' | 'contract' | 'invoice' | 'credit_note';
 export type NumberRangeResetRule = 'yearly' | 'continuous';
 }
 }
@@ -868,10 +869,19 @@ settledVia: string | null,
 settledViaLabel: string | null,
 paidOn: string | null,
 paymentReference: string | null,
+paidAmount: number,
+remaining: number,
 isLate: boolean,
 invoiceNumber: string | null,
 invoicedOn: string | null,
 hasInvoiceDocument: boolean,
+creditNotes: {
+id: string,
+number: string,
+amount: number,
+issuedOn: string,
+hasDocument: boolean,
+}[],
 };
 export type PaymentPlanData = {
 id: string,
@@ -885,7 +895,7 @@ installments: App.Payments.Data.PaymentInstallmentData[],
 namespace Enums {
 export type CancellationKind = 'correction' | 'void';
 export type OverdueReason = 'due_date_passed' | 'payment_failed';
-export type PaymentInstallmentStatus = 'scheduled' | 'paid' | 'invoiced' | 'cancelled';
+export type PaymentInstallmentStatus = 'scheduled' | 'paid' | 'invoiced' | 'cancelled' | 'partial';
 export type SettledVia = 'stripe' | 'transfer' | 'manual';
 }
 }
@@ -913,6 +923,11 @@ vatMode: string,
 vatRate: number,
 vatNote: string | null,
 vatAmount: number,
+vatLines: {
+rate: number,
+net: number,
+vat: number,
+}[],
 intro: string | null,
 outro: string | null,
 items: App.Quotes.Data.QuoteItemData[],
@@ -950,6 +965,7 @@ discountType: string | null,
 discountValue: number | null,
 discountAmount: number,
 netTotal: number,
+vatRate: number | null,
 selectable: boolean,
 selected: boolean,
 outcome: string | null,

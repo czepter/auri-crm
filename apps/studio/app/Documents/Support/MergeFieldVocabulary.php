@@ -12,6 +12,12 @@ use Illuminate\Support\Arr;
  * DocumentMergeDataBuilder::fromProject()'s array shape in sync: a path
  * here with nothing on that side resolves to an empty string forever, and a
  * path on that side with nothing here is undocumented.
+ *
+ * One exception, #412's `invoice.vatLines`: a list, not a string, because
+ * § 14 Abs. 4 Nr. 7 UStG wants a row per tax rate and a template body cannot
+ * loop. It is read by App\Payments\Support\InvoiceDocument and never by a
+ * `{{ }}` placeholder, so it stays out of the map below — see
+ * docs/documents.md.
  */
 class MergeFieldVocabulary
 {
@@ -80,6 +86,22 @@ class MergeFieldVocabulary
         'invoice.vatNote' => 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.',
         'invoice.dueOn' => '29.08.2026',
         'invoice.paymentTerm' => 'Zahlbar bis 29.08.2026 ohne Abzug.',
+        // #409: the same figures with the sign reversed, plus the reference
+        // § 31 Abs. 5 UStDV asks for — a Gutschrift must point "spezifisch
+        // und eindeutig" at the invoice it corrects. No dueOn and no
+        // paymentTerm: nothing is owed on a credit note, it is paid out.
+        'creditNote.number' => 'GS-2026-3',
+        'creditNote.date' => '20.08.2026',
+        'creditNote.servicePeriod' => '14.06.2026',
+        'creditNote.description' => 'Hochzeitsreportage — 1. Rate',
+        'creditNote.reason' => 'Zweite Kamera nicht erbracht',
+        'creditNote.net' => '420,17 €',
+        'creditNote.vatRate' => '19 %',
+        'creditNote.vat' => '79,83 €',
+        'creditNote.gross' => '500,00 €',
+        'creditNote.vatNote' => 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.',
+        'creditNote.invoiceNumber' => 'RE-2026-17',
+        'creditNote.invoiceDate' => '15.08.2026',
     ];
 
     /** @return list<string> Every documented dot-path, e.g. "project.name". */

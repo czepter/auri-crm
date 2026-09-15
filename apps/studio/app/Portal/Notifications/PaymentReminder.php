@@ -40,9 +40,11 @@ class PaymentReminder extends Notification
         $message = (new MailMessage)
             ->subject("Offene Rate zu {$project->name}")
             ->greeting('Hallo,')
+            // #414: der offene Rest, nicht der Ratenbetrag — eine angezahlte
+            // Rate wird sonst über einen Betrag angemahnt, der schon kleiner ist.
             ->line(sprintf(
                 'Die Rate über %s war am %s fällig.',
-                Number::currency($this->installment->amount / 100, in: 'EUR', locale: 'de'),
+                Number::currency($this->installment->remaining() / 100, in: 'EUR', locale: 'de'),
                 $this->installment->due_on->format('d.m.Y'),
             ))
             // The portal is where "Jetzt zahlen" lives when Stripe is on, and

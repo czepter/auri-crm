@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import type { PricingMode, QuoteDraft, QuoteRow, VatSettings } from './quotePayload'
 import { quoteRowToLine } from './quotePayload'
-import { applyDiscount, span, subtotal, vatAmount } from './quoteTotals'
+import { applyDiscount, lineAmount, span, subtotal, vatLines } from './quoteTotals'
 import { basisPointsToPercent, eurosToCents, formatEuros, parseDiscount } from '@/admin/lib/money'
 import { moveRow } from '@/admin/lib/rows'
 import QuoteInsertRow from '@/admin/components/QuoteInsertRow.vue'
@@ -176,7 +176,16 @@ const total = computed(() =>
 // Q-04 friert das erst beim Versenden ein (Quote::computeVat()) — bis dahin
 // zeigt der Builder dieselbe Live-Rechnung aus den aktuellen
 // Studio-Einstellungen, die die Portal-Vorschau daneben auch zeigt.
-const vat = computed(() => vatAmount(total.value, props.vatSettings.rate))
+// #412: eine Zeile je Steuersatz. Bei einem Satz ist das die eine Zeile,
+// die hier immer stand.
+const vatRows = computed(() =>
+  vatLines(
+    chargedRows.value.map((row) => ({ netTotal: lineAmount(quoteRowToLine(row)), vatRate: row.vatRate })),
+    props.vatSettings.rate,
+    total.value,
+  ),
+)
+const vat = computed(() => vatRows.value.reduce((sum, line) => sum + line.vat, 0))
 </script>
 
 <template>
@@ -224,6 +233,7 @@ const vat = computed(() => vatAmount(total.value, props.vatSettings.rate))
         :quote-id="quoteId"
         :can-manage-catalog="canManageCatalog"
         :row="entry.row"
+        :vat-mode="vatSettings.mode"
         :open="isOpen(entry.index)"
         @update:open="(value) => setOpen(entry.index, value)"
         @change="emit('change')"
@@ -257,9 +267,9 @@ const vat = computed(() => vatAmount(total.value, props.vatSettings.rate))
       </div>
 
       <template v-if="vatSettings.mode === 'standard'">
-        <div class="flex justify-between text-[12.5px] text-ink-2">
-          <span>{{ $t('quotes.vat', { rate: basisPointsToPercent(vatSettings.rate) }) }}</span>
-          <span class="tabular-nums">{{ formatEuros(vat) }}</span>
+        <div v-for="line in vatRows" :key="line.rate" class="flex justify-between text-[12.5px] text-ink-2">
+          <span>{{ $t('quotes.vat', { rate: basisPointsToPercent(line.rate) }) }}</span>
+          <span class="tabular-nums">{{ formatEuros(line.vat) }}</span>
         </div>
         <div class="flex justify-between border-t border-rule pt-1.5 text-[15px] font-semibold">
           <span>{{ $t('quotes.total') }}</span>

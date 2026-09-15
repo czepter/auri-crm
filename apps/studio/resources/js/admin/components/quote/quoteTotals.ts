@@ -56,3 +56,43 @@ export function vatAmount(net: number, rateBasisPoints: number): number {
 
   return Math.max(0, Math.min(amount, net))
 }
+
+/**
+ * Mirrors App\Quotes\Support\VatLines::fromItems() — the quote-level discount
+ * shared over the rates pro rata, the leftover cent onto the largest line, so
+ * the live preview prints the same per-rate rows the PDF does.
+ */
+export function vatLines(
+  rows: { netTotal: number; vatRate: number | null }[],
+  defaultRate: number,
+  net: number,
+): { rate: number; net: number; vat: number }[] {
+  const bases = new Map<number, number>()
+
+  for (const row of rows) {
+    if (row.netTotal === 0) {
+      continue
+    }
+
+    const rate = row.vatRate ?? defaultRate
+    bases.set(rate, (bases.get(rate) ?? 0) + row.netTotal)
+  }
+
+  if (bases.size === 0) {
+    return [{ rate: defaultRate, net, vat: vatAmount(net, defaultRate) }]
+  }
+
+  const ordered = [...bases.entries()].sort((a, b) => b[1] - a[1])
+  const subtotal = ordered.reduce((sum, [, base]) => sum + base, 0)
+
+  const lines = ordered.map(([rate, base]) => {
+    const share = subtotal === 0 ? 0 : Math.floor((net * base) / subtotal)
+
+    return { rate, net: share, vat: 0 }
+  })
+
+  const spent = lines.reduce((sum, line) => sum + line.net, 0)
+  lines[0].net += net - spent
+
+  return lines.map((line) => ({ ...line, vat: vatAmount(line.net, line.rate) }))
+}

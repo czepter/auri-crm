@@ -56,7 +56,7 @@ function choose(kind: string, id: string) {
     emit('insert', item ? [itemRow(item)] : [])
     if (item) remember(kind, id)
   } else {
-    emit('insert', [{ title: term.value.trim(), description: '', quantity: 1, unitPrice: '', discount: '', selectable: false, selected: false, outcome: '', hasImage: false }])
+    emit('insert', [{ title: term.value.trim(), description: '', quantity: 1, unitPrice: '', discount: '', vatRate: null, selectable: false, selected: false, outcome: '', hasImage: false }])
   }
 
   term.value = ''
