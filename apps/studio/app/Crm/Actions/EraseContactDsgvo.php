@@ -14,8 +14,11 @@ use App\Crm\Models\Task;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Engagement\Models\ThreadParticipant;
+use App\Gallery\Models\AssetComment;
+use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryPrereleaseSignup;
+use App\Gallery\Models\GalleryView;
 use App\Media\Models\Asset;
 use App\Models\User;
 use App\Notifications\Models\InAppNotification;
@@ -50,7 +53,7 @@ class EraseContactDsgvo
                 $sharedWithSomeoneElse = $project->contacts()->whereKeyNot($contact->id)->exists();
 
                 if ($sharedWithSomeoneElse) {
-                    $this->detachFromSharedProject($project, $contact);
+                    $project->contacts()->detach($contact->id);
 
                     continue;
                 }
@@ -58,6 +61,11 @@ class EraseContactDsgvo
                 $this->purgeSoleContactProject($project);
             }
 
+            Message::where('contact_id', $contact->id)->delete();
+            ThreadParticipant::where('contact_id', $contact->id)->delete();
+            AssetComment::where('contact_id', $contact->id)->delete();
+            AssetFavorite::where('contact_id', $contact->id)->delete();
+            GalleryView::where('contact_id', $contact->id)->delete();
             ClientAccess::where('contact_id', $contact->id)->delete();
 
             // Der Satz, den jemand über diese Person geschrieben hat, ist
@@ -69,8 +77,8 @@ class EraseContactDsgvo
             // can still find it. Global rather than scoped to the projects
             // above: purgeSoleContactProject's Gallery::delete() already
             // cascades this away for a sole-contact project, but a shared
-            // project's gallery is never dropped (detachFromSharedProject
-            // only strips this contact's own fingerprints), and a contact
+            // project's gallery is never dropped (erasure only detaches
+            // this contact from it), and a contact
             // may have signed up for a gallery's pre-release that belongs
             // to no project of theirs at all.
             if ($contact->email !== null) {
@@ -84,6 +92,10 @@ class EraseContactDsgvo
                 'name' => '[gelöscht]',
                 'email' => null,
                 'phone' => null,
+                'street' => null,
+                'postcode' => null,
+                'city' => null,
+                'portal_overrides' => null,
                 'portal_access_revoked_at' => $contact->portal_access_revoked_at ?? now(),
                 'dsgvo_erased_at' => now(),
             ])->save();
@@ -98,16 +110,6 @@ class EraseContactDsgvo
                 subject: $contact->public_id,
             );
         });
-    }
-
-    /** Strips only this contact's own fingerprints; the project and its shared content stay for whoever else is on it. */
-    private function detachFromSharedProject(Project $project, Contact $contact): void
-    {
-        $threadIds = $project->threads()->pluck('id');
-
-        Message::whereIn('thread_id', $threadIds)->where('contact_id', $contact->id)->delete();
-        ThreadParticipant::whereIn('thread_id', $threadIds)->where('contact_id', $contact->id)->delete();
-        $project->contacts()->detach($contact->id);
     }
 
     /**
