@@ -63,7 +63,25 @@ class QuoteSent extends Notification
             $message->greeting('Hallo,');
         }
 
-        $message->line('Gesamtbetrag: '.Number::currency($this->quote->net / 100, in: 'EUR', locale: 'de'));
+        // The same figure QuoteWorkspace's own summaryRows shows: Rabatt only
+        // when there is one, USt. only for a regelbesteuertes Studio — a
+        // Kleinunternehmer's net already is the amount due.
+        if ($this->quote->discount_amount > 0) {
+            $message
+                ->line('Zwischensumme: '.Number::currency($this->quote->total / 100, in: 'EUR', locale: 'de'))
+                ->line('Rabatt: −'.Number::currency($this->quote->discount_amount / 100, in: 'EUR', locale: 'de'));
+        }
+
+        if ($this->quote->vat_mode === 'standard') {
+            $rate = rtrim(rtrim(number_format($this->quote->vat_rate / 100, 2, ',', '.'), '0'), ',');
+
+            $message
+                ->line('Netto: '.Number::currency($this->quote->net / 100, in: 'EUR', locale: 'de'))
+                ->line("USt. {$rate} %: ".Number::currency(($this->quote->vat_amount ?? 0) / 100, in: 'EUR', locale: 'de'))
+                ->line('Gesamtbetrag: '.Number::currency(($this->quote->net + ($this->quote->vat_amount ?? 0)) / 100, in: 'EUR', locale: 'de'));
+        } else {
+            $message->line('Gesamtbetrag: '.Number::currency($this->quote->net / 100, in: 'EUR', locale: 'de'));
+        }
 
         if ($this->quote->valid_until !== null) {
             $message->line("Das Angebot ist gültig bis {$this->quote->valid_until->format('d.m.Y')}.");
