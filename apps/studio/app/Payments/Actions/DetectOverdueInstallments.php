@@ -60,7 +60,7 @@ class DetectOverdueInstallments
         // today (see PaymentPlan), which makes the clause inert rather than
         // wrong — and closes the trap before invoicing sets it.
         $installments = PaymentInstallment::query()
-            ->whereIn('status', [PaymentInstallmentStatus::Scheduled, PaymentInstallmentStatus::Invoiced])
+            ->whereIn('status', PaymentInstallmentStatus::open())
             ->whereNull('overdue_notified_at')
             ->whereDate('due_on', '<', now('UTC')->toDateString())
             ->get();
@@ -178,9 +178,7 @@ class DetectOverdueInstallments
         PaymentInstallment $installment,
         OverdueReason $reason = OverdueReason::DueDatePassed,
     ): void {
-        $open = [PaymentInstallmentStatus::Scheduled, PaymentInstallmentStatus::Invoiced];
-
-        if (! in_array($installment->status, $open, true) || $installment->overdue_notified_at !== null) {
+        if (! in_array($installment->status, PaymentInstallmentStatus::open(), true) || $installment->overdue_notified_at !== null) {
             return;
         }
 

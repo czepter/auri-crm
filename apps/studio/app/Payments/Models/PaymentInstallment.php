@@ -36,14 +36,14 @@ class PaymentInstallment extends Model
 
     protected $fillable = [
         'payment_plan_id', 'amount', 'due_on', 'status', 'sort_order', 'title',
-        'settled_via', 'paid_on', 'payment_reference', 'overdue_notified_at',
+        'settled_via', 'paid_on', 'payment_reference', 'paid_amount', 'overdue_notified_at',
         'overdue_reason', 'overdue_reminders_sent', 'client_reminders_sent',
         'stripe_checkout_session_id',
         'invoice_number', 'invoiced_at', 'invoice_path', 'invoice_template_id',
         'cancelled_at', 'cancellation_kind', 'cancellation_reason',
     ];
 
-    protected $attributes = ['status' => PaymentInstallmentStatus::Scheduled, 'sort_order' => 0];
+    protected $attributes = ['status' => PaymentInstallmentStatus::Scheduled, 'sort_order' => 0, 'paid_amount' => 0];
 
     protected function casts(): array
     {
@@ -124,8 +124,14 @@ class PaymentInstallment extends Model
      */
     public function scopeOverdue(Builder $query): void
     {
-        $query->whereIn('status', [PaymentInstallmentStatus::Scheduled, PaymentInstallmentStatus::Invoiced])
+        $query->whereIn('status', PaymentInstallmentStatus::open())
             ->whereNotNull('overdue_notified_at');
+    }
+
+    /** #414: what is still owed — what a reminder names and what Stripe charges. */
+    public function remaining(): int
+    {
+        return max(0, (int) $this->amount - (int) $this->paid_amount);
     }
 
     /** M-06: issued means stamped with a number, whatever the render has done since. */
