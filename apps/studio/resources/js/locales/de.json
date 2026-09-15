@@ -466,6 +466,8 @@
     "waiting": "seit 1 Tag | seit {count} Tagen",
     "reply": "Antwort",
     "send": "Senden",
+    "draftsTitle": "Entwürfe",
+    "discard": "Verwerfen",
     "done": "Erledigt",
     "reopen": "Wieder öffnen",
     "people": "Beteiligte",
