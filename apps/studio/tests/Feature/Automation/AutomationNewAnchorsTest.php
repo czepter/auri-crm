@@ -5,9 +5,11 @@ use App\Automation\Enums\AutomationAnchor;
 use App\Automation\Enums\AutomationOffsetDirection;
 use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Models\AutomationRule;
+use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Job;
+use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
@@ -15,6 +17,8 @@ use App\Gallery\Models\Gallery;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
+use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Models\Quote;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -81,6 +85,32 @@ it('counts from the day the primary shoot was delivered', function () use ($toda
 
     AutomationRule::factory()
         ->dateOffset(AutomationAnchor::Delivered, 14, AutomationOffsetDirection::After)
+        ->create(['recipient_type' => AutomationRecipient::Studio]);
+
+    expect(sweep($today()))->toBe(1);
+});
+
+it('counts from the day a still unanswered quote went out', function () use ($today) {
+    staffMember();
+
+    Quote::factory()->create(['status' => QuoteStatus::Sent, 'sent_at' => $today()->subDays(7)]);
+    Quote::factory()->create(['status' => QuoteStatus::Accepted, 'sent_at' => $today()->subDays(7)]);
+
+    AutomationRule::factory()
+        ->dateOffset(AutomationAnchor::QuoteSent, 7, AutomationOffsetDirection::After)
+        ->create(['recipient_type' => AutomationRecipient::Studio]);
+
+    expect(sweep($today()))->toBe(1);
+});
+
+it('counts from the capture of an inquiry nobody has moved on', function () use ($today) {
+    staffMember();
+
+    Lead::factory()->atStage(LeadStage::New)->create(['captured_at' => $today()->subDays(2)]);
+    Lead::factory()->atStage(LeadStage::Contacted)->create(['captured_at' => $today()->subDays(2)]);
+
+    AutomationRule::factory()
+        ->dateOffset(AutomationAnchor::InquiryCaptured, 2, AutomationOffsetDirection::After)
         ->create(['recipient_type' => AutomationRecipient::Studio]);
 
     expect(sweep($today()))->toBe(1);

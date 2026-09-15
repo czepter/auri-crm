@@ -8,6 +8,7 @@ use App\Automation\Models\AutomationRule;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Enums\TaskAudience;
+use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Crm\Support\CrmVocabulary;
@@ -123,6 +124,26 @@ class SweepDateOffsetAutomationRules
                 ->with('project')
                 ->get()
                 ->map(fn (Shoot $shoot) => $shoot->project);
+        }
+
+        if ($rule->anchor === AutomationAnchor::QuoteSent) {
+            return Quote::query()
+                ->where('status', QuoteStatus::Sent)
+                ->whereDate('sent_at', $day)
+                ->with('project')
+                ->get()
+                ->map(fn (Quote $quote) => $quote->project);
+        }
+
+        if ($rule->anchor === AutomationAnchor::InquiryCaptured) {
+            return Lead::query()
+                ->open()
+                ->unbooked()
+                ->where('stage', $this->stages->anchored(StagePipeline::Lead, StageAnchor::Entry)?->key)
+                ->whereDate('captured_at', $day)
+                ->with('project')
+                ->get()
+                ->map(fn (Lead $lead) => $lead->project);
         }
 
         if ($rule->anchor === AutomationAnchor::QuoteValidity) {
