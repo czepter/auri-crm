@@ -39,7 +39,7 @@ class InstallmentOverdue extends StudioEventNotification
             ->map(fn (PaymentInstallment $installment) => sprintf(
                 '%s — %s, fällig am %s (%s)',
                 $installment->plan->job->project->name,
-                number_format($installment->amount / 100, 2, ',', '.').' €',
+                number_format($installment->remaining() / 100, 2, ',', '.').' €',
                 $installment->due_on->format('d.m.Y'),
                 $installment->overdue_reason?->label() ?? 'Frist überschritten',
             ))

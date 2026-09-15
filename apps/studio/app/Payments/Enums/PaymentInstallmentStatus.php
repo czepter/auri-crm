@@ -23,6 +23,7 @@ enum PaymentInstallmentStatus: string
     case Scheduled = 'scheduled';
     case Paid = 'paid';
     case Invoiced = 'invoiced';
+    case Partial = 'partial';
 
     public function label(): string
     {
@@ -30,6 +31,19 @@ enum PaymentInstallmentStatus: string
             self::Scheduled => 'Geplant',
             self::Paid => 'Bezahlt',
             self::Invoiced => 'Gestellt',
+            self::Partial => 'Teilzahlung',
         };
+    }
+
+    /**
+     * #414: still owed something. The overdue scan, its reminder ladder and
+     * the Stripe checkout all read this rather than listing the cases again —
+     * `partial` was the third case that had to be added to every one of them.
+     *
+     * @return list<self>
+     */
+    public static function open(): array
+    {
+        return [self::Scheduled, self::Invoiced, self::Partial];
     }
 }

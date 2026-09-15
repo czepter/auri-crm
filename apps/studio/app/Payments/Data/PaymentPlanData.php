@@ -2,7 +2,6 @@
 
 namespace App\Payments\Data;
 
-use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use Spatie\LaravelData\Data;
@@ -45,9 +44,9 @@ class PaymentPlanData extends Data
             ))
             ->all();
 
-        $openTotal = $plan->total - $installments
-            ->where('status', PaymentInstallmentStatus::Paid)
-            ->sum('amount');
+        // #414: what has arrived, not which rows are done — a part payment
+        // reduces what is open by exactly what was booked.
+        $openTotal = $plan->total - $installments->sum('paid_amount');
 
         return new self(
             id: $plan->public_id,

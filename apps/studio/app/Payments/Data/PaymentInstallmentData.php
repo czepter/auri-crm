@@ -31,6 +31,12 @@ class PaymentInstallmentData extends Data
         public ?string $settledViaLabel,
         public ?string $paidOn,
         public ?string $paymentReference,
+        // #414: what has arrived and what is still owed. `remaining` is sent
+        // resolved because both the admin dialog's prefill and the portal's
+        // pay button charge exactly it, and two subtractions is two chances
+        // to disagree with what Stripe is handed.
+        public int $paidAmount,
+        public int $remaining,
         // Derived, not stored: the same "still scheduled, due date passed"
         // condition App\Payments\Actions\DetectOverdueInstallments queries
         // for its own scan, minus that action's overdue_notified_at guard —
@@ -68,6 +74,8 @@ class PaymentInstallmentData extends Data
             settledViaLabel: $installment->settled_via?->label(),
             paidOn: $installment->paid_on?->format('Y-m-d'),
             paymentReference: $installment->payment_reference,
+            paidAmount: (int) $installment->paid_amount,
+            remaining: $installment->remaining(),
             isLate: $installment->status === PaymentInstallmentStatus::Scheduled
                 && $installment->due_on->lt(now('UTC')->startOfDay()),
             invoiceNumber: $installment->invoice_number,

@@ -30,6 +30,7 @@ class PaymentInstallmentController extends Controller
             'paid_on' => ['required', 'date'],
             'method' => ['required', Rule::enum(SettledVia::class)],
             'reference' => ['nullable', 'string', 'max:255'],
+            'amount' => ['nullable', 'integer', 'min:1'],
         ]);
 
         $markPaid(
@@ -38,6 +39,7 @@ class PaymentInstallmentController extends Controller
             $validated['paid_on'],
             $validated['reference'] ?? null,
             auth('staff')->user(),
+            $validated['amount'] ?? null,
         );
 
         return back();

@@ -12,6 +12,7 @@ import { Button } from '@/ui/button'
 type Installment = {
   id: string
   amount: number
+  remaining: number
   dueOn: string
   status: string
   statusLabel: string
@@ -130,7 +131,11 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
                     :disabled="payingId === installment.id"
                     @click="payNow(installment.id)"
                   >
-                    {{ $t('portal.payNowButton') }}
+                    <!-- #414: der Knopf nennt, was er abbucht — nach einer
+                         Teilzahlung ist das der Rest und nicht die Rate. -->
+                    {{ installment.remaining === installment.amount
+                      ? $t('portal.payNowButton')
+                      : $t('portal.payNowRemaining', { amount: formatEuros(installment.remaining) }) }}
                   </Button>
                 </span>
               </template>

@@ -15,6 +15,7 @@ import { DatePicker } from '@/ui/date-picker'
 import { Label } from '@/ui/label'
 import { useI18n } from 'vue-i18n'
 import QuoteActions from '@/admin/components/quote/QuoteActions.vue'
+import InstallmentPaidDialog from '@/admin/components/InstallmentPaidDialog.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -269,12 +270,17 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
     <div
       v-for="installment in paymentPlan?.installments ?? []"
       :key="installment.id"
-      class="flex gap-3 py-[9px] text-[13px]"
+      class="flex items-center gap-3 py-[9px] text-[13px]"
     >
       <span class="w-[110px] flex-none text-ink-2">{{ dayWithWeekday(installment.dueOn) }}</span>
       <span class="flex-1">{{ installment.label }}</span>
       <span class="text-[12px] text-ink-2">{{ installment.statusLabel }}</span>
       <span class="w-[110px] flex-none text-right font-semibold tabular-nums">{{ formatEuros(installment.amount) }}</span>
+      <InstallmentPaidDialog
+        v-if="canManagePaymentPlan && installment.remaining > 0"
+        :installment-id="installment.id"
+        :remaining="installment.remaining"
+      />
     </div>
 
     <form v-if="!paymentPlan && canManagePaymentPlan" class="mt-2 grid grid-cols-2 gap-x-5 gap-y-4" @submit.prevent="createPlan">

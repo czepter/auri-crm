@@ -868,6 +868,8 @@ settledVia: string | null,
 settledViaLabel: string | null,
 paidOn: string | null,
 paymentReference: string | null,
+paidAmount: number,
+remaining: number,
 isLate: boolean,
 invoiceNumber: string | null,
 invoicedOn: string | null,
@@ -884,7 +886,7 @@ installments: App.Payments.Data.PaymentInstallmentData[],
 }
 namespace Enums {
 export type OverdueReason = 'due_date_passed' | 'payment_failed';
-export type PaymentInstallmentStatus = 'scheduled' | 'paid' | 'invoiced';
+export type PaymentInstallmentStatus = 'scheduled' | 'paid' | 'invoiced' | 'partial';
 export type SettledVia = 'stripe' | 'transfer' | 'manual';
 }
 }

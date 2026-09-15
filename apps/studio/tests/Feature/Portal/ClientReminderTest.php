@@ -8,10 +8,12 @@ use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Task;
 use App\Payments\Actions\DetectOverdueInstallments;
+use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Portal\Notifications\PaymentReminder;
 use App\Portal\Notifications\TaskDue;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 
@@ -55,6 +57,26 @@ it('holds the payment reminder until the second rung', function () {
 
     Notification::assertSentTo($contact, PaymentReminder::class);
     expect($installment->fresh()->client_reminders_sent)->toBe(2);
+});
+
+// #414: eine angezahlte Rate wird über den Rest angemahnt, nicht über den
+// Ratenbetrag.
+it('names the remaining amount in the payment reminder', function () {
+    staffMember();
+
+    [$project, $contact] = projectWithClient();
+
+    $installment = PaymentInstallment::factory()->create([
+        'payment_plan_id' => planFor($project),
+        'amount' => 50000,
+        'paid_amount' => 20000,
+        'status' => PaymentInstallmentStatus::Partial,
+        'due_on' => now()->subDays(5)->toDateString(),
+    ]);
+
+    $mail = (new PaymentReminder($installment, app(StudioSettingsResolver::class)))->toMail($contact);
+
+    expect(implode(' ', array_map('strval', $mail->introLines)))->toContain('300,00');
 });
 
 it('says nothing to a client whose plan has reminders switched off', function () {
