@@ -122,6 +122,16 @@ pnpm build
 pnpm --filter @studio/app exec playwright test   # end-to-end, needs a built admin bundle
 ```
 
+`tests/e2e/visual.spec.ts` compares four screens against `-linux.png`
+baselines and runs on CI only. Renew them in a container that replays the CI
+e2e job, never from a Mac:
+
+```sh
+pnpm --filter @studio/app test:e2e:linux --project=visual --update-snapshots
+```
+
+The same command without the flags runs the whole suite as CI does.
+
 Two artifacts are generated, never hand-edited, and CI fails on drift:
 
 ```sh
