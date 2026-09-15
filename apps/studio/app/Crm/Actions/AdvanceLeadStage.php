@@ -4,12 +4,14 @@ namespace App\Crm\Actions;
 
 use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\StageAnchor;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Events\LeadLost;
 use App\Crm\Events\LeadStageChanged;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
 use App\Models\User;
+use App\Crm\Support\CrmVocabulary;
 use App\Crm\Support\StageHistory;
 use App\Support\AuditLogger;
 use Carbon\CarbonInterface;
@@ -30,7 +32,24 @@ class AdvanceLeadStage
         private readonly BookProject $book,
         private readonly UnbookProject $unbook,
         private readonly AdvanceShootStatus $shoots,
+        private readonly CrmVocabulary $stages,
     ) {}
+
+    /**
+     * The funnel following a quote on its own. Forward only and only for an
+     * open lead: a card staff already dragged further, or closed, stays where
+     * they put it. A project without a lead has no funnel to move.
+     */
+    public function reach(?Lead $lead, StageAnchor $anchor, ?User $actor = null, ?CarbonInterface $at = null): void
+    {
+        $next = $this->stages->anchored(StagePipeline::Lead, $anchor);
+
+        if ($lead === null || $next === null || $lead->isLost() || $next->sort_order <= $lead->stage->sort_order) {
+            return;
+        }
+
+        $this($lead, $next, $actor, $at);
+    }
 
     /**
      * $enteredAt backdates the move — an inquiry worked by phone last week and
