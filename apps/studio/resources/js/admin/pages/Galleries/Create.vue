@@ -23,7 +23,6 @@ const props = defineProps<{
     lists: boolean
     comments: boolean
     expiryDays: number | null
-    requiresSettledBalance: boolean
     design: Record<string, string>
   }
 }>()
@@ -44,7 +43,6 @@ const form = useForm({
   is_external: false,
   external_url: '',
   expires_at: '' as string,
-  requires_settled_balance: props.studioDefaults.requiresSettledBalance,
   downloads_enabled: props.studioDefaults.downloads,
   lists_enabled: props.studioDefaults.lists,
   comments_enabled: props.studioDefaults.comments,
@@ -57,8 +55,6 @@ watch([preset, project], () => {
   form.downloads_enabled = born.downloads
   form.lists_enabled = born.lists
   form.comments_enabled = born.comments
-  form.requires_settled_balance =
-    preset.value?.requiresSettledBalance ?? props.studioDefaults.requiresSettledBalance
   form.design = preset.value?.design ?? { ...props.studioDefaults.design }
   form.expires_at = expiryOn(preset.value, props.studioDefaults, new Date())
 }, { immediate: true })
@@ -76,7 +72,6 @@ function submit() {
         ? {
             expires_at: '',
             design: null,
-            requires_settled_balance: false,
             downloads_enabled: true,
             lists_enabled: true,
             comments_enabled: true,
@@ -133,11 +128,6 @@ function submit() {
               <div class="flex flex-col gap-1.5">
                 <Label for="gallery-expiry">{{ $t('galleries.expiryField') }}</Label>
                 <Input id="gallery-expiry" v-model="form.expires_at" type="date" />
-              </div>
-
-              <div class="flex items-center gap-2.5">
-                <Checkbox id="cb-new-balance" v-model="form.requires_settled_balance" />
-                <Label variant="inline" for="cb-new-balance">{{ $t('gallerySettings.balanceLabel') }}</Label>
               </div>
 
               <div class="flex items-center gap-2.5">

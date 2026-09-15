@@ -260,7 +260,7 @@ Client-facing tasks render in the portal as a checklist — sign contract, compl
 
 ### 3.4 Media
 
-- `Gallery` — project-scoped with a nullable `shoot_id`; name, cover, access policy, `expires_at`, `requires_settled_balance`
+- `Gallery` — project-scoped with a nullable `shoot_id`; name, cover, access policy, `expires_at`
 - `GalleryVersion` — immutable published set
 - `Asset` — **shoot-scoped**; original S3 key, checksum, EXIF, capture time, original filename
 - `AssetDerivative` — size variant, S3 key, dimensions, bytes
@@ -277,8 +277,6 @@ Galleries are versioned, never mutated. When a photographer re-uploads corrected
 What a separate gallery actually buys is separate access control and separate delivery timing: the engagement gallery ships in March with its own password, its own expiry, and its own audience, months before the wedding gallery exists. That is why the split lives on `Gallery` rather than being expressed only through sections.
 
 `Asset.shoot_id` is where the real association lives, because an import belongs to one shooting day. Composing a gallery is then a query over a shoot rather than manual sorting of 1500 files, and "every frame from the reception" stays answerable however the client chose to group their galleries.
-
-`requires_settled_balance` makes §7's payment gate per-gallery. Blocking the engagement gallery in March because the wedding balance is outstanding would be absurd; blocking the final wedding gallery is the point.
 
 ### 3.5 Access
 
@@ -470,9 +468,7 @@ No visual rule builder in v1. Rules are seeded from config and become editable o
 
 Each `PaymentInstallment` becomes a Stripe Invoice. Stripe owns the hosted payment page, card and SEPA handling, dunning email, VAT, and receipts — building EU tax handling and reminder logic in-house is months of work with tax-level consequences for getting it wrong.
 
-Webhooks (`invoice.paid`, `invoice.payment_failed`) reconcile back to the installment and emit `InstallmentPaid`, which completes the client task and optionally unlocks the gallery. Webhook handling is idempotent by Stripe event ID. Stripe, not the local record, is the source of truth for payment state.
-
-An optional gate blocks gallery download until the balance is settled. It is set per gallery via `Gallery.requires_settled_balance`, defaulting to off. Payment plans run against the `Job`, so a project-wide gate would hold back an engagement gallery in March over a balance not due until September.
+Webhooks (`invoice.paid`, `invoice.payment_failed`) reconcile back to the installment and emit `InstallmentPaid`, which completes the client task. Webhook handling is idempotent by Stripe event ID. Stripe, not the local record, is the source of truth for payment state.
 
 ### Contracts
 

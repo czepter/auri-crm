@@ -24,7 +24,6 @@ class GallerySettingsController extends Controller
 
         $validated = $request->validate([
             'gallery_default_expiry_days' => ['nullable', 'integer', 'min:1', 'max:3650'],
-            'gallery_default_requires_settled_balance' => ['required', 'boolean'],
             'gallery_default_downloads_enabled' => ['required', 'boolean'],
             'gallery_default_lists_enabled' => ['required', 'boolean'],
             'gallery_default_comments_enabled' => ['required', 'boolean'],

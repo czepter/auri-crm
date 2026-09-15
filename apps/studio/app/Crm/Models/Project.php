@@ -13,7 +13,6 @@ use App\Engagement\Models\Thread;
 use App\Enums\Capability;
 use App\Gallery\Models\Gallery;
 use App\Models\User;
-use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Quotes\Models\Quote;
 use BackedEnum;
 use Database\Factories\Crm\ProjectFactory;
@@ -285,24 +284,6 @@ class Project extends Model
     }
 
     /** Projects this person may see, for the reads that list many at once. */
-    /**
-     * Every instalment of this project's payment plan paid — false with no
-     * plan at all, because "nothing owed" and "nothing agreed" are not the
-     * same answer to a gallery asking whether it may hand the archive over.
-     */
-    public function balanceSettled(): bool
-    {
-        $plan = $this->job?->paymentPlan;
-
-        if ($plan === null) {
-            return false;
-        }
-
-        return ! $plan->installments()
-            ->where('status', '!=', PaymentInstallmentStatus::Paid)
-            ->exists();
-    }
-
     public function scopeVisibleTo(Builder $query, User $user): void
     {
         if ($user->role->allows(Capability::ViewAllProjects)) {
