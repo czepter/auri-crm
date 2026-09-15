@@ -5,6 +5,7 @@ import Page from '@/ui/page/Page.vue'
 import ProjectQueue from '@/admin/components/ProjectQueue.vue'
 import StageTrack from '@/admin/components/StageTrack.vue'
 import RailHistory from '@/admin/components/RailHistory.vue'
+import SettlePlanDialog from '@/admin/components/SettlePlanDialog.vue'
 import Rail from '@/ui/page/Rail.vue'
 import RailItem from '@/ui/page/RailItem.vue'
 import RailSection from '@/ui/page/RailSection.vue'
@@ -103,6 +104,12 @@ function destroy() {
               <Checkbox id="cb-plan-reminders" :model-value="header.paymentPlan.clientRemindersEnabled" @update:model-value="toggleReminders" />
               <Label variant="inline" for="cb-plan-reminders">{{ $t('payments.clientReminders') }}</Label>
             </div>
+
+            <SettlePlanDialog
+              v-if="header.canManagePaymentPlan && header.primaryShootCancelled && !header.paymentPlan.settledOn"
+              class="mt-2"
+              :plan="header.paymentPlan"
+            />
           </RailSection>
 
           <RailSection v-if="header.galleries.length" :title="$t('contacts.galleries')">

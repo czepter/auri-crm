@@ -3,6 +3,7 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\Cache;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -30,5 +31,6 @@ abstract class TestCase extends BaseTestCase
         // gives each test its own, which is what the per-test flush was
         // reaching for anyway.
         config(['cache.stores.redis' => ['driver' => 'array', 'serialize' => false]]);
+        Cache::forgetDriver('redis');
     }
 }

@@ -222,12 +222,24 @@ Route::middleware('portal.maintenance')->group(function () {
             ->middleware('portal.capability:payment_status')
             ->name('portal.payments.checkout');
 
+        // #419. The invoice as a page, in the studio's own layout — the PDF
+        // below is the same document to keep rather than to read.
+        Route::get('/projekte/{project}/zahlungen/{installment}', [PaymentController::class, 'show'])
+            ->middleware('portal.capability:payment_status')
+            ->name('portal.payments.invoice-page');
+
         // M-06. The invoice itself, behind the same gate as the screen that
         // links to it — a client who may not see payment status may not
         // download the paperwork behind it either.
         Route::get('/projekte/{project}/zahlungen/{installment}/rechnung', [PaymentController::class, 'invoice'])
             ->middleware('portal.capability:payment_status')
             ->name('portal.payments.invoice');
+
+        // #409: the Gutschrift, behind the same gate as the invoice it
+        // corrects.
+        Route::get('/projekte/{project}/zahlungen/{installment}/gutschrift/{creditNote}', [PaymentController::class, 'creditNote'])
+            ->middleware('portal.capability:payment_status')
+            ->name('portal.payments.credit-note');
     });
 });
 

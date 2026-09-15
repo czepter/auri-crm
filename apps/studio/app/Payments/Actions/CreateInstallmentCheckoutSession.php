@@ -26,9 +26,9 @@ use Stripe\StripeClient;
  *
  * Idempotent twice over. The installment's own stripe_checkout_session_id
  * column is what a repeat click actually reuses — checked first, before any
- * Stripe call. Stripe's own idempotency key (the installment's public_id,
- * the same "one identifier reused as the key" shape the rest of Payments
- * already leans on) only guards the narrower case of two requests racing
+ * Stripe call. Stripe's own idempotency key (the installment's public_id and
+ * the payable, which #414's part payments move under it) only guards the
+ * narrower case of two requests racing
  * before that column is written; unlike the column, it expires after 24
  * hours on Stripe's side, so it is a second line of defence, not the first.
  */
@@ -39,11 +39,15 @@ class CreateInstallmentCheckoutSession
     public function __invoke(PaymentInstallment $installment, string $successUrl, string $cancelUrl): string
     {
         $client = new StripeClient($this->settings->activeStripeSecretKey());
+        $payable = $installment->remaining();
 
         if ($installment->stripe_checkout_session_id !== null) {
             $existing = $client->checkout->sessions->retrieve($installment->stripe_checkout_session_id);
 
-            if ($existing->status === 'open') {
+            // #414: a part payment booked since that session was opened moved
+            // the payable, and a session's amount cannot be edited. Reusing it
+            // would charge the old figure.
+            if ($existing->status === 'open' && $existing->amount_total === $payable) {
                 return $existing->url;
             }
 
@@ -59,7 +63,7 @@ class CreateInstallmentCheckoutSession
             'line_items' => [[
                 'price_data' => [
                     'currency' => 'eur',
-                    'unit_amount' => $installment->amount,
+                    'unit_amount' => $payable,
                     'product_data' => ['name' => $this->description($installment)],
                 ],
                 'quantity' => 1,
@@ -67,7 +71,7 @@ class CreateInstallmentCheckoutSession
             'success_url' => $successUrl,
             'cancel_url' => $cancelUrl,
         ], [
-            'idempotency_key' => $installment->public_id,
+            'idempotency_key' => "{$installment->public_id}:{$payable}",
         ]);
 
         $installment->update(['stripe_checkout_session_id' => $session->id]);

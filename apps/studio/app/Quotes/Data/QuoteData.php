@@ -4,6 +4,7 @@ namespace App\Quotes\Data;
 
 use App\Quotes\Models\Quote;
 use App\Quotes\Support\QuoteRange;
+use App\Quotes\Support\VatLines;
 use App\Settings\Support\StudioSettingsResolver;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -11,7 +12,10 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 #[TypeScript]
 class QuoteData extends Data
 {
-    /** @param list<QuoteItemData> $items */
+    /**
+     * @param  list<QuoteItemData>  $items
+     * @param  list<array{rate: int, net: int, vat: int}>  $vatLines
+     */
     public function __construct(
         public string $id,
         public ?string $predecessorId,
@@ -44,6 +48,10 @@ class QuoteData extends Data
         public int $vatRate,
         public ?string $vatNote,
         public int $vatAmount,
+        // #412: das Entgelt je Steuersatz (§ 14 Abs. 4 Nr. 7 UStG). Ein
+        // Angebot mit einem Satz hat genau einen Eintrag; leer bei
+        // Kleinunternehmerregelung, wo kein Satz auszuweisen ist.
+        public array $vatLines,
         // Anschreiben, roh mit Merge-Feldern — aufgelöst wird erst beim
         // Rendern (App\Quotes\Actions\RenderQuotePdf), damit der Schirm
         // bearbeitet, was gespeichert ist.
@@ -109,6 +117,9 @@ class QuoteData extends Data
             vatRate: $vat['vat_rate'],
             vatNote: $vat['vat_note'],
             vatAmount: $vat['vat_amount'],
+            vatLines: $vat['vat_mode'] === 'standard'
+                ? VatLines::fromItems($quote->items, (int) $vat['vat_rate'], $quote->net)
+                : [],
             intro: $quote->intro,
             outro: $quote->outro,
             items: $quote->items->map(QuoteItemData::fromModel(...))->all(),

@@ -85,6 +85,7 @@ describe('itemRow', () => {
       quantity: 1,
       unitPrice: '490.00',
       discount: '',
+      vatRate: null,
       selectable: false,
       selected: false,
       outcome: '',

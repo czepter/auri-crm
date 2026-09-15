@@ -43,6 +43,7 @@ class CreatePackageFromQuote
                 'description' => $item->description,
                 'quantity' => $item->quantity,
                 'unit_price' => $item->unit_price,
+                'vat_rate' => $item->vat_rate,
                 'sort_order' => $index,
             ])->all()
         );

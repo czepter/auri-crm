@@ -37,6 +37,10 @@ class SavePackage
             'items.*.description' => ['nullable', 'string', 'max:2000'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.unit_price' => ['nullable', 'integer', 'min:0'],
+            // #412: Basispunkte, leer = der Satz des Angebots, auf dem die
+            // Zeile landet. Das Paket bringt den Satz mit, statt ihn bei
+            // jedem Angebot neu zu verlangen.
+            'items.*.vat_rate' => ['nullable', 'integer', 'min:1', 'max:10000'],
             // Q-09/Q-10: the block half of a line. `id` is how a picture
             // survives the wholesale replace below — never the path itself:
             // a stored path accepted from a form is a read of any file on
@@ -79,6 +83,7 @@ class SavePackage
                 'description' => $item['description'] ?? null,
                 'quantity' => $item['quantity'],
                 'unit_price' => $item['unit_price'] ?? null,
+                'vat_rate' => $item['vat_rate'] ?? null,
                 'sort_order' => $index,
                 'selectable' => $item['selectable'] ?? false,
                 'selected' => $item['selected'] ?? false,

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3'
+import { Link, router } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
@@ -12,12 +12,14 @@ import { Button } from '@/ui/button'
 type Installment = {
   id: string
   amount: number
+  remaining: number
   dueOn: string
   status: string
   statusLabel: string
   label: string
   invoiceNumber: string | null
   hasInvoiceDocument: boolean
+  creditNotes: { id: string; number: string; amount: number; issuedOn: string; hasDocument: boolean }[]
 }
 
 type Plan = {
@@ -42,7 +44,11 @@ const props = defineProps<{
 // specific installment, never the plan as a whole. The click itself never
 // talks to Stripe; it posts to PaymentCheckoutController, which creates (or
 // reuses) the Checkout Session and sends the browser there.
-const openInstallments = computed(() => props.plan?.installments.filter((installment) => installment.status !== 'paid') ?? [])
+// #408: eine stornierte Rate ist weder offen noch bezahlt — sie bleibt
+// lesbar und fällt aus jedem Betrag und jedem Knopf heraus.
+const openInstallments = computed(
+  () => props.plan?.installments.filter((installment) => !['paid', 'cancelled'].includes(installment.status)) ?? [],
+)
 const payingId = ref<string | null>(null)
 
 // M-06: what a still-open installment should be transferred under. Only
@@ -105,32 +111,43 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
               v-for="installment in plan.installments"
               :key="installment.id"
               :title="installment.label"
-              :state="installment.status === 'paid' ? 'done' : 'open'"
-              :note="installment.status === 'paid'
+              :state="installment.status === 'paid' || installment.status === 'cancelled' ? 'done' : 'open'"
+              :note="installment.status === 'paid' || installment.status === 'cancelled'
                 ? installment.statusLabel
                 : $t('portal.dueOn', { date: longDate(installment.dueOn) })"
               :aside="formatEuros(installment.amount)"
-              :aside-open="installment.status !== 'paid'"
+              :aside-open="!['paid', 'cancelled'].includes(installment.status)"
             >
               <template #action>
                 <span class="flex flex-wrap items-center gap-4">
-                  <!-- M-06: only once the PDF exists. Between issue and render
-                       the number is the transfer reference below, but there is
-                       nothing to download yet. -->
-                  <a
-                    v-if="installment.hasInvoiceDocument"
+                  <!-- #419: auf die Seite, nicht aufs PDF. Erst ab der
+                       Nummer — vorher gibt es keine Rechnung zu zeigen. -->
+                  <Link
+                    v-if="installment.invoiceNumber !== null"
                     class="text-[13px] whitespace-nowrap text-muted-foreground hover:text-foreground"
-                    :href="`/projekte/${project.id}/zahlungen/${installment.id}/rechnung`"
+                    :href="`/projekte/${project.id}/zahlungen/${installment.id}`"
+                  >{{ $t('portal.invoiceDownload', { number: installment.invoiceNumber }) }}</Link>
+                  <!-- Eine Gutschrift setzt keine Rechnung voraus; ohne
+                       Rechnungsseite hängt ihr PDF direkt an der Rate. -->
+                  <a
+                    v-for="note in installment.invoiceNumber === null ? installment.creditNotes.filter((note) => note.hasDocument) : []"
+                    :key="note.id"
+                    class="text-[13px] whitespace-nowrap text-muted-foreground hover:text-foreground"
+                    :href="`/projekte/${project.id}/zahlungen/${installment.id}/gutschrift/${note.id}`"
                     target="_blank"
-                  >{{ $t('portal.invoiceDownload', { number: installment.invoiceNumber }) }}</a>
+                  >{{ $t('portal.creditNoteDownload', { number: note.number }) }}</a>
                   <Button
-                    v-if="stripeEnabled && installment.status !== 'paid'"
+                    v-if="stripeEnabled && !['paid', 'cancelled'].includes(installment.status)"
                     variant="portal-chip"
                     type="button"
                     :disabled="payingId === installment.id"
                     @click="payNow(installment.id)"
                   >
-                    {{ $t('portal.payNowButton') }}
+                    <!-- #414: der Knopf nennt, was er abbucht — nach einer
+                         Teilzahlung ist das der Rest und nicht die Rate. -->
+                    {{ installment.remaining === installment.amount
+                      ? $t('portal.payNowButton')
+                      : $t('portal.payNowRemaining', { amount: formatEuros(installment.remaining) }) }}
                   </Button>
                 </span>
               </template>

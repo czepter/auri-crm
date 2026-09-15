@@ -35,6 +35,15 @@ type Document = {
   settled: boolean
 }
 
+type Invoice = {
+  id: string
+  number: string
+  issuedOn: string | null
+  amount: number
+  status: string
+  settled: boolean
+}
+
 type Offers = {
   suggestion: { service: App.Catalog.Data.PortalServiceData; note: string | null; author: string | null } | null
   shelf: App.Catalog.Data.PortalServiceData[]
@@ -53,6 +62,7 @@ const props = defineProps<{
     shoots: Shoot[]
     gallery: { id: string; title: string | null; count: number; expiresAt: string | null; strip: string[] } | null
     documents: Document[]
+    invoices: Invoice[]
     questionnaires: { id: string; name: string; count: number; openCount: number }[]
     details: { date: string | null; callTime: string | null; venue: string | null; email: string | null; phone: string | null }
   }
@@ -261,6 +271,24 @@ function documentNote(document: Document) {
             }[documentNote(document)]"
             :aside="document.amount ? formatEuros(document.amount) : null"
             :aside-open="!document.settled"
+          />
+        </div>
+      </section>
+
+      <!-- #415: die eigene Kopie der Rechnungsfolge, eine Zeile je
+           ausgestellte Rate. -->
+      <section v-if="project.invoices.length" class="pt-12">
+        <div :class="BAND">
+          <PortalLabel class="mb-6">{{ $t('portal.invoicesTitle') }}</PortalLabel>
+          <PortalRow
+            v-for="invoice in project.invoices"
+            :key="invoice.id"
+            :href="`/projekte/${project.id}/zahlungen/${invoice.id}`"
+            :title="invoice.number"
+            :state="invoice.settled ? 'done' : 'open'"
+            :note="invoice.issuedOn ? `${invoice.status} · ${shortDate(invoice.issuedOn)}` : invoice.status"
+            :aside="formatEuros(invoice.amount)"
+            :aside-open="!invoice.settled"
           />
         </div>
       </section>

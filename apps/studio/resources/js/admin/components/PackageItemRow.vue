@@ -10,6 +10,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Label } from '@/ui/label'
 import DragHandle from '@/admin/components/quote/DragHandle.vue'
 import QuoteCard from '@/admin/components/quote/QuoteCard.vue'
+import VatRateSelect from '@/admin/components/VatRateSelect.vue'
 
 const props = defineProps<{ packageId?: string; row: PackageItemRow }>()
 
@@ -83,6 +84,15 @@ function upload(event: Event) {
             <InputGroupAddon align="inline-end">€</InputGroupAddon>
           </InputGroup>
         </div>
+      </div>
+
+      <div class="flex min-w-0 max-w-[200px] flex-col gap-1.5">
+        <Label>{{ $t('packages.itemVatRate') }}</Label>
+        <VatRateSelect
+          v-model="row.vatRate"
+          :placeholder="$t('packages.itemVatRateDefault')"
+          @update:model-value="emit('change')"
+        />
       </div>
 
       <ChoiceGroup

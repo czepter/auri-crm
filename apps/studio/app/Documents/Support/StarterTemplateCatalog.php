@@ -106,6 +106,7 @@ class StarterTemplateCatalog
             self::contractWerkvertrag(),
             self::invoiceStandard(),
             self::invoiceSmallBusiness(),
+            self::creditNote(),
             ...self::mails(),
         ];
     }
@@ -224,29 +225,12 @@ class StarterTemplateCatalog
             'key' => 'invoice-standard',
             'type' => DocumentTemplateType::Invoice->value,
             'name' => 'Rechnung',
-            'description' => 'Mit den Pflichtangaben nach § 14 UStG. Ausgangspunkt, keine Steuerberatung.',
+            'description' => 'Anschreiben zur Rechnung; Pflichtangaben und Summen liefert das Layout. Ausgangspunkt, keine Steuerberatung.',
             'shootKind' => null,
             'blocks' => ['blocks' => [
-                self::header('Rechnung {{ invoice.number }}'),
-                self::paragraph('{{ contact.name }}<br>{{ contact.street }}<br>{{ contact.postcode }} {{ contact.city }}'),
-                self::table([
-                    ['Rechnungsdatum', '{{ invoice.date }}'],
-                    ['Leistungszeitraum', '{{ invoice.servicePeriod }}'],
-                    ['Steuernummer', '{{ studio.taxNumber }}'],
-                    ['USt-IdNr.', '{{ studio.vatId }}'],
-                ]),
-                self::header('Leistung', 3),
-                self::paragraph('{{ invoice.description }}'),
-                self::table([
-                    ['Netto', '{{ invoice.net }}'],
-                    ['Umsatzsteuer {{ invoice.vatRate }}', '{{ invoice.vat }}'],
-                    ['Gesamtbetrag', '{{ invoice.gross }}'],
-                ], withHeadings: false),
-                self::header('Zahlung', 3),
-                self::paragraph('{{ invoice.paymentTerm }}'),
-                self::paragraph('Nach 30 Tagen ab Zugang und Fälligkeit tritt Verzug ein (§ 286 Abs. 3 BGB).'),
-                self::paragraph('{{ studio.bankHolder }}<br>IBAN {{ studio.bankIban }}<br>BIC {{ studio.bankBic }}'),
-                self::paragraph('Bitte geben Sie die Rechnungsnummer {{ invoice.number }} als Verwendungszweck an.'),
+                self::paragraph('Guten Tag {{ contact.name }},'),
+                self::paragraph('vielen Dank für den Auftrag. Die Aufstellung finden Sie unten.'),
+                self::paragraph('Steuernummer {{ studio.taxNumber }} · USt-IdNr. {{ studio.vatId }}'),
             ]],
         ];
     }
@@ -257,27 +241,31 @@ class StarterTemplateCatalog
             'key' => 'invoice-small-business',
             'type' => DocumentTemplateType::Invoice->value,
             'name' => 'Rechnung — Kleinunternehmer',
-            'description' => 'Ohne Umsatzsteuerausweis, mit dem Hinweis nach § 19 UStG. Ausgangspunkt, keine Steuerberatung.',
+            'description' => 'Anschreiben ohne Umsatzsteuerausweis; der §-19-Hinweis kommt aus dem Layout. Ausgangspunkt, keine Steuerberatung.',
             'shootKind' => null,
             'blocks' => ['blocks' => [
-                self::header('Rechnung {{ invoice.number }}'),
-                self::paragraph('{{ contact.name }}<br>{{ contact.street }}<br>{{ contact.postcode }} {{ contact.city }}'),
-                self::table([
-                    ['Rechnungsdatum', '{{ invoice.date }}'],
-                    ['Leistungszeitraum', '{{ invoice.servicePeriod }}'],
-                    ['Steuernummer', '{{ studio.taxNumber }}'],
-                ]),
-                self::header('Leistung', 3),
-                self::paragraph('{{ invoice.description }}'),
-                self::table([
-                    ['Gesamtbetrag', '{{ invoice.gross }}'],
-                ], withHeadings: false),
-                self::paragraph('{{ invoice.vatNote }}'),
-                self::header('Zahlung', 3),
-                self::paragraph('{{ invoice.paymentTerm }}'),
-                self::paragraph('Nach 30 Tagen ab Zugang und Fälligkeit tritt Verzug ein (§ 286 Abs. 3 BGB).'),
-                self::paragraph('{{ studio.bankHolder }}<br>IBAN {{ studio.bankIban }}<br>BIC {{ studio.bankBic }}'),
-                self::paragraph('Bitte geben Sie die Rechnungsnummer {{ invoice.number }} als Verwendungszweck an.'),
+                self::paragraph('Guten Tag {{ contact.name }},'),
+                self::paragraph('vielen Dank für den Auftrag. Die Aufstellung finden Sie unten.'),
+                self::paragraph('Steuernummer {{ studio.taxNumber }}'),
+            ]],
+        ];
+    }
+
+    // --- Gutschrift ------------------------------------------------------
+
+    private static function creditNote(): array
+    {
+        return [
+            'key' => 'credit-note',
+            'type' => DocumentTemplateType::CreditNote->value,
+            'name' => 'Gutschrift',
+            'description' => 'Anschreiben zur Gutschrift; Bezugszeile und Summen liefert das Layout. Ausgangspunkt, keine Steuerberatung.',
+            'shootKind' => null,
+            'blocks' => ['blocks' => [
+                self::paragraph('Guten Tag {{ contact.name }},'),
+                self::paragraph('Grund der Gutschrift: {{ creditNote.reason }}'),
+                self::paragraph('Steuernummer {{ studio.taxNumber }} · USt-IdNr. {{ studio.vatId }}'),
+                self::paragraph('Der Betrag wird auf das uns bekannte Konto erstattet.'),
             ]],
         ];
     }
@@ -325,6 +313,18 @@ class StarterTemplateCatalog
                     self::paragraph('Guten Tag {{ contact.name }},'),
                     self::paragraph('der Termin für {{ project.name }} ist fest eingetragen. Ich freue mich darauf.'),
                     self::paragraph('Vorher melde ich mich rechtzeitig zur Abstimmung.'),
+                ]],
+            ],
+            [
+                'key' => 'mail-invoice-sent',
+                'type' => DocumentTemplateType::Mail->value,
+                'name' => 'Rechnung verschickt',
+                'description' => 'Begleitmail zur Rechnung.',
+                'shootKind' => null,
+                'blocks' => ['blocks' => [
+                    self::paragraph('Guten Tag {{ contact.name }},'),
+                    self::paragraph('anbei die Rechnung {{ invoice.number }} über {{ invoice.gross }} für {{ project.name }}. Zahlbar bis {{ invoice.dueOn }}.'),
+                    self::paragraph('Melden Sie sich gern, wenn etwas offen ist.'),
                 ]],
             ],
             [

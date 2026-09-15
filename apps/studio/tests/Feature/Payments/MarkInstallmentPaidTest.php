@@ -71,6 +71,76 @@ it('leaves an audit row naming the method, date and reference', function () {
         ->and($row->context['reference'])->toBe('RE-2026-1');
 });
 
+// --- #414: Teilzahlung -----------------------------------------------------
+
+it('books a short payment as partial and leaves the remainder open', function () {
+    Event::fake([InstallmentPaid::class]);
+
+    $installment = PaymentInstallment::factory()->create(['amount' => 100000]);
+
+    $result = app(MarkInstallmentPaid::class)($installment, SettledVia::Transfer, '2026-09-01', 'RE-1', null, 40000);
+
+    expect($result->status)->toBe(PaymentInstallmentStatus::Partial)
+        ->and($result->paid_amount)->toBe(40000)
+        ->and($result->remaining())->toBe(60000);
+
+    // The deposit that books a project is the deposit, not part of it.
+    Event::assertNotDispatched(InstallmentPaid::class);
+});
+
+it('adds a second booking up and completes the installment', function () {
+    Event::fake([InstallmentPaid::class]);
+
+    $installment = PaymentInstallment::factory()->create(['amount' => 100000]);
+
+    $action = app(MarkInstallmentPaid::class);
+    $action($installment, SettledVia::Transfer, '2026-09-01', 'RE-1', null, 40000);
+    $result = $action($installment->fresh(), SettledVia::Transfer, '2026-09-08', 'RE-2', null, 60000);
+
+    expect($result->status)->toBe(PaymentInstallmentStatus::Paid)
+        ->and($result->paid_amount)->toBe(100000)
+        ->and($result->remaining())->toBe(0)
+        ->and($result->payment_reference)->toBe('RE-2');
+
+    Event::assertDispatchedTimes(InstallmentPaid::class, 1);
+});
+
+it('defaults the booked amount to what is still owed', function () {
+    $installment = PaymentInstallment::factory()->create(['amount' => 100000, 'paid_amount' => 25000]);
+
+    $result = app(MarkInstallmentPaid::class)($installment, SettledVia::Transfer, '2026-09-01', null);
+
+    expect($result->status)->toBe(PaymentInstallmentStatus::Paid)
+        ->and($result->paid_amount)->toBe(100000);
+});
+
+it('records the booked amount and what is left in the audit context', function () {
+    $actor = staffMember(StaffRole::Owner);
+    $installment = PaymentInstallment::factory()->create(['amount' => 100000]);
+
+    app(MarkInstallmentPaid::class)($installment, SettledVia::Transfer, '2026-09-01', null, $actor, 40000);
+
+    $row = AuditLog::where('event', 'payment_installment.paid')->where('subject', $installment->public_id)->sole();
+    expect($row->context['amount'])->toBe(40000)
+        ->and($row->context['remaining'])->toBe(60000);
+});
+
+it('books a partial payment through the admin screen', function () {
+    $plan = t07PaidPlan();
+    $installment = $plan->installments->sole();
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->post("/raten/{$installment->public_id}/bezahlt", [
+            'paid_on' => '2026-09-01',
+            'method' => 'transfer',
+            'amount' => 30000,
+        ])
+        ->assertRedirect();
+
+    expect($installment->fresh()->status)->toBe(PaymentInstallmentStatus::Partial)
+        ->and($installment->fresh()->paid_amount)->toBe(30000);
+});
+
 // --- The admin screen: the HTTP boundary, idempotency included -------------
 
 function t07PaidPlan(): PaymentPlan

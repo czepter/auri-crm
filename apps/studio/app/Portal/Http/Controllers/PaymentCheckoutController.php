@@ -40,6 +40,9 @@ class PaymentCheckoutController extends Controller
         abort_unless($visible, 404);
         abort_unless($installment->plan?->job?->project?->public_id === $project, 404);
         abort_if($installment->status === PaymentInstallmentStatus::Paid, 404);
+        abort_if($installment->status === PaymentInstallmentStatus::Cancelled, 404);
+        // #418: a settled plan takes no more money.
+        abort_if($installment->plan->isSettled(), 404);
 
         // A literal path, not route(): App\Portal\Http\Controllers\
         // ContractController's own download link is built the same way — the

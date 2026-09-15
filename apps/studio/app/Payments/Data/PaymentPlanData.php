@@ -2,7 +2,6 @@
 
 namespace App\Payments\Data;
 
-use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use Spatie\LaravelData\Data;
@@ -27,13 +26,18 @@ class PaymentPlanData extends Data
         // T-25: der Einzelfall neben dem Studioschalter unter Zahlungen —
         // der eine Kunde, mit dem man gerade telefoniert hat.
         public bool $clientRemindersEnabled,
+        // #418: closed. The dialog is gone once this is set, and so is every
+        // action that would move money on the plan.
+        public ?string $settledOn,
         public array $installments,
     ) {}
 
     public static function fromModel(PaymentPlan $plan): self
     {
         $installments = $plan->installments;
-        $count = $installments->count();
+        // #408: a cancelled row is paperwork, not a stage of the plan, so it
+        // is not counted — a Storno must not rename the rows around it.
+        $count = $installments->reject->isCancelled()->count();
 
         $items = $installments->values()
             ->map(fn ($installment, int $index) => PaymentInstallmentData::fromModel(
@@ -45,9 +49,9 @@ class PaymentPlanData extends Data
             ))
             ->all();
 
-        $openTotal = $plan->total - $installments
-            ->where('status', PaymentInstallmentStatus::Paid)
-            ->sum('amount');
+        // #414: what has arrived, not which rows are done — a part payment
+        // reduces what is open by exactly what was booked.
+        $openTotal = $plan->total - $installments->sum('paid_amount');
 
         return new self(
             id: $plan->public_id,
@@ -55,6 +59,7 @@ class PaymentPlanData extends Data
             openTotal: $openTotal,
             reference: $plan->reference,
             clientRemindersEnabled: $plan->client_reminders_enabled,
+            settledOn: $plan->settled_at?->format('Y-m-d'),
             installments: $items,
         );
     }
@@ -70,7 +75,11 @@ class PaymentPlanData extends Data
             return $installment->title;
         }
 
-        $siblings = $installment->plan->installments()->orderBy('sort_order')->pluck('id')->all();
+        $siblings = $installment->plan->installments()
+            ->whereNull('cancelled_at')
+            ->orderBy('sort_order')
+            ->pluck('id')
+            ->all();
         $index = array_search($installment->id, $siblings, true);
 
         return self::labelFor($index === false ? 0 : (int) $index, count($siblings));

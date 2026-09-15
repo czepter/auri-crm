@@ -12,6 +12,7 @@ use App\Quotes\Enums\DiscountType;
 use App\Quotes\Enums\PricingMode;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Support\DiscountCalculator;
+use App\Quotes\Support\VatLines;
 use App\Settings\Support\StudioSettingsResolver;
 use Database\Factories\Quotes\QuoteFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -226,7 +227,24 @@ class Quote extends Model
      */
     public function snapshotVat(StudioSettingsResolver $settings): void
     {
-        $this->update(self::computeVat($this->net, $settings));
+        $this->update(self::computeVat($this->net, $settings, $this->items()->get()));
+    }
+
+    /**
+     * #412: the Entgelt by tax rate — § 14 Abs. 4 Nr. 7 UStG. One line at the
+     * quote's own rate for every quote whose lines carry no rate of their
+     * own, which is every quote written before this existed; empty under the
+     * small-business rule, where there is no rate to break out.
+     *
+     * @return list<array{rate: int, net: int, vat: int}>
+     */
+    public function vatLines(): array
+    {
+        if ($this->vat_mode !== 'standard') {
+            return [];
+        }
+
+        return VatLines::fromItems($this->items, (int) $this->vat_rate, (int) $this->net);
     }
 
     /**
@@ -238,9 +256,14 @@ class Quote extends Model
      * discount is, round-half-up, computed off net (Q-03's one rounding),
      * never off an unrounded intermediate line.
      *
+     * #412: with lines at their own rates it is the sum over the rate lines
+     * instead — the same rounding, applied once per rate rather than once,
+     * so the total still matches the rows a client reads.
+     *
+     * @param  iterable<QuoteItem>  $items
      * @return array{vat_mode: string, vat_rate: int, vat_note: ?string, vat_amount: int}
      */
-    public static function computeVat(int $net, StudioSettingsResolver $settings): array
+    public static function computeVat(int $net, StudioSettingsResolver $settings, iterable $items = []): array
     {
         $mode = $settings->vatMode();
         $rate = $settings->effectiveVatRate();
@@ -252,7 +275,11 @@ class Quote extends Model
             // QuoteData: standard shows a computed VAT line instead, so it
             // has no use for the note text.
             'vat_note' => $mode === 'small_business' ? $settings->vatNote() : null,
-            'vat_amount' => DiscountCalculator::resolve($net, DiscountType::Percentage, $rate),
+            // § 19 UStG: no rate is charged, so a line's own rate is ignored
+            // rather than broken out against a base that carries no tax.
+            'vat_amount' => $mode === 'small_business'
+                ? 0
+                : collect(VatLines::fromItems($items, $rate, $net))->sum('vat'),
         ];
     }
 

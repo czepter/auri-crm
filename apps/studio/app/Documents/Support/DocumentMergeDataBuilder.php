@@ -4,8 +4,12 @@ namespace App\Documents\Support;
 
 use App\Crm\Models\Project;
 use App\Payments\Data\PaymentPlanData;
+use App\Payments\Models\CreditNote;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Support\InvoiceFigures;
+use App\Quotes\Models\Quote;
+use App\Quotes\Models\QuoteItem;
+use App\Quotes\Support\VatLines;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Support\Number;
 
@@ -24,18 +28,22 @@ use Illuminate\Support\Number;
 class DocumentMergeDataBuilder
 {
     /**
-     * $installment is the one argument that is not derivable from the
-     * project: an invoice is about one due amount, not about the job as a
-     * whole, and only the caller rendering one knows which. Every other
-     * document type passes null and the `invoice` block resolves to empty
-     * strings — present in the array rather than absent, so a merge field
-     * used on the wrong document type renders as nothing instead of leaving
-     * a raw placeholder in a PDF.
+     * $installment and $creditNote are the two arguments not derivable from
+     * the project: an invoice is about one due amount and a Gutschrift about
+     * one refund of it, not about the job as a whole, and only the caller
+     * rendering one knows which. Every other document type passes null and
+     * those blocks resolve to empty strings — present in the array rather
+     * than absent, so a merge field used on the wrong document type renders
+     * as nothing instead of leaving a raw placeholder in a PDF.
      *
      * @return array<string, mixed>
      */
-    public function fromProject(Project $project, StudioSettingsResolver $settings, ?PaymentInstallment $installment = null): array
-    {
+    public function fromProject(
+        Project $project,
+        StudioSettingsResolver $settings,
+        ?PaymentInstallment $installment = null,
+        ?CreditNote $creditNote = null,
+    ): array {
         $contact = $project->primaryContact();
         $studio = $settings->attributes();
 
@@ -52,6 +60,7 @@ class DocumentMergeDataBuilder
                 'city' => $contact?->city ?? '',
             ],
             'invoice' => $this->invoice($installment, $project, $settings),
+            'creditNote' => $this->creditNote($creditNote, $project, $settings),
             'job' => [
                 'bookedAt' => $project->job?->booked_at?->format('d.m.Y') ?? '',
             ],
@@ -133,7 +142,7 @@ class DocumentMergeDataBuilder
      * day it arrived instead: § 14 Abs. 4 Nr. 6 UStG asks for the Zeitpunkt
      * der Vereinnahmung in an Abs. 5 case, and the shoot is still ahead.
      *
-     * @return array<string, string>
+     * @return array<string, string|list<array{rate: string, net: string, vat: string}>>
      */
     private function invoice(?PaymentInstallment $installment, Project $project, StudioSettingsResolver $settings): array
     {
@@ -141,7 +150,7 @@ class DocumentMergeDataBuilder
             return array_fill_keys(
                 ['number', 'date', 'servicePeriod', 'description', 'net', 'vatRate', 'vat', 'gross', 'vatNote', 'dueOn', 'paymentTerm'],
                 '',
-            );
+            ) + ['vatLines' => [], 'lines' => [], 'deposits' => [], 'totalNet' => '', 'totalVat' => '', 'totalGross' => ''];
         }
 
         $figures = InvoiceFigures::forInstallment($installment, $settings);
@@ -165,8 +174,171 @@ class DocumentMergeDataBuilder
             'vat' => $this->money($figures->vat),
             'gross' => $this->money($figures->gross),
             'vatNote' => $figures->vatNote ?? '',
+            // #412: structured rather than a `{{ }}` path — a template body
+            // cannot loop, so this is read by the layouts
+            // (App\Payments\Support\InvoiceDocument) and by nothing else.
+            'vatLines' => array_map(fn (array $line) => [
+                'rate' => VatLines::percent($line['rate']).' %',
+                'net' => $this->money($line['net']),
+                'vat' => $this->money($line['vat']),
+            ], $figures->rates),
             'dueOn' => $dueOn,
             'paymentTerm' => $dueOn === '' ? '' : "Zahlbar bis {$dueOn} ohne Abzug.",
+            // #411: § 14 Abs. 5 S. 2 UStG binds the last installment of a
+            // plan, and only it. Everything below is empty on an
+            // Anzahlungsrechnung, which is what keeps the blocks absent
+            // rather than present and blank.
+            ...$this->finalInvoice($installment, $settings),
+        ];
+    }
+
+    /**
+     * The Endrechnung's three additions: the whole Leistung line by line, its
+     * own totals, and every Teilentgelt already invoiced.
+     *
+     * The Leistung comes from the accepted quote rather than from the plan's
+     * total — the quote is what the client agreed to, and a plan can hold a
+     * Nachtrag or a voided rate that never described a supply.
+     *
+     * @return array{lines: list<array<string, string>>, deposits: list<array<string, string>>, totalNet: string, totalVat: string, totalGross: string}
+     */
+    private function finalInvoice(PaymentInstallment $installment, StudioSettingsResolver $settings): array
+    {
+        $quote = $installment->acceptedQuote();
+
+        if (! $installment->isFinal() || $quote === null) {
+            return ['lines' => [], 'deposits' => [], 'totalNet' => '', 'totalVat' => '', 'totalGross' => ''];
+        }
+
+        $vat = $quote->vat_mode === 'standard' ? (int) $quote->vat_amount : 0;
+
+        return [
+            'lines' => $quote->hasSlider() ? $this->sliderLine($quote) : $this->quoteLines($quote),
+            'deposits' => $this->deposits($installment, $settings),
+            'totalNet' => $this->money((int) $quote->net),
+            'totalVat' => $this->money($vat),
+            'totalGross' => $this->money((int) $quote->net + $vat),
+        ];
+    }
+
+    /**
+     * The quote's own positions, plus the quote-level discount as a line of
+     * its own — § 14 Abs. 4 Nr. 7 counts any Minderung agreed in advance as
+     * part of the Entgelt and wants it stated.
+     *
+     * @return list<array<string, string>>
+     */
+    private function quoteLines(Quote $quote): array
+    {
+        $lines = $quote->items
+            ->map(fn (QuoteItem $item) => [
+                'title' => $item->title,
+                'quantity' => (string) $item->quantity,
+                'unitPrice' => $item->isIncluded() ? '' : $this->money((int) $item->unit_price),
+                'discount' => $item->discount_amount > 0 ? '−'.$this->money((int) $item->discount_amount) : '',
+                'total' => $item->isIncluded() ? 'enthalten' : $this->money($item->discountedLineTotal()),
+                'vatRate' => VatLines::percent((int) ($item->vat_rate ?? $quote->vat_rate)).' %',
+            ])
+            ->values()
+            ->all();
+
+        if ($quote->discount_amount > 0) {
+            $lines[] = [
+                'title' => 'Rabatt',
+                'quantity' => '',
+                'unitPrice' => '',
+                'discount' => '',
+                'total' => '−'.$this->money((int) $quote->discount_amount),
+                'vatRate' => '',
+            ];
+        }
+
+        return $lines;
+    }
+
+    /**
+     * A slider quote has no positions: the supply is hours at a rate, and
+     * that is the one line — the same figure RenderQuotePdf prints for it.
+     *
+     * @return list<array<string, string>>
+     */
+    private function sliderLine(Quote $quote): array
+    {
+        $hours = (int) ($quote->hours ?? $quote->min_hours ?? 0);
+
+        return [[
+            'title' => $quote->time_title ?? $hours.' Stunden',
+            'quantity' => (string) $hours,
+            'unitPrice' => $this->money((int) $quote->hourly_rate),
+            'discount' => '',
+            'total' => $this->money($hours * (int) $quote->hourly_rate),
+            'vatRate' => VatLines::percent((int) $quote->vat_rate).' %',
+        ]];
+    }
+
+    /**
+     * Every earlier issued installment of the plan, as the deduction it is.
+     * A credited one is deducted net of its Gutschrift: that much of the
+     * Teilentgelt was handed back and was never part of the Leistung.
+     *
+     * @return list<array<string, string>>
+     */
+    private function deposits(PaymentInstallment $installment, StudioSettingsResolver $settings): array
+    {
+        return $installment->earlierIssued()
+            ->map(function (PaymentInstallment $earlier) use ($settings) {
+                $credited = (int) $earlier->creditNotes->sum('amount');
+                $rate = InvoiceFigures::forInstallment($earlier, $settings)->rate;
+                $figures = InvoiceFigures::fromGross((int) $earlier->amount - $credited, $rate);
+
+                return [
+                    'number' => (string) $earlier->invoice_number,
+                    'date' => $earlier->invoiced_at?->format('d.m.Y') ?? '',
+                    'net' => $this->money($figures->net),
+                    'vat' => $this->money($figures->vat),
+                    'gross' => $this->money($figures->gross),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * #409: the Gutschrift's own particulars, or empty strings on every
+     * document that is not one.
+     *
+     * The split runs off the credit note's amount rather than the
+     * installment's, so a partial Gutschrift states the VAT actually being
+     * given back; the rate itself still comes from the installment, because
+     * a refund carries the tax rate of the supply it reverses, not today's.
+     *
+     * @return array<string, string>
+     */
+    private function creditNote(?CreditNote $creditNote, Project $project, StudioSettingsResolver $settings): array
+    {
+        $keys = ['number', 'date', 'servicePeriod', 'description', 'reason', 'net', 'vatRate', 'vat', 'gross', 'vatNote', 'invoiceNumber', 'invoiceDate'];
+
+        if ($creditNote === null) {
+            return array_fill_keys($keys, '');
+        }
+
+        $installment = $creditNote->installment;
+        $rate = InvoiceFigures::forInstallment($installment, $settings);
+        $figures = InvoiceFigures::fromGross($creditNote->amount, $rate->rate, $rate->vatNote);
+
+        return [
+            'number' => $creditNote->number,
+            'date' => $creditNote->issued_at->format('d.m.Y'),
+            'servicePeriod' => $project->shoots()->where('is_primary', true)->first()?->date?->format('d.m.Y') ?? '',
+            'description' => $project->name.' — '.PaymentPlanData::labelForInstallment($installment),
+            'reason' => $creditNote->reason,
+            'net' => $this->money($figures->net),
+            'vatRate' => $figures->ratePercentage(),
+            'vat' => $this->money($figures->vat),
+            'gross' => $this->money($figures->gross),
+            'vatNote' => $figures->vatNote ?? '',
+            'invoiceNumber' => $installment->invoice_number ?? '',
+            'invoiceDate' => $installment->invoiced_at?->format('d.m.Y') ?? '',
         ];
     }
 

@@ -32,13 +32,13 @@ class PaymentPlan extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['job_id', 'total', 'reference', 'client_reminders_enabled'];
+    protected $fillable = ['job_id', 'total', 'reference', 'client_reminders_enabled', 'settled_at'];
 
     protected $attributes = ['client_reminders_enabled' => true];
 
     protected function casts(): array
     {
-        return ['client_reminders_enabled' => 'boolean'];
+        return ['client_reminders_enabled' => 'boolean', 'settled_at' => 'immutable_datetime'];
     }
 
     public function job(): BelongsTo
@@ -49,6 +49,12 @@ class PaymentPlan extends Model
     public function installments(): HasMany
     {
         return $this->hasMany(PaymentInstallment::class)->orderBy('sort_order');
+    }
+
+    /** #418: closed. Nothing chases it, nothing charges on it, nothing edits it. */
+    public function isSettled(): bool
+    {
+        return $this->settled_at !== null;
     }
 
     protected static function newFactory(): Factory

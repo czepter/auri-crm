@@ -64,6 +64,7 @@ use App\Http\Controllers\Staff\SetupController;
 use App\Media\Http\Controllers\FailedAssetController;
 use App\Media\Http\Controllers\MultipartUploadController;
 use App\Media\Http\Controllers\UploadPrecheckController;
+use App\Payments\Http\Controllers\InvoiceExportController;
 use App\Payments\Http\Controllers\PaymentInstallmentController;
 use App\Payments\Http\Controllers\PaymentPlanController;
 use App\Quotes\Http\Controllers\QuoteController;
@@ -371,6 +372,9 @@ Route::middleware('audience:staff')->group(function () {
             ->name('number-ranges.index');
         Route::patch('/einstellungen/nummernkreise/{numberRange}', [NumberRangeController::class, 'update'])
             ->name('number-ranges.update');
+
+        Route::get('/einstellungen/rechnungen/export', InvoiceExportController::class)
+            ->name('invoices.export');
 
         Route::get('/einstellungen/verfuegbarkeit', [StudioClosureController::class, 'index'])
             ->name('availability.edit');
@@ -790,6 +794,10 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/zahlungsplaene/{paymentPlan}/erinnerungen', [PaymentPlanController::class, 'reminders'])
             ->name('payment-plans.reminders');
 
+        // #418: one call closes the plan. See SettlePaymentPlan.
+        Route::post('/zahlungsplaene/{paymentPlan}/abwickeln', [PaymentPlanController::class, 'settle'])
+            ->name('payment-plans.settle');
+
         // T-07's staff action: date, method and reference, recorded once —
         // never a status flipped on its own. See MarkInstallmentPaid.
         Route::post('/raten/{installment}/bezahlt', [PaymentInstallmentController::class, 'markPaid'])
@@ -801,6 +809,24 @@ Route::middleware('audience:staff')->group(function () {
             ->name('payment-installments.issue-invoice');
         Route::get('/raten/{installment}/rechnung', [PaymentInstallmentController::class, 'downloadInvoice'])
             ->name('payment-installments.invoice');
+
+        // #415: the compose screen and the send, the same pair the contract
+        // has. Issuing redirects into the first; nothing sends on its own.
+        Route::get('/raten/{installment}/rechnung/versenden', [PaymentInstallmentController::class, 'sendView'])
+            ->name('payment-installments.invoice.send-view');
+        Route::post('/raten/{installment}/rechnung/versenden', [PaymentInstallmentController::class, 'send'])
+            ->name('payment-installments.invoice.send');
+
+        // #408: the only way back out of an issued invoice. See CancelInvoice
+        // for why the number stays where it is.
+        Route::post('/raten/{installment}/storno', [PaymentInstallmentController::class, 'cancelInvoice'])
+            ->name('payment-installments.cancel-invoice');
+
+        // #409: what a paid rate gets instead of a Storno.
+        Route::post('/raten/{installment}/gutschrift', [PaymentInstallmentController::class, 'issueCreditNote'])
+            ->name('payment-installments.issue-credit-note');
+        Route::get('/raten/{installment}/gutschrift/{creditNote}', [PaymentInstallmentController::class, 'downloadCreditNote'])
+            ->name('payment-installments.credit-note');
 
         Route::post('/auftraege/{project}/shootings', [ShootController::class, 'store'])
             ->name('shoots.store');

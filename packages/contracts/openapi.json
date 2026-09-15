@@ -4790,6 +4790,15 @@
                                                             ],
                                                             "minimum": 0
                                                         },
+                                                        "vat_rate": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "description": "#412: Basispunkte, leer = der Satz des Angebots, auf dem die\nZeile landet. Das Paket bringt den Satz mit, statt ihn bei\njedem Angebot neu zu verlangen.",
+                                                            "minimum": 1,
+                                                            "maximum": 10000
+                                                        },
                                                         "id": {
                                                             "type": [
                                                                 "string",
@@ -4935,6 +4944,15 @@
                                                                 "null"
                                                             ],
                                                             "minimum": 0
+                                                        },
+                                                        "vat_rate": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "description": "#412: Basispunkte, leer = der Satz des Angebots, auf dem die\nZeile landet. Das Paket bringt den Satz mit, statt ihn bei\njedem Angebot neu zu verlangen.",
+                                                            "minimum": 1,
+                                                            "maximum": 10000
                                                         },
                                                         "id": {
                                                             "type": [
@@ -6254,6 +6272,15 @@
                                                             ],
                                                             "minimum": 1
                                                         },
+                                                        "vat_rate": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "description": "#412: Basispunkte, leer = der Satz des Angebots. 0 waere ein\neigener Satz von null Prozent und ist etwas anderes.",
+                                                            "minimum": 1,
+                                                            "maximum": 10000
+                                                        },
                                                         "id": {
                                                             "type": [
                                                                 "string",
@@ -6555,6 +6582,15 @@
                                                                 "null"
                                                             ],
                                                             "minimum": 1
+                                                        },
+                                                        "vat_rate": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "description": "#412: Basispunkte, leer = der Satz des Angebots. 0 waere ein\neigener Satz von null Prozent und ist etwas anderes.",
+                                                            "minimum": 1,
+                                                            "maximum": 10000
                                                         },
                                                         "id": {
                                                             "type": [
@@ -9259,6 +9295,15 @@
                                     ],
                                     "minimum": 0
                                 },
+                                "vat_rate": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "description": "#412: Basispunkte, leer = der Satz des Angebots, auf dem die\nZeile landet. Das Paket bringt den Satz mit, statt ihn bei\njedem Angebot neu zu verlangen.",
+                                    "minimum": 1,
+                                    "maximum": 10000
+                                },
                                 "id": {
                                     "type": [
                                         "string",
@@ -9459,6 +9504,15 @@
                                         "null"
                                     ],
                                     "minimum": 1
+                                },
+                                "vat_rate": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "description": "#412: Basispunkte, leer = der Satz des Angebots. 0 waere ein\neigener Satz von null Prozent und ist etwas anderes.",
+                                    "minimum": 1,
+                                    "maximum": 10000
                                 },
                                 "id": {
                                     "type": [

@@ -50,7 +50,7 @@ class SampleQuoteData
         $quote->setRelation('items', $items);
         $quote->setRelation('paymentStages', collect());
         $quote->fill(Quote::computeTotals($items, $quote->discount_type, $quote->discount_value));
-        $quote->fill(Quote::computeVat($quote->net, $settings));
+        $quote->fill(Quote::computeVat($quote->net, $settings, $items));
 
         return $quote;
     }
