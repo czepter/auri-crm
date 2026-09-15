@@ -8,7 +8,9 @@ would be an activation rather than a rewrite. EU hosting and EU processors
 throughout, because DSGVO is a constraint on the architecture and not a page
 in the footer.
 
-The full reasoning lives in the [product vision](docs/superpowers/specs/2026-08-07-photography-client-management-vision-design.md);
+What the product is for, and the rules every change is held to, is
+[docs/purpose.md](docs/purpose.md). The full reasoning lives in the
+[product vision](docs/superpowers/specs/2026-08-07-photography-client-management-vision-design.md);
 what is built and what is next lives in the [backlog](docs/backlog.md).
 
 ## The four surfaces

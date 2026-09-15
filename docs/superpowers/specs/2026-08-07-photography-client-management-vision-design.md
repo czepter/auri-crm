@@ -1,7 +1,7 @@
 # Product Vision — Photography Studio Client Management Platform
 
 **Date:** 2026-08-07
-**Status:** Approved vision. Parent document only — each phase gets its own spec and implementation plan.
+**Status:** Approved vision. Parent document only — each phase gets its own spec and implementation plan. Subordinate to [docs/purpose.md](../../purpose.md); where the two disagree, the purpose wins.
 **Scope:** CRM, client portal (contracts, questionnaires, payments, messaging), and client/guest photo gallery for a wedding and portrait photography studio.
 
 ---
