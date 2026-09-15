@@ -27,6 +27,8 @@ class QuoteItemData extends Data
         // left for the client to subtract, the same reasoning as lineTotal
         // itself above.
         public int $netTotal,
+        // #412: null heisst der Satz des Angebots, nicht null Prozent.
+        public ?int $vatRate = null,
         // Q-09: die dritte Art Zeile — eine, die der Kunde selbst schaltet.
         // Beides false ist der heutige Zustand jeder bestehenden Zeile.
         public bool $selectable = false,
@@ -51,6 +53,7 @@ class QuoteItemData extends Data
             discountValue: $item->discount_value,
             discountAmount: $item->discount_amount,
             netTotal: $item->discountedLineTotal(),
+            vatRate: $item->vat_rate,
             selectable: $item->selectable,
             selected: $item->selected,
             outcome: $item->outcome,

@@ -15,6 +15,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Label } from '@/ui/label'
 import QuoteCard from './QuoteCard.vue'
 import DiscountInput from './DiscountInput.vue'
+import VatRateSelect from '@/admin/components/VatRateSelect.vue'
 import DragHandle from './DragHandle.vue'
 
 const props = defineProps<{
@@ -22,6 +23,7 @@ const props = defineProps<{
   quoteId: string
   canManageCatalog: boolean
   row: QuoteRow
+  vatMode: string
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
@@ -55,6 +57,7 @@ function saveAsPackage() {
         description: props.row.description || null,
         quantity: props.row.quantity,
         unit_price: eurosToCents(props.row.unitPrice),
+        vat_rate: props.row.vatRate,
         selectable: props.row.selectable,
         selected: props.row.selected,
         outcome: props.row.outcome || null,
@@ -120,6 +123,15 @@ function saveAsPackage() {
           <Label>{{ $t('quotes.discount') }}</Label>
           <DiscountInput v-model="row.discount" @change="emit('change')" />
         </div>
+      </div>
+
+      <div v-if="vatMode === 'standard'" class="flex min-w-0 max-w-[200px] flex-col gap-1.5">
+        <Label>{{ $t('quotes.itemVatRate') }}</Label>
+        <VatRateSelect
+          v-model="row.vatRate"
+          :placeholder="$t('quotes.itemVatRateDefault')"
+          @update:model-value="emit('change')"
+        />
       </div>
 
       <ChoiceGroup

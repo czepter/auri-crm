@@ -57,6 +57,7 @@ const form = useForm({
       description: item.description ?? '',
       quantity: item.quantity,
       unitPrice: centsToEuros(item.unitPrice),
+      vatRate: item.vatRate,
       selectable: item.selectable,
       selected: item.selected,
       hasImage: item.hasImage,
@@ -112,6 +113,7 @@ function save() {
         description: item.description || null,
         quantity: item.quantity,
         unit_price: eurosToCents(item.unitPrice),
+        vat_rate: item.vatRate,
         selectable: item.selectable,
         selected: item.selected,
         // Die id, nicht der Pfad: der Controller schlaegt das Bild an der

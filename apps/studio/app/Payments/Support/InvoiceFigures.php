@@ -4,6 +4,7 @@ namespace App\Payments\Support;
 
 use App\Payments\Models\PaymentInstallment;
 use App\Quotes\Models\Quote;
+use App\Quotes\Support\VatLines;
 use App\Settings\Support\StudioSettingsResolver;
 
 /**
@@ -36,6 +37,14 @@ final class InvoiceFigures
         public readonly int $vat,
         public readonly int $rate,
         public readonly ?string $vatNote,
+        /**
+         * #412: the same gross broken out by tax rate — § 14 Abs. 4 Nr. 7
+         * UStG. One line for the ordinary quote, one per rate where its
+         * lines carry their own, and always summing back to `gross`.
+         *
+         * @var list<array{rate: int, net: int, vat: int}>
+         */
+        public readonly array $rates,
     ) {}
 
     public static function forInstallment(PaymentInstallment $installment, StudioSettingsResolver $settings): self
@@ -50,7 +59,13 @@ final class InvoiceFigures
             ? $quote->vat_note
             : ($settings->vatMode() === 'small_business' ? $settings->vatNote() : null);
 
-        return self::fromGross((int) $installment->amount, (int) $rate, $note);
+        $figures = self::fromGross((int) $installment->amount, (int) $rate, $note);
+
+        // The Kleinunternehmer case short-circuits: there is one rate, it is
+        // zero, and § 19 forbids showing it at all.
+        $quoteLines = $rate === 0 ? [] : ($quote?->vatLines() ?? []);
+
+        return count($quoteLines) < 2 ? $figures : $figures->splitOver($quoteLines);
     }
 
     public static function fromGross(int $gross, int $rate, ?string $vatNote = null): self
@@ -61,7 +76,28 @@ final class InvoiceFigures
             ? $gross
             : intdiv($gross * self::BASIS_POINTS + intdiv(self::BASIS_POINTS + $rate, 2), self::BASIS_POINTS + $rate);
 
-        return new self($gross, $net, $gross - $net, $rate, $vatNote);
+        return new self($gross, $net, $gross - $net, $rate, $vatNote, [['rate' => $rate, 'net' => $net, 'vat' => $gross - $net]]);
+    }
+
+    /**
+     * This gross shared out pro rata over the quote's rate lines. `rate`,
+     * `net` and `vat` stay the single-figure view a one-rate template still
+     * prints; `rates` is the breakdown, and both describe the same gross.
+     *
+     * @param  list<array{rate: int, net: int, vat: int}>  $quoteLines
+     */
+    private function splitOver(array $quoteLines): self
+    {
+        $rates = [];
+
+        foreach (VatLines::grossShares($quoteLines, $this->gross) as $rate => $share) {
+            $line = self::fromGross($share, (int) $rate);
+            $rates[] = ['rate' => (int) $rate, 'net' => $line->net, 'vat' => $line->vat];
+        }
+
+        $net = array_sum(array_column($rates, 'net'));
+
+        return new self($this->gross, $net, $this->gross - $net, $this->rate, $this->vatNote, $rates);
     }
 
     /** The rate as a printable percentage — 1900 basis points reads as "19 %". */

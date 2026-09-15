@@ -21,7 +21,7 @@ class PackageItem extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['title', 'description', 'quantity', 'unit_price', 'sort_order', 'selectable', 'selected', 'outcome', 'image_path'];
+    protected $fillable = ['title', 'description', 'quantity', 'unit_price', 'sort_order', 'selectable', 'selected', 'outcome', 'image_path', 'vat_rate'];
 
     protected $attributes = ['quantity' => 1, 'sort_order' => 0];
 

@@ -45,6 +45,13 @@ final class InvoiceDocument
         public readonly array $recipient,
         public readonly array $paymentLines,
         public readonly ?string $reference,
+        /**
+         * #412: one entry per tax rate, already formatted. A single-rate
+         * document has one and prints the ordinary Umsatzsteuer row from it.
+         *
+         * @var list<array{rate: string, net: string, vat: string}>
+         */
+        public readonly array $vatLines = [],
     ) {}
 
     /** @param array<string, mixed> $mergeData */
@@ -81,6 +88,7 @@ final class InvoiceDocument
             recipient: self::recipient($mergeData),
             paymentLines: $payment,
             reference: null,
+            vatLines: $invoice['vatLines'] ?? [],
         );
     }
 
@@ -122,6 +130,9 @@ final class InvoiceDocument
      * Kleinunternehmer prints instead — § 19 UStG forbids showing a VAT line
      * at all, and `vatNote` carries the sentence that replaces it.
      *
+     * #412: one Umsatzsteuer row per rate, which for a quote at a single rate
+     * is the one row this always printed.
+     *
      * @return list<array{0: string, 1: string, 2: bool}> label, amount, is-total
      */
     public function summaryRows(): array
@@ -130,9 +141,16 @@ final class InvoiceDocument
             return [['Gesamtbetrag', $this->sign.$this->gross, true]];
         }
 
+        $vat = $this->vatLines === []
+            ? [['Umsatzsteuer '.$this->vatRate, $this->sign.$this->vat, false]]
+            : array_map(
+                fn (array $line) => ['Umsatzsteuer '.$line['rate'], $this->sign.$line['vat'], false],
+                $this->vatLines,
+            );
+
         return [
             ['Netto', $this->sign.$this->net, false],
-            ['Umsatzsteuer '.$this->vatRate, $this->sign.$this->vat, false],
+            ...$vat,
             ['Gesamtbetrag', $this->sign.$this->gross, true],
         ];
     }

@@ -65,6 +65,7 @@ function draftOf(quote: App.Quotes.Data.QuoteData): QuoteDraft {
       quantity: item.quantity,
       unitPrice: centsToEuros(item.unitPrice),
       discount: formatDiscount(item.discountType, item.discountValue),
+      vatRate: item.vatRate,
       selectable: item.selectable,
       selected: item.selected,
       outcome: item.outcome ?? '',
@@ -138,7 +139,7 @@ function createPlan() {
  * Entwurf endet deshalb bei Gesamt oder Netto.
  */
 function summaryRows(quote: App.Quotes.Data.QuoteData) {
-  const rows = quote.discountAmount
+  const rows: { label: string; value: string; rate?: number }[] = quote.discountAmount
     ? [
         { label: 'quotes.total', value: formatEuros(quote.total) },
         { label: 'quotes.discount', value: `−${formatEuros(quote.discountAmount)}` },
@@ -147,10 +148,12 @@ function summaryRows(quote: App.Quotes.Data.QuoteData) {
     : [{ label: 'quotes.total', value: formatEuros(quote.total) }]
 
   if (quote.vatMode === 'standard') {
-    rows.push(
-      { label: 'quotes.vat', value: formatEuros(quote.vatAmount ?? 0) },
-      { label: 'quotes.total', value: formatEuros(quote.net + (quote.vatAmount ?? 0)) },
-    )
+    // #412: eine Zeile je Steuersatz, bei einem Satz genau die eine.
+    for (const line of quote.vatLines) {
+      rows.push({ label: 'quotes.vat', value: formatEuros(line.vat), rate: line.rate })
+    }
+
+    rows.push({ label: 'quotes.total', value: formatEuros(quote.net + (quote.vatAmount ?? 0)) })
   }
 
   return rows.map((row, index) => ({ ...row, last: index === rows.length - 1 }))
@@ -239,7 +242,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
           :class="row.last ? 'mt-1.5 pt-2.5 font-semibold shadow-[inset_0_1px_0_var(--line)]' : 'text-[12.5px]'"
         >
           <span class="flex-1" :class="{ 'text-[13.5px]': row.last }">
-            {{ row.label === 'quotes.vat' ? $t('quotes.vat', { rate: basisPointsToPercent(quote.vatRate) }) : $t(row.label) }}
+            {{ row.rate === undefined ? $t(row.label) : $t('quotes.vat', { rate: basisPointsToPercent(row.rate) }) }}
           </span>
           <span class="w-[110px] flex-none text-right tabular-nums" :class="{ 'text-[14px]': row.last }">{{ row.value }}</span>
         </div>
