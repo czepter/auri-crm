@@ -16,6 +16,7 @@ use App\Payments\Support\Layouts\InvoiceLayoutRenderer;
 use App\Payments\Support\Layouts\LetterInvoiceLayout;
 use App\Payments\Support\Layouts\MinimalInvoiceLayout;
 use App\Payments\Support\Layouts\StructuredInvoiceLayout;
+use App\Payments\Support\MergeDataSnapshot;
 use App\Quotes\Enums\QuoteLayout;
 use App\Settings\Support\StudioSettingsResolver;
 
@@ -38,10 +39,17 @@ class RenderInvoicePdf
         private readonly DocumentRenderer $renderer,
     ) {}
 
-    public function forInstallment(PaymentInstallment $installment, ?QuoteLayout $layoutOverride = null): string
+    /**
+     * $snapshotPath, where given, is the document the merge data belongs to:
+     * the array is frozen beside it on the first render and read back on
+     * every later one (#416). A preview passes none and always resolves live.
+     */
+    public function forInstallment(PaymentInstallment $installment, ?QuoteLayout $layoutOverride = null, ?string $snapshotPath = null): string
     {
         $project = $installment->plan?->job?->project;
-        $data = $this->mergeData->fromProject($project, $this->settings, $installment);
+        $build = fn (): array => $this->mergeData->fromProject($project, $this->settings, $installment);
+
+        $data = $snapshotPath === null ? $build() : MergeDataSnapshot::remember($snapshotPath, $build);
 
         return $this->wrap(
             DocumentTemplateType::Invoice,
@@ -52,10 +60,12 @@ class RenderInvoicePdf
         );
     }
 
-    public function forCreditNote(CreditNote $creditNote, ?QuoteLayout $layoutOverride = null): string
+    public function forCreditNote(CreditNote $creditNote, ?QuoteLayout $layoutOverride = null, ?string $snapshotPath = null): string
     {
         $project = $creditNote->installment?->plan?->job?->project;
-        $data = $this->mergeData->fromProject($project, $this->settings, $creditNote->installment, $creditNote);
+        $build = fn (): array => $this->mergeData->fromProject($project, $this->settings, $creditNote->installment, $creditNote);
+
+        $data = $snapshotPath === null ? $build() : MergeDataSnapshot::remember($snapshotPath, $build);
 
         return $this->wrap(
             DocumentTemplateType::CreditNote,

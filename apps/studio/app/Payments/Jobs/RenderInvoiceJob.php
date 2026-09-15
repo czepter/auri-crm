@@ -33,7 +33,16 @@ class RenderInvoiceJob implements ShouldQueue
     {
         $installment = $this->installment->fresh(['invoiceTemplate', 'plan.job.project']);
 
-        if ($installment === null || ! $installment->isInvoiced() || $installment->invoice_path !== null) {
+        if ($installment === null || ! $installment->isInvoiced()) {
+            return;
+        }
+
+        // The file rather than the recorded path: a row whose PDF is gone is
+        // exactly the re-render #416's snapshot exists for, and one whose PDF
+        // is there must never be produced a second time.
+        $path = "invoices/{$installment->tenant_id}/{$installment->public_id}.pdf";
+
+        if (Storage::disk('local')->exists($path)) {
             return;
         }
 
@@ -47,9 +56,8 @@ class RenderInvoiceJob implements ShouldQueue
             return;
         }
 
-        $pdf = $gotenberg->htmlToPdf($render->forInstallment($installment));
+        $pdf = $gotenberg->htmlToPdf($render->forInstallment($installment, snapshotPath: $path));
 
-        $path = "invoices/{$installment->tenant_id}/{$installment->public_id}.pdf";
         Storage::disk('local')->put($path, $pdf);
 
         $installment->update(['invoice_path' => $path]);
