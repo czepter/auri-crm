@@ -49,7 +49,7 @@ function cancel() {
             <h2 class="m-0 text-[13.5px] leading-[1.2] font-semibold tracking-[-0.015em]">
                 {{ title }}
             </h2>
-            <span v-if="summary" class="min-w-0 truncate text-ink-2">{{ summary }}</span>
+            <span v-if="summary && !open" class="min-w-0 truncate text-ink-2">{{ summary }}</span>
 
             <div class="ml-auto flex flex-none items-center gap-3.5">
                 <slot name="action" />
