@@ -59,7 +59,7 @@ const ROW = [
 </script>
 
 <template>
-  <div v-if="model" class="flex items-center gap-[11px] rounded-md border border-line-hover px-3 py-[9px]">
+  <div v-if="model" class="flex items-center gap-[11px] rounded-[6px] border border-line-hover px-3 py-[9px]">
     <span
       class="flex size-[30px] flex-none items-center justify-center rounded-full bg-[#EDE7F6] text-[12px] leading-none font-semibold text-[#5B4B8A]"
     >
@@ -91,7 +91,7 @@ const ROW = [
   </div>
 
   <div v-else>
-    <div class="overflow-hidden rounded-md border border-line-hover">
+    <div class="overflow-hidden rounded-[6px] border border-line-hover">
       <Input v-model="term" class="border-0" type="search" :placeholder="$t('common.search')" />
 
       <div v-if="searched" class="border-t border-border">
