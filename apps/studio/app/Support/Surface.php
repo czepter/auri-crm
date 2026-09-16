@@ -52,7 +52,13 @@ class Surface
         $file = base_path("routes/{$surface}.php");
 
         match ($surface) {
-            self::API => Route::middleware('api')->prefix('api')->group($file),
+            // Two files, because the MCP endpoint and its discovery document
+            // are addressed at the host root rather than under /api — see
+            // routes/mcp.php.
+            self::API => Route::middleware('api')->group(function () use ($file) {
+                Route::group([], base_path('routes/mcp.php'));
+                Route::prefix('api')->group($file);
+            }),
             default => Route::middleware('web')->group($file),
         };
     }

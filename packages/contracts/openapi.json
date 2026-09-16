@@ -4581,113 +4581,6 @@
                 }
             }
         },
-        "/oauth/token-info": {
-            "get": {
-                "operationId": "oauth.token-info",
-                "tags": [
-                    "OAuthTokenInfo"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "anyOf": [
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "clientId": {
-                                                    "type": "string"
-                                                },
-                                                "scopes": {
-                                                    "anyOf": [
-                                                        {
-                                                            "type": "string"
-                                                        },
-                                                        {
-                                                            "type": "array",
-                                                            "items": {
-                                                                "type": "string"
-                                                            },
-                                                            "minItems": 0,
-                                                            "maxItems": 0,
-                                                            "additionalItems": false
-                                                        }
-                                                    ]
-                                                },
-                                                "expiresAt": {
-                                                    "type": "null"
-                                                }
-                                            },
-                                            "required": [
-                                                "clientId",
-                                                "scopes",
-                                                "expiresAt"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "clientId": {
-                                                    "type": "string"
-                                                },
-                                                "scopes": {
-                                                    "anyOf": [
-                                                        {
-                                                            "type": "string"
-                                                        },
-                                                        {
-                                                            "type": "array",
-                                                            "items": {
-                                                                "type": "string"
-                                                            },
-                                                            "minItems": 0,
-                                                            "maxItems": 0,
-                                                            "additionalItems": false
-                                                        }
-                                                    ]
-                                                },
-                                                "expiresAt": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ]
-                                                }
-                                            },
-                                            "required": [
-                                                "clientId",
-                                                "scopes",
-                                                "expiresAt"
-                                            ]
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "const": "Forbidden."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/packages": {
             "get": {
                 "operationId": "packages.index",
@@ -7351,7 +7244,7 @@
         "/projects/{project}/shoots": {
             "post": {
                 "operationId": "projects.shoots.store",
-                "description": "Mirrors App\\Crm\\Http\\Controllers\\ShootController::store: the same\nrules, the same nullable date, and the model's own defaults for status,\nis_primary and sort_order \u2014 the primary one is already taken.",
+                "description": "Mirrors App\\Crm\\Http\\Controllers\\ShootController::store: the same\nrules, the same nullable date, the booked status on a booked project,\nand the model's own defaults for is_primary and sort_order \u2014 the\nprimary one is already taken.",
                 "summary": "A second shooting day on a project that already has one. CaptureInquiry\nmakes exactly one shoot and marks it primary; a wedding split over two\ndays \u2014 Trauung on one, Feier on another \u2014 has no way to reach the\nsecond from here otherwise",
                 "tags": [
                     "Shoot"
