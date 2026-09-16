@@ -18,7 +18,6 @@ it('creates a preset', function () {
         'name' => 'Hochzeit',
         'expiry_mode' => 'days',
         'expiry_days' => 365,
-        'requires_settled_balance' => true,
         'downloads_enabled' => true,
         'lists_enabled' => null,
         'comments_enabled' => false,
@@ -41,7 +40,6 @@ it('renames and deletes one', function () {
         'name' => 'Business',
         'expiry_mode' => 'inherit',
         'expiry_days' => null,
-        'requires_settled_balance' => null,
         'downloads_enabled' => null,
         'lists_enabled' => null,
         'comments_enabled' => null,
@@ -76,7 +74,6 @@ it('answers 404 for a role without ManageSettings', function () {
 it('saves a gallery as a named preset', function () {
     $gallery = Gallery::factory()->create([
         'design' => ['cover' => 'split', 'type' => 'serif', 'colour' => 'dark', 'grid' => 'dense'],
-        'requires_settled_balance' => true,
         'downloads_enabled' => false,
         'lists_enabled' => true,
         'comments_enabled' => false,
@@ -91,7 +88,6 @@ it('saves a gallery as a named preset', function () {
 
     expect($preset->name)->toBe('Hochzeit')
         ->and($preset->design['colour'])->toBe('dark')
-        ->and($preset->requires_settled_balance)->toBeTrue()
         ->and($preset->downloads_enabled)->toBeFalse()
         ->and($preset->comments_enabled)->toBeFalse()
         ->and($preset->expiry_mode)->toBe('days')

@@ -2,8 +2,10 @@
 
 use App\Crm\Actions\BookProject;
 use App\Crm\Enums\BookedVia;
+use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Events\ProjectBooked;
+use App\Crm\Models\Contact;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -64,6 +66,30 @@ it('routes the shoots through the pipeline rather than mass updating them', func
     app(BookProject::class)($project, User::factory()->create());
 
     expect(AuditLog::where('event', 'shoot.status_changed')->count())->toBe(2);
+});
+
+it('books a shoot added to an already booked project', function () {
+    $project = Project::factory()->create();
+    app(BookProject::class)($project, User::factory()->create());
+
+    $this->actingAs(User::factory()->withMfa()->create(), 'staff')
+        ->post("/auftraege/{$project->public_id}/shootings", ['kind' => 'Feier'])
+        ->assertRedirect();
+
+    expect($project->shoots()->sole()->status->key)->toBe(ShootStatus::Booked->value);
+});
+
+it('shows a booked project in the portal unless its contact is held back', function () {
+    $open = Project::factory()->create();
+    $open->attachContact(Contact::factory()->create(), ProjectContactRole::Primary);
+    $held = Project::factory()->create();
+    $held->attachContact(Contact::factory()->create(['portal_overrides' => ['portal_visible' => false]]), ProjectContactRole::Primary);
+
+    app(BookProject::class)($open);
+    app(BookProject::class)($held);
+
+    expect($open->fresh()->portal_visible)->toBeTrue()
+        ->and($held->fresh()->portal_visible)->toBeFalse();
 });
 
 it('fires ProjectBooked exactly once and writes the audit row', function () {

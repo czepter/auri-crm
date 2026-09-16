@@ -5,6 +5,7 @@ namespace App\Crm\Http\Controllers;
 use App\Crm\Actions\AdvanceShootStatus;
 use App\Crm\Actions\DesignatePrimaryShoot;
 use App\Crm\Data\ProjectSuggestionData;
+use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -39,7 +40,7 @@ class ShootController extends Controller
         ]);
     }
 
-    public function store(Request $request, Project $project): RedirectResponse
+    public function store(Request $request, Project $project, AdvanceShootStatus $advance, CrmVocabulary $stages): RedirectResponse
     {
         $this->authorize('manageShoots', $project);
 
@@ -59,11 +60,21 @@ class ShootController extends Controller
             'entered_at' => ['nullable', 'date', 'before_or_equal:now'],
         ]);
 
-        $project->shoots()->create(
+        $shoot = $project->shoots()->create(
             Arr::except($validated, 'entered_at')
             + ['kind' => $validated['kind'] ?? Shoot::kindFor($project->type)]
             + array_filter(['status_entered_at' => $validated['entered_at'] ?? null])
         );
+
+        // BookProject only moves the shoots that exist at booking time.
+        if ($project->job()->exists()) {
+            $advance(
+                $shoot,
+                $stages->anchored(StagePipeline::Project, StageAnchor::Booked),
+                auth('staff')->user(),
+                isset($validated['entered_at']) ? CarbonImmutable::parse($validated['entered_at']) : null,
+            );
+        }
 
         // Aus dem Wizard zum neuen Shooting am Projekt, nicht zurück ins leere Formular.
         return $request->boolean('wizard')
