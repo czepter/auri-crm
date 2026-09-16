@@ -12,6 +12,11 @@ beforeEach(function () {
     $this->actingAs(User::factory()->withMfa()->create(), 'staff');
 });
 
+it('opens the mode named in the url, internal otherwise', function () {
+    expect(props('/galerien/neu?art=extern')['mode'])->toBe('external')
+        ->and(props('/galerien/neu?art=fremd')['mode'])->toBe('internal');
+});
+
 it('creates a gallery and sends the user to its record', function () {
     $project = Project::factory()->create();
 
