@@ -50,7 +50,7 @@ class ShootController extends Controller
             'label' => ['nullable', 'string', 'max:255'],
             'date' => ['nullable', 'date'],
             'call_time' => ['nullable', 'date_format:H:i'],
-            'end_time' => ['nullable', 'date_format:H:i', 'after:call_time'],
+            'end_time' => ['nullable', 'date_format:H:i'],
             'venue_name' => ['nullable', 'string', 'max:255'],
             'venue_city' => ['nullable', 'string', 'max:255'],
             'entered_at' => ['nullable', 'date', 'before_or_equal:now'],
