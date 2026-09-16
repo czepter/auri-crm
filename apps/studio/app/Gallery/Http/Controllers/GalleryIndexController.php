@@ -74,6 +74,7 @@ class GalleryIndexController extends Controller
             : null;
 
         return Inertia::render('Galleries/Create', [
+            'mode' => $request->query('art') === 'extern' ? 'external' : 'internal',
             'project' => $project ? ProjectSuggestionData::fromModel($project) : null,
             'shootId' => $project?->shoots()->where('public_id', $request->query('shooting'))->value('public_id'),
             'presets' => GalleryPresetData::collect(GalleryPreset::query()->orderBy('name')->get()),

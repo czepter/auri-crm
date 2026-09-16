@@ -219,6 +219,13 @@ it('renders the capture page with its options and no integer ids', function () {
         ->and(integerIdPaths($props))->toBe([]);
 });
 
+it('prefills the main date from the url, nothing for a malformed one', function () {
+    $this->actingAs($this->staff, 'staff');
+
+    expect(props('/anfragen/neu?termin=2027-06-12')['date'])->toBe('2027-06-12')
+        ->and(props('/anfragen/neu?termin=2027-13-45')['date'])->toBeNull();
+});
+
 it('rejects an unauthenticated capture', function () {
     $this->post('/anfragen', payload())->assertRedirect('/login');
 
