@@ -6,8 +6,8 @@ use App\Integration\Models\ApiToken;
 use Illuminate\Console\Command;
 
 /**
- * I-01's revoke path — see CreateApiTokenCommand's own docblock for why this
- * is a command rather than an admin screen action.
+ * I-01's revoke path from the console; the studio revokes through
+ * App\Settings\Http\Controllers\ApiTokenController.
  */
 class RevokeApiTokenCommand extends Command
 {

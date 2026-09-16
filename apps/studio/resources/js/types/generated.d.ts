@@ -612,7 +612,6 @@ name: string,
 design: Record<string, string> | null,
 expiryMode: string,
 expiryDays: number | null,
-requiresSettledBalance: boolean | null,
 downloadsEnabled: boolean | null,
 listsEnabled: boolean | null,
 commentsEnabled: boolean | null,
@@ -825,9 +824,6 @@ note: string | null,
 isTransit: boolean,
 };
 }
-namespace Enums {
-export type WebhookDeliveryStatus = 'pending' | 'delivered' | 'failed';
-}
 }
 namespace Media {
 namespace Data {
@@ -997,7 +993,6 @@ namespace Data {
 export type GallerySettingsData = {
 id: string,
 expiryDays: number | null,
-requiresSettledBalance: boolean,
 downloadsEnabled: boolean,
 listsEnabled: boolean,
 commentsEnabled: boolean,

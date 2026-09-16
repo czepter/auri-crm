@@ -11,8 +11,6 @@ const gallery = {
   downloadPin: '4417',
   requiresVerifiedEmail: false,
   expiresAt: '2026-11-30',
-  balanceSettled: true,
-  requiresSettledBalance: true,
   design: { cover: 'full', type: 'serif', colour: 'light', grid: 'wide' },
   offers: { downloads: true, lists: true, comments: false },
   deviates: false,

@@ -9,9 +9,9 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * The reader the in_app transport never had. Every staff-facing notification
- * writes a row here whatever the mail preference says, so this list is the
- * complete record and the mail is the interruption.
+ * The reader the in_app transport never had. A row lands here unless the
+ * person set the event to Aus — NotificationService::send() asks the
+ * preference per channel, and Off allows none.
  *
  * Ungated, like the profile: these are this person's own rows, and the
  * audience that produced them was already narrowed by StudioAudience.
