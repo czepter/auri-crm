@@ -57,7 +57,7 @@ class DocumentTemplateController extends Controller
             // first — a template is written for the work in front of you.
             'projects' => Project::query()->latest()->limit(50)->get()
                 ->map(fn (Project $project) => ['id' => $project->public_id, 'name' => $project->name])->all(),
-            'starters' => StarterTemplateCatalog::byType(),
+            'starters' => StarterTemplateCatalog::byType(app(StudioSettingsResolver::class)->clientRegister()),
         ]);
     }
 

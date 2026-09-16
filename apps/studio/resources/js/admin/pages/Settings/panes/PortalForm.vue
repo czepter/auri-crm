@@ -7,6 +7,7 @@ import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group'
+import { ChoiceGroup } from '@/ui/choice-group'
 
 type Section = 'portal' | 'home' | 'privacy'
 
@@ -19,7 +20,7 @@ const emit = defineEmits<{ saved: [] }>()
 // A pane sends only its own fields; the controller's `sometimes` leaves the
 // rest of the row untouched.
 const SECTION_FIELDS: Record<Section, string[]> = {
-  portal: ['portal_maintenance_enabled', 'portal_maintenance_message', 'portal_accept_quotes_enabled', 'portal_payment_status_enabled', 'portal_messaging_mode', 'portal_offers_enabled'],
+  portal: ['portal_maintenance_enabled', 'portal_maintenance_message', 'portal_accept_quotes_enabled', 'portal_payment_status_enabled', 'portal_messaging_mode', 'portal_offers_enabled', 'client_register'],
   home: ['portal_welcome_inquiry', 'portal_welcome_text', 'portal_welcome_many', 'portal_contact_phone', 'portal_contact_email', 'portal_contact_response_time'],
   privacy: ['dsgvo_request_recipient', 'dsgvo_request_deadline_days', 'portal_legal_datenschutz_url', 'portal_legal_agb_url'],
 }
@@ -36,6 +37,7 @@ const form = useForm({
   portal_payment_status_enabled: props.settings.paymentStatusEnabled,
   portal_offers_enabled: props.settings.offersEnabled,
   portal_messaging_mode: props.settings.messagingMode,
+  client_register: props.settings.clientRegister,
   portal_welcome_inquiry: props.settings.welcomeInquiry ?? '',
   portal_welcome_many: props.settings.welcomeMany ?? '',
   dsgvo_request_recipient: props.settings.dsgvoRecipient ?? '',
@@ -212,6 +214,15 @@ defineExpose({ form, submit })
           </div>
         </RadioGroup>
       </div>
+      <ChoiceGroup
+        v-model="form.client_register"
+        class="mb-6"
+        :label="$t('settings.clientRegister')"
+        :options="[
+          { value: 'formal', label: $t('settings.clientRegisterFormal') },
+          { value: 'informal', label: $t('settings.clientRegisterInformal') },
+        ]"
+      />
     </div>
   </form>
 </template>

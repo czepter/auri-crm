@@ -1037,6 +1037,9 @@
     "daySat": "Sa",
     "daySun": "So",
     "fontPair": "Schriftpaar",
+    "clientRegister": "Anrede",
+    "clientRegisterFormal": "Sie",
+    "clientRegisterInformal": "Du",
     "previewBrand": "Marke",
     "previewPortal": "Portal",
     "previewDocument": "Beleg",
@@ -1478,6 +1481,22 @@
     "priceOnRequest": "Auf Anfrage",
     "vatNote": "inkl. {rate} % Umsatzsteuer",
     "unsubscribeDone": "Abgemeldet."
+  },
+  "portalFormal": {
+    "yourData": "Ihre Daten",
+    "emailIsLogin": "Damit melden Sie sich an.",
+    "dataCopyHint": "Alles, was zu Ihnen gespeichert ist, als Datei.",
+    "inquiryReceivedTitle": "Wir haben Ihre Anfrage.",
+    "notedTitle": "Ihre Angaben",
+    "inquiryText": "Was Sie sich vorstellen",
+    "reachUs": "Sie erreichen uns",
+    "bookingsTitle": "Ihre Buchungen",
+    "galleriesTitle": "Ihre Galerien",
+    "pendingTitle": "Das wartet auf Sie",
+    "contactTitle": "Ihr Kontakt",
+    "messagesBodyPlaceholder": "Ihre Nachricht …",
+    "backHome": "Zu Ihren Buchungen",
+    "backMessages": "Zu Ihren Nachrichten"
   },
   "galleries": {
     "title": "Galerien",

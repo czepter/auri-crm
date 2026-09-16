@@ -71,6 +71,27 @@ class StudioSettingsResolver
         return $this->row()->quote_layout;
     }
 
+    /** 'formal' or 'informal' — see the studio_settings table's check constraint. */
+    public function clientRegister(): string
+    {
+        return $this->row()->client_register;
+    }
+
+    /**
+     * #439: how a client text addresses its readers. Informal splits on the
+     * count, so a couple reads "ihr" where a single contact reads "du".
+     *
+     * @return 'sie'|'du'|'ihr'
+     */
+    public function clientAddress(int $recipients = 1): string
+    {
+        return match (true) {
+            $this->clientRegister() === 'formal' => 'sie',
+            $recipients > 1 => 'ihr',
+            default => 'du',
+        };
+    }
+
     /**
      * T-09: the length ShootCalendar gives a shoot whose end_time is unset,
      * replacing the hardcoded addHours(2) that used to sit in that class

@@ -32,14 +32,18 @@ class ClientAccessLink extends Notification implements Transactional
 
     public function toMail(object $notifiable): MailMessage
     {
+        $du = $this->settings->clientAddress() === 'du';
+
         $message = (new MailMessage)
-            ->subject('Ihr Zugang zum Kundenbereich')
+            ->subject($du ? 'Dein Zugang zum Kundenbereich' : 'Ihr Zugang zum Kundenbereich')
             ->greeting("Hallo {$this->contact->name},")
             ->action('Kundenbereich öffnen', $this->url)
             // Said plainly, because a link that stops working without warning
             // reads as a broken system rather than as a deliberate one.
             ->line('Der Link gilt '.ClientAccess::VALID_FOR_MINUTES.' Minuten und funktioniert einmal.')
-            ->line('Wenn Sie das nicht angefordert haben, können Sie diese E-Mail ignorieren.');
+            ->line($du
+                ? 'Wenn du das nicht angefordert hast, kannst du diese E-Mail ignorieren.'
+                : 'Wenn Sie das nicht angefordert haben, können Sie diese E-Mail ignorieren.');
 
         // T-06: from/reply-to/BCC and the signature+legal footer, resolved
         // per tenant at send time rather than from MAIL_FROM_ADDRESS.

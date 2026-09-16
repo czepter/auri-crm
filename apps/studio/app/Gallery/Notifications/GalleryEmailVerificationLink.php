@@ -38,7 +38,9 @@ class GalleryEmailVerificationLink extends Notification
             ->greeting('Hallo,')
             ->action('E-Mail-Adresse bestätigen', $this->url)
             ->line('Der Link gilt '.GalleryEmailVerification::VALID_FOR_MINUTES.' Minuten.')
-            ->line('Wenn Sie das nicht angefordert haben, können Sie diese E-Mail ignorieren.');
+            ->line($this->settings->clientAddress() === 'du'
+                ? 'Wenn du das nicht angefordert hast, kannst du diese E-Mail ignorieren.'
+                : 'Wenn Sie das nicht angefordert haben, können Sie diese E-Mail ignorieren.');
 
         return $this->appendStudioMailIdentity($message, $this->settings);
     }

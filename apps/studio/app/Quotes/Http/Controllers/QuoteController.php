@@ -116,6 +116,7 @@ class QuoteController extends Controller
             'quote' => QuoteData::fromModel($quote),
             'recipientName' => $contact?->name ?? '',
             'recipientEmail' => $contact?->email ?? '',
+            'address' => app(StudioSettingsResolver::class)->clientAddress($quote->project->contacts()->count()),
             'mailHtml' => MailPreview::html(new QuoteSent($quote, null, MailPreview::MESSAGE), $contact ?? (object) []),
         ]);
     }
