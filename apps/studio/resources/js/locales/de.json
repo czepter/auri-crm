@@ -382,6 +382,23 @@
     "empty": "Keine Angebote.",
     "create": "Neues Angebot"
   },
+  "invoicesOverview": {
+    "title": "Rechnungen",
+    "searchPlaceholder": "Rechnung, Projekt oder Kunde suchen",
+    "rate": "Rate",
+    "number": "Nummer",
+    "dueOn": "Fällig",
+    "amount": "Betrag",
+    "status": "Status",
+    "all": "Alle",
+    "open": "Offen",
+    "paid": "Bezahlt",
+    "cancelled": "Storniert",
+    "overdue": "Überfällig",
+    "send": "Versenden",
+    "sent": "Versendet",
+    "viewed": "Geöffnet"
+  },
   "projects": {
     "title": "Projekte",
     "name": "Projekt",

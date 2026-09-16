@@ -823,6 +823,12 @@ export type NumberRangeResetRule = 'yearly' | 'continuous';
 }
 namespace Payments {
 namespace Data {
+export type InvoicePlanData = {
+projectId: string,
+projectName: string,
+contact: string | null,
+plan: App.Payments.Data.PaymentPlanData,
+};
 export type PaymentInstallmentData = {
 id: string,
 amount: number,
@@ -841,6 +847,8 @@ isLate: boolean,
 invoiceNumber: string | null,
 invoicedOn: string | null,
 hasInvoiceDocument: boolean,
+sentOn: string | null,
+viewedOn: string | null,
 creditNotes: {
 id: string,
 number: string,

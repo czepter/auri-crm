@@ -88,6 +88,13 @@ const items = computed(() =>
             icon: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M9.5 13h5M9.5 16h5"/>',
         },
         {
+            key: "rechnungen",
+            label: "Rechnungen",
+            href: "/rechnungen",
+            needs: "manage_contracts",
+            icon: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+        },
+        {
             key: "projekte",
             label: "Projekte",
             href: "/projekte",

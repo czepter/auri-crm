@@ -57,7 +57,10 @@ class PaymentPlanController extends Controller
         // count with their stored amount: that is the figure the update keeps.
         $validator->after(function ($validator) use ($request, $paymentPlan) {
             $total = (int) $request->input('total');
-            $issued = $paymentPlan->installments()->whereNotNull('invoiced_at')->pluck('amount', 'public_id');
+            // A cancelled row stays in the payload, or UpdatePaymentPlan would try to delete it, but
+            // counts zero — the sum trigger excludes it since 2026_09_14_000200.
+            $issued = $paymentPlan->installments()->whereNotNull('invoiced_at')->get()
+                ->mapWithKeys(fn ($row) => [$row->public_id => $row->isCancelled() ? 0 : $row->amount]);
             $sum = collect($request->input('installments', []))
                 ->sum(fn ($item) => (int) ($issued[$item['public_id'] ?? ''] ?? $item['amount'] ?? 0));
 

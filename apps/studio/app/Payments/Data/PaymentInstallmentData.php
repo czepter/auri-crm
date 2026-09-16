@@ -38,7 +38,7 @@ class PaymentInstallmentData extends Data
         // to disagree with what Stripe is handed.
         public int $paidAmount,
         public int $remaining,
-        // Derived, not stored: the same "still scheduled, due date passed"
+        // Derived, not stored: the same "still owed, due date passed"
         // condition App\Payments\Actions\DetectOverdueInstallments queries
         // for its own scan, minus that action's overdue_notified_at guard —
         // that column only dedupes the one-time notification event and is
@@ -54,6 +54,9 @@ class PaymentInstallmentData extends Data
         public ?string $invoiceNumber,
         public ?string $invoicedOn,
         public bool $hasInvoiceDocument,
+        // #415: when the client was told and when they opened it.
+        public ?string $sentOn,
+        public ?string $viewedOn,
         // #409: every Gutschrift written against this rate. `hasDocument` is
         // false between issue and render, for the same reason
         // hasInvoiceDocument is.
@@ -82,11 +85,13 @@ class PaymentInstallmentData extends Data
             paymentReference: $installment->payment_reference,
             paidAmount: (int) $installment->paid_amount,
             remaining: $installment->remaining(),
-            isLate: $installment->status === PaymentInstallmentStatus::Scheduled
+            isLate: in_array($installment->status, PaymentInstallmentStatus::open(), true)
                 && $installment->due_on->lt(now('UTC')->startOfDay()),
             invoiceNumber: $installment->invoice_number,
             invoicedOn: $installment->invoiced_at?->format('Y-m-d'),
             hasInvoiceDocument: $installment->invoice_path !== null,
+            sentOn: $installment->sent_at?->format('Y-m-d'),
+            viewedOn: $installment->viewed_at?->format('Y-m-d'),
             creditNotes: $installment->creditNotes->map(fn (CreditNote $note) => [
                 'id' => $note->public_id,
                 'number' => $note->number,
