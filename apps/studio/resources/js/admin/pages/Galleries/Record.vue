@@ -33,8 +33,6 @@ const props = withDefaults(defineProps<{
     downloadPin: string | null
     requiresVerifiedEmail: boolean
     expiresAt: string | null
-    balanceSettled: boolean
-    requiresSettledBalance: boolean
     design: Record<string, string> | null
     offers: { downloads: boolean; lists: boolean; comments: boolean }
     deviates: boolean

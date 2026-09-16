@@ -16,7 +16,6 @@ import { computed } from 'vue'
 const props = defineProps<{
   design: Record<string, string>
   offers: { downloads: boolean; lists: boolean; comments: boolean }
-  requiresSettledBalance: boolean
   title: string
   url: string
 }>()
@@ -24,15 +23,15 @@ const props = defineProps<{
 const SCHEMES: Record<string, Record<string, string>> = {
   light: {
     bg: '#FFFFFF', ink: '#151A22', muted: '#626B78', line: '#E2E7EB',
-    hero: '#C9D1D7', due: '#8A6212', dueBg: '#FAF3E4',
+    hero: '#C9D1D7',
   },
   dark: {
     bg: '#0E0C0B', ink: '#F2EDE9', muted: '#8B817B', line: '#241F1C',
-    hero: '#2C2521', due: '#D9B25C', dueBg: '#241D0E',
+    hero: '#2C2521',
   },
   warm: {
     bg: '#FBF7F2', ink: '#2A211B', muted: '#7A6A5C', line: '#E6DBCC',
-    hero: '#D8C4AC', due: '#8A6212', dueBg: '#F6EBD8',
+    hero: '#D8C4AC',
   },
 }
 
@@ -142,17 +141,7 @@ const filters = computed(() => [
         </span>
 
         <span
-          v-if="requiresSettledBalance"
-          class="flex flex-none items-center gap-[5px] rounded-md px-2.5 py-[5px] text-[8.5px] leading-none font-semibold"
-          :style="{ background: scheme.dueBg, color: scheme.due }"
-        >
-          <svg class="size-[9px] fill-none stroke-current stroke-[2.2] [stroke-linecap:round] [stroke-linejoin:round]" viewBox="0 0 24 24">
-            <rect height="9" rx="2" width="14" x="5" y="11" /><path d="M8 11V8a4 4 0 018 0v3" />
-          </svg>
-          {{ $t('gallerySettings.previewLocked') }}
-        </span>
-        <span
-          v-else-if="offers.downloads"
+          v-if="offers.downloads"
           class="flex flex-none items-center gap-[5px] rounded-md px-2.5 py-[5px] text-[8.5px] leading-none font-semibold"
           :style="{ background: scheme.ink, color: scheme.bg }"
         >

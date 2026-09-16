@@ -3,6 +3,7 @@
 namespace App\Payments\Support\Layouts;
 
 use App\Payments\Support\InvoiceDocument;
+use Illuminate\Support\Number;
 
 /**
  * The parts every invoice layout prints identically, because they carry no
@@ -102,7 +103,14 @@ trait RendersInvoiceParts
                 $columns,
                 "Rechnung {$deposit['number']} vom {$deposit['date']}",
                 '−'.$deposit['gross'],
+                $document->smallBusiness ? '' : "netto {$deposit['net']} · USt {$deposit['vat']}",
             );
+        }
+
+        // § 14 Abs. 5 S. 2 UStG: the tax already invoiced is deducted by amount.
+        if (! $document->smallBusiness) {
+            $vat = array_sum(array_column($document->deposits, 'vatAmount'));
+            $rows .= $this->spanningRow($columns, 'davon USt', '−'.Number::currency($vat / 100, in: 'EUR', locale: 'de'));
         }
 
         return $rows.$this->spanningRow($columns, 'Restbetrag', $document->gross);
@@ -136,10 +144,11 @@ trait RendersInvoiceParts
         return '<tr><td>'.$label.'</td>'.$middle.'<td class="doc-num">'.e($amount).'</td></tr>';
     }
 
-    private function spanningRow(int $columns, string $label, string $amount): string
+    private function spanningRow(int $columns, string $label, string $amount, string $detail = ''): string
     {
         $span = $columns >= 4 ? ' colspan="3"' : '';
+        $detail = $detail === '' ? '' : '<br><small>'.e($detail).'</small>';
 
-        return '<tr><td'.$span.'>'.e($label).'</td><td class="doc-num">'.e($amount).'</td></tr>';
+        return '<tr><td'.$span.'>'.e($label).$detail.'</td><td class="doc-num">'.e($amount).'</td></tr>';
     }
 }

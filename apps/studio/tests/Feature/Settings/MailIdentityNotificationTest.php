@@ -190,7 +190,9 @@ it("renders the studio's legal particulars inside the layout's footer zone, not 
         ->toContain('Hamburg');
 });
 
-it('renders the product footer on a mail that carries its own brand', function () {
+it('renders the product footer on a mail that carries its own brand', function (?string $address) {
+    config(['mail.support_address' => $address]);
+
     $html = (string) app(Markdown::class)->render('mail.product-message', [
         'brand' => 'Auri CRM',
         'greeting' => 'Hallo Christian,',
@@ -199,5 +201,7 @@ it('renders the product footer on a mail that carries its own brand', function (
         'salutation' => null,
     ]);
 
-    expect($html)->toContain('github.com/czepter/auri-crm/issues');
-});
+    $address
+        ? expect($html)->toContain('href="mailto:hilfe@auri.test"')
+        : expect($html)->not->toContain('Fragen:')->not->toContain('mailto:');
+})->with(['configured' => 'hilfe@auri.test', 'unset' => null]);
