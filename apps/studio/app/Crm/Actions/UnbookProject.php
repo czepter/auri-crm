@@ -26,8 +26,8 @@ use Illuminate\Support\Facades\DB;
  * be reused. Cancelling a booking that far along is a decision with paperwork,
  * not a correction of a mis-drop.
  *
- * What it does not undo: the tasks ApplyTemplatesOnBooking wrote, the webhook
- * DispatchWebhookNotifications sent, any automation rule that fired. A
+ * What it does not undo: the tasks ApplyTemplatesOnBooking wrote, any
+ * automation rule that fired. A
  * delivered event cannot be recalled, and a task somebody has since ticked is
  * theirs, not the booking's. Only the booking itself is taken back.
  */

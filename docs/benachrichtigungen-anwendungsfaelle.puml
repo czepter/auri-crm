@@ -33,14 +33,12 @@ rectangle "Auri CRM · Notifications" {
 
   usecase "Mail senden" as N_Mail
   usecase "In-App-Eintrag schreiben" as N_InApp
-  usecase "Webhook senden" as N_Hook
 
   usecase "Antwortmail einlesen" as N_Inbound
   usecase "Nachricht dem Thread zuordnen" as N_Thread
 }
 
 actor "Mailserver" as Mail2
-actor "Integrationsclient" as Api2
 
 Client2 --> N_Message
 Client2 --> N_QuoteAccepted
@@ -74,20 +72,17 @@ N_Service ..> N_Quiet : <<include>>
 N_Quiet ..> N_Defer : <<extend>>
 N_Service ..> N_Mail : <<include>>
 N_Service ..> N_InApp : <<include>>
-N_Service ..> N_Hook : <<extend>>
 N_InApp ..> N_Digest : <<extend>>
 
-N_Overdue ..> N_Hook : <<include>>
+N_Overdue ..> N_Service : <<include>>
 N_Inbound ..> N_Thread : <<include>>
 N_Thread ..> N_Message : <<extend>>
 
 N_Mail --> Mail2
 Mail2 --> N_Inbound
-N_Hook --> Api2
 
 legend right
   Transactional (StaffInvited, ClientAccessLink, QuoteSent, Galerie-Codes)
   umgeht Praeferenz und Ruhezeit.
-  Zahlungsverzug erreicht heute nur den Webhook, keine Studio-Mail.
 endlegend
 @enduml
