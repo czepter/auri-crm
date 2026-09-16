@@ -438,6 +438,13 @@ const due = computed(() => {
                         @cancel="anfrage.reset()"
                         @save="saveAnfrage"
                     >
+                        <template v-if="header.canManagePortalVisibility" #action>
+                            <div class="flex items-center gap-2" @click.stop>
+                                <Label for="lead-portal" variant="inline">{{ $t("project.portal") }}</Label>
+                                <Switch id="lead-portal" :model-value="header.portalVisible" @update:model-value="togglePortal" />
+                            </div>
+                        </template>
+
                         <!-- Der Anfragetext, darunter woher und wann. Die
                              Personen stehen in ihrer eigenen Karte: eine
                              Seitenspalte trägt keinen Zeileneditor. -->
@@ -507,13 +514,6 @@ const due = computed(() => {
                         @cancel="kontakte.reset()"
                         @save="saveKontakte"
                     >
-                        <template v-if="header.canManagePortalVisibility" #action>
-                            <div class="flex items-center gap-2" @click.stop>
-                                <Label for="lead-portal" variant="inline">{{ $t("project.portal") }}</Label>
-                                <Switch id="lead-portal" :model-value="header.portalVisible" @update:model-value="togglePortal" />
-                            </div>
-                        </template>
-
                         <div
                             v-for="person in people"
                             :key="person.id"
