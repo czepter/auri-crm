@@ -63,14 +63,28 @@ class PaymentInstallmentController extends Controller
      * job it already booked, and splitting them across two capabilities would
      * invent a role that can settle a payment but not document it.
      */
-    public function issueInvoice(PaymentInstallment $installment, IssueInvoice $issue): RedirectResponse
+    public function issueInvoice(Request $request, PaymentInstallment $installment, IssueInvoice $issue): RedirectResponse
     {
         $this->authorize('managePaymentPlan', $installment->plan->job->project);
 
         $issue($installment, auth('staff')->user());
 
         // #415: straight into the compose screen. Sending stays a second decision — see send().
-        return redirect("/raten/{$installment->public_id}/rechnung/versenden");
+        // #479: `liste` carries the way back to /rechnungen through both screens.
+        return redirect("/raten/{$installment->public_id}/rechnung/versenden".($request->boolean('liste') ? '?liste=1' : ''));
+    }
+
+    /**
+     * #479. The due date alone, without the whole plan UpdatePaymentPlan
+     * wants. The model audits the change on an issued invoice.
+     */
+    public function updateDueOn(Request $request, PaymentInstallment $installment): RedirectResponse
+    {
+        $this->authorize('managePaymentPlan', $installment->plan->job->project);
+
+        $installment->update($request->validate(['due_on' => ['required', 'date']]));
+
+        return back();
     }
 
     /**
@@ -78,7 +92,7 @@ class PaymentInstallmentController extends Controller
      * recipients, the subject and the message on the left, this
      * notification's own render on the right.
      */
-    public function sendView(PaymentInstallment $installment, StudioSettingsResolver $settings): Response
+    public function sendView(Request $request, PaymentInstallment $installment, StudioSettingsResolver $settings): Response
     {
         $this->authorize('managePaymentPlan', $installment->plan->job->project);
 
@@ -89,6 +103,7 @@ class PaymentInstallmentController extends Controller
         return Inertia::render('Invoices/Send', [
             'projectId' => $installment->plan->job->project->public_id,
             'installmentId' => $installment->public_id,
+            'fromList' => $request->boolean('liste'),
             'invoice' => [
                 'number' => $installment->invoice_number,
                 'date' => $installment->invoiced_at?->format('d.m.Y'),
@@ -133,7 +148,7 @@ class PaymentInstallmentController extends Controller
             $installment->update(['sent_at' => now()]);
         }
 
-        return redirect("/auftraege/{$installment->plan->job->project->public_id}");
+        return redirect($request->boolean('liste') ? '/rechnungen' : "/auftraege/{$installment->plan->job->project->public_id}");
     }
 
     /**

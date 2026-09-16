@@ -150,3 +150,20 @@ it('keeps the surviving rates named as they were before the Storno', function ()
     expect($after[1]->label)->toBe($labelsBefore[1]->label)
         ->and($after[2]->label)->toBe($labelsBefore[0]->label);
 });
+
+it('still edits a plan that carries a cancelled rate', function () {
+    $installment = stornoableInstallment();
+    app(CancelInvoice::class)($installment, CancellationKind::Correction, 'Falscher Empfänger');
+    $plan = $installment->plan->fresh();
+
+    test()->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->patch("/zahlungsplaene/{$plan->public_id}", [
+            'total' => $plan->total,
+            'installments' => $plan->installments->map(fn ($row) => [
+                'public_id' => $row->public_id,
+                'amount' => $row->amount,
+                'due_on' => '2026-12-01',
+            ])->all(),
+        ])
+        ->assertSessionHasNoErrors();
+});

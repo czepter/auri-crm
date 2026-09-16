@@ -63,6 +63,7 @@ use App\Http\Controllers\Staff\SetupController;
 use App\Media\Http\Controllers\FailedAssetController;
 use App\Media\Http\Controllers\MultipartUploadController;
 use App\Media\Http\Controllers\UploadPrecheckController;
+use App\Payments\Http\Controllers\InvoiceController;
 use App\Payments\Http\Controllers\InvoiceExportController;
 use App\Payments\Http\Controllers\PaymentInstallmentController;
 use App\Payments\Http\Controllers\PaymentPlanController;
@@ -788,6 +789,10 @@ Route::middleware('audience:staff')->group(function () {
         // #418: one call closes the plan. See SettlePaymentPlan.
         Route::post('/zahlungsplaene/{paymentPlan}/abwickeln', [PaymentPlanController::class, 'settle'])
             ->name('payment-plans.settle');
+
+        Route::get('/rechnungen', [InvoiceController::class, 'index'])->name('invoices.index');
+        Route::patch('/raten/{installment}/faelligkeit', [PaymentInstallmentController::class, 'updateDueOn'])
+            ->name('payment-installments.due-on');
 
         // T-07's staff action: date, method and reference, recorded once —
         // never a status flipped on its own. See MarkInstallmentPaid.

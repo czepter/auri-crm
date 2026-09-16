@@ -26,3 +26,13 @@ it('does not mark a paid installment late, however old', function () {
     expect(PaymentPlanData::fromModel($installment->plan->load('installments'))
         ->installments[0]->isLate)->toBeFalse();
 });
+
+it('marks an issued invoice past its due date as late', function () {
+    $installment = PaymentInstallment::factory()->create([
+        'due_on' => now()->subDay()->toDateString(),
+        'status' => PaymentInstallmentStatus::Invoiced,
+    ]);
+
+    expect(PaymentPlanData::fromModel($installment->plan->load('installments'))
+        ->installments[0]->isLate)->toBeTrue();
+});

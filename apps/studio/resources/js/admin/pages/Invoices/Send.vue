@@ -10,6 +10,7 @@ import { formatEuros } from '@/admin/lib/money'
 const props = defineProps<{
   projectId: string
   installmentId: string
+  fromList: boolean
   invoice: {
     number: string
     date: string | null
@@ -30,11 +31,11 @@ const message: EditorDocument = {
 const cardOpen = ref(true)
 
 function cancel() {
-  router.visit(`/auftraege/${props.projectId}`)
+  router.visit(props.fromList ? '/rechnungen' : `/auftraege/${props.projectId}`)
 }
 
 function send({ subject, message }: { subject: string; message: EditorDocument }) {
-  router.post(`/raten/${props.installmentId}/rechnung/versenden`, { subject, message: toPlainText(message) })
+  router.post(`/raten/${props.installmentId}/rechnung/versenden`, { subject, message: toPlainText(message), liste: props.fromList })
 }
 </script>
 
