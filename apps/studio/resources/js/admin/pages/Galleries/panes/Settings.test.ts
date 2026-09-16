@@ -28,8 +28,6 @@ const gallery = {
   downloadPin: null,
   requiresVerifiedEmail: false,
   expiresAt: null,
-  balanceSettled: true,
-  requiresSettledBalance: false,
   offers: { downloads: true, lists: true, comments: true },
 }
 
@@ -71,15 +69,5 @@ describe('Settings', () => {
     expect(html).toContain(de.gallerySettings.commentsLabel)
     expect(html).not.toContain(de.gallerySettings.downloadsLabel)
     expect(html).not.toContain(de.galleryRecord.slugLabel)
-  })
-
-  it('shows the studio-owed notice when a balance is due, on every section', async () => {
-    const html = await render({
-      ...base,
-      gallery: { ...gallery, requiresSettledBalance: true, balanceSettled: false },
-      settingsSection: 'kommentare',
-    })
-
-    expect(html).toContain(de.galleryRecord.blockedByBalance)
   })
 })

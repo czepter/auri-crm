@@ -43,10 +43,6 @@ class DownloadZipPartController extends Controller
 
         abort_unless($zipBuild->galleryVersion->gallery_id === $gallery->id, 404);
         abort_unless($zipBuild->status === ZipBuildStatus::Ready, 404);
-        // G-05: the link is signed for 24 hours and the balance can fall due
-        // inside them, so the flag is read here and not only where the link
-        // was minted.
-        abort_if($gallery->balanceBlocksDownload(), 404);
 
         try {
             $range = ByteRange::parse($request->header('Range'), $zipBuildPart->byte_size);

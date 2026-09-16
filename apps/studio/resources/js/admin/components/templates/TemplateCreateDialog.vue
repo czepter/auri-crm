@@ -53,7 +53,6 @@ const preset = useForm({
   name: '',
   expiry_mode: 'inherit',
   expiry_days: '' as string | number,
-  requires_settled_balance: null,
   downloads_enabled: null,
   lists_enabled: null,
   comments_enabled: null,

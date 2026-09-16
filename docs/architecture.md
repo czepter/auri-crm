@@ -113,7 +113,7 @@ app/Crm/
 | `Portal` | The client surface's own screens and notifications |
 | `Engagement` | Message threads between studio and client |
 | `Automation` | Rules that fire on events and on date offsets |
-| `Integration` | The public integration API, API tokens, webhooks |
+| `Integration` | The public integration API, API tokens |
 | `Migration` | Historical import, cutover snapshot and restore |
 | `Settings` | Studio profile, portal capabilities, document settings |
 

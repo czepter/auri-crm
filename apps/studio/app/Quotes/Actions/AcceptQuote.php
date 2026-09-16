@@ -2,6 +2,8 @@
 
 namespace App\Quotes\Actions;
 
+use App\Crm\Actions\AdvanceLeadStage;
+use App\Crm\Enums\StageAnchor;
 use App\Crm\Models\Contact;
 use App\Notifications\Actions\NotifyStudio;
 use App\Notifications\Studio\QuoteAccepted;
@@ -9,6 +11,7 @@ use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Quotes\Support\QuoteRange;
+use App\Quotes\Support\VatLines;
 use App\Support\AuditLogger;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
@@ -36,7 +39,10 @@ use Illuminate\Validation\ValidationException;
  */
 class AcceptQuote
 {
-    public function __construct(private readonly NotifyStudio $notifyStudio) {}
+    public function __construct(
+        private readonly NotifyStudio $notifyStudio,
+        private readonly AdvanceLeadStage $leads,
+    ) {}
 
     /**
      * @param  list<string>  $selectedItemIds  public_ids of the blocks the client switched on
@@ -94,6 +100,8 @@ class AcceptQuote
                 projectId: $quote->project_id,
                 occurredAt: $at,
             );
+
+            $this->leads->reach($quote->project->lead, StageAnchor::QuoteAccepted, at: $at);
         });
 
         $accepted = $quote->fresh();
@@ -134,10 +142,17 @@ class AcceptQuote
             throw ValidationException::withMessages(['items' => __('portal.quote_item_not_selectable')]);
         }
 
+        $total = QuoteRange::totalFor($quote, $hours, $chosen->pluck('id'));
+
         return [
             'quote' => [
                 'hours' => $hours,
-                'total' => QuoteRange::totalFor($quote, $hours, $chosen->pluck('id')),
+                'total' => $total,
+                'net' => $total,
+                // At the rate frozen at send, never today's setting.
+                'vat_amount' => $quote->vat_mode === 'small_business'
+                    ? 0
+                    : collect(VatLines::fromItems($quote->items, (int) $quote->vat_rate, $total))->sum('vat'),
             ],
             'selected' => $selectable
                 ->mapWithKeys(fn (QuoteItem $item) => [$item->id => $chosen->contains('id', $item->id)])

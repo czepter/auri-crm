@@ -68,6 +68,7 @@ use App\Payments\Http\Controllers\PaymentPlanController;
 use App\Quotes\Http\Controllers\QuoteController;
 use App\Releases\Http\Controllers\ReleaseController;
 use App\Reporting\Http\Controllers\ReportController;
+use App\Settings\Http\Controllers\ApiTokenController;
 use App\Settings\Http\Controllers\GallerySettingsController;
 use App\Settings\Http\Controllers\NotificationSettingsController;
 use App\Settings\Http\Controllers\NumberRangeController;
@@ -492,6 +493,13 @@ Route::middleware('audience:staff')->group(function () {
             ->name('settings.notifications.edit');
         Route::patch('/einstellungen/benachrichtigungen', [NotificationSettingsController::class, 'update'])
             ->name('settings.notifications.update');
+
+        Route::get('/einstellungen/api-token', [ApiTokenController::class, 'index'])
+            ->name('api-tokens.index');
+        Route::post('/einstellungen/api-token', [ApiTokenController::class, 'store'])
+            ->name('api-tokens.store');
+        Route::delete('/einstellungen/api-token/{apiToken}', [ApiTokenController::class, 'destroy'])
+            ->name('api-tokens.destroy');
 
         // /anfragen/neu stays above /anfragen/{lead}/stufe for the same reason
         // /kontakte/suche stays above /kontakte/{contact}.
