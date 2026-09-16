@@ -4,6 +4,7 @@ namespace App\Integration\Http\Controllers;
 
 use App\Crm\Actions\AdvanceShootStatus;
 use App\Crm\Actions\DesignatePrimaryShoot;
+use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -36,10 +37,11 @@ class ShootController extends Controller
      * second from here otherwise.
      *
      * Mirrors App\Crm\Http\Controllers\ShootController::store: the same
-     * rules, the same nullable date, and the model's own defaults for status,
-     * is_primary and sort_order — the primary one is already taken.
+     * rules, the same nullable date, the booked status on a booked project,
+     * and the model's own defaults for is_primary and sort_order — the
+     * primary one is already taken.
      */
-    public function store(Request $request, Project $project): JsonResponse
+    public function store(Request $request, Project $project, AdvanceShootStatus $advance, CrmVocabulary $stages): JsonResponse
     {
         $validated = $request->validate([
             // Nullable, like the admin screen's own store — the project's
@@ -60,6 +62,15 @@ class ShootController extends Controller
             + array_filter(['status_entered_at' => $validated['entered_at'] ?? null])
         );
         $shoot->setRelation('project', $project);
+
+        if ($project->job()->exists()) {
+            $advance(
+                $shoot,
+                $stages->anchored(StagePipeline::Project, StageAnchor::Booked),
+                $this->actor($request),
+                isset($validated['entered_at']) ? CarbonImmutable::parse($validated['entered_at']) : null,
+            );
+        }
 
         return response()->json(['data' => ShootReadData::fromModel($shoot)], 201);
     }
