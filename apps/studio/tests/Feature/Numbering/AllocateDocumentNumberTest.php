@@ -6,10 +6,29 @@ use App\Numbering\Models\NumberCounter;
 use App\Settings\Models\NumberRange;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
+
+// The subprocesses below commit on their own connections, so their rows
+// outlive RefreshDatabase's rollback — and a delete on the test connection
+// would be rolled back with everything else, leaving them for whatever test
+// counts counters next.
+function purgeCommittedCounters(string $tenantId, string $type, int $year): void
+{
+    config(['database.connections.numbering_purge' => config('database.connections.pgsql')]);
+
+    DB::connection('numbering_purge')
+        ->table('quote_number_counters')
+        ->where('tenant_id', $tenantId)
+        ->where('document_type', $type)
+        ->where('year', $year)
+        ->delete();
+
+    DB::purge('numbering_purge');
+}
 
 // Q-05's own six scenarios, unchanged in substance — the seeded tenant
 // (config('tenancy.tenant_id')) already carries a quote range from the
@@ -199,13 +218,11 @@ it('never hands out the same quote number twice under real concurrent access', f
 
     // The database agrees with what the processes reported: exactly one row
     // per successful allocation, and every counter value handed back is
-    // actually there. Real subprocesses commit for real on their own
-    // connections — RefreshDatabase's rollback of the main test connection
-    // never touches them — so this also cleans up after itself.
+    // actually there.
     expect(NumberCounter::where('tenant_id', $tenantId)->where('document_type', 'quote')->where('year', $year)->count())
         ->toBe($succeeded->count());
 
-    NumberCounter::where('tenant_id', $tenantId)->where('document_type', 'quote')->where('year', $year)->delete();
+    purgeCommittedCounters($tenantId, 'quote', $year);
 });
 
 it('never hands out the same number twice for a second document type under real concurrent access', function () {
@@ -244,5 +261,5 @@ it('never hands out the same number twice for a second document type under real 
     expect(NumberCounter::where('tenant_id', $tenantId)->where('document_type', 'credit_note')->where('year', $year)->count())
         ->toBe($succeeded->count());
 
-    NumberCounter::where('tenant_id', $tenantId)->where('document_type', 'credit_note')->where('year', $year)->delete();
+    purgeCommittedCounters($tenantId, 'credit_note', $year);
 });

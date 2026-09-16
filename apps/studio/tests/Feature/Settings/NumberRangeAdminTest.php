@@ -24,7 +24,7 @@ it('renders the numbering settings shell for an owner, one row per document type
         ->assertOk()
         ->viewData('page')['props'];
 
-    expect($props['ranges'])->toHaveCount(4);
+    expect($props['ranges'])->toHaveCount(3);
 
     $quote = collect($props['ranges'])->firstWhere('documentType', 'quote');
     expect($quote['id'])->toBe(($this->quoteRange)()->public_id)
