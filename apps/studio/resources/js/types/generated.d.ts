@@ -18,6 +18,8 @@ eventLabel: string | null,
 anchor: string | null,
 offsetDays: number | null,
 direction: string | null,
+projectType: string | null,
+action: string,
 };
 export type AutomationRunData = {
 id: string,
@@ -28,11 +30,12 @@ statusLabel: string,
 };
 }
 namespace Enums {
-export type AutomationAnchor = 'per_shoot' | 'primary_shoot' | 'quote_validity' | 'installment_due' | 'gallery_expiry' | 'questionnaire_due';
+export type AutomationAction = 'notice' | 'task' | 'mail_draft';
+export type AutomationAnchor = 'per_shoot' | 'primary_shoot' | 'quote_validity' | 'installment_due' | 'gallery_expiry' | 'questionnaire_due' | 'delivered' | 'quote_sent' | 'inquiry_captured';
 export type AutomationCondition = 'payment_open' | 'questionnaire_open' | 'gallery_unopened';
 export type AutomationOffsetDirection = 'before' | 'after';
 export type AutomationRecipient = 'client' | 'crew' | 'studio';
-export type AutomationRunStatus = 'pending' | 'sent' | 'failed' | 'skipped';
+export type AutomationRunStatus = 'pending' | 'sent' | 'failed' | 'skipped' | 'awaiting_approval';
 export type AutomationTriggerType = 'event' | 'date_offset';
 }
 }

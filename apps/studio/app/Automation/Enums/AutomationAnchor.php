@@ -40,6 +40,15 @@ enum AutomationAnchor: string implements HasLabel
     case GalleryExpiry = 'gallery_expiry';
     case QuestionnaireDue = 'questionnaire_due';
 
+    /** The day the primary shoot entered the stage anchored Delivered. Fires against its Project. */
+    case Delivered = 'delivered';
+
+    /** #438: a quote's sent_at while it is still unanswered. Fires against its Project, as QuoteValidity does. */
+    case QuoteSent = 'quote_sent';
+
+    /** #438: an open inquiry's captured_at while it still sits in the stage anchored Entry. */
+    case InquiryCaptured = 'inquiry_captured';
+
     public function label(): string
     {
         return match ($this) {
@@ -49,6 +58,9 @@ enum AutomationAnchor: string implements HasLabel
             self::InstallmentDue => 'Rate fällig',
             self::GalleryExpiry => 'Galerie läuft ab',
             self::QuestionnaireDue => 'Kundenaufgabe fällig',
+            self::Delivered => 'Ausgeliefert',
+            self::QuoteSent => 'Angebot verschickt',
+            self::InquiryCaptured => 'Anfrage eingegangen',
         };
     }
 }

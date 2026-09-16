@@ -23,6 +23,8 @@ const meta = {
       anchor: 'installment_due',
       offsetDays: 3,
       direction: 'after',
+      projectType: null,
+      action: 'mail_draft',
     },
     anchors: [
       { value: 'primary_shoot', label: 'Haupttermin' },
@@ -35,6 +37,14 @@ const meta = {
     ],
     conditions: [
       { value: 'payment_open', label: 'Zahlung offen' },
+    ],
+    projectTypes: [
+      { value: 'wedding', label: 'Hochzeit' },
+      { value: 'portrait', label: 'Portrait' },
+    ],
+    actions: [
+      { value: 'notice', label: 'Hinweis' },
+      { value: 'task', label: 'Aufgabe' },
     ],
     mergeFields: [
       { path: 'client.firstName', sample: 'Lena' },

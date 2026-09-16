@@ -2,6 +2,9 @@
 
 namespace App\Engagement\Http\Controllers;
 
+use App\Automation\Actions\FireAutomationRule;
+use App\Automation\Enums\AutomationRunStatus;
+use App\Automation\Models\AutomationRun;
 use App\Crm\Models\Project;
 use App\Engagement\Actions\AttachThreadToProject;
 use App\Engagement\Actions\PostMessage;
@@ -108,6 +111,21 @@ class InboxController extends Controller
                     'subject' => $thread->subject,
                     'snippet' => $thread->latestMessage?->body,
                     'startedAt' => $thread->created_at->toIso8601String(),
+                ])
+                ->all(),
+            // #438: client mails an automation drafted, waiting for the studio's send.
+            'drafts' => AutomationRun::query()
+                ->where('status', AutomationRunStatus::AwaitingApproval)
+                ->with('anchorable')
+                ->latest('fired_at')
+                ->limit(100)
+                ->get()
+                ->map(fn (AutomationRun $run) => [
+                    'id' => $run->public_id,
+                    'subject' => $run->subject,
+                    'body' => $run->body,
+                    'projectName' => $run->anchorable === null ? null : FireAutomationRule::projectOf($run->anchorable)?->name,
+                    'to' => $run->contacts()->pluck('name')->join(', '),
                 ])
                 ->all(),
             'projects' => Project::query()

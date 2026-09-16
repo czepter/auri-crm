@@ -5,14 +5,19 @@ namespace App\Automation\Actions;
 use App\Automation\Enums\AutomationAnchor;
 use App\Automation\Enums\AutomationOffsetDirection;
 use App\Automation\Models\AutomationRule;
+use App\Crm\Enums\StageAnchor;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Enums\TaskAudience;
+use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
+use App\Crm\Support\CrmVocabulary;
 use App\Gallery\Models\Gallery;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
+use App\Settings\Support\StudioSettingsResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 
@@ -39,11 +44,17 @@ use Illuminate\Database\Eloquent\Model;
  */
 class SweepDateOffsetAutomationRules
 {
-    public function __construct(private readonly FireAutomationRule $fire) {}
+    public function __construct(
+        private readonly FireAutomationRule $fire,
+        private readonly StudioSettingsResolver $settings,
+        private readonly CrmVocabulary $stages,
+    ) {}
 
     public function __invoke(?CarbonImmutable $today = null): int
     {
-        $today = ($today ?? CarbonImmutable::now('UTC'))->startOfDay();
+        // The schedule runs at 00:00 studio time, when UTC east of Greenwich
+        // still reads yesterday.
+        $today = ($today ?? CarbonImmutable::now($this->settings->timezone()))->startOfDay();
         $fired = 0;
 
         foreach (AutomationRule::query()->active()->dateOffset()->get() as $rule) {
@@ -104,6 +115,37 @@ class SweepDateOffsetAutomationRules
                 ->get();
         }
 
+        if ($rule->anchor === AutomationAnchor::Delivered) {
+            return Shoot::query()
+                ->uncancelled()
+                ->where('is_primary', true)
+                ->where('status', $this->stages->anchored(StagePipeline::Project, StageAnchor::Delivered)?->key)
+                ->whereDate('status_entered_at', $day)
+                ->with('project')
+                ->get()
+                ->map(fn (Shoot $shoot) => $shoot->project);
+        }
+
+        if ($rule->anchor === AutomationAnchor::QuoteSent) {
+            return Quote::query()
+                ->where('status', QuoteStatus::Sent)
+                ->whereDate('sent_at', $day)
+                ->with('project')
+                ->get()
+                ->map(fn (Quote $quote) => $quote->project);
+        }
+
+        if ($rule->anchor === AutomationAnchor::InquiryCaptured) {
+            return Lead::query()
+                ->open()
+                ->unbooked()
+                ->where('stage', $this->stages->anchored(StagePipeline::Lead, StageAnchor::Entry)?->key)
+                ->whereDate('captured_at', $day)
+                ->with('project')
+                ->get()
+                ->map(fn (Lead $lead) => $lead->project);
+        }
+
         if ($rule->anchor === AutomationAnchor::QuoteValidity) {
             return Quote::query()
                 ->where('status', QuoteStatus::Sent)
@@ -117,6 +159,8 @@ class SweepDateOffsetAutomationRules
 
         return Shoot::query()
             ->uncancelled()
+            // An inquiry's requested date is a shoot row too; only a booking has a shooting to remind of.
+            ->whereHas('project.job')
             ->whereDate('date', $targetDate->toDateString())
             ->when($isPrimary, fn ($query) => $query->where('is_primary', true))
             ->with('project')

@@ -1,5 +1,6 @@
 <?php
 
+use App\Automation\Http\Controllers\AutomationDraftController;
 use App\Automation\Http\Controllers\AutomationRuleController;
 use App\Catalog\Http\Controllers\PackageController;
 use App\Catalog\Http\Controllers\ServiceSuggestionController;
@@ -325,6 +326,12 @@ Route::middleware('audience:staff')->group(function () {
             ->name('inbox.close');
         Route::post('/posteingang/unterhaltung/{thread}/zuordnen', [InboxController::class, 'file'])
             ->name('inbox.thread.file');
+        Route::get('/posteingang/entwuerfe/{automationRun}/senden', [AutomationDraftController::class, 'compose'])
+            ->name('automation-drafts.compose');
+        Route::post('/posteingang/entwuerfe/{automationRun}/versenden', [AutomationDraftController::class, 'send'])
+            ->name('automation-drafts.send');
+        Route::post('/posteingang/entwuerfe/{automationRun}/verwerfen', [AutomationDraftController::class, 'discard'])
+            ->name('automation-drafts.discard');
 
         // S-13 + M-07. One screen: how the studio is doing, and what is
         // coming in. Gated on ViewAllProjects inside the controller — these
