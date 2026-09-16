@@ -1,10 +1,9 @@
 <?php
 
+use App\Crm\Models\Contact;
 use App\Enums\Capability;
 use App\Enums\StaffRole;
-use App\Models\AuditLog;
 use App\Payments\Actions\IssueInvoice;
-use App\Payments\Models\PaymentPlan;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
@@ -18,47 +17,42 @@ beforeEach(function () {
     Bus::fake();
 });
 
-it('lists every plan of every project with its rates', function () {
-    $first = invoiceablePlan();
-    $second = PaymentPlan::factory()->create();
-    app(IssueInvoice::class)($first);
+it('lists invoices, not rates — with and without a project, newest first', function () {
+    $rates = invoiceablePlan()->plan->installments()->orderBy('sort_order')->get();
+    $project = app(IssueInvoice::class)($rates);
 
-    $plans = test()->actingAs(staffMember(), 'staff')->get('/rechnungen')
-        ->assertOk()->viewData('page')['props']['plans'];
+    $this->travel(1)->minute();
+    $free = app(IssueInvoice::class)->free(
+        Contact::factory()->create(['name' => 'Jonas Gast']),
+        [['description' => 'Abzüge', 'quantity' => 30, 'unit_price' => 1_000, 'vat_rate' => 1900]],
+        now()->addWeek()->toDateString(),
+    );
 
-    expect(collect($plans)->pluck('plan.id')->sort()->values()->all())
-        ->toBe(collect([$first->plan->public_id, $second->public_id])->sort()->values()->all());
+    $rows = $this->actingAs(staffMember(), 'staff')->get('/rechnungen')
+        ->assertOk()->viewData('page')['props']['invoices'];
 
-    $issued = collect($plans)->firstWhere('plan.id', $first->plan->public_id);
-
-    expect($issued['projectName'])->toBe($first->plan->job->project->name)
-        ->and($issued['plan']['installments'])->toHaveCount(2)
-        ->and($issued['plan']['installments'][0]['invoiceNumber'])->toBe($first->fresh()->invoice_number);
+    expect(collect($rows)->pluck('id')->all())->toBe([$free->public_id, $project->public_id])
+        ->and($rows[0]['projectName'])->toBeNull()
+        ->and($rows[0]['contact'])->toBe('Jonas Gast')
+        ->and($rows[0]['amount'])->toBe(30_000)
+        ->and($rows[1]['amount'])->toBe(150_000)
+        ->and($rows[1]['openInstallments'])->toHaveCount(2);
 });
 
 it('refuses a role that may not manage payment plans', function () {
     $role = collect(StaffRole::cases())->first(fn (StaffRole $role) => ! $role->allows(Capability::ManageContracts));
 
-    test()->actingAs(staffMember($role), 'staff')->get('/rechnungen')->assertForbidden();
+    $this->actingAs(staffMember($role), 'staff')->get('/rechnungen')->assertForbidden();
 });
 
-it('moves the due date of an issued invoice and audits it', function () {
+it('offers the open rates of each plan on the new-invoice screen', function () {
     $installment = invoiceablePlan();
     app(IssueInvoice::class)($installment);
 
-    test()->actingAs(staffMember(), 'staff')
-        ->patch("/raten/{$installment->public_id}/faelligkeit", ['due_on' => '2026-12-24'])
-        ->assertRedirect();
+    $plans = $this->actingAs(staffMember(), 'staff')->get('/rechnungen/neu')
+        ->assertOk()->viewData('page')['props']['plans'];
 
-    expect($installment->fresh()->due_on->format('Y-m-d'))->toBe('2026-12-24')
-        ->and(AuditLog::where('event', 'payments.installment.due_on_changed')->sole()->context['to'])->toBe('2026-12-24');
-});
-
-it('returns to the list after sending from it', function () {
-    $installment = invoiceablePlan();
-    app(IssueInvoice::class)($installment);
-
-    test()->actingAs(staffMember(), 'staff')
-        ->post("/raten/{$installment->public_id}/rechnung/versenden", ['subject' => 'Rechnung', 'liste' => true])
-        ->assertRedirect('/rechnungen');
+    expect($plans)->toHaveCount(1)
+        ->and($plans[0]['installments'])->toHaveCount(1)
+        ->and($plans[0]['installments'][0]['label'])->toBe('Restbetrag');
 });

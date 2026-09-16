@@ -83,7 +83,7 @@ it('splits an Anzahlung pro rata over both rates, summing to the installment exa
     // the Anzahlung below.
     $installment = mixedRateInstallment([[100_000, null], [10_000, 700]], 64_850);
 
-    $figures = InvoiceFigures::forInstallment($installment, app(StudioSettingsResolver::class));
+    $figures = InvoiceFigures::forInvoice(app(IssueInvoice::class)($installment), app(StudioSettingsResolver::class));
 
     expect(array_column($figures->rates, 'rate'))->toBe([1900, 700])
         ->and(array_sum(array_column($figures->rates, 'net')) + array_sum(array_column($figures->rates, 'vat')))
@@ -95,7 +95,7 @@ it('puts the rounding difference on the largest rate so the shares still sum to 
     // 3 cent over three unequal shares: the division cannot come out even.
     $installment = mixedRateInstallment([[100_000, null], [33_333, 700]], 99_999);
 
-    $figures = InvoiceFigures::forInstallment($installment, app(StudioSettingsResolver::class));
+    $figures = InvoiceFigures::forInvoice(app(IssueInvoice::class)($installment), app(StudioSettingsResolver::class));
 
     $shares = array_map(fn (array $line) => $line['net'] + $line['vat'], $figures->rates);
 
@@ -107,7 +107,7 @@ it('leaves the small-business case at one zero rate', function () {
     $settings = app(StudioSettingsResolver::class);
     $installment = mixedRateInstallment([[100_000, null], [10_000, 700]], 55_000, vatMode: 'small_business');
 
-    $figures = InvoiceFigures::forInstallment($installment, $settings);
+    $figures = InvoiceFigures::forInvoice(app(IssueInvoice::class)($installment), $settings);
 
     expect($figures->rate)->toBe(0)
         ->and($figures->vat)->toBe(0)
@@ -119,9 +119,9 @@ it('leaves the small-business case at one zero rate', function () {
 it('prints one Umsatzsteuer row per rate on the invoice', function () {
     $installment = mixedRateInstallment([[100_000, null], [10_000, 700]], 64_850);
 
-    app(IssueInvoice::class)($installment);
+    $invoice = app(IssueInvoice::class)($installment);
 
-    $html = app(RenderInvoicePdf::class)->forInstallment($installment->fresh());
+    $html = app(RenderInvoicePdf::class)->forInvoice($invoice->fresh());
 
     expect($html)->toContain('Umsatzsteuer 19 %')
         ->and($html)->toContain('Umsatzsteuer 7 %')

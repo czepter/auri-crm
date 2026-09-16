@@ -1,20 +1,26 @@
 <?php
 
+use App\Crm\Models\Contact;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentBlockCatalog;
+use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Documents\Support\MergeFieldResolver;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Numbering\Enums\DocumentType;
 use App\Numbering\Models\NumberCounter;
+use App\Payments\Actions\CancelInvoice;
 use App\Payments\Actions\IssueInvoice;
+use App\Payments\Actions\MarkInstallmentPaid;
 use App\Payments\Actions\RenderInvoicePdf;
 use App\Payments\Data\PaymentPlanData;
+use App\Payments\Enums\CancellationKind;
 use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Payments\Enums\SettledVia;
 use App\Payments\Jobs\RenderInvoiceJob;
-use App\Payments\Models\PaymentInstallment;
+use App\Payments\Models\Invoice;
 use App\Payments\Support\InvoiceFigures;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\GotenbergClient;
@@ -45,7 +51,7 @@ it('refuses to issue without a Steuernummer or USt-IdNr., drawing no number', fu
     expect(fn () => app(IssueInvoice::class)($installment))
         ->toThrow(ValidationException::class);
 
-    expect($installment->fresh()->invoice_number)->toBeNull()
+    expect($installment->fresh()->invoice_id)->toBeNull()
         ->and(NumberCounter::query()->where('document_type', DocumentType::Invoice->value)->exists())->toBeFalse();
 });
 
@@ -54,7 +60,7 @@ it('issues on the USt-IdNr. alone', function () {
     $settings->set('tax_number', null, null);
     $settings->set('vat_id', 'DE123456789', null);
 
-    expect(app(IssueInvoice::class)(invoiceablePlan())->invoice_number)->not->toBeNull();
+    expect(app(IssueInvoice::class)(invoiceablePlan())->number)->toStartWith('RE-');
 });
 
 // --- T-15: invoice as the fourth document type --------------------------
@@ -127,20 +133,20 @@ it('charges no VAT under the small-business rule', function () {
 
 // --- M-06: issuing ------------------------------------------------------
 
-it('stamps a number, a date and the Invoiced status when an installment is issued', function () {
+it('stamps a number and a date on the invoice and moves the rate to Invoiced', function () {
     Storage::fake('local');
     Bus::fake();
 
     $installment = invoiceablePlan();
     expect($installment->isInvoiced())->toBeFalse();
 
-    app(IssueInvoice::class)($installment, staffMember(StaffRole::Owner));
+    $invoice = app(IssueInvoice::class)($installment, staffMember(StaffRole::Owner));
 
-    $installment->refresh();
-
-    expect($installment->invoice_number)->toStartWith('RE-')
-        ->and($installment->invoiced_at)->not->toBeNull()
-        ->and($installment->status)->toBe(PaymentInstallmentStatus::Invoiced);
+    expect($invoice->number)->toStartWith('RE-')
+        ->and($invoice->issued_at)->not->toBeNull()
+        ->and($invoice->contact->name)->toBe('Lena Meier')
+        ->and($installment->fresh()->invoice_id)->toBe($invoice->id)
+        ->and($installment->fresh()->status)->toBe(PaymentInstallmentStatus::Invoiced);
 });
 
 it('allocates exactly one number when the same installment is issued twice', function () {
@@ -150,13 +156,39 @@ it('allocates exactly one number when the same installment is issued twice', fun
     $installment = invoiceablePlan();
     $issue = app(IssueInvoice::class);
 
-    $issue($installment);
-    $first = $installment->fresh()->invoice_number;
+    $first = $issue($installment);
+    $second = $issue($installment->fresh());
 
-    $issue($installment->fresh());
-
-    expect($installment->fresh()->invoice_number)->toBe($first)
+    expect($second->id)->toBe($first->id)
         ->and(NumberCounter::where('document_type', DocumentType::Invoice->value)->count())->toBe(1);
+});
+
+// #480: Anzahlung and second rate on one document.
+it('puts several rates of one plan on one invoice, one number and one sum', function () {
+    Storage::fake('local');
+    Bus::fake();
+
+    $installment = invoiceablePlan();
+    $rates = $installment->plan->installments()->orderBy('sort_order')->get();
+
+    $invoice = app(IssueInvoice::class)($rates);
+
+    expect(Invoice::count())->toBe(1)
+        ->and($invoice->fresh('installments')->amount())->toBe(150_000)
+        ->and($rates->map->fresh()->pluck('invoice_id')->unique()->all())->toBe([$invoice->id])
+        ->and(app(DocumentMergeDataBuilder::class)->fromInvoice($invoice->fresh(), app(StudioSettingsResolver::class))['invoice']['description'])
+        ->toBe('Hochzeit Meier & Kowalski — Anzahlung, Restbetrag');
+});
+
+it('refuses a rate that already sits on another invoice', function () {
+    Storage::fake('local');
+    Bus::fake();
+
+    $installment = invoiceablePlan();
+    $rates = $installment->plan->installments()->orderBy('sort_order')->get();
+    app(IssueInvoice::class)($rates->first());
+
+    expect(fn () => app(IssueInvoice::class)($rates->fresh()))->toThrow(ValidationException::class);
 });
 
 it('leaves the invoice sequence gapless — every allocated invoice number belongs to an invoice', function () {
@@ -169,13 +201,10 @@ it('leaves the invoice sequence gapless — every allocated invoice number belon
     app(IssueInvoice::class)($installment);
     app(IssueInvoice::class)($sibling);
 
-    $issued = PaymentInstallment::whereNotNull('invoice_number')->pluck('invoice_number')->sort()->values();
-    $counters = NumberCounter::where('document_type', DocumentType::Invoice->value)->count();
-
     // Creating the plan itself must no longer burn a number: two invoices,
     // two counter rows, and nothing in between them.
-    expect($issued)->toHaveCount(2)
-        ->and($counters)->toBe(2)
+    expect(Invoice::pluck('number'))->toHaveCount(2)
+        ->and(NumberCounter::where('document_type', DocumentType::Invoice->value)->count())->toBe(2)
         ->and($installment->plan->fresh()->reference)->toBeNull();
 });
 
@@ -189,7 +218,7 @@ it('keeps a settled installment paid when its paperwork is issued afterwards', f
     app(IssueInvoice::class)($installment);
 
     expect($installment->fresh()->status)->toBe(PaymentInstallmentStatus::Paid)
-        ->and($installment->fresh()->invoice_number)->not->toBeNull();
+        ->and($installment->fresh()->invoice_id)->not->toBeNull();
 });
 
 it('records who issued the invoice', function () {
@@ -199,6 +228,79 @@ it('records who issued the invoice', function () {
     app(IssueInvoice::class)(invoiceablePlan(), staffMember(StaffRole::Owner));
 
     expect(AuditLog::where('event', 'payments.invoice.issued')->count())->toBe(1);
+});
+
+// --- #480: an invoice without a project ---------------------------------
+
+function freeInvoice(): Invoice
+{
+    Storage::fake('local');
+    Bus::fake();
+
+    $guest = Contact::factory()->create(['name' => 'Jonas Gast', 'city' => 'Jena']);
+
+    return app(IssueInvoice::class)->free($guest, [
+        ['description' => 'Abzug 30×45', 'quantity' => 30, 'unit_price' => 1_190, 'vat_rate' => 1900],
+        ['description' => 'Versand', 'quantity' => 1, 'unit_price' => 500, 'vat_rate' => 1900],
+    ], '2026-10-01');
+}
+
+it('issues an invoice without a project from its items, with one installment to book against', function () {
+    $invoice = freeInvoice()->fresh(['installments', 'items']);
+
+    expect($invoice->project_id)->toBeNull()
+        ->and($invoice->number)->toStartWith('RE-')
+        ->and($invoice->amount())->toBe(36_200)
+        ->and($invoice->installments->sole()->payment_plan_id)->toBeNull()
+        ->and($invoice->installments->sole()->due_on->format('Y-m-d'))->toBe('2026-10-01');
+
+    $figures = InvoiceFigures::forInvoice($invoice, app(StudioSettingsResolver::class));
+
+    expect($figures->gross)->toBe(36_200)
+        ->and($figures->net + $figures->vat)->toBe(36_200)
+        ->and($figures->net)->toBe(30_420);
+});
+
+it('prints the items and the guest as recipient on an invoice without a project', function () {
+    $invoice = freeInvoice();
+
+    $data = app(DocumentMergeDataBuilder::class)->fromInvoice($invoice->fresh(), app(StudioSettingsResolver::class));
+
+    expect($data['contact']['name'])->toBe('Jonas Gast')
+        ->and($data['project']['name'])->toBe('')
+        ->and($data['invoice']['lines'])->toHaveCount(2)
+        ->and($data['invoice']['lines'][0]['title'])->toBe('Abzug 30×45')
+        ->and($data['invoice']['gross'])->toContain('362,00');
+});
+
+it('marks an invoice without a project paid, and retires it', function () {
+    $invoice = freeInvoice();
+
+    app(MarkInstallmentPaid::class)($invoice->installments()->sole(), SettledVia::Transfer, '2026-10-02', null, null, 10_000);
+
+    expect($invoice->fresh()->status())->toBe('partial')
+        ->and(fn () => app(CancelInvoice::class)($invoice->fresh(), CancellationKind::Void, 'Falsch'))->toThrow(ValidationException::class);
+
+    $open = freeInvoice();
+    app(CancelInvoice::class)($open, CancellationKind::Void, 'Doppelt');
+
+    expect($open->fresh()->status())->toBe('cancelled')
+        ->and($open->installments()->sole()->status)->toBe(PaymentInstallmentStatus::Cancelled);
+});
+
+it('lets staff issue an invoice without a project to a new contact', function () {
+    Storage::fake('local');
+    Bus::fake();
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->post('/rechnungen', [
+            'contact' => ['name' => 'Jonas Gast', 'city' => 'Jena'],
+            'due_on' => '2026-10-01',
+            'items' => [['description' => 'Abzüge', 'quantity' => 2, 'unit_price' => 2_000, 'vat_rate' => 1900]],
+        ])
+        ->assertRedirect("/rechnungen/{$this->app['db']->table('invoices')->value('public_id')}/versenden");
+
+    expect(Invoice::sole()->contact->name)->toBe('Jonas Gast');
 });
 
 // --- M-06: rendering ----------------------------------------------------
@@ -221,15 +323,12 @@ it('renders the invoice against the pinned template and stores the artifact', fu
             return '%PDF-1.4 fake';
         });
 
-    $installment = invoiceablePlan();
-    app(IssueInvoice::class)($installment);
+    $invoice = app(IssueInvoice::class)(invoiceablePlan())->fresh();
 
-    $installment->refresh();
+    expect($invoice->template_id)->not->toBeNull()
+        ->and($invoice->pdf_path)->toBe("invoices/{$invoice->tenant_id}/{$invoice->public_id}.pdf");
 
-    expect($installment->invoice_template_id)->not->toBeNull()
-        ->and($installment->invoice_path)->toBe("invoices/{$installment->tenant_id}/{$installment->public_id}.pdf");
-
-    Storage::disk('local')->assertExists($installment->invoice_path);
+    Storage::disk('local')->assertExists($invoice->pdf_path);
 });
 
 it('never re-renders an invoice a client may already hold', function () {
@@ -242,11 +341,10 @@ it('never re-renders an invoice a client may already hold', function () {
 
     $this->mock(GotenbergClient::class)->shouldReceive('htmlToPdf')->once()->andReturn('%PDF-1.4 fake');
 
-    $installment = invoiceablePlan();
-    app(IssueInvoice::class)($installment);
+    $invoice = app(IssueInvoice::class)(invoiceablePlan());
 
     // A second run of the same job is a no-op, not a second Gotenberg call.
-    (new RenderInvoiceJob($installment->fresh()))->handle(
+    (new RenderInvoiceJob($invoice->fresh()))->handle(
         app(GotenbergClient::class),
         app(RenderInvoicePdf::class),
     );
@@ -270,19 +368,9 @@ it('lets staff issue and then download the invoice', function () {
         ->assertRedirect();
 
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get("/raten/{$installment->public_id}/rechnung")
+        ->get('/rechnungen/'.Invoice::sole()->public_id.'/pdf')
         ->assertOk()
         ->assertHeader('content-type', 'application/pdf');
-});
-
-it('404s a download for an installment that was never issued', function () {
-    Storage::fake('local');
-
-    $installment = invoiceablePlan();
-
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get("/raten/{$installment->public_id}/rechnung")
-        ->assertNotFound();
 });
 
 it('sends the invoice number to the client as the reference to transfer under', function () {

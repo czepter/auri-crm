@@ -34,14 +34,14 @@ const props = defineProps<{
     paymentLines: string[]
     creditNotes: { id: string; number: string }[]
   }
-  canPay: boolean
+  payInstallmentId: string | null
 }>()
 
 const paying = ref(false)
 
 function payNow() {
   paying.value = true
-  router.post(`/projekte/${props.project.id}/zahlungen/${props.invoice.id}/jetzt-zahlen`, {}, {
+  router.post(`/projekte/${props.project.id}/zahlungen/${props.payInstallmentId}/jetzt-zahlen`, {}, {
     onFinish: () => (paying.value = false),
   })
 }
@@ -154,7 +154,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
             target="_blank"
           >{{ $t('portal.creditNoteDownload', { number: note.number }) }}</a>
 
-          <Button v-if="canPay" variant="portal" type="button" :disabled="paying" @click="payNow">
+          <Button v-if="payInstallmentId" variant="portal" type="button" :disabled="paying" @click="payNow">
             {{ $t('portal.payNowButton') }}
           </Button>
         </div>

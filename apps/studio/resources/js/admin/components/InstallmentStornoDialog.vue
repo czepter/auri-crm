@@ -21,13 +21,13 @@ import { Field } from '@/ui/field'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Textarea } from '@/ui/textarea'
 
-const props = defineProps<{ installmentId: string }>()
+const props = defineProps<{ invoiceId: string }>()
 
 const open = ref(false)
 const form = useForm({ kind: 'correction', reason: '' })
 
 function submit() {
-  form.post(`/raten/${props.installmentId}/storno`, {
+  form.post(`/rechnungen/${props.invoiceId}/storno`, {
     preserveScroll: true,
     onSuccess: () => {
       form.reset()

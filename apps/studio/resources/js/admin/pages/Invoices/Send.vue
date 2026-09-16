@@ -8,9 +8,7 @@ import type { EditorDocument } from '@/admin/documents/blocks/types'
 import { formatEuros } from '@/admin/lib/money'
 
 const props = defineProps<{
-  projectId: string
-  installmentId: string
-  fromList: boolean
+  invoiceId: string
   invoice: {
     number: string
     date: string | null
@@ -31,11 +29,11 @@ const message: EditorDocument = {
 const cardOpen = ref(true)
 
 function cancel() {
-  router.visit(props.fromList ? '/rechnungen' : `/auftraege/${props.projectId}`)
+  router.visit('/rechnungen')
 }
 
 function send({ subject, message }: { subject: string; message: EditorDocument }) {
-  router.post(`/raten/${props.installmentId}/rechnung/versenden`, { subject, message: toPlainText(message), liste: props.fromList })
+  router.post(`/rechnungen/${props.invoiceId}/versenden`, { subject, message: toPlainText(message) })
 }
 </script>
 

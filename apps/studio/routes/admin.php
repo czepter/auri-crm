@@ -788,39 +788,33 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/zahlungsplaene/{paymentPlan}/abwickeln', [PaymentPlanController::class, 'settle'])
             ->name('payment-plans.settle');
 
-        Route::get('/rechnungen', [InvoiceController::class, 'index'])->name('invoices.index');
-        Route::patch('/raten/{installment}/faelligkeit', [PaymentInstallmentController::class, 'updateDueOn'])
-            ->name('payment-installments.due-on');
-
         // T-07's staff action: date, method and reference, recorded once —
         // never a status flipped on its own. See MarkInstallmentPaid.
         Route::post('/raten/{installment}/bezahlt', [PaymentInstallmentController::class, 'markPaid'])
             ->name('payment-installments.mark-paid');
 
-        // M-06's "Fällig stellen" — the row S-09 deferred, because at the
-        // time no invoice state existed for it to move into.
+        // M-06's "Fällig stellen" for one rate on its own invoice.
         Route::post('/raten/{installment}/rechnung', [PaymentInstallmentController::class, 'issueInvoice'])
             ->name('payment-installments.issue-invoice');
-        Route::get('/raten/{installment}/rechnung', [PaymentInstallmentController::class, 'downloadInvoice'])
-            ->name('payment-installments.invoice');
 
-        // #415: the compose screen and the send, the same pair the contract
-        // has. Issuing redirects into the first; nothing sends on its own.
-        Route::get('/raten/{installment}/rechnung/versenden', [PaymentInstallmentController::class, 'sendView'])
-            ->name('payment-installments.invoice.send-view');
-        Route::post('/raten/{installment}/rechnung/versenden', [PaymentInstallmentController::class, 'send'])
-            ->name('payment-installments.invoice.send');
+        // #480: the invoice as a document of its own. /rechnungen/neu stays
+        // above /rechnungen/{invoice}.
+        Route::get('/rechnungen', [InvoiceController::class, 'index'])->name('invoices.index');
+        Route::get('/rechnungen/neu', [InvoiceController::class, 'create'])->name('invoices.create');
+        Route::post('/rechnungen', [InvoiceController::class, 'store'])->name('invoices.store');
+        Route::get('/rechnungen/{invoice}/pdf', [InvoiceController::class, 'download'])->name('invoices.download');
 
-        // #408: the only way back out of an issued invoice. See CancelInvoice
-        // for why the number stays where it is.
-        Route::post('/raten/{installment}/storno', [PaymentInstallmentController::class, 'cancelInvoice'])
-            ->name('payment-installments.cancel-invoice');
+        // #415: the compose screen and the send. Issuing redirects into the
+        // first; nothing sends on its own.
+        Route::get('/rechnungen/{invoice}/versenden', [InvoiceController::class, 'sendView'])->name('invoices.send-view');
+        Route::post('/rechnungen/{invoice}/versenden', [InvoiceController::class, 'send'])->name('invoices.send');
 
-        // #409: what a paid rate gets instead of a Storno.
-        Route::post('/raten/{installment}/gutschrift', [PaymentInstallmentController::class, 'issueCreditNote'])
-            ->name('payment-installments.issue-credit-note');
-        Route::get('/raten/{installment}/gutschrift/{creditNote}', [PaymentInstallmentController::class, 'downloadCreditNote'])
-            ->name('payment-installments.credit-note');
+        // #408: the only way back out of an issued invoice. #409: what money
+        // already received gets instead.
+        Route::post('/rechnungen/{invoice}/storno', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
+        Route::post('/rechnungen/{invoice}/gutschrift', [InvoiceController::class, 'creditNote'])->name('invoices.credit-note');
+        Route::get('/rechnungen/{invoice}/gutschrift/{creditNote}', [InvoiceController::class, 'downloadCreditNote'])
+            ->name('invoices.credit-note.download');
 
         Route::post('/auftraege/{project}/shootings', [ShootController::class, 'store'])
             ->name('shoots.store');

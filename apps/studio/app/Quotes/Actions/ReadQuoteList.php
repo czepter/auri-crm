@@ -32,7 +32,7 @@ class ReadQuoteList
             'payments' => match (true) {
                 $plan !== null => [
                     'number' => $payable?->number,
-                    'rows' => collect(PaymentPlanData::fromModel($plan->load('installments.creditNotes'))->installments)
+                    'rows' => collect(PaymentPlanData::fromModel($plan->load('installments.invoice.creditNotes'))->installments)
                         ->map(fn ($installment) => ['label' => $installment->label, 'amount' => $installment->amount])
                         ->all(),
                 ],

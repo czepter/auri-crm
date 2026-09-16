@@ -11,7 +11,6 @@ use App\Settings\Models\StudioSettings;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -143,33 +142,4 @@ it('lists payments among the booking\'s documents once a plan exists', function 
         ->viewData('page')['props'];
 
     expect(collect($props['project']['documents'])->pluck('kind')->all())->toContain('payments');
-});
-
-it('serves a Gutschrift for a paid installment that was never invoiced', function () {
-    Storage::fake('local');
-    Storage::disk('local')->put('credit-notes/gs-1.pdf', '%PDF-fake-bytes');
-
-    [$project, $contact, $plan] = t07PortalProjectWithPlan();
-    $installment = $plan->installments()->first();
-    $installment->update(['status' => PaymentInstallmentStatus::Paid, 'paid_on' => '2026-09-02']);
-    $note = $installment->creditNotes()->create([
-        'number' => 'GS-2026-1',
-        'issued_at' => now(),
-        'amount' => 20000,
-        'reason' => 'Zweite Kamera nicht erbracht',
-        'pdf_path' => 'credit-notes/gs-1.pdf',
-    ]);
-
-    $props = $this->actingAs($contact, 'portal')
-        ->get("/projekte/{$project->public_id}/zahlungen")
-        ->assertOk()
-        ->viewData('page')['props'];
-
-    expect($props['plan']['installments'][0]['invoiceNumber'])->toBeNull()
-        ->and($props['plan']['installments'][0]['creditNotes'][0]['hasDocument'])->toBeTrue();
-
-    $this->actingAs($contact, 'portal')
-        ->get("/projekte/{$project->public_id}/zahlungen/{$installment->public_id}/gutschrift/{$note->public_id}")
-        ->assertOk()
-        ->assertHeader('content-type', 'application/pdf');
 });

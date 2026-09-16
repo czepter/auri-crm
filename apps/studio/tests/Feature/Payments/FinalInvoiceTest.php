@@ -9,7 +9,6 @@ use App\Payments\Actions\MarkInstallmentPaid;
 use App\Payments\Actions\RenderInvoicePdf;
 use App\Payments\Enums\CancellationKind;
 use App\Payments\Enums\SettledVia;
-use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Payments\Support\InvoiceFigures;
 use App\Quotes\Enums\QuoteStatus;
@@ -79,12 +78,11 @@ it('treats a single installment as the Endrechnung with nothing to deduct', func
     $plan = planBehindQuote(['2026-09-01']);
     $only = $plan->installments()->sole();
 
-    app(IssueInvoice::class)($only);
+    $invoice = app(IssueInvoice::class)($only);
 
-    $html = app(RenderInvoicePdf::class)->forInstallment($only->fresh());
+    $html = app(RenderInvoicePdf::class)->forInvoice($invoice->fresh());
 
     expect($only->isFinal())->toBeTrue()
-        ->and($only->earlierIssued())->toHaveCount(0)
         ->and($html)->toContain('Hochzeitsreportage')
         ->and($html)->toContain('Gesamtbetrag der Leistung')
         ->and($html)->not->toContain('Abzüglich Anzahlungen');
@@ -96,23 +94,20 @@ it('lists the quote lines, deducts the Anzahlung and sums to the cent', function
     $plan = planBehindQuote(['2026-09-01', '2026-10-01']);
     [$deposit, $final] = $plan->installments()->orderBy('sort_order')->get()->all();
 
-    app(IssueInvoice::class)($deposit);
-    app(IssueInvoice::class)($final);
+    $depositInvoice = app(IssueInvoice::class)($deposit);
+    $finalInvoice = app(IssueInvoice::class)($final)->fresh();
 
-    $deposit = $deposit->fresh();
-    $final = $final->fresh();
-
-    $html = app(RenderInvoicePdf::class)->forInstallment($final);
+    $html = app(RenderInvoicePdf::class)->forInvoice($finalInvoice);
 
     expect($html)->toContain('Hochzeitsreportage')
         ->and($html)->toContain('Fotobuch')
         ->and($html)->toContain('Abzüglich Anzahlungen')
-        ->and($html)->toContain($deposit->invoice_number)
+        ->and($html)->toContain($depositInvoice->number)
         ->and($html)->toContain('Restbetrag')
         ->and($html)->not->toContain('{{');
 
     // Netto + Steuer des Restbetrags ergeben genau die Rate.
-    $figures = InvoiceFigures::forInstallment($final, app(StudioSettingsResolver::class));
+    $figures = InvoiceFigures::forInvoice($finalInvoice, app(StudioSettingsResolver::class));
     expect($figures->net + $figures->vat)->toBe((int) $final->amount);
 });
 
@@ -121,10 +116,10 @@ it('deducts the VAT of each Anzahlung by amount', function () {
     [$deposit, $final] = $plan->installments()->orderBy('sort_order')->get()->all();
 
     app(IssueInvoice::class)($deposit);
-    app(IssueInvoice::class)($final);
+    $invoice = app(IssueInvoice::class)($final);
 
     $vat = InvoiceFigures::fromGross((int) $deposit->amount, 1900)->vat;
-    $html = app(RenderInvoicePdf::class)->forInstallment($final->fresh());
+    $html = app(RenderInvoicePdf::class)->forInvoice($invoice->fresh());
 
     expect($html)->toContain('USt '.Number::currency($vat / 100, in: 'EUR', locale: 'de'))
         ->and($html)->toContain('davon USt');
@@ -134,31 +129,47 @@ it('prints the quote discount as its own Rabatt line', function () {
     $plan = planBehindQuote(['2026-09-01'], discountValue: 1000);
     $only = $plan->installments()->sole();
 
-    app(IssueInvoice::class)($only);
+    $invoice = app(IssueInvoice::class)($only);
 
-    expect(app(RenderInvoicePdf::class)->forInstallment($only->fresh()))->toContain('Rabatt');
+    expect(app(RenderInvoicePdf::class)->forInvoice($invoice->fresh()))->toContain('Rabatt');
 });
 
 it('leaves a cancelled earlier installment out of the deposits', function () {
     $plan = planBehindQuote(['2026-09-01', '2026-10-01', '2026-11-01']);
     [$first, $second, $final] = $plan->installments()->orderBy('sort_order')->get()->all();
 
-    app(IssueInvoice::class)($first);
-    app(IssueInvoice::class)($second);
-    app(CancelInvoice::class)($first->fresh(), CancellationKind::Void, 'Leistung entfallen');
+    $firstInvoice = app(IssueInvoice::class)($first);
+    $secondInvoice = app(IssueInvoice::class)($second);
+    app(CancelInvoice::class)($firstInvoice, CancellationKind::Void, 'Leistung entfallen');
 
-    $numbers = $final->fresh()->earlierIssued()->pluck('invoice_number')->all();
+    $finalInvoice = app(IssueInvoice::class)($final->fresh());
+    $deposits = app(DocumentMergeDataBuilder::class)->fromInvoice($finalInvoice->fresh(), app(StudioSettingsResolver::class))['invoice']['deposits'];
 
-    expect($numbers)->toBe([$second->fresh()->invoice_number]);
+    expect(array_column($deposits, 'number'))->toBe([$secondInvoice->number]);
+});
+
+// #480: two Anzahlungen on one document are one Teilentgelt to deduct.
+it('deducts an Anzahlungsrechnung carrying two rates as one line', function () {
+    $plan = planBehindQuote(['2026-09-01', '2026-10-01', '2026-11-01']);
+    [$first, $second, $final] = $plan->installments()->orderBy('sort_order')->get()->all();
+
+    $deposit = app(IssueInvoice::class)(collect([$first, $second]));
+    $finalInvoice = app(IssueInvoice::class)($final);
+
+    $deposits = app(DocumentMergeDataBuilder::class)->fromInvoice($finalInvoice->fresh(), app(StudioSettingsResolver::class))['invoice']['deposits'];
+
+    expect($deposits)->toHaveCount(1)
+        ->and($deposits[0]['number'])->toBe($deposit->number)
+        ->and($deposits[0]['gross'])->toBe(Number::currency(((int) $first->amount + (int) $second->amount) / 100, in: 'EUR', locale: 'de'));
 });
 
 it('keeps an Anzahlungsrechnung free of both blocks', function () {
     $plan = planBehindQuote(['2026-09-01', '2026-10-01']);
     $deposit = $plan->installments()->orderBy('sort_order')->first();
 
-    app(IssueInvoice::class)($deposit);
+    $invoice = app(IssueInvoice::class)($deposit);
 
-    $html = app(RenderInvoicePdf::class)->forInstallment($deposit->fresh());
+    $html = app(RenderInvoicePdf::class)->forInvoice($invoice->fresh());
 
     expect($html)->not->toContain('Gesamtbetrag der Leistung')
         ->and($html)->not->toContain('Abzüglich Anzahlungen')
@@ -176,9 +187,9 @@ it('renders a slider quote as the hours line', function () {
     ]);
     $only = $plan->installments()->sole();
 
-    app(IssueInvoice::class)($only);
+    $invoice = app(IssueInvoice::class)($only);
 
-    $html = app(RenderInvoicePdf::class)->forInstallment($only->fresh());
+    $html = app(RenderInvoicePdf::class)->forInvoice($invoice->fresh());
 
     expect($html)->toContain('Begleitung')
         ->and($html)->not->toContain('Hochzeitsreportage');
@@ -188,8 +199,8 @@ it('cancels a cancelled installment out of isFinal', function () {
     $plan = planBehindQuote(['2026-09-01', '2026-10-01']);
     [$first, $last] = $plan->installments()->orderBy('sort_order')->get()->all();
 
-    app(IssueInvoice::class)($last);
-    app(CancelInvoice::class)($last->fresh(), CancellationKind::Void, 'Restleistung entfallen');
+    $invoice = app(IssueInvoice::class)($last);
+    app(CancelInvoice::class)($invoice, CancellationKind::Void, 'Restleistung entfallen');
 
     expect($first->fresh()->isFinal())->toBeTrue();
 });
@@ -198,19 +209,18 @@ it('deducts a credited Anzahlung net of its Gutschrift', function () {
     $plan = planBehindQuote(['2026-09-01', '2026-10-01']);
     [$deposit, $final] = $plan->installments()->orderBy('sort_order')->get()->all();
 
-    app(IssueInvoice::class)($deposit);
+    $depositInvoice = app(IssueInvoice::class)($deposit);
     app(MarkInstallmentPaid::class)(
         $deposit->fresh(),
         SettledVia::Transfer,
         '2026-09-02',
         null,
     );
-    app(IssueCreditNote::class)($deposit->fresh(), 10_000, 'Nachlass');
+    app(IssueCreditNote::class)($depositInvoice->fresh(), 10_000, 'Nachlass');
 
-    $mergeData = app(DocumentMergeDataBuilder::class)->fromProject(
-        $final->plan->job->project,
+    $mergeData = app(DocumentMergeDataBuilder::class)->fromInvoice(
+        app(IssueInvoice::class)($final)->fresh(),
         app(StudioSettingsResolver::class),
-        $final->fresh(),
     );
 
     $gross = $mergeData['invoice']['deposits'][0]['gross'];

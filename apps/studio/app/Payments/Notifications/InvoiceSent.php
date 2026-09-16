@@ -5,7 +5,7 @@ namespace App\Payments\Notifications;
 use App\Concerns\AppliesStudioMailIdentity;
 use App\Concerns\AttachesInvoicePdf;
 use App\Concerns\WritesComposedMail;
-use App\Payments\Models\PaymentInstallment;
+use App\Payments\Models\Invoice;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -26,7 +26,7 @@ class InvoiceSent extends Notification
     use WritesComposedMail;
 
     public function __construct(
-        private readonly PaymentInstallment $installment,
+        private readonly Invoice $invoice,
         private readonly string $subject,
         private readonly ?string $body,
         private readonly StudioSettingsResolver $settings,
@@ -41,16 +41,16 @@ class InvoiceSent extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $message = $this->composedMail($this->subject, $this->body);
-        $project = $this->installment->plan->job->project;
+        $project = $this->invoice->project;
 
-        if ($project->portal_visible) {
+        if ($project?->portal_visible) {
             $message->action(
                 'Rechnung ansehen',
-                config('portal.url')."/projekte/{$project->public_id}/zahlungen/{$this->installment->public_id}",
+                config('portal.url')."/projekte/{$project->public_id}/zahlungen/{$this->invoice->public_id}",
             );
         }
 
-        $this->attachInvoicePdf($message, $this->installment);
+        $this->attachInvoicePdf($message, $this->invoice);
 
         return $this->appendStudioMailIdentity($this->appendUnsubscribe($message, $notifiable), $this->settings);
     }

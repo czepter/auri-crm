@@ -2,7 +2,7 @@
 
 namespace App\Concerns;
 
-use App\Payments\Models\PaymentInstallment;
+use App\Payments\Models\Invoice;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Storage;
 
@@ -13,9 +13,9 @@ use Illuminate\Support\Facades\Storage;
  */
 trait AttachesInvoicePdf
 {
-    protected function attachInvoicePdf(MailMessage $message, PaymentInstallment $installment): MailMessage
+    protected function attachInvoicePdf(MailMessage $message, ?Invoice $invoice): MailMessage
     {
-        $path = $installment->invoice_path;
+        $path = $invoice?->pdf_path;
 
         if ($path === null || ! Storage::disk('local')->exists($path)) {
             return $message;
@@ -23,7 +23,7 @@ trait AttachesInvoicePdf
 
         return $message->attachData(
             Storage::disk('local')->get($path),
-            "rechnung-{$installment->invoice_number}.pdf",
+            "rechnung-{$invoice->number}.pdf",
             ['mime' => 'application/pdf'],
         );
     }

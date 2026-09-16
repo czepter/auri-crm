@@ -5,6 +5,8 @@ namespace App\Documents\Support;
 use App\Crm\Models\Project;
 use App\Payments\Data\PaymentPlanData;
 use App\Payments\Models\CreditNote;
+use App\Payments\Models\Invoice;
+use App\Payments\Models\InvoiceItem;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Support\InvoiceFigures;
 use App\Quotes\Models\Quote;
@@ -26,10 +28,10 @@ use Illuminate\Support\Number;
 class DocumentMergeDataBuilder
 {
     /**
-     * $installment and $creditNote are the two arguments not derivable from
-     * the project: an invoice is about one due amount and a Gutschrift about
-     * one refund of it, not about the job as a whole, and only the caller
-     * rendering one knows which. Every other document type passes null and
+     * $invoice and $creditNote are the two arguments not derivable from the
+     * project: an invoice is about some of the amounts due and a Gutschrift
+     * about one refund of it, not about the job as a whole, and only the
+     * caller rendering one knows which. Every other document type passes null and
      * those blocks resolve to empty strings — present in the array rather
      * than absent, so a merge field used on the wrong document type renders
      * as nothing instead of leaving a raw placeholder in a PDF.
@@ -39,11 +41,12 @@ class DocumentMergeDataBuilder
     public function fromProject(
         Project $project,
         StudioSettingsResolver $settings,
-        ?PaymentInstallment $installment = null,
+        ?Invoice $invoice = null,
         ?CreditNote $creditNote = null,
     ): array {
-        $contact = $project->primaryContact();
-        $studio = $settings->attributes();
+        // #480: the invoice names its own recipient — the primary contact at
+        // issue, and still the addressee after the project changed hands.
+        $contact = $invoice?->contact ?? $project->primaryContact();
 
         return [
             'project' => [
@@ -57,7 +60,7 @@ class DocumentMergeDataBuilder
                 'postcode' => $contact?->postcode ?? '',
                 'city' => $contact?->city ?? '',
             ],
-            'invoice' => $this->invoice($installment, $project, $settings),
+            'invoice' => $this->invoice($invoice, $project, $settings),
             'creditNote' => $this->creditNote($creditNote, $project, $settings),
             'job' => [
                 'bookedAt' => $project->job?->booked_at?->format('d.m.Y') ?? '',
@@ -79,29 +82,75 @@ class DocumentMergeDataBuilder
             // that names them on a project without a gallery is asking about
             // something that does not exist.
             'gallery' => $this->gallery($project),
-            'studio' => [
-                'name' => $studio['legal_name'] ?: ($studio['display_name'] ?? ''),
-                'legalForm' => $studio['legal_form'] ?? '',
-                'street' => $studio['street'] ?? '',
-                'postcode' => $studio['postcode'] ?? '',
-                'city' => $studio['city'] ?? '',
-                'country' => $studio['country'] ?? '',
-                'taxNumber' => $studio['tax_number'] ?? '',
-                'vatId' => $studio['vat_id'] ?? '',
-                'registerNumber' => $studio['register_number'] ?? '',
-                'registerCourt' => $studio['register_court'] ?? '',
-                'representative' => $studio['representative'] ?? '',
-                'website' => $studio['website'] ?? '',
-                'bankHolder' => $studio['bank_account_holder'] ?? '',
-                'bankIban' => $studio['bank_iban'] ?? '',
-                'bankBic' => $studio['bank_bic'] ?? '',
-                // The stored file path, not a URL — no template embeds it as
-                // an <img> today; see docs/documents.md.
-                'logoPath' => $settings->logoPath() ?? '',
-            ],
+            'studio' => $this->studio($settings),
             'settings' => [
                 'widerrufText' => $settings->widerrufIncluded() ? ($settings->widerrufText() ?? '') : '',
             ],
+        ];
+    }
+
+    /**
+     * #480: an invoice without a project — a print order years after the
+     * event, to a guest who was never a client. The same array shape
+     * fromProject() returns, so every layout and template reads it
+     * unchanged; what only a project knows stays empty.
+     *
+     * @return array<string, mixed>
+     */
+    public function fromInvoice(Invoice $invoice, StudioSettingsResolver $settings, ?CreditNote $creditNote = null): array
+    {
+        if ($invoice->project !== null) {
+            return $this->fromProject($invoice->project, $settings, $invoice, $creditNote);
+        }
+
+        $contact = $invoice->contact;
+
+        return [
+            'project' => ['name' => '', 'type' => ''],
+            'contact' => [
+                'name' => $contact?->name ?? '',
+                'email' => $contact?->email ?? '',
+                'street' => $contact?->street ?? '',
+                'postcode' => $contact?->postcode ?? '',
+                'city' => $contact?->city ?? '',
+            ],
+            'invoice' => $this->invoice($invoice, null, $settings),
+            'creditNote' => $this->creditNote($creditNote, null, $settings),
+            'job' => ['bookedAt' => ''],
+            'shoot' => ['date' => ''],
+            'quote' => ['validUntil' => '', 'vatNote' => ''],
+            'gallery' => array_fill_keys(['title', 'link', 'password', 'downloadPin', 'expiresOn'], ''),
+            'studio' => $this->studio($settings),
+            'settings' => [
+                'widerrufText' => $settings->widerrufIncluded() ? ($settings->widerrufText() ?? '') : '',
+            ],
+        ];
+    }
+
+    /** @return array<string, string> */
+    private function studio(StudioSettingsResolver $settings): array
+    {
+        $studio = $settings->attributes();
+
+        return [
+            'name' => $studio['legal_name'] ?: ($studio['display_name'] ?? ''),
+            'legalForm' => $studio['legal_form'] ?? '',
+            'street' => $studio['street'] ?? '',
+            'postcode' => $studio['postcode'] ?? '',
+            'city' => $studio['city'] ?? '',
+            'country' => $studio['country'] ?? '',
+            'taxNumber' => $studio['tax_number'] ?? '',
+            'vatId' => $studio['vat_id'] ?? '',
+            'registerNumber' => $studio['register_number'] ?? '',
+            'registerCourt' => $studio['register_court'] ?? '',
+            'representative' => $studio['representative'] ?? '',
+            'website' => $studio['website'] ?? '',
+            'bankHolder' => $studio['bank_account_holder'] ?? '',
+            'bankIban' => $studio['bank_iban'] ?? '',
+            'bankBic' => $studio['bank_bic'] ?? '',
+            // The stored file path, not a URL — no template embeds it as
+            // an <img> today; see docs/documents.md.
+            'logoPath' => $settings->logoPath() ?? '',
         ];
     }
 
@@ -134,39 +183,41 @@ class DocumentMergeDataBuilder
      * invoice's own — the supply happened on the shoot day, and an invoice
      * issued three weeks later that claims otherwise is wrong in the one
      * field a Betriebsprüfung reads first. A project with no primary shoot
-     * yet leaves it empty rather than guessing.
+     * yet leaves it empty rather than guessing. An invoice without a project
+     * bills a supply made when it is issued, and says so.
      *
      * An Anzahlung whose transfer arrived before the paperwork prints the
      * day it arrived instead: § 14 Abs. 4 Nr. 6 UStG asks for the Zeitpunkt
      * der Vereinnahmung in an Abs. 5 case, and the shoot is still ahead.
      *
-     * @return array<string, string|list<array{rate: string, net: string, vat: string}>>
+     * @return array<string, string|list<array<string, string>>>
      */
-    private function invoice(?PaymentInstallment $installment, Project $project, StudioSettingsResolver $settings): array
+    private function invoice(?Invoice $invoice, ?Project $project, StudioSettingsResolver $settings): array
     {
-        if ($installment === null) {
+        if ($invoice === null) {
             return array_fill_keys(
                 ['number', 'date', 'servicePeriod', 'description', 'net', 'vatRate', 'vat', 'gross', 'vatNote', 'dueOn', 'paymentTerm'],
                 '',
             ) + ['vatLines' => [], 'lines' => [], 'deposits' => [], 'totalNet' => '', 'totalVat' => '', 'totalGross' => ''];
         }
 
-        $figures = InvoiceFigures::forInstallment($installment, $settings);
-        $dueOn = $installment->due_on?->format('d.m.Y') ?? '';
+        $figures = InvoiceFigures::forInvoice($invoice, $settings);
+        $installments = $invoice->installments;
+        $dueOn = $installments->max('due_on')?->format('d.m.Y') ?? '';
         // paid_on is only ever written alongside the paid status, by
         // MarkInstallmentPaid — its presence is the settlement.
-        $receivedOn = $installment->paid_on !== null
-            && $installment->invoiced_at !== null
-            && $installment->paid_on->lt($installment->invoiced_at)
-                ? $installment->paid_on
-                : null;
+        $receivedOn = $installments->every(fn (PaymentInstallment $row) => $row->paid_on?->lt($invoice->issued_at) ?? false)
+            ? $installments->max('paid_on')
+            : null;
+        $servicePeriod = $project === null
+            ? $invoice->issued_at->format('d.m.Y')
+            : $project->shoots()->where('is_primary', true)->first()?->date?->format('d.m.Y') ?? '';
 
         return [
-            'number' => $installment->invoice_number ?? '',
-            'date' => $installment->invoiced_at?->format('d.m.Y') ?? '',
-            'servicePeriod' => $receivedOn?->format('d.m.Y')
-                ?? $project->shoots()->where('is_primary', true)->first()?->date?->format('d.m.Y') ?? '',
-            'description' => $project->name.' — '.PaymentPlanData::labelForInstallment($installment),
+            'number' => $invoice->number,
+            'date' => $invoice->issued_at->format('d.m.Y'),
+            'servicePeriod' => $receivedOn?->format('d.m.Y') ?? $servicePeriod,
+            'description' => $this->description($invoice),
             'net' => $this->money($figures->net),
             'vatRate' => $figures->ratePercentage(),
             'vat' => $this->money($figures->vat),
@@ -182,11 +233,43 @@ class DocumentMergeDataBuilder
             ], $figures->rates),
             'dueOn' => $dueOn,
             'paymentTerm' => $dueOn === '' ? '' : "Zahlbar bis {$dueOn} ohne Abzug.",
-            // #411: § 14 Abs. 5 S. 2 UStG binds the last installment of a
-            // plan, and only it. Everything below is empty on an
-            // Anzahlungsrechnung, which is what keeps the blocks absent
-            // rather than present and blank.
-            ...$this->finalInvoice($installment, $settings),
+            ...($project === null ? $this->itemLines($invoice, $figures) : $this->finalInvoice($invoice, $settings)),
+        ];
+    }
+
+    /** "Hochzeit Kranz — Anzahlung, 2. Rate", or the items' own words without a project. */
+    private function description(Invoice $invoice): string
+    {
+        if ($invoice->project === null) {
+            return $invoice->items->pluck('description')->implode(', ');
+        }
+
+        return $invoice->project->name.' — '.$invoice->installments
+            ->map(fn (PaymentInstallment $row) => PaymentPlanData::labelForInstallment($row))
+            ->implode(', ');
+    }
+
+    /**
+     * #480: an invoice without a project prints its items the way an
+     * Endrechnung prints the quote's lines.
+     *
+     * @return array{lines: list<array<string, string>>, deposits: list<array<string, string>>, totalNet: string, totalVat: string, totalGross: string}
+     */
+    private function itemLines(Invoice $invoice, InvoiceFigures $figures): array
+    {
+        return [
+            'lines' => $invoice->items->map(fn (InvoiceItem $item) => [
+                'title' => $item->description,
+                'quantity' => (string) $item->quantity,
+                'unitPrice' => $this->money((int) $item->unit_price),
+                'discount' => '',
+                'total' => $this->money($item->total()),
+                'vatRate' => $figures->rate === 0 ? '' : VatLines::percent((int) $item->vat_rate).' %',
+            ])->values()->all(),
+            'deposits' => [],
+            'totalNet' => $this->money($figures->net),
+            'totalVat' => $this->money($figures->vat),
+            'totalGross' => $this->money($figures->gross),
         ];
     }
 
@@ -200,11 +283,12 @@ class DocumentMergeDataBuilder
      *
      * @return array{lines: list<array<string, string>>, deposits: list<array<string, string>>, totalNet: string, totalVat: string, totalGross: string}
      */
-    private function finalInvoice(PaymentInstallment $installment, StudioSettingsResolver $settings): array
+    private function finalInvoice(Invoice $invoice, StudioSettingsResolver $settings): array
     {
-        $quote = $installment->acceptedQuote()?->asSeenByClient();
+        $final = $invoice->installments->first(fn (PaymentInstallment $row) => $row->isFinal());
+        $quote = $final?->acceptedQuote()?->asSeenByClient();
 
-        if (! $installment->isFinal() || $quote === null) {
+        if ($quote === null) {
             return ['lines' => [], 'deposits' => [], 'totalNet' => '', 'totalVat' => '', 'totalGross' => ''];
         }
 
@@ -212,7 +296,7 @@ class DocumentMergeDataBuilder
 
         return [
             'lines' => $quote->hasSlider() ? $this->sliderLine($quote) : $this->quoteLines($quote),
-            'deposits' => $this->deposits($installment, $settings),
+            'deposits' => $this->deposits($invoice, $settings),
             'totalNet' => $this->money((int) $quote->net),
             'totalVat' => $this->money($vat),
             'totalGross' => $this->money((int) $quote->net + $vat),
@@ -281,23 +365,28 @@ class DocumentMergeDataBuilder
     }
 
     /**
-     * Every earlier issued installment of the plan, as the deduction it is.
-     * A credited one is deducted net of its Gutschrift: that much of the
-     * Teilentgelt was handed back and was never part of the Leistung.
+     * Every earlier invoice on the plan that still stands, as the deduction it
+     * is — one line per invoice, however many rates it carried. A credited
+     * one is deducted net of its Gutschriften: that much of the Teilentgelt
+     * was handed back and was never part of the Leistung.
      *
-     * @return list<array<string, string>>
+     * @return list<array<string, string|int>>
      */
-    private function deposits(PaymentInstallment $installment, StudioSettingsResolver $settings): array
+    private function deposits(Invoice $invoice, StudioSettingsResolver $settings): array
     {
-        return $installment->earlierIssued()
-            ->map(function (PaymentInstallment $earlier) use ($settings) {
-                $credited = (int) $earlier->creditNotes->sum('amount');
-                $rate = InvoiceFigures::forInstallment($earlier, $settings)->rate;
-                $figures = InvoiceFigures::fromGross((int) $earlier->amount - $credited, $rate);
+        return Invoice::query()
+            ->where('id', '<', $invoice->id)
+            ->whereNull('cancelled_at')
+            ->whereHas('installments', fn ($query) => $query->where('payment_plan_id', $invoice->installments->first()?->payment_plan_id))
+            ->with(['installments', 'creditNotes', 'project'])
+            ->orderBy('id')
+            ->get()
+            ->map(function (Invoice $earlier) use ($settings) {
+                $figures = InvoiceFigures::forInvoice($earlier, $settings)->share($earlier->amount() - $earlier->creditedAmount());
 
                 return [
-                    'number' => (string) $earlier->invoice_number,
-                    'date' => $earlier->invoiced_at?->format('d.m.Y') ?? '',
+                    'number' => $earlier->number,
+                    'date' => $earlier->issued_at->format('d.m.Y'),
                     'net' => $this->money($figures->net),
                     'vat' => $this->money($figures->vat),
                     'gross' => $this->money($figures->gross),
@@ -319,7 +408,7 @@ class DocumentMergeDataBuilder
      *
      * @return array<string, string>
      */
-    private function creditNote(?CreditNote $creditNote, Project $project, StudioSettingsResolver $settings): array
+    private function creditNote(?CreditNote $creditNote, ?Project $project, StudioSettingsResolver $settings): array
     {
         $keys = ['number', 'date', 'servicePeriod', 'description', 'reason', 'net', 'vatRate', 'vat', 'gross', 'vatNote', 'invoiceNumber', 'invoiceDate'];
 
@@ -327,23 +416,23 @@ class DocumentMergeDataBuilder
             return array_fill_keys($keys, '');
         }
 
-        $installment = $creditNote->installment;
-        $rate = InvoiceFigures::forInstallment($installment, $settings);
-        $figures = InvoiceFigures::fromGross($creditNote->amount, $rate->rate, $rate->vatNote);
+        $invoice = $creditNote->invoice;
+        $figures = InvoiceFigures::forInvoice($invoice, $settings)->share((int) $creditNote->amount);
 
         return [
             'number' => $creditNote->number,
             'date' => $creditNote->issued_at->format('d.m.Y'),
-            'servicePeriod' => $project->shoots()->where('is_primary', true)->first()?->date?->format('d.m.Y') ?? '',
-            'description' => $project->name.' — '.PaymentPlanData::labelForInstallment($installment),
+            'servicePeriod' => $project?->shoots()->where('is_primary', true)->first()?->date?->format('d.m.Y')
+                ?? $invoice->issued_at->format('d.m.Y'),
+            'description' => $this->description($invoice),
             'reason' => $creditNote->reason,
             'net' => $this->money($figures->net),
             'vatRate' => $figures->ratePercentage(),
             'vat' => $this->money($figures->vat),
             'gross' => $this->money($figures->gross),
             'vatNote' => $figures->vatNote ?? '',
-            'invoiceNumber' => $installment->invoice_number ?? '',
-            'invoiceDate' => $installment->invoiced_at?->format('d.m.Y') ?? '',
+            'invoiceNumber' => $invoice->number,
+            'invoiceDate' => $invoice->issued_at->format('d.m.Y'),
         ];
     }
 

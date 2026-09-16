@@ -42,8 +42,6 @@ class MarkInstallmentPaid
             return $installment;
         }
 
-        $installment->loadMissing('plan.job');
-
         $booked = $amount ?? $installment->remaining();
         $paidAmount = (int) $installment->paid_amount + $booked;
         $status = $paidAmount >= (int) $installment->amount
@@ -70,7 +68,7 @@ class MarkInstallmentPaid
                     'remaining' => max(0, (int) $installment->amount - $paidAmount),
                 ],
                 subject: $installment->public_id,
-                projectId: $installment->plan->job->project_id,
+                projectId: $installment->project()?->id,
             );
         });
 

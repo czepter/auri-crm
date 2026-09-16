@@ -9,6 +9,7 @@ use App\Payments\Actions\MarkInstallmentPaid;
 use App\Payments\Actions\RenderInvoicePdf;
 use App\Payments\Enums\SettledVia;
 use App\Payments\Models\CreditNote;
+use App\Payments\Models\Invoice;
 use App\Payments\Support\InvoiceDocument;
 use App\Quotes\Enums\QuoteLayout;
 use App\Settings\Support\StudioSettingsResolver;
@@ -23,7 +24,7 @@ beforeEach(function () {
     app(StudioSettingsResolver::class)->set('tax_number', '22/123/45678', null);
 });
 
-function layoutInvoice(): App\Payments\Models\PaymentInstallment
+function layoutInvoice(): Invoice
 {
     Storage::fake('local');
     Bus::fake();
@@ -34,9 +35,7 @@ function layoutInvoice(): App\Payments\Models\PaymentInstallment
     // and empty without one.
     Shoot::factory()->for($installment->plan->job->project)->primary()->create(['date' => '2026-06-14']);
 
-    app(IssueInvoice::class)($installment);
-
-    return $installment->fresh();
+    return app(IssueInvoice::class)($installment)->fresh();
 }
 
 // --- #419: every layout carries the § 14 particulars itself --------------
@@ -46,11 +45,11 @@ it('prints the number, the gross and the § 19 note in every layout under the sm
     $settings->set('vat_mode', 'small_business', null);
     $settings->set('vat_note', 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.', null);
 
-    $installment = layoutInvoice();
+    $invoice = layoutInvoice();
 
-    $html = app(RenderInvoicePdf::class)->forInstallment($installment, $layout);
+    $html = app(RenderInvoicePdf::class)->forInvoice($invoice, $layout);
 
-    expect($html)->toContain($installment->invoice_number)
+    expect($html)->toContain($invoice->number)
         ->and($html)->toContain('750,00')
         ->and($html)->toContain('§ 19 UStG')
         // Kein Umsatzsteuerausweis: § 19 verbietet die Zeile.
@@ -65,9 +64,9 @@ it('prints the number, the gross and the § 19 note in every layout under the sm
 ]);
 
 it('prints the Netto → Umsatzsteuer → Gesamtbetrag chain in every layout at the standard rate', function (QuoteLayout $layout) {
-    $installment = layoutInvoice();
+    $invoice = layoutInvoice();
 
-    $html = app(RenderInvoicePdf::class)->forInstallment($installment, $layout);
+    $html = app(RenderInvoicePdf::class)->forInvoice($invoice, $layout);
 
     expect($html)->toContain('Netto')
         ->and($html)->toContain('Umsatzsteuer 19 %')
@@ -75,7 +74,7 @@ it('prints the Netto → Umsatzsteuer → Gesamtbetrag chain in every layout at 
         // Die Nummer steht in jedem Layout; das Label „Rechnungsnummer" nur
         // in denen mit einer Meta-Tabelle — Minimal und Kopfband tragen sie
         // in der Kopfzeile, wie beim Angebot.
-        ->and($html)->toContain($installment->invoice_number)
+        ->and($html)->toContain($invoice->number)
         ->and($html)->toContain('14.06.2026')
         ->and($html)->not->toContain('{{');
 })->with([
@@ -89,13 +88,13 @@ it('prints the Netto → Umsatzsteuer → Gesamtbetrag chain in every layout at 
 it('reads the layout from the same setting the quote reads', function () {
     app(StudioSettingsResolver::class)->set('quote_layout', 'header_band', null);
 
-    $html = app(RenderInvoicePdf::class)->forInstallment(layoutInvoice());
+    $html = app(RenderInvoicePdf::class)->forInvoice(layoutInvoice());
 
     expect($html)->toContain('doc-layout-header_band');
 });
 
 it('carries the Verzugshinweis once, in every layout', function (QuoteLayout $layout) {
-    $html = app(RenderInvoicePdf::class)->forInstallment(layoutInvoice(), $layout);
+    $html = app(RenderInvoicePdf::class)->forInvoice(layoutInvoice(), $layout);
 
     expect(substr_count($html, InvoiceDocument::DEFAULT_NOTICE))->toBe(1);
 })->with([
@@ -111,26 +110,26 @@ it('carries the bank details and the Verwendungszweck without a template block',
     $settings->set('bank_account_holder', 'Atelier Nordlicht', null);
     $settings->set('bank_iban', 'DE02120300000000202051', null);
 
-    $installment = layoutInvoice();
+    $invoice = layoutInvoice();
 
-    $html = app(RenderInvoicePdf::class)->forInstallment($installment);
+    $html = app(RenderInvoicePdf::class)->forInvoice($invoice);
 
     expect($html)->toContain('Zahlung')
         ->and($html)->toContain('Atelier Nordlicht')
         ->and($html)->toContain('IBAN DE02120300000000202051')
-        ->and($html)->toContain('Verwendungszweck '.$installment->invoice_number);
+        ->and($html)->toContain('Verwendungszweck '.$invoice->number);
 });
 
 it('renders the Gutschrift through the same layouts, negative and referencing the invoice', function () {
-    $installment = layoutInvoice();
-    app(MarkInstallmentPaid::class)($installment, SettledVia::Transfer, '2026-09-02', null);
+    $invoice = layoutInvoice();
+    app(MarkInstallmentPaid::class)($invoice->installments->sole(), SettledVia::Transfer, '2026-09-02', null);
 
-    app(IssueCreditNote::class)($installment->fresh(), 25_000, 'Nachlass');
+    app(IssueCreditNote::class)($invoice->fresh(), 25_000, 'Nachlass');
 
     $html = app(RenderInvoicePdf::class)->forCreditNote(CreditNote::sole());
 
     expect($html)->toContain('Gutschrift')
-        ->and($html)->toContain('Zu Rechnung '.$installment->invoice_number)
+        ->and($html)->toContain('Zu Rechnung '.$invoice->number)
         ->and($html)->toContain('−250,00')
         ->and($html)->toContain('doc-layout-classic')
         // Eine Gutschrift wird ausgezahlt, nicht überwiesen.

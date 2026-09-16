@@ -17,11 +17,10 @@ function installment(overrides: Partial<App.Payments.Data.PaymentInstallmentData
     paidAmount: 0,
     remaining: 100000,
     isLate: false,
+    invoiceId: null,
     invoiceNumber: null,
     invoicedOn: null,
     hasInvoiceDocument: false,
-    sentOn: null,
-    viewedOn: null,
     creditNotes: [],
     ...overrides,
   }

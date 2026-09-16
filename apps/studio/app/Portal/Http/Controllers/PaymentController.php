@@ -2,11 +2,14 @@
 
 namespace App\Portal\Http\Controllers;
 
+use App\Crm\Models\Project;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Http\Controllers\Controller;
 use App\Payments\Actions\ConfirmInstallmentCheckoutSession;
 use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Payments\Models\Invoice;
+use App\Payments\Models\PaymentInstallment;
 use App\Payments\Support\InvoiceDocument;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\Request;
@@ -49,7 +52,7 @@ class PaymentController extends Controller
 
         $found = $contact->visibleProjects()
             ->where('projects.public_id', $project)
-            ->with('job.paymentPlan.installments.creditNotes')
+            ->with('job.paymentPlan.installments.invoice.creditNotes')
             ->firstOrFail();
 
         $plan = $found->job?->paymentPlan;
@@ -71,7 +74,7 @@ class PaymentController extends Controller
             'contact' => ['name' => $contact->name],
             'showSwitcher' => $contact->visibleProjects()->count() > 1,
             'project' => ['id' => $found->public_id, 'name' => $found->name],
-            'plan' => $plan === null ? null : PaymentPlanData::fromModel($plan->load('installments.creditNotes')),
+            'plan' => $plan === null ? null : PaymentPlanData::fromModel($plan->load('installments.invoice.creditNotes')),
             'stripeEnabled' => $settings->stripeEnabled(),
             'paymentStatus' => in_array($status, ['success', 'cancelled'], true) ? $status : null,
             'bankDetails' => [
@@ -90,20 +93,12 @@ class PaymentController extends Controller
      */
     public function show(
         string $project,
-        string $installment,
+        string $invoice,
         StudioSettingsResolver $settings,
         DocumentMergeDataBuilder $mergeData,
     ): Response {
         $contact = auth('portal')->user();
-
-        $found = $contact->visibleProjects()
-            ->where('projects.public_id', $project)
-            ->with('job.paymentPlan.installments.creditNotes')
-            ->firstOrFail();
-
-        $row = $found->job?->paymentPlan?->installments->firstWhere('public_id', $installment);
-
-        abort_if($row === null || ! $row->isInvoiced(), 404);
+        [$found, $row] = $this->find($project, $invoice);
 
         // #415: the first look, and only the first — the column answers
         // whether the client has seen the invoice, not how often.
@@ -111,11 +106,8 @@ class PaymentController extends Controller
             $row->update(['viewed_at' => now()]);
         }
 
-        $document = InvoiceDocument::forInvoice(
-            $row,
-            $mergeData->fromProject($found, $settings, $row),
-            $settings,
-        );
+        $document = InvoiceDocument::forInvoice($row, $mergeData->fromInvoice($row, $settings), $settings);
+        $open = $row->installments->first(fn (PaymentInstallment $one) => in_array($one->status, PaymentInstallmentStatus::open(), true));
 
         return Inertia::render('Payments/Invoice', [
             'contact' => ['name' => $contact->name],
@@ -123,10 +115,10 @@ class PaymentController extends Controller
             'project' => ['id' => $found->public_id, 'name' => $found->name],
             'invoice' => [
                 'id' => $row->public_id,
-                'number' => $row->invoice_number,
-                'status' => $row->status->value,
-                'statusLabel' => $row->status->label(),
-                'hasDocument' => $row->invoice_path !== null,
+                'number' => $row->number,
+                'status' => $row->status(),
+                'statusLabel' => __("payments.invoiceStatus.{$row->status()}"),
+                'hasDocument' => $row->pdf_path !== null,
                 'metaRows' => $document->metaRows,
                 'description' => $document->description,
                 // #411: leer auf einer Anzahlungsrechnung — dann bleibt es
@@ -144,49 +136,50 @@ class PaymentController extends Controller
                     ->all(),
             ],
             // #408: a cancelled invoice stays readable and loses the button.
-            'canPay' => $settings->stripeEnabled()
-                && $row->status !== PaymentInstallmentStatus::Paid
-                && $row->status !== PaymentInstallmentStatus::Cancelled,
+            // #480: the button charges the earliest rate still open on it.
+            'payInstallmentId' => $settings->stripeEnabled() && ! $row->isCancelled() ? $open?->public_id : null,
         ]);
     }
 
     /**
      * M-06's client-side half. Scoped through visibleProjects() and the
-     * plan, never by installment alone: a public_id from another client's
+     * project, never by invoice alone: a public_id from another client's
      * project must 404 here exactly as the screen itself does, rather than
      * 403 and confirm the row exists.
      */
-    public function invoice(string $project, string $installment): StreamedResponse
+    public function invoice(string $project, string $invoice): StreamedResponse
     {
-        $contact = auth('portal')->user();
+        [, $row] = $this->find($project, $invoice);
 
-        $found = $contact->visibleProjects()
-            ->where('projects.public_id', $project)
-            ->with('job.paymentPlan.installments')
-            ->firstOrFail();
+        abort_if($row->pdf_path === null, 404);
 
-        $row = $found->job?->paymentPlan?->installments->firstWhere('public_id', $installment);
-
-        abort_if($row === null || $row->invoice_path === null, 404);
-
-        return Storage::disk('local')->response($row->invoice_path, "rechnung-{$row->invoice_number}.pdf");
+        return Storage::disk('local')->response($row->pdf_path, "rechnung-{$row->number}.pdf");
     }
 
     /** #409, scoped exactly as invoice() is — through the project, never by id alone. */
-    public function creditNote(string $project, string $installment, string $creditNote): StreamedResponse
+    public function creditNote(string $project, string $invoice, string $creditNote): StreamedResponse
     {
-        $contact = auth('portal')->user();
-
-        $found = $contact->visibleProjects()
-            ->where('projects.public_id', $project)
-            ->with('job.paymentPlan.installments.creditNotes')
-            ->firstOrFail();
-
-        $row = $found->job?->paymentPlan?->installments->firstWhere('public_id', $installment);
-        $note = $row?->creditNotes->firstWhere('public_id', $creditNote);
+        [, $row] = $this->find($project, $invoice);
+        $note = $row->creditNotes->firstWhere('public_id', $creditNote);
 
         abort_if($note === null || $note->pdf_path === null, 404);
 
         return Storage::disk('local')->response($note->pdf_path, "gutschrift-{$note->number}.pdf");
+    }
+
+    /** @return array{0: Project, 1: Invoice} */
+    private function find(string $project, string $invoice): array
+    {
+        $found = auth('portal')->user()->visibleProjects()
+            ->where('projects.public_id', $project)
+            ->firstOrFail();
+
+        $row = Invoice::query()
+            ->where('project_id', $found->id)
+            ->where('public_id', $invoice)
+            ->with(['installments', 'creditNotes', 'contact', 'project', 'items'])
+            ->firstOrFail();
+
+        return [$found, $row];
     }
 }

@@ -12,6 +12,7 @@ use App\Crm\Support\CrmVocabulary;
 use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
 use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
 use App\Portal\Actions\UpdateProjectDetails;
 use App\Portal\Support\PortalSettings;
@@ -284,16 +285,18 @@ class ProjectController extends Controller
             return [];
         }
 
-        return ($found->job?->paymentPlan?->installments ?? collect())
-            ->filter(fn (PaymentInstallment $one) => $one->isInvoiced())
-            ->sortBy('invoice_number')
-            ->map(fn (PaymentInstallment $one) => [
+        return Invoice::query()
+            ->where('project_id', $found->id)
+            ->with('installments')
+            ->orderBy('number')
+            ->get()
+            ->map(fn (Invoice $one) => [
                 'id' => $one->public_id,
-                'number' => $one->invoice_number,
-                'issuedOn' => $one->invoiced_at?->format('Y-m-d'),
-                'amount' => (int) $one->amount,
-                'status' => $one->status->label(),
-                'settled' => $one->status === PaymentInstallmentStatus::Paid,
+                'number' => $one->number,
+                'issuedOn' => $one->issued_at->format('Y-m-d'),
+                'amount' => $one->amount(),
+                'status' => __("payments.invoiceStatus.{$one->status()}"),
+                'settled' => $one->isPaid(),
             ])
             ->values()
             ->all();

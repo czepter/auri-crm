@@ -4,6 +4,7 @@ namespace App\Payments\Actions;
 
 use App\Models\User;
 use App\Payments\Enums\CancellationKind;
+use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Support\AuditLogger;
@@ -92,13 +93,13 @@ class SettlePaymentPlan
      */
     private function settlePaid(PaymentInstallment $installment, array $decision, ?User $actor): array
     {
-        if (($decision['action'] ?? 'keep') !== 'credit') {
+        if (($decision['action'] ?? 'keep') !== 'credit' || $installment->invoice === null) {
             return ['action' => 'keep', 'amount' => (int) $installment->paid_amount];
         }
 
         $note = ($this->issueCreditNote)(
-            $installment,
-            (int) ($decision['amount'] ?? $installment->amount),
+            $installment->invoice,
+            (int) ($decision['amount'] ?? $installment->paid_amount),
             __('payments.settleCreditReason'),
             $actor,
         );
@@ -109,15 +110,29 @@ class SettlePaymentPlan
     /** @return array<string, mixed> */
     private function dropOpen(PaymentInstallment $installment, ?User $actor): array
     {
-        if (! $installment->isInvoiced()) {
+        $invoice = $installment->invoice;
+
+        if ($invoice === null) {
             $amount = (int) $installment->amount;
             $installment->delete();
 
             return ['action' => 'delete', 'amount' => $amount];
         }
 
-        ($this->cancelInvoice)($installment, CancellationKind::Void, __('payments.settleVoidReason'), $actor);
+        // #480: an invoice that also carries a rate with money on it cannot be
+        // retired whole. ponytail: the open rate alone leaves the plan and the
+        // invoice keeps its number; a Gutschrift covers the paid part.
+        if ($invoice->paidAmount() > 0) {
+            $installment->update(['status' => PaymentInstallmentStatus::Cancelled, 'cancelled_at' => now()]);
+            $installment->plan->decrement('total', $installment->amount);
 
-        return ['action' => 'void', 'amount' => (int) $installment->amount, 'number' => $installment->invoice_number];
+            return ['action' => 'void', 'amount' => (int) $installment->amount, 'number' => $invoice->number];
+        }
+
+        if (! $invoice->isCancelled()) {
+            ($this->cancelInvoice)($invoice, CancellationKind::Void, __('payments.settleVoidReason'), $actor);
+        }
+
+        return ['action' => 'void', 'amount' => (int) $installment->amount, 'number' => $invoice->number];
     }
 }

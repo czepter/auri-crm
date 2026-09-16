@@ -3,7 +3,7 @@
 namespace App\Payments\Support;
 
 use App\Payments\Models\CreditNote;
-use App\Payments\Models\PaymentInstallment;
+use App\Payments\Models\Invoice;
 use App\Settings\Support\StudioSettingsResolver;
 
 /**
@@ -73,7 +73,7 @@ final class InvoiceDocument
     ) {}
 
     /** @param array<string, mixed> $mergeData */
-    public static function forInvoice(PaymentInstallment $installment, array $mergeData, StudioSettingsResolver $settings): self
+    public static function forInvoice(Invoice $record, array $mergeData, StudioSettingsResolver $settings): self
     {
         $invoice = $mergeData['invoice'] ?? [];
         $studio = $mergeData['studio'] ?? [];
@@ -101,7 +101,7 @@ final class InvoiceDocument
             vat: $invoice['vat'] ?? '',
             gross: $invoice['gross'] ?? '',
             vatNote: $invoice['vatNote'] ?? '',
-            smallBusiness: InvoiceFigures::forInstallment($installment, $settings)->rate === 0,
+            smallBusiness: InvoiceFigures::forInvoice($record, $settings)->rate === 0,
             sign: '',
             recipient: self::recipient($mergeData),
             paymentLines: $payment,
@@ -136,7 +136,7 @@ final class InvoiceDocument
             vat: $note['vat'] ?? '',
             gross: $note['gross'] ?? '',
             vatNote: $note['vatNote'] ?? '',
-            smallBusiness: InvoiceFigures::forInstallment($creditNote->installment, $settings)->rate === 0,
+            smallBusiness: InvoiceFigures::forInvoice($creditNote->invoice, $settings)->rate === 0,
             sign: '−',
             recipient: self::recipient($mergeData),
             // § 31 Abs. 5 UStDV: the document has to point at the invoice it

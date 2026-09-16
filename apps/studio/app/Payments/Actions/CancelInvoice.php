@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\CancellationKind;
 use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
@@ -17,67 +18,78 @@ use Illuminate\Validation\ValidationException;
  * readable, and the correction is a new document (GoBD Rz. 93,
  * § 31 Abs. 5 UStDV).
  *
- * `paid` is refused rather than handled. Money that already arrived is a
+ * Money already booked on it is refused rather than handled. That is a
  * Gutschrift (#409) or an Ausfallhonorar, and which of the two it is comes
  * out of the contract — not out of this button.
  *
- * One transaction for both kinds, because both move the plan and the row
- * together: Korrektur hands the amount back as a fresh scheduled row, so
+ * #480: every rate the invoice carries goes with it, in one transaction.
+ * Korrektur hands each amount back to its plan as a fresh scheduled rate, so
  * the total stands; Wegfall lowers the total instead. The sum trigger
- * (2026_09_14_000200) ignores the cancelled row and checks the result of
- * whichever half ran.
+ * (2026_09_14_000200) ignores the cancelled rows. An invoice without a plan
+ * has nothing to hand back to.
  */
 class CancelInvoice
 {
     public function __invoke(
-        PaymentInstallment $installment,
+        Invoice $invoice,
         CancellationKind $kind,
         string $reason,
         ?User $actor = null,
-    ): PaymentInstallment {
-        if ($installment->status === PaymentInstallmentStatus::Paid) {
-            throw ValidationException::withMessages(['kind' => __('payments.cancelPaidRefused')]);
-        }
-
-        if (! $installment->isInvoiced() || $installment->isCancelled()) {
+    ): Invoice {
+        if ($invoice->isCancelled()) {
             throw ValidationException::withMessages(['kind' => __('payments.cancelNotInvoiced')]);
         }
 
-        return DB::transaction(function () use ($installment, $kind, $reason, $actor) {
-            $label = PaymentPlanData::labelForInstallment($installment);
+        if ($invoice->paidAmount() > 0) {
+            throw ValidationException::withMessages(['kind' => __('payments.cancelPaidRefused')]);
+        }
 
-            $installment->update([
-                'status' => PaymentInstallmentStatus::Cancelled,
+        return DB::transaction(function () use ($invoice, $kind, $reason, $actor) {
+            $invoice->update([
                 'cancelled_at' => now(),
                 'cancellation_kind' => $kind,
                 'cancellation_reason' => $reason,
             ]);
 
-            if ($kind === CancellationKind::Correction) {
-                $installment->plan->installments()->create([
-                    'amount' => $installment->amount,
-                    'due_on' => $installment->due_on,
-                    'title' => $label,
-                    'status' => PaymentInstallmentStatus::Scheduled,
-                    'sort_order' => (int) $installment->plan->installments()->max('sort_order') + 1,
-                ]);
-            } else {
-                $installment->plan->decrement('total', $installment->amount);
+            foreach ($invoice->installments as $installment) {
+                $this->retire($installment, $kind);
             }
 
             AuditLogger::record(
                 event: 'payments.invoice.cancelled',
                 actor: $actor,
-                context: [
-                    'number' => $installment->invoice_number,
-                    'kind' => $kind->value,
-                    'reason' => $reason,
-                ],
-                subject: $installment->public_id,
-                projectId: $installment->plan?->job?->project_id,
+                context: ['number' => $invoice->number, 'kind' => $kind->value, 'reason' => $reason],
+                subject: $invoice->public_id,
+                projectId: $invoice->project_id,
             );
 
-            return $installment;
+            return $invoice;
         });
+    }
+
+    private function retire(PaymentInstallment $installment, CancellationKind $kind): void
+    {
+        $label = $installment->plan === null ? null : PaymentPlanData::labelForInstallment($installment);
+
+        $installment->update([
+            'status' => PaymentInstallmentStatus::Cancelled,
+            'cancelled_at' => now(),
+        ]);
+
+        if ($installment->plan === null) {
+            return;
+        }
+
+        if ($kind === CancellationKind::Correction) {
+            $installment->plan->installments()->create([
+                'amount' => $installment->amount,
+                'due_on' => $installment->due_on,
+                'title' => $label,
+                'status' => PaymentInstallmentStatus::Scheduled,
+                'sort_order' => (int) $installment->plan->installments()->max('sort_order') + 1,
+            ]);
+        } else {
+            $installment->plan->decrement('total', $installment->amount);
+        }
     }
 }

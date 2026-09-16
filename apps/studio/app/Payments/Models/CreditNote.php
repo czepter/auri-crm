@@ -9,10 +9,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * #409. One Gutschrift against one paid installment, in minor units — the
- * same convention PaymentInstallment::$amount keeps. Several per installment
- * are expected: a partial credit note is the normal case, and the sum of
- * them is what IssueCreditNote caps against the amount actually paid.
+ * #409. One Gutschrift against one paid invoice, in minor units — the same
+ * convention PaymentInstallment::$amount keeps. Several per invoice are
+ * expected: a partial credit note is the normal case, and the sum of them is
+ * what IssueCreditNote caps against the amount actually paid.
  *
  * Never negative. The document prints the amount as a deduction; storing it
  * as a negative integer would mean every reader had to remember which sign
@@ -24,7 +24,7 @@ class CreditNote extends Model
     use HasPublicId;
 
     protected $fillable = [
-        'payment_installment_id', 'number', 'issued_at', 'amount',
+        'invoice_id', 'number', 'issued_at', 'amount',
         'reason', 'pdf_path', 'template_id', 'stripe_refund_id',
     ];
 
@@ -33,9 +33,9 @@ class CreditNote extends Model
         return ['issued_at' => 'immutable_datetime'];
     }
 
-    public function installment(): BelongsTo
+    public function invoice(): BelongsTo
     {
-        return $this->belongsTo(PaymentInstallment::class, 'payment_installment_id');
+        return $this->belongsTo(Invoice::class);
     }
 
     public function template(): BelongsTo
