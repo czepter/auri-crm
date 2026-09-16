@@ -15,12 +15,7 @@ const top = computed(() => topLines(props.quote.items))
 
 <template>
   <div>
-    <div class="flex flex-wrap items-baseline gap-2">
-      <!-- Ein Entwurf trägt keine Nummer: SendQuote vergibt sie erst beim Versenden. -->
-      <span class="rounded-[var(--r-pill)] bg-sunk-2 px-[11px] py-[5px] text-[12px] leading-[1.4]">
-        <b class="font-semibold">{{ quote.number ?? $t('quotes.draft') }}</b>
-        {{ quote.statusLabel }}
-      </span>
+    <div v-if="superseded.length" class="mb-2.5 flex flex-wrap items-baseline gap-2">
       <span
         v-for="old in superseded"
         :key="old.id"
@@ -30,7 +25,7 @@ const top = computed(() => topLines(props.quote.items))
       </span>
     </div>
 
-    <div class="mt-2.5">
+    <div>
       <LineItems :items="top.shown" />
       <div v-if="top.rest" class="py-2 text-[12.5px] leading-[1.47] text-ink-2 shadow-[inset_0_1px_0_var(--rule)]">
         {{ $t('quotes.more', { count: top.rest }) }}

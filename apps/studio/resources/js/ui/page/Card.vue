@@ -43,12 +43,13 @@ function cancel() {
 <template>
     <section class="rounded-md border border-rule bg-background">
         <header
-            class="flex cursor-pointer items-center gap-3 px-[18px] py-[15px]"
+            class="flex h-[46px] cursor-pointer items-center gap-3 px-[18px]"
             @click="open = !open"
         >
             <h2 class="m-0 text-[13.5px] leading-[1.2] font-semibold tracking-[-0.015em]">
                 {{ title }}
             </h2>
+            <slot name="meta" />
             <span v-if="summary && !open" class="min-w-0 truncate text-ink-2">{{ summary }}</span>
 
             <div class="ml-auto flex flex-none items-center gap-3.5">

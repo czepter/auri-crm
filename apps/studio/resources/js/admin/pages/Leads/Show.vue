@@ -27,6 +27,7 @@ import { Textarea } from "@/ui/textarea";
 import { DropdownMenuItem } from "@/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/admin/lib/money";
+import { quoteChipClass } from "@/admin/lib/quoteDisplay";
 import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
 import { dayWithWeekday as day } from "@/admin/lib/dates";
 
@@ -266,11 +267,7 @@ const termineSummary = computed(() =>
 );
 
 const quoteSummary = computed(() =>
-    props.quote === null
-        ? ""
-        : [props.quote.number, props.quote.statusLabel, formatEurosRounded(Number(props.quote.net))]
-              .filter(Boolean)
-              .join(" · "),
+    props.quote === null ? "" : formatEurosRounded(Number(props.quote.net)),
 );
 
 const taskSummary = computed(() => {
@@ -638,7 +635,15 @@ const due = computed(() => {
                         </template>
                     </Card>
 
-                    <Card :title="$t('lead.quote')" :summary="quoteSummary" :default-open="quote !== null">
+                    <Card
+                        :title="$t('lead.quote')"
+                        :summary="quoteSummary"
+                        :default-open="quote !== null"
+                    >
+                        <template v-if="quote" #meta>
+                            <span v-if="quote.number" class="text-[13.5px] leading-[1.2] tracking-[-0.015em] text-ink-2 tabular-nums">{{ quote.number }}</span>
+                            <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
+                        </template>
                         <template v-if="header.canManageQuotes" #action>
                             <Link
                                 class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
