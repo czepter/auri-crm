@@ -20,7 +20,6 @@ enum LeadStage: string implements HasLabel
     case Contacted = 'contacted';
     case QuoteSent = 'quote_sent';
     case QuoteAccepted = 'quote_accepted';
-    case ContractSent = 'contract_sent';
     case Booked = 'booked';
 
     public function label(): string
@@ -30,7 +29,6 @@ enum LeadStage: string implements HasLabel
             self::Contacted => 'Kontaktiert',
             self::QuoteSent => 'Angebot',
             self::QuoteAccepted => 'Angebot angenommen',
-            self::ContractSent => 'Vertrag',
             self::Booked => 'Gebucht',
         };
     }

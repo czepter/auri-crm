@@ -43,7 +43,6 @@ export const stages: (Option & { anchor: string | null })[] = [
     { value: 'contacted', label: 'Kontaktiert', anchor: null },
     { value: 'quote_sent', label: 'Angebot', anchor: 'quote_sent' },
     { value: 'quote_accepted', label: 'Angebot angenommen', anchor: 'quote_accepted' },
-    { value: 'contract_sent', label: 'Vertrag', anchor: 'contract_sent' },
     { value: 'booked', label: 'Gebucht', anchor: 'won' },
 ]
 
@@ -59,7 +58,6 @@ const leadTrack = [
     { key: 'contacted', label: 'Kontaktiert', pipeline: 'lead', state: 'done' },
     { key: 'quote_sent', label: 'Angebot', pipeline: 'lead', state: 'current' },
     { key: 'quote_accepted', label: 'Angebot angenommen', pipeline: 'lead', state: 'todo' },
-    { key: 'contract_sent', label: 'Vertrag', pipeline: 'lead', state: 'todo' },
     { key: 'booked', label: 'Gebucht', pipeline: 'lead', state: 'todo' },
 ]
 
@@ -405,7 +403,6 @@ const permissions = {
     canManageMessages: true,
     canManagePortalVisibility: true,
     canManageQuotes: true,
-    canManageContracts: true,
     canManagePaymentPlan: true,
     primaryShootCancelled: false,
     canManageForms: true,
@@ -439,7 +436,6 @@ export const header: App.Crm.Data.ProjectHeaderData = {
         { key: 'messages', label: 'project.messages', href: `/auftraege/${RAHN}/nachrichten`, count: 0, countTo: null, children: [] },
         { key: 'forms', label: 'project.forms', href: `/auftraege/${RAHN}/frageboegen`, count: 1, countTo: null, children: [] },
         { key: 'quotes', label: 'project.quotes', href: `/auftraege/${RAHN}/angebote`, count: null, countTo: null, children: [] },
-        { key: 'contract', label: 'project.contract', href: `/auftraege/${RAHN}/vertrag`, count: 1, countTo: null, children: [] },
     ],
     track: projectTrack,
     queue: [],
@@ -518,6 +514,5 @@ export const bookedLeadHeader: App.Crm.Data.ProjectHeaderData = {
         { key: 'messages', label: 'project.messages', href: `/auftraege/${BRANDT}/nachrichten`, count: 1, countTo: null, children: [] },
         { key: 'forms', label: 'project.forms', href: `/auftraege/${BRANDT}/frageboegen`, count: 0, countTo: null, children: [] },
         { key: 'quotes', label: 'project.quotes', href: `/auftraege/${BRANDT}/angebote`, count: null, countTo: null, children: [] },
-        { key: 'contract', label: 'project.contract', href: `/auftraege/${BRANDT}/vertrag`, count: null, countTo: null, children: [] },
     ],
 }

@@ -7,7 +7,7 @@ import type { EditorDocument } from '@/admin/documents/blocks/types'
 
 // Two-speed preview. The local paint keeps the sheet alive while typing; the
 // server answer is the one that counts, because it runs the real
-// MergeFieldResolver and DocumentRenderer — the same pair RenderContractJob
+// MergeFieldResolver and DocumentRenderer — the same pair every PDF render
 // uses. The local pass never decides anything, it only fills the 400ms.
 const props = defineProps<{
   type: string

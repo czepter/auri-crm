@@ -8,7 +8,6 @@ use App\Automation\Models\AutomationRule;
 use App\Automation\Models\AutomationRun;
 use App\Automation\Notifications\AutomationReminder;
 use App\Automation\Support\AutomationConditions;
-use App\Contracts\Models\Contract;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -141,8 +140,8 @@ class FireAutomationRule
     {
         return match (true) {
             $anchor instanceof Project => $anchor,
-            $anchor instanceof Shoot, $anchor instanceof Contract,
-            $anchor instanceof Gallery, $anchor instanceof Task => $anchor->project,
+            $anchor instanceof Shoot, $anchor instanceof Gallery,
+            $anchor instanceof Task => $anchor->project,
             $anchor instanceof PaymentInstallment => $anchor->plan->job->project,
             default => null,
         };

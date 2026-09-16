@@ -110,7 +110,7 @@ class ExportContactDsgvoData
                     'enabled' => $p->enabled,
                 ])->all(),
             // AuditLogger::record only ever writes a Contact's identity as its
-            // opaque public_id (see SignContract, AcceptQuote) — these rows
+            // opaque public_id (see AcceptQuote) — these rows
             // are the append-only trail F-06 requires and are never purged by
             // erasure, so exporting them as-is leaks nothing erasure would
             // not already have made unresolvable.
@@ -174,22 +174,6 @@ class ExportContactDsgvoData
             'notes' => $project->notes->map(fn ($note) => [
                 'body' => $note->body, 'created_at' => $note->created_at?->toIso8601String(),
             ])->all(),
-            'contracts' => $project->contracts->map(function ($contract) use ($contact) {
-                $signature = $contract->signature;
-
-                return [
-                    'id' => $contract->public_id,
-                    'status' => $contract->status?->value,
-                    'rendered_at' => $contract->rendered_at?->toIso8601String(),
-                    // Only this contact's own signature — a co-signer's typed
-                    // name and IP are their own personal data.
-                    'signed_by_this_contact' => $signature !== null && $signature->contact_id === $contact->id ? [
-                        'typed_name' => $signature->typed_name,
-                        'consented_at' => $signature->consented_at?->toIso8601String(),
-                        'ip_address' => $signature->ip_address,
-                    ] : null,
-                ];
-            })->all(),
             'quotes' => $project->quotes->map(fn ($quote) => [
                 'id' => $quote->public_id,
                 'status' => $quote->status?->value,

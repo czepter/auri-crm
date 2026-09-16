@@ -2,7 +2,6 @@
 
 namespace App\Migration\Actions;
 
-use App\Contracts\Enums\ContractStatus;
 use App\Crm\Enums\BookedVia;
 use App\Crm\Models\Contact;
 use App\Crm\Support\CrmVocabulary;
@@ -10,7 +9,7 @@ use App\Migration\Support\ImportPlan;
 use DateTime;
 
 /**
- * Reads the four CSV files a historical import directory holds — see
+ * Reads the three CSV files a historical import directory holds — see
  * docs/historical-import.md for the column reference — and resolves every
  * row into either something CommitHistoricalImport can write, or an error
  * naming exactly why the row can't be mapped. Never writes anything itself:
@@ -30,13 +29,11 @@ class PlanHistoricalImport
         [$contactsToCreate, $contactsToReuse, $contactErrors, $contactRefs] = $this->planContacts("{$path}/contacts.csv");
         [$projectsToCreate, $projectErrors, $projectRefs] = $this->planProjects("{$path}/projects.csv", $contactRefs);
         [$jobsToCreate, $jobErrors] = $this->planJobs("{$path}/jobs.csv", $projectRefs);
-        [$contractsToCreate, $contractErrors] = $this->planContracts("{$path}/contracts.csv", $projectRefs);
 
         return new ImportPlan(
             contacts: ['toCreate' => $contactsToCreate, 'toReuse' => $contactsToReuse, 'errors' => $contactErrors],
             projects: ['toCreate' => $projectsToCreate, 'errors' => $projectErrors],
             jobs: ['toCreate' => $jobsToCreate, 'errors' => $jobErrors],
-            contracts: ['toCreate' => $contractsToCreate, 'errors' => $contractErrors],
         );
     }
 
@@ -214,69 +211,6 @@ class PlanHistoricalImport
 
             $seenProjectRefs[$projectRef] = true;
             $toCreate[] = ['project_ref' => $projectRef, 'booked_at' => $bookedAt, 'booked_via' => $bookedVia];
-        }
-
-        return [$toCreate, $errors];
-    }
-
-    /**
-     * @param  array<string,true>  $projectRefs
-     * @return array{0: list<array>, 1: list<array>}
-     */
-    private function planContracts(string $file, array $projectRefs): array
-    {
-        $toCreate = [];
-        $errors = [];
-
-        foreach ($this->readCsv($file) as $i => $row) {
-            $rowNumber = $i + 1;
-            $projectRef = $this->cell($row, 'project_ref');
-            $statusRaw = $this->cell($row, 'status') ?? ContractStatus::Rendered->value;
-            $renderedAtRaw = $this->cell($row, 'rendered_at');
-            $artifactPath = $this->cell($row, 'artifact_path');
-
-            if ($projectRef === null) {
-                $errors[] = ['row' => $rowNumber, 'ref' => null, 'reason' => 'project_ref is required'];
-
-                continue;
-            }
-
-            if (! isset($projectRefs[$projectRef])) {
-                $errors[] = ['row' => $rowNumber, 'ref' => $projectRef, 'reason' => "project_ref '{$projectRef}' not found in projects.csv"];
-
-                continue;
-            }
-
-            $status = ContractStatus::tryFrom(strtolower($statusRaw));
-
-            if ($status === null) {
-                $values = implode(', ', array_column(ContractStatus::cases(), 'value'));
-                $errors[] = ['row' => $rowNumber, 'ref' => $projectRef, 'reason' => "status must be one of: {$values}"];
-
-                continue;
-            }
-
-            $renderedAt = null;
-
-            if ($status === ContractStatus::Rendered) {
-                if ($renderedAtRaw === null) {
-                    $errors[] = ['row' => $rowNumber, 'ref' => $projectRef, 'reason' => 'rendered_at is required when status is rendered'];
-
-                    continue;
-                }
-
-                $renderedAt = $this->parseDate($renderedAtRaw);
-
-                if ($renderedAt === null) {
-                    $errors[] = ['row' => $rowNumber, 'ref' => $projectRef, 'reason' => 'rendered_at must be a valid date (YYYY-MM-DD)'];
-
-                    continue;
-                }
-            } elseif ($renderedAtRaw !== null) {
-                $renderedAt = $this->parseDate($renderedAtRaw);
-            }
-
-            $toCreate[] = ['project_ref' => $projectRef, 'status' => $status, 'rendered_at' => $renderedAt, 'artifact_path' => $artifactPath];
         }
 
         return [$toCreate, $errors];

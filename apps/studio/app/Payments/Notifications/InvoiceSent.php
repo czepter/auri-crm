@@ -11,7 +11,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 /**
- * #415, built like ContractSent: subject and paragraphs come from the compose
+ * #415: subject and paragraphs come from the compose
  * screen, and this class adds only what the screen cannot.
  *
  * The PDF travels with the mail. A § 14 UStG invoice is a document the client

@@ -30,14 +30,13 @@ enum AutomationAnchor: string implements HasLabel
     case QuoteValidity = 'quote_validity';
 
     /**
-     * E-16: four more dates the machinery could already carry and did not
+     * E-16: three more dates the machinery could already carry and did not
      * see. The offset works in both directions, so `installment_due` is the
      * announcement that prevents T-22's arrears rather than the repair after
      * them — and it belongs here and not in the overdue scan, because it is
      * a studio's decision and not a system truth.
      */
     case InstallmentDue = 'installment_due';
-    case ContractDeadline = 'contract_deadline';
     case GalleryExpiry = 'gallery_expiry';
     case QuestionnaireDue = 'questionnaire_due';
 
@@ -48,7 +47,6 @@ enum AutomationAnchor: string implements HasLabel
             self::PrimaryShoot => 'Haupttermin',
             self::QuoteValidity => 'Angebot gültig bis',
             self::InstallmentDue => 'Rate fällig',
-            self::ContractDeadline => 'Vertragsfrist',
             self::GalleryExpiry => 'Galerie läuft ab',
             self::QuestionnaireDue => 'Kundenaufgabe fällig',
         };

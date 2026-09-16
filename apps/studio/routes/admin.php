@@ -3,8 +3,6 @@
 use App\Automation\Http\Controllers\AutomationRuleController;
 use App\Catalog\Http\Controllers\PackageController;
 use App\Catalog\Http\Controllers\ServiceSuggestionController;
-use App\Contracts\Http\Controllers\ContractController;
-use App\Contracts\Http\Controllers\ContractSignerController;
 use App\Crm\Http\Controllers\AvailabilityController;
 use App\Crm\Http\Controllers\CalendarController;
 use App\Crm\Http\Controllers\ContactController;
@@ -637,29 +635,6 @@ Route::middleware('audience:staff')->group(function () {
             ->name('form-instance-files.download');
         Route::delete('/fragebogen-dateien/{file}', [FormInstanceController::class, 'destroyFile'])
             ->name('form-instance-files.destroy');
-
-        Route::get('/auftraege/{project}/vertrag', [ContractController::class, 'show'])
-            ->name('projects.contract');
-        Route::post('/auftraege/{project}/vertraege', [ContractController::class, 'store'])
-            ->name('contracts.store');
-        Route::get('/vertraege/{contract}/pdf', [ContractController::class, 'download'])
-            ->name('contracts.download');
-        // Eine Fassung wird gesichert, nicht überschrieben: der unterschriebene
-        // Stand bleibt abrufbar, bis die neue versendet ist.
-        Route::patch('/vertraege/{contract}', [ContractController::class, 'update'])
-            ->name('contracts.update');
-        Route::patch('/vertraege/{contract}/frist', [ContractController::class, 'deadline'])
-            ->name('contracts.deadline');
-        Route::get('/vertraege/{contract}/senden', [ContractController::class, 'compose'])
-            ->name('contracts.compose');
-        Route::post('/vertraege/{contract}/versenden', [ContractController::class, 'send'])
-            ->name('contracts.send');
-        Route::post('/vertraege/{contract}/unterzeichner', [ContractSignerController::class, 'store'])
-            ->name('contract-signers.store');
-        Route::delete('/unterzeichner/{signer}', [ContractSignerController::class, 'destroy'])
-            ->name('contract-signers.destroy');
-        Route::post('/unterzeichner/{signer}/erinnerung', [ContractSignerController::class, 'remind'])
-            ->name('contract-signers.remind');
 
         // G-02: app-proxied multipart ingest into a gallery's quarantine
         // prefix. galleries.uploads.* is a JSON API for the browser's own

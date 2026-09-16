@@ -10,7 +10,7 @@ use App\Notifications\Actions\SendStudioDigests;
 use App\Notifications\Enums\NotificationMode;
 use App\Notifications\Models\InAppNotification;
 use App\Notifications\Studio\ClientMessagePosted;
-use App\Notifications\Studio\ContractSigned;
+use App\Notifications\Studio\InstallmentPaid;
 use App\Notifications\Studio\StudioDigest;
 use App\Notifications\Support\NotificationPreferences;
 use App\Notifications\Support\StudioEvents;
@@ -76,8 +76,8 @@ it('carries only the events set to the summary, and never the ones already maile
     InAppNotification::create([
         'notifiable_type' => $user->getMorphClass(),
         'notifiable_id' => $user->getKey(),
-        'type' => ContractSigned::class,
-        'data' => ['title' => 'Vertrag unterschrieben', 'body' => 'Meier'],
+        'type' => InstallmentPaid::class,
+        'data' => ['title' => 'Zahlung eingegangen', 'body' => 'Meier'],
     ]);
 
     expect(app(SendStudioDigests::class)())->toBe(1);
@@ -86,7 +86,7 @@ it('carries only the events set to the summary, and never the ones already maile
         $lines = collect($digest->toMail($user)->introLines);
 
         return $lines->contains(fn (string $line) => str_contains($line, 'Neue Nachricht'))
-            && $lines->doesntContain(fn (string $line) => str_contains($line, 'Vertrag'));
+            && $lines->doesntContain(fn (string $line) => str_contains($line, 'Zahlung'));
     });
 
     expect($user->fresh()->digest_sent_at)->not->toBeNull();

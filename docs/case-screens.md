@@ -102,10 +102,9 @@ goes away — what hid behind it is either visible or one link away:
 | Nachrichten | Bubbles, client left, studio right, composer on top with an attachment control instead of a date. |
 | Fragebögen | One card per instance. Fields in the same two-column label-over-value grid as Eckdaten; an unanswered field renders as an input so the studio can enter what came by phone. |
 | Angebot | One card per quote: number, state badge, lines, total. Superseded quotes shut. |
-| Vertrag | The only tab with a document column — a document exists, so the quote editor's two-column split is right here. Signers, deadline and versions carry the rail. |
 
 Tab order and counts follow `ProjectHeaderData::from()`: Übersicht, (Anfrage),
-Shootings, Aufgaben, Galerien, Nachrichten, Fragebögen, Angebot, Vertrag.
+Shootings, Aufgaben, Galerien, Nachrichten, Fragebögen, Angebot.
 
 ## Copy
 
@@ -159,6 +158,5 @@ change; the fallback for an untranslated role lands here.
 **5 — Leads/Create.vue** ([#375](https://github.com/czepter/auri-crm/issues/375)). Three cards, type fields and first shoot visible,
 arrival date as a text line, `<details>` removed.
 
-**6 — The seven tabs** ([#376](https://github.com/czepter/auri-crm/issues/376)). One per commit, in the order of the table above.
-Shootings first because it carries the no-card-in-card rule; Vertrag last
-because it is the only two-column screen.
+**6 — The six tabs** ([#376](https://github.com/czepter/auri-crm/issues/376)). One per commit, in the order of the table above.
+Shootings first because it carries the no-card-in-card rule.

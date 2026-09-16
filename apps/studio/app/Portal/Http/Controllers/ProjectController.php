@@ -3,7 +3,6 @@
 namespace App\Portal\Http\Controllers;
 
 use App\Catalog\Support\PortalOffers;
-use App\Contracts\Models\Contract;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\FormInstance;
@@ -27,7 +26,7 @@ use Inertia\Response;
  * One booking, in one of two shapes.
  *
  * P-03 (#222) before anything is reserved: two names, a wished-for date and
- * a kind. No pictures, no appointments, no quote, no contract, no payments —
+ * a kind. No pictures, no appointments, no quote, no payments —
  * so it is a letter, not a dashboard of empty boxes, and the details the
  * client typed into the inquiry are theirs to correct.
  *
@@ -35,7 +34,7 @@ use Inertia\Response;
  * where things stand, then the pictures, the appointments, and the paperwork
  * last. The old screen had exactly the reverse order and read like a file.
  * The same details are here, read-only, because from `gebucht` the date and
- * the place are contract content — in their place stands the way to ask for
+ * the place are agreed — in their place stands the way to ask for
  * a change.
  *
  * Both ask Contact::visibleProjects() the same question the home does, so a
@@ -157,7 +156,7 @@ class ProjectController extends Controller
     {
         $found->load([
             'shoots' => fn ($query) => $query->uncancelled()->orderByRaw('date is null, date'),
-            'latestContract.signature', 'latestQuote', 'job.paymentPlan.installments',
+            'latestQuote', 'job.paymentPlan.installments',
             'galleries.currentVersion', 'primaryShoot',
         ]);
 
@@ -250,17 +249,6 @@ class ProjectController extends Controller
             ];
         }
 
-        if ($found->latestContract !== null) {
-            $rows[] = [
-                'kind' => 'contract',
-                'href' => "/projekte/{$found->public_id}/vertrag",
-                'signedOn' => $this->signedOn($found->latestContract),
-                'dueOn' => null,
-                'amount' => null,
-                'settled' => $this->signedOn($found->latestContract) !== null,
-            ];
-        }
-
         if ($found->latestQuote !== null) {
             $rows[] = [
                 'kind' => 'quote',
@@ -309,10 +297,5 @@ class ProjectController extends Controller
             ])
             ->values()
             ->all();
-    }
-
-    private function signedOn(Contract $contract): ?string
-    {
-        return $contract->signature?->consented_at?->format('Y-m-d');
     }
 }

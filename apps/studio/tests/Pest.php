@@ -1,8 +1,5 @@
 <?php
 
-use App\Contracts\Enums\ContractStatus;
-use App\Contracts\Models\Contract;
-use App\Contracts\Models\ContractSignature;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ShootStatus;
@@ -12,7 +9,6 @@ use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Stage;
 use App\Crm\Support\CrmVocabulary;
-use App\Documents\Models\DocumentTemplate;
 use App\Engagement\Models\Thread;
 use App\Enums\StaffRole;
 use App\Gallery\Models\Gallery;
@@ -226,13 +222,12 @@ function bearerToken(mixed $tokenable): string
 }
 
 /**
- * A booked project with a primary contact — the fixture RenderContractJob's
- * merge fields resolve against (project.name, contact.name, job.bookedAt).
- * Lives here rather than in whichever Contracts test file happened to
- * declare it first: several do now, and a global function declared inside
- * one test file collides the moment a second file declares the same name.
+ * A booked project with a primary contact — the fixture the merge fields
+ * resolve against (project.name, contact.name, job.bookedAt). Lives here
+ * because a global function declared inside one test file collides the
+ * moment a second file declares the same name.
  */
-function contractProject(): Project
+function bookedContactProject(): Project
 {
     $project = Project::factory()->create(['name' => 'Hochzeit Meier & Kowalski']);
     $contact = Contact::factory()->create(['name' => 'Lena Meier', 'email' => 'lena@example.test']);
@@ -240,26 +235,6 @@ function contractProject(): Project
     Job::factory()->for($project)->create(['booked_at' => '2026-06-14 00:00:00']);
 
     return $project;
-}
-
-/**
- * A Contract already in the `rendered` state, with real bytes sitting on the
- * faked `local` disk at its artifact_path — call Storage::fake('local')
- * before this. Several Contracts suites need "a rendered contract that
- * exists" without caring how it got there.
- */
-function renderedContract(?Project $project = null, string $bytes = '%PDF-stored-bytes'): Contract
-{
-    $contract = Contract::factory()
-        ->for($project ?? Project::factory())
-        ->for(DocumentTemplate::factory(), 'template')
-        ->create(['status' => ContractStatus::Pending]);
-
-    $path = "contracts/test/{$contract->public_id}.pdf";
-    Storage::disk('local')->put($path, $bytes);
-    $contract->update(['status' => ContractStatus::Rendered, 'artifact_path' => $path, 'rendered_at' => now()]);
-
-    return $contract->fresh();
 }
 
 /**
@@ -356,7 +331,7 @@ function integerIdPaths(mixed $node, string $path = '$'): array
  * E-12's inbound-mail fixtures. Both InboundMailTest and
  * InboundMimeMessageTest need the same tenant secret and the same threaded
  * project, and a global function declared inside one test file collides the
- * moment a second file declares it — the reason contractProject() lives here
+ * moment a second file declares it — the reason bookedContactProject() lives here
  * too.
  */
 function inboundDomain(): string
@@ -366,7 +341,7 @@ function inboundDomain(): string
 
 function inboundThread(string $email = 'lena@example.test'): Thread
 {
-    $project = contractProject();
+    $project = bookedContactProject();
     $contact = $project->contacts()->sole();
     $contact->update(['email' => $email]);
 
@@ -407,16 +382,13 @@ function confirmedGuest(Gallery $gallery, string $email = 'gast@example.com', st
 }
 
 /**
- * The first installment of a plan on a booked, signed project — the setup
+ * The first installment of a plan on a booked project — the setup
  * every invoicing suite starts from. Moved out of InvoiceTest.php once #408
  * needed it too, for the reason studioWithProject() above already gives.
  */
 function invoiceablePlan(): PaymentInstallment
 {
-    $project = contractProject();
-    $contract = renderedContract($project);
-    $contact = $project->contacts()->sole();
-    ContractSignature::factory()->for($contract)->for($contact)->create();
+    $project = bookedContactProject();
 
     $plan = app(CreatePaymentPlan::class)($project->job()->sole(), 150_000, ['2026-09-01', '2026-10-01']);
 

@@ -12,12 +12,12 @@ it('returns a project\'s events newest first', function () {
 
     AuditLogger::record('quote.sent', null, [], null, $project->id);
     $this->travel(1)->hours();
-    AuditLogger::record('contract.signed', null, [], null, $project->id);
+    AuditLogger::record('quote.accepted', null, [], null, $project->id);
 
     $activity = ProjectActivity::for($project);
 
     expect($activity)->toHaveCount(2)
-        ->and($activity[0]['event'])->toBe('contract.signed');
+        ->and($activity[0]['event'])->toBe('quote.accepted');
 });
 
 it('dates a backdated event when it happened, not when it was typed', function () {

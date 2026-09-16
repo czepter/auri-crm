@@ -44,7 +44,7 @@ class SavePackage
             // Q-09/Q-10: the block half of a line. `id` is how a picture
             // survives the wholesale replace below — never the path itself:
             // a stored path accepted from a form is a read of any file on
-            // the disk, this app's contracts included.
+            // the disk, this app's invoices included.
             'items.*.id' => ['nullable', 'string'],
             'items.*.selectable' => ['sometimes', 'boolean'],
             'items.*.selected' => ['sometimes', 'boolean'],

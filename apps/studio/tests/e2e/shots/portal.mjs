@@ -18,7 +18,6 @@ await visit(admin, `${ADMIN}/einstellungen/portal`)
 await shot(admin, 'portal/setup', 'einstellungen-portal--alles-aus')
 for (const id of [
   '#cb-portal-accept-quotes-enabled',
-  '#cb-portal-sign-contracts-enabled',
   '#cb-portal-payment-status-enabled',
 ]) {
   const box = admin.locator(id)

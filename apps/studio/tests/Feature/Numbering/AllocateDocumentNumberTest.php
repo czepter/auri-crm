@@ -8,10 +8,29 @@ use App\Settings\Support\StudioSettingsResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
+
+// The subprocesses below commit on their own connections, so their rows
+// outlive RefreshDatabase's rollback — and a delete on the test connection
+// would be rolled back with everything else, leaving them for whatever test
+// counts counters next.
+function purgeCommittedCounters(string $tenantId, string $type, int $year): void
+{
+    config(['database.connections.numbering_purge' => config('database.connections.pgsql')]);
+
+    DB::connection('numbering_purge')
+        ->table('quote_number_counters')
+        ->where('tenant_id', $tenantId)
+        ->where('document_type', $type)
+        ->where('year', $year)
+        ->delete();
+
+    DB::purge('numbering_purge');
+}
 
 // Q-05's own six scenarios, unchanged in substance — the seeded tenant
 // (config('tenancy.tenant_id')) already carries a quote range from the
@@ -200,20 +219,18 @@ it('never hands out the same quote number twice under real concurrent access', f
 
     // The database agrees with what the processes reported: exactly one row
     // per successful allocation, and every counter value handed back is
-    // actually there. Real subprocesses commit for real on their own
-    // connections — RefreshDatabase's rollback of the main test connection
-    // never touches them — so this also cleans up after itself.
+    // actually there.
     expect(NumberCounter::where('tenant_id', $tenantId)->where('document_type', 'quote')->where('year', $year)->count())
         ->toBe($succeeded->count());
 
-    NumberCounter::where('tenant_id', $tenantId)->where('document_type', 'quote')->where('year', $year)->delete();
+    purgeCommittedCounters($tenantId, 'quote', $year);
 });
 
 it('never hands out the same number twice for a second document type under real concurrent access', function () {
     // Q-05 proved this for quote specifically. T-04's refactor is only worth
     // shipping if the same guarantee holds for a range it didn't originally
-    // know about — so this repeats the exact proof above for contract, the
-    // seeded tenant's other range, and nothing else changes.
+    // know about — so this repeats the exact proof above for credit_note, another
+    // seeded yearly range, and nothing else changes.
     $tenantId = config('tenancy.tenant_id');
     $year = 2223;
     $attempts = 20;
@@ -222,7 +239,7 @@ it('never hands out the same number twice for a second document type under real 
     $pool = Process::pool(function ($pool) use ($tenantId, $year, $attempts, $database) {
         for ($i = 0; $i < $attempts; $i++) {
             $pool->as($i)->path(base_path())->timeout(30)->command([
-                'php', 'tests/Support/allocate_document_number_cli.php', $tenantId, (string) $year, 'contract',
+                'php', 'tests/Support/allocate_document_number_cli.php', $tenantId, (string) $year, 'credit_note',
                 $database,
             ]);
         }
@@ -242,8 +259,8 @@ it('never hands out the same number twice for a second document type under real 
         fn ($result) => expect($result->errorOutput())->toContain('quote_number_counters_tenant_id_document_type_year_counter')
     );
 
-    expect(NumberCounter::where('tenant_id', $tenantId)->where('document_type', 'contract')->where('year', $year)->count())
+    expect(NumberCounter::where('tenant_id', $tenantId)->where('document_type', 'credit_note')->where('year', $year)->count())
         ->toBe($succeeded->count());
 
-    NumberCounter::where('tenant_id', $tenantId)->where('document_type', 'contract')->where('year', $year)->delete();
+    purgeCommittedCounters($tenantId, 'credit_note', $year);
 });

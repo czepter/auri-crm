@@ -19,8 +19,6 @@ use App\Gallery\Models\GalleryPreset;
 use App\Http\Controllers\Controller;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -81,7 +79,6 @@ class TemplateHubController extends Controller
             'taskTemplates' => TaskTemplateData::collect($tasks),
             'formTemplates' => FormTemplateData::collect($forms),
             'documentTemplates' => DocumentTemplateData::collect($documents),
-            'documentUse' => $this->documentUse($documents),
             'galleryPresets' => GalleryPresetData::collect($presets),
             'audiences' => $this->options(TaskAudience::cases()),
             'shootKinds' => Shoot::kindSuggestions(),
@@ -118,26 +115,6 @@ class TemplateHubController extends Controller
         ];
 
         return array_keys(array_filter($checks));
-    }
-
-    /**
-     * How many documents each current edition is out in — the one number that
-     * decides whether overwriting a template is safe. Same source as
-     * DocumentTemplateController's own table.
-     *
-     * @param  Collection<int, DocumentTemplate>  $templates
-     * @return array<string, int>
-     */
-    private function documentUse($templates): array
-    {
-        $inUse = DB::table('contracts')
-            ->selectRaw('contract_template_id, count(*) as total')
-            ->groupBy('contract_template_id')
-            ->pluck('total', 'contract_template_id');
-
-        return $templates->mapWithKeys(fn (DocumentTemplate $template) => [
-            $template->public_id => (int) ($inUse[$template->id] ?? 0),
-        ])->all();
     }
 
     /**

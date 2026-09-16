@@ -25,8 +25,7 @@ use Illuminate\Validation\ValidationException;
  * quote superseded by a revision, or past its own valid_until, is rejected
  * here even when an earlier GET on the same quote had nothing to object to.
  *
- * Idempotent the same shape App\Contracts\Actions\SignContract's own
- * docblock describes: a doubled request (a retried POST, two tabs) finds the
+ * Idempotent: a doubled request (a retried POST, two tabs) finds the
  * quote already accepted and returns it, rather than failing on the
  * booted() guard's second write or writing a second acceptance.
  *
@@ -93,8 +92,7 @@ class AcceptQuote
             }
 
             // actor is null, not $contact — AuditLog::actor_id is a foreign
-            // key to staff users, and a Contact is never one. The same shape
-            // SignContract's own audit call uses.
+            // key to staff users, and a Contact is never one.
             AuditLogger::record(
                 event: 'quote.accepted',
                 context: ['project' => $quote->project->public_id, 'contact' => $contact->public_id],

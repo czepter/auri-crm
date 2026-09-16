@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use App\Automation\Listeners\FireAutomationRulesForEvent;
 use App\Catalog\Models\Package;
-use App\Contracts\Events\ContractSigned;
 use App\Crm\Actions\RescheduleAnchoredTasks;
 use App\Crm\Events\LeadCaptured;
 use App\Crm\Events\LeadStageChanged;
@@ -12,7 +11,6 @@ use App\Crm\Events\ProjectBooked;
 use App\Crm\Events\ShootStatusChanged;
 use App\Crm\Listeners\ApplyTemplatesOnBooking;
 use App\Crm\Listeners\ApplyTemplatesOnStage;
-use App\Crm\Listeners\BookProjectOnContractAndDeposit;
 use App\Portal\Listeners\RevealProjectOnBooking;
 use App\Crm\Models\Contact;
 use App\Crm\Models\FormTemplate;
@@ -219,16 +217,10 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
-        // P-05b: one listener, two triggers, converging on the same
-        // BookProject the manual button calls — see the class docblock.
-        Event::listen(ContractSigned::class, [BookProjectOnContractAndDeposit::class, 'handleContractSigned']);
-        Event::listen(InstallmentPaid::class, [BookProjectOnContractAndDeposit::class, 'handleInstallmentPaid']);
-
         // T-11: the studio's own inbox. Three of the six events the profile
         // screen lists have a domain event; the other three call NotifyStudio
         // from their action — see the listener's own docblock.
         Event::listen(LeadCaptured::class, [NotifyStudioOfDomainEvent::class, 'handleLeadCaptured']);
-        Event::listen(ContractSigned::class, [NotifyStudioOfDomainEvent::class, 'handleContractSigned']);
         Event::listen(InstallmentPaid::class, [NotifyStudioOfDomainEvent::class, 'handleInstallmentPaid']);
         Event::listen(InstallmentOverdue::class, [NotifyStudioOfDomainEvent::class, 'handleInstallmentOverdue']);
 

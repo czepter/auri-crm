@@ -11,8 +11,8 @@ use App\Crm\Events\ShootStatusChanged;
  * A stage the project reaches owes what the workflow says it owes.
  *
  * Booking keeps its own listener (ApplyTemplatesOnBooking): a lead that jumps
- * straight to "Gebucht" and a contract that books the project without the board
- * ever moving are two paths to the same stage, and only one of them changes a
+ * straight to "Gebucht" and the Buchen button that books the project without the
+ * board ever moving are two paths to the same stage, and only one of them changes a
  * lead stage.
  */
 class ApplyTemplatesOnStage

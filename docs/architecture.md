@@ -105,7 +105,6 @@ app/Crm/
 | `Crm` | Contacts, projects, shoots, leads, the board, tasks, forms, timeline |
 | `Catalog` | Packages and priced items |
 | `Quotes` | Quote building, sending, acceptance |
-| `Contracts` | Contract rendering and signature |
 | `Documents` | Templates, merge fields, the shared vocabulary behind all three document types |
 | `Payments` | Payment plans, installments, Stripe |
 | `Numbering` | Document number ranges and allocation |

@@ -26,10 +26,9 @@ type Shoot = {
 }
 
 type Document = {
-  kind: 'payments' | 'contract' | 'quote' | 'messages'
+  kind: 'payments' | 'quote' | 'messages'
   href: string
   dueOn: string | null
-  signedOn?: string | null
   acceptedOn?: string | null
   amount: number | null
   settled: boolean
@@ -122,10 +121,6 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
 function documentNote(document: Document) {
   if (document.kind === 'payments') {
     return document.settled ? 'settled' : 'due'
-  }
-
-  if (document.kind === 'contract') {
-    return document.signedOn ? 'signed' : 'unsigned'
   }
 
   if (document.kind === 'quote') {
@@ -263,8 +258,6 @@ function documentNote(document: Document) {
             :note="{
               settled: $t('portal.allSettled'),
               due: document.dueOn ? $t('portal.dueOn', { date: shortDate(document.dueOn) }) : null,
-              signed: document.signedOn ? $t('portal.signedOn', { date: shortDate(document.signedOn) }) : null,
-              unsigned: $t('portal.notSignedYet'),
               accepted: document.acceptedOn ? $t('portal.quoteAccepted', { date: shortDate(document.acceptedOn) }) : null,
               open: $t('portal.quoteOpen'),
               messages: `${$t('portal.messagesAbout')} ${project.name}`,
@@ -312,7 +305,7 @@ function documentNote(document: Document) {
       </section>
 
       <!-- The same details the inquiry let them edit, read-only now: from
-           `gebucht` the date and the place are contract content. In their
+           `gebucht` the date and the place are agreed. In their
            place stands the way a change gets discussed. -->
       <section class="pt-12">
         <div :class="BAND">

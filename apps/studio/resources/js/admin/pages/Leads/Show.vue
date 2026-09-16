@@ -332,12 +332,7 @@ const due = computed(() => {
         return props.tab === "quotes" ? null : { label: "lead.writeQuote", href: newQuote.value };
     }
 
-    return props.lead.stage === "quote_accepted"
-        ? {
-              label: "lead.sendContract",
-              href: `/auftraege/${props.lead.projectId}/vertrag`,
-          }
-        : null;
+    return null;
 });
 </script>
 

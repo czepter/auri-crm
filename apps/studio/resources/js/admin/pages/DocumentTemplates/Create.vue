@@ -37,7 +37,7 @@ type Starter = {
 const project = ref<string | null>(null)
 
 // The scope of a starter, in the two numbers that say whether it is a page or
-// a contract: how many blocks, and how many placeholders it will ask the
+// a whole document: how many blocks, and how many placeholders it will ask the
 // project for.
 function scopeOf(starter: Starter) {
   const text = JSON.stringify(starter.blocks)
@@ -49,7 +49,7 @@ function scopeOf(starter: Starter) {
 }
 
 const doc = ref<EditorDocument>({ blocks: [] })
-const form = useForm({ name: '', body: '', blocks: doc.value, type: 'contract', shoot_kind: '' })
+const form = useForm({ name: '', body: '', blocks: doc.value, type: 'quote', shoot_kind: '' })
 
 // T-16: the screen opens on a choice rather than on an empty canvas. A
 // starter is a starting point and not a link — choosing one copies its blocks
@@ -133,7 +133,7 @@ function submit() {
 
           <!-- The screen opens on a choice rather than on an empty page. Each card
                states its scope, because "14 Blöcke · 9 Platzhalter" is what says
-               whether this is a page or a contract. The blank one is the last card
+               whether this is a page or a whole document. The blank one is the last card
                and carries no surface: it is a choice, not the default. -->
           <section v-if="chosen === null" data-tokens>
             <div class="grid grid-cols-3 gap-3">

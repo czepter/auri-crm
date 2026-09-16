@@ -49,7 +49,7 @@ it('adds a stage after the one it was placed behind', function () {
     ])->assertRedirect();
 
     expect(Stage::ordered(StagePipeline::Lead)->pluck('key')->all())
-        ->toBe(['new', 'contacted', 'vorgesprach', 'quote_sent', 'quote_accepted', 'contract_sent', 'booked']);
+        ->toBe(['new', 'contacted', 'vorgesprach', 'quote_sent', 'quote_accepted', 'booked']);
 });
 
 it('renames a stage without moving the records standing on it', function () {

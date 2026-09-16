@@ -17,8 +17,8 @@ use Illuminate\Database\Eloquent\Model;
  * locale and working_days are T-13's (Allgemein); the rest below is T-02's
  * Studio-Profil. quote_validity_days, payment_term_days,
  * deposit_percentage, widerruf_included and widerruf_text are T-05's
- * Dokumente pane — the values every new quote, payment plan and contract
- * render starts from, including the deposit and Zahlungsziel defaults
+ * Dokumente pane — the values every new quote and payment plan
+ * starts from, including the deposit and Zahlungsziel defaults
  * T-07's own issue also named; T-05 landed first, so T-07 reads those two
  * through T-05's columns rather than declaring a second pair. The
  * payments_* columns below are T-07's own remainder: Stripe as an optional
@@ -55,7 +55,7 @@ class StudioSettings extends Model
         'mail_from_name', 'mail_from_address', 'mail_reply_to', 'mail_signature', 'mail_bcc', 'mail_clients_enabled',
         'portal_maintenance_enabled', 'portal_maintenance_message',
         'portal_welcome_text', 'portal_legal_datenschutz_url', 'portal_legal_agb_url',
-        'portal_accept_quotes_enabled', 'portal_sign_contracts_enabled',
+        'portal_accept_quotes_enabled',
         'portal_payment_status_enabled', 'portal_messaging_mode', 'portal_offers_enabled',
         'portal_welcome_inquiry', 'portal_welcome_many',
         'gallery_default_expiry_days',
@@ -93,7 +93,6 @@ class StudioSettings extends Model
             'mail_clients_enabled' => 'boolean',
             'portal_maintenance_enabled' => 'boolean',
             'portal_accept_quotes_enabled' => 'boolean',
-            'portal_sign_contracts_enabled' => 'boolean',
             'portal_payment_status_enabled' => 'boolean',
             'portal_offers_enabled' => 'boolean',
             'gallery_default_downloads_enabled' => 'boolean',
