@@ -31,6 +31,13 @@ function projectRows(?User $as = null): array
         ->get('/projekte')->assertOk()->viewData('page')['props']['projects'];
 }
 
+it('opens the view named in the url, the list otherwise', function () {
+    test()->actingAs(test()->staff, 'staff');
+
+    expect(props('/projekte?ansicht=board')['view'])->toBe('board')
+        ->and(props('/projekte?ansicht=kanban')['view'])->toBe('liste');
+});
+
 // C-02 (#236): a studio looks a project up by its day, so the nearest one is
 // the first row and the ones without a date do not push it down.
 it('orders by the primary shoot, undated last', function () {

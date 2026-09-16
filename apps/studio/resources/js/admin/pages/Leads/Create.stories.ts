@@ -34,6 +34,7 @@ const meta = {
     component: Create,
     parameters: { layout: 'fullscreen', url: '/anfragen/neu' },
     args: {
+        date: null,
         types,
         sources,
         channels,
@@ -77,6 +78,7 @@ export const KontaktSuche: Story = {
 
 /** Ein Wunschtermin, an dem schon etwas steht — die Meldung warnt, das Formular bleibt speicherbar. */
 export const MitKollision: Story = {
+    args: { date: '2027-06-12' },
     beforeEach: () => {
         const original = window.fetch
 
@@ -88,16 +90,5 @@ export const MitKollision: Story = {
         return () => {
             window.fetch = original
         }
-    },
-    play: async ({ canvasElement }) => {
-        const label = [...canvasElement.querySelectorAll('label')].find(
-            (node) => node.textContent?.trim() === 'Haupttermin',
-        )
-        const input = canvasElement.querySelector<HTMLInputElement>(`#${label?.htmlFor}`)
-
-        if (!input) return
-
-        input.value = '12.06.2027'
-        input.dispatchEvent(new Event('input', { bubbles: true }))
     },
 }

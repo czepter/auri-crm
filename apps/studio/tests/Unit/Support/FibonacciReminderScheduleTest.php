@@ -24,6 +24,11 @@ it('collapses missed runs into a single due reminder', function () use ($anchor)
         ->and(FibonacciReminderSchedule::isDue($anchor(), 3, $anchor()->addDays(9)))->toBeFalse();
 });
 
+it('stops at the ceiling', function () use ($anchor) {
+    expect(FibonacciReminderSchedule::isDue($anchor(), 7, $anchor()->addDays(90)))->toBeTrue()
+        ->and(FibonacciReminderSchedule::isDue($anchor(), 7, $anchor()->addDays(90), ceilingDays: 80))->toBeFalse();
+});
+
 it('reaches no rung for a date still ahead', function () use ($anchor) {
     expect(FibonacciReminderSchedule::reachedRungs($anchor(), $anchor()->subDays(4)))->toBe(0);
 });
