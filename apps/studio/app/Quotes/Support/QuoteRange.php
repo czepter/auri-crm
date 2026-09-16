@@ -47,13 +47,25 @@ final class QuoteRange
 
     /**
      * The one formula: hours at the rate, plus every fixed position, plus the
-     * optional blocks named. AcceptQuote computes the stored `total` through
+     * optional blocks named, less the quote-level discount. AcceptQuote computes the stored `total` through
      * here too, so the figure a client saw and the figure that lands on the
      * row can only ever come from one place.
      *
      * @param  Collection<int, int>  $selectedItemIds  primary keys of the switched-on blocks
      */
     public static function totalFor(Quote $quote, int $hours, Collection $selectedItemIds): int
+    {
+        $subtotal = self::subtotalFor($quote, $hours, $selectedItemIds);
+
+        return $subtotal - DiscountCalculator::resolve($subtotal, $quote->discount_type, $quote->discount_value);
+    }
+
+    /**
+     * totalFor() before the quote-level discount.
+     *
+     * @param  Collection<int, int>  $selectedItemIds
+     */
+    public static function subtotalFor(Quote $quote, int $hours, Collection $selectedItemIds): int
     {
         $items = $quote->items;
 

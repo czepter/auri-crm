@@ -1,5 +1,5 @@
 import { eurosToCents, parseDiscount } from '@/admin/lib/money'
-import { applyDiscount, lineAmount, subtotal, vatLines } from './quoteTotals'
+import { applyDiscount, lineAmount, spread, subtotal, vatLines } from './quoteTotals'
 
 export type PricingMode = 'classic' | 'choice'
 
@@ -40,6 +40,7 @@ export type QuoteDraft = {
   pricingMode: PricingMode
   validUntil: string
   discount: string
+  discountHidden: boolean
   intro: string
   outro: string
   rows: QuoteRow[]
@@ -114,6 +115,7 @@ export function buildQuotePayload(draft: QuoteDraft, options: QuotePayloadOption
     outro: draft.outro || null,
     discount_type: quoteDiscount.type || null,
     discount_value: quoteDiscount.value,
+    discount_hidden: draft.discountHidden,
     hourly_rate: eurosToCents(draft.slider.hourlyRate),
     min_hours: draft.slider.minHours,
     max_hours: draft.slider.maxHours,
@@ -184,6 +186,11 @@ export function buildPreviewQuote(draft: QuoteDraft, vat: VatSettings): App.Quot
     type: quoteDiscount.type || null,
     value: quoteDiscount.type === 'percentage' && quoteDiscount.value !== null ? quoteDiscount.value / 100 : quoteDiscount.value,
   })
+  const hidden = draft.discountHidden && draft.pricingMode === 'classic'
+
+  if (hidden) {
+    hideDiscount(items, total)
+  }
 
   return {
     id: 'preview',
@@ -198,10 +205,11 @@ export function buildPreviewQuote(draft: QuoteDraft, vat: VatSettings): App.Quot
     number: null,
     sentAt: null,
     sentChannel: null,
-    total,
-    discountType: quoteDiscount.type || null,
-    discountValue: quoteDiscount.value,
-    discountAmount: itemsSubtotal - total,
+    total: hidden ? total : itemsSubtotal,
+    discountType: hidden ? null : quoteDiscount.type || null,
+    discountValue: hidden ? null : quoteDiscount.value,
+    discountAmount: hidden ? 0 : itemsSubtotal - total,
+    discountHidden: draft.discountHidden,
     net: total,
     // Gefroren wird erst beim Versenden (Quote::computeVat()) — bis dahin
     // rechnet die Vorschau live aus den aktuellen Studio-Einstellungen,
@@ -236,4 +244,20 @@ export function buildPreviewQuote(draft: QuoteDraft, vat: VatSettings): App.Quot
     recipientCity: draft.recipientCity,
     portalUrl: null,
   }
+}
+
+/**
+ * Portal-Vorschau von Quote::asSeenByClient(): der Rabatt steckt in den
+ * Zeilenpreisen. Im Auswahl-Modus rechnet QuoteSlider selbst.
+ *
+ * ponytail: anteilig über alle Zeilen statt je Steuersatz — bei gemischten
+ * Sätzen kann eine Zeile hier um einen Cent vom PDF abweichen.
+ */
+function hideDiscount(items: App.Quotes.Data.QuoteItemData[], net: number) {
+  const charged = items.filter((item) => item.netTotal > 0)
+  const amounts = spread(charged.map((item) => item.netTotal), net)
+
+  charged.forEach((item, index) => {
+    Object.assign(item, { discountType: null, discountValue: null, discountAmount: 0, lineTotal: amounts[index], netTotal: amounts[index] })
+  })
 }

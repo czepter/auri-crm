@@ -713,6 +713,7 @@
     "itemVatRate": "Steuersatz",
     "itemVatRateDefault": "Angebotssatz",
     "discount": "Rabatt",
+    "discountHidden": "Rabatt verbergen",
     "net": "Netto",
     "vat": "USt. {rate} %",
     "sendByMail": "Per E-Mail senden",

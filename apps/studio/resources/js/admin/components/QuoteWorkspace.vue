@@ -48,6 +48,7 @@ function draftOf(quote: App.Quotes.Data.QuoteData): QuoteDraft {
     pricingMode: quote.pricingMode as QuoteDraft['pricingMode'],
     validUntil: quote.validUntil ?? '',
     discount: formatDiscount(quote.discountType, quote.discountValue),
+    discountHidden: quote.discountHidden,
     intro: quote.intro ?? '',
     outro: quote.outro ?? '',
     recipientContact: quote.recipientContact,

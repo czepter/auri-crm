@@ -23,6 +23,29 @@ export function applyDiscount(amount: number, discount: { type: 'percentage' | '
   return Math.max(0, amount)
 }
 
+/** Server-side encoding (basis points / cents) into applyDiscount's plain percent. */
+export function quoteDiscount(type: string | null, value: number | null): { type: 'percentage' | 'amount' | null; value: number | null } {
+  if (type !== 'percentage' && type !== 'amount') {
+    return { type: null, value: null }
+  }
+
+  return { type, value: type === 'percentage' && value !== null ? value / 100 : value }
+}
+
+/** Mirrors DiscountCalculator::spread(): total pro rata over amounts, leftover cent onto the largest. */
+export function spread(amounts: number[], total: number): number[] {
+  const base = amounts.reduce((sum, amount) => sum + amount, 0)
+
+  if (base <= 0) {
+    return amounts
+  }
+
+  const shares = amounts.map((amount) => Math.floor((total * amount) / base))
+  shares[amounts.indexOf(Math.max(...amounts))] += total - shares.reduce((sum, share) => sum + share, 0)
+
+  return shares
+}
+
 export function lineAmount(row: QuoteLineInput): number {
   return applyDiscount(row.quantity * row.unitPrice, { type: row.discountType, value: row.discountValue })
 }

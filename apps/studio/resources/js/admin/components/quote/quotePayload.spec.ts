@@ -11,6 +11,7 @@ function baseDraft(pricingMode: QuoteDraft['pricingMode']): QuoteDraft {
     pricingMode,
     validUntil: '2026-10-01',
     discount: '',
+    discountHidden: false,
     intro: '',
     outro: '',
     rows: [],

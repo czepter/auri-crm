@@ -61,6 +61,7 @@ class ReviseQuote
                 'outro' => $predecessor->outro,
                 'discount_type' => $predecessor->discount_type,
                 'discount_value' => $predecessor->discount_value,
+                'discount_hidden' => $predecessor->discount_hidden,
                 'hourly_rate' => $predecessor->hourly_rate,
                 'min_hours' => $predecessor->min_hours,
                 'max_hours' => $predecessor->max_hours,

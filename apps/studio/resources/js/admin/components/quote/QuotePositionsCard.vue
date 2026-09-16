@@ -5,6 +5,8 @@ import { quoteRowToLine } from './quotePayload'
 import { applyDiscount, lineAmount, span, subtotal, vatLines } from './quoteTotals'
 import { basisPointsToPercent, eurosToCents, formatEuros, parseDiscount } from '@/admin/lib/money'
 import { moveRow } from '@/admin/lib/rows'
+import { Label } from '@/ui/label'
+import { Switch } from '@/ui/switch'
 import QuoteInsertRow from '@/admin/components/QuoteInsertRow.vue'
 import QuotePositionRow from './QuotePositionRow.vue'
 import DiscountInput from './DiscountInput.vue'
@@ -160,18 +162,18 @@ const tiles = computed(() => {
   const { minHours, maxHours } = draft.value.slider
 
   return {
-    min: span(lines, minHours ?? 0, rate.value, false),
-    preselected: span(selected, hours.value, rate.value, true),
-    max: span(lines, maxHours ?? 0, rate.value, true),
+    min: applyDiscount(span(lines, minHours ?? 0, rate.value, false), discountArg.value),
+    preselected: applyDiscount(span(selected, hours.value, rate.value, true), discountArg.value),
+    max: applyDiscount(span(lines, maxHours ?? 0, rate.value, true), discountArg.value),
   }
 })
 
-const total = computed(() =>
-  applyDiscount(quoteSubtotal.value, {
-    type: quoteDiscount.value.type || null,
-    value: quoteDiscount.value.type === 'percentage' && quoteDiscount.value.value !== null ? quoteDiscount.value.value / 100 : quoteDiscount.value.value,
-  }),
-)
+const discountArg = computed(() => ({
+  type: quoteDiscount.value.type || null,
+  value: quoteDiscount.value.type === 'percentage' && quoteDiscount.value.value !== null ? quoteDiscount.value.value / 100 : quoteDiscount.value.value,
+}))
+
+const total = computed(() => applyDiscount(quoteSubtotal.value, discountArg.value))
 
 // Q-04 friert das erst beim Versenden ein (Quote::computeVat()) — bis dahin
 // zeigt der Builder dieselbe Live-Rechnung aus den aktuellen
@@ -260,6 +262,14 @@ const vat = computed(() => vatRows.value.reduce((sum, line) => sum + line.vat, 0
       <div class="flex items-center justify-between gap-2 text-[12.5px] text-ink-2">
         <span>{{ $t('quotes.discount') }}</span>
         <DiscountInput v-model="draft.discount" class="w-32" @change="emit('change')" />
+      </div>
+      <div v-if="draft.discount || draft.rows.some((row) => row.discount)" class="flex items-center justify-between gap-2">
+        <Label for="discount-hidden" variant="inline" class="text-[12.5px] text-ink-2">{{ $t('quotes.discountHidden') }}</Label>
+        <Switch
+          id="discount-hidden"
+          :model-value="draft.discountHidden"
+          @update:model-value="((draft.discountHidden = $event), emit('change'))"
+        />
       </div>
       <div class="flex justify-between border-t border-rule pt-1.5 text-[15px] font-semibold">
         <span>{{ $t('quotes.total') }}</span>

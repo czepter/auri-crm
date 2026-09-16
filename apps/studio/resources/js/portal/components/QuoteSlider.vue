@@ -11,6 +11,7 @@ import { computed, ref } from 'vue'
 import { useForm, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import { formatEuros } from '@/admin/lib/money'
+import { applyDiscount, quoteDiscount, spread } from '@/admin/components/quote/quoteTotals'
 import { splitStages } from '@/portal/lib/paymentStages'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
@@ -59,12 +60,19 @@ const blocks = computed(() => props.quote.items.filter((item) => item.selectable
 const included = computed(() => props.quote.items.filter((item) => item.isIncluded))
 const fixed = computed(() => props.quote.items.filter((item) => !item.isIncluded && !item.selectable))
 
-const total = computed(
+const subtotal = computed(
   () =>
     hours.value * (props.quote.hourlyRate ?? 0) +
     fixed.value.reduce((sum, item) => sum + item.netTotal, 0) +
     blocks.value.filter((item) => chosen.value.has(item.id)).reduce((sum, item) => sum + item.netTotal, 0)
 )
+const total = computed(() => applyDiscount(subtotal.value, quoteDiscount(props.quote.discountType, props.quote.discountValue)))
+const hidden = computed(() => props.quote.discountHidden && total.value < subtotal.value)
+
+// Verborgen steckt der Rabatt anteilig in jedem Preis, den der Kunde liest.
+function price(amount: number) {
+  return hidden.value && subtotal.value > 0 ? Math.round((amount * total.value) / subtotal.value) : amount
+}
 
 const stages = computed(() =>
   splitStages(
@@ -86,14 +94,25 @@ const timeDetail = computed(() =>
 // Die Aufstellung sagt, was der Betrag deckt, in der Reihenfolge, in der er
 // entsteht: die Stunden, dann was ohne Aufpreis folgt, dann jeder gewählte
 // Baustein.
-const breakdown = computed(() => [
-  { label: props.quote.timeTitle ?? t('quotes.hoursCount', hours.value), amount: hours.value * (props.quote.hourlyRate ?? 0), lead: true },
-  ...(props.quote.timeTitle ? [{ label: timeDetail.value, amount: null, lead: false }] : []),
-  ...fixed.value.map((item) => ({ label: item.title, amount: item.netTotal, lead: false })),
-  ...(props.quote.timeTitle ? [] : [{ label: t('quotes.editedImages', { count: images.value }), amount: null, lead: false }]),
-  ...included.value.map((item) => ({ label: item.outcome ?? item.title, amount: null, lead: false })),
-  ...blocks.value.filter((item) => chosen.value.has(item.id)).map((item) => ({ label: item.title, amount: item.netTotal, lead: false })),
-])
+const breakdown = computed(() => {
+  const rows: { label: string; amount: number | null; lead: boolean }[] = [
+    { label: props.quote.timeTitle ?? t('quotes.hoursCount', hours.value), amount: hours.value * (props.quote.hourlyRate ?? 0), lead: true },
+    ...(props.quote.timeTitle ? [{ label: timeDetail.value, amount: null, lead: false }] : []),
+    ...fixed.value.map((item) => ({ label: item.title, amount: item.netTotal, lead: false })),
+    ...(props.quote.timeTitle ? [] : [{ label: t('quotes.editedImages', { count: images.value }), amount: null, lead: false }]),
+    ...included.value.map((item) => ({ label: item.outcome ?? item.title, amount: null, lead: false })),
+    ...blocks.value.filter((item) => chosen.value.has(item.id)).map((item) => ({ label: item.title, amount: item.netTotal, lead: false })),
+  ]
+
+  if (hidden.value) {
+    const priced = rows.filter((row) => row.amount !== null)
+    spread(priced.map((row) => row.amount!), total.value).forEach((amount, index) => (priced[index].amount = amount))
+  } else if (total.value < subtotal.value) {
+    rows.push({ label: t('quotes.discount'), amount: total.value - subtotal.value, lead: false })
+  }
+
+  return rows
+})
 
 function toggle(item: Item) {
   if (accepted.value) return
@@ -160,7 +179,7 @@ function accept() {
 
       <div class="mt-2.5 flex items-baseline justify-between gap-4">
         <span class="text-[13.5px] leading-[1.45] text-muted-foreground">
-          {{ $t('quotes.perHour', { amount: formatEuros(quote.hourlyRate ?? 0) }) }}
+          {{ $t('quotes.perHour', { amount: formatEuros(price(quote.hourlyRate ?? 0)) }) }}
         </span>
         <span class="hidden text-[16px] leading-[1.2] font-semibold text-[var(--accent)] tabular-nums lg:inline">
           {{ $t('quotes.imageCount', { count: images }) }}
@@ -221,7 +240,7 @@ function accept() {
             <span
               class="mt-2.5 block text-[13px] leading-none font-semibold tabular-nums"
               :class="chosen.has(item.id) ? 'text-[var(--accent)]' : 'text-muted-foreground'"
-            >+ {{ formatEuros(item.netTotal) }}</span>
+            >+ {{ formatEuros(price(item.netTotal)) }}</span>
           </span>
         </button>
       </div>

@@ -73,7 +73,7 @@ class QuoteSent extends Notification
         // The same figure QuoteWorkspace's own summaryRows shows: Rabatt only
         // when there is one, USt. only for a regelbesteuertes Studio — a
         // Kleinunternehmer's net already is the amount due.
-        if ($this->quote->discount_amount > 0) {
+        if ($this->quote->discount_amount > 0 && ! $this->quote->discount_hidden) {
             $message
                 ->line('Zwischensumme: '.Number::currency($this->quote->total / 100, in: 'EUR', locale: 'de'))
                 ->line('Rabatt: −'.Number::currency($this->quote->discount_amount / 100, in: 'EUR', locale: 'de'));

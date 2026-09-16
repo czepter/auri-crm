@@ -48,7 +48,7 @@ class QuoteController extends Controller
             // holen sich jede ihr Bild ueber ihren Index.
             'showcaseCount' => count($settings->showcasePaths()),
             'quote' => $quote === null ? null : [
-                ...QuoteData::fromModel($quote)->toArray(),
+                ...QuoteData::fromModel($quote->asSeenByClient())->toArray(),
                 // Display only — see AcceptQuote for the re-check this
                 // flag has no say over. A stale tab keeps reading whatever
                 // it rendered; the server never trusts it back.

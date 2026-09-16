@@ -38,7 +38,7 @@ class QuoteShareController extends Controller
             'acceptUrl' => "/angebot/{$quote->share_token}/teilen/annehmen",
             'imageUrlBase' => "/angebot/{$quote->share_token}/teilen",
             'quote' => [
-                ...QuoteData::fromModel($quote)->toArray(),
+                ...QuoteData::fromModel($quote->asSeenByClient())->toArray(),
                 'expired' => $quote->valid_until !== null && $quote->valid_until->copy()->endOfDay()->isPast(),
                 'acceptedAt' => $quote->accepted_at?->format('Y-m-d'),
             ],

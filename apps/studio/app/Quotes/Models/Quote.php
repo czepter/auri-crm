@@ -43,7 +43,7 @@ class Quote extends Model
     use HasHourlyPricing;
     use HasPublicId;
 
-    protected $fillable = ['project_id', 'predecessor_id', 'is_addendum', 'status', 'pricing_mode', 'intro', 'outro', 'currency', 'valid_until', 'sent_at', 'sent_channel', 'number', 'total', 'discount_type', 'discount_value', 'discount_amount', 'net', 'vat_mode', 'vat_rate', 'vat_note', 'vat_amount', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id', 'hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours', 'time_title', 'time_description', 'time_sort_order', 'recipient_contact_id', 'recipient_street', 'recipient_postcode', 'recipient_city'];
+    protected $fillable = ['project_id', 'predecessor_id', 'is_addendum', 'status', 'pricing_mode', 'intro', 'outro', 'currency', 'valid_until', 'sent_at', 'sent_channel', 'number', 'total', 'discount_type', 'discount_value', 'discount_amount', 'discount_hidden', 'net', 'vat_mode', 'vat_rate', 'vat_note', 'vat_amount', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id', 'hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours', 'time_title', 'time_description', 'time_sort_order', 'recipient_contact_id', 'recipient_street', 'recipient_postcode', 'recipient_city'];
 
     // The bearer credential QuoteShareController checks — never worth
     // serialising alongside the rest of the model, the same call
@@ -56,7 +56,7 @@ class Quote extends Model
     // reloaded, even though the row itself already holds the column
     // defaults — and Q-06's SendQuote can run against a quote that was never
     // re-fetched after creation.
-    protected $attributes = ['status' => 'draft', 'pricing_mode' => 'classic', 'currency' => 'EUR', 'total' => 0, 'discount_amount' => 0, 'net' => 0, 'time_sort_order' => 0];
+    protected $attributes = ['status' => 'draft', 'pricing_mode' => 'classic', 'currency' => 'EUR', 'total' => 0, 'discount_amount' => 0, 'discount_hidden' => false, 'net' => 0, 'time_sort_order' => 0];
 
     protected function casts(): array
     {
@@ -68,6 +68,7 @@ class Quote extends Model
             'accepted_at' => 'immutable_datetime',
             'discount_type' => DiscountType::class,
             'is_addendum' => 'boolean',
+            'discount_hidden' => 'boolean',
         ];
     }
 
@@ -107,9 +108,10 @@ class Quote extends Model
             // Q-12: `hours` and `total` join the list by name rather than by
             // softening the guard. A slider quote turns from a configuration
             // into an amount at exactly one moment, and it is this one.
-            // #442: the chosen amount replaces the preselection's net and VAT.
+            // #442: the chosen amount replaces the preselection's net and VAT,
+            // and with it the discount taken off that amount.
             $sliderAcceptance = $quote->hasSlider() && $quote->status === QuoteStatus::Accepted
-                ? ['net', 'vat_amount']
+                ? ['discount_amount', 'net', 'vat_amount']
                 : [];
             $allowed = $original === QuoteStatus::Sent->value
                 ? ['status', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id', 'hours', 'total', ...$sliderAcceptance]
@@ -223,6 +225,43 @@ class Quote extends Model
             'discount_amount' => $discountAmount,
             'net' => $subtotal - $discountAmount,
         ];
+    }
+
+    /**
+     * The quote as a client reads it. With discount_hidden, every discount is
+     * folded into the line prices: each rate's net from VatLines is shared
+     * out over that rate's lines, so the per-rate nets and the VAT a renderer
+     * recomputes from the lines match what the row froze. Never saved.
+     *
+     * ponytail: unit_price is floored to amount / quantity, so "3 × 68,52 €"
+     * can trail the line amount by up to quantity − 1 cents.
+     */
+    public function asSeenByClient(): self
+    {
+        if (! $this->discount_hidden || $this->hasSlider()) {
+            return $this;
+        }
+
+        $rate = (int) $this->vat_rate;
+        $nets = collect(VatLines::fromItems($this->items, $rate, (int) $this->net))->pluck('net', 'rate');
+        $items = $this->items->map(fn (QuoteItem $item) => clone $item);
+
+        foreach ($items->filter(fn (QuoteItem $item) => $item->discountedLineTotal() > 0)->groupBy(fn (QuoteItem $item) => $item->vat_rate ?? $rate) as $key => $group) {
+            $amounts = DiscountCalculator::spread($group->map(fn (QuoteItem $item) => $item->discountedLineTotal())->all(), $nets[$key] ?? 0);
+
+            foreach ($group as $index => $item) {
+                $item->unit_price = intdiv($amounts[$index], $item->quantity);
+                $item->discount_type = null;
+                $item->discount_value = null;
+                $item->discount_amount = $item->lineTotal() - $amounts[$index];
+            }
+        }
+
+        $client = clone $this;
+        $client->forceFill(['total' => $this->net, 'discount_type' => null, 'discount_value' => null, 'discount_amount' => 0]);
+        $client->setRelation('items', $items);
+
+        return $client;
     }
 
     /**

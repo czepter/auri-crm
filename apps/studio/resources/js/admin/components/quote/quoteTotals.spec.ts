@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { applyDiscount, lineAmount, span, vatLines } from './quoteTotals'
+import { applyDiscount, lineAmount, span, spread, vatLines } from './quoteTotals'
 
 describe('quoteTotals', () => {
   it('rechnet Menge mal Preis', () => {
@@ -51,5 +51,11 @@ describe('quoteTotals', () => {
 
   it('nennt den Angebotssatz, wo keine Zeile einen eigenen traegt', () => {
     expect(vatLines([], 1900, 50000)).toEqual([{ rate: 1900, net: 50000, vat: 9500 }])
+  })
+})
+
+describe('spread', () => {
+  it('teilt den Betrag anteilig und legt den Rest-Cent auf den größten', () => {
+    expect(spread([25000, 20000], 37000)).toEqual([20556, 16444])
   })
 })

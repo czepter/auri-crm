@@ -36,6 +36,7 @@ class DuplicateQuote
                 'outro' => $source->outro,
                 'discount_type' => $source->discount_type,
                 'discount_value' => $source->discount_value,
+                'discount_hidden' => $source->discount_hidden,
                 'hourly_rate' => $source->hourly_rate,
                 'min_hours' => $source->min_hours,
                 'max_hours' => $source->max_hours,

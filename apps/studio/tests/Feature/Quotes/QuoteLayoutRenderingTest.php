@@ -103,3 +103,30 @@ it('renders the structured layout with card wrappers', function (): void {
     expect($html)->toContain('doc-layout-structured')
         ->and($html)->toContain('dst-card');
 });
+
+it('folds a hidden discount into the line prices and prints no Rabatt line', function () {
+    [$user, $project] = studioWithProject();
+
+    $quote = Quote::factory()->for($project)->create([
+        'discount_type' => 'amount',
+        'discount_value' => 8000,
+        'discount_hidden' => true,
+        'vat_mode' => 'standard',
+        'vat_rate' => 1900,
+    ]);
+    $quote->items()->create(['title' => 'Shooting', 'quantity' => 1, 'unit_price' => 25000, 'sort_order' => 0]);
+    $quote->items()->create(['title' => 'Album', 'quantity' => 2, 'unit_price' => 10000, 'sort_order' => 1]);
+    $quote->recalculateTotal();
+    $quote = $quote->fresh('items');
+
+    app(StudioSettingsResolver::class)->set('quote_layout', 'classic');
+
+    $html = app(RenderQuotePdf::class)->html($quote);
+    $client = $quote->asSeenByClient();
+
+    expect($html)->not->toContain('Rabatt')
+        ->and($client->items->sum(fn ($item) => $item->discountedLineTotal()))->toBe(37000)
+        ->and($client->items->map->discountedLineTotal()->all())->toBe([20556, 16444])
+        ->and($quote->items->first()->unit_price)->toBe(25000)
+        ->and($quote->discount_amount)->toBe(8000);
+});

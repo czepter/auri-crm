@@ -38,4 +38,27 @@ final class DiscountCalculator
 
         return max(0, min($amount, $base));
     }
+
+    /**
+     * $total shared over $amounts pro rata, the leftover cent onto the
+     * largest — how a hidden discount disappears into the prices it cuts.
+     *
+     * @template TKey of array-key
+     *
+     * @param  array<TKey, int>  $amounts
+     * @return array<TKey, int>
+     */
+    public static function spread(array $amounts, int $total): array
+    {
+        $base = array_sum($amounts);
+
+        if ($amounts === [] || $base <= 0) {
+            return $amounts;
+        }
+
+        $shares = array_map(fn (int $amount) => intdiv($total * $amount, $base), $amounts);
+        $shares[array_search(max($amounts), $amounts, true)] += $total - array_sum($shares);
+
+        return $shares;
+    }
 }

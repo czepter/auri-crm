@@ -142,17 +142,19 @@ class AcceptQuote
             throw ValidationException::withMessages(['items' => __('portal.quote_item_not_selectable')]);
         }
 
-        $total = QuoteRange::totalFor($quote, $hours, $chosen->pluck('id'));
+        $total = QuoteRange::subtotalFor($quote, $hours, $chosen->pluck('id'));
+        $net = QuoteRange::totalFor($quote, $hours, $chosen->pluck('id'));
 
         return [
             'quote' => [
                 'hours' => $hours,
                 'total' => $total,
-                'net' => $total,
+                'discount_amount' => $total - $net,
+                'net' => $net,
                 // At the rate frozen at send, never today's setting.
                 'vat_amount' => $quote->vat_mode === 'small_business'
                     ? 0
-                    : collect(VatLines::fromItems($quote->items, (int) $quote->vat_rate, $total))->sum('vat'),
+                    : collect(VatLines::fromItems($quote->items, (int) $quote->vat_rate, $net))->sum('vat'),
             ],
             'selected' => $selectable
                 ->mapWithKeys(fn (QuoteItem $item) => [$item->id => $chosen->contains('id', $item->id)])

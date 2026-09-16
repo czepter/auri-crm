@@ -202,7 +202,7 @@ class DocumentMergeDataBuilder
      */
     private function finalInvoice(PaymentInstallment $installment, StudioSettingsResolver $settings): array
     {
-        $quote = $installment->acceptedQuote();
+        $quote = $installment->acceptedQuote()?->asSeenByClient();
 
         if (! $installment->isFinal() || $quote === null) {
             return ['lines' => [], 'deposits' => [], 'totalNet' => '', 'totalVat' => '', 'totalGross' => ''];
@@ -264,7 +264,7 @@ class DocumentMergeDataBuilder
     {
         $hours = (int) ($quote->hours ?? $quote->min_hours ?? 0);
 
-        return [[
+        $lines = [[
             'title' => $quote->time_title ?? $hours.' Stunden',
             'quantity' => (string) $hours,
             'unitPrice' => $this->money((int) $quote->hourly_rate),
@@ -272,6 +272,12 @@ class DocumentMergeDataBuilder
             'total' => $this->money($hours * (int) $quote->hourly_rate),
             'vatRate' => VatLines::percent((int) $quote->vat_rate).' %',
         ]];
+
+        if ($quote->discount_amount > 0 && ! $quote->discount_hidden) {
+            $lines[] = ['title' => 'Rabatt', 'quantity' => '', 'unitPrice' => '', 'discount' => '', 'total' => '−'.$this->money((int) $quote->discount_amount), 'vatRate' => ''];
+        }
+
+        return $lines;
     }
 
     /**

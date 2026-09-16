@@ -274,6 +274,7 @@ export function quoteOf(
         discountType: null,
         discountValue: null,
         discountAmount: 0,
+        discountHidden: false,
         vatMode: 'exempt',
         vatRate: 0,
         vatNote: 'Kleinunternehmer nach § 19 UStG',

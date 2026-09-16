@@ -36,6 +36,7 @@ class QuoteData extends Data
         public ?string $discountType,
         public ?int $discountValue,
         public int $discountAmount,
+        public bool $discountHidden,
         public int $net,
         // Q-04: frozen by Q-06's send onto the quote's own columns — read
         // straight off the row once populated, so a later change to the
@@ -112,6 +113,7 @@ class QuoteData extends Data
             discountType: $quote->discount_type?->value,
             discountValue: $quote->discount_value,
             discountAmount: $quote->discount_amount,
+            discountHidden: $quote->discount_hidden,
             net: $quote->net,
             vatMode: $vat['vat_mode'],
             vatRate: $vat['vat_rate'],

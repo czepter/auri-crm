@@ -7,9 +7,11 @@ use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Documents\Support\DocumentRenderer;
 use App\Documents\Support\MergeFieldResolver;
+use App\Quotes\Enums\DiscountType;
 use App\Quotes\Enums\QuoteLayout;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
+use App\Quotes\Support\DiscountCalculator;
 use App\Quotes\Support\Layouts\ClassicQuoteLayout;
 use App\Quotes\Support\Layouts\HeaderBandQuoteLayout;
 use App\Quotes\Support\Layouts\LetterQuoteLayout;
@@ -17,6 +19,7 @@ use App\Quotes\Support\Layouts\MinimalQuoteLayout;
 use App\Quotes\Support\Layouts\QuoteLayoutRenderer;
 use App\Quotes\Support\Layouts\StructuredQuoteLayout;
 use App\Quotes\Support\QuoteRange;
+use App\Quotes\Support\VatLines;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\GotenbergClient;
 use Illuminate\Support\Number;
@@ -48,6 +51,7 @@ class RenderQuotePdf
 
     public function html(Quote $quote, ?QuoteLayout $layoutOverride = null): string
     {
+        $quote = $quote->asSeenByClient();
         $project = $quote->project;
         $data = $this->mergeData->fromProject($project, $this->settings);
 
@@ -164,9 +168,23 @@ class RenderQuotePdf
     {
         $accepted = $quote->status === QuoteStatus::Accepted;
         $hours = $quote->hours ?? $quote->min_hours ?? 0;
+        $hideDiscount = $quote->discount_hidden && $quote->discount_amount > 0;
+
+        // Accepted with a hidden discount: the rows carry it, pro rata.
+        $amounts = ['time' => $hours * (int) $quote->hourly_rate];
+
+        foreach ($quote->items->values() as $index => $item) {
+            if (! $item->isIncluded() && (! $item->selectable || ($accepted && $item->selected))) {
+                $amounts[$index] = $item->discountedLineTotal();
+            }
+        }
+
+        if ($accepted && $hideDiscount) {
+            $amounts = DiscountCalculator::spread($amounts, (int) $quote->net);
+        }
 
         $timeRow = $accepted
-            ? $this->row($this->timeLine($quote, $hours), $this->money($hours * $quote->hourly_rate))
+            ? $this->row($this->timeLine($quote, $hours), $this->money($amounts['time']))
             : $this->row(
                 $quote->time_title === null
                     ? e(sprintf('%d–%d Stunden', $quote->min_hours ?? 0, $quote->max_hours ?? 0))
@@ -192,7 +210,7 @@ class RenderQuotePdf
 
             $html .= $this->row(
                 e($item->title).($item->outcome === null ? '' : '<br><small>'.e($item->outcome).'</small>'),
-                $item->isIncluded() ? 'enthalten' : $this->money($item->discountedLineTotal()),
+                $item->isIncluded() ? 'enthalten' : $this->money($amounts[$index] ?? $item->discountedLineTotal()),
             );
         }
 
@@ -200,8 +218,20 @@ class RenderQuotePdf
             $html .= $timeRow;
         }
 
-        return $html.($accepted
-            ? $this->row('Gesamt', $this->money($quote->total))
+        // ponytail: vor der Zusage bleiben Stundensatz und Bausteine beim
+        // verborgenen Rabatt Listenpreise, nur die Spanne ist rabattiert.
+        $discount = match (true) {
+            $quote->discount_hidden || $quote->discount_type === null => '',
+            $accepted => $quote->discount_amount > 0
+                ? $this->row('Zwischensumme', $this->money($quote->total)).$this->row('Rabatt', '−'.$this->money($quote->discount_amount))
+                : '',
+            default => $this->row('Rabatt', $quote->discount_type === DiscountType::Percentage
+                ? VatLines::percent((int) $quote->discount_value).' %'
+                : '−'.$this->money((int) $quote->discount_value)),
+        };
+
+        return $html.$discount.($accepted
+            ? $this->row('Gesamt', $this->money($quote->net))
             : $this->row('Spanne', $this->money(QuoteRange::min($quote)).' – '.$this->money(QuoteRange::max($quote))));
     }
 
