@@ -17,7 +17,7 @@ it('lets a minimum push the share up and takes the difference off the last stage
 
     $split = PaymentStageSplitter::split(215_000, $stages);
 
-    expect(array_column($split, 'amount'))->toBe([80_000, 108_000, 27_000])
+    expect(array_column($split, 'amount'))->toBe([80_000, 107_500, 27_500])
         ->and(array_sum(array_column($split, 'amount')))->toBe(215_000);
 });
 
@@ -35,13 +35,22 @@ it('drops the stages an oversized minimum leaves nothing for', function () {
         ->and($split[0]['label'])->toBe('Bei der Zusage');
 });
 
-// Ohne Mindestbetrag ist es der Dreisatz, auf zehn Euro gerundet.
-it('rounds a plain share to ten euros and lets the last stage absorb it', function () {
-    $split = PaymentStageSplitter::split(215_000, collect([
+// Ohne Mindestbetrag ist es der Dreisatz, auf den Euro gerundet.
+it('rounds a plain share to the euro and lets the last stage absorb it', function () {
+    $split = PaymentStageSplitter::split(215_050, collect([
         paymentStage(25, 'Anzahlung'),
         paymentStage(75, 'Rest'),
     ]));
 
-    expect(array_column($split, 'amount'))->toBe([54_000, 161_000])
-        ->and(array_sum(array_column($split, 'amount')))->toBe(215_000);
+    expect(array_column($split, 'amount'))->toBe([53_800, 161_250])
+        ->and(array_sum(array_column($split, 'amount')))->toBe(215_050);
+});
+
+it('splits a small amount without rounding a share to ten euros', function () {
+    $split = PaymentStageSplitter::split(8_900, collect([
+        paymentStage(50, 'Anzahlung'),
+        paymentStage(50, 'Rest'),
+    ]));
+
+    expect(array_column($split, 'amount'))->toBe([4_500, 4_400]);
 });
