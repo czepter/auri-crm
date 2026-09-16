@@ -1336,7 +1336,6 @@
   "gallerySettings": {
     "title": "Galerien",
     "expiryLabel": "Gültigkeit in Tagen",
-    "balanceLabel": "Erst nach vollständiger Zahlung freigeben",
     "downloadsLabel": "Download erlauben",
     "listsLabel": "Listen erlauben",
     "commentsLabel": "Kommentare erlauben",
@@ -1346,7 +1345,6 @@
     "nav_vorlagen": "Vorlagen",
     "defaultLabel": "Standard bei neuen Galerien",
     "defaultMark": "Standard",
-    "previewLocked": "Nach Zahlung",
     "previewInherited": "Gestaltung geerbt"
   },
   "portal": {
@@ -1589,8 +1587,6 @@
     "views": "Aufrufe",
     "marks": "Markierte Bilder",
     "comments": "Kommentare",
-    "balanceTitle": "Download noch gesperrt",
-    "balanceBody": "Die Bilder stehen bereit, sobald die Rechnung beglichen ist.",
     "pinKicker": "Download · Schritt 1 von 2",
     "pinTitle": "Download-Code erforderlich",
     "pinLabel": "Download-Code",
@@ -1715,7 +1711,6 @@
     "marked": "Markiert",
     "downloaded": "Heruntergeladen",
     "viewed": "Aufgerufen",
-    "blockedByBalance": "Gesperrt bis die Rechnung beglichen ist.",
     "versions": "Fassungen",
     "cover": "Titelbild",
     "setCover": "Titelbild setzen",
