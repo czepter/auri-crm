@@ -71,3 +71,11 @@ it('shows the inquiry tabs until the booking and the project tabs after it', fun
     expect(collect(props("/anfragen/{$lead->public_id}")['header']['tabs'])->pluck('key'))
         ->toContain('lead', 'shoots', 'quotes');
 });
+
+it('shows the draft quote on the overview', function () {
+    $project = Project::factory()->create();
+    $lead = Lead::factory()->for($project)->create();
+    $draft = Quote::factory()->create(['project_id' => $project->id, 'status' => QuoteStatus::Draft, 'sent_at' => null]);
+
+    expect(props("/anfragen/{$lead->public_id}")['quote']['id'])->toBe($draft->public_id);
+});

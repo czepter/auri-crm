@@ -642,8 +642,8 @@ const due = computed(() => {
                         <template v-if="header.canManageQuotes" #action>
                             <Link
                                 class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
-                                :href="newQuote"
-                            >{{ $t("quotes.create") }}</Link>
+                                :href="quote ? `/angebote/${quote.id}` : newQuote"
+                            >{{ quote ? $t("common.edit") : $t("quotes.create") }}</Link>
                         </template>
 
                         <QuoteSummary

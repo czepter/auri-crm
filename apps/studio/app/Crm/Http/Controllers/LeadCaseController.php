@@ -78,7 +78,9 @@ class LeadCaseController extends Controller
             $project->name,
         );
 
-        $project->load(['contacts', 'shoots.crew.user', 'primaryShoot', 'job', 'tasks.project', 'tasks.assignee', 'notes.author', 'latestQuote.items']);
+        $project->load(['contacts', 'shoots.crew.user', 'primaryShoot', 'job', 'tasks.project', 'tasks.assignee', 'notes.author']);
+        // The studio works on drafts too; latestQuote() is the portal's, sent only.
+        $quote = $project->quotes()->where('status', '!=', QuoteStatus::Superseded)->with(['items', 'predecessor', 'paymentStages'])->latest('id')->first();
         $primary = $project->primaryShoot;
         $conversation = $project->latestThread()->with('messages.contact', 'messages.author')->first();
 
@@ -117,7 +119,7 @@ class LeadCaseController extends Controller
             'shoots' => ShootData::collect(
                 $project->shoots->map(fn (Shoot $shoot) => ShootData::fromShoot($shoot))
             ),
-            'quote' => $project->latestQuote === null ? null : QuoteData::fromModel($project->latestQuote),
+            'quote' => $quote === null ? null : QuoteData::fromModel($quote),
             // Die ersetzten Fassungen tragen in der Übersicht nur ihren Preis:
             // was in ihnen stand, steht im Angebot selbst.
             'supersededQuotes' => $project->quotes()
@@ -132,7 +134,7 @@ class LeadCaseController extends Controller
             // Without a quote, the active packages with their item count and
             // sum — the next move is choosing one, so the screen offers the
             // choice rather than an empty section.
-            'packages' => $project->latestQuote !== null ? [] : Package::query()
+            'packages' => $quote !== null ? [] : Package::query()
                 ->where('is_active', true)
                 ->with('items')
                 ->orderBy('name')
