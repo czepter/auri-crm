@@ -12,6 +12,7 @@ use App\Automation\Notifications\AutomationReminder;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
+use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\User;
@@ -23,7 +24,11 @@ uses(RefreshDatabase::class);
 
 function shootIn(int $days, ?Project $project = null): Shoot
 {
-    return Shoot::factory()->for($project ?? Project::factory()->create())->create([
+    $project ??= Project::factory()->create();
+    // The factory's own booker would be a second person in a "solo" studio.
+    Job::factory()->for($project)->create(['booked_by_id' => User::query()->value('id')]);
+
+    return Shoot::factory()->for($project)->create([
         'date' => CarbonImmutable::parse('2026-06-01', 'UTC')->addDays($days)->toDateString(),
     ]);
 }
@@ -73,7 +78,7 @@ it('keeps a crew rule silent without a crew and widens a studio rule to everyone
         ->dateOffset(AutomationAnchor::PrimaryShoot, 7, AutomationOffsetDirection::Before)
         ->create(['recipient_type' => AutomationRecipient::Studio]);
 
-    Shoot::factory()->create([
+    Shoot::factory()->for(Job::factory()->create(['booked_by_id' => $staff->id])->project)->create([
         'date' => CarbonImmutable::parse('2026-06-08', 'UTC')->toDateString(),
         'is_primary' => true,
     ]);
@@ -126,6 +131,45 @@ it('records a run as skipped when the condition does not hold', function () {
 
     expect(AutomationRun::query()->first()->status)->toBe(AutomationRunStatus::Skipped);
     Notification::assertNothingSent();
+});
+
+// Primary contact whose portal access was revoked: the partner is who the studio still reaches.
+it('addresses the client side the portal reaches, not the bare primary contact', function () {
+    Notification::fake();
+    staffMember();
+
+    $project = Project::factory()->create(['portal_visible' => true]);
+    $revoked = Contact::factory()->create(['portal_access_revoked_at' => now()]);
+    $partner = Contact::factory()->create();
+    $project->attachContact($revoked, ProjectContactRole::Primary);
+    $project->attachContact($partner, ProjectContactRole::Partner);
+    shootIn(7, $project);
+
+    AutomationRule::factory()
+        ->dateOffset(AutomationAnchor::PerShoot, 7, AutomationOffsetDirection::Before)
+        ->create(['recipient_type' => AutomationRecipient::Client]);
+
+    sweepOn();
+
+    expect(AutomationRun::sole()->contact_ids)->toBe([$partner->id]);
+});
+
+// Wedding copy on a portrait booking is worse than silence.
+it('skips a project of another type than the rule names', function () {
+    Notification::fake();
+    $owner = staffMember();
+
+    shootIn(7, Project::factory()->wedding()->create());
+    shootIn(7, Project::factory()->create());
+
+    $rule = AutomationRule::factory()
+        ->dateOffset(AutomationAnchor::PerShoot, 7, AutomationOffsetDirection::Before)
+        ->create(['recipient_type' => AutomationRecipient::Studio, 'project_type' => 'wedding']);
+
+    sweepOn();
+
+    expect($rule->runs()->pluck('status')->map->value->sort()->values()->all())->toBe(['sent', 'skipped'])
+        ->and(Notification::sent($owner, AutomationReminder::class))->toHaveCount(1);
 });
 
 it('sends a crew rule to the only person in a solo studio', function () {

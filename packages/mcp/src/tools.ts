@@ -233,26 +233,6 @@ const paymentPlanSchema = z.object({
   installments: z.array(paymentInstallmentSchema),
 })
 
-/** ContractSignerData. */
-const contractSignerSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  signedAt: z.string().nullable(),
-  remindedAt: z.string().nullable(),
-})
-
-/** ContractData — see create_contract. */
-const contractSchema = z.object({
-  id: z.string(),
-  version: z.number(),
-  state: z.string(),
-  status: z.string(),
-  templateName: z.string(),
-  sentAt: z.string().nullable(),
-  signDeadlineOn: z.string().nullable(),
-  signers: z.array(contractSignerSchema),
-})
-
 const pipelineStageSchema = z.object({
   stage: z.string(),
   label: z.string(),
@@ -328,15 +308,14 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
   server.registerTool(
     'get_project_money',
     {
-      title: 'Get a project\'s payments and contracts',
+      title: 'Get a project\'s payments',
       description:
-        "#402: what get_project leaves out — the payment plan (null if none exists yet) and every contract Fassung, newest first. Check this before offering create_payment_plan or record_payment: a plan already exists once this returns one.",
+        "#402: what get_project leaves out — the payment plan (null if none exists yet). Check this before offering create_payment_plan or record_payment: a plan already exists once this returns one.",
       inputSchema: {
         publicId: z.string().describe("The project's public_id, never its internal integer id."),
       },
       outputSchema: {
         paymentPlan: paymentPlanSchema.nullable(),
-        contracts: z.array(contractSchema),
       },
       annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     },
@@ -348,7 +327,7 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
         return errorResult(error, response)
       }
 
-      const money = data.data as unknown as { paymentPlan: z.infer<typeof paymentPlanSchema> | null; contracts: z.infer<typeof contractSchema>[] }
+      const money = data.data as unknown as { paymentPlan: z.infer<typeof paymentPlanSchema> | null }
       return jsonResult(money)
     },
   )

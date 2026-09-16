@@ -75,7 +75,7 @@ same-second jobs it was.
 
 `docker-compose.coolify.yml` runs the queue in a deployment: a `horizon`
 service running `php artisan horizon`, a password-protected Redis with
-`appendonly` on so a signed contract's render job survives a restart, and
+`appendonly` on so an invoice's render job survives a restart, and
 `QUEUE_CONNECTION=redis` baked into `docker/app/Dockerfile` — Horizon only
 supervises the redis connection, and the database driver it would otherwise
 inherit is invisible to it, so jobs would pile up unworked beneath a green

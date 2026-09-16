@@ -27,7 +27,7 @@ it('allows only one lead per project', function () {
 
 it('knows the funnel order', function () {
     expect(LeadStage::New->position())->toBe(0)
-        ->and(LeadStage::Booked->position())->toBe(5)
+        ->and(LeadStage::Booked->position())->toBe(4)
         ->and(LeadStage::New->next())->toBe(LeadStage::Contacted)
         ->and(LeadStage::Booked->next())->toBeNull();
 });

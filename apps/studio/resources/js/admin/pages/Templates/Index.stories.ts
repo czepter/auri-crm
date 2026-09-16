@@ -12,12 +12,12 @@ const FRAGEBOEGEN: App.Crm.Data.FormTemplateData[] = [
 ]
 
 const DOKUMENTE: App.Documents.Data.DocumentTemplateData[] = [
-  { id: 'dt1', name: 'Fotovertrag Hochzeit', body: '', blocks: null, version: 4, type: 'contract', typeLabel: 'Vertrag', shootKind: 'Hochzeitstag' },
+  { id: 'dt1', name: 'Angebot Hochzeit', body: '', blocks: null, version: 4, type: 'quote', typeLabel: 'Angebot', shootKind: 'Hochzeitstag' },
   { id: 'dt2', name: 'Angebotsanschreiben', body: '', blocks: null, version: 2, type: 'mail', typeLabel: 'E-Mail', shootKind: null },
 ]
 
 const GALERIEN: App.Gallery.Data.GalleryPresetData[] = [
-  { id: 'gp1', name: 'Hochzeit, sechs Monate', design: null, expiryMode: 'days', expiryDays: 180, requiresSettledBalance: true, downloadsEnabled: true, listsEnabled: true, commentsEnabled: false, isDefault: true },
+  { id: 'gp1', name: 'Hochzeit, sechs Monate', design: null, expiryMode: 'days', expiryDays: 180, downloadsEnabled: true, listsEnabled: true, commentsEnabled: false, isDefault: true },
 ]
 
 const AUSWAHL = {
@@ -43,7 +43,6 @@ const meta = {
     taskTemplates: AUFGABEN,
     formTemplates: FRAGEBOEGEN,
     documentTemplates: DOKUMENTE,
-    documentUse: { dt1: 7, dt2: 0 },
     galleryPresets: GALERIEN,
     ...AUSWAHL,
     selected: null,
@@ -82,7 +81,6 @@ export const Leer: Story = {
     taskTemplates: [],
     formTemplates: [],
     documentTemplates: [],
-    documentUse: {},
     galleryPresets: [],
   },
 }

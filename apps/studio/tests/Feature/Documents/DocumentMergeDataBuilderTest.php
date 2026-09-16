@@ -11,10 +11,10 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-// contractProject() lives in tests/Pest.php — see the note there.
+// bookedContactProject() lives in tests/Pest.php — see the note there.
 
 it('builds the same merge data shape any document type resolves against', function () {
-    $project = contractProject();
+    $project = bookedContactProject();
 
     $data = (new DocumentMergeDataBuilder)->fromProject($project, new StudioSettingsResolver);
 
@@ -33,7 +33,7 @@ it('builds the same merge data shape any document type resolves against', functi
  * and a mail rendered from the same project read the exact same values.
  */
 it('is the one place the array is built — nothing about it varies by document type', function () {
-    $project = contractProject();
+    $project = bookedContactProject();
     $settings = new StudioSettingsResolver;
     $builder = new DocumentMergeDataBuilder;
 
@@ -48,7 +48,7 @@ it('is the one place the array is built — nothing about it varies by document 
 // guest can open (Gallery::publicUrl()).
 it('points the gallery merge field at the viewer host, not this app', function () {
     config(['services.gallery.url' => 'http://gallery.test']);
-    $project = contractProject();
+    $project = bookedContactProject();
     Gallery::factory()->for($project)->create(['title' => 'Hochzeit Meier', 'slug' => 'hochzeit-meier']);
 
     $data = (new DocumentMergeDataBuilder)->fromProject($project, new StudioSettingsResolver);
@@ -60,7 +60,7 @@ it('points the gallery merge field at the viewer host, not this app', function (
 // invoice went out is taxed on receipt, so the Leistungszeitraum is the day
 // the money arrived — the shoot is still weeks away.
 it('prints the Vereinnahmungsdatum on an Anzahlung paid before it was issued', function () {
-    $project = contractProject();
+    $project = bookedContactProject();
     Shoot::factory()->for($project)->primary()->on('2026-06-20')->create();
     $plan = PaymentPlan::factory()->for($project->job()->sole())->create(['total' => 50_000]);
     $installment = PaymentInstallment::factory()->for($plan, 'plan')->create([

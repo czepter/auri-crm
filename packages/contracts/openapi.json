@@ -588,415 +588,6 @@
                 }
             }
         },
-        "/projects/{project}/contracts": {
-            "post": {
-                "operationId": "projects.contracts.store",
-                "tags": [
-                    "Contract"
-                ],
-                "parameters": [
-                    {
-                        "name": "project",
-                        "in": "path",
-                        "required": true,
-                        "description": "The project public id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "template": {
-                                        "type": "string"
-                                    }
-                                },
-                                "required": [
-                                    "template"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/ContractData"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    }
-                }
-            }
-        },
-        "/contracts/{contract}": {
-            "patch": {
-                "operationId": "contracts.update",
-                "tags": [
-                    "Contract"
-                ],
-                "parameters": [
-                    {
-                        "name": "contract",
-                        "in": "path",
-                        "required": true,
-                        "description": "The contract public id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "body": {
-                                        "type": "string",
-                                        "maxLength": 100000
-                                    }
-                                },
-                                "required": [
-                                    "body"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/ContractData"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    }
-                }
-            }
-        },
-        "/contracts/{contract}/send": {
-            "post": {
-                "operationId": "contracts.send",
-                "tags": [
-                    "Contract"
-                ],
-                "parameters": [
-                    {
-                        "name": "contract",
-                        "in": "path",
-                        "required": true,
-                        "description": "The contract public id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/ContractData"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "An error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview.",
-                                            "examples": [
-                                                ""
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    }
-                }
-            }
-        },
-        "/contracts/{contract}/deadline": {
-            "patch": {
-                "operationId": "contracts.deadline",
-                "tags": [
-                    "Contract"
-                ],
-                "parameters": [
-                    {
-                        "name": "contract",
-                        "in": "path",
-                        "required": true,
-                        "description": "The contract public id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "sign_deadline_on": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "format": "date-time"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/ContractData"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    }
-                }
-            }
-        },
-        "/contracts/{contract}/signers": {
-            "post": {
-                "operationId": "contracts.signers.store",
-                "tags": [
-                    "ContractSigner"
-                ],
-                "parameters": [
-                    {
-                        "name": "contract",
-                        "in": "path",
-                        "required": true,
-                        "description": "The contract public id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "contact": {
-                                        "type": "string"
-                                    }
-                                },
-                                "required": [
-                                    "contact"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/ContractSignerData"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    }
-                }
-            }
-        },
-        "/contract-signers/{signer}": {
-            "delete": {
-                "operationId": "contract-signers.destroy",
-                "summary": "A signature is evidence \u2014 the row that carries one is not removable",
-                "tags": [
-                    "ContractSigner"
-                ],
-                "parameters": [
-                    {
-                        "name": "signer",
-                        "in": "path",
-                        "required": true,
-                        "description": "The signer public id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No content"
-                    },
-                    "422": {
-                        "description": "An error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview.",
-                                            "examples": [
-                                                ""
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    }
-                }
-            }
-        },
-        "/contract-signers/{signer}/remind": {
-            "post": {
-                "operationId": "contract-signers.remind",
-                "tags": [
-                    "ContractSigner"
-                ],
-                "parameters": [
-                    {
-                        "name": "signer",
-                        "in": "path",
-                        "required": true,
-                        "description": "The signer public id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/ContractSignerData"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    }
-                }
-            }
-        },
         "/staff": {
             "get": {
                 "operationId": "staff.index",
@@ -1406,7 +997,10 @@
                                                     "type": "string"
                                                 },
                                                 "source": {
-                                                    "type": "string"
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
                                                 }
                                             },
                                             "required": [
@@ -1734,7 +1328,10 @@
                                             ]
                                         },
                                         "source": {
-                                            "type": "string"
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         },
                                         "sourceOther": {
                                             "type": [
@@ -1821,7 +1418,7 @@
         "/projects/{project}/money": {
             "get": {
                 "operationId": "projects.money",
-                "summary": "#402: the payment plan and contracts ProjectDetailReadData leaves out",
+                "summary": "#402: the payment plan ProjectDetailReadData leaves out",
                 "tags": [
                     "CrmRead"
                 ],
@@ -4327,7 +3924,10 @@
                                             ]
                                         },
                                         "capturedVia": {
-                                            "type": "string"
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         },
                                         "capturedViaOther": {
                                             "type": [
@@ -4804,7 +4404,7 @@
                                                                 "string",
                                                                 "null"
                                                             ],
-                                                            "description": "Q-09/Q-10: the block half of a line. `id` is how a picture\nsurvives the wholesale replace below \u2014 never the path itself:\na stored path accepted from a form is a read of any file on\nthe disk, this app's contracts included."
+                                                            "description": "Q-09/Q-10: the block half of a line. `id` is how a picture\nsurvives the wholesale replace below \u2014 never the path itself:\na stored path accepted from a form is a read of any file on\nthe disk, this app's invoices included."
                                                         },
                                                         "selectable": {
                                                             "type": "boolean"
@@ -4959,7 +4559,7 @@
                                                                 "string",
                                                                 "null"
                                                             ],
-                                                            "description": "Q-09/Q-10: the block half of a line. `id` is how a picture\nsurvives the wholesale replace below \u2014 never the path itself:\na stored path accepted from a form is a read of any file on\nthe disk, this app's contracts included."
+                                                            "description": "Q-09/Q-10: the block half of a line. `id` is how a picture\nsurvives the wholesale replace below \u2014 never the path itself:\na stored path accepted from a form is a read of any file on\nthe disk, this app's invoices included."
                                                         },
                                                         "selectable": {
                                                             "type": "boolean"
@@ -7351,7 +6951,7 @@
         "/projects/{project}/shoots": {
             "post": {
                 "operationId": "projects.shoots.store",
-                "description": "Mirrors App\\Crm\\Http\\Controllers\\ShootController::store: the same\nrules, the same nullable date, and the model's own defaults for status,\nis_primary and sort_order \u2014 the primary one is already taken.",
+                "description": "Mirrors App\\Crm\\Http\\Controllers\\ShootController::store: the same\nrules, the same nullable date, the booked status on a booked project,\nand the model's own defaults for is_primary and sort_order \u2014 the\nprimary one is already taken.",
                 "summary": "A second shooting day on a project that already has one. CaptureInquiry\nmakes exactly one shoot and marks it primary; a wedding split over two\ndays \u2014 Trauung on one, Feier on another \u2014 has no way to reach the\nsecond from here otherwise",
                 "tags": [
                     "Shoot"
@@ -8956,10 +8556,24 @@
                         "type": "string"
                     },
                     "source": {
-                        "$ref": "#/components/schemas/LeadSource"
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/LeadSource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
                     },
                     "captured_via": {
-                        "$ref": "#/components/schemas/CaptureChannel"
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/CaptureChannel"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
                     },
                     "type_other": {
                         "type": [
@@ -9049,21 +8663,9 @@
                 },
                 "required": [
                     "project_name",
-                    "type",
-                    "source",
-                    "captured_via"
+                    "type"
                 ],
                 "title": "CaptureInquiryData"
-            },
-            "ContractData": {
-                "type": "object",
-                "additionalProperties": {},
-                "title": "ContractData"
-            },
-            "ContractSignerData": {
-                "type": "object",
-                "additionalProperties": {},
-                "title": "ContractSignerData"
             },
             "CrewAssignmentReadData": {
                 "type": "object",
@@ -9309,7 +8911,7 @@
                                         "string",
                                         "null"
                                     ],
-                                    "description": "Q-09/Q-10: the block half of a line. `id` is how a picture\nsurvives the wholesale replace below \u2014 never the path itself:\na stored path accepted from a form is a read of any file on\nthe disk, this app's contracts included."
+                                    "description": "Q-09/Q-10: the block half of a line. `id` is how a picture\nsurvives the wholesale replace below \u2014 never the path itself:\na stored path accepted from a form is a read of any file on\nthe disk, this app's invoices included."
                                 },
                                 "selectable": {
                                     "type": "boolean"

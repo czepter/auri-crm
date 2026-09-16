@@ -10,7 +10,6 @@ const galleries: App.Gallery.Data.GalleryRowData[] = [
 const settings: App.Settings.Data.GallerySettingsData = {
   id: 'gs-1',
   expiryDays: 90,
-  requiresSettledBalance: true,
   downloadsEnabled: true,
   listsEnabled: true,
   commentsEnabled: false,
@@ -24,7 +23,6 @@ const presets: App.Gallery.Data.GalleryPresetData[] = [
     design: { cover: 'full', type: 'serif', colour: 'light', grid: 'wide' },
     expiryMode: 'days',
     expiryDays: 90,
-    requiresSettledBalance: true,
     downloadsEnabled: true,
     listsEnabled: true,
     commentsEnabled: false,
@@ -36,7 +34,6 @@ const presets: App.Gallery.Data.GalleryPresetData[] = [
     design: { cover: 'plain', type: 'grotesk', colour: 'dark', grid: 'dense' },
     expiryMode: 'none',
     expiryDays: null,
-    requiresSettledBalance: false,
     downloadsEnabled: true,
     listsEnabled: false,
     commentsEnabled: false,

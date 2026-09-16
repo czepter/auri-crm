@@ -4,6 +4,7 @@ namespace App\Automation\Http\Controllers;
 
 use App\Automation\Data\AutomationRuleData;
 use App\Automation\Data\AutomationRunData;
+use App\Automation\Enums\AutomationAction;
 use App\Automation\Enums\AutomationAnchor;
 use App\Automation\Enums\AutomationCondition;
 use App\Automation\Enums\AutomationOffsetDirection;
@@ -11,6 +12,7 @@ use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Enums\AutomationTriggerType;
 use App\Automation\Models\AutomationRule;
 use App\Concerns\AuthorizesStaffSettings;
+use App\Crm\Models\ProjectType;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -57,6 +59,11 @@ class AutomationRuleController extends Controller
                 fn (AutomationRecipient $case) => $case !== AutomationRecipient::Crew || ! User::soloStudio(),
             ))),
             'conditions' => $this->options(AutomationCondition::cases()),
+            // A client rule is always a draft; only the studio side has a choice.
+            'actions' => $this->options([AutomationAction::Notice, AutomationAction::Task]),
+            'projectTypes' => ProjectType::query()->active()->orderBy('sort_order')->get()
+                ->map(fn (ProjectType $type) => ['value' => $type->key, 'label' => $type->name])
+                ->all(),
             // The same vocabulary and the same sample values the document
             // templates show, so a field means one thing in both places.
             'mergeFields' => collect(MergeFieldVocabulary::samples())
@@ -119,7 +126,9 @@ class AutomationRuleController extends Controller
             'offset_days' => [Rule::requiredIf($dated), 'integer', 'between:0,365'],
             'direction' => [Rule::requiredIf($dated), Rule::enum(AutomationOffsetDirection::class)],
             'recipient_type' => ['required', Rule::enum(AutomationRecipient::class)],
+            'action' => ['sometimes', Rule::enum(AutomationAction::class)],
             'condition' => ['nullable', Rule::enum(AutomationCondition::class)],
+            'project_type' => ['nullable', 'string', Rule::exists(ProjectType::class, 'key')],
             'notification_subject' => ['required', 'string', 'max:255'],
             'notification_body' => ['required', 'string', 'max:5000'],
             'is_active' => ['required', 'boolean'],
@@ -127,7 +136,7 @@ class AutomationRuleController extends Controller
     }
 
     /**
-     * @param  list<AutomationAnchor|AutomationRecipient|AutomationCondition>  $cases
+     * @param  list<AutomationAnchor|AutomationRecipient|AutomationCondition|AutomationAction>  $cases
      * @return list<array{value: string, label: string}>
      */
     private function options(array $cases): array

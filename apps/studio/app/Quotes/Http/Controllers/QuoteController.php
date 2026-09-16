@@ -6,6 +6,7 @@ use App\Catalog\Actions\CreatePackageFromQuote;
 use App\Catalog\Actions\SavePackage;
 use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
+use App\Crm\Actions\BookProject;
 use App\Crm\Data\ProjectSuggestionData;
 use App\Crm\Models\Project;
 use App\Enums\Capability;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Controller;
 use App\Notifications\Support\MailPreview;
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
+use App\Quotes\Actions\AcceptQuote;
 use App\Quotes\Actions\DuplicateQuote;
 use App\Quotes\Actions\MarkQuoteSent;
 use App\Quotes\Actions\ReadQuoteWorkspace;
@@ -114,6 +116,7 @@ class QuoteController extends Controller
             'quote' => QuoteData::fromModel($quote),
             'recipientName' => $contact?->name ?? '',
             'recipientEmail' => $contact?->email ?? '',
+            'address' => app(StudioSettingsResolver::class)->clientAddress($quote->project->contacts()->count()),
             'mailHtml' => MailPreview::html(new QuoteSent($quote, null, MailPreview::MESSAGE), $contact ?? (object) []),
         ]);
     }
@@ -338,6 +341,24 @@ class QuoteController extends Controller
         $this->authorize('manageQuotes', $quote->project);
 
         $mark($quote, 'self', auth('staff')->user());
+
+        return back();
+    }
+
+    public function markAccepted(Quote $quote, AcceptQuote $accept, BookProject $book): RedirectResponse
+    {
+        $this->authorize('manageQuotes', $quote->project);
+
+        $contact = $quote->project->primaryContact()
+            ?? throw ValidationException::withMessages(['quote' => __('quotes.noPrimaryContact')]);
+
+        $accept($quote, $contact, null);
+
+        // Every role manages quotes, but booking is Owner-only (StaffRole):
+        // the yes is recorded either way, the job only when this user may book.
+        if (Gate::allows('book', $quote->project)) {
+            $book($quote->project, auth('staff')->user());
+        }
 
         return back();
     }

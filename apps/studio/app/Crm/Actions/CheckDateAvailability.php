@@ -58,7 +58,8 @@ class CheckDateAvailability
         $shoots = Shoot::query()
             ->with('project')
             ->whereIn('date', $dates)
-            ->whereHas('project.lead', fn ($lead) => $lead->whereNull('lost_at'))
+            ->uncancelled()
+            ->whereHas('project.lead', fn ($lead) => $lead->open())
             ->when($except, fn ($query) => $query->where('project_id', '!=', $except->id))
             ->get();
 

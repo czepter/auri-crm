@@ -94,10 +94,12 @@ class BookingFunnel
             ->map(fn ($row) => [
                 // The detail rides in the key too: "Sonstige" split three ways
                 // is three rows, and a row needs a key of its own.
-                'source' => $row->source->value.($row->source_other === null ? '' : ':'.$row->source_other),
-                'label' => $row->source_other === null
-                    ? $row->source->label()
-                    : $row->source->label().' — '.$row->source_other,
+                'source' => ($row->source?->value ?? 'unknown').($row->source_other === null ? '' : ':'.$row->source_other),
+                'label' => match (true) {
+                    $row->source === null => 'Unbekannt',
+                    $row->source_other === null => $row->source->label(),
+                    default => $row->source->label().' — '.$row->source_other,
+                },
                 'captured' => (int) $row->captured,
                 'booked' => (int) $row->booked,
                 'revenue' => (int) $row->revenue,

@@ -24,9 +24,6 @@ use App\Settings\Models\StudioSettings;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
-
-// renderedContract() lives in tests/Pest.php — see the note there.
 
 uses(RefreshDatabase::class);
 
@@ -168,23 +165,6 @@ it('never puts an integer identifier into the document template screens', functi
     expect(integerIdPaths($editProps))->toBe([]);
 });
 
-it('never puts an integer identifier into a project\'s contract tab', function () {
-    Storage::fake('local');
-
-    $user = User::factory()->withMfa()->create();
-    $project = Project::factory()->create();
-    Job::factory()->for($project)->create();
-    renderedContract($project);
-    DocumentTemplate::factory()->create();
-
-    $props = $this->actingAs($user, 'staff')
-        ->get("/auftraege/{$project->public_id}/vertrag")
-        ->assertOk()
-        ->viewData('page')['props'];
-
-    expect(integerIdPaths($props))->toBe([]);
-});
-
 it('detects an integer id when one is present', function () {
     expect(integerIdPaths(['data' => ['id' => 7, 'name' => 'x']]))->toBe(['$.data.id']);
     expect(integerIdPaths(['data' => ['id' => 'abc', 'name' => 'x']]))->toBe([]);
@@ -200,36 +180,6 @@ it('never puts an integer identifier into the portal switcher', function () {
     $second->attachContact($contact, ProjectContactRole::Primary);
 
     $props = $this->actingAs($contact, 'portal')->get('/')->assertOk()->viewData('page')['props'];
-
-    expect(integerIdPaths($props))->toBe([]);
-});
-
-it('never puts an integer identifier into the portal contract screen once signed, and the sign route takes only a public id', function () {
-    useSurface(Surface::PORTAL);
-    Storage::fake('local');
-    // T-08's "sign contracts" switch defaults to off — this test exercises
-    // the sign action itself, so the switch is on for it. Cache::flush()
-    // first: StudioSettingsResolver caches the row (T-01), and a row already
-    // cached by an earlier test in the same suite run would otherwise still
-    // read as off.
-    Cache::store('redis')->flush();
-    StudioSettings::query()->update(['portal_sign_contracts_enabled' => true]);
-
-    $project = Project::factory()->create(['portal_visible' => true]);
-    renderedContract($project);
-    $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
-
-    // The URL itself names the project by public id, never by its integer
-    // primary key — this is the request that writes the signature row.
-    $this->actingAs($contact, 'portal')
-        ->post("/projekte/{$project->public_id}/vertrag/unterschreiben", ['typedName' => 'Lena Meier', 'consent' => true])
-        ->assertRedirect();
-
-    $props = $this->actingAs($contact, 'portal')
-        ->get("/projekte/{$project->public_id}/vertrag")
-        ->assertOk()
-        ->viewData('page')['props'];
 
     expect(integerIdPaths($props))->toBe([]);
 });

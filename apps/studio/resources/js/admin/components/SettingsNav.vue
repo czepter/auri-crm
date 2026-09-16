@@ -34,6 +34,7 @@ const items = [
   { key: 'availability', href: '/einstellungen/verfuegbarkeit', label: 'settings.navAvailability' },
   { key: 'capture', href: '/einstellungen?pane=capture', label: 'settings.navCapture' },
   { key: 'automations', href: '/einstellungen/automationen', label: 'automations.title' },
+  { key: 'api-tokens', href: '/einstellungen/api-token', label: 'apiTokens.title' },
 
   { group: 'settings.groupPortal' },
   { key: 'portal', href: '/einstellungen/portal', label: 'settings.navPortal' },

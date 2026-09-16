@@ -81,7 +81,7 @@ const TYPE_DOT: Record<string, string> = {
     portrait: "bg-ok",
 };
 
-const DONE_STAGES = ["contract_sent", "booked"];
+const DONE_STAGES = ["booked"];
 
 function shortDate(date: string | null) {
     return date

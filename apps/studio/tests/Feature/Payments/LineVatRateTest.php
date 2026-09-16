@@ -1,6 +1,5 @@
 <?php
 
-use App\Contracts\Models\ContractSignature;
 use App\Payments\Actions\CreatePaymentPlan;
 use App\Payments\Actions\IssueInvoice;
 use App\Payments\Actions\RenderInvoicePdf;
@@ -34,9 +33,7 @@ function mixedRateInstallment(array $lines, int $deposit, string $vatMode = 'sta
     // § 14 Abs. 4 Nr. 2: IssueInvoice refuses without one.
     $settings->set('tax_number', '22/123/45678', null);
 
-    $project = contractProject();
-    $contract = renderedContract($project);
-    ContractSignature::factory()->for($contract)->for($project->contacts()->sole())->create();
+    $project = bookedContactProject();
 
     $quote = Quote::factory()->create([
         'project_id' => $project->id,

@@ -1,21 +1,24 @@
 <?php
 
-use App\Contracts\Models\Contract;
-use App\Contracts\Models\ContractSignature;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\InternalNote;
+use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Task;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Enums\StaffRole;
+use App\Gallery\Models\AssetComment;
+use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryPrereleaseSignup;
+use App\Gallery\Models\GalleryVersion;
 use App\Media\Models\Asset;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Portal\Models\ClientAccess;
 use App\Quotes\Models\Quote;
@@ -30,7 +33,7 @@ beforeEach(function () {
     Storage::fake('local');
 });
 
-/** A sole-contact project with a gallery asset, a quote, an unsigned contract, a thread and a note — the ordinary case. */
+/** A sole-contact project with a gallery asset, a quote, a thread and a note — the ordinary case. */
 function dsgvoErasableProject(Contact $contact): Project
 {
     $project = Project::factory()->create(['name' => 'Meier — Hochzeit']);
@@ -41,7 +44,6 @@ function dsgvoErasableProject(Contact $contact): Project
     Storage::disk('s3')->put($asset->key, 'bytes');
 
     Quote::factory()->for($project)->create();
-    Contract::factory()->for($project)->create();
 
     $thread = Thread::factory()->for($project)->create();
     Message::factory()->for($thread)->create(['contact_id' => $contact->id, 'author_id' => null]);
@@ -65,7 +67,6 @@ it('erases a sole-contact project outright, including its storage objects', func
     expect(Project::query()->whereKey($project->id)->exists())->toBeFalse()
         ->and(Gallery::query()->exists())->toBeFalse()
         ->and(Quote::query()->exists())->toBeFalse()
-        ->and(Contract::query()->exists())->toBeFalse()
         ->and(Thread::query()->exists())->toBeFalse()
         ->and(Message::query()->exists())->toBeFalse()
         ->and(Task::query()->exists())->toBeFalse()
@@ -84,6 +85,56 @@ it('erases a sole-contact project outright, including its storage objects', func
         ->and(Contact::query()->whereKey($contact->id)->exists())->toBeTrue();
 });
 
+it('keeps the payment plan, its issued invoices and their PDFs when erasing a booked project', function () {
+    $contact = Contact::factory()->create(['name' => 'Lena Meier']);
+    $project = dsgvoErasableProject($contact);
+    $plan = PaymentPlan::factory()->for(Job::factory()->for($project))->create(['total' => 100000]);
+    $installment = PaymentInstallment::factory()->for($plan, 'plan')->create([
+        'amount' => 100000,
+        'invoice_number' => 'RE-2026-0001',
+        'invoiced_at' => now(),
+        'invoice_path' => 'invoices/re-2026-0001.pdf',
+    ]);
+    Storage::disk('local')->put($installment->invoice_path, 'pdf');
+
+    $this->actingAs($this->owner, 'staff')->post("/kontakte/{$contact->public_id}/dsgvo/loeschen");
+
+    expect($installment->fresh()?->invoice_number)->toBe('RE-2026-0001')
+        ->and($project->fresh()->name)->toBe('[gelöscht]')
+        ->and(Quote::query()->exists())->toBeFalse();
+
+    Storage::disk('local')->assertExists($installment->invoice_path);
+});
+
+it('exports and erases the address, comments and favorites of a contact on a shared project', function () {
+    $contact = Contact::factory()->create(['street' => 'Lindenweg 4', 'postcode' => '07743', 'city' => 'Jena']);
+    $project = Project::factory()->create();
+    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact(Contact::factory()->create(), ProjectContactRole::Partner);
+    $version = GalleryVersion::factory()->for(Gallery::factory()->for($project))->create();
+    AssetComment::factory()->for($version)->create(['contact_id' => $contact->id, 'body' => 'Bitte in Farbe']);
+    AssetFavorite::factory()->for($version)->create(['contact_id' => $contact->id]);
+
+    $data = json_decode(
+        $this->actingAs($this->owner, 'staff')->get("/kontakte/{$contact->public_id}/dsgvo/export")->getContent(),
+        true
+    );
+
+    expect($data['contact']['city'])->toBe('Jena')
+        ->and($data['projects'][0]['type'])->toBe($project->type->key)
+        ->and($data['asset_comments'][0]['body'])->toBe('Bitte in Farbe')
+        ->and($data['asset_favorites'])->toHaveCount(1);
+
+    $this->actingAs($this->owner, 'staff')->post("/kontakte/{$contact->public_id}/dsgvo/loeschen");
+
+    $contact->refresh();
+    expect($contact->street)->toBeNull()
+        ->and($contact->postcode)->toBeNull()
+        ->and($contact->city)->toBeNull()
+        ->and(AssetComment::query()->exists())->toBeFalse()
+        ->and(AssetFavorite::query()->exists())->toBeFalse();
+});
+
 it('records one audit event naming only the opaque public_id, never PII', function () {
     $contact = Contact::factory()->create(['name' => 'Lena Meier']);
     dsgvoErasableProject($contact);
@@ -94,8 +145,7 @@ it('records one audit event naming only the opaque public_id, never PII', functi
 
     expect($row->subject)->toBe($contact->public_id)
         ->and($row->actor_id)->toBe($this->owner->id)
-        ->and(json_encode($row->context))->not->toContain('Lena Meier')
-        ->and($row->context['retained_projects'])->toBe([]);
+        ->and(json_encode($row->context))->not->toContain('Lena Meier');
 });
 
 it("leaves a project shared with another contact alone, beyond this contact's own fingerprints", function () {
@@ -121,39 +171,6 @@ it("leaves a project shared with another contact alone, beyond this contact's ow
         ->and($partner->fresh()->name)->toBe('Tom Kowalski');
 });
 
-it('keeps a signed contract and its project shell, and purges everything else erasable under it', function () {
-    $contact = Contact::factory()->create(['name' => 'Lena Meier']);
-    $project = Project::factory()->create(['name' => 'Meier — Hochzeit']);
-    $project->attachContact($contact, ProjectContactRole::Primary);
-
-    $contract = renderedContract($project);
-    $signature = ContractSignature::factory()->for($contract)->create(['contact_id' => $contact->id]);
-
-    $gallery = Gallery::factory()->for($project)->create();
-    Quote::factory()->for($project)->create();
-
-    $this->actingAs($this->owner, 'staff')
-        ->post("/kontakte/{$contact->public_id}/dsgvo/loeschen")
-        ->assertRedirect('/kontakte');
-
-    expect(Project::query()->whereKey($project->id)->exists())->toBeTrue()
-        ->and(Contract::query()->whereKey($contract->id)->exists())->toBeTrue()
-        ->and(ContractSignature::query()->whereKey($signature->id)->exists())->toBeTrue()
-        // Everything erasable under the same project still goes.
-        ->and(Gallery::query()->whereKey($gallery->id)->exists())->toBeFalse()
-        ->and(Quote::query()->exists())->toBeFalse()
-        ->and($project->fresh()->contacts()->count())->toBe(0)
-        ->and($project->fresh()->name)->not->toBe('Meier — Hochzeit');
-
-    $row = AuditLog::where('event', 'contact.dsgvo_erased')->sole();
-    expect($row->context['retained_projects'])->toBe([$project->public_id]);
-
-    // The signature's own contact_id still resolves — restrictOnDelete would
-    // have refused this erasure outright if it pointed at a dropped row —
-    // it just resolves to an already-anonymised contact now.
-    expect($signature->fresh()->contact_id)->toBe($contact->id);
-});
-
 it('deletes client accesses and api tokens, and cannot be run twice', function () {
     $contact = Contact::factory()->create();
     ClientAccess::create([
@@ -176,7 +193,7 @@ it('deletes client accesses and api tokens, and cannot be run twice', function (
 // Personal-data fix round 1: GalleryPrereleaseSignup carries no contact_id
 // (same reason ClientAccess above does not need to be the model here),
 // matched by address instead — including on a gallery under a *shared*
-// project, the gap detachFromSharedProject alone would have left open.
+// project, the gap detaching from it alone would have left open.
 it('deletes a pre-release signup by address, even on a gallery shared with another contact', function () {
     $contact = Contact::factory()->create(['email' => 'lena@example.test']);
     $partner = Contact::factory()->create();

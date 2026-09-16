@@ -1,14 +1,10 @@
 # Documents
 
-T-12 generalises M-01's contract-only template system into one family
-covering every document type the studio sends: `App\Documents\Models\
-DocumentTemplate` holds the wording (versioned, exactly as M-01's
-`ContractTemplate` was), for one of three `App\Documents\Enums\
-DocumentTemplateType` values — `contract`, `quote`, `mail` — with an
-optional `shoot_kind` variant. `Contract` is still the one document that
-actually renders to a PDF today (`App\Contracts\Jobs\RenderContractJob`);
-quote and mail templates exist as the same model and vocabulary, ready for
-whichever story wires a quote PDF or a templated mail up to them next.
+One template family covers every document type the studio sends:
+`App\Documents\Models\DocumentTemplate` holds the wording (versioned), for
+one `App\Documents\Enums\DocumentTemplateType` value — `quote`, `invoice`,
+`credit_note`, `mail` — with an optional `shoot_kind` variant. Quotes,
+invoices and credit notes render to PDF; a mail is sent as HTML.
 
 ## Merge fields
 
@@ -17,7 +13,7 @@ dot-addressed, resolved by `App\Documents\Support\MergeFieldResolver` against
 a plain array, never against a live model. An unresolvable path renders as
 an empty string rather than failing the render. The resolver takes no
 document type at all, which is what makes "the same merge field resolves
-identically in a contract, a quote and a mail" true by construction: every
+identically in a quote, an invoice and a mail" true by construction: every
 caller resolves the same body against the same shape of array.
 
 That array is built in exactly one place, `App\Documents\Support\
@@ -56,8 +52,8 @@ look like at the moment a render runs:
 ## Starter templates
 
 `App\Documents\Support\StarterTemplateCatalog` holds ready-made templates in
-code — a quote (generic and a wedding variant), a photography Werkvertrag, an
-invoice (standard and Kleinunternehmer), and five short mails. The create
+code — a quote (generic and a wedding variant), an invoice (standard and
+Kleinunternehmer), a credit note, and short mails. The create
 screen opens on them, with **Leere Vorlage** among the cards as an equal
 option rather than an escape hatch.
 
@@ -203,7 +199,7 @@ template is allowed to reference beyond what that array contains.
 Example:
 
 ```html
-<p>Vertrag mit {{ contact.name }} über {{ project.name }} ({{ project.type }}).</p>
+<p>Angebot für {{ contact.name }}: {{ project.name }} ({{ project.type }}).</p>
 ```
 
 ## Authoring: the block editor
@@ -212,8 +208,8 @@ A template's wording is edited as blocks, not as HTML.
 `document_templates.blocks` holds Editor.js JSON and is the edit source of
 truth; `body` is the HTML those blocks serialize to
 (`resources/js/admin/documents/blocks/serialize.ts`) and keeps its exact
-former meaning — `MergeFieldResolver`, `DocumentRenderer` and
-`RenderContractJob` know nothing about blocks.
+former meaning — `MergeFieldResolver`, `DocumentRenderer` and the render
+jobs know nothing about blocks.
 
 Which blocks a document type may use is `App\Documents\Support\
 DocumentBlockCatalog` — one list, read both by the inserter palette and by
@@ -256,8 +252,8 @@ a client reads.
 
 ## Letterhead and footer
 
-`App\Documents\Support\DocumentRenderer` wraps a Contract or Quote's
-resolved body in the studio's one configured letterhead (above) and footer
+`App\Documents\Support\DocumentRenderer` wraps a Quote, Invoice or
+CreditNote's resolved body in the studio's one configured letterhead (above) and footer
 (below) — `StudioSettingsResolver::documentLetterheadHtml()` /
 `documentFooterHtml()`, the Dokumente pane — rather than either being pasted
 into every template. Mail is not a PDF, so `DocumentRenderer` leaves a mail
@@ -265,9 +261,9 @@ body untouched.
 
 ## Why resolution happens in the job, not the controller
 
-A contract that read project data live would silently change after
-signing — the couple's guest count on 3 June could differ from the guest
-count on 14 June, and nothing would mark the difference. `RenderContractJob`
+A document that read project data live would silently change after the
+client saw it — the couple's guest count on 3 June could differ from the
+guest count on 14 June, and nothing would mark the difference. A render job
 pulls the project/job/contact data it needs at the moment it runs and bakes
 the result into the HTML sent to Gotenberg. Once rendered, the PDF is the
 record; nothing ever re-renders it to serve a later read.
@@ -276,40 +272,19 @@ record; nothing ever re-renders it to serve a later read.
 
 Editing a template never mutates its row. `DocumentTemplate::newVersion()`
 inserts a new row in the same `family_id` and moves `is_current`; the old row
-is untouched, and any `Contract` already pointing at it (`contract_template_id`
-— the column keeps its M-01 name even though it now points at
-`document_templates`) keeps pointing at exactly that wording. `type` and
-`shoot_kind` name the family and are never accepted as edit input — they
-carry forward from the row `newVersion()` is called on. This is what M-02
-needs to record which version a signature was made against, and why an
-edited template never touches a PDF already handed to a client.
+is untouched, and any document already pointing at it keeps pointing at
+exactly that wording. `type` and `shoot_kind` name the family and are never
+accepted as edit input — they carry forward from the row `newVersion()` is
+called on. This is why an edited template never touches a PDF already handed
+to a client.
 
 ## Variants per shoot kind
 
 A template family that needs different wording per shoot kind
-(e.g. a wedding contract reading differently from a portrait one) gets its
+(e.g. a wedding quote reading differently from a portrait one) gets its
 own row per kind — `shoot_kind` set — rather than one template full of
 conditionals. `DocumentTemplate::scopeForShootKind()` returns every generic
-(no shoot kind) template plus whichever variant matches, compared case-insensitively since the kind is free text; the project contract
-tab offers exactly that set, filtered to the project's own primary shoot's
-kind.
-
-## Rendering pipeline (contract)
-
-1. Staff pick a current, type-`contract` template for a project and submit —
-   the request creates a `pending` `Contract` row and dispatches
-   `RenderContractJob` onto the `render` queue (`config/horizon.php`'s
-   `supervisor-render`, from M-00), then returns immediately.
-2. The job resolves merge fields (`DocumentMergeDataBuilder` +
-   `MergeFieldResolver`), wraps the result in the shared letterhead/footer
-   (`DocumentRenderer`), posts the HTML to Gotenberg
-   (`POST {GOTENBERG_URL}/forms/chromium/convert/html`), and stores the
-   response on the `local` filesystem disk at
-   `contracts/{tenant_id}/{contract public_id}.pdf`.
-3. The row moves to `rendered` (or `failed`, with the error recorded) and
-   `artifact_path` is set. Every later read — admin or portal — serves that
-   file. Nothing calls Gotenberg or the job again to display an existing
-   contract.
+(no shoot kind) template plus whichever variant matches, compared case-insensitively since the kind is free text.
 
 ## Deploy
 

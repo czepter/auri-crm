@@ -10,8 +10,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * M-06's IssueInvoice leaves an already-paid row paid rather than walking it
  * backwards.
  *
- * M-03 declared `invoiced` before anything produced it — the same shape
- * App\Contracts\Enums\ContractStatus used for `failed` — so that M-04 would
+ * M-03 declared `invoiced` before anything produced it, so that M-04 would
  * have somewhere to land without a migration widening this column's domain.
  * M-04 shipped as Stripe Checkout and never used it; M-06's own invoice is
  * what finally writes it. Since #407 the status no longer decides what may

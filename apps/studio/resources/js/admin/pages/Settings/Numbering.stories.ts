@@ -18,16 +18,6 @@ const meta = {
         nextNumberPreview: 'AN-2026-042',
       },
       {
-        id: 'nr2',
-        documentType: 'contract',
-        documentTypeLabel: 'Vertrag',
-        prefix: 'VT-',
-        resetRule: 'yearly',
-        startingCounter: 1,
-        canSetStartingCounter: false,
-        nextNumberPreview: 'VT-2026-019',
-      },
-      {
         id: 'nr3',
         documentType: 'invoice',
         documentTypeLabel: 'Rechnung',

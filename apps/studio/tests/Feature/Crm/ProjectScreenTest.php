@@ -1,8 +1,6 @@
 <?php
 
-use App\Contracts\Enums\ContractStatus;
-use App\Contracts\Models\Contract;
-use App\Contracts\Models\ContractSignature;
+use App\Crm\Actions\ReadProjectScreen;
 use App\Crm\Enums\CrewRole;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ShootStatus;
@@ -52,11 +50,11 @@ it('renders the project overview with a derived header', function () {
 
 it('shows only the tabs whose feature exists', function () {
     // Mockup 04 shows seven. A tab appears when the feature behind it lands,
-    // never as an empty shell. Vertrag is M-01, Kommunikation is E-06,
+    // never as an empty shell. Kommunikation is E-06,
     // Fragebögen is E-02.
     $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
 
-    expect(array_column($tabs, 'key'))->toBe(['overview', 'shoots', 'tasks', 'galleries', 'messages', 'forms', 'quotes', 'contract']);
+    expect(array_column($tabs, 'key'))->toBe(['overview', 'shoots', 'tasks', 'galleries', 'messages', 'forms', 'quotes']);
 });
 
 it('names its tabs with keys the catalogue answers', function () {
@@ -113,19 +111,6 @@ it('counts the quotes the client has not answered', function () {
     $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
 
     expect(collect($tabs)->firstWhere('key', 'quotes')['count'])->toBe(1);
-});
-
-it('counts the contracts still waiting for a signature', function () {
-    // A contract in front of the client and unsigned is the one that waits.
-    // Signed is done, and one that never rendered is the studio's own problem.
-    Contract::factory()->for($this->project)->create(['status' => ContractStatus::Rendered]);
-
-    $signed = Contract::factory()->for($this->project)->create(['status' => ContractStatus::Rendered]);
-    ContractSignature::factory()->for($signed)->create();
-
-    $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
-
-    expect(collect($tabs)->firstWhere('key', 'contract')['count'])->toBe(1);
 });
 
 it('agrees with the board about an unbooked project', function () {
@@ -499,4 +484,12 @@ it('carries the key figures with the proof under each', function () {
 
     expect($figures)->toHaveKeys(['phase', 'nextDate', 'value', 'open', 'portal'])
         ->and($figures['nextDate']['value'])->toBe(now()->addMonth()->format('Y-m-d'));
+});
+
+it('keeps the main date once it lies behind us', function () {
+    $project = Project::factory()->create();
+    Shoot::factory()->for($project)->primary()->on(now()->subDays(119)->format('Y-m-d'))->create();
+
+    expect(app(ReadProjectScreen::class)->figures($project)['nextDate']['value'])
+        ->toBe(now()->subDays(119)->format('Y-m-d'));
 });

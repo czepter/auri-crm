@@ -57,7 +57,7 @@ class EnsureAudience
 
         // P-09 (#228): a preview session reads and nothing else. A studio
         // owner looking at what a client sees must not be able to accept a
-        // quote or sign a contract as them, and one check here beats the
+        // quote as them, and one check here beats the
         // same check on every write route this surface will ever grow.
         if ($audience === Surface::PORTAL
             && $request->session()->get('portal_preview') === true

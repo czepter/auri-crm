@@ -2,6 +2,8 @@
 
 namespace App\Quotes\Actions;
 
+use App\Crm\Actions\AdvanceLeadStage;
+use App\Crm\Enums\StageAnchor;
 use App\Crm\Models\Contact;
 use App\Notifications\Actions\NotifyStudio;
 use App\Notifications\Studio\QuoteAccepted;
@@ -9,6 +11,7 @@ use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Quotes\Support\QuoteRange;
+use App\Quotes\Support\VatLines;
 use App\Support\AuditLogger;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
@@ -22,8 +25,7 @@ use Illuminate\Validation\ValidationException;
  * quote superseded by a revision, or past its own valid_until, is rejected
  * here even when an earlier GET on the same quote had nothing to object to.
  *
- * Idempotent the same shape App\Contracts\Actions\SignContract's own
- * docblock describes: a doubled request (a retried POST, two tabs) finds the
+ * Idempotent: a doubled request (a retried POST, two tabs) finds the
  * quote already accepted and returns it, rather than failing on the
  * booted() guard's second write or writing a second acceptance.
  *
@@ -37,7 +39,10 @@ use Illuminate\Validation\ValidationException;
  */
 class AcceptQuote
 {
-    public function __construct(private readonly NotifyStudio $notifyStudio) {}
+    public function __construct(
+        private readonly NotifyStudio $notifyStudio,
+        private readonly AdvanceLeadStage $leads,
+    ) {}
 
     /**
      * @param  list<string>  $selectedItemIds  public_ids of the blocks the client switched on
@@ -87,8 +92,7 @@ class AcceptQuote
             }
 
             // actor is null, not $contact — AuditLog::actor_id is a foreign
-            // key to staff users, and a Contact is never one. The same shape
-            // SignContract's own audit call uses.
+            // key to staff users, and a Contact is never one.
             AuditLogger::record(
                 event: 'quote.accepted',
                 context: ['project' => $quote->project->public_id, 'contact' => $contact->public_id],
@@ -96,6 +100,8 @@ class AcceptQuote
                 projectId: $quote->project_id,
                 occurredAt: $at,
             );
+
+            $this->leads->reach($quote->project->lead, StageAnchor::QuoteAccepted, at: $at);
         });
 
         $accepted = $quote->fresh();
@@ -136,10 +142,17 @@ class AcceptQuote
             throw ValidationException::withMessages(['items' => __('portal.quote_item_not_selectable')]);
         }
 
+        $total = QuoteRange::totalFor($quote, $hours, $chosen->pluck('id'));
+
         return [
             'quote' => [
                 'hours' => $hours,
-                'total' => QuoteRange::totalFor($quote, $hours, $chosen->pluck('id')),
+                'total' => $total,
+                'net' => $total,
+                // At the rate frozen at send, never today's setting.
+                'vat_amount' => $quote->vat_mode === 'small_business'
+                    ? 0
+                    : collect(VatLines::fromItems($quote->items, (int) $quote->vat_rate, $total))->sum('vat'),
             ],
             'selected' => $selectable
                 ->mapWithKeys(fn (QuoteItem $item) => [$item->id => $chosen->contains('id', $item->id)])

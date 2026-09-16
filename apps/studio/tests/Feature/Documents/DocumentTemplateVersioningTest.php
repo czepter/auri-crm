@@ -7,16 +7,16 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 it('starts a fresh template family at version 1, current', function () {
-    $template = DocumentTemplate::createFirstVersion(['name' => 'Hochzeit', 'body' => '<p>v1</p>', 'type' => DocumentTemplateType::Contract]);
+    $template = DocumentTemplate::createFirstVersion(['name' => 'Hochzeit', 'body' => '<p>v1</p>', 'type' => DocumentTemplateType::Invoice]);
 
     expect($template->version)->toBe(1)
         ->and($template->is_current)->toBeTrue()
-        ->and($template->type)->toBe(DocumentTemplateType::Contract)
+        ->and($template->type)->toBe(DocumentTemplateType::Invoice)
         ->and($template->shoot_kind)->toBeNull();
 });
 
 it('creates a new version rather than mutating the current row', function () {
-    $v1 = DocumentTemplate::createFirstVersion(['name' => 'Hochzeit', 'body' => '<p>v1</p>', 'type' => DocumentTemplateType::Contract]);
+    $v1 = DocumentTemplate::createFirstVersion(['name' => 'Hochzeit', 'body' => '<p>v1</p>', 'type' => DocumentTemplateType::Invoice]);
 
     $v2 = $v1->newVersion(['name' => 'Hochzeit', 'body' => '<p>v2</p>']);
 
@@ -32,7 +32,7 @@ it('creates a new version rather than mutating the current row', function () {
 });
 
 it('keeps every old version queryable by its own public id', function () {
-    $v1 = DocumentTemplate::createFirstVersion(['name' => 'Hochzeit', 'body' => '<p>v1</p>', 'type' => DocumentTemplateType::Contract]);
+    $v1 = DocumentTemplate::createFirstVersion(['name' => 'Hochzeit', 'body' => '<p>v1</p>', 'type' => DocumentTemplateType::Invoice]);
     $v1->newVersion(['name' => 'Hochzeit', 'body' => '<p>v2</p>']);
 
     $found = DocumentTemplate::findByPublicId($v1->public_id);
@@ -42,7 +42,7 @@ it('keeps every old version queryable by its own public id', function () {
 });
 
 it('numbers a third version off the family maximum, not off whichever row called it', function () {
-    $v1 = DocumentTemplate::createFirstVersion(['name' => 'Hochzeit', 'body' => '<p>v1</p>', 'type' => DocumentTemplateType::Contract]);
+    $v1 = DocumentTemplate::createFirstVersion(['name' => 'Hochzeit', 'body' => '<p>v1</p>', 'type' => DocumentTemplateType::Invoice]);
     $v2 = $v1->newVersion(['name' => 'Hochzeit', 'body' => '<p>v2</p>']);
     $v3 = $v2->newVersion(['name' => 'Hochzeit', 'body' => '<p>v3</p>']);
 
@@ -51,7 +51,7 @@ it('numbers a third version off the family maximum, not off whichever row called
 });
 
 it('scopes current() to exactly the one row per family with the pointer', function () {
-    $v1 = DocumentTemplate::createFirstVersion(['name' => 'A', 'body' => '<p>a</p>', 'type' => DocumentTemplateType::Contract]);
+    $v1 = DocumentTemplate::createFirstVersion(['name' => 'A', 'body' => '<p>a</p>', 'type' => DocumentTemplateType::Invoice]);
     $v1->newVersion(['name' => 'A', 'body' => '<p>b</p>']);
 
     expect(DocumentTemplate::current()->where('family_id', $v1->family_id)->count())->toBe(1);
@@ -71,7 +71,7 @@ it('carries type and shoot_kind forward across a new version rather than accepti
 });
 
 it('scopes ofType to exactly the templates of one document type', function () {
-    DocumentTemplate::factory()->create(['type' => DocumentTemplateType::Contract]);
+    DocumentTemplate::factory()->create(['type' => DocumentTemplateType::Invoice]);
     DocumentTemplate::factory()->create(['type' => DocumentTemplateType::Quote]);
     DocumentTemplate::factory()->create(['type' => DocumentTemplateType::Mail]);
 
@@ -80,11 +80,11 @@ it('scopes ofType to exactly the templates of one document type', function () {
 
 /** T-12's own acceptance criterion: variants per shoot kind rather than one template full of conditionals. */
 it('scopes forShootKind to the generic templates plus the matching variant', function () {
-    $generic = DocumentTemplate::factory()->create(['type' => DocumentTemplateType::Contract, 'shoot_kind' => null]);
-    $wedding = DocumentTemplate::factory()->create(['type' => DocumentTemplateType::Contract, 'shoot_kind' => 'wedding']);
-    DocumentTemplate::factory()->create(['type' => DocumentTemplateType::Contract, 'shoot_kind' => 'portrait']);
+    $generic = DocumentTemplate::factory()->create(['type' => DocumentTemplateType::Invoice, 'shoot_kind' => null]);
+    $wedding = DocumentTemplate::factory()->create(['type' => DocumentTemplateType::Invoice, 'shoot_kind' => 'wedding']);
+    DocumentTemplate::factory()->create(['type' => DocumentTemplateType::Invoice, 'shoot_kind' => 'portrait']);
 
-    $offered = DocumentTemplate::current()->ofType(DocumentTemplateType::Contract)->forShootKind('wedding')->pluck('id');
+    $offered = DocumentTemplate::current()->ofType(DocumentTemplateType::Invoice)->forShootKind('wedding')->pluck('id');
 
     expect($offered->sort()->values()->all())->toBe(collect([$generic->id, $wedding->id])->sort()->values()->all());
 });

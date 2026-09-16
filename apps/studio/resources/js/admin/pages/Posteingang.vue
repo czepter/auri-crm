@@ -53,6 +53,7 @@ const props = defineProps<{
   }[]
   threads: { id: string; label: string }[]
   unfiled: { id: string; subject: string; snippet: string | null; startedAt: string }[]
+  drafts: { id: string; subject: string; body: string; projectName: string | null; to: string }[]
   projects: { id: string; label: string }[]
 }>()
 
@@ -111,6 +112,10 @@ function close(id: string) {
 
 function show(id: string) {
   router.get('/posteingang', { unterhaltung: id }, { preserveScroll: true, preserveState: true })
+}
+
+function discard(id: string) {
+  router.post(`/posteingang/entwuerfe/${id}/verwerfen`, {}, { preserveScroll: true })
 }
 
 function rotate() {
@@ -216,6 +221,23 @@ function receivedAt(iso: string) {
               </AlertDialogContent>
             </AlertDialog>
           </template>
+        </section>
+
+        <section v-if="drafts.length" class="mt-8">
+          <h2 class="m-0 mb-[9px] text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ $t('inbox.draftsTitle') }}</h2>
+
+          <div v-for="draft in drafts" :key="draft.id" class="py-3 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
+            <div class="flex items-baseline gap-[9px]">
+              <span class="text-[13px] leading-[1.47] font-semibold tracking-[-0.012em]">{{ draft.subject }}</span>
+              <span class="ml-auto text-[11.5px] leading-[1.47] text-ink-2">{{ [draft.projectName, draft.to].filter(Boolean).join(' · ') }}</span>
+            </div>
+            <div class="mt-[5px] line-clamp-3 max-w-[68ch] text-[13.5px] leading-[1.55] whitespace-pre-line text-ink-2">{{ draft.body }}</div>
+
+            <div class="mt-2.5 flex items-center gap-2">
+              <Button :as="Link" variant="pill" :href="`/posteingang/entwuerfe/${draft.id}/senden`">{{ $t('inbox.send') }}</Button>
+              <Button variant="ghost" type="button" @click="discard(draft.id)">{{ $t('inbox.discard') }}</Button>
+            </div>
+          </div>
         </section>
 
         <!-- P-04 (#223): a conversation the client started without naming a

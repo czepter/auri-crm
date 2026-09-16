@@ -5,7 +5,6 @@ const events = {
   inquiryReceived: 'immediate',
   clientMessage: 'immediate',
   quoteAccepted: 'immediate',
-  contractSigned: 'digest',
   questionnaireSubmitted: 'digest',
   installmentPaid: 'digest',
   installmentDueSoon: 'immediate',

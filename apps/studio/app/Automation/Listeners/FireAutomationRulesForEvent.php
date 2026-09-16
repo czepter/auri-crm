@@ -20,7 +20,7 @@ use ReflectionProperty;
  *
  * The anchor is whichever public Project or Shoot property the firing event
  * carries — every domain event in this codebase already exposes its subject
- * that way (see ProjectBooked, ContractSigned, InstallmentPaid), and Project
+ * that way (see ProjectBooked, InstallmentPaid), and Project
  * and Shoot are the only two entities E-08 ever anchors a rule to. An event
  * naming neither is simply not something an AutomationRule can watch yet.
  */

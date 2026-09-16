@@ -32,7 +32,7 @@ describe('birthValues', () => {
 })
 
 describe('expiryOn', () => {
-  const STUDIO_DAYS = { downloads: true, lists: true, comments: true, expiryDays: 30, requiresSettledBalance: false }
+  const STUDIO_DAYS = { downloads: true, lists: true, comments: true, expiryDays: 30 }
 
   // toISOString() rechnet nach UTC um: in MESZ ergab der 1. um 00:30 Uhr den
   // Vortag.

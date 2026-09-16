@@ -86,7 +86,6 @@ return new class extends Migration
             'new' => StageAnchor::Entry,
             'quote_sent' => StageAnchor::QuoteSent,
             'quote_accepted' => StageAnchor::QuoteAccepted,
-            'contract_sent' => StageAnchor::ContractSent,
             'booked' => StageAnchor::Won,
         ];
 

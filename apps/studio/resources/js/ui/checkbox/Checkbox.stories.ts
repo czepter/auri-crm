@@ -49,7 +49,7 @@ export const AlleZustaende: Story = {
     setup: () => ({
       zeilen: [
         { key: 'accept_quotes', value: false, disabled: false, name: 'aus' },
-        { key: 'sign_contracts', value: true, disabled: false, name: 'an' },
+        { key: 'payment_status', value: true, disabled: false, name: 'an' },
         { key: 'gallery_lists', value: 'indeterminate', disabled: false, name: 'indeterminate' },
         { key: 'gallery_comments', value: true, disabled: true, name: 'disabled' },
       ] as const,

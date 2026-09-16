@@ -25,6 +25,8 @@ const meta = {
         anchor: 'installment_due',
         offsetDays: 3,
         direction: 'after',
+        projectType: null,
+        action: 'mail_draft',
       },
       {
         id: 'ar2',
@@ -43,6 +45,8 @@ const meta = {
         anchor: 'primary_shoot',
         offsetDays: 7,
         direction: 'before',
+        projectType: null,
+        action: 'mail_draft',
       },
       {
         id: 'ar3',
@@ -61,6 +65,8 @@ const meta = {
         anchor: null,
         offsetDays: null,
         direction: null,
+        projectType: null,
+        action: 'notice',
       },
     ],
   },

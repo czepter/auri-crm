@@ -10,7 +10,6 @@ const QUEUE: App.Crm.Data.ContactRowData[] = [
 const PORTAL_DEFAULTS: Record<string, string | boolean | null> = {
   portal_visible: true,
   accept_quotes: true,
-  sign_contracts: true,
   payment_status: false,
   gallery_downloads: true,
   gallery_lists: true,

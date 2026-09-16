@@ -14,10 +14,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * The only writer of payment_plans. M-02's own issue text: "a plan is
- * created against a signed contract" — so this refuses a Job whose Project
- * has no Contract with a signature, the same abort_unless shape
- * App\Contracts\Actions\SignContract uses for its own precondition.
+ * The only writer of payment_plans. A Job is the one precondition: the
+ * accepted quote is the agreement a plan is created against.
  *
  * One transaction for plan and installments together, same reasoning as
  * BookProject pairing Job creation with its shoots: the deferred constraint
@@ -42,11 +40,6 @@ class CreatePaymentPlan
     public function __invoke(Job $job, int $total, array $dueDates): PaymentPlan
     {
         abort_if($job->paymentPlan()->exists(), 422, 'This job already has a payment plan.');
-        abort_unless(
-            $job->project->contracts()->whereHas('signature')->exists(),
-            422,
-            'A payment plan requires a signed contract.'
-        );
 
         // Q-11: where the accepted quote carries stages, they decide the
         // amounts and their wording; the dates stay this action's own, since
