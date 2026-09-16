@@ -55,9 +55,9 @@ const form = useForm({
   // Was „Sonstige" war. Project und Lead räumen den Wert beim Speichern weg,
   // sobald die Wahl daneben eine andere ist.
   type_other: '',
-  source: props.sources[0].value,
+  source: null as string | null,
   source_other: '',
-  captured_via: props.channels[0].value,
+  captured_via: null as string | null,
   captured_via_other: '',
   date: props.date ?? '',
   call_time: '',
@@ -244,48 +244,6 @@ function submit() {
               </datalist>
             </Field>
 
-            <ChoiceGroup
-              v-model="form.source"
-              class="mt-4"
-              :label="$t('leads.source')"
-              :options="sources"
-              variant="segmented"
-            />
-
-            <Field
-              v-if="form.source === CATCH_ALL"
-              v-slot="{ id }"
-              class="mt-2 max-w-[320px]"
-              :error="form.errors.source_other"
-            >
-              <Input :id="id" v-model="form.source_other" type="text" :aria-label="$t('leads.source')" list="source-presets" />
-              <datalist id="source-presets">
-                <option v-for="value in presets.source" :key="value" :value="value" />
-              </datalist>
-            </Field>
-
-            <!-- CaptureChannel without web_form: what somebody types in here did
-                 not arrive through the form. The controller filters it. -->
-            <ChoiceGroup
-              v-model="form.captured_via"
-              class="mt-4"
-              :label="$t('leads.capturedVia')"
-              :options="channels"
-              variant="segmented"
-            />
-
-            <Field
-              v-if="form.captured_via === CATCH_ALL"
-              v-slot="{ id }"
-              class="mt-2 max-w-[320px]"
-              :error="form.errors.captured_via_other"
-            >
-              <Input :id="id" v-model="form.captured_via_other" type="text" :aria-label="$t('leads.capturedVia')" list="channel-presets" />
-              <datalist id="channel-presets">
-                <option v-for="value in presets.channel" :key="value" :value="value" />
-              </datalist>
-            </Field>
-
             <Field
               v-if="backdating"
               v-slot="{ id }"
@@ -350,6 +308,49 @@ function submit() {
 
             <Field v-slot="{ id }" class="mt-4" :label="$t('leads.inquiryText')">
               <Textarea :id="id" v-model="form.inquiry_text" rows="8" />
+            </Field>
+
+            <!-- Statistik, keine Arbeit (#457): zuletzt und ohne Vorauswahl. -->
+            <ChoiceGroup
+              v-model="form.source"
+              class="mt-4"
+              :label="$t('leads.source')"
+              :options="sources"
+              variant="segmented"
+            />
+
+            <Field
+              v-if="form.source === CATCH_ALL"
+              v-slot="{ id }"
+              class="mt-2 max-w-[320px]"
+              :error="form.errors.source_other"
+            >
+              <Input :id="id" v-model="form.source_other" type="text" :aria-label="$t('leads.source')" list="source-presets" />
+              <datalist id="source-presets">
+                <option v-for="value in presets.source" :key="value" :value="value" />
+              </datalist>
+            </Field>
+
+            <!-- CaptureChannel without web_form: what somebody types in here did
+                 not arrive through the form. The controller filters it. -->
+            <ChoiceGroup
+              v-model="form.captured_via"
+              class="mt-4"
+              :label="$t('leads.capturedVia')"
+              :options="channels"
+              variant="segmented"
+            />
+
+            <Field
+              v-if="form.captured_via === CATCH_ALL"
+              v-slot="{ id }"
+              class="mt-2 max-w-[320px]"
+              :error="form.errors.captured_via_other"
+            >
+              <Input :id="id" v-model="form.captured_via_other" type="text" :aria-label="$t('leads.capturedVia')" list="channel-presets" />
+              <datalist id="channel-presets">
+                <option v-for="value in presets.channel" :key="value" :value="value" />
+              </datalist>
             </Field>
           </Card>
 

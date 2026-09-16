@@ -13,6 +13,7 @@ use App\Crm\Support\CrmVocabulary;
 use App\Models\User;
 use App\Support\AuditLogger;
 use Carbon\CarbonInterface;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -60,32 +61,38 @@ class BookProject
 
         $booked = $this->stages->anchored(StagePipeline::Project, StageAnchor::Booked);
 
-        $job = DB::transaction(function () use ($project, $actor, $via, $booked, $at) {
-            $job = Job::create([
-                'project_id' => $project->id,
-                'booked_at' => $at ?? now(),
-                'booked_by_id' => $actor?->id,
-                'booked_via' => $via,
-            ]);
+        try {
+            $job = DB::transaction(function () use ($project, $actor, $via, $booked, $at) {
+                $job = Job::create([
+                    'project_id' => $project->id,
+                    'booked_at' => $at ?? now(),
+                    'booked_by_id' => $actor?->id,
+                    'booked_via' => $via,
+                ]);
 
-            $project->shoots()->uncancelled()->get()
-                // A shoot already past booked is left alone: booking must not
-                // undo delivered work, and the action would reject the
-                // backwards move anyway.
-                ->filter(fn (Shoot $shoot) => $booked !== null && $shoot->status->canTransitionTo($booked))
-                ->each(fn (Shoot $shoot) => ($this->advance)($shoot, $booked, $actor, $at));
+                $project->shoots()->uncancelled()->get()
+                    // A shoot already past booked is left alone: booking must not
+                    // undo delivered work, and the action would reject the
+                    // backwards move anyway.
+                    ->filter(fn (Shoot $shoot) => $booked !== null && $shoot->status->canTransitionTo($booked))
+                    ->each(fn (Shoot $shoot) => ($this->advance)($shoot, $booked, $actor, $at));
 
-            AuditLogger::record(
-                event: 'project.booked',
-                actor: $actor,
-                context: ['via' => $via->value, 'job' => $job->public_id],
-                subject: $project->public_id,
-                projectId: $project->id,
-                occurredAt: $at,
-            );
+                AuditLogger::record(
+                    event: 'project.booked',
+                    actor: $actor,
+                    context: ['via' => $via->value, 'job' => $job->public_id],
+                    subject: $project->public_id,
+                    projectId: $project->id,
+                    occurredAt: $at,
+                );
 
-            return $job;
-        });
+                return $job;
+            });
+        } catch (UniqueConstraintViolationException) {
+            // The exists() check above races: two triggers on one project both
+            // pass it, and jobs.project_id lets only the first one through.
+            return null;
+        }
 
         ProjectBooked::dispatch($project, $job);
 

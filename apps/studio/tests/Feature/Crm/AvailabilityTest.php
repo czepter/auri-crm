@@ -1,6 +1,8 @@
 <?php
 
+use App\Crm\Actions\AdvanceShootStatus;
 use App\Crm\Actions\CheckDateAvailability;
+use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
@@ -122,7 +124,14 @@ it('respects closures across every date passed to forDates', function () {
 it('ignores lost leads', function () {
     // Vision §7: the scan covers projects whose lead is not lost.
     $project = bookedOn('2026-06-14');
-    $project->lead->forceFill(['lost_at' => now(), 'lost_reason' => 'Budget'])->save();
+    $project->lead->forceFill(['lost_at' => now(), 'lost_reason' => 'Budget', 'outcome' => LeadOutcome::Lost])->save();
+
+    expect(app(CheckDateAvailability::class)->forDate('2026-06-14'))->toBe([]);
+});
+
+it('ignores cancelled shoots', function () {
+    $project = bookedOn('2026-06-14');
+    app(AdvanceShootStatus::class)->cancel($project->shoots()->sole(), 'Verschoben');
 
     expect(app(CheckDateAvailability::class)->forDate('2026-06-14'))->toBe([]);
 });

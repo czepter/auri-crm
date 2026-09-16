@@ -68,6 +68,7 @@ use App\Payments\Http\Controllers\PaymentPlanController;
 use App\Quotes\Http\Controllers\QuoteController;
 use App\Releases\Http\Controllers\ReleaseController;
 use App\Reporting\Http\Controllers\ReportController;
+use App\Settings\Http\Controllers\ApiTokenController;
 use App\Settings\Http\Controllers\GallerySettingsController;
 use App\Settings\Http\Controllers\NotificationSettingsController;
 use App\Settings\Http\Controllers\NumberRangeController;
@@ -493,6 +494,13 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/einstellungen/benachrichtigungen', [NotificationSettingsController::class, 'update'])
             ->name('settings.notifications.update');
 
+        Route::get('/einstellungen/api-token', [ApiTokenController::class, 'index'])
+            ->name('api-tokens.index');
+        Route::post('/einstellungen/api-token', [ApiTokenController::class, 'store'])
+            ->name('api-tokens.store');
+        Route::delete('/einstellungen/api-token/{apiToken}', [ApiTokenController::class, 'destroy'])
+            ->name('api-tokens.destroy');
+
         // /anfragen/neu stays above /anfragen/{lead}/stufe for the same reason
         // /kontakte/suche stays above /kontakte/{contact}.
         Route::get('/anfragen/neu', [InquiryCaptureController::class, 'create'])->name('leads.create');
@@ -592,6 +600,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/angebote/{quote}/senden', [QuoteController::class, 'compose'])->name('quotes.compose');
         Route::post('/angebote/{quote}/versenden', [QuoteController::class, 'send'])->name('quotes.send');
         Route::post('/angebote/{quote}/versendet', [QuoteController::class, 'markSent'])->name('quotes.mark-sent');
+        Route::post('/angebote/{quote}/angenommen', [QuoteController::class, 'markAccepted'])->name('quotes.mark-accepted');
         Route::post('/angebote/{quote}/empfaenger-uebernehmen', [QuoteController::class, 'adoptRecipient'])
             ->name('quotes.adopt-recipient');
         Route::post('/angebote/{quote}/als-paket', [QuoteController::class, 'saveAsPackage'])->name('quotes.saveAsPackage');
