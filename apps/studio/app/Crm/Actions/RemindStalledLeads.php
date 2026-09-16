@@ -22,6 +22,9 @@ use Illuminate\Support\Collection;
  */
 class RemindStalledLeads
 {
+    /** Last reminder on day 55; an inquiry parked for 2028 stops nagging after that. */
+    public const CEILING_DAYS = 80;
+
     public function __construct(
         private readonly NotificationService $notifications,
         private readonly StudioAudience $audience,
@@ -39,6 +42,7 @@ class RemindStalledLeads
             ->filter(fn (Lead $lead) => FibonacciReminderSchedule::isDue(
                 $lead->stage_entered_at,
                 $lead->stalled_reminders_sent,
+                ceilingDays: self::CEILING_DAYS,
             ));
 
         if ($due->isEmpty()) {
@@ -53,7 +57,7 @@ class RemindStalledLeads
 
         foreach ($due as $lead) {
             $lead->forceFill([
-                'stalled_reminders_sent' => FibonacciReminderSchedule::reachedRungs($lead->stage_entered_at),
+                'stalled_reminders_sent' => FibonacciReminderSchedule::reachedRungs($lead->stage_entered_at, ceilingDays: self::CEILING_DAYS),
                 'stalled_reminded_at' => now(),
             ])->save();
         }

@@ -1,18 +1,25 @@
 <?php
 
 use App\Crm\Actions\AdvanceLeadStage;
+use App\Crm\Actions\BookProject;
 use App\Crm\Enums\LeadStage;
+use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Events\LeadLost;
 use App\Crm\Events\LeadStageChanged;
+use App\Crm\Models\Contact;
 use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Payments\Models\PaymentPlan;
+use App\Quotes\Actions\AcceptQuote;
+use App\Quotes\Actions\MarkQuoteSent;
+use App\Quotes\Models\Quote;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Notification;
 
 uses(RefreshDatabase::class);
 
@@ -219,6 +226,35 @@ it('refuses to take the booking back once a payment plan hangs off it', function
 
     expect(Job::count())->toBe(1)
         ->and($lead->fresh()->stage->key)->toBe(LeadStage::Booked->value);
+});
+
+it('leaves the stage alone when the booking fails', function () {
+    $this->mock(BookProject::class)->shouldReceive('__invoke')->andThrow(new DomainException('Shoot'));
+    $lead = Lead::factory()->atStage(LeadStage::QuoteAccepted)->create();
+
+    expect(fn () => app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), User::factory()->create()))
+        ->toThrow(DomainException::class);
+
+    expect($lead->fresh()->stage->key)->toBe(LeadStage::QuoteAccepted->value)
+        ->and(AuditLog::where('event', 'lead.stage_changed')->exists())->toBeFalse();
+});
+
+it('follows the quote forward and leaves a lead further along alone', function () {
+    Notification::fake();
+    $lead = Lead::factory()->create();
+    $lead->project->attachContact(Contact::factory()->create(), ProjectContactRole::Primary);
+    $quote = Quote::factory()->create(['project_id' => $lead->project_id]);
+    $ahead = Lead::factory()->atStage(LeadStage::Booked)->create();
+    $later = Quote::factory()->create(['project_id' => $ahead->project_id]);
+
+    app(MarkQuoteSent::class)($quote, 'self');
+    expect($lead->fresh()->stage->key)->toBe(LeadStage::QuoteSent->value);
+
+    app(AcceptQuote::class)($quote->fresh(), $lead->project->primaryContact(), null);
+    app(MarkQuoteSent::class)($later, 'self');
+
+    expect($lead->fresh()->stage->key)->toBe(LeadStage::QuoteAccepted->value)
+        ->and($ahead->fresh()->stage->key)->toBe(LeadStage::Booked->value);
 });
 
 it('cancels the open shoots of a lost project and leaves an earlier absage alone', function () {

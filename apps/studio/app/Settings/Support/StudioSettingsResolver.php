@@ -649,7 +649,6 @@ class StudioSettingsResolver
 
         return [
             'expiryDays' => $row->gallery_default_expiry_days,
-            'requiresSettledBalance' => (bool) $row->gallery_default_requires_settled_balance,
         ];
     }
 

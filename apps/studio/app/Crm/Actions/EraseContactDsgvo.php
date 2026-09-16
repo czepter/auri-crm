@@ -14,8 +14,11 @@ use App\Crm\Models\Task;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Engagement\Models\ThreadParticipant;
+use App\Gallery\Models\AssetComment;
+use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryPrereleaseSignup;
+use App\Gallery\Models\GalleryView;
 use App\Media\Models\Asset;
 use App\Models\User;
 use App\Notifications\Models\InAppNotification;
@@ -33,7 +36,8 @@ use Illuminate\Support\Facades\Storage;
  * restrictOnDelete a contact who has accepted something and the database
  * enforces it, so erasure means scrubbing this row's identifying columns in
  * place, never removing it. Every table this contact's projects touch is
- * purged outright, storage objects included.
+ * purged outright, storage objects included, except a booked project's
+ * invoices (see purgeSoleContactProject).
  *
  * A project shared with another contact (a partner, a payer, a planner) is
  * never touched beyond this contact's own fingerprints on it — the other
@@ -49,7 +53,7 @@ class EraseContactDsgvo
                 $sharedWithSomeoneElse = $project->contacts()->whereKeyNot($contact->id)->exists();
 
                 if ($sharedWithSomeoneElse) {
-                    $this->detachFromSharedProject($project, $contact);
+                    $project->contacts()->detach($contact->id);
 
                     continue;
                 }
@@ -57,6 +61,11 @@ class EraseContactDsgvo
                 $this->purgeSoleContactProject($project);
             }
 
+            Message::where('contact_id', $contact->id)->delete();
+            ThreadParticipant::where('contact_id', $contact->id)->delete();
+            AssetComment::where('contact_id', $contact->id)->delete();
+            AssetFavorite::where('contact_id', $contact->id)->delete();
+            GalleryView::where('contact_id', $contact->id)->delete();
             ClientAccess::where('contact_id', $contact->id)->delete();
 
             // Der Satz, den jemand über diese Person geschrieben hat, ist
@@ -68,8 +77,8 @@ class EraseContactDsgvo
             // can still find it. Global rather than scoped to the projects
             // above: purgeSoleContactProject's Gallery::delete() already
             // cascades this away for a sole-contact project, but a shared
-            // project's gallery is never dropped (detachFromSharedProject
-            // only strips this contact's own fingerprints), and a contact
+            // project's gallery is never dropped (erasure only detaches
+            // this contact from it), and a contact
             // may have signed up for a gallery's pre-release that belongs
             // to no project of theirs at all.
             if ($contact->email !== null) {
@@ -83,6 +92,10 @@ class EraseContactDsgvo
                 'name' => '[gelöscht]',
                 'email' => null,
                 'phone' => null,
+                'street' => null,
+                'postcode' => null,
+                'city' => null,
+                'portal_overrides' => null,
                 'portal_access_revoked_at' => $contact->portal_access_revoked_at ?? now(),
                 'dsgvo_erased_at' => now(),
             ])->save();
@@ -99,27 +112,24 @@ class EraseContactDsgvo
         });
     }
 
-    /** Strips only this contact's own fingerprints; the project and its shared content stay for whoever else is on it. */
-    private function detachFromSharedProject(Project $project, Contact $contact): void
-    {
-        $threadIds = $project->threads()->pluck('id');
-
-        Message::whereIn('thread_id', $threadIds)->where('contact_id', $contact->id)->delete();
-        ThreadParticipant::whereIn('thread_id', $threadIds)->where('contact_id', $contact->id)->delete();
-        $project->contacts()->detach($contact->id);
-    }
-
     /**
      * Purges every erasable table under this project — the whole fan-out:
      * quotes/items, galleries/assets/derivatives/zip builds/download events/
      * favorites/comments (and their storage objects), threads/messages,
      * form instances/fields/answers, tasks, notes, shoots and everything
-     * under one (crew, timeline, shot list), the lead, the job and its
-     * payment plan, and any automation run anchored to the project or a
-     * shoot of it, then the project row itself.
+     * under one (crew, timeline, shot list), the lead, and any automation run
+     * anchored to the project or a shoot of it, then the job and the project
+     * row itself.
+     *
+     * A job with a payment plan stays, and the project with it under a
+     * scrubbed name: the plan carries allocated invoice numbers and issued
+     * invoices, which § 147 AO requires kept (Art. 17(3)(b) DSGVO) and which
+     * UnbookProject refuses to drop for the same reason.
      */
     private function purgeSoleContactProject(Project $project): void
     {
+        $keepsInvoices = Job::where('project_id', $project->id)->whereHas('paymentPlan')->exists();
+
         $this->purgeStorageObjects($project);
 
         Quote::where('project_id', $project->id)->delete();
@@ -132,12 +142,18 @@ class EraseContactDsgvo
         $shootIds = $project->shoots()->pluck('id');
         Shoot::where('project_id', $project->id)->delete();
         Lead::where('project_id', $project->id)->delete();
-        Job::where('project_id', $project->id)->delete();
 
         AutomationRun::where(fn ($q) => $q->where('anchorable_type', Project::class)->where('anchorable_id', $project->id))
             ->orWhere(fn ($q) => $q->where('anchorable_type', Shoot::class)->whereIn('anchorable_id', $shootIds))
             ->delete();
 
+        if ($keepsInvoices) {
+            $project->forceFill(['name' => '[gelöscht]', 'type_other' => null, 'field_values' => null])->save();
+
+            return;
+        }
+
+        Job::where('project_id', $project->id)->delete();
         $project->delete();
     }
 

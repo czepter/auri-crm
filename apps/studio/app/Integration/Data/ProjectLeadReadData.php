@@ -16,10 +16,10 @@ class ProjectLeadReadData extends Data
 {
     public function __construct(
         public string $stage,
-        public string $source,
+        public ?string $source,
         public ?string $sourceOther,
         public ?string $inquiryText,
-        public string $capturedVia,
+        public ?string $capturedVia,
         public ?string $capturedViaOther,
         public string $capturedAt,
         public ?string $stageEnteredAt,
@@ -32,10 +32,10 @@ class ProjectLeadReadData extends Data
     {
         return new self(
             stage: $lead->stage->key,
-            source: $lead->source->value,
+            source: $lead->source?->value,
             sourceOther: $lead->source_other,
             inquiryText: $lead->inquiry_text,
-            capturedVia: $lead->captured_via->value,
+            capturedVia: $lead->captured_via?->value,
             capturedViaOther: $lead->captured_via_other,
             capturedAt: $lead->captured_at->toIso8601String(),
             stageEnteredAt: $lead->stage_entered_at?->toIso8601String(),

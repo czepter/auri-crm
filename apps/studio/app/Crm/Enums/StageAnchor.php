@@ -39,11 +39,11 @@ enum StageAnchor: string implements HasLabel
             self::Entry => 'Eingang',
             self::QuoteSent => 'Angebot raus',
             self::QuoteAccepted => 'Angebot angenommen',
-            self::Won => 'Gewonnen, legt Projekt an',
+            self::Won => 'Gewonnen, legt Auftrag an',
             self::Booked => 'Gebucht',
             self::Shot => 'Fotografiert',
             self::Ready => 'Fertig',
-            self::Delivered => 'Ausgeliefert, gibt Galerie frei',
+            self::Delivered => 'Ausgeliefert',
             self::Archived => 'Archiviert',
         };
     }

@@ -41,6 +41,10 @@ function markSent() {
   router.post(`/angebote/${props.quote.id}/versendet`, {}, { preserveScroll: true })
 }
 
+function markAccepted() {
+  router.post(`/angebote/${props.quote.id}/angenommen`, {}, { preserveScroll: true })
+}
+
 function duplicate() {
   router.post(`/angebote/${props.quote.id}/duplizieren`, {})
 }
@@ -201,6 +205,7 @@ function run(key: ActionKey) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem v-if="quote.status === 'sent'" @select="markAccepted">{{ $t('quotes.markAccepted') }}</DropdownMenuItem>
         <DropdownMenuItem @select="duplicate">{{ $t('quotes.duplicate') }}</DropdownMenuItem>
         <DropdownMenuItem v-if="quote.status === 'draft'" class="text-destructive" @select="deleting = true">
           {{ $t('quotes.deleteMenu') }}

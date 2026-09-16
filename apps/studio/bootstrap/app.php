@@ -18,8 +18,6 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\MarkSilentWrite;
 use App\Http\Middleware\RequireStudioOnboarding;
 use App\Integration\Console\Commands\CreateApiTokenCommand;
-use App\Integration\Console\Commands\CreateWebhookEndpointCommand;
-use App\Integration\Console\Commands\RedeliverWebhookCommand;
 use App\Integration\Console\Commands\RevokeApiTokenCommand;
 use App\Media\Console\Commands\ReapIncompleteMultipartUploads;
 use App\Migration\Console\Commands\CutoverRestoreCommand;
@@ -63,8 +61,6 @@ return Application::configure(basePath: dirname(__DIR__))
         PollInboundMailbox::class,
         CreateApiTokenCommand::class,
         RevokeApiTokenCommand::class,
-        CreateWebhookEndpointCommand::class,
-        RedeliverWebhookCommand::class,
         BuildMailTemplatesCommand::class,
         RemindOnboardingCommand::class,
         SendStudioDigestsCommand::class,

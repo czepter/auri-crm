@@ -18,7 +18,6 @@ class GallerySettingsData extends Data
     public function __construct(
         public string $id,
         public ?int $expiryDays,
-        public bool $requiresSettledBalance,
         public bool $downloadsEnabled,
         public bool $listsEnabled,
         public bool $commentsEnabled,
@@ -31,7 +30,6 @@ class GallerySettingsData extends Data
         return new self(
             id: $settings->publicId(),
             expiryDays: $settings->galleryDefaults()['expiryDays'],
-            requiresSettledBalance: $settings->galleryDefaults()['requiresSettledBalance'],
             downloadsEnabled: $settings->galleryDownloadsEnabled(),
             listsEnabled: $settings->galleryListsEnabled(),
             commentsEnabled: $settings->galleryCommentsEnabled(),
