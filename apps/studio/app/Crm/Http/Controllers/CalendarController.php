@@ -43,6 +43,7 @@ class CalendarController extends Controller
     {
         $user = auth('staff')->user();
         $month = $this->month($request);
+        $view = in_array($request->query('ansicht'), ['monat', 'liste', 'saison'], true) ? $request->query('ansicht') : 'monat';
 
         $from = $month->startOfMonth()->startOfWeek();
         $to = $from->addWeeks(6)->subDay();
@@ -112,6 +113,7 @@ class CalendarController extends Controller
         }
 
         return Inertia::render('Kalender', [
+            'view' => $view,
             'month' => $month->format('Y-m'),
             'label' => $month->translatedFormat('F Y'),
             'previous' => $month->subMonthNoOverflow()->format('Y-m'),
@@ -128,7 +130,7 @@ class CalendarController extends Controller
                 ->filter(fn (Shoot $shoot) => $shoot->crew->contains('user_id', $user->id))
                 ->pluck('public_id')
                 ->values(),
-            'season' => Inertia::optional(fn () => $this->season($user, $vocabulary)),
+            'season' => $view === 'saison' ? $this->season($user, $vocabulary) : null,
         ]);
     }
 

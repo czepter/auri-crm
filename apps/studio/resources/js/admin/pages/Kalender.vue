@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import CalendarSeason from '@/admin/components/CalendarSeason.vue'
@@ -11,6 +11,7 @@ import Empty from '@/ui/page/Empty.vue'
 import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
 
 const props = defineProps<{
+  view: 'monat' | 'liste' | 'saison'
   month: string
   label: string
   previous: string
@@ -19,17 +20,10 @@ const props = defineProps<{
   shoots: App.Crm.Data.ShootData[]
   projects: Record<string, { id: string; name: string }>
   mine: string[]
-  season?: InstanceType<typeof CalendarSeason>['$props']['season']
+  season: InstanceType<typeof CalendarSeason>['$props']['season'] | null
 }>()
 
-const view = ref('monat')
 const seasonLabel = ref('')
-
-// Every year of shoots is more than a month view should carry on each visit,
-// so the season comes along only once somebody opens it.
-watch(view, (next) => {
-  if (next === 'saison' && !props.season) router.reload({ only: ['season'] })
-})
 
 // Three lines, then a count. The frame is six week rows and it has to stay
 // six: a wedding with four shoots on one day would otherwise push the rest of
@@ -51,8 +45,8 @@ function dayNumber(date: string) {
   return new Date(date).getDate()
 }
 
-function go(month: string) {
-  router.get('/kalender', { monat: month }, { preserveScroll: true, preserveState: true })
+function go(month: string, view: string = props.view) {
+  router.get('/kalender', { monat: month, ansicht: view }, { preserveScroll: true, preserveState: true })
 }
 
 // The list answers "what is next", so it groups by nearness rather than by
@@ -87,7 +81,7 @@ function shortDate(date: string | null) {
       <div class="min-w-0 flex-1">
         <PageHead :kicker="view === 'saison' ? seasonLabel : label" :title="$t('calendar.title')">
           <ChoiceGroup
-            v-model="view"
+            :model-value="view"
             class="ml-auto"
             :options="[
               { value: 'monat', label: $t('calendar.viewMonth') },
@@ -95,6 +89,7 @@ function shortDate(date: string | null) {
               { value: 'saison', label: $t('calendar.viewSeason') },
             ]"
             variant="segmented"
+            @update:model-value="(next) => go(month, next)"
           />
 
           <Button

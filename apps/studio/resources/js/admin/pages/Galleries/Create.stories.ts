@@ -41,6 +41,7 @@ const meta = {
   component: Create,
   parameters: { layout: 'fullscreen', url: '/galerien/neu' },
   args: {
+    mode: 'internal',
     project,
     shootId: 's-rahn',
     presets,
@@ -63,3 +64,6 @@ export const AusShooting: Story = {}
 
 /** Ohne Projekt und ohne Vorlagen bleiben nur die Studio-Standardwerte. */
 export const OhneProjekt: Story = { args: { project: null, shootId: null, presets: [] } }
+
+/** Eine Galerie, die anderswo liegt: nur Projekt, Titel und Adresse. */
+export const Extern: Story = { args: { mode: 'external' } }
