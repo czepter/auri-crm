@@ -29,15 +29,8 @@ uses(RefreshDatabase::class);
 
 // integerIdPaths() lives in tests/Pest.php — see the note there.
 //
-// N-04: this Pest process cannot call into packages/mcp's Node process to
-// check an MCP tool's own CallToolResult the way it checks an Inertia prop
-// or a JSON body above — there is no PHP call that reaches it. The same
-// invariant is enforced there instead, by a JS port of integerIdPaths() —
-// see packages/mcp/src/tools/write.test.ts's "never puts an integer
-// identifier into a write tool's result" suite, which proves it against
-// capture_lead, advance_lead_stage and add_internal_note's real result
-// shapes (the same LeadController/InternalNoteController responses this
-// file's own Integration tests already cover).
+// N-04: an MCP tool's own result is checked the same way, one file over —
+// see McpServerTest's "never puts an integer identifier into a tool result".
 
 it('never puts an integer identifier into an authenticated inertia page prop', function () {
     $user = User::factory()->withMfa()->create();

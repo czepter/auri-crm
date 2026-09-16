@@ -24,7 +24,7 @@ request.
 |---|---|---|---|---|
 | Admin | `admin` | `apps/studio/routes/admin.php` | Studio staff | Private, opt-in TOTP |
 | Portal | `portal` | `apps/studio/routes/portal.php` | Booked clients | Public, magic-link sign-in |
-| API | `api` | `apps/studio/routes/api.php` | The gallery, integrations, the MCP server | Public JSON |
+| API | `api` | `apps/studio/routes/api.php`, `apps/studio/routes/mcp.php` | The gallery, integrations, MCP clients | Public JSON |
 | Gallery | — | `apps/gallery` (Astro SSR) | Clients and wedding guests | Public |
 
 A fifth, unauthenticated sibling app — the marketing site — lives in its
@@ -43,7 +43,6 @@ apps/
   gallery/       Astro 7, server-rendered — the guest gallery viewer
 packages/
   contracts/     openapi.json, generated from the api surface's routes
-  mcp/           MCP server over the integration API (stdio or HTTP)
 docker/
   php/           local development image
   app/           production image for the three Laravel surfaces

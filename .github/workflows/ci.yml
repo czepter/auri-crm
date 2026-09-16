@@ -325,9 +325,6 @@ jobs:
         with: { node-version: 24, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @studio/app build
-      # mcp.spec.ts runs the MCP server as its own process (see the webServer
-      # list in playwright.config.ts), and that process is dist/index.js.
-      - run: pnpm --filter @studio/mcp build
       # Every database setting goes into .env rather than into this step's env.
       # Playwright starts `artisan serve` as a subprocess of a later step, and
       # that subprocess reads .env — so step-level DB_* variables reached the
