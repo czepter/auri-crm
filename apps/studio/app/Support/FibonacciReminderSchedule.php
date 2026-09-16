@@ -18,12 +18,21 @@ final class FibonacciReminderSchedule
 {
     public const FIRST_RUNG = 3;
 
-    public static function reachedRungs(CarbonImmutable $anchor, ?CarbonImmutable $now = null): int
+    /**
+     * Past $ceilingDays nothing counts as reached, so the item also leaves
+     * every list that reads this — something open that long is parked, not
+     * forgotten.
+     */
+    public static function reachedRungs(CarbonImmutable $anchor, ?CarbonImmutable $now = null, ?int $ceilingDays = null): int
     {
         // Day boundaries, not hours: an inquiry taken at 23:00 is not a day
         // old at midnight.
         $days = (int) $anchor->startOfDay()
             ->diffInDays(($now ?? CarbonImmutable::now())->startOfDay());
+
+        if ($ceilingDays !== null && $days > $ceilingDays) {
+            return 0;
+        }
 
         $reached = 0;
         $previous = self::FIRST_RUNG - 1;
@@ -37,8 +46,8 @@ final class FibonacciReminderSchedule
         return $reached;
     }
 
-    public static function isDue(CarbonImmutable $anchor, int $remindersSent, ?CarbonImmutable $now = null): bool
+    public static function isDue(CarbonImmutable $anchor, int $remindersSent, ?CarbonImmutable $now = null, ?int $ceilingDays = null): bool
     {
-        return self::reachedRungs($anchor, $now) > $remindersSent;
+        return self::reachedRungs($anchor, $now, $ceilingDays) > $remindersSent;
     }
 }

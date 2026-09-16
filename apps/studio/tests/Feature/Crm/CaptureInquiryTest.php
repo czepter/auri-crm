@@ -18,6 +18,7 @@ use App\Crm\Models\ProjectType as ProjectTypeModel;
 use App\Crm\Models\Shoot;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Reporting\Support\BookingFunnel;
 use App\Settings\Models\StudioClosure;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -296,6 +297,20 @@ it('captures every person on the inquiry with their own reach', function () {
         ->and($partners->firstWhere('name', 'Tim Erdmann')->phone)->toBe('0170 111');
 });
 
+it('reuses a partner already on file by email', function () {
+    $partner = Contact::factory()->create(['name' => 'Ruben Falk', 'email' => 'r.falk@example.test']);
+
+    $this->actingAs($this->staff, 'staff')
+        ->post('/anfragen', payload([
+            'people' => [['name' => 'R. Falk', 'email' => 'r.falk@example.test', 'phone' => null]],
+        ]))
+        ->assertRedirect('/anfragen');
+
+    expect(Contact::where('email', 'r.falk@example.test')->count())->toBe(1)
+        ->and(Project::sole()->contacts()->wherePivot('role', ProjectContactRole::Partner->value)->sole()->id)
+        ->toBe($partner->id);
+});
+
 it('skips a person row left blank', function () {
     test()->actingAs(test()->staff, 'staff')
         ->post('/anfragen', payload(['people' => []]))
@@ -396,6 +411,29 @@ it('puts times and venue on the primary shoot the capture creates', function () 
         ->and($shoot->end_time)->toStartWith('22:30')
         ->and($shoot->venue_name)->toBe('Gut Basthorst')
         ->and($shoot->venue_city)->toBe('Basthorst');
+});
+
+it('accepts a shoot ending after midnight', function () {
+    $this->actingAs($this->staff, 'staff')
+        ->post('/anfragen', payload(['call_time' => '14:00', 'end_time' => '01:00']))
+        ->assertSessionHasNoErrors()
+        ->assertRedirect('/anfragen');
+
+    expect(Shoot::sole()->end_time)->toStartWith('01:00');
+});
+
+it('captures without source and channel and counts it as unknown', function () {
+    $this->actingAs($this->staff, 'staff')
+        ->post('/anfragen', payload(['source' => null, 'captured_via' => null]))
+        ->assertSessionHasNoErrors()
+        ->assertRedirect('/anfragen');
+
+    $lead = Lead::sole();
+
+    expect($lead->source)->toBeNull()
+        ->and($lead->captured_via)->toBeNull()
+        ->and(BookingFunnel::bySource(now()->subDay(), now()->addDay()))
+        ->toBe([['source' => 'unknown', 'label' => 'Unbekannt', 'captured' => 1, 'booked' => 0, 'revenue' => 0]]);
 });
 
 it('saves without times and venue', function () {

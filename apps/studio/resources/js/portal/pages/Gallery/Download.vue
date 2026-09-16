@@ -22,7 +22,7 @@ type Build = {
 
 const props = defineProps<{
   gallery: { id: string; title: string | null; count: number; expiresAt: string | null }
-  step: 'balance' | 'pin' | 'email' | 'ready'
+  step: 'pin' | 'email' | 'ready'
   gates: { key: string; value: string | null }[] | null
   selections: Selection[]
   builds: Build[]
@@ -123,20 +123,8 @@ const OPT = [
        rules are all `[data-theme="gallery"] .foo` descendant selectors,
        matching the mockup's own <html data-theme="gallery"> root. -->
   <div data-theme="gallery" class="min-h-screen bg-background text-foreground">
-    <!-- G-05: the studio withholds the archive until its invoice clears.
-         Said here because the guest's own screen shows nothing about it. -->
-    <div v-if="step === 'balance'" data-tokens class="mx-auto max-w-[560px] px-8 pt-14 pb-11 text-center">
-      <span class="text-[13px] leading-none font-bold tracking-[0.18em] whitespace-nowrap uppercase text-foreground no-underline">{{ studioName }}</span>
-      <h1 class="mt-14 m-0 font-[family-name:var(--font-display)] text-[27px] leading-[1.2] font-semibold tracking-[var(--display-tracking)]">{{ $t('gallery.balanceTitle') }}</h1>
-      <p class="mt-1.5 text-[14px] leading-[1.6] font-normal text-muted-foreground">{{ $t('gallery.balanceBody') }}</p>
-
-      <Button as="a" variant="ghost" class="mt-5 w-full justify-center" :href="`/galerien/${gallery.id}`">
-        {{ $t('gallery.backToGallery') }}
-      </Button>
-    </div>
-
     <!-- mockup 11: the whole page centers on the pin step -->
-    <div v-else-if="step === 'pin'" data-tokens class="mx-auto max-w-[560px] px-8 pt-14 pb-11 text-center">
+    <div v-if="step === 'pin'" data-tokens class="mx-auto max-w-[560px] px-8 pt-14 pb-11 text-center">
       <span class="text-[13px] leading-none font-bold tracking-[0.18em] whitespace-nowrap uppercase text-foreground no-underline">{{ studioName }}</span>
       <div class="mt-14 mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.pinKicker') }}</div>
       <h1 class="m-0 font-[family-name:var(--font-display)] text-[27px] leading-[1.2] font-semibold tracking-[var(--display-tracking)]">{{ $t('gallery.pinTitle') }}</h1>

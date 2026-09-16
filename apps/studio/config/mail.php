@@ -113,6 +113,9 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    // Unset, the product mails (AppServiceProvider's mail::layout composer) carry no footer.
+    'support_address' => env('MAIL_SUPPORT_ADDRESS'),
+
     /*
     |--------------------------------------------------------------------------
     | Inbound Mail (E-11, E-12)

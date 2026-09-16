@@ -69,7 +69,7 @@ class ProjectController extends Controller
             'name' => $project->name,
             'type' => $project->type->key,
             'typeOther' => $project->type_other,
-            'source' => $project->lead?->source->value,
+            'source' => $project->lead?->source?->value,
             'sourceOther' => $project->lead?->source_other,
         ]);
     }

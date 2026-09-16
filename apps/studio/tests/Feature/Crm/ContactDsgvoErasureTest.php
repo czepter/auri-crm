@@ -3,17 +3,22 @@
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\InternalNote;
+use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Task;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Enums\StaffRole;
+use App\Gallery\Models\AssetComment;
+use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryPrereleaseSignup;
+use App\Gallery\Models\GalleryVersion;
 use App\Media\Models\Asset;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Portal\Models\ClientAccess;
 use App\Quotes\Models\Quote;
@@ -80,6 +85,56 @@ it('erases a sole-contact project outright, including its storage objects', func
         ->and(Contact::query()->whereKey($contact->id)->exists())->toBeTrue();
 });
 
+it('keeps the payment plan, its issued invoices and their PDFs when erasing a booked project', function () {
+    $contact = Contact::factory()->create(['name' => 'Lena Meier']);
+    $project = dsgvoErasableProject($contact);
+    $plan = PaymentPlan::factory()->for(Job::factory()->for($project))->create(['total' => 100000]);
+    $installment = PaymentInstallment::factory()->for($plan, 'plan')->create([
+        'amount' => 100000,
+        'invoice_number' => 'RE-2026-0001',
+        'invoiced_at' => now(),
+        'invoice_path' => 'invoices/re-2026-0001.pdf',
+    ]);
+    Storage::disk('local')->put($installment->invoice_path, 'pdf');
+
+    $this->actingAs($this->owner, 'staff')->post("/kontakte/{$contact->public_id}/dsgvo/loeschen");
+
+    expect($installment->fresh()?->invoice_number)->toBe('RE-2026-0001')
+        ->and($project->fresh()->name)->toBe('[gelöscht]')
+        ->and(Quote::query()->exists())->toBeFalse();
+
+    Storage::disk('local')->assertExists($installment->invoice_path);
+});
+
+it('exports and erases the address, comments and favorites of a contact on a shared project', function () {
+    $contact = Contact::factory()->create(['street' => 'Lindenweg 4', 'postcode' => '07743', 'city' => 'Jena']);
+    $project = Project::factory()->create();
+    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact(Contact::factory()->create(), ProjectContactRole::Partner);
+    $version = GalleryVersion::factory()->for(Gallery::factory()->for($project))->create();
+    AssetComment::factory()->for($version)->create(['contact_id' => $contact->id, 'body' => 'Bitte in Farbe']);
+    AssetFavorite::factory()->for($version)->create(['contact_id' => $contact->id]);
+
+    $data = json_decode(
+        $this->actingAs($this->owner, 'staff')->get("/kontakte/{$contact->public_id}/dsgvo/export")->getContent(),
+        true
+    );
+
+    expect($data['contact']['city'])->toBe('Jena')
+        ->and($data['projects'][0]['type'])->toBe($project->type->key)
+        ->and($data['asset_comments'][0]['body'])->toBe('Bitte in Farbe')
+        ->and($data['asset_favorites'])->toHaveCount(1);
+
+    $this->actingAs($this->owner, 'staff')->post("/kontakte/{$contact->public_id}/dsgvo/loeschen");
+
+    $contact->refresh();
+    expect($contact->street)->toBeNull()
+        ->and($contact->postcode)->toBeNull()
+        ->and($contact->city)->toBeNull()
+        ->and(AssetComment::query()->exists())->toBeFalse()
+        ->and(AssetFavorite::query()->exists())->toBeFalse();
+});
+
 it('records one audit event naming only the opaque public_id, never PII', function () {
     $contact = Contact::factory()->create(['name' => 'Lena Meier']);
     dsgvoErasableProject($contact);
@@ -138,7 +193,7 @@ it('deletes client accesses and api tokens, and cannot be run twice', function (
 // Personal-data fix round 1: GalleryPrereleaseSignup carries no contact_id
 // (same reason ClientAccess above does not need to be the model here),
 // matched by address instead — including on a gallery under a *shared*
-// project, the gap detachFromSharedProject alone would have left open.
+// project, the gap detaching from it alone would have left open.
 it('deletes a pre-release signup by address, even on a gallery shared with another contact', function () {
     $contact = Contact::factory()->create(['email' => 'lena@example.test']);
     $partner = Contact::factory()->create();

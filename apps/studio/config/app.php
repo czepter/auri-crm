@@ -97,6 +97,9 @@ return [
 
     'timezone' => env('APP_TIMEZONE', 'UTC'),
 
+    // Set by playwright.config.ts only. See AppServiceProvider::boot().
+    'e2e_now' => env('E2E_NOW'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration

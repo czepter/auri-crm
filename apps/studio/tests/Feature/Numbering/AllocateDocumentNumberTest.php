@@ -4,6 +4,8 @@ use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
 use App\Numbering\Models\NumberCounter;
 use App\Settings\Models\NumberRange;
+use App\Settings\Support\StudioSettingsResolver;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -79,15 +81,14 @@ it('keeps two tenants on independent sequences for the same year', function () {
         ->and($firstForB)->toBe(['number' => 'AN-2026-1', 'year' => 2026, 'counter' => 1]);
 });
 
-it('defaults to the current tenant and the current UTC year when called with no arguments', function () {
-    $tenantId = (string) Str::uuid();
-    config(['tenancy.tenant_id' => $tenantId]);
-    NumberRange::factory()->create(['tenant_id' => $tenantId]);
-    $this->travelTo(now()->utc()->setDate(2031, 12, 31));
+it("defaults to the current tenant and the studio's year when called with no arguments", function () {
+    app(StudioSettingsResolver::class)->set('timezone', 'Europe/Berlin');
+    // 00:30 on 1 January in Berlin, still New Year's Eve in UTC.
+    $this->travelTo(CarbonImmutable::parse('2031-12-31 23:30', 'UTC'));
 
     $result = app(AllocateDocumentNumber::class)();
 
-    expect($result)->toBe(['number' => 'AN-2031-1', 'year' => 2031, 'counter' => 1]);
+    expect($result)->toBe(['number' => 'AN-2032-1', 'year' => 2032, 'counter' => 1]);
 });
 
 it('rejects a second row for the same tenant, document type, year and counter at the schema level', function () {

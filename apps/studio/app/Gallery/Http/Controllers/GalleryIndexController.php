@@ -85,7 +85,6 @@ class GalleryIndexController extends Controller
                 'lists' => $settings->galleryListsEnabled(),
                 'comments' => $settings->galleryCommentsEnabled(),
                 'expiryDays' => $settings->galleryDefaults()['expiryDays'],
-                'requiresSettledBalance' => $settings->galleryDefaults()['requiresSettledBalance'],
                 'design' => $settings->galleryDesign(),
             ],
         ]);
@@ -105,7 +104,6 @@ class GalleryIndexController extends Controller
             'is_external' => ['required', 'boolean'],
             'external_url' => ['nullable', 'url', 'max:2000', 'required_if:is_external,true'],
             'expires_at' => ['nullable', 'date'],
-            'requires_settled_balance' => ['nullable', 'boolean'],
             'downloads_enabled' => ['nullable', 'boolean'],
             'lists_enabled' => ['nullable', 'boolean'],
             'comments_enabled' => ['nullable', 'boolean'],

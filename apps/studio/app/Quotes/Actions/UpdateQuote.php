@@ -168,11 +168,6 @@ class UpdateQuote
                 ->all()
         );
 
-        // Q-15: ein Regler-Angebot hat vor der Zusage keine Summe, sondern
-        // eine Spanne. AcceptQuote schreibt total; bis dahin wuerde diese
-        // Ableitung eine zweite, falsche Wahrheit hinstellen.
-        if (! $quote->fresh()->hasSlider()) {
-            $quote->recalculateTotal();
-        }
+        $quote->recalculateTotal();
     }
 }

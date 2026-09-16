@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Actions;
 
+use App\Crm\Actions\RemindStalledLeads;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Lead;
@@ -124,7 +125,7 @@ class BuildMorningBriefing
             ->whereIn('stage', Stage::query()->pipeline(StagePipeline::Lead)->active()->pluck('key'))
             ->with('project')
             ->get()
-            ->filter(fn (Lead $lead) => FibonacciReminderSchedule::reachedRungs($lead->stage_entered_at) > 0)
+            ->filter(fn (Lead $lead) => FibonacciReminderSchedule::reachedRungs($lead->stage_entered_at, ceilingDays: RemindStalledLeads::CEILING_DAYS) > 0)
             ->filter(fn (Lead $lead) => $this->hears($user, $lead->project))
             ->map(fn (Lead $lead) => sprintf(
                 '%s — %s, seit %d Tagen',

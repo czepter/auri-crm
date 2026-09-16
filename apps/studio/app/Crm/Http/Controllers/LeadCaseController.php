@@ -95,7 +95,7 @@ class LeadCaseController extends Controller
                 'type' => $project->type->key,
                 'typeOther' => $project->type_other,
                 'typeLabel' => $project->typeLabel(),
-                'source' => $lead->source->value,
+                'source' => $lead->source?->value,
                 'sourceOther' => $lead->source_other,
                 'sourceLabel' => $lead->sourceLabel(),
                 'stage' => $lead->stage->key,
@@ -197,7 +197,7 @@ class LeadCaseController extends Controller
         $validated = $request->validate([
             'type' => ['sometimes', 'required', Rule::exists('project_types', 'key')->where('is_active', true)],
             'type_other' => ['nullable', 'string', 'max:120'],
-            'source' => ['sometimes', 'required', Rule::enum(LeadSource::class)],
+            'source' => ['sometimes', 'nullable', Rule::enum(LeadSource::class)],
             'source_other' => ['nullable', 'string', 'max:120'],
             'inquiry_text' => ['sometimes', 'nullable', 'string', 'max:10000'],
             'people' => ['array'],

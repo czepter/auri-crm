@@ -103,6 +103,7 @@ are not:
 | `MAIL_URL` | The outbound SMTP DSN |
 | `MAIL_FROM_ADDRESS` | The studio's sending address |
 | `MAIL_FROM_NAME` | Optional; the sender name beside it, `Studio` unless set. It is the fallback, not the sender — a notification carrying `AppliesStudioMailIdentity` takes the studio's own from Einstellungen › E-Mail |
+| `MAIL_SUPPORT_ADDRESS` | Optional; the address in the footer of Auri CRM's own mails. Unset, they have no footer |
 | `STRIPE_WEBHOOK_SECRET` | From the Stripe dashboard's webhook endpoint |
 | `STUDIO_SENTRY_DSN` | The GlitchTip project for the Laravel surfaces — leave empty and the SDK stays fully inert |
 | `GALLERY_SENTRY_DSN` | The GlitchTip project for the Astro gallery — same |
