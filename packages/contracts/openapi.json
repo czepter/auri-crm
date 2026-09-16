@@ -4395,7 +4395,7 @@
                                                                 "string",
                                                                 "null"
                                                             ],
-                                                            "description": "Q-09/Q-10: the block half of a line. `id` is how a picture\nsurvives the wholesale replace below \u2014 never the path itself:\na stored path accepted from a form is a read of any file on\nthe disk, this app's contracts included."
+                                                            "description": "Q-09/Q-10: the block half of a line. `id` is how a picture\nsurvives the wholesale replace below \u2014 never the path itself:\na stored path accepted from a form is a read of any file on\nthe disk, this app's invoices included."
                                                         },
                                                         "selectable": {
                                                             "type": "boolean"
@@ -4550,7 +4550,7 @@
                                                                 "string",
                                                                 "null"
                                                             ],
-                                                            "description": "Q-09/Q-10: the block half of a line. `id` is how a picture\nsurvives the wholesale replace below \u2014 never the path itself:\na stored path accepted from a form is a read of any file on\nthe disk, this app's contracts included."
+                                                            "description": "Q-09/Q-10: the block half of a line. `id` is how a picture\nsurvives the wholesale replace below \u2014 never the path itself:\na stored path accepted from a form is a read of any file on\nthe disk, this app's invoices included."
                                                         },
                                                         "selectable": {
                                                             "type": "boolean"
@@ -8890,7 +8890,7 @@
                                         "string",
                                         "null"
                                     ],
-                                    "description": "Q-09/Q-10: the block half of a line. `id` is how a picture\nsurvives the wholesale replace below \u2014 never the path itself:\na stored path accepted from a form is a read of any file on\nthe disk, this app's contracts included."
+                                    "description": "Q-09/Q-10: the block half of a line. `id` is how a picture\nsurvives the wholesale replace below \u2014 never the path itself:\na stored path accepted from a form is a read of any file on\nthe disk, this app's invoices included."
                                 },
                                 "selectable": {
                                     "type": "boolean"
