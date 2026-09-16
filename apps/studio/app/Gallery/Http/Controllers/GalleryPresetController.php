@@ -55,7 +55,6 @@ class GalleryPresetController extends Controller
         $preset = GalleryPreset::create([
             'name' => $validated['name'],
             'design' => $gallery->design,
-            'requires_settled_balance' => $gallery->requires_settled_balance,
             'downloads_enabled' => $gallery->downloads_enabled,
             'lists_enabled' => $gallery->lists_enabled,
             'comments_enabled' => $gallery->comments_enabled,
@@ -177,7 +176,6 @@ class GalleryPresetController extends Controller
             'name' => ['required', 'string', 'max:120'],
             'expiry_mode' => ['required', Rule::in(GalleryPreset::MODES)],
             'expiry_days' => ['nullable', 'integer', 'min:1', 'max:3650', 'required_if:expiry_mode,days'],
-            'requires_settled_balance' => ['nullable', 'boolean'],
             'downloads_enabled' => ['nullable', 'boolean'],
             'lists_enabled' => ['nullable', 'boolean'],
             'comments_enabled' => ['nullable', 'boolean'],

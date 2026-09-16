@@ -23,8 +23,6 @@ const props = defineProps<{
     downloadPin: string | null
     requiresVerifiedEmail: boolean
     expiresAt: string | null
-    balanceSettled: boolean
-    requiresSettledBalance: boolean
     offers: { downloads: boolean; lists: boolean; comments: boolean }
   }
   siblings: { id: string; title: string | null; assetCount: number; open: boolean }[]
@@ -144,12 +142,6 @@ function day(iso: string | null) {
     </nav>
 
     <div class="min-w-0 flex-1">
-  <!-- balance_settled is a state out of the payments, never a switch —
-       it stands as a value beside the block it causes. -->
-  <p v-if="gallery.requiresSettledBalance && !gallery.balanceSettled" class="mb-5 text-[11.5px] leading-[1.45] text-faint">
-    {{ $t('galleryRecord.blockedByBalance') }}
-  </p>
-
   <template v-if="settingsSection === 'allgemein'">
     <h2 class="mt-0">{{ $t('galleryRecord.settingsNav.allgemein') }}</h2>
 

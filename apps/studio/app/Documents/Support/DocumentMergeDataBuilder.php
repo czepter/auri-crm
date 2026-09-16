@@ -297,6 +297,7 @@ class DocumentMergeDataBuilder
                     'net' => $this->money($figures->net),
                     'vat' => $this->money($figures->vat),
                     'gross' => $this->money($figures->gross),
+                    'vatAmount' => $figures->vat,
                 ];
             })
             ->values()

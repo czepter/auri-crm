@@ -49,9 +49,6 @@ use Inertia\Response;
  *
  * The versions sit with the pictures rather than with the permissions: a
  * version is a published selection, so it is a statement about pictures.
- *
- * Whether the balance is settled stays a state read off the payments and
- * never becomes a switch — it stands as a value beside the block it causes.
  */
 class GalleryRecordController extends Controller
 {
@@ -156,8 +153,6 @@ class GalleryRecordController extends Controller
                 'downloadPin' => $gallery->download_pin,
                 'requiresVerifiedEmail' => $gallery->requiresVerifiedEmail(),
                 'expiresAt' => $gallery->expires_at?->format('Y-m-d'),
-                'balanceSettled' => $gallery->project?->balanceSettled() ?? false,
-                'requiresSettledBalance' => $gallery->requires_settled_balance,
                 'design' => $gallery->design,
                 // Drives the publish button's label (Veröffentlichen ·
                 // Neu veröffentlichen · Wieder freigeben) — computed fresh

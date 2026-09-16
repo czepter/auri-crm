@@ -33,7 +33,6 @@ it('keeps the defaults from a role that may not edit them', function () {
 it('writes the design the room chose', function () {
     $this->patch('/einstellungen/galerien', [
         'gallery_default_expiry_days' => 90,
-        'gallery_default_requires_settled_balance' => false,
         'gallery_default_downloads_enabled' => true,
         'gallery_default_lists_enabled' => true,
         'gallery_default_comments_enabled' => false,
@@ -46,7 +45,6 @@ it('writes the design the room chose', function () {
 
 it('refuses a half design', function () {
     $this->patch('/einstellungen/galerien', [
-        'gallery_default_requires_settled_balance' => false,
         'gallery_default_downloads_enabled' => true,
         'gallery_default_lists_enabled' => true,
         'gallery_default_comments_enabled' => true,

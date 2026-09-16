@@ -267,7 +267,7 @@ names: string,
 date: string | null,
 shootCount: number,
 venue: string | null,
-source: string,
+source: string | null,
 stage: string,
 daysInStage: number,
 value: number | null,
@@ -612,7 +612,6 @@ name: string,
 design: Record<string, string> | null,
 expiryMode: string,
 expiryDays: number | null,
-requiresSettledBalance: boolean | null,
 downloadsEnabled: boolean | null,
 listsEnabled: boolean | null,
 commentsEnabled: boolean | null,
@@ -688,7 +687,7 @@ export type LeadReadData = {
 id: string,
 projectId: string,
 projectName: string,
-source: string,
+source: string | null,
 sourceOther: string | null,
 stage: string,
 stageEnteredAt: string | null,
@@ -737,10 +736,10 @@ allowNewOptions: boolean,
 };
 export type ProjectLeadReadData = {
 stage: string,
-source: string,
+source: string | null,
 sourceOther: string | null,
 inquiryText: string | null,
-capturedVia: string,
+capturedVia: string | null,
 capturedViaOther: string | null,
 capturedAt: string,
 stageEnteredAt: string | null,
@@ -824,9 +823,6 @@ location: string | null,
 note: string | null,
 isTransit: boolean,
 };
-}
-namespace Enums {
-export type WebhookDeliveryStatus = 'pending' | 'delivered' | 'failed';
 }
 }
 namespace Media {
@@ -997,7 +993,6 @@ namespace Data {
 export type GallerySettingsData = {
 id: string,
 expiryDays: number | null,
-requiresSettledBalance: boolean,
 downloadsEnabled: boolean,
 listsEnabled: boolean,
 commentsEnabled: boolean,
