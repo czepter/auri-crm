@@ -59,6 +59,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Console\ServeCommand;
 use Illuminate\Notifications\Events\NotificationSending;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -114,6 +115,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // #324: the e2e suite pins the clock for the seeder and every server,
+        // or seeded dates and pixel baselines age by a day each night.
+        if (config('app.e2e_now') !== null && ! $this->app->isProduction()) {
+            Carbon::setTestNow(config('app.e2e_now'));
+        }
+
         // The 'mail::' namespace (<x-mail::layout>, <x-mail::button>) only
         // exists while Illuminate\Mail\Markdown::render() is on the stack —
         // it registers it there and nowhere else, pointed at
