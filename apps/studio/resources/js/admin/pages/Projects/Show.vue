@@ -262,18 +262,22 @@ function complete(row: App.Crm.Data.TaskRowData) {
                          stage stays here only as the field that changes it. -->
                     <div class="mt-5 mb-5 flex">
                         <BandCell
+                            v-if="figures.nextDate.value"
                             :label="$t('project.mainDateLabel')"
                             :sub="$t('board.shootCount', shoots.length)"
                         >
                             <BandValue plain>{{ day(figures.nextDate.value) }}</BandValue>
                         </BandCell>
 
-                        <BandCell :label="$t('board.colValue')" :sub="figures.value.proof">
+                        <BandCell
+                            v-if="figures.value.value !== null || header.canManageQuotes"
+                            :label="$t('board.colValue')"
+                            :sub="figures.value.proof"
+                        >
                             <BandValue v-if="figures.value.value !== null">{{ euro(figures.value.value) }}</BandValue>
-                            <Button v-else-if="header.canManageQuotes" class="mt-[5px]" variant="outline" as-child>
+                            <Button v-else class="mt-[5px]" variant="outline" as-child>
                                 <Link :href="`/auftraege/${header.id}/angebote`">{{ $t("project.quoteAdd") }}</Link>
                             </Button>
-                            <BandValue v-else>—</BandValue>
                         </BandCell>
 
                         <BandCell
