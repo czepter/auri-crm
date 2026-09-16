@@ -1406,7 +1406,10 @@
                                                     "type": "string"
                                                 },
                                                 "source": {
-                                                    "type": "string"
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
                                                 }
                                             },
                                             "required": [
@@ -1734,7 +1737,10 @@
                                             ]
                                         },
                                         "source": {
-                                            "type": "string"
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         },
                                         "sourceOther": {
                                             "type": [
@@ -4327,7 +4333,10 @@
                                             ]
                                         },
                                         "capturedVia": {
-                                            "type": "string"
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         },
                                         "capturedViaOther": {
                                             "type": [
