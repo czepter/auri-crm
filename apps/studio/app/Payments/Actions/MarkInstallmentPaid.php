@@ -18,8 +18,7 @@ use Illuminate\Support\Facades\DB;
  * manual receipt today; the same action, unchanged, is the one a future
  * Stripe webhook (M-04/M-05) is expected to call with SettledVia::Stripe.
  *
- * Idempotency guards the row, not the trigger — the same shape
- * App\Contracts\Actions\SignContract uses for a doubled signing request: an
+ * Idempotency guards the row, not the trigger: an
  * installment already marked paid is returned as-is, with no second write
  * and no second InstallmentPaid dispatch, so two staff submissions (or one
  * retried request) racing for the same installment produce exactly one
@@ -27,9 +26,7 @@ use Illuminate\Support\Facades\DB;
  *
  * #414: a transfer that comes up short books as far as it goes. Amounts add
  * up across calls, so the caller passes what arrived and never a running
- * total. InstallmentPaid fires only once the row is fully settled — the
- * deposit that books a project (App\Crm\Listeners\
- * BookProjectOnContractAndDeposit) is the deposit, not part of it.
+ * total. InstallmentPaid fires only once the row is fully settled.
  */
 class MarkInstallmentPaid
 {

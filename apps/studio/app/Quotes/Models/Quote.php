@@ -12,6 +12,7 @@ use App\Quotes\Enums\DiscountType;
 use App\Quotes\Enums\PricingMode;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Support\DiscountCalculator;
+use App\Quotes\Support\QuoteRange;
 use App\Quotes\Support\VatLines;
 use App\Settings\Support\StudioSettingsResolver;
 use Database\Factories\Quotes\QuoteFactory;
@@ -106,8 +107,12 @@ class Quote extends Model
             // Q-12: `hours` and `total` join the list by name rather than by
             // softening the guard. A slider quote turns from a configuration
             // into an amount at exactly one moment, and it is this one.
+            // #442: the chosen amount replaces the preselection's net and VAT.
+            $sliderAcceptance = $quote->hasSlider() && $quote->status === QuoteStatus::Accepted
+                ? ['net', 'vat_amount']
+                : [];
             $allowed = $original === QuoteStatus::Sent->value
-                ? ['status', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id', 'hours', 'total']
+                ? ['status', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id', 'hours', 'total', ...$sliderAcceptance]
                 : [];
             $blocked = array_diff(array_keys($quote->getDirty()), $allowed);
 
@@ -143,7 +148,7 @@ class Quote extends Model
      */
     public function paymentSplit(): array
     {
-        $base = $this->hasSlider() ? $this->total : $this->net + ($this->vat_mode === 'standard' ? ($this->vat_amount ?? 0) : 0);
+        $base = $this->net + ($this->vat_mode === 'standard' ? ($this->vat_amount ?? 0) : 0);
 
         return PaymentStageSplitter::split($base, $this->paymentStages);
     }
@@ -178,6 +183,14 @@ class Quote extends Model
      */
     public function recalculateTotal(): void
     {
+        // Q-15: a slider quote has no total before acceptance, but snapshotVat()
+        // taxes net, so net follows the studio's preselection until AcceptQuote.
+        if ($this->hasSlider()) {
+            $this->update(['net' => QuoteRange::preselected($this->load('items'))]);
+
+            return;
+        }
+
         $this->update(self::computeTotals($this->items()->get(), $this->discount_type, $this->discount_value));
     }
 

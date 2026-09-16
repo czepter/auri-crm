@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Automation\Actions\FireAutomationRule;
 use App\Automation\Models\AutomationRule;
-use App\Contracts\Models\Contract;
 use App\Crm\Actions\AdvanceShootStatus;
 use App\Crm\Actions\BookProject;
 use App\Crm\Enums\CrewRole;
@@ -65,7 +64,7 @@ class DemoCrmSeeder extends Seeder
         ['Annika Reuter', 'Finn Sölter', 'wedding', '2026-05-30', 'quote_sent', 3, 'wedding_fair', 'Elbspeicher', 'Hamburg'],
         ['Lea Hoffmann', 'Jonas Behr', 'wedding', '2026-10-03', 'quote_sent', 6, 'instagram', 'Gut Wulksfelde', 'Tangstedt'],
         ['Marie Ahrens', 'David Kroll', 'wedding', '2026-07-25', 'quote_accepted', 1, 'referral', 'Kaispeicher', 'Hamburg'],
-        ['Sophie Lang', 'Erik Voss', 'wedding', '2026-09-19', 'contract_sent', 2, 'website', 'Gut Basthorst', 'Basthorst'],
+        ['Sophie Lang', 'Erik Voss', 'wedding', '2026-09-19', 'quote_accepted', 2, 'website', 'Gut Basthorst', 'Basthorst'],
         ['Meier & Kowalski', null, 'wedding', '2026-06-14', 'booked', 12, 'referral', 'Gut Basthorst', 'Basthorst'],
     ];
 
@@ -368,8 +367,6 @@ class DemoCrmSeeder extends Seeder
         Artisan::call('automation:seed-default-rules');
 
         $this->seedChasedQuote($projects['Annika Reuter']);
-        $this->seedAcceptedQuoteWithoutContract($projects['Marie Ahrens']);
-        $this->seedUnsignedContract($projects['Sophie Lang']);
         $this->seedOverdueInstallment($projects['Meier & Kowalski']);
         $this->seedReferralAndExpiringGallery($projects['Meier & Kowalski'], $projects['Familie Osterhoff']);
         $this->seedUnansweredThread($projects['Annika Reuter']);
@@ -402,32 +399,6 @@ class DemoCrmSeeder extends Seeder
         // separate weeks, which is exactly what "2×" means on the row.
         $fire($rule, $project, now()->subDays(9)->toDateString());
         $fire($rule, $project, now()->subDays(2)->toDateString());
-    }
-
-    /** Accepted, and nothing has rendered a contract for it yet. */
-    private function seedAcceptedQuoteWithoutContract(Project $project): void
-    {
-        $quote = Quote::factory()->for($project)->create();
-        $quote->items()->create(['title' => 'Hochzeitsreportage Ganztag', 'description' => 'bis 10 Std. am Hochzeitstag, Bearbeitung, Online-Galerie', 'quantity' => 1, 'unit_price' => 420000]);
-        $quote->recalculateTotal();
-        $quote->update(['status' => QuoteStatus::Accepted, 'sent_at' => now()->subDays(10), 'accepted_at' => now()->subDays(3)]);
-    }
-
-    /** Rendered, aged past ReadInquiryColumn::UNSIGNED_AFTER_DAYS, still no signature. */
-    private function seedUnsignedContract(Project $project): void
-    {
-        $project->primaryContact()?->update(['phone' => '+49 40 5550102']);
-
-        $contract = Contract::factory()->for($project)->rendered()->create();
-
-        // created_at drives the row's "N Tage unsigniert" — timestamps only
-        // accept an override outside Eloquent's own auto-touch, which a plain
-        // create() array does not bypass.
-        $contract->timestamps = false;
-        $contract->forceFill([
-            'created_at' => now()->subDays(6),
-            'rendered_at' => now()->subDays(6),
-        ])->save();
     }
 
     /**

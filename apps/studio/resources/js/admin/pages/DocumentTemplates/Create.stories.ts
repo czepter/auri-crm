@@ -2,15 +2,13 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import type { PaletteEntry } from '@/admin/documents/blocks/types'
 import Create from './Create.vue'
 
-/* Der Ausschnitt aus DocumentBlockCatalog, den ein Vertrag und eine E-Mail sehen. */
-const VERTRAG: PaletteEntry[] = [
+/* Der Ausschnitt aus DocumentBlockCatalog, den ein Angebot und eine E-Mail sehen. */
+const ANGEBOT: PaletteEntry[] = [
   { type: 'paragraph', group: 'text', label: 'Absatz', inline: false },
   { type: 'header', group: 'text', label: 'Überschrift', inline: false },
   { type: 'list', group: 'text', label: 'Liste', inline: false },
   { type: 'table', group: 'layout', label: 'Tabelle', inline: false },
   { type: 'pagebreak', group: 'layout', label: 'Seitenumbruch', inline: false },
-  { type: 'clause', group: 'contract', label: 'Klausel', inline: false },
-  { type: 'signature', group: 'contract', label: 'Unterschriften', inline: false },
   { type: 'paymentPlan', group: 'data', label: 'Zahlungsplan', inline: false },
   { type: 'lineItems', group: 'data', label: 'Positionen', inline: false, allowed: false, only: 'Angebot, Rechnung' },
   { type: 'mergeField', group: 'data', label: 'Feld', inline: true },
@@ -21,7 +19,7 @@ const MAIL: PaletteEntry[] = [
   { type: 'header', group: 'text', label: 'Überschrift', inline: false },
   { type: 'list', group: 'text', label: 'Liste', inline: false },
   { type: 'callout', group: 'layout', label: 'Hinweis', inline: false },
-  { type: 'pagebreak', group: 'layout', label: 'Seitenumbruch', inline: false, allowed: false, only: 'Vertrag, Angebot, Rechnung' },
+  { type: 'pagebreak', group: 'layout', label: 'Seitenumbruch', inline: false, allowed: false, only: 'Angebot, Rechnung' },
   { type: 'mergeField', group: 'data', label: 'Feld', inline: true },
 ]
 
@@ -33,18 +31,16 @@ const MERGE_FIELDS = [
   { path: 'angebot.summe', sample: '4.260,00 €' },
 ]
 
-const VERTRAG_STARTER = {
-  key: 'wedding-contract',
-  name: 'Fotovertrag Hochzeit',
+const ANGEBOT_STARTER = {
+  key: 'wedding-quote',
+  name: 'Angebot Hochzeit',
   description: 'Leistungen, Zahlungsplan, Nutzungsrechte, Ausfallstaffel.',
   shootKind: 'Hochzeitstag',
   blocks: {
     blocks: [
-      { type: 'header', data: { text: 'Fotovertrag', level: 1 } },
-      { type: 'paragraph', data: { text: 'Zwischen {{ kunde.name }} und Atelier Nordlicht für {{ auftrag.name }} am {{ shooting.datum }}.' } },
-      { type: 'clause', data: { rows: [{ title: 'Leistungsumfang', body: 'Begleitung, 10 Stunden, inklusive Zweitfotograf ab dem Empfang.' }] } },
+      { type: 'header', data: { text: 'Angebot', level: 1 } },
+      { type: 'paragraph', data: { text: 'Für {{ kunde.name }}: {{ auftrag.name }} am {{ shooting.datum }}.' } },
       { type: 'paymentPlan', data: { rows: [{ label: 'Anzahlung', amount: '{{ angebot.summe }}' }] } },
-      { type: 'signature', data: { rows: [{ label: 'Kunden' }, { label: 'Atelier Nordlicht' }] } },
     ],
   },
 }
@@ -55,27 +51,25 @@ const meta = {
   parameters: { layout: 'fullscreen', url: '/dokumentvorlagen/neu' },
   args: {
     types: [
-      { value: 'contract', label: 'Vertrag' },
       { value: 'quote', label: 'Angebot' },
       { value: 'invoice', label: 'Rechnung' },
       { value: 'mail', label: 'E-Mail' },
     ],
     shootKinds: ['Hochzeitstag', 'Portrait'],
-    palettes: { contract: VERTRAG, mail: MAIL },
+    palettes: { quote: ANGEBOT, mail: MAIL },
     mergeFields: MERGE_FIELDS,
     starters: {
-      contract: [
-        VERTRAG_STARTER,
+      quote: [
+        ANGEBOT_STARTER,
         {
-          key: 'portrait-contract',
-          name: 'Fotovertrag Porträt',
+          key: 'portrait-quote',
+          name: 'Angebot Porträt',
           description: 'Kurzfassung für Einzeltermine.',
           shootKind: 'Portrait',
           blocks: {
             blocks: [
-              { type: 'header', data: { text: 'Fotovertrag', level: 1 } },
+              { type: 'header', data: { text: 'Angebot', level: 1 } },
               { type: 'paragraph', data: { text: '{{ kunde.name }}, Termin am {{ shooting.datum }}.' } },
-              { type: 'signature', data: { rows: [{ label: 'Kunden' }, { label: 'Atelier Nordlicht' }] } },
             ],
           },
         },
@@ -96,4 +90,4 @@ type Story = StoryObj<typeof meta>
 export const Auswahl: Story = {}
 
 /** Ein Typ ohne Vorlage — es bleibt die leere Karte. */
-export const OhneVorlage: Story = { args: { starters: { contract: [], mail: [] } } }
+export const OhneVorlage: Story = { args: { starters: { quote: [], mail: [] } } }

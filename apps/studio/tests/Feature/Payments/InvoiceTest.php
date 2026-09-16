@@ -32,7 +32,7 @@ beforeEach(function () {
     app(StudioSettingsResolver::class)->set('tax_number', '22/123/45678', null);
 });
 
-// contractProject(), renderedContract(), staffMember() and invoiceablePlan()
+// bookedContactProject(), staffMember() and invoiceablePlan()
 // live in tests/Pest.php.
 
 it('refuses to issue without a Steuernummer or USt-IdNr., drawing no number', function () {

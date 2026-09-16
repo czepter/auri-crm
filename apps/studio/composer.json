@@ -12,6 +12,7 @@
         "kornrunner/blurhash": "^1.2",
         "laravel/framework": "^13.0",
         "laravel/horizon": "^5.48",
+        "laravel/mcp": "^1.0",
         "laravel/sanctum": "^4.3",
         "laravel/tinker": "^3.0",
         "league/flysystem-aws-s3-v3": "^3.29",

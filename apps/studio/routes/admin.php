@@ -1,10 +1,9 @@
 <?php
 
+use App\Automation\Http\Controllers\AutomationDraftController;
 use App\Automation\Http\Controllers\AutomationRuleController;
 use App\Catalog\Http\Controllers\PackageController;
 use App\Catalog\Http\Controllers\ServiceSuggestionController;
-use App\Contracts\Http\Controllers\ContractController;
-use App\Contracts\Http\Controllers\ContractSignerController;
 use App\Crm\Http\Controllers\AvailabilityController;
 use App\Crm\Http\Controllers\CalendarController;
 use App\Crm\Http\Controllers\ContactController;
@@ -70,6 +69,7 @@ use App\Payments\Http\Controllers\PaymentPlanController;
 use App\Quotes\Http\Controllers\QuoteController;
 use App\Releases\Http\Controllers\ReleaseController;
 use App\Reporting\Http\Controllers\ReportController;
+use App\Settings\Http\Controllers\ApiTokenController;
 use App\Settings\Http\Controllers\GallerySettingsController;
 use App\Settings\Http\Controllers\NotificationSettingsController;
 use App\Settings\Http\Controllers\NumberRangeController;
@@ -326,6 +326,12 @@ Route::middleware('audience:staff')->group(function () {
             ->name('inbox.close');
         Route::post('/posteingang/unterhaltung/{thread}/zuordnen', [InboxController::class, 'file'])
             ->name('inbox.thread.file');
+        Route::get('/posteingang/entwuerfe/{automationRun}/senden', [AutomationDraftController::class, 'compose'])
+            ->name('automation-drafts.compose');
+        Route::post('/posteingang/entwuerfe/{automationRun}/versenden', [AutomationDraftController::class, 'send'])
+            ->name('automation-drafts.send');
+        Route::post('/posteingang/entwuerfe/{automationRun}/verwerfen', [AutomationDraftController::class, 'discard'])
+            ->name('automation-drafts.discard');
 
         // S-13 + M-07. One screen: how the studio is doing, and what is
         // coming in. Gated on ViewAllProjects inside the controller — these
@@ -495,6 +501,13 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/einstellungen/benachrichtigungen', [NotificationSettingsController::class, 'update'])
             ->name('settings.notifications.update');
 
+        Route::get('/einstellungen/api-token', [ApiTokenController::class, 'index'])
+            ->name('api-tokens.index');
+        Route::post('/einstellungen/api-token', [ApiTokenController::class, 'store'])
+            ->name('api-tokens.store');
+        Route::delete('/einstellungen/api-token/{apiToken}', [ApiTokenController::class, 'destroy'])
+            ->name('api-tokens.destroy');
+
         // /anfragen/neu stays above /anfragen/{lead}/stufe for the same reason
         // /kontakte/suche stays above /kontakte/{contact}.
         Route::get('/anfragen/neu', [InquiryCaptureController::class, 'create'])->name('leads.create');
@@ -594,6 +607,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/angebote/{quote}/senden', [QuoteController::class, 'compose'])->name('quotes.compose');
         Route::post('/angebote/{quote}/versenden', [QuoteController::class, 'send'])->name('quotes.send');
         Route::post('/angebote/{quote}/versendet', [QuoteController::class, 'markSent'])->name('quotes.mark-sent');
+        Route::post('/angebote/{quote}/angenommen', [QuoteController::class, 'markAccepted'])->name('quotes.mark-accepted');
         Route::post('/angebote/{quote}/empfaenger-uebernehmen', [QuoteController::class, 'adoptRecipient'])
             ->name('quotes.adopt-recipient');
         Route::post('/angebote/{quote}/als-paket', [QuoteController::class, 'saveAsPackage'])->name('quotes.saveAsPackage');
@@ -629,29 +643,6 @@ Route::middleware('audience:staff')->group(function () {
             ->name('form-instance-files.download');
         Route::delete('/fragebogen-dateien/{file}', [FormInstanceController::class, 'destroyFile'])
             ->name('form-instance-files.destroy');
-
-        Route::get('/auftraege/{project}/vertrag', [ContractController::class, 'show'])
-            ->name('projects.contract');
-        Route::post('/auftraege/{project}/vertraege', [ContractController::class, 'store'])
-            ->name('contracts.store');
-        Route::get('/vertraege/{contract}/pdf', [ContractController::class, 'download'])
-            ->name('contracts.download');
-        // Eine Fassung wird gesichert, nicht überschrieben: der unterschriebene
-        // Stand bleibt abrufbar, bis die neue versendet ist.
-        Route::patch('/vertraege/{contract}', [ContractController::class, 'update'])
-            ->name('contracts.update');
-        Route::patch('/vertraege/{contract}/frist', [ContractController::class, 'deadline'])
-            ->name('contracts.deadline');
-        Route::get('/vertraege/{contract}/senden', [ContractController::class, 'compose'])
-            ->name('contracts.compose');
-        Route::post('/vertraege/{contract}/versenden', [ContractController::class, 'send'])
-            ->name('contracts.send');
-        Route::post('/vertraege/{contract}/unterzeichner', [ContractSignerController::class, 'store'])
-            ->name('contract-signers.store');
-        Route::delete('/unterzeichner/{signer}', [ContractSignerController::class, 'destroy'])
-            ->name('contract-signers.destroy');
-        Route::post('/unterzeichner/{signer}/erinnerung', [ContractSignerController::class, 'remind'])
-            ->name('contract-signers.remind');
 
         // G-02: app-proxied multipart ingest into a gallery's quarantine
         // prefix. galleries.uploads.* is a JSON API for the browser's own

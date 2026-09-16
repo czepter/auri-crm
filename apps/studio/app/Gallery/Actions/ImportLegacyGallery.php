@@ -7,7 +7,6 @@ use App\Crm\Models\Shoot;
 use App\Gallery\Models\Gallery;
 use App\Media\Enums\AssetStatus;
 use App\Media\Models\Asset;
-use App\Settings\Support\StudioSettingsResolver;
 use InvalidArgumentException;
 
 /**
@@ -114,12 +113,6 @@ class ImportLegacyGallery
             'project_id' => $project->id,
             'shoot_id' => $shoot?->id,
             'title' => $title,
-            // P-09 (#228): the studio's own defaults are the starting values,
-            // never a lock — rotateViewPassword() and the rest still override
-            // per gallery, and a later change to the default deliberately
-            // leaves galleries already out there alone.
-            'requires_settled_balance' => app(StudioSettingsResolver::class)
-                ->galleryDefaults()['requiresSettledBalance'],
         ]);
 
         // publish() snapshots real Asset rows (Gallery::draftAssets()), not

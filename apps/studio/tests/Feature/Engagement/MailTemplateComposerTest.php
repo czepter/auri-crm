@@ -11,11 +11,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-// contractProject() and staffMember() live in tests/Pest.php.
+// bookedContactProject() and staffMember() live in tests/Pest.php.
 
 function threadedProject(): Project
 {
-    $project = contractProject();
+    $project = bookedContactProject();
     Thread::factory()->for($project)->create();
 
     return $project;
@@ -88,11 +88,11 @@ it('marks a template that references a field the vocabulary does not have', func
         });
 });
 
-it('offers only mail templates, never a contract or an invoice one', function () {
+it('offers only mail templates, never a quote or an invoice one', function () {
     $project = threadedProject();
 
     DocumentTemplate::factory()->create(['type' => DocumentTemplateType::Mail, 'name' => 'Mail']);
-    DocumentTemplate::factory()->create(['type' => DocumentTemplateType::Contract, 'name' => 'Vertrag']);
+    DocumentTemplate::factory()->create(['type' => DocumentTemplateType::Quote, 'name' => 'Angebot']);
     DocumentTemplate::factory()->create(['type' => DocumentTemplateType::Invoice, 'name' => 'Rechnung']);
 
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')

@@ -39,9 +39,9 @@ const props = defineProps<{
         type: string;
         typeOther: string | null;
         typeLabel: string;
-        source: string;
+        source: string | null;
         sourceOther: string | null;
-        sourceLabel: string;
+        sourceLabel: string | null;
         stage: string;
         stageLabel: string;
         inquiryText: string | null;
@@ -338,12 +338,7 @@ const due = computed(() => {
         return props.tab === "quotes" ? null : { label: "lead.writeQuote", href: newQuote.value };
     }
 
-    return props.lead.stage === "quote_accepted"
-        ? {
-              label: "lead.sendContract",
-              href: `/auftraege/${props.lead.projectId}/vertrag`,
-          }
-        : null;
+    return null;
 });
 </script>
 

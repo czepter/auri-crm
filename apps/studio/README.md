@@ -14,7 +14,7 @@ container (`pnpm php <command>` from the repository root).
 ## Layout
 
 ```
-app/          domain modules (Crm, Quotes, Contracts, Payments, Media, …),
+app/          domain modules (Crm, Quotes, Payments, Media, …),
               each with its own Actions/ Data/ Enums/ Http/ Models/
 routes/       admin.php · portal.php · api.php · console.php — one is loaded
 resources/js  Vue 3 components, per-surface entrypoints, generated.d.ts

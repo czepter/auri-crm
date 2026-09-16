@@ -5,8 +5,6 @@ use App\Automation\Enums\AutomationAnchor;
 use App\Automation\Enums\AutomationOffsetDirection;
 use App\Automation\Enums\AutomationTriggerType;
 use App\Automation\Models\AutomationRule;
-use App\Contracts\Enums\ContractStatus;
-use App\Contracts\Models\Contract;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
@@ -79,53 +77,6 @@ it('rows a silent quote once the reminders are exhausted', function () {
         ->and($rows->first()->projectId)->toBe($project->public_id);
 });
 
-it('rows an accepted quote with no contract, pointing at the template choice', function () {
-    // contracts.store needs a template. The dashboard has no standing to pick
-    // one, so the button opens the screen where the studio does.
-    $project = projectWithPhone('Duhnkrack & W.');
-    Quote::factory()->for($project)->create([
-        'status' => QuoteStatus::Accepted,
-        'accepted_at' => now()->subDays(3),
-    ]);
-
-    $rows = app(ReadInquiryColumn::class)();
-
-    expect($rows)->toHaveCount(1)
-        ->and($rows->first()->emphasis)->toBe('Vertrag fehlt')
-        ->and($rows->first()->whatTail)->toBeNull()
-        ->and($rows->first()->action->kind)->toBe('link')
-        ->and($rows->first()->action->target)->toBe("/auftraege/{$project->public_id}/vertrag");
-});
-
-it('does not row an accepted quote once its contract exists', function () {
-    // A brand-new contract has not earned the unsigned row either
-    // (UNSIGNED_AFTER_DAYS = 4), so the accepted-quote row drops off with
-    // nothing yet replacing it — this is the one moment the column is
-    // legitimately silent about a project that used to be on it.
-    $project = projectWithPhone('Duhnkrack & W.');
-    Quote::factory()->for($project)->create([
-        'status' => QuoteStatus::Accepted,
-        'accepted_at' => now()->subDays(3),
-    ]);
-    Contract::factory()->for($project)->create(['status' => ContractStatus::Rendered]);
-
-    expect(app(ReadInquiryColumn::class)())->toBeEmpty();
-});
-
-it('rows a rendered contract left unsigned', function () {
-    $project = projectWithPhone('Ahlers & Sobotta');
-    Contract::factory()->for($project)->create([
-        'status' => ContractStatus::Rendered,
-        'created_at' => now()->subDays(6),
-    ]);
-
-    $rows = app(ReadInquiryColumn::class)();
-
-    expect($rows)->toHaveCount(1)
-        ->and($rows->first()->emphasis)->toBe('6 Tage unsigniert')
-        ->and($rows->first()->hot)->toBeFalse();
-});
-
 it('drops the action when the contact has no phone number', function () {
     // A button that dials nothing is worse than no button; the row still
     // states the fact.
@@ -163,30 +114,6 @@ it('orders chased quotes by soonest expiry first', function () {
     $rows = app(ReadInquiryColumn::class)();
 
     expect($rows->pluck('who')->all())->toBe(['Läuft bald ab', 'Läuft später ab']);
-});
-
-it('orders accepted-without-contract rows by oldest acceptance first', function () {
-    $newer = projectWithPhone('Kürzlich angenommen');
-    Quote::factory()->for($newer)->create(['status' => QuoteStatus::Accepted, 'accepted_at' => now()->subDay()]);
-
-    $older = projectWithPhone('Länger angenommen');
-    Quote::factory()->for($older)->create(['status' => QuoteStatus::Accepted, 'accepted_at' => now()->subDays(8)]);
-
-    $rows = app(ReadInquiryColumn::class)();
-
-    expect($rows->pluck('who')->all())->toBe(['Länger angenommen', 'Kürzlich angenommen']);
-});
-
-it('orders unsigned-contract rows by oldest render first', function () {
-    $newer = projectWithPhone('Kürzlich gerendert');
-    Contract::factory()->for($newer)->create(['status' => ContractStatus::Rendered, 'created_at' => now()->subDays(5)]);
-
-    $older = projectWithPhone('Länger gerendert');
-    Contract::factory()->for($older)->create(['status' => ContractStatus::Rendered, 'created_at' => now()->subDays(9)]);
-
-    $rows = app(ReadInquiryColumn::class)();
-
-    expect($rows->pluck('who')->all())->toBe(['Länger gerendert', 'Kürzlich gerendert']);
 });
 
 it('does not throw when no viewer is authenticated', function () {

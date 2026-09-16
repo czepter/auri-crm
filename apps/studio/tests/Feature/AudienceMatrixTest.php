@@ -76,6 +76,12 @@ const PUBLIC_ROUTES = [
     // AssetCommentController's own doc comment.
     'api' => [
         'api/health', 'api/stripe/webhook',
+        // N-04: RFC 9728's document, read by a client that holds no token
+        // yet to find out who hands one out. Gating it would close the only
+        // door in. The MCP endpoint it describes carries `audience:api` like
+        // every other route on this surface — see routes/mcp.php.
+        '.well-known/oauth-protected-resource',
+        '.well-known/oauth-protected-resource/{path}',
         // C-08. The one route in the system a stranger is meant to reach —
         // an audience guard on it would defeat the point. What stands in
         // for one is the honeypot, the timing floor, the per-IP and

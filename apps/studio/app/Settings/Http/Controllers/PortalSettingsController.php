@@ -51,12 +51,12 @@ class PortalSettingsController extends Controller
             'portal_legal_datenschutz_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
             'portal_legal_agb_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
             'portal_accept_quotes_enabled' => ['sometimes', 'required', 'boolean'],
-            'portal_sign_contracts_enabled' => ['sometimes', 'required', 'boolean'],
             'portal_payment_status_enabled' => ['sometimes', 'required', 'boolean'],
             'portal_offers_enabled' => ['sometimes', 'required', 'boolean'],
             // P-09 (#228): everything Sprint 25's seven portal screens do
             // that T-08's four switches never described.
             'portal_messaging_mode' => ['sometimes', 'required', 'in:off,booking,any'],
+            'client_register' => ['sometimes', 'required', 'in:formal,informal'],
             'portal_welcome_inquiry' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'portal_welcome_many' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'dsgvo_request_recipient' => ['sometimes', 'nullable', 'email', 'max:255'],

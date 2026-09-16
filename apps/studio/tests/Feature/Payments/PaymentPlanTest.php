@@ -24,15 +24,15 @@ use Visus\Cuid2\Cuid2;
 
 uses(RefreshDatabase::class);
 
-// contractProject(), renderedContract() and staffMember() live in tests/Pest.php.
+// bookedContactProject() and staffMember() live in tests/Pest.php.
 
 /**
- * A booked project (contractProject() already gives it a Job) with a quote
+ * A booked project (bookedContactProject() already gives it a Job) with a quote
  * the client has accepted — the agreement a plan is created against.
  */
 function acceptedQuoteJob(): Job
 {
-    $project = contractProject();
+    $project = bookedContactProject();
     Quote::factory()->for($project)->create(['status' => QuoteStatus::Accepted, 'accepted_at' => now()]);
 
     return $project->job()->sole();
@@ -129,13 +129,13 @@ it('logs the creation, naming the job and the total', function () {
 });
 
 it('refuses to create a plan against a project with no quote', function () {
-    $job = contractProject()->job()->sole(); // booked, but nothing offered
+    $job = bookedContactProject()->job()->sole(); // booked, but nothing offered
 
     app(CreatePaymentPlan::class)($job, 1000, ['2026-09-01']);
 })->throws(HttpException::class);
 
 it('refuses to create a plan against a quote that was sent but never accepted', function () {
-    $project = contractProject();
+    $project = bookedContactProject();
     Quote::factory()->for($project)->create(['status' => QuoteStatus::Sent, 'sent_at' => now()]);
 
     app(CreatePaymentPlan::class)($project->job()->sole(), 1000, ['2026-09-01']);

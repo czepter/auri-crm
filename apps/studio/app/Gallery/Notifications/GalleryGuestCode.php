@@ -33,14 +33,18 @@ class GalleryGuestCode extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
+        $du = $this->settings->clientAddress() === 'du';
+
         $message = (new MailMessage)
-            ->subject("Dein Code für die Galerie „{$this->gallery->title}“")
+            ->subject(($du ? 'Dein' : 'Ihr')." Code für die Galerie „{$this->gallery->title}“")
             ->greeting('Hallo,')
-            ->line('Dein Code:')
+            ->line($du ? 'Dein Code:' : 'Ihr Code:')
             ->line("**{$this->code}**")
             ->line('Gültig '.GalleryEmailVerification::VALID_FOR_MINUTES.' Minuten.')
             ->action('Oder hier bestätigen', $this->url)
-            ->line('Wenn Sie das nicht angefordert haben, können Sie diese E-Mail ignorieren.');
+            ->line($du
+                ? 'Wenn du das nicht angefordert hast, kannst du diese E-Mail ignorieren.'
+                : 'Wenn Sie das nicht angefordert haben, können Sie diese E-Mail ignorieren.');
 
         return $this->appendStudioMailIdentity($message, $this->settings);
     }

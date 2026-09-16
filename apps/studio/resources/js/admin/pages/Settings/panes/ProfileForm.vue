@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group'
+import { ChoiceGroup } from '@/ui/choice-group'
 
 type Section = 'legal' | 'brand' | 'bank'
 
@@ -56,6 +57,7 @@ const form = useForm({
   website: props.settings.website ?? '',
   accent_color: props.settings.accentColor ?? '',
   font_pair: props.settings.fontPair ?? 'hanken',
+  client_register: props.settings.clientRegister,
   logo: null as File | null,
   bank_account_holder: props.settings.bankAccountHolder ?? '',
   bank_iban: props.settings.bankIban ?? '',
@@ -97,6 +99,7 @@ function submit() {
 
   if (props.firstRun) {
     FIRST_RUN_OMITS.forEach((field) => sent.delete(field))
+    sent.add('client_register')
   }
 
   // Inertia's own documented workaround: a browser cannot send a real PUT
@@ -205,6 +208,16 @@ defineExpose({ form, submit })
           <Field :label="$t('settings.displayName')" id="p-anzeigename" :error="form.errors.display_name">
             <Input id="p-anzeigename" v-model="form.display_name" type="text" />
           </Field>
+          <ChoiceGroup
+            v-if="firstRun"
+            v-model="form.client_register"
+            class="mt-6"
+            :label="$t('settings.clientRegister')"
+            :options="[
+              { value: 'formal', label: $t('settings.clientRegisterFormal') },
+              { value: 'informal', label: $t('settings.clientRegisterInformal') },
+            ]"
+          />
           <Field v-if="!firstRun" :label="$t('settings.website')" id="p-web" :error="form.errors.website">
             <InputGroup>
               <InputGroupAddon>https://</InputGroupAddon>

@@ -8,7 +8,6 @@ const presets: App.Gallery.Data.GalleryPresetData[] = [
     design: { cover: 'full', type: 'serif', colour: 'light', grid: 'wide' },
     expiryMode: 'days',
     expiryDays: 90,
-    requiresSettledBalance: true,
     downloadsEnabled: true,
     listsEnabled: true,
     commentsEnabled: false,
@@ -20,7 +19,6 @@ const presets: App.Gallery.Data.GalleryPresetData[] = [
     design: { cover: 'plain', type: 'grotesk', colour: 'dark', grid: 'dense' },
     expiryMode: 'none',
     expiryDays: null,
-    requiresSettledBalance: false,
     downloadsEnabled: true,
     listsEnabled: false,
     commentsEnabled: false,
@@ -41,6 +39,7 @@ const meta = {
   component: Create,
   parameters: { layout: 'fullscreen', url: '/galerien/neu' },
   args: {
+    mode: 'internal',
     project,
     shootId: 's-rahn',
     presets,
@@ -49,7 +48,6 @@ const meta = {
       lists: true,
       comments: false,
       expiryDays: 90,
-      requiresSettledBalance: true,
       design: { cover: 'full', type: 'serif', colour: 'light', grid: 'wide' },
     },
   },
@@ -63,3 +61,6 @@ export const AusShooting: Story = {}
 
 /** Ohne Projekt und ohne Vorlagen bleiben nur die Studio-Standardwerte. */
 export const OhneProjekt: Story = { args: { project: null, shootId: null, presets: [] } }
+
+/** Eine Galerie, die anderswo liegt: nur Projekt, Titel und Adresse. */
+export const Extern: Story = { args: { mode: 'external' } }

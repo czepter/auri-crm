@@ -67,7 +67,7 @@ const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
     <PortalHeader :switcher="{ label: project.name, toAll: showSwitcher }" />
 
     <!-- The first day in the portal. There are two names, a wished-for date and
-         a kind; there are no pictures, appointments, quote, contract or
+         a kind; there are no pictures, appointments, quote or
          payments. So this is a letter, not a dashboard with five empty boxes —
          a narrower measure than any other screen here, on purpose. -->
     <main class="mx-auto w-full max-w-[668px] grow px-6 pt-40 pb-28 max-[700px]:pt-[var(--band)]">

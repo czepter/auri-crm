@@ -10,8 +10,8 @@ use App\Payments\Enums\PaymentInstallmentStatus;
 
 /**
  * E-15: whether a rule's one condition holds for the project it is about to
- * fire against. Four questions, each over state that already exists — no
- * expression language, and a fifth case arrives as a fifth arm.
+ * fire against. Three questions, each over state that already exists — no
+ * expression language, and a fourth case arrives as a fourth arm.
  *
  * A rule without a condition always holds: the check is an addition to E-08,
  * never a new hurdle in front of the rules that already ran.
@@ -33,10 +33,6 @@ class AutomationConditions
                 ?->installments()
                 ->where('status', '!=', PaymentInstallmentStatus::Paid)
                 ->exists() ?? false,
-
-            AutomationCondition::ContractUnsigned => $project->contracts()
-                ->whereDoesntHave('signers', fn ($signer) => $signer->whereNotNull('signed_at'))
-                ->exists(),
 
             AutomationCondition::QuestionnaireOpen => $project->tasks()
                 ->open()

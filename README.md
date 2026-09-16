@@ -26,7 +26,7 @@ request.
 |---|---|---|---|---|
 | Admin | `admin` | `apps/studio/routes/admin.php` | Studio staff | Private, opt-in TOTP |
 | Portal | `portal` | `apps/studio/routes/portal.php` | Booked clients | Public, magic-link sign-in |
-| API | `api` | `apps/studio/routes/api.php` | The gallery, integrations, the MCP server | Public JSON |
+| API | `api` | `apps/studio/routes/api.php`, `apps/studio/routes/mcp.php` | The gallery, integrations, MCP clients | Public JSON |
 | Gallery | — | `apps/gallery` (Astro SSR) | Clients and wedding guests | Public |
 
 A fifth, unauthenticated sibling app — the marketing site — lives in its
@@ -45,7 +45,6 @@ apps/
   gallery/       Astro 7, server-rendered — the guest gallery viewer
 packages/
   contracts/     openapi.json, generated from the api surface's routes
-  mcp/           MCP server over the integration API (stdio or HTTP)
 docker/
   php/           local development image
   app/           production image for the three Laravel surfaces
@@ -68,7 +67,7 @@ is needed: every PHP process in this repository runs in a container.
 ```sh
 pnpm install
 cp apps/studio/.env.example apps/studio/.env
-docker compose up -d                        # postgres, redis, minio, mailpit, gotenberg, worker (Horizon), glitchtip
+docker compose up -d                        # postgres, redis, rustfs, mailpit, gotenberg, worker (Horizon), glitchtip
 pnpm php composer install
 pnpm php php artisan key:generate
 pnpm php php artisan migrate --seed
@@ -100,7 +99,7 @@ The gallery reaches Laravel over the api surface container to container
 own linux `node_modules` inside the container rather than reusing the host's.
 
 Ports are variables (`APP_PORT`, `PORTAL_PORT`, `API_PORT`, `GALLERY_PORT`,
-`POSTGRES_PORT`, `MINIO_PORT`, `GOTENBERG_PORT`, `GLITCHTIP_PORT`) so several
+`POSTGRES_PORT`, `RUSTFS_PORT`, `GOTENBERG_PORT`, `GLITCHTIP_PORT`) so several
 git worktrees of this repository can run their own stack at once; set them in
 a root `.env` per worktree.
 
@@ -110,7 +109,7 @@ a root `.env` per worktree.
 | API | http://localhost:8002 | `routes/api.php`, and what the gallery renders against |
 | Gallery | http://localhost:4321 | Guest-facing Astro SSR, `/g/:galleryId` |
 | Mailpit | http://localhost:8025 | Every mail the app sends locally |
-| MinIO console | http://localhost:9001 | The `media` bucket (`studio` / `studio-media-secret`) |
+| RustFS console | http://localhost:9001/rustfs/console/ | The `media` bucket (`studio` / `studio-media-secret`) |
 | Horizon | `/horizon` on the admin surface | Queue supervisors and failed jobs |
 | GlitchTip | `http://localhost:${GLITCHTIP_PORT:-8080}` | Error tracking, inert until `SENTRY_LARAVEL_DSN` is set |
 
@@ -122,6 +121,18 @@ pnpm lint                                   # vue-tsc, astro check, tsc across t
 pnpm test                                   # vitest across the workspace
 pnpm build
 pnpm --filter @studio/app exec playwright test   # end-to-end, needs a built admin bundle
+```
+
+### Visual baselines
+
+`tests/e2e/visual.spec.ts` compares four screens against `-linux.png`
+baselines and runs on CI only: a screenshot from any other machine never
+matches the runner. To renew one, delete its PNG, push with the `e2e` label on
+the pull request, and take what the failing run wrote:
+
+```sh
+gh run download <run-id> -n visual-snapshots -D /tmp/visual
+cp /tmp/visual/tests/e2e/visual.spec.ts-snapshots/*.png apps/studio/tests/e2e/visual.spec.ts-snapshots/
 ```
 
 Two artifacts are generated, never hand-edited, and CI fails on drift:
@@ -157,5 +168,4 @@ a docs-only change does not boot Postgres.
 | [studio/docs/media.md](apps/studio/docs/media.md) | Object storage, ingest, derivatives, ZIP builds, delivery |
 | [documents.md](docs/documents.md) | Document templates, merge fields, the PDF render path |
 | [studio/docs/database-grants.md](apps/studio/docs/database-grants.md) | DB-level privilege revocation for the audit log |
-| [studio/docs/historical-import.md](apps/studio/docs/historical-import.md) | CSV import of the studio's existing data |
 | [studio/docs/cutover-runbook.md](apps/studio/docs/cutover-runbook.md) | The go-live sequence, its snapshot and its rollback |

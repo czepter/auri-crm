@@ -77,15 +77,15 @@ For the length of the window (a business day is usually enough to spot-check
 against the legacy source; longer if that source is hard to reach):
 
 - **This app is authoritative for everything created here from the moment
-  §3 finishes** — new contacts, new bookings, contracts, payments (M-05
+  §3 finishes** — new contacts, new bookings, payments (M-05
   lives only here, so there is no "legacy" side of it to reconcile against).
 - **The legacy system is authoritative for anything predating the
   snapshot**, consulted read-only to verify what §3 imported, never written
   to going forward.
 - Consider enabling the portal's maintenance closure (T-08 — a studio
   setting, `StudioSettingsResolver::maintenanceEnabled()`) for the short
-  span between §2 and the go/no-go call in §5, if clients might sign
-  contracts or otherwise write through the portal during it. A rollback
+  span between §2 and the go/no-go call in §5, if clients might accept
+  quotes or otherwise write through the portal during it. A rollback
   (§6) discards portal writes made after the snapshot exactly as it
   discards the imports — closing the portal for that narrow window avoids
   silently losing one under the other. Not needed once §5 has said "go":

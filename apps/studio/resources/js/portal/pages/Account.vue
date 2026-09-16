@@ -82,7 +82,7 @@ const ROW = 'flex items-center gap-6 border-b border-border py-6'
 
         <div class="min-w-0 max-w-[680px]">
         <!-- Always editable, whatever phase a booking is in: these are the
-             client's own particulars, not contract content. -->
+             client's own particulars, not agreed terms. -->
         <section v-if="pane === 'daten'">
           <form class="grid gap-4" @submit.prevent="save">
             <PortalField :label="$t('portal.nameLabel')">
@@ -179,7 +179,7 @@ const ROW = 'flex items-center gap-6 border-b border-border py-6'
             <div :class="ROW">
               <span class="flex-1">
                 <b class="block text-[15px] leading-[1.35] font-semibold tracking-[-0.008em] text-action">{{ $t('portal.erasure') }}</b>
-                <!-- Ten years of retention on signed contracts and issued
+                <!-- Ten years of retention on accepted quotes and issued
                      invoices. The line says so instead of promising a deletion
                      that would not be one. -->
                 <span class="text-[13px] text-muted-foreground">{{ $t('portal.erasureHint') }}</span>

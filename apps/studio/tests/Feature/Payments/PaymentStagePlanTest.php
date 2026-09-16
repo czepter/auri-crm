@@ -13,7 +13,7 @@ beforeEach(fn () => Storage::fake('local'));
 
 function bookedJobWithStages(int $total): Job
 {
-    $project = contractProject();
+    $project = bookedContactProject();
 
     $quote = Quote::factory()->create([
         'project_id' => $project->id,
@@ -42,7 +42,7 @@ it('materialises the installments from the accepted quote’s stages', function 
 
     $installments = $plan->installments()->orderBy('sort_order')->get();
 
-    expect($installments->pluck('amount')->all())->toBe([80_000, 108_000, 27_000])
+    expect($installments->pluck('amount')->all())->toBe([80_000, 107_500, 27_500])
         ->and($installments->pluck('title')->all())
         ->toBe(['Bei der Zusage', 'Vier Wochen vorher', 'Nach der Lieferung'])
         ->and($installments->sum('amount'))->toBe(215_000);

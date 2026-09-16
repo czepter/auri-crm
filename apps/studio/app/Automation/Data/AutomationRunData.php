@@ -3,6 +3,7 @@
 namespace App\Automation\Data;
 
 use App\Automation\Actions\FireAutomationRule;
+use App\Automation\Enums\AutomationAction;
 use App\Automation\Enums\AutomationRunStatus;
 use App\Automation\Models\AutomationRun;
 use Spatie\LaravelData\Data;
@@ -32,7 +33,8 @@ class AutomationRunData extends Data
             anchorLabel: self::anchor($run),
             status: $run->status->value,
             statusLabel: match ($run->status) {
-                AutomationRunStatus::Sent => 'Gesendet',
+                AutomationRunStatus::Sent => $run->rule->action === AutomationAction::Task ? 'Angelegt' : 'Gesendet',
+                AutomationRunStatus::AwaitingApproval => 'Entwurf',
                 AutomationRunStatus::Skipped => 'Übersprungen',
                 AutomationRunStatus::Failed => 'Fehlgeschlagen',
                 AutomationRunStatus::Pending => 'Offen',

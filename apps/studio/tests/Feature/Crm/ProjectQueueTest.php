@@ -43,7 +43,7 @@ it('shows the inquiry done and the project at its booked step', function () {
     $steps = collect(app(ReadStageTrack::class)(new ProjectPositionData(source: 'lead', value: 'booked', label: 'Gebucht')));
 
     expect($steps->where('state', 'done')->pluck('key')->all())
-        ->toBe(['new', 'contacted', 'quote_sent', 'quote_accepted', 'contract_sent'])
+        ->toBe(['new', 'contacted', 'quote_sent', 'quote_accepted'])
         ->and($steps->firstWhere('state', 'current'))->toMatchArray(['key' => 'booked', 'pipeline' => 'project'])
         ->and($steps->pluck('key')->last())->toBe('completed');
 });

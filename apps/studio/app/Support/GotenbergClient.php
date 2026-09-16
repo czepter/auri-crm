@@ -13,8 +13,7 @@ use Illuminate\Support\Facades\Http;
  * Nothing else in the app calls Http against Gotenberg directly, which is
  * what lets a test mock this one boundary (Http::fake()) rather than every
  * caller of it. Lives beside AuditLogger in App\Support rather than under
- * Contracts: M-01 was its first caller but not its last — E-04's timeline PDF
- * is the second.
+ * a domain: quotes, invoices and E-04's timeline PDF all call it.
  */
 class GotenbergClient
 {

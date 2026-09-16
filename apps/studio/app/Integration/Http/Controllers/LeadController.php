@@ -40,7 +40,7 @@ class LeadController extends Controller
 
         return response()->json([
             'project' => ['id' => $project->public_id, 'name' => $project->name],
-            'lead' => ['id' => $lead->public_id, 'stage' => $lead->stage->key, 'source' => $lead->source->value],
+            'lead' => ['id' => $lead->public_id, 'stage' => $lead->stage->key, 'source' => $lead->source?->value],
         ], 201);
     }
 
@@ -143,7 +143,7 @@ class LeadController extends Controller
         return response()->json([
             'id' => $lead->public_id,
             'inquiryText' => $lead->inquiry_text,
-            'capturedVia' => $lead->captured_via->value,
+            'capturedVia' => $lead->captured_via?->value,
             'capturedViaOther' => $lead->captured_via_other,
         ]);
     }

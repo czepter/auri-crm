@@ -7,6 +7,7 @@ import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group'
+import { ChoiceGroup } from '@/ui/choice-group'
 
 type Section = 'portal' | 'home' | 'privacy'
 
@@ -19,7 +20,7 @@ const emit = defineEmits<{ saved: [] }>()
 // A pane sends only its own fields; the controller's `sometimes` leaves the
 // rest of the row untouched.
 const SECTION_FIELDS: Record<Section, string[]> = {
-  portal: ['portal_maintenance_enabled', 'portal_maintenance_message', 'portal_accept_quotes_enabled', 'portal_sign_contracts_enabled', 'portal_payment_status_enabled', 'portal_messaging_mode', 'portal_offers_enabled'],
+  portal: ['portal_maintenance_enabled', 'portal_maintenance_message', 'portal_accept_quotes_enabled', 'portal_payment_status_enabled', 'portal_messaging_mode', 'portal_offers_enabled', 'client_register'],
   home: ['portal_welcome_inquiry', 'portal_welcome_text', 'portal_welcome_many', 'portal_contact_phone', 'portal_contact_email', 'portal_contact_response_time'],
   privacy: ['dsgvo_request_recipient', 'dsgvo_request_deadline_days', 'portal_legal_datenschutz_url', 'portal_legal_agb_url'],
 }
@@ -33,10 +34,10 @@ const form = useForm({
   portal_legal_datenschutz_url: props.settings.datenschutzUrl ?? '',
   portal_legal_agb_url: props.settings.agbUrl ?? '',
   portal_accept_quotes_enabled: props.settings.acceptQuotesEnabled,
-  portal_sign_contracts_enabled: props.settings.signContractsEnabled,
   portal_payment_status_enabled: props.settings.paymentStatusEnabled,
   portal_offers_enabled: props.settings.offersEnabled,
   portal_messaging_mode: props.settings.messagingMode,
+  client_register: props.settings.clientRegister,
   portal_welcome_inquiry: props.settings.welcomeInquiry ?? '',
   portal_welcome_many: props.settings.welcomeMany ?? '',
   dsgvo_request_recipient: props.settings.dsgvoRecipient ?? '',
@@ -189,12 +190,6 @@ defineExpose({ form, submit })
       </div>
       <div class="mb-6">
         <div class="flex items-center gap-2.5">
-          <Checkbox id="cb-portal-sign-contracts-enabled" v-model="form.portal_sign_contracts_enabled" />
-          <Label variant="inline" for="cb-portal-sign-contracts-enabled">{{ $t('portalSettings.signContractsEnabledLabel') }}</Label>
-        </div>
-      </div>
-      <div class="mb-6">
-        <div class="flex items-center gap-2.5">
           <Checkbox id="cb-portal-payment-status-enabled" v-model="form.portal_payment_status_enabled" />
           <Label variant="inline" for="cb-portal-payment-status-enabled">{{ $t('portalSettings.paymentStatusEnabledLabel') }}</Label>
         </div>
@@ -219,6 +214,15 @@ defineExpose({ form, submit })
           </div>
         </RadioGroup>
       </div>
+      <ChoiceGroup
+        v-model="form.client_register"
+        class="mb-6"
+        :label="$t('settings.clientRegister')"
+        :options="[
+          { value: 'formal', label: $t('settings.clientRegisterFormal') },
+          { value: 'informal', label: $t('settings.clientRegisterInformal') },
+        ]"
+      />
     </div>
   </form>
 </template>

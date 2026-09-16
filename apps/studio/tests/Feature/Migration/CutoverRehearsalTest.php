@@ -1,6 +1,5 @@
 <?php
 
-use App\Contracts\Models\Contract;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
@@ -33,7 +32,6 @@ it('runs the cutover sequence end to end: snapshot, commit import, verify, roll 
         'contacts' => Contact::count(),
         'projects' => Project::count(),
         'jobs' => Job::count(),
-        'contracts' => Contract::count(),
         'galleries' => Gallery::count(),
     ];
 
@@ -75,7 +73,6 @@ it('runs the cutover sequence end to end: snapshot, commit import, verify, roll 
     expect(Contact::count())->toBe($baseline['contacts'])
         ->and(Project::count())->toBe($baseline['projects'])
         ->and(Job::count())->toBe($baseline['jobs'])
-        ->and(Contract::count())->toBe($baseline['contracts'])
         ->and(Gallery::count())->toBe($baseline['galleries']);
 
     unlink($snapshotPath);

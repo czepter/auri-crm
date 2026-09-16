@@ -39,7 +39,6 @@ class ContactController extends Controller
     /** P-09 (#228): what may depart from the studio's default — on the sheet and at creation. */
     private const PORTAL_RULES = [
         'accept_quotes' => ['nullable', 'boolean'],
-        'sign_contracts' => ['nullable', 'boolean'],
         'payment_status' => ['nullable', 'boolean'],
         'messaging_mode' => ['nullable', 'in:off,booking,any'],
         'gallery_downloads' => ['nullable', 'boolean'],
@@ -55,7 +54,6 @@ class ContactController extends Controller
     {
         return [
             'accept_quotes' => $settings->acceptQuotesEnabled(),
-            'sign_contracts' => $settings->signContractsEnabled(),
             'payment_status' => $settings->paymentStatusEnabled(),
             'messaging_mode' => $settings->messagingMode(),
             'gallery_downloads' => $settings->galleryDownloadsEnabled(),

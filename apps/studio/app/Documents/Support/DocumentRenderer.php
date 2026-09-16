@@ -7,8 +7,8 @@ use App\Settings\Support\StudioSettingsResolver;
 
 /**
  * The shared PDF shell — T-12's "letterhead and footer are shared, not
- * copied into each template". Contract and Quote are the two document types
- * Gotenberg ever turns into a PDF, so both get the studio's one configured
+ * copied into each template". Quote, Invoice and CreditNote are the document
+ * types Gotenberg turns into a PDF, so each gets the studio's one configured
  * letterhead above their resolved body and one configured footer below it
  * (App\Settings\Support\StudioSettingsResolver, the Dokumente pane). Mail is
  * not a PDF — App\Quotes\Notifications\QuoteSent builds an email, not a
@@ -85,11 +85,10 @@ class DocumentRenderer
     private const STYLE = <<<'CSS'
         <style>
           /* Papiermaße, keine Bildschirmmaße: 10.5pt Grundschrift ist das,
-             was ein Vertrag am Tisch verlangt, und liegt über dem 12px, das
+             was ein Angebot am Tisch verlangt, und liegt über dem 12px, das
              ein Browser von sich aus setzt. Silbentrennung an, weil deutsche
              Komposita in einer 16cm breiten Spalte sonst Löcher reißen. */
           body {
-            counter-reset: doc-clause;
             margin: 0;
             font-family: 'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif;
             font-size: 10.5pt;
@@ -114,27 +113,15 @@ class DocumentRenderer
           figure { margin: 10pt 0; }
           figure img { max-width: 100%; }
           figcaption { margin-top: 3pt; font-size: 8.5pt; color: #6B6B6B; }
-          /* Weder eine Tabelle noch ein Unterschriftsfeld darf über die
-             Seitenkante zerfallen. Eine Klausel schon: sie kann länger sein
-             als eine Seite, und was nicht umbrechen darf, läuft über. */
-          table, .doc-signature { break-inside: avoid; page-break-inside: avoid; }
+          /* Eine Tabelle darf nicht über die Seitenkante zerfallen. */
+          table { break-inside: avoid; page-break-inside: avoid; }
           .doc-table { width: 100%; border-collapse: collapse; margin: 8pt 0; }
           .doc-table th, .doc-table td { padding: 4pt 6pt; border-bottom: .75pt solid #E9E9E7; text-align: left; vertical-align: top; font-size: 9.5pt; }
           .doc-table th { font-weight: 600; }
           .doc-table .doc-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-          .doc-clause { counter-increment: doc-clause; margin: 12pt 0; }
-          .doc-clause h3 { margin: 0 0 3pt; }
-          .doc-clause h3::before { content: "§ " counter(doc-clause) " "; }
-          .doc-clause p { margin: 0; }
           .doc-checklist { list-style: none; padding: 0; margin: 8pt 0; }
           .doc-checklist li { margin: 2pt 0; }
           .doc-fineprint { font-size: 8pt; line-height: 1.45; color: #6B6B6B; }
-          .doc-signature-place { margin: 20pt 0 0; }
-          .doc-signature { display: flex; gap: 24pt; margin-top: 28pt; }
-          .doc-signature-line { flex: 1; }
-          .doc-signature-rule { display: block; border-top: .75pt solid #191919; margin-bottom: 3pt; }
-          .doc-signature-role { display: block; font-size: 8.5pt; color: #6B6B6B; }
-          .doc-signature-name { display: block; font-size: 9.5pt; }
           .doc-pagebreak { break-after: page; page-break-after: always; }
 
           /* Angebot-Drucklayouts — je ein Block pro App\Quotes\Enums\

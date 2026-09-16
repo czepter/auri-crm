@@ -69,5 +69,5 @@ it('shows the inquiry tabs until the booking and the project tabs after it', fun
     app(BookProject::class)($project, auth('staff')->user());
 
     expect(collect(props("/anfragen/{$lead->public_id}")['header']['tabs'])->pluck('key'))
-        ->toContain('lead', 'shoots', 'contract');
+        ->toContain('lead', 'shoots', 'quotes');
 });

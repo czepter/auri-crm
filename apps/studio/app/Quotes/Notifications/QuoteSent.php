@@ -4,6 +4,7 @@ namespace App\Quotes\Notifications;
 
 use App\Crm\Models\Contact;
 use App\Quotes\Models\Quote;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Number;
@@ -50,7 +51,13 @@ class QuoteSent extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $message = (new MailMessage)->subject($this->customSubject ?: "Ihr Angebot {$this->quote->number}");
+        $possessive = [
+            'sie' => 'Ihr',
+            'du' => 'Dein',
+            'ihr' => 'Euer',
+        ][app(StudioSettingsResolver::class)->clientAddress($this->quote->project->contacts()->count())];
+
+        $message = (new MailMessage)->subject($this->customSubject ?: "{$possessive} Angebot {$this->quote->number}");
 
         if ($this->customMessage !== null && trim($this->customMessage) !== '') {
             // The compose screen's paragraphs, blank-line separated —

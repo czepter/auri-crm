@@ -140,7 +140,8 @@ it('searches contacts by name or email, case-insensitively', function () {
 // The search the page-local filter could never do: the match is on the last
 // page, so a filter over the first page returns nothing at all.
 it('finds a contact that the first page does not contain', function () {
-    Contact::factory()->count(30)->create(['name' => 'Meier']);
+    // Faker emails come from surnames, so a random one can contain "steffens".
+    Contact::factory()->count(30)->sequence(fn ($s) => ['email' => "meier{$s->index}@example.test"])->create(['name' => 'Meier']);
     $needle = Contact::factory()->create(['name' => 'Steffens']);
 
     $body = $this->withHeader('Authorization', bearerFor(Capability::ManageContacts))
@@ -496,7 +497,6 @@ it('summarises the lead pipeline as a count per stage, in funnel order', functio
         ['stage' => 'contacted', 'label' => 'Kontaktiert', 'count' => 1],
         ['stage' => 'quote_sent', 'label' => 'Angebot', 'count' => 0],
         ['stage' => 'quote_accepted', 'label' => 'Angebot angenommen', 'count' => 0],
-        ['stage' => 'contract_sent', 'label' => 'Vertrag', 'count' => 0],
         ['stage' => 'booked', 'label' => 'Gebucht', 'count' => 0],
     ]);
 });

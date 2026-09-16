@@ -1,5 +1,6 @@
 <?php
 
+use App\Automation\Enums\AutomationAction;
 use App\Automation\Enums\AutomationCondition;
 use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Models\AutomationRule;
@@ -24,6 +25,7 @@ it('lists the rules and edits one', function () {
             'offset_days' => 1,
             'direction' => 'before',
             'recipient_type' => 'crew',
+            'action' => 'task',
             'condition' => 'payment_open',
             'notification_subject' => 'Morgen: {{ project.name }}',
             'notification_body' => 'Ausrüstung packen.',
@@ -32,6 +34,7 @@ it('lists the rules and edits one', function () {
         ->assertRedirect();
 
     expect($rule->fresh()->recipient_type)->toBe(AutomationRecipient::Crew)
+        ->and($rule->fresh()->action)->toBe(AutomationAction::Task)
         ->and($rule->fresh()->condition)->toBe(AutomationCondition::PaymentOpen);
 });
 

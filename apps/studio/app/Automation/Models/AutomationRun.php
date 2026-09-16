@@ -5,6 +5,8 @@ namespace App\Automation\Models;
 use App\Automation\Enums\AutomationRunStatus;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
+use App\Crm\Models\Contact;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -35,6 +37,9 @@ class AutomationRun extends Model
         'fired_at',
         'status',
         'error',
+        'subject',
+        'body',
+        'contact_ids',
     ];
 
     protected function casts(): array
@@ -42,7 +47,14 @@ class AutomationRun extends Model
         return [
             'fired_at' => 'immutable_datetime',
             'status' => AutomationRunStatus::class,
+            'contact_ids' => 'array',
         ];
+    }
+
+    /** @return Collection<int, Contact> */
+    public function contacts(): Collection
+    {
+        return Contact::query()->whereIn('id', $this->contact_ids ?? [])->get();
     }
 
     public function rule(): BelongsTo

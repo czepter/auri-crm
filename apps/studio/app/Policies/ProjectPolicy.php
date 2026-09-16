@@ -96,18 +96,11 @@ class ProjectPolicy
         return $user->role->allows(Capability::ManageFormTemplates) && $this->view($user, $project);
     }
 
-    /** Generate a rendered contract for this project (M-01). */
-    public function manageContracts(User $user, Project $project): bool
-    {
-        return $user->role->allows(Capability::ManageContracts) && $this->view($user, $project);
-    }
-
     /**
      * Create or edit this project's payment plan (M-03). Reuses
-     * Capability::ManageContracts rather than a new capability: a payment
-     * plan is created against a signed contract and is exactly as sensitive
-     * as the contract it depends on, so it stays with the same roles rather
-     * than opening to every role ManageQuotes already trusts.
+     * Capability::ManageContracts rather than a new capability, so it stays
+     * with the same roles rather than opening to every role ManageQuotes
+     * already trusts.
      */
     public function managePaymentPlan(User $user, Project $project): bool
     {

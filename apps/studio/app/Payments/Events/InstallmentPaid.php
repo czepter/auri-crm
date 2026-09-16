@@ -6,18 +6,15 @@ use App\Payments\Models\PaymentInstallment;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
- * The anchor T-07's own issue names three future listeners against: G-05
- * gates galleries on a settled balance, E-07 fans out from it, and I-04
- * registers webhooks on it. Fires for a bank transfer marked paid by staff
+ * The anchor T-07's own issue names future listeners against: G-05
+ * gates galleries on a settled balance and E-07 fans out from it. Fires for a bank transfer marked paid by staff
  * exactly the same as it will for a real Stripe payment once M-04/M-05
  * land — carrying the PaymentInstallment is what lets every listener reach
  * ->settled_via, ->plan and ->plan->job without re-querying, the same shape
- * App\Crm\Events\ProjectBooked and App\Contracts\Events\ContractSigned
- * already carry their own subjects in.
+ * App\Crm\Events\ProjectBooked already carries its own subject in.
  *
  * Fires at most once per installment: App\Payments\Actions\
- * MarkInstallmentPaid guards a second "mark paid" the same way SignContract
- * guards a second signature, so a doubled request never dispatches this
+ * MarkInstallmentPaid guards a second "mark paid", so a doubled request never dispatches this
  * twice.
  */
 class InstallmentPaid

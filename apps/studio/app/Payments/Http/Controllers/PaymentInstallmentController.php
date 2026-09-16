@@ -69,8 +69,7 @@ class PaymentInstallmentController extends Controller
 
         $issue($installment, auth('staff')->user());
 
-        // #415: straight into the compose screen, the way the contract tab's
-        // own button does. Sending stays a second decision — see send().
+        // #415: straight into the compose screen. Sending stays a second decision — see send().
         return redirect("/raten/{$installment->public_id}/rechnung/versenden");
     }
 
@@ -203,8 +202,7 @@ class PaymentInstallmentController extends Controller
     }
 
     /**
-     * Inline rather than an attachment, for the reason ContractController::
-     * download() already gives: the browser's own viewer is what a studio
+     * Inline rather than an attachment: the browser's own viewer is what a studio
      * wants when checking its own paperwork, and the client-side `download`
      * attribute still saves it.
      */

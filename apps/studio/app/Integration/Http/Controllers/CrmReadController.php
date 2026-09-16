@@ -73,7 +73,7 @@ class CrmReadController extends Controller
         return response()->json(['data' => ProjectDetailReadData::fromModel($project)]);
     }
 
-    /** #402: the payment plan and contracts ProjectDetailReadData leaves out. */
+    /** #402: the payment plan ProjectDetailReadData leaves out. */
     public function money(Project $project): JsonResponse
     {
         return response()->json(['data' => ProjectMoneyReadData::fromModel($project)]);

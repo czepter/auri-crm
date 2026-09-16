@@ -19,10 +19,10 @@ services:
       PORTAL_URL: ${SERVICE_FQDN_PORTAL}
       GALLERY_URL: ${SERVICE_FQDN_GALLERY_4321}
       API_URL: ${SERVICE_FQDN_API}
-      MCP_URL: ${SERVICE_FQDN_MCP}
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
+      MAIL_SUPPORT_ADDRESS: ${MAIL_SUPPORT_ADDRESS}
       # E-12: the inbox reads config('mail.inbound.domain') to show the
       # catch-all address; unset, InboundAddress::configured() reports none.
       MAIL_INBOUND_DOMAIN: ${MAIL_INBOUND_DOMAIN}
@@ -81,6 +81,7 @@ services:
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
+      MAIL_SUPPORT_ADDRESS: ${MAIL_SUPPORT_ADDRESS}
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/up"]
       interval: 10s
@@ -116,6 +117,10 @@ services:
       AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
       MERCURE_PUBLISHER_JWT_KEY: ${SERVICE_PASSWORD_64_MERCUREPUB}
+      # N-04: this surface carries the MCP endpoint claude.ai connects to,
+      # and the RFC 9728 document beside it names admin as the issuer —
+      # /oauth/authorize, /oauth/token and /oauth/register all live there.
+      ADMIN_URL: ${SERVICE_FQDN_ADMIN}
       # This surface raises notifications of its own — PublicInquiryController
       # -> LeadCaptured -> InquiryReceived is the studio's only word that a
       # lead arrived, and the Stripe webhook above raises InstallmentPaid the
@@ -125,6 +130,7 @@ services:
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
+      MAIL_SUPPORT_ADDRESS: ${MAIL_SUPPORT_ADDRESS}
       # E-12: InboundMailController verifies the webhook against the signing
       # secret, and refuses every delivery without it.
       MAIL_INBOUND_DOMAIN: ${MAIL_INBOUND_DOMAIN}
@@ -174,34 +180,6 @@ services:
       api:
         condition: service_healthy
 
-  # N-04: the MCP HTTP transport, the one service here a third party connects
-  # to directly — claude.ai adds this FQDN as a connector and runs the OAuth
-  # flow against admin. Its own domain because that is what "resource" means
-  # in the metadata document it serves; CRM_API_BASE_URL stays internal
-  # because only this container calls it.
-  mcp:
-    image: ghcr.io/czepter/auri-crm/mcp:v0.9.0
-    restart: unless-stopped
-    environment:
-      SERVICE_FQDN_MCP_3000:
-      MCP_PUBLIC_URL: ${SERVICE_FQDN_MCP}
-      OAUTH_ISSUER_URL: ${SERVICE_FQDN_ADMIN}
-      CRM_API_BASE_URL: http://api:8080/api
-      # F-11: a protocol error here never throws — the SDK answers it with a
-      # 400 body and calls onerror — so this DSN is the only way a rejected
-      # handshake is ever seen. The healthcheck below cannot see one: it reads
-      # the metadata document, which is served in front of the whole gate.
-      SENTRY_DSN: ${MCP_SENTRY_DSN}
-    healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/.well-known/oauth-protected-resource').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
-      interval: 10s
-      timeout: 3s
-      start_period: 20s
-      retries: 6
-    depends_on:
-      api:
-        condition: service_healthy
-
   horizon:
     image: ghcr.io/czepter/auri-crm/studio:v0.9.0
     restart: unless-stopped
@@ -232,6 +210,7 @@ services:
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
+      MAIL_SUPPORT_ADDRESS: ${MAIL_SUPPORT_ADDRESS}
       # E-12: IngestInboundMessage runs here, and E-11 takes the domain half
       # of every outgoing Message-ID from the inbound domain.
       MAIL_INBOUND_DOMAIN: ${MAIL_INBOUND_DOMAIN}
@@ -289,6 +268,7 @@ services:
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
+      MAIL_SUPPORT_ADDRESS: ${MAIL_SUPPORT_ADDRESS}
       # E-12: PollInboundMailbox runs on this schedule and needs the IMAP
       # credentials of the catch-all mailbox.
       MAIL_INBOUND_DOMAIN: ${MAIL_INBOUND_DOMAIN}

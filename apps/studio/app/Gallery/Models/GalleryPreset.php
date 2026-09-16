@@ -33,14 +33,13 @@ class GalleryPreset extends Model
 
     protected $fillable = [
         'name', 'design', 'expiry_mode', 'expiry_days', 'is_default',
-        'requires_settled_balance', 'downloads_enabled', 'lists_enabled', 'comments_enabled',
+        'downloads_enabled', 'lists_enabled', 'comments_enabled',
     ];
 
     protected function casts(): array
     {
         return [
             'design' => 'array',
-            'requires_settled_balance' => 'boolean',
             'downloads_enabled' => 'boolean',
             'lists_enabled' => 'boolean',
             'comments_enabled' => 'boolean',

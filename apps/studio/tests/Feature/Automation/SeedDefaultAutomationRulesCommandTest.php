@@ -1,6 +1,8 @@
 <?php
 
+use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Models\AutomationRule;
+use App\Documents\Support\MergeFieldVocabulary;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -14,6 +16,43 @@ it('creates one AutomationRule per config/automation.php entry', function () {
 
     foreach ($keys as $key) {
         expect(AutomationRule::query()->where('key', $key)->exists())->toBeTrue();
+    }
+});
+
+// A thank-you the day after the wedding reads as a form letter; the studio writes that one itself.
+it('ships no automated thank-you after the wedding', function () {
+    expect(collect(config('automation.rules'))->pluck('key'))->not->toContain('thank-you-after-wedding');
+});
+
+// The offset is editable on the screen; a "7 Tage" in the text goes stale the moment it is.
+it('writes no offset into a default rule text', function () {
+    $texts = collect(config('automation.rules'))
+        ->flatMap(fn (array $rule) => [$rule['notification_subject'], $rule['notification_body']])
+        ->flatMap(fn (string|array $text) => (array) $text);
+
+    foreach ($texts as $text) {
+        expect($text)->not->toMatch('/\d|\bwoche|\btage?n?\b|\bmorgen\b|\bjahr/iu');
+    }
+});
+
+it('writes every client text in both registers', function () {
+    $client = collect(config('automation.rules'))
+        ->filter(fn (array $rule) => ($rule['recipient_type'] ?? AutomationRecipient::Client) === AutomationRecipient::Client);
+
+    expect($client)->not->toBeEmpty();
+
+    foreach ($client as $rule) {
+        expect($rule['notification_body'])->toHaveKeys(['formal', 'informal']);
+    }
+});
+
+it('names only merge fields the vocabulary resolves', function () {
+    $texts = collect(config('automation.rules'))
+        ->flatMap(fn (array $rule) => [$rule['notification_subject'], $rule['notification_body']])
+        ->flatMap(fn (string|array $text) => (array) $text);
+
+    foreach ($texts as $text) {
+        expect(MergeFieldVocabulary::unknownPathsIn($text))->toBe([]);
     }
 });
 

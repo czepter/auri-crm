@@ -4,16 +4,19 @@ namespace App\Crm\Actions;
 
 use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\StageAnchor;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Events\LeadLost;
 use App\Crm\Events\LeadStageChanged;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
 use App\Models\User;
+use App\Crm\Support\CrmVocabulary;
 use App\Crm\Support\StageHistory;
 use App\Support\AuditLogger;
 use Carbon\CarbonInterface;
 use DomainException;
+use Illuminate\Support\Facades\DB;
 
 /**
  * The only writer of Lead::$stage, Lead::$lost_at and Lead::$outcome.
@@ -29,7 +32,24 @@ class AdvanceLeadStage
         private readonly BookProject $book,
         private readonly UnbookProject $unbook,
         private readonly AdvanceShootStatus $shoots,
+        private readonly CrmVocabulary $stages,
     ) {}
+
+    /**
+     * The funnel following a quote on its own. Forward only and only for an
+     * open lead: a card staff already dragged further, or closed, stays where
+     * they put it. A project without a lead has no funnel to move.
+     */
+    public function reach(?Lead $lead, StageAnchor $anchor, ?User $actor = null, ?CarbonInterface $at = null): void
+    {
+        $next = $this->stages->anchored(StagePipeline::Lead, $anchor);
+
+        if ($lead === null || $next === null || $lead->isLost() || $next->sort_order <= $lead->stage->sort_order) {
+            return;
+        }
+
+        $this($lead, $next, $actor, $at);
+    }
 
     /**
      * $enteredAt backdates the move — an inquiry worked by phone last week and
@@ -51,53 +71,57 @@ class AdvanceLeadStage
             );
         }
 
-        // Taking back the won stage takes back the booking with it, or the
-        // board and the project list each show what the other one denies.
-        // Throws when the booking has a payment plan — see UnbookProject.
-        if ($backwards && $from->anchor === StageAnchor::Won) {
-            ($this->unbook)($lead->project, $actor ?? auth('staff')->user(), $enteredAt);
-        }
+        DB::transaction(function () use ($lead, $from, $next, $backwards, $actor, $enteredAt) {
+            // Taking back the won stage takes back the booking with it, or the
+            // board and the project list each show what the other one denies.
+            // Throws when the booking has a payment plan — see UnbookProject.
+            if ($backwards && $from->anchor === StageAnchor::Won) {
+                ($this->unbook)($lead->project, $actor ?? auth('staff')->user(), $enteredAt);
+            }
 
-        // A correction restores the moment the lead first entered the stage it
-        // returns to, read from the append-only trail: the board colours "how
-        // long has it sat where it sits", and after a mis-drop is undone it has
-        // sat there since it originally arrived, not since the undo.
-        // T-20: a lead that moved forward starts the reminder ladder over. The
-        // rungs count time in the stage it sits in, and it sits in a new one. A
-        // correction that hands back an old timestamp keeps the rungs already
-        // climbed, or undoing the mis-drop would re-send every reminder.
-        $entered = $enteredAt
-            ?? ($backwards ? StageHistory::enteredAt('lead.stage_changed', $lead->public_id, $next->key) : null)
-            ?? now();
+            // A correction restores the moment the lead first entered the stage it
+            // returns to, read from the append-only trail: the board colours "how
+            // long has it sat where it sits", and after a mis-drop is undone it has
+            // sat there since it originally arrived, not since the undo.
+            // T-20: a lead that moved forward starts the reminder ladder over. The
+            // rungs count time in the stage it sits in, and it sits in a new one. A
+            // correction that hands back an old timestamp keeps the rungs already
+            // climbed, or undoing the mis-drop would re-send every reminder.
+            $entered = $enteredAt
+                ?? ($backwards ? StageHistory::enteredAt('lead.stage_changed', $lead->public_id, $next->key) : null)
+                ?? now();
 
-        $lead->forceFill([
-            'stage' => $next,
-            'stage_entered_at' => $entered,
-            ...$backwards ? [] : ['stalled_reminders_sent' => 0, 'stalled_reminded_at' => null],
-        ])->save();
+            $lead->forceFill([
+                'stage' => $next,
+                'stage_entered_at' => $entered,
+                ...$backwards ? [] : ['stalled_reminders_sent' => 0, 'stalled_reminded_at' => null],
+            ])->save();
 
-        AuditLogger::record(
-            event: 'lead.stage_changed',
-            actor: $actor ?? auth('staff')->user(),
-            context: [
-                'from' => $from->key,
-                'to' => $next->key,
-                'entered_at' => $entered->toIso8601String(),
-                ...$backwards ? ['reverted' => true] : [],
-            ],
-            subject: $lead->public_id,
-            projectId: $lead->project_id,
-            occurredAt: $enteredAt,
-        );
+            AuditLogger::record(
+                event: 'lead.stage_changed',
+                actor: $actor ?? auth('staff')->user(),
+                context: [
+                    'from' => $from->key,
+                    'to' => $next->key,
+                    'entered_at' => $entered->toIso8601String(),
+                    ...$backwards ? ['reverted' => true] : [],
+                ],
+                subject: $lead->public_id,
+                projectId: $lead->project_id,
+                occurredAt: $enteredAt,
+            );
 
-        // "Gebucht" is the booking, not a label for one. Without this the
-        // stage and the Job disagree, and the two lists that read them —
-        // /anfragen by stage, /projekte by Job — each show the record the
-        // other one is missing. Idempotent: BookProject writes nothing when a
-        // Job already exists (the contract-and-deposit path got there first).
-        if ($next->anchor === StageAnchor::Won) {
-            ($this->book)($lead->project, $actor ?? auth('staff')->user(), at: $entered);
-        }
+            // "Gebucht" is the booking, not a label for one. Without this the
+            // stage and the Job disagree, and the two lists that read them —
+            // /anfragen by stage, /projekte by Job — each show the record the
+            // other one is missing. Idempotent: BookProject writes nothing when
+            // a Job already exists. Inside the transaction: a booking that
+            // throws leaves the stage where it was instead of "Gebucht"
+            // without a Job.
+            if ($next->anchor === StageAnchor::Won) {
+                ($this->book)($lead->project, $actor ?? auth('staff')->user(), at: $entered);
+            }
+        });
 
         LeadStageChanged::dispatch($lead, $from, $next);
 

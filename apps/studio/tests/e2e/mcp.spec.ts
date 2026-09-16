@@ -24,7 +24,9 @@ import { signIn } from './helpers'
  * config.ts starts.
  */
 
-const MCP_URL = 'http://127.0.0.1:3000'
+// The api surface serves both: the MCP endpoint at /mcp and, at the host
+// root, the document that says the admin surface hands out tokens for it.
+const MCP_URL = 'http://127.0.0.1:8002/mcp'
 const ISSUER = 'http://127.0.0.1:8000'
 
 /** Catches the authorization code, the way a desktop client's loopback listener does. */
@@ -84,16 +86,15 @@ test('a remote client registers itself, is consented to, and calls a tool', asyn
 
     const client = new Client({ name: 'e2e', version: '0.0.1' })
     await client.connect(
-      new StreamableHTTPClientTransport(new URL(`${MCP_URL}/mcp`), {
+      new StreamableHTTPClientTransport(new URL(MCP_URL), {
         requestInit: { headers: { Authorization: `Bearer ${tokens.access_token}` } },
       }),
     )
 
     try {
-      // A tool the api surface answers from the seeded database — the call
-      // goes out with this session's bearer or not at all, and without one
-      // the api surface redirects to /login and the tool reports an error
-      // body it cannot read.
+      // A tool the api surface answers from the seeded database — the tool
+      // call is an api call carrying this session's bearer (ApiCall), and
+      // without one the scope check behind it refuses.
       const result = (await client.callTool({ name: 'pipeline_snapshot', arguments: {} })) as {
         isError?: boolean
         content: { text: string }[]
