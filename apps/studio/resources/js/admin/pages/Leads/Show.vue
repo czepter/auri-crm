@@ -24,7 +24,8 @@ import RailSection from "@/ui/page/RailSection.vue";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
 import { Switch } from "@/ui/switch";
 import { Textarea } from "@/ui/textarea";
-import { DropdownMenuItem } from "@/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui/dropdown-menu";
+import { ChevronDown } from "lucide-vue-next";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/admin/lib/money";
 import { quoteChipClass } from "@/admin/lib/quoteDisplay";
@@ -312,31 +313,9 @@ function addTask() {
     });
 }
 
-// Exactly one filled button, and it moves with the action that is due.
-const due = computed(() => {
-    if (props.lead.booked) {
-        return {
-            label: "lead.openProject",
-            href: `/auftraege/${props.lead.projectId}`,
-        };
-    }
-
-    // Stages the studio walks before the quote stage are due one by one: a
-    // fresh inquiry wants an answer, not yet an offer.
-    const at = props.stages.findIndex((stage) => stage.value === props.lead.stage);
-    const quoteAt = props.stages.findIndex((stage) => stage.anchor === "quote_sent");
-
-    if (props.quote === null && at >= 0 && at + 1 < quoteAt) {
-        return { label: props.stages[at + 1].label, stage: props.stages[at + 1].value };
-    }
-
-    // The quote tab carries its own button.
-    if (props.quote === null) {
-        return props.tab === "quotes" ? null : { label: "lead.writeQuote", href: newQuote.value };
-    }
-
-    return null;
-});
+const nextStage = computed(
+    () => props.stages[props.stages.findIndex((stage) => stage.value === props.lead.stage) + 1] ?? null,
+);
 </script>
 
 <template>
@@ -390,26 +369,45 @@ const due = computed(() => {
                 </Rail>
             </template>
 
-            <!-- Bearbeitet wird je Karte; im Kopf steht nur noch die eine
-                 Aktion, die gerade fällig ist. -->
-            <template #actions>
-                <Button v-if="due?.stage" variant="pill" type="button" @click="move(due.stage)">{{
-                    due.label
-                }}</Button>
-                <Button v-else-if="due" :as="Link" variant="pill" :href="due.href">{{
-                    $t(due.label)
+            <template v-if="lead.booked" #actions>
+                <Button :as="Link" variant="pill" :href="`/auftraege/${lead.projectId}`">{{
+                    $t("lead.openProject")
                 }}</Button>
             </template>
 
-            <template v-if="!lead.outcomeLabel && !lead.booked" #menu>
-                <DropdownMenuItem
-                    v-for="stage in stages"
-                    :key="stage.value"
-                    :disabled="stage.value === lead.stage"
-                    @select="move(stage.value)"
-                >
-                    {{ stage.label }}
-                </DropdownMenuItem>
+            <template v-if="!lead.outcomeLabel && !lead.booked" #stage>
+                <div class="flex">
+                    <Button
+                        v-if="nextStage"
+                        variant="pill"
+                        type="button"
+                        class="rounded-r-none"
+                        @click="move(nextStage.value)"
+                        >{{ nextStage.label }}</Button
+                    >
+                    <DropdownMenu>
+                        <DropdownMenuTrigger as-child>
+                            <Button
+                                variant="pill"
+                                type="button"
+                                :class="nextStage ? 'rounded-l-none border-l border-white/30 px-2' : ''"
+                                :aria-label="$t('board.colStage')"
+                            >
+                                <ChevronDown class="size-3.5" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" class="w-[208px]">
+                            <DropdownMenuItem
+                                v-for="stage in stages"
+                                :key="stage.value"
+                                :disabled="stage.value === lead.stage"
+                                @select="move(stage.value)"
+                            >
+                                {{ stage.label }}
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </template>
 
             <AlertDialog v-model:open="booking">

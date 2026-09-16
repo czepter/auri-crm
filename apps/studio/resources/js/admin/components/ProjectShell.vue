@@ -143,9 +143,10 @@ function destroy() {
 
           <div class="ml-auto flex items-center gap-2">
             <slot name="actions" />
+            <slot name="stage" />
 
             <!-- A page with a stage menu books through it. -->
-            <AlertDialog v-if="!header.isBooked && header.canBook && !$slots.menu">
+            <AlertDialog v-if="!header.isBooked && header.canBook && !$slots.stage">
               <AlertDialogTrigger as-child>
                 <Button variant="pill" type="button">{{ $t('project.book') }}</Button>
               </AlertDialogTrigger>
@@ -160,7 +161,7 @@ function destroy() {
               </AlertDialogContent>
             </AlertDialog>
 
-            <DropdownMenu v-if="$slots.menu || (header.canComplete && !header.isCompleted) || (header.canClose && !header.outcomeLabel) || header.canDelete">
+            <DropdownMenu v-if="(header.canComplete && !header.isCompleted) || (header.canClose && !header.outcomeLabel) || header.canDelete">
               <DropdownMenuTrigger
                 class="flex size-8 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2"
                 :aria-label="$t('project.more')"
@@ -170,13 +171,11 @@ function destroy() {
                 </svg>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" class="w-[208px]">
-                <slot name="menu" />
                 <DropdownMenuItem v-if="header.canComplete && !header.isCompleted" @select="complete">
                   {{ $t('project.completeMenu') }}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   v-if="header.canClose && !header.outcomeLabel"
-                  :class="{ 'border-t border-rule': $slots.menu }"
                   @select="closing = true"
                 >
                   {{ $t('project.closeMenu') }}
