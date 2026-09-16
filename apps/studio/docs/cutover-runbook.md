@@ -18,7 +18,7 @@ against a host PHP set up the same way tests are.
 ## 0. Pre-cutover checklist
 
 - [ ] Legacy data already exported into `contacts.csv` / `projects.csv` /
-      `jobs.csv` / `contracts.csv` (docs/historical-import.md) and a legacy
+      `jobs.csv` (docs/historical-import.md) and a legacy
       galleries JSON fixture (`App\Gallery\Console\Commands\ImportLegacyGalleriesCommand`'s
       doc comment for the two record shapes)
 - [ ] `docker compose up -d` — Postgres, Redis, the worker and Gotenberg are
@@ -63,7 +63,7 @@ docker compose run --rm php php artisan gallery:import-legacy storage/app/import
 docker compose run --rm php php artisan gallery:import-legacy storage/app/import/legacy-galleries-linked.json --mode=link
 ```
 
-X-01's whole run — contacts, projects, jobs and contracts together — commits
+X-01's whole run — contacts, projects and jobs together — commits
 in one transaction, so a project whose job fails to import can't leave
 contacts behind with nothing to point at. X-02 is per-record: a bad row is
 reported and skipped without blocking the rest of the file. Compare the commit summary counts against the dry-run
@@ -81,15 +81,15 @@ For the length of the window (a business day is usually enough to spot-check
 against the legacy source; longer if that source is hard to reach):
 
 - **This app is authoritative for everything created here from the moment
-  §3 finishes** — new contacts, new bookings, contracts, payments (M-05
+  §3 finishes** — new contacts, new bookings, payments (M-05
   lives only here, so there is no "legacy" side of it to reconcile against).
 - **The legacy system is authoritative for anything predating the
   snapshot**, consulted read-only to verify what §3 imported, never written
   to going forward.
 - Consider enabling the portal's maintenance closure (T-08 — a studio
   setting, `StudioSettingsResolver::maintenanceEnabled()`) for the short
-  span between §2 and the go/no-go call in §5, if clients might sign
-  contracts or otherwise write through the portal during it. A rollback
+  span between §2 and the go/no-go call in §5, if clients might accept
+  quotes or otherwise write through the portal during it. A rollback
   (§6) discards portal writes made after the snapshot exactly as it
   discards the imports — closing the portal for that narrow window avoids
   silently losing one under the other. Not needed once §5 has said "go":
@@ -100,7 +100,7 @@ against the legacy source; longer if that source is hard to reach):
 
 - [ ] §1's final dry run had zero unresolved unmapped/error rows
 - [ ] §3's commit summary counts match §1's dry-run counts
-- [ ] Spot-checked a sample of imported contacts/projects/contracts/galleries
+- [ ] Spot-checked a sample of imported contacts/projects/galleries
       against the legacy source
 - [ ] Staff can sign in, see their projects and the data they expect, on the
       admin surface

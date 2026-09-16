@@ -89,7 +89,7 @@ it('gives every entry a key that is unique, and a description that says what it 
 it('marks the legal skeletons as a starting point, and only where the studio reads it', function () {
     // The disclaimer belongs in the description, where it is read while
     // choosing — never in a body a client receives.
-    foreach (['contract-werkvertrag', 'invoice-standard', 'invoice-small-business'] as $key) {
+    foreach (['invoice-standard', 'invoice-small-business'] as $key) {
         $entry = StarterTemplateCatalog::find($key);
 
         expect(mb_strtolower($entry['description']))->toContain('ausgangspunkt');
@@ -126,16 +126,6 @@ it('contains no placeholder prose, in any entry', function () {
     }
 });
 
-it('keeps the Widerruf clause as a merge field rather than typed text', function () {
-    // So it disappears from a rendered contract when the studio switches it
-    // off — T-05 owns that decision, not the wording.
-    $contract = StarterTemplateCatalog::find('contract-werkvertrag');
-    $body = StarterBlockSerializer::toHtml($contract['blocks']);
-
-    expect($body)->toContain('{{ settings.widerrufText }}')
-        ->and(mb_strtolower($body))->not->toContain('vierzehn tagen ohne angabe von gründen');
-});
-
 it('offers the wedding quote for weddings and the generic one always', function () {
     $quotes = collect(StarterTemplateCatalog::for(DocumentTemplateType::Quote));
 
@@ -165,7 +155,7 @@ it('pre-ticks a default set that exists and covers the trading documents', funct
 
     $types = collect($defaults)->map(fn (string $key) => StarterTemplateCatalog::find($key)['type'])->unique();
 
-    expect($types)->toContain('quote', 'contract', 'invoice', 'mail');
+    expect($types)->toContain('quote', 'invoice', 'mail');
 
     // A studio that shoots no weddings should not finish onboarding with a
     // wedding quote.

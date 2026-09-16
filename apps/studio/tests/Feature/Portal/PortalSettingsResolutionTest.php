@@ -153,7 +153,6 @@ it('stores only the keys that actually depart from the default', function () {
     test()->actingAs(staffMember(), 'staff')
         ->patch("/kontakte/{$contact->public_id}/portal", [
             'accept_quotes' => true,
-            'sign_contracts' => null,
             'messaging_mode' => null,
             'welcome' => '',
         ])

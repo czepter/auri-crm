@@ -1,14 +1,11 @@
 <?php
 
-use App\Contracts\Enums\ContractStatus;
-use App\Contracts\Models\Contract;
 use App\Crm\Enums\BookedVia;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
-use App\Documents\Models\DocumentTemplate;
 use App\Migration\Actions\CommitHistoricalImport;
 use App\Migration\Actions\PlanHistoricalImport;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -33,9 +30,7 @@ it('plans every row of a clean import as creatable, with none unmapped', functio
         ->and($plan->projects['toCreate'])->toHaveCount(1)
         ->and($plan->projects['errors'])->toBe([])
         ->and($plan->jobs['toCreate'])->toHaveCount(1)
-        ->and($plan->jobs['errors'])->toBe([])
-        ->and($plan->contracts['toCreate'])->toHaveCount(1)
-        ->and($plan->contracts['errors'])->toBe([]);
+        ->and($plan->jobs['errors'])->toBe([]);
 
     $project = $plan->projects['toCreate'][0];
     expect($project['type']->key)->toBe(ProjectType::Wedding->value)
@@ -43,10 +38,6 @@ it('plans every row of a clean import as creatable, with none unmapped', functio
 
     $job = $plan->jobs['toCreate'][0];
     expect($job['booked_via'])->toBe(BookedVia::Manual);
-
-    $contract = $plan->contracts['toCreate'][0];
-    expect($contract['status'])->toBe(ContractStatus::Rendered)
-        ->and($contract['rendered_at'])->toBe('2024-04-20');
 });
 
 it('commits a clean plan into real, linked records', function () {
@@ -58,13 +49,11 @@ it('commits a clean plan into real, linked records', function () {
         'contacts_reused' => 0,
         'projects' => 1,
         'jobs' => 1,
-        'contracts' => 1,
     ]);
 
     expect(Contact::count())->toBe(2)
         ->and(Project::count())->toBe(1)
-        ->and(Job::count())->toBe(1)
-        ->and(Contract::count())->toBe(1);
+        ->and(Job::count())->toBe(1);
 
     $project = Project::sole();
     expect($project->name)->toBe('Meier & Kowalski — Hochzeit')
@@ -76,15 +65,6 @@ it('commits a clean plan into real, linked records', function () {
         ->and($job->booked_via)->toBe(BookedVia::Manual)
         ->and($job->booked_by_id)->toBeNull()
         ->and($job->booked_at->toDateString())->toBe('2024-05-01');
-
-    $contract = Contract::sole();
-    expect($contract->project_id)->toBe($project->id)
-        ->and($contract->status)->toBe(ContractStatus::Rendered)
-        ->and($contract->rendered_at->toDateString())->toBe('2024-04-20');
-
-    $template = DocumentTemplate::findOrFail($contract->contract_template_id);
-    expect($template->name)->toBe('Historischer Import (X-01)')
-        ->and($template->is_current)->toBeFalse();
 });
 
 it('reuses an existing contact matched by email instead of creating a duplicate', function () {
@@ -128,8 +108,7 @@ it('never writes anything on a dry run, and writes exactly the plan on --commit'
 
     expect(Contact::count())->toBe(0)
         ->and(Project::count())->toBe(0)
-        ->and(Job::count())->toBe(0)
-        ->and(Contract::count())->toBe(0);
+        ->and(Job::count())->toBe(0);
 
     $this->artisan('migration:import-historical-data', ['path' => cleanFixture(), '--commit' => true])
         ->assertSuccessful()
@@ -137,8 +116,7 @@ it('never writes anything on a dry run, and writes exactly the plan on --commit'
 
     expect(Contact::count())->toBe(2)
         ->and(Project::count())->toBe(1)
-        ->and(Job::count())->toBe(1)
-        ->and(Contract::count())->toBe(1);
+        ->and(Job::count())->toBe(1);
 });
 
 it('reports unmapped rows from the command without writing anything for that entity', function () {

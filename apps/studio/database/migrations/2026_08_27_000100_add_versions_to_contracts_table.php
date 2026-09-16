@@ -1,6 +1,5 @@
 <?php
 
-use App\Contracts\Enums\ContractState;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +14,7 @@ return new class extends Migration
             // makes two simultaneous "Fassung sichern" clicks collide in the
             // database rather than produce two Fassung 3.
             $table->unsignedInteger('version')->default(1);
-            $table->string('state')->default(ContractState::Draft->value);
+            $table->string('state')->default('draft');
 
             // The wording of this Fassung, once someone has edited it. Null
             // means "still exactly the template row this contract names" —
@@ -56,7 +55,7 @@ return new class extends Migration
 
             DB::table('contracts')->where('id', $row->id)->update([
                 'version' => $version[$row->project_id],
-                'state' => $isValid ? ContractState::Valid->value : ContractState::Superseded->value,
+                'state' => $isValid ? 'valid' : 'superseded',
                 'sent_at' => $row->created_at,
             ]);
         }

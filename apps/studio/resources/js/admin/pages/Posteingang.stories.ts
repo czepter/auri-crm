@@ -6,6 +6,15 @@ const meta = {
   component: Posteingang,
   parameters: { layout: 'fullscreen', url: '/posteingang' },
   args: {
+    drafts: [
+      {
+        id: 'ar-run-1',
+        subject: 'Ihre Galerie ist bald nicht mehr erreichbar',
+        body: 'Hallo Marie,\n\ndie Galerie zu Rahn, Marie & Jonas ist noch bis zum 30.09.2026 online.',
+        projectName: 'Rahn, Marie & Jonas',
+        to: 'Marie Rahn',
+      },
+    ],
     groups: [
       {
         key: 'unbeantwortet',

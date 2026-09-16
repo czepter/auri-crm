@@ -6,7 +6,7 @@ use App\Integration\Mcp\Tools\BookingTaskTools;
 use App\Integration\Mcp\Tools\CrmEditTools;
 use App\Integration\Mcp\Tools\GalleryTools;
 use App\Integration\Mcp\Tools\MessageTools;
-use App\Integration\Mcp\Tools\MoneyContractTools;
+use App\Integration\Mcp\Tools\MoneyTools;
 use App\Integration\Mcp\Tools\QuoteActionTools;
 use App\Integration\Mcp\Tools\ReadTools;
 use App\Integration\Mcp\Tools\StudioOpsTools;
@@ -26,7 +26,7 @@ class CrmServer extends Server
     protected string $version = '1.0.0';
 
     protected string $instructions = <<<'MARKDOWN'
-        The studio's CRM: leads and projects, shoots and crew, quotes, contracts, payments, galleries, tasks and messages.
+        The studio's CRM: leads and projects, shoots and crew, quotes, payments, galleries, tasks and messages.
         Every id in an argument or an answer is a public_id, never a row's internal integer id.
         MARKDOWN;
 
@@ -55,7 +55,7 @@ class CrmServer extends Server
             ...WriteTools::definitions(),
             ...CrmEditTools::definitions(),
             ...QuoteActionTools::definitions(),
-            ...MoneyContractTools::definitions(),
+            ...MoneyTools::definitions(),
             ...BookingTaskTools::definitions(),
             ...MessageTools::definitions(),
             ...GalleryTools::definitions(),

@@ -65,8 +65,8 @@ final class ReadTools
 
             new ToolDefinition(
                 name: 'get_project_money',
-                title: 'Get a project\'s payments and contracts',
-                description: '#402: what get_project leaves out — the payment plan (null if none exists yet) and every contract Fassung, newest first. Check this before offering create_payment_plan or record_payment: a plan already exists once this returns one.',
+                title: 'Get a project\'s payments',
+                description: '#402: what get_project leaves out — the payment plan (null if none exists yet). Check this before offering create_payment_plan or record_payment: a plan already exists once this returns one.',
                 method: 'GET',
                 path: '/projects/{publicId}/money',
                 schema: fn (JsonSchema $schema) => [
@@ -76,7 +76,6 @@ final class ReadTools
                 structure: fn (array $body) => $body['data'],
                 outputSchema: fn (JsonSchema $schema) => [
                     'paymentPlan' => self::paymentPlan($schema)->nullable(),
-                    'contracts' => $schema->array()->items(self::contract($schema)),
                 ],
             ),
 
@@ -423,26 +422,6 @@ final class ReadTools
                 'invoiceNumber' => $schema->string()->nullable(),
                 'invoicedOn' => $schema->string()->nullable(),
                 'hasInvoiceDocument' => $schema->boolean(),
-            ])),
-        ]);
-    }
-
-    /** ContractData — see create_contract. */
-    private static function contract(JsonSchema $schema): object
-    {
-        return $schema->object([
-            'id' => $schema->string(),
-            'version' => $schema->integer(),
-            'state' => $schema->string(),
-            'status' => $schema->string(),
-            'templateName' => $schema->string(),
-            'sentAt' => $schema->string()->nullable(),
-            'signDeadlineOn' => $schema->string()->nullable(),
-            'signers' => $schema->array()->items($schema->object([
-                'id' => $schema->string(),
-                'name' => $schema->string(),
-                'signedAt' => $schema->string()->nullable(),
-                'remindedAt' => $schema->string()->nullable(),
             ])),
         ]);
     }

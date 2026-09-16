@@ -114,10 +114,10 @@ class AdvanceLeadStage
             // "Gebucht" is the booking, not a label for one. Without this the
             // stage and the Job disagree, and the two lists that read them —
             // /anfragen by stage, /projekte by Job — each show the record the
-            // other one is missing. Idempotent: BookProject writes nothing when a
-            // Job already exists (the contract-and-deposit path got there first).
-            // Inside the transaction: a booking that throws leaves the stage
-            // where it was instead of "Gebucht" without a Job.
+            // other one is missing. Idempotent: BookProject writes nothing when
+            // a Job already exists. Inside the transaction: a booking that
+            // throws leaves the stage where it was instead of "Gebucht"
+            // without a Job.
             if ($next->anchor === StageAnchor::Won) {
                 ($this->book)($lead->project, $actor ?? auth('staff')->user(), at: $entered);
             }

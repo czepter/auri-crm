@@ -40,7 +40,9 @@ class EmailChangeConfirmation extends Notification implements Transactional
             ->greeting("Hallo {$this->contact->name},")
             ->action('Adresse bestätigen', $this->url)
             ->line('Der Link gilt '.EmailChange::VALID_FOR_HOURS.' Stunden.')
-            ->line('Bis dahin bleibt die bisherige Adresse Ihr Zugang.');
+            ->line($this->settings->clientAddress() === 'du'
+                ? 'Bis dahin bleibt die bisherige Adresse dein Zugang.'
+                : 'Bis dahin bleibt die bisherige Adresse Ihr Zugang.');
 
         return $this->appendStudioMailIdentity($message, $this->settings);
     }

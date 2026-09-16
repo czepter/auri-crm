@@ -105,7 +105,6 @@ app/Crm/
 | `Crm` | Contacts, projects, shoots, leads, the board, tasks, forms, timeline |
 | `Catalog` | Packages and priced items |
 | `Quotes` | Quote building, sending, acceptance |
-| `Contracts` | Contract rendering and signature |
 | `Documents` | Templates, merge fields, the shared vocabulary behind all three document types |
 | `Payments` | Payment plans, installments, Stripe |
 | `Numbering` | Document number ranges and allocation |
@@ -217,8 +216,8 @@ Its tools hold no logic. Each one names a route in `routes/api.php` and is
 answered by it, through this app's own HTTP kernel (`ApiCall`) carrying the
 bearer that opened the session — so `audience:api`, `scope:` and `idempotent`
 run on a tool call exactly as they do on an outside integration's, and the
-audit log stays complete. `ToolDefinition` is what differs between the 112 of
-them: the name and description an assistant reads, the input schema, and
+audit log stays complete. `ToolDefinition` is what differs between one and
+the next: the name and description an assistant reads, the input schema, and
 which route it stands for.
 
 The bearer is a staff member's own OAuth token (the authorization server is

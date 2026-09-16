@@ -89,6 +89,7 @@ jobs:
       || github.event.pull_request.changed_files > 15
       || github.event.pull_request.additions > 300
       || github.event.pull_request.deletions > 300
+      || contains(github.event.pull_request.labels.*.name, 'e2e')
     runs-on: ubuntu-latest
     outputs:
       php: ${{ steps.filter.outputs.php }}
@@ -346,3 +347,13 @@ jobs:
         env:
           APP_SURFACE: admin
         run: pnpm exec playwright test
+      # A missing baseline is written by the failing run. This is where it is
+      # picked up: README.md, "Visual baselines".
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-snapshots
+          path: |
+            apps/studio/tests/e2e/visual.spec.ts-snapshots/
+            apps/studio/test-results/
+          if-no-files-found: ignore

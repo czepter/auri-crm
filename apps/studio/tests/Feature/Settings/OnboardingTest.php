@@ -1,5 +1,6 @@
 <?php
 
+use App\Automation\Models\AutomationRule;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Enums\StaffRole;
@@ -65,6 +66,19 @@ it('writes the starter templates on finish, skipping included', function () {
 
     expect(DocumentTemplate::query()->current()->ofType(DocumentTemplateType::Invoice)->pluck('name')->all())
         ->toBe(['Rechnung']);
+});
+
+it('seeds the default automation rules on finish, in the studio register', function () {
+    app(StudioSettingsResolver::class)->set('client_register', 'informal', null);
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->post('/einrichtung/studio/abschluss')
+        ->assertRedirect('/');
+
+    expect(AutomationRule::query()->pluck('key')->all())
+        ->toEqualCanonicalizing(collect(config('automation.rules'))->pluck('key')->all())
+        ->and(AutomationRule::query()->where('key', 'booking-confirmation')->value('notification_subject'))
+        ->toBe('Deine Buchung ist bestätigt');
 });
 
 it('writes the Kleinunternehmer invoice when that is the mode the wizard left behind', function () {

@@ -11,12 +11,10 @@ use Illuminate\Foundation\Events\Dispatchable;
  * exactly the same as it will for a real Stripe payment once M-04/M-05
  * land — carrying the PaymentInstallment is what lets every listener reach
  * ->settled_via, ->plan and ->plan->job without re-querying, the same shape
- * App\Crm\Events\ProjectBooked and App\Contracts\Events\ContractSigned
- * already carry their own subjects in.
+ * App\Crm\Events\ProjectBooked already carries its own subject in.
  *
  * Fires at most once per installment: App\Payments\Actions\
- * MarkInstallmentPaid guards a second "mark paid" the same way SignContract
- * guards a second signature, so a doubled request never dispatches this
+ * MarkInstallmentPaid guards a second "mark paid", so a doubled request never dispatches this
  * twice.
  */
 class InstallmentPaid

@@ -14,18 +14,16 @@ use Illuminate\Support\Facades\DB;
 use Visus\Cuid2\Cuid2;
 
 /**
- * T-12's generalisation of M-01's ContractTemplate: one versioned template
- * model for every document type (contract, quote, mail), rather than three
- * parallel systems each with their own idea of what a merge field means.
+ * T-12: one versioned template model for every document type (quote,
+ * invoice, mail), rather than parallel systems each with their own idea of
+ * what a merge field means.
  *
- * Everything M-01 and M-02 already relied on is unchanged in shape:
  * `family_id` is stable across every edit, each row's own `public_id` names
  * one exact version, and editing never mutates a row — newVersion() inserts
- * a new one and moves `is_current`, so a Contract already pointing at a row
- * here (still via `contracts.contract_template_id`, see the migration that
- * moved this table's data) keeps pointing at exactly that wording. See
- * docs/documents.md for the merge-field vocabulary and the letterhead/footer
- * every Contract/Quote render wraps a template's body in.
+ * a new one and moves `is_current`, so a document already pointing at a row
+ * here keeps pointing at exactly that wording. See docs/documents.md for the
+ * merge-field vocabulary and the letterhead/footer every PDF render wraps a
+ * template's body in.
  *
  * `type` and `shoot_kind` name what a family *is* and never change across
  * its own versions — newVersion() carries both forward from the row it is
@@ -83,7 +81,7 @@ class DocumentTemplate extends Model
     /**
      * Inserts a new version in this template's family and moves the current
      * pointer to it. The old row is left untouched — no update, no delete —
-     * so a Contract already rendered from it, and the PDF that render wrote
+     * so a document already rendered from it, and the PDF that render wrote
      * to storage, are never touched by this call.
      *
      * type and shoot_kind are never accepted here: they identify the family,

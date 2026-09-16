@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
  * document_type, year, counter) do the concurrency-safety work instead of a
  * row lock: two inserts racing for the same tuple can't both land. Q-05
  * shipped this as QuoteNumberCounter, quote-only, keyed on (tenant_id, year,
- * counter); T-04 added document_type so Contract and Invoice (M-01, M-04)
+ * counter); T-04 added document_type so Invoice (M-04) and later ranges
  * can share the same mechanism instead of each growing their own copy.
  *
  * Table name stays quote_number_counters — T-04's issue is explicit that the

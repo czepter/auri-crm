@@ -195,7 +195,7 @@ class ProjectController extends Controller
             'stage' => $project->job()->exists()
                 ? $this->position->leastAdvanced($project->shoots)?->status->key
                 : $project->lead?->stage->key,
-            'source' => $project->lead?->source->value,
+            'source' => $project->lead?->source?->value,
             'sourceOther' => $project->lead?->source_other,
             'sourceLabel' => $project->lead?->sourceLabel(),
             'inquiry' => $project->lead === null ? null : [

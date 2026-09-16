@@ -71,6 +71,27 @@ class StudioSettingsResolver
         return $this->row()->quote_layout;
     }
 
+    /** 'formal' or 'informal' — see the studio_settings table's check constraint. */
+    public function clientRegister(): string
+    {
+        return $this->row()->client_register;
+    }
+
+    /**
+     * #439: how a client text addresses its readers. Informal splits on the
+     * count, so a couple reads "ihr" where a single contact reads "du".
+     *
+     * @return 'sie'|'du'|'ihr'
+     */
+    public function clientAddress(int $recipients = 1): string
+    {
+        return match (true) {
+            $this->clientRegister() === 'formal' => 'sie',
+            $recipients > 1 => 'ihr',
+            default => 'du',
+        };
+    }
+
     /**
      * T-09: the length ShootCalendar gives a shoot whose end_time is unset,
      * replacing the hardcoded addHours(2) that used to sit in that class
@@ -121,7 +142,7 @@ class StudioSettingsResolver
         return $this->row()->deposit_percentage;
     }
 
-    /** Whether a rendered contract's `settings.widerrufText` merge field carries any text at all. */
+    /** Whether a rendered document's `settings.widerrufText` merge field carries any text at all. */
     public function widerrufIncluded(): bool
     {
         return $this->row()->widerruf_included;
@@ -134,7 +155,7 @@ class StudioSettingsResolver
 
     /**
      * T-12: the PDF shell App\Documents\Support\DocumentRenderer wraps a
-     * Contract or Quote's resolved body in, above it. Null renders as no
+     * Quote or Invoice's resolved body in, above it. Null renders as no
      * letterhead at all — the same "unset is a valid, working state"
      * convention widerrufText() above already carries.
      */
@@ -203,7 +224,7 @@ class StudioSettingsResolver
     }
 
     /**
-     * The stored path of the logo — the ONE file both RenderContractJob's
+     * The stored path of the logo — the ONE file both the
      * `studio.logoPath` merge field and a future portal-branding read are
      * meant to resolve against (T-02's acceptance criterion). Never a second
      * upload for a second context: whoever needs the logo reads it through
@@ -217,7 +238,7 @@ class StudioSettingsResolver
     /**
      * T-02's legal-entity, brand and bank columns, keyed by column name —
      * the one place outside this class permitted to see them, and only as
-     * plain values. The Studio-Profil edit screen and RenderContractJob's
+     * plain values. The Studio-Profil edit screen and the
      * `studio.*` merge fields (docs/documents.md) both read through this
      * rather than through row() itself, which stays private.
      *
@@ -247,8 +268,8 @@ class StudioSettingsResolver
      * The logo is stored once (T-02's acceptance criterion) — a re-upload
      * replaces the same tenant's file and removes whatever it replaces,
      * rather than accumulating a second one under a second name. Uses the
-     * `local` disk the exact way RenderContractJob stores a rendered
-     * contract (Storage::disk('local'), see docs/documents.md), not a
+     * `local` disk the exact way RenderInvoiceJob stores a rendered
+     * invoice (Storage::disk('local'), see docs/documents.md), not a
      * second filesystem convention invented for branding alone.
      */
     public function setLogo(UploadedFile $file, ?User $actor = null): void
@@ -596,12 +617,6 @@ class StudioSettingsResolver
     public function acceptQuotesEnabled(): bool
     {
         return $this->row()->portal_accept_quotes_enabled;
-    }
-
-    /** Gates M-02's sign action — the contract itself stays viewable either way. */
-    public function signContractsEnabled(): bool
-    {
-        return $this->row()->portal_sign_contracts_enabled;
     }
 
     /** Gates T-07's payment screen in full. */

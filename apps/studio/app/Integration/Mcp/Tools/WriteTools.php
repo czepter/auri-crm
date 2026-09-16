@@ -304,7 +304,7 @@ final class WriteTools
             new ToolDefinition(
                 name: 'delete_project',
                 title: 'Delete a project',
-                description: 'Deletes a project together with its lead, its shoots, its internal notes and its links to contacts. The contacts themselves stay. Refused while a job, a quote, a contract or a gallery hangs off the project — past that point the project is a record of an agreement, and removing it is a decision for a screen rather than a tool. There is no undo.',
+                description: 'Deletes a project together with its lead, its shoots, its internal notes and its links to contacts. The contacts themselves stay. Refused while a job, a quote or a gallery hangs off the project — past that point the project is a record of an agreement, and removing it is a decision for a screen rather than a tool. There is no undo.',
                 method: 'DELETE',
                 path: '/projects/{project}',
                 schema: fn (JsonSchema $schema) => [
@@ -445,9 +445,9 @@ final class WriteTools
             ]))->description('Everyone on the inquiry besides the contact — the partner of a wedding couple. Each becomes a contact of their own on the project.'),
             'project_name' => $schema->string()->max(255)->required(),
             'type' => $schema->string()->description('The project type key — see list_project_types. A studio defines its own, so this is not a fixed list.')->required(),
-            'source' => $schema->string()->enum(self::LEAD_SOURCES)->required(),
+            'source' => $schema->string()->enum(self::LEAD_SOURCES)->nullable(),
             'source_other' => $schema->string()->max(120)->nullable()->description('What \'other\' actually was, e.g. the platform the inquiry came from. Only kept beside source: other.'),
-            'captured_via' => $schema->string()->enum(self::CAPTURE_CHANNELS)->required(),
+            'captured_via' => $schema->string()->enum(self::CAPTURE_CHANNELS)->nullable(),
             'captured_via_other' => $schema->string()->max(120)->nullable()->description('What \'other\' actually was. Only kept beside captured_via: other.'),
             'date' => $schema->string()->nullable()->description('YYYY-MM-DD'),
             'inquiry_text' => $schema->string()->max(10000)->nullable(),

@@ -98,12 +98,12 @@ it('leaves nothing behind when a transition is refused', function () {
 
 it('marks a lead lost from any stage without changing the stage', function () {
     Event::fake([LeadLost::class]);
-    $lead = Lead::factory()->atStage(LeadStage::ContractSent)->create();
+    $lead = Lead::factory()->atStage(LeadStage::QuoteAccepted)->create();
 
     $lost = app(AdvanceLeadStage::class)->markLost($lead, 'Anderer Fotograf');
 
     expect($lost->isLost())->toBeTrue()
-        ->and($lost->stage->key)->toBe(LeadStage::ContractSent->value)
+        ->and($lost->stage->key)->toBe(LeadStage::QuoteAccepted->value)
         ->and($lost->lost_reason)->toBe('Anderer Fotograf');
 
     Event::assertDispatched(LeadLost::class);
@@ -127,7 +127,7 @@ it('refuses to lose a lead twice', function () {
 // stands in neither list — /anfragen leaves booked ones out, /projekte reads
 // the job.
 it('books the project when the lead reaches gebucht', function () {
-    $lead = Lead::factory()->atStage(LeadStage::ContractSent)->create();
+    $lead = Lead::factory()->atStage(LeadStage::QuoteAccepted)->create();
 
     app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), User::factory()->create());
 
@@ -135,7 +135,7 @@ it('books the project when the lead reaches gebucht', function () {
 });
 
 it('backdates the booking and its shoots with the stage move', function () {
-    $lead = Lead::factory()->atStage(LeadStage::ContractSent)->create();
+    $lead = Lead::factory()->atStage(LeadStage::QuoteAccepted)->create();
     $shoot = Shoot::factory()->for($lead->project)->create();
 
     app(AdvanceLeadStage::class)(
@@ -150,7 +150,7 @@ it('backdates the booking and its shoots with the stage move', function () {
 });
 
 it('leaves an existing job alone when the stage catches up', function () {
-    $lead = Lead::factory()->atStage(LeadStage::ContractSent)->create();
+    $lead = Lead::factory()->atStage(LeadStage::QuoteAccepted)->create();
     $job = Job::factory()->for($lead->project)->create();
 
     app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), User::factory()->create());
@@ -188,20 +188,20 @@ it('takes the booking back when the won stage is taken back', function () {
     app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), $actor);
     expect(Job::count())->toBe(1);
 
-    app(AdvanceLeadStage::class)($lead, stage(LeadStage::ContractSent), $actor);
+    app(AdvanceLeadStage::class)($lead, stage(LeadStage::QuoteAccepted), $actor);
 
     expect(Job::count())->toBe(0)
-        ->and($lead->fresh()->stage->key)->toBe(LeadStage::ContractSent->value)
+        ->and($lead->fresh()->stage->key)->toBe(LeadStage::QuoteAccepted->value)
         ->and(AuditLog::where('event', 'project.unbooked')->count())->toBe(1);
 });
 
 it('dates a backdated unbooking when it happened', function () {
-    $lead = Lead::factory()->atStage(LeadStage::ContractSent)->create();
+    $lead = Lead::factory()->atStage(LeadStage::QuoteAccepted)->create();
     Shoot::factory()->for($lead->project)->create();
     $actor = User::factory()->create();
 
     app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), $actor);
-    app(AdvanceLeadStage::class)($lead->fresh(), stage(LeadStage::ContractSent), $actor, CarbonImmutable::parse('2026-05-02 10:00'));
+    app(AdvanceLeadStage::class)($lead->fresh(), stage(LeadStage::QuoteAccepted), $actor, CarbonImmutable::parse('2026-05-02 10:00'));
 
     $dates = AuditLog::whereIn('event', ['project.unbooked', 'shoot.status_changed'])
         ->where('context->reverted', true)
@@ -221,7 +221,7 @@ it('refuses to take the booking back once a payment plan hangs off it', function
     app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), $actor);
     PaymentPlan::factory()->for(Job::sole())->create();
 
-    expect(fn () => app(AdvanceLeadStage::class)($lead, stage(LeadStage::ContractSent), $actor))
+    expect(fn () => app(AdvanceLeadStage::class)($lead, stage(LeadStage::QuoteAccepted), $actor))
         ->toThrow(DomainException::class);
 
     expect(Job::count())->toBe(1)
@@ -230,12 +230,12 @@ it('refuses to take the booking back once a payment plan hangs off it', function
 
 it('leaves the stage alone when the booking fails', function () {
     $this->mock(BookProject::class)->shouldReceive('__invoke')->andThrow(new DomainException('Shoot'));
-    $lead = Lead::factory()->atStage(LeadStage::ContractSent)->create();
+    $lead = Lead::factory()->atStage(LeadStage::QuoteAccepted)->create();
 
     expect(fn () => app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), User::factory()->create()))
         ->toThrow(DomainException::class);
 
-    expect($lead->fresh()->stage->key)->toBe(LeadStage::ContractSent->value)
+    expect($lead->fresh()->stage->key)->toBe(LeadStage::QuoteAccepted->value)
         ->and(AuditLog::where('event', 'lead.stage_changed')->exists())->toBeFalse();
 });
 

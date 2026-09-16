@@ -16,9 +16,9 @@ use Illuminate\Support\Collection;
  * it hands the body its lines. The composer is the only place that reaches
  * the layout's own scope — the same reason `brand` is resolved there.
  *
- * The particulars are the ones App\Contracts\Jobs\RenderContractJob's
- * `studio.*` merge fields read, from StudioSettingsResolver::attributes(),
- * so the mail footer and the rendered contract cannot drift apart.
+ * The particulars are the ones the `studio.*` merge fields read, from
+ * StudioSettingsResolver::attributes(), so the mail footer and a rendered
+ * PDF cannot drift apart.
  */
 final class StudioMailFooter
 {

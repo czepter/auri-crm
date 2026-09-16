@@ -2,16 +2,12 @@
 
 namespace App\Migration\Actions;
 
-use App\Contracts\Models\Contract;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
-use App\Documents\Enums\DocumentTemplateType;
-use App\Documents\Models\DocumentTemplate;
 use App\Migration\Support\ImportPlan;
 use Illuminate\Support\Facades\DB;
-use Visus\Cuid2\Cuid2;
 
 /**
  * Writes exactly the plan PlanHistoricalImport built — nothing here decides
@@ -27,8 +23,6 @@ use Visus\Cuid2\Cuid2;
  */
 class CommitHistoricalImport
 {
-    private const HISTORICAL_TEMPLATE_NAME = 'Historischer Import (X-01)';
-
     public function __invoke(ImportPlan $plan): array
     {
         return DB::transaction(function () use ($plan) {
@@ -46,25 +40,11 @@ class CommitHistoricalImport
                 ]);
             }
 
-            $contractRows = $plan->contracts['toCreate'];
-            $template = $contractRows === [] ? null : $this->historicalImportTemplate();
-
-            foreach ($contractRows as $row) {
-                Contract::create([
-                    'project_id' => $projectsByRef[$row['project_ref']]->id,
-                    'contract_template_id' => $template->id,
-                    'status' => $row['status'],
-                    'rendered_at' => $row['rendered_at'],
-                    'artifact_path' => $row['artifact_path'],
-                ]);
-            }
-
             return [
                 'contacts' => count($plan->contacts['toCreate']),
                 'contacts_reused' => count($plan->contacts['toReuse']),
                 'projects' => count($plan->projects['toCreate']),
                 'jobs' => count($plan->jobs['toCreate']),
-                'contracts' => count($contractRows),
             ];
         });
     }
@@ -109,27 +89,5 @@ class CommitHistoricalImport
         }
 
         return $byRef;
-    }
-
-    /**
-     * Contract.contract_template_id is a mandatory FK: every ordinary row
-     * names the exact DocumentTemplate version RenderContractJob rendered it
-     * from (M-01, generalised by T-12). A historical row was never rendered
-     * by this app at all, so every import shares one placeholder template
-     * instead of forcing the studio to fabricate one — created once per
-     * tenant and left is_current = false, so the settings screen that offers
-     * a template to render a fresh contract from (M-01) never lists it.
-     */
-    private function historicalImportTemplate(): DocumentTemplate
-    {
-        return DocumentTemplate::query()->where('name', self::HISTORICAL_TEMPLATE_NAME)->first()
-            ?? DocumentTemplate::create([
-                'family_id' => (string) new Cuid2,
-                'version' => 1,
-                'type' => DocumentTemplateType::Contract,
-                'name' => self::HISTORICAL_TEMPLATE_NAME,
-                'body' => '<p>Historisch importiertes Dokument — kein Rendering durch dieses System.</p>',
-                'is_current' => false,
-            ]);
     }
 }

@@ -35,8 +35,8 @@ return [
         ],
     ],
 
-    // M-01: the `gotenberg` Compose service converts a rendered contract's
-    // HTML to PDF. The default already matches docker-compose.yml's service
+    // The `gotenberg` Compose service converts a rendered document's HTML to
+    // PDF. The default already matches docker-compose.yml's service
     // name and Gotenberg's own default port, so a Compose stack needs no
     // override — only a deploy environment naming the service differently
     // does. See App\Support\GotenbergClient.

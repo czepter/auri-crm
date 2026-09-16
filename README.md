@@ -121,6 +121,18 @@ pnpm build
 pnpm --filter @studio/app exec playwright test   # end-to-end, needs a built admin bundle
 ```
 
+### Visual baselines
+
+`tests/e2e/visual.spec.ts` compares four screens against `-linux.png`
+baselines and runs on CI only: a screenshot from any other machine never
+matches the runner. To renew one, delete its PNG, push with the `e2e` label on
+the pull request, and take what the failing run wrote:
+
+```sh
+gh run download <run-id> -n visual-snapshots -D /tmp/visual
+cp /tmp/visual/tests/e2e/visual.spec.ts-snapshots/*.png apps/studio/tests/e2e/visual.spec.ts-snapshots/
+```
+
 Two artifacts are generated, never hand-edited, and CI fails on drift:
 
 ```sh

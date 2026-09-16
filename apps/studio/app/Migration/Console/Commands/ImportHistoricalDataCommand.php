@@ -7,7 +7,7 @@ use App\Migration\Actions\PlanHistoricalImport;
 use Illuminate\Console\Command;
 
 /**
- * X-01: bulk-imports historical contacts, projects, jobs and contracts from
+ * X-01: bulk-imports historical contacts, projects and jobs from
  * a directory of CSV files, so a studio moving onto this app is not left
  * re-typing years of client history by hand.
  *
@@ -18,13 +18,12 @@ use Illuminate\Console\Command;
  * plan to CommitHistoricalImport instead of a second, separately-written
  * write path, so the report can never drift from what actually gets written.
  *
- * Input format — {path} is a directory holding up to four CSV files, any of
+ * Input format — {path} is a directory holding up to three CSV files, any of
  * which may be omitted. Full column reference: docs/historical-import.md.
  *
  *   contacts.csv   ref,name,email,phone
  *   projects.csv   ref,name,type,primary_contact_ref
  *   jobs.csv       project_ref,booked_at,booked_via
- *   contracts.csv  project_ref,status,rendered_at,artifact_path
  *
  * `ref` and `*_ref` columns are a legacy identifier that exists only to link
  * rows to each other within this one import run — never stored on the
@@ -33,10 +32,10 @@ use Illuminate\Console\Command;
 class ImportHistoricalDataCommand extends Command
 {
     protected $signature = 'migration:import-historical-data
-        {path : Directory containing contacts.csv, projects.csv, jobs.csv, contracts.csv}
+        {path : Directory containing contacts.csv, projects.csv, jobs.csv}
         {--commit : Write the import. Without this flag, only a report is printed.}';
 
-    protected $description = 'Dry-runs or commits a historical import of contacts, projects, jobs and contracts from CSV files (X-01). See docs/historical-import.md for the file format.';
+    protected $description = 'Dry-runs or commits a historical import of contacts, projects and jobs from CSV files (X-01). See docs/historical-import.md for the file format.';
 
     public function handle(PlanHistoricalImport $plan, CommitHistoricalImport $commit): int
     {
@@ -60,9 +59,6 @@ class ImportHistoricalDataCommand extends Command
         $this->reportEntity('Jobs', $importPlan->jobs['toCreate'], $importPlan->jobs['errors'],
             fn (array $row) => "project {$row['project_ref']}, booked {$row['booked_at']}",
         );
-        $this->reportEntity('Contracts', $importPlan->contracts['toCreate'], $importPlan->contracts['errors'],
-            fn (array $row) => "project {$row['project_ref']} ({$row['status']->value})",
-        );
 
         if (! $this->option('commit')) {
             $this->newLine();
@@ -75,8 +71,8 @@ class ImportHistoricalDataCommand extends Command
 
         $this->newLine();
         $this->info(sprintf(
-            'Imported %d contact(s) (%d matched to an existing contact by email), %d project(s), %d job(s), %d contract(s).',
-            $summary['contacts'], $summary['contacts_reused'], $summary['projects'], $summary['jobs'], $summary['contracts'],
+            'Imported %d contact(s) (%d matched to an existing contact by email), %d project(s), %d job(s).',
+            $summary['contacts'], $summary['contacts_reused'], $summary['projects'], $summary['jobs'],
         ));
 
         return self::SUCCESS;
@@ -85,7 +81,7 @@ class ImportHistoricalDataCommand extends Command
     /**
      * One entity's slice of the report: how many rows would be created (with
      * up to five samples), and every row that can't be mapped, with its
-     * reason. Shared between all four entities rather than repeated four
+     * reason. Shared between all three entities rather than repeated three
      * times — the acceptance criterion is the same shape for each of them.
      */
     private function reportEntity(string $label, array $toCreate, array $errors, \Closure $describe, int $reused = 0): void

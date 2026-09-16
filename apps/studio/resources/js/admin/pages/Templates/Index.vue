@@ -35,7 +35,6 @@ const props = defineProps<{
   taskTemplates: App.Crm.Data.TaskTemplateData[]
   formTemplates: App.Crm.Data.FormTemplateData[]
   documentTemplates: App.Documents.Data.DocumentTemplateData[]
-  documentUse: Record<string, number>
   galleryPresets: App.Gallery.Data.GalleryPresetData[]
   audiences: { value: string; label: string }[]
   shootKinds: string[]
@@ -79,7 +78,7 @@ const rows = computed<Record<Kind, Row[]>>(() => ({
     name: template.name,
     meta: [template.typeLabel, template.shootKind, t('templates.version', { version: template.version })]
       .filter(Boolean).join(' · '),
-    note: t('templates.inUse', { count: props.documentUse[template.id] ?? 0 }),
+    note: '',
     active: true,
     href: `/dokumentvorlagen/${template.id}`,
   })),

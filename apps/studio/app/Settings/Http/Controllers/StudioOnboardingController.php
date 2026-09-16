@@ -2,6 +2,7 @@
 
 namespace App\Settings\Http\Controllers;
 
+use App\Automation\Actions\SeedDefaultAutomationRules;
 use App\Concerns\AuthorizesStaffSettings;
 use App\Documents\Actions\SeedStarterTemplates;
 use App\Documents\Support\StarterTemplateCatalog;
@@ -41,6 +42,7 @@ class StudioOnboardingController extends Controller
     public function complete(
         StudioSettingsResolver $settings,
         SeedStarterTemplates $seed,
+        SeedDefaultAutomationRules $seedRules,
         NotificationService $notifications,
     ): RedirectResponse {
         $this->authorizeSettings();
@@ -49,7 +51,8 @@ class StudioOnboardingController extends Controller
 
         // Also on "später abschließen": a studio with no templates can issue
         // nothing. Idempotent, so a second pass writes nothing.
-        $seed(StarterTemplateCatalog::onboardingDefaults($settings->vatMode()), $owner);
+        $seed(StarterTemplateCatalog::onboardingDefaults($settings->vatMode()), $owner, $settings->clientRegister());
+        $seedRules();
 
         $settings->set('onboarding_completed_at', now(), $owner);
 

@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\DB;
  * this cannot dedupe on provenance. It dedupes on what a studio would actually
  * see as a duplicate: a **current template of the same type with the same
  * name**. Re-entering the wizard step therefore adds nothing, and a studio
- * that renamed its contract gets no second one imposed on it either — their
+ * that renamed its quote gets no second one imposed on it either — their
  * own row wins, and nothing here overwrites it.
  *
  * @return int how many were written
@@ -31,10 +31,10 @@ use Illuminate\Support\Facades\DB;
 class SeedStarterTemplates
 {
     /** @param list<string> $keys */
-    public function __invoke(array $keys, ?User $actor): int
+    public function __invoke(array $keys, ?User $actor, string $register = 'formal'): int
     {
         $entries = collect($keys)
-            ->map(fn (string $key) => StarterTemplateCatalog::find($key))
+            ->map(fn (string $key) => StarterTemplateCatalog::find($key, $register))
             ->filter()
             ->values();
 

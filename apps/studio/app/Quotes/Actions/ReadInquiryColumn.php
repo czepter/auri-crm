@@ -3,8 +3,6 @@
 namespace App\Quotes\Actions;
 
 use App\Automation\Models\AutomationRun;
-use App\Contracts\Enums\ContractStatus;
-use App\Contracts\Models\Contract;
 use App\Crm\Data\DomainRowData;
 use App\Crm\Data\RowActionData;
 use App\Crm\Models\Project;
@@ -31,8 +29,6 @@ class ReadInquiryColumn
 {
     private const EXPIRY_WINDOW_DAYS = 14;
 
-    private const UNSIGNED_AFTER_DAYS = 4;
-
     private const FOLLOW_UP_RULE = 'quote-follow-up';
 
     /**
@@ -42,10 +38,7 @@ class ReadInquiryColumn
     {
         $viewer ??= auth('staff')->user();
 
-        return $this->chasedQuotes($viewer)
-            ->concat($this->acceptedWithoutContract($viewer))
-            ->concat($this->unsignedContracts($viewer))
-            ->values();
+        return $this->chasedQuotes($viewer);
     }
 
     /**
@@ -131,71 +124,5 @@ class ReadInquiryColumn
             ->where('anchorable_type', (new Project)->getMorphClass())
             ->where('anchorable_id', $projectId)
             ->count();
-    }
-
-    /**
-     * Ordered by oldest acceptance first: there is no deadline here, only how
-     * long the studio has already left "Vertrag fehlt" standing, so the
-     * longest-waiting acceptance is the most urgent one to chase.
-     *
-     * @return Collection<int, DomainRowData>
-     */
-    private function acceptedWithoutContract(?User $viewer): Collection
-    {
-        return Quote::query()
-            ->where('status', QuoteStatus::Accepted)
-            ->when($viewer !== null, fn ($query) => $query->whereIn(
-                'project_id',
-                Project::query()->visibleTo($viewer)->select('projects.id'),
-            ))
-            ->whereDoesntHave('project.contracts')
-            ->with('project')
-            ->orderBy('accepted_at')
-            ->get()
-            ->map(fn (Quote $quote) => new DomainRowData(
-                projectId: $quote->project->public_id,
-                who: $quote->project->name,
-                what: 'angenommen '.$quote->accepted_at?->format('d.m.Y').' —',
-                emphasis: 'Vertrag fehlt',
-                whatTail: null,
-                action: RowActionData::link(
-                    'Vertrag senden',
-                    "/auftraege/{$quote->project->public_id}/vertrag",
-                ),
-                hot: true,
-            ));
-    }
-
-    /**
-     * ContractStatus describes the render, not a dispatch — there is no `sent`
-     * to test against — so a rendered contract with no signature, aged past
-     * the window, is what "unsigniert" means here.
-     *
-     * Ordered by oldest render first: the contract that has been waiting on a
-     * signature the longest is the most urgent one to call about.
-     *
-     * @return Collection<int, DomainRowData>
-     */
-    private function unsignedContracts(?User $viewer): Collection
-    {
-        return Contract::query()
-            ->where('status', ContractStatus::Rendered)
-            ->whereDoesntHave('signature')
-            ->where('created_at', '<=', now()->subDays(self::UNSIGNED_AFTER_DAYS))
-            ->when($viewer !== null, fn ($query) => $query->whereIn(
-                'project_id',
-                Project::query()->visibleTo($viewer)->select('projects.id'),
-            ))
-            ->with('project')
-            ->orderBy('created_at')
-            ->get()
-            ->map(fn (Contract $contract) => new DomainRowData(
-                projectId: $contract->project->public_id,
-                who: $contract->project->name,
-                what: 'Vertrag',
-                emphasis: (int) $contract->created_at->diffInDays().' Tage unsigniert',
-                whatTail: null,
-                action: RowActionData::tel('Anrufen', $contract->project->primaryContact()?->phone),
-            ));
     }
 }

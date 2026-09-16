@@ -1,4 +1,10 @@
 import { defineConfig } from '@playwright/test'
+import { NOW } from './tests/e2e/helpers'
+
+// Every PHP process of the suite runs at NOW (#324). A session cookie issued
+// then has already expired for a browser living in real time.
+// ponytail: ten years of SESSION_LIFETIME, move NOW forward before 2036.
+const clock = { E2E_NOW: NOW, SESSION_LIFETIME: String(10 * 365 * 24 * 60) }
 
 // CI installs PHP natively; locally there is no host PHP, so the server runs in
 // the compose container, which publishes its port 8000 on the host as APP_PORT.
@@ -52,16 +58,33 @@ const mcpServers = [
       PHP_CLI_SERVER_WORKERS: '4',
       API_URL: 'http://127.0.0.1:8002',
       ADMIN_URL: 'http://127.0.0.1:8000',
+      ...clock,
     },
     timeout: 120_000,
   },
 ]
 
+// visual.spec.ts dials the portal surface, which only CI and
+// docker/e2e/run.sh start.
+const portalServer = {
+  cwd: '.',
+  command: 'php artisan serve --no-reload --host=0.0.0.0 --port=8001',
+  url: 'http://127.0.0.1:8001/up',
+  env: { APP_SURFACE: 'portal', PHP_CLI_SERVER_WORKERS: '4', ...clock },
+  timeout: 120_000,
+}
+
 export default defineConfig({
   testDir: './tests/e2e',
+  // visual first: the other specs write to the fixtures its screens show.
   // mcp.spec.ts braucht den gebauten MCP-Server; CI fährt ihn in einem
   // eigenen Job hoch, lokal steht er nicht.
-  testIgnore: process.env.CI ? [] : ['**/mcp.spec.ts'],
+  projects: process.env.CI
+    ? [
+        { name: 'visual', testMatch: '**/visual.spec.ts' },
+        { name: 'e2e', testIgnore: '**/visual.spec.ts', dependencies: ['visual'] },
+      ]
+    : [{ name: 'e2e', testIgnore: ['**/mcp.spec.ts', '**/visual.spec.ts'] }],
   timeout: 30_000,
   use: {
     baseURL,
@@ -72,16 +95,16 @@ export default defineConfig({
       cwd: process.env.CI ? '.' : '../..',
       command: process.env.CI
         ? serve
-        : `docker compose run --rm --service-ports -e APP_SURFACE=admin -e DB_DATABASE=studio_e2e php ${serve}`,
+        : `docker compose run --rm --service-ports -e APP_SURFACE=admin -e DB_DATABASE=studio_e2e -e E2E_NOW -e SESSION_LIFETIME php ${serve}`,
       url: `${baseURL}/up`,
       reuseExistingServer: !process.env.CI,
       // One PHP worker serves one request at a time, so a fetch a page fires
       // while that page is still pulling assets waits behind them — which is
       // what gallery-record's five-second assertion on a minted link kept
       // losing to on CI. Respected only alongside --no-reload above.
-      env: { APP_SURFACE: 'admin', PHP_CLI_SERVER_WORKERS: '4' },
+      env: { APP_SURFACE: 'admin', PHP_CLI_SERVER_WORKERS: '4', PORTAL_URL: 'http://localhost:8001', ...clock },
       timeout: 120_000,
     },
-    ...(process.env.CI ? mcpServers : []),
+    ...(process.env.CI ? [portalServer, ...mcpServers] : []),
   ],
 })

@@ -6,9 +6,9 @@ use App\Automation\Enums\AutomationAnchor;
 use App\Automation\Enums\AutomationOffsetDirection;
 use App\Automation\Models\AutomationRule;
 use App\Automation\Models\AutomationRun;
-use App\Automation\Notifications\AutomationReminder;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
+use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use Carbon\CarbonImmutable;
@@ -25,7 +25,7 @@ uses(RefreshDatabase::class);
 it('fires exactly one AutomationRun when the same rule/anchor/date is processed twice through FireAutomationRule', function () {
     Notification::fake();
 
-    $project = Project::factory()->create();
+    $project = Project::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
     $project->attachContact($contact, ProjectContactRole::Primary);
     $shoot = Shoot::factory()->for($project)->create();
@@ -40,8 +40,8 @@ it('fires exactly one AutomationRun when the same rule/anchor/date is processed 
     expect($first)->not->toBeNull()
         ->and($second)->toBeNull();
 
-    expect(AutomationRun::count())->toBe(1);
-    Notification::assertSentToTimes($contact, AutomationReminder::class, 1);
+    expect(AutomationRun::count())->toBe(1)
+        ->and(AutomationRun::sole()->contact_ids)->toBe([$contact->id]);
 });
 
 it('never re-fires when the daily sweep is re-run for the same day, as a redeployed scheduler would', function () {
@@ -51,6 +51,7 @@ it('never re-fires when the daily sweep is re-run for the same day, as a redeplo
     $project = Project::factory()->create();
     $contact = Contact::factory()->create();
     $project->attachContact($contact, ProjectContactRole::Primary);
+    Job::factory()->for($project)->create();
     Shoot::factory()->for($project)->create(['date' => $today->addDays(7)->toDateString()]);
 
     AutomationRule::factory()
