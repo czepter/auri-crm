@@ -126,6 +126,7 @@ class DemoCrmSeeder extends Seeder
             $lead = Lead::factory()->for($project)->atStage(LeadStage::from($stage), $daysAgo)->create([
                 'source' => LeadSource::from($source),
                 'captured_by_id' => $staff->id,
+                'captured_at' => now()->subDays($daysAgo),
             ]);
 
             // The cast is built from models rather than CaptureInquiry, so the
