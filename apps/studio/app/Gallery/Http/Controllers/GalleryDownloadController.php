@@ -468,10 +468,6 @@ class GalleryDownloadController extends Controller
             || (! $gallery->requiresVerifiedEmail() && $this->clientEmail($gallery) !== null);
 
         return match (true) {
-            // Before either gate: no code and no address gets a guest past
-            // an unpaid invoice, so asking for them first would be asking
-            // for nothing.
-            $gallery->balanceBlocksDownload() => 'balance',
             ! $hasPin => 'pin',
             ! $hasEmail => 'email',
             default => 'ready',

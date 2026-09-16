@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useForm } from '@inertiajs/vue3'
+import { router, useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
@@ -15,6 +15,7 @@ import { NONE, fromOption, toOption } from '@/lib/select'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
 const props = defineProps<{
+  mode: 'internal' | 'external'
   project: App.Crm.Data.ProjectSuggestionData | null
   shootId: string | null
   presets: App.Gallery.Data.GalleryPresetData[]
@@ -23,14 +24,19 @@ const props = defineProps<{
     lists: boolean
     comments: boolean
     expiryDays: number | null
-    requiresSettledBalance: boolean
     design: Record<string, string>
   }
 }>()
 
 const MODES = ['internal', 'external']
 
-const mode = ref('internal')
+const page = usePage()
+
+// The page URL, not '/galerien/neu': it carries projekt and shooting along.
+function switchMode(next: string) {
+  router.get(page.url, { art: next === 'external' ? 'extern' : 'intern' }, { preserveScroll: true, preserveState: true })
+}
+
 const project = ref<App.Crm.Data.ProjectSuggestionData | null>(props.project)
 // G-16: womit eine neue Galerie anfängt. Die Standard-Vorlage steht schon
 // gewählt da, statt dass jeder sie aus der Liste sucht.
@@ -44,7 +50,6 @@ const form = useForm({
   is_external: false,
   external_url: '',
   expires_at: '' as string,
-  requires_settled_balance: props.studioDefaults.requiresSettledBalance,
   downloads_enabled: props.studioDefaults.downloads,
   lists_enabled: props.studioDefaults.lists,
   comments_enabled: props.studioDefaults.comments,
@@ -57,8 +62,6 @@ watch([preset, project], () => {
   form.downloads_enabled = born.downloads
   form.lists_enabled = born.lists
   form.comments_enabled = born.comments
-  form.requires_settled_balance =
-    preset.value?.requiresSettledBalance ?? props.studioDefaults.requiresSettledBalance
   form.design = preset.value?.design ?? { ...props.studioDefaults.design }
   form.expires_at = expiryOn(preset.value, props.studioDefaults, new Date())
 }, { immediate: true })
@@ -71,12 +74,11 @@ function submit() {
       ...data,
       project_id: project.value?.id ?? null,
       shoot_id: project.value?.id === props.project?.id ? props.shootId : null,
-      is_external: mode.value === 'external',
-      ...(mode.value === 'external'
+      is_external: props.mode === 'external',
+      ...(props.mode === 'external'
         ? {
             expires_at: '',
             design: null,
-            requires_settled_balance: false,
             downloads_enabled: true,
             lists_enabled: true,
             comments_enabled: true,
@@ -95,8 +97,9 @@ function submit() {
 
         <form class="max-w-[620px] px-8 pt-7 pb-8" @submit.prevent="submit">
           <ChoiceGroup
-            v-model="mode"
+            :model-value="mode"
             :options="MODES.map((option) => ({ value: option, label: $t(`galleries.mode_${option}`) }))"
+            @update:model-value="switchMode"
           />
 
           <div class="mt-6 flex flex-col gap-4">
@@ -133,11 +136,6 @@ function submit() {
               <div class="flex flex-col gap-1.5">
                 <Label for="gallery-expiry">{{ $t('galleries.expiryField') }}</Label>
                 <Input id="gallery-expiry" v-model="form.expires_at" type="date" />
-              </div>
-
-              <div class="flex items-center gap-2.5">
-                <Checkbox id="cb-new-balance" v-model="form.requires_settled_balance" />
-                <Label variant="inline" for="cb-new-balance">{{ $t('gallerySettings.balanceLabel') }}</Label>
               </div>
 
               <div class="flex items-center gap-2.5">

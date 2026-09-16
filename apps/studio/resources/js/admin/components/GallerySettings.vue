@@ -37,7 +37,6 @@ type Section = 'standardwerte' | 'gestaltung' | 'vorlagen'
 const SECTIONS: Section[] = ['standardwerte', 'gestaltung', 'vorlagen']
 
 const GATES = [
-  { field: 'gallery_default_requires_settled_balance', label: 'gallerySettings.balanceLabel' },
   { field: 'gallery_default_downloads_enabled', label: 'gallerySettings.downloadsLabel' },
   { field: 'gallery_default_lists_enabled', label: 'gallerySettings.listsLabel' },
   { field: 'gallery_default_comments_enabled', label: 'gallerySettings.commentsLabel' },
@@ -58,7 +57,6 @@ const TRISTATE = [
 ]
 
 const PRESET_GATES = [
-  { field: 'requires_settled_balance', label: 'gallerySettings.balanceLabel' },
   { field: 'downloads_enabled', label: 'gallerySettings.downloadsLabel' },
   { field: 'lists_enabled', label: 'gallerySettings.listsLabel' },
   { field: 'comments_enabled', label: 'gallerySettings.commentsLabel' },
@@ -68,7 +66,6 @@ const open = ref<Section>(props.section)
 
 const form = useForm({
   gallery_default_expiry_days: props.settings.expiryDays ?? ('' as string | number),
-  gallery_default_requires_settled_balance: props.settings.requiresSettledBalance,
   gallery_default_downloads_enabled: props.settings.downloadsEnabled,
   gallery_default_lists_enabled: props.settings.listsEnabled,
   gallery_default_comments_enabled: props.settings.commentsEnabled,
@@ -98,7 +95,6 @@ function fields(row: App.Gallery.Data.GalleryPresetData) {
     name: row.name,
     expiry_mode: row.expiryMode,
     expiry_days: (row.expiryDays ?? '') as string | number,
-    requires_settled_balance: toTri(row.requiresSettledBalance),
     downloads_enabled: toTri(row.downloadsEnabled),
     lists_enabled: toTri(row.listsEnabled),
     comments_enabled: toTri(row.commentsEnabled),
@@ -108,7 +104,7 @@ function fields(row: App.Gallery.Data.GalleryPresetData) {
 
 const presetForm = useForm(fields(props.presets[0] ?? {
   name: '', expiryMode: 'inherit', expiryDays: null, design: null,
-  requiresSettledBalance: null, downloadsEnabled: null, listsEnabled: null, commentsEnabled: null,
+  downloadsEnabled: null, listsEnabled: null, commentsEnabled: null,
 } as App.Gallery.Data.GalleryPresetData))
 
 watch(preset, (row) => {
@@ -165,9 +161,6 @@ const presetPreview = computed(() => ({
     lists: presetForm.lists_enabled === '' ? form.gallery_default_lists_enabled : presetForm.lists_enabled === '1',
     comments: presetForm.comments_enabled === '' ? form.gallery_default_comments_enabled : presetForm.comments_enabled === '1',
   },
-  requiresSettledBalance: presetForm.requires_settled_balance === ''
-    ? form.gallery_default_requires_settled_balance
-    : presetForm.requires_settled_balance === '1',
 }))
 
 const studioOffers = computed(() => ({
@@ -248,7 +241,6 @@ const studioOffers = computed(() => ({
             <GalleryPreview
               :design="form.gallery_default_design"
               :offers="studioOffers"
-              :requires-settled-balance="form.gallery_default_requires_settled_balance"
               :title="previewTitle"
               :url="galleryHost"
             />
@@ -278,7 +270,6 @@ const studioOffers = computed(() => ({
             <GalleryPreview
               :design="form.gallery_default_design"
               :offers="studioOffers"
-              :requires-settled-balance="form.gallery_default_requires_settled_balance"
               :title="previewTitle"
               :url="galleryHost"
             />
@@ -382,7 +373,6 @@ const studioOffers = computed(() => ({
               <GalleryPreview
                 :design="presetPreview.design"
                 :offers="presetPreview.offers"
-                :requires-settled-balance="presetPreview.requiresSettledBalance"
                 :title="previewTitle"
                 :url="galleryHost"
               />

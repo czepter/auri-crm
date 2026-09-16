@@ -2,6 +2,8 @@
 
 namespace App\Quotes\Actions;
 
+use App\Crm\Actions\AdvanceLeadStage;
+use App\Crm\Enums\StageAnchor;
 use App\Crm\Models\Contact;
 use App\Notifications\Actions\NotifyStudio;
 use App\Notifications\Studio\QuoteAccepted;
@@ -38,7 +40,10 @@ use Illuminate\Validation\ValidationException;
  */
 class AcceptQuote
 {
-    public function __construct(private readonly NotifyStudio $notifyStudio) {}
+    public function __construct(
+        private readonly NotifyStudio $notifyStudio,
+        private readonly AdvanceLeadStage $leads,
+    ) {}
 
     /**
      * @param  list<string>  $selectedItemIds  public_ids of the blocks the client switched on
@@ -97,6 +102,8 @@ class AcceptQuote
                 projectId: $quote->project_id,
                 occurredAt: $at,
             );
+
+            $this->leads->reach($quote->project->lead, StageAnchor::QuoteAccepted, at: $at);
         });
 
         $accepted = $quote->fresh();

@@ -45,7 +45,7 @@ class ReadProjectScreen
         return [
             'phase' => [
                 'value' => ($this->position)($project)->label,
-                'proof' => $project->lead?->source->label(),
+                'proof' => $project->lead?->source?->label(),
             ],
             'nextDate' => [
                 'value' => $project->shoots()->uncancelled()->whereNotNull('date')
