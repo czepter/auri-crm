@@ -96,6 +96,7 @@ class ProjectController extends Controller
         $delivered = $vocabulary->anchored(StagePipeline::Project, StageAnchor::Delivered)?->sort_order ?? PHP_INT_MAX;
 
         return Inertia::render('Projects/Index', [
+            'view' => request()->query('ansicht') === 'board' ? 'board' : 'liste',
             'projects' => ProjectRowData::collect(
                 $projects->map(fn (Project $project) => ProjectRowData::fromProject($project, $this->position))
             ),

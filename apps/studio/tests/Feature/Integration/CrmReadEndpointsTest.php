@@ -140,7 +140,8 @@ it('searches contacts by name or email, case-insensitively', function () {
 // The search the page-local filter could never do: the match is on the last
 // page, so a filter over the first page returns nothing at all.
 it('finds a contact that the first page does not contain', function () {
-    Contact::factory()->count(30)->create(['name' => 'Meier']);
+    // Faker emails come from surnames, so a random one can contain "steffens".
+    Contact::factory()->count(30)->sequence(fn ($s) => ['email' => "meier{$s->index}@example.test"])->create(['name' => 'Meier']);
     $needle = Contact::factory()->create(['name' => 'Steffens']);
 
     $body = $this->withHeader('Authorization', bearerFor(Capability::ManageContacts))

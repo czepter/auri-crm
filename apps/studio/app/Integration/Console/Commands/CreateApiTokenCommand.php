@@ -7,10 +7,9 @@ use App\Integration\Models\ApiToken;
 use Illuminate\Console\Command;
 
 /**
- * I-01's minting path. No admin screen exists yet for this — the story's own
- * acceptance is the credential, the scope and the rate limit working, not a
- * UI to manage them — so a machine token is issued here, once, and the
- * plaintext secret is shown exactly this one time (Sanctum never stores it).
+ * I-01's minting path from the console; the studio mints through
+ * App\Settings\Http\Controllers\ApiTokenController. The plaintext secret is
+ * shown exactly this one time (Sanctum never stores it).
  */
 class CreateApiTokenCommand extends Command
 {

@@ -21,6 +21,7 @@ type Option = { value: string; label: string }
 type FieldDefinition = InstanceType<typeof ProjectFields>['$props']['fields'][number]
 
 const props = defineProps<{
+  date: string | null
   types: Option[]
   sources: Option[]
   channels: Option[]
@@ -58,7 +59,7 @@ const form = useForm({
   source_other: '',
   captured_via: props.channels[0].value,
   captured_via_other: '',
-  date: '',
+  date: props.date ?? '',
   call_time: '',
   end_time: '',
   venue_name: '',
@@ -119,6 +120,7 @@ watch(
     })
     conflicts.value = (await response.json()).conflicts
   },
+  { immediate: true },
 )
 
 function addPerson() {

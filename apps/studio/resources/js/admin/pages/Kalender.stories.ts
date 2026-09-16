@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
-import { userEvent, within } from 'storybook/test'
 import CalendarSeason from '@/admin/components/CalendarSeason.vue'
 import { addDays, weekMondays } from '@/admin/lib/season'
 import Kalender from './Kalender.vue'
@@ -87,21 +86,12 @@ const shootAhrens: App.Crm.Data.ShootData = {
   crewConflicts: [],
 }
 
-// Die Saison liegt hinter dem Umschalter, den nur ein Klick bedient.
-async function oeffneSaison({ canvasElement }: { canvasElement: HTMLElement }) {
-  await userEvent.click(within(canvasElement).getByText('Saison'))
-}
-
-// Die Liste liegt hinter demselben Umschalter wie die Saison.
-async function oeffneListe({ canvasElement }: { canvasElement: HTMLElement }) {
-  await userEvent.click(within(canvasElement).getByText('Liste'))
-}
-
 const meta = {
   title: 'Bildschirme/Kalender',
   component: Kalender,
   parameters: { layout: 'fullscreen', url: '/kalender' },
   args: {
+    view: 'monat',
     month: '2026-09',
     label: 'September 2026',
     previous: '2026-08',
@@ -149,11 +139,12 @@ type Story = StoryObj<typeof meta>
 export const Monat: Story = {}
 
 /** Drei Jahre dicht belegt, mit Doppelbelegung und Abwesenheiten in derselben Zeile. */
-export const SaisonDicht: Story = { play: oeffneSaison }
+export const SaisonDicht: Story = { args: { view: 'saison' } }
 
 /** Ein Jahr mit zwei Terminen: die Saison bleibt eine Zeile Wochen, fast alle leer. */
 export const SaisonFastLeer: Story = {
   args: {
+    view: 'saison',
     season: {
       shoots: [
         { date: '2026-09-13', name: 'Hochzeit Rahn', projectId: 'p-rahn', status: 'Bestätigt', phase: 'upcoming' },
@@ -162,8 +153,7 @@ export const SaisonFastLeer: Story = {
       away: [],
     },
   },
-  play: oeffneSaison,
 }
 
 /** Ein Monat ohne Termine, in der Liste. */
-export const ListeLeer: Story = { args: { shoots: [] }, play: oeffneListe }
+export const ListeLeer: Story = { args: { view: 'liste', shoots: [] } }
