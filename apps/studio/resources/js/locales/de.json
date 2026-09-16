@@ -838,7 +838,6 @@
     "status": "Status",
     "statusScheduled": "Geplant",
     "statusPaid": "Bezahlt",
-    "clientReminders": "Kunden erinnern",
     "notEditable": "Der Zahlungsplan ist nicht mehr bearbeitbar.",
     "sumMismatch": "Die Raten ergeben nicht den Gesamtbetrag.",
     "markPaid": "Als bezahlt markieren",

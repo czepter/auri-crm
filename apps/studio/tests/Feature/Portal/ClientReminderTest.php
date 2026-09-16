@@ -28,11 +28,10 @@ function projectWithClient(): array
     return [$project, $contact];
 }
 
-function planFor(Project $project, bool $remindClients = true): PaymentPlan
+function planFor(Project $project): PaymentPlan
 {
     return PaymentPlan::factory()->create([
         'job_id' => Job::factory()->create(['project_id' => $project->id]),
-        'client_reminders_enabled' => $remindClients,
     ]);
 }
 
@@ -77,22 +76,6 @@ it('names the remaining amount in the payment reminder', function () {
     $mail = (new PaymentReminder($installment, app(StudioSettingsResolver::class)))->toMail($contact);
 
     expect(implode(' ', array_map('strval', $mail->introLines)))->toContain('300,00');
-});
-
-it('says nothing to a client whose plan has reminders switched off', function () {
-    Notification::fake();
-    staffMember();
-
-    [$project, $contact] = projectWithClient();
-
-    PaymentInstallment::factory()->create([
-        'payment_plan_id' => planFor($project, remindClients: false),
-        'due_on' => now()->subDays(5)->toDateString(),
-    ]);
-
-    app(DetectOverdueInstallments::class)();
-
-    Notification::assertNotSentTo($contact, PaymentReminder::class);
 });
 
 it('reminds the client of their own open task on the second rung', function () {

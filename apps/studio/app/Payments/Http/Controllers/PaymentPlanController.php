@@ -92,20 +92,4 @@ class PaymentPlanController extends Controller
 
         return redirect("/auftraege/{$paymentPlan->job->project->public_id}");
     }
-
-    /**
-     * T-25: reminders for this one client, off. Its own route rather than a
-     * field on update() above, which submits the whole plan — a phone call
-     * must not need every installment's amount and date to hand.
-     */
-    public function reminders(Request $request, PaymentPlan $paymentPlan): RedirectResponse
-    {
-        $this->authorize('managePaymentPlan', $paymentPlan->job->project);
-
-        $paymentPlan->update($request->validate([
-            'client_reminders_enabled' => ['required', 'boolean'],
-        ]));
-
-        return back();
-    }
 }

@@ -408,7 +408,6 @@ final class ReadTools
             'total' => $schema->integer(),
             'openTotal' => $schema->integer(),
             'isEditable' => $schema->boolean(),
-            'clientRemindersEnabled' => $schema->boolean(),
             'installments' => $schema->array()->items($schema->object([
                 'id' => $schema->string(),
                 'amount' => $schema->integer(),

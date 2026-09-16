@@ -782,8 +782,6 @@ Route::middleware('audience:staff')->group(function () {
             ->name('payment-plans.store');
         Route::patch('/zahlungsplaene/{paymentPlan}', [PaymentPlanController::class, 'update'])
             ->name('payment-plans.update');
-        Route::patch('/zahlungsplaene/{paymentPlan}/erinnerungen', [PaymentPlanController::class, 'reminders'])
-            ->name('payment-plans.reminders');
 
         // #418: one call closes the plan. See SettlePaymentPlan.
         Route::post('/zahlungsplaene/{paymentPlan}/abwickeln', [PaymentPlanController::class, 'settle'])

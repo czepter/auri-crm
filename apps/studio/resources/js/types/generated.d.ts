@@ -854,7 +854,6 @@ id: string,
 total: number,
 openTotal: number,
 reference: string | null,
-clientRemindersEnabled: boolean,
 settledOn: string | null,
 installments: App.Payments.Data.PaymentInstallmentData[],
 };

@@ -12,8 +12,6 @@ import RailSection from '@/ui/page/RailSection.vue'
 import { formatEurosRounded } from '@/admin/lib/money'
 import { dayWithWeekday as day } from '@/admin/lib/dates'
 import { Button } from '@/ui/button'
-import { Checkbox } from '@/ui/checkbox'
-import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
@@ -61,14 +59,6 @@ function reopenProject() {
   router.delete(`/auftraege/${props.header.id}/abschluss`, { preserveScroll: true })
 }
 
-function toggleReminders(value: boolean | 'indeterminate') {
-  router.patch(
-    `/zahlungsplaene/${props.header.paymentPlan?.id}/erinnerungen`,
-    { client_reminders_enabled: value === true },
-    { preserveScroll: true },
-  )
-}
-
 function destroy() {
   router.delete(`/auftraege/${props.header.id}`)
 }
@@ -98,11 +88,6 @@ function destroy() {
             <div v-for="instalment in header.paymentPlan.installments" :key="instalment.id" class="flex gap-2.5 py-[5px] text-[12.5px] leading-[1.47]">
               <span class="w-[74px] flex-none text-ink-2">{{ day(instalment.dueOn) }}</span>
               <span>{{ formatEurosRounded(Number(instalment.amount)) }}</span>
-            </div>
-
-            <div class="mt-2 flex items-center gap-2">
-              <Checkbox id="cb-plan-reminders" :model-value="header.paymentPlan.clientRemindersEnabled" @update:model-value="toggleReminders" />
-              <Label variant="inline" for="cb-plan-reminders">{{ $t('payments.clientReminders') }}</Label>
             </div>
 
             <SettlePlanDialog

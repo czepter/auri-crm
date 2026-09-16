@@ -51,20 +51,6 @@ final class MoneyTools
             ),
 
             new ToolDefinition(
-                name: 'set_payment_reminders',
-                title: 'Set payment reminders',
-                description: 'Turn a payment plan\'s client reminders on or off — the one-off switch for a client already handled by phone.',
-                method: 'POST',
-                path: '/payment-plans/{payment_plan}/reminders',
-                schema: fn (JsonSchema $schema) => [
-                    'payment_plan' => $schema->string()->description('The payment plan public id')->required(),
-                    'client_reminders_enabled' => $schema->boolean()->required(),
-                ],
-                annotations: ToolDefinition::OVERWRITES,
-                silent: false,
-            ),
-
-            new ToolDefinition(
                 name: 'record_payment',
                 title: 'Record a payment',
                 description: 'Mark one installment paid, with the date, method and reference staff actually have in hand. Idempotent: an installment already paid is returned as-is.',

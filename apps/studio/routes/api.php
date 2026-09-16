@@ -448,8 +448,6 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageContracts->value, 
         ->name('api.projects.payment-plan.store');
     Route::patch('/payment-plans/{paymentPlan:public_id}', [PaymentController::class, 'update'])
         ->name('api.payment-plans.update');
-    Route::post('/payment-plans/{paymentPlan:public_id}/reminders', [PaymentController::class, 'reminders'])
-        ->name('api.payment-plans.reminders');
     Route::post('/payment-installments/{installment:public_id}/paid', [PaymentController::class, 'markPaid'])
         ->name('api.payment-installments.paid');
     Route::post('/payment-installments/{installment:public_id}/invoice', [PaymentController::class, 'issueInvoice'])

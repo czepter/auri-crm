@@ -71,15 +71,6 @@ class PaymentController extends Controller
         return response()->json(['data' => PaymentPlanData::fromModel($plan)]);
     }
 
-    public function reminders(Request $request, PaymentPlan $paymentPlan): JsonResponse
-    {
-        $paymentPlan->update($request->validate([
-            'client_reminders_enabled' => ['required', 'boolean'],
-        ]));
-
-        return response()->json(['data' => PaymentPlanData::fromModel($paymentPlan->fresh('installments'))]);
-    }
-
     public function markPaid(Request $request, PaymentInstallment $installment, MarkInstallmentPaid $markPaid): JsonResponse
     {
         $validated = $request->validate([

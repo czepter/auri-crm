@@ -149,10 +149,8 @@ class DetectOverdueInstallments
      * is a transfer in flight; the studio may know that earlier and more
      * often than the client is asked about it.
      *
-     * Two switches, both the studio's: the Zahlungen pane for all of them,
-     * the payment plan for the one client somebody just spoke to. Nothing
-     * goes out while the portal is closed for maintenance — the link would
-     * land on the closure page.
+     * Nothing goes out while the portal is closed for maintenance — the link
+     * would land on the closure page.
      */
     private function remindClients(): void
     {
@@ -162,7 +160,6 @@ class DetectOverdueInstallments
 
         $due = PaymentInstallment::query()
             ->overdue()
-            ->whereHas('plan', fn ($plan) => $plan->where('client_reminders_enabled', true))
             ->with('plan.job.project')
             ->get()
             ->filter(fn (PaymentInstallment $installment) => FibonacciReminderSchedule::isDue(

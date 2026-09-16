@@ -4710,69 +4710,6 @@
                 }
             }
         },
-        "/payment-plans/{paymentPlan}/reminders": {
-            "post": {
-                "operationId": "payment-plans.reminders",
-                "tags": [
-                    "Payment"
-                ],
-                "parameters": [
-                    {
-                        "name": "paymentPlan",
-                        "in": "path",
-                        "required": true,
-                        "description": "The payment plan public id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "client_reminders_enabled": {
-                                        "type": "boolean"
-                                    }
-                                },
-                                "required": [
-                                    "client_reminders_enabled"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/PaymentPlanData"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    }
-                }
-            }
-        },
         "/payment-installments/{installment}/paid": {
             "post": {
                 "operationId": "payment-installments.paid",
