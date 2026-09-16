@@ -29,7 +29,7 @@ has no per-queue granularity, only Horizon's supervisors do.
 ## Running it
 
 `docker compose up` starts a `worker` container running `php artisan horizon`
-alongside `php`, `postgres`, `redis`, `mailpit` and `minio` (G-01a's local
+alongside `php`, `postgres`, `redis`, `mailpit` and `rustfs` (G-01a's local
 S3-compatible service — see docs/media.md). The dashboard is mounted
 on the admin surface at `/horizon`, behind the `ManageStaff` capability (see
 `App\Providers\HorizonServiceProvider` and

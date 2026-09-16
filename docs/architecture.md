@@ -170,7 +170,7 @@ dedicated scheduler container in a deployment. See
 Object storage is Laravel's `s3` disk and nothing else — no
 `StorageDriverInterface` over the abstraction Flysystem already provides.
 Nothing in `app/` names a provider; only the Compose files' env values do,
-which is what keeps MinIO (local), RustFS (deployed) and any hosted
+which is what keeps RustFS (local and deployed) and any hosted
 S3-compatible bucket interchangeable. See
 [studio/docs/media.md](../apps/studio/docs/media.md).
 
