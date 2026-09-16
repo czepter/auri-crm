@@ -15,14 +15,13 @@ use Illuminate\Support\Collection;
  * total. Anything that produces amounts has to be unable to break it, and
  * "unable" means one implementation with a test on both edges.
  *
- * Rounded to ten euros, not to the cent: these are shares of an offer, and a
- * client reading "1.075 €" beside "1.080 €" is reading an arithmetic
- * artefact. The last stage absorbs whatever the rounding moved, so the sum
- * is exact whatever the shares round to.
+ * Rounded to the euro, not to the cent: these are shares of an offer. Not to
+ * ten euros either, which turns 50 % of 89 € into 40 €. The last stage absorbs
+ * whatever the rounding moved, so the sum is exact whatever the shares round to.
  */
 final class PaymentStageSplitter
 {
-    private const ROUNDING = 1000;
+    private const ROUNDING = 100;
 
     /**
      * @param  Collection<int, object{percent: int, minimum: int, label: string}>  $stages  in order
@@ -38,7 +37,7 @@ final class PaymentStageSplitter
             $amount = $index === $last
                 ? max(0, $rest)
                 : min(
-                    max(self::roundToTenEuros((int) round($total * $stage->percent / 100)), $stage->minimum),
+                    max(self::roundToEuros((int) round($total * $stage->percent / 100)), $stage->minimum),
                     max(0, $rest),
                 );
 
@@ -52,7 +51,7 @@ final class PaymentStageSplitter
         return $amounts;
     }
 
-    private static function roundToTenEuros(int $minorUnits): int
+    private static function roundToEuros(int $minorUnits): int
     {
         return (int) round($minorUnits / self::ROUNDING) * self::ROUNDING;
     }

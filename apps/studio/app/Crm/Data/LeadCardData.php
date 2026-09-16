@@ -33,7 +33,7 @@ class LeadCardData extends Data
         public ?string $date,
         public int $shootCount,
         public ?string $venue,
-        public string $source,
+        public ?string $source,
         public string $stage,
         public int $daysInStage,
         // C-07 (#241): the list view carries a value column and the board's
@@ -61,7 +61,7 @@ class LeadCardData extends Data
             date: $primary?->date?->format('Y-m-d'),
             shootCount: $project->shoots->count(),
             venue: $primary?->venue(),
-            source: $lead->source->label(),
+            source: $lead->source?->label(),
             stage: $lead->stage->key,
             daysInStage: (int) $lead->stage_entered_at->startOfDay()->diffInDays(now()->startOfDay()),
             value: $project->latestQuote?->total,

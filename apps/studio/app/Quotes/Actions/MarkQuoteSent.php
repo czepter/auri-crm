@@ -2,6 +2,8 @@
 
 namespace App\Quotes\Actions;
 
+use App\Crm\Actions\AdvanceLeadStage;
+use App\Crm\Enums\StageAnchor;
 use App\Models\User;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
@@ -21,6 +23,7 @@ class MarkQuoteSent
 {
     public function __construct(
         private readonly StudioSettingsResolver $settings,
+        private readonly AdvanceLeadStage $leads,
     ) {}
 
     /** $at: when it went out, for a quote entered after the fact. */
@@ -52,6 +55,8 @@ class MarkQuoteSent
                 projectId: $quote->project_id,
                 occurredAt: $at,
             );
+
+            $this->leads->reach($quote->project->lead, StageAnchor::QuoteSent, $actor, $at);
         });
 
         return $quote;

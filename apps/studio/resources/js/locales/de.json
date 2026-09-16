@@ -1186,6 +1186,18 @@
     "previewEmpty": "Keine passende Vorlage aktiv.",
     "previewDue": "fällig am"
   },
+  "apiTokens": {
+    "title": "API-Token",
+    "secret": "Token",
+    "secretHint": "Nur jetzt sichtbar.",
+    "active": "Aktiv",
+    "new": "Neuer Token",
+    "name": "Name",
+    "scopes": "Berechtigungen",
+    "create": "Erzeugen",
+    "revoke": "Widerrufen",
+    "revokeTitle": "Token widerrufen?"
+  },
   "notificationSettings": {
     "title": "Benachrichtigungen",
     "quietHoursSection": "Ruhezeiten",
@@ -1300,7 +1312,6 @@
   "gallerySettings": {
     "title": "Galerien",
     "expiryLabel": "Gültigkeit in Tagen",
-    "balanceLabel": "Erst nach vollständiger Zahlung freigeben",
     "downloadsLabel": "Download erlauben",
     "listsLabel": "Listen erlauben",
     "commentsLabel": "Kommentare erlauben",
@@ -1310,7 +1321,6 @@
     "nav_vorlagen": "Vorlagen",
     "defaultLabel": "Standard bei neuen Galerien",
     "defaultMark": "Standard",
-    "previewLocked": "Nach Zahlung",
     "previewInherited": "Gestaltung geerbt"
   },
   "portal": {
@@ -1540,8 +1550,6 @@
     "views": "Aufrufe",
     "marks": "Markierte Bilder",
     "comments": "Kommentare",
-    "balanceTitle": "Download noch gesperrt",
-    "balanceBody": "Die Bilder stehen bereit, sobald die Rechnung beglichen ist.",
     "pinKicker": "Download · Schritt 1 von 2",
     "pinTitle": "Download-Code erforderlich",
     "pinLabel": "Download-Code",
@@ -1665,7 +1673,6 @@
     "marked": "Markiert",
     "downloaded": "Heruntergeladen",
     "viewed": "Aufgerufen",
-    "blockedByBalance": "Gesperrt bis die Rechnung beglichen ist.",
     "versions": "Fassungen",
     "cover": "Titelbild",
     "setCover": "Titelbild setzen",

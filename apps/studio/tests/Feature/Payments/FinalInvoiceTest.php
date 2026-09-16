@@ -18,6 +18,7 @@ use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Number;
 
 uses(RefreshDatabase::class);
 
@@ -113,6 +114,20 @@ it('lists the quote lines, deducts the Anzahlung and sums to the cent', function
     // Netto + Steuer des Restbetrags ergeben genau die Rate.
     $figures = InvoiceFigures::forInstallment($final, app(StudioSettingsResolver::class));
     expect($figures->net + $figures->vat)->toBe((int) $final->amount);
+});
+
+it('deducts the VAT of each Anzahlung by amount', function () {
+    $plan = planBehindQuote(['2026-09-01', '2026-10-01']);
+    [$deposit, $final] = $plan->installments()->orderBy('sort_order')->get()->all();
+
+    app(IssueInvoice::class)($deposit);
+    app(IssueInvoice::class)($final);
+
+    $vat = InvoiceFigures::fromGross((int) $deposit->amount, 1900)->vat;
+    $html = app(RenderInvoicePdf::class)->forInstallment($final->fresh());
+
+    expect($html)->toContain('USt '.Number::currency($vat / 100, in: 'EUR', locale: 'de'))
+        ->and($html)->toContain('davon USt');
 });
 
 it('prints the quote discount as its own Rabatt line', function () {

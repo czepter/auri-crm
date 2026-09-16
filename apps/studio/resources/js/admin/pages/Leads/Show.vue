@@ -37,9 +37,9 @@ const props = defineProps<{
         type: string;
         typeOther: string | null;
         typeLabel: string;
-        source: string;
+        source: string | null;
         sourceOther: string | null;
-        sourceLabel: string;
+        sourceLabel: string | null;
         stage: string;
         stageLabel: string;
         inquiryText: string | null;

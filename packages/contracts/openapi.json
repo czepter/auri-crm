@@ -997,7 +997,10 @@
                                                     "type": "string"
                                                 },
                                                 "source": {
-                                                    "type": "string"
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
                                                 }
                                             },
                                             "required": [
@@ -1325,7 +1328,10 @@
                                             ]
                                         },
                                         "source": {
-                                            "type": "string"
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         },
                                         "sourceOther": {
                                             "type": [
@@ -3918,7 +3924,10 @@
                                             ]
                                         },
                                         "capturedVia": {
-                                            "type": "string"
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         },
                                         "capturedViaOther": {
                                             "type": [
@@ -6942,7 +6951,7 @@
         "/projects/{project}/shoots": {
             "post": {
                 "operationId": "projects.shoots.store",
-                "description": "Mirrors App\\Crm\\Http\\Controllers\\ShootController::store: the same\nrules, the same nullable date, and the model's own defaults for status,\nis_primary and sort_order \u2014 the primary one is already taken.",
+                "description": "Mirrors App\\Crm\\Http\\Controllers\\ShootController::store: the same\nrules, the same nullable date, the booked status on a booked project,\nand the model's own defaults for is_primary and sort_order \u2014 the\nprimary one is already taken.",
                 "summary": "A second shooting day on a project that already has one. CaptureInquiry\nmakes exactly one shoot and marks it primary; a wedding split over two\ndays \u2014 Trauung on one, Feier on another \u2014 has no way to reach the\nsecond from here otherwise",
                 "tags": [
                     "Shoot"
@@ -8547,10 +8556,24 @@
                         "type": "string"
                     },
                     "source": {
-                        "$ref": "#/components/schemas/LeadSource"
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/LeadSource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
                     },
                     "captured_via": {
-                        "$ref": "#/components/schemas/CaptureChannel"
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/CaptureChannel"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
                     },
                     "type_other": {
                         "type": [
@@ -8640,9 +8663,7 @@
                 },
                 "required": [
                     "project_name",
-                    "type",
-                    "source",
-                    "captured_via"
+                    "type"
                 ],
                 "title": "CaptureInquiryData"
             },

@@ -56,8 +56,6 @@ const gallery = {
   downloadPin: null,
   requiresVerifiedEmail: false,
   expiresAt: null,
-  balanceSettled: true,
-  requiresSettledBalance: false,
   design: null,
   offers: { downloads: true, lists: true, comments: true },
   deviates: true,
@@ -182,7 +180,7 @@ describe('Record', () => {
   })
 
   it('offers Vorlage anwenden once a preset exists', async () => {
-    const html = await render({ ...base, presets: [{ id: 'p1', name: 'Hochzeit', design: null, expiryMode: 'inherit', expiryDays: null, requiresSettledBalance: null, downloadsEnabled: null, listsEnabled: null, commentsEnabled: null }] })
+    const html = await render({ ...base, presets: [{ id: 'p1', name: 'Hochzeit', design: null, expiryMode: 'inherit', expiryDays: null, downloadsEnabled: null, listsEnabled: null, commentsEnabled: null }] })
 
     expect(html).toContain(de.galleryRecord.applyPreset)
   })
