@@ -27,12 +27,10 @@ trait RendersInvoiceParts
         return $document->reference === null ? '' : '<p>'.e($document->reference).'</p>';
     }
 
-    /** Freitext, kein HTML: escaped, Absätze bleiben Absätze — wie RenderQuotePdf::letter(). */
-    private function letter(string $text): string
+    /** #480: sanitised at save, merge fields escaped by InvoiceDocument. */
+    private function letter(string $html): string
     {
-        return $text === ''
-            ? ''
-            : collect(preg_split('/\n{2,}/', $text))->map(fn (string $paragraph) => '<p>'.nl2br(e(trim($paragraph))).'</p>')->implode('');
+        return $html;
     }
 
     private function vatNote(InvoiceDocument $document): string

@@ -54,6 +54,20 @@ class DocumentBlockCatalog
     ];
 
     /**
+     * #480: the letter text of a quote or an invoice — prose and merge fields,
+     * no block a layout would have to make room for.
+     *
+     * @return list<array{type: string, group: string, label: string, inline: bool}>
+     */
+    public static function letter(): array
+    {
+        return array_values(array_filter(
+            self::for(DocumentTemplateType::Quote),
+            fn (array $entry) => $entry['group'] === 'text' || $entry['inline'],
+        ));
+    }
+
+    /**
      * The palette for one document type, in the order the inserter shows it.
      *
      * @return list<array{type: string, group: string, label: string, inline: bool}>

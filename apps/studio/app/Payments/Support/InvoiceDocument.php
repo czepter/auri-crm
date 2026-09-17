@@ -2,6 +2,7 @@
 
 namespace App\Payments\Support;
 
+use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Payments\Models\CreditNote;
 use App\Payments\Models\Invoice;
@@ -71,7 +72,7 @@ final class InvoiceDocument
         public readonly string $totalNet = '',
         public readonly string $totalVat = '',
         public readonly string $totalGross = '',
-        /** #480: the invoice's own letter text, merge fields resolved. */
+        /** #480: the invoice's own letter text — sanitised HTML, merge fields resolved. */
         public readonly string $intro = '',
         public readonly string $outro = '',
     ) {}
@@ -117,8 +118,8 @@ final class InvoiceDocument
             totalNet: $invoice['totalNet'] ?? '',
             totalVat: $invoice['totalVat'] ?? '',
             totalGross: $invoice['totalGross'] ?? '',
-            intro: trim(MergeFieldResolver::resolve($record->intro ?? '', $mergeData)),
-            outro: trim(MergeFieldResolver::resolve($record->outro ?? '', $mergeData)),
+            intro: MergeFieldResolver::resolve(InlineHtmlSanitizer::letter($record->intro) ?? '', $mergeData, escape: true),
+            outro: MergeFieldResolver::resolve(InlineHtmlSanitizer::letter($record->outro) ?? '', $mergeData, escape: true),
         );
     }
 

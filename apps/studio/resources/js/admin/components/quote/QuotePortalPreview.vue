@@ -36,7 +36,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
         </h1>
       </section>
 
-      <p v-if="quote.intro" class="mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] whitespace-pre-line">{{ quote.intro }}</p>
+      <div v-if="quote.intro" class="mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] [&_p+*]:mt-3 [&_*+p]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5" v-html="quote.intro" />
 
       <QuoteSlider
         v-if="quote.hourlyRate !== null"
@@ -103,7 +103,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
           </tr>
         </table>
 
-        <p v-if="quote.outro" class="mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] whitespace-pre-line">{{ quote.outro }}</p>
+        <div v-if="quote.outro" class="mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] [&_p+*]:mt-3 [&_*+p]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5" v-html="quote.outro" />
 
         <p v-if="quote.validUntil" class="mt-8 text-[13px] text-muted-foreground">
           {{ $t('quotes.validUntil') }} {{ quote.validUntil }}

@@ -9,6 +9,7 @@ use App\Catalog\Models\Package;
 use App\Crm\Actions\BookProject;
 use App\Crm\Data\ProjectSuggestionData;
 use App\Crm\Models\Project;
+use App\Documents\Support\InlineHtmlSanitizer;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Notifications\Support\MailPreview;
@@ -514,8 +515,8 @@ class QuoteController extends Controller
             'recipient_street' => ['nullable', 'string', 'max:255'],
             'recipient_postcode' => ['nullable', 'string', 'max:32'],
             'recipient_city' => ['nullable', 'string', 'max:255'],
-            'intro' => ['nullable', 'string', 'max:5000'],
-            'outro' => ['nullable', 'string', 'max:5000'],
+            'intro' => ['nullable', 'string', 'max:20000'],
+            'outro' => ['nullable', 'string', 'max:20000'],
             'discount_type' => ['nullable', 'in:percentage,amount'],
             'discount_value' => ['nullable', 'integer', 'min:1'],
             'discount_hidden' => ['sometimes', 'boolean'],
@@ -554,8 +555,8 @@ class QuoteController extends Controller
             'recipient_street' => $validated['recipient_street'] ?? null,
             'recipient_postcode' => $validated['recipient_postcode'] ?? null,
             'recipient_city' => $validated['recipient_city'] ?? null,
-            'intro' => $validated['intro'] ?? null,
-            'outro' => $validated['outro'] ?? null,
+            'intro' => InlineHtmlSanitizer::letter($validated['intro'] ?? null),
+            'outro' => InlineHtmlSanitizer::letter($validated['outro'] ?? null),
             'discount_type' => $validated['discount_type'] ?? null,
             'discount_value' => $validated['discount_value'] ?? null,
             'discount_hidden' => $validated['discount_hidden'] ?? false,
