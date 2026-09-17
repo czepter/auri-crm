@@ -162,7 +162,7 @@
           
               <tr>
                 <td
-                   align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;"
+                   align="left" style="font-size:0px;padding:0;word-break:break-word;"
                 >
                   
       <div
@@ -174,7 +174,7 @@
             
               <tr>
                 <td
-                   align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;"
+                   align="left" style="font-size:0px;padding:0;word-break:break-word;"
                 >
                   
       <div
@@ -245,7 +245,7 @@
             
               <tr>
                 <td
-                   align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;"
+                   align="left" style="font-size:0px;padding:0;word-break:break-word;"
                 >
                   
       <div

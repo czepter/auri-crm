@@ -176,7 +176,7 @@ class InvoiceController extends Controller
                 InvoiceDocument::forInvoice($invoice, $mergeData->fromInvoice($invoice, $settings), $settings)->page(),
             ),
             'mail' => response(MailPreview::html(
-                new InvoiceSent($invoice, '', MailPreview::MESSAGE, $settings),
+                new InvoiceSent($invoice, '', InvoiceSent::defaultMessage($invoice), $settings),
                 $invoice->contact ?? (object) [],
             ), 200, ['Content-Type' => 'text/html']),
             default => response($render->forInvoice($invoice), 200, ['Content-Type' => 'text/html']),
@@ -276,6 +276,7 @@ class InvoiceController extends Controller
                 'statusLabel' => __("payments.invoiceStatus.{$invoice->status()}"),
             ],
             'recipients' => $recipients->map(fn (Contact $contact) => ['name' => $contact->name, 'email' => $contact->email])->values(),
+            'message' => InvoiceSent::defaultMessage($invoice),
             'mailHtml' => MailPreview::html(
                 new InvoiceSent($invoice, '', MailPreview::MESSAGE, $settings),
                 $recipients->first() ?? (object) [],

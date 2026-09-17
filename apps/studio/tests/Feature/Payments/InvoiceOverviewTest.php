@@ -126,7 +126,10 @@ it('previews the draft as the portal page and as the mail', function () {
     $this->actingAs(staffMember(), 'staff')
         ->post('/rechnungen/vorschau', [...$draft, 'format' => 'mail'])
         ->assertOk()
-        ->assertSee('%%NACHRICHT%%', false);
+        ->assertSee('Hallo Jonas Gast,')
+        ->assertSee('Rechnungsbetrag 40,00')
+        ->assertDontSee('%%NACHRICHT%%', false)
+        ->assertDontSee('abbestellen');
 });
 
 it('starts the letter from the invoice template, without the tax line the layout prints', function () {
