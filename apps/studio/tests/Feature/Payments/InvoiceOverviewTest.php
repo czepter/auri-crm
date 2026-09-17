@@ -22,9 +22,10 @@ it('lists invoices, not rates — with and without a project, newest first', fun
     $project = app(IssueInvoice::class)($rates);
 
     $this->travel(1)->minute();
-    $free = app(IssueInvoice::class)->free(
+    $free = app(IssueInvoice::class)->positions(
         Contact::factory()->create(['name' => 'Jonas Gast']),
-        [['description' => 'Abzüge', 'quantity' => 30, 'unit_price' => 1_000, 'vat_rate' => 1900]],
+        null,
+        [['title' => 'Abzüge', 'quantity' => 30, 'unit_price' => 1_000, 'vat_rate' => 1900]],
         now()->addWeek()->toDateString(),
     );
 
@@ -34,7 +35,7 @@ it('lists invoices, not rates — with and without a project, newest first', fun
     expect(collect($rows)->pluck('id')->all())->toBe([$free->public_id, $project->public_id])
         ->and($rows[0]['projectName'])->toBeNull()
         ->and($rows[0]['contact'])->toBe('Jonas Gast')
-        ->and($rows[0]['amount'])->toBe(30_000)
+        ->and($rows[0]['amount'])->toBe(35_700)
         ->and($rows[1]['amount'])->toBe(150_000)
         ->and($rows[1]['openInstallments'])->toHaveCount(2);
 });
@@ -49,12 +50,11 @@ it('offers the open rates of each plan on the new-invoice screen', function () {
     $installment = invoiceablePlan();
     app(IssueInvoice::class)($installment);
 
-    $plans = $this->actingAs(staffMember(), 'staff')->get('/rechnungen/neu')
-        ->assertOk()->viewData('page')['props']['plans'];
+    $rates = $this->actingAs(staffMember(), 'staff')->get('/rechnungen/neu')
+        ->assertOk()->viewData('page')['props']['rates'];
 
-    expect($plans)->toHaveCount(1)
-        ->and($plans[0]['installments'])->toHaveCount(1)
-        ->and($plans[0]['installments'][0]['label'])->toBe('Restbetrag');
+    expect($rates[$installment->plan->job->project->public_id])->toHaveCount(1)
+        ->and($rates[$installment->plan->job->project->public_id][0]['label'])->toBe('Restbetrag');
 });
 
 it('previews an invoice without a project as it will print, drawing no number', function () {
@@ -62,7 +62,7 @@ it('previews an invoice without a project as it will print, drawing no number', 
         ->post('/rechnungen/vorschau', [
             'contact' => ['name' => 'Jonas Gast', 'city' => 'Jena'],
             'due_on' => '2026-10-01',
-            'items' => [['description' => 'Abzug 30×45', 'quantity' => 30, 'unit_price' => 1_190, 'vat_rate' => 1900]],
+            'items' => [['title' => 'Abzug 30×45', 'quantity' => 30, 'unit_price' => 1_000, 'vat_rate' => 1900]],
         ])
         ->assertOk()
         ->getContent();
@@ -79,11 +79,14 @@ it('previews the chosen rates of a plan', function () {
     $rates = invoiceablePlan()->plan->installments()->orderBy('sort_order')->get();
 
     $html = $this->actingAs(staffMember(), 'staff')
-        ->post('/rechnungen/vorschau', ['installments' => $rates->pluck('public_id')->all()])
+        ->post('/rechnungen/vorschau', [
+            'project_id' => $rates->first()->plan->job->project->public_id,
+            'items' => $rates->map(fn ($row) => ['title' => 'Rate', 'installment_id' => $row->public_id])->all(),
+        ])
         ->assertOk()
         ->getContent();
 
-    expect($html)->toContain('Anzahlung, Restbetrag')
+    expect($html)->toContain('1.500,00')
         ->and($html)->toContain('Lena Meier')
         ->and(App\Payments\Models\Invoice::count())->toBe(0);
 });
@@ -95,7 +98,7 @@ it('keeps the letter text on the invoice and prints it around the positions', fu
             'due_on' => '2026-10-01',
             'intro' => 'Hallo {{ contact.name }},',
             'outro' => 'Viel Freude mit den Bildern.',
-            'items' => [['description' => 'Abzüge', 'quantity' => 2, 'unit_price' => 2_000, 'vat_rate' => 1900]],
+            'items' => [['title' => 'Abzüge', 'quantity' => 2, 'unit_price' => 2_000, 'vat_rate' => 1900]],
         ])
         ->assertRedirect();
 
@@ -112,7 +115,7 @@ it('previews the draft as the portal page and as the mail', function () {
     $draft = [
         'contact' => ['name' => 'Jonas Gast'],
         'intro' => 'Hallo Jonas,',
-        'items' => [['description' => 'Abzüge', 'quantity' => 2, 'unit_price' => 2_000, 'vat_rate' => 1900]],
+        'items' => [['title' => 'Abzüge', 'quantity' => 2, 'unit_price' => 2_000, 'vat_rate' => 1900]],
     ];
 
     $page = $this->actingAs(staffMember(), 'staff')
@@ -127,7 +130,7 @@ it('previews the draft as the portal page and as the mail', function () {
         ->post('/rechnungen/vorschau', [...$draft, 'format' => 'mail'])
         ->assertOk()
         ->assertSee('Hallo Jonas Gast,')
-        ->assertSee('Rechnungsbetrag 40,00')
+        ->assertSee('Rechnungsbetrag 47,60')
         ->assertDontSee('%%NACHRICHT%%', false)
         ->assertDontSee('abbestellen');
 });
@@ -162,7 +165,7 @@ it('keeps only letter markup and escapes what a merge field brings in', function
             'contact_id' => $contact->public_id,
             'due_on' => '2026-10-01',
             'intro' => '<h2>Hallo {{ contact.name }}</h2><script>alert(1)</script><p onclick="x()">Danke</p>',
-            'items' => [['description' => 'Abzüge', 'quantity' => 1, 'unit_price' => 2_000, 'vat_rate' => 1900]],
+            'items' => [['title' => 'Abzüge', 'quantity' => 1, 'unit_price' => 2_000, 'vat_rate' => 1900]],
         ])
         ->assertRedirect();
 

@@ -2,6 +2,11 @@
 
 namespace App\Payments\Http\Controllers;
 
+use App\Catalog\Data\CatalogItemData;
+use App\Catalog\Data\PackageData;
+use App\Catalog\Models\CatalogItem;
+use App\Catalog\Models\Package;
+use App\Crm\Data\ProjectSuggestionData;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Documents\Enums\DocumentTemplateType;
@@ -26,6 +31,7 @@ use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Payments\Notifications\InvoiceSent;
 use App\Payments\Support\InvoiceDocument;
+use App\Payments\Support\InvoiceFigures;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -69,27 +75,34 @@ class InvoiceController extends Controller
 
         $viewer = $request->user('staff');
 
-        $plans = PaymentPlan::query()
+        // The Schnellwahl: every rate still to be billed, keyed by project.
+        $rates = PaymentPlan::query()
             ->whereNull('settled_at')
             ->whereHas('installments', fn ($query) => $query->whereNull('invoice_id')->whereNull('cancelled_at'))
             ->whereHas('job.project', fn ($query) => $query->visibleTo($viewer))
             ->with(['installments', 'job.project'])
             ->get()
-            ->map(fn (PaymentPlan $plan) => [
-                'projectId' => $plan->job->project->public_id,
-                'projectName' => $plan->job->project->name,
-                'installments' => collect(PaymentPlanData::fromModel($plan)->installments)
+            ->mapWithKeys(fn (PaymentPlan $plan) => [
+                $plan->job->project->public_id => collect(PaymentPlanData::fromModel($plan)->installments)
                     ->filter(fn ($row) => $row->invoiceNumber === null && $row->status !== 'cancelled')
                     ->map(fn ($row) => ['id' => $row->id, 'label' => $row->label, 'amount' => $row->amount, 'dueOn' => $row->dueOn])
                     ->values(),
-            ])
-            ->sortBy('projectName')
-            ->values();
+            ]);
+
+        $project = $request->query('projekt') === null
+            ? null
+            : Project::query()->visibleTo($viewer)->where('public_id', $request->query('projekt'))->first();
 
         return Inertia::render('Invoices/Create', [
-            'plans' => $plans,
-            'project' => $request->query('projekt'),
-            'vatRate' => $settings->vatMode() === 'small_business' ? 0 : $settings->effectiveVatRate(),
+            'rates' => $rates,
+            'project' => $project === null ? null : ProjectSuggestionData::fromModel($project),
+            'packages' => PackageData::collect(Package::active()->with('items')->orderBy('name')->get()),
+            'catalogItems' => CatalogItemData::collect(CatalogItem::query()->orderBy('title')->get()),
+            'vatSettings' => [
+                'mode' => $settings->vatMode(),
+                'rate' => $settings->effectiveVatRate(),
+                'note' => $settings->vatNote(),
+            ],
             // The invoice template's prose: the starting point for this
             // invoice's own letter, merge fields left for the render.
             'intro' => InlineHtmlSanitizer::letter($render->currentTemplate(DocumentTemplateType::Invoice)?->body) ?? '',
@@ -100,38 +113,33 @@ class InvoiceController extends Controller
     {
         self::authorizeProject(null);
 
-        $actor = $request->user('staff');
-
-        if ($request->filled('installments')) {
-            $ids = $request->validate(['installments' => ['required', 'array', 'min:1'], 'installments.*' => ['string']])['installments'];
-            $installments = PaymentInstallment::query()->whereIn('public_id', $ids)->with('plan.job.project')->get();
-
-            abort_if($installments->count() !== count($ids), 404);
-            self::authorizeProject($installments->first()->project());
-
-            return redirect("/rechnungen/{$issue($installments, $actor, $this->texts($request))->public_id}/versenden");
-        }
-
         $validated = $request->validate([
-            'contact_id' => ['nullable', 'string'],
-            'contact.name' => ['required_without:contact_id', 'nullable', 'string', 'max:255'],
-            'contact.email' => ['nullable', 'email', 'max:255'],
-            'contact.street' => ['nullable', 'string', 'max:255'],
-            'contact.postcode' => ['nullable', 'string', 'max:20'],
-            'contact.city' => ['nullable', 'string', 'max:255'],
-            'due_on' => ['required', 'date'],
+            ...$this->rules(),
+            'contact.name' => ['required_without_all:contact_id,project_id', 'nullable', 'string', 'max:255'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.description' => ['required', 'string', 'max:255'],
-            'items.*.quantity' => ['required', 'integer', 'min:1'],
-            'items.*.unit_price' => ['required', 'integer', 'min:0'],
-            'items.*.vat_rate' => ['required', 'integer', 'min:0', 'max:10000'],
+            'items.*.title' => ['required', 'string', 'max:255'],
         ]);
 
-        $contact = isset($validated['contact_id'])
-            ? Contact::query()->where('public_id', $validated['contact_id'])->firstOrFail()
-            : Contact::create(array_filter($validated['contact'], fn ($value) => $value !== null));
+        $project = $this->project($validated);
+        $contact = match (true) {
+            isset($validated['contact_id']) => Contact::query()->where('public_id', $validated['contact_id'])->firstOrFail(),
+            isset($validated['contact']['name']) => Contact::create(array_filter($validated['contact'], fn ($value) => $value !== null)),
+            default => $project?->primaryContact(),
+        };
 
-        $invoice = $issue->free($contact, $validated['items'], $validated['due_on'], $actor, $this->texts($request));
+        $invoice = $issue->positions(
+            $contact,
+            $project,
+            $this->positions($validated, strict: true),
+            $validated['due_on'] ?? null,
+            [
+                'intro' => InlineHtmlSanitizer::letter($validated['intro'] ?? null),
+                'outro' => InlineHtmlSanitizer::letter($validated['outro'] ?? null),
+                'discount_type' => $validated['discount_type'] ?? null,
+                'discount_value' => $validated['discount_value'] ?? null,
+            ],
+            $request->user('staff'),
+        );
 
         return redirect("/rechnungen/{$invoice->public_id}/versenden");
     }
@@ -150,26 +158,8 @@ class InvoiceController extends Controller
     ): HttpResponse|JsonResponse {
         self::authorizeProject(null);
 
-        $validated = $request->validate([
-            'format' => ['nullable', 'in:pdf,portal,mail'],
-            'installments' => ['nullable', 'array'],
-            'installments.*' => ['string'],
-            'contact_id' => ['nullable', 'string'],
-            'contact.name' => ['nullable', 'string', 'max:255'],
-            'contact.street' => ['nullable', 'string', 'max:255'],
-            'contact.postcode' => ['nullable', 'string', 'max:20'],
-            'contact.city' => ['nullable', 'string', 'max:255'],
-            'due_on' => ['nullable', 'date'],
-            'intro' => ['nullable', 'string', 'max:20000'],
-            'outro' => ['nullable', 'string', 'max:20000'],
-            'items' => ['nullable', 'array'],
-            'items.*.description' => ['nullable', 'string', 'max:255'],
-            'items.*.quantity' => ['nullable', 'integer', 'min:0'],
-            'items.*.unit_price' => ['nullable', 'integer', 'min:0'],
-            'items.*.vat_rate' => ['nullable', 'integer', 'min:0', 'max:10000'],
-        ]);
-
-        $invoice = $this->draft($validated);
+        $validated = $request->validate([...$this->rules(), 'format' => ['nullable', 'in:pdf,portal,mail']]);
+        $invoice = $this->draft($validated, $settings);
 
         return match ($validated['format'] ?? 'pdf') {
             'portal' => response()->json(
@@ -183,63 +173,128 @@ class InvoiceController extends Controller
         };
     }
 
+    /** @return array<string, list<mixed>> */
+    private function rules(): array
+    {
+        return [
+            'contact_id' => ['nullable', 'string'],
+            'contact.name' => ['nullable', 'string', 'max:255'],
+            'contact.email' => ['nullable', 'email', 'max:255'],
+            'contact.street' => ['nullable', 'string', 'max:255'],
+            'contact.postcode' => ['nullable', 'string', 'max:20'],
+            'contact.city' => ['nullable', 'string', 'max:255'],
+            'project_id' => ['nullable', 'string'],
+            'due_on' => ['nullable', 'date'],
+            'intro' => ['nullable', 'string', 'max:20000'],
+            'outro' => ['nullable', 'string', 'max:20000'],
+            'discount_type' => ['nullable', 'in:percentage,amount'],
+            'discount_value' => ['nullable', 'integer', 'min:1'],
+            'items' => ['nullable', 'array'],
+            'items.*.title' => ['nullable', 'string', 'max:255'],
+            'items.*.description' => ['nullable', 'string', 'max:2000'],
+            'items.*.quantity' => ['nullable', 'integer', 'min:1'],
+            'items.*.unit_price' => ['nullable', 'integer', 'min:0'],
+            'items.*.discount_type' => ['nullable', 'in:percentage,amount'],
+            'items.*.discount_value' => ['nullable', 'integer', 'min:1'],
+            'items.*.vat_rate' => ['nullable', 'integer', 'min:0', 'max:10000'],
+            'items.*.installment_id' => ['nullable', 'string'],
+        ];
+    }
+
+    /** @param  array<string, mixed>  $validated */
+    private function project(array $validated): ?Project
+    {
+        if (! isset($validated['project_id'])) {
+            return null;
+        }
+
+        $project = Project::query()->where('public_id', $validated['project_id'])->firstOrFail();
+        self::authorizeProject($project);
+
+        return $project;
+    }
+
+    /**
+     * The request's items as IssueInvoice::positions() takes them. A rate named
+     * by a stale form is a 404 on issue and simply left out of a preview.
+     *
+     * @param  array<string, mixed>  $validated
+     * @return list<array<string, mixed>>
+     */
+    private function positions(array $validated, bool $strict): array
+    {
+        $ids = collect($validated['items'] ?? [])->pluck('installment_id')->filter();
+        $rows = PaymentInstallment::query()->whereIn('public_id', $ids)->with('plan.job.project')->get()->keyBy('public_id');
+
+        abort_if($strict && $rows->count() !== $ids->unique()->count(), 404);
+
+        return collect($validated['items'] ?? [])
+            ->reject(fn (array $item) => isset($item['installment_id']) && ! $rows->has($item['installment_id']))
+            ->map(fn (array $item) => [
+                'title' => $item['title'] ?? '',
+                'description' => $item['description'] ?? null,
+                'quantity' => $item['quantity'] ?? 1,
+                'unit_price' => $item['unit_price'] ?? 0,
+                'discount_type' => $item['discount_type'] ?? null,
+                'discount_value' => $item['discount_value'] ?? null,
+                'vat_rate' => $item['vat_rate'] ?? null,
+                'installment' => isset($item['installment_id']) ? $rows[$item['installment_id']] : null,
+            ])
+            ->values()
+            ->all();
+    }
+
     /**
      * An unsaved invoice from the create form: nothing is written and no
      * number drawn, and every field may still be half filled.
      *
      * @param  array<string, mixed>  $validated
      */
-    private function draft(array $validated): Invoice
+    private function draft(array $validated, StudioSettingsResolver $settings): Invoice
     {
+        $project = $this->project($validated);
+
         $invoice = new Invoice([
             'number' => __('payments.previewNumber'),
             'issued_at' => now(),
             'intro' => InlineHtmlSanitizer::letter($validated['intro'] ?? null),
             'outro' => InlineHtmlSanitizer::letter($validated['outro'] ?? null),
+            'discount_type' => $validated['discount_type'] ?? null,
+            'discount_value' => $validated['discount_value'] ?? null,
         ]);
-        $invoice->setRelation('creditNotes', collect())->setRelation('template', null);
+        $invoice->project_id = $project?->id;
 
-        if (filled($validated['installments'] ?? null)) {
-            $installments = PaymentInstallment::query()
-                ->whereIn('public_id', $validated['installments'])
-                ->whereNotNull('payment_plan_id')
-                ->with('plan.job.project')
-                ->orderBy('sort_order')
-                ->get();
-            $project = $installments->first()?->plan->job->project;
+        $items = collect($this->positions($validated, strict: false))->map(function (array $position) {
+            $item = new InvoiceItem(collect($position)->except('installment')->all());
+            $item->payment_installment_id = $position['installment']?->id;
 
-            abort_if($project === null, 404);
-            self::authorizeProject($project);
+            return $item->setRelation('installment', $position['installment']);
+        });
 
-            $invoice->project_id = $project->id;
+        $free = $items->whereNull('payment_installment_id');
+        $installments = $items->pluck('installment')->filter()->values();
 
-            return $invoice
-                ->setRelation('project', $project)
-                ->setRelation('contact', $project->primaryContact())
-                ->setRelation('installments', $installments)
-                ->setRelation('items', collect());
-        }
-
-        $items = collect($validated['items'] ?? [])->map(fn (array $item) => new InvoiceItem([
-            'description' => $item['description'] ?? '',
-            'quantity' => $item['quantity'] ?? 0,
-            'unit_price' => $item['unit_price'] ?? 0,
-            'vat_rate' => $item['vat_rate'] ?? 0,
-        ]));
-
-        $contact = isset($validated['contact_id'])
-            ? Contact::query()->where('public_id', $validated['contact_id'])->first()
-            : new Contact($validated['contact'] ?? []);
-
-        return $invoice
-            ->setRelation('project', null)
-            ->setRelation('contact', $contact)
-            ->setRelation('items', $items)
-            ->setRelation('installments', collect([new PaymentInstallment([
-                'amount' => $items->sum(fn (InvoiceItem $item) => $item->total()),
+        if ($free->isNotEmpty()) {
+            $installments->push(new PaymentInstallment([
+                'amount' => InvoiceFigures::forPositions($free, $invoice->discount_type, $invoice->discount_value, $settings)->gross,
                 'due_on' => $validated['due_on'] ?? null,
                 'status' => PaymentInstallmentStatus::Invoiced,
-            ])]));
+            ]));
+        }
+
+        $contact = match (true) {
+            isset($validated['contact_id']) => Contact::query()->where('public_id', $validated['contact_id'])->first(),
+            isset($validated['contact']['name']) => new Contact($validated['contact']),
+            default => $project?->primaryContact(),
+        };
+
+        return $invoice
+            ->setRelation('creditNotes', collect())
+            ->setRelation('template', null)
+            ->setRelation('project', $project)
+            ->setRelation('contact', $contact)
+            ->setRelation('items', $items)
+            ->setRelation('installments', $installments);
     }
 
     /**
@@ -344,15 +399,6 @@ class InvoiceController extends Controller
         abort_if($creditNote->invoice_id !== $invoice->id || $creditNote->pdf_path === null, 404);
 
         return Storage::disk('local')->response($creditNote->pdf_path, "gutschrift-{$creditNote->number}.pdf");
-    }
-
-    /** @return array{intro?: ?string, outro?: ?string} */
-    private function texts(Request $request): array
-    {
-        return array_map(InlineHtmlSanitizer::letter(...), $request->validate([
-            'intro' => ['nullable', 'string', 'max:20000'],
-            'outro' => ['nullable', 'string', 'max:20000'],
-        ]));
     }
 
     /**

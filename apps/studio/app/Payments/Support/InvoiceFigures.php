@@ -4,6 +4,7 @@ namespace App\Payments\Support;
 
 use App\Payments\Models\Invoice;
 use App\Payments\Models\InvoiceItem;
+use App\Quotes\Enums\DiscountType;
 use App\Quotes\Models\Quote;
 use App\Quotes\Support\VatLines;
 use App\Settings\Support\StudioSettingsResolver;
@@ -55,9 +56,55 @@ final class InvoiceFigures
      */
     public static function forInvoice(Invoice $invoice, StudioSettingsResolver $settings): self
     {
-        return $invoice->project_id === null
-            ? self::forItems($invoice, $settings)
+        // Rates alone keep their plan's own split over the quote's rates (#412).
+        return $invoice->items->whereNull('payment_installment_id')->isNotEmpty()
+            ? self::forPositions($invoice->items, $invoice->discount_type, $invoice->discount_value, $settings)
             : self::forGross($invoice->amount(), self::acceptedQuote($invoice), $settings);
+    }
+
+    /**
+     * #480: positions written with the quote's builder. Free lines take the
+     * quote's own arithmetic — line and invoice discount, a net per rate,
+     * VAT on top. A line picked from a payment plan is that installment's
+     * gross split backwards, so the invoice asks for exactly what the plan
+     * says is owed. The invoice discount reaches free lines only.
+     *
+     * @param  iterable<InvoiceItem>  $items
+     */
+    public static function forPositions(iterable $items, ?DiscountType $discountType, ?int $discountValue, StudioSettingsResolver $settings): self
+    {
+        $items = collect($items);
+        $smallBusiness = $settings->vatMode() === 'small_business';
+        $defaultRate = $smallBusiness ? 0 : $settings->effectiveVatRate();
+
+        [$picked, $free] = $items->partition(fn (InvoiceItem $item) => $item->payment_installment_id !== null);
+
+        $lines = [];
+
+        if ($free->isNotEmpty()) {
+            $quoteItems = $free->map(fn (InvoiceItem $item) => $item->asQuoteItem());
+            $net = Quote::computeTotals($quoteItems, $discountType, $discountValue)['net'];
+            $lines = $smallBusiness
+                ? [['rate' => 0, 'net' => $net, 'vat' => 0]]
+                : VatLines::fromItems($quoteItems, $defaultRate, $net);
+        }
+
+        foreach ($picked as $item) {
+            $line = self::fromGross((int) $item->installment?->amount, $smallBusiness ? 0 : (int) ($item->vat_rate ?? $defaultRate));
+            $lines[] = ['rate' => $line->rate, 'net' => $line->net, 'vat' => $line->vat];
+        }
+
+        $rates = collect($lines)
+            ->groupBy('rate')
+            ->map(fn ($group, $rate) => ['rate' => (int) $rate, 'net' => $group->sum('net'), 'vat' => $group->sum('vat')])
+            ->sortByDesc('net')
+            ->values()
+            ->all();
+
+        $net = array_sum(array_column($rates, 'net'));
+        $vat = array_sum(array_column($rates, 'vat'));
+
+        return new self($net + $vat, $net, $vat, $rates[0]['rate'] ?? $defaultRate, $smallBusiness ? $settings->vatNote() : null, $rates);
     }
 
     /** A part of an invoice — a Gutschrift, a deducted Anzahlung — at that invoice's rate. */
@@ -94,26 +141,6 @@ final class InvoiceFigures
         $quoteLines = $rate === 0 ? [] : ($quote?->vatLines() ?? []);
 
         return count($quoteLines) < 2 ? $figures : $figures->splitOver($quoteLines);
-    }
-
-    private static function forItems(Invoice $invoice, StudioSettingsResolver $settings): self
-    {
-        if ($settings->vatMode() === 'small_business') {
-            return self::fromGross($invoice->items->sum(fn (InvoiceItem $item) => $item->total()), 0, $settings->vatNote());
-        }
-
-        $rates = $invoice->items
-            ->groupBy('vat_rate')
-            ->map(fn ($items, $rate) => self::fromGross($items->sum(fn (InvoiceItem $item) => $item->total()), (int) $rate))
-            ->sortKeysDesc()
-            ->map(fn (self $line) => ['rate' => $line->rate, 'net' => $line->net, 'vat' => $line->vat])
-            ->values()
-            ->all();
-
-        $gross = $invoice->items->sum(fn (InvoiceItem $item) => $item->total());
-        $net = array_sum(array_column($rates, 'net'));
-
-        return new self($gross, $net, $gross - $net, $rates[0]['rate'] ?? 0, null, $rates);
     }
 
     /**

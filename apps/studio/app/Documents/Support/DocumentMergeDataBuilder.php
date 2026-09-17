@@ -233,15 +233,20 @@ class DocumentMergeDataBuilder
             ], $figures->rates),
             'dueOn' => $dueOn,
             'paymentTerm' => $dueOn === '' ? '' : "Zahlbar bis {$dueOn} ohne Abzug.",
-            ...($project === null ? $this->itemLines($invoice, $figures) : $this->finalInvoice($invoice, $settings)),
+            // #411: rates alone print as the one line of what they bill, or as
+            // the quote's whole Leistung on an Endrechnung; positions written
+            // with the builder print as themselves.
+            ...($invoice->items->whereNull('payment_installment_id')->isEmpty()
+                ? $this->finalInvoice($invoice, $settings)
+                : $this->positionLines($invoice, $figures, $settings)),
         ];
     }
 
-    /** "Hochzeit Kranz — Anzahlung, 2. Rate", or the items' own words without a project. */
+    /** "Hochzeit Kranz — Anzahlung, 2. Rate", or the positions' titles. */
     private function description(Invoice $invoice): string
     {
-        if ($invoice->project === null) {
-            return $invoice->items->pluck('description')->implode(', ');
+        if ($invoice->items->whereNull('payment_installment_id')->isNotEmpty()) {
+            return $invoice->items->pluck('title')->implode(', ');
         }
 
         return $invoice->project->name.' — '.$invoice->installments
@@ -250,22 +255,47 @@ class DocumentMergeDataBuilder
     }
 
     /**
-     * #480: an invoice without a project prints its items the way an
-     * Endrechnung prints the quote's lines.
+     * #480: the positions as the quote's builder wrote them. A position picked
+     * from a payment plan prints the installment's net — its gross split at
+     * the line's rate — so the lines add up to what the plan asks for.
      *
      * @return array{lines: list<array<string, string>>, deposits: list<array<string, string>>, totalNet: string, totalVat: string, totalGross: string}
      */
-    private function itemLines(Invoice $invoice, InvoiceFigures $figures): array
+    private function positionLines(Invoice $invoice, InvoiceFigures $figures, StudioSettingsResolver $settings): array
     {
-        return [
-            'lines' => $invoice->items->map(fn (InvoiceItem $item) => [
-                'title' => $item->description,
+        $smallBusiness = $settings->vatMode() === 'small_business';
+        $defaultRate = $settings->effectiveVatRate();
+        $free = $invoice->items->whereNull('payment_installment_id')->map(fn (InvoiceItem $item) => $item->asQuoteItem());
+        $discount = Quote::computeTotals($free, $invoice->discount_type, $invoice->discount_value)['discount_amount'];
+
+        $lines = $invoice->items->map(function (InvoiceItem $item) use ($smallBusiness, $defaultRate) {
+            $rate = (int) ($item->vat_rate ?? $defaultRate);
+
+            if ($item->payment_installment_id !== null) {
+                $net = InvoiceFigures::fromGross((int) $item->installment?->amount, $smallBusiness ? 0 : $rate)->net;
+
+                return ['title' => $item->title, 'quantity' => '1', 'unitPrice' => $this->money($net), 'discount' => '', 'total' => $this->money($net), 'vatRate' => $smallBusiness ? '' : VatLines::percent($rate).' %'];
+            }
+
+            $line = $item->asQuoteItem();
+
+            return [
+                'title' => $item->title,
                 'quantity' => (string) $item->quantity,
                 'unitPrice' => $this->money((int) $item->unit_price),
-                'discount' => '',
-                'total' => $this->money($item->total()),
-                'vatRate' => $figures->rate === 0 ? '' : VatLines::percent((int) $item->vat_rate).' %',
-            ])->values()->all(),
+                'discount' => $line->discount_amount > 0 ? '−'.$this->money((int) $line->discount_amount) : '',
+                'total' => $this->money($line->discountedLineTotal()),
+                'vatRate' => $smallBusiness ? '' : VatLines::percent($rate).' %',
+            ];
+        })->values()->all();
+
+        // § 14 Abs. 4 Nr. 7 UStG: an agreed Minderung is stated, never folded into the prices.
+        if ($discount > 0) {
+            $lines[] = ['title' => 'Rabatt', 'quantity' => '', 'unitPrice' => '', 'discount' => '', 'total' => '−'.$this->money($discount), 'vatRate' => ''];
+        }
+
+        return [
+            'lines' => $lines,
             'deposits' => [],
             'totalNet' => $this->money($figures->net),
             'totalVat' => $this->money($figures->vat),

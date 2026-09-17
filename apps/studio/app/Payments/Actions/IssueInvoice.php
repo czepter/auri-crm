@@ -3,15 +3,18 @@
 namespace App\Payments\Actions;
 
 use App\Crm\Models\Contact;
+use App\Crm\Models\Project;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Models\User;
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
+use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Jobs\RenderInvoiceJob;
 use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
+use App\Payments\Support\InvoiceFigures;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Support\Collection;
@@ -74,17 +77,95 @@ class IssueInvoice
 
         $project = $installments->first()->plan->job->project;
 
+        return $this->positions(
+            $project->primaryContact(),
+            $project,
+            $installments->map(fn (PaymentInstallment $row) => ['title' => PaymentPlanData::labelForInstallment($row), 'installment' => $row])->all(),
+            null,
+            $texts,
+            $actor,
+        );
+    }
+
+    /**
+     * #480: positions written with the quote's builder. A position carrying an
+     * `installment` bills that rate of the project's plan at its own gross;
+     * every other position is charged on top, as one more receivable due on
+     * $dueOn. An Endrechnung prints the quote's whole Leistung instead of its
+     * positions (#411), so it takes no free positions beside it.
+     *
+     * @param  list<array{title: string, description?: ?string, quantity?: int, unit_price?: ?int, discount_type?: ?string, discount_value?: ?int, vat_rate?: ?int, installment?: ?PaymentInstallment}>  $positions
+     * @param  array{intro?: ?string, outro?: ?string, discount_type?: ?string, discount_value?: ?int}  $attributes
+     */
+    public function positions(?Contact $contact, ?Project $project, array $positions, ?string $dueOn, array $attributes = [], ?User $actor = null): Invoice
+    {
+        $positions = collect($positions)->values();
+        [$picked, $free] = $positions->partition(fn (array $position) => ($position['installment'] ?? null) !== null);
+
+        foreach ($picked as $position) {
+            $row = $position['installment'];
+
+            if ($row->plan?->job?->project_id !== $project?->id) {
+                throw ValidationException::withMessages(['items' => __('payments.invoiceOnePlan')]);
+            }
+
+            if ($row->isCancelled()) {
+                throw ValidationException::withMessages(['items' => __('payments.cancelledNotIssuable')]);
+            }
+
+            if ($row->isInvoiced()) {
+                throw ValidationException::withMessages(['items' => __('payments.alreadyInvoiced')]);
+            }
+        }
+
+        if ($free->isNotEmpty() && $picked->contains(fn (array $position) => $position['installment']->isFinal())) {
+            throw ValidationException::withMessages(['items' => __('payments.finalTakesNoPositions')]);
+        }
+
+        if ($free->isNotEmpty() && blank($dueOn)) {
+            throw ValidationException::withMessages(['due_on' => __('validation.required', ['attribute' => 'Fällig am'])]);
+        }
+
         return $this->issue(
-            ['contact_id' => $project->primaryContact()?->id, 'project_id' => $project->id, ...$texts],
-            function (Invoice $invoice) use ($installments) {
-                foreach ($installments as $row) {
+            ['contact_id' => $contact?->id, 'project_id' => $project?->id, ...$attributes],
+            function (Invoice $invoice) use ($positions, $dueOn) {
+                $defaultRate = $this->settings->vatMode() === 'small_business' ? 0 : $this->settings->effectiveVatRate();
+
+                foreach ($positions as $index => $position) {
+                    $row = $position['installment'] ?? null;
+
+                    $invoice->items()->create([
+                        'title' => $position['title'],
+                        'description' => $position['description'] ?? null,
+                        'quantity' => $row === null ? ($position['quantity'] ?? 1) : 1,
+                        'unit_price' => $row === null
+                            ? ($position['unit_price'] ?? 0)
+                            : InvoiceFigures::fromGross((int) $row->amount, (int) ($position['vat_rate'] ?? $defaultRate))->net,
+                        'discount_type' => $row === null ? ($position['discount_type'] ?? null) : null,
+                        'discount_value' => $row === null ? ($position['discount_value'] ?? null) : null,
+                        'vat_rate' => $position['vat_rate'] ?? null,
+                        'payment_installment_id' => $row?->id,
+                        'sort_order' => $index,
+                    ]);
+
                     // An installment already settled keeps saying so —
                     // issuing the paperwork afterwards must not un-pay it.
-                    $row->update([
+                    $row?->update([
                         'invoice_id' => $invoice->id,
                         'status' => in_array($row->status, [PaymentInstallmentStatus::Paid, PaymentInstallmentStatus::Partial], true)
                             ? $row->status
                             : PaymentInstallmentStatus::Invoiced,
+                    ]);
+                }
+
+                $free = $invoice->items()->whereNull('payment_installment_id')->get();
+
+                if ($free->isNotEmpty()) {
+                    PaymentInstallment::create([
+                        'invoice_id' => $invoice->id,
+                        'amount' => InvoiceFigures::forPositions($free, $invoice->discount_type, $invoice->discount_value, $this->settings)->gross,
+                        'due_on' => $dueOn,
+                        'status' => PaymentInstallmentStatus::Invoiced,
                     ]);
                 }
             },
@@ -92,33 +173,7 @@ class IssueInvoice
         );
     }
 
-    /**
-     * #480: an invoice without a project. The items are the document; the one
-     * installment beside them, outside any plan, is what payments book against.
-     *
-     * @param  list<array{description: string, quantity: int, unit_price: int, vat_rate: int}>  $items
-     */
-    public function free(Contact $contact, array $items, string $dueOn, ?User $actor = null, array $texts = []): Invoice
-    {
-        return $this->issue(
-            ['contact_id' => $contact->id, 'project_id' => null, ...$texts],
-            function (Invoice $invoice) use ($items, $dueOn) {
-                foreach (array_values($items) as $index => $item) {
-                    $invoice->items()->create([...$item, 'sort_order' => $index]);
-                }
-
-                PaymentInstallment::create([
-                    'invoice_id' => $invoice->id,
-                    'amount' => $invoice->items()->get()->sum(fn ($item) => $item->total()),
-                    'due_on' => $dueOn,
-                    'status' => PaymentInstallmentStatus::Invoiced,
-                ]);
-            },
-            $actor,
-        );
-    }
-
-    /** @param  array{contact_id: ?int, project_id: ?int, intro?: ?string, outro?: ?string}  $attributes */
+    /** @param  array<string, mixed>  $attributes */
     private function issue(array $attributes, \Closure $attach, ?User $actor): Invoice
     {
         // Ahead of the transaction: a number drawn for a document that cannot

@@ -403,8 +403,6 @@
   },
   "invoicesCreate": {
     "title": "Neue Rechnung",
-    "fromPlan": "Zahlungsplan",
-    "free": "Ohne Projekt",
     "project": "Projekt",
     "recipient": "Empfänger",
     "name": "Name",
@@ -412,11 +410,7 @@
     "street": "Straße",
     "postcode": "PLZ",
     "city": "Ort",
-    "description": "Beschreibung",
-    "quantity": "Menge",
-    "unitPrice": "Einzelpreis",
-    "vatRate": "USt",
-    "addItem": "Position hinzufügen",
+    "rates": "Raten",
     "previewMail": "E-Mail",
     "submit": "Rechnung stellen"
   },

@@ -9,6 +9,7 @@ use App\Crm\Models\Project;
 use App\Documents\Models\DocumentTemplate;
 use App\Payments\Enums\CancellationKind;
 use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Quotes\Enums\DiscountType;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,6 +32,7 @@ class Invoice extends Model
     protected $fillable = [
         'number', 'issued_at', 'intro', 'outro', 'contact_id', 'project_id', 'template_id', 'pdf_path',
         'sent_at', 'viewed_at', 'cancelled_at', 'cancellation_kind', 'cancellation_reason',
+        'discount_type', 'discount_value',
     ];
 
     protected function casts(): array
@@ -41,6 +43,7 @@ class Invoice extends Model
             'viewed_at' => 'immutable_datetime',
             'cancelled_at' => 'immutable_datetime',
             'cancellation_kind' => CancellationKind::class,
+            'discount_type' => DiscountType::class,
         ];
     }
 
