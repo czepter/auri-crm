@@ -87,3 +87,44 @@ it('previews the chosen rates of a plan', function () {
         ->and($html)->toContain('Lena Meier')
         ->and(App\Payments\Models\Invoice::count())->toBe(0);
 });
+
+it('keeps the letter text on the invoice and prints it around the positions', function () {
+    $this->actingAs(staffMember(), 'staff')
+        ->post('/rechnungen', [
+            'contact' => ['name' => 'Jonas Gast'],
+            'due_on' => '2026-10-01',
+            'intro' => 'Hallo {{ contact.name }},',
+            'outro' => 'Viel Freude mit den Bildern.',
+            'items' => [['description' => 'Abzüge', 'quantity' => 2, 'unit_price' => 2_000, 'vat_rate' => 1900]],
+        ])
+        ->assertRedirect();
+
+    $invoice = App\Payments\Models\Invoice::sole();
+    $html = app(App\Payments\Actions\RenderInvoicePdf::class)->forInvoice($invoice->load('installments', 'items', 'contact'));
+
+    expect($invoice->intro)->toBe('Hallo {{ contact.name }},')
+        ->and($html)->toContain('Hallo Jonas Gast,')
+        ->and(strpos($html, 'Hallo Jonas Gast,'))->toBeLessThan(strpos($html, 'Abzüge'))
+        ->and(strpos($html, 'Viel Freude mit den Bildern.'))->toBeGreaterThan(strpos($html, 'Abzüge'));
+});
+
+it('previews the draft as the portal page and as the mail', function () {
+    $draft = [
+        'contact' => ['name' => 'Jonas Gast'],
+        'intro' => 'Hallo Jonas,',
+        'items' => [['description' => 'Abzüge', 'quantity' => 2, 'unit_price' => 2_000, 'vat_rate' => 1900]],
+    ];
+
+    $page = $this->actingAs(staffMember(), 'staff')
+        ->post('/rechnungen/vorschau', [...$draft, 'format' => 'portal'])
+        ->assertOk()
+        ->json();
+
+    expect($page['intro'])->toBe('Hallo Jonas,')
+        ->and($page['lines'][0]['title'])->toBe('Abzüge');
+
+    $this->actingAs(staffMember(), 'staff')
+        ->post('/rechnungen/vorschau', [...$draft, 'format' => 'mail'])
+        ->assertOk()
+        ->assertSee('%%NACHRICHT%%', false);
+});

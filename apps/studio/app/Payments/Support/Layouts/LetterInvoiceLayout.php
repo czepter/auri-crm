@@ -34,11 +34,13 @@ class LetterInvoiceLayout implements InvoiceLayoutRenderer
             .'<div class="dll-to">An<br>'.$this->recipientLines($document).'</div>'
             .$this->reference($document)
             .$templateBody
+            .$this->letter($document->intro)
             .'<table class="doc-table"><thead><tr><th>Beschreibung</th><th class="doc-num">Betrag</th></tr></thead><tbody>'
             .$this->positionRows($document)
             .$summary
             .'</tbody></table>'
             .$this->vatNote($document)
+            .$this->letter($document->outro)
             .$this->payment($document)
             .'</div>';
     }

@@ -34,9 +34,11 @@ class StructuredInvoiceLayout implements InvoiceLayoutRenderer
             .'</div>'
             .$this->reference($document)
             .$templateBody
+            .$this->letter($document->intro)
             .'<div class="dst-card dst-items">'.$this->positions($document).'</div>'
             .'<div class="dst-card dst-summary"><table>'.$summary.'</table></div>'
             .$this->vatNote($document)
+            .$this->letter($document->outro)
             .$this->payment($document)
             .'</div>';
     }

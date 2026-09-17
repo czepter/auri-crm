@@ -29,7 +29,7 @@ class Invoice extends Model
     use HasPublicId;
 
     protected $fillable = [
-        'number', 'issued_at', 'contact_id', 'project_id', 'template_id', 'pdf_path',
+        'number', 'issued_at', 'intro', 'outro', 'contact_id', 'project_id', 'template_id', 'pdf_path',
         'sent_at', 'viewed_at', 'cancelled_at', 'cancellation_kind', 'cancellation_reason',
     ];
 

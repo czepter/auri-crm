@@ -46,8 +46,11 @@ class IssueInvoice
         private readonly StudioSettingsResolver $settings,
     ) {}
 
-    /** @param  iterable<PaymentInstallment>|PaymentInstallment  $installments */
-    public function __invoke(iterable|PaymentInstallment $installments, ?User $actor = null): Invoice
+    /**
+     * @param  iterable<PaymentInstallment>|PaymentInstallment  $installments
+     * @param  array{intro?: ?string, outro?: ?string}  $texts
+     */
+    public function __invoke(iterable|PaymentInstallment $installments, ?User $actor = null, array $texts = []): Invoice
     {
         $installments = Collection::wrap($installments)->values();
 
@@ -72,7 +75,7 @@ class IssueInvoice
         $project = $installments->first()->plan->job->project;
 
         return $this->issue(
-            ['contact_id' => $project->primaryContact()?->id, 'project_id' => $project->id],
+            ['contact_id' => $project->primaryContact()?->id, 'project_id' => $project->id, ...$texts],
             function (Invoice $invoice) use ($installments) {
                 foreach ($installments as $row) {
                     // An installment already settled keeps saying so —
@@ -95,10 +98,10 @@ class IssueInvoice
      *
      * @param  list<array{description: string, quantity: int, unit_price: int, vat_rate: int}>  $items
      */
-    public function free(Contact $contact, array $items, string $dueOn, ?User $actor = null): Invoice
+    public function free(Contact $contact, array $items, string $dueOn, ?User $actor = null, array $texts = []): Invoice
     {
         return $this->issue(
-            ['contact_id' => $contact->id, 'project_id' => null],
+            ['contact_id' => $contact->id, 'project_id' => null, ...$texts],
             function (Invoice $invoice) use ($items, $dueOn) {
                 foreach (array_values($items) as $index => $item) {
                     $invoice->items()->create([...$item, 'sort_order' => $index]);
@@ -115,7 +118,7 @@ class IssueInvoice
         );
     }
 
-    /** @param  array{contact_id: ?int, project_id: ?int}  $attributes */
+    /** @param  array{contact_id: ?int, project_id: ?int, intro?: ?string, outro?: ?string}  $attributes */
     private function issue(array $attributes, \Closure $attach, ?User $actor): Invoice
     {
         // Ahead of the transaction: a number drawn for a document that cannot

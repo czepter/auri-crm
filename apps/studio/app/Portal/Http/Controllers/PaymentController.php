@@ -119,16 +119,7 @@ class PaymentController extends Controller
                 'status' => $row->status(),
                 'statusLabel' => __("payments.invoiceStatus.{$row->status()}"),
                 'hasDocument' => $row->pdf_path !== null,
-                'metaRows' => $document->metaRows,
-                'description' => $document->description,
-                // #411: leer auf einer Anzahlungsrechnung — dann bleibt es
-                // bei der einen Zeile, wie bisher.
-                'lines' => $document->lines,
-                'deposits' => $document->deposits,
-                'totalGross' => $document->totalGross,
-                'summaryRows' => $document->summaryRows(),
-                'vatNote' => $document->vatNote,
-                'paymentLines' => $document->paymentLines,
+                ...$document->page(),
                 'creditNotes' => $row->creditNotes
                     ->filter(fn ($note) => $note->pdf_path !== null)
                     ->map(fn ($note) => ['id' => $note->public_id, 'number' => $note->number])

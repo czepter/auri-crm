@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useDebounceFn, useElementSize } from '@vueuse/core'
+import { ref, watch } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
+import PaperSheet from '@/admin/components/PaperSheet.vue'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { buildQuotePayload, type QuoteDraft, type VatSettings } from './quotePayload'
 import QuotePortalPreview from './QuotePortalPreview.vue'
@@ -14,11 +15,7 @@ import QuotePortalPreview from './QuotePortalPreview.vue'
 // that), so it fetches the stored quote once over GET instead of re-posting
 // a draft on every keystroke.
 const props = defineProps<{
-  quoteId?: string
-  // #480: the invoice create screen posts its own draft to its own route and
-  // has no portal view.
-  previewUrl?: string
-  payload?: unknown
+  quoteId: string
   draft?: QuoteDraft
   canManageCatalog?: boolean
   // Nur für den Portal-Modus: die Anrede-Zeile, die der Kunde über dem
@@ -28,38 +25,11 @@ const props = defineProps<{
   vatSettings?: VatSettings
 }>()
 
-const mode = ref<'pdf' | 'portal'>(props.previewUrl ? 'pdf' : 'portal')
-
-// A4 at 96 dpi, matching DocumentPreviewPane's own sheet metrics — the same
-// paper RenderQuotePdf sends to Gotenberg.
-const SHEET_WIDTH = 794
-const SHEET_HEIGHT = 1123
-const SHEET_MARGIN = 38
-const PAD = 16
+const mode = ref<'pdf' | 'portal'>('portal')
 
 const html = ref('')
 const stale = ref(true)
 const fit = ref(true)
-
-const frame = ref<HTMLElement | null>(null)
-const { width: available } = useElementSize(frame)
-
-const scale = computed(() =>
-  fit.value && available.value > 0 ? Math.min(1, (available.value - PAD * 2) / SHEET_WIDTH) : 1,
-)
-
-const sheet = computed(() => {
-  const style = `<style>
-    @page { size: A4; margin: ${SHEET_MARGIN}px; }
-    html { background: #fff; }
-    body {
-      width: ${SHEET_WIDTH}px; min-height: ${SHEET_HEIGHT}px; margin: 0; padding: ${SHEET_MARGIN}px;
-      background-image: repeating-linear-gradient(to bottom, transparent 0 ${SHEET_HEIGHT - 1}px, #E9E9E7 ${SHEET_HEIGHT - 1}px ${SHEET_HEIGHT}px);
-    }
-  </style>`
-
-  return html.value.includes('</head>') ? html.value.replace('</head>', `${style}</head>`) : style + html.value
-})
 
 // useDebounceFn only cancels a pending, not-yet-started call — a monotonic
 // token is how a later edit's response wins even if it lands first.
@@ -68,10 +38,10 @@ let requestId = 0
 const refreshFromServer = useDebounceFn(async () => {
   const id = ++requestId
   const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
-  const body = props.payload ?? buildQuotePayload(props.draft as QuoteDraft, { canManageCatalog: props.canManageCatalog ?? false })
+  const body = buildQuotePayload(props.draft as QuoteDraft, { canManageCatalog: props.canManageCatalog ?? false })
 
   try {
-    const response = await fetch(props.previewUrl ?? `/angebote/${props.quoteId}/vorschau`, {
+    const response = await fetch(`/angebote/${props.quoteId}/vorschau`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token, Accept: 'text/html' },
       body: JSON.stringify(body),
@@ -103,9 +73,9 @@ async function loadStoredSheet() {
   if (response.ok) html.value = await response.text()
 }
 
-if (props.draft || props.payload) {
+if (props.draft) {
   watch(
-    () => [props.draft, props.canManageCatalog, props.payload],
+    () => [props.draft, props.canManageCatalog],
     () => {
       stale.value = true
       refreshFromServer()
@@ -124,7 +94,6 @@ if (props.draft || props.payload) {
       <span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('quotes.preview') }}</span>
 
       <ChoiceGroup
-        v-if="!previewUrl"
         :model-value="mode"
         :options="[{ value: 'pdf', label: $t('quotes.previewPdf') }, { value: 'portal', label: $t('quotes.previewPortal') }]"
         variant="segmented"
@@ -142,32 +111,12 @@ if (props.draft || props.payload) {
           @click="fit = option.on"
         >{{ $t(option.label) }}</button>
       </div>
-      <span v-if="mode === 'pdf' && (draft || payload)" class="ml-2.5 text-[11px] leading-none" :class="stale ? 'text-due' : 'text-faint'">{{
+      <span v-if="mode === 'pdf' && draft" class="ml-2.5 text-[11px] leading-none" :class="stale ? 'text-due' : 'text-faint'">{{
         stale ? $t('quotes.previewStale') : $t('quotes.previewFresh')
       }}</span>
     </div>
 
-    <!-- sandbox="" (no allow-* tokens): the sheet is staff-authored HTML, not
-         trusted script — an empty sandbox keeps a <script> in it from ever
-         running with this session's origin. -->
-    <div
-      v-if="mode === 'pdf'"
-      ref="frame"
-      class="mt-6 flex-1 overflow-auto bg-sunk"
-      :style="{ height: `${SHEET_HEIGHT * scale + PAD * 2}px`, padding: `${PAD}px` }"
-    >
-      <iframe
-        class="block border border-border bg-white shadow-[0_18px_40px_-24px_rgba(20,16,14,.28)]"
-        :srcdoc="sheet"
-        sandbox=""
-        :style="{
-          width: `${SHEET_WIDTH}px`,
-          height: `${SHEET_HEIGHT}px`,
-          transform: `scale(${scale})`,
-          transformOrigin: 'top left',
-        }"
-      ></iframe>
-    </div>
+    <PaperSheet v-if="mode === 'pdf'" :html="html" :fit="fit" />
 
     <div v-else class="mt-6 flex-1 overflow-auto rounded-md border border-border bg-sunk p-4">
       <QuotePortalPreview

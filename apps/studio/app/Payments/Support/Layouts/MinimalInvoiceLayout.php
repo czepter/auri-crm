@@ -42,8 +42,10 @@ class MinimalInvoiceLayout implements InvoiceLayoutRenderer
             .'<div class="dlm-to">für <strong>'.e($name).'</strong>'.($address === '' ? '' : ' · '.e($address)).'</div>'
             .$this->reference($document)
             .$templateBody
+            .$this->letter($document->intro)
             .'<table class="dlm-table">'.$rows.'</table>'
             .$this->vatNote($document)
+            .$this->letter($document->outro)
             .$this->payment($document)
             .'</div>';
     }
