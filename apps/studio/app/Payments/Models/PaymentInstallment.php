@@ -159,7 +159,7 @@ class PaymentInstallment extends Model
      */
     public function isFinal(): bool
     {
-        return $this->live()->last()?->is($this) ?? false;
+        return $this->plan !== null && ($this->live()->last()?->is($this) ?? false);
     }
 
     /**

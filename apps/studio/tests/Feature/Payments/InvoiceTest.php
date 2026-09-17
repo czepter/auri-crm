@@ -239,9 +239,9 @@ function freeInvoice(): Invoice
 
     $guest = Contact::factory()->create(['name' => 'Jonas Gast', 'city' => 'Jena']);
 
-    return app(IssueInvoice::class)->free($guest, [
-        ['description' => 'Abzug 30×45', 'quantity' => 30, 'unit_price' => 1_190, 'vat_rate' => 1900],
-        ['description' => 'Versand', 'quantity' => 1, 'unit_price' => 500, 'vat_rate' => 1900],
+    return app(IssueInvoice::class)->positions($guest, null, [
+        ['title' => 'Abzug 30×45', 'quantity' => 30, 'unit_price' => 1_000, 'vat_rate' => 1900],
+        ['title' => 'Versand', 'quantity' => 1, 'unit_price' => 500],
     ], '2026-10-01');
 }
 
@@ -250,15 +250,15 @@ it('issues an invoice without a project from its items, with one installment to 
 
     expect($invoice->project_id)->toBeNull()
         ->and($invoice->number)->toStartWith('RE-')
-        ->and($invoice->amount())->toBe(36_200)
+        ->and($invoice->amount())->toBe(36_295)
         ->and($invoice->installments->sole()->payment_plan_id)->toBeNull()
         ->and($invoice->installments->sole()->due_on->format('Y-m-d'))->toBe('2026-10-01');
 
     $figures = InvoiceFigures::forInvoice($invoice, app(StudioSettingsResolver::class));
 
-    expect($figures->gross)->toBe(36_200)
-        ->and($figures->net + $figures->vat)->toBe(36_200)
-        ->and($figures->net)->toBe(30_420);
+    expect($figures->gross)->toBe(36_295)
+        ->and($figures->net + $figures->vat)->toBe(36_295)
+        ->and($figures->net)->toBe(30_500);
 });
 
 it('prints the items and the guest as recipient on an invoice without a project', function () {
@@ -270,7 +270,7 @@ it('prints the items and the guest as recipient on an invoice without a project'
         ->and($data['project']['name'])->toBe('')
         ->and($data['invoice']['lines'])->toHaveCount(2)
         ->and($data['invoice']['lines'][0]['title'])->toBe('Abzug 30×45')
-        ->and($data['invoice']['gross'])->toContain('362,00');
+        ->and($data['invoice']['gross'])->toContain('362,95');
 });
 
 it('marks an invoice without a project paid, and retires it', function () {
@@ -288,6 +288,39 @@ it('marks an invoice without a project paid, and retires it', function () {
         ->and($open->installments()->sole()->status)->toBe(PaymentInstallmentStatus::Cancelled);
 });
 
+// #480: a rate of the plan and a free position on one invoice.
+it('bills a picked rate at its own gross and charges free positions on top', function () {
+    Storage::fake('local');
+    Bus::fake();
+
+    $installment = invoiceablePlan();
+    $project = $installment->plan->job->project;
+
+    $invoice = app(IssueInvoice::class)->positions($project->primaryContact(), $project, [
+        ['title' => 'Anzahlung', 'installment' => $installment],
+        ['title' => 'Zusätzliche Abzüge', 'quantity' => 10, 'unit_price' => 1_000, 'discount_type' => 'percentage', 'discount_value' => 1000],
+    ], '2026-10-15')->fresh(['installments', 'items']);
+
+    $extra = $invoice->installments->firstWhere('payment_plan_id', null);
+    $figures = InvoiceFigures::forInvoice($invoice, app(StudioSettingsResolver::class));
+
+    expect($installment->fresh()->invoice_id)->toBe($invoice->id)
+        ->and($extra->amount)->toBe(10_710)
+        ->and($extra->due_on->format('Y-m-d'))->toBe('2026-10-15')
+        ->and($invoice->amount())->toBe((int) $installment->amount + 10_710)
+        ->and($figures->gross)->toBe((int) $installment->amount + 10_710);
+});
+
+it('refuses a rate from another project', function () {
+    Storage::fake('local');
+    Bus::fake();
+
+    $installment = invoiceablePlan();
+
+    expect(fn () => app(IssueInvoice::class)->positions(null, null, [['title' => 'Anzahlung', 'installment' => $installment]], null))
+        ->toThrow(ValidationException::class);
+});
+
 it('lets staff issue an invoice without a project to a new contact', function () {
     Storage::fake('local');
     Bus::fake();
@@ -296,7 +329,7 @@ it('lets staff issue an invoice without a project to a new contact', function ()
         ->post('/rechnungen', [
             'contact' => ['name' => 'Jonas Gast', 'city' => 'Jena'],
             'due_on' => '2026-10-01',
-            'items' => [['description' => 'Abzüge', 'quantity' => 2, 'unit_price' => 2_000, 'vat_rate' => 1900]],
+            'items' => [['title' => 'Abzüge', 'quantity' => 2, 'unit_price' => 2_000]],
         ])
         ->assertRedirect("/rechnungen/{$this->app['db']->table('invoices')->value('public_id')}/versenden");
 
