@@ -375,7 +375,8 @@ class DocumentMergeDataBuilder
     private function deposits(Invoice $invoice, StudioSettingsResolver $settings): array
     {
         return Invoice::query()
-            ->where('id', '<', $invoice->id)
+            // An unsaved preview comes after every invoice that exists.
+            ->when($invoice->exists, fn ($query) => $query->where('id', '<', $invoice->id))
             ->whereNull('cancelled_at')
             ->whereHas('installments', fn ($query) => $query->where('payment_plan_id', $invoice->installments->first()?->payment_plan_id))
             ->with(['installments', 'creditNotes', 'project'])

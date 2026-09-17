@@ -56,3 +56,34 @@ it('offers the open rates of each plan on the new-invoice screen', function () {
         ->and($plans[0]['installments'])->toHaveCount(1)
         ->and($plans[0]['installments'][0]['label'])->toBe('Restbetrag');
 });
+
+it('previews an invoice without a project as it will print, drawing no number', function () {
+    $html = $this->actingAs(staffMember(), 'staff')
+        ->post('/rechnungen/vorschau', [
+            'contact' => ['name' => 'Jonas Gast', 'city' => 'Jena'],
+            'due_on' => '2026-10-01',
+            'items' => [['description' => 'Abzug 30×45', 'quantity' => 30, 'unit_price' => 1_190, 'vat_rate' => 1900]],
+        ])
+        ->assertOk()
+        ->getContent();
+
+    expect($html)->toContain('Jonas Gast')
+        ->and($html)->toContain('Abzug 30×45')
+        ->and($html)->toContain('357,00')
+        ->and($html)->toContain('01.10.2026')
+        ->and(App\Payments\Models\Invoice::count())->toBe(0)
+        ->and(App\Numbering\Models\NumberCounter::count())->toBe(0);
+});
+
+it('previews the chosen rates of a plan', function () {
+    $rates = invoiceablePlan()->plan->installments()->orderBy('sort_order')->get();
+
+    $html = $this->actingAs(staffMember(), 'staff')
+        ->post('/rechnungen/vorschau', ['installments' => $rates->pluck('public_id')->all()])
+        ->assertOk()
+        ->getContent();
+
+    expect($html)->toContain('Anzahlung, Restbetrag')
+        ->and($html)->toContain('Lena Meier')
+        ->and(App\Payments\Models\Invoice::count())->toBe(0);
+});
