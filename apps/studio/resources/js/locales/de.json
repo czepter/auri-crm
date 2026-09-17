@@ -386,6 +386,7 @@
     "title": "Rechnungen",
     "create": "Neue Rechnung",
     "searchPlaceholder": "Rechnung, Projekt oder Kunde suchen",
+    "empty": "Keine Rechnungen.",
     "number": "Nummer",
     "recipient": "Empfänger",
     "issuedOn": "Datum",
