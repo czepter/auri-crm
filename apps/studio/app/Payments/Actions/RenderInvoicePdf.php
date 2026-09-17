@@ -53,7 +53,9 @@ class RenderInvoicePdf
             DocumentTemplateType::Invoice,
             InvoiceDocument::forInvoice($invoice, $data, $this->settings),
             $data,
-            $invoice->template,
+            // #480: the invoice's letter is its own intro and outro, filled
+            // from the template when it was written — not the template again.
+            '',
             $layoutOverride,
         );
     }
@@ -67,30 +69,20 @@ class RenderInvoicePdf
             DocumentTemplateType::CreditNote,
             InvoiceDocument::forCreditNote($creditNote, $data, $this->settings),
             $data,
-            $creditNote->template,
+            MergeFieldResolver::resolve(($creditNote->template ?? $this->currentTemplate(DocumentTemplateType::CreditNote))?->body ?? '', $data),
             $layoutOverride,
         );
     }
 
-    /**
-     * The pinned template where the caller has one — an issued document's
-     * wording must not change under it — and the current one otherwise, which
-     * is what a settings preview needs.
-     */
-    private function wrap(
-        DocumentTemplateType $type,
-        InvoiceDocument $document,
-        array $data,
-        ?DocumentTemplate $template,
-        ?QuoteLayout $layoutOverride,
-    ): string {
-        $template ??= DocumentTemplate::query()->current()->ofType($type)->orderBy('id')->first();
+    /** The current template, which is what an invoice's letter text starts from. */
+    public function currentTemplate(DocumentTemplateType $type): ?DocumentTemplate
+    {
+        return DocumentTemplate::query()->current()->ofType($type)->orderBy('id')->first();
+    }
 
-        $body = $this->layoutRenderer($layoutOverride)->render(
-            $document,
-            $data,
-            MergeFieldResolver::resolve($template?->body ?? '', $data),
-        );
+    private function wrap(DocumentTemplateType $type, InvoiceDocument $document, array $data, string $prose, ?QuoteLayout $layoutOverride): string
+    {
+        $body = $this->layoutRenderer($layoutOverride)->render($document, $data, $prose);
 
         return $this->renderer->wrap($type, $body, $this->settings);
     }

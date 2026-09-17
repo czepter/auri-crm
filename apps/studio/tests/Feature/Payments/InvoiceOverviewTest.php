@@ -128,3 +128,25 @@ it('previews the draft as the portal page and as the mail', function () {
         ->assertOk()
         ->assertSee('%%NACHRICHT%%', false);
 });
+
+it('starts the letter from the invoice template, without the tax line the layout prints', function () {
+    App\Documents\Models\DocumentTemplate::factory()->create([
+        'type' => App\Documents\Enums\DocumentTemplateType::Invoice,
+        'body' => '<p>Guten Tag {{ contact.name }},</p><p>vielen Dank f&uuml;r den Auftrag.</p>',
+    ]);
+
+    $intro = $this->actingAs(staffMember(), 'staff')->get('/rechnungen/neu')
+        ->assertOk()->viewData('page')['props']['intro'];
+
+    expect($intro)->toBe("Guten Tag {{ contact.name }},\n\nvielen Dank für den Auftrag.");
+});
+
+it('prints the Steuernummer from the layout whatever the letter says', function () {
+    $invoice = app(IssueInvoice::class)(invoiceablePlan(), null, ['intro' => 'Hallo.'])->fresh();
+
+    $html = app(App\Payments\Actions\RenderInvoicePdf::class)->forInvoice($invoice);
+
+    expect($html)->toContain('Steuernummer')
+        ->and($html)->toContain('22/123/45678')
+        ->and($html)->toContain('Hallo.');
+});

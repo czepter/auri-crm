@@ -176,7 +176,6 @@ class StarterTemplateCatalog
             'blocks' => ['blocks' => [
                 self::paragraph('Guten Tag {{ contact.name }},'),
                 self::paragraph('vielen Dank für den Auftrag. Die Aufstellung finden Sie unten.'),
-                self::paragraph('Steuernummer {{ studio.taxNumber }} · USt-IdNr. {{ studio.vatId }}'),
             ]],
         ];
     }
@@ -192,7 +191,6 @@ class StarterTemplateCatalog
             'blocks' => ['blocks' => [
                 self::paragraph('Guten Tag {{ contact.name }},'),
                 self::paragraph('vielen Dank für den Auftrag. Die Aufstellung finden Sie unten.'),
-                self::paragraph('Steuernummer {{ studio.taxNumber }}'),
             ]],
         ];
     }
@@ -210,7 +208,6 @@ class StarterTemplateCatalog
             'blocks' => ['blocks' => [
                 self::paragraph('Guten Tag {{ contact.name }},'),
                 self::paragraph('Grund der Gutschrift: {{ creditNote.reason }}'),
-                self::paragraph('Steuernummer {{ studio.taxNumber }} · USt-IdNr. {{ studio.vatId }}'),
                 self::paragraph('Der Betrag wird auf das uns bekannte Konto erstattet.'),
             ]],
         ];
