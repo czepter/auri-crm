@@ -96,7 +96,7 @@ class FireAutomationRule
         $data = $project === null ? [] : $this->merge->fromProject(
             $project,
             $this->settings,
-            $anchor instanceof PaymentInstallment ? $anchor : null,
+            $anchor instanceof PaymentInstallment ? $anchor->invoice : null,
         );
         $subject = MergeFieldResolver::resolve($rule->notification_subject, $data, keepUnknown: true);
         $body = MergeFieldResolver::resolve($rule->notification_body, $data, keepUnknown: true);
@@ -198,7 +198,7 @@ class FireAutomationRule
             $anchor instanceof Project => $anchor,
             $anchor instanceof Shoot, $anchor instanceof Gallery,
             $anchor instanceof Task => $anchor->project,
-            $anchor instanceof PaymentInstallment => $anchor->plan->job->project,
+            $anchor instanceof PaymentInstallment => $anchor->project(),
             default => null,
         };
     }

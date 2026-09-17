@@ -18,6 +18,7 @@ use App\Gallery\Models\GalleryVersion;
 use App\Media\Models\Asset;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Portal\Models\ClientAccess;
@@ -89,21 +90,23 @@ it('keeps the payment plan, its issued invoices and their PDFs when erasing a bo
     $contact = Contact::factory()->create(['name' => 'Lena Meier']);
     $project = dsgvoErasableProject($contact);
     $plan = PaymentPlan::factory()->for(Job::factory()->for($project))->create(['total' => 100000]);
-    $installment = PaymentInstallment::factory()->for($plan, 'plan')->create([
-        'amount' => 100000,
-        'invoice_number' => 'RE-2026-0001',
-        'invoiced_at' => now(),
-        'invoice_path' => 'invoices/re-2026-0001.pdf',
+    $invoice = Invoice::create([
+        'number' => 'RE-2026-0001',
+        'issued_at' => now(),
+        'contact_id' => $contact->id,
+        'project_id' => $project->id,
+        'pdf_path' => 'invoices/re-2026-0001.pdf',
     ]);
-    Storage::disk('local')->put($installment->invoice_path, 'pdf');
+    $installment = PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 100000, 'invoice_id' => $invoice->id]);
+    Storage::disk('local')->put($invoice->pdf_path, 'pdf');
 
     $this->actingAs($this->owner, 'staff')->post("/kontakte/{$contact->public_id}/dsgvo/loeschen");
 
-    expect($installment->fresh()?->invoice_number)->toBe('RE-2026-0001')
+    expect($installment->fresh()?->invoice?->number)->toBe('RE-2026-0001')
         ->and($project->fresh()->name)->toBe('[gelöscht]')
         ->and(Quote::query()->exists())->toBeFalse();
 
-    Storage::disk('local')->assertExists($installment->invoice_path);
+    Storage::disk('local')->assertExists($invoice->pdf_path);
 });
 
 it('exports and erases the address, comments and favorites of a contact on a shared project', function () {

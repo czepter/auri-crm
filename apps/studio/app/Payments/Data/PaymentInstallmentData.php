@@ -51,13 +51,11 @@ class PaymentInstallmentData extends Data
         // `hasInvoiceDocument` is false between issue and render: the number
         // exists the moment the action runs, the PDF only after Gotenberg
         // returns, and a download link offered in that window would 404.
+        public ?string $invoiceId,
         public ?string $invoiceNumber,
         public ?string $invoicedOn,
         public bool $hasInvoiceDocument,
-        // #415: when the client was told and when they opened it.
-        public ?string $sentOn,
-        public ?string $viewedOn,
-        // #409: every Gutschrift written against this rate. `hasDocument` is
+        // #409: every Gutschrift written against this rate's invoice. `hasDocument` is
         // false between issue and render, for the same reason
         // hasInvoiceDocument is.
         /** @var list<array{id: string, number: string, amount: int, issuedOn: string, hasDocument: bool}> */
@@ -87,12 +85,11 @@ class PaymentInstallmentData extends Data
             remaining: $installment->remaining(),
             isLate: in_array($installment->status, PaymentInstallmentStatus::open(), true)
                 && $installment->due_on->lt(now('UTC')->startOfDay()),
-            invoiceNumber: $installment->invoice_number,
-            invoicedOn: $installment->invoiced_at?->format('Y-m-d'),
-            hasInvoiceDocument: $installment->invoice_path !== null,
-            sentOn: $installment->sent_at?->format('Y-m-d'),
-            viewedOn: $installment->viewed_at?->format('Y-m-d'),
-            creditNotes: $installment->creditNotes->map(fn (CreditNote $note) => [
+            invoiceId: $installment->invoice?->public_id,
+            invoiceNumber: $installment->invoice?->number,
+            invoicedOn: $installment->invoice?->issued_at->format('Y-m-d'),
+            hasInvoiceDocument: $installment->invoice?->pdf_path !== null,
+            creditNotes: ($installment->invoice?->creditNotes ?? collect())->map(fn (CreditNote $note) => [
                 'id' => $note->public_id,
                 'number' => $note->number,
                 'amount' => $note->amount,

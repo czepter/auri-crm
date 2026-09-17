@@ -17,6 +17,7 @@ type Installment = {
   status: string
   statusLabel: string
   label: string
+  invoiceId: string | null
   invoiceNumber: string | null
   hasInvoiceDocument: boolean
   creditNotes: { id: string; number: string; amount: number; issuedOn: string; hasDocument: boolean }[]
@@ -125,17 +126,8 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
                   <Link
                     v-if="installment.invoiceNumber !== null"
                     class="text-[13px] whitespace-nowrap text-muted-foreground hover:text-foreground"
-                    :href="`/projekte/${project.id}/zahlungen/${installment.id}`"
+                    :href="`/projekte/${project.id}/zahlungen/${installment.invoiceId}`"
                   >{{ $t('portal.invoiceDownload', { number: installment.invoiceNumber }) }}</Link>
-                  <!-- Eine Gutschrift setzt keine Rechnung voraus; ohne
-                       Rechnungsseite hängt ihr PDF direkt an der Rate. -->
-                  <a
-                    v-for="note in installment.invoiceNumber === null ? installment.creditNotes.filter((note) => note.hasDocument) : []"
-                    :key="note.id"
-                    class="text-[13px] whitespace-nowrap text-muted-foreground hover:text-foreground"
-                    :href="`/projekte/${project.id}/zahlungen/${installment.id}/gutschrift/${note.id}`"
-                    target="_blank"
-                  >{{ $t('portal.creditNoteDownload', { number: note.number }) }}</a>
                   <Button
                     v-if="stripeEnabled && !['paid', 'cancelled'].includes(installment.status)"
                     variant="portal-chip"

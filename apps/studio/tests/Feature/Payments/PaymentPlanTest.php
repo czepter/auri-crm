@@ -10,6 +10,7 @@ use App\Payments\Actions\CreatePaymentPlan;
 use App\Payments\Actions\UpdatePaymentPlan;
 use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Payments\Support\PaymentInstallmentSplitter;
@@ -41,15 +42,19 @@ function acceptedQuoteJob(): Job
 /** An installment with a number, a rendered PDF and a transfer already against it. */
 function issuedInstallment(PaymentPlan $plan, int $amount): PaymentInstallment
 {
+    $invoice = Invoice::create([
+        'number' => 'RE-2026-0001',
+        'issued_at' => '2026-08-25 10:00:00',
+        'pdf_path' => 'invoices/re-2026-0001.pdf',
+    ]);
+
     return PaymentInstallment::factory()->for($plan, 'plan')->create([
         'amount' => $amount,
         'due_on' => '2026-09-01',
         'sort_order' => 0,
         'status' => PaymentInstallmentStatus::Paid,
         'paid_on' => '2026-08-20',
-        'invoice_number' => 'RE-2026-0001',
-        'invoiced_at' => '2026-08-25 10:00:00',
-        'invoice_path' => 'invoices/re-2026-0001.pdf',
+        'invoice_id' => $invoice->id,
     ]);
 }
 
@@ -198,8 +203,8 @@ it('updates a named row in place, keeping the issued one whole', function () {
 
     $issued->refresh();
 
-    expect($issued->invoice_number)->toBe('RE-2026-0001')
-        ->and($issued->invoice_path)->toBe('invoices/re-2026-0001.pdf')
+    expect($issued->invoice->number)->toBe('RE-2026-0001')
+        ->and($issued->invoice->pdf_path)->toBe('invoices/re-2026-0001.pdf')
         ->and($issued->amount)->toBe(100)
         ->and($issued->status)->toBe(PaymentInstallmentStatus::Paid)
         ->and($issued->paid_on->format('Y-m-d'))->toBe('2026-08-20')

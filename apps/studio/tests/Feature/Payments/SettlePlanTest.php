@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 uses(RefreshDatabase::class);
 
@@ -70,7 +71,7 @@ it('deletes the unissued rate, voids the issued one and keeps the paid one', fun
 
     expect(PaymentInstallment::query()->whereKey($open->id)->exists())->toBeFalse()
         ->and($issued->fresh()->status)->toBe(PaymentInstallmentStatus::Cancelled)
-        ->and($issued->fresh()->cancellation_kind)->toBe(CancellationKind::Void)
+        ->and($issued->fresh()->invoice->cancellation_kind)->toBe(CancellationKind::Void)
         ->and($paid->fresh()->status)->toBe(PaymentInstallmentStatus::Paid)
         // Was noch lebt, ist die behaltene Rate — und genau das ist die
         // Plansumme, weil der Summen-Trigger beides zusammen prüft.
@@ -96,7 +97,7 @@ it('turns a credit decision into a Gutschrift', function () {
         $paid->public_id => ['action' => 'credit', 'amount' => 20_000],
     ], staffMember(StaffRole::Owner));
 
-    $note = $paid->fresh()->creditNotes->sole();
+    $note = $paid->fresh()->invoice->creditNotes->sole();
 
     expect($note->amount)->toBe(20_000)
         ->and($note->number)->toStartWith('GS-')
@@ -129,5 +130,5 @@ it('refuses a second settlement', function () {
     app(SettlePaymentPlan::class)($plan, []);
 
     expect(fn () => app(SettlePaymentPlan::class)($plan->fresh(), []))
-        ->toThrow(Illuminate\Validation\ValidationException::class);
+        ->toThrow(ValidationException::class);
 });

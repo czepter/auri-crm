@@ -56,7 +56,7 @@ class PaymentReminder extends Notification
 
         // #415: die Rechnung liegt bei, damit die Erinnerung ohne Portal-Login
         // alles enthält, was zum Bezahlen gebraucht wird.
-        $this->attachInvoicePdf($message, $this->installment);
+        $this->attachInvoicePdf($message, $this->installment->invoice);
 
         if ($notifiable instanceof Contact) {
             $message->line(

@@ -41,20 +41,20 @@ it('sends the issue button into the compose screen', function () {
 
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->post("/raten/{$installment->public_id}/rechnung")
-        ->assertRedirect("/raten/{$installment->public_id}/rechnung/versenden");
+        ->assertRedirect('/rechnungen/'.$installment->fresh()->invoice->public_id.'/versenden');
 });
 
 it('renders the compose screen with the recipient and the invoice card data', function () {
-    $installment = mailableInvoice();
+    $invoice = mailableInvoice();
 
     $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get("/raten/{$installment->public_id}/rechnung/versenden")
+        ->get("/rechnungen/{$invoice->public_id}/versenden")
         ->assertOk()
         ->viewData('page')['props'];
 
-    expect($props['invoice']['number'])->toBe($installment->invoice_number)
-        ->and($props['invoice']['amount'])->toBe((int) $installment->amount)
-        ->and($props['invoice']['statusLabel'])->toBe('Gestellt')
+    expect($props['invoice']['number'])->toBe($invoice->number)
+        ->and($props['invoice']['amount'])->toBe($invoice->amount())
+        ->and($props['invoice']['statusLabel'])->toBe(__('payments.invoiceStatus.'.$invoice->status()))
         ->and($props['recipients'][0]['email'])->toBe('lena@example.test')
         ->and($props['mailHtml'])->toContain('%%NACHRICHT%%');
 });
@@ -62,42 +62,34 @@ it('renders the compose screen with the recipient and the invoice card data', fu
 it('attaches the PDF to the mail and stamps sent_at once', function () {
     Notification::fake();
 
-    $installment = mailableInvoice();
+    $invoice = mailableInvoice();
 
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->post("/raten/{$installment->public_id}/rechnung/versenden", [
-            'subject' => "Rechnung {$installment->invoice_number}",
+        ->post("/rechnungen/{$invoice->public_id}/versenden", [
+            'subject' => "Rechnung {$invoice->number}",
             'message' => "Hallo Lena,\n\nanbei die Rechnung.",
         ])
-        ->assertRedirect();
+        ->assertRedirect('/rechnungen');
 
     Notification::assertSentTo(
-        $installment->plan->job->project->primaryContact(),
+        $invoice->project->primaryContact(),
         InvoiceSent::class,
-        function (InvoiceSent $notification, array $channels, $notifiable) use ($installment) {
+        function (InvoiceSent $notification, array $channels, $notifiable) use ($invoice) {
             $mail = $notification->toMail($notifiable);
 
-            expect($mail->rawAttachments[0]['name'])->toBe("rechnung-{$installment->invoice_number}.pdf")
+            expect($mail->rawAttachments[0]['name'])->toBe("rechnung-{$invoice->number}.pdf")
                 ->and($mail->rawAttachments[0]['data'])->toBe('%PDF-1.4 fake');
 
             return true;
         },
     );
 
-    $sentAt = $installment->fresh()->sent_at;
+    $sentAt = $invoice->fresh()->sent_at;
     expect($sentAt)->not->toBeNull();
 
     $this->travel(1)->day();
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->post("/raten/{$installment->public_id}/rechnung/versenden", ['subject' => 'Nochmal']);
+        ->post("/rechnungen/{$invoice->public_id}/versenden", ['subject' => 'Nochmal']);
 
-    expect($installment->fresh()->sent_at->equalTo($sentAt))->toBeTrue();
-});
-
-it('refuses the compose screen for a rate nobody has issued', function () {
-    $installment = invoiceablePlan();
-
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get("/raten/{$installment->public_id}/rechnung/versenden")
-        ->assertNotFound();
+    expect($invoice->fresh()->sent_at->equalTo($sentAt))->toBeTrue();
 });

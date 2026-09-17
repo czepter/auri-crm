@@ -14,7 +14,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * have somewhere to land without a migration widening this column's domain.
  * M-04 shipped as Stripe Checkout and never used it; M-06's own invoice is
  * what finally writes it. Since #407 the status no longer decides what may
- * be edited — `invoiced_at` does, on the row itself.
+ * be edited — `invoice_id` does, on the row itself.
  *
  * `cancelled` (#408) is terminal and reachable only from `invoiced`: the row
  * keeps its number and its PDF, and nothing that chases money — overdue

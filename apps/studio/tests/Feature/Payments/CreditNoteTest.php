@@ -9,6 +9,7 @@ use App\Numbering\Enums\DocumentType;
 use App\Numbering\Models\NumberCounter;
 use App\Payments\Actions\IssueCreditNote;
 use App\Payments\Actions\IssueInvoice;
+use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\SettledVia;
 use App\Payments\Models\CreditNote;
 use App\Settings\Models\StudioSettings;
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Stripe\ApiRequestor;
+use Stripe\Exception\CardException;
 use Tests\Support\FakeStripeHttpClient;
 
 uses(RefreshDatabase::class);
@@ -32,7 +34,7 @@ afterEach(fn () => ApiRequestor::setHttpClient(null));
 it('allocates the number from the credit-note range, not the invoice one', function () {
     $installment = creditableInstallment();
 
-    $note = app(IssueCreditNote::class)($installment, $installment->amount, 'Zweite Kamera nicht erbracht');
+    $note = app(IssueCreditNote::class)($installment->invoice, $installment->amount, 'Zweite Kamera nicht erbracht');
 
     expect($note->number)->toStartWith('GS-')
         ->and(NumberCounter::where('document_type', DocumentType::CreditNote->value)->count())->toBe(1)
@@ -42,7 +44,7 @@ it('allocates the number from the credit-note range, not the invoice one', funct
 it('credits the whole amount', function () {
     $installment = creditableInstallment();
 
-    $note = app(IssueCreditNote::class)($installment, $installment->amount, 'Auftrag entfallen');
+    $note = app(IssueCreditNote::class)($installment->invoice, $installment->amount, 'Auftrag entfallen');
 
     expect($note->amount)->toBe($installment->amount)
         ->and($note->reason)->toBe('Auftrag entfallen')
@@ -53,34 +55,34 @@ it('credits a part, and caps the next one at what is left', function () {
     $installment = creditableInstallment();
     $issue = app(IssueCreditNote::class);
 
-    $issue($installment, 20_000, 'Teilleistung entfallen');
-    $issue($installment->fresh(), 10_000, 'Nachlass');
+    $issue($installment->invoice, 20_000, 'Teilleistung entfallen');
+    $issue($installment->fresh()->invoice, 10_000, 'Nachlass');
 
-    expect($installment->fresh()->creditNotes)->toHaveCount(2);
+    expect($installment->fresh()->invoice->creditNotes)->toHaveCount(2);
 
     $remaining = $installment->amount - 30_000;
 
-    expect(fn () => $issue($installment->fresh(), $remaining + 1, 'Zu viel'))
+    expect(fn () => $issue($installment->fresh()->invoice, $remaining + 1, 'Zu viel'))
         ->toThrow(ValidationException::class);
 });
 
 it('refuses more than was paid', function () {
     $installment = creditableInstallment();
 
-    expect(fn () => app(IssueCreditNote::class)($installment, $installment->amount + 1, 'Zu viel'))
+    expect(fn () => app(IssueCreditNote::class)($installment->invoice, $installment->amount + 1, 'Zu viel'))
         ->toThrow(ValidationException::class);
 
     expect(CreditNote::count())->toBe(0)
         ->and(NumberCounter::where('document_type', DocumentType::CreditNote->value)->count())->toBe(0);
 });
 
-it('refuses an installment that was never paid', function () {
+it('refuses an invoice that was never paid', function () {
     Storage::fake('local');
 
     $installment = invoiceablePlan();
     app(IssueInvoice::class)($installment);
 
-    expect(fn () => app(IssueCreditNote::class)($installment->fresh(), 10_000, 'Zu früh'))
+    expect(fn () => app(IssueCreditNote::class)($installment->fresh()->invoice, 10_000, 'Zu früh'))
         ->toThrow(ValidationException::class);
 });
 
@@ -100,7 +102,7 @@ it('refunds through Stripe and stores the refund id', function () {
     ]]);
     ApiRequestor::setHttpClient($fake);
 
-    $note = app(IssueCreditNote::class)($installment, 50_000, 'Teilleistung entfallen');
+    $note = app(IssueCreditNote::class)($installment->invoice, 50_000, 'Teilleistung entfallen');
 
     expect($note->fresh()->stripe_refund_id)->toBe('re_test_789')
         ->and($fake->requests)->toHaveCount(1)
@@ -123,8 +125,8 @@ it('writes no credit note when the Stripe refund fails', function () {
         'body' => ['error' => ['type' => 'card_error', 'message' => 'Charge has already been refunded.']],
     ]]));
 
-    expect(fn () => app(IssueCreditNote::class)($installment, 50_000, 'Teilleistung entfallen'))
-        ->toThrow(Stripe\Exception\CardException::class);
+    expect(fn () => app(IssueCreditNote::class)($installment->invoice, 50_000, 'Teilleistung entfallen'))
+        ->toThrow(CardException::class);
 
     expect(CreditNote::count())->toBe(0)
         ->and(NumberCounter::where('document_type', DocumentType::CreditNote->value)->count())->toBe(0);
@@ -133,13 +135,13 @@ it('writes no credit note when the Stripe refund fails', function () {
 it('records the number, the invoice it credits and the reason', function () {
     $installment = creditableInstallment();
 
-    app(IssueCreditNote::class)($installment, 25_000, 'Nachlass', staffMember(StaffRole::Owner));
+    app(IssueCreditNote::class)($installment->invoice, 25_000, 'Nachlass', staffMember(StaffRole::Owner));
 
     $log = AuditLog::where('event', 'payments.credit_note.issued')->sole();
 
     expect($log->context['amount'])->toBe(25_000)
         ->and($log->context['reason'])->toBe('Nachlass')
-        ->and($log->context['invoice_number'])->toBe($installment->invoice_number)
+        ->and($log->context['invoice_number'])->toBe($installment->invoice->number)
         ->and($log->context['number'])->toStartWith('GS-');
 });
 
@@ -159,14 +161,14 @@ it('renders the Gutschrift against the pinned template, with the reference line 
         ->once()
         ->andReturnUsing(function (string $html) use ($installment) {
             expect($html)->toContain('Gutschrift GS-')
-                ->and($html)->toContain('Zu Rechnung '.$installment->invoice_number)
+                ->and($html)->toContain('Zu Rechnung '.$installment->invoice->number)
                 ->and($html)->toContain('Nachlass')
                 ->and($html)->not->toContain('{{');
 
             return '%PDF-1.4 fake';
         });
 
-    $note = app(IssueCreditNote::class)($installment, 25_000, 'Nachlass');
+    $note = app(IssueCreditNote::class)($installment->invoice, 25_000, 'Nachlass');
 
     expect($note->fresh()->pdf_path)->toBe("credit-notes/{$note->tenant_id}/{$note->public_id}.pdf");
     Storage::disk('local')->assertExists($note->fresh()->pdf_path);
@@ -193,27 +195,37 @@ it('lets staff issue a Gutschrift through the route and download it', function (
     $installment = creditableInstallment();
 
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->post("/raten/{$installment->public_id}/gutschrift", ['amount' => 25_000, 'reason' => 'Nachlass'])
+        ->post("/rechnungen/{$installment->invoice->public_id}/gutschrift", ['amount' => 25_000, 'reason' => 'Nachlass'])
         ->assertRedirect();
 
     $note = CreditNote::sole();
 
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get("/raten/{$installment->public_id}/gutschrift/{$note->public_id}")
+        ->get("/rechnungen/{$installment->invoice->public_id}/gutschrift/{$note->public_id}")
         ->assertOk()
         ->assertHeader('content-type', 'application/pdf');
 });
 
 it('sends the Gutschrift to the client alongside the invoice', function () {
     $installment = creditableInstallment();
-    app(IssueCreditNote::class)($installment, 25_000, 'Nachlass');
+    app(IssueCreditNote::class)($installment->invoice, 25_000, 'Nachlass');
 
-    $data = App\Payments\Data\PaymentPlanData::fromModel(
-        $installment->plan->fresh()->load('installments.creditNotes'),
+    $data = PaymentPlanData::fromModel(
+        $installment->plan->fresh()->load('installments.invoice.creditNotes'),
     );
 
     expect($data->installments[0]->creditNotes)->toHaveCount(1)
         ->and($data->installments[0]->creditNotes[0]['number'])->toStartWith('GS-')
         ->and($data->installments[0]->creditNotes[0]['amount'])->toBe(25_000)
         ->and($data->installments[1]->creditNotes)->toBe([]);
+});
+
+// #480: the plan loads its Gutschriften through the invoice now.
+it('renders the project quote tab once a Gutschrift exists', function () {
+    $installment = creditableInstallment();
+    app(IssueCreditNote::class)($installment->invoice, 25_000, 'Nachlass');
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->get("/auftraege/{$installment->plan->job->project->public_id}/angebote")
+        ->assertOk();
 });

@@ -7,6 +7,7 @@ use App\Crm\Models\Project;
 use App\Payments\Actions\CancelInvoice;
 use App\Payments\Actions\IssueInvoice;
 use App\Payments\Enums\CancellationKind;
+use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Settings\Models\StudioSettings;
@@ -29,7 +30,7 @@ beforeEach(function () {
     ]);
 });
 
-/** @return array{0: Project, 1: Contact, 2: PaymentInstallment} */
+/** @return array{0: Project, 1: Contact, 2: Invoice} */
 function portalIssuedInvoice(): array
 {
     Storage::fake('local');
@@ -46,20 +47,18 @@ function portalIssuedInvoice(): array
         'due_on' => now()->addWeek()->toDateString(),
     ]);
 
-    app(IssueInvoice::class)($installment);
-
-    return [$project, $contact, $installment->fresh()];
+    return [$project, $contact, app(IssueInvoice::class)($installment)->fresh()];
 }
 
 it('shows the invoice as a page, with the recipient, the meta rows and the summary chain', function () {
-    [$project, $contact, $installment] = portalIssuedInvoice();
+    [$project, $contact, $invoice] = portalIssuedInvoice();
 
     $props = $this->actingAs($contact, 'portal')
-        ->get("/projekte/{$project->public_id}/zahlungen/{$installment->public_id}")
+        ->get("/projekte/{$project->public_id}/zahlungen/{$invoice->public_id}")
         ->assertOk()
         ->viewData('page')['props'];
 
-    expect($props['invoice']['number'])->toBe($installment->invoice_number)
+    expect($props['invoice']['number'])->toBe($invoice->number)
         ->and(collect($props['invoice']['metaRows'])->pluck(0)->all())
         ->toContain('Rechnungsnummer', 'Rechnungsdatum', 'Fällig am')
         ->and(collect($props['invoice']['summaryRows'])->pluck(0)->all())
@@ -68,28 +67,28 @@ it('shows the invoice as a page, with the recipient, the meta rows and the summa
 });
 
 it('drops the pay button on a cancelled invoice and keeps the page readable', function () {
-    [$project, $contact, $installment] = portalIssuedInvoice();
+    [$project, $contact, $invoice] = portalIssuedInvoice();
 
-    app(CancelInvoice::class)($installment, CancellationKind::Void, 'Termin abgesagt');
+    app(CancelInvoice::class)($invoice, CancellationKind::Void, 'Termin abgesagt');
 
     $props = $this->actingAs($contact, 'portal')
-        ->get("/projekte/{$project->public_id}/zahlungen/{$installment->public_id}")
+        ->get("/projekte/{$project->public_id}/zahlungen/{$invoice->public_id}")
         ->assertOk()
         ->viewData('page')['props'];
 
     expect($props['invoice']['statusLabel'])->toBe('Storniert')
-        ->and($props['canPay'])->toBeFalse();
+        ->and($props['payInstallmentId'])->toBeNull();
 });
 
 it('404s the page for a contact who cannot see the project', function () {
-    [$project, , $installment] = portalIssuedInvoice();
+    [$project, , $invoice] = portalIssuedInvoice();
 
     $this->actingAs(Contact::factory()->create(), 'portal')
-        ->get("/projekte/{$project->public_id}/zahlungen/{$installment->public_id}")
+        ->get("/projekte/{$project->public_id}/zahlungen/{$invoice->public_id}")
         ->assertNotFound();
 });
 
-it('404s the page for an installment that was never issued', function () {
+it('404s the page for a rate that was never issued', function () {
     [$project, $contact] = portalIssuedInvoice();
 
     $sibling = PaymentInstallment::factory()
@@ -102,22 +101,22 @@ it('404s the page for an installment that was never issued', function () {
 });
 
 it('404s the page while the payment-status switch is off', function () {
-    [$project, $contact, $installment] = portalIssuedInvoice();
+    [$project, $contact, $invoice] = portalIssuedInvoice();
 
     Cache::store('redis')->flush();
     StudioSettings::query()->update(['portal_payment_status_enabled' => false]);
 
     $this->actingAs($contact, 'portal')
-        ->get("/projekte/{$project->public_id}/zahlungen/{$installment->public_id}")
+        ->get("/projekte/{$project->public_id}/zahlungen/{$invoice->public_id}")
         ->assertNotFound();
 });
 
 // --- #415: die Rechnungsliste am Projekt und der erste Blick ------------
 
-it('lists only issued rates on the project page', function () {
-    [$project, $contact, $installment] = portalIssuedInvoice();
+it('lists only invoices on the project page', function () {
+    [$project, $contact, $invoice] = portalIssuedInvoice();
 
-    PaymentInstallment::factory()->for($installment->plan, 'plan')->create([
+    PaymentInstallment::factory()->for($invoice->plan(), 'plan')->create([
         'amount' => 50_000,
         'due_on' => now()->addMonth()->toDateString(),
         'sort_order' => 1,
@@ -129,26 +128,26 @@ it('lists only issued rates on the project page', function () {
         ->viewData('page')['props'];
 
     expect($props['project']['invoices'])->toHaveCount(1)
-        ->and($props['project']['invoices'][0]['number'])->toBe($installment->invoice_number)
+        ->and($props['project']['invoices'][0]['number'])->toBe($invoice->number)
         ->and($props['project']['invoices'][0]['amount'])->toBe(100_000);
 });
 
 it('stamps viewed_at on the first look and leaves it on the second', function () {
-    [$project, $contact, $installment] = portalIssuedInvoice();
+    [$project, $contact, $invoice] = portalIssuedInvoice();
 
-    expect($installment->viewed_at)->toBeNull();
+    expect($invoice->viewed_at)->toBeNull();
 
     $this->actingAs($contact, 'portal')
-        ->get("/projekte/{$project->public_id}/zahlungen/{$installment->public_id}")
+        ->get("/projekte/{$project->public_id}/zahlungen/{$invoice->public_id}")
         ->assertOk();
 
-    $first = $installment->fresh()->viewed_at;
+    $first = $invoice->fresh()->viewed_at;
     expect($first)->not->toBeNull();
 
     $this->travel(1)->day();
     $this->actingAs($contact, 'portal')
-        ->get("/projekte/{$project->public_id}/zahlungen/{$installment->public_id}")
+        ->get("/projekte/{$project->public_id}/zahlungen/{$invoice->public_id}")
         ->assertOk();
 
-    expect($installment->fresh()->viewed_at->equalTo($first))->toBeTrue();
+    expect($invoice->fresh()->viewed_at->equalTo($first))->toBeTrue();
 });

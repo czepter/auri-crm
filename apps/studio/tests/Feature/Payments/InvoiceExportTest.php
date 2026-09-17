@@ -38,8 +38,8 @@ it('exports one line per issued invoice of the year, with a BOM and the header r
             'Brutto', 'bezahlt am', 'Status', 'Gutschriften',
         ])
         ->and(str_getcsv($lines[1], ';'))->toBe([
-            $issued->invoice_number, '04.05.2026', 'Lena Meier', 'Hochzeit Meier & Kowalski',
-            '630,25', '19 %', '119,75', '750,00', '', 'Gestellt', '',
+            $issued->number, '04.05.2026', 'Lena Meier', 'Hochzeit Meier & Kowalski',
+            '630,25', '19 %', '119,75', '750,00', '', 'Offen', '',
         ]);
 });
 
@@ -84,15 +84,15 @@ it('re-renders a lost PDF from the snapshot, not from today settings', function 
             return '%PDF-1.4 fake';
         });
 
-    $installment = app(IssueInvoice::class)(invoiceablePlan());
-    $path = $installment->fresh()->invoice_path;
+    $invoice = app(IssueInvoice::class)(invoiceablePlan());
+    $path = $invoice->fresh()->pdf_path;
 
     expect(Storage::disk('local')->exists(MergeDataSnapshot::pathFor($path)))->toBeTrue();
 
     $settings->set('bank_iban', 'DE89370400440532013000', null);
     Storage::disk('local')->delete($path);
 
-    (new RenderInvoiceJob($installment->fresh()))->handle(
+    (new RenderInvoiceJob($invoice->fresh()))->handle(
         app(GotenbergClient::class),
         app(RenderInvoicePdf::class),
     );
@@ -110,7 +110,7 @@ it('freezes a Gutschrift beside its own PDF', function () {
     $this->mock(GotenbergClient::class)->shouldReceive('htmlToPdf')->andReturn('%PDF-1.4 fake');
 
     $installment = creditableInstallment();
-    $note = app(IssueCreditNote::class)($installment, 20_000, 'Teilleistung entfallen');
+    $note = app(IssueCreditNote::class)($installment->invoice, 20_000, 'Teilleistung entfallen');
 
     expect(Storage::disk('local')->exists(MergeDataSnapshot::pathFor($note->fresh()->pdf_path)))->toBeTrue();
 });

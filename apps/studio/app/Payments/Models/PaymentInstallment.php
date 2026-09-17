@@ -4,8 +4,7 @@ namespace App\Payments\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
-use App\Documents\Models\DocumentTemplate;
-use App\Payments\Enums\CancellationKind;
+use App\Crm\Models\Project;
 use App\Payments\Enums\OverdueReason;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Enums\SettledVia;
@@ -17,7 +16,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
 /**
@@ -40,9 +38,7 @@ class PaymentInstallment extends Model
         'overdue_reason', 'overdue_reminders_sent', 'client_reminders_sent',
         'before_due_reminder_sent_at',
         'stripe_checkout_session_id',
-        'invoice_number', 'invoiced_at', 'invoice_path', 'invoice_template_id',
-        'cancelled_at', 'cancellation_kind', 'cancellation_reason',
-        'sent_at', 'viewed_at',
+        'invoice_id', 'cancelled_at',
     ];
 
     protected $attributes = ['status' => PaymentInstallmentStatus::Scheduled, 'sort_order' => 0, 'paid_amount' => 0];
@@ -57,11 +53,7 @@ class PaymentInstallment extends Model
             'overdue_notified_at' => 'immutable_datetime',
             'before_due_reminder_sent_at' => 'immutable_datetime',
             'overdue_reason' => OverdueReason::class,
-            'invoiced_at' => 'immutable_datetime',
-            'sent_at' => 'immutable_datetime',
-            'viewed_at' => 'immutable_datetime',
             'cancelled_at' => 'immutable_datetime',
-            'cancellation_kind' => CancellationKind::class,
         ];
     }
 
@@ -73,7 +65,7 @@ class PaymentInstallment extends Model
     protected static function booted(): void
     {
         static::updating(function (self $installment) {
-            if ($installment->getOriginal('invoiced_at') === null) {
+            if ($installment->getOriginal('invoice_id') === null) {
                 return;
             }
 
@@ -97,7 +89,7 @@ class PaymentInstallment extends Model
                     'to' => $installment->due_on->format('Y-m-d'),
                 ],
                 subject: $installment->public_id,
-                projectId: $installment->plan?->job?->project_id,
+                projectId: $installment->project()?->id,
             );
         });
     }
@@ -107,19 +99,16 @@ class PaymentInstallment extends Model
         return $this->belongsTo(PaymentPlan::class, 'payment_plan_id');
     }
 
-    /**
-     * The exact template version this invoice was rendered from — pinned at
-     * issue, never resolved again, so editing the invoice wording later
-     * cannot change a document a client already holds.
-     */
-    public function invoiceTemplate(): BelongsTo
+    /** #480: the document this rate is billed on, if it has been. */
+    public function invoice(): BelongsTo
     {
-        return $this->belongsTo(DocumentTemplate::class, 'invoice_template_id');
+        return $this->belongsTo(Invoice::class);
     }
 
-    public function creditNotes(): HasMany
+    /** The plan's project, or the invoice's for a rate outside any plan. */
+    public function project(): ?Project
     {
-        return $this->hasMany(CreditNote::class)->orderBy('id');
+        return $this->plan?->job?->project ?? $this->invoice?->project;
     }
 
     /**
@@ -150,10 +139,9 @@ class PaymentInstallment extends Model
         return max(0, (int) $this->amount - (int) $this->paid_amount);
     }
 
-    /** M-06: issued means stamped with a number, whatever the render has done since. */
     public function isInvoiced(): bool
     {
-        return $this->invoiced_at !== null;
+        return $this->invoice_id !== null;
     }
 
     public function isCancelled(): bool
@@ -172,20 +160,6 @@ class PaymentInstallment extends Model
     public function isFinal(): bool
     {
         return $this->live()->last()?->is($this) ?? false;
-    }
-
-    /**
-     * The Teilentgelte this invoice has to deduct: every live installment
-     * before it that has actually been issued. An unissued one took no
-     * payment and names no invoice to reference.
-     *
-     * @return Collection<int, self>
-     */
-    public function earlierIssued(): Collection
-    {
-        return $this->live()
-            ->filter(fn (self $candidate) => $candidate->sort_order < $this->sort_order && $candidate->isInvoiced())
-            ->values();
     }
 
     /**

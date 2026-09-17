@@ -4,6 +4,7 @@ use App\Crm\Models\Shoot;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Gallery\Models\Gallery;
 use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Settings\Support\StudioSettingsResolver;
@@ -63,21 +64,22 @@ it('prints the Vereinnahmungsdatum on an Anzahlung paid before it was issued', f
     $project = bookedContactProject();
     Shoot::factory()->for($project)->primary()->on('2026-06-20')->create();
     $plan = PaymentPlan::factory()->for($project->job()->sole())->create(['total' => 50_000]);
+    $invoice = Invoice::create(['number' => 'RE-2026-1', 'issued_at' => '2026-03-05 09:00:00', 'project_id' => $project->id]);
     $installment = PaymentInstallment::factory()->for($plan, 'plan')->create([
         'amount' => 50_000,
         'status' => PaymentInstallmentStatus::Paid,
         'paid_on' => '2026-03-02',
-        'invoiced_at' => '2026-03-05 09:00:00',
+        'invoice_id' => $invoice->id,
     ]);
 
-    $data = (new DocumentMergeDataBuilder)->fromProject($project, new StudioSettingsResolver, $installment);
+    $data = (new DocumentMergeDataBuilder)->fromInvoice($invoice, new StudioSettingsResolver);
 
     expect($data['invoice']['servicePeriod'])->toBe('02.03.2026');
 
     // Paid after issue: the shoot day is the supply, as before.
     $installment->update(['paid_on' => '2026-03-09']);
 
-    $data = (new DocumentMergeDataBuilder)->fromProject($project, new StudioSettingsResolver, $installment->fresh());
+    $data = (new DocumentMergeDataBuilder)->fromInvoice($invoice->fresh(), new StudioSettingsResolver);
 
     expect($data['invoice']['servicePeriod'])->toBe('20.06.2026');
 });

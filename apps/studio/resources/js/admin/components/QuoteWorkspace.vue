@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import QuoteEditor from '@/admin/components/quote/QuoteEditor.vue'
 import QuotePreviewPane from '@/admin/components/quote/QuotePreviewPane.vue'
@@ -18,6 +18,7 @@ import QuoteActions from '@/admin/components/quote/QuoteActions.vue'
 import InstallmentPaidDialog from '@/admin/components/InstallmentPaidDialog.vue'
 import InstallmentStornoDialog from '@/admin/components/InstallmentStornoDialog.vue'
 import CreditNoteDialog from '@/admin/components/CreditNoteDialog.vue'
+import PaymentPlanDialog from '@/admin/components/PaymentPlanDialog.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -127,6 +128,15 @@ function create() {
 }
 
 const planForm = useForm({ total: '', installments: [{ due_on: '' }] })
+
+// #480: a Gutschrift belongs to the invoice, and an invoice can carry several rates.
+const creditNotes = computed(() => {
+  const seen = new Set<string>()
+
+  return (props.paymentPlan?.installments ?? []).flatMap((installment) => installment.creditNotes
+    .filter((note) => !seen.has(note.id) && seen.add(note.id))
+    .map((note) => ({ note, invoiceId: installment.invoiceId })))
+})
 
 function createPlan() {
   planForm
@@ -273,6 +283,10 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
     :title="$t('payments.title')"
     :summary="paymentPlan ? $t('payments.open', { amount: formatEuros(paymentPlan.openTotal) }) : null"
   >
+    <template v-if="canManagePaymentPlan && paymentPlan && !paymentPlan.settledOn" #action>
+      <PaymentPlanDialog :plan="paymentPlan" />
+    </template>
+
     <div
       v-for="installment in paymentPlan?.installments ?? []"
       :key="installment.id"
@@ -280,26 +294,39 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
     >
       <span class="w-[110px] flex-none text-ink-2">{{ dayWithWeekday(installment.dueOn) }}</span>
       <span class="flex-1">{{ installment.label }}</span>
+      <a
+        v-if="installment.invoiceId && installment.hasInvoiceDocument"
+        class="text-[12px] text-ink-2"
+        :href="`/rechnungen/${installment.invoiceId}/pdf`"
+        target="_blank"
+      >{{ installment.invoiceNumber }}</a>
+      <span v-else-if="installment.invoiceNumber" class="text-[12px] text-ink-2">{{ installment.invoiceNumber }}</span>
       <span class="text-[12px] text-ink-2">{{ installment.statusLabel }}</span>
       <span class="w-[110px] flex-none text-right font-semibold tabular-nums">{{ formatEuros(installment.amount) }}</span>
+      <Button
+        v-if="canManagePaymentPlan && !installment.invoiceId && installment.status !== 'cancelled'"
+        variant="outline"
+        type="button"
+        @click="router.post(`/raten/${installment.id}/rechnung`)"
+      >{{ $t('payments.issueInvoice') }}</Button>
       <InstallmentPaidDialog
         v-if="canManagePaymentPlan && installment.status !== 'cancelled' && installment.remaining > 0"
         :installment-id="installment.id"
         :remaining="installment.remaining"
       />
       <InstallmentStornoDialog
-        v-if="canManagePaymentPlan && installment.status === 'invoiced'"
-        :installment-id="installment.id"
+        v-if="canManagePaymentPlan && installment.invoiceId && installment.status === 'invoiced'"
+        :invoice-id="installment.invoiceId"
       />
       <CreditNoteDialog
-        v-if="canManagePaymentPlan && installment.status === 'paid'"
-        :installment-id="installment.id"
+        v-if="canManagePaymentPlan && installment.invoiceId && installment.status === 'paid'"
+        :invoice-id="installment.invoiceId"
         :amount="installment.amount"
       />
     </div>
 
     <div
-      v-for="note in paymentPlan?.installments.flatMap((installment) => installment.creditNotes.map((note) => ({ note, installment }))) ?? []"
+      v-for="note in creditNotes"
       :key="note.note.id"
       class="flex items-center gap-3 py-[9px] text-[13px] text-ink-2"
     >
@@ -307,7 +334,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
       <a
         v-if="note.note.hasDocument"
         class="flex-1"
-        :href="`/raten/${note.installment.id}/gutschrift/${note.note.id}`"
+        :href="`/rechnungen/${note.invoiceId}/gutschrift/${note.note.id}`"
         target="_blank"
       >{{ $t('payments.creditNoteRow', { number: note.note.number }) }}</a>
       <span v-else class="flex-1">{{ $t('payments.creditNoteRow', { number: note.note.number }) }}</span>

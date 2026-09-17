@@ -4,8 +4,7 @@ namespace App\Payments\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
-use App\Payments\Models\CreditNote;
-use App\Payments\Models\PaymentInstallment;
+use App\Payments\Models\Invoice;
 use App\Payments\Support\InvoiceFigures;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\Request;
@@ -37,21 +36,20 @@ class InvoiceExportController extends Controller
             'jahr' => ['required', 'integer', 'min:2000', 'max:2100'],
         ])['jahr'];
 
-        $installments = PaymentInstallment::query()
-            ->whereNotNull('invoice_number')
-            ->whereYear('invoiced_at', $year)
-            ->with(['creditNotes', 'plan.job.project'])
-            ->orderBy('invoice_number')
+        $invoices = Invoice::query()
+            ->whereYear('issued_at', $year)
+            ->with(['installments', 'creditNotes', 'contact', 'project', 'items'])
+            ->orderBy('number')
             ->get();
 
-        return response()->streamDownload(function () use ($installments, $settings) {
+        return response()->streamDownload(function () use ($invoices, $settings) {
             $out = fopen('php://output', 'w');
 
             fwrite($out, "\u{FEFF}");
             fputcsv($out, self::COLUMNS, ';');
 
-            foreach ($installments as $installment) {
-                fputcsv($out, $this->row($installment, $settings), ';');
+            foreach ($invoices as $invoice) {
+                fputcsv($out, $this->row($invoice, $settings), ';');
             }
 
             fclose($out);
@@ -59,23 +57,22 @@ class InvoiceExportController extends Controller
     }
 
     /** @return list<string> */
-    private function row(PaymentInstallment $installment, StudioSettingsResolver $settings): array
+    private function row(Invoice $invoice, StudioSettingsResolver $settings): array
     {
-        $figures = InvoiceFigures::forInstallment($installment, $settings);
-        $project = $installment->plan?->job?->project;
-        $credited = $installment->creditNotes->sum(fn (CreditNote $note) => (int) $note->amount);
+        $figures = InvoiceFigures::forInvoice($invoice, $settings);
+        $credited = $invoice->creditedAmount();
 
         return [
-            (string) $installment->invoice_number,
-            $installment->invoiced_at?->format('d.m.Y') ?? '',
-            $project?->primaryContact()?->name ?? '',
-            $project?->name ?? '',
+            $invoice->number,
+            $invoice->issued_at->format('d.m.Y'),
+            $invoice->contact?->name ?? '',
+            $invoice->project?->name ?? '',
             $this->euro($figures->net),
             $figures->ratePercentage(),
             $this->euro($figures->vat),
             $this->euro($figures->gross),
-            $installment->paid_on?->format('d.m.Y') ?? '',
-            $installment->status->label(),
+            $invoice->isPaid() ? $invoice->installments->max('paid_on')->format('d.m.Y') : '',
+            __("payments.invoiceStatus.{$invoice->status()}"),
             $credited === 0 ? '' : $this->euro($credited),
         ];
     }

@@ -59,7 +59,7 @@ class PaymentPlanController extends Controller
             $total = (int) $request->input('total');
             // A cancelled row stays in the payload, or UpdatePaymentPlan would try to delete it, but
             // counts zero — the sum trigger excludes it since 2026_09_14_000200.
-            $issued = $paymentPlan->installments()->whereNotNull('invoiced_at')->get()
+            $issued = $paymentPlan->installments()->whereNotNull('invoice_id')->get()
                 ->mapWithKeys(fn ($row) => [$row->public_id => $row->isCancelled() ? 0 : $row->amount]);
             $sum = collect($request->input('installments', []))
                 ->sum(fn ($item) => (int) ($issued[$item['public_id'] ?? ''] ?? $item['amount'] ?? 0));

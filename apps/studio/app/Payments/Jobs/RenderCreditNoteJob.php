@@ -27,13 +27,9 @@ class RenderCreditNoteJob implements ShouldQueue
 
     public function handle(GotenbergClient $gotenberg, RenderInvoicePdf $render): void
     {
-        $creditNote = $this->creditNote->fresh(['template', 'installment.plan.job.project']);
+        $creditNote = $this->creditNote->fresh(['template', 'invoice.project', 'invoice.contact', 'invoice.installments.plan.job.project', 'invoice.items']);
 
         if ($creditNote === null) {
-            return;
-        }
-
-        if ($creditNote->installment?->plan?->job?->project === null) {
             return;
         }
 

@@ -8,7 +8,7 @@ use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Documents\Support\DocumentRenderer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Payments\Models\CreditNote;
-use App\Payments\Models\PaymentInstallment;
+use App\Payments\Models\Invoice;
 use App\Payments\Support\InvoiceDocument;
 use App\Payments\Support\Layouts\ClassicInvoiceLayout;
 use App\Payments\Support\Layouts\HeaderBandInvoiceLayout;
@@ -44,27 +44,23 @@ class RenderInvoicePdf
      * the array is frozen beside it on the first render and read back on
      * every later one (#416). A preview passes none and always resolves live.
      */
-    public function forInstallment(PaymentInstallment $installment, ?QuoteLayout $layoutOverride = null, ?string $snapshotPath = null): string
+    public function forInvoice(Invoice $invoice, ?QuoteLayout $layoutOverride = null, ?string $snapshotPath = null): string
     {
-        $project = $installment->plan?->job?->project;
-        $build = fn (): array => $this->mergeData->fromProject($project, $this->settings, $installment);
-
+        $build = fn (): array => $this->mergeData->fromInvoice($invoice, $this->settings);
         $data = $snapshotPath === null ? $build() : MergeDataSnapshot::remember($snapshotPath, $build);
 
         return $this->wrap(
             DocumentTemplateType::Invoice,
-            InvoiceDocument::forInvoice($installment, $data, $this->settings),
+            InvoiceDocument::forInvoice($invoice, $data, $this->settings),
             $data,
-            $installment->invoiceTemplate,
+            $invoice->template,
             $layoutOverride,
         );
     }
 
     public function forCreditNote(CreditNote $creditNote, ?QuoteLayout $layoutOverride = null, ?string $snapshotPath = null): string
     {
-        $project = $creditNote->installment?->plan?->job?->project;
-        $build = fn (): array => $this->mergeData->fromProject($project, $this->settings, $creditNote->installment, $creditNote);
-
+        $build = fn (): array => $this->mergeData->fromInvoice($creditNote->invoice, $this->settings, $creditNote);
         $data = $snapshotPath === null ? $build() : MergeDataSnapshot::remember($snapshotPath, $build);
 
         return $this->wrap(

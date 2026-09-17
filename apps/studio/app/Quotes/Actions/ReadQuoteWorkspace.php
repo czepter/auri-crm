@@ -28,7 +28,7 @@ class ReadQuoteWorkspace
                 $project->quotes()->with(['items', 'predecessor', 'paymentStages'])->get()
             ),
             'paymentPlan' => $project->job?->paymentPlan
-                ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments.creditNotes'))
+                ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments.invoice.creditNotes'))
                 : null,
             // Beide Listen als Prop statt als Suchendpunkt: ein Studio führt
             // zweistellige Mengen, gefiltert wird in der Suchzeile selbst.

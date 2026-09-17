@@ -22,7 +22,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Textarea } from '@/ui/textarea'
 import { centsToEuros, eurosToCents } from '@/admin/lib/money'
 
-const props = defineProps<{ installmentId: string; amount: number }>()
+const props = defineProps<{ invoiceId: string; amount: number }>()
 
 const open = ref(false)
 const form = useForm({ amount: centsToEuros(props.amount), reason: '' })
@@ -30,7 +30,7 @@ const form = useForm({ amount: centsToEuros(props.amount), reason: '' })
 function submit() {
   form
     .transform((data) => ({ ...data, amount: eurosToCents(data.amount) }))
-    .post(`/raten/${props.installmentId}/gutschrift`, {
+    .post(`/rechnungen/${props.invoiceId}/gutschrift`, {
       preserveScroll: true,
       onSuccess: () => {
         form.reset()

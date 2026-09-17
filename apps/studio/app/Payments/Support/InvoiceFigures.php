@@ -2,13 +2,15 @@
 
 namespace App\Payments\Support;
 
-use App\Payments\Models\PaymentInstallment;
+use App\Payments\Models\Invoice;
+use App\Payments\Models\InvoiceItem;
+use App\Quotes\Models\Quote;
 use App\Quotes\Support\VatLines;
 use App\Settings\Support\StudioSettingsResolver;
 
 /**
- * The net / VAT / gross split one invoice prints, derived from the one number
- * an installment actually holds.
+ * The net / VAT / gross split one invoice prints, derived from the gross it
+ * bills — the sum of its installments, or of its items.
  *
  * An installment's `amount` is the payable — what the client transfers, what
  * the portal's Bezahlen button charges. So the split runs *backwards* out of
@@ -46,10 +48,37 @@ final class InvoiceFigures
         public readonly array $rates,
     ) {}
 
-    public static function forInstallment(PaymentInstallment $installment, StudioSettingsResolver $settings): self
+    /**
+     * #480: a project invoice takes its rate from the accepted quote over the
+     * sum of its installments; an invoice without a project splits each
+     * item's gross at the item's own rate.
+     */
+    public static function forInvoice(Invoice $invoice, StudioSettingsResolver $settings): self
     {
-        $quote = $installment->acceptedQuote();
+        return $invoice->project_id === null
+            ? self::forItems($invoice, $settings)
+            : self::forGross($invoice->amount(), self::acceptedQuote($invoice), $settings);
+    }
 
+    /** A part of an invoice — a Gutschrift, a deducted Anzahlung — at that invoice's rate. */
+    public function share(int $gross): self
+    {
+        if (count($this->rates) < 2) {
+            return self::fromGross($gross, $this->rate, $this->vatNote);
+        }
+
+        $rates = [];
+        foreach (VatLines::grossShares($this->rates, $gross) as $rate => $part) {
+            $line = self::fromGross($part, (int) $rate);
+            $rates[] = ['rate' => (int) $rate, 'net' => $line->net, 'vat' => $line->vat];
+        }
+        $net = array_sum(array_column($rates, 'net'));
+
+        return new self($gross, $net, $gross - $net, $this->rate, $this->vatNote, $rates);
+    }
+
+    private static function forGross(int $gross, ?Quote $quote, StudioSettingsResolver $settings): self
+    {
         $rate = $quote?->vat_mode === 'small_business'
             ? 0
             : ($quote?->vat_rate ?? $settings->effectiveVatRate());
@@ -58,13 +87,45 @@ final class InvoiceFigures
             ? $quote->vat_note
             : ($settings->vatMode() === 'small_business' ? $settings->vatNote() : null);
 
-        $figures = self::fromGross((int) $installment->amount, (int) $rate, $note);
+        $figures = self::fromGross($gross, (int) $rate, $note);
 
         // The Kleinunternehmer case short-circuits: there is one rate, it is
         // zero, and § 19 forbids showing it at all.
         $quoteLines = $rate === 0 ? [] : ($quote?->vatLines() ?? []);
 
         return count($quoteLines) < 2 ? $figures : $figures->splitOver($quoteLines);
+    }
+
+    private static function forItems(Invoice $invoice, StudioSettingsResolver $settings): self
+    {
+        if ($settings->vatMode() === 'small_business') {
+            return self::fromGross($invoice->items->sum(fn (InvoiceItem $item) => $item->total()), 0, $settings->vatNote());
+        }
+
+        $rates = $invoice->items
+            ->groupBy('vat_rate')
+            ->map(fn ($items, $rate) => self::fromGross($items->sum(fn (InvoiceItem $item) => $item->total()), (int) $rate))
+            ->sortKeysDesc()
+            ->map(fn (self $line) => ['rate' => $line->rate, 'net' => $line->net, 'vat' => $line->vat])
+            ->values()
+            ->all();
+
+        $gross = $invoice->items->sum(fn (InvoiceItem $item) => $item->total());
+        $net = array_sum(array_column($rates, 'net'));
+
+        return new self($gross, $net, $gross - $net, $rates[0]['rate'] ?? 0, null, $rates);
+    }
+
+    /**
+     * A revision chain (Q-06) leaves at most one row in `accepted`, so this
+     * cannot silently pick between two.
+     */
+    private static function acceptedQuote(Invoice $invoice): ?Quote
+    {
+        return $invoice->project?->quotes()
+            ->where('status', 'accepted')
+            ->latest('accepted_at')
+            ->first();
     }
 
     public static function fromGross(int $gross, int $rate, ?string $vatNote = null): self
