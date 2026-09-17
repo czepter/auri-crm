@@ -11,17 +11,21 @@ use App\Notifications\Support\MailPreview;
 use App\Payments\Actions\CancelInvoice;
 use App\Payments\Actions\IssueCreditNote;
 use App\Payments\Actions\IssueInvoice;
+use App\Payments\Actions\RenderInvoicePdf;
 use App\Payments\Data\InvoiceRowData;
 use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\CancellationKind;
+use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\CreditNote;
 use App\Payments\Models\Invoice;
+use App\Payments\Models\InvoiceItem;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Payments\Notifications\InvoiceSent;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -122,6 +126,78 @@ class InvoiceController extends Controller
         $invoice = $issue->free($contact, $validated['items'], $validated['due_on'], $actor);
 
         return redirect("/rechnungen/{$invoice->public_id}/versenden");
+    }
+
+    /**
+     * The sheet the create screen shows beside the form: an unsaved invoice
+     * rendered through the same RenderInvoicePdf the issued one takes.
+     * Every field optional, since the form posts on each debounced keystroke.
+     * Nothing is written and no number drawn.
+     */
+    public function preview(Request $request, RenderInvoicePdf $render): HttpResponse
+    {
+        self::authorizeProject(null);
+
+        $validated = $request->validate([
+            'installments' => ['nullable', 'array'],
+            'installments.*' => ['string'],
+            'contact_id' => ['nullable', 'string'],
+            'contact.name' => ['nullable', 'string', 'max:255'],
+            'contact.street' => ['nullable', 'string', 'max:255'],
+            'contact.postcode' => ['nullable', 'string', 'max:20'],
+            'contact.city' => ['nullable', 'string', 'max:255'],
+            'due_on' => ['nullable', 'date'],
+            'items' => ['nullable', 'array'],
+            'items.*.description' => ['nullable', 'string', 'max:255'],
+            'items.*.quantity' => ['nullable', 'integer', 'min:0'],
+            'items.*.unit_price' => ['nullable', 'integer', 'min:0'],
+            'items.*.vat_rate' => ['nullable', 'integer', 'min:0', 'max:10000'],
+        ]);
+
+        $invoice = new Invoice(['number' => __('payments.previewNumber'), 'issued_at' => now()]);
+        $invoice->setRelation('creditNotes', collect())->setRelation('template', null);
+
+        if (filled($validated['installments'] ?? null)) {
+            $installments = PaymentInstallment::query()
+                ->whereIn('public_id', $validated['installments'])
+                ->whereNotNull('payment_plan_id')
+                ->with('plan.job.project')
+                ->orderBy('sort_order')
+                ->get();
+            $project = $installments->first()?->plan->job->project;
+
+            abort_if($project === null, 404);
+            self::authorizeProject($project);
+
+            $invoice->project_id = $project->id;
+
+            return response($render->forInvoice($invoice
+                ->setRelation('project', $project)
+                ->setRelation('contact', $project->primaryContact())
+                ->setRelation('installments', $installments)
+                ->setRelation('items', collect())), 200, ['Content-Type' => 'text/html']);
+        }
+
+        $items = collect($validated['items'] ?? [])->map(fn (array $item) => new InvoiceItem([
+            'description' => $item['description'] ?? '',
+            'quantity' => $item['quantity'] ?? 0,
+            'unit_price' => $item['unit_price'] ?? 0,
+            'vat_rate' => $item['vat_rate'] ?? 0,
+        ]));
+
+        $contact = isset($validated['contact_id'])
+            ? Contact::query()->where('public_id', $validated['contact_id'])->first()
+            : new Contact($validated['contact'] ?? []);
+
+        return response($render->forInvoice($invoice
+            ->setRelation('project', null)
+            ->setRelation('contact', $contact)
+            ->setRelation('items', $items)
+            ->setRelation('installments', collect([new PaymentInstallment([
+                'amount' => $items->sum(fn (InvoiceItem $item) => $item->total()),
+                'due_on' => $validated['due_on'] ?? null,
+                'status' => PaymentInstallmentStatus::Invoiced,
+            ])]))), 200, ['Content-Type' => 'text/html']);
     }
 
     /**

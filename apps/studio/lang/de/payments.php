@@ -12,6 +12,7 @@ return [
     'cancelledNotIssuable' => 'Stornierte Rate',
     'alreadyInvoiced' => 'Rate bereits gestellt',
     'invoiceOnePlan' => 'Raten eines Zahlungsplans wählen',
+    'previewNumber' => 'Entwurf',
     'invoiceStatus' => [
         'open' => 'Offen',
         'partial' => 'Teilzahlung',

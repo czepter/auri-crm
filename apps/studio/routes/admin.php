@@ -806,6 +806,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/rechnungen', [InvoiceController::class, 'index'])->name('invoices.index');
         Route::get('/rechnungen/neu', [InvoiceController::class, 'create'])->name('invoices.create');
         Route::post('/rechnungen', [InvoiceController::class, 'store'])->name('invoices.store');
+        Route::post('/rechnungen/vorschau', [InvoiceController::class, 'preview'])->name('invoices.preview');
         Route::get('/rechnungen/{invoice}/pdf', [InvoiceController::class, 'download'])->name('invoices.download');
 
         // #415: the compose screen and the send. Issuing redirects into the
