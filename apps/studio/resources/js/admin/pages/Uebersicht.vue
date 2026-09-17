@@ -18,7 +18,7 @@ type Entry = {
     href: string | null;
 };
 
-type Activity = { text: string; when: string; fresh: boolean };
+type Activity = { text: string; href: string; when: string; fresh: boolean };
 
 const props = defineProps<{
     today: string;
@@ -290,13 +290,19 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                     </Panel>
 
                     <Panel class="col-start-4 row-start-2" :class="hasFooter && 'row-span-2'" :title="$t('dashboard.activity')">
-                        <div v-for="entry in activity" :key="`${entry.when}${entry.text}`" class="flex gap-2.5 py-[9px]" :class="ROW">
+                        <Link
+                            v-for="entry in activity"
+                            :key="`${entry.when}${entry.text}`"
+                            :href="entry.href"
+                            class="flex gap-2.5 py-[9px] text-foreground no-underline hover:text-action"
+                            :class="ROW"
+                        >
                             <i class="mt-[5px] size-[7px] flex-none rounded-full" :class="entry.fresh ? 'bg-action' : 'bg-mark'" />
                             <div class="text-[12.5px] leading-[1.4]">
                                 {{ entry.text }}
                                 <span class="mt-0.5 block text-[11px] text-faint">{{ entry.when }}</span>
                             </div>
-                        </div>
+                        </Link>
                     </Panel>
 
                     <Panel

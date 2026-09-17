@@ -275,6 +275,10 @@ it('tells what moved across projects, from the history allow-list and gallery op
     $activity = props('/')['activity'];
 
     expect(collect($activity)->pluck('text')->all())->toBe(['Ahrens · Zahlung erhalten', 'Ahrens · Galerie geöffnet'])
+        ->and(collect($activity)->pluck('href')->all())->toBe([
+            '/auftraege/'.$project->public_id.'/angebote',
+            '/auftraege/'.$project->public_id.'/galerien',
+        ])
         ->and($activity[0]['fresh'])->toBeTrue()
         ->and($activity[1]['when'])->toBe('gestern');
 });
