@@ -32,6 +32,7 @@ class ApiTokenController extends Controller
                 fn (Capability $c) => ['value' => $c->value, 'label' => $c->label()],
                 Capability::cases(),
             ),
+            'mcpUrl' => config('services.mcp.url'),
         ]);
     }
 

@@ -80,7 +80,7 @@ function chipClass(status: string): string {
   <AdminLayout active="einstellungen">
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
-        <PageHead :kicker="$t('automations.title')" :title="rule.name">
+        <PageHead :kicker="$t('automations.title')" kicker-href="/einstellungen/automationen" :title="rule.name">
           <span
             v-if="form.isDirty"
             class="ml-auto flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due"

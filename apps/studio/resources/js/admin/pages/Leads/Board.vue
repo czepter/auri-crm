@@ -231,6 +231,14 @@ function pick(key: string) {
     stage.value = stage.value === key ? null : key;
 }
 
+const collapsed = ref<string[]>([]);
+
+function toggleGroup(key: string) {
+    collapsed.value = collapsed.value.includes(key)
+        ? collapsed.value.filter((k) => k !== key)
+        : [...collapsed.value, key];
+}
+
 const groupRows = computed(() => {
     const needle = query.value.trim().toLocaleLowerCase("de");
 
@@ -451,10 +459,17 @@ const workflowAllowed = computed(() =>
                     </thead>
                     <tbody>
                         <template v-for="group in groupRows" :key="group.key">
-                            <TableGroupRow :colspan="6">
+                            <TableGroupRow
+                                :colspan="6"
+                                :open="!collapsed.includes(group.key)"
+                                @toggle="toggleGroup(group.key)"
+                            >
                                 {{ $t(`lead.group.${group.key}`) }}
                             </TableGroupRow>
-                            <TableRow v-for="card in group.rows" :key="card.id">
+                            <TableRow
+                                v-for="card in collapsed.includes(group.key) ? [] : group.rows"
+                                :key="card.id"
+                            >
                                 <TableCell tone="name">
                                     <Link :href="`/anfragen/${card.leadId}`">{{
                                         card.names

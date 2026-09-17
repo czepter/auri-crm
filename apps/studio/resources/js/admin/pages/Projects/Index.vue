@@ -28,6 +28,11 @@ const workflowAllowed = computed(() => (usePage().props.auth.can ?? []).includes
 const scope = ref('running')
 const stage = ref<string | null>(null)
 const query = ref('')
+const collapsed = ref<Phase[]>([])
+
+function toggle(phase: Phase) {
+  collapsed.value = collapsed.value.includes(phase) ? collapsed.value.filter((p) => p !== phase) : [...collapsed.value, phase]
+}
 
 const today = isoDate(new Date())
 
@@ -153,11 +158,11 @@ function reset() {
             </thead>
             <tbody>
               <template v-for="group in groups" :key="group.phase">
-                <TableGroupRow :colspan="6">
+                <TableGroupRow :colspan="6" :open="!collapsed.includes(group.phase)" @toggle="toggle(group.phase)">
                   {{ $t(`projects.phase.${group.phase}`) }}
                   <span class="ml-1.5 font-normal">{{ group.rows.length }}</span>
                 </TableGroupRow>
-                <TableRow v-for="project in group.rows" :key="project.id">
+                <TableRow v-for="project in collapsed.includes(group.phase) ? [] : group.rows" :key="project.id">
                   <TableCell tone="name">
                     <Link :href="`/auftraege/${project.id}`">{{ project.name }}</Link>
                   </TableCell>

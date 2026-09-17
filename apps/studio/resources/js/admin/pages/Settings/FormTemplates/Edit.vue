@@ -76,7 +76,7 @@ function submit() {
   <AdminLayout active="vorlagen">
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
-        <PageHead :kicker="$t('formTemplates.kicker')" :title="form.name || $t('formTemplates.untitled')">
+        <PageHead :kicker="$t('formTemplates.kicker')" kicker-href="/vorlagen?typ=fragebogen" :title="form.name || $t('formTemplates.untitled')">
           <Button class="ml-auto" type="submit" form="form-template-form" :disabled="form.processing" variant="pill">
             {{ $t('formTemplates.save') }}
           </Button>

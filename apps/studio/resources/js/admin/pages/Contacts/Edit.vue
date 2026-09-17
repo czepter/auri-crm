@@ -227,7 +227,7 @@ function eraseDsgvoData() {
       </template>
 
       <main data-tokens class="min-w-0 flex-1 overflow-y-auto pb-8">
-        <PageHead :kicker="$t('contacts.title')" :title="contact.name">
+        <PageHead :kicker="$t('contacts.title')" kicker-href="/kontakte" :title="contact.name">
           <div class="ml-auto flex items-center gap-2">
             <template v-if="editing">
               <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>

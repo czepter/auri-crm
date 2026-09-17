@@ -71,6 +71,7 @@ use App\Quotes\Http\Controllers\QuoteController;
 use App\Releases\Http\Controllers\ReleaseController;
 use App\Reporting\Http\Controllers\ReportController;
 use App\Settings\Http\Controllers\ApiTokenController;
+use App\Settings\Http\Controllers\DataExportController;
 use App\Settings\Http\Controllers\GallerySettingsController;
 use App\Settings\Http\Controllers\NotificationSettingsController;
 use App\Settings\Http\Controllers\NumberRangeController;
@@ -382,6 +383,9 @@ Route::middleware('audience:staff')->group(function () {
 
         Route::get('/einstellungen/rechnungen/export', InvoiceExportController::class)
             ->name('invoices.export');
+        Route::get('/einstellungen/export', [DataExportController::class, 'index'])->name('settings.export');
+        Route::get('/einstellungen/export/kontakte', [DataExportController::class, 'contacts'])->name('settings.export.contacts');
+        Route::get('/einstellungen/export/projekte', [DataExportController::class, 'projects'])->name('settings.export.projects');
 
         Route::get('/einstellungen/verfuegbarkeit', [StudioClosureController::class, 'index'])
             ->name('availability.edit');

@@ -159,6 +159,20 @@ it('saves the Sonstige detail from the case and drops it with the case', functio
         ->and($lead->fresh()->source_other)->toBeNull();
 });
 
+// The rail saves one select at a time.
+it('saves the source alone and leaves the occasion', function () {
+    $lead = caseFor();
+    $type = $lead->project->type->key;
+
+    test()->patch("/anfragen/{$lead->public_id}", [
+        'source' => 'other',
+        'source_other' => 'Messe',
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    expect($lead->fresh()->source_other)->toBe('Messe')
+        ->and($lead->project->fresh()->type->key)->toBe($type);
+});
+
 it('moves the shoot while it is an inquiry', function () {
     $lead = caseFor();
     $shoot = $lead->project->primaryShoot;

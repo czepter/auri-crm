@@ -14,6 +14,7 @@ const meta = {
       { value: 'manage_contacts', label: 'Kontakte verwalten' },
       { value: 'view_all_projects', label: 'Alle Aufträge einsehen' },
     ],
+    mcpUrl: 'https://api.atelier-nordlicht.de/mcp',
   },
 } satisfies Meta<typeof ApiTokens>
 

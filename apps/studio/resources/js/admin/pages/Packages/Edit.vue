@@ -137,7 +137,7 @@ watch(() => form.data(), autosave, { deep: true })
   <AdminLayout active="pakete">
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
-        <PageHead :kicker="$t('packages.title')" :title="package.name">
+        <PageHead :kicker="$t('packages.title')" kicker-href="/pakete" :title="package.name">
           <div class="ml-auto flex items-center gap-2">
             <Button as="a" variant="pill-muted" href="/pakete">{{ $t('common.cancel') }}</Button>
 
