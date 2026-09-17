@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
+import Empty from '@/ui/page/Empty.vue'
 import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
 import { Input } from '@/ui/input'
 import { Button } from '@/ui/button'
@@ -128,6 +129,10 @@ const shown = computed(() => {
             </tbody>
           </Table>
         </template>
+
+        <Empty v-else class="mx-8 mt-7" :text="$t('invoicesOverview.empty')">
+          <Button :as="Link" variant="pill" href="/rechnungen/neu">{{ $t('invoicesOverview.create') }}</Button>
+        </Empty>
       </div>
     </Page>
   </AdminLayout>
