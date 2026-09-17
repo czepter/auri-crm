@@ -36,9 +36,11 @@ class ClassicInvoiceLayout implements InvoiceLayoutRenderer
             .'</div>'
             .$this->reference($document)
             .$templateBody
+            .$this->letter($document->intro)
             .$this->positions($document)
             .'<table class="dlc-summary">'.$summary.'</table>'
             .$this->vatNote($document)
+            .$this->letter($document->outro)
             .$this->payment($document)
             .'</div>';
     }

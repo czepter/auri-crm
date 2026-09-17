@@ -7,6 +7,7 @@
  */
 import { router } from '@inertiajs/vue3'
 import { ref } from 'vue'
+import InvoiceSheet, { type InvoicePage } from '@/portal/components/InvoiceSheet.vue'
 import PortalDot from '@/portal/components/PortalDot.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
@@ -18,20 +19,12 @@ const props = defineProps<{
   contact: { name: string }
   showSwitcher: boolean
   project: { id: string; name: string }
-  invoice: {
+  invoice: InvoicePage & {
     id: string
     number: string | null
     status: string
     statusLabel: string
     hasDocument: boolean
-    metaRows: [string, string][]
-    description: string
-    lines: { title: string; quantity: string; unitPrice: string; discount: string; total: string; vatRate: string }[]
-    deposits: { number: string; date: string; net: string; vat: string; gross: string }[]
-    totalGross: string
-    summaryRows: [string, string, boolean][]
-    vatNote: string
-    paymentLines: string[]
     creditNotes: { id: string; number: string }[]
   }
   payInstallmentId: string | null
@@ -45,8 +38,6 @@ function payNow() {
     onFinish: () => (paying.value = false),
   })
 }
-
-const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1.5] [&>td:last-child]:text-right [&>td:last-child]:tabular-nums [&>td:last-child]:whitespace-nowrap'
 </script>
 
 <template>
@@ -68,75 +59,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
           </span>
         </div>
 
-        <table class="mt-8 w-full max-w-[420px] border-collapse">
-          <tr v-for="row in invoice.metaRows" :key="row[0]" :class="[ROW, '[&>td]:py-1! [&>td]:text-muted-foreground']">
-            <td>{{ row[0] }}</td>
-            <td>{{ row[1] }}</td>
-          </tr>
-        </table>
-
-        <table class="mt-8 w-full border-collapse">
-          <!-- #411: die ganze Leistung, wenn dies die Endrechnung ist, sonst
-               die eine Zeile dieser Rate. -->
-          <template v-if="invoice.lines.length">
-            <tr v-for="(line, index) in invoice.lines" :key="`line-${index}`" :class="ROW">
-              <td>
-                {{ line.title }}
-                <span v-if="line.unitPrice" class="block text-[13px] text-muted-foreground">
-                  {{ line.quantity }} × {{ line.unitPrice }}<template v-if="line.discount"> · {{ $t('quotes.discount') }} {{ line.discount }}</template>
-                </span>
-              </td>
-              <td>{{ line.total }}</td>
-            </tr>
-            <tr :class="[ROW, '[&>td]:border-t [&>td]:border-border [&>td]:pt-3!']">
-              <td>{{ $t('portal.invoiceServiceTotal') }}</td>
-              <td>{{ invoice.totalGross }}</td>
-            </tr>
-            <template v-if="invoice.deposits.length">
-              <tr :class="[ROW, '[&>td]:py-1! [&>td]:text-muted-foreground']">
-                <td colspan="2">{{ $t('portal.invoiceDeposits') }}</td>
-              </tr>
-              <tr v-for="deposit in invoice.deposits" :key="deposit.number" :class="[ROW, '[&>td]:py-1! [&>td]:text-muted-foreground']">
-                <td>{{ $t('portal.invoiceDeposit', { number: deposit.number, date: deposit.date }) }}</td>
-                <td>−{{ deposit.gross }}</td>
-              </tr>
-            </template>
-          </template>
-          <tr v-else :class="ROW">
-            <td>{{ invoice.description }}</td>
-            <td>{{ invoice.summaryRows[invoice.summaryRows.length - 1]?.[1] }}</td>
-          </tr>
-
-          <tr
-            v-for="(row, index) in invoice.summaryRows"
-            :key="row[0]"
-            :class="[
-              ROW,
-              index === 0 && '[&>td]:border-t [&>td]:border-border [&>td]:pt-3!',
-              row[2]
-                ? '[&>td]:pt-2! [&>td]:font-serif [&>td]:text-[22px]!'
-                : '[&>td]:py-1! [&>td]:text-muted-foreground',
-            ]"
-          >
-            <td>{{ row[0] }}</td>
-            <td>{{ row[1] }}</td>
-          </tr>
-
-          <tr v-if="invoice.vatNote" :class="[ROW, '[&>td]:py-1! [&>td]:text-[13px]! [&>td]:text-muted-foreground']">
-            <td colspan="2">{{ invoice.vatNote }}</td>
-          </tr>
-        </table>
-
-        <table v-if="invoice.paymentLines.length" class="mt-8 w-full max-w-[420px] border-collapse">
-          <tr :class="[ROW, '[&>td]:border-b-0']">
-            <td colspan="2" class="text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">
-              {{ $t('portal.transferTitle') }}
-            </td>
-          </tr>
-          <tr v-for="line in invoice.paymentLines" :key="line" :class="[ROW, '[&>td]:py-1! [&>td]:text-muted-foreground']">
-            <td colspan="2">{{ line }}</td>
-          </tr>
-        </table>
+        <InvoiceSheet :invoice="invoice" />
 
         <div class="mt-8 flex flex-wrap items-center gap-4">
           <a

@@ -417,6 +417,7 @@
     "unitPrice": "Einzelpreis",
     "vatRate": "USt",
     "addItem": "Position hinzufügen",
+    "previewMail": "E-Mail",
     "submit": "Rechnung stellen"
   },
   "projects": {

@@ -2,6 +2,7 @@
 
 namespace App\Payments\Support;
 
+use App\Documents\Support\MergeFieldResolver;
 use App\Payments\Models\CreditNote;
 use App\Payments\Models\Invoice;
 use App\Settings\Support\StudioSettingsResolver;
@@ -70,6 +71,9 @@ final class InvoiceDocument
         public readonly string $totalNet = '',
         public readonly string $totalVat = '',
         public readonly string $totalGross = '',
+        /** #480: the invoice's own letter text, merge fields resolved. */
+        public readonly string $intro = '',
+        public readonly string $outro = '',
     ) {}
 
     /** @param array<string, mixed> $mergeData */
@@ -112,6 +116,8 @@ final class InvoiceDocument
             totalNet: $invoice['totalNet'] ?? '',
             totalVat: $invoice['totalVat'] ?? '',
             totalGross: $invoice['totalGross'] ?? '',
+            intro: trim(MergeFieldResolver::resolve($record->intro ?? '', $mergeData)),
+            outro: trim(MergeFieldResolver::resolve($record->outro ?? '', $mergeData)),
         );
     }
 
@@ -146,6 +152,28 @@ final class InvoiceDocument
                 ? null
                 : "Zu Rechnung {$invoiceNumber}".($invoiceDate === '' ? '' : " vom {$invoiceDate}"),
         );
+    }
+
+    /**
+     * #419/#480: what the portal page and the create screen's portal preview
+     * render — the same figures the PDF layouts print.
+     *
+     * @return array<string, mixed>
+     */
+    public function page(): array
+    {
+        return [
+            'metaRows' => $this->metaRows,
+            'description' => $this->description,
+            'lines' => $this->lines,
+            'deposits' => $this->deposits,
+            'totalGross' => $this->totalGross,
+            'summaryRows' => $this->summaryRows(),
+            'vatNote' => $this->vatNote,
+            'paymentLines' => $this->paymentLines,
+            'intro' => $this->intro,
+            'outro' => $this->outro,
+        ];
     }
 
     /**

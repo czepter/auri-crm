@@ -8,7 +8,7 @@ import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import ContactTypeahead from '@/admin/components/ContactTypeahead.vue'
 import VatRateSelect from '@/admin/components/VatRateSelect.vue'
-import QuotePreviewPane from '@/admin/components/quote/QuotePreviewPane.vue'
+import InvoicePreviewPane from '@/admin/components/InvoicePreviewPane.vue'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { ChoiceGroup } from '@/ui/choice-group'
@@ -17,6 +17,7 @@ import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { Textarea } from '@/ui/textarea'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { eurosToCents, formatEuros } from '@/admin/lib/money'
 
@@ -36,6 +37,9 @@ const projectId = ref(props.plans.some((plan) => plan.projectId === props.projec
 const plan = computed(() => props.plans.find((candidate) => candidate.projectId === projectId.value) ?? null)
 
 const planForm = useForm({ installments: [] as string[] })
+
+// Der Brieftext gehört zur Rechnung, nicht zum Modus: er bleibt beim Umschalten stehen.
+const texts = ref({ intro: '', outro: '' })
 
 function toggle(id: string, checked: boolean | 'indeterminate') {
   planForm.installments = checked === true
@@ -77,12 +81,17 @@ function freePayload(data: ReturnType<typeof freeForm.data>) {
 }
 
 function submitFree() {
-  freeForm.transform(freePayload).post('/rechnungen')
+  freeForm.transform((data) => ({ ...freePayload(data), ...texts.value })).post('/rechnungen')
 }
 
-const previewPayload = computed(() => mode.value === 'plan'
-  ? { installments: planForm.installments }
-  : freePayload(freeForm.data()))
+function submitPlan() {
+  planForm.transform((data) => ({ ...data, ...texts.value })).post('/rechnungen')
+}
+
+const previewPayload = computed(() => ({
+  ...(mode.value === 'plan' ? { installments: planForm.installments } : freePayload(freeForm.data())),
+  ...texts.value,
+}))
 
 const showPreview = useMediaQuery('(min-width: 1180px)')
 </script>
@@ -97,7 +106,7 @@ const showPreview = useMediaQuery('(min-width: 1180px)')
           <div class="w-[720px] max-w-full flex-none">
             <ChoiceGroup v-if="plans.length" v-model="mode" variant="segmented" :options="modes" />
 
-            <form v-if="mode === 'plan'" class="mt-5 grid gap-4" @submit.prevent="planForm.post('/rechnungen')">
+            <form v-if="mode === 'plan'" class="mt-5 grid gap-4" @submit.prevent="submitPlan">
               <Field v-slot="{ id }" :label="$t('invoicesCreate.project')">
                 <Select v-model="projectId" @update:model-value="planForm.installments = []">
                   <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
@@ -117,6 +126,13 @@ const showPreview = useMediaQuery('(min-width: 1180px)')
                   <span class="w-[110px] text-right tabular-nums">{{ formatEuros(row.amount) }}</span>
                 </label>
               </div>
+
+              <Field v-slot="{ id }" :label="$t('quotes.intro')">
+                <Textarea :id="id" v-model="texts.intro" rows="3" />
+              </Field>
+              <Field v-slot="{ id }" :label="$t('quotes.outro')">
+                <Textarea :id="id" v-model="texts.outro" rows="3" />
+              </Field>
 
               <p v-if="planForm.errors.installments" class="text-[12px] text-destructive">{{ planForm.errors.installments }}</p>
               <p v-if="planErrors.invoice" class="text-[12px] text-destructive">{{ planErrors.invoice }}</p>
@@ -180,6 +196,13 @@ const showPreview = useMediaQuery('(min-width: 1180px)')
                 <DatePicker :id="id" v-model="freeForm.due_on" required />
               </Field>
 
+              <Field v-slot="{ id }" :label="$t('quotes.intro')">
+                <Textarea :id="id" v-model="texts.intro" rows="3" />
+              </Field>
+              <Field v-slot="{ id }" :label="$t('quotes.outro')">
+                <Textarea :id="id" v-model="texts.outro" rows="3" />
+              </Field>
+
               <p v-if="freeErrors.invoice" class="text-[12px] text-destructive">{{ freeErrors.invoice }}</p>
 
               <div class="flex items-center gap-3">
@@ -190,7 +213,7 @@ const showPreview = useMediaQuery('(min-width: 1180px)')
           </div>
 
           <div class="hidden min-w-[420px] flex-1 min-[1180px]:block">
-            <QuotePreviewPane v-if="showPreview" preview-url="/rechnungen/vorschau" :payload="previewPayload" />
+            <InvoicePreviewPane v-if="showPreview" :payload="previewPayload" />
           </div>
         </div>
       </div>

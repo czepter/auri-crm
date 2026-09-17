@@ -38,9 +38,11 @@ class HeaderBandInvoiceLayout implements InvoiceLayoutRenderer
             .'<div class="dhb-to">'.$this->recipientLines($document).'</div>'
             .$this->reference($document)
             .$templateBody
+            .$this->letter($document->intro)
             .$this->positions($document)
             .'<table class="dhb-summary">'.$summary.'</table>'
             .$this->vatNote($document)
+            .$this->letter($document->outro)
             .$this->payment($document)
             .'</div></div>';
     }

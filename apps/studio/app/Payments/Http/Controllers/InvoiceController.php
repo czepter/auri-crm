@@ -4,6 +4,7 @@ namespace App\Payments\Http\Controllers;
 
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
+use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Notifications\NotificationService;
@@ -22,7 +23,9 @@ use App\Payments\Models\InvoiceItem;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Payments\Notifications\InvoiceSent;
+use App\Payments\Support\InvoiceDocument;
 use App\Settings\Support\StudioSettingsResolver;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
@@ -101,7 +104,7 @@ class InvoiceController extends Controller
             abort_if($installments->count() !== count($ids), 404);
             self::authorizeProject($installments->first()->project());
 
-            return redirect("/rechnungen/{$issue($installments, $actor)->public_id}/versenden");
+            return redirect("/rechnungen/{$issue($installments, $actor, $this->texts($request))->public_id}/versenden");
         }
 
         $validated = $request->validate([
@@ -123,7 +126,7 @@ class InvoiceController extends Controller
             ? Contact::query()->where('public_id', $validated['contact_id'])->firstOrFail()
             : Contact::create(array_filter($validated['contact'], fn ($value) => $value !== null));
 
-        $invoice = $issue->free($contact, $validated['items'], $validated['due_on'], $actor);
+        $invoice = $issue->free($contact, $validated['items'], $validated['due_on'], $actor, $this->texts($request));
 
         return redirect("/rechnungen/{$invoice->public_id}/versenden");
     }
@@ -134,11 +137,16 @@ class InvoiceController extends Controller
      * Every field optional, since the form posts on each debounced keystroke.
      * Nothing is written and no number drawn.
      */
-    public function preview(Request $request, RenderInvoicePdf $render): HttpResponse
-    {
+    public function preview(
+        Request $request,
+        RenderInvoicePdf $render,
+        DocumentMergeDataBuilder $mergeData,
+        StudioSettingsResolver $settings,
+    ): HttpResponse|JsonResponse {
         self::authorizeProject(null);
 
         $validated = $request->validate([
+            'format' => ['nullable', 'in:pdf,portal,mail'],
             'installments' => ['nullable', 'array'],
             'installments.*' => ['string'],
             'contact_id' => ['nullable', 'string'],
@@ -147,6 +155,8 @@ class InvoiceController extends Controller
             'contact.postcode' => ['nullable', 'string', 'max:20'],
             'contact.city' => ['nullable', 'string', 'max:255'],
             'due_on' => ['nullable', 'date'],
+            'intro' => ['nullable', 'string', 'max:5000'],
+            'outro' => ['nullable', 'string', 'max:5000'],
             'items' => ['nullable', 'array'],
             'items.*.description' => ['nullable', 'string', 'max:255'],
             'items.*.quantity' => ['nullable', 'integer', 'min:0'],
@@ -154,7 +164,34 @@ class InvoiceController extends Controller
             'items.*.vat_rate' => ['nullable', 'integer', 'min:0', 'max:10000'],
         ]);
 
-        $invoice = new Invoice(['number' => __('payments.previewNumber'), 'issued_at' => now()]);
+        $invoice = $this->draft($validated);
+
+        return match ($validated['format'] ?? 'pdf') {
+            'portal' => response()->json(
+                InvoiceDocument::forInvoice($invoice, $mergeData->fromInvoice($invoice, $settings), $settings)->page(),
+            ),
+            'mail' => response(MailPreview::html(
+                new InvoiceSent($invoice, '', MailPreview::MESSAGE, $settings),
+                $invoice->contact ?? (object) [],
+            ), 200, ['Content-Type' => 'text/html']),
+            default => response($render->forInvoice($invoice), 200, ['Content-Type' => 'text/html']),
+        };
+    }
+
+    /**
+     * An unsaved invoice from the create form: nothing is written and no
+     * number drawn, and every field may still be half filled.
+     *
+     * @param  array<string, mixed>  $validated
+     */
+    private function draft(array $validated): Invoice
+    {
+        $invoice = new Invoice([
+            'number' => __('payments.previewNumber'),
+            'issued_at' => now(),
+            'intro' => $validated['intro'] ?? null,
+            'outro' => $validated['outro'] ?? null,
+        ]);
         $invoice->setRelation('creditNotes', collect())->setRelation('template', null);
 
         if (filled($validated['installments'] ?? null)) {
@@ -171,11 +208,11 @@ class InvoiceController extends Controller
 
             $invoice->project_id = $project->id;
 
-            return response($render->forInvoice($invoice
+            return $invoice
                 ->setRelation('project', $project)
                 ->setRelation('contact', $project->primaryContact())
                 ->setRelation('installments', $installments)
-                ->setRelation('items', collect())), 200, ['Content-Type' => 'text/html']);
+                ->setRelation('items', collect());
         }
 
         $items = collect($validated['items'] ?? [])->map(fn (array $item) => new InvoiceItem([
@@ -189,7 +226,7 @@ class InvoiceController extends Controller
             ? Contact::query()->where('public_id', $validated['contact_id'])->first()
             : new Contact($validated['contact'] ?? []);
 
-        return response($render->forInvoice($invoice
+        return $invoice
             ->setRelation('project', null)
             ->setRelation('contact', $contact)
             ->setRelation('items', $items)
@@ -197,7 +234,7 @@ class InvoiceController extends Controller
                 'amount' => $items->sum(fn (InvoiceItem $item) => $item->total()),
                 'due_on' => $validated['due_on'] ?? null,
                 'status' => PaymentInstallmentStatus::Invoiced,
-            ])]))), 200, ['Content-Type' => 'text/html']);
+            ])]));
     }
 
     /**
@@ -301,6 +338,15 @@ class InvoiceController extends Controller
         abort_if($creditNote->invoice_id !== $invoice->id || $creditNote->pdf_path === null, 404);
 
         return Storage::disk('local')->response($creditNote->pdf_path, "gutschrift-{$creditNote->number}.pdf");
+    }
+
+    /** @return array{intro?: ?string, outro?: ?string} */
+    private function texts(Request $request): array
+    {
+        return $request->validate([
+            'intro' => ['nullable', 'string', 'max:5000'],
+            'outro' => ['nullable', 'string', 'max:5000'],
+        ]);
     }
 
     /**
