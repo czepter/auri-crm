@@ -68,7 +68,8 @@ watch(doc, (value) => {
 </script>
 
 <template>
-  <div class="rounded-md border border-border px-3 py-2.5">
+  <!-- Das Werkzeugmenü ragt über das Feld hinaus; ohne eigenen Stapel läge das nächste Feld darüber. -->
+  <div class="relative isolate rounded-md border border-border px-3 py-2.5 focus-within:z-10">
     <DocumentEditor v-model="doc" :palette="palette" :merge-fields="mergeFields" :min-height="60" />
   </div>
 </template>
