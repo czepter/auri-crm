@@ -20,7 +20,7 @@ class HeaderBandInvoiceLayout implements InvoiceLayoutRenderer
         $number = collect($document->metaRows)->first(fn (array $row) => str_ends_with($row[0], 'nummer'));
 
         $metaRow = collect($document->metaRows)
-            ->reject(fn (array $row) => str_ends_with($row[0], 'nummer'))
+            ->reject(fn (array $row) => $row === $number)
             ->map(fn (array $row) => '<span>'.e($row[0]).' <strong>'.e($row[1]).'</strong></span>')
             ->implode('');
 

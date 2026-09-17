@@ -98,6 +98,7 @@ final class InvoiceDocument
                 ['Rechnungsdatum', $invoice['date'] ?? ''],
                 ['Leistungszeitraum', $invoice['servicePeriod'] ?? ''],
                 ['Fällig am', $invoice['dueOn'] ?? ''],
+                ...self::taxRows($mergeData),
             ], fn (array $row) => $row[1] !== '')),
             description: $invoice['description'] ?? '',
             net: $invoice['net'] ?? '',
@@ -135,6 +136,7 @@ final class InvoiceDocument
                 ['Gutschriftnummer', $note['number'] ?? ''],
                 ['Gutschriftdatum', $note['date'] ?? ''],
                 ['Leistungszeitraum', $note['servicePeriod'] ?? ''],
+                ...self::taxRows($mergeData),
             ], fn (array $row) => $row[1] !== '')),
             description: $note['description'] ?? '',
             net: $note['net'] ?? '',
@@ -203,6 +205,20 @@ final class InvoiceDocument
             ['Netto', $this->sign.$this->net, false],
             ...$vat,
             ['Gesamtbetrag', $this->sign.$this->gross, true],
+        ];
+    }
+
+    /**
+     * § 14 Abs. 4 Nr. 2 UStG: Steuernummer or USt-IdNr. on every invoice. The
+     * layout prints them, so no edit to the letter text can drop them.
+     *
+     * @return list<array{0: string, 1: string}>
+     */
+    private static function taxRows(array $mergeData): array
+    {
+        return [
+            ['Steuernummer', $mergeData['studio']['taxNumber'] ?? ''],
+            ['USt-IdNr.', $mergeData['studio']['vatId'] ?? ''],
         ];
     }
 

@@ -23,7 +23,7 @@ import { eurosToCents, formatEuros } from '@/admin/lib/money'
 
 type Plan = { projectId: string; projectName: string; installments: { id: string; label: string; amount: number; dueOn: string }[] }
 
-const props = defineProps<{ plans: Plan[]; project: string | null; vatRate: number }>()
+const props = defineProps<{ plans: Plan[]; project: string | null; vatRate: number; intro: string }>()
 
 const { t } = useI18n()
 
@@ -39,7 +39,7 @@ const plan = computed(() => props.plans.find((candidate) => candidate.projectId 
 const planForm = useForm({ installments: [] as string[] })
 
 // Der Brieftext gehört zur Rechnung, nicht zum Modus: er bleibt beim Umschalten stehen.
-const texts = ref({ intro: '', outro: '' })
+const texts = ref({ intro: props.intro, outro: '' })
 
 function toggle(id: string, checked: boolean | 'indeterminate') {
   planForm.installments = checked === true

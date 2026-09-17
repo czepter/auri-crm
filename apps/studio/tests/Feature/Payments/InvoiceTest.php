@@ -305,7 +305,7 @@ it('lets staff issue an invoice without a project to a new contact', function ()
 
 // --- M-06: rendering ----------------------------------------------------
 
-it('renders the invoice against the pinned template and stores the artifact', function () {
+it('renders the invoice with its own letter text and stores the artifact', function () {
     Storage::fake('local');
 
     DocumentTemplate::factory()->create([
@@ -317,13 +317,13 @@ it('renders the invoice against the pinned template and stores the artifact', fu
         ->shouldReceive('htmlToPdf')
         ->once()
         ->andReturnUsing(function (string $html) {
-            expect($html)->toContain('Rechnung RE-')
+            expect($html)->toContain('an Lena Meier.')
                 ->and($html)->not->toContain('{{');
 
             return '%PDF-1.4 fake';
         });
 
-    $invoice = app(IssueInvoice::class)(invoiceablePlan())->fresh();
+    $invoice = app(IssueInvoice::class)(invoiceablePlan(), null, ['intro' => 'Rechnung über {{ invoice.gross }} an {{ contact.name }}.'])->fresh();
 
     expect($invoice->template_id)->not->toBeNull()
         ->and($invoice->pdf_path)->toBe("invoices/{$invoice->tenant_id}/{$invoice->public_id}.pdf");

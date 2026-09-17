@@ -4,6 +4,7 @@ namespace App\Payments\Http\Controllers;
 
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
+use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
@@ -61,7 +62,7 @@ class InvoiceController extends Controller
         ]);
     }
 
-    public function create(Request $request, StudioSettingsResolver $settings): Response
+    public function create(Request $request, StudioSettingsResolver $settings, RenderInvoicePdf $render): Response
     {
         self::authorizeProject(null);
 
@@ -88,6 +89,12 @@ class InvoiceController extends Controller
             'plans' => $plans,
             'project' => $request->query('projekt'),
             'vatRate' => $settings->vatMode() === 'small_business' ? 0 : $settings->effectiveVatRate(),
+            // The invoice template's prose as plain text: the starting point
+            // for this invoice's own letter, merge fields left for the render.
+            'intro' => collect(preg_split('#</(p|h[1-6]|li)>#i', $render->currentTemplate(DocumentTemplateType::Invoice)?->body ?? ''))
+                ->map(fn (string $block) => trim(html_entity_decode(strip_tags($block))))
+                ->filter()
+                ->implode("\n\n"),
         ]);
     }
 

@@ -19,7 +19,7 @@ class MinimalInvoiceLayout implements InvoiceLayoutRenderer
 
         $head = '<span>'.e($document->title.($number === null ? '' : ' '.$number[1])).'</span>'
             .collect($document->metaRows)
-            ->reject(fn (array $row) => str_ends_with($row[0], 'nummer'))
+            ->reject(fn (array $row) => $row === $number)
             ->map(fn (array $row) => '<span>'.e($row[0].' '.$row[1]).'</span>')
             ->implode('');
 
