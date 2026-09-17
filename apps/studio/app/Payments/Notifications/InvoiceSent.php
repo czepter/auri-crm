@@ -8,6 +8,7 @@ use App\Concerns\WritesComposedMail;
 use App\Payments\Models\Invoice;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Support\Number;
 use Illuminate\Notifications\Notification;
 
 /**
@@ -38,10 +39,26 @@ class InvoiceSent extends Notification
         return ['mail'];
     }
 
+    /** The compose screen's starting text, and what the create screen's preview shows in its place. */
+    public static function defaultMessage(Invoice $invoice): string
+    {
+        $name = $invoice->contact?->name;
+
+        return ($name === null ? 'Guten Tag,' : "Hallo {$name},")."\n\nanbei die Rechnung {$invoice->number}.";
+    }
+
     public function toMail(object $notifiable): MailMessage
     {
         $message = $this->composedMail($this->subject, $this->body);
         $project = $this->invoice->project;
+        $dueOn = $this->invoice->dueOn();
+
+        // What the attachment says, readable without opening it.
+        $message->line(sprintf(
+            'Rechnungsbetrag %s%s.',
+            Number::currency($this->invoice->amount() / 100, in: 'EUR', locale: 'de'),
+            $dueOn === null ? '' : ', zahlbar bis '.$dueOn->format('d.m.Y'),
+        ));
 
         if ($project?->portal_visible) {
             $message->action(
@@ -52,6 +69,7 @@ class InvoiceSent extends Notification
 
         $this->attachInvoicePdf($message, $this->invoice);
 
-        return $this->appendStudioMailIdentity($this->appendUnsubscribe($message, $notifiable), $this->settings);
+        // No unsubscribe: an invoice is transactional, not a notification a client can opt out of.
+        return $this->appendStudioMailIdentity($message, $this->settings);
     }
 }

@@ -16,14 +16,12 @@ const props = defineProps<{
     statusLabel: string
   }
   recipients: { name: string; email: string }[]
+  message: string
   mailHtml: string
 }>()
 
 const message: EditorDocument = {
-  blocks: [
-    { type: 'paragraph', data: { text: `Hallo ${props.recipients.map((recipient) => recipient.name).join(' und ')},` } },
-    { type: 'paragraph', data: { text: `anbei die Rechnung ${props.invoice.number}.` } },
-  ],
+  blocks: props.message.split('\n\n').map((text) => ({ type: 'paragraph', data: { text } })),
 }
 
 const cardOpen = ref(true)
