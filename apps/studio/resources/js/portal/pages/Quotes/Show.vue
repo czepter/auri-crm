@@ -113,10 +113,12 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
         </h1>
       </section>
 
-      <p
+      <!-- #480: Editor.js-HTML, beim Speichern bereinigt, Felder escaped (QuoteController). -->
+      <div
         v-if="quote?.intro"
-        class="animate-rise [animation-delay:190ms] motion-reduce:animate-none mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] whitespace-pre-line"
-      >{{ quote.intro }}</p>
+        class="animate-rise [animation-delay:190ms] motion-reduce:animate-none mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] [&_p+*]:mt-3 [&_*+p]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
+        v-html="quote.intro"
+      />
 
       <QuoteSlider
         v-if="quote && quote.hourlyRate !== null"
@@ -200,7 +202,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
           </tr>
         </table>
 
-        <p v-if="quote.outro" class="mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] whitespace-pre-line">{{ quote.outro }}</p>
+        <div v-if="quote.outro" class="mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] [&_p+*]:mt-3 [&_*+p]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5" v-html="quote.outro" />
 
         <p v-if="quote.status === 'accepted'" class="mt-8 text-[14.5px] text-muted-foreground">
           {{ $t('portal.quoteAccepted', { date: quote.acceptedAt }) }}

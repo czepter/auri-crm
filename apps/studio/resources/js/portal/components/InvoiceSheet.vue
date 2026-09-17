@@ -24,7 +24,8 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
 
 <template>
   <div>
-    <p v-if="invoice.intro" class="mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] whitespace-pre-line">{{ invoice.intro }}</p>
+    <!-- #480: bereinigtes Editor.js-HTML, Felder escaped (InvoiceDocument). -->
+    <div v-if="invoice.intro" class="mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] [&_p+*]:mt-3 [&_*+p]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5" v-html="invoice.intro" />
 
     <table class="mt-8 w-full max-w-[420px] border-collapse">
       <tr v-for="row in invoice.metaRows" :key="row[0]" :class="[ROW, '[&>td]:py-1! [&>td]:text-muted-foreground']">
@@ -96,6 +97,6 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
       </tr>
     </table>
 
-    <p v-if="invoice.outro" class="mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] whitespace-pre-line">{{ invoice.outro }}</p>
+    <div v-if="invoice.outro" class="mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] [&_p+*]:mt-3 [&_*+p]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5" v-html="invoice.outro" />
   </div>
 </template>

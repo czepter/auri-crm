@@ -17,7 +17,7 @@ import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
-import { Textarea } from '@/ui/textarea'
+import LetterField from '@/admin/components/LetterField.vue'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { eurosToCents, formatEuros } from '@/admin/lib/money'
 
@@ -127,11 +127,11 @@ const showPreview = useMediaQuery('(min-width: 1180px)')
                 </label>
               </div>
 
-              <Field v-slot="{ id }" :label="$t('quotes.intro')">
-                <Textarea :id="id" v-model="texts.intro" rows="3" />
+              <Field :label="$t('quotes.intro')">
+                <LetterField v-model="texts.intro" />
               </Field>
-              <Field v-slot="{ id }" :label="$t('quotes.outro')">
-                <Textarea :id="id" v-model="texts.outro" rows="3" />
+              <Field :label="$t('quotes.outro')">
+                <LetterField v-model="texts.outro" />
               </Field>
 
               <p v-if="planForm.errors.installments" class="text-[12px] text-destructive">{{ planForm.errors.installments }}</p>
@@ -196,11 +196,11 @@ const showPreview = useMediaQuery('(min-width: 1180px)')
                 <DatePicker :id="id" v-model="freeForm.due_on" required />
               </Field>
 
-              <Field v-slot="{ id }" :label="$t('quotes.intro')">
-                <Textarea :id="id" v-model="texts.intro" rows="3" />
+              <Field :label="$t('quotes.intro')">
+                <LetterField v-model="texts.intro" />
               </Field>
-              <Field v-slot="{ id }" :label="$t('quotes.outro')">
-                <Textarea :id="id" v-model="texts.outro" rows="3" />
+              <Field :label="$t('quotes.outro')">
+                <LetterField v-model="texts.outro" />
               </Field>
 
               <p v-if="freeErrors.invoice" class="text-[12px] text-destructive">{{ freeErrors.invoice }}</p>

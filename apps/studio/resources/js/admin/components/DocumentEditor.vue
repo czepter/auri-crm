@@ -23,6 +23,7 @@ import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/type
 const props = defineProps<{
   palette: PaletteEntry[]
   mergeFields: { path: string; sample: string }[]
+  minHeight?: number
 }>()
 
 const model = defineModel<EditorDocument>({ required: true })
@@ -58,7 +59,7 @@ function create(data: EditorDocument): EditorJS {
   return new EditorJS({
     holder: holder.value!,
     data,
-    minHeight: 240,
+    minHeight: props.minHeight ?? 240,
     placeholder: 'Text schreiben oder / für Bausteine',
     tools: {
       ...buildTools(props.palette, registry),

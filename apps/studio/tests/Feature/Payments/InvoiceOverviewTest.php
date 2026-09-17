@@ -138,7 +138,7 @@ it('starts the letter from the invoice template, without the tax line the layout
     $intro = $this->actingAs(staffMember(), 'staff')->get('/rechnungen/neu')
         ->assertOk()->viewData('page')['props']['intro'];
 
-    expect($intro)->toBe("Guten Tag {{ contact.name }},\n\nvielen Dank für den Auftrag.");
+    expect($intro)->toBe('<p>Guten Tag {{ contact.name }},</p><p>vielen Dank für den Auftrag.</p>');
 });
 
 it('prints the Steuernummer from the layout whatever the letter says', function () {
@@ -149,4 +149,23 @@ it('prints the Steuernummer from the layout whatever the letter says', function 
     expect($html)->toContain('Steuernummer')
         ->and($html)->toContain('22/123/45678')
         ->and($html)->toContain('Hallo.');
+});
+
+it('keeps only letter markup and escapes what a merge field brings in', function () {
+    $contact = App\Crm\Models\Contact::factory()->create(['name' => '<b>Jonas</b>']);
+
+    $this->actingAs(staffMember(), 'staff')
+        ->post('/rechnungen', [
+            'contact_id' => $contact->public_id,
+            'due_on' => '2026-10-01',
+            'intro' => '<h2>Hallo {{ contact.name }}</h2><script>alert(1)</script><p onclick="x()">Danke</p>',
+            'items' => [['description' => 'Abzüge', 'quantity' => 1, 'unit_price' => 2_000, 'vat_rate' => 1900]],
+        ])
+        ->assertRedirect();
+
+    $invoice = App\Payments\Models\Invoice::sole();
+    $html = app(App\Payments\Actions\RenderInvoicePdf::class)->forInvoice($invoice->load('installments', 'items', 'contact'));
+
+    expect($invoice->intro)->toBe('<h2>Hallo {{ contact.name }}</h2><p>Danke</p>')
+        ->and($html)->toContain('<h2>Hallo &lt;b&gt;Jonas&lt;/b&gt;</h2>');
 });

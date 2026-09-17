@@ -6,6 +6,7 @@ use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Documents\Support\DocumentRenderer;
+use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Quotes\Enums\DiscountType;
 use App\Quotes\Enums\QuoteLayout;
@@ -116,18 +117,10 @@ class RenderQuotePdf
         return '<p>'.implode('<br>', $lines).'</p>';
     }
 
-    /** Freitext, kein HTML: escaped, Absätze bleiben Absätze. */
-    private function letter(?string $text, array $data): string
+    /** #480: Editor.js-HTML, bereinigt wie beim Speichern; die Felder escaped. */
+    private function letter(?string $html, array $data): string
     {
-        $resolved = trim(MergeFieldResolver::resolve($text ?? '', $data));
-
-        if ($resolved === '') {
-            return '';
-        }
-
-        return collect(preg_split('/\n{2,}/', $resolved))
-            ->map(fn (string $paragraph) => '<p>'.nl2br(e(trim($paragraph))).'</p>')
-            ->implode('');
+        return MergeFieldResolver::resolve(InlineHtmlSanitizer::letter($html) ?? '', $data, escape: true);
     }
 
     /**

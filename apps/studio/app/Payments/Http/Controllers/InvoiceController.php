@@ -6,6 +6,7 @@ use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Support\DocumentMergeDataBuilder;
+use App\Documents\Support\InlineHtmlSanitizer;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Notifications\NotificationService;
@@ -89,12 +90,9 @@ class InvoiceController extends Controller
             'plans' => $plans,
             'project' => $request->query('projekt'),
             'vatRate' => $settings->vatMode() === 'small_business' ? 0 : $settings->effectiveVatRate(),
-            // The invoice template's prose as plain text: the starting point
-            // for this invoice's own letter, merge fields left for the render.
-            'intro' => collect(preg_split('#</(p|h[1-6]|li)>#i', $render->currentTemplate(DocumentTemplateType::Invoice)?->body ?? ''))
-                ->map(fn (string $block) => trim(html_entity_decode(strip_tags($block))))
-                ->filter()
-                ->implode("\n\n"),
+            // The invoice template's prose: the starting point for this
+            // invoice's own letter, merge fields left for the render.
+            'intro' => InlineHtmlSanitizer::letter($render->currentTemplate(DocumentTemplateType::Invoice)?->body) ?? '',
         ]);
     }
 
@@ -162,8 +160,8 @@ class InvoiceController extends Controller
             'contact.postcode' => ['nullable', 'string', 'max:20'],
             'contact.city' => ['nullable', 'string', 'max:255'],
             'due_on' => ['nullable', 'date'],
-            'intro' => ['nullable', 'string', 'max:5000'],
-            'outro' => ['nullable', 'string', 'max:5000'],
+            'intro' => ['nullable', 'string', 'max:20000'],
+            'outro' => ['nullable', 'string', 'max:20000'],
             'items' => ['nullable', 'array'],
             'items.*.description' => ['nullable', 'string', 'max:255'],
             'items.*.quantity' => ['nullable', 'integer', 'min:0'],
@@ -196,8 +194,8 @@ class InvoiceController extends Controller
         $invoice = new Invoice([
             'number' => __('payments.previewNumber'),
             'issued_at' => now(),
-            'intro' => $validated['intro'] ?? null,
-            'outro' => $validated['outro'] ?? null,
+            'intro' => InlineHtmlSanitizer::letter($validated['intro'] ?? null),
+            'outro' => InlineHtmlSanitizer::letter($validated['outro'] ?? null),
         ]);
         $invoice->setRelation('creditNotes', collect())->setRelation('template', null);
 
@@ -350,10 +348,10 @@ class InvoiceController extends Controller
     /** @return array{intro?: ?string, outro?: ?string} */
     private function texts(Request $request): array
     {
-        return $request->validate([
-            'intro' => ['nullable', 'string', 'max:5000'],
-            'outro' => ['nullable', 'string', 'max:5000'],
-        ]);
+        return array_map(InlineHtmlSanitizer::letter(...), $request->validate([
+            'intro' => ['nullable', 'string', 'max:20000'],
+            'outro' => ['nullable', 'string', 'max:20000'],
+        ]));
     }
 
     /**

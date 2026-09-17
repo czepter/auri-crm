@@ -5,6 +5,8 @@ namespace App\Http\Middleware;
 use App\Crm\Actions\OpenLeads;
 use App\Crm\Models\Project;
 use App\Data\StaffProfileData;
+use App\Documents\Support\DocumentBlockCatalog;
+use App\Documents\Support\MergeFieldVocabulary;
 use App\Help\Support\HelpIndex;
 use App\Models\User;
 use App\Portal\Support\PortalSettings;
@@ -53,6 +55,15 @@ class HandleInertiaRequests extends Middleware
             'portalPreview' => $request->session()->get('portal_preview') === true,
             // Crew, assignees and bylines name the only person there is.
             'soloStudio' => fn () => $user !== null && User::soloStudio(),
+            // #480: what the letter fields of quotes and invoices offer —
+            // DocumentBlockCatalog's text blocks and every merge field.
+            'letterEditor' => fn () => $user === null ? null : [
+                'palette' => DocumentBlockCatalog::letter(),
+                'mergeFields' => collect(MergeFieldVocabulary::samples())
+                    ->map(fn (string $sample, string $path) => ['path' => $path, 'sample' => $sample])
+                    ->values()
+                    ->all(),
+            ],
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),
                 // P-06 (#225): a freshly set gallery secret, readable exactly

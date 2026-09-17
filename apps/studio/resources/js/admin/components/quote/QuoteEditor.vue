@@ -8,7 +8,7 @@ import { subtotal } from './quoteTotals'
 import { eurosToCents, formatEuros } from '@/admin/lib/money'
 import { monthDate } from '@/admin/lib/dates'
 import { ChoiceGroup } from '@/ui/choice-group'
-import { Textarea } from '@/ui/textarea'
+import LetterField from '@/admin/components/LetterField.vue'
 import { Label } from '@/ui/label'
 import { Button } from '@/ui/button'
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/ui/dialog'
@@ -97,7 +97,7 @@ const termsSummary = computed(() => {
   return parts.join(' · ')
 })
 
-const textSummary = computed(() => draft.value.intro.split('\n')[0] ?? '')
+const textSummary = computed(() => new DOMParser().parseFromString(draft.value.intro, 'text/html').body.firstElementChild?.textContent ?? '')
 </script>
 
 <template>
@@ -175,11 +175,11 @@ const textSummary = computed(() => draft.value.intro.split('\n')[0] ?? '')
         <div class="flex flex-col gap-4">
           <div class="flex min-w-0 flex-col gap-1.5">
             <Label>{{ $t('quotes.intro') }}</Label>
-            <Textarea v-model="draft.intro" rows="3" @blur="emit('change')" />
+            <LetterField v-model="draft.intro" @update:model-value="emit('change')" />
           </div>
           <div class="flex min-w-0 flex-col gap-1.5">
             <Label>{{ $t('quotes.outro') }}</Label>
-            <Textarea v-model="draft.outro" rows="3" @blur="emit('change')" />
+            <LetterField v-model="draft.outro" @update:model-value="emit('change')" />
           </div>
         </div>
       </QuoteCard>

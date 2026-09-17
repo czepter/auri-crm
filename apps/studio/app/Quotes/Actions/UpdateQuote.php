@@ -2,6 +2,7 @@
 
 namespace App\Quotes\Actions;
 
+use App\Documents\Support\InlineHtmlSanitizer;
 use App\Quotes\Enums\PricingMode;
 use App\Quotes\Models\Quote;
 use Illuminate\Validation\Rule;
@@ -29,8 +30,8 @@ class UpdateQuote
             'recipient_street' => ['nullable', 'string', 'max:255'],
             'recipient_postcode' => ['nullable', 'string', 'max:32'],
             'recipient_city' => ['nullable', 'string', 'max:255'],
-            'intro' => ['nullable', 'string', 'max:5000'],
-            'outro' => ['nullable', 'string', 'max:5000'],
+            'intro' => ['nullable', 'string', 'max:20000'],
+            'outro' => ['nullable', 'string', 'max:20000'],
             'discount_type' => ['nullable', 'in:percentage,amount', 'required_with:discount_value'],
             'discount_value' => ['nullable', 'integer', 'min:1', 'required_with:discount_type'],
             'discount_hidden' => ['sometimes', 'boolean'],
@@ -119,8 +120,8 @@ class UpdateQuote
             'valid_until' => $validated['valid_until'] ?? null,
             'pricing_mode' => $mode,
             ...$recipientFields,
-            'intro' => $validated['intro'] ?? null,
-            'outro' => $validated['outro'] ?? null,
+            'intro' => InlineHtmlSanitizer::letter($validated['intro'] ?? null),
+            'outro' => InlineHtmlSanitizer::letter($validated['outro'] ?? null),
             'discount_type' => $validated['discount_type'] ?? null,
             'discount_value' => $validated['discount_value'] ?? null,
             'discount_hidden' => $validated['discount_hidden'] ?? $quote->discount_hidden,
