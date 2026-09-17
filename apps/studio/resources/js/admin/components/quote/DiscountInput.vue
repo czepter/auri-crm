@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 // parseDiscount liest "10 %" als Prozent und alles andere als Euro.
 const model = defineModel<string>({ required: true })
+defineProps<{ disabled?: boolean }>()
 const emit = defineEmits<{ change: [] }>()
 
 const unit = ref(model.value.trim().endsWith('%') ? '%' : '€')
@@ -29,10 +30,11 @@ function setUnit(value: unknown) {
       class="text-right tabular-nums"
       type="text"
       inputmode="decimal"
+      :disabled="disabled"
       @update:model-value="sync"
       @blur="emit('change')"
     />
-    <Select :model-value="unit" @update:model-value="setUnit">
+    <Select :model-value="unit" :disabled="disabled" @update:model-value="setUnit">
       <SelectTrigger size="sm" class="w-auto gap-1 border-0 bg-transparent pr-[11px]">
         <SelectValue />
       </SelectTrigger>

@@ -103,7 +103,8 @@ function saveAsPackage() {
       <div class="grid grid-cols-3 gap-4">
         <div class="flex min-w-0 flex-col gap-1.5">
           <Label>{{ $t('quotes.itemQuantity') }}</Label>
-          <Input v-model.number="row.quantity" class="tabular-nums" type="number" min="1" @blur="emit('change')" />
+          <!-- #480: a rate picked into an invoice bills its own gross; quantity, price and discount are not the author's to change. -->
+          <Input v-model.number="row.quantity" class="tabular-nums" type="number" min="1" :disabled="!!row.installmentId" @blur="emit('change')" />
         </div>
         <div class="flex min-w-0 flex-col gap-1.5">
           <Label>{{ $t('quotes.itemPrice') }}</Label>
@@ -114,6 +115,7 @@ function saveAsPackage() {
               type="text"
               inputmode="decimal"
               :placeholder="$t('quotes.itemPriceHint')"
+              :disabled="!!row.installmentId"
               @blur="emit('change')"
             />
             <InputGroupAddon align="inline-end">€</InputGroupAddon>
@@ -121,7 +123,7 @@ function saveAsPackage() {
         </div>
         <div class="flex min-w-0 flex-col gap-1.5">
           <Label>{{ $t('quotes.discount') }}</Label>
-          <DiscountInput v-model="row.discount" @change="emit('change')" />
+          <DiscountInput v-model="row.discount" :disabled="!!row.installmentId" @change="emit('change')" />
         </div>
       </div>
 
