@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { Check } from 'lucide-vue-next'
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
@@ -7,6 +8,7 @@ import PageHead from '@/ui/page/PageHead.vue'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Field } from '@/ui/field'
+import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
@@ -25,7 +27,8 @@ type Invitation = { id: string; email: string; name: string; roleLabel: string; 
 defineProps<{
   staff: Member[]
   invitations: Invitation[]
-  roles: { value: string; label: string }[]
+  roles: { value: string; label: string; capabilities: string[] }[]
+  capabilities: { value: string; label: string }[]
 }>()
 
 const inviting = ref(false)
@@ -156,6 +159,29 @@ function initials(name: string) {
                 {{ member.mfaConfirmed ? $t('team.mfaOn') : $t('team.mfaPending') }}
               </span>
             </div>
+          </section>
+
+          <section class="mt-7">
+            <h2 class="m-0 text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ $t('team.permissions') }}</h2>
+            <Table class="mt-3 [&_td]:px-3 [&_td:first-child]:pl-0 [&_th]:px-3 [&_th:first-child]:pl-0">
+              <thead>
+                <tr>
+                  <TableHead />
+                  <TableHead v-for="role in roles" :key="role.value" class="text-center">
+                    {{ role.label }}
+                    <span class="ml-1 font-normal tabular-nums">{{ staff.filter((member) => member.role === role.value).length }}</span>
+                  </TableHead>
+                </tr>
+              </thead>
+              <tbody>
+                <TableRow v-for="capability in capabilities" :key="capability.value">
+                  <TableCell>{{ capability.label }}</TableCell>
+                  <TableCell v-for="role in roles" :key="role.value" class="text-center align-middle">
+                    <Check v-if="role.capabilities.includes(capability.value)" class="inline size-4 stroke-[1.8]" :aria-label="$t('team.allowed')" />
+                  </TableCell>
+                </TableRow>
+              </tbody>
+            </Table>
           </section>
         </div>
       </div>

@@ -169,3 +169,12 @@ it('renders the calendar and reply blocks, and drops the 2FA line', function () 
         ->toContain('Antworten am Auftrag')
         ->not->toContain('Zwei-Faktor');
 });
+
+it('shows each role with the capabilities the enum grants it', function () {
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Owner]), 'staff')
+        ->get('/team')
+        ->assertInertia(fn ($page) => $page
+            ->where('roles.1.value', StaffRole::Photographer->value)
+            ->where('roles.1.capabilities', array_map(fn ($capability) => $capability->value, StaffRole::Photographer->capabilities()))
+            ->has('capabilities', count(App\Enums\Capability::cases())));
+});

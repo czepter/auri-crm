@@ -90,7 +90,7 @@ function submit() {
   <AdminLayout active="vorlagen">
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
-        <PageHead :kicker="$t('documentTemplates.title')" :title="$t('documentTemplates.createTitle')">
+        <PageHead :kicker="$t('documentTemplates.title')" kicker-href="/vorlagen?typ=dokumente" :title="$t('documentTemplates.createTitle')">
           <Button as="a" class="ml-auto" href="/vorlagen?typ=dokumente" variant="ghost">{{ $t('common.cancel') }}</Button>
           <!-- Nothing to save until a starting point is chosen, and a back that
                returns to the choice rather than leaving the screen. -->

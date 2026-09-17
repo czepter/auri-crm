@@ -594,7 +594,9 @@
     "revoke": "Zurückziehen",
     "revokeConfirm": "Einladung für {email} zurückziehen? Der Link wird ungültig.",
     "mfaOn": "Zwei Faktoren",
-    "mfaPending": "Einrichtung offen"
+    "mfaPending": "Einrichtung offen",
+    "permissions": "Rechte je Rolle",
+    "allowed": "erlaubt"
   },
   "absences": {
     "title": "Abwesenheiten",
@@ -938,10 +940,12 @@
     "bankIban": "IBAN",
     "bankBic": "BIC",
     "soon": "bald",
+    "groupPersonal": "Persönlich",
     "groupStudio": "Studio",
     "groupBilling": "Abrechnung",
     "groupWork": "Ablauf",
     "groupPortal": "Portal",
+    "groupInterfaces": "Schnittstellen",
     "navVat": "Zahlungsdaten & USt",
     "navNumbering": "Nummernkreise",
     "navAvailability": "Verfügbarkeit",
@@ -953,6 +957,8 @@
     "navPortal": "Portal",
     "navNotifications": "Benachrichtigungen",
     "navGeneral": "Allgemein",
+    "navExport": "Export",
+    "exportInvoices": "Rechnungen",
     "navCapture": "Erfassung",
     "captureTitle": "Erfassung",
     "capturePresetsLabel": "Vorschläge für „Sonstige“",
@@ -1205,7 +1211,8 @@
     "scopes": "Berechtigungen",
     "create": "Erzeugen",
     "revoke": "Widerrufen",
-    "revokeTitle": "Token widerrufen?"
+    "revokeTitle": "Token widerrufen?",
+    "mcpHelp": "Claude verbinden"
   },
   "notificationSettings": {
     "title": "Benachrichtigungen",

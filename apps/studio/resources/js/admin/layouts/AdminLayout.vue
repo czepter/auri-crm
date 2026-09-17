@@ -49,7 +49,8 @@ const initials = computed(() => {
 const can = computed(() => page.props.auth.can ?? []);
 
 // C-02 (#236): two groups, and the order follows a job's life — inquiry,
-// project, contact. Eleven equal-ranked entries were a list of everything the
+// project, contact. What is addressed to the person reading — the bell and
+// the tray — comes before it, the way a mail client opens on its inbox. Eleven equal-ranked entries were a list of everything the
 // product has, in the order the screens happened to be built.
 //
 // Only entries with a screen behind them appear, which is the same ruling C-06
@@ -71,6 +72,26 @@ const items = computed(() =>
             label: "Übersicht",
             href: "/",
             icon: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>',
+        },
+        {
+            // T-11's bell. A sidebar row rather than a popover: the count badge and
+            // the active state are already built here, and a panel would be a second
+            // way to read the same list.
+            key: "benachrichtigungen",
+            label: "Benachrichtigungen",
+            href: "/benachrichtigungen",
+            count: nav.value?.unread,
+            icon: '<path d="M18 16v-5a6 6 0 10-12 0v5l-1.5 2.5h15L18 16z"/><path d="M10 19.5a2 2 0 004 0"/>',
+        },
+        {
+            // E-12: the tray for mail that arrived and matched nothing. Same
+            // capability as replying to a client, because triaging one is deciding
+            // which conversation it belongs to.
+            key: "posteingang",
+            label: "Posteingang",
+            href: "/posteingang",
+            needs: "manage_messages",
+            icon: '<path d="M3 6.5h18v11H3z"/><path d="m3 7.5 9 6 9-6"/>',
         },
         {
             key: "anfragen",
@@ -122,26 +143,6 @@ const items = computed(() =>
             label: "Abwesenheiten",
             href: "/abwesenheiten",
             icon: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="M8 14h3M13 14h3M8 17h3"/>',
-        },
-        {
-            // T-11's bell. A sidebar row rather than a popover: the count badge and
-            // the active state are already built here, and a panel would be a second
-            // way to read the same list.
-            key: "benachrichtigungen",
-            label: "Benachrichtigungen",
-            href: "/benachrichtigungen",
-            count: nav.value?.unread,
-            icon: '<path d="M18 16v-5a6 6 0 10-12 0v5l-1.5 2.5h15L18 16z"/><path d="M10 19.5a2 2 0 004 0"/>',
-        },
-        {
-            // E-12: the tray for mail that arrived and matched nothing. Same
-            // capability as replying to a client, because triaging one is deciding
-            // which conversation it belongs to.
-            key: "posteingang",
-            label: "Posteingang",
-            href: "/posteingang",
-            needs: "manage_messages",
-            icon: '<path d="M3 6.5h18v11H3z"/><path d="m3 7.5 9 6 9-6"/>',
         },
         { group: "Studio" },
         {
@@ -220,12 +221,23 @@ const items = computed(() =>
             <nav
                 class="flex w-[214px] flex-col px-3 py-4.5 max-[1080px]:w-14 max-[1080px]:px-2 max-[640px]:sticky max-[640px]:bottom-0 max-[640px]:z-30 max-[640px]:order-2 max-[640px]:w-auto max-[640px]:flex-row max-[640px]:justify-around max-[640px]:bg-paper max-[640px]:px-1 max-[640px]:py-1.5 max-[640px]:shadow-[inset_0_1px_0_var(--rule)] sticky top-0 h-screen overflow-y-auto max-[640px]:top-auto max-[640px]:h-auto max-[640px]:overflow-visible"
             >
-                <Link
-                    class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 pb-5.5 text-[17px] leading-none font-semibold tracking-[-0.024em] text-foreground no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk max-[1080px]:hidden"
-                    href="/"
-                >
-                    {{ $page.props.brand }}
-                </Link>
+                <div class="mb-px flex items-start gap-1 pb-5.5 max-[1080px]:hidden">
+                    <Link
+                        class="flex min-w-0 flex-1 items-center rounded-lg px-2.5 text-[17px] leading-none font-semibold tracking-[-0.024em] text-foreground no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk"
+                        href="/"
+                    >
+                        {{ $page.props.brand }}
+                    </Link>
+                    <Link
+                        v-if="can.includes('manage_leads')"
+                        class="-mt-1 flex size-6.5 flex-none items-center justify-center rounded-lg text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground"
+                        href="/anfragen/neu"
+                        :title="$t('leads.createKicker')"
+                        :aria-label="$t('leads.createKicker')"
+                    >
+                        <svg class="size-4.25 fill-none stroke-current stroke-[1.6] [stroke-linecap:round]" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+                    </Link>
+                </div>
 
                 <!-- Above the navigation, not in it: it does not change page, it
              opens a tool. The shortcut stands where a count would. -->

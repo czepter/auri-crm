@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { router, useForm, usePage } from '@inertiajs/vue3'
+import { Link, router, useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
@@ -22,17 +22,26 @@ import { Label } from '@/ui/label'
 const props = defineProps<{
   tokens: { id: string; name: string; scopes: string[]; createdAt: string }[]
   capabilities: { value: string; label: string }[]
+  mcpUrl: string
 }>()
 
 const secret = computed(() => usePage().props.flash?.secret as string | undefined)
-const copied = ref(false)
+const copied = ref<string | null>(null)
 
 function copy(value: string) {
   navigator.clipboard
     ?.writeText(value)
-    .then(() => (copied.value = true))
-    .catch(() => (copied.value = false))
+    .then(() => (copied.value = value))
+    .catch(() => (copied.value = null))
 }
+
+// The connection signs in through the studio's own OAuth approval
+// (mcp-claude-verbinden.md), so each client needs the address and nothing else.
+const clients = computed(() => [
+  { name: 'Claude', setup: props.mcpUrl },
+  { name: 'Claude Code', setup: `claude mcp add --transport http studio ${props.mcpUrl}` },
+  { name: 'Cursor', setup: JSON.stringify({ mcpServers: { studio: { url: props.mcpUrl } } }, null, 2) },
+])
 
 const form = useForm({ name: '', scopes: [] as string[] })
 
@@ -45,7 +54,7 @@ function create() {
     preserveScroll: true,
     onSuccess: () => {
       form.reset()
-      copied.value = false
+      copied.value = null
     },
   })
 }
@@ -78,7 +87,7 @@ function revoke() {
                 <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('apiTokens.secretHint') }}</span>
                 <div class="mt-2">
                   <Button type="button" variant="pill-muted" @click="copy(secret)">
-                    {{ copied ? $t('gallery.copied') : $t('gallery.copy') }}
+                    {{ copied === secret ? $t('gallery.copied') : $t('gallery.copy') }}
                   </Button>
                 </div>
               </div>
@@ -104,6 +113,24 @@ function revoke() {
                     {{ $t('apiTokens.revoke') }}
                   </Button>
                 </div>
+              </div>
+
+              <div class="mb-8">
+                <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">MCP</div>
+                <div
+                  v-for="client in clients"
+                  :key="client.name"
+                  class="flex items-start gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]"
+                >
+                  <div class="min-w-0 flex-1">
+                    <div class="text-[14px] font-semibold">{{ client.name }}</div>
+                    <pre class="m-0 mt-1 text-[12px] leading-[1.5] break-all whitespace-pre-wrap text-ink-2"><code>{{ client.setup }}</code></pre>
+                  </div>
+                  <Button type="button" variant="pill-muted" @click="copy(client.setup)">
+                    {{ copied === client.setup ? $t('gallery.copied') : $t('gallery.copy') }}
+                  </Button>
+                </div>
+                <Link class="mt-2.5 inline-block text-[12.5px]" href="/hilfe/mcp-claude-verbinden">{{ $t('apiTokens.mcpHelp') }}</Link>
               </div>
 
               <form id="api-token-form" @submit.prevent="create">

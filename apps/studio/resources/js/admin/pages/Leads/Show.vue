@@ -14,7 +14,6 @@ import RailHistory from "@/admin/components/RailHistory.vue";
 import ShootFields from "@/admin/components/ShootFields.vue";
 import ShootRow from "@/admin/components/ShootRow.vue";
 import { Button } from "@/ui/button";
-import { ChoiceGroup } from "@/ui/choice-group";
 import { DatePicker } from "@/ui/date-picker";
 import { Field } from "@/ui/field";
 import { Input } from "@/ui/input";
@@ -141,12 +140,26 @@ const kontakteEditing = ref(false);
 const termineEditing = ref(false);
 
 const anfrage = useForm({
+    inquiry_text: props.lead.inquiryText ?? "",
+});
+
+// Typ und Quelle stehen in der Seitenspalte und speichern bei jeder Änderung:
+// zwei Auswahlen brauchen keinen Bearbeiten-Modus.
+const details = useForm({
     type: props.lead.type,
     type_other: props.lead.typeOther ?? "",
     source: props.lead.source,
     source_other: props.lead.sourceOther ?? "",
-    inquiry_text: props.lead.inquiryText ?? "",
 });
+
+function saveDetail(field: "type" | "source") {
+    details
+        .transform((data) => ({
+            [field]: data[field],
+            [`${field}_other`]: data[field] === "other" ? blank(data[`${field}_other`]) : null,
+        }))
+        .patch(`/anfragen/${props.lead.id}`, { preserveScroll: true });
+}
 
 const kontakte = useForm({
     people: props.people.map((person) => ({
@@ -254,7 +267,7 @@ function removeShoot(id: string) {
 
 // Was eine Karte sagt, wenn sie zu ist.
 const anfrageSummary = computed(() =>
-    [props.lead.typeLabel, props.lead.sourceLabel, day(props.lead.capturedAt)].filter(Boolean).join(" · "),
+    [props.lead.capturedVia, day(props.lead.capturedAt)].filter(Boolean).join(" · "),
 );
 
 const kontakteSummary = computed(() => props.people.map((person) => person.name).join(", "));
@@ -349,6 +362,60 @@ const due = computed(() => {
                  by what is already on it. -->
             <template #rail>
                 <Rail>
+                    <RailSection :title="$t('project.lead')">
+                        <div class="flex flex-col gap-3">
+                            <Field v-slot="{ id }" :label="$t('leads.type')" :error="details.errors.type">
+                                <Select
+                                    v-model="details.type"
+                                    :disabled="!header.canManageShoots"
+                                    @update:model-value="saveDetail('type')"
+                                >
+                                    <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem v-for="option in types" :key="option.value" :value="option.value">{{ option.label }}</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <Input
+                                    v-if="details.type === 'other'"
+                                    v-model="details.type_other"
+                                    class="mt-2"
+                                    type="text"
+                                    list="type-presets"
+                                    :disabled="!header.canManageShoots"
+                                    @change="saveDetail('type')"
+                                />
+                                <datalist id="type-presets">
+                                    <option v-for="value in presets.type" :key="value" :value="value" />
+                                </datalist>
+                            </Field>
+
+                            <Field v-slot="{ id }" :label="$t('leads.source')" :error="details.errors.source">
+                                <Select
+                                    v-model="details.source"
+                                    :disabled="!header.canManageShoots"
+                                    @update:model-value="saveDetail('source')"
+                                >
+                                    <SelectTrigger :id="id"><SelectValue placeholder="—" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem v-for="option in sources" :key="option.value" :value="option.value">{{ option.label }}</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <Input
+                                    v-if="details.source === 'other'"
+                                    v-model="details.source_other"
+                                    class="mt-2"
+                                    type="text"
+                                    list="source-presets"
+                                    :disabled="!header.canManageShoots"
+                                    @change="saveDetail('source')"
+                                />
+                                <datalist id="source-presets">
+                                    <option v-for="value in presets.source" :key="value" :value="value" />
+                                </datalist>
+                            </Field>
+                        </div>
+                    </RailSection>
+
                     <RailSection :title="$t('lead.week')">
                         <template v-if="week.length">
                             <Link
@@ -432,64 +499,17 @@ const due = computed(() => {
                         @cancel="anfrage.reset()"
                         @save="saveAnfrage"
                     >
-                        <!-- Der Anfragetext, darunter woher und wann. Die
-                             Personen stehen in ihrer eigenen Karte: eine
-                             Seitenspalte trägt keinen Zeileneditor. -->
+                        <!-- Der Anfragetext. Die Personen stehen in ihrer
+                             eigenen Karte: eine Seitenspalte trägt keinen
+                             Zeileneditor. -->
                         <p class="m-0 max-w-[58ch] text-[14px] leading-[1.5] tracking-[-0.008em] whitespace-pre-line">
                             {{ lead.inquiryText ?? $t("lead.noText") }}
                         </p>
-
-                        <div class="mt-4 grid grid-cols-3 gap-[18px] pt-3.5 shadow-[inset_0_1px_0_var(--rule)] max-[640px]:grid-cols-1">
-                            <div>
-                                <div class="text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t("leads.type") }}</div>
-                                <div class="mt-1.5 text-[13.5px] leading-[1.35]">{{ lead.typeLabel }}</div>
-                            </div>
-                            <div>
-                                <div class="text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t("leads.source") }}</div>
-                                <div class="mt-1.5 text-[13.5px] leading-[1.35]">{{ lead.sourceLabel }}</div>
-                            </div>
-                            <div>
-                                <div class="text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t("leads.capturedAt") }}</div>
-                                <div class="mt-1.5 text-[13.5px] leading-[1.35]">
-                                    {{ lead.capturedVia ? `${lead.capturedVia} · ` : "" }}{{ day(lead.capturedAt) }}
-                                </div>
-                            </div>
-                        </div>
 
                         <template #edit>
                             <Field v-slot="{ id }" :label="$t('leads.inquiryText')" :error="anfrage.errors.inquiry_text">
                                 <Textarea :id="id" v-model="anfrage.inquiry_text" rows="6" />
                             </Field>
-
-                            <div class="mt-3.5 flex flex-wrap gap-3">
-                                <Field class="min-w-[220px] flex-1" :label="$t('leads.type')" :error="anfrage.errors.type">
-                                    <ChoiceGroup v-model="anfrage.type" :options="types" />
-                                    <Input
-                                        v-if="anfrage.type === 'other'"
-                                        v-model="anfrage.type_other"
-                                        class="mt-2"
-                                        type="text"
-                                        list="type-presets"
-                                    />
-                                    <datalist id="type-presets">
-                                        <option v-for="value in presets.type" :key="value" :value="value" />
-                                    </datalist>
-                                </Field>
-
-                                <Field class="min-w-[220px] flex-1" :label="$t('leads.source')" :error="anfrage.errors.source">
-                                    <ChoiceGroup v-model="anfrage.source" :options="sources" />
-                                    <Input
-                                        v-if="anfrage.source === 'other'"
-                                        v-model="anfrage.source_other"
-                                        class="mt-2"
-                                        type="text"
-                                        list="source-presets"
-                                    />
-                                    <datalist id="source-presets">
-                                        <option v-for="value in presets.source" :key="value" :value="value" />
-                                    </datalist>
-                                </Field>
-                            </div>
                         </template>
                     </Card>
 

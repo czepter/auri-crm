@@ -18,6 +18,10 @@ onMounted(() => bar.value?.querySelector('[data-open]')?.scrollIntoView({ inline
 // Grouped the same way AdminLayout's own sidebar groups: a `group` entry is a
 // heading, everything after it belongs to it until the next one.
 const items = [
+  { group: 'settings.groupPersonal' },
+  { key: 'profile', href: '/profil', label: 'profile.nav' },
+  { key: 'calendar', href: '/einstellungen/kalender', label: 'calendar.subscribe' },
+
   { group: 'settings.groupStudio' },
   { key: 'brand', href: '/einstellungen', label: 'settings.brand' },
   { key: 'legal', href: '/einstellungen?pane=legal', label: 'settings.legalEntity' },
@@ -34,7 +38,6 @@ const items = [
   { key: 'availability', href: '/einstellungen/verfuegbarkeit', label: 'settings.navAvailability' },
   { key: 'capture', href: '/einstellungen?pane=capture', label: 'settings.navCapture' },
   { key: 'automations', href: '/einstellungen/automationen', label: 'automations.title' },
-  { key: 'api-tokens', href: '/einstellungen/api-token', label: 'apiTokens.title' },
 
   { group: 'settings.groupPortal' },
   { key: 'portal', href: '/einstellungen/portal', label: 'settings.navPortal' },
@@ -42,6 +45,10 @@ const items = [
   { key: 'privacy', href: '/einstellungen/portal?pane=privacy', label: 'portalSettings.dsgvoSection' },
   { key: 'email', href: '/einstellungen?pane=email', label: 'settings.navMail' },
   { key: 'notifications', href: '/einstellungen/benachrichtigungen', label: 'settings.navNotifications' },
+
+  { group: 'settings.groupInterfaces' },
+  { key: 'api-tokens', href: '/einstellungen/api-token', label: 'apiTokens.title' },
+  { key: 'export', href: '/einstellungen/export', label: 'settings.navExport' },
 
 ]
 
