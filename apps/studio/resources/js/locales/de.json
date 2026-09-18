@@ -401,6 +401,18 @@
     "sent": "Versendet",
     "viewed": "Geöffnet"
   },
+  "creditNotesOverview": {
+    "title": "Gutschriften",
+    "searchPlaceholder": "Gutschrift, Rechnung oder Kunde suchen",
+    "empty": "Keine Gutschriften.",
+    "toInvoices": "Zu den Rechnungen",
+    "number": "Nummer",
+    "recipient": "Empfänger",
+    "issuedOn": "Datum",
+    "invoice": "Rechnung",
+    "reason": "Grund",
+    "amount": "Betrag"
+  },
   "invoicesCreate": {
     "title": "Neue Rechnung",
     "project": "Projekt",

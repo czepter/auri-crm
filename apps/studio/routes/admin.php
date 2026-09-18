@@ -63,6 +63,7 @@ use App\Http\Controllers\Staff\SetupController;
 use App\Media\Http\Controllers\FailedAssetController;
 use App\Media\Http\Controllers\MultipartUploadController;
 use App\Media\Http\Controllers\UploadPrecheckController;
+use App\Payments\Http\Controllers\CreditNoteController;
 use App\Payments\Http\Controllers\InvoiceController;
 use App\Payments\Http\Controllers\InvoiceExportController;
 use App\Payments\Http\Controllers\PaymentInstallmentController;
@@ -818,6 +819,10 @@ Route::middleware('audience:staff')->group(function () {
         // already received gets instead.
         Route::post('/rechnungen/{invoice}/storno', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
         Route::post('/rechnungen/{invoice}/gutschrift', [InvoiceController::class, 'creditNote'])->name('invoices.credit-note');
+
+        // Die Gutschriften des ganzen Buchs. Eine Gutschrift haengt an ihrer
+        // Rechnung, die Frage nach allen stellt aber der Jahresabschluss.
+        Route::get('/gutschriften', CreditNoteController::class)->name('credit-notes.index');
         Route::get('/rechnungen/{invoice}/gutschrift/{creditNote}', [InvoiceController::class, 'downloadCreditNote'])
             ->name('invoices.credit-note.download');
 
