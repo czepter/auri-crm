@@ -823,6 +823,19 @@ export type NumberRangeResetRule = 'yearly' | 'continuous';
 }
 namespace Payments {
 namespace Data {
+export type CreditNoteRowData = {
+id: string,
+number: string,
+issuedOn: string,
+amount: number,
+reason: string | null,
+invoiceId: string,
+invoiceNumber: string,
+projectId: string | null,
+projectName: string | null,
+contact: string | null,
+hasDocument: boolean,
+};
 export type InvoiceRowData = {
 id: string,
 number: string,

@@ -11,6 +11,7 @@ import {
 import { Toaster } from "@/ui/sonner";
 import CommandPalette from "@/admin/components/CommandPalette.vue";
 import HelpButton from "@/ui/page/HelpButton.vue";
+import { documentKeys, navItems, studioKeys } from "@/admin/lib/nav";
 
 const props = defineProps<{ active: string }>();
 
@@ -48,168 +49,15 @@ const initials = computed(() => {
 
 const can = computed(() => page.props.auth.can ?? []);
 
-// C-02 (#236): two groups, and the order follows a job's life — inquiry,
-// project, contact. What is addressed to the person reading — the bell and
-// the tray — comes before it, the way a mail client opens on its inbox. Eleven equal-ranked entries were a list of everything the
-// product has, in the order the screens happened to be built.
-//
-// Only entries with a screen behind them appear, which is the same ruling C-06
-// applies to its tabs and S-01 to the Übersicht: an item that goes nowhere
-// teaches staff to distrust the nav.
-//
-// From S-06 the same rule covers authority: a nav item this role would be
-// refused is absent rather than rendered into a 403.
-//
-// Icons: 17px, stroke 1.6, round ends, and the stroke follows the text —
-// grey, black in the active row. Anfragen is a board of three columns,
-// Posteingang an envelope, Dokumentvorlagen a sheet with a folded corner,
-// Auswertungen bars. Kontakte got the address book, or it would be the same
-// person symbol as Team.
-const items = computed(() =>
-    [
-        {
-            key: "uebersicht",
-            label: "Übersicht",
-            href: "/",
-            icon: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>',
-        },
-        {
-            // T-11's bell. A sidebar row rather than a popover: the count badge and
-            // the active state are already built here, and a panel would be a second
-            // way to read the same list.
-            key: "benachrichtigungen",
-            label: "Benachrichtigungen",
-            href: "/benachrichtigungen",
-            count: nav.value?.unread,
-            icon: '<path d="M18 16v-5a6 6 0 10-12 0v5l-1.5 2.5h15L18 16z"/><path d="M10 19.5a2 2 0 004 0"/>',
-        },
-        {
-            // E-12: the tray for mail that arrived and matched nothing. Same
-            // capability as replying to a client, because triaging one is deciding
-            // which conversation it belongs to.
-            key: "posteingang",
-            label: "Posteingang",
-            href: "/posteingang",
-            needs: "manage_messages",
-            icon: '<path d="M3 6.5h18v11H3z"/><path d="m3 7.5 9 6 9-6"/>',
-        },
-        {
-            key: "anfragen",
-            label: "Anfragen",
-            href: "/anfragen",
-            count: nav.value?.leads,
-            needs: "manage_leads",
-            icon: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 8v8M13 8v5M18 8v10"/>',
-        },
-        {
-            key: "angebote",
-            label: "Angebote",
-            href: "/angebote",
-            needs: "manage_quotes",
-            icon: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M9.5 13h5M9.5 16h5"/>',
-        },
-        {
-            key: "rechnungen",
-            label: "Rechnungen",
-            href: "/rechnungen",
-            needs: "manage_contracts",
-            icon: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
-        },
-        {
-            key: "projekte",
-            label: "Projekte",
-            href: "/projekte",
-            count: nav.value?.projects,
-            icon: '<path d="M4 8h16v12H4z"/><path d="M9 8V5h6v3"/><path d="M4 13h16"/>',
-        },
-        {
-            key: "galerien",
-            label: "Galerien",
-            href: "/galerien",
-            needs: "manage_shoots",
-            icon: '<rect x="3" y="3" width="13" height="13" rx="2"/><path d="M8 21h11a2 2 0 0 0 2-2V8"/>',
-        },
-        {
-            key: "kontakte",
-            label: "Kontakte",
-            href: "/kontakte",
-            needs: "manage_contacts",
-            icon: '<path d="M6 3h12v18H6z"/><circle cx="12" cy="10" r="2.4"/><path d="M8.7 17c.6-1.7 1.8-2.6 3.3-2.6s2.7.9 3.3 2.6"/><path d="M6 7H3.5M6 12H3.5M6 17H3.5"/>',
-        },
-        {
-            key: "kalender",
-            label: "Kalender",
-            href: "/kalender",
-            icon: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/>',
-        },
-        {
-            // T-10. Not in the draft's sidebar, because C-13 (#249) folds absences
-            // into the calendar's month grid as dimmed entries. Until it does, this
-            // is the only way to the screen.
-            key: "abwesenheiten",
-            label: "Abwesenheiten",
-            href: "/abwesenheiten",
-            icon: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="M8 14h3M13 14h3M8 17h3"/>',
-        },
-        { group: "Studio" },
-        {
-            key: "pakete",
-            label: "Pakete",
-            href: "/pakete",
-            needs: "manage_packages",
-            studio: true,
-            icon: '<path d="M21 8.5v7l-9 4.5-9-4.5v-7L12 4z"/><path d="M3 8.5 12 13l9-4.5M12 13v7"/>',
-        },
-        {
-            // Vier Arten unter einem Eintrag (TemplateHubController). Wer nur
-            // eine davon führen darf, sieht ihn deshalb auch — der Hub zeigt
-            // nur die Arten, für die es reicht.
-            key: "vorlagen",
-            label: "Vorlagen",
-            href: "/vorlagen",
-            needs: [
-                "manage_tasks",
-                "manage_form_templates",
-                "manage_contracts",
-                "manage_settings",
-            ],
-            studio: true,
-            icon: '<rect x="4" y="3" width="12" height="16" rx="2"/><path d="M8 8h4M8 12h4M19 7v12a2 2 0 0 1-2 2H8"/>',
-        },
-        {
-            key: "team",
-            label: "Team",
-            href: "/team",
-            needs: "manage_staff",
-            studio: true,
-            icon: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M16.5 5.5a3.2 3.2 0 010 5.6M17.5 14.8c2 .7 3.5 2.6 3.5 5.2"/>',
-        },
-        {
-            // S-13: whole-book figures, so the same capability that lets a role see
-            // every project is the one that lets them see the totals over all of them.
-            key: "auswertungen",
-            label: "Auswertungen",
-            href: "/auswertungen",
-            needs: "view_all_projects",
-            studio: true,
-            icon: '<path d="M3.5 20h17"/><path d="M7 20v-6M12 20V6M17 20v-9"/>',
-        },
-        {
-            key: "einstellungen",
-            label: "Einstellungen",
-            href: "/einstellungen",
-            needs: "manage_settings",
-            studio: true,
-            icon: '<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="18" r="2"/>',
-        },
-    ].filter(
-        (item) =>
-            !item.needs ||
-            [item.needs]
-                .flat()
-                .some((need) => can.value.includes(need as App.Enums.Capability)),
-    ),
-);
+// Die Zeilen selbst stehen in lib/nav.ts, damit die Befugnisregel ohne
+// gemountete Komponente pruefbar ist.
+const items = computed(() => navItems(can.value, nav.value ?? {}));
+
+// Zwei Aufklapper, beide ohne gespeicherten Zustand: wer in einem Zweig steht,
+// sieht ihn offen, und beim Verlassen faellt er wieder zu. Das ist der Zustand,
+// den man ohnehin will, und spart den Speicher dafuer.
+const studioOpen = ref(studioKeys.includes(props.active));
+const documentsOpen = ref(documentKeys.includes(props.active));
 </script>
 
 <template>
@@ -274,23 +122,101 @@ const items = computed(() =>
                 <template v-for="item in items" :key="item.key ?? item.group">
                     <template v-if="item.group">
                         <div class="h-4.5 max-[640px]:hidden" />
+                        <!-- Foldable only where a heading is drawn: the narrow rail
+                   has none, and without one there would be no handle to open
+                   the rows again. -->
+                        <button
+                            v-if="item.fold"
+                            class="flex w-full cursor-pointer items-center border-0 bg-transparent px-2.5 pb-1.5 text-left text-[10.5px] tracking-[0.06em] uppercase text-ink-2 transition-colors duration-[120ms] ease-out hover:text-foreground max-[1080px]:hidden"
+                            type="button"
+                            :aria-expanded="studioOpen"
+                            @click="studioOpen = !studioOpen"
+                        >
+                            {{ item.group }}
+                            <svg
+                                class="ml-auto size-3.5 flex-none fill-none stroke-ink-2 stroke-[1.8] [stroke-linecap:round] [stroke-linejoin:round] transition-transform duration-[120ms] ease-out"
+                                :class="studioOpen && 'rotate-180'"
+                                viewBox="0 0 24 24"
+                            >
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
+                        </button>
                         <div
+                            v-else
                             class="px-2.5 pb-1.5 text-[10.5px] tracking-[0.06em] uppercase text-ink-2 max-[1080px]:hidden"
                         >
                             {{ item.group }}
                         </div>
                     </template>
 
+                    <!-- A collecting entry goes nowhere itself, it opens its rows.
+               On the narrow rail it is dropped and the rows stand open, or
+               they would be unreachable there. -->
+                    <template v-else-if="item.children">
+                        <button
+                            class="mb-px flex w-full cursor-pointer items-center gap-2.25 rounded-lg border-0 bg-transparent px-2.5 py-1.5 text-left text-[13px] tracking-[-0.01em] text-foreground transition-colors duration-[120ms] ease-out hover:bg-sunk max-[1080px]:hidden"
+                            type="button"
+                            :aria-expanded="documentsOpen"
+                            @click="documentsOpen = !documentsOpen"
+                        >
+                            <svg
+                                class="size-4.25 flex-none fill-none stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]"
+                                :class="
+                                    documentsOpen
+                                        ? 'stroke-foreground'
+                                        : 'stroke-ink-2'
+                                "
+                                viewBox="0 0 24 24"
+                                v-html="item.icon"
+                            />
+                            <span>{{ item.label }}</span>
+                            <svg
+                                class="ml-auto size-3.5 flex-none fill-none stroke-ink-2 stroke-[1.8] [stroke-linecap:round] [stroke-linejoin:round] transition-transform duration-[120ms] ease-out"
+                                :class="documentsOpen && 'rotate-180'"
+                                viewBox="0 0 24 24"
+                            >
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
+                        </button>
+                        <div
+                            class="mb-px ml-[19px] border-l border-rule pl-1.5 max-[1080px]:ml-0 max-[1080px]:border-0 max-[1080px]:pl-0"
+                            :class="!documentsOpen && 'hidden max-[1080px]:block'"
+                        >
+                            <Link
+                                v-for="child in item.children"
+                                :key="child.key"
+                                class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 py-1 text-[12.5px] tracking-[-0.01em] text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2"
+                                :class="
+                                    child.key === props.active &&
+                                    'bg-sunk-2 font-semibold text-foreground'
+                                "
+                                :href="child.href!"
+                            >
+                                <svg
+                                    class="hidden size-4.25 flex-none fill-none stroke-ink-2 stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round] max-[1080px]:block"
+                                    viewBox="0 0 24 24"
+                                    v-html="child.icon"
+                                />
+                                <span class="max-[1080px]:hidden">{{
+                                    child.label
+                                }}</span>
+                            </Link>
+                        </div>
+                    </template>
+
                     <!-- The label rides in its own span so the narrow breakpoint can
                drop it: ten truncated words are harder to hit than ten icons.
-               The second group drops out entirely on a phone — nobody sets up
-               a studio from one. -->
+               Studio drops out entirely on a phone — nobody sets up a studio
+               from one. -->
                     <Link
                         v-else
                         class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 py-1.5 text-[13px] tracking-[-0.01em] text-foreground no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2"
                         :class="[
                             item.key === props.active &&
                                 'bg-sunk-2 font-semibold',
+                            item.studio &&
+                                !studioOpen &&
+                                'hidden max-[1080px]:flex',
                             item.studio && 'max-[640px]:hidden',
                         ]"
                         :href="item.href!"
