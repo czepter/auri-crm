@@ -2,6 +2,8 @@
 
 namespace App\Quotes\Support;
 
+use App\Crm\Enums\ProjectType;
+use App\Crm\Models\Project;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use Carbon\CarbonInterface;
@@ -30,9 +32,9 @@ class QuoteAcceptanceRate
         return self::between(now()->subYear(), now());
     }
 
-    public static function between(CarbonInterface $from, CarbonInterface $to): ?int
+    public static function between(CarbonInterface $from, CarbonInterface $to, ?ProjectType $type = null): ?int
     {
-        ['sent' => $sent, 'accepted' => $accepted] = self::counts($from, $to);
+        ['sent' => $sent, 'accepted' => $accepted] = self::counts($from, $to, $type);
 
         return $sent === 0 ? null : (int) round($accepted / $sent * 100);
     }
@@ -50,11 +52,17 @@ class QuoteAcceptanceRate
     }
 
     /** @return array{sent: int, accepted: int} */
-    public static function counts(CarbonInterface $from, CarbonInterface $to): array
+    public static function counts(CarbonInterface $from, CarbonInterface $to, ?ProjectType $type = null): array
     {
         $sent = Quote::query()
             ->whereNotNull('sent_at')
             ->whereBetween('sent_at', [$from, $to]);
+
+        // Der Projekttyp-Filter der Auswertungen. Ohne Typ bleibt die Abfrage
+        // die der Übersicht — dieselbe Zahl an beiden Stellen.
+        if ($type !== null) {
+            $sent->whereIn('quotes.project_id', Project::query()->select('id')->where('type', $type->value));
+        }
 
         return [
             'sent' => (clone $sent)->count(),

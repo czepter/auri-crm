@@ -7,6 +7,17 @@ const meta = {
   parameters: { layout: 'fullscreen', url: '/auswertungen' },
   args: {
     window: { from: '2026-01-01', to: '2026-12-31' },
+    filters: { period: '12m', type: null },
+    periods: [
+      { value: '12m', label: 'Letzte 12 Monate' },
+      { value: '6m', label: 'Letzte 6 Monate' },
+      { value: 'jahr', label: 'Dieses Jahr' },
+    ],
+    projectTypes: [
+      { value: 'wedding', label: 'Hochzeit' },
+      { value: 'portrait', label: 'Portrait' },
+      { value: 'other', label: 'Sonstige' },
+    ],
     funnelByMonth: [
       { month: '2026-01', captured: 3, booked: 1, rate: 33 },
       { month: '2026-02', captured: 2, booked: 0, rate: 0 },
@@ -53,6 +64,54 @@ const meta = {
         { month: '2026-12', due: 85200, received: 0, open: 0 },
       ],
     },
+    revenueByType: [
+      { type: 'wedding', label: 'Hochzeit', projects: 7, revenue: 3834000, average: 547714 },
+      { type: 'other', label: 'Sonstige', projects: 1, revenue: 298200, average: 298200 },
+      { type: 'portrait', label: 'Portrait', projects: 3, revenue: 554000, average: 184667 },
+    ],
+    steps: [
+      { key: 'new', label: 'Neu', leads: 47, lost: 0, drop: null },
+      { key: 'contacted', label: 'Kontaktiert', leads: 39, lost: 8, drop: 17 },
+      { key: 'quote_sent', label: 'Angebot', leads: 21, lost: 18, drop: 46 },
+      { key: 'quote_accepted', label: 'Angebot angenommen', leads: 11, lost: 10, drop: 48 },
+      { key: 'booked', label: 'Gebucht', leads: 11, lost: 0, drop: 0 },
+    ],
+    dwell: [
+      { key: 'new', label: 'Neu', days: 1.5, moves: 39 },
+      { key: 'contacted', label: 'Kontaktiert', days: 4.2, moves: 21 },
+      { key: 'quote_sent', label: 'Angebot', days: 11.4, moves: 11 },
+      { key: 'quote_accepted', label: 'Angebot angenommen', days: 2.1, moves: 11 },
+    ],
+    responseTimes: {
+      buckets: [
+        { key: 'day', label: 'unter 24 Std.', leads: 21 },
+        { key: 'days3', label: '1–3 Tage', leads: 12 },
+        { key: 'days7', label: '3–7 Tage', leads: 4 },
+        { key: 'later', label: 'über 7 Tage', leads: 2 },
+      ],
+      medianHours: 14.5,
+      unanswered: 8,
+    },
+    shootsByMonth: [
+      { month: '2026-03', shoots: 2 },
+      { month: '2026-04', shoots: 4 },
+      { month: '2026-05', shoots: 6 },
+      { month: '2026-06', shoots: 9 },
+      { month: '2026-07', shoots: 7 },
+      { month: '2026-08', shoots: 5 },
+      { month: '2026-09', shoots: 4 },
+    ],
+    leadTimes: {
+      buckets: [
+        { key: 'q1', label: 'unter 3 Mon.', projects: 2 },
+        { key: 'q2', label: '3–6 Mon.', projects: 3 },
+        { key: 'q3', label: '6–9 Mon.', projects: 4 },
+        { key: 'q4', label: '9–12 Mon.', projects: 1 },
+        { key: 'later', label: 'über 12 Mon.', projects: 1 },
+      ],
+      medianMonths: 7.2,
+      withoutDate: 1,
+    },
   },
 } satisfies Meta<typeof Auswertungen>
 
@@ -75,5 +134,68 @@ export const OhneZahlen: Story = {
     revenuePrior: { projects: 0, revenue: 0, averagePerProject: null },
     perContact: [],
     cashFlow: { overdue: 0, months: [] },
+    revenueByType: [],
+    steps: [],
+    dwell: [],
+    responseTimes: { buckets: [], medianHours: null, unanswered: 0 },
+    shootsByMonth: [],
+    leadTimes: { buckets: [], medianMonths: null, withoutDate: 0 },
+  },
+}
+
+/** Ein Monat Geschichte: kein Vorjahr, also keine Vergleichszeile an den Kennzahlen. */
+export const ErstesJahr: Story = {
+  args: {
+    funnelByMonth: [{ month: '2026-09', captured: 11, booked: 1, rate: 9 }],
+    sources: [
+      { source: 'referral', label: 'Empfehlung', captured: 5, booked: 1, revenue: 150000 },
+      { source: 'website', label: 'Website', captured: 3, booked: 0, revenue: 0 },
+      { source: 'instagram', label: 'Instagram', captured: 2, booked: 0, revenue: 0 },
+    ],
+    referrers: [{ name: 'Osterhoff, Familie', count: 1 }],
+    lostReasons: [],
+    acceptanceRate: 33,
+    acceptanceRatePrior: null,
+    revenue: { projects: 1, revenue: 150000, averagePerProject: 150000 },
+    revenuePrior: { projects: 0, revenue: 0, averagePerProject: null },
+    perContact: [{ name: 'Meier & Kowalski', projects: 1, revenue: 150000 }],
+    cashFlow: {
+      overdue: 150000,
+      months: [{ month: '2026-09', due: 0, received: 0, open: 350000 }],
+    },
+    revenueByType: [{ type: 'wedding', label: 'Hochzeit', projects: 1, revenue: 150000, average: 150000 }],
+    steps: [
+      { key: 'new', label: 'Neu', leads: 11, lost: 0, drop: null },
+      { key: 'contacted', label: 'Kontaktiert', leads: 6, lost: 5, drop: 45 },
+      { key: 'quote_sent', label: 'Angebot', leads: 3, lost: 3, drop: 50 },
+      { key: 'quote_accepted', label: 'Angebot angenommen', leads: 1, lost: 2, drop: 67 },
+      { key: 'booked', label: 'Gebucht', leads: 1, lost: 0, drop: 0 },
+    ],
+    dwell: [
+      { key: 'new', label: 'Neu', days: 2.4, moves: 6 },
+      { key: 'contacted', label: 'Kontaktiert', days: 6.1, moves: 3 },
+    ],
+    responseTimes: {
+      buckets: [
+        { key: 'day', label: 'unter 24 Std.', leads: 3 },
+        { key: 'days3', label: '1–3 Tage', leads: 2 },
+        { key: 'days7', label: '3–7 Tage', leads: 1 },
+        { key: 'later', label: 'über 7 Tage', leads: 0 },
+      ],
+      medianHours: 20.5,
+      unanswered: 5,
+    },
+    shootsByMonth: [{ month: '2027-06', shoots: 1 }],
+    leadTimes: {
+      buckets: [
+        { key: 'q1', label: 'unter 3 Mon.', projects: 0 },
+        { key: 'q2', label: '3–6 Mon.', projects: 0 },
+        { key: 'q3', label: '6–9 Mon.', projects: 1 },
+        { key: 'q4', label: '9–12 Mon.', projects: 0 },
+        { key: 'later', label: 'über 12 Mon.', projects: 0 },
+      ],
+      medianMonths: 8.4,
+      withoutDate: 0,
+    },
   },
 }

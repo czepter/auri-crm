@@ -3,9 +3,11 @@
 namespace App\Reporting\Support;
 
 use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\ProjectType;
 use App\Crm\Models\Contact;
+use App\Crm\Models\Job;
 use App\Payments\Models\PaymentPlan;
-use Illuminate\Support\Carbon;
+use Carbon\CarbonInterface;
 
 /**
  * S-13's money half: what a booked project is worth, and what a client is
@@ -23,12 +25,15 @@ class RevenueReport
      *
      * @return array{projects: int, revenue: int, averagePerProject: int|null}
      */
-    public static function forWindow(Carbon $from, Carbon $to): array
+    public static function forWindow(CarbonInterface $from, CarbonInterface $to, ?ProjectType $type = null): array
     {
-        $plans = PaymentPlan::query()
+        $query = PaymentPlan::query()
             ->join('jobs', 'jobs.id', '=', 'payment_plans.job_id')
-            ->whereBetween('jobs.booked_at', [$from, $to])
-            ->get(['payment_plans.total']);
+            ->whereBetween('jobs.booked_at', [$from, $to]);
+
+        ProjectFilter::apply($query, $type, 'jobs.project_id');
+
+        $plans = $query->get(['payment_plans.total']);
 
         $revenue = (int) $plans->sum('total');
         $count = $plans->count();
@@ -50,9 +55,9 @@ class RevenueReport
      *
      * @return list<array{name: string, projects: int, revenue: int}>
      */
-    public static function perContact(Carbon $from, Carbon $to, int $limit = 10): array
+    public static function perContact(CarbonInterface $from, CarbonInterface $to, ?ProjectType $type = null, int $limit = 10): array
     {
-        return Contact::query()
+        $query = Contact::query()
             ->join('project_contacts', 'project_contacts.contact_id', '=', 'contacts.id')
             ->join('jobs', 'jobs.project_id', '=', 'project_contacts.project_id')
             ->leftJoin('payment_plans', 'payment_plans.job_id', '=', 'jobs.id')
@@ -61,13 +66,52 @@ class RevenueReport
             ->groupBy('contacts.id', 'contacts.name')
             ->selectRaw('contacts.name, count(distinct jobs.id) as projects, coalesce(sum(payment_plans.total), 0) as revenue')
             ->orderByDesc('revenue')
-            ->limit($limit)
-            ->get()
+            ->limit($limit);
+
+        ProjectFilter::apply($query, $type, 'jobs.project_id');
+
+        return $query->get()
             ->map(fn ($row) => [
                 'name' => $row->name,
                 'projects' => (int) $row->projects,
                 'revenue' => (int) $row->revenue,
             ])
+            ->all();
+    }
+
+    /**
+     * Was ein Auftrag je Projekttyp im Schnitt bringt, bester zuerst.
+     *
+     * Der Schnitt ist Umsatz durch Aufträge desselben Typs, nicht der
+     * Studio-Schnitt nach Typ aufgeteilt: eine Hochzeit und ein Portrait
+     * teilen sich keinen Durchschnitt.
+     *
+     * @return list<array{type: string, label: string, projects: int, revenue: int, average: int}>
+     */
+    public static function perProjectType(CarbonInterface $from, CarbonInterface $to): array
+    {
+        return Job::query()
+            ->join('projects', 'projects.id', '=', 'jobs.project_id')
+            ->leftJoin('payment_plans', 'payment_plans.job_id', '=', 'jobs.id')
+            ->whereBetween('jobs.booked_at', [$from, $to])
+            ->groupBy('projects.type')
+            ->selectRaw('projects.type, count(distinct jobs.id) as projects, coalesce(sum(payment_plans.total), 0) as revenue')
+            ->get()
+            ->map(function ($row) {
+                $type = ProjectType::tryFrom($row->type);
+                $projects = (int) $row->projects;
+                $revenue = (int) $row->revenue;
+
+                return [
+                    'type' => $row->type,
+                    'label' => $type?->label() ?? $row->type,
+                    'projects' => $projects,
+                    'revenue' => $revenue,
+                    'average' => $projects === 0 ? 0 : (int) round($revenue / $projects),
+                ];
+            })
+            ->sortByDesc('average')
+            ->values()
             ->all();
     }
 }

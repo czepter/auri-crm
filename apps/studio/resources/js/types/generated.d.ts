@@ -999,6 +999,11 @@ export type QuoteLayout = 'classic' | 'minimal' | 'letter' | 'header_band' | 'st
 export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'superseded' | 'expired';
 }
 }
+namespace Reporting {
+namespace Enums {
+export type ReportPeriod = '12m' | '6m' | 'jahr';
+}
+}
 namespace Settings {
 namespace Data {
 export type GallerySettingsData = {
