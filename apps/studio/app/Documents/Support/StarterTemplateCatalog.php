@@ -74,24 +74,35 @@ class StarterTemplateCatalog
     }
 
     /**
-     * The set the wizard writes on finish: one document of each kind a studio
-     * cannot trade without, and the two mails it will send in the first week.
-     * Variants stay out — a studio that shoots no weddings should not finish
-     * onboarding with a wedding quote.
+     * The set the wizard writes on finish: the quote and the two mails a
+     * studio will send in its first week. Variants stay out — a studio that
+     * shoots no weddings should not finish onboarding with a wedding quote.
      *
-     * The invoice is the exception, because the two variants are not a matter
-     * of taste: a Kleinunternehmer's invoice must not show a VAT line at all.
+     * The invoice is not in here, because which of its two variants is right
+     * is not a matter of taste: a Kleinunternehmer's invoice must not show a
+     * VAT line at all, and the wizard no longer asks for the VAT mode — that
+     * question falls due with the first quote. See invoiceDefaults().
      *
      * @return list<string>
      */
-    public static function onboardingDefaults(string $vatMode): array
+    public static function onboardingDefaults(): array
     {
         return [
             'quote-generic',
-            $vatMode === 'small_business' ? 'invoice-small-business' : 'invoice-standard',
             'mail-quote-sent',
             'mail-booking-confirmed',
         ];
+    }
+
+    /**
+     * The invoice starter, written when the first invoice is drafted — by
+     * then the studio has answered the VAT question at the quote gate.
+     *
+     * @return list<string>
+     */
+    public static function invoiceDefaults(string $vatMode): array
+    {
+        return [$vatMode === 'small_business' ? 'invoice-small-business' : 'invoice-standard'];
     }
 
     /**
@@ -105,7 +116,39 @@ class StarterTemplateCatalog
             self::invoiceStandard(),
             self::invoiceSmallBusiness(),
             self::creditNote(),
+            self::widerruf(),
             ...self::mails($register),
+        ];
+    }
+
+    /**
+     * Ein Gerüst, kein Rechtstext: Überschriften, Reihenfolge und die Felder,
+     * die eine Widerrufsbelehrung ohne das Studio nicht ausfüllen kann. Die
+     * Fristen und die Formulierung stehen im Gesetz und gehören vor dem
+     * ersten Versand von jemandem geprüft, der dafür haftet — deshalb Lücken
+     * in eckigen Klammern statt eines Wortlauts, den hier niemand
+     * verantworten kann.
+     */
+    private static function widerruf(): array
+    {
+        return [
+            'key' => 'legal-widerruf',
+            'type' => DocumentTemplateType::Legal->value,
+            'name' => 'Widerrufsbelehrung',
+            'description' => 'Gerüst mit den Pflichtangaben. Die Formulierung ist kein Rechtsrat und gehört vor dem ersten Versand geprüft.',
+            'shootKind' => null,
+            'blocks' => ['blocks' => [
+                self::header('Widerrufsrecht', 2),
+                self::paragraph('[Frist und Beginn eintragen.]'),
+                self::header('Ausübung des Widerrufs', 3),
+                self::paragraph('{{ studio.name }}, {{ studio.street }}, {{ studio.postcode }} {{ studio.city }}'),
+                self::paragraph('{{ studio.representative }}'),
+                self::header('Folgen des Widerrufs', 3),
+                self::paragraph('[Rückzahlung und Fristen eintragen.]'),
+                self::delimiter(),
+                self::header('Muster-Widerrufsformular', 3),
+                self::paragraph('[Formular eintragen: Empfänger, Vertrag, Datum, Name, Anschrift, Unterschrift.]'),
+            ]],
         ];
     }
 

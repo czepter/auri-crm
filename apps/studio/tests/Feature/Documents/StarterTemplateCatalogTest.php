@@ -146,8 +146,8 @@ it('repeats neither the signature nor the legal footer in a mail starter', funct
     }
 });
 
-it('pre-ticks a default set that exists and covers the trading documents', function () {
-    $defaults = StarterTemplateCatalog::onboardingDefaults('standard');
+it('pre-ticks a default set that exists and covers what the first week sends', function () {
+    $defaults = StarterTemplateCatalog::onboardingDefaults();
 
     foreach ($defaults as $key) {
         expect(StarterTemplateCatalog::find($key))->not->toBeNull("unknown default: {$key}");
@@ -155,7 +155,11 @@ it('pre-ticks a default set that exists and covers the trading documents', funct
 
     $types = collect($defaults)->map(fn (string $key) => StarterTemplateCatalog::find($key)['type'])->unique();
 
-    expect($types)->toContain('quote', 'invoice', 'mail');
+    expect($types)->toContain('quote', 'mail');
+
+    // The VAT mode is answered at the quote gate, so the invoice starter is
+    // written with the first invoice rather than guessed here.
+    expect($types)->not->toContain('invoice');
 
     // A studio that shoots no weddings should not finish onboarding with a
     // wedding quote.
@@ -163,9 +167,12 @@ it('pre-ticks a default set that exists and covers the trading documents', funct
 });
 
 it('swaps the invoice for the Kleinunternehmer variant', function () {
-    expect(StarterTemplateCatalog::onboardingDefaults('small_business'))
+    expect(StarterTemplateCatalog::invoiceDefaults('small_business'))
         ->toContain('invoice-small-business')
         ->not->toContain('invoice-standard');
+
+    expect(StarterTemplateCatalog::invoiceDefaults('standard'))
+        ->toContain('invoice-standard');
 });
 
 // --- the serializer the seeding path depends on -------------------------

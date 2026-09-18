@@ -11,6 +11,7 @@ use App\Help\Support\HelpIndex;
 use App\Models\User;
 use App\Portal\Support\PortalSettings;
 use App\Releases\Support\ReleaseLog;
+use App\Portal\Http\Controllers\LegalTextController;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\LiveUpdate;
 use App\Support\RecordVisit;
@@ -146,11 +147,13 @@ class HandleInertiaRequests extends Middleware
                     'accentColor' => app(StudioSettingsResolver::class)->attributes()['accent_color'],
                     'address' => $this->studioAddress(),
                 ],
-                'portalLegal' => fn () => [
-                    'impressumUrl' => '/impressum',
-                    'datenschutzUrl' => app(StudioSettingsResolver::class)->legalDatenschutzUrl(),
-                    'agbUrl' => app(StudioSettingsResolver::class)->legalAgbUrl(),
-                ],
+                // Je Text die fremde Adresse, die eigene Seite oder nichts —
+                // siehe StudioSettingsResolver::legalUrl().
+                'portalLegal' => fn () => collect(LegalTextController::TEXTS)
+                    ->mapWithKeys(fn (string $text) => [
+                        $text.'Url' => app(StudioSettingsResolver::class)->legalUrl($text),
+                    ])
+                    ->all(),
                 // The header stands on every screen and its links are the
                 // same four everywhere, so what decides them is shared
                 // rather than passed per page. Null with nobody signed in:

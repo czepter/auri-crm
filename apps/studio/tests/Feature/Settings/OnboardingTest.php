@@ -59,13 +59,15 @@ it('stamps completion and releases the dashboard', function () {
     $this->get('/')->assertOk();
 });
 
-it('writes the starter templates on finish, skipping included', function () {
+it('writes the starter templates on finish, the invoice aside', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->post('/einrichtung/studio/abschluss')
         ->assertRedirect('/');
 
-    expect(DocumentTemplate::query()->current()->ofType(DocumentTemplateType::Invoice)->pluck('name')->all())
-        ->toBe(['Rechnung']);
+    expect(DocumentTemplate::query()->current()->ofType(DocumentTemplateType::Quote)->pluck('name')->all())
+        ->toBe(['Angebot'])
+        ->and(DocumentTemplate::query()->current()->ofType(DocumentTemplateType::Invoice)->exists())
+        ->toBeFalse();
 });
 
 it('seeds the default automation rules on finish, in the studio register', function () {
@@ -81,12 +83,18 @@ it('seeds the default automation rules on finish, in the studio register', funct
         ->toBe('Deine Buchung ist bestätigt');
 });
 
-it('writes the Kleinunternehmer invoice when that is the mode the wizard left behind', function () {
+it('writes the Kleinunternehmer invoice when the first invoice is drafted in that mode', function () {
     app(StudioSettingsResolver::class)->set('vat_mode', 'small_business', null);
 
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->post('/einrichtung/studio/abschluss')
         ->assertRedirect('/');
+
+    expect(DocumentTemplate::query()->current()->ofType(DocumentTemplateType::Invoice)->exists())->toBeFalse();
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->get('/rechnungen/neu')
+        ->assertOk();
 
     expect(DocumentTemplate::query()->current()->ofType(DocumentTemplateType::Invoice)->pluck('name')->all())
         ->toBe(['Rechnung — Kleinunternehmer']);

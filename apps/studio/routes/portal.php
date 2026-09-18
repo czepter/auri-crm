@@ -10,6 +10,7 @@ use App\Portal\Http\Controllers\BrandingController;
 use App\Portal\Http\Controllers\GalleryController as PortalGalleryController;
 use App\Portal\Http\Controllers\HomeController;
 use App\Portal\Http\Controllers\ImpressumController;
+use App\Portal\Http\Controllers\LegalTextController;
 use App\Portal\Http\Controllers\MagicLinkController;
 use App\Portal\Http\Controllers\MailboxController;
 use App\Portal\Http\Controllers\PaymentCheckoutController;
@@ -244,6 +245,11 @@ Route::get('/e-mail-bestaetigen/{token}', [AccountController::class, 'confirmEma
 // § 5 TMG. Public and reachable regardless of the maintenance closure above —
 // see ImpressumController and EnsurePortalMaintenanceClosure's own note.
 Route::get('/impressum', ImpressumController::class)->name('portal.impressum');
+
+// Dieselbe Regel für die selbstgeschriebenen Texte: AGB und
+// Widerrufsbelehrung stehen beim Vertragsschluss neben dem Häkchen, also
+// auch dann, wenn das Portal geschlossen ist.
+Route::get('/rechtstexte/{text}', LegalTextController::class)->name('portal.legal-text');
 
 // G-06: the gallery guest's own way in — a different audience from the
 // client above (no Contact, no `audience:portal` session; see

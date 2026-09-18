@@ -601,16 +601,44 @@ class StudioSettingsResolver
         return $this->row()->portal_welcome_text;
     }
 
-    /** External link — no local Datenschutzerklärung page exists or is planned here. */
-    public function legalDatenschutzUrl(): ?string
+    /**
+     * Wohin ein Rechtstext im Portal zeigt: auf die fremde Adresse, wenn eine
+     * hinterlegt ist, sonst auf die eigene Seite, wenn eine Vorlage gewählt
+     * wurde. Das Impressum hat immer eine Seite — es wird aus den
+     * Studio-Daten gezeichnet, wenn nichts anderes gesetzt ist.
+     */
+    public function legalUrl(string $text): ?string
     {
-        return $this->row()->portal_legal_datenschutz_url;
+        $row = $this->row();
+
+        return match (true) {
+            filled($row->{"portal_legal_{$text}_url"} ?? null) => $row->{"portal_legal_{$text}_url"},
+            filled($row->{"portal_legal_{$text}_family"} ?? null) => "/rechtstexte/{$text}",
+            $text === 'impressum' => '/impressum',
+            default => null,
+        };
     }
 
-    /** External link — no local AGB page exists or is planned here. */
+    /** Die Vorlagen-Familie hinter einem Rechtstext, sofern eine gewählt ist. */
+    public function legalFamily(string $text): ?string
+    {
+        return $this->row()->{"portal_legal_{$text}_family"} ?? null;
+    }
+
+    /** Die eingetragene fremde Adresse — was das Portal daraus macht, sagt legalUrl(). */
+    public function legalTextUrl(string $text): ?string
+    {
+        return $this->row()->{"portal_legal_{$text}_url"} ?? null;
+    }
+
+    public function legalDatenschutzUrl(): ?string
+    {
+        return $this->legalTextUrl('datenschutz');
+    }
+
     public function legalAgbUrl(): ?string
     {
-        return $this->row()->portal_legal_agb_url;
+        return $this->legalTextUrl('agb');
     }
 
     /** Gates Q-07's accept action. */

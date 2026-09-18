@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Textarea } from '@/ui/textarea'
@@ -8,21 +9,36 @@ import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group'
 import { ChoiceGroup } from '@/ui/choice-group'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
 type Section = 'portal' | 'home' | 'privacy'
+
+// Reihenfolge der Zeilen im Abschnitt Rechtliches; dieselben Schlüssel führt
+// LegalTextController::TEXTS und die Portal-Route /rechtstexte/{text}.
+const LEGAL_TEXTS = ['impressum', 'datenschutz', 'agb', 'widerruf'] as const
+
+type LegalText = (typeof LEGAL_TEXTS)[number]
+
+type LegalTemplate = { family: string; name: string; updatedAt: string | null }
 
 const props = withDefaults(defineProps<{
   settings: App.Settings.Data.PortalSettingsData
   sections?: Section[]
-}>(), { sections: () => ['portal', 'home', 'privacy'] })
+  /** Rechtstexte aus dem Dokumenteneditor, als Quelle wählbar. */
+  legalTemplates?: LegalTemplate[]
+}>(), { sections: () => ['portal', 'home', 'privacy'], legalTemplates: () => [] })
 const emit = defineEmits<{ saved: [] }>()
+const { t } = useI18n()
 
 // A pane sends only its own fields; the controller's `sometimes` leaves the
 // rest of the row untouched.
 const SECTION_FIELDS: Record<Section, string[]> = {
   portal: ['portal_maintenance_enabled', 'portal_maintenance_message', 'portal_accept_quotes_enabled', 'portal_payment_status_enabled', 'portal_messaging_mode', 'portal_offers_enabled', 'client_register'],
   home: ['portal_welcome_inquiry', 'portal_welcome_text', 'portal_welcome_many', 'portal_contact_phone', 'portal_contact_email', 'portal_contact_response_time'],
-  privacy: ['dsgvo_request_recipient', 'dsgvo_request_deadline_days', 'portal_legal_datenschutz_url', 'portal_legal_agb_url'],
+  privacy: [
+    'dsgvo_request_recipient', 'dsgvo_request_deadline_days',
+    ...LEGAL_TEXTS.flatMap((text) => [`portal_legal_${text}_url`, `portal_legal_${text}_family`]),
+  ],
 }
 
 const shows = (section: Section) => props.sections.includes(section)
@@ -31,8 +47,14 @@ const form = useForm({
   portal_maintenance_enabled: props.settings.maintenanceEnabled,
   portal_maintenance_message: props.settings.maintenanceMessage ?? '',
   portal_welcome_text: props.settings.welcomeText ?? '',
+  portal_legal_impressum_url: props.settings.impressumUrl ?? '',
   portal_legal_datenschutz_url: props.settings.datenschutzUrl ?? '',
   portal_legal_agb_url: props.settings.agbUrl ?? '',
+  portal_legal_widerruf_url: props.settings.widerrufUrl ?? '',
+  portal_legal_impressum_family: props.settings.legalFamilies.impressum ?? '',
+  portal_legal_datenschutz_family: props.settings.legalFamilies.datenschutz ?? '',
+  portal_legal_agb_family: props.settings.legalFamilies.agb ?? '',
+  portal_legal_widerruf_family: props.settings.legalFamilies.widerruf ?? '',
   portal_accept_quotes_enabled: props.settings.acceptQuotesEnabled,
   portal_payment_status_enabled: props.settings.paymentStatusEnabled,
   portal_offers_enabled: props.settings.offersEnabled,
@@ -47,6 +69,31 @@ const form = useForm({
   portal_contact_response_time: props.settings.contactResponseTime ?? '',
 })
 
+type Source = 'studio' | 'link' | 'document'
+
+// Welche Quelle gilt, steht in den Werten selbst: eine Adresse schlägt eine
+// Vorlage, und beim Impressum bleibt die Seite aus den Studio-Daten, solange
+// keins von beiden gesetzt ist.
+function sourceOf(text: LegalText): Source {
+  if (form[`portal_legal_${text}_url`]) return 'link'
+  if (form[`portal_legal_${text}_family`]) return 'document'
+
+  return text === 'impressum' ? 'studio' : 'link'
+}
+
+function sourceOptions(text: LegalText) {
+  return [
+    ...(text === 'impressum' ? [{ value: 'studio', label: t('portalSettings.legalSourceStudio') }] : []),
+    { value: 'link', label: t('portalSettings.legalSourceLink') },
+    { value: 'document', label: t('portalSettings.legalSourceDocument') },
+  ]
+}
+
+function chooseSource(text: LegalText, source: Source) {
+  form[`portal_legal_${text}_url`] = ''
+  form[`portal_legal_${text}_family`] = source === 'document' ? (props.settings.legalFamilies[text] ?? '') : ''
+}
+
 function submit() {
   const sent = new Set<string>(props.sections.flatMap((section) => SECTION_FIELDS[section]))
 
@@ -55,8 +102,10 @@ function submit() {
       ...data,
       portal_maintenance_message: data.portal_maintenance_message || null,
       portal_welcome_text: data.portal_welcome_text || null,
-      portal_legal_datenschutz_url: data.portal_legal_datenschutz_url || null,
-      portal_legal_agb_url: data.portal_legal_agb_url || null,
+      ...Object.fromEntries(LEGAL_TEXTS.flatMap((text) => [
+        [`portal_legal_${text}_url`, data[`portal_legal_${text}_url`] || null],
+        [`portal_legal_${text}_family`, data[`portal_legal_${text}_family`] || null],
+      ])),
       portal_welcome_inquiry: data.portal_welcome_inquiry || null,
       portal_welcome_many: data.portal_welcome_many || null,
       dsgvo_request_recipient: data.dsgvo_request_recipient || null,
@@ -163,17 +212,55 @@ defineExpose({ form, submit })
 
     <div v-if="shows('privacy')" class="mt-8 first-of-type:mt-6">
       <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('portalSettings.legalSection') }}</div>
-      <div class="mb-6">
-        <div class="grid grid-cols-2 gap-4">
-          <Field :error="form.errors.portal_legal_datenschutz_url" v-slot="{ id }">
-            <Label :for="id">{{ $t('portalSettings.datenschutzUrlLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
-            <Input :id v-model="form.portal_legal_datenschutz_url" type="text" />
-          </Field>
-          <Field :error="form.errors.portal_legal_agb_url" v-slot="{ id }">
-            <Label :for="id">{{ $t('portalSettings.agbUrlLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
-            <Input :id v-model="form.portal_legal_agb_url" type="text" />
-          </Field>
+      <div class="mb-6 flex flex-col gap-3">
+        <div v-for="text in LEGAL_TEXTS" :key="text" class="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-[12px] border border-border p-4">
+          <div class="w-[200px] flex-none">
+            <span class="block text-[14px] leading-none font-semibold tracking-[-0.01em] text-foreground">{{ $t(`portalSettings.legal_${text}`) }}</span>
+            <span class="mt-1.5 block text-[12px] text-muted-foreground">{{ $t(`portalSettings.legalNote_${text}`) }}</span>
+          </div>
+
+          <ChoiceGroup
+            class="flex-none"
+            variant="segmented"
+            :model-value="sourceOf(text)"
+            :options="sourceOptions(text)"
+            @update:model-value="(value) => chooseSource(text, value as Source)"
+          />
+
+          <div class="min-w-[220px] flex-grow">
+            <Field v-if="sourceOf(text) === 'link'" :error="form.errors[`portal_legal_${text}_url`]" v-slot="{ id }">
+              <Label :for="id">{{ $t('portalSettings.legalUrlLabel') }}</Label>
+              <Input :id v-model="form[`portal_legal_${text}_url`]" type="text" placeholder="https://" />
+            </Field>
+
+            <Field v-else-if="sourceOf(text) === 'document'" :error="form.errors[`portal_legal_${text}_family`]" v-slot="{ id }">
+              <Label :for="id">{{ $t('portalSettings.legalTemplateLabel') }}</Label>
+              <Select
+                :model-value="form[`portal_legal_${text}_family`]"
+                @update:model-value="(value) => (form[`portal_legal_${text}_family`] = String(value))"
+              >
+                <SelectTrigger :id><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="template in legalTemplates" :key="template.family" :value="template.family">
+                    {{ template.name }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+
+            <a
+              v-else
+              class="text-[13px] font-medium text-action no-underline"
+              href="/impressum"
+              target="_blank"
+              rel="noopener"
+            >{{ $t('portalSettings.legalOpenImpressum') }}</a>
+          </div>
         </div>
+
+        <a class="text-[13px] font-medium text-action no-underline" href="/dokumentvorlagen/neu">
+          {{ $t('portalSettings.legalNewTemplate') }}
+        </a>
       </div>
     </div>
 

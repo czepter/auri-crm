@@ -26,12 +26,12 @@ class DocumentBlockCatalog
      * @var array<string, array{group: string, label: string, types: list<string>, inline?: bool}>
      */
     private const BLOCKS = [
-        'paragraph' => ['group' => 'text', 'label' => 'Absatz', 'types' => ['quote', 'invoice', 'credit_note', 'mail']],
-        'header' => ['group' => 'text', 'label' => 'Überschrift', 'types' => ['quote', 'invoice', 'credit_note', 'mail']],
-        'list' => ['group' => 'text', 'label' => 'Liste', 'types' => ['quote', 'invoice', 'credit_note', 'mail']],
-        'quote' => ['group' => 'text', 'label' => 'Zitat', 'types' => ['quote', 'invoice', 'credit_note', 'mail']],
-        'delimiter' => ['group' => 'text', 'label' => 'Trenner', 'types' => ['quote', 'invoice', 'credit_note', 'mail']],
-        'table' => ['group' => 'layout', 'label' => 'Tabelle', 'types' => ['quote', 'invoice', 'credit_note', 'mail']],
+        'paragraph' => ['group' => 'text', 'label' => 'Absatz', 'types' => ['quote', 'invoice', 'credit_note', 'mail', 'legal']],
+        'header' => ['group' => 'text', 'label' => 'Überschrift', 'types' => ['quote', 'invoice', 'credit_note', 'mail', 'legal']],
+        'list' => ['group' => 'text', 'label' => 'Liste', 'types' => ['quote', 'invoice', 'credit_note', 'mail', 'legal']],
+        'quote' => ['group' => 'text', 'label' => 'Zitat', 'types' => ['quote', 'invoice', 'credit_note', 'mail', 'legal']],
+        'delimiter' => ['group' => 'text', 'label' => 'Trenner', 'types' => ['quote', 'invoice', 'credit_note', 'mail', 'legal']],
+        'table' => ['group' => 'layout', 'label' => 'Tabelle', 'types' => ['quote', 'invoice', 'credit_note', 'mail', 'legal']],
         'columns' => ['group' => 'layout', 'label' => '2 Spalten', 'types' => ['quote', 'invoice', 'credit_note']],
         'image' => ['group' => 'layout', 'label' => 'Bild', 'types' => ['quote', 'invoice', 'credit_note', 'mail']],
         'callout' => ['group' => 'layout', 'label' => 'Hinweis', 'types' => ['quote', 'invoice', 'credit_note', 'mail']],

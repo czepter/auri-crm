@@ -5,7 +5,7 @@ import { usePage } from '@inertiajs/vue3'
 import { cn } from '@/lib/utils'
 
 type Branding = { displayName: string | null; address: string | null }
-type Legal = { impressumUrl: string; datenschutzUrl: string | null; agbUrl: string | null }
+type Legal = { impressumUrl: string; datenschutzUrl: string | null; agbUrl: string | null; widerrufUrl: string | null }
 
 /*
  * mockups/redesign/tokens.css `.foot`. The studio on the left, the law on the
@@ -38,6 +38,9 @@ const who = computed(() =>
         {{ $t('portal.footerDatenschutz') }}
       </a>
       <a v-if="legal?.agbUrl" :href="legal.agbUrl" target="_blank" rel="noopener">{{ $t('portal.footerAgb') }}</a>
+      <a v-if="legal?.widerrufUrl" :href="legal.widerrufUrl" target="_blank" rel="noopener">
+        {{ $t('portal.footerWiderruf') }}
+      </a>
     </span>
   </footer>
 </template>

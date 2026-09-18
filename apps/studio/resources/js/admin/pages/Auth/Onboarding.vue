@@ -1,55 +1,27 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import EmailVerificationForm from '@/admin/pages/Auth/panes/EmailVerificationForm.vue'
 import ProfileForm from '@/admin/pages/Settings/panes/ProfileForm.vue'
-import VatForm from '@/admin/pages/Settings/panes/VatForm.vue'
-import AuthLayout from '@/admin/layouts/AuthLayout.vue'
 import { Button } from '@/ui/button'
 
-defineProps<{
+const props = defineProps<{
   settings: App.Settings.Data.StudioSettingsData
   emailVerified: boolean
   hasLiveVerification: boolean
 }>()
 
-// Every other studio setting ships with a column default (see the
-// studio_settings migrations), so a step confirming one asks for a decision
-// before the studio has the context to make it. vat_mode is the exception:
-// it is the one default that can be actively wrong, and it decides which
-// invoice starter the wizard writes on finish.
-const steps = ['profile', 'vat'] as const
-const titles: Record<(typeof steps)[number], string> = {
-  profile: 'onboarding.stepProfile',
-  vat: 'onboarding.stepVat',
-}
+// One step, and it asks for what the client sees first: PortalHeader draws
+// the display name, the logo and the accent, and the portal goes live with
+// the first quote. Firmierung and Anschrift are due at that quote (they
+// carry the Impressum), Steuernummer and bank at the first invoice — see
+// the gates in Settings/panes.
+const paneRef = ref<{ form: { processing: boolean; display_name: string; accent_color: string }; submit: () => void }>()
 
-const stepIndex = ref(0)
-const step = () => steps[stepIndex.value]
-
-// Only one of these is mounted at a time (v-if chain below), so only one
-// ref is ever non-null. Each exposes { form, submit } — see
-// Settings/panes/ProfileForm.vue and its siblings.
-//
-// stepIndex above survives each pane's own save (POST/PATCH -> redirect ->
-// redirect -> back to this same Inertia component) only because
-// router.post/patch default to preserveState: true, which keeps this Vue
-// component instance — and therefore stepIndex — alive across that
-// redirect chain. If a pane's redirect target or preserveState option ever
-// changes, the wizard will silently reset to step 1 on every save.
-const paneRef = ref<{ form: { processing: boolean }; submit: () => void }>()
-
-function advance() {
-  if (stepIndex.value < steps.length - 1) {
-    stepIndex.value += 1
-  } else {
-    finish()
-  }
-}
-
-function saveAndContinue() {
-  paneRef.value?.submit()
-}
+const preview = computed(() => ({
+  name: paneRef.value?.form.display_name || props.settings.displayName || '',
+  accent: paneRef.value?.form.accent_color || props.settings.accentColor || 'var(--accent)',
+}))
 
 function finish() {
   router.post('/einrichtung/studio/abschluss')
@@ -57,27 +29,52 @@ function finish() {
 </script>
 
 <template>
-  <AuthLayout :title="$t(titles[step()])" width="max-w-[640px]">
-    <p class="mb-6 text-[11.5px] leading-[1.45] font-normal text-faint">
-      {{ $t('onboarding.stepCount', { current: stepIndex + 1, total: steps.length }) }}
-    </p>
-
-    <EmailVerificationForm v-if="step() === 'profile' && !emailVerified && hasLiveVerification" />
-    <ProfileForm v-if="step() === 'profile'" ref="paneRef" :settings="settings" first-run @saved="advance" />
-    <VatForm v-else ref="paneRef" :settings="settings" @saved="finish" />
-
-    <div class="mt-6 flex gap-2.5">
-      <Button
-        type="button"
-        class="flex-1 justify-center"
-        :disabled="paneRef?.form.processing"
-        @click="saveAndContinue"
-      >
-        {{ stepIndex === steps.length - 1 ? $t('onboarding.finish') : $t('onboarding.next') }}
-      </Button>
-      <Button variant="ghost" type="button" @click="finish">
-        {{ $t('onboarding.skip') }}
-      </Button>
+  <div data-tokens class="flex min-h-screen flex-col gap-5 bg-sunk-2 p-7">
+    <div class="flex items-center justify-between">
+      <span class="text-[19px] leading-none font-bold tracking-[-0.035em] text-foreground">{{ $page.props.brand }}</span>
+      <Button variant="ghost" type="button" @click="finish">{{ $t('onboarding.skip') }}</Button>
     </div>
-  </AuthLayout>
+
+    <div class="flex flex-grow overflow-hidden rounded-md border border-border bg-background max-lg:flex-col">
+      <div class="flex w-[396px] flex-none flex-col gap-6 border-r border-border bg-sunk-2 p-10 max-lg:w-full max-lg:border-r-0 max-lg:border-b">
+        <div>
+          <h1 class="text-[44px] leading-[var(--display-leading)] font-bold tracking-[var(--display-tracking)] text-foreground">
+            {{ $t('onboarding.title') }}
+          </h1>
+          <p class="mt-3.5 text-[13px] leading-[1.5] text-muted-foreground">{{ $t('onboarding.subtitle') }}</p>
+        </div>
+
+        <!-- Was der Kunde zuerst sieht, während es eingetragen wird — dieselben
+             drei Werte, die PortalHeader zeichnet. -->
+        <div>
+          <span class="block text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-muted-foreground">{{ $t('onboarding.previewLabel') }}</span>
+          <div class="mt-3 overflow-hidden rounded-[14px] border border-border bg-background">
+            <div class="flex items-center gap-2.5 border-b border-border px-4 py-3.5">
+              <img v-if="settings.logoUrl" :src="settings.logoUrl" alt="" class="size-[26px] rounded-[6px] object-contain" />
+              <span
+                v-else
+                class="flex size-[26px] items-center justify-center rounded-[6px] text-[12px] font-bold text-paper"
+                :style="{ background: preview.accent }"
+              >{{ preview.name.slice(0, 1) }}</span>
+              <span class="text-[14px] leading-none font-semibold tracking-[-0.02em] text-foreground">{{ preview.name }}</span>
+            </div>
+            <div class="p-4">
+              <span class="inline-block rounded-[var(--r-pill)] bg-foreground px-5 py-2.5 text-[12.5px] leading-none font-semibold text-paper">{{ $t('portal.quoteAccept') }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-grow flex-col gap-5 p-10">
+        <EmailVerificationForm v-if="!emailVerified && hasLiveVerification" />
+        <ProfileForm ref="paneRef" :settings="settings" first-run @saved="finish" />
+
+        <div class="mt-auto flex justify-end">
+          <Button type="button" :disabled="paneRef?.form.processing" @click="paneRef?.submit()">
+            {{ $t('onboarding.finish') }}
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>

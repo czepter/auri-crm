@@ -49,9 +49,11 @@ class StudioOnboardingController extends Controller
 
         $owner = auth('staff')->user();
 
-        // Also on "später abschließen": a studio with no templates can issue
-        // nothing. Idempotent, so a second pass writes nothing.
-        $seed(StarterTemplateCatalog::onboardingDefaults($settings->vatMode()), $owner, $settings->clientRegister());
+        // Also on "später abschließen": a studio with no templates can send
+        // nothing. Idempotent, so a second pass writes nothing. The invoice
+        // starter is not among them — InvoiceController::create writes it
+        // once the VAT mode is answered.
+        $seed(StarterTemplateCatalog::onboardingDefaults(), $owner, $settings->clientRegister());
         $seedRules();
 
         $settings->set('onboarding_completed_at', now(), $owner);

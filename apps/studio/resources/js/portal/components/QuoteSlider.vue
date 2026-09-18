@@ -44,7 +44,9 @@ const IMAGES_PER_TILE = 20
 const hours = ref(props.quote.hours ?? props.quote.minHours ?? 0)
 const chosen = ref(new Set(props.quote.items.filter((i) => i.selectable && i.selected).map((i) => i.id)))
 
-const agbUrl = computed(() => (usePage().props.portalLegal as { agbUrl: string | null } | undefined)?.agbUrl ?? null)
+const portalLegal = computed(() => usePage().props.portalLegal as { agbUrl: string | null; widerrufUrl: string | null } | undefined)
+const agbUrl = computed(() => portalLegal.value?.agbUrl ?? null)
+const widerrufUrl = computed(() => portalLegal.value?.widerrufUrl ?? null)
 
 const form = useForm({ terms: false })
 const rejection = computed(() => {
@@ -294,12 +296,14 @@ function accept() {
 
         <template v-if="canAccept">
           <div
-            v-if="agbUrl"
+            v-if="agbUrl || widerrufUrl"
             class="mt-3.5 flex items-start gap-3 text-[13.5px] leading-[1.5] [&_[data-slot=checkbox]]:mt-0.5 [&_[data-slot=checkbox]]:size-[17px] [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action"
           >
             <Checkbox id="slider-terms" v-model="form.terms" required />
             <Label variant="inline" for="slider-terms">
-              <a :href="agbUrl" target="_blank" rel="noopener" class="underline">{{ $t('portal.footerAgb') }}</a>
+              <a v-if="agbUrl" :href="agbUrl" target="_blank" rel="noopener" class="underline">{{ $t('portal.footerAgb') }}</a>
+              <template v-if="agbUrl && widerrufUrl"> {{ $t('portal.quoteTermsAnd') }} </template>
+              <a v-if="widerrufUrl" :href="widerrufUrl" target="_blank" rel="noopener" class="underline">{{ $t('portal.footerWiderruf') }}</a>
               {{ $t('portal.quoteTerms') }}
             </Label>
           </div>
@@ -308,7 +312,7 @@ function accept() {
             class="mt-3.5 w-full rounded-[var(--r-pill)] py-[17px] text-[15px] font-semibold"
             variant="portal"
             type="button"
-            :disabled="form.processing || (agbUrl !== null && !form.terms)"
+            :disabled="form.processing || ((agbUrl !== null || widerrufUrl !== null) && !form.terms)"
             @click="accept"
           >
             {{ $t('portal.quoteAccept') }}

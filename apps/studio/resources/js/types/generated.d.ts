@@ -524,7 +524,7 @@ unknownFields: string[],
 };
 }
 namespace Enums {
-export type DocumentTemplateType = 'quote' | 'invoice' | 'credit_note' | 'mail';
+export type DocumentTemplateType = 'quote' | 'invoice' | 'credit_note' | 'mail' | 'legal';
 }
 }
 namespace Engagement {
@@ -1041,6 +1041,9 @@ maintenanceMessage: string | null,
 welcomeText: string | null,
 datenschutzUrl: string | null,
 agbUrl: string | null,
+impressumUrl: string | null,
+widerrufUrl: string | null,
+legalFamilies: Record<string, string | null>,
 acceptQuotesEnabled: boolean,
 paymentStatusEnabled: boolean,
 offersEnabled: boolean,

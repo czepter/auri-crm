@@ -56,6 +56,9 @@ const settings: App.Settings.Data.PortalSettingsData = {
   welcomeText: 'Hier liegen eure Termine, Unterlagen und Bilder.',
   datenschutzUrl: 'https://atelier-nordlicht.de/datenschutz',
   agbUrl: 'https://atelier-nordlicht.de/agb',
+  impressumUrl: null,
+  widerrufUrl: null,
+  legalFamilies: { impressum: null, datenschutz: null, agb: null, widerruf: null },
   acceptQuotesEnabled: true,
   paymentStatusEnabled: true,
   offersEnabled: true,
@@ -74,7 +77,8 @@ const meta = {
   title: 'Bildschirme/Einstellungen/Portal',
   component: Portal,
   parameters: { layout: 'fullscreen', url: '/einstellungen/portal' },
-  args: { settings, branding },
+  args: {
+    legalTemplates: [{ family: 'fam-widerruf-0000000000', name: 'Widerrufsbelehrung', updatedAt: '2026-06-12' }], settings, branding },
 } satisfies Meta<typeof Portal>
 
 export default meta
@@ -91,6 +95,18 @@ export const Wartung: Story = {
       maintenanceEnabled: true,
       maintenanceMessage: 'Wir sind Montag wieder erreichbar.',
       messagingMode: 'off',
+    },
+  },
+}
+
+/** Der Abschnitt Rechtliches: vier Texte, je Zeile Link oder Dokument. */
+export const Rechtliches: Story = {
+  parameters: { url: '/einstellungen/portal?pane=privacy' },
+  args: {
+    settings: {
+      ...settings,
+      widerrufUrl: null,
+      legalFamilies: { impressum: null, datenschutz: null, agb: null, widerruf: 'fam-widerruf-0000000000' },
     },
   },
 }

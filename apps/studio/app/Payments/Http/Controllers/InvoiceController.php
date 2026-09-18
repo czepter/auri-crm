@@ -9,9 +9,11 @@ use App\Catalog\Models\Package;
 use App\Crm\Data\ProjectSuggestionData;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
+use App\Documents\Actions\SeedStarterTemplates;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Documents\Support\InlineHtmlSanitizer;
+use App\Documents\Support\StarterTemplateCatalog;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Notifications\NotificationService;
@@ -32,6 +34,8 @@ use App\Payments\Models\PaymentPlan;
 use App\Payments\Notifications\InvoiceSent;
 use App\Payments\Support\InvoiceDocument;
 use App\Payments\Support\InvoiceFigures;
+use App\Settings\Data\StudioSettingsData;
+use App\Settings\Support\StudioReadiness;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -69,9 +73,24 @@ class InvoiceController extends Controller
         ]);
     }
 
-    public function create(Request $request, StudioSettingsResolver $settings, RenderInvoicePdf $render): Response
-    {
+    public function create(
+        Request $request,
+        StudioSettingsResolver $settings,
+        RenderInvoicePdf $render,
+        SeedStarterTemplates $seed,
+        StudioReadiness $readiness,
+    ): Response {
         self::authorizeProject(null);
+
+        // Die Rechnungsvorlage entsteht hier statt beim Abschluss des
+        // Assistenten: erst jetzt steht fest, ob sie eine USt.-Zeile trägt.
+        // SeedStarterTemplates dedupliziert über Typ und Name, ein zweiter
+        // Aufruf schreibt also nichts.
+        $seed(
+            StarterTemplateCatalog::invoiceDefaults($settings->vatMode()),
+            $request->user('staff'),
+            $settings->clientRegister(),
+        );
 
         $viewer = $request->user('staff');
 
@@ -106,6 +125,10 @@ class InvoiceController extends Controller
             // The invoice template's prose: the starting point for this
             // invoice's own letter, merge fields left for the render.
             'intro' => InlineHtmlSanitizer::letter($render->currentTemplate(DocumentTemplateType::Invoice)?->body) ?? '',
+            'studioSettings' => StudioSettingsData::fromResolver($settings),
+            // Was IssueInvoice beim Ausstellen ohnehin verlangt, steht hier
+            // vor dem Formular statt hinter dem Absenden.
+            'missingInvoiceData' => $readiness->missingForInvoice(),
         ]);
     }
 

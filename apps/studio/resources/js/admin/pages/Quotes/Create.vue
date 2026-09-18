@@ -7,6 +7,7 @@ import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import ProjectTypeahead from '@/admin/components/ProjectTypeahead.vue'
 import QuoteWorkspace from '@/admin/components/QuoteWorkspace.vue'
+import BusinessDataGate from '@/admin/pages/Settings/panes/BusinessDataGate.vue'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 
@@ -18,7 +19,13 @@ const props = defineProps<{
   contacts: QuoteContact[]
   canManageCatalog: boolean
   vatSettings: VatSettings
+  studioSettings: App.Settings.Data.StudioSettingsData
+  missingBusinessData: string[]
 }>()
+
+// Offen, solange Impressumsdaten fehlen; „Abbrechen" führt zurück, ohne zu
+// speichern, damit niemand im Formular festsitzt.
+const gateOpen = ref(props.missingBusinessData.length > 0)
 
 const project = ref(props.project)
 
@@ -87,5 +94,12 @@ onMounted(() => {
         </div>
       </div>
     </Page>
+
+    <BusinessDataGate
+      :open="gateOpen"
+      :settings="studioSettings"
+      @done="gateOpen = false"
+      @cancel="router.visit('/angebote')"
+    />
   </AdminLayout>
 </template>

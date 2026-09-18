@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
-import { useForm } from '@inertiajs/vue3'
+import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
@@ -11,6 +11,7 @@ import InvoicePreviewPane from '@/admin/components/InvoicePreviewPane.vue'
 import LetterField from '@/admin/components/LetterField.vue'
 import QuotePositionsCard from '@/admin/components/quote/QuotePositionsCard.vue'
 import { buildQuotePayload, type QuoteDraft, type VatSettings } from '@/admin/components/quote/quotePayload'
+import InvoiceDataGate from '@/admin/pages/Settings/panes/InvoiceDataGate.vue'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
 import { Field } from '@/ui/field'
@@ -26,7 +27,13 @@ const props = defineProps<{
   catalogItems: App.Catalog.Data.CatalogItemData[]
   vatSettings: VatSettings
   intro: string
+  studioSettings: App.Settings.Data.StudioSettingsData
+  missingInvoiceData: string[]
 }>()
+
+// IssueInvoice weist eine Rechnung ohne Steuernummer ohnehin ab; das Fenster
+// steht vor dem Formular statt hinter dem Absenden.
+const gateOpen = ref(props.missingInvoiceData.length > 0)
 
 const project = ref(props.project)
 const contact = ref<App.Crm.Data.ContactSuggestionData | null>(null)
@@ -179,5 +186,12 @@ const showPreview = useMediaQuery('(min-width: 1180px)')
         </div>
       </div>
     </Page>
+
+    <InvoiceDataGate
+      :open="gateOpen"
+      :settings="studioSettings"
+      @done="gateOpen = false"
+      @cancel="router.visit('/rechnungen')"
+    />
   </AdminLayout>
 </template>

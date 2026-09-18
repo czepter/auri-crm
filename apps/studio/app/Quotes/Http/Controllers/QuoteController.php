@@ -32,6 +32,8 @@ use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Quotes\Models\QuotePaymentStage;
 use App\Quotes\Notifications\QuoteSent;
+use App\Settings\Data\StudioSettingsData;
+use App\Settings\Support\StudioReadiness;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Carbon\CarbonInterval;
@@ -134,6 +136,10 @@ class QuoteController extends Controller
 
         return Inertia::render('Quotes/Create', [
             'project' => $project ? ProjectSuggestionData::fromModel($project) : null,
+            'studioSettings' => StudioSettingsData::fromResolver($settings),
+            // Mit dem ersten Angebot geht ein Portal-Link hinaus; was das
+            // Impressum trägt, muss vorher stehen.
+            'missingBusinessData' => app(StudioReadiness::class)->missingForQuote(),
             ...($project
                 ? Arr::except($workspace($project, $viewer), 'paymentPlan')
                 : [

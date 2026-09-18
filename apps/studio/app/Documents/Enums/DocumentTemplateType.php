@@ -24,6 +24,10 @@ enum DocumentTemplateType: string
     case CreditNote = 'credit_note';
     case Mail = 'mail';
 
+    /* Impressum, AGB, Datenschutz, Widerrufsbelehrung: Prosa ohne Briefkopf,
+       die das Portal als eigene Seite zeigt statt als PDF zu rendern. */
+    case Legal = 'legal';
+
     public function label(): string
     {
         return match ($this) {
@@ -31,6 +35,7 @@ enum DocumentTemplateType: string
             self::Invoice => 'Rechnung',
             self::CreditNote => 'Gutschrift',
             self::Mail => 'E-Mail',
+            self::Legal => 'Rechtstext',
         };
     }
 }

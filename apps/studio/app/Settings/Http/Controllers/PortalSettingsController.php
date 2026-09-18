@@ -4,8 +4,11 @@ namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
+use App\Documents\Enums\DocumentTemplateType;
+use App\Documents\Models\DocumentTemplate;
 use App\Settings\Data\PortalSettingsData;
 use App\Settings\Data\StudioSettingsData;
+use App\Settings\Rules\LegalTemplateFamily;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,6 +40,19 @@ class PortalSettingsController extends Controller
             // studio's logo, pair and accent — none of which belongs in
             // PortalSettingsData, all of which this DTO already carries.
             'branding' => StudioSettingsData::fromResolver($settings),
+            // Die Rechtstexte, die das Studio selbst geschrieben hat — als
+            // Familie, weil die Zeile auf die jeweils aktuelle Fassung zeigt.
+            'legalTemplates' => DocumentTemplate::query()
+                ->current()
+                ->ofType(DocumentTemplateType::Legal)
+                ->orderBy('name')
+                ->get()
+                ->map(fn (DocumentTemplate $template) => [
+                    'family' => $template->family_id,
+                    'name' => $template->name,
+                    'updatedAt' => $template->updated_at?->toDateString(),
+                ])
+                ->all(),
         ]);
     }
 
@@ -50,6 +66,15 @@ class PortalSettingsController extends Controller
             'portal_welcome_text' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'portal_legal_datenschutz_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
             'portal_legal_agb_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
+            'portal_legal_impressum_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
+            'portal_legal_widerruf_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
+            // Die Vorlage wird als Familie gespeichert, damit das Portal die
+            // jeweils aktuelle Fassung zeigt; exists() prüft gegen die
+            // Rechtstexte des Studios.
+            'portal_legal_impressum_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
+            'portal_legal_datenschutz_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
+            'portal_legal_agb_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
+            'portal_legal_widerruf_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
             'portal_accept_quotes_enabled' => ['sometimes', 'required', 'boolean'],
             'portal_payment_status_enabled' => ['sometimes', 'required', 'boolean'],
             'portal_offers_enabled' => ['sometimes', 'required', 'boolean'],

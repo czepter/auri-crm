@@ -2,6 +2,7 @@
 
 namespace App\Settings\Data;
 
+use App\Portal\Http\Controllers\LegalTextController;
 use App\Settings\Support\StudioSettingsResolver;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -27,6 +28,10 @@ class PortalSettingsData extends Data
         public ?string $welcomeText,
         public ?string $datenschutzUrl,
         public ?string $agbUrl,
+        public ?string $impressumUrl,
+        public ?string $widerrufUrl,
+        /** @var array<string, ?string> Vorlagen-Familie je Rechtstext */
+        public array $legalFamilies,
         public bool $acceptQuotesEnabled,
         public bool $paymentStatusEnabled,
         public bool $offersEnabled,
@@ -50,6 +55,11 @@ class PortalSettingsData extends Data
             welcomeText: $settings->portalWelcomeText(),
             datenschutzUrl: $settings->legalDatenschutzUrl(),
             agbUrl: $settings->legalAgbUrl(),
+            impressumUrl: $settings->legalTextUrl('impressum'),
+            widerrufUrl: $settings->legalTextUrl('widerruf'),
+            legalFamilies: collect(LegalTextController::TEXTS)
+                ->mapWithKeys(fn (string $text) => [$text => $settings->legalFamily($text)])
+                ->all(),
             acceptQuotesEnabled: $settings->acceptQuotesEnabled(),
             paymentStatusEnabled: $settings->paymentStatusEnabled(),
             offersEnabled: $settings->offersEnabled(),

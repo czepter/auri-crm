@@ -10,12 +10,16 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('finishes onboarding with a current template for each offered type', function () {
-    app(SeedStarterTemplates::class)(StarterTemplateCatalog::onboardingDefaults('standard'), staffMember(StaffRole::Owner));
+it('finishes onboarding with a current template for the quote and the mails', function () {
+    app(SeedStarterTemplates::class)(StarterTemplateCatalog::onboardingDefaults(), staffMember(StaffRole::Owner));
 
-    foreach ([DocumentTemplateType::Quote, DocumentTemplateType::Invoice, DocumentTemplateType::Mail] as $type) {
+    foreach ([DocumentTemplateType::Quote, DocumentTemplateType::Mail] as $type) {
         expect(DocumentTemplate::query()->current()->ofType($type)->exists())->toBeTrue("no {$type->value} template");
     }
+
+    // Die Rechnungsvorlage entsteht erst mit der ersten Rechnung — welche
+    // der beiden Fassungen richtig ist, entscheidet der USt.-Modus.
+    expect(DocumentTemplate::query()->current()->ofType(DocumentTemplateType::Invoice)->exists())->toBeFalse();
 });
 
 it('writes a first version through the ordinary path, body and blocks alike', function () {
@@ -35,8 +39,8 @@ it('leaves the template count unchanged when the step runs twice', function () {
     $seed = app(SeedStarterTemplates::class);
     $actor = staffMember(StaffRole::Owner);
 
-    $first = $seed(StarterTemplateCatalog::onboardingDefaults('standard'), $actor);
-    $second = $seed(StarterTemplateCatalog::onboardingDefaults('standard'), $actor);
+    $first = $seed(StarterTemplateCatalog::onboardingDefaults(), $actor);
+    $second = $seed(StarterTemplateCatalog::onboardingDefaults(), $actor);
 
     expect($first)->toBeGreaterThan(0)
         ->and($second)->toBe(0)
