@@ -32,7 +32,7 @@ function finish() {
   <!-- Die Karte steht mittig und wächst mit dem Formular, statt den Bildschirm
        zu füllen: fünf Felder über 1400px gezogen lesen sich als leere Seite
        mit Rand. -->
-  <div data-tokens class="flex min-h-screen items-center justify-center bg-sunk-2 p-6">
+  <div data-tokens class="flex min-h-screen items-center justify-center p-6">
     <div class="w-full max-w-[940px]">
       <div class="mb-3.5 flex items-center justify-between">
         <span class="text-[17px] leading-none font-bold tracking-[-0.035em] text-foreground">{{ $page.props.brand }}</span>
@@ -40,7 +40,7 @@ function finish() {
       </div>
 
       <div class="flex overflow-hidden rounded-md border border-border bg-background max-lg:flex-col">
-        <div class="flex w-[320px] flex-none flex-col gap-7 border-r border-border bg-sunk-2 p-7 max-lg:w-full max-lg:border-r-0 max-lg:border-b">
+        <div class="flex w-[320px] flex-none flex-col gap-7 border-r border-border bg-sunk p-7 max-lg:w-full max-lg:border-r-0 max-lg:border-b">
           <div>
             <h1 class="text-[32px] leading-[var(--display-leading)] font-bold tracking-[var(--display-tracking)] text-foreground">
               {{ $t('onboarding.title') }}
