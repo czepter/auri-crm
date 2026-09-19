@@ -32,7 +32,7 @@ const props = defineProps<{
   dwell: { key: string; label: string; days: number; moves: number }[]
   responseTimes: { buckets: { key: string; label: string; leads: number }[]; medianHours: number | null; unanswered: number }
   shootsByMonth: { month: string; shoots: number }[]
-  leadTimes: { buckets: { key: string; label: string; projects: number }[]; medianMonths: number | null; withoutDate: number }
+  leadTimes: { buckets: { key: string; label: string; projects: number }[]; median: string | null; withoutDate: number }
 }>()
 
 // Zeitraum und Typ stehen in der URL: eine gefilterte Auswertung ist ein Link.
@@ -47,8 +47,10 @@ function filter(next: { zeitraum?: string; typ?: string | null }) {
   )
 }
 
+const capturedTotal = computed(() => props.funnelByMonth.reduce((sum, m) => sum + m.captured, 0))
+
 const bare = computed(() =>
-  !props.funnelByMonth.length
+  !capturedTotal.value
   && !props.sources.length
   && !props.referrers.length
   && !props.lostReasons.length
@@ -61,15 +63,18 @@ const bare = computed(() =>
 // Minor units end to end, turned into euros exactly once — the same rule
 // Uebersicht.vue states for its own tiles.
 
-function monthLabel(month: string) {
-  const [year, index] = month.split('-')
-  return new Date(Number(year), Number(index) - 1, 1)
-    .toLocaleDateString('de-DE', { month: 'short', year: '2-digit' })
-}
-
 function monthShort(month: string) {
   const [year, index] = month.split('-')
   return new Date(Number(year), Number(index) - 1, 1).toLocaleDateString('de-DE', { month: 'short' })
+}
+
+// Neben den Monatsnamen ist auf einer Achse von 220px kein Platz für zwölf
+// Jahreszahlen, unter ihnen schon. Sie steht dort, wo sie sich ändert: am
+// ersten Monat und im Januar.
+function yearTick(month: string, index: number) {
+  const [year, ordinal] = month.split('-')
+
+  return index === 0 || ordinal === '01' ? year.slice(2) : ''
 }
 
 function initials(name: string) {
@@ -114,7 +119,6 @@ const cashPeak = computed(() =>
 )
 
 const bookedTotal = computed(() => props.funnelByMonth.reduce((sum, m) => sum + m.booked, 0))
-const capturedTotal = computed(() => props.funnelByMonth.reduce((sum, m) => sum + m.captured, 0))
 const bookingRate = computed(() =>
   capturedTotal.value === 0 ? null : Math.round((bookedTotal.value / capturedTotal.value) * 100),
 )
@@ -130,8 +134,6 @@ const ratePoints = computed(() =>
 const sourcePeak = computed(() => Math.max(1, ...props.sources.map((s) => s.revenue)))
 const lostPeak = computed(() => Math.max(1, ...props.lostReasons.map((r) => r.count)))
 const lostTotal = computed(() => props.lostReasons.reduce((sum, r) => sum + r.count, 0))
-const dueTotal = computed(() => props.cashFlow.months.reduce((sum, m) => sum + m.due, 0))
-const receivedTotal = computed(() => props.cashFlow.months.reduce((sum, m) => sum + m.received, 0))
 
 // Offene Angebote sind eine Prognose und stehen schraffiert, nicht als zweite
 // gefuellte Flaeche — IBCS-Notation, damit Ist und Erwartung sich nicht
@@ -242,329 +244,322 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
             />
           </div>
 
-          <div v-if="!bare" class="grid grid-cols-[minmax(0,1fr)_420px] items-start gap-6">
-            <div class="flex flex-col gap-6">
-              <ReportCard
-                v-if="funnelByMonth.length"
-                :title="$t('reports.funnelTitle')"
-                :sub="$t('reports.funnelSub', { captured: capturedTotal, booked: bookedTotal })"
-              >
-                <div class="flex items-center gap-4 text-[12.5px] text-muted-foreground">
-                  <span class="inline-flex items-center gap-1.5">
-                    <span class="size-2.5 rounded-[3px] bg-[var(--accent-bg)]" />{{ $t('reports.captured') }}
-                  </span>
-                  <span class="inline-flex items-center gap-1.5">
-                    <span class="size-2.5 rounded-[3px] bg-action" />{{ $t('reports.booked') }}
-                  </span>
-                  <span class="inline-flex items-center gap-1.5">
-                    <span class="h-0.5 w-3.5 rounded-sm bg-[var(--due)]" />{{ $t('reports.rate') }}
-                  </span>
-                </div>
-
-                <div class="relative h-[216px]">
-                  <div class="absolute inset-0 flex flex-col justify-between">
-                    <div class="border-t border-dashed border-border" />
-                    <div class="border-t border-dashed border-border" />
-                    <div class="border-t border-dashed border-border" />
-                    <div class="border-t border-border" />
-                  </div>
-                  <svg
-                    v-if="ratePoints"
-                    class="absolute inset-0 h-full w-full"
-                    viewBox="0 0 1000 216"
-                    preserveAspectRatio="none"
-                    fill="none"
-                    role="img"
-                    :aria-label="$t('reports.rate')"
-                  >
-                    <polyline
-                      :points="ratePoints"
-                      stroke="var(--due)"
-                      stroke-width="2"
-                      stroke-dasharray="5 4"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      vector-effect="non-scaling-stroke"
-                    />
-                  </svg>
-                  <div class="absolute inset-0 flex items-end">
-                    <div v-for="row in funnelByMonth" :key="row.month" class="flex flex-1 items-end justify-center gap-1.5">
-                      <div class="flex flex-col items-center gap-1">
-                        <span class="text-[10.5px] leading-none font-semibold tabular-nums text-faint">{{ row.captured || '' }}</span>
-                        <div class="w-4 rounded-t-[4px] bg-[var(--accent-bg)]" :style="{ height: barHeight(row.captured, funnelPeak, 188) }" />
-                      </div>
-                      <div class="flex flex-col items-center gap-1">
-                        <span class="text-[10.5px] leading-none font-semibold tabular-nums text-action">{{ row.booked || '' }}</span>
-                        <div class="w-4 rounded-t-[4px] bg-action" :style="{ height: barHeight(row.booked, funnelPeak, 188) }" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="flex">
-                  <div v-for="row in funnelByMonth" :key="row.month" class="flex-1 text-center text-[11.5px] text-faint">
-                    {{ monthLabel(row.month) }}
-                  </div>
-                </div>
-              </ReportCard>
-
-              <div class="grid grid-cols-2 gap-6">
-                <ReportCard v-if="sources.length || referrers.length" :title="$t('reports.sourcesTitle')">
-                  <div v-if="sources.length" class="flex flex-col gap-3.5">
-                    <div v-for="row in sources" :key="row.source" class="flex flex-col gap-1.5">
-                      <div class="flex items-baseline justify-between gap-3">
-                        <span class="text-[13.5px] font-medium">{{ row.label }}</span>
-                        <span class="text-[13.5px] font-semibold tabular-nums">{{ formatEurosRounded(row.revenue) }}</span>
-                      </div>
-                      <div class="h-1.5 overflow-hidden rounded-[3px] bg-muted">
-                        <div class="h-1.5 rounded-[3px] bg-action" :style="{ width: `${Math.round((row.revenue / sourcePeak) * 100)}%` }" />
-                      </div>
-                      <span class="text-[12px] tabular-nums text-muted-foreground">
-                        {{ $t('reports.funnelSub', { captured: row.captured, booked: row.booked }) }}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div v-if="referrers.length" class="mt-auto flex flex-col gap-2 border-t border-border pt-3.5">
-                    <span class="text-[11px] leading-none font-semibold tracking-[0.08em] uppercase text-faint">{{ $t('reports.referrersTitle') }}</span>
-                    <ul class="m-0 flex list-none flex-col gap-1.5 p-0">
-                      <li v-for="row in referrers" :key="row.name" class="flex items-baseline justify-between gap-3 text-[13px]">
-                        <span>{{ row.name }}</span>
-                        <span class="tabular-nums text-muted-foreground">{{ row.count }}</span>
-                      </li>
-                    </ul>
-                  </div>
-                </ReportCard>
-
-                <!-- The field P-01 has collected since the funnel existed and no
-                     screen has ever shown. A lead lost without a reason is in the
-                     funnel above and absent here rather than bucketed as
-                     "unbekannt" — a category invented for an empty field makes a
-                     breakdown look complete when it is not. -->
-                <ReportCard v-if="lostReasons.length" :title="$t('reports.lostTitle')">
-                  <div class="flex flex-col gap-3.5">
-                    <div v-for="row in lostReasons" :key="`${row.outcome}:${row.reason}`" class="flex items-center gap-3">
-                      <span class="w-[132px] shrink-0 text-right text-[13px]">{{ row.reason }}</span>
-                      <div class="flex flex-1 items-center gap-2">
-                        <div class="h-4 rounded-[2px] bg-action" :style="{ width: `${Math.round((row.count / lostPeak) * 76)}%` }" />
-                        <span class="text-[13px] font-semibold tabular-nums">{{ row.count }}</span>
-                      </div>
-                    </div>
-                    <div class="flex items-center gap-3 border-t border-border pt-2.5">
-                      <span class="w-[132px] shrink-0 text-right text-[13px] font-semibold">{{ $t('reports.total') }}</span>
-                      <span class="text-[13px] font-semibold tabular-nums">{{ lostTotal }}</span>
-                    </div>
-                  </div>
-                </ReportCard>
+          <!-- Die beiden Diagramme teilen sich die Breite zur Hälfte. Multi-Column
+               kennt bei column-span nur ganz oder gar nicht, also steht die erste
+               Reihe im Grid und der Rest darunter im Masonry. -->
+          <div v-if="!bare" class="mb-6 grid grid-cols-2 gap-6">
+            <ReportCard
+              v-if="capturedTotal"
+              :title="$t('reports.funnelTitle')"
+              :sub="$t('reports.funnelSub', { captured: capturedTotal, booked: bookedTotal })"
+            >
+              <div class="flex items-center gap-4 text-[12.5px] text-muted-foreground">
+                <span class="inline-flex items-center gap-1.5">
+                  <span class="size-2.5 rounded-[3px] bg-[var(--accent-bg)]" />{{ $t('reports.captured') }}
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                  <span class="size-2.5 rounded-[3px] bg-action" />{{ $t('reports.booked') }}
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                  <span class="h-0.5 w-3.5 rounded-sm bg-[var(--due)]" />{{ $t('reports.rate') }}
+                </span>
               </div>
-            </div>
 
-            <div class="flex flex-col gap-6">
-              <!-- M-07. Its own panel on this screen rather than a screen of its
-                   own: "how are we doing" and "what is coming in" are the same
-                   question asked twice. -->
-              <ReportCard v-if="cashFlow.months.length" :title="$t('reports.cashFlowTitle')" :sub="$t('reports.cashFlowNote')">
-                <template #head>
-                  <span
-                    v-if="cashFlow.overdue"
-                    class="inline-flex items-center gap-1.5 rounded-full bg-late-bg px-2.5 py-1 text-[12px] leading-none font-semibold text-destructive"
-                  >
-                    {{ $t('reports.overdue', { amount: formatEurosRounded(cashFlow.overdue) }) }}
-                  </span>
-                </template>
-
-                <div class="flex items-center gap-4 text-[12.5px] text-muted-foreground">
-                  <span class="inline-flex items-center gap-1.5">
-                    <span class="size-2.5 rounded-[3px] bg-action" />{{ $t('reports.seriesDue') }}
-                  </span>
-                  <span class="inline-flex items-center gap-1.5">
-                    <span class="size-2.5 rounded-[3px]" :style="{ background: forecastFill }" />{{ $t('reports.seriesOpen') }}
-                  </span>
+              <div class="relative mt-auto h-[216px]">
+                <div class="absolute inset-0 flex flex-col justify-between">
+                  <div class="border-t border-dashed border-border" />
+                  <div class="border-t border-dashed border-border" />
+                  <div class="border-t border-dashed border-border" />
+                  <div class="border-t border-border" />
                 </div>
+                <svg
+                  v-if="ratePoints"
+                  class="absolute inset-0 h-full w-full"
+                  viewBox="0 0 1000 216"
+                  preserveAspectRatio="none"
+                  fill="none"
+                  role="img"
+                  :aria-label="$t('reports.rate')"
+                >
+                  <polyline
+                    :points="ratePoints"
+                    stroke="var(--due)"
+                    stroke-width="2"
+                    stroke-dasharray="5 4"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    vector-effect="non-scaling-stroke"
+                  />
+                </svg>
+                <div class="absolute inset-0 flex items-end">
+                  <div v-for="row in funnelByMonth" :key="row.month" class="flex flex-1 items-end justify-center gap-1.5">
+                    <div class="flex flex-col items-center gap-1">
+                      <span class="text-[10.5px] leading-none font-semibold tabular-nums text-faint">{{ row.captured || '' }}</span>
+                      <div class="w-4 rounded-t-[4px] bg-[var(--accent-bg)]" :style="{ height: barHeight(row.captured, funnelPeak, 188) }" />
+                    </div>
+                    <div class="flex flex-col items-center gap-1">
+                      <span class="text-[10.5px] leading-none font-semibold tabular-nums text-action">{{ row.booked || '' }}</span>
+                      <div class="w-4 rounded-t-[4px] bg-action" :style="{ height: barHeight(row.booked, funnelPeak, 188) }" />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                <!-- Ein einzelner Monat zieht seine Spalte sonst ueber die ganze
-                     Karte und behauptet eine Masse, die nicht da ist. -->
-                <div class="flex h-[156px] items-end justify-center gap-2.5">
+              <div class="flex">
+                <div v-for="(row, index) in funnelByMonth" :key="row.month" class="flex flex-1 flex-col items-center text-[11.5px] leading-tight text-faint">
+                  <span>{{ monthShort(row.month) }}</span>
+                  <span class="h-[13px]">{{ yearTick(row.month, index) }}</span>
+                </div>
+              </div>
+            </ReportCard>
+
+            <!-- M-07. Its own panel on this screen rather than a screen of its
+                 own: "how are we doing" and "what is coming in" are the same
+                 question asked twice. -->
+            <ReportCard v-if="cashFlow.months.length" :title="$t('reports.cashFlowTitle')">
+              <template #head>
+                <span
+                  v-if="cashFlow.overdue"
+                  class="inline-flex items-center gap-1.5 rounded-full bg-late-bg px-2.5 py-1 text-[12px] leading-none font-semibold text-destructive"
+                >
+                  {{ $t('reports.overdue', { amount: formatEurosRounded(cashFlow.overdue) }) }}
+                </span>
+              </template>
+
+              <div class="flex items-center gap-4 text-[12.5px] text-muted-foreground">
+                <span class="inline-flex items-center gap-1.5">
+                  <span class="size-2.5 rounded-[3px] bg-action" />{{ $t('reports.seriesDue') }}
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                  <span class="size-2.5 rounded-[3px]" :style="{ background: forecastFill }" />{{ $t('reports.seriesOpen') }}
+                </span>
+              </div>
+
+              <!-- Ein einzelner Monat zieht seine Spalte sonst ueber die ganze
+                   Karte und behauptet eine Masse, die nicht da ist. -->
+              <div class="relative mt-auto h-[216px]">
+                <div class="absolute inset-0 flex flex-col justify-between">
+                  <div class="border-t border-dashed border-border" />
+                  <div class="border-t border-dashed border-border" />
+                  <div class="border-t border-dashed border-border" />
+                  <div class="border-t border-border" />
+                </div>
+                <div class="absolute inset-0 flex items-end justify-center gap-2.5">
                   <div v-for="row in cashFlow.months" :key="row.month" class="flex h-full max-w-[64px] flex-1 flex-col justify-end gap-1">
                     <span class="text-center text-[10.5px] leading-none font-semibold tabular-nums text-action">
                       {{ row.due ? formatEurosRounded(row.due) : '' }}
                     </span>
-                    <div class="w-full rounded-t-[4px]" :style="{ background: forecastFill, height: barHeight(row.open, cashPeak, 134) }" />
-                    <div class="w-full rounded-t-[4px] bg-action" :style="{ height: barHeight(row.due, cashPeak, 134) }" />
+                    <div class="w-full rounded-t-[4px]" :style="{ background: forecastFill, height: barHeight(row.open, cashPeak, 194) }" />
+                    <div class="w-full rounded-t-[4px] bg-action" :style="{ height: barHeight(row.due, cashPeak, 194) }" />
                   </div>
                 </div>
+              </div>
 
-                <div class="flex justify-center gap-2.5">
-                  <div v-for="row in cashFlow.months" :key="row.month" class="max-w-[64px] flex-1 text-center text-[11.5px] text-faint">
-                    {{ monthShort(row.month) }}
-                  </div>
+              <div class="flex justify-center gap-2.5">
+                <div v-for="(row, index) in cashFlow.months" :key="row.month" class="flex max-w-[64px] flex-1 flex-col items-center text-[11.5px] leading-tight text-faint">
+                  <span>{{ monthShort(row.month) }}</span>
+                  <span class="h-[13px]">{{ yearTick(row.month, index) }}</span>
                 </div>
-
-                <dl class="m-0 flex flex-col gap-2 border-t border-border pt-3.5">
-                  <div class="flex items-baseline justify-between gap-3">
-                    <dt class="text-[12.5px] text-muted-foreground">{{ $t('reports.due') }}</dt>
-                    <dd class="m-0 text-[15px] font-semibold tabular-nums">{{ formatEurosRounded(dueTotal) }}</dd>
-                  </div>
-                  <div class="flex items-baseline justify-between gap-3">
-                    <dt class="text-[12.5px] text-muted-foreground">{{ $t('reports.received') }}</dt>
-                    <dd class="m-0 text-[15px] font-semibold tabular-nums">{{ formatEurosRounded(receivedTotal) }}</dd>
-                  </div>
-                </dl>
-              </ReportCard>
-
-              <ReportCard v-if="perContact.length" :title="$t('reports.perContactTitle')">
-                <table class="w-full border-collapse text-[13.5px]">
-                  <thead>
-                    <tr>
-                      <th class="pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-faint">{{ $t('reports.contact') }}</th>
-                      <th class="pb-2 text-right text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-faint">{{ $t('reports.projects') }}</th>
-                      <th class="pb-2 text-right text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-faint">{{ $t('reports.revenue') }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="row in perContact" :key="row.name">
-                      <td class="border-t border-border py-2">
-                        <span class="inline-flex items-center gap-2.5">
-                          <span class="inline-flex size-[26px] items-center justify-center rounded-full bg-[var(--accent-bg)] text-[11px] font-semibold text-action">
-                            {{ initials(row.name) }}
-                          </span>
-                          {{ row.name }}
-                        </span>
-                      </td>
-                      <td class="border-t border-border py-2 text-right tabular-nums text-muted-foreground">{{ row.projects }}</td>
-                      <td class="border-t border-border py-2 text-right font-semibold tabular-nums">{{ formatEurosRounded(row.revenue) }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </ReportCard>
-            </div>
+              </div>
+            </ReportCard>
           </div>
 
-          <!-- Trichter und Zeiten: was der Trichter zwischen den Schritten
-               verliert, und wie lange er dafür braucht. Aus demselben Fenster
-               wie oben, nur aus dem Audit-Trail statt aus der Anfrage-Zeile. -->
-          <div v-if="!bare && steps.length" class="mt-6 flex flex-col gap-4">
-            <h2 class="text-[20px] leading-none font-semibold tracking-[-0.015em]">{{ $t('reports.timesTitle') }}</h2>
-
-            <div class="grid grid-cols-3 gap-6">
-              <ReportCard :title="$t('reports.stepsTitle')" :sub="$t('reports.stepsSub')">
-                <div class="flex flex-col gap-3">
-                  <div v-for="step in steps" :key="step.key" class="flex flex-col gap-1.5">
-                    <div class="flex items-baseline justify-between gap-3">
-                      <span class="text-[13px] font-medium">{{ step.label }}</span>
-                      <span class="text-[13px] font-semibold tabular-nums">{{ step.leads }}</span>
-                    </div>
-                    <div class="h-2 overflow-hidden rounded-[4px] bg-muted">
-                      <div class="h-2 rounded-[4px] bg-action" :style="{ width: barWidth(step.leads, stepPeak) }" />
-                    </div>
-                    <span class="text-[11.5px] tabular-nums" :class="step.lost ? 'text-destructive' : 'text-faint'">
-                      {{ step.drop === null ? $t('reports.stepEntry') : $t('reports.stepDrop', { lost: step.lost, percent: step.drop }) }}
-                    </span>
+          <div v-if="!bare" class="columns-3 gap-6">
+            <ReportCard class="mb-6 break-inside-avoid" v-if="sources.length || referrers.length" :title="$t('reports.sourcesTitle')">
+              <div v-if="sources.length" class="flex flex-col gap-3.5">
+                <div v-for="row in sources" :key="row.source" class="flex flex-col gap-1.5">
+                  <div class="flex items-baseline justify-between gap-3">
+                    <span class="text-[13.5px] font-medium">{{ row.label }}</span>
+                    <span class="text-[13.5px] font-semibold tabular-nums">{{ formatEurosRounded(row.revenue) }}</span>
                   </div>
-                </div>
-
-                <div v-if="biggestDrop" class="mt-auto border-t border-border pt-3 text-[12.5px] text-muted-foreground">
-                  {{ $t('reports.biggestDrop', { step: biggestDrop.label, count: biggestDrop.lost }) }}
-                </div>
-              </ReportCard>
-
-              <ReportCard v-if="revenueByType.length" :title="$t('reports.perTypeTitle')" :sub="$t('reports.perTypeSub')">
-                <div class="flex flex-col gap-3.5">
-                  <div v-for="row in revenueByType" :key="row.type" class="flex flex-col gap-1.5">
-                    <div class="flex items-baseline justify-between gap-3">
-                      <span class="text-[13px] font-medium">{{ row.label }}</span>
-                      <span class="text-[14px] font-semibold tabular-nums">{{ formatEurosRounded(row.average) }}</span>
-                    </div>
-                    <div class="h-1.5 overflow-hidden rounded-[3px] bg-muted">
-                      <div class="h-1.5 rounded-[3px] bg-action" :style="{ width: barWidth(row.average, typePeak) }" />
-                    </div>
-                    <span class="text-[11.5px] tabular-nums text-muted-foreground">
-                      {{ $t('reports.bookedProjects', { count: row.projects }) }} · {{ formatEurosRounded(row.revenue) }}
-                    </span>
+                  <div class="h-1.5 overflow-hidden rounded-[3px] bg-muted">
+                    <div class="h-1.5 rounded-[3px] bg-action" :style="{ width: `${Math.round((row.revenue / sourcePeak) * 100)}%` }" />
                   </div>
-                </div>
-              </ReportCard>
-
-              <ReportCard v-if="dwell.length" :title="$t('reports.dwellTitle')" :sub="$t('reports.dwellSub')">
-                <div class="flex flex-col gap-3">
-                  <div v-for="row in dwell" :key="row.key" class="flex items-center gap-3">
-                    <span class="w-[104px] shrink-0 text-[12.5px]">{{ row.label }}</span>
-                    <div class="h-2 flex-1 overflow-hidden rounded-[4px] bg-muted">
-                      <div
-                        class="h-2 rounded-[4px]"
-                        :class="row.days >= dwellPeak ? 'bg-[var(--due)]' : 'bg-action'"
-                        :style="{ width: barWidth(row.days, dwellPeak) }"
-                      />
-                    </div>
-                    <span class="w-12 shrink-0 text-right text-[12.5px] font-semibold tabular-nums">
-                      {{ $t('reports.days', { days: row.days }) }}
-                    </span>
-                  </div>
-                </div>
-              </ReportCard>
-
-              <ReportCard :title="$t('reports.leadTimeTitle')" :sub="$t('reports.leadTimeSub')">
-                <template #head>
-                  <span v-if="leadTimes.medianMonths !== null" class="rounded-full bg-[var(--accent-bg)] px-2.5 py-1 text-[12px] leading-none font-semibold text-action">
-                    {{ $t('reports.medianMonths', { months: leadTimes.medianMonths }) }}
+                  <span class="text-[12px] tabular-nums text-muted-foreground">
+                    {{ $t('reports.funnelSub', { captured: row.captured, booked: row.booked }) }}
                   </span>
-                </template>
+                </div>
+              </div>
 
-                <div class="flex flex-col gap-3">
-                  <div v-for="bucket in leadTimes.buckets" :key="bucket.key" class="flex items-center gap-3">
-                    <span class="w-[104px] shrink-0 text-[12.5px]">{{ bucket.label }}</span>
-                    <div class="h-2 flex-1 overflow-hidden rounded-[4px] bg-muted">
-                      <div class="h-2 rounded-[4px] bg-action" :style="{ width: barWidth(bucket.projects, leadTimePeak) }" />
-                    </div>
-                    <span class="w-7 shrink-0 text-right text-[12.5px] font-semibold tabular-nums">{{ bucket.projects }}</span>
+              <div v-if="referrers.length" class="mt-auto flex flex-col gap-2 border-t border-border pt-3.5">
+                <span class="text-[11px] leading-none font-semibold tracking-[0.08em] uppercase text-faint">{{ $t('reports.referrersTitle') }}</span>
+                <ul class="m-0 flex list-none flex-col gap-1.5 p-0">
+                  <li v-for="row in referrers" :key="row.name" class="flex items-baseline justify-between gap-3 text-[13px]">
+                    <span>{{ row.name }}</span>
+                    <span class="tabular-nums text-muted-foreground">{{ row.count }}</span>
+                  </li>
+                </ul>
+              </div>
+            </ReportCard>
+
+            <!-- The field P-01 has collected since the funnel existed and no
+                 screen has ever shown. A lead lost without a reason is in the
+                 funnel above and absent here rather than bucketed as
+                 "unbekannt" — a category invented for an empty field makes a
+                 breakdown look complete when it is not. -->
+            <ReportCard class="mb-6 break-inside-avoid" v-if="lostReasons.length" :title="$t('reports.lostTitle')">
+              <div class="flex flex-col gap-3.5">
+                <div v-for="row in lostReasons" :key="`${row.outcome}:${row.reason}`" class="flex items-center gap-3">
+                  <span class="w-[132px] shrink-0 text-right text-[13px]">{{ row.reason }}</span>
+                  <div class="flex flex-1 items-center gap-2">
+                    <div class="h-4 rounded-[2px] bg-action" :style="{ width: `${Math.round((row.count / lostPeak) * 76)}%` }" />
+                    <span class="text-[13px] font-semibold tabular-nums">{{ row.count }}</span>
                   </div>
                 </div>
-
-                <div v-if="leadTimes.withoutDate" class="mt-auto border-t border-border pt-3 text-[12.5px] text-muted-foreground">
-                  {{ $t('reports.withoutDate', { count: leadTimes.withoutDate }) }}
+                <div class="flex items-center gap-3 border-t border-border pt-2.5">
+                  <span class="w-[132px] shrink-0 text-right text-[13px] font-semibold">{{ $t('reports.total') }}</span>
+                  <span class="text-[13px] font-semibold tabular-nums">{{ lostTotal }}</span>
                 </div>
-              </ReportCard>
+              </div>
+            </ReportCard>
 
-              <ReportCard :title="$t('reports.responseTitle')" :sub="$t('reports.responseSub')">
-                <template #head>
-                  <span v-if="responseTimes.medianHours !== null" class="rounded-full bg-[var(--accent-bg)] px-2.5 py-1 text-[12px] leading-none font-semibold text-action">
-                    {{ $t('reports.medianHours', { hours: responseTimes.medianHours }) }}
+            <ReportCard class="mb-6 break-inside-avoid" v-if="perContact.length" :title="$t('reports.perContactTitle')">
+              <table class="w-full border-collapse text-[13.5px]">
+                <thead>
+                  <tr>
+                    <th class="pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-faint">{{ $t('reports.contact') }}</th>
+                    <th class="pb-2 text-right text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-faint">{{ $t('reports.projects') }}</th>
+                    <th class="pb-2 text-right text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-faint">{{ $t('reports.revenue') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in perContact" :key="row.name">
+                    <td class="border-t border-border py-2">
+                      <span class="inline-flex items-center gap-2.5">
+                        <span class="inline-flex size-[26px] items-center justify-center rounded-full bg-[var(--accent-bg)] text-[11px] font-semibold text-action">
+                          {{ initials(row.name) }}
+                        </span>
+                        {{ row.name }}
+                      </span>
+                    </td>
+                    <td class="border-t border-border py-2 text-right tabular-nums text-muted-foreground">{{ row.projects }}</td>
+                    <td class="border-t border-border py-2 text-right font-semibold tabular-nums">{{ formatEurosRounded(row.revenue) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </ReportCard>
+
+            <!-- Was der Trichter zwischen den Schritten verliert und wie lange
+                 er dafür braucht. Aus demselben Fenster wie die Karten darüber,
+                 nur aus dem Audit-Trail statt aus der Anfrage-Zeile. -->
+            <ReportCard class="mb-6 break-inside-avoid" v-if="steps.length" :title="$t('reports.stepsTitle')" :sub="$t('reports.stepsSub')">
+              <div class="flex flex-col gap-3">
+                <div v-for="step in steps" :key="step.key" class="flex flex-col gap-1.5">
+                  <div class="flex items-baseline justify-between gap-3">
+                    <span class="text-[13px] font-medium">{{ step.label }}</span>
+                    <span class="text-[13px] font-semibold tabular-nums">{{ step.leads }}</span>
+                  </div>
+                  <div class="h-2 overflow-hidden rounded-[4px] bg-muted">
+                    <div class="h-2 rounded-[4px] bg-action" :style="{ width: barWidth(step.leads, stepPeak) }" />
+                  </div>
+                  <span class="text-[11.5px] tabular-nums" :class="step.lost ? 'text-destructive' : 'text-faint'">
+                    {{ step.drop === null ? $t('reports.stepEntry') : $t('reports.stepDrop', { lost: step.lost, percent: step.drop }) }}
                   </span>
-                </template>
+                </div>
+              </div>
 
-                <div class="flex flex-col gap-3">
-                  <div v-for="bucket in responseTimes.buckets" :key="bucket.key" class="flex items-center gap-3">
-                    <span class="w-[104px] shrink-0 text-[12.5px]">{{ bucket.label }}</span>
-                    <div class="h-2 flex-1 overflow-hidden rounded-[4px] bg-muted">
-                      <div
-                        class="h-2 rounded-[4px]"
-                        :class="bucket.key === 'later' ? 'bg-[var(--due)]' : 'bg-action'"
-                        :style="{ width: barWidth(bucket.leads, replyPeak) }"
-                      />
-                    </div>
-                    <span class="w-7 shrink-0 text-right text-[12.5px] font-semibold tabular-nums">{{ bucket.leads }}</span>
-                  </div>
-                </div>
+              <div v-if="biggestDrop" class="mt-auto border-t border-border pt-3 text-[12.5px] text-muted-foreground">
+                {{ $t('reports.biggestDrop', { step: biggestDrop.label, count: biggestDrop.lost }) }}
+              </div>
+            </ReportCard>
 
-                <div v-if="responseTimes.unanswered" class="mt-auto border-t border-border pt-3 text-[12.5px] text-muted-foreground">
-                  {{ $t('reports.unanswered', { count: responseTimes.unanswered }) }}
+            <ReportCard class="mb-6 break-inside-avoid" v-if="revenueByType.length" :title="$t('reports.perTypeTitle')" :sub="$t('reports.perTypeSub')">
+              <div class="flex flex-col gap-3.5">
+                <div v-for="row in revenueByType" :key="row.type" class="flex flex-col gap-1.5">
+                  <div class="flex items-baseline justify-between gap-3">
+                    <span class="text-[13px] font-medium">{{ row.label }}</span>
+                    <span class="text-[14px] font-semibold tabular-nums">{{ formatEurosRounded(row.average) }}</span>
+                  </div>
+                  <div class="h-1.5 overflow-hidden rounded-[3px] bg-muted">
+                    <div class="h-1.5 rounded-[3px] bg-action" :style="{ width: barWidth(row.average, typePeak) }" />
+                  </div>
+                  <span class="text-[11.5px] tabular-nums text-muted-foreground">
+                    {{ $t('reports.bookedProjects', { count: row.projects }) }} · {{ formatEurosRounded(row.revenue) }}
+                  </span>
                 </div>
-              </ReportCard>
+              </div>
+            </ReportCard>
 
-              <ReportCard v-if="shootsByMonth.length" :title="$t('reports.shootsTitle')" :sub="$t('reports.shootsSub', { count: shootsTotal })">
-                <div class="flex h-[120px] items-end justify-center gap-1.5">
-                  <div v-for="row in shootsByMonth" :key="row.month" class="flex h-full max-w-[40px] flex-1 flex-col justify-end gap-1">
-                    <span class="text-center text-[10.5px] leading-none font-semibold tabular-nums text-faint">{{ row.shoots }}</span>
-                    <div class="w-full rounded-t-[4px] bg-action" :style="{ height: barHeight(row.shoots, shootPeak, 92) }" />
+            <ReportCard class="mb-6 break-inside-avoid" v-if="dwell.length" :title="$t('reports.dwellTitle')" :sub="$t('reports.dwellSub')">
+              <div class="flex flex-col gap-3">
+                <div v-for="row in dwell" :key="row.key" class="flex items-center gap-3">
+                  <span class="w-[104px] shrink-0 text-[12.5px]">{{ row.label }}</span>
+                  <div class="h-2 flex-1 overflow-hidden rounded-[4px] bg-muted">
+                    <div
+                      class="h-2 rounded-[4px]"
+                      :class="row.days >= dwellPeak ? 'bg-[var(--due)]' : 'bg-action'"
+                      :style="{ width: barWidth(row.days, dwellPeak) }"
+                    />
                   </div>
+                  <span class="w-12 shrink-0 text-right text-[12.5px] font-semibold tabular-nums">
+                    {{ $t('reports.days', { days: row.days }) }}
+                  </span>
                 </div>
-                <div class="flex justify-center gap-1.5">
-                  <div v-for="row in shootsByMonth" :key="row.month" class="max-w-[40px] flex-1 text-center text-[11px] text-faint">
-                    {{ monthShort(row.month) }}
+              </div>
+            </ReportCard>
+
+            <ReportCard class="mb-6 break-inside-avoid" v-if="steps.length" :title="$t('reports.leadTimeTitle')" :sub="$t('reports.leadTimeSub')">
+              <template #head>
+                <span v-if="leadTimes.median !== null" class="rounded-full bg-[var(--accent-bg)] px-2.5 py-1 text-[12px] leading-none font-semibold text-action">
+                  {{ $t('reports.median', { value: leadTimes.median }) }}
+                </span>
+              </template>
+
+              <div class="flex flex-col gap-3">
+                <div v-for="bucket in leadTimes.buckets" :key="bucket.key" class="flex items-center gap-3">
+                  <span class="w-[104px] shrink-0 text-[12.5px]">{{ bucket.label }}</span>
+                  <div class="h-2 flex-1 overflow-hidden rounded-[4px] bg-muted">
+                    <div class="h-2 rounded-[4px] bg-action" :style="{ width: barWidth(bucket.projects, leadTimePeak) }" />
                   </div>
+                  <span class="w-7 shrink-0 text-right text-[12.5px] font-semibold tabular-nums">{{ bucket.projects }}</span>
                 </div>
-              </ReportCard>
-            </div>
+              </div>
+
+              <div v-if="leadTimes.withoutDate" class="mt-auto border-t border-border pt-3 text-[12.5px] text-muted-foreground">
+                {{ $t('reports.withoutDate', { count: leadTimes.withoutDate }) }}
+              </div>
+            </ReportCard>
+
+            <ReportCard class="mb-6 break-inside-avoid" v-if="steps.length" :title="$t('reports.responseTitle')" :sub="$t('reports.responseSub')">
+              <template #head>
+                <span v-if="responseTimes.medianHours !== null" class="rounded-full bg-[var(--accent-bg)] px-2.5 py-1 text-[12px] leading-none font-semibold text-action">
+                  {{ $t('reports.medianHours', { hours: responseTimes.medianHours }) }}
+                </span>
+              </template>
+
+              <div class="flex flex-col gap-3">
+                <div v-for="bucket in responseTimes.buckets" :key="bucket.key" class="flex items-center gap-3">
+                  <span class="w-[104px] shrink-0 text-[12.5px]">{{ bucket.label }}</span>
+                  <div class="h-2 flex-1 overflow-hidden rounded-[4px] bg-muted">
+                    <div
+                      class="h-2 rounded-[4px]"
+                      :class="bucket.key === 'later' ? 'bg-[var(--due)]' : 'bg-action'"
+                      :style="{ width: barWidth(bucket.leads, replyPeak) }"
+                    />
+                  </div>
+                  <span class="w-7 shrink-0 text-right text-[12.5px] font-semibold tabular-nums">{{ bucket.leads }}</span>
+                </div>
+              </div>
+
+              <div v-if="responseTimes.unanswered" class="mt-auto border-t border-border pt-3 text-[12.5px] text-muted-foreground">
+                {{ $t('reports.unanswered', { count: responseTimes.unanswered }) }}
+              </div>
+            </ReportCard>
+
+            <ReportCard class="mb-6 break-inside-avoid" v-if="shootsTotal" :title="$t('reports.shootsTitle')" :sub="$t('reports.shootsSub', { count: shootsTotal })">
+              <div class="flex h-[120px] items-end justify-center gap-1.5">
+                <div v-for="row in shootsByMonth" :key="row.month" class="flex h-full max-w-[40px] flex-1 flex-col justify-end gap-1">
+                  <span class="text-center text-[10.5px] leading-none font-semibold tabular-nums text-faint">{{ row.shoots || '' }}</span>
+                  <div class="w-full rounded-t-[4px] bg-action" :style="{ height: barHeight(row.shoots, shootPeak, 92) }" />
+                </div>
+              </div>
+              <div class="flex justify-center gap-1.5">
+                <div v-for="(row, index) in shootsByMonth" :key="row.month" class="flex max-w-[40px] flex-1 flex-col items-center text-[11px] leading-tight text-faint">
+                  <span>{{ monthShort(row.month) }}</span>
+                  <span class="h-[13px]">{{ yearTick(row.month, index) }}</span>
+                </div>
+              </div>
+            </ReportCard>
           </div>
         </div>
       </div>

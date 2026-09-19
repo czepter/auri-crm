@@ -52,14 +52,21 @@ class BookingFunnel
 
         ProjectFilter::apply($query, $type, 'leads.project_id');
 
-        return $query->get()->map(fn ($row) => [
-            'month' => $row->month,
-            'captured' => (int) $row->captured,
-            'booked' => (int) $row->booked,
-            // Null, not zero, on an empty denominator — S-11's rule. A month
-            // with no intake had no booking rate, it did not have a bad one.
-            'rate' => (int) $row->captured === 0 ? null : (int) round($row->booked / $row->captured * 100),
-        ])->all();
+        $counted = $query->get()->keyBy('month');
+
+        return collect(MonthRange::keys($from, $to))->map(function (string $month) use ($counted) {
+            $captured = (int) ($counted[$month]->captured ?? 0);
+            $booked = (int) ($counted[$month]->booked ?? 0);
+
+            return [
+                'month' => $month,
+                'captured' => $captured,
+                'booked' => $booked,
+                // Null, not zero, on an empty denominator — S-11's rule. A month
+                // with no intake had no booking rate, it did not have a bad one.
+                'rate' => $captured === 0 ? null : (int) round($booked / $captured * 100),
+            ];
+        })->all();
     }
 
     /**

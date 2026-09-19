@@ -87,6 +87,22 @@ it('keys the booking rate on capture, so a month cannot exceed 100%', function (
         ->and(collect($months)->pluck('rate')->max())->toBeLessThanOrEqual(100);
 });
 
+it('puts every month of the window on the funnel, including the ones without a lead', function () {
+    Lead::factory()->create(['captured_at' => now(), 'stage' => LeadStage::New]);
+
+    $months = collect(BookingFunnel::byMonth(now()->subMonths(3), now()));
+
+    expect($months)->toHaveCount(4)
+        ->and($months->pluck('month')->all())->toBe([
+            now()->subMonths(3)->format('Y-m'),
+            now()->subMonths(2)->format('Y-m'),
+            now()->subMonth()->format('Y-m'),
+            now()->format('Y-m'),
+        ])
+        ->and($months->first()['captured'])->toBe(0)
+        ->and($months->first()['rate'])->toBeNull();
+});
+
 it('counts a lead lost without a reason in the funnel and leaves it out of the breakdown', function () {
     Lead::factory()->lost()->create(['stage' => LeadStage::New]);
     Lead::factory()->lost(reason: '')->create(['lost_reason' => null, 'stage' => LeadStage::New]);
@@ -224,7 +240,7 @@ it('shows an empty studio empty figures rather than zeroes', function () {
 
             expect($props['acceptanceRate'])->toBeNull()
                 ->and($props['revenue']['averagePerProject'])->toBeNull()
-                ->and($props['funnelByMonth'])->toBe([]);
+                ->and(collect($props['funnelByMonth'])->sum('captured'))->toBe(0);
         });
 });
 
@@ -329,6 +345,34 @@ it('buckets the lead time on the primary shoot and counts the dateless apart', f
         ->and($times['withoutDate'])->toBe(1);
 });
 
+it('reads the lead-time steps in the unit most of the lead times fall into', function () {
+    // Drei Aufträge, alle wenige Wochen vorher gebucht: eine Monatsachse
+    // legte alle drei in die erste Stufe.
+    foreach ([18, 25, 40] as $days) {
+        $project = Project::factory()->create(['type' => ProjectType::Portrait]);
+        Job::factory()->create(['project_id' => $project->id, 'booked_at' => now()]);
+        // Der Termin ist ein Datum ohne Uhrzeit: ohne startOfDay misst der
+        // Abstand die Tageszeit mit und der Median kippt um einen Tag.
+        $captured = now()->subMonths(2)->startOfDay();
+
+        Lead::factory()->create(['project_id' => $project->id, 'captured_at' => $captured]);
+        Shoot::factory()->create([
+            'project_id' => $project->id,
+            'is_primary' => true,
+            'date' => $captured->copy()->addDays($days),
+        ]);
+    }
+
+    $times = ShootReport::leadTimes(now()->subYear(), now());
+
+    expect(collect($times['buckets'])->pluck('label')->all())->toBe([
+        'unter 2 Wochen', '2–4 Wochen', '4–8 Wochen', '8–12 Wochen', 'über 12 Wochen',
+    ])
+        ->and(collect($times['buckets'])->firstWhere('key', 'q2')['projects'])->toBe(2)
+        ->and(collect($times['buckets'])->firstWhere('key', 'q3')['projects'])->toBe(1)
+        ->and($times['median'])->toBe('4 Wochen');
+});
+
 it('counts the shooting days by the date they fall on', function () {
     Shoot::factory()->create(['date' => now()->subMonth()]);
     Shoot::factory()->count(2)->create(['date' => now()]);
@@ -337,7 +381,9 @@ it('counts the shooting days by the date they fall on', function () {
     $months = collect(ShootReport::byMonth(now()->subYear(), now()));
 
     expect($months->sum('shoots'))->toBe(3)
-        ->and($months->firstWhere('month', now()->format('Y-m'))['shoots'])->toBe(2);
+        ->and($months->firstWhere('month', now()->format('Y-m'))['shoots'])->toBe(2)
+        // Ein Monat ohne Termin steht mit 0 in der Reihe statt zu fehlen.
+        ->and($months->firstWhere('month', now()->subMonths(6)->format('Y-m'))['shoots'])->toBe(0);
 });
 
 // --- RevenueReport ------------------------------------------------------

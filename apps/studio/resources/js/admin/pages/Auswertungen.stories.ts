@@ -109,7 +109,7 @@ const meta = {
         { key: 'q4', label: '9–12 Mon.', projects: 1 },
         { key: 'later', label: 'über 12 Mon.', projects: 1 },
       ],
-      medianMonths: 7.2,
+      median: '7,2 Mon.',
       withoutDate: 1,
     },
   },
@@ -139,7 +139,7 @@ export const OhneZahlen: Story = {
     dwell: [],
     responseTimes: { buckets: [], medianHours: null, unanswered: 0 },
     shootsByMonth: [],
-    leadTimes: { buckets: [], medianMonths: null, withoutDate: 0 },
+    leadTimes: { buckets: [], median: null, withoutDate: 0 },
   },
 }
 
@@ -194,7 +194,7 @@ export const ErstesJahr: Story = {
         { key: 'q4', label: '9–12 Mon.', projects: 0 },
         { key: 'later', label: 'über 12 Mon.', projects: 0 },
       ],
-      medianMonths: 8.4,
+      median: '8,4 Mon.',
       withoutDate: 0,
     },
   },
