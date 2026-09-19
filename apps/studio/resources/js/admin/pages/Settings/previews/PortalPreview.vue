@@ -9,6 +9,7 @@ const props = defineProps<{
     maintenanceMessage: string
     welcomeText: string
     acceptQuotes: boolean
+    signContracts: boolean
     paymentStatus: boolean
     messagingMode: string
     contactPhone: string
@@ -21,6 +22,7 @@ const props = defineProps<{
 
 const rows = computed(() => [
   { on: props.portal.acceptQuotes, label: 'portalSettings.acceptQuotesEnabledLabel' },
+  { on: props.portal.signContracts, label: 'portalSettings.signContractsEnabledLabel' },
   { on: props.portal.paymentStatus, label: 'portalSettings.paymentStatusEnabledLabel' },
   { on: props.portal.messagingMode !== 'off', label: 'portalSettings.messagingLabel' },
 ].filter((row) => row.on))

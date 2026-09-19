@@ -17,13 +17,15 @@ use Illuminate\Support\Number;
 
 /**
  * The one place a merge-field array is assembled from real data — T-12's
- * "resolved from one place" acceptance criterion. Every quote, invoice and
- * transactional mail render calls this rather than building its own array:
+ * "resolved from one place" acceptance criterion. App\Contracts\Jobs\
+ * RenderContractJob calls this rather than building its own array, and
+ * whatever eventually renders a quote or a transactional mail calls it too:
  * one vocabulary, one builder, so `{{ project.name }}` can never mean two
  * different things depending which document reads it.
  *
- * Called at render time, never live from a controller: a document that read
- * project data live would silently change after a client already saw it.
+ * Called at render time, never live from a controller — see RenderContractJob's
+ * own doc comment for why: a document that read project data live would
+ * silently change after a client already saw it.
  */
 class DocumentMergeDataBuilder
 {
@@ -67,13 +69,13 @@ class DocumentMergeDataBuilder
             ],
             // The occasion this document is about. Same primary shoot the
             // invoice's Leistungszeitraum reads, named plainly here because a
-            // quote and a mail both talk about the day rather than about
+            // quote and a contract both talk about the day rather than about
             // a service period.
             'shoot' => [
                 'date' => $project->primaryShoot?->date?->format('d.m.Y') ?? '',
             ],
             // What a quote says about itself. Empty on a project with no sent
-            // quote — a mail template referencing them is asking about a
+            // quote — a contract template referencing them is asking about a
             // document that does not exist, which is exactly the case an
             // empty string is right for.
             'quote' => $this->quote($project, $settings),

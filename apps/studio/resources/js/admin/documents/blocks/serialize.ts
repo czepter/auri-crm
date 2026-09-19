@@ -167,6 +167,30 @@ function serializeBlock(block: EditorBlock, profile: SerializeProfile): string {
       return `<table class="doc-table doc-${block.type}"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`
     }
 
+    case 'signature': {
+      const parties: { role?: string; name?: string }[] = data.parties ?? []
+      const place = String(data.place ?? '').trim()
+      const dateline = place === '' ? '' : `<p class="doc-signature-place">${inline(place)}</p>`
+      const lines = parties
+        .map(
+          (party) =>
+            '<div class="doc-signature-line"><span class="doc-signature-rule"></span>' +
+            `<span class="doc-signature-role">${escapeText(String(party.role ?? ''))}</span>` +
+            `<span class="doc-signature-name">${inline(party.name)}</span></div>`,
+        )
+        .join('')
+
+      return `${dateline}<div class="doc-signature">${lines}</div>`
+    }
+
+    // Die Nummer zählt im Dokument hoch (DocumentRenderer setzt den Counter),
+    // damit eine eingeschobene Klausel keine Handarbeit auslöst.
+    case 'clause':
+      return (
+        '<section class="doc-clause">' +
+        `<h3>${inline(data.title)}</h3><p>${inline(data.text)}</p></section>`
+      )
+
     case 'checklist': {
       const items: { text?: string; checked?: boolean }[] = data.items ?? []
 
@@ -192,7 +216,7 @@ function serializeBlock(block: EditorBlock, profile: SerializeProfile): string {
       return String(data.html ?? '')
 
     // A block from a later phase, or a tool that was removed. Emitting a
-    // guess would put wrong wording in a quote; skipping is honest.
+    // guess would put wrong wording in a contract; skipping is honest.
     default:
       return ''
   }

@@ -43,6 +43,7 @@ const preview = computed(() => {
     maintenanceMessage: form?.portal_maintenance_message ?? props.settings.maintenanceMessage ?? '',
     welcomeText: form?.portal_welcome_text ?? props.settings.welcomeText ?? '',
     acceptQuotes: form?.portal_accept_quotes_enabled ?? props.settings.acceptQuotesEnabled,
+    signContracts: form?.portal_sign_contracts_enabled ?? props.settings.signContractsEnabled,
     paymentStatus: form?.portal_payment_status_enabled ?? props.settings.paymentStatusEnabled,
     messagingMode: form?.portal_messaging_mode ?? props.settings.messagingMode,
     contactPhone: form?.portal_contact_phone ?? props.settings.contactPhone ?? '',

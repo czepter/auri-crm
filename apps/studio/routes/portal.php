@@ -7,6 +7,7 @@ use App\Gallery\Http\Controllers\GalleryImageController;
 use App\Gallery\Http\Controllers\GalleryPasswordController;
 use App\Portal\Http\Controllers\AccountController;
 use App\Portal\Http\Controllers\BrandingController;
+use App\Portal\Http\Controllers\ContractController;
 use App\Portal\Http\Controllers\GalleryController as PortalGalleryController;
 use App\Portal\Http\Controllers\HomeController;
 use App\Portal\Http\Controllers\ImpressumController;
@@ -105,9 +106,26 @@ Route::middleware('portal.maintenance')->group(function () {
         Route::patch('/projekte/{project}/fragebogen/{questionnaire}', [QuestionnaireController::class, 'update'])
             ->name('portal.questionnaires.update');
 
+        // Mockup 07. Reads only the artifact M-01's queued job already
+        // stored — see App\Portal\Http\Controllers\ContractController.
+        Route::get('/projekte/{project}/vertrag', [ContractController::class, 'show'])
+            ->name('portal.contracts.show');
+        Route::get('/projekte/{project}/vertrag/pdf', [ContractController::class, 'download'])
+            ->name('portal.contracts.download');
+
+        // M-02's signing rail. Writes at most one contract_signatures row per
+        // contract — see App\Contracts\Actions\SignContract. Gated by T-08's
+        // own "sign contracts" switch (default off) — a 404 identical to a
+        // route that does not exist when it is off, regardless of whether
+        // SignContract itself would otherwise allow it.
+        Route::post('/projekte/{project}/vertrag/unterschreiben', [ContractController::class, 'sign'])
+            ->middleware('portal.capability:sign_contracts')
+            ->name('portal.contracts.sign');
+
         // Q-07. Reads Project::latestQuote() — Q-06's own frozen snapshot,
         // never re-derived — see App\Portal\Http\Controllers\QuoteController.
-        // The view stays open; only the accept action below is gated.
+        // The view stays open the same way a contract's view does; only the
+        // accept action below is gated.
         Route::get('/projekte/{project}/angebot/bild/{item}', [QuoteController::class, 'image'])
             ->name('portal.quotes.image');
         Route::get('/projekte/{project}/angebot', [QuoteController::class, 'show'])
@@ -176,7 +194,7 @@ Route::middleware('portal.maintenance')->group(function () {
         // E-06, gated by T-08's own "messaging" switch (default off) — the
         // whole mailbox, GET and POST alike, the same full-screen shape
         // payment_status takes rather than gating only a submit the way
-        // accept_quotes does. See EnsurePortalCapability and
+        // accept_quotes/sign_contracts do. See EnsurePortalCapability and
         // StudioSettingsResolver::messagingEnabled().
         //
         // P-04 (#223): one mailbox, no project in the path. A thread names a

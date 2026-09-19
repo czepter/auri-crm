@@ -24,7 +24,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * settings — so what renders here is exactly the document a client is
  * accepting.
  *
- * Asks Contact::visibleProjects(), so a project the contact is not on and one the studio has not made
+ * Asks Contact::visibleProjects() the same question ContractController does,
+ * so a project the contact is not on and one the studio has not made
  * portal_visible fail identically, as a 404 rather than a 403.
  */
 class QuoteController extends Controller

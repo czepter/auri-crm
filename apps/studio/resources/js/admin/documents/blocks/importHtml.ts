@@ -2,7 +2,7 @@ import type { EditorDocument } from './types'
 
 // A template written before the block editor existed has blocks = null. Rather
 // than parsing its HTML into blocks — which would silently rewrite wording
-// that is already in sent documents' template history — it becomes one
+// that is already in signed contracts' template history — it becomes one
 // rawHtml block the author can keep, replace, or build around.
 export function htmlToBlocks(html: string): EditorDocument {
   if (html.trim() === '') return { blocks: [] }

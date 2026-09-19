@@ -17,7 +17,7 @@ import { Textarea } from '@/ui/textarea'
 // useForm, processing and methods included, which Record<string, string>
 // refuses — a type asking only for what these fields read and write does not.
 type PortalKey =
-  | 'portal_visible' | 'accept_quotes' | 'payment_status'
+  | 'portal_visible' | 'accept_quotes' | 'sign_contracts' | 'payment_status'
   | 'messaging_mode' | 'gallery_downloads' | 'gallery_lists' | 'gallery_comments'
   | 'offers' | 'welcome'
 
@@ -37,9 +37,9 @@ const { t } = useI18n()
 // Der Reiter am Kontakt stellt die Gruppen als eigene Karten nebeneinander,
 // das Anlegen-Formular hat nur eine Spalte und nimmt alle.
 const GROUPS = {
-  all: ['portal_visible', 'accept_quotes', 'payment_status',
+  all: ['portal_visible', 'accept_quotes', 'sign_contracts', 'payment_status',
     'gallery_downloads', 'gallery_lists', 'gallery_comments', 'offers'],
-  permissions: ['accept_quotes', 'payment_status', 'portal_visible'],
+  permissions: ['accept_quotes', 'sign_contracts', 'payment_status', 'portal_visible'],
   gallery: ['gallery_downloads', 'gallery_lists', 'gallery_comments'],
   offers: ['offers'],
   welcome: [],

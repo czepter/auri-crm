@@ -96,6 +96,12 @@ class ProjectPolicy
         return $user->role->allows(Capability::ManageFormTemplates) && $this->view($user, $project);
     }
 
+    /** Draft, render and send a contract for this project. Never required — nothing waits for one. */
+    public function manageContracts(User $user, Project $project): bool
+    {
+        return $user->role->allows(Capability::ManageContracts) && $this->view($user, $project);
+    }
+
     /**
      * Create or edit this project's payment plan (M-03). Reuses
      * Capability::ManageContracts rather than a new capability, so it stays

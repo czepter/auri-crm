@@ -19,10 +19,10 @@ class DocumentTemplateFactory extends Factory
         return [
             'family_id' => (string) new Cuid2,
             'version' => 1,
-            'type' => DocumentTemplateType::Quote,
+            'type' => DocumentTemplateType::Contract,
             'shoot_kind' => null,
             'name' => 'Hochzeit',
-            'body' => '<p>Angebot für {{ project.name }} ({{ project.type }}), '
+            'body' => '<p>Vertrag mit {{ project.name }} ({{ project.type }}), '
                 .'vertreten durch {{ contact.name }}, gebucht am {{ job.bookedAt }}.</p>',
             'is_current' => true,
         ];

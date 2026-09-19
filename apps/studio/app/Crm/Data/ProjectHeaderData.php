@@ -2,6 +2,7 @@
 
 namespace App\Crm\Data;
 
+use App\Contracts\Enums\ContractStatus;
 use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\OpenProjects;
 use App\Crm\Actions\ReadStageTrack;
@@ -50,6 +51,7 @@ class ProjectHeaderData extends Data
         public bool $portalVisible,
         public bool $canManagePortalVisibility,
         public bool $canManageQuotes,
+        public bool $canManageContracts,
         public bool $canManagePaymentPlan,
         // #418: the one condition the "Zahlungsplan abwickeln" link hangs
         // off, beside the plan's own settled_at.
@@ -94,6 +96,7 @@ class ProjectHeaderData extends Data
             portalVisible: $project->portal_visible,
             canManagePortalVisibility: $user?->can('manageVisibility', $project) ?? false,
             canManageQuotes: $user?->can('manageQuotes', $project) ?? false,
+            canManageContracts: $user?->can('manageContracts', $project) ?? false,
             canManagePaymentPlan: $user?->can('managePaymentPlan', $project) ?? false,
             primaryShootCancelled: $project->primaryShoot?->isCancelled() ?? false,
             canManageForms: $user?->can('manageForms', $project) ?? false,
@@ -111,7 +114,9 @@ class ProjectHeaderData extends Data
             // tab panels" (mockups/_shared/admin-extra.css) — so it lives on
             // the overview screen instead, never as a tab.
             //
-            // E-06's Kommunikation and E-02's
+            // Q-02 landed the quote half of "Angebot & Vertrag" under one
+            // combined tab; M-01 splits Vertrag into its own tab now that it
+            // has a screen of its own. E-06's Kommunikation and E-02's
             // Fragebögen both sit between Shootings and Angebot, matching
             // mockup 04's own tab order (mockups/_shared/layout.js's
             // PROJECT_TABS).
@@ -124,6 +129,7 @@ class ProjectHeaderData extends Data
                 ['key' => 'messages', 'label' => 'project.messages', 'href' => "/auftraege/{$project->public_id}/nachrichten", 'count' => self::waitingThreads($project), 'countTo' => null, 'children' => []],
                 ['key' => 'forms', 'label' => 'project.forms', 'href' => "/auftraege/{$project->public_id}/frageboegen", 'count' => self::unansweredForms($project), 'countTo' => null, 'children' => []],
                 ['key' => 'quotes', 'label' => 'project.quotes', 'href' => "/auftraege/{$project->public_id}/angebote", 'count' => $project->quotes()->where('status', QuoteStatus::Sent)->count(), 'countTo' => null, 'children' => []],
+                ['key' => 'contract', 'label' => 'project.contract', 'href' => "/auftraege/{$project->public_id}/vertrag", 'count' => self::unsignedContracts($project), 'countTo' => null, 'children' => []],
             ],
             track: app(ReadStageTrack::class)($position),
             queue: $user === null || ! $queue ? [] : app(OpenProjects::class)->queue($user, $project),
@@ -141,8 +147,8 @@ class ProjectHeaderData extends Data
     }
 
     /**
-     * Before the booking the record is an inquiry: shootings, tasks and forms
-     * have nothing to hold yet, and its screens live under
+     * Before the booking the record is an inquiry: shootings, tasks, forms and
+     * the contract have nothing to hold yet, and its screens live under
      * /anfragen.
      */
     private static function leadTabs(Project $project): array
@@ -178,6 +184,18 @@ class ProjectHeaderData extends Data
         return $project->formInstances()
             ->shared()
             ->whereDoesntHave('fields.answers')
+            ->count();
+    }
+
+    /**
+     * In front of the client and unsigned. A contract that never rendered is
+     * the studio's own problem and says nothing about what the client owes.
+     */
+    private static function unsignedContracts(Project $project): int
+    {
+        return $project->contracts()
+            ->where('status', ContractStatus::Rendered)
+            ->whereDoesntHave('signature')
             ->count();
     }
 }

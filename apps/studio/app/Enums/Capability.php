@@ -78,10 +78,10 @@ enum Capability: string
     case ManageQuotes = 'manage_quotes';
 
     /**
-     * Author document templates and manage a project's payment plan. The
-     * name outlived the contract feature (#441) because issued API tokens
-     * carry it as a scope. Stays with the roles ManageShoots already trusts
-     * rather than opening to every crew role the way the catalog does.
+     * Author document templates, draft a contract for a project and manage
+     * its payment plan. A contract is what a client signs, so this stays with
+     * the roles ManageShoots already trusts rather than opening to every crew
+     * role the way the catalog does.
      */
     case ManageContracts = 'manage_contracts';
 

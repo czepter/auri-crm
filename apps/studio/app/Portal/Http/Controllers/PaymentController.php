@@ -21,7 +21,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /**
  * T-07's portal payment screen — no mockup was drawn for this one ("Mockup —"
  * in the issue header), so this matches the closest existing portal screen
- * instead: App\Portal\Http\Controllers\QuoteController's own shape
+ * instead: App\Portal\Http\Controllers\ContractController's own shape
  * (contact/showSwitcher/project header, a 404 for a project the contact
  * cannot see, never a 403).
  *

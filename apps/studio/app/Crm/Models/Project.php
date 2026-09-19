@@ -4,6 +4,7 @@ namespace App\Crm\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
+use App\Contracts\Models\Contract;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
@@ -159,6 +160,22 @@ class Project extends Model
         return $this->hasMany(Task::class);
     }
 
+    /** Every render this project has ever had, newest first. M-01. */
+    public function contracts(): HasMany
+    {
+        return $this->hasMany(Contract::class)->latest();
+    }
+
+    /**
+     * The one a screen shows: the most recent render, whatever its status —
+     * but only once it has gone out. Seit Verträge Fassungen haben, liegt vor
+     * der versendeten ein Entwurf, und das Portal liest diese Relation.
+     */
+    public function latestContract(): HasOne
+    {
+        return $this->hasOne(Contract::class)->whereNotNull('sent_at')->latestOfMany();
+    }
+
     public function shoots(): HasMany
     {
         return $this->hasMany(Shoot::class)->orderBy('sort_order');
@@ -187,6 +204,7 @@ class Project extends Model
         return collect([
             'job' => $this->job(),
             'quote' => $this->quotes(),
+            'contract' => $this->contracts(),
             'gallery' => $this->galleries(),
         ])->filter(fn (Relation $relation) => $relation->exists())->keys();
     }

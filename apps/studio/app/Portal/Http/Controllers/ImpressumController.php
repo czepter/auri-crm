@@ -8,8 +8,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * T-08: § 5 TMG. Reads the same legal-entity fields the `studio.*` merge
- * fields already read (T-02, docs/documents.md) — never a
+ * T-08: § 5 TMG. Reads the same legal-entity fields RenderContractJob's
+ * `studio.*` merge fields already read (T-02, docs/documents.md) — never a
  * second, independently-maintained copy of a studio's own particulars.
  *
  * Public and reachable regardless of auth state or the maintenance closure
@@ -24,7 +24,7 @@ class ImpressumController extends Controller
         $attrs = $settings->attributes();
 
         return Inertia::render('Impressum', [
-            // Same fallback the `studio.name` merge field
+            // Same fallback RenderContractJob's `studio.name` merge field
             // uses — a studio that has not filled in its registered name yet
             // still shows the one it trades under.
             'name' => $attrs['legal_name'] ?: $attrs['display_name'],

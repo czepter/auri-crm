@@ -36,7 +36,7 @@ class PortalSettings
 
     /** @var list<string> */
     public const OVERRIDABLE = [
-        'welcome', 'accept_quotes', 'payment_status', 'messaging_mode',
+        'welcome', 'accept_quotes', 'sign_contracts', 'payment_status', 'messaging_mode',
         'gallery_downloads', 'gallery_lists', 'gallery_comments', 'portal_visible', 'offers',
     ];
 
@@ -45,6 +45,11 @@ class PortalSettings
     public function acceptQuotesEnabled(?Contact $contact = null): bool
     {
         return (bool) $this->resolve($contact, 'accept_quotes', $this->studio->acceptQuotesEnabled());
+    }
+
+    public function signContractsEnabled(?Contact $contact = null): bool
+    {
+        return (bool) $this->resolve($contact, 'sign_contracts', $this->studio->signContractsEnabled());
     }
 
     public function paymentStatusEnabled(?Contact $contact = null): bool

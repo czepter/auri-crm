@@ -26,7 +26,7 @@ describe('buildTools', () => {
   })
 
   it('skips a palette entry with no implementation rather than crashing the editor', () => {
-    const tools = buildTools([entry('paragraph'), entry('checklist')], registry)
+    const tools = buildTools([entry('paragraph'), entry('signature')], registry)
 
     expect(Object.keys(tools)).toEqual(['paragraph'])
   })
@@ -37,7 +37,7 @@ describe('buildTools with a palette that names what is refused', () => {
     const tools = buildTools(
       [
         { type: 'paragraph', group: 'text', label: 'Absatz', inline: false, allowed: true },
-        { type: 'columns', group: 'layout', label: '2 Spalten', inline: false, allowed: false, only: 'Angebot' },
+        { type: 'columns', group: 'layout', label: '2 Spalten', inline: false, allowed: false, only: 'Vertrag' },
       ],
       { paragraph: {}, columns: {} },
     )
