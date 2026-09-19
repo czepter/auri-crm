@@ -55,6 +55,8 @@ const meta = {
     ],
     cashFlow: {
       overdue: 85200,
+      projects: 4,
+      quotes: 2,
       months: [
         { month: '2026-07', due: 213000, received: 213000, open: 0 },
         { month: '2026-08', due: 255600, received: 170400, open: 0 },
@@ -62,6 +64,17 @@ const meta = {
         { month: '2026-10', due: 298200, received: 0, open: 426000 },
         { month: '2026-11', due: 170400, received: 0, open: 0 },
         { month: '2026-12', due: 85200, received: 0, open: 0 },
+      ],
+    },
+    cashFlowPast: {
+      projects: 3,
+      months: [
+        { month: '2026-04', received: 127800 },
+        { month: '2026-05', received: 0 },
+        { month: '2026-06', received: 213000 },
+        { month: '2026-07', received: 213000 },
+        { month: '2026-08', received: 170400 },
+        { month: '2026-09', received: 127800 },
       ],
     },
     revenueByType: [
@@ -133,7 +146,8 @@ export const OhneZahlen: Story = {
     revenue: { projects: 0, revenue: 0, averagePerProject: null },
     revenuePrior: { projects: 0, revenue: 0, averagePerProject: null },
     perContact: [],
-    cashFlow: { overdue: 0, months: [] },
+    cashFlow: { overdue: 0, projects: 0, quotes: 0, months: [] },
+    cashFlowPast: { projects: 0, months: [] },
     revenueByType: [],
     steps: [],
     dwell: [],
@@ -161,8 +175,11 @@ export const ErstesJahr: Story = {
     perContact: [{ name: 'Meier & Kowalski', projects: 1, revenue: 150000 }],
     cashFlow: {
       overdue: 150000,
+      projects: 1,
+      quotes: 1,
       months: [{ month: '2026-09', due: 0, received: 0, open: 350000 }],
     },
+    cashFlowPast: { projects: 0, months: [{ month: '2026-09', received: 0 }] },
     revenueByType: [{ type: 'wedding', label: 'Hochzeit', projects: 1, revenue: 150000, average: 150000 }],
     steps: [
       { key: 'new', label: 'Neu', leads: 11, lost: 0, drop: null },

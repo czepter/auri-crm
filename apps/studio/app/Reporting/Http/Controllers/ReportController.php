@@ -73,6 +73,7 @@ class ReportController extends Controller
             'revenueByType' => RevenueReport::perProjectType($from, $to),
 
             'cashFlow' => CashFlowForecast::build(type: $type),
+            'cashFlowPast' => CashFlowForecast::past($type),
 
             'steps' => FunnelTimes::steps($from, $to, $type),
             'dwell' => FunnelTimes::dwell($from, $to, $type),

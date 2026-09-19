@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
@@ -9,6 +9,7 @@ import ReportCard from '@/admin/components/ReportCard.vue'
 import ReportKpi from '@/admin/components/ReportKpi.vue'
 import { Button } from '@/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { ChoiceGroup } from '@/ui/choice-group'
 import { formatEurosRounded } from '@/admin/lib/money'
 import { barHeight, ratePoints as ratePointsFor } from '@/admin/lib/chart'
 
@@ -26,7 +27,8 @@ const props = defineProps<{
   revenue: { projects: number; revenue: number; averagePerProject: number | null }
   revenuePrior: { projects: number; revenue: number; averagePerProject: number | null }
   perContact: { name: string; projects: number; revenue: number }[]
-  cashFlow: { overdue: number; months: { month: string; due: number; received: number; open: number }[] }
+  cashFlow: { overdue: number; projects: number; quotes: number; months: { month: string; due: number; received: number; open: number }[] }
+  cashFlowPast: { projects: number; months: { month: string; received: number }[] }
   revenueByType: { type: string; label: string; projects: number; revenue: number; average: number }[]
   steps: { key: string; label: string; leads: number; lost: number; drop: number | null }[]
   dwell: { key: string; label: string; days: number; moves: number }[]
@@ -114,8 +116,19 @@ const acceptanceDelta = computed(() =>
 // The tallest bar in the funnel sets the scale for all of them. An empty
 // window leaves it at 1 so the division below never divides by zero.
 const funnelPeak = computed(() => Math.max(1, ...props.funnelByMonth.map((m) => m.captured)))
+// Erwartet und bisher sind dieselbe Frage in zwei Richtungen, also dieselbe
+// Karte mit einem Schalter statt zweier Karten nebeneinander.
+const cashMode = ref('expected')
+const cashAhead = computed(() => cashMode.value === 'expected')
+
+const cashMonths = computed(() =>
+  cashAhead.value
+    ? props.cashFlow.months.map((m) => ({ month: m.month, value: m.due, forecast: m.open }))
+    : props.cashFlowPast.months.map((m) => ({ month: m.month, value: m.received, forecast: 0 })),
+)
+
 const cashPeak = computed(() =>
-  Math.max(1, ...props.cashFlow.months.map((m) => m.due + m.open)),
+  Math.max(1, ...cashMonths.value.map((m) => Math.max(m.value, m.forecast))),
 )
 
 const bookedTotal = computed(() => props.funnelByMonth.reduce((sum, m) => sum + m.booked, 0))
@@ -316,22 +329,37 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
             <!-- M-07. Its own panel on this screen rather than a screen of its
                  own: "how are we doing" and "what is coming in" are the same
                  question asked twice. -->
-            <ReportCard v-if="cashFlow.months.length" :title="$t('reports.cashFlowTitle')">
+            <ReportCard
+              v-if="cashFlow.months.length"
+              :title="cashAhead ? $t('reports.cashFlowTitle') : $t('reports.cashFlowPastTitle')"
+              :sub="cashAhead
+                ? $t('reports.cashFlowSub', { projects: cashFlow.projects, quotes: cashFlow.quotes })
+                : $t('reports.cashFlowPastSub', { projects: cashFlowPast.projects })"
+            >
               <template #head>
-                <span
-                  v-if="cashFlow.overdue"
-                  class="inline-flex items-center gap-1.5 rounded-full bg-late-bg px-2.5 py-1 text-[12px] leading-none font-semibold text-destructive"
-                >
-                  {{ $t('reports.overdue', { amount: formatEurosRounded(cashFlow.overdue) }) }}
-                </span>
+                <ChoiceGroup
+                  v-model="cashMode"
+                  variant="segmented"
+                  :options="[
+                    { value: 'expected', label: $t('reports.cashAhead') },
+                    { value: 'past', label: $t('reports.cashPast') },
+                  ]"
+                />
               </template>
 
               <div class="flex items-center gap-4 text-[12.5px] text-muted-foreground">
                 <span class="inline-flex items-center gap-1.5">
-                  <span class="size-2.5 rounded-[3px] bg-action" />{{ $t('reports.seriesDue') }}
+                  <span class="size-2.5 rounded-[3px] bg-action" />
+                  {{ cashAhead ? $t('reports.seriesDue') : $t('reports.seriesReceived') }}
                 </span>
-                <span class="inline-flex items-center gap-1.5">
+                <span v-if="cashAhead" class="inline-flex items-center gap-1.5">
                   <span class="size-2.5 rounded-[3px]" :style="{ background: forecastFill }" />{{ $t('reports.seriesOpen') }}
+                </span>
+                <span
+                  v-if="cashAhead && cashFlow.overdue"
+                  class="ml-auto inline-flex items-center gap-1.5 rounded-full bg-late-bg px-2.5 py-1 text-[12px] leading-none font-semibold text-destructive"
+                >
+                  {{ $t('reports.overdue', { amount: formatEurosRounded(cashFlow.overdue) }) }}
                 </span>
               </div>
 
@@ -344,19 +372,29 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                   <div class="border-t border-dashed border-border" />
                   <div class="border-t border-border" />
                 </div>
+                <!-- IBCS: die Prognose steht neben dem Ist, nicht darauf, und
+                     schmaler als es. Gestapelt läse sich beides als eine Summe,
+                     die so niemand erwarten darf. -->
                 <div class="absolute inset-0 flex items-end justify-center gap-2.5">
-                  <div v-for="row in cashFlow.months" :key="row.month" class="flex h-full max-w-[64px] flex-1 flex-col justify-end gap-1">
-                    <span class="text-center text-[10.5px] leading-none font-semibold tabular-nums text-action">
-                      {{ row.due ? formatEurosRounded(row.due) : '' }}
-                    </span>
-                    <div class="w-full rounded-t-[4px]" :style="{ background: forecastFill, height: barHeight(row.open, cashPeak, 194) }" />
-                    <div class="w-full rounded-t-[4px] bg-action" :style="{ height: barHeight(row.due, cashPeak, 194) }" />
+                  <div v-for="row in cashMonths" :key="row.month" class="flex h-full max-w-[64px] flex-1 items-end gap-[3px]">
+                    <div class="flex h-full min-w-0 flex-[3] flex-col justify-end gap-1">
+                      <span class="text-center text-[10.5px] leading-none font-semibold tabular-nums whitespace-nowrap text-action">
+                        {{ row.value ? formatEurosRounded(row.value) : '' }}
+                      </span>
+                      <div class="w-full rounded-t-[4px] bg-action" :style="{ height: barHeight(row.value, cashPeak, 194) }" />
+                    </div>
+                    <div v-if="cashAhead" class="flex h-full min-w-0 flex-[2] flex-col justify-end gap-1">
+                      <span class="text-center text-[10.5px] leading-none font-semibold tabular-nums whitespace-nowrap text-faint">
+                        {{ row.forecast ? formatEurosRounded(row.forecast) : '' }}
+                      </span>
+                      <div v-if="row.forecast" class="w-full rounded-t-[4px]" :style="{ background: forecastFill, height: barHeight(row.forecast, cashPeak, 194) }" />
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div class="flex justify-center gap-2.5">
-                <div v-for="(row, index) in cashFlow.months" :key="row.month" class="flex max-w-[64px] flex-1 flex-col items-center text-[11.5px] leading-tight text-faint">
+                <div v-for="(row, index) in cashMonths" :key="row.month" class="flex max-w-[64px] flex-1 flex-col items-center text-[11.5px] leading-tight text-faint">
                   <span>{{ monthShort(row.month) }}</span>
                   <span class="h-[13px]">{{ yearTick(row.month, index) }}</span>
                 </div>

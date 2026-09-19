@@ -31,17 +31,47 @@ class CashFlowForecast
     /**
      * @return array{
      *     overdue: int,
+     *     projects: int,
+     *     quotes: int,
      *     months: list<array{month: string, due: int, received: int, open: int}>,
      * }
      */
     public static function build(?CarbonInterface $from = null, ?ProjectType $type = null): array
     {
         $start = ($from ?? now())->copy()->startOfMonth();
+        $end = $start->copy()->addMonths(self::MONTHS - 1)->endOfMonth();
 
         return [
             'overdue' => self::overdue($start, $type),
+            'projects' => self::projectsBehind($type, fn ($query) => $query
+                ->where('payment_installments.status', '!=', PaymentInstallmentStatus::Paid)
+                ->whereBetween('payment_installments.due_on', [$start, $end])),
+            'quotes' => self::openQuotes($type)
+                ->where('status', QuoteStatus::Sent)
+                ->whereNotNull('valid_until')
+                ->whereBetween('valid_until', [$start, $end])
+                ->count(),
             'months' => self::months($start, $type),
         ];
+    }
+
+    /**
+     * Wie viele Projekte hinter den Balken stehen. Ein Projekt mit sechs
+     * Raten ist ein Projekt, nicht sechs — gezählt wird über die Rate zum
+     * Auftrag und von dort zum Projekt.
+     *
+     * @param  callable(\Illuminate\Database\Eloquent\Builder): mixed  $scope
+     */
+    private static function projectsBehind(?ProjectType $type, callable $scope): int
+    {
+        $query = PaymentInstallment::query()
+            ->join('payment_plans', 'payment_plans.id', '=', 'payment_installments.payment_plan_id')
+            ->join('jobs', 'jobs.id', '=', 'payment_plans.job_id');
+
+        ProjectFilter::apply($query, $type, 'jobs.project_id');
+        $scope($query);
+
+        return (int) $query->distinct()->count('jobs.project_id');
     }
 
     /**
@@ -119,6 +149,44 @@ class CashFlowForecast
         }
 
         return $months;
+    }
+
+    /**
+     * Was tatsächlich hereinkam: die zwölf Monate bis einschließlich diesem,
+     * gebucht auf den Zahltag.
+     *
+     * Kein Gegenstück zur Prognose, sondern die andere Hälfte derselben
+     * Frage. Offene Angebote und fällige Raten haben hier nichts zu suchen:
+     * in einem vergangenen Monat ist beides entweder Geld geworden oder
+     * nicht.
+     *
+     * @return array{projects: int, months: list<array{month: string, received: int}>}
+     */
+    public static function past(?ProjectType $type = null): array
+    {
+        $start = now()->copy()->startOfMonth()->subMonths(self::MONTHS - 1);
+        $end = now()->copy()->endOfMonth();
+
+        $months = [];
+
+        for ($offset = 0; $offset < self::MONTHS; $offset++) {
+            $monthStart = $start->copy()->addMonths($offset);
+
+            $months[] = [
+                'month' => $monthStart->format('Y-m'),
+                'received' => (int) self::installments($type)
+                    ->where('status', PaymentInstallmentStatus::Paid)
+                    ->whereBetween('paid_on', [$monthStart, $monthStart->copy()->endOfMonth()])
+                    ->sum('amount'),
+            ];
+        }
+
+        return [
+            'projects' => self::projectsBehind($type, fn ($query) => $query
+                ->where('payment_installments.status', PaymentInstallmentStatus::Paid)
+                ->whereBetween('payment_installments.paid_on', [$start, $end])),
+            'months' => $months,
+        ];
     }
 
     /** Offene Angebote, auf Wunsch auf einen Projekttyp verengt. */

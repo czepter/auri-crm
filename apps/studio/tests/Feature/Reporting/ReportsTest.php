@@ -211,6 +211,33 @@ it('forecasts twelve months and every unpaid installment lands in exactly one bu
 
 // --- the screen ---------------------------------------------------------
 
+it('books the past series on the settlement month and counts the projects behind it', function () {
+    $paid = PaymentPlan::factory()->create(['total' => 60_000]);
+    PaymentInstallment::factory()->for($paid, 'plan')->create([
+        'amount' => 60_000,
+        'due_on' => now()->subMonths(4),
+        'paid_on' => now()->subMonths(3),
+        'sort_order' => 0,
+        'status' => PaymentInstallmentStatus::Paid,
+    ]);
+
+    // Unbezahlt und im selben Fenster fällig: gehört in die Prognose, nicht
+    // in das, was hereinkam.
+    PaymentInstallment::factory()->for(PaymentPlan::factory()->create(['total' => 30_000]), 'plan')->create([
+        'amount' => 30_000,
+        'due_on' => now()->subMonths(3),
+        'sort_order' => 0,
+        'status' => PaymentInstallmentStatus::Scheduled,
+    ]);
+
+    $past = CashFlowForecast::past();
+
+    expect($past['months'])->toHaveCount(12)
+        ->and(collect($past['months'])->sum('received'))->toBe(60_000)
+        ->and(collect($past['months'])->firstWhere('month', now()->subMonths(3)->format('Y-m'))['received'])->toBe(60_000)
+        ->and($past['projects'])->toBe(1);
+});
+
 it('renders the Auswertungen screen for a role that sees every project', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->get('/auswertungen')
