@@ -15,7 +15,7 @@ defineProps<{ portalDefaults: Record<string, string | boolean | null> }>()
 const form = useForm({
   name: '', email: '', phone: '', street: '', postcode: '', city: '',
   portal: {
-    portal_visible: '', accept_quotes: '', payment_status: '',
+    portal_visible: '', accept_quotes: '', sign_contracts: '', payment_status: '',
     messaging_mode: '', gallery_downloads: '', gallery_lists: '', gallery_comments: '',
     offers: '',
     welcome: '',

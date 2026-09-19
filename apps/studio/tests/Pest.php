@@ -1,5 +1,7 @@
 <?php
 
+use App\Contracts\Enums\ContractStatus;
+use App\Contracts\Models\Contract;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ShootStatus;
@@ -9,6 +11,7 @@ use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Stage;
 use App\Crm\Support\CrmVocabulary;
+use App\Documents\Models\DocumentTemplate;
 use App\Engagement\Models\Thread;
 use App\Enums\StaffRole;
 use App\Gallery\Models\Gallery;
@@ -240,6 +243,25 @@ function bookedContactProject(): Project
     Job::factory()->for($project)->create(['booked_at' => '2026-06-14 00:00:00']);
 
     return $project;
+}
+
+/**
+ * A Contract already in the `rendered` state, with real bytes sitting on the
+ * faked `local` disk at its artifact_path — call Storage::fake('local')
+ * before this.
+ */
+function renderedContract(?Project $project = null, string $bytes = '%PDF-stored-bytes'): Contract
+{
+    $contract = Contract::factory()
+        ->for($project ?? Project::factory())
+        ->for(DocumentTemplate::factory(), 'template')
+        ->create(['status' => ContractStatus::Pending]);
+
+    $path = "contracts/test/{$contract->public_id}.pdf";
+    Storage::disk('local')->put($path, $bytes);
+    $contract->update(['status' => ContractStatus::Rendered, 'artifact_path' => $path, 'rendered_at' => now()]);
+
+    return $contract->fresh();
 }
 
 /**

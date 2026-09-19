@@ -33,7 +33,7 @@ const { t } = useI18n()
 // A pane sends only its own fields; the controller's `sometimes` leaves the
 // rest of the row untouched.
 const SECTION_FIELDS: Record<Section, string[]> = {
-  portal: ['portal_maintenance_enabled', 'portal_maintenance_message', 'portal_accept_quotes_enabled', 'portal_payment_status_enabled', 'portal_messaging_mode', 'portal_offers_enabled', 'client_register'],
+  portal: ['portal_maintenance_enabled', 'portal_maintenance_message', 'portal_accept_quotes_enabled', 'portal_sign_contracts_enabled', 'portal_payment_status_enabled', 'portal_messaging_mode', 'portal_offers_enabled', 'client_register'],
   home: ['portal_welcome_inquiry', 'portal_welcome_text', 'portal_welcome_many', 'portal_contact_phone', 'portal_contact_email', 'portal_contact_response_time'],
   privacy: [
     'dsgvo_request_recipient', 'dsgvo_request_deadline_days',
@@ -56,6 +56,7 @@ const form = useForm({
   portal_legal_agb_family: props.settings.legalFamilies.agb ?? '',
   portal_legal_widerruf_family: props.settings.legalFamilies.widerruf ?? '',
   portal_accept_quotes_enabled: props.settings.acceptQuotesEnabled,
+  portal_sign_contracts_enabled: props.settings.signContractsEnabled,
   portal_payment_status_enabled: props.settings.paymentStatusEnabled,
   portal_offers_enabled: props.settings.offersEnabled,
   portal_messaging_mode: props.settings.messagingMode,
@@ -273,6 +274,12 @@ defineExpose({ form, submit })
         <div class="flex items-center gap-2.5">
           <Checkbox id="cb-portal-accept-quotes-enabled" v-model="form.portal_accept_quotes_enabled" />
           <Label variant="inline" for="cb-portal-accept-quotes-enabled">{{ $t('portalSettings.acceptQuotesEnabledLabel') }}</Label>
+        </div>
+      </div>
+      <div class="mb-6">
+        <div class="flex items-center gap-2.5">
+          <Checkbox id="cb-portal-sign-contracts-enabled" v-model="form.portal_sign_contracts_enabled" />
+          <Label variant="inline" for="cb-portal-sign-contracts-enabled">{{ $t('portalSettings.signContractsEnabledLabel') }}</Label>
         </div>
       </div>
       <div class="mb-6">

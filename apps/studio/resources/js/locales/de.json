@@ -426,6 +426,31 @@
     "sent": "Versendet",
     "viewed": "Geöffnet"
   },
+  "contractWizard": {
+    "open": "Schnellbau",
+    "title": "Vertrag zusammenstellen",
+    "submit": "Vertrag prüfen",
+    "group": {
+      "auftrag": "Auftrag",
+      "nutzung": "Nutzungsrechte",
+      "lieferung": "Lieferung",
+      "ausfall": "Ausfall und Rücktritt",
+      "recht": "Rechtliches"
+    }
+  },
+  "contractsOverview": {
+    "title": "Verträge",
+    "searchPlaceholder": "Kunde oder Projekt suchen",
+    "empty": "Keine Verträge.",
+    "toProjects": "Zu den Projekten",
+    "project": "Kunde",
+    "version": "Fassung",
+    "versionLabel": "Fassung {version}",
+    "sentOn": "Versendet",
+    "signedOn": "Unterschrieben",
+    "open": "Offen",
+    "deadline": "Frist"
+  },
   "creditNotesOverview": {
     "title": "Gutschriften",
     "searchPlaceholder": "Gutschrift, Rechnung oder Kunde suchen",

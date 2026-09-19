@@ -8,6 +8,7 @@ use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Jobs\RenderContractJob;
 use App\Contracts\Models\Contract;
 use App\Contracts\Notifications\ContractSent;
+use App\Contracts\Support\ClauseCatalog;
 use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Data\ProjectHeaderData;
 use App\Crm\Enums\ProjectContactRole;
@@ -18,6 +19,7 @@ use App\Documents\Support\DocumentBlockCatalog;
 use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Documents\Support\SafeHtml;
+use App\Documents\Support\StarterBlockSerializer;
 use App\Http\Controllers\Controller;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\MailPreview;
@@ -84,6 +86,11 @@ class ContractController extends Controller
                 ->map(fn ($contact) => ['value' => $contact->public_id, 'label' => $contact->name])
                 ->values(),
             'palette' => DocumentBlockCatalog::paletteFor(DocumentTemplateType::Contract),
+            'clauses' => ClauseCatalog::forTemplate(
+                DocumentTemplate::current()->ofType(DocumentTemplateType::Contract)
+                    ->forShootKind($project->primaryShoot?->kind)
+                    ->orderBy('name')->first(),
+            ),
             'mergeFields' => collect(MergeFieldVocabulary::samples())
                 ->map(fn (string $sample, string $path) => ['path' => $path, 'sample' => $sample])
                 ->values()->all(),
@@ -94,10 +101,22 @@ class ContractController extends Controller
     {
         $this->authorize('manageContracts', $project);
 
-        $validated = $request->validate(['template' => ['required', 'string']]);
+        $validated = $request->validate([
+            'template' => ['required', 'string'],
+            'clauses' => ['nullable', 'array'],
+            'clauses.*.title' => ['required_with:clauses', 'string', 'max:200'],
+            'clauses.*.text' => ['required_with:clauses', 'string', 'max:10000'],
+        ]);
 
         $template = DocumentTemplate::current()->ofType(DocumentTemplateType::Contract)
             ->where('public_id', $validated['template'])->firstOrFail();
+
+        $blocks = isset($validated['clauses'])
+            ? ['blocks' => array_map(
+                fn (array $clause) => ['type' => 'clause', 'data' => ['title' => $clause['title'], 'text' => $clause['text']]],
+                array_values($validated['clauses']),
+            )]
+            : null;
 
         $contract = Contract::create([
             'project_id' => $project->id,
@@ -106,6 +125,10 @@ class ContractController extends Controller
             'status' => ContractStatus::Pending,
             'state' => ContractState::Draft,
             'version' => $this->nextVersion($project),
+            // Der Schnellbau schreibt eine eigene Fassung; ohne ihn bleibt die
+            // Vorlage der Wortlaut (Contract::resolvedBody()).
+            'body' => $blocks === null ? null : StarterBlockSerializer::toHtml($blocks),
+            'blocks' => $blocks,
         ]);
 
         RenderContractJob::dispatch($contract)->onQueue('render');

@@ -60,6 +60,7 @@ const settings: App.Settings.Data.PortalSettingsData = {
   widerrufUrl: null,
   legalFamilies: { impressum: null, datenschutz: null, agb: null, widerruf: null },
   acceptQuotesEnabled: true,
+  signContractsEnabled: true,
   paymentStatusEnabled: true,
   offersEnabled: true,
   messagingMode: 'booking',

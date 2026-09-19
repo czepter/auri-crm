@@ -4,6 +4,7 @@ import { Link, router, useForm } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/ProjectShell.vue'
+import ContractWizard from '@/admin/components/ContractWizard.vue'
 import DocumentEditor from '@/admin/components/DocumentEditor.vue'
 import DocumentPreviewPane from '@/admin/components/DocumentPreviewPane.vue'
 import Card from '@/ui/page/Card.vue'
@@ -27,6 +28,7 @@ const props = defineProps<{
   contacts: { value: string; label: string }[]
   palette: PaletteEntry[]
   mergeFields: { path: string; sample: string }[]
+  clauses: { key: string; group: string; title: string; text: string; on: boolean }[]
 }>()
 
 const { t } = useI18n()
@@ -253,6 +255,10 @@ function day(value: string | null): string {
           v-if="!header.canManageContracts || !templates.length"
           class="text-[11.5px] leading-[1.45] text-faint"
         >{{ $t('project.contractNone') }}</p>
+
+        <div v-if="header.canManageContracts && templates.length" class="mb-6">
+          <ContractWizard :project-id="header.id" :templates="templates" :clauses="clauses" />
+        </div>
 
         <form v-if="header.canManageContracts && templates.length" @submit.prevent="generate.post(`/auftraege/${header.id}/vertraege`, { preserveScroll: true })">
           <div class="mb-6 flex min-w-0 max-w-[280px] flex-col gap-1.5">

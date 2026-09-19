@@ -5,6 +5,7 @@ use App\Automation\Http\Controllers\AutomationRuleController;
 use App\Catalog\Http\Controllers\PackageController;
 use App\Catalog\Http\Controllers\ServiceSuggestionController;
 use App\Contracts\Http\Controllers\ContractController;
+use App\Contracts\Http\Controllers\ContractIndexController;
 use App\Contracts\Http\Controllers\ContractSignerController;
 use App\Crm\Http\Controllers\AvailabilityController;
 use App\Crm\Http\Controllers\CalendarController;
@@ -848,6 +849,8 @@ Route::middleware('audience:staff')->group(function () {
         // Die Gutschriften des ganzen Buchs. Eine Gutschrift haengt an ihrer
         // Rechnung, die Frage nach allen stellt aber der Jahresabschluss.
         Route::get('/gutschriften', CreditNoteController::class)->name('credit-notes.index');
+
+        Route::get('/vertraege', ContractIndexController::class)->name('contracts.index');
         Route::get('/rechnungen/{invoice}/gutschrift/{creditNote}', [InvoiceController::class, 'downloadCreditNote'])
             ->name('invoices.credit-note.download');
 
