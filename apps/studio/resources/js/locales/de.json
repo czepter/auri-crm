@@ -1227,8 +1227,7 @@
   },
   "onboarding": {
     "title": "Studio einrichten",
-    "subtitle": "Name, Logo, Farbe, Anrede.",
-    "previewLabel": "Kundenportal",
+    "subtitle": "So erscheint das Studio im Kundenportal.",
     "finish": "Fertig",
     "skip": "Später abschließen",
     "emailCode": "Code aus der E-Mail",

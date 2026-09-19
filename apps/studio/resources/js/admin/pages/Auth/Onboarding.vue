@@ -50,21 +50,18 @@ function finish() {
 
           <!-- Was der Kunde zuerst sieht, während es eingetragen wird — dieselben
                drei Werte, die PortalHeader zeichnet. -->
-          <div>
-            <span class="block text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-muted-foreground">{{ $t('onboarding.previewLabel') }}</span>
-            <div class="mt-2.5 overflow-hidden rounded-[12px] border border-border bg-background">
-              <div class="flex items-center gap-2.5 border-b border-border px-3.5 py-3">
-                <img v-if="settings.logoUrl" :src="settings.logoUrl" alt="" class="size-[24px] rounded-[6px] object-contain" />
-                <span
-                  v-else
-                  class="flex size-[24px] items-center justify-center rounded-[6px] text-[11px] font-bold text-paper"
-                  :style="{ background: preview.accent }"
-                >{{ preview.name.slice(0, 1) }}</span>
-                <span class="text-[13.5px] leading-none font-semibold tracking-[-0.02em] text-foreground">{{ preview.name }}</span>
-              </div>
-              <div class="px-3.5 py-3">
-                <span class="inline-block rounded-[var(--r-pill)] bg-foreground px-4 py-2 text-[12px] leading-none font-semibold text-paper">{{ $t('portal.quoteAccept') }}</span>
-              </div>
+          <div class="overflow-hidden rounded-[12px] border border-border bg-background">
+            <div class="flex items-center gap-2.5 border-b border-border px-3.5 py-3">
+              <img v-if="settings.logoUrl" :src="settings.logoUrl" alt="" class="size-[24px] rounded-[6px] object-contain" />
+              <span
+                v-else
+                class="flex size-[24px] items-center justify-center rounded-[6px] text-[11px] font-bold text-paper"
+                :style="{ background: preview.accent }"
+              >{{ preview.name.slice(0, 1) }}</span>
+              <span class="text-[13.5px] leading-none font-semibold tracking-[-0.02em] text-foreground">{{ preview.name }}</span>
+            </div>
+            <div class="px-3.5 py-3">
+              <span class="inline-block rounded-[var(--r-pill)] bg-foreground px-4 py-2 text-[12px] leading-none font-semibold text-paper">{{ $t('portal.quoteAccept') }}</span>
             </div>
           </div>
         </div>
