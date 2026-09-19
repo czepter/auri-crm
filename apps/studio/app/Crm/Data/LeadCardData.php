@@ -2,7 +2,9 @@
 
 namespace App\Crm\Data;
 
+use App\Crm\Enums\StageAnchor;
 use App\Crm\Models\Lead;
+use App\Support\FibonacciReminderSchedule;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -36,6 +38,11 @@ class LeadCardData extends Data
         public ?string $source,
         public string $stage,
         public int $daysInStage,
+        // Liegezeit, abgeleitet statt gespeichert: ein zweiter Status neben
+        // der Stufe liefe mit ihr auseinander, sobald jemand die Karte
+        // verschiebt. Die Schwelle ist die erste Sprosse des Laufs, der
+        // ohnehin schon erinnert — siehe RemindStalledLeads.
+        public bool $stale,
         // C-07 (#241): the list view carries a value column and the board's
         // column heads carry the sum of one — the question staff otherwise
         // leave the screen for. Minor units, formatted once on the screen.
@@ -51,6 +58,7 @@ class LeadCardData extends Data
     {
         $project = $lead->project;
         $primary = $project->primaryShoot;
+        $daysInStage = (int) $lead->stage_entered_at->startOfDay()->diffInDays(now()->startOfDay());
 
         return new self(
             id: $project->public_id,
@@ -63,7 +71,9 @@ class LeadCardData extends Data
             venue: $primary?->venue(),
             source: $lead->source?->label(),
             stage: $lead->stage->key,
-            daysInStage: (int) $lead->stage_entered_at->startOfDay()->diffInDays(now()->startOfDay()),
+            daysInStage: $daysInStage,
+            stale: $lead->stage->anchor !== StageAnchor::Won
+                && $daysInStage >= FibonacciReminderSchedule::FIRST_RUNG,
             value: $project->latestQuote?->total,
             lastAt: $lead->stage_entered_at->toIso8601String(),
             conflicts: $conflicts,

@@ -96,6 +96,18 @@ it('counts days in the current stage, not since creation', function () {
     expect(boardProps()['columns'][1]['cards'][0]['daysInStage'])->toBe(8);
 });
 
+it('marks a lead as lying from the first reminder rung, and never a booked one', function () {
+    leadOn('2026-06-14', LeadStage::New, daysAgo: 2);
+    leadOn('2026-07-11', LeadStage::Contacted, daysAgo: 3, name: 'Petersen');
+    leadOn('2026-08-22', LeadStage::Booked, daysAgo: 40, name: 'Vehse & Rieck');
+
+    $columns = boardProps()['columns'];
+
+    expect($columns[0]['cards'][0]['stale'])->toBeFalse()
+        ->and($columns[1]['cards'][0]['stale'])->toBeTrue()
+        ->and($columns[4]['cards'][0]['stale'])->toBeFalse();
+});
+
 it('renders a card with no date at all', function () {
     leadOn(null, name: 'Mira Sundermann');
 

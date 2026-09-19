@@ -2,6 +2,12 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import Board from './Board.vue'
 import { conflicts, queue, stages } from '../__stories__/fixtures'
 
+// Die Liegezeit steht auf der Karte, also muss sie mitaltern: ein
+// festes Datum hier zeigt nach einer Woche einen anderen Zustand als
+// daysInStage daneben behauptet.
+const daysAgo = (days: number) =>
+    new Date(Date.now() - days * 86_400_000).toISOString()
+
 const cards: App.Crm.Data.LeadCardData[] = [
     {
         id: 'p-osterhoff',
@@ -15,8 +21,9 @@ const cards: App.Crm.Data.LeadCardData[] = [
         source: 'Website',
         stage: 'new',
         daysInStage: 6,
+        stale: true,
         value: null,
-        lastAt: '2026-09-06T09:30:00+02:00',
+        lastAt: daysAgo(6),
         conflicts: [],
     },
     {
@@ -31,8 +38,9 @@ const cards: App.Crm.Data.LeadCardData[] = [
         source: 'Instagram',
         stage: 'contacted',
         daysInStage: 2,
+        stale: false,
         value: null,
-        lastAt: '2026-09-10T14:05:00+02:00',
+        lastAt: daysAgo(2),
         conflicts: [],
     },
     {
@@ -47,8 +55,9 @@ const cards: App.Crm.Data.LeadCardData[] = [
         source: 'Website',
         stage: 'quote_sent',
         daysInStage: 4,
+        stale: true,
         value: 348000,
-        lastAt: '2026-09-08T11:02:00+02:00',
+        lastAt: daysAgo(4),
         conflicts,
     },
     {
@@ -63,8 +72,9 @@ const cards: App.Crm.Data.LeadCardData[] = [
         source: 'Hochzeitsmesse',
         stage: 'quote_sent',
         daysInStage: 11,
+        stale: true,
         value: 412000,
-        lastAt: '2026-09-01T17:45:00+02:00',
+        lastAt: daysAgo(11),
         conflicts: [],
     },
     {
@@ -79,8 +89,9 @@ const cards: App.Crm.Data.LeadCardData[] = [
         source: 'Empfehlung',
         stage: 'quote_accepted',
         daysInStage: 2,
+        stale: false,
         value: 426000,
-        lastAt: '2026-09-10T08:15:00+02:00',
+        lastAt: daysAgo(2),
         conflicts: [],
     },
 ]
