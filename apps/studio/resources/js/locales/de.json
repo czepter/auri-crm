@@ -1397,6 +1397,7 @@
     "legalTemplateLabel": "Vorlage",
     "legalOpenImpressum": "Impressum ansehen",
     "legalNewTemplate": "Rechtstext schreiben",
+    "legalMissing": "Fehlt vor dem ersten Versand",
     "capabilitiesSection": "Freigaben",
     "acceptQuotesEnabledLabel": "Angebote online annehmen",
     "paymentStatusEnabledLabel": "Zahlungsstatus einsehen",

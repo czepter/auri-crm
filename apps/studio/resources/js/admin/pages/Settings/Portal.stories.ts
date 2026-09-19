@@ -110,3 +110,15 @@ export const Rechtliches: Story = {
     },
   },
 }
+
+/** Ohne Widerrufsbelehrung: das Angebot darf entstehen, aber nicht hinaus. */
+export const RechtlichesUnvollstaendig: Story = {
+  parameters: { url: '/einstellungen/portal?pane=privacy' },
+  args: {
+    settings: {
+      ...settings,
+      widerrufUrl: null,
+      legalFamilies: { impressum: null, datenschutz: null, agb: null, widerruf: null },
+    },
+  },
+}

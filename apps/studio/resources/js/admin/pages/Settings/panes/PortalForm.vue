@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
@@ -9,6 +10,7 @@ import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group'
 import { ChoiceGroup } from '@/ui/choice-group'
+import { missingLegalTexts } from '@/admin/lib/legalTexts'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
 type Section = 'portal' | 'home' | 'privacy'
@@ -88,6 +90,11 @@ function sourceOptions(text: LegalText) {
     { value: 'document', label: t('portalSettings.legalSourceDocument') },
   ]
 }
+
+// Ohne Widerrufsbelehrung darf ein Angebot entstehen, aber nicht hinausgehen.
+const missingBeforeSend = computed(() => missingLegalTexts(Object.fromEntries(
+  LEGAL_TEXTS.map((text) => [text, { url: form[`portal_legal_${text}_url`], family: form[`portal_legal_${text}_family`] }]),
+)))
 
 function chooseSource(text: LegalText, source: Source) {
   form[`portal_legal_${text}_url`] = ''
@@ -256,6 +263,11 @@ defineExpose({ form, submit })
               rel="noopener"
             >{{ $t('portalSettings.legalOpenImpressum') }}</a>
           </div>
+        </div>
+
+        <div v-if="missingBeforeSend.length" class="flex flex-wrap items-center gap-2.5 rounded-[12px] bg-due-bg px-4 py-3 text-[12.5px] text-due">
+          <span class="font-semibold">{{ $t('portalSettings.legalMissing') }}</span>
+          <span>{{ missingBeforeSend.map((text) => $t(`portalSettings.legal_${text}`)).join(', ') }}</span>
         </div>
 
         <a class="text-[13px] font-medium text-action no-underline" href="/dokumentvorlagen/neu">
