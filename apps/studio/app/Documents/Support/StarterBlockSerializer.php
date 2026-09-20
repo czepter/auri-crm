@@ -26,7 +26,7 @@ namespace App\Documents\Support;
 class StarterBlockSerializer
 {
     /** Every type this can render — asserted against the catalog by StarterTemplateCatalogTest. */
-    public const SUPPORTED = ['header', 'paragraph', 'list', 'delimiter', 'table'];
+    public const SUPPORTED = ['header', 'paragraph', 'list', 'delimiter', 'table', 'clause'];
 
     /** @param array{blocks: list<array{type: string, data: array<string, mixed>}>} $document */
     public static function toHtml(array $document): string
@@ -47,6 +47,7 @@ class StarterBlockSerializer
             'list' => self::list($data),
             'delimiter' => '<hr class="doc-rule">',
             'table' => self::table($data),
+            'clause' => '<section class="doc-clause"><h3>'.self::text($data['title'] ?? '').'</h3><p>'.self::text($data['text'] ?? '').'</p></section>',
             default => throw new \InvalidArgumentException(
                 "StarterBlockSerializer cannot render a '{$block['type']}' block. Add it here and to serialize.ts, or keep it out of the catalog."
             ),

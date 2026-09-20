@@ -9,7 +9,14 @@ import Table from '@editorjs/table'
 import { buildTools } from '@/admin/documents/blocks/tools'
 import { createMergeFieldTool } from '@/admin/documents/blocks/mergeFieldTool'
 import { CalloutTool, ColumnsTool, ImageTool, RawHtmlTool, SpacerTool } from '@/admin/documents/blocks/customTools'
-import { ChecklistTool, FinePrintTool, PageBreakTool, rowsTool } from '@/admin/documents/blocks/printTools'
+import {
+  ChecklistTool,
+  ClauseTool,
+  FinePrintTool,
+  PageBreakTool,
+  SignatureTool,
+  rowsTool,
+} from '@/admin/documents/blocks/printTools'
 import { ROW_SPECS } from '@/admin/documents/blocks/rowSpecs'
 import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/types'
 
@@ -45,6 +52,8 @@ const registry = {
   columns: ColumnsTool,
   image: ImageTool,
   pagebreak: PageBreakTool,
+  clause: ClauseTool,
+  signature: SignatureTool,
   checklist: ChecklistTool,
   finePrint: FinePrintTool,
   // Positionen, Zahlungsplan, Nutzungsrechte, Ablauf, Lieferumfang,

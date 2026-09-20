@@ -172,7 +172,7 @@ it('gives the edit screen the palette for the template it is editing', function 
             ->where('palette', fn ($palette) => collect($palette)
                 ->where('allowed', true)->pluck('type')->doesntContain('columns'))
             ->where('palette', fn ($palette) => collect($palette)
-                ->firstWhere('type', 'columns')['only'] === 'Angebot und Rechnung und Gutschrift'));
+                ->firstWhere('type', 'columns')['only'] === 'Vertrag und Angebot und Rechnung und Gutschrift'));
 });
 
 it('refuses a body carrying an href with an unsafe scheme', function () {

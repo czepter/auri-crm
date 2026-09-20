@@ -115,6 +115,7 @@ class StarterTemplateCatalog
             self::quoteWedding(),
             self::invoiceStandard(),
             self::invoiceSmallBusiness(),
+            self::contractWerkvertrag(),
             self::creditNote(),
             self::widerruf(),
             ...self::mails($register),
@@ -205,6 +206,60 @@ class StarterTemplateCatalog
             ]],
         ];
     }
+
+    // --- Vertrag ---------------------------------------------------------
+
+    private static function contractWerkvertrag(): array
+    {
+        return [
+            'key' => 'contract-werkvertrag',
+            'type' => DocumentTemplateType::Contract->value,
+            'name' => 'Fotovertrag (Werkvertrag)',
+            'description' => 'Gerüst mit Nutzungsrechten, Ausfall und Rücktritt. Ausgangspunkt, keine Rechtsberatung — vor dem ersten Einsatz prüfen lassen.',
+            'shootKind' => null,
+            'blocks' => ['blocks' => [
+                self::header('Fotovertrag'),
+
+                self::header('1. Parteien', 3),
+                self::paragraph('{{ studio.name }}, {{ studio.street }}, {{ studio.postcode }} {{ studio.city }} — nachfolgend Fotograf.'),
+                self::paragraph('{{ contact.name }}, {{ contact.street }}, {{ contact.postcode }} {{ contact.city }} — nachfolgend Auftraggeber.'),
+
+                self::header('2. Leistung', 3),
+                self::paragraph('Der Fotograf erstellt Aufnahmen im Rahmen von {{ project.name }}. Umfang und Ablauf ergeben sich aus dem angenommenen Angebot.'),
+
+                self::header('3. Termine', 3),
+                self::paragraph('Termin und Zeitrahmen sind im Angebot festgehalten. Verschiebungen bedürfen der Abstimmung beider Seiten in Textform.'),
+
+                self::header('4. Vergütung und Zahlung', 3),
+                self::paragraph('Es gilt die im Angebot vereinbarte Vergütung. Die Anzahlung wird mit Vertragsschluss fällig, der Restbetrag nach dem im Zahlungsplan genannten Termin.'),
+
+                self::header('5. Nutzungsrechte', 3),
+                self::paragraph('Der Auftraggeber erhält ein einfaches, räumlich und zeitlich unbeschränktes Nutzungsrecht an den gelieferten Bildern für private Zwecke.'),
+                self::paragraph('Eine gewerbliche Nutzung, die Weitergabe an Dritte zur Veröffentlichung sowie der Weiterverkauf bedürfen einer gesonderten Vereinbarung.'),
+                self::paragraph('Bearbeitungen, die den Bildcharakter verändern — Zuschnitt über das Format hinaus, Filter, Retusche —, sind nur nach Absprache zulässig. Bei Veröffentlichung ist der Fotograf zu nennen.'),
+                self::paragraph('Der Fotograf bleibt Urheber und darf die Bilder zur eigenen Werbung verwenden, sofern der Auftraggeber dem nicht in Textform widerspricht.'),
+
+                self::header('6. Bildauswahl und Lieferung', 3),
+                self::paragraph('Der Fotograf trifft die Auswahl der zu bearbeitenden Bilder nach gestalterischen Gesichtspunkten. Ein Anspruch auf unbearbeitete Dateien besteht nicht.'),
+                self::paragraph('Die Lieferung erfolgt über eine Online-Galerie innerhalb der vereinbarten Frist.'),
+
+                self::header('7. Ausfall und Rücktritt', 3),
+                self::paragraph('Kann der Fotograf den Termin aus einem von ihm nicht zu vertretenden Grund nicht wahrnehmen, bemüht er sich um eine Vertretung. Gelingt das nicht, werden bereits gezahlte Beträge erstattet; weitergehende Ansprüche bestehen nicht.'),
+                self::paragraph('Tritt der Auftraggeber zurück, bleibt die Anzahlung als Ausgleich für den reservierten Termin einbehalten.'),
+
+                self::header('8. Datenschutz', 3),
+                self::paragraph('Personenbezogene Daten werden ausschließlich zur Durchführung dieses Vertrags verarbeitet. Einzelheiten regelt die Datenschutzerklärung des Fotografen.'),
+
+                self::header('9. Widerruf', 3),
+                self::paragraph('{{ settings.widerrufText }}'),
+
+                self::header('10. Schlussbestimmungen', 3),
+                self::paragraph('Änderungen bedürfen der Textform. Sollte eine Bestimmung unwirksam sein, bleibt der übrige Vertrag wirksam.'),
+            ]],
+        ];
+    }
+
+    // --- Rechnung --------------------------------------------------------
 
     // --- Rechnung --------------------------------------------------------
 

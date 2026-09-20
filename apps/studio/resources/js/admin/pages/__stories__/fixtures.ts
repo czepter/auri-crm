@@ -404,6 +404,7 @@ const permissions = {
     canManageMessages: true,
     canManagePortalVisibility: true,
     canManageQuotes: true,
+    canManageContracts: true,
     canManagePaymentPlan: true,
     primaryShootCancelled: false,
     canManageForms: true,

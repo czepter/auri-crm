@@ -22,6 +22,7 @@ final class StudioEvents
         'inquiryReceived' => Studio\InquiryReceived::class,
         'clientMessage' => Studio\ClientMessagePosted::class,
         'quoteAccepted' => Studio\QuoteAccepted::class,
+        'contractSigned' => Studio\ContractSigned::class,
         'questionnaireSubmitted' => Studio\QuestionnaireSubmitted::class,
         'installmentPaid' => Studio\InstallmentPaid::class,
         'installmentDueSoon' => Studio\InstallmentDueSoon::class,

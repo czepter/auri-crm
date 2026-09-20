@@ -107,6 +107,51 @@ namespace Enums {
 export type PortalPriceMode = 'exact' | 'from' | 'on_request';
 }
 }
+namespace Contracts {
+namespace Data {
+export type ContractData = {
+id: string,
+version: number,
+state: string,
+stateLabel: string,
+status: string,
+statusLabel: string,
+templateName: string,
+templateVersion: number,
+body: string,
+blocks: Record<string, any> | null,
+renderedAt: string | null,
+sentAt: string | null,
+downloadUrl: string | null,
+signDeadlineOn: string | null,
+signers: App.Contracts.Data.ContractSignerData[],
+};
+export type ContractRowData = {
+id: string,
+projectId: string,
+projectName: string,
+contact: string | null,
+version: number,
+state: string,
+status: string,
+sentOn: string | null,
+signedOn: string | null,
+deadlineOn: string | null,
+hasDocument: boolean,
+};
+export type ContractSignerData = {
+id: string,
+name: string,
+role: string | null,
+signedAt: string | null,
+remindedAt: string | null,
+};
+}
+namespace Enums {
+export type ContractState = 'draft' | 'valid' | 'superseded';
+export type ContractStatus = 'pending' | 'rendered' | 'failed';
+}
+}
 namespace Crm {
 namespace Data {
 export type CalendarDayData = {
@@ -297,6 +342,7 @@ canManageMessages: boolean,
 portalVisible: boolean,
 canManagePortalVisibility: boolean,
 canManageQuotes: boolean,
+canManageContracts: boolean,
 canManagePaymentPlan: boolean,
 primaryShootCancelled: boolean,
 canManageForms: boolean,
@@ -525,7 +571,7 @@ unknownFields: string[],
 };
 }
 namespace Enums {
-export type DocumentTemplateType = 'quote' | 'invoice' | 'credit_note' | 'mail' | 'legal';
+export type DocumentTemplateType = 'contract' | 'quote' | 'invoice' | 'credit_note' | 'mail' | 'legal';
 }
 }
 namespace Engagement {
@@ -818,7 +864,7 @@ export type NotificationMode = 'immediate' | 'briefing' | 'digest' | 'off';
 }
 namespace Numbering {
 namespace Enums {
-export type DocumentType = 'quote' | 'invoice' | 'credit_note';
+export type DocumentType = 'quote' | 'contract' | 'invoice' | 'credit_note';
 export type NumberRangeResetRule = 'yearly' | 'continuous';
 }
 }
@@ -1046,6 +1092,7 @@ impressumUrl: string | null,
 widerrufUrl: string | null,
 legalFamilies: Record<string, string | null>,
 acceptQuotesEnabled: boolean,
+signContractsEnabled: boolean,
 paymentStatusEnabled: boolean,
 offersEnabled: boolean,
 messagingMode: string,

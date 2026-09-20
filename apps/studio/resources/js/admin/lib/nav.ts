@@ -25,7 +25,7 @@ export type NavCounts = {
 export const studioKeys = ['pakete', 'vorlagen', 'team', 'einstellungen']
 
 /** Die Zeilen unter "Unterlagen". */
-export const documentKeys = ['angebote', 'rechnungen', 'gutschriften']
+export const documentKeys = ['angebote', 'vertraege', 'rechnungen', 'gutschriften']
 
 // C-02 (#236), jetzt in vier Bloecken statt einem. Oben steht, was ohne
 // einzelnen Auftrag gilt; "Arbeit" ist, was heute ansteht, "Auftraege" sind
@@ -36,8 +36,10 @@ export const documentKeys = ['angebote', 'rechnungen', 'gutschriften']
 // "Studio" faltet zu: seine Zeilen sind Einrichtung, nicht Alltag. Wer darin
 // steht, sieht sie aufgeklappt, sonst kostet der Block eine Zeile.
 //
-// "Unterlagen" buendelt Angebote, Rechnungen und Gutschriften — die drei
-// Arten, die eine Buchhaltung als Belege kennt.
+// "Unterlagen" buendelt Angebote, Vertraege, Rechnungen und Gutschriften.
+// Der Vertrag steht zwischen Angebot und Rechnung, weil er dort entsteht,
+// und ist der einzige Eintrag, den kein Ablauf verlangt: #441 hat ihn
+// abgeschafft, #441 bringt ihn als Moeglichkeit zurueck.
 //
 // Nur Eintraege mit einem Screen dahinter erscheinen, dieselbe Regel, die C-06
 // auf seine Tabs und S-01 auf die Uebersicht anwendet: ein Eintrag, der nirgends
@@ -133,6 +135,13 @@ export function navItems(can: Capability[], counts: NavCounts = {}): NavEntry[] 
                     href: '/angebote',
                     needs: 'manage_quotes',
                     icon: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M9.5 13h5M9.5 16h5"/>',
+                },
+                {
+                    key: 'vertraege',
+                    label: 'Verträge',
+                    href: '/vertraege',
+                    needs: 'manage_contracts',
+                    icon: '<path d="M7 3h10v18H7z"/><path d="M10 8h4M10 12h4"/><path d="M9.5 17.5c1.2-1.4 2.2-1.4 2.8 0 .5 1.1 1.4 1.1 2.2-.3"/>',
                 },
                 {
                     key: 'rechnungen',

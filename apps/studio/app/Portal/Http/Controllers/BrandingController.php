@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /**
  * T-08's portal-side read of the one stored logo — the same file
  * StudioSettingsController::logo() serves on the admin surface and
- * the `studio.logoPath` merge field points at
+ * RenderContractJob's `studio.logoPath` merge field points at
  * (StudioSettingsResolver::logoPath()'s own doc comment already names this
  * as the future read). Public: a brand mark is not a secret, and this route
  * has to resolve on the sign-in screen, before any contact session exists.

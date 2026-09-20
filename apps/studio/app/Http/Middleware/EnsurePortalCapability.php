@@ -28,6 +28,7 @@ class EnsurePortalCapability
 
         $enabled = match ($capability) {
             'accept_quotes' => $settings->acceptQuotesEnabled($contact),
+            'sign_contracts' => $settings->signContractsEnabled($contact),
             'payment_status' => $settings->paymentStatusEnabled($contact),
             'messaging' => $settings->messagingEnabled($contact),
             'offers' => $settings->offersEnabled($contact),

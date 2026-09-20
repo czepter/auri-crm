@@ -152,6 +152,24 @@ describe('safety and unknown input', () => {
     expect(serialize(doc({ type: 'schedule', data: { rows: [{ time: '', item: '', place: '' }] } }), 'print')).toBe('')
   })
 
+  it('renders a signature block with one line per party', () => {
+    const html = serialize(
+      doc({
+        type: 'signature',
+        data: { place: 'Hamburg, 14.06.2026', parties: [{ role: 'Fotograf', name: 'Alex Nordlicht' }] },
+      }),
+      'print',
+    )
+
+    expect(html).toContain('<p class="doc-signature-place">Hamburg, 14.06.2026</p>')
+    expect(html).toContain('<span class="doc-signature-role">Fotograf</span>')
+  })
+
+  it('leaves the clause unnumbered in the body — the stylesheet counts', () => {
+    expect(serialize(doc({ type: 'clause', data: { title: 'Nutzungsrechte', text: 'Privat.' } }), 'print'))
+      .toBe('<section class="doc-clause"><h3>Nutzungsrechte</h3><p>Privat.</p></section>')
+  })
+
   it('marks a ticked option with a filled box', () => {
     expect(serialize(doc({ type: 'checklist', data: { items: [{ text: 'Social Media', checked: true }, { text: 'Print', checked: false }] } }), 'print'))
       .toBe('<ul class="doc-checklist"><li>☒ Social Media</li><li>☐ Print</li></ul>')

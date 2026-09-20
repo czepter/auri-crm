@@ -117,6 +117,7 @@ const portal = useForm({
   // switch on a single project still overrides it afterwards.
   portal_visible: asChoice(props.portalOverrides.portal_visible),
   accept_quotes: asChoice(props.portalOverrides.accept_quotes),
+  sign_contracts: asChoice(props.portalOverrides.sign_contracts),
   payment_status: asChoice(props.portalOverrides.payment_status),
   messaging_mode: (props.portalOverrides.messaging_mode as string) ?? '',
   gallery_downloads: asChoice(props.portalOverrides.gallery_downloads),

@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Listeners;
 
+use App\Contracts\Events\ContractSigned;
 use App\Crm\Events\LeadCaptured;
 use App\Notifications\Actions\NotifyStudio;
 use App\Notifications\Studio;
@@ -22,6 +23,11 @@ class NotifyStudioOfDomainEvent
     public function handleLeadCaptured(LeadCaptured $event): void
     {
         ($this->notify)(new Studio\InquiryReceived($event->lead));
+    }
+
+    public function handleContractSigned(ContractSigned $event): void
+    {
+        ($this->notify)(new Studio\ContractSigned($event->contract));
     }
 
     public function handleInstallmentPaid(InstallmentPaid $event): void
