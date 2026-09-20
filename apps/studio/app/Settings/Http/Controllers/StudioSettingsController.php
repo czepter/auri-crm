@@ -15,6 +15,7 @@ use App\Settings\Enums\FontPair;
 use App\Settings\Models\StudioSettings;
 use App\Settings\Rules\LegalTemplateFamily;
 use App\Settings\Rules\ValidIban;
+use App\Settings\Support\LogoResponse;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -115,10 +116,10 @@ class StudioSettingsController extends Controller
             'font_pair' => ['sometimes', 'nullable', Rule::enum(FontPair::class)],
             // #439: the onboarding's first step asks this beside the identity.
             'client_register' => ['sometimes', 'required', 'in:formal,informal'],
-            // SVG deliberately excluded: served inline from this app's own
-            // origin (logo(), below), an uploaded SVG can carry a <script>
-            // and execute as this app rather than as an image.
-            'logo' => ['sometimes', 'nullable', 'file', 'mimes:png', 'max:2048'],
+            // SVG ist erlaubt, weil App\Settings\Support\LogoResponse die
+            // Datei mit Sandbox-CSP ausliefert; ohne die beiden Kopfzeilen
+            // liefe ein <script> darin auf unserer Herkunft.
+            'logo' => ['sometimes', 'nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:2048'],
             // Optional: a studio that only takes card payments (or none yet
             // during onboarding) has no IBAN to file. What is entered still
             // has to be a real IBAN — the portal's "Überweisen" block hides
@@ -157,7 +158,7 @@ class StudioSettingsController extends Controller
 
         abort_if($path === null, 404);
 
-        return Storage::disk('local')->response($path);
+        return LogoResponse::for($path);
     }
 
     /**

@@ -209,6 +209,56 @@ it('stores an uploaded logo once and serves it from one route, with an audit row
     $this->get($props['settings']['logoUrl'])->assertOk();
 });
 
+// Vier Formate, weil ein Studio sein Zeichen als Vektor hat, wenn es Glück
+// hat. SVG geht nur mit den Kopfzeilen darunter.
+it('takes a logo as PNG, JPEG, WebP or SVG', function (string $file, string $mime) {
+    Storage::fake('local');
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->patch('/einstellungen', [
+            'tax_number' => '22/123/45678',
+            'logo' => UploadedFile::fake()->create($file, 12, $mime),
+            ...t07ValidBankFields(),
+        ])
+        ->assertSessionHasNoErrors();
+
+    expect(StudioSettings::query()->sole()->logo_path)->not->toBeNull();
+})->with([
+    ['logo.png', 'image/png'],
+    ['logo.jpg', 'image/jpeg'],
+    ['logo.webp', 'image/webp'],
+    ['logo.svg', 'image/svg+xml'],
+]);
+
+it('refuses a logo that is not an image at all', function () {
+    Storage::fake('local');
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->patch('/einstellungen', [
+            'tax_number' => '22/123/45678',
+            'logo' => UploadedFile::fake()->create('logo.pdf', 12, 'application/pdf'),
+            ...t07ValidBankFields(),
+        ])
+        ->assertInvalid(['logo']);
+});
+
+// Eine SVG-Datei ist Markup: ohne diese Kopfzeilen liefe ein <script> darin
+// auf unserer Herkunft, sobald jemand die Adresse direkt öffnet.
+it('serves the logo sandboxed, so an SVG cannot run as this app', function () {
+    Storage::fake('local');
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')->patch('/einstellungen', [
+        'tax_number' => '22/123/45678',
+        'logo' => UploadedFile::fake()->create('logo.svg', 12, 'image/svg+xml'),
+        ...t07ValidBankFields(),
+    ]);
+
+    $this->get('/einstellungen/logo')
+        ->assertOk()
+        ->assertHeader('X-Content-Type-Options', 'nosniff')
+        ->assertHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; sandbox");
+});
+
 it('replaces the logo on a second upload rather than keeping both', function () {
     Storage::fake('local');
     $owner = staffMember(StaffRole::Owner);
