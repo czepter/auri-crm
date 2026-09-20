@@ -15,6 +15,7 @@ class StudioClosureData extends Data
         public string $label,
         public string $startsOn,
         public string $endsOn,
+        public ?string $message,
     ) {}
 
     public static function fromModel(StudioClosure $closure): self
@@ -24,6 +25,7 @@ class StudioClosureData extends Data
             label: $closure->label,
             startsOn: $closure->starts_on->format('Y-m-d'),
             endsOn: $closure->ends_on->format('Y-m-d'),
+            message: $closure->message,
         );
     }
 }

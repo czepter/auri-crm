@@ -1138,6 +1138,7 @@
     "availabilityTitle": "Verfügbarkeit",
     "closuresLabel": "Schließzeiten",
     "closureLabelField": "Bezeichnung",
+    "closureMessageField": "Hinweis im Portal",
     "closureStartsOn": "Von",
     "closureEndsOn": "Bis",
     "closureAdd": "Schließzeit hinzufügen",

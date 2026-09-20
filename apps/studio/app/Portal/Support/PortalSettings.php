@@ -5,6 +5,7 @@ namespace App\Portal\Support;
 use App\Crm\Models\Contact;
 use App\Enums\StaffRole;
 use App\Models\User;
+use App\Settings\Models\StudioClosure;
 use App\Settings\Support\StudioSettingsResolver;
 
 /**
@@ -143,6 +144,9 @@ class PortalSettings
      * Inhabers zurück, damit ein Studio, das nie in den Einstellungen war,
      * erreichbar bleibt. Die Adresse nicht: ein Login ist ein Zugangsdatum
      * und nichts, was ein Kundenbildschirm von sich aus zeigen darf.
+     *
+     * Eine laufende oder bevorstehende Schließzeit mit Text ersetzt die
+     * Antwortzeit: solange das Studio zu ist, stimmt sie nicht.
      */
     public function contactLine(): array
     {
@@ -151,8 +155,27 @@ class PortalSettings
             'avatarUrl' => $this->studio->portalContactAvatarPath() !== null ? '/branding/kontakt' : null,
             'phone' => $this->studio->portalContactPhone() ?? $this->ownerPhone(),
             'email' => $this->studio->portalContactEmail(),
-            'responseTime' => $this->studio->portalContactResponseTime(),
+            'responseTime' => $this->closureNotice() ?? $this->studio->portalContactResponseTime(),
         ];
+    }
+
+    private function closureNotice(): ?string
+    {
+        $closure = StudioClosure::query()
+            ->whereNotNull('message')
+            ->whereDate('ends_on', '>=', today())
+            ->orderBy('starts_on')
+            ->first();
+
+        if ($closure === null) {
+            return null;
+        }
+
+        $range = $closure->starts_on->isSameDay($closure->ends_on)
+            ? $closure->starts_on->format('d.m.')
+            : $closure->starts_on->format('d.m.').' bis '.$closure->ends_on->format('d.m.');
+
+        return "{$range}: {$closure->message}";
     }
 
     private function ownerPhone(): ?string

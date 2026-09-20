@@ -63,12 +63,14 @@ it('creates a closure and leaves an audit row naming the actor', function () {
             'label' => 'Weihnachtspause',
             'starts_on' => '2026-12-24',
             'ends_on' => '2026-12-31',
+            'message' => 'Zurück am 2. Januar.',
         ])
         ->assertRedirect('/einstellungen/verfuegbarkeit');
 
     $closure = StudioClosure::query()->sole();
 
     expect($closure->label)->toBe('Weihnachtspause')
+        ->and($closure->message)->toBe('Zurück am 2. Januar.')
         ->and(AuditLog::where('event', 'studio_closure.created')->sole()->actor_id)->toBe($owner->id);
 });
 

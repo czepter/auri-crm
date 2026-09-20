@@ -9,6 +9,7 @@ import { Checkbox } from '@/ui/checkbox'
 import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
+import { Textarea } from '@/ui/textarea'
 
 const props = defineProps<{
   workingDays: number[]
@@ -42,7 +43,7 @@ function saveWorkingDays() {
 const closureForms = Object.fromEntries(
   props.closures.map((closure) => [
     closure.id,
-    useForm({ label: closure.label, starts_on: closure.startsOn, ends_on: closure.endsOn }),
+    useForm({ label: closure.label, starts_on: closure.startsOn, ends_on: closure.endsOn, message: closure.message ?? '' }),
   ]),
 )
 
@@ -54,7 +55,7 @@ function deleteClosure(id: string) {
   router.delete(`/einstellungen/verfuegbarkeit/schliesszeiten/${id}`, { preserveScroll: true })
 }
 
-const newClosureForm = useForm({ label: '', starts_on: '', ends_on: '' })
+const newClosureForm = useForm({ label: '', starts_on: '', ends_on: '', message: '' })
 
 function addClosure() {
   newClosureForm.post('/einstellungen/verfuegbarkeit/schliesszeiten', {
@@ -122,6 +123,11 @@ function addClosure() {
                         <DatePicker :id="`ends-${closure.id}`" v-model="closureForms[closure.id].ends_on" />
                         <p v-if="closureForms[closure.id].errors.ends_on" class="text-[11.5px] leading-[1.45] text-destructive">{{ closureForms[closure.id].errors.ends_on }}</p>
                       </div>
+                      <div class="col-span-full flex min-w-0 flex-col gap-1.5">
+                        <Label :for="`message-${closure.id}`">{{ $t('settings.closureMessageField') }} <em>{{ $t('settings.optional') }}</em></Label>
+                        <Textarea :id="`message-${closure.id}`" v-model="closureForms[closure.id].message" rows="2" maxlength="2000" />
+                        <p v-if="closureForms[closure.id].errors.message" class="text-[11.5px] leading-[1.45] text-destructive">{{ closureForms[closure.id].errors.message }}</p>
+                      </div>
                     </div>
                     <div class="mt-6 flex items-center gap-4 [&_[data-slot=button][data-variant=default]]:ml-0">
                       <Button
@@ -156,6 +162,11 @@ function addClosure() {
                       <Label for="new-ends">{{ $t('settings.closureEndsOn') }}</Label>
                       <DatePicker id="new-ends" v-model="newClosureForm.ends_on" />
                       <p v-if="newClosureForm.errors.ends_on" class="text-[11.5px] leading-[1.45] text-destructive">{{ newClosureForm.errors.ends_on }}</p>
+                    </div>
+                    <div class="col-span-full flex min-w-0 flex-col gap-1.5">
+                      <Label for="new-message">{{ $t('settings.closureMessageField') }} <em>{{ $t('settings.optional') }}</em></Label>
+                      <Textarea id="new-message" v-model="newClosureForm.message" rows="2" maxlength="2000" />
+                      <p v-if="newClosureForm.errors.message" class="text-[11.5px] leading-[1.45] text-destructive">{{ newClosureForm.errors.message }}</p>
                     </div>
                   </div>
                   <div class="mt-6 flex items-center gap-4 [&_[data-slot=button][data-variant=default]]:ml-0">

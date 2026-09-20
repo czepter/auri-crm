@@ -1111,6 +1111,7 @@ id: string,
 label: string,
 startsOn: string,
 endsOn: string,
+message: string | null,
 };
 export type StudioSettingsData = {
 id: string,

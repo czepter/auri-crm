@@ -50,10 +50,10 @@ it('assigns crew, lists it and removes an assignment', function () {
 
 it('reads studio settings, closures and number ranges', function () {
     $this->withHeader('Authorization', 'Bearer '.opsToken(Capability::ManageSettings));
-    StudioClosure::factory()->spanning('2026-12-24', '2026-12-31')->create(['label' => 'Weihnachtspause']);
+    StudioClosure::factory()->spanning('2026-12-24', '2026-12-31')->create(['label' => 'Weihnachtspause', 'message' => 'Zurück am 2. Januar.']);
 
     $this->getJson('/api/studio-settings')->assertOk()->assertJsonStructure(['data' => ['vatMode', 'vatRate', 'quoteValidityDays']]);
-    $this->getJson('/api/studio-closures')->assertOk()->assertJsonPath('data.0.label', 'Weihnachtspause');
+    $this->getJson('/api/studio-closures')->assertOk()->assertJsonPath('data.0.label', 'Weihnachtspause')->assertJsonPath('data.0.message', 'Zurück am 2. Januar.');
     $this->getJson('/api/number-ranges')->assertOk()->assertJsonCount(NumberRange::query()->count(), 'data');
 });
 

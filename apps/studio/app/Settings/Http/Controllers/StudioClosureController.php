@@ -106,13 +106,14 @@ class StudioClosureController extends Controller
         return redirect('/einstellungen/verfuegbarkeit');
     }
 
-    /** @return array{label: string, starts_on: string, ends_on: string} */
+    /** @return array{label: string, starts_on: string, ends_on: string, message?: ?string} */
     private function validateClosure(Request $request): array
     {
         return $request->validate([
             'label' => ['required', 'string', 'max:255'],
             'starts_on' => ['required', 'date'],
             'ends_on' => ['required', 'date', 'after_or_equal:starts_on'],
+            'message' => ['nullable', 'string', 'max:2000'],
         ]);
     }
 }

@@ -7,6 +7,7 @@ use App\Engagement\Models\Thread;
 use App\Enums\StaffRole;
 use App\Gallery\Models\Gallery;
 use App\Portal\Support\PortalSettings;
+use App\Settings\Models\StudioClosure;
 use App\Settings\Models\StudioSettings;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -217,4 +218,37 @@ it('takes the contact number from the owner when the studio names none', functio
     Cache::store('redis')->flush();
 
     expect(settings()->contactLine()['phone'])->toBe('030 220120');
+});
+
+it('shows the notice of a closure that is running or ahead in place of the response time', function () {
+    $this->travelTo('2026-12-27 10:00:00');
+    StudioSettings::query()->update(['portal_contact_response_time' => 'binnen 24 Stunden']);
+
+    expect(settings()->contactLine()['responseTime'])->toBe('binnen 24 Stunden');
+
+    StudioClosure::factory()->spanning('2026-12-24', '2026-12-31')->create(['message' => 'Zurück am 2. Januar.']);
+    expect(settings()->contactLine()['responseTime'])->toBe('24.12. bis 31.12.: Zurück am 2. Januar.');
+
+    StudioClosure::query()->delete();
+    StudioClosure::factory()->spanning('2027-02-08', '2027-02-22')->create(['message' => 'Lofoten.']);
+    expect(settings()->contactLine()['responseTime'])->toBe('08.02. bis 22.02.: Lofoten.');
+});
+
+it('keeps the response time for a closure that is over or has no notice', function () {
+    $this->travelTo('2027-01-05 10:00:00');
+    StudioSettings::query()->update(['portal_contact_response_time' => 'binnen 24 Stunden']);
+
+    StudioClosure::factory()->spanning('2026-12-24', '2027-01-04')->create(['message' => 'Vorbei.']);
+    StudioClosure::factory()->spanning('2027-01-04', '2027-01-10')->create(['message' => null]);
+
+    expect(settings()->contactLine()['responseTime'])->toBe('binnen 24 Stunden');
+});
+
+it('takes the closure that starts first when several carry a notice', function () {
+    $this->travelTo('2026-12-01 10:00:00');
+
+    StudioClosure::factory()->spanning('2027-02-08', '2027-02-22')->create(['message' => 'Später.']);
+    StudioClosure::factory()->spanning('2026-12-24', '2026-12-31')->create(['message' => 'Zuerst.']);
+
+    expect(settings()->contactLine()['responseTime'])->toBe('24.12. bis 31.12.: Zuerst.');
 });

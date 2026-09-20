@@ -21,7 +21,7 @@ class StudioClosure extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['label', 'starts_on', 'ends_on'];
+    protected $fillable = ['label', 'starts_on', 'ends_on', 'message'];
 
     protected function casts(): array
     {
