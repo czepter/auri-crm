@@ -242,7 +242,7 @@ defineExpose({ form, submit })
                 <img :src="settings.logoUrl" :alt="$t('settings.logo')" style="width: 100%; height: 100%; object-fit: contain" />
               </div>
               <div v-else class="flex size-10 flex-none items-center justify-center rounded-[6px] bg-muted p-1 text-center text-[8.5px] leading-[1.2] font-semibold tracking-[0.02em] text-faint">{{ $t('settings.logo') }}</div>
-              <Input id="p-logo" type="file" accept="image/png" style="flex: 1" @change="onLogoChange" />
+              <Input id="p-logo" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="flex: 1" @change="onLogoChange" />
             </div>
           </Field>
           <Field

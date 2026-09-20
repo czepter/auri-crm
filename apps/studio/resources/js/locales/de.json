@@ -1052,7 +1052,7 @@
     "logo": "Logo",
     "showcase": "Schaufenster",
     "showcaseHint": "Raster über dem Regler. Unter sechs Bildern wiederholt es sich sichtbar.",
-    "logoHint": "PNG, transparenter Hintergrund empfohlen.",
+    "logoHint": "PNG, JPEG, WebP oder SVG. Transparenter Hintergrund empfohlen.",
     "accentColor": "Akzentfarbe",
     "bank": "Bankverbindung",
     "bankAccountHolder": "Kontoinhaber",
