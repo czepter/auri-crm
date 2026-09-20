@@ -24,10 +24,10 @@ it('creates the first owner, signs them in, and sends them to the studio wizard'
     $this->assertAuthenticatedAs($user, 'staff');
 });
 
-it('404s both verbs once a staff account already exists', function () {
+it('redirects GET to login and 404s POST once a staff account exists', function () {
     User::factory()->create();
 
-    $this->get('/einrichtung')->assertNotFound();
+    $this->get('/einrichtung')->assertRedirect('/login');
     $this->post('/einrichtung', [
         'name' => 'Zweite Person',
         'email' => 'zweite@nordlicht.test',
