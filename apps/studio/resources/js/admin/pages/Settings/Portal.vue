@@ -8,7 +8,8 @@ import PortalForm from './panes/PortalForm.vue'
 import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { useI18n } from 'vue-i18n'
-import { refDebounced, useElementSize } from '@vueuse/core'
+import { onKeyStroke, refDebounced } from '@vueuse/core'
+import { Maximize2, Monitor, Smartphone, X } from 'lucide-vue-next'
 
 defineProps<{
   settings: App.Settings.Data.PortalSettingsData
@@ -49,25 +50,33 @@ const stateOptions = ['inquiry', 'active', 'done'].map((value) => ({
   label: t(`portalSettings.welcomeState.${value}`),
 }))
 
-// Die Seite steht neben dem Formular, also in einer Spalte, die schmaler ist
-// als das Portal breit ist. Gerendert wird trotzdem in der echten Breite —
-// 1180px am Schreibtisch, 390px am Telefon — und das Ganze auf die Spalte
-// heruntergerechnet, damit der Umbruch der ist, den der Kunde sieht, und
-// nicht einer, den die Rahmenbreite erfindet.
-const DEVICES = { desktop: { width: 1180, height: 900 }, mobile: { width: 390, height: 844 } }
+// Die Seite wird in der Breite gerendert, die sie bekommt — kein Maßstab,
+// keine Lupe. Am Telefon sind das 390px, am Schreibtisch die Spalte selbst,
+// und wem die zu schmal ist, der klappt die Vorschau auf: dann stehen die
+// 1180px da, mit denen das Portal seine zwei Spalten aufmacht.
+const DEVICES = {
+  desktop: { width: null as number | null, expanded: 1180, icon: Monitor },
+  mobile: { width: 390, expanded: 390, icon: Smartphone },
+}
 
 const device = ref<keyof typeof DEVICES>('desktop')
 
 const deviceOptions = (Object.keys(DEVICES) as (keyof typeof DEVICES)[]).map((value) => ({
   value,
   label: t(`portalSettings.device.${value}`),
+  icon: DEVICES[value].icon,
 }))
 
-const rail = ref<HTMLElement>()
-const { width: railWidth } = useElementSize(rail)
+const expanded = ref(false)
 
-const frame = computed(() => DEVICES[device.value])
-const scale = computed(() => Math.min(1, (railWidth.value || frame.value.width) / frame.value.width))
+onKeyStroke('Escape', () => (expanded.value = false))
+
+const width = computed(() => {
+  const size = expanded.value ? DEVICES[device.value].expanded : DEVICES[device.value].width
+
+  return size === null ? '100%' : `${size}px`
+})
+
 </script>
 
 <template>
@@ -96,28 +105,51 @@ const scale = computed(() => Math.min(1, (railWidth.value || frame.value.width) 
               <PortalForm ref="formRef" :settings="settings" />
             </div>
 
-            <aside ref="rail" class="sticky top-6 min-w-[360px] flex-1">
-              <div class="mb-2.5 flex flex-wrap items-center gap-3">
+            <aside class="sticky top-6 min-w-[360px] flex-1">
+              <div class="mb-2.5 flex items-center gap-3">
                 <span class="text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.previewPortal') }}</span>
-                <ChoiceGroup v-model="device" class="ml-auto" variant="segmented" :options="deviceOptions" />
+                <ChoiceGroup v-model="device" class="ml-auto" variant="segmented" :options="deviceOptions">
+                  <template #option="{ option }">
+                    <component :is="deviceOptions.find((row) => row.value === option.value)!.icon" class="size-4" />
+                  </template>
+                </ChoiceGroup>
+                <Button :aria-label="$t('portalSettings.previewExpand')" type="button" variant="outline" @click="expanded = true">
+                  <Maximize2 />
+                </Button>
               </div>
               <ChoiceGroup v-model="state" class="mb-3" variant="segmented" :options="stateOptions" />
               <div class="rounded-lg bg-muted p-3">
-                <div class="overflow-hidden" :style="{ height: `${frame.height * scale}px` }">
-                  <iframe
-                    :src="src"
-                    class="rounded-md border-0 bg-background"
-                    :style="{
-                      width: `${frame.width}px`,
-                      height: `${frame.height}px`,
-                      transform: `scale(${scale})`,
-                      transformOrigin: 'top left',
-                    }"
-                    title=""
-                  />
-                </div>
+                <iframe
+                  :src="src"
+                  class="mx-auto block h-[760px] rounded-md border-0 bg-background"
+                  :style="{ width }"
+                  title=""
+                />
               </div>
             </aside>
+
+            <!-- Aufgeklappt, weil 1180px neben einem Formular nirgends
+                 hinpassen und das Portal erst dort seine zweite Spalte
+                 aufmacht. -->
+            <div v-if="expanded" class="fixed inset-0 z-50 overflow-y-auto bg-background/95 p-6 backdrop-blur-[12px]">
+              <div class="mx-auto flex max-w-[1180px] items-center gap-3 pb-3">
+                <ChoiceGroup v-model="device" variant="segmented" :options="deviceOptions">
+                  <template #option="{ option }">
+                    <component :is="deviceOptions.find((row) => row.value === option.value)!.icon" class="size-4" />
+                  </template>
+                </ChoiceGroup>
+                <ChoiceGroup v-model="state" variant="segmented" :options="stateOptions" />
+                <Button :aria-label="$t('common.close')" class="ml-auto" type="button" variant="outline" @click="expanded = false">
+                  <X />
+                </Button>
+              </div>
+              <iframe
+                :src="src"
+                class="mx-auto block h-[calc(100dvh-140px)] rounded-lg border-0 bg-background shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+                :style="{ width }"
+                title=""
+              />
+            </div>
           </div>
         </div>
       </div>

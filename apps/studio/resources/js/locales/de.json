@@ -1477,7 +1477,8 @@
     "device": {
       "desktop": "Schreibtisch",
       "mobile": "Telefon"
-    }
+    },
+    "previewExpand": "Vorschau aufklappen"
   },
   "gallerySettings": {
     "title": "Galerien",

@@ -73,12 +73,16 @@ const ITEM = {
       <label v-for="option in options" :key="option.value" class="relative">
         <input
           v-model="model"
+          :aria-label="option.label"
           class="peer pointer-events-none absolute opacity-0"
           :name="name"
           type="radio"
           :value="option.value"
         >
-        <span :class="ITEM[variant]">{{ option.label }}</span>
+        <!-- Der Slot ist für die Fälle, in denen ein Zeichen kürzer ist als
+             sein Wort — die Beschriftung bleibt am Eingabefeld und damit für
+             den Screenreader stehen. -->
+        <span :class="ITEM[variant]"><slot name="option" :option="option">{{ option.label }}</slot></span>
       </label>
     </div>
   </component>
