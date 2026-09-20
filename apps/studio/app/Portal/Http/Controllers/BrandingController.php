@@ -5,7 +5,6 @@ namespace App\Portal\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Settings\Support\LogoResponse;
 use App\Settings\Support\StudioSettingsResolver;
-use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -27,19 +26,4 @@ class BrandingController extends Controller
         return LogoResponse::for($path);
     }
 
-    /**
-     * Q-10: one shop-window picture from the slider's grid. Public for the
-     * same reason the logo is — these are pictures the photographer uploaded
-     * to show, the way one puts them on a website, and the grid renders
-     * before any quote is accepted. Indexed rather than named, so no stored
-     * filename ever reaches a URL.
-     */
-    public function showcase(int $index, StudioSettingsResolver $settings): StreamedResponse
-    {
-        $path = $settings->showcasePaths()[$index] ?? null;
-
-        abort_if($path === null, 404);
-
-        return Storage::disk('local')->response($path);
-    }
 }

@@ -5,6 +5,7 @@ namespace App\Quotes\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasHourlyPricing;
 use App\Concerns\HasPublicId;
+use App\Concerns\HasShowcaseImages;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Payments\Support\PaymentStageSplitter;
@@ -42,8 +43,9 @@ class Quote extends Model
     use HasFactory;
     use HasHourlyPricing;
     use HasPublicId;
+    use HasShowcaseImages;
 
-    protected $fillable = ['project_id', 'predecessor_id', 'is_addendum', 'status', 'pricing_mode', 'intro', 'outro', 'currency', 'valid_until', 'sent_at', 'sent_channel', 'number', 'total', 'discount_type', 'discount_value', 'discount_amount', 'discount_hidden', 'net', 'vat_mode', 'vat_rate', 'vat_note', 'vat_amount', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id', 'hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours', 'time_title', 'time_description', 'time_sort_order', 'recipient_contact_id', 'recipient_street', 'recipient_postcode', 'recipient_city'];
+    protected $fillable = ['project_id', 'predecessor_id', 'is_addendum', 'status', 'pricing_mode', 'intro', 'outro', 'currency', 'valid_until', 'sent_at', 'sent_channel', 'number', 'total', 'discount_type', 'discount_value', 'discount_amount', 'discount_hidden', 'net', 'vat_mode', 'vat_rate', 'vat_note', 'vat_amount', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id', 'hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours', 'time_title', 'time_description', 'time_sort_order', 'recipient_contact_id', 'recipient_street', 'recipient_postcode', 'recipient_city', 'showcase_paths'];
 
     // The bearer credential QuoteShareController checks — never worth
     // serialising alongside the rest of the model, the same call
@@ -69,6 +71,7 @@ class Quote extends Model
             'discount_type' => DiscountType::class,
             'is_addendum' => 'boolean',
             'discount_hidden' => 'boolean',
+            'showcase_paths' => 'array',
         ];
     }
 

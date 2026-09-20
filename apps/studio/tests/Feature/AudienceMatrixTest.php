@@ -134,11 +134,10 @@ const PUBLIC_ROUTES = [
         // credential, checked by QuoteShareController's own lookup rather
         // than an `audience:` guard.
         'angebot/{quote}/teilen', 'angebot/{quote}/teilen/bild/{item}', 'angebot/{quote}/teilen/annehmen',
-        // Q-10: das Reglerraster. Oeffentlich aus demselben Grund wie das
-        // Logo — Schaufensterbilder laedt der Fotograf hoch, um sie zu
-        // zeigen, und das Raster steht, bevor irgendwer angenommen hat. Der
-        // Index laesst keinen Dateinamen raten.
-        'schaufenster/{index}',
+        // Q-10: das Reglerraster dieses Angebots. Oeffentlich aus demselben
+        // Grund wie die Positionsbilder daneben — share_token im Pfad ist
+        // der ganze Zugriffsschutz. Der Index laesst keinen Dateinamen raten.
+        'angebot/{quote}/teilen/schaufenster/{index}',
         // P-05 (#224): the e-mail-change confirmation. Whoever follows it is
         // reading the new inbox, which is not necessarily the browser
         // holding the session — same reason zugang/{token} above carries no

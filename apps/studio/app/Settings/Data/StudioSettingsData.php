@@ -39,10 +39,6 @@ class StudioSettingsData extends Data
         /** #234: which of the four licensed pairs this studio writes in. */
         public ?string $fontPair,
         public ?string $logoUrl,
-        // Q-10: die Schaufensterbilder als Routen, nie als Pfade — dieselbe
-        // Regel, die logoUrl daneben schon traegt.
-        /** @var list<string> */
-        public array $showcaseUrls,
         public ?string $bankAccountHolder,
         public ?string $bankIban,
         public ?string $bankBic,
@@ -99,10 +95,6 @@ class StudioSettingsData extends Data
             accentColor: $attrs['accent_color'],
             fontPair: $attrs['font_pair'] ?? null,
             logoUrl: $settings->logoPath() !== null ? route('settings.logo') : null,
-            showcaseUrls: collect($settings->showcasePaths())
-                ->keys()
-                ->map(fn (int $index) => route('settings.showcase', $index))
-                ->all(),
             bankAccountHolder: $attrs['bank_account_holder'],
             bankIban: $attrs['bank_iban'],
             bankBic: $attrs['bank_bic'],

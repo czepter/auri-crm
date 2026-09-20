@@ -62,6 +62,7 @@ portalHasImage: boolean,
 price: number | null,
 requestedCount: number,
 bookedCount: number,
+showcaseCount: number,
 };
 export type PackageItemData = {
 id: string,
@@ -1008,6 +1009,7 @@ recipientStreet: string | null,
 recipientPostcode: string | null,
 recipientCity: string | null,
 portalUrl: string | null,
+showcaseCount: number,
 };
 export type QuoteItemData = {
 id: string,
@@ -1129,7 +1131,6 @@ website: string | null,
 accentColor: string | null,
 fontPair: string | null,
 logoUrl: string | null,
-showcaseUrls: string[],
 bankAccountHolder: string | null,
 bankIban: string | null,
 bankBic: string | null,

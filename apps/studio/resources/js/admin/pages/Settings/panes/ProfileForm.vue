@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
+import { useObjectUrl } from '@vueuse/core'
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
@@ -83,19 +84,17 @@ function onLogoChange(event: Event) {
   form.logo = (event.target as HTMLInputElement).files?.[0] ?? null
 }
 
-// Q-10: eigener Weg, nicht Teil des Profil-Formulars. Ein Satz waechst und
-// schrumpft; das Logo wird ersetzt.
-function onShowcaseChange(event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0]
+const logoOver = ref(false)
 
-  if (!file) return
+function onLogoDrop(event: DragEvent) {
+  logoOver.value = false
+  const file = event.dataTransfer?.files?.[0]
 
-  router.post('/einstellungen/schaufenster', { image: file }, { preserveScroll: true, forceFormData: true })
+  if (file) form.logo = file
 }
 
-function removeShowcase(index: number) {
-  router.delete(`/einstellungen/schaufenster/${index}`, { preserveScroll: true })
-}
+const pickedLogo = useObjectUrl(computed(() => form.logo ?? undefined))
+const logoPreview = computed(() => pickedLogo.value ?? props.settings.logoUrl)
 
 function submit() {
   const sent = new Set<string>(shownSections.value.flatMap((section) => SECTION_FIELDS[section]))
@@ -237,33 +236,18 @@ defineExpose({ form, submit })
         />
         <div :class="firstRun ? 'flex flex-col gap-6' : 'grid grid-cols-2 gap-4'">
           <Field :label="$t('settings.logo')" id="p-logo" :error="form.errors.logo" :hint="$t('settings.logoHint')">
-            <div style="display: flex; align-items: center; gap: var(--s3)">
-              <div v-if="settings.logoUrl" class="size-10 flex-none rounded-[6px] bg-muted object-cover">
-                <img :src="settings.logoUrl" :alt="$t('settings.logo')" style="width: 100%; height: 100%; object-fit: contain" />
-              </div>
-              <div v-else class="flex size-10 flex-none items-center justify-center rounded-[6px] bg-muted p-1 text-center text-[8.5px] leading-[1.2] font-semibold tracking-[0.02em] text-faint">{{ $t('settings.logo') }}</div>
-              <Input id="p-logo" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="flex: 1" @change="onLogoChange" />
-            </div>
-          </Field>
-          <Field
-            v-if="!firstRun"
-            wide
-            :label="$t('settings.showcase')"
-            id="p-schaufenster"
-            :hint="$t('settings.showcaseHint')"
-          >
-            <div class="flex flex-wrap items-center gap-2">
-              <div v-for="(url, index) in settings.showcaseUrls" :key="url" class="relative">
-                <img class="size-14 rounded-[6px] object-cover" :src="url" alt="" />
-                <button
-                  class="absolute -top-1.5 -right-1.5 flex size-5 cursor-pointer items-center justify-center rounded-full bg-sunk-2 text-[11px] leading-none"
-                  type="button"
-                  :aria-label="$t('common.remove')"
-                  @click="removeShowcase(index)"
-                >×</button>
-              </div>
-              <Input id="p-schaufenster" class="max-w-[240px]" type="file" accept="image/png,image/jpeg" @change="onShowcaseChange" />
-            </div>
+            <label
+              class="flex cursor-pointer items-center gap-4 rounded-lg border border-dashed p-4 transition-colors"
+              :class="logoOver ? 'border-foreground bg-muted' : 'border-border'"
+              @dragover.prevent="logoOver = true"
+              @dragleave="logoOver = false"
+              @drop.prevent="onLogoDrop"
+            >
+              <img v-if="logoPreview" :src="logoPreview" :alt="$t('settings.logo')" class="size-20 flex-none rounded-[6px] bg-muted object-contain p-1.5" />
+              <div v-else class="size-20 flex-none rounded-[6px] bg-muted" />
+              <span class="min-w-0 truncate text-[13px] text-foreground">{{ form.logo?.name ?? $t('settings.logoDrop') }}</span>
+              <Input id="p-logo" type="file" class="hidden" accept="image/png,image/jpeg,image/webp,image/svg+xml" @change="onLogoChange" />
+            </label>
           </Field>
 
           <Field :label="$t('settings.accentColor')" id="p-akzent" :error="form.errors.accent_color">

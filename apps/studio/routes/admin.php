@@ -253,6 +253,14 @@ Route::middleware('audience:staff')->group(function () {
             ->name('packages.items.image.store');
         Route::get('/pakete/{package}/positionen/{packageItem}/bild', [PackageController::class, 'image'])
             ->name('packages.items.image');
+        // Q-10: die Schaufensterbilder des Reglerrasters, neben den
+        // Stundenwerten gepflegt, die es illustriert.
+        Route::post('/pakete/{package}/schaufenster', [PackageController::class, 'storeShowcase'])
+            ->name('packages.showcase.store');
+        Route::get('/pakete/{package}/schaufenster/{index}', [PackageController::class, 'showcase'])
+            ->whereNumber('index')->name('packages.showcase');
+        Route::delete('/pakete/{package}/schaufenster/{index}', [PackageController::class, 'destroyShowcase'])
+            ->whereNumber('index')->name('packages.showcase.destroy');
 
         Route::get('/vorlagen', [TemplateHubController::class, 'index'])->name('templates.index');
 
@@ -361,13 +369,6 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/einstellungen', [StudioSettingsController::class, 'edit'])->name('settings.edit');
         Route::patch('/einstellungen', [StudioSettingsController::class, 'update'])->name('settings.update');
         Route::get('/einstellungen/logo', [StudioSettingsController::class, 'logo'])->name('settings.logo');
-        // Q-10: die Schaufensterbilder, neben dem Logo gepflegt.
-        Route::post('/einstellungen/schaufenster', [StudioSettingsController::class, 'storeShowcase'])
-            ->name('settings.showcase.store');
-        Route::get('/einstellungen/schaufenster/{index}', [StudioSettingsController::class, 'showcase'])
-            ->whereNumber('index')->name('settings.showcase');
-        Route::delete('/einstellungen/schaufenster/{index}', [StudioSettingsController::class, 'destroyShowcase'])
-            ->whereNumber('index')->name('settings.showcase.destroy');
         Route::patch('/einstellungen/ust', [StudioSettingsController::class, 'updateVat'])->name('settings.vat.update');
         Route::patch('/einstellungen/dokumente', [StudioSettingsController::class, 'updateDocuments'])->name('settings.documents.update');
         Route::get('/einstellungen/dokumente/angebot-vorschau', [StudioSettingsController::class, 'previewQuoteLayout'])
@@ -627,6 +628,12 @@ Route::middleware('audience:staff')->group(function () {
         // E-02: a project's own questionnaires, seeded from a FormTemplate
         // or started blank, then personalised freely — see FormInstance's
         // own doc comment.
+        Route::post('/angebote/{quote}/schaufenster', [QuoteController::class, 'storeShowcase'])
+            ->name('quotes.showcase.store');
+        Route::get('/angebote/{quote}/schaufenster/{index}', [QuoteController::class, 'showcase'])
+            ->whereNumber('index')->name('quotes.showcase');
+        Route::delete('/angebote/{quote}/schaufenster/{index}', [QuoteController::class, 'destroyShowcase'])
+            ->whereNumber('index')->name('quotes.showcase.destroy');
         Route::get('/auftraege/{project}/frageboegen', [ProjectController::class, 'forms'])
             ->name('projects.forms');
         Route::post('/auftraege/{project}/frageboegen', [FormInstanceController::class, 'store'])

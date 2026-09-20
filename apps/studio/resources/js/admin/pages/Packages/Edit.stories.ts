@@ -40,6 +40,7 @@ const meta = {
       price: 426000,
       requestedCount: 7,
       bookedCount: 4,
+      showcaseCount: 0,
     },
   },
 } satisfies Meta<typeof Edit>
@@ -56,7 +57,7 @@ export const OhnePositionen: Story = {
     package: {
       id: 'pk3', name: 'Trauung und Feier', description: null, isActive: false, itemCount: 0, items: [],
       portalOffered: false, portalPriceMode: 'exact', portalRequiresDate: true,
-      projectTypeKey: null, portalHasImage: false, price: 0, requestedCount: 0, bookedCount: 0,
+      projectTypeKey: null, portalHasImage: false, price: 0, requestedCount: 0, bookedCount: 0, showcaseCount: 0,
     },
     requests: [],
   },

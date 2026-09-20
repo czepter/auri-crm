@@ -9,6 +9,7 @@ import type { PackageItemRow } from '@/admin/lib/packageItem'
 import { lineTotal } from '@/admin/lib/packageItem'
 import { debounced } from '@/admin/lib/autosave'
 import PackageItemsEditor from '@/admin/components/PackageItemsEditor.vue'
+import ShowcaseImages from '@/admin/components/ShowcaseImages.vue'
 import PackagePortalPreview, { type PreviewItem } from '@/admin/components/PackagePortalPreview.vue'
 import PackagePriceSummary from '@/admin/components/PackagePriceSummary.vue'
 import { centsToEuros, eurosToCents } from '@/admin/lib/money'
@@ -184,6 +185,12 @@ watch(() => form.data(), autosave, { deep: true })
           <div class="mt-8 first-of-type:mt-6">
             <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.items') }}</div>
             <PackageItemsEditor v-model="form.items" :package-id="package.id" :catalog-items="catalogItems" />
+          </div>
+
+          <div class="mt-8">
+            <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.showcase') }}</div>
+            <ShowcaseImages :base="`/pakete/${package.id}/schaufenster`" :count="package.showcaseCount" />
+            <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('packages.showcaseHint') }}</span>
           </div>
 
           <!-- Ein Paket ist eine Angebotsvorlage. Diese Felder machen daraus

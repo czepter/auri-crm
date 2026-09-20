@@ -26,7 +26,6 @@ const settings: App.Settings.Data.StudioSettingsData = {
   accentColor: '#2F4858',
   fontPair: 'fraunces',
   logoUrl: null,
-  showcaseUrls: [],
   bankAccountHolder: 'Christian Zepter',
   bankIban: 'DE02120300000000202051',
   bankBic: 'BYLADEM1001',

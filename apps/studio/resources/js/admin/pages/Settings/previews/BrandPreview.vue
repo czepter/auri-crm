@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, watchEffect } from 'vue'
+import { computed } from 'vue'
+import { useObjectUrl } from '@vueuse/core'
 import PreviewFrame from './PreviewFrame.vue'
 
 const props = defineProps<{
@@ -11,22 +12,7 @@ const props = defineProps<{
   logoUrl: string | null
 }>()
 
-// A picked file has no address until one is made for it, and the one made
-// for the previous pick has to go — a studio trying four logos would
-// otherwise leave four blobs behind for the tab's lifetime.
-const picked = ref<string | null>(null)
-
-watchEffect((onCleanup) => {
-  if (!props.logoFile) {
-    picked.value = null
-
-    return
-  }
-
-  const url = URL.createObjectURL(props.logoFile)
-  picked.value = url
-  onCleanup(() => URL.revokeObjectURL(url))
-})
+const picked = useObjectUrl(computed(() => props.logoFile ?? undefined))
 
 const logo = computed(() => picked.value ?? props.logoUrl)
 

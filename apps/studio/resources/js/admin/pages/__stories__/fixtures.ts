@@ -259,6 +259,7 @@ export function quoteOf(
     row: Partial<App.Quotes.Data.QuoteData> & Pick<App.Quotes.Data.QuoteData, 'id' | 'number' | 'net' | 'items'>,
 ): App.Quotes.Data.QuoteData {
     return {
+        showcaseCount: 0,
         predecessorId: null,
         isAddendum: false,
         predecessorNumber: null,
@@ -350,6 +351,7 @@ export const catalogPackages: App.Catalog.Data.PackageData[] = [
         price: 300000,
         requestedCount: 0,
         bookedCount: 0,
+        showcaseCount: 0,
     },
 ]
 
@@ -537,7 +539,6 @@ export const studioSettings: App.Settings.Data.StudioSettingsData = {
   accentColor: '#2F4858',
   fontPair: 'fraunces',
   logoUrl: null,
-  showcaseUrls: [],
   bankAccountHolder: 'Christian Zepter',
   bankIban: 'DE02120300000000202051',
   bankBic: 'BYLADEM1001',

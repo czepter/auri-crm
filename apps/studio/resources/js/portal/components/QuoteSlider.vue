@@ -31,10 +31,11 @@ const props = defineProps<{
   imageUrlBase?: string
   expired: boolean
   acceptedAt: string | null
-  showcaseCount: number
 }>()
 
-const imageUrl = (itemId: string) => `${props.imageUrlBase ?? `/projekte/${props.project.id}/angebot`}/bild/${itemId}`
+const showcaseCount = computed(() => props.quote.showcaseCount)
+const imageBase = computed(() => props.imageUrlBase ?? `/projekte/${props.project.id}/angebot`)
+const imageUrl = (itemId: string) => `${imageBase.value}/bild/${itemId}`
 
 const { t } = useI18n()
 
@@ -125,7 +126,7 @@ function toggle(item: Item) {
 }
 
 function tileImage(index: number) {
-  return props.showcaseCount === 0 ? null : `/schaufenster/${index % props.showcaseCount}`
+  return showcaseCount.value === 0 ? null : `${imageBase.value}/schaufenster/${index % showcaseCount.value}`
 }
 
 function accept() {

@@ -214,6 +214,43 @@ class PackageController extends Controller
     }
 
     /** Behind the staff gate: a catalogue picture is not published until a quote carries a copy of it. */
+    /**
+     * Q-10: die Schaufensterbilder des Pakets — der Startsatz, den
+     * SeedQuoteFromPackage in jedes daraus gebaute Angebot kopiert.
+     * Angehängt statt ersetzt, ein Satz ist, was das Raster braucht.
+     */
+    public function storeShowcase(Request $request, Package $package): RedirectResponse
+    {
+        $this->authorize('update', $package);
+
+        $request->validate(['image' => ['required', 'file', 'mimes:png,jpg,jpeg', 'max:4096']]);
+
+        $package->addShowcaseImage($request->file('image'));
+
+        return back();
+    }
+
+    public function destroyShowcase(Package $package, int $index): RedirectResponse
+    {
+        $this->authorize('update', $package);
+
+        $package->removeShowcaseImage($index);
+
+        return back();
+    }
+
+    /** Indiziert statt benannt, damit kein gespeicherter Dateiname in eine URL gerät. */
+    public function showcase(Package $package, int $index): StreamedResponse
+    {
+        $this->authorize('view', $package);
+
+        $path = $package->showcasePaths()[$index] ?? null;
+
+        abort_if($path === null, 404);
+
+        return Storage::disk('local')->response($path);
+    }
+
     public function image(Package $package, PackageItem $packageItem): StreamedResponse
     {
         $this->authorize('view', $package);
