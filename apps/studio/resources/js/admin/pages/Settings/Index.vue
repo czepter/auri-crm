@@ -13,8 +13,9 @@ import BrandPreview from './previews/BrandPreview.vue'
 import DocumentPreview from './previews/DocumentPreview.vue'
 import MailPreview from './previews/MailPreview.vue'
 import { basisPointsToPercent } from '@/admin/lib/money'
+import { browserTimezone, searchTimezones, timezoneLabel } from '@/admin/lib/timezones'
 import { Button } from '@/ui/button'
-import { Input } from '@/ui/input'
+import { Combobox, ComboboxAnchor, ComboboxContent, ComboboxInput, ComboboxItem } from '@/ui/combobox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Checkbox } from '@/ui/checkbox'
 import { Textarea } from '@/ui/textarea'
@@ -66,6 +67,21 @@ const generalForm = useForm({
   locale: props.settings.locale,
   working_days: [...props.settings.workingDays] as number[],
 })
+
+// Der Browser kennt die Zone des Geräts; die Zeile darunter bietet sie an,
+// solange sie von der gespeicherten abweicht.
+const zoneTerm = ref<string>()
+const zoneChoices = computed(() => searchTimezones(zoneTerm.value ?? '', generalForm.timezone))
+const browserZone = computed(() => {
+  const zone = browserTimezone()
+
+  return zone === generalForm.timezone ? null : zone
+})
+
+function chooseZone(zone: string) {
+  generalForm.timezone = zone
+  zoneTerm.value = undefined
+}
 
 // The three suggestion lists the "Sonstige" fields at capture offer, one
 // entry per line — the list is short and typed rarely, so a textarea beats a
@@ -254,8 +270,33 @@ function submitGeneral() {
                     <div class="grid grid-cols-2 gap-4">
                       <div class="flex min-w-0 flex-col gap-1.5">
                         <Label for="g-zeitzone">{{ $t('settings.timezoneLabel') }}</Label>
-                        <Input id="g-zeitzone" v-model="generalForm.timezone" type="text" placeholder="Europe/Berlin" />
-                        <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('settings.timezoneHint') }}</span>
+                        <Combobox ignore-filter>
+                          <ComboboxAnchor>
+                            <ComboboxInput
+                              id="g-zeitzone"
+                              :model-value="zoneTerm ?? timezoneLabel(generalForm.timezone, generalForm.locale)"
+                              @update:model-value="zoneTerm = String($event)"
+                            />
+                          </ComboboxAnchor>
+                          <ComboboxContent>
+                            <ComboboxItem
+                              v-for="zone in zoneChoices"
+                              :key="zone"
+                              :value="zone"
+                              @select="chooseZone(zone)"
+                            >
+                              {{ timezoneLabel(zone, generalForm.locale) }}
+                            </ComboboxItem>
+                          </ComboboxContent>
+                        </Combobox>
+                        <button
+                          v-if="browserZone"
+                          type="button"
+                          class="self-start text-[11.5px] leading-[1.45] text-ink-2 underline"
+                          @click="chooseZone(browserZone)"
+                        >
+                          {{ $t('settings.timezoneFromBrowser', { zone: browserZone }) }}
+                        </button>
                         <p v-if="generalForm.errors.timezone" class="text-[11.5px] leading-[1.45] text-destructive">{{ generalForm.errors.timezone }}</p>
                       </div>
                       <div class="flex min-w-0 flex-col gap-1.5">

@@ -1151,7 +1151,7 @@
     "generalTitle": "Allgemein",
     "timezoneLocaleLabel": "Zeitzone & Sprache",
     "timezoneLabel": "Zeitzone",
-    "timezoneHint": "IANA-Zeitzonenkennung. Leer lassen für die Systemvorgabe.",
+    "timezoneFromBrowser": "{zone} aus dem Browser übernehmen",
     "localeLabel": "Sprache",
     "localeDe": "Deutsch (allgemein)",
     "localeDeDe": "Deutsch (Deutschland)",
