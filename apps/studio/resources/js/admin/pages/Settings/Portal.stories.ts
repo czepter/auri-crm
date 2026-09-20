@@ -70,8 +70,6 @@ export const settings: App.Settings.Data.PortalSettingsData = {
   welcomeInquiry: 'Schön, dass ihr da seid.',
   welcomeActive: 'Hier liegen eure Termine, Unterlagen und Bilder.',
   welcomeDone: null,
-  dsgvoRecipient: 'christian@atelier-nordlicht.de',
-  dsgvoDeadlineDays: 30,
   contactName: 'Jana Wolf',
   contactAvatarUrl: null,
   contactPhone: '+49 40 4321987',

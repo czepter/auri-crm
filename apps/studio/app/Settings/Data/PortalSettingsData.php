@@ -12,8 +12,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * welcome text per opening state (nothing booked, a booking under way,
  * everything delivered), the two external legal
  * links, the client capability switches (messaging among them, as three
- * states rather than a boolean — see P-04), where a DSGVO request goes and by
- * when, and the contact line the portal footer had no source for.
+ * states rather than a boolean — see P-04), and the contact line the portal footer had no source for.
  * Deliberately carries none of T-02's branding fields (logo, accent colour,
  * display name) a second time — those are edited on Studio-Profil and read
  * portal-wide through HandleInertiaRequests's `portalBranding` prop, never
@@ -44,8 +43,6 @@ class PortalSettingsData extends Data
         public ?string $welcomeInquiry,
         public ?string $welcomeActive,
         public ?string $welcomeDone,
-        public ?string $dsgvoRecipient,
-        public int $dsgvoDeadlineDays,
         public ?string $contactName,
         public ?string $contactAvatarUrl,
         public ?string $contactPhone,
@@ -78,8 +75,6 @@ class PortalSettingsData extends Data
             welcomeInquiry: $settings->portalWelcomeInquiry(),
             welcomeActive: $settings->portalWelcomeActive(),
             welcomeDone: $settings->portalWelcomeDone(),
-            dsgvoRecipient: $settings->dsgvoRequestRecipient(),
-            dsgvoDeadlineDays: $settings->dsgvoRequestDeadlineDays(),
             contactName: $settings->portalContactName(),
             contactAvatarUrl: $settings->portalContactAvatarPath() !== null ? route('settings.portal.contact.avatar') : null,
             contactPhone: $settings->portalContactPhone(),

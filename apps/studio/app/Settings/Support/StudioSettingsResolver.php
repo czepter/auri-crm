@@ -722,17 +722,6 @@ class StudioSettingsResolver
         return (bool) $this->row()->gallery_default_comments_enabled;
     }
 
-    /** P-05 (#224)'s requests need a recipient and a deadline; both were missing. */
-    public function dsgvoRequestRecipient(): ?string
-    {
-        return $this->row()->dsgvo_request_recipient;
-    }
-
-    public function dsgvoRequestDeadlineDays(): int
-    {
-        return (int) $this->row()->dsgvo_request_deadline_days;
-    }
-
     /**
      * Wer im Portal ansprechbar ist. Ohne eigenen Namen steht dort die
      * Marke — ein Ein-Personen-Studio trägt beides ohnehin.

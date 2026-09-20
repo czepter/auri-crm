@@ -2,7 +2,6 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Input } from '@/ui/input'
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
 import { ChoiceGroup } from '@/ui/choice-group'
@@ -10,9 +9,8 @@ import { missingLegalTexts } from '@/admin/lib/legalTexts'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
 /*
- * Impressum, Datenschutz, AGB und Widerruf — und wohin eine
- * Datenschutz-Anfrage geht. Beides gehört dem Studio, nicht dem Portal, und
- * steht deshalb im Formular von Allgemein statt in einem eigenen.
+ * Impressum, Datenschutz, AGB und Widerruf gehören dem Studio, nicht dem
+ * Portal, und stehen deshalb im Formular von Allgemein statt in einem eigenen.
  *
  * Die Felder gehören dem Formular der Seite: sie werden mit ihr gespeichert,
  * und ein eigenes useForm hier wäre ein zweiter Speicherknopf auf einem Blatt.
@@ -130,26 +128,6 @@ function chooseSource(text: LegalText, source: Source) {
       <a class="text-[13px] font-medium text-action no-underline" href="/dokumentvorlagen/neu">
         {{ $t('portalSettings.legalNewTemplate') }}
       </a>
-    </div>
-
-    <!-- P-05 (#224) put subject access and erasure in the portal; both are
-         requests with a legal deadline, so both need somewhere to land. -->
-    <div class="mt-8">
-      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('portalSettings.dsgvoSection') }}</div>
-      <div class="mb-6">
-        <div class="grid grid-cols-2 gap-4">
-          <Field :error="form.errors.dsgvo_request_recipient" v-slot="{ id }">
-            <Label :for="id">{{ $t('portalSettings.dsgvoRecipientLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
-            <Input :id v-model="form.dsgvo_request_recipient" type="email" />
-          </Field>
-          <Field :label="$t('portalSettings.dsgvoDeadlineLabel')" id="po-dsgvo-frist">
-            <InputGroup>
-              <InputGroupInput id="po-dsgvo-frist" v-model="form.dsgvo_request_deadline_days" class="tabular-nums" type="number" min="1" />
-              <InputGroupAddon align="inline-end">{{ $t('common.unitDays') }}</InputGroupAddon>
-            </InputGroup>
-          </Field>
-        </div>
-      </div>
     </div>
   </div>
 </template>

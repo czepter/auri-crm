@@ -61,8 +61,8 @@ const generalForm = useForm({
   // Die Anrede trägt jede Mail, jedes Angebot und das Portal — sie stand
   // unter Portal und gilt überall.
   client_register: props.settings.clientRegister,
-  // Die vier Rechtstexte und wohin eine Datenschutz-Anfrage geht: Angaben
-  // über das Studio, wie Zeitzone und Arbeitstage daneben.
+  // Die vier Rechtstexte: Angaben über das Studio, wie Zeitzone und
+  // Arbeitstage daneben.
   portal_legal_impressum_url: props.portal.impressumUrl ?? '',
   portal_legal_datenschutz_url: props.portal.datenschutzUrl ?? '',
   portal_legal_agb_url: props.portal.agbUrl ?? '',
@@ -71,8 +71,6 @@ const generalForm = useForm({
   portal_legal_datenschutz_family: props.portal.legalFamilies.datenschutz ?? '',
   portal_legal_agb_family: props.portal.legalFamilies.agb ?? '',
   portal_legal_widerruf_family: props.portal.legalFamilies.widerruf ?? '',
-  dsgvo_request_recipient: props.portal.dsgvoRecipient ?? '',
-  dsgvo_request_deadline_days: props.portal.dsgvoDeadlineDays,
 })
 
 // Der Browser kennt die Zone des Geräts; die Zeile darunter bietet sie an,
@@ -226,7 +224,6 @@ function submitGeneral() {
       portal_legal_datenschutz_family: data.portal_legal_datenschutz_family || null,
       portal_legal_agb_family: data.portal_legal_agb_family || null,
       portal_legal_widerruf_family: data.portal_legal_widerruf_family || null,
-      dsgvo_request_recipient: data.dsgvo_request_recipient || null,
     }))
     .patch('/einstellungen/allgemein', { preserveScroll: true })
 }

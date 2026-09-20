@@ -62,7 +62,6 @@ class StudioSettings extends Model
         'gallery_default_expiry_days',
         'gallery_default_downloads_enabled', 'gallery_default_lists_enabled',
         'gallery_default_comments_enabled', 'gallery_default_design',
-        'dsgvo_request_recipient', 'dsgvo_request_deadline_days',
         'portal_contact_name', 'portal_contact_phone', 'portal_contact_email',
         'portal_contact_response_time', 'portal_contact_avatar_path',
         'onboarding_completed_at', 'onboarding_reminder_sent_at',

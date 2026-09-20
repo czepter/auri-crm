@@ -91,7 +91,7 @@ it('rejects a Datenschutz link that is not a URL', function () {
         ->assertInvalid(['portal_legal_datenschutz_url']);
 });
 
-it('stores the legal links and where a privacy request goes on the general route', function () {
+it('stores the legal links on the general route', function () {
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')
@@ -99,17 +99,13 @@ it('stores the legal links and where a privacy request goes on the general route
             'working_days' => [1, 2, 3, 4, 5],
             'portal_legal_datenschutz_url' => 'https://atelier-nordlicht.de/datenschutz',
             'portal_legal_agb_url' => 'https://atelier-nordlicht.de/agb',
-            'dsgvo_request_recipient' => 'datenschutz@atelier-nordlicht.de',
-            'dsgvo_request_deadline_days' => 14,
         ])
         ->assertRedirect();
 
     $row = StudioSettings::query()->sole();
 
     expect($row->portal_legal_datenschutz_url)->toBe('https://atelier-nordlicht.de/datenschutz')
-        ->and($row->portal_legal_agb_url)->toBe('https://atelier-nordlicht.de/agb')
-        ->and($row->dsgvo_request_recipient)->toBe('datenschutz@atelier-nordlicht.de')
-        ->and($row->dsgvo_request_deadline_days)->toBe(14);
+        ->and($row->portal_legal_agb_url)->toBe('https://atelier-nordlicht.de/agb');
 });
 
 it('gives every non-owner role the same response on the portal settings route as a route that does not exist', function (StaffRole $role, int $status) {
@@ -154,13 +150,13 @@ it('leaves the settings a pane does not show untouched', function () {
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen/allgemein', [
             'working_days' => [1, 2, 3, 4, 5],
-            'dsgvo_request_recipient' => 'datenschutz@atelier-nordlicht.de',
+            'portal_legal_datenschutz_url' => 'https://atelier-nordlicht.de/datenschutz',
         ])
         ->assertRedirect();
 
     $row = StudioSettings::query()->sole();
 
-    expect($row->dsgvo_request_recipient)->toBe('datenschutz@atelier-nordlicht.de')
+    expect($row->portal_legal_datenschutz_url)->toBe('https://atelier-nordlicht.de/datenschutz')
         ->and($row->portal_maintenance_enabled)->toBeTrue()
         ->and($row->portal_messaging_mode)->toBe('any')
         ->and($row->portal_accept_quotes_enabled)->toBeTrue();

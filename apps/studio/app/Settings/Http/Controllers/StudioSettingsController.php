@@ -289,8 +289,6 @@ class StudioSettingsController extends Controller
             'portal_legal_datenschutz_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
             'portal_legal_agb_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
             'portal_legal_widerruf_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
-            'dsgvo_request_recipient' => ['sometimes', 'nullable', 'email', 'max:255'],
-            'dsgvo_request_deadline_days' => ['sometimes', 'required', 'integer', 'min:1', 'max:365'],
         ]);
 
         $actor = auth('staff')->user();

@@ -18,7 +18,7 @@ use App\Settings\Support\StudioSettingsResolver;
  * one JSONB blob rather than a dozen nullable columns.
  *
  * Not everything is overridable and that is deliberate. Maintenance, the
- * legal links, the DSGVO recipient and the footer's contact line stay
+ * legal links and the footer's contact line stay
  * studio-wide: they are the studio speaking about itself. Access revocation
  * stays per contact (contacts.portal_access_revoked_at) and the visibility
  * flag itself per booking (projects.portal_visible) — both A-04's, only
