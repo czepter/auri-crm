@@ -21,6 +21,7 @@ const christian = {
   role: 'owner',
   roleLabel: 'Inhaber',
   mfaConfirmed: true,
+  transferable: false,
 }
 
 const meta = {
@@ -37,6 +38,7 @@ const meta = {
         role: 'second_shooter',
         roleLabel: 'Zweitfotograf',
         mfaConfirmed: false,
+        transferable: true,
       },
     ],
     invitations: [

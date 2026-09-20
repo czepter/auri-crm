@@ -724,6 +724,9 @@
     "revokeConfirm": "Einladung für {email} zurückziehen? Der Link wird ungültig.",
     "mfaOn": "Zwei Faktoren",
     "mfaPending": "Einrichtung offen",
+    "transfer": "Zum Inhaber machen",
+    "transferTitle": "Inhaberschaft an {name}",
+    "transferConfirm": "Übertragen",
     "permissions": "Rechte je Rolle",
     "allowed": "erlaubt"
   },

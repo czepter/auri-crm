@@ -60,6 +60,7 @@ use App\Http\Controllers\Staff\OAuthClientRegistrationController;
 use App\Http\Controllers\Staff\OAuthMetadataController;
 use App\Http\Controllers\Staff\OAuthTokenController;
 use App\Http\Controllers\Staff\PasswordResetController;
+use App\Http\Controllers\Staff\OwnershipController;
 use App\Http\Controllers\Staff\ProfileController;
 use App\Http\Controllers\Staff\SessionController;
 use App\Http\Controllers\Staff\SetupController;
@@ -317,6 +318,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/team/einladungen', [InvitationController::class, 'store'])->name('staff.invite');
         Route::delete('/team/einladungen/{invitation}', [InvitationController::class, 'destroy'])
             ->name('staff.invitation.destroy');
+        Route::post('/team/{user}/inhaber', [OwnershipController::class, 'update'])->name('staff.ownership');
 
         // Suche und Artikel-JSON vor dem Platzhalter registriert, sonst
         // schluckt /hilfe/{slug} beide.
