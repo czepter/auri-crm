@@ -550,6 +550,7 @@ export const studioSettings: App.Settings.Data.StudioSettingsData = {
   widerrufIncluded: true,
   widerrufText: null,
   quoteLayout: 'classic',
+  remindersEnabled: true,
   clientRegister: 'informal',
   documentLetterheadHtml: null,
   documentFooterHtml: null,

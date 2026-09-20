@@ -12,9 +12,6 @@ const meta = {
       stripeMode: 'live',
       hasStripeTestKeys: true,
       hasStripeLiveKeys: true,
-      remindersEnabled: true,
-      depositPercent: 30,
-      zahlungszielDays: 14,
     },
   },
 } satisfies Meta<typeof Payments>
@@ -34,9 +31,6 @@ export const OhneStripe: Story = {
       stripeMode: 'test',
       hasStripeTestKeys: false,
       hasStripeLiveKeys: false,
-      remindersEnabled: false,
-      depositPercent: 30,
-      zahlungszielDays: 14,
     },
   },
 }

@@ -62,10 +62,7 @@ class HomeController extends Controller
 
         return Inertia::render('Home', [
             'contact' => ['name' => $contact->name],
-            // P-09 (#228): a sentence written for somebody who has not
-            // booked anything reads as a mistake to a venue with forty. The
-            // third room, the single booking, no longer lands here.
-            'welcomeText' => $settings->welcomeText($contact, $bookings->isEmpty() ? 'inquiry' : 'many'),
+            'welcomeText' => $settings->welcomeText($contact, $this->welcomeState($bookings->all())),
             'pending' => $this->pending($contact, $projects, $settings),
             'bookings' => $bookings->all(),
             'phaseCounts' => $bookings->countBy('phase')->all(),
@@ -80,6 +77,24 @@ class HomeController extends Controller
                 ...$settings->contactLine(),
             ],
         ]);
+    }
+
+    /**
+     * Which of the three greetings this client is owed. Nothing booked is
+     * the stranger with an inquiry; everything delivered is the client whose
+     * pictures are done — the two used to share one text.
+     *
+     * @param  list<array{phase: string}>  $bookings
+     */
+    private function welcomeState(array $bookings): string
+    {
+        if ($bookings === []) {
+            return 'inquiry';
+        }
+
+        return collect($bookings)->every(fn (array $booking) => $booking['phase'] === 'delivered')
+            ? 'done'
+            : 'active';
     }
 
     /**

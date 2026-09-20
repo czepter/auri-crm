@@ -476,6 +476,8 @@ Route::middleware('audience:staff')->group(function () {
 
         Route::get('/einstellungen/portal', [PortalSettingsController::class, 'edit'])
             ->name('settings.portal.edit');
+        Route::get('/einstellungen/portal/vorschau', [PortalSettingsController::class, 'preview'])
+            ->name('settings.portal.preview');
         Route::patch('/einstellungen/portal', [PortalSettingsController::class, 'update'])
             ->name('settings.portal.update');
 

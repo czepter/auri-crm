@@ -3,14 +3,19 @@
 namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
+use App\Documents\Enums\DocumentTemplateType;
+use App\Documents\Models\DocumentTemplate;
 use App\Http\Controllers\Controller;
 use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Enums\QuoteLayout;
 use App\Quotes\Support\SampleQuoteData;
+use App\Settings\Data\PortalSettingsData;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Enums\FontPair;
 use App\Settings\Models\StudioSettings;
+use App\Settings\Rules\LegalTemplateFamily;
 use App\Settings\Rules\ValidIban;
+use App\Settings\Support\LogoResponse;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -58,6 +63,21 @@ class StudioSettingsController extends Controller
                 'address' => $row->mail_from_address === null,
             ],
             'settings' => StudioSettingsData::fromResolver($settings),
+            // Rechtstexte und Datenschutz-Anfragen stehen im Abschnitt
+            // Allgemein: beides sagt etwas über das Studio, nichts über das
+            // Portal, in dem es nur auftaucht.
+            'portal' => PortalSettingsData::fromResolver($settings),
+            'legalTemplates' => DocumentTemplate::query()
+                ->current()
+                ->ofType(DocumentTemplateType::Legal)
+                ->orderBy('name')
+                ->get()
+                ->map(fn (DocumentTemplate $template) => [
+                    'family' => $template->family_id,
+                    'name' => $template->name,
+                    'updatedAt' => $template->updated_at?->toDateString(),
+                ])
+                ->all(),
         ]);
     }
 
@@ -96,10 +116,10 @@ class StudioSettingsController extends Controller
             'font_pair' => ['sometimes', 'nullable', Rule::enum(FontPair::class)],
             // #439: the onboarding's first step asks this beside the identity.
             'client_register' => ['sometimes', 'required', 'in:formal,informal'],
-            // SVG deliberately excluded: served inline from this app's own
-            // origin (logo(), below), an uploaded SVG can carry a <script>
-            // and execute as this app rather than as an image.
-            'logo' => ['sometimes', 'nullable', 'file', 'mimes:png', 'max:2048'],
+            // SVG ist erlaubt, weil App\Settings\Support\LogoResponse die
+            // Datei mit Sandbox-CSP ausliefert; ohne die beiden Kopfzeilen
+            // liefe ein <script> darin auf unserer Herkunft.
+            'logo' => ['sometimes', 'nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:2048'],
             // Optional: a studio that only takes card payments (or none yet
             // during onboarding) has no IBAN to file. What is entered still
             // has to be a real IBAN — the portal's "Überweisen" block hides
@@ -138,7 +158,7 @@ class StudioSettingsController extends Controller
 
         abort_if($path === null, 404);
 
-        return Storage::disk('local')->response($path);
+        return LogoResponse::for($path);
     }
 
     /**
@@ -225,6 +245,9 @@ class StudioSettingsController extends Controller
             'widerruf_included' => ['required', 'boolean'],
             'widerruf_text' => ['nullable', 'string', 'max:5000'],
             'quote_layout' => ['required', Rule::enum(QuoteLayout::class)],
+            // Eine Mahnstufe ist eine Frist: sie stand bei Stripe, weil das
+            // Geld dort eingeht, gehört aber zu den Fristen daneben.
+            'payments_reminders_enabled' => ['sometimes', 'required', 'boolean'],
             // T-12: the shared PDF shell App\Documents\Support\DocumentRenderer
             // wraps a Contract or Quote's resolved body in — this pane's the
             // one place either is set, rather than pasted into each template.
@@ -241,6 +264,10 @@ class StudioSettingsController extends Controller
         $settings->set('quote_layout', $validated['quote_layout'], $actor);
         $settings->set('document_letterhead_html', $validated['document_letterhead_html'] ?? null, $actor);
         $settings->set('document_footer_html', $validated['document_footer_html'] ?? null, $actor);
+
+        if (array_key_exists('payments_reminders_enabled', $validated)) {
+            $settings->set('payments_reminders_enabled', $validated['payments_reminders_enabled'], $actor);
+        }
 
         return back();
     }
@@ -287,12 +314,31 @@ class StudioSettingsController extends Controller
             'locale' => ['nullable', Rule::in(['de', 'de_DE', 'de_AT', 'de_CH'])],
             'working_days' => ['required', 'array', 'min:1'],
             'working_days.*' => ['integer', 'between:1,7', 'distinct'],
+            // Gilt für Portal, Mails und Belege gleichermaßen — deshalb hier
+            // und nicht mehr unter Portal.
+            'client_register' => ['sometimes', 'required', Rule::in(['formal', 'informal'])],
+            'portal_legal_impressum_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
+            'portal_legal_datenschutz_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
+            'portal_legal_agb_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
+            'portal_legal_widerruf_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
+            // Die Vorlage wird als Familie gespeichert, damit das Portal die
+            // jeweils aktuelle Fassung zeigt.
+            'portal_legal_impressum_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
+            'portal_legal_datenschutz_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
+            'portal_legal_agb_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
+            'portal_legal_widerruf_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
+            'dsgvo_request_recipient' => ['sometimes', 'nullable', 'email', 'max:255'],
+            'dsgvo_request_deadline_days' => ['sometimes', 'required', 'integer', 'min:1', 'max:365'],
         ]);
 
         $actor = auth('staff')->user();
         $settings->set('timezone', $validated['timezone'] ?? null, $actor);
         $settings->set('locale', $validated['locale'] ?? null, $actor);
         $settings->set('working_days', array_values($validated['working_days']), $actor);
+
+        foreach (Arr::except($validated, ['timezone', 'locale', 'working_days']) as $key => $value) {
+            $settings->set($key, $value, $actor);
+        }
 
         return back();
     }

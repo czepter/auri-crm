@@ -39,6 +39,7 @@ const settings: App.Settings.Data.StudioSettingsData = {
   widerrufIncluded: true,
   widerrufText: null,
   quoteLayout: 'classic',
+  remindersEnabled: true,
   clientRegister: 'formal',
   documentLetterheadHtml: null,
   documentFooterHtml: null,
@@ -56,6 +57,34 @@ const settings: App.Settings.Data.StudioSettingsData = {
   leadChannelPresets: ['E-Mail', 'Telefon', 'Kontaktformular'],
 }
 
+const portal: App.Settings.Data.PortalSettingsData = {
+  id: 'po1',
+  maintenanceEnabled: false,
+  maintenanceMessage: null,
+  datenschutzUrl: 'https://atelier-nordlicht.de/datenschutz',
+  agbUrl: null,
+  impressumUrl: null,
+  widerrufUrl: null,
+  legalFamilies: { impressum: null, datenschutz: null, agb: null, widerruf: null },
+  acceptQuotesEnabled: true,
+  signContractsEnabled: true,
+  paymentStatusEnabled: true,
+  offersEnabled: true,
+  galleryDownloadsEnabled: true,
+  galleryListsEnabled: true,
+  galleryCommentsEnabled: false,
+  messagingMode: 'booking',
+  clientRegister: 'formal',
+  welcomeInquiry: null,
+  welcomeActive: null,
+  welcomeDone: null,
+  dsgvoRecipient: 'datenschutz@atelier-nordlicht.de',
+  dsgvoDeadlineDays: 30,
+  contactPhone: null,
+  contactEmail: null,
+  contactResponseTime: null,
+}
+
 const meta = {
   title: 'Bildschirme/Einstellungen/Studio',
   component: Index,
@@ -64,6 +93,8 @@ const meta = {
     fontPairs,
     mailSenderFromEnv: { name: false, address: false },
     settings,
+    portal,
+    legalTemplates: [{ family: 'fam-widerruf-0000000000', name: 'Widerrufsbelehrung', updatedAt: '2026-06-12' }],
   },
 } satisfies Meta<typeof Index>
 

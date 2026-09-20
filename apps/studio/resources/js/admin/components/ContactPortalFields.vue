@@ -19,7 +19,7 @@ import { Textarea } from '@/ui/textarea'
 type PortalKey =
   | 'portal_visible' | 'accept_quotes' | 'sign_contracts' | 'payment_status'
   | 'messaging_mode' | 'gallery_downloads' | 'gallery_lists' | 'gallery_comments'
-  | 'offers' | 'welcome'
+  | 'offers' | 'welcome_inquiry' | 'welcome_active' | 'welcome_done'
 
 const props = withDefaults(
   defineProps<{
@@ -44,6 +44,10 @@ const GROUPS = {
   offers: ['offers'],
   welcome: [],
 } as const
+
+// Dieselben drei Zustände wie unter Einstellungen → Portal; wer für einen
+// Kunden schreibt, überschreibt jeden einzeln.
+const WELCOME_STATES = ['inquiry', 'active', 'done'] as const
 
 type Group = keyof typeof GROUPS
 
@@ -141,13 +145,17 @@ function defaultLabel(key: string) {
     </Select>
   </div>
 
-  <div v-if="group === 'all' || group === 'welcome'" class="py-[9px] shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
-    <Label variant="inline" for="portal-welcome">
-      {{ $t('contacts.portalKey.welcome') }}
+  <div
+    v-for="state in (group === 'all' || group === 'welcome' ? WELCOME_STATES : [])"
+    :key="state"
+    class="py-[9px] shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+  >
+    <Label variant="inline" :for="`portal-welcome-${state}`">
+      {{ $t(`portalSettings.welcomeState.${state}`) }}
     </Label>
     <Textarea
-      id="portal-welcome"
-      v-model="portal.welcome"
+      :id="`portal-welcome-${state}`"
+      v-model="portal[`welcome_${state}`]"
       class="mt-[3px]"
       rows="2"
       @blur="emit('change')"

@@ -157,8 +157,7 @@
       "gallery_lists": "Galerie-Listen",
       "gallery_comments": "Galerie-Kommentare",
       "portal_visible": "Neue Projekte sichtbar",
-      "offers": "Weitere Leistungen",
-      "welcome": "Begrüßung"
+      "offers": "Weitere Leistungen"
     },
     "portalPreview": "Vorschau als Kunde",
     "portalPermissions": "Freigaben",
@@ -1053,7 +1052,7 @@
     "logo": "Logo",
     "showcase": "Schaufenster",
     "showcaseHint": "Raster über dem Regler. Unter sechs Bildern wiederholt es sich sichtbar.",
-    "logoHint": "PNG, transparenter Hintergrund empfohlen.",
+    "logoHint": "PNG, JPEG, WebP oder SVG. Transparenter Hintergrund empfohlen.",
     "accentColor": "Akzentfarbe",
     "bank": "Bankverbindung",
     "bankAccountHolder": "Kontoinhaber",
@@ -1182,7 +1181,9 @@
     "navGalleryDefaults": "Standardwerte",
     "navGalleryPresets": "Vorlagen",
     "mailSenderFromEnv": "Serverkonfiguration",
-    "mailSenderReset": "Zurücksetzen"
+    "mailSenderReset": "Zurücksetzen",
+    "navInvoiceData": "Rechnungsdaten",
+    "vatSection": "Umsatzsteuer"
   },
   "notifications": {
     "title": "Benachrichtigungen",
@@ -1284,7 +1285,7 @@
     "emailConfirm": "Bestätigen"
   },
   "paymentSettings": {
-    "title": "Zahlungen",
+    "title": "Stripe",
     "stripeSection": "Stripe",
     "stripeEnabled": "Online-Zahlung per Karte (Stripe)",
     "stripeEnabledHint": "Kunden wählen dann je Zahlung zwischen Überweisung und Karte.",
@@ -1345,10 +1346,9 @@
     "title": "Benachrichtigungen",
     "quietHoursSection": "Ruhezeiten",
     "quietHoursEnabledLabel": "Ruhezeiten aktivieren",
-    "quietHoursEnabledHint": "Mails in diesem Fenster werden erst danach zugestellt.",
     "quietHoursStartLabel": "Von",
     "quietHoursEndLabel": "Bis",
-    "quietHoursHint": "Studioweit, in der Zeitzone aus Allgemein."
+    "quietHoursHint": "Zeitzone aus Allgemein"
   },
   "formTemplates": {
     "kicker": "Einstellungen · Fragebogen-Vorlagen",
@@ -1424,11 +1424,8 @@
   "portalSettings": {
     "title": "Portal",
     "maintenanceSection": "Wartung",
-    "maintenanceEnabledLabel": "Portal vorübergehend schließen",
-    "maintenanceEnabledHint": "Kunden sehen nur den Hinweistext, keine Projektdaten.",
-    "maintenanceMessageLabel": "Hinweistext",
-    "homeSection": "Startseite",
-    "welcomeTextLabel": "Willkommenstext",
+    "maintenanceEnabledLabel": "Portal schließen",
+    "maintenanceMessageLabel": "Hinweistext beim Schließen",
     "legalSection": "Rechtliches",
     "datenschutzUrlLabel": "Datenschutzerklärung",
     "agbUrlLabel": "AGB",
@@ -1446,28 +1443,43 @@
     "legalUrlLabel": "Adresse",
     "legalTemplateLabel": "Vorlage",
     "legalOpenImpressum": "Impressum ansehen",
-    "legalNewTemplate": "Rechtstext schreiben",
-    "legalMissing": "Fehlt vor dem ersten Versand",
+    "legalNewTemplate": "Vorlage anlegen",
+    "legalMissing": "Ohne sie geht kein Angebot raus",
     "capabilitiesSection": "Freigaben",
-    "acceptQuotesEnabledLabel": "Angebote online annehmen",
-    "signContractsEnabledLabel": "Verträge online unterschreiben",
+    "acceptQuotesEnabledLabel": "Angebote annehmen",
+    "signContractsEnabledLabel": "Verträge unterschreiben",
     "paymentStatusEnabledLabel": "Zahlungsstatus einsehen",
     "offersEnabledLabel": "Weitere Leistungen anbieten",
-    "welcomeInquiryLabel": "Begrüßung vor der ersten Buchung",
-    "welcomeManyLabel": "Begrüßung bei vielen Buchungen",
     "dsgvoSection": "Datenschutz-Anfragen",
     "dsgvoRecipientLabel": "Empfänger",
     "dsgvoDeadlineLabel": "Frist in Tagen",
-    "contactSection": "Kontakt im Portal-Fuß",
+    "contactSection": "Kontakt im Fuß",
     "contactPhoneLabel": "Telefon",
     "contactEmailLabel": "E-Mail",
     "contactResponseLabel": "Antwortzeit",
     "messagingLabel": "Nachrichten",
     "messagingMode": {
       "off": "Aus",
-      "booking": "Nur zu einer Buchung",
-      "any": "Auch ohne Buchung"
-    }
+      "booking": "Zu einer Buchung",
+      "any": "Immer"
+    },
+    "perContactHint": "Voreinstellung, pro Kunde änderbar.",
+    "welcomeSection": "Begrüßung",
+    "welcomeState": {
+      "inquiry": "Anfrage",
+      "active": "Laufend",
+      "done": "Abgeschlossen"
+    },
+    "welcomeWhen": {
+      "inquiry": "Noch nie gebucht",
+      "active": "Termin steht oder Bilder in Arbeit",
+      "done": "Alles geliefert, nichts offen"
+    },
+    "device": {
+      "desktop": "Schreibtisch",
+      "mobile": "Telefon"
+    },
+    "previewExpand": "Vorschau aufklappen"
   },
   "gallerySettings": {
     "title": "Galerien",

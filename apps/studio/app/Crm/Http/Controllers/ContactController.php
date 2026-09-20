@@ -46,7 +46,9 @@ class ContactController extends Controller
         'gallery_comments' => ['nullable', 'boolean'],
         'offers' => ['nullable', 'boolean'],
         'portal_visible' => ['nullable', 'boolean'],
-        'welcome' => ['nullable', 'string', 'max:2000'],
+        'welcome_inquiry' => ['nullable', 'string', 'max:2000'],
+        'welcome_active' => ['nullable', 'string', 'max:2000'],
+        'welcome_done' => ['nullable', 'string', 'max:2000'],
     ];
 
     /** @return array<string, string|bool|null> */
@@ -60,7 +62,9 @@ class ContactController extends Controller
             'gallery_lists' => $settings->galleryListsEnabled(),
             'gallery_comments' => $settings->galleryCommentsEnabled(),
             'offers' => $settings->offersEnabled(),
-            'welcome' => $settings->portalWelcomeText(),
+            'welcome_inquiry' => $settings->portalWelcomeInquiry(),
+            'welcome_active' => $settings->portalWelcomeActive(),
+            'welcome_done' => $settings->portalWelcomeDone(),
             'portal_visible' => $portal->projectsVisibleByDefault(),
         ];
     }

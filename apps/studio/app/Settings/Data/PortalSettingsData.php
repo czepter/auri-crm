@@ -8,8 +8,9 @@ use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
- * T-08's own pane, extended by P-09 (#228): the maintenance closure, three
- * welcome texts for the portal's three opening states, the two external legal
+ * T-08's own pane, extended by P-09 (#228): the maintenance closure, one
+ * welcome text per opening state (nothing booked, a booking under way,
+ * everything delivered), the two external legal
  * links, the client capability switches (messaging among them, as three
  * states rather than a boolean — see P-04), where a DSGVO request goes and by
  * when, and the contact line the portal footer had no source for.
@@ -25,7 +26,6 @@ class PortalSettingsData extends Data
         public string $id,
         public bool $maintenanceEnabled,
         public ?string $maintenanceMessage,
-        public ?string $welcomeText,
         public ?string $datenschutzUrl,
         public ?string $agbUrl,
         public ?string $impressumUrl,
@@ -36,10 +36,14 @@ class PortalSettingsData extends Data
         public bool $signContractsEnabled,
         public bool $paymentStatusEnabled,
         public bool $offersEnabled,
+        public bool $galleryDownloadsEnabled,
+        public bool $galleryListsEnabled,
+        public bool $galleryCommentsEnabled,
         public string $messagingMode,
         public string $clientRegister,
         public ?string $welcomeInquiry,
-        public ?string $welcomeMany,
+        public ?string $welcomeActive,
+        public ?string $welcomeDone,
         public ?string $dsgvoRecipient,
         public int $dsgvoDeadlineDays,
         public ?string $contactPhone,
@@ -53,7 +57,6 @@ class PortalSettingsData extends Data
             id: $settings->publicId(),
             maintenanceEnabled: $settings->maintenanceEnabled(),
             maintenanceMessage: $settings->maintenanceMessage(),
-            welcomeText: $settings->portalWelcomeText(),
             datenschutzUrl: $settings->legalDatenschutzUrl(),
             agbUrl: $settings->legalAgbUrl(),
             impressumUrl: $settings->legalTextUrl('impressum'),
@@ -65,10 +68,14 @@ class PortalSettingsData extends Data
             signContractsEnabled: $settings->signContractsEnabled(),
             paymentStatusEnabled: $settings->paymentStatusEnabled(),
             offersEnabled: $settings->offersEnabled(),
+            galleryDownloadsEnabled: $settings->galleryDownloadsEnabled(),
+            galleryListsEnabled: $settings->galleryListsEnabled(),
+            galleryCommentsEnabled: $settings->galleryCommentsEnabled(),
             messagingMode: $settings->messagingMode(),
             clientRegister: $settings->clientRegister(),
             welcomeInquiry: $settings->portalWelcomeInquiry(),
-            welcomeMany: $settings->portalWelcomeMany(),
+            welcomeActive: $settings->portalWelcomeActive(),
+            welcomeDone: $settings->portalWelcomeDone(),
             dsgvoRecipient: $settings->dsgvoRequestRecipient(),
             dsgvoDeadlineDays: $settings->dsgvoRequestDeadlineDays(),
             contactPhone: $settings->portalContactPhone(),

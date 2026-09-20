@@ -3,6 +3,7 @@
 namespace App\Portal\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Settings\Support\LogoResponse;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -23,7 +24,7 @@ class BrandingController extends Controller
 
         abort_if($path === null, 404);
 
-        return Storage::disk('local')->response($path);
+        return LogoResponse::for($path);
     }
 
     /**
