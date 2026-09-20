@@ -1223,6 +1223,10 @@
     "mfaEnroll": "Einrichten",
     "recoveryCodesLeft": "{count} Wiederherstellungscodes übrig",
     "regenerate": "Neu erzeugen",
+    "sessionsSection": "Angemeldete Geräte",
+    "sessionCurrent": "Dieses Gerät",
+    "sessionEnd": "Beenden",
+    "sessionsEndOthers": "Alle anderen abmelden",
     "eventsSection": "Ereignisse",
     "backlogSection": "Rückstände",
     "event": {

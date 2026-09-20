@@ -30,6 +30,10 @@ const meta = {
     },
     pendingEmail: null,
     mfaConfirmed: true,
+    sessions: [
+      { id: 's1', device: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleW…', ip: '84.112.7.31', lastActiveAt: '2026-09-20T21:14:00+02:00', current: true },
+      { id: 's2', device: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X…', ip: '84.112.7.31', lastActiveAt: '2026-09-19T08:02:00+02:00', current: false },
+    ],
     recoveryCodesLeft: 8,
     digestFrequency: 'weekly',
     calendarFeedUrl: 'https://atelier-nordlicht.de/kalender/8f3c1a9e27b4/shootings.ics',

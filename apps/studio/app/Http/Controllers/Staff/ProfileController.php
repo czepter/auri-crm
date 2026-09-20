@@ -14,7 +14,12 @@ use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
@@ -56,6 +61,15 @@ class ProfileController extends Controller
             'calendarFeedUrl' => $pane === 'kalender'
                 ? url('/kalender/'.$user->calendarToken().'/shootings.ics')
                 : null,
+            'sessions' => $pane === 'sicherheit'
+                ? $this->sessionRows($user)->map(fn (object $row) => [
+                    'id' => $row->id,
+                    'device' => Str::limit((string) $row->user_agent, 60),
+                    'ip' => $row->ip_address,
+                    'lastActiveAt' => Carbon::createFromTimestamp($row->last_activity)->toIso8601String(),
+                    'current' => $row->id === $request->session()->getId(),
+                ])->all()
+                : [],
             'recoveryCodesLeft' => count($user->mfa_recovery_codes ?? []),
             'digestFrequency' => $user->digest_frequency,
             'events' => collect(StudioEvents::ALL)
@@ -160,6 +174,32 @@ class ProfileController extends Controller
         return redirect('/auth/mfa/recovery-codes')->with('recovery_codes', $codes);
     }
 
+    public function destroySession(Request $request, string $id): RedirectResponse
+    {
+        $user = $request->user('staff');
+
+        abort_if($id === $request->session()->getId(), 404);
+        abort_unless($this->sessionRows($user)->contains('id', $id), 404);
+
+        $this->revokeSessions($user, [$id]);
+
+        return back();
+    }
+
+    public function destroyOtherSessions(Request $request): RedirectResponse
+    {
+        $user = $request->user('staff');
+
+        $request->validate(['current_password' => ['required', 'current_password:staff']]);
+
+        $this->revokeSessions($user, $this->sessionRows($user)
+            ->pluck('id')
+            ->reject($request->session()->getId())
+            ->all());
+
+        return back();
+    }
+
     public function updateNotifications(Request $request, NotificationPreferences $preferences): RedirectResponse
     {
         $user = $request->user('staff');
@@ -180,6 +220,36 @@ class ProfileController extends Controller
         }
 
         return back();
+    }
+
+    /**
+     * Portal and gallery sessions share this table and their user_id is a
+     * contact id, which can equal a staff id — the staff login key in the
+     * payload is what tells them apart.
+     */
+    private function sessionRows(User $user): Collection
+    {
+        $guardKey = Auth::guard('staff')->getName();
+
+        return DB::table(config('session.table'))
+            ->where('user_id', $user->id)
+            ->orderByDesc('last_activity')
+            ->get()
+            ->filter(fn (object $row) => str_contains((string) base64_decode($row->payload), $guardKey))
+            ->values();
+    }
+
+    /**
+     * The remember token goes with them: a revoked device that still holds
+     * the recaller cookie would sign itself straight back in.
+     */
+    private function revokeSessions(User $user, array $ids): void
+    {
+        DB::table(config('session.table'))->whereIn('id', $ids)->delete();
+
+        $user->forceFill(['remember_token' => Str::random(60)])->save();
+
+        AuditLogger::record('profile.session_revoked', $user, ['count' => count($ids)]);
     }
 
     private function requestEmailChange(User $user, string $newEmail, StudioSettingsResolver $settings): void

@@ -8,12 +8,14 @@ import { Button } from '@/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
+import SessionList from './SessionList.vue'
 
 const props = defineProps<{
   pane: 'konto' | 'sicherheit' | 'benachrichtigungen' | 'kalender'
   user: { name: string; email: string; phone: string | null; role: string }
   pendingEmail: string | null
   mfaConfirmed: boolean
+  sessions: { id: string; device: string; ip: string | null; lastActiveAt: string; current: boolean }[]
   recoveryCodesLeft: number
   digestFrequency: string | null
   calendarFeedUrl: string | null
@@ -341,6 +343,8 @@ function regenerateFeedUrl() {
                   </Button>
                 </div>
               </div>
+
+              <SessionList v-if="pane === 'sicherheit'" :sessions="sessions" />
             </div>
           </div>
         </div>

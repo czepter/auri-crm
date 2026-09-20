@@ -303,6 +303,10 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/profil', [ProfileController::class, 'update'])->name('profile.update');
         Route::put('/profil/passwort', [ProfileController::class, 'updatePassword'])
             ->name('profile.password');
+        Route::delete('/profil/sitzungen/{id}', [ProfileController::class, 'destroySession'])
+            ->name('profile.sessions.destroy');
+        Route::delete('/profil/sitzungen', [ProfileController::class, 'destroyOtherSessions'])
+            ->name('profile.sessions.destroy-others');
         Route::post('/profil/wiederherstellungscodes', [ProfileController::class, 'regenerateRecoveryCodes'])
             ->name('profile.recovery-codes');
         Route::patch('/profil/benachrichtigungen', [ProfileController::class, 'updateNotifications'])
