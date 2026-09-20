@@ -34,8 +34,13 @@ export async function signIn(page: Page): Promise<void> {
   await submitLogin(page, ACCOUNTS.mfa)
 
   await expect(page).toHaveURL('/auth/mfa')
-  await page.getByLabel('Code aus der App').fill(authenticator.generate(MFA_SECRET))
-  await page.getByRole('button', { name: 'Bestätigen' }).click()
+
+  // Sechs Felder, eines je Ziffer. Jedes trägt sein eigenes aria-label
+  // ("pin input 1 of 6"), also greift die Beschriftung darüber nicht; #code
+  // sitzt auf dem ersten. Der Fokus rückt je Tastendruck weiter, deshalb
+  // tippen statt füllen — die letzte Ziffer schickt ab.
+  await page.locator('#code').click()
+  await page.keyboard.type(authenticator.generate(MFA_SECRET))
 
   await expect(page).toHaveURL('/')
 }
