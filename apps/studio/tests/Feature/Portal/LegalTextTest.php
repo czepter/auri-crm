@@ -3,10 +3,13 @@
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Settings\Support\StudioSettingsResolver;
+use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 
 uses(RefreshDatabase::class);
+
+beforeEach(fn () => useSurface(Surface::PORTAL));
 
 function legalTemplate(string $name = 'Widerrufsbelehrung'): DocumentTemplate
 {
@@ -53,4 +56,24 @@ it('keeps the generated Impressum page when nothing else is set', function () {
 
 it('has no page for a text nobody wrote', function () {
     $this->get('/rechtstexte/agb')->assertNotFound();
+});
+
+it('resolves the studio fields a Widerrufsbelehrung names', function () {
+    $template = DocumentTemplate::createFirstVersion([
+        'type' => DocumentTemplateType::Legal->value,
+        'name' => 'Widerrufsbelehrung',
+        'body' => '<p>{{ studio.name }}, {{ studio.city }}</p>',
+        'blocks' => ['blocks' => []],
+    ]);
+
+    $settings = app(StudioSettingsResolver::class);
+    $settings->set('legal_name', 'Atelier Nordlicht Fotografie GmbH', null);
+    $settings->set('city', 'Hamburg', null);
+    pointAt('widerruf', $template->family_id);
+
+    $this->get('/rechtstexte/widerruf')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Rechtstext', false)
+            ->where('body', '<p>Atelier Nordlicht Fotografie GmbH, Hamburg</p>'));
 });
