@@ -193,7 +193,9 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               :model-value="filters.type ?? 'all'"
               @update:model-value="(value) => filter({ typ: String(value) === 'all' ? null : String(value) })"
             >
-              <SelectTrigger id="report-type" class="w-[190px]">
+              <!-- sm ist die Variante für Schalter in einer Zeile statt in einem
+                   Formular; die 30px sind die Höhe der Segmentleiste daneben. -->
+              <SelectTrigger id="report-type" size="sm" class="h-[30px] w-[190px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -202,18 +204,12 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               </SelectContent>
             </Select>
 
-            <div class="flex items-center gap-0.5 rounded-md border border-border p-0.5">
-              <button
-                v-for="period in periods"
-                :key="period.value"
-                type="button"
-                class="h-9 rounded-[6px] px-3.5 text-[13px] font-medium"
-                :class="period.value === filters.period ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'"
-                @click="filter({ zeitraum: period.value })"
-              >
-                {{ period.label }}
-              </button>
-            </div>
+            <ChoiceGroup
+              :model-value="filters.period"
+              variant="segmented"
+              :options="periods"
+              @update:model-value="(value) => filter({ zeitraum: value })"
+            />
           </div>
         </div>
 
