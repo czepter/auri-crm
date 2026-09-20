@@ -1,21 +1,23 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3'
-import { Input } from '@/ui/input'
+import { DropArea } from '@/ui/drop-area'
 
 // Q-10: der Bildersatz des Reglerrasters — am Paket der Startsatz, am
 // Angebot der, den der Kunde sieht. Beide Wege sind dieselben drei Routen
 // unter ihrer eigenen Basis, also trägt der Aufrufer nur die Basis bei.
 const props = defineProps<{ base: string; count: number }>()
 
-function add(event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0]
-
-  if (!file) return
-
-  router.post(props.base, { image: file }, { preserveScroll: true, forceFormData: true })
+// Ein Satz wächst, deshalb geht jede gezogene Datei einzeln hoch: der
+// Endpunkt hängt an, und Inertia schickt die Anfragen nacheinander los.
+function add(files: File[]) {
+  files.forEach((image) => router.post(props.base, { image }, { preserveScroll: true, forceFormData: true }))
 }
 </script>
 
+<!--
+  Die Miniaturen stehen neben der Fläche, nicht darin: ein Knopf in einem
+  Label loest das Label mit aus, und Entfernen wuerde den Dateidialog oeffnen.
+-->
 <template>
   <div class="flex flex-wrap items-center gap-2">
     <div v-for="index in count" :key="index" class="relative">
@@ -27,6 +29,8 @@ function add(event: Event) {
         @click="router.delete(`${base}/${index - 1}`, { preserveScroll: true })"
       >×</button>
     </div>
-    <Input class="max-w-[240px]" type="file" accept="image/png,image/jpeg" @change="add" />
+    <DropArea class="min-w-[220px] flex-1" accept="image/png,image/jpeg" multiple @files="add">
+      <span class="text-[13px] text-foreground">{{ $t('common.drop') }}</span>
+    </DropArea>
   </div>
 </template>

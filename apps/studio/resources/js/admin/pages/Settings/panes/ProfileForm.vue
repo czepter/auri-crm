@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import { useObjectUrl } from '@vueuse/core'
 import { Input } from '@/ui/input'
+import { DropArea } from '@/ui/drop-area'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Label } from '@/ui/label'
@@ -79,19 +80,6 @@ const websiteHost = computed({
     form.website = host === '' ? '' : `https://${host}`
   },
 })
-
-function onLogoChange(event: Event) {
-  form.logo = (event.target as HTMLInputElement).files?.[0] ?? null
-}
-
-const logoOver = ref(false)
-
-function onLogoDrop(event: DragEvent) {
-  logoOver.value = false
-  const file = event.dataTransfer?.files?.[0]
-
-  if (file) form.logo = file
-}
 
 const pickedLogo = useObjectUrl(computed(() => form.logo ?? undefined))
 const logoPreview = computed(() => pickedLogo.value ?? props.settings.logoUrl)
@@ -236,18 +224,11 @@ defineExpose({ form, submit })
         />
         <div :class="firstRun ? 'flex flex-col gap-6' : 'grid grid-cols-2 gap-4'">
           <Field :label="$t('settings.logo')" id="p-logo" :error="form.errors.logo" :hint="$t('settings.logoHint')">
-            <label
-              class="flex cursor-pointer items-center gap-4 rounded-lg border border-dashed p-4 transition-colors"
-              :class="logoOver ? 'border-foreground bg-muted' : 'border-border'"
-              @dragover.prevent="logoOver = true"
-              @dragleave="logoOver = false"
-              @drop.prevent="onLogoDrop"
-            >
+            <DropArea id="p-logo" accept="image/png,image/jpeg,image/webp,image/svg+xml" @files="(files) => (form.logo = files[0])">
               <img v-if="logoPreview" :src="logoPreview" :alt="$t('settings.logo')" class="size-20 flex-none rounded-[6px] bg-muted object-contain p-1.5" />
               <div v-else class="size-20 flex-none rounded-[6px] bg-muted" />
-              <span class="min-w-0 truncate text-[13px] text-foreground">{{ form.logo?.name ?? $t('settings.logoDrop') }}</span>
-              <Input id="p-logo" type="file" class="hidden" accept="image/png,image/jpeg,image/webp,image/svg+xml" @change="onLogoChange" />
-            </label>
+              <span class="min-w-0 truncate text-[13px] text-foreground">{{ form.logo?.name ?? $t('common.drop') }}</span>
+            </DropArea>
           </Field>
 
           <Field :label="$t('settings.accentColor')" id="p-akzent" :error="form.errors.accent_color">

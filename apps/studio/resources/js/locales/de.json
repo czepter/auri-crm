@@ -11,6 +11,7 @@
     "calendar": "Kalender",
     "unitMinutes": "Min.",
     "unitDays": "Tage",
+    "drop": "Ablegen oder auswählen",
     "rename": "Umbenennen"
   },
   "auth": {
@@ -1055,7 +1056,6 @@
     "website": "Website",
     "logo": "Logo",
     "logoHint": "PNG, JPEG, WebP oder SVG. Transparenter Hintergrund empfohlen.",
-    "logoDrop": "Ablegen oder auswählen",
     "accentColor": "Akzentfarbe",
     "bank": "Bankverbindung",
     "bankAccountHolder": "Kontoinhaber",
