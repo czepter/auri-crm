@@ -369,8 +369,8 @@ Route::middleware('audience:staff')->group(function () {
         Route::delete('/abwesenheiten/{absence}', [AbsenceController::class, 'destroy'])->name('absences.destroy');
 
         Route::redirect('/einstellungen', '/einstellungen/allgemein');
-        Route::get('/einstellungen/marke', [StudioSettingsController::class, 'edit'])->defaults('pane', 'brand');
-        Route::get('/einstellungen/rechtliche-einheit', [StudioSettingsController::class, 'edit'])->defaults('pane', 'legal');
+        Route::redirect('/einstellungen/marke', '/einstellungen/allgemein');
+        Route::redirect('/einstellungen/rechtliche-einheit', '/einstellungen/allgemein');
         Route::get('/einstellungen/allgemein', [StudioSettingsController::class, 'edit'])->defaults('pane', 'general');
         Route::get('/einstellungen/email', [StudioSettingsController::class, 'edit'])->defaults('pane', 'email');
         Route::get('/einstellungen/rechnungsdaten', [StudioSettingsController::class, 'edit'])->defaults('pane', 'invoice');
@@ -381,7 +381,6 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/einstellungen/dokumente', [StudioSettingsController::class, 'updateDocuments'])->name('settings.documents.update');
         Route::get('/einstellungen/dokumente/angebot-vorschau', [StudioSettingsController::class, 'previewQuoteLayout'])
             ->name('settings.documents.quote-layout-preview');
-        Route::patch('/einstellungen/allgemein', [StudioSettingsController::class, 'updateGeneral'])->name('settings.general.update');
         Route::patch('/einstellungen/email', [StudioSettingsController::class, 'updateMail'])->name('settings.mail.update');
 
         Route::get('/einstellungen/nummernkreise', [NumberRangeController::class, 'index'])

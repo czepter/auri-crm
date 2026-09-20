@@ -26,7 +26,7 @@ it('updates timezone and the register, redirects, and audits the owner', functio
 
     $this->actingAs($owner, 'staff')
         ->from('/einstellungen/allgemein')
-        ->patch('/einstellungen/allgemein', [
+        ->patch('/einstellungen', [
             'timezone' => 'Europe/Vienna',
             'client_register' => 'informal',
         ])
@@ -43,9 +43,9 @@ it('updates timezone and the register, redirects, and audits the owner', functio
 it('clears the tenant timezone back to the environment fallback when submitted blank', function () {
     $owner = staffMember(StaffRole::Owner);
 
-    $this->actingAs($owner, 'staff')->patch('/einstellungen/allgemein', ['timezone' => 'Europe/Vienna']);
+    $this->actingAs($owner, 'staff')->patch('/einstellungen', ['timezone' => 'Europe/Vienna']);
 
-    $this->actingAs($owner, 'staff')->patch('/einstellungen/allgemein', ['timezone' => null]);
+    $this->actingAs($owner, 'staff')->patch('/einstellungen', ['timezone' => null]);
 
     $row = StudioSettings::query()->sole();
 
@@ -54,7 +54,7 @@ it('clears the tenant timezone back to the environment fallback when submitted b
 
 it('rejects a timezone that is not a real IANA identifier', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->patch('/einstellungen/allgemein', ['timezone' => 'Nonsense/Place'])
+        ->patch('/einstellungen', ['timezone' => 'Nonsense/Place'])
         ->assertInvalid(['timezone']);
 });
 
@@ -62,7 +62,7 @@ it('gives every non-owner role the same response on the general settings route a
     $missing = $this->actingAs(staffMember($role), 'staff')->get('/this-route-does-not-exist-xyz');
 
     $response = $this->actingAs(staffMember($role), 'staff')
-        ->patch('/einstellungen/allgemein', ['timezone' => 'Europe/Vienna']);
+        ->patch('/einstellungen', ['timezone' => 'Europe/Vienna']);
 
     $response->assertStatus($status);
 

@@ -26,8 +26,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * The section shell T-00 mocked as screen 14. Studio-Profil — legal entity,
  * brand, bank, T-02's three fieldsets on the one route T-01 scaffolded —
  * with enough save and dirty-state plumbing already in place from that
- * story. Zahlungsdaten & USt is T-03's own pane, Allgemein (timezone,
- * working days) is T-13's; every remaining group renders as a
+ * story. Zahlungsdaten & USt is T-03's own pane, and Allgemein carries
+ * brand, legal entity, tax and timezone on one page; every remaining group renders as a
  * disabled "bald" nav entry: AdminLayout's own sidebar already rules out a
  * link with nothing behind it, and the same call applies one level down.
  */
@@ -97,6 +97,9 @@ class StudioSettingsController extends Controller
             'font_pair' => ['sometimes', 'nullable', Rule::enum(FontPair::class)],
             // #439: the onboarding's first step asks this beside the identity.
             'client_register' => ['sometimes', 'required', 'in:formal,informal'],
+            // Blank returns the tenant to config('app.timezone'), per
+            // StudioSettingsResolver's fallback contract.
+            'timezone' => ['sometimes', 'nullable', 'timezone'],
             // SVG ist erlaubt, weil App\Settings\Support\LogoResponse die
             // Datei mit Sandbox-CSP ausliefert; ohne die beiden Kopfzeilen
             // liefe ein <script> darin auf unserer Herkunft.
@@ -230,35 +233,6 @@ class StudioSettingsController extends Controller
         $sample = SampleQuoteData::build($settings);
 
         return response($render->html($sample, $layout))->header('Content-Type', 'text/html; charset=utf-8');
-    }
-
-    /**
-     * T-13's own save action, same reasoning as updateVat() above: Allgemein
-     * is its own form with its own "Speichern" button, so an unrelated
-     * pane's validation error never blocks this one's save.
-     *
-     * timezone is nullable — clearing it back to blank returns the tenant to
-     * config('app.timezone'), per StudioSettingsResolver's fallback contract.
-     */
-    public function updateGeneral(Request $request, StudioSettingsResolver $settings): RedirectResponse
-    {
-        $this->authorizeSettings();
-
-        $validated = $request->validate([
-            'timezone' => ['nullable', 'timezone'],
-            // Gilt für Portal, Mails und Belege gleichermaßen — deshalb hier
-            // und nicht mehr unter Portal.
-            'client_register' => ['sometimes', 'required', Rule::in(['formal', 'informal'])],
-        ]);
-
-        $actor = auth('staff')->user();
-        $settings->set('timezone', $validated['timezone'] ?? null, $actor);
-
-        foreach (Arr::except($validated, ['timezone']) as $key => $value) {
-            $settings->set($key, $value, $actor);
-        }
-
-        return back();
     }
 
     /**

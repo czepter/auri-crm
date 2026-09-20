@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
@@ -13,46 +12,14 @@ import BrandPreview from './previews/BrandPreview.vue'
 import DocumentPreview from './previews/DocumentPreview.vue'
 import MailPreview from './previews/MailPreview.vue'
 import { basisPointsToPercent } from '@/admin/lib/money'
-import { browserTimezone, searchTimezones, timezoneLabel } from '@/admin/lib/timezones'
 import { Button } from '@/ui/button'
-import { Combobox, ComboboxAnchor, ComboboxContent, ComboboxInput, ComboboxItem } from '@/ui/combobox'
-import { ChoiceGroup } from '@/ui/choice-group'
-import { Label } from '@/ui/label'
 
 const props = defineProps<{
-  pane: 'brand' | 'legal' | 'invoice' | 'documents' | 'email' | 'general'
+  pane: 'invoice' | 'documents' | 'email' | 'general'
   fontPairs: { value: string; label: string; description: string }[]
   mailSenderFromEnv: { name: boolean; address: boolean }
   settings: App.Settings.Data.StudioSettingsData
 }>()
-
-// Der Studio-Steckbrief ist ein Formular auf zwei Einträgen: ProfileForm
-// zeigt nur den Abschnitt, der zum Pane gehört.
-// Bankverbindung und Umsatzsteuer stehen auf demselben Beleg und deshalb auf
-// einem Blatt: „invoice" zeigt beide Formulare untereinander.
-const profileSection = computed(() => (props.pane === 'brand' || props.pane === 'legal' ? props.pane : undefined))
-
-const generalForm = useForm({
-  timezone: props.settings.timezone,
-  // Die Anrede trägt jede Mail, jedes Angebot und das Portal — sie stand
-  // unter Portal und gilt überall.
-  client_register: props.settings.clientRegister,
-})
-
-// Der Browser kennt die Zone des Geräts; die Zeile darunter bietet sie an,
-// solange sie von der gespeicherten abweicht.
-const zoneTerm = ref<string>()
-const zoneChoices = computed(() => searchTimezones(zoneTerm.value ?? '', generalForm.timezone))
-const browserZone = computed(() => {
-  const zone = browserTimezone()
-
-  return zone === generalForm.timezone ? null : zone
-})
-
-function chooseZone(zone: string) {
-  generalForm.timezone = zone
-  zoneTerm.value = undefined
-}
 
 // Template refs onto the four extracted panes — each exposes { form, submit }
 // (see panes/ProfileForm.vue and its siblings). Only one is ever mounted at a
@@ -74,7 +41,6 @@ const activePanes = computed(() => {
   if (props.pane === 'invoice') return [profileRef.value, vatRef.value]
   if (props.pane === 'documents') return [documentsRef.value]
   if (props.pane === 'email') return [emailRef.value]
-  if (props.pane === 'general') return [{ form: generalForm, submit: submitGeneral }]
   return [profileRef.value]
 })
 
@@ -89,16 +55,14 @@ const paneTitle = computed(() => {
   if (props.pane === 'invoice') return 'settings.navInvoiceData'
   if (props.pane === 'documents') return 'settings.documentsTitle'
   if (props.pane === 'email') return 'settings.mailTitle'
-  if (props.pane === 'general') return 'settings.generalTitle'
-  if (props.pane === 'legal') return 'settings.legalEntity'
-  return 'settings.brand'
+  return 'settings.generalTitle'
 })
 
-// The sample sheet Rechtliches, Bankverbindung, Zahlungsdaten & USt and
+// The sample sheet Bankverbindung, Zahlungsdaten & USt and
 // Dokumente share: saved settings underneath, whatever the mounted form holds
 // on top, so the field being typed is the one moving in the preview. Only one
 // pane is mounted at a time, so at most one of the three refs contributes.
-const DOCUMENT_PANES = ['legal', 'invoice', 'documents']
+const DOCUMENT_PANES = ['invoice', 'documents']
 
 const documentPreview = computed(() => {
   const profile = profileRef.value?.form
@@ -143,15 +107,6 @@ const mailPreview = computed(() => {
     signature: mail?.mail_signature ?? props.settings.mailSignature ?? '',
   }
 })
-
-function submitGeneral() {
-  generalForm
-    .transform((data) => ({
-      timezone: data.timezone || null,
-      client_register: data.client_register,
-    }))
-    .patch('/einstellungen/allgemein', { preserveScroll: true })
-}
 </script>
 
 <template>
@@ -177,7 +132,7 @@ function submitGeneral() {
             <SettingsNav :active="pane" />
 
             <div class="max-w-[620px] min-w-0 flex-1">
-              <ProfileForm v-if="profileSection" ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="profileSection === 'legal' ? ['legal', 'tax'] : [profileSection]" />
+              <ProfileForm v-if="pane === 'general'" ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="['brand', 'legal', 'tax', 'general']" />
 
               <template v-else-if="pane === 'invoice'">
                 <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.bank') }}</div>
@@ -191,62 +146,10 @@ function submitGeneral() {
               <DocumentsForm v-else-if="pane === 'documents'" ref="documentsRef" :settings="settings" />
               <EmailForm v-else-if="pane === 'email'" ref="emailRef" :settings="settings" :sender-from-env="mailSenderFromEnv" />
 
-              <form v-else id="general-form" @submit.prevent="submitGeneral">
-                <div>
-                  <div class="mb-6">
-                    <div class="grid grid-cols-2 gap-4">
-                      <div class="flex min-w-0 flex-col gap-1.5">
-                        <Label for="g-zeitzone">{{ $t('settings.timezoneLabel') }}</Label>
-                        <Combobox ignore-filter>
-                          <ComboboxAnchor>
-                            <ComboboxInput
-                              id="g-zeitzone"
-                              :model-value="zoneTerm ?? timezoneLabel(generalForm.timezone)"
-                              @update:model-value="zoneTerm = String($event)"
-                            />
-                          </ComboboxAnchor>
-                          <ComboboxContent>
-                            <ComboboxItem
-                              v-for="zone in zoneChoices"
-                              :key="zone"
-                              :value="zone"
-                              @select="chooseZone(zone)"
-                            >
-                              {{ timezoneLabel(zone) }}
-                            </ComboboxItem>
-                          </ComboboxContent>
-                        </Combobox>
-                        <button
-                          v-if="browserZone"
-                          type="button"
-                          class="self-start text-[11.5px] leading-[1.45] text-ink-2 underline"
-                          @click="chooseZone(browserZone)"
-                        >
-                          {{ $t('settings.timezoneFromBrowser', { zone: browserZone }) }}
-                        </button>
-                        <p v-if="generalForm.errors.timezone" class="text-[11.5px] leading-[1.45] text-destructive">{{ generalForm.errors.timezone }}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="mt-8 first-of-type:mt-6">
-                  <ChoiceGroup
-                    v-model="generalForm.client_register"
-                    class="mb-6"
-                    :label="$t('settings.clientRegister')"
-                    :options="[
-                      { value: 'formal', label: $t('settings.clientRegisterFormal') },
-                      { value: 'informal', label: $t('settings.clientRegisterInformal') },
-                    ]"
-                  />
-                </div>
-
-              </form>
             </div>
 
             <BrandPreview
-              v-if="pane === 'brand' && profileRef"
+              v-if="pane === 'general' && profileRef"
               :display-name="profileRef.form.display_name"
               :website="profileRef.form.website"
               :accent-color="profileRef.form.accent_color"

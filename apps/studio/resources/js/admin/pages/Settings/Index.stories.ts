@@ -53,9 +53,9 @@ const settings: App.Settings.Data.StudioSettingsData = {
 const meta = {
   title: 'Bildschirme/Einstellungen/Studio',
   component: Index,
-  parameters: { layout: 'fullscreen', url: '/einstellungen/marke' },
+  parameters: { layout: 'fullscreen', url: '/einstellungen/allgemein' },
   args: {
-    pane: 'brand',
+    pane: 'general',
     fontPairs,
     mailSenderFromEnv: { name: false, address: false },
     settings,
@@ -65,14 +65,8 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-/** Marke, Schrift und Akzentfarbe eines eingerichteten Studios. */
-export const Marke: Story = {}
-
-/** Rechtsform, Anschrift und Steuernummern — die Fläche hinter dem Briefkopf. */
-export const Rechtliches: Story = {
-  args: { pane: 'legal' },
-  parameters: { url: '/einstellungen/rechtliche-einheit' },
-}
+/** Marke, Anrede, Rechtsform, Anschrift, Steuerangaben und Zeitzone eines eingerichteten Studios. */
+export const Allgemein: Story = {}
 
 /** Absender, Antwortadresse und Signatur der ausgehenden Post. */
 export const EMail: Story = {

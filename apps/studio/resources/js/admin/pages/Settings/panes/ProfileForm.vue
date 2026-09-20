@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import { useObjectUrl } from '@vueuse/core'
 import { Input } from '@/ui/input'
@@ -10,16 +10,18 @@ import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group'
 import { ChoiceGroup } from '@/ui/choice-group'
+import { Combobox, ComboboxAnchor, ComboboxContent, ComboboxInput, ComboboxItem } from '@/ui/combobox'
+import { browserTimezone, searchTimezones, timezoneLabel } from '@/admin/lib/timezones'
 import { requiresRegister } from '@/admin/lib/legalForm'
 
-type Section = 'legal' | 'tax' | 'brand' | 'bank'
+type Section = 'legal' | 'tax' | 'brand' | 'bank' | 'general'
 
 const props = withDefaults(defineProps<{
   settings: App.Settings.Data.StudioSettingsData
   // Absent during first-run setup: the pair is fine-tuning, not a thing a
   // studio has to decide before it can work.
   fontPairs?: { value: string; label: string; description: string }[]
-  // The settings screen shows one fieldset per nav entry.
+  // The settings screen shows one fieldset per section.
   sections?: Section[]
   // First run asks for the brand and stops there: the display name, the logo
   // and the accent are what the portal header shows the client, and the
@@ -27,7 +29,7 @@ const props = withDefaults(defineProps<{
   // along with that quote (they carry the Impressum), Steuernummer and the
   // register pair with the first invoice.
   firstRun?: boolean
-}>(), { fontPairs: () => [], sections: () => ['legal', 'tax', 'brand', 'bank'], firstRun: false })
+}>(), { fontPairs: () => [], sections: () => ['brand', 'legal', 'tax', 'general', 'bank'], firstRun: false })
 const emit = defineEmits<{ saved: [] }>()
 
 // A pane sends only its own fields. tax_number/vat_id are required_without
@@ -37,8 +39,9 @@ const emit = defineEmits<{ saved: [] }>()
 const SECTION_FIELDS: Record<Section, string[]> = {
   legal: ['legal_name', 'legal_form', 'representative', 'street', 'postcode', 'city', 'country'],
   tax: ['tax_number', 'vat_id', 'register_number', 'register_court'],
-  brand: ['display_name', 'website', 'logo', 'accent_color', 'font_pair'],
+  brand: ['display_name', 'website', 'logo', 'accent_color', 'font_pair', 'client_register'],
   bank: ['bank_account_holder', 'bank_iban', 'bank_bic'],
+  general: ['timezone'],
 }
 
 const FIRST_RUN_SECTIONS: Section[] = ['brand']
@@ -63,6 +66,7 @@ const form = useForm({
   accent_color: props.settings.accentColor ?? '',
   font_pair: props.settings.fontPair ?? 'hanken',
   client_register: props.settings.clientRegister,
+  timezone: props.settings.timezone,
   logo: null as File | null,
   bank_account_holder: props.settings.bankAccountHolder ?? '',
   bank_iban: props.settings.bankIban ?? '',
@@ -81,22 +85,33 @@ const websiteHost = computed({
   },
 })
 
+// Der Browser kennt die Zone des Geräts; die Zeile darunter bietet sie an,
+// solange sie von der gespeicherten abweicht.
+const zoneTerm = ref<string>()
+const zoneChoices = computed(() => searchTimezones(zoneTerm.value ?? '', form.timezone))
+const browserZone = computed(() => {
+  const zone = browserTimezone()
+
+  return zone === form.timezone ? null : zone
+})
+
+function chooseZone(zone: string) {
+  form.timezone = zone
+  zoneTerm.value = undefined
+}
+
 const pickedLogo = useObjectUrl(computed(() => form.logo ?? undefined))
 const logoPreview = computed(() => pickedLogo.value ?? props.settings.logoUrl)
 
 function submit() {
   const sent = new Set<string>(shownSections.value.flatMap((section) => SECTION_FIELDS[section]))
 
-  if (props.firstRun) {
-    sent.add('client_register')
-  }
-
   // Inertia's own documented workaround: a browser cannot send a real PUT
   // or PATCH as multipart/form-data, so a file upload goes over POST with
   // `_method` spoofing the verb Laravel's router actually matches on.
   form
     .transform((data) => ({
-      ...Object.fromEntries(Object.entries(data).filter(([field]) => sent.has(field))),
+      ...Object.fromEntries(Object.entries({ ...data, timezone: data.timezone || null }).filter(([field]) => sent.has(field))),
       _method: 'patch',
     }))
     .post('/einstellungen', { forceFormData: true, preserveScroll: true, onSuccess: () => emit('saved') })
@@ -107,6 +122,77 @@ defineExpose({ form, submit })
 
 <template>
   <form id="settings-form" @submit.prevent="submit">
+    <div v-if="shows('brand')" class="mt-8 first:mt-0">
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.brand') }}</div>
+      <div class="mb-6">
+        <div class="grid grid-cols-2 gap-4">
+          <Field :label="$t('settings.displayName')" id="p-anzeigename" :error="form.errors.display_name">
+            <Input id="p-anzeigename" v-model="form.display_name" type="text" />
+          </Field>
+          <Field :label="$t('settings.website')" id="p-web" :error="form.errors.website">
+            <InputGroup>
+              <InputGroupAddon>https://</InputGroupAddon>
+              <InputGroupInput id="p-web" v-model="websiteHost" type="text" />
+            </InputGroup>
+          </Field>
+        </div>
+      </div>
+      <div class="mb-6">
+        <ChoiceGroup
+          v-model="form.client_register"
+          class="mb-6"
+          :label="$t('settings.clientRegister')"
+          :options="[
+            { value: 'formal', label: $t('settings.clientRegisterFormal') },
+            { value: 'informal', label: $t('settings.clientRegisterInformal') },
+          ]"
+        />
+        <div :class="firstRun ? 'flex flex-col gap-6' : 'grid grid-cols-2 gap-4'">
+          <Field :label="$t('settings.logo')" id="p-logo" :error="form.errors.logo" :hint="$t('settings.logoHint')">
+            <DropArea id="p-logo" accept="image/png,image/jpeg,image/webp,image/svg+xml" @files="(files) => (form.logo = files[0])">
+              <img v-if="logoPreview" :src="logoPreview" :alt="$t('settings.logo')" class="size-20 flex-none rounded-[6px] bg-muted object-contain p-1.5" />
+              <div v-else class="size-20 flex-none rounded-[6px] bg-muted" />
+              <span class="min-w-0 truncate text-[13px] text-foreground">{{ form.logo?.name ?? $t('common.drop') }}</span>
+            </DropArea>
+          </Field>
+
+          <Field :label="$t('settings.accentColor')" id="p-akzent" :error="form.errors.accent_color">
+            <InputGroup>
+              <InputGroupAddon>
+                <span
+                  class="size-4 flex-none rounded-[3px] border border-border"
+                  :style="{ background: form.accent_color || 'transparent' }"
+                />
+              </InputGroupAddon>
+              <InputGroupInput id="p-akzent" v-model="form.accent_color" class="tabular-nums" type="text" placeholder="#1C6870" />
+            </InputGroup>
+          </Field>
+        </div>
+
+        <!-- #234: the pair is shown in itself, not named in a sample line —
+             a typeface is judged by reading it. Only the display pair is
+             selectable; minimum sizes and contrast stay fixed. -->
+        <Field v-if="fontPairs.length" class="mt-6">
+          <Label>{{ $t('settings.fontPair') }}</Label>
+          <RadioGroup v-model="form.font_pair" class="grid grid-cols-2 gap-2.5">
+            <!-- The card is the radio: a <label> forwards its click to the
+                 button reka renders, so the whole sample is the hit area and
+                 the dot itself has nothing to draw. -->
+            <label
+              v-for="pair in fontPairs"
+              :key="pair.value"
+              class="block cursor-pointer rounded-md bg-muted px-4 pt-4 pb-6 shadow-[inset_0_0_0_1px_transparent] has-[[data-state=checked]]:shadow-[inset_0_0_0_2px_var(--accent)]"
+              :data-font="pair.value"
+            >
+              <RadioGroupItem :value="pair.value" class="sr-only" />
+              <b class="block font-normal text-[26px] leading-[var(--display-leading)] font-[family-name:var(--font-display)] tracking-[var(--display-tracking)] text-foreground">{{ settings.displayName || pair.label }}</b>
+              <em class="mt-2 block font-sans text-[12.5px] leading-[1.5] font-normal not-italic text-muted-foreground">{{ pair.description }}</em>
+            </label>
+          </RadioGroup>
+        </Field>
+      </div>
+    </div>
+
     <div v-if="shows('legal')" class="mt-8 first:mt-0">
       <div v-if="shownSections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.legalEntity') }}</div>
       <div class="mb-6">
@@ -196,75 +282,36 @@ defineExpose({ form, submit })
       </div>
     </div>
 
-    <div v-if="shows('brand')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.brand') }}</div>
+    <div v-if="shows('general')" class="mt-8 first:mt-0">
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.timezoneLabel') }}</div>
       <div class="mb-6">
         <div class="grid grid-cols-2 gap-4">
-          <Field :label="$t('settings.displayName')" id="p-anzeigename" :error="form.errors.display_name">
-            <Input id="p-anzeigename" v-model="form.display_name" type="text" />
-          </Field>
-          <Field :label="$t('settings.website')" id="p-web" :error="form.errors.website">
-            <InputGroup>
-              <InputGroupAddon>https://</InputGroupAddon>
-              <InputGroupInput id="p-web" v-model="websiteHost" type="text" />
-            </InputGroup>
-          </Field>
-        </div>
-      </div>
-      <div class="mb-6">
-        <ChoiceGroup
-          v-if="firstRun"
-          v-model="form.client_register"
-          class="mb-6"
-          :label="$t('settings.clientRegister')"
-          :options="[
-            { value: 'formal', label: $t('settings.clientRegisterFormal') },
-            { value: 'informal', label: $t('settings.clientRegisterInformal') },
-          ]"
-        />
-        <div :class="firstRun ? 'flex flex-col gap-6' : 'grid grid-cols-2 gap-4'">
-          <Field :label="$t('settings.logo')" id="p-logo" :error="form.errors.logo" :hint="$t('settings.logoHint')">
-            <DropArea id="p-logo" accept="image/png,image/jpeg,image/webp,image/svg+xml" @files="(files) => (form.logo = files[0])">
-              <img v-if="logoPreview" :src="logoPreview" :alt="$t('settings.logo')" class="size-20 flex-none rounded-[6px] bg-muted object-contain p-1.5" />
-              <div v-else class="size-20 flex-none rounded-[6px] bg-muted" />
-              <span class="min-w-0 truncate text-[13px] text-foreground">{{ form.logo?.name ?? $t('common.drop') }}</span>
-            </DropArea>
-          </Field>
-
-          <Field :label="$t('settings.accentColor')" id="p-akzent" :error="form.errors.accent_color">
-            <InputGroup>
-              <InputGroupAddon>
-                <span
-                  class="size-4 flex-none rounded-[3px] border border-border"
-                  :style="{ background: form.accent_color || 'transparent' }"
+          <Field :error="form.errors.timezone" v-slot="{ id }">
+            <Label :for="id" class="sr-only">{{ $t('settings.timezoneLabel') }}</Label>
+            <Combobox ignore-filter>
+              <ComboboxAnchor>
+                <ComboboxInput
+                  :id
+                  :model-value="zoneTerm ?? timezoneLabel(form.timezone)"
+                  @update:model-value="zoneTerm = String($event)"
                 />
-              </InputGroupAddon>
-              <InputGroupInput id="p-akzent" v-model="form.accent_color" class="tabular-nums" type="text" placeholder="#1C6870" />
-            </InputGroup>
+              </ComboboxAnchor>
+              <ComboboxContent>
+                <ComboboxItem v-for="zone in zoneChoices" :key="zone" :value="zone" @select="chooseZone(zone)">
+                  {{ timezoneLabel(zone) }}
+                </ComboboxItem>
+              </ComboboxContent>
+            </Combobox>
+            <button
+              v-if="browserZone"
+              type="button"
+              class="self-start text-[11.5px] leading-[1.45] text-ink-2 underline"
+              @click="chooseZone(browserZone)"
+            >
+              {{ $t('settings.timezoneFromBrowser', { zone: browserZone }) }}
+            </button>
           </Field>
         </div>
-
-        <!-- #234: the pair is shown in itself, not named in a sample line —
-             a typeface is judged by reading it. Only the display pair is
-             selectable; minimum sizes and contrast stay fixed. -->
-        <Field v-if="fontPairs.length" class="mt-6">
-          <Label>{{ $t('settings.fontPair') }}</Label>
-          <RadioGroup v-model="form.font_pair" class="grid grid-cols-2 gap-2.5">
-            <!-- The card is the radio: a <label> forwards its click to the
-                 button reka renders, so the whole sample is the hit area and
-                 the dot itself has nothing to draw. -->
-            <label
-              v-for="pair in fontPairs"
-              :key="pair.value"
-              class="block cursor-pointer rounded-md bg-muted px-4 pt-4 pb-6 shadow-[inset_0_0_0_1px_transparent] has-[[data-state=checked]]:shadow-[inset_0_0_0_2px_var(--accent)]"
-              :data-font="pair.value"
-            >
-              <RadioGroupItem :value="pair.value" class="sr-only" />
-              <b class="block font-normal text-[26px] leading-[var(--display-leading)] font-[family-name:var(--font-display)] tracking-[var(--display-tracking)] text-foreground">{{ settings.displayName || pair.label }}</b>
-              <em class="mt-2 block font-sans text-[12.5px] leading-[1.5] font-normal not-italic text-muted-foreground">{{ pair.description }}</em>
-            </label>
-          </RadioGroup>
-        </Field>
       </div>
     </div>
 

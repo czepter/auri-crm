@@ -120,17 +120,6 @@ it('stores the legal links and the attach switches on the Impressum & AGB route'
         ->and($row->portal_legal_widerruf_attach)->toBeFalse();
 });
 
-it('no longer takes the legal texts on the general route', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->patch('/einstellungen/allgemein', [
-            'timezone' => 'Europe/Vienna',
-            'portal_legal_agb_url' => 'https://atelier-nordlicht.de/agb',
-        ])
-        ->assertRedirect();
-
-    expect(StudioSettings::query()->sole()->portal_legal_agb_url)->toBeNull();
-});
-
 it('gives every non-owner role the same response on the portal settings route as a route that does not exist', function (StaffRole $role, int $status) {
     $missing = $this->actingAs(staffMember($role), 'staff')->get('/this-route-does-not-exist-xyz');
 

@@ -46,7 +46,30 @@ it('renders the settings shell for an owner', function () {
         ->and($props['settings'])->toHaveKey('displayName')
         ->and($props['settings'])->toHaveKey('legalName')
         ->and($props['settings'])->toHaveKey('bankIban')
+        ->and($props['settings'])->toHaveKeys(['accentColor', 'fontPair', 'clientRegister', 'taxNumber', 'vatId', 'registerNumber', 'timezone'])
+        ->and($props)->toHaveKey('fontPairs')
         ->and($props['settings']['logoUrl'])->toBeNull();
+});
+
+it('sends the brand and legal-entity paths to Allgemein', function (string $path) {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->get($path)
+        ->assertRedirect('/einstellungen/allgemein');
+})->with(['/einstellungen/marke', '/einstellungen/rechtliche-einheit']);
+
+it('saves the form of address and the timezone with the rest of the profile', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->patch('/einstellungen', ['display_name' => 'Atelier Nordlicht', 'client_register' => 'informal', 'timezone' => 'Europe/Vienna'])
+        ->assertSessionHasNoErrors();
+
+    $row = StudioSettings::query()->sole();
+
+    expect($row->client_register)->toBe('informal')
+        ->and($row->timezone)->toBe('Europe/Vienna');
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->patch('/einstellungen', ['timezone' => 'Nonsense/Place'])
+        ->assertInvalid(['timezone']);
 });
 
 it('sends the settings root to the first pane', function () {
@@ -62,8 +85,6 @@ it('serves every settings pane on its own path', function (string $path, string 
         ->assertInertia(fn ($page) => $page->where('pane', $pane));
 })->with([
     ['/einstellungen/allgemein', 'general'],
-    ['/einstellungen/marke', 'brand'],
-    ['/einstellungen/rechtliche-einheit', 'legal'],
     ['/einstellungen/email', 'email'],
     ['/einstellungen/rechnungsdaten', 'invoice'],
     ['/einstellungen/dokumente', 'documents'],
