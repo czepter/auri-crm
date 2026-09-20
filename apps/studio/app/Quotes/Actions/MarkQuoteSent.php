@@ -12,6 +12,7 @@ use App\Support\AuditLogger;
 use Carbon\CarbonInterface;
 use DomainException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * The state change SendQuote used to own outright, now shared with the
@@ -31,6 +32,15 @@ class MarkQuoteSent
     {
         if ($quote->status !== QuoteStatus::Draft) {
             throw new DomainException("Quote {$quote->public_id} is already {$quote->status->value} and cannot be sent.");
+        }
+
+        // Ein Angebot darf entstehen, ohne dass die Widerrufsbelehrung steht;
+        // hinausgehen darf es nicht. Ohne sie beginnt die Frist eines
+        // Verbrauchers nicht zu laufen (§ 356 Abs. 3 BGB), und das gilt
+        // unabhängig davon, ob das Angebot als Mail oder über WhatsApp
+        // rausgeht — deshalb steht die Prüfung hier und nicht in SendQuote.
+        if ($this->settings->legalUrl('widerruf') === null) {
+            throw ValidationException::withMessages(['quote' => __('quotes.widerrufMissing')]);
         }
 
         DB::transaction(function () use ($quote, $channel, $actor, $at) {

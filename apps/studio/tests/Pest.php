@@ -70,8 +70,16 @@ pest()->extend(TestCase::class)
         // earlier run would otherwise leak into this one. Flushing here is
         // the same fix StudioSettingsAdminTest's own beforeEach already
         // applies per-file; this makes it universal.
+        // Dieselbe Begründung für die Widerrufsbelehrung: MarkQuoteSent lässt
+        // kein Angebot hinaus, solange keine Quelle hinterlegt ist, und jeder
+        // Test, der ein Angebot versendet, spielt ein Studio, das im Betrieb
+        // steht. QuoteWiderrufGuardTest räumt die Spalte pro Test wieder ab
+        // und prüft die Sperre selbst.
         if (Schema::hasTable('studio_settings')) {
-            StudioSettings::query()->update(['onboarding_completed_at' => now()]);
+            StudioSettings::query()->update([
+                'onboarding_completed_at' => now(),
+                'portal_legal_widerruf_url' => 'https://example.test/widerruf',
+            ]);
             Cache::store('redis')->flush();
         }
     })
