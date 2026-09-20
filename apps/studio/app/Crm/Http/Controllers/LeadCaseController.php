@@ -21,13 +21,13 @@ use App\Crm\Models\ProjectType;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
 use App\Crm\Support\CrmVocabulary;
+use App\Crm\Support\OtherSuggestions;
 use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
 use App\Quotes\Actions\ReadQuoteList;
 use App\Quotes\Data\QuoteData;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\RecordVisit;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
@@ -63,7 +63,6 @@ class LeadCaseController extends Controller
         private readonly CheckDateAvailability $availability,
         private readonly OpenLeads $leads,
         private readonly BuildThread $thread,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     public function show(Lead $lead, string $tab = 'overview'): Response
@@ -157,8 +156,8 @@ class LeadCaseController extends Controller
             'sources' => collect(LeadSource::cases())
                 ->map(fn (LeadSource $source) => ['value' => $source->value, 'label' => $source->label()])->all(),
             'presets' => [
-                'type' => $this->settings->leadPresets('type'),
-                'source' => $this->settings->leadPresets('source'),
+                'type' => OtherSuggestions::for('type'),
+                'source' => OtherSuggestions::for('source'),
             ],
             'week' => $this->week($project, $primary?->date?->format('Y-m-d')),
             'conflicts' => $this->availability->forDate($primary?->date?->format('Y-m-d'), $project),

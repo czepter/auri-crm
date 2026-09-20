@@ -67,7 +67,6 @@ it('serves every settings pane on its own path', function (string $path, string 
     ['/einstellungen/email', 'email'],
     ['/einstellungen/rechnungsdaten', 'invoice'],
     ['/einstellungen/dokumente', 'documents'],
-    ['/einstellungen/erfassung', 'capture'],
 ]);
 
 it('updates the display name, redirects, and leaves an audit row naming the owner', function () {

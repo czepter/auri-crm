@@ -301,38 +301,6 @@ class StudioSettingsController extends Controller
     }
 
     /**
-     * The suggestion lists the three "Sonstige" fields at capture offer.
-     * Free text stays free text — these only spare the studio retyping the
-     * kinds of work it does every week.
-     */
-    public function updateCapture(Request $request, StudioSettingsResolver $settings): RedirectResponse
-    {
-        $this->authorizeSettings();
-
-        $validated = $request->validate([
-            'lead_type_presets' => ['array'],
-            'lead_type_presets.*' => ['nullable', 'string', 'max:120'],
-            'lead_source_presets' => ['array'],
-            'lead_source_presets.*' => ['nullable', 'string', 'max:120'],
-            'lead_channel_presets' => ['array'],
-            'lead_channel_presets.*' => ['nullable', 'string', 'max:120'],
-        ]);
-
-        $actor = auth('staff')->user();
-
-        foreach (['lead_type_presets', 'lead_source_presets', 'lead_channel_presets'] as $key) {
-            $settings->set($key, collect($validated[$key] ?? [])
-                ->map(fn (?string $value) => trim((string) $value))
-                ->filter()
-                ->unique()
-                ->values()
-                ->all(), $actor);
-        }
-
-        return redirect('/einstellungen/erfassung');
-    }
-
-    /**
      * T-06's own pane and save action, same reasoning as updateVat() above:
      * E-Mail is its own form with its own "Speichern" button.
      *

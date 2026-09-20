@@ -32,6 +32,7 @@ use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
 use App\Crm\Models\TaskTemplate;
 use App\Crm\Support\CrmVocabulary;
+use App\Crm\Support\OtherSuggestions;
 use App\Crm\Support\StageSettingsPayload;
 use App\Crm\Support\TaskAnchors;
 use App\Documents\Data\MailTemplateData;
@@ -59,7 +60,6 @@ class ProjectController extends Controller
     public function __construct(
         private readonly DeriveProjectPosition $position,
         private readonly CheckDateAvailability $availability,
-        private readonly StudioSettingsResolver $settings,
         private readonly BuildThread $thread,
         private readonly ReadProjectScreen $screen,
     ) {}
@@ -191,7 +191,7 @@ class ProjectController extends Controller
                 ->map(fn (LeadSource $source) => ['value' => $source->value, 'label' => $source->label()])->all(),
             'roles' => collect(ProjectContactRole::cases())
                 ->map(fn (ProjectContactRole $role) => ['value' => $role->value, 'label' => $role->value])->all(),
-            'presets' => ['source' => $this->settings->leadPresets('source')],
+            'presets' => ['source' => OtherSuggestions::for('source')],
             'stage' => $project->job()->exists()
                 ? $this->position->leastAdvanced($project->shoots)?->status->key
                 : $project->lead?->stage->key,

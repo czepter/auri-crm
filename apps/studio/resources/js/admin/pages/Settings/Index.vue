@@ -19,11 +19,10 @@ import { Button } from '@/ui/button'
 import { Combobox, ComboboxAnchor, ComboboxContent, ComboboxInput, ComboboxItem } from '@/ui/combobox'
 import { Checkbox } from '@/ui/checkbox'
 import { ChoiceGroup } from '@/ui/choice-group'
-import { Textarea } from '@/ui/textarea'
 import { Label } from '@/ui/label'
 
 const props = defineProps<{
-  pane: 'brand' | 'legal' | 'invoice' | 'documents' | 'email' | 'capture' | 'general'
+  pane: 'brand' | 'legal' | 'invoice' | 'documents' | 'email' | 'general'
   fontPairs: { value: string; label: string; description: string }[]
   mailSenderFromEnv: { name: boolean; address: boolean }
   settings: App.Settings.Data.StudioSettingsData
@@ -86,29 +85,6 @@ function chooseZone(zone: string) {
   zoneTerm.value = undefined
 }
 
-// The three suggestion lists the "Sonstige" fields at capture offer, one
-// entry per line — the list is short and typed rarely, so a textarea beats a
-// tag editor nobody asked for.
-const captureForm = useForm({
-  lead_type_presets: props.settings.leadTypePresets.join('\n'),
-  lead_source_presets: props.settings.leadSourcePresets.join('\n'),
-  lead_channel_presets: props.settings.leadChannelPresets.join('\n'),
-})
-
-function lines(value: string) {
-  return value.split('\n').map((line) => line.trim()).filter(Boolean)
-}
-
-function submitCapture() {
-  captureForm
-    .transform((data) => ({
-      lead_type_presets: lines(data.lead_type_presets),
-      lead_source_presets: lines(data.lead_source_presets),
-      lead_channel_presets: lines(data.lead_channel_presets),
-    }))
-    .patch('/einstellungen/erfassung', { preserveScroll: true })
-}
-
 // Template refs onto the four extracted panes — each exposes { form, submit }
 // (see panes/ProfileForm.vue and its siblings). Only one is ever mounted at a
 // time (v-if/v-else-if below), so only one of these is non-null at once.
@@ -129,7 +105,6 @@ const activePanes = computed(() => {
   if (props.pane === 'invoice') return [profileRef.value, vatRef.value]
   if (props.pane === 'documents') return [documentsRef.value]
   if (props.pane === 'email') return [emailRef.value]
-  if (props.pane === 'capture') return [{ form: captureForm, submit: submitCapture }]
   if (props.pane === 'general') return [{ form: generalForm, submit: submitGeneral }]
   return [profileRef.value]
 })
@@ -145,7 +120,6 @@ const paneTitle = computed(() => {
   if (props.pane === 'invoice') return 'settings.navInvoiceData'
   if (props.pane === 'documents') return 'settings.documentsTitle'
   if (props.pane === 'email') return 'settings.mailTitle'
-  if (props.pane === 'capture') return 'settings.captureTitle'
   if (props.pane === 'general') return 'settings.generalTitle'
   if (props.pane === 'legal') return 'settings.legalEntity'
   return 'settings.brand'
@@ -262,27 +236,6 @@ function submitGeneral() {
 
               <DocumentsForm v-else-if="pane === 'documents'" ref="documentsRef" :settings="settings" />
               <EmailForm v-else-if="pane === 'email'" ref="emailRef" :settings="settings" :sender-from-env="mailSenderFromEnv" />
-
-              <form v-else-if="pane === 'capture'" id="capture-form" @submit.prevent="submitCapture">
-                <div>
-                  <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.capturePresetsLabel') }}</div>
-                  <div class="mb-6">
-                    <div class="flex min-w-0 flex-col gap-1.5">
-                      <Label for="c-typ">{{ $t('leads.type') }}</Label>
-                      <Textarea id="c-typ" v-model="captureForm.lead_type_presets" rows="4" />
-                    </div>
-                    <div class="mt-4 flex min-w-0 flex-col gap-1.5">
-                      <Label for="c-quelle">{{ $t('leads.source') }}</Label>
-                      <Textarea id="c-quelle" v-model="captureForm.lead_source_presets" rows="4" />
-                    </div>
-                    <div class="mt-4 flex min-w-0 flex-col gap-1.5">
-                      <Label for="c-kanal">{{ $t('leads.capturedVia') }}</Label>
-                      <Textarea id="c-kanal" v-model="captureForm.lead_channel_presets" rows="4" />
-                    </div>
-                    <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('settings.capturePresetsHint') }}</span>
-                  </div>
-                </div>
-              </form>
 
               <form v-else id="general-form" @submit.prevent="submitGeneral">
                 <div>

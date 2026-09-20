@@ -375,7 +375,6 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/einstellungen/email', [StudioSettingsController::class, 'edit'])->defaults('pane', 'email');
         Route::get('/einstellungen/rechnungsdaten', [StudioSettingsController::class, 'edit'])->defaults('pane', 'invoice');
         Route::get('/einstellungen/dokumente', [StudioSettingsController::class, 'edit'])->defaults('pane', 'documents');
-        Route::get('/einstellungen/erfassung', [StudioSettingsController::class, 'edit'])->defaults('pane', 'capture');
         Route::patch('/einstellungen', [StudioSettingsController::class, 'update'])->name('settings.update');
         Route::get('/einstellungen/logo', [StudioSettingsController::class, 'logo'])->name('settings.logo');
         Route::patch('/einstellungen/ust', [StudioSettingsController::class, 'updateVat'])->name('settings.vat.update');
@@ -384,7 +383,6 @@ Route::middleware('audience:staff')->group(function () {
             ->name('settings.documents.quote-layout-preview');
         Route::patch('/einstellungen/allgemein', [StudioSettingsController::class, 'updateGeneral'])->name('settings.general.update');
         Route::patch('/einstellungen/email', [StudioSettingsController::class, 'updateMail'])->name('settings.mail.update');
-        Route::patch('/einstellungen/erfassung', [StudioSettingsController::class, 'updateCapture'])->name('settings.capture.update');
 
         Route::get('/einstellungen/nummernkreise', [NumberRangeController::class, 'index'])
             ->name('number-ranges.index');

@@ -50,9 +50,6 @@ const settings: App.Settings.Data.StudioSettingsData = {
   mailSignature: 'Christian Zepter\nAtelier Nordlicht',
   mailBcc: null,
   mailClientsEnabled: true,
-  leadTypePresets: ['Hochzeit', 'Paarshooting', 'Familie'],
-  leadSourcePresets: ['Empfehlung', 'Instagram', 'Website'],
-  leadChannelPresets: ['E-Mail', 'Telefon', 'Kontaktformular'],
 }
 
 const portal: App.Settings.Data.PortalSettingsData = {
@@ -138,9 +135,6 @@ export const FrischAngelegt: Story = {
       bankBic: null,
       mailReplyTo: null,
       mailSignature: null,
-      leadTypePresets: [],
-      leadSourcePresets: [],
-      leadChannelPresets: [],
     },
   },
 }

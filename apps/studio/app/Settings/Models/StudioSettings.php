@@ -65,7 +65,6 @@ class StudioSettings extends Model
         'portal_contact_name', 'portal_contact_phone', 'portal_contact_email',
         'portal_contact_response_time', 'portal_contact_avatar_path',
         'onboarding_completed_at', 'onboarding_reminder_sent_at',
-        'lead_type_presets', 'lead_source_presets', 'lead_channel_presets',
     ];
 
     // Defence in depth beside StudioSettingsResolver never exposing these
@@ -102,9 +101,6 @@ class StudioSettings extends Model
             'gallery_default_design' => 'array',
             'onboarding_completed_at' => 'datetime',
             'onboarding_reminder_sent_at' => 'datetime',
-            'lead_type_presets' => 'array',
-            'lead_source_presets' => 'array',
-            'lead_channel_presets' => 'array',
         ];
     }
 }

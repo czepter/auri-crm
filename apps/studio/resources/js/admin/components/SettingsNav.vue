@@ -34,7 +34,6 @@ const items = [
 
   { group: 'settings.groupWork' },
   { key: 'availability', href: '/einstellungen/verfuegbarkeit', label: 'settings.navAvailability' },
-  { key: 'capture', href: '/einstellungen/erfassung', label: 'settings.navCapture' },
   { key: 'automations', href: '/einstellungen/automationen', label: 'automations.title' },
 
   { group: 'settings.groupPortal' },

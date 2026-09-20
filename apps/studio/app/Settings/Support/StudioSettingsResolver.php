@@ -201,17 +201,6 @@ class StudioSettingsResolver
     }
 
     /**
-     * The details this studio keeps typing under "Sonstige" at capture —
-     * offered as suggestions on the three fields, never as a closed list.
-     *
-     * @return list<string>
-     */
-    public function leadPresets(string $kind): array
-    {
-        return $this->row()->{"lead_{$kind}_presets"} ?? [];
-    }
-
-    /**
      * The stored path of the logo — the ONE file both RenderContractJob's
      * `studio.logoPath` merge field and a future portal-branding read are
      * meant to resolve against (T-02's acceptance criterion). Never a second

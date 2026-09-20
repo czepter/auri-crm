@@ -1155,9 +1155,6 @@ mailReplyTo: string | null,
 mailSignature: string | null,
 mailBcc: string | null,
 mailClientsEnabled: boolean,
-leadTypePresets: string[],
-leadSourcePresets: string[],
-leadChannelPresets: string[],
 };
 }
 namespace Enums {
