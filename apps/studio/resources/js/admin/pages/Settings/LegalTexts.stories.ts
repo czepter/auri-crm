@@ -30,9 +30,9 @@ const settings: App.Settings.Data.PortalSettingsData = {
 }
 
 const meta = {
-  title: 'Bildschirme/Einstellungen/Rechtstexte',
+  title: 'Bildschirme/Einstellungen/Pflichtangaben',
   component: LegalTexts,
-  parameters: { layout: 'fullscreen', url: '/einstellungen/rechtstexte' },
+  parameters: { layout: 'fullscreen', url: '/einstellungen/pflichtangaben' },
   args: {
     settings,
     legalTemplates: [{ family: 'fam-widerruf-0000000000', name: 'Widerrufsbelehrung', updatedAt: '2026-06-12' }],

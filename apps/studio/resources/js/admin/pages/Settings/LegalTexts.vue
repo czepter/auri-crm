@@ -19,7 +19,7 @@ const formRef = ref<InstanceType<typeof LegalTextsForm>>()
   <AdminLayout active="einstellungen">
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
-        <PageHead :kicker="$t('settings.kicker')" :title="$t('settings.navLegalTexts')">
+        <PageHead :kicker="$t('settings.kicker')" :title="$t('settings.navObligations')">
           <span v-if="formRef?.form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
           <Button
             v-if="formRef?.form.isDirty"
@@ -35,7 +35,7 @@ const formRef = ref<InstanceType<typeof LegalTextsForm>>()
 
         <div class="px-8 pt-7 pb-8">
           <div class="flex flex-wrap items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
-            <SettingsNav active="legal-texts" />
+            <SettingsNav active="obligations" />
 
             <div class="max-w-[700px] min-w-0 flex-1">
               <LegalTextsForm ref="formRef" :settings="settings" :legal-templates="legalTemplates" />

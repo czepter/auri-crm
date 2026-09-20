@@ -478,8 +478,8 @@ Route::middleware('audience:staff')->group(function () {
             ->name('settings.portal.edit');
         Route::get('/einstellungen/portal/vorschau', [PortalSettingsController::class, 'preview'])
             ->name('settings.portal.preview');
-        Route::get('/einstellungen/rechtstexte', [PortalSettingsController::class, 'legal'])
-            ->name('settings.legal-texts');
+        Route::get('/einstellungen/pflichtangaben', [PortalSettingsController::class, 'legal'])
+            ->name('settings.obligations');
         Route::patch('/einstellungen/portal', [PortalSettingsController::class, 'update'])
             ->name('settings.portal.update');
 

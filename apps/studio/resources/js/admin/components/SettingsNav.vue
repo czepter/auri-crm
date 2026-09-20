@@ -35,7 +35,7 @@ const items = [
   { key: 'payments', href: '/einstellungen/zahlungen', label: 'settings.navPayments' },
   // Ohne Widerrufsbelehrung geht kein Angebot hinaus; die Rechtstexte hängen
   // am Versand, nicht am Portal.
-  { key: 'legal-texts', href: '/einstellungen/rechtstexte', label: 'settings.navLegalTexts' },
+  { key: 'obligations', href: '/einstellungen/pflichtangaben', label: 'settings.navObligations' },
 
   { group: 'settings.groupWork' },
   { key: 'availability', href: '/einstellungen/verfuegbarkeit', label: 'settings.navAvailability' },
