@@ -261,10 +261,7 @@ class StudioSettingsController extends Controller
      * pane's validation error never blocks this one's save.
      *
      * timezone is nullable — clearing it back to blank returns the tenant to
-     * config('app.timezone'), per StudioSettingsResolver's fallback contract. working_days is not:
-     * an empty selection would leave TaskTemplate::dueFor() nothing to
-     * roll onto, so at least one day is required here rather than only
-     * guarded defensively in the resolver.
+     * config('app.timezone'), per StudioSettingsResolver's fallback contract.
      */
     public function updateGeneral(Request $request, StudioSettingsResolver $settings): RedirectResponse
     {
@@ -272,8 +269,6 @@ class StudioSettingsController extends Controller
 
         $validated = $request->validate([
             'timezone' => ['nullable', 'timezone'],
-            'working_days' => ['required', 'array', 'min:1'],
-            'working_days.*' => ['integer', 'between:1,7', 'distinct'],
             // Gilt für Portal, Mails und Belege gleichermaßen — deshalb hier
             // und nicht mehr unter Portal.
             'client_register' => ['sometimes', 'required', Rule::in(['formal', 'informal'])],
@@ -291,9 +286,8 @@ class StudioSettingsController extends Controller
 
         $actor = auth('staff')->user();
         $settings->set('timezone', $validated['timezone'] ?? null, $actor);
-        $settings->set('working_days', array_values($validated['working_days']), $actor);
 
-        foreach (Arr::except($validated, ['timezone', 'working_days']) as $key => $value) {
+        foreach (Arr::except($validated, ['timezone']) as $key => $value) {
             $settings->set($key, $value, $actor);
         }
 

@@ -3,6 +3,7 @@
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Settings\Models\StudioClosure;
+use App\Settings\Models\StudioSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 
@@ -25,6 +26,34 @@ it('renders the availability pane with every closure', function () {
         ->and($props['closures'][0]['startsOn'])->toBe('2026-12-24')
         ->and($props['closures'][0]['endsOn'])->toBe('2026-12-31');
 });
+
+it('hands the working days to the availability pane', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->get('/einstellungen/verfuegbarkeit')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('workingDays', [1, 2, 3, 4, 5, 6, 7]));
+});
+
+it('saves the working days and audits the owner', function () {
+    $owner = staffMember(StaffRole::Owner);
+
+    $this->actingAs($owner, 'staff')
+        ->from('/einstellungen/verfuegbarkeit')
+        ->patch('/einstellungen/verfuegbarkeit/arbeitstage', ['working_days' => [1, 2, 3, 4, 5]])
+        ->assertRedirect('/einstellungen/verfuegbarkeit');
+
+    expect(StudioSettings::query()->sole()->working_days)->toBe([1, 2, 3, 4, 5])
+        ->and(AuditLog::where('context->key', 'working_days')->sole()->actor_id)->toBe($owner->id);
+});
+
+it('rejects an empty or out-of-range working-days selection', function (array $days, string $key) {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->patch('/einstellungen/verfuegbarkeit/arbeitstage', ['working_days' => $days])
+        ->assertInvalid([$key]);
+})->with([
+    [[], 'working_days'],
+    [[0, 1, 2], 'working_days.0'],
+]);
 
 it('creates a closure and leaves an audit row naming the actor', function () {
     $owner = staffMember(StaffRole::Owner);

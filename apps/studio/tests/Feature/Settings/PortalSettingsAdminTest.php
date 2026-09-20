@@ -85,7 +85,6 @@ it('prefers the typed greeting over the saved one', function () {
 it('rejects a Datenschutz link that is not a URL', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->patch('/einstellungen/allgemein', [
-            'working_days' => [1, 2, 3, 4, 5],
             'portal_legal_datenschutz_url' => 'not-a-url',
         ])
         ->assertInvalid(['portal_legal_datenschutz_url']);
@@ -96,7 +95,6 @@ it('stores the legal links on the general route', function () {
 
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen/allgemein', [
-            'working_days' => [1, 2, 3, 4, 5],
             'portal_legal_datenschutz_url' => 'https://atelier-nordlicht.de/datenschutz',
             'portal_legal_agb_url' => 'https://atelier-nordlicht.de/agb',
         ])
@@ -149,7 +147,6 @@ it('leaves the settings a pane does not show untouched', function () {
 
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen/allgemein', [
-            'working_days' => [1, 2, 3, 4, 5],
             'portal_legal_datenschutz_url' => 'https://atelier-nordlicht.de/datenschutz',
         ])
         ->assertRedirect();

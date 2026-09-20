@@ -17,7 +17,6 @@ import { basisPointsToPercent } from '@/admin/lib/money'
 import { browserTimezone, searchTimezones, timezoneLabel } from '@/admin/lib/timezones'
 import { Button } from '@/ui/button'
 import { Combobox, ComboboxAnchor, ComboboxContent, ComboboxInput, ComboboxItem } from '@/ui/combobox'
-import { Checkbox } from '@/ui/checkbox'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Label } from '@/ui/label'
 
@@ -37,29 +36,12 @@ const props = defineProps<{
 // einem Blatt: „invoice" zeigt beide Formulare untereinander.
 const profileSection = computed(() => (props.pane === 'brand' || props.pane === 'legal' ? props.pane : undefined))
 
-// Mo..So, ISO weekday order — matches the integers StudioSettingsController
-// validates working_days.* against and TaskTemplate::dueFor() rolls over.
-const weekdays = [
-  { value: 1, key: 'settings.dayMon' },
-  { value: 2, key: 'settings.dayTue' },
-  { value: 3, key: 'settings.dayWed' },
-  { value: 4, key: 'settings.dayThu' },
-  { value: 5, key: 'settings.dayFri' },
-  { value: 6, key: 'settings.daySat' },
-  { value: 7, key: 'settings.daySun' },
-] as const
-
-// working_days travels the form as the array of ISO weekday integers
-// StudioSettingsController validates directly — no bitmask, no translation
-// at the wire boundary, same as every other field here.
 const generalForm = useForm({
   timezone: props.settings.timezone,
-  working_days: [...props.settings.workingDays] as number[],
   // Die Anrede trägt jede Mail, jedes Angebot und das Portal — sie stand
   // unter Portal und gilt überall.
   client_register: props.settings.clientRegister,
-  // Die vier Rechtstexte: Angaben über das Studio, wie Zeitzone und
-  // Arbeitstage daneben.
+  // Die vier Rechtstexte: Angaben über das Studio, wie die Zeitzone daneben.
   portal_legal_impressum_url: props.portal.impressumUrl ?? '',
   portal_legal_datenschutz_url: props.portal.datenschutzUrl ?? '',
   portal_legal_agb_url: props.portal.agbUrl ?? '',
@@ -176,16 +158,10 @@ const mailPreview = computed(() => {
   }
 })
 
-function toggleWorkingDay(day: number) {
-  const days = generalForm.working_days
-  generalForm.working_days = days.includes(day) ? days.filter((d) => d !== day) : [...days, day].sort()
-}
-
 function submitGeneral() {
   generalForm
     .transform((data) => ({
       timezone: data.timezone || null,
-      working_days: data.working_days,
       client_register: data.client_register,
       portal_legal_impressum_url: data.portal_legal_impressum_url || null,
       portal_legal_datenschutz_url: data.portal_legal_datenschutz_url || null,
@@ -288,23 +264,6 @@ function submitGeneral() {
                   />
                 </div>
 
-                <div class="mt-8 first-of-type:mt-6">
-                  <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.workingDaysLabel') }}</div>
-                  <div class="mb-6">
-                    <div class="flex flex-wrap gap-4">
-                      <div v-for="day in weekdays" :key="day.value" class="flex items-center gap-2">
-                        <Checkbox
-                          :id="`wd-${day.value}`"
-                          :model-value="generalForm.working_days.includes(day.value)"
-                          @update:model-value="toggleWorkingDay(day.value)"
-                        />
-                        <Label :for="`wd-${day.value}`">{{ $t(day.key) }}</Label>
-                      </div>
-                    </div>
-                    <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('settings.workingDaysHint') }}</span>
-                    <p v-if="generalForm.errors.working_days" class="text-[11.5px] leading-[1.45] text-destructive">{{ generalForm.errors.working_days }}</p>
-                  </div>
-                </div>
                 <div class="mt-8">
                   <LegalTextFields :form="generalForm" :families="portal.legalFamilies" :legal-templates="legalTemplates" />
                 </div>

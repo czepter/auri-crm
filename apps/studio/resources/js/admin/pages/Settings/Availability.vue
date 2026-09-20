@@ -5,13 +5,37 @@ import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import SettingsNav from '@/admin/components/SettingsNav.vue'
 import { Button } from '@/ui/button'
+import { Checkbox } from '@/ui/checkbox'
 import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 
 const props = defineProps<{
+  workingDays: number[]
   closures: App.Settings.Data.StudioClosureData[]
 }>()
+
+// Mo..So, ISO weekday order — the integers TaskTemplate::dueFor() rolls over.
+const weekdays = [
+  { value: 1, key: 'settings.dayMon' },
+  { value: 2, key: 'settings.dayTue' },
+  { value: 3, key: 'settings.dayWed' },
+  { value: 4, key: 'settings.dayThu' },
+  { value: 5, key: 'settings.dayFri' },
+  { value: 6, key: 'settings.daySat' },
+  { value: 7, key: 'settings.daySun' },
+] as const
+
+const workingDaysForm = useForm({ working_days: [...props.workingDays] as number[] })
+
+function toggleWorkingDay(day: number) {
+  const days = workingDaysForm.working_days
+  workingDaysForm.working_days = days.includes(day) ? days.filter((d) => d !== day) : [...days, day].sort()
+}
+
+function saveWorkingDays() {
+  workingDaysForm.patch('/einstellungen/verfuegbarkeit/arbeitstage', { preserveScroll: true })
+}
 
 // One form per closure, keyed by its id — an independent draft per row,
 // matching how Settings/Numbering.vue edits its number ranges.
@@ -51,7 +75,32 @@ function addClosure() {
             <SettingsNav active="availability" />
 
             <div style="flex: 1; min-width: 0; max-width: 620px">
-              <div class="mt-8 first-of-type:mt-6">
+              <form id="working-days-form" class="mt-8 first-of-type:mt-6" @submit.prevent="saveWorkingDays">
+                <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.workingDaysLabel') }}</div>
+                <div class="mb-6">
+                  <div class="flex flex-wrap gap-4">
+                    <div v-for="day in weekdays" :key="day.value" class="flex items-center gap-2">
+                      <Checkbox
+                        :id="`wd-${day.value}`"
+                        :model-value="workingDaysForm.working_days.includes(day.value)"
+                        @update:model-value="toggleWorkingDay(day.value)"
+                      />
+                      <Label :for="`wd-${day.value}`">{{ $t(day.key) }}</Label>
+                    </div>
+                  </div>
+                  <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('settings.workingDaysHint') }}</span>
+                  <p v-if="workingDaysForm.errors.working_days" class="text-[11.5px] leading-[1.45] text-destructive">{{ workingDaysForm.errors.working_days }}</p>
+                </div>
+                <div v-if="workingDaysForm.isDirty" class="flex items-center gap-4 [&_[data-slot=button][data-variant=default]]:ml-0">
+                  <Button type="submit" :disabled="workingDaysForm.processing">
+                    <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" /></svg>
+                    {{ $t('settings.numberingSave') }}
+                  </Button>
+                  <span class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
+                </div>
+              </form>
+
+              <div class="mt-8">
                 <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.closuresLabel') }}</div>
 
 

@@ -6,6 +6,7 @@ use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
 use App\Settings\Data\StudioClosureData;
 use App\Settings\Models\StudioClosure;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,15 +24,31 @@ class StudioClosureController extends Controller
 {
     use AuthorizesStaffSettings;
 
-    public function index(): Response
+    public function index(StudioSettingsResolver $settings): Response
     {
         $this->authorizeSettings();
 
         $closures = StudioClosure::query()->orderBy('starts_on')->get();
 
         return Inertia::render('Settings/Availability', [
+            'workingDays' => $settings->workingDays(),
             'closures' => $closures->map(StudioClosureData::fromModel(...))->all(),
         ]);
+    }
+
+    // At least one day: an empty selection leaves TaskTemplate::dueFor() nothing to roll onto.
+    public function updateWorkingDays(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    {
+        $this->authorizeSettings();
+
+        $validated = $request->validate([
+            'working_days' => ['required', 'array', 'min:1'],
+            'working_days.*' => ['integer', 'between:1,7', 'distinct'],
+        ]);
+
+        $settings->set('working_days', array_values($validated['working_days']), auth('staff')->user());
+
+        return back();
     }
 
     public function store(Request $request): RedirectResponse
