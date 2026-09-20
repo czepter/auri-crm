@@ -304,12 +304,8 @@ One commit per tab, in this order. Each replaces `ui/page/Section` with
    template picker opens from there.
 6. **`Projects/Quotes.vue`** — one `Card` per quote (number, state badge,
    lines, total); superseded quotes `defaultOpen: false`.
-7. **`Projects/Contract.vue`** — keeps its two-column layout. The document
-   gets a `Card` header carrying version and state as the summary and
-   `Download` / `Sichern` / `Versenden` as actions. Signers, deadline and
-   versions stay in the rail.
 
-After tab 7: delete `resources/js/admin/components/CaseSection.vue` and
+After tab 6: delete `resources/js/admin/components/CaseSection.vue` and
 `resources/js/ui/page/Section.vue`, and check `grep -rn "CaseSection\|page/Section"
 resources/js` is empty.
 

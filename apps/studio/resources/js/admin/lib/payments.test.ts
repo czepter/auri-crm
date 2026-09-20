@@ -14,10 +14,14 @@ function installment(overrides: Partial<App.Payments.Data.PaymentInstallmentData
     settledViaLabel: null,
     paidOn: null,
     paymentReference: null,
+    paidAmount: 0,
+    remaining: 100000,
     isLate: false,
+    invoiceId: null,
     invoiceNumber: null,
     invoicedOn: null,
     hasInvoiceDocument: false,
+    creditNotes: [],
     ...overrides,
   }
 }

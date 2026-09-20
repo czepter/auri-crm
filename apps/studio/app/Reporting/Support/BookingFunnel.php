@@ -2,11 +2,12 @@
 
 namespace App\Reporting\Support;
 
+use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Lead;
 use App\Crm\Support\CrmVocabulary;
-use Illuminate\Support\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -39,25 +40,33 @@ class BookingFunnel
      *
      * @return list<array{month: string, captured: int, booked: int, rate: int|null}>
      */
-    public static function byMonth(Carbon $from, Carbon $to): array
+    public static function byMonth(CarbonInterface $from, CarbonInterface $to, ?ProjectType $type = null): array
     {
-        $rows = Lead::query()
+        $query = Lead::query()
             ->selectRaw("to_char(date_trunc('month', leads.captured_at), 'YYYY-MM') as month")
             ->selectRaw('count(*) as captured')
             ->selectRaw('count(*) filter (where leads.stage = ?) as booked', [self::wonKey()])
             ->whereBetween('leads.captured_at', [$from, $to])
             ->groupBy('month')
-            ->orderBy('month')
-            ->get();
+            ->orderBy('month');
 
-        return $rows->map(fn ($row) => [
-            'month' => $row->month,
-            'captured' => (int) $row->captured,
-            'booked' => (int) $row->booked,
-            // Null, not zero, on an empty denominator — S-11's rule. A month
-            // with no intake had no booking rate, it did not have a bad one.
-            'rate' => (int) $row->captured === 0 ? null : (int) round($row->booked / $row->captured * 100),
-        ])->all();
+        ProjectFilter::apply($query, $type, 'leads.project_id');
+
+        $counted = $query->get()->keyBy('month');
+
+        return collect(MonthRange::keys($from, $to))->map(function (string $month) use ($counted) {
+            $captured = (int) ($counted[$month]->captured ?? 0);
+            $booked = (int) ($counted[$month]->booked ?? 0);
+
+            return [
+                'month' => $month,
+                'captured' => $captured,
+                'booked' => $booked,
+                // Null, not zero, on an empty denominator — S-11's rule. A month
+                // with no intake had no booking rate, it did not have a bad one.
+                'rate' => $captured === 0 ? null : (int) round($booked / $captured * 100),
+            ];
+        })->all();
     }
 
     /**
@@ -75,9 +84,9 @@ class BookingFunnel
      *
      * @return list<array{source: string, label: string, captured: int, booked: int, revenue: int}>
      */
-    public static function bySource(Carbon $from, Carbon $to): array
+    public static function bySource(CarbonInterface $from, CarbonInterface $to, ?ProjectType $type = null): array
     {
-        return Lead::query()
+        $query = Lead::query()
             ->selectRaw('leads.source')
             ->selectRaw('leads.source_other')
             ->selectRaw('count(*) as captured')
@@ -87,17 +96,22 @@ class BookingFunnel
             ->leftJoin('payment_plans', 'payment_plans.job_id', '=', 'jobs.id')
             ->whereBetween('leads.captured_at', [$from, $to])
             ->groupBy('leads.source', 'leads.source_other')
-            ->orderByDesc('captured')
-            ->get()
+            ->orderByDesc('captured');
+
+        ProjectFilter::apply($query, $type, 'leads.project_id');
+
+        return $query->get()
             // `source` arrives as a LeadSource, not a string: Lead casts the
             // column, and a raw select does not opt out of that.
             ->map(fn ($row) => [
                 // The detail rides in the key too: "Sonstige" split three ways
                 // is three rows, and a row needs a key of its own.
-                'source' => $row->source->value.($row->source_other === null ? '' : ':'.$row->source_other),
-                'label' => $row->source_other === null
-                    ? $row->source->label()
-                    : $row->source->label().' — '.$row->source_other,
+                'source' => ($row->source?->value ?? 'unknown').($row->source_other === null ? '' : ':'.$row->source_other),
+                'label' => match (true) {
+                    $row->source === null => 'Unbekannt',
+                    $row->source_other === null => $row->source->label(),
+                    default => $row->source->label().' — '.$row->source_other,
+                },
                 'captured' => (int) $row->captured,
                 'booked' => (int) $row->booked,
                 'revenue' => (int) $row->revenue,
@@ -112,15 +126,18 @@ class BookingFunnel
      *
      * @return list<array{name: string, count: int}>
      */
-    public static function referrers(Carbon $from, Carbon $to): array
+    public static function referrers(CarbonInterface $from, CarbonInterface $to, ?ProjectType $type = null): array
     {
-        return Lead::query()
+        $query = Lead::query()
             ->join('contacts', 'contacts.id', '=', 'leads.referred_by_contact_id')
             ->selectRaw('contacts.name, count(*) as count')
             ->whereBetween('leads.captured_at', [$from, $to])
             ->groupBy('contacts.name')
-            ->orderByDesc('count')
-            ->get()
+            ->orderByDesc('count');
+
+        ProjectFilter::apply($query, $type, 'leads.project_id');
+
+        return $query->get()
             ->map(fn ($row) => ['name' => $row->name, 'count' => (int) $row->count])
             ->all();
     }
@@ -139,16 +156,19 @@ class BookingFunnel
      *
      * @return list<array{outcome: string, outcomeLabel: string, reason: string, count: int}>
      */
-    public static function lostReasons(Carbon $from, Carbon $to): array
+    public static function lostReasons(CarbonInterface $from, CarbonInterface $to, ?ProjectType $type = null): array
     {
-        return Lead::query()
+        $query = Lead::query()
             ->select('outcome', 'lost_reason', DB::raw('count(*) as count'))
             ->whereNotNull('outcome')
             ->whereNotNull('lost_reason')
             ->whereBetween('captured_at', [$from, $to])
             ->groupBy('outcome', 'lost_reason')
-            ->orderByDesc('count')
-            ->get()
+            ->orderByDesc('count');
+
+        ProjectFilter::apply($query, $type, 'leads.project_id');
+
+        return $query->get()
             ->map(fn ($row) => [
                 'outcome' => $row->outcome->value,
                 'outcomeLabel' => $row->outcome->label(),

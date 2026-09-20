@@ -90,6 +90,11 @@ const meta = {
         contacts: [],
         palette,
         mergeFields,
+        clauses: [
+            { key: 'scope', group: 'auftrag', title: 'Leistung', text: 'Aufnahmen im Rahmen von {{ project.name }}.', on: true },
+            { key: 'usage', group: 'nutzung', title: 'Nutzungsrechte', text: 'Einfaches Nutzungsrecht für private Zwecke.', on: true },
+            { key: 'ai', group: 'nutzung', title: 'KI-Training', text: 'Kein Training, keine Erzeugung.', on: false },
+        ],
     },
 } satisfies Meta<typeof Contract>
 

@@ -2,7 +2,6 @@
 
 namespace App\Documents\Support;
 
-use App\Crm\Enums\ShootKind;
 use App\Documents\Enums\DocumentTemplateType;
 
 /**
@@ -43,20 +42,20 @@ class StarterTemplateCatalog
     /**
      * @return list<array{key: string, name: string, description: string, shootKind: ?string, blocks: array{blocks: list<array{type: string, data: array<string, mixed>}>}}>
      */
-    public static function for(DocumentTemplateType $type): array
+    public static function for(DocumentTemplateType $type, string $register = 'formal'): array
     {
         return array_values(array_filter(
-            self::all(),
+            self::all($register),
             fn (array $entry) => $entry['type'] === $type->value,
         ));
     }
 
     /** @return array<string, list<array<string, mixed>>> keyed by document type, for the create screen's type select */
-    public static function byType(): array
+    public static function byType(string $register = 'formal'): array
     {
         return collect(DocumentTemplateType::cases())
             ->mapWithKeys(fn (DocumentTemplateType $type) => [
-                $type->value => collect(self::for($type))
+                $type->value => collect(self::for($type, $register))
                     ->map(fn (array $entry) => [
                         'key' => $entry['key'],
                         'name' => $entry['name'],
@@ -69,45 +68,88 @@ class StarterTemplateCatalog
             ->all();
     }
 
-    public static function find(string $key): ?array
+    public static function find(string $key, string $register = 'formal'): ?array
     {
-        return collect(self::all())->firstWhere('key', $key);
+        return collect(self::all($register))->firstWhere('key', $key);
     }
 
     /**
-     * The set the wizard writes on finish: one document of each kind a studio
-     * cannot trade without, and the two mails it will send in the first week.
-     * Variants stay out — a studio that shoots no weddings should not finish
-     * onboarding with a wedding quote.
+     * The set the wizard writes on finish: the quote and the two mails a
+     * studio will send in its first week. Variants stay out — a studio that
+     * shoots no weddings should not finish onboarding with a wedding quote.
      *
-     * The invoice is the exception, because the two variants are not a matter
-     * of taste: a Kleinunternehmer's invoice must not show a VAT line at all.
+     * The invoice is not in here, because which of its two variants is right
+     * is not a matter of taste: a Kleinunternehmer's invoice must not show a
+     * VAT line at all, and the wizard no longer asks for the VAT mode — that
+     * question falls due with the first quote. See invoiceDefaults().
      *
      * @return list<string>
      */
-    public static function onboardingDefaults(string $vatMode): array
+    public static function onboardingDefaults(): array
     {
         return [
             'quote-generic',
-            'contract-werkvertrag',
-            $vatMode === 'small_business' ? 'invoice-small-business' : 'invoice-standard',
             'mail-quote-sent',
             'mail-booking-confirmed',
         ];
     }
 
     /**
+     * The invoice starter, written when the first invoice is drafted — by
+     * then the studio has answered the VAT question at the quote gate.
+     *
+     * @return list<string>
+     */
+    public static function invoiceDefaults(string $vatMode): array
+    {
+        return [$vatMode === 'small_business' ? 'invoice-small-business' : 'invoice-standard'];
+    }
+
+    /**
      * @return list<array{key: string, type: string, name: string, description: string, shootKind: ?string, blocks: array{blocks: list<array{type: string, data: array<string, mixed>}>}}>
      */
-    public static function all(): array
+    public static function all(string $register = 'formal'): array
     {
         return [
             self::quoteGeneric(),
             self::quoteWedding(),
-            self::contractWerkvertrag(),
             self::invoiceStandard(),
             self::invoiceSmallBusiness(),
-            ...self::mails(),
+            self::contractWerkvertrag(),
+            self::creditNote(),
+            self::widerruf(),
+            ...self::mails($register),
+        ];
+    }
+
+    /**
+     * Ein Gerüst, kein Rechtstext: Überschriften, Reihenfolge und die Felder,
+     * die eine Widerrufsbelehrung ohne das Studio nicht ausfüllen kann. Die
+     * Fristen und die Formulierung stehen im Gesetz und gehören vor dem
+     * ersten Versand von jemandem geprüft, der dafür haftet — deshalb Lücken
+     * in eckigen Klammern statt eines Wortlauts, den hier niemand
+     * verantworten kann.
+     */
+    private static function widerruf(): array
+    {
+        return [
+            'key' => 'legal-widerruf',
+            'type' => DocumentTemplateType::Legal->value,
+            'name' => 'Widerrufsbelehrung',
+            'description' => 'Gerüst mit den Pflichtangaben. Die Formulierung ist kein Rechtsrat und gehört vor dem ersten Versand geprüft.',
+            'shootKind' => null,
+            'blocks' => ['blocks' => [
+                self::header('Widerrufsrecht', 2),
+                self::paragraph('[Frist und Beginn eintragen.]'),
+                self::header('Ausübung des Widerrufs', 3),
+                self::paragraph('{{ studio.name }}, {{ studio.street }}, {{ studio.postcode }} {{ studio.city }}'),
+                self::paragraph('{{ studio.representative }}'),
+                self::header('Folgen des Widerrufs', 3),
+                self::paragraph('[Rückzahlung und Fristen eintragen.]'),
+                self::delimiter(),
+                self::header('Muster-Widerrufsformular', 3),
+                self::paragraph('[Formular eintragen: Empfänger, Vertrag, Datum, Name, Anschrift, Unterschrift.]'),
+            ]],
         ];
     }
 
@@ -144,7 +186,7 @@ class StarterTemplateCatalog
             'type' => DocumentTemplateType::Quote->value,
             'name' => 'Angebot — Hochzeit',
             'description' => 'Wie das allgemeine Angebot, mit Ablauf am Hochzeitstag und den üblichen enthaltenen Leistungen.',
-            'shootKind' => ShootKind::Wedding->value,
+            'shootKind' => 'Hochzeitstag',
             'blocks' => ['blocks' => [
                 self::header('Angebot {{ project.name }}'),
                 self::paragraph('Guten Tag {{ contact.name }},'),
@@ -158,7 +200,7 @@ class StarterTemplateCatalog
                     'Online-Galerie zum Ansehen und Herunterladen',
                 ]),
                 self::header('Gültigkeit', 3),
-                self::paragraph('Dieses Angebot gilt bis {{ quote.validUntil }}. Der Termin ist erst mit Vertrag und Anzahlung fest reserviert.'),
+                self::paragraph('Dieses Angebot gilt bis {{ quote.validUntil }}. Der Termin ist erst mit Annahme und Anzahlung fest reserviert.'),
                 self::header('Umsatzsteuer', 3),
                 self::paragraph('{{ quote.vatNote }}'),
             ]],
@@ -219,34 +261,19 @@ class StarterTemplateCatalog
 
     // --- Rechnung --------------------------------------------------------
 
+    // --- Rechnung --------------------------------------------------------
+
     private static function invoiceStandard(): array
     {
         return [
             'key' => 'invoice-standard',
             'type' => DocumentTemplateType::Invoice->value,
             'name' => 'Rechnung',
-            'description' => 'Mit den Pflichtangaben nach § 14 UStG. Ausgangspunkt, keine Steuerberatung.',
+            'description' => 'Anschreiben zur Rechnung; Pflichtangaben und Summen liefert das Layout. Ausgangspunkt, keine Steuerberatung.',
             'shootKind' => null,
             'blocks' => ['blocks' => [
-                self::header('Rechnung {{ invoice.number }}'),
-                self::paragraph('{{ contact.name }}<br>{{ contact.street }}<br>{{ contact.postcode }} {{ contact.city }}'),
-                self::table([
-                    ['Rechnungsdatum', '{{ invoice.date }}'],
-                    ['Leistungszeitraum', '{{ invoice.servicePeriod }}'],
-                    ['Steuernummer', '{{ studio.taxNumber }}'],
-                    ['USt-IdNr.', '{{ studio.vatId }}'],
-                ]),
-                self::header('Leistung', 3),
-                self::paragraph('{{ invoice.description }}'),
-                self::table([
-                    ['Netto', '{{ invoice.net }}'],
-                    ['Umsatzsteuer {{ invoice.vatRate }}', '{{ invoice.vat }}'],
-                    ['Gesamtbetrag', '{{ invoice.gross }}'],
-                ], withHeadings: false),
-                self::header('Zahlung', 3),
-                self::paragraph('{{ invoice.paymentTerm }}'),
-                self::paragraph('{{ studio.bankHolder }}<br>IBAN {{ studio.bankIban }}<br>BIC {{ studio.bankBic }}'),
-                self::paragraph('Bitte geben Sie die Rechnungsnummer {{ invoice.number }} als Verwendungszweck an.'),
+                self::paragraph('Guten Tag {{ contact.name }},'),
+                self::paragraph('vielen Dank für den Auftrag. Die Aufstellung finden Sie unten.'),
             ]],
         ];
     }
@@ -257,26 +284,29 @@ class StarterTemplateCatalog
             'key' => 'invoice-small-business',
             'type' => DocumentTemplateType::Invoice->value,
             'name' => 'Rechnung — Kleinunternehmer',
-            'description' => 'Ohne Umsatzsteuerausweis, mit dem Hinweis nach § 19 UStG. Ausgangspunkt, keine Steuerberatung.',
+            'description' => 'Anschreiben ohne Umsatzsteuerausweis; der §-19-Hinweis kommt aus dem Layout. Ausgangspunkt, keine Steuerberatung.',
             'shootKind' => null,
             'blocks' => ['blocks' => [
-                self::header('Rechnung {{ invoice.number }}'),
-                self::paragraph('{{ contact.name }}<br>{{ contact.street }}<br>{{ contact.postcode }} {{ contact.city }}'),
-                self::table([
-                    ['Rechnungsdatum', '{{ invoice.date }}'],
-                    ['Leistungszeitraum', '{{ invoice.servicePeriod }}'],
-                    ['Steuernummer', '{{ studio.taxNumber }}'],
-                ]),
-                self::header('Leistung', 3),
-                self::paragraph('{{ invoice.description }}'),
-                self::table([
-                    ['Gesamtbetrag', '{{ invoice.gross }}'],
-                ], withHeadings: false),
-                self::paragraph('{{ invoice.vatNote }}'),
-                self::header('Zahlung', 3),
-                self::paragraph('{{ invoice.paymentTerm }}'),
-                self::paragraph('{{ studio.bankHolder }}<br>IBAN {{ studio.bankIban }}<br>BIC {{ studio.bankBic }}'),
-                self::paragraph('Bitte geben Sie die Rechnungsnummer {{ invoice.number }} als Verwendungszweck an.'),
+                self::paragraph('Guten Tag {{ contact.name }},'),
+                self::paragraph('vielen Dank für den Auftrag. Die Aufstellung finden Sie unten.'),
+            ]],
+        ];
+    }
+
+    // --- Gutschrift ------------------------------------------------------
+
+    private static function creditNote(): array
+    {
+        return [
+            'key' => 'credit-note',
+            'type' => DocumentTemplateType::CreditNote->value,
+            'name' => 'Gutschrift',
+            'description' => 'Anschreiben zur Gutschrift; Bezugszeile und Summen liefert das Layout. Ausgangspunkt, keine Steuerberatung.',
+            'shootKind' => null,
+            'blocks' => ['blocks' => [
+                self::paragraph('Guten Tag {{ contact.name }},'),
+                self::paragraph('Grund der Gutschrift: {{ creditNote.reason }}'),
+                self::paragraph('Der Betrag wird auf das uns bekannte Konto erstattet.'),
             ]],
         ];
     }
@@ -287,8 +317,14 @@ class StarterTemplateCatalog
     // and legal footer to every outgoing mail, so a starter that repeated
     // either would send it twice.
 
-    private static function mails(): array
+    // #439: the mails reach the client, so they come in the studio's register;
+    // the documents stay formal until #438 decides otherwise.
+    private static function mails(string $register): array
     {
+        $du = $register === 'informal';
+        $greeting = self::paragraph($du ? 'Hallo {{ contact.name }},' : 'Guten Tag {{ contact.name }},');
+        $openQuestions = self::paragraph($du ? 'Melde dich gern, wenn etwas offen ist.' : 'Melden Sie sich gern, wenn etwas offen ist.');
+
         return [
             [
                 'key' => 'mail-quote-sent',
@@ -297,33 +333,33 @@ class StarterTemplateCatalog
                 'description' => 'Begleitmail zum Angebot.',
                 'shootKind' => null,
                 'blocks' => ['blocks' => [
-                    self::paragraph('Guten Tag {{ contact.name }},'),
+                    $greeting,
                     self::paragraph('anbei mein Angebot für {{ project.name }}. Es gilt bis {{ quote.validUntil }}.'),
-                    self::paragraph('Melden Sie sich gern, wenn etwas offen ist.'),
-                ]],
-            ],
-            [
-                'key' => 'mail-contract-to-sign',
-                'type' => DocumentTemplateType::Mail->value,
-                'name' => 'Vertrag zur Unterschrift',
-                'description' => 'Begleitmail zum Vertrag.',
-                'shootKind' => null,
-                'blocks' => ['blocks' => [
-                    self::paragraph('Guten Tag {{ contact.name }},'),
-                    self::paragraph('der Vertrag für {{ project.name }} liegt im Kundenbereich zur Unterschrift bereit.'),
-                    self::paragraph('Mit Unterschrift und Anzahlung ist der Termin fest reserviert.'),
+                    $openQuestions,
                 ]],
             ],
             [
                 'key' => 'mail-booking-confirmed',
                 'type' => DocumentTemplateType::Mail->value,
                 'name' => 'Buchung bestätigt',
-                'description' => 'Bestätigung nach Vertrag und Anzahlung.',
+                'description' => 'Bestätigung nach Annahme und Anzahlung.',
                 'shootKind' => null,
                 'blocks' => ['blocks' => [
-                    self::paragraph('Guten Tag {{ contact.name }},'),
+                    $greeting,
                     self::paragraph('der Termin für {{ project.name }} ist fest eingetragen. Ich freue mich darauf.'),
                     self::paragraph('Vorher melde ich mich rechtzeitig zur Abstimmung.'),
+                ]],
+            ],
+            [
+                'key' => 'mail-invoice-sent',
+                'type' => DocumentTemplateType::Mail->value,
+                'name' => 'Rechnung verschickt',
+                'description' => 'Begleitmail zur Rechnung.',
+                'shootKind' => null,
+                'blocks' => ['blocks' => [
+                    $greeting,
+                    self::paragraph('anbei die Rechnung {{ invoice.number }} über {{ invoice.gross }} für {{ project.name }}. Zahlbar bis {{ invoice.dueOn }}.'),
+                    $openQuestions,
                 ]],
             ],
             [
@@ -333,9 +369,11 @@ class StarterTemplateCatalog
                 'description' => 'Freundliche Erinnerung an eine offene Rate.',
                 'shootKind' => null,
                 'blocks' => ['blocks' => [
-                    self::paragraph('Guten Tag {{ contact.name }},'),
+                    $greeting,
                     self::paragraph('die Rechnung {{ invoice.number }} über {{ invoice.gross }} war am {{ invoice.dueOn }} fällig und ist noch offen.'),
-                    self::paragraph('Falls sich das überschnitten hat, betrachten Sie diese Nachricht bitte als gegenstandslos.'),
+                    self::paragraph($du
+                        ? 'Falls sich das überschnitten hat, betrachte diese Nachricht bitte als gegenstandslos.'
+                        : 'Falls sich das überschnitten hat, betrachten Sie diese Nachricht bitte als gegenstandslos.'),
                 ]],
             ],
             [
@@ -345,9 +383,11 @@ class StarterTemplateCatalog
                 'description' => 'Benachrichtigung, dass die Bilder bereitstehen.',
                 'shootKind' => null,
                 'blocks' => ['blocks' => [
-                    self::paragraph('Guten Tag {{ contact.name }},'),
-                    self::paragraph('die Bilder zu {{ project.name }} sind fertig und stehen in Ihrer Galerie bereit.'),
-                    self::paragraph('Das Passwort haben Sie separat erhalten.'),
+                    $greeting,
+                    self::paragraph($du
+                        ? 'die Bilder zu {{ project.name }} sind fertig und stehen in deiner Galerie bereit.'
+                        : 'die Bilder zu {{ project.name }} sind fertig und stehen in Ihrer Galerie bereit.'),
+                    self::paragraph($du ? 'Das Passwort hast du separat erhalten.' : 'Das Passwort haben Sie separat erhalten.'),
                 ]],
             ],
         ];

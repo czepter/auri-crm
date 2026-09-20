@@ -50,7 +50,7 @@ class TimelineCalendar
 
     private function title(Shoot $shoot): string
     {
-        return trim(($shoot->label ?? $shoot->kind->label()).' · '.$shoot->project->name);
+        return trim(($shoot->label ?? $shoot->kind).' · '.$shoot->project->name);
     }
 
     /** @return list<string> */

@@ -1,7 +1,11 @@
 import { beforeEach, expect, it, vi } from 'vitest'
 
-const { reload } = vi.hoisted(() => ({ reload: vi.fn() }))
-vi.mock('@inertiajs/vue3', () => ({ router: { reload } }))
+const { reload, on } = vi.hoisted(() => ({
+  reload: vi.fn(),
+  on: vi.fn(),
+}))
+vi.mock('@inertiajs/vue3', () => ({ router: { reload, on } }))
+vi.useFakeTimers()
 
 class FakeEventSource {
   static CLOSED = 2
@@ -38,6 +42,24 @@ it('opens one source per session and reloads on an event', () => {
   expect(FakeEventSource.opened).toHaveLength(1)
   expect(FakeEventSource.opened[0].init).toEqual({ withCredentials: true })
 
+  FakeEventSource.opened[0].onmessage!()
+  expect(reload).toHaveBeenCalledOnce()
+})
+
+it('skips the reload while a visit is under way', () => {
+  const fire = (name: string, async: boolean) =>
+    on.mock.calls.find(([event]) => event === name)![1]({ detail: { visit: { async } } })
+
+  followLiveUpdates('/hub')
+  vi.advanceTimersByTime(2000)
+
+  fire('start', false)
+  FakeEventSource.opened[0].onmessage!()
+  fire('finish', false)
+  expect(reload).not.toHaveBeenCalled()
+
+  vi.advanceTimersByTime(2000)
+  fire('start', true)
   FakeEventSource.opened[0].onmessage!()
   expect(reload).toHaveBeenCalledOnce()
 })

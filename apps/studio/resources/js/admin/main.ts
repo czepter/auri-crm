@@ -4,6 +4,7 @@ import { createI18n } from 'vue-i18n'
 import de from '../locales/de.json'
 import { followLiveUpdates } from './lib/liveReload'
 import '../../css/admin.css'
+import 'vue-sonner/style.css'
 
 // German is the only locale. The catalog exists so a second one would be a
 // file rather than a rewrite, not because one is planned — and so the German

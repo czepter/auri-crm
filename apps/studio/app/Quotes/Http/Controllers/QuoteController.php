@@ -3,14 +3,20 @@
 namespace App\Quotes\Http\Controllers;
 
 use App\Catalog\Actions\CreatePackageFromQuote;
+use App\Catalog\Actions\SavePackage;
 use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
+use App\Crm\Actions\BookProject;
 use App\Crm\Data\ProjectSuggestionData;
 use App\Crm\Models\Project;
+use App\Documents\Support\InlineHtmlSanitizer;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
+use App\Notifications\Support\MailPreview;
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
+use App\Quotes\Actions\AcceptQuote;
+use App\Quotes\Actions\DuplicateQuote;
 use App\Quotes\Actions\MarkQuoteSent;
 use App\Quotes\Actions\ReadQuoteWorkspace;
 use App\Quotes\Actions\RenderQuotePdf;
@@ -18,11 +24,16 @@ use App\Quotes\Actions\ResolveQuoteRecipient;
 use App\Quotes\Actions\SeedQuoteFromPackage;
 use App\Quotes\Actions\SendQuote;
 use App\Quotes\Actions\UpdateQuote;
+use App\Quotes\Data\QuoteData;
+use App\Quotes\Data\QuoteRowData;
 use App\Quotes\Enums\PricingMode;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Quotes\Models\QuotePaymentStage;
+use App\Quotes\Notifications\QuoteSent;
+use App\Settings\Data\StudioSettingsData;
+use App\Settings\Support\StudioReadiness;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Carbon\CarbonInterval;
@@ -41,8 +52,80 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QuoteController extends Controller
 {
+    /** Every quote across every project, newest first — the sidebar's own Angebote entry. */
+    public function index(Request $request): InertiaResponse
+    {
+        $viewer = $request->user('staff');
+        abort_unless($viewer->role->allows(Capability::ManageQuotes), 403);
+
+        $quotes = Quote::query()
+            ->whereHas('project', fn ($query) => $query->visibleTo($viewer))
+            ->with(['project.contacts'])
+            ->latest()
+            ->get();
+
+        return Inertia::render('Quotes/Index', [
+            'quotes' => QuoteRowData::collect($quotes->map(QuoteRowData::fromModel(...))),
+        ]);
+    }
+
+    /**
+     * One quote on its own screen, reached from the overview — the same
+     * QuoteWorkspace the project's Angebote tab renders, scoped to just this
+     * quote rather than the project's whole list and its "new quote" tool.
+     */
+    public function show(Request $request, Quote $quote, ReadQuoteWorkspace $workspace): InertiaResponse
+    {
+        $viewer = $request->user('staff');
+        $this->authorize('view', $quote->project);
+
+        $quote->loadMissing(['items', 'predecessor', 'paymentStages', 'project', 'recipientContact']);
+
+        return Inertia::render('Quotes/Show', [
+            'projectId' => $quote->project->public_id,
+            'projectName' => $quote->project->name,
+            'projectIsBooked' => $quote->project->job !== null,
+            'canManageQuotes' => $viewer->can('manageQuotes', $quote->project),
+            // The payment plan is the project's, not this one quote's — it
+            // stays on the Angebote tab, not in this quote's own capsule.
+            'canManagePaymentPlan' => false,
+            'paymentPlan' => null,
+            ...Arr::only($workspace($quote->project, $viewer), ['packages', 'catalogItems', 'contacts', 'canManageCatalog', 'vatSettings']),
+            'quotes' => [QuoteData::fromModel($quote)],
+            // QuoteData carries the recipient only as a contact id (the
+            // editor's own preselect value) — this screen has no editor
+            // beside it to resolve that id into a name, so it needs the
+            // name itself.
+            'recipientName' => $quote->recipientContact?->name,
+        ]);
+    }
+
+    /**
+     * The compose screen QuoteActions.vue's "Per E-Mail senden" opens into
+     * instead of firing the send off blind — subject and message here ride
+     * along to send() as plain request input, never stored on the quote
+     * itself (Q-06 already freezes everything that is).
+     */
+    public function compose(Request $request, Quote $quote): InertiaResponse
+    {
+        $this->authorize('manageQuotes', $quote->project);
+        abort_unless($quote->status === QuoteStatus::Draft, 404);
+
+        $quote->loadMissing(['items', 'project']);
+        $contact = $quote->project->primaryContact();
+
+        return Inertia::render('Quotes/Send', [
+            'projectId' => $quote->project->public_id,
+            'quote' => QuoteData::fromModel($quote),
+            'recipientName' => $contact?->name ?? '',
+            'recipientEmail' => $contact?->email ?? '',
+            'address' => app(StudioSettingsResolver::class)->clientAddress($quote->project->contacts()->count()),
+            'mailHtml' => MailPreview::html(new QuoteSent($quote, null, MailPreview::MESSAGE), $contact ?? (object) []),
+        ]);
+    }
+
     /** The Übersicht's wizard: the project or inquiry first, then the workspace its Angebote tab shows. */
-    public function create(Request $request, ReadQuoteWorkspace $workspace): InertiaResponse
+    public function create(Request $request, ReadQuoteWorkspace $workspace, StudioSettingsResolver $settings): InertiaResponse
     {
         $viewer = $request->user('staff');
         abort_unless($viewer->role->allows(Capability::ManageQuotes), 403);
@@ -53,9 +136,16 @@ class QuoteController extends Controller
 
         return Inertia::render('Quotes/Create', [
             'project' => $project ? ProjectSuggestionData::fromModel($project) : null,
+            'studioSettings' => StudioSettingsData::fromResolver($settings),
+            // Mit dem ersten Angebot geht ein Portal-Link hinaus; was das
+            // Impressum trägt, muss vorher stehen.
+            'missingBusinessData' => app(StudioReadiness::class)->missingForQuote(),
             ...($project
                 ? Arr::except($workspace($project, $viewer), 'paymentPlan')
-                : ['quotes' => [], 'packages' => [], 'catalogItems' => [], 'contacts' => [], 'canManageCatalog' => false]),
+                : [
+                    'quotes' => [], 'packages' => [], 'catalogItems' => [], 'contacts' => [], 'canManageCatalog' => false,
+                    'vatSettings' => ['mode' => $settings->vatMode(), 'rate' => $settings->effectiveVatRate(), 'note' => $settings->vatNote()],
+                ]),
         ]);
     }
 
@@ -197,17 +287,55 @@ class QuoteController extends Controller
     }
 
     /**
+     * Die Zeile kommt aus dem Entwurf statt per id: eine gerade eingefügte
+     * Position hat bis zum nächsten Laden noch keine.
+     */
+    public function saveItemAsPackage(Request $request, Quote $quote, SavePackage $save): RedirectResponse
+    {
+        $this->authorize('manageQuotes', $quote->project);
+        $this->authorize('create', Package::class);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'item' => ['required', 'array'],
+            ...collect(SavePackage::rules())
+                ->filter(fn ($rule, string $key) => str_starts_with($key, 'items.*.') && $key !== 'items.*.id')
+                ->mapWithKeys(fn ($rule, string $key) => [str_replace('items.*.', 'item.', $key) => $rule])
+                ->all(),
+        ]);
+
+        $package = $save(new Package, ['name' => $validated['name'], 'items' => [$validated['item']]]);
+
+        AuditLogger::record(
+            event: 'package.created',
+            actor: auth('staff')->user(),
+            context: ['name' => $package->name, 'source' => 'quote_item'],
+            subject: $package->public_id,
+        );
+
+        return back();
+    }
+
+    /**
      * Q-06's state change: allocates the number, snapshots the VAT and the
      * already-computed amounts, and sends the client mail — all of
      * SendQuote::__invoke(), audit logging included, so nothing repeats here.
      */
-    public function send(Quote $quote, SendQuote $send): RedirectResponse
+    public function send(Request $request, Quote $quote, SendQuote $send): RedirectResponse
     {
         $this->authorize('manageQuotes', $quote->project);
 
-        $send($quote, auth('staff')->user());
+        // Both optional: a caller posting straight here without going
+        // through compose() (tests included) sends neither, and SendQuote
+        // falls back to QuoteSent's own defaults exactly as before.
+        $validated = $request->validate([
+            'subject' => ['nullable', 'string', 'max:255'],
+            'message' => ['nullable', 'string'],
+        ]);
 
-        return back();
+        $send($quote, auth('staff')->user(), null, $validated['subject'] ?? null, $validated['message'] ?? null);
+
+        return redirect("/auftraege/{$quote->project->public_id}");
     }
 
     /**
@@ -222,6 +350,87 @@ class QuoteController extends Controller
         $mark($quote, 'self', auth('staff')->user());
 
         return back();
+    }
+
+    public function markAccepted(Quote $quote, AcceptQuote $accept, BookProject $book): RedirectResponse
+    {
+        $this->authorize('manageQuotes', $quote->project);
+
+        $contact = $quote->project->primaryContact()
+            ?? throw ValidationException::withMessages(['quote' => __('quotes.noPrimaryContact')]);
+
+        $accept($quote, $contact, null);
+
+        // Every role manages quotes, but booking is Owner-only (StaffRole):
+        // the yes is recorded either way, the job only when this user may book.
+        if (Gate::allows('book', $quote->project)) {
+            $book($quote->project, auth('staff')->user());
+        }
+
+        return back();
+    }
+
+    /**
+     * QuoteActions.vue's split button remembers itself here: whichever of
+     * download/copy_link/send_by_mail was reached for last becomes the
+     * default next time, on this user rather than a cookie — the same
+     * reasoning as LeadBoardController::chooseView().
+     */
+    public function chooseLastAction(Request $request): RedirectResponse
+    {
+        $validated = $request->validate(['action' => ['required', 'in:download,copy_link,send_by_mail']]);
+
+        auth('staff')->user()->update(['last_quote_action' => $validated['action']]);
+
+        return back();
+    }
+
+    /**
+     * A new draft on the same project, carrying this quote's positions and
+     * terms — never its history (status, send, vat snapshot, predecessor).
+     * Redirects to the copy itself: duplicating is the first step of
+     * editing it, not a fire-and-forget like markSent.
+     */
+    public function duplicate(Quote $quote, DuplicateQuote $duplicate): RedirectResponse
+    {
+        $this->authorize('manageQuotes', $quote->project);
+
+        $copy = $duplicate($quote);
+
+        AuditLogger::record(
+            event: 'quote.duplicated',
+            actor: auth('staff')->user(),
+            context: ['from' => $quote->public_id],
+            subject: $copy->public_id,
+            projectId: $quote->project_id,
+        );
+
+        return redirect("/angebote/{$copy->public_id}");
+    }
+
+    /**
+     * Only a draft — Quote::booted() already refuses to write a sent one
+     * further, and deleting one that a client has already seen would erase
+     * a record they might still hold a copy or a mail of.
+     */
+    public function destroy(Quote $quote): RedirectResponse
+    {
+        $this->authorize('manageQuotes', $quote->project);
+        abort_unless($quote->status === QuoteStatus::Draft, 422, 'Nur ein Entwurf lässt sich löschen.');
+
+        $projectId = $quote->project->public_id;
+
+        AuditLogger::record(
+            event: 'quote.deleted',
+            actor: auth('staff')->user(),
+            context: ['number' => $quote->number],
+            subject: $quote->public_id,
+            projectId: $quote->project_id,
+        );
+
+        $quote->delete();
+
+        return redirect("/auftraege/{$projectId}/angebote");
     }
 
     /**
@@ -282,6 +491,21 @@ class QuoteController extends Controller
     }
 
     /**
+     * The print sheet of a quote as it stands saved — QuotePreviewPane's read
+     * path, for a quote no draft is re-posting on every keystroke (sent,
+     * accepted, superseded). `view` rather than `manageQuotes`: seeing the
+     * sheet a client already has needs no write capability.
+     */
+    public function previewSheet(Quote $quote, RenderQuotePdf $render): Response
+    {
+        $this->authorize('view', $quote->project);
+
+        $quote->loadMissing(['items', 'paymentStages', 'recipientContact', 'project']);
+
+        return response($render->html($quote), 200, ['Content-Type' => 'text/html']);
+    }
+
+    /**
      * Same shape update() validates, on an unsaved copy — every field
      * optional, since the editor posts here on each debounced keystroke of
      * a half-filled draft. Nothing here is written: not to $quote, not to
@@ -297,10 +521,11 @@ class QuoteController extends Controller
             'recipient_street' => ['nullable', 'string', 'max:255'],
             'recipient_postcode' => ['nullable', 'string', 'max:32'],
             'recipient_city' => ['nullable', 'string', 'max:255'],
-            'intro' => ['nullable', 'string', 'max:5000'],
-            'outro' => ['nullable', 'string', 'max:5000'],
+            'intro' => ['nullable', 'string', 'max:20000'],
+            'outro' => ['nullable', 'string', 'max:20000'],
             'discount_type' => ['nullable', 'in:percentage,amount'],
             'discount_value' => ['nullable', 'integer', 'min:1'],
+            'discount_hidden' => ['sometimes', 'boolean'],
             'items' => ['array'],
             'items.*.title' => ['nullable', 'string', 'max:255'],
             'items.*.description' => ['nullable', 'string', 'max:2000'],
@@ -308,6 +533,7 @@ class QuoteController extends Controller
             'items.*.unit_price' => ['nullable', 'integer', 'min:0'],
             'items.*.discount_type' => ['nullable', 'in:percentage,amount'],
             'items.*.discount_value' => ['nullable', 'integer', 'min:1'],
+            'items.*.vat_rate' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'items.*.selectable' => ['sometimes', 'boolean'],
             'items.*.selected' => ['sometimes', 'boolean'],
             'items.*.outcome' => ['nullable', 'string', 'max:255'],
@@ -318,6 +544,7 @@ class QuoteController extends Controller
             'hours' => ['nullable', 'integer', 'min:1', 'max:2000'],
             'time_title' => ['nullable', 'string', 'max:255'],
             'time_description' => ['nullable', 'string', 'max:255'],
+            'time_sort_order' => ['nullable', 'integer', 'min:0', 'max:2000'],
             'stages' => ['array'],
             'stages.*.percent' => ['nullable', 'integer', 'min:0', 'max:100'],
             'stages.*.label' => ['nullable', 'string', 'max:255'],
@@ -334,10 +561,11 @@ class QuoteController extends Controller
             'recipient_street' => $validated['recipient_street'] ?? null,
             'recipient_postcode' => $validated['recipient_postcode'] ?? null,
             'recipient_city' => $validated['recipient_city'] ?? null,
-            'intro' => $validated['intro'] ?? null,
-            'outro' => $validated['outro'] ?? null,
+            'intro' => InlineHtmlSanitizer::letter($validated['intro'] ?? null),
+            'outro' => InlineHtmlSanitizer::letter($validated['outro'] ?? null),
             'discount_type' => $validated['discount_type'] ?? null,
             'discount_value' => $validated['discount_value'] ?? null,
+            'discount_hidden' => $validated['discount_hidden'] ?? false,
             'hourly_rate' => $validated['hourly_rate'] ?? null,
             'min_hours' => $validated['min_hours'] ?? null,
             'max_hours' => $validated['max_hours'] ?? null,
@@ -345,6 +573,7 @@ class QuoteController extends Controller
             'hours' => $validated['hours'] ?? null,
             'time_title' => $validated['time_title'] ?? null,
             'time_description' => $validated['time_description'] ?? null,
+            'time_sort_order' => $validated['time_sort_order'] ?? 0,
         ]);
 
         $items = collect($validated['items'] ?? [])->map(function (array $item) {
@@ -355,6 +584,7 @@ class QuoteController extends Controller
                 'unit_price' => $item['unit_price'] ?? null,
                 'discount_type' => $item['discount_type'] ?? null,
                 'discount_value' => $item['discount_value'] ?? null,
+                'vat_rate' => $item['vat_rate'] ?? null,
                 'selectable' => $item['selectable'] ?? false,
                 'selected' => $item['selected'] ?? false,
                 'outcome' => $item['outcome'] ?? null,
@@ -372,7 +602,7 @@ class QuoteController extends Controller
         ])));
 
         $preview->fill(Quote::computeTotals($items, $preview->discount_type, $preview->discount_value));
-        $preview->fill(Quote::computeVat($preview->net, $settings));
+        $preview->fill(Quote::computeVat($preview->net, $settings, $items));
 
         return response($render->html($preview), 200, ['Content-Type' => 'text/html']);
     }

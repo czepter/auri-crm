@@ -3,6 +3,7 @@
 namespace App\Payments\Data;
 
 use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Payments\Models\CreditNote;
 use App\Payments\Models\PaymentInstallment;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -31,7 +32,13 @@ class PaymentInstallmentData extends Data
         public ?string $settledViaLabel,
         public ?string $paidOn,
         public ?string $paymentReference,
-        // Derived, not stored: the same "still scheduled, due date passed"
+        // #414: what has arrived and what is still owed. `remaining` is sent
+        // resolved because both the admin dialog's prefill and the portal's
+        // pay button charge exactly it, and two subtractions is two chances
+        // to disagree with what Stripe is handed.
+        public int $paidAmount,
+        public int $remaining,
+        // Derived, not stored: the same "still owed, due date passed"
         // condition App\Payments\Actions\DetectOverdueInstallments queries
         // for its own scan, minus that action's overdue_notified_at guard —
         // that column only dedupes the one-time notification event and is
@@ -44,9 +51,15 @@ class PaymentInstallmentData extends Data
         // `hasInvoiceDocument` is false between issue and render: the number
         // exists the moment the action runs, the PDF only after Gotenberg
         // returns, and a download link offered in that window would 404.
+        public ?string $invoiceId,
         public ?string $invoiceNumber,
         public ?string $invoicedOn,
         public bool $hasInvoiceDocument,
+        // #409: every Gutschrift written against this rate's invoice. `hasDocument` is
+        // false between issue and render, for the same reason
+        // hasInvoiceDocument is.
+        /** @var list<array{id: string, number: string, amount: int, issuedOn: string, hasDocument: bool}> */
+        public array $creditNotes,
     ) {}
 
     /**
@@ -68,11 +81,21 @@ class PaymentInstallmentData extends Data
             settledViaLabel: $installment->settled_via?->label(),
             paidOn: $installment->paid_on?->format('Y-m-d'),
             paymentReference: $installment->payment_reference,
-            isLate: $installment->status === PaymentInstallmentStatus::Scheduled
+            paidAmount: (int) $installment->paid_amount,
+            remaining: $installment->remaining(),
+            isLate: in_array($installment->status, PaymentInstallmentStatus::open(), true)
                 && $installment->due_on->lt(now('UTC')->startOfDay()),
-            invoiceNumber: $installment->invoice_number,
-            invoicedOn: $installment->invoiced_at?->format('Y-m-d'),
-            hasInvoiceDocument: $installment->invoice_path !== null,
+            invoiceId: $installment->invoice?->public_id,
+            invoiceNumber: $installment->invoice?->number,
+            invoicedOn: $installment->invoice?->issued_at->format('Y-m-d'),
+            hasInvoiceDocument: $installment->invoice?->pdf_path !== null,
+            creditNotes: ($installment->invoice?->creditNotes ?? collect())->map(fn (CreditNote $note) => [
+                'id' => $note->public_id,
+                'number' => $note->number,
+                'amount' => $note->amount,
+                'issuedOn' => $note->issued_at->format('Y-m-d'),
+                'hasDocument' => $note->pdf_path !== null,
+            ])->all(),
         );
     }
 }

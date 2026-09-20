@@ -168,6 +168,14 @@ img { max-width: 100%; height: auto; }
 .signin input::placeholder { color: #6C625A; }
 .signin input:focus { outline: none; border-color: var(--accent); }
 .signin input[name='code'] { flex: 0 0 140px; letter-spacing: .32em; font-variant-numeric: tabular-nums; }
+/* Sechs Felder statt einem: das Skript unter der Anmeldung baut sie aus dem
+   Feld oben, sobald JavaScript läuft. Ohne es bleibt das eine Feld stehen. */
+.signin input[hidden] { display: none; }
+.signin .pin { display: flex; gap: var(--s1, 6px); }
+.signin .pin input {
+  flex: 0 0 44px; padding-inline: 0; text-align: center; letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
 .signin .err { margin: var(--s2) 0 0; color: #E4805C; }
 
 .gfoot .who { display: flex; align-items: center; gap: var(--s2); }

@@ -1,6 +1,5 @@
 <?php
 
-use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -24,14 +23,14 @@ it('adds a second shooting day to a project', function () {
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'shoot-1')
         ->postJson("/api/projects/{$project->public_id}/shoots", [
-            'kind' => ShootKind::Reception->value,
+            'kind' => 'Feier',
             'label' => 'Feier',
             'date' => '2019-07-06',
         ]);
 
     $response->assertCreated();
 
-    expect($response->json('data.kind'))->toBe(ShootKind::Reception->value)
+    expect($response->json('data.kind'))->toBe('Feier')
         ->and($response->json('data.date'))->toBe('2019-07-06')
         ->and($response->json('data.projectId'))->toBe($project->public_id)
         ->and($response->json('data.status'))->toBe(ShootStatus::Requested->value)
@@ -41,6 +40,21 @@ it('adds a second shooting day to a project', function () {
     expect($project->shoots()->latest('id')->first()->is_primary)->toBeFalse();
 });
 
+it('falls back to the project type for a shoot given no kind', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
+    $project = Project::factory()->create(['type' => 'wedding']);
+
+    $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'shoot-no-kind')
+        ->postJson("/api/projects/{$project->public_id}/shoots", [
+            'date' => '2019-07-06',
+        ]);
+
+    $response->assertCreated();
+
+    expect($response->json('data.kind'))->toBe($project->type->name);
+});
+
 it('backdates a shooting day entered after the fact', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
     $project = Project::factory()->create();
@@ -48,7 +62,7 @@ it('backdates a shooting day entered after the fact', function () {
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'shoot-backdated')
         ->postJson("/api/projects/{$project->public_id}/shoots", [
-            'kind' => ShootKind::Reception->value,
+            'kind' => 'Feier',
             'date' => '2019-07-06',
             'entered_at' => '2018-12-03',
         ])
@@ -63,7 +77,7 @@ it('refuses a shoot to a token that does not hold ManageShoots', function () {
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'shoot-forbidden')
-        ->postJson("/api/projects/{$project->public_id}/shoots", ['kind' => ShootKind::Reception->value])
+        ->postJson("/api/projects/{$project->public_id}/shoots", ['kind' => 'Feier'])
         ->assertForbidden();
 });
 
@@ -105,6 +119,60 @@ it('cancels a shoot and takes the absage back', function () {
         ->assertOk();
 
     expect($shoot->fresh()->isCancelled())->toBeFalse();
+});
+
+// #363/#400: call_time, venue and label had no way back after create. A
+// caller resending only the date must not null the venue beside it — the
+// same merge LeadCaseController::update()'s admin version fails to hold to.
+it('updates a shoot, leaving fields the request omits untouched', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
+    $shoot = Shoot::factory()->create(['venue_name' => 'Schloss Elmau', 'venue_city' => 'Elmau', 'call_time' => '10:00']);
+
+    $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'shoot-update-1')
+        ->patchJson("/api/shoots/{$shoot->public_id}", ['date' => '2019-08-01']);
+
+    $response->assertOk();
+
+    expect($shoot->fresh()->date->toDateString())->toBe('2019-08-01')
+        ->and($shoot->fresh()->venue_name)->toBe('Schloss Elmau')
+        ->and($shoot->fresh()->call_time)->not->toBeNull()
+        ->and(integerIdPaths($response->json()))->toBe([]);
+});
+
+it('deletes a non-primary shoot but refuses to delete the primary one', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
+    $project = Project::factory()->create();
+    $primary = $project->shoots()->create(['kind' => 'Trauung', 'is_primary' => true]);
+    $extra = $project->shoots()->create(['kind' => 'Feier']);
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'shoot-delete-primary')
+        ->deleteJson("/api/shoots/{$primary->public_id}")
+        ->assertUnprocessable();
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'shoot-delete-extra')
+        ->deleteJson("/api/shoots/{$extra->public_id}")
+        ->assertNoContent();
+
+    expect(Shoot::whereKey($primary->id)->exists())->toBeTrue()
+        ->and(Shoot::whereKey($extra->id)->exists())->toBeFalse();
+});
+
+it('designates a different shoot as primary', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
+    $project = Project::factory()->create();
+    $primary = $project->shoots()->create(['kind' => 'Trauung', 'is_primary' => true]);
+    $extra = $project->shoots()->create(['kind' => 'Feier']);
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'shoot-primary-1')
+        ->postJson("/api/shoots/{$extra->public_id}/primary")
+        ->assertOk();
+
+    expect($primary->fresh()->is_primary)->toBeFalse()
+        ->and($extra->fresh()->is_primary)->toBeTrue();
 });
 
 it('refuses a shoot write to a token that may only read projects', function () {

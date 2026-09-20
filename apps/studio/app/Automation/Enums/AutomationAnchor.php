@@ -30,16 +30,24 @@ enum AutomationAnchor: string implements HasLabel
     case QuoteValidity = 'quote_validity';
 
     /**
-     * E-16: four more dates the machinery could already carry and did not
+     * E-16: three more dates the machinery could already carry and did not
      * see. The offset works in both directions, so `installment_due` is the
      * announcement that prevents T-22's arrears rather than the repair after
      * them — and it belongs here and not in the overdue scan, because it is
      * a studio's decision and not a system truth.
      */
     case InstallmentDue = 'installment_due';
-    case ContractDeadline = 'contract_deadline';
     case GalleryExpiry = 'gallery_expiry';
     case QuestionnaireDue = 'questionnaire_due';
+
+    /** The day the primary shoot entered the stage anchored Delivered. Fires against its Project. */
+    case Delivered = 'delivered';
+
+    /** #438: a quote's sent_at while it is still unanswered. Fires against its Project, as QuoteValidity does. */
+    case QuoteSent = 'quote_sent';
+
+    /** #438: an open inquiry's captured_at while it still sits in the stage anchored Entry. */
+    case InquiryCaptured = 'inquiry_captured';
 
     public function label(): string
     {
@@ -48,9 +56,11 @@ enum AutomationAnchor: string implements HasLabel
             self::PrimaryShoot => 'Haupttermin',
             self::QuoteValidity => 'Angebot gültig bis',
             self::InstallmentDue => 'Rate fällig',
-            self::ContractDeadline => 'Vertragsfrist',
             self::GalleryExpiry => 'Galerie läuft ab',
             self::QuestionnaireDue => 'Kundenaufgabe fällig',
+            self::Delivered => 'Ausgeliefert',
+            self::QuoteSent => 'Angebot verschickt',
+            self::InquiryCaptured => 'Anfrage eingegangen',
         };
     }
 }

@@ -14,7 +14,7 @@ container (`pnpm php <command>` from the repository root).
 ## Layout
 
 ```
-app/          domain modules (Crm, Quotes, Contracts, Payments, Media, …),
+app/          domain modules (Crm, Quotes, Payments, Media, …),
               each with its own Actions/ Data/ Enums/ Http/ Models/
 routes/       admin.php · portal.php · api.php · console.php — one is loaded
 resources/js  Vue 3 components, per-surface entrypoints, generated.d.ts
@@ -29,5 +29,4 @@ docs/         this app's own vertical documentation
 | [queue.md](docs/queue.md) | Horizon supervisors, the named queues, retrying a failed job |
 | [media.md](docs/media.md) | Object storage, multipart ingest, derivatives, ZIP builds, delivery |
 | [database-grants.md](docs/database-grants.md) | DB-level privilege revocation behind the append-only audit log |
-| [historical-import.md](docs/historical-import.md) | CSV import of the studio's existing data |
 | [cutover-runbook.md](docs/cutover-runbook.md) | The go-live sequence, its snapshot and its rollback |

@@ -20,17 +20,20 @@ class ProjectSearchController extends Controller
     {
         $term = trim((string) $request->query('q', ''));
 
-        if (mb_strlen($term) < 2) {
-            return response()->json(['projects' => []]);
-        }
-
-        $projects = Project::query()
+        $query = Project::query()
             ->visibleTo(auth('staff')->user())
             ->with('job')
-            ->where('name', 'ilike', "%{$term}%")
-            ->orderBy('name')
-            ->limit(8)
-            ->get();
+            ->limit(8);
+
+        if (mb_strlen($term) < 2) {
+            $query->whereNull('completed_at')
+                ->where(fn ($open) => $open->whereHas('job')->orWhereHas('lead', fn ($lead) => $lead->open()))
+                ->latest('updated_at');
+        } else {
+            $query->where('name', 'ilike', "%{$term}%")->orderBy('name');
+        }
+
+        $projects = $query->get();
 
         return response()->json([
             'projects' => ProjectSuggestionData::collect($projects),

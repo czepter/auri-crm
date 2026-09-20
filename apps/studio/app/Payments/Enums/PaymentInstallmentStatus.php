@@ -10,12 +10,15 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * M-06's IssueInvoice leaves an already-paid row paid rather than walking it
  * backwards.
  *
- * M-03 declared `invoiced` before anything produced it — the same shape
- * App\Contracts\Enums\ContractStatus used for `failed` — so that M-04 would
+ * M-03 declared `invoiced` before anything produced it, so that M-04 would
  * have somewhere to land without a migration widening this column's domain.
  * M-04 shipped as Stripe Checkout and never used it; M-06's own invoice is
- * what finally writes it, which is also what makes PaymentPlan::isEditable()'s
- * defensive guard load-bearing rather than hypothetical.
+ * what finally writes it. Since #407 the status no longer decides what may
+ * be edited — `invoice_id` does, on the row itself.
+ *
+ * `cancelled` (#408) is terminal and reachable only from `invoiced`: the row
+ * keeps its number and its PDF, and nothing that chases money — overdue
+ * detection, the reminder ladders, Stripe checkout — looks at it again.
  */
 #[TypeScript]
 enum PaymentInstallmentStatus: string
@@ -23,6 +26,8 @@ enum PaymentInstallmentStatus: string
     case Scheduled = 'scheduled';
     case Paid = 'paid';
     case Invoiced = 'invoiced';
+    case Cancelled = 'cancelled';
+    case Partial = 'partial';
 
     public function label(): string
     {
@@ -30,6 +35,20 @@ enum PaymentInstallmentStatus: string
             self::Scheduled => 'Geplant',
             self::Paid => 'Bezahlt',
             self::Invoiced => 'Gestellt',
+            self::Cancelled => 'Storniert',
+            self::Partial => 'Teilzahlung',
         };
+    }
+
+    /**
+     * #414: still owed something. The overdue scan, its reminder ladder and
+     * the Stripe checkout all read this rather than listing the cases again —
+     * `partial` was the third case that had to be added to every one of them.
+     *
+     * @return list<self>
+     */
+    public static function open(): array
+    {
+        return [self::Scheduled, self::Invoiced, self::Partial];
     }
 }

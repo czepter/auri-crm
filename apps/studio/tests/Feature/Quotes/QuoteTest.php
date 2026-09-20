@@ -649,14 +649,19 @@ describe('Q-04: VAT snapshot', function () {
         expect($quote->fresh()->only(['vat_mode', 'vat_rate', 'vat_note', 'vat_amount']))->toBe($before);
     });
 
-    it('sends a quote\'s own VAT snapshot columns to the screen once populated, and null for a draft', function () {
+    it('sends a quote\'s own VAT snapshot columns to the screen once populated, and a live preview for a draft', function () {
         $project = Project::factory()->create();
-        $draft = Quote::factory()->for($project)->create();
+        $draft = Quote::factory()->for($project)->create(['net' => 50000]);
 
         $sent = Quote::factory()->for($project)->create(['net' => 100000]);
         app(StudioSettingsResolver::class)->set('vat_mode', 'standard');
         app(StudioSettingsResolver::class)->set('vat_rate', 1900);
         $sent->snapshotVat(app(StudioSettingsResolver::class));
+
+        // The tenant's rate changes after the send — the sent quote must not
+        // see it, the still-unsent draft must, since nothing of its is
+        // frozen yet.
+        app(StudioSettingsResolver::class)->set('vat_rate', 700);
 
         $props = $this->actingAs(quoteOwner(), 'staff')
             ->get("/auftraege/{$project->public_id}/angebote")
@@ -665,8 +670,9 @@ describe('Q-04: VAT snapshot', function () {
 
         $quotes = collect($props['quotes'])->keyBy('id');
 
-        expect($quotes[$draft->public_id]['vatMode'])->toBeNull()
-            ->and($quotes[$draft->public_id]['vatAmount'])->toBeNull()
+        expect($quotes[$draft->public_id]['vatMode'])->toBe('standard')
+            ->and($quotes[$draft->public_id]['vatRate'])->toBe(700)
+            ->and($quotes[$draft->public_id]['vatAmount'])->toBe(Quote::computeVat(50000, app(StudioSettingsResolver::class))['vat_amount'])
             ->and($quotes[$sent->public_id]['vatMode'])->toBe('standard')
             ->and($quotes[$sent->public_id]['vatRate'])->toBe(1900)
             ->and($quotes[$sent->public_id]['vatAmount'])->toBe($sent->fresh()->vat_amount);
@@ -800,6 +806,52 @@ describe('Q-06: sending a quote', function () {
 
         expect($quote->fresh()->status)->toBe(QuoteStatus::Sent);
     });
+
+    it('opens the compose screen for a draft quote, carrying the recipient it would mail', function () {
+        $contact = Contact::factory()->create(['name' => 'Lena Brandt', 'email' => 'lena@example.test']);
+        $project = Project::factory()->create();
+        $project->attachContact($contact, ProjectContactRole::Primary);
+        $quote = Quote::factory()->for($project)->create();
+        QuoteItem::factory()->for($quote)->create();
+
+        $this->actingAs(quoteOwner(), 'staff')
+            ->get("/angebote/{$quote->public_id}/senden")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Quotes/Send')
+                ->where('recipientName', 'Lena Brandt')
+                ->where('recipientEmail', 'lena@example.test'));
+    });
+
+    it('refuses the compose screen once a quote is no longer a draft', function () {
+        $quote = Quote::factory()->create(['status' => QuoteStatus::Sent]);
+
+        $this->actingAs(quoteOwner(), 'staff')
+            ->get("/angebote/{$quote->public_id}/senden")
+            ->assertNotFound();
+    });
+
+    it('carries the compose screen\'s subject and message into the mail', function () {
+        Notification::fake();
+
+        $contact = Contact::factory()->create(['email' => 'lena@example.test']);
+        $project = Project::factory()->create();
+        $project->attachContact($contact, ProjectContactRole::Primary);
+        $quote = Quote::factory()->for($project)->create();
+        QuoteItem::factory()->for($quote)->create();
+
+        $this->actingAs(quoteOwner(), 'staff')->post("/angebote/{$quote->public_id}/versenden", [
+            'subject' => 'Euer Angebot ist da',
+            'message' => "Hallo Lena,\n\nvielen Dank für euer Vertrauen.",
+        ]);
+
+        Notification::assertSentTo($contact, function (QuoteSent $notification) use ($contact) {
+            $mail = $notification->toMail($contact);
+
+            return $mail->subject === 'Euer Angebot ist da'
+                && str_contains((string) $mail->render(), 'vielen Dank für euer Vertrauen.');
+        });
+    });
 });
 
 // --- Q-06: a sent quote is immutable at the model level --------------------
@@ -906,6 +958,56 @@ describe('Q-06: revising a sent quote', function () {
 
         expect(Quote::count())->toBe(1)
             ->and($predecessor->fresh()->status)->toBe(QuoteStatus::Sent);
+    });
+
+    // #396: a revision used to carry only valid_until, the discount and a
+    // handful of per-item columns, dropping the hourly slider, the time
+    // line, the recipient and the number every other quote-creating path
+    // sets — the same fields DuplicateQuote already carries fully.
+    it('carries the number, recipient and hourly/time fields DuplicateQuote already carries fully', function () {
+        $contact = Contact::factory()->create();
+        $predecessor = Quote::factory()->create([
+            'status' => QuoteStatus::Sent,
+            'pricing_mode' => 'choice',
+            'hourly_rate' => 15000,
+            'min_hours' => 2,
+            'max_hours' => 8,
+            'images_per_hour' => 20,
+            'hours' => 4,
+            'time_title' => 'Ablauf',
+            'time_description' => 'ab 14 Uhr',
+            'recipient_contact_id' => $contact->id,
+            'recipient_street' => 'Hauptstr. 1',
+            'recipient_postcode' => '10115',
+            'recipient_city' => 'Berlin',
+        ]);
+
+        $revision = app(ReviseQuote::class)($predecessor);
+
+        expect($revision->number)->not->toBeNull()
+            ->and($revision->number)->not->toBe($predecessor->number)
+            ->and($revision->pricing_mode->value)->toBe('choice')
+            ->and($revision->hourly_rate)->toBe(15000)
+            ->and($revision->min_hours)->toBe(2)
+            ->and($revision->max_hours)->toBe(8)
+            ->and($revision->images_per_hour)->toBe(20)
+            ->and($revision->hours)->toBe(4)
+            ->and($revision->time_title)->toBe('Ablauf')
+            ->and($revision->time_description)->toBe('ab 14 Uhr')
+            ->and($revision->recipient_contact_id)->toBe($contact->id)
+            ->and($revision->recipient_street)->toBe('Hauptstr. 1')
+            ->and($revision->recipient_postcode)->toBe('10115')
+            ->and($revision->recipient_city)->toBe('Berlin');
+    });
+
+    // AcceptQuote refuses a lapsed valid_until outright, so a revision that
+    // just copied its predecessor's date could never be accepted.
+    it('gives the revision a fresh valid_until when the predecessor\'s own has lapsed', function () {
+        $predecessor = Quote::factory()->create(['status' => QuoteStatus::Sent, 'valid_until' => '2018-01-01']);
+
+        $revision = app(ReviseQuote::class)($predecessor);
+
+        expect($revision->valid_until->isFuture())->toBeTrue();
     });
 
     it('refuses to revise a quote that is not sent', function (QuoteStatus $status) {
@@ -1136,13 +1238,13 @@ it('refuses to write the library for an actor without the catalog capability', f
 });
 
 it('sends active packages with their items, the library and the catalog permission to the quotes screen', function () {
-    $project = Project::factory()->create();
+    $quote = Quote::factory()->create();
     Package::factory()->has(PackageItem::factory()->count(2), 'items')->create(['name' => 'Hochzeit Basis']);
     Package::factory()->inactive()->create(['name' => 'Alt']);
     CatalogItem::create(['title' => 'Zweitfotograf', 'unit_price' => 49000]);
 
     $props = $this->actingAs(quoteOwner(), 'staff')
-        ->get("/auftraege/{$project->public_id}/angebote")
+        ->get("/angebote/{$quote->public_id}")
         ->assertOk()
         ->viewData('page')['props'];
 
@@ -1150,4 +1252,119 @@ it('sends active packages with their items, the library and the catalog permissi
         ->and($props['packages'][0]['items'])->toHaveCount(2)
         ->and($props['catalogItems'][0]['title'])->toBe('Zweitfotograf')
         ->and($props['canManageCatalog'])->toBeTrue();
+});
+
+// --- QuoteActions.vue's split button: remembered per user -----------------
+
+describe('remembering the last quote action a user took', function () {
+    it('writes one of the three known actions onto the acting user', function () {
+        $user = quoteOwner();
+
+        $this->actingAs($user, 'staff')
+            ->post('/angebote/letzte-aktion', ['action' => 'copy_link'])
+            ->assertRedirect();
+
+        expect($user->fresh()->last_quote_action)->toBe('copy_link');
+    });
+
+    it('refuses anything outside the three known actions', function () {
+        $this->actingAs(quoteOwner(), 'staff')
+            ->post('/angebote/letzte-aktion', ['action' => 'delete_everything'])
+            ->assertSessionHasErrors('action');
+    });
+
+    it('sends it back down as the quote screen loads, per user rather than per quote', function () {
+        $project = Project::factory()->create();
+        $user = quoteOwner();
+        $user->update(['last_quote_action' => 'send_by_mail']);
+
+        $props = $this->actingAs($user, 'staff')
+            ->get("/auftraege/{$project->public_id}/angebote")
+            ->assertOk()
+            ->viewData('page')['props'];
+
+        expect($props['auth']['user']['lastQuoteAction'])->toBe('send_by_mail');
+    });
+});
+
+// --- QuoteActions.vue's 3-dot menu: duplicate and delete -------------------
+
+describe('duplicating a quote', function () {
+    it('opens a new draft on the same project, carrying positions, terms and payment stages, none of the source\'s history', function () {
+        $project = Project::factory()->create();
+        $source = Quote::factory()->for($project)->create([
+            'status' => QuoteStatus::Sent,
+            'number' => 'AN-2026-1',
+            'sent_at' => now(),
+            'sent_channel' => 'mail',
+            'intro' => 'Liebe Grüße',
+            'discount_type' => DiscountType::Percentage,
+            'discount_value' => 1000,
+            'vat_mode' => 'standard',
+            'vat_rate' => 1900,
+            'vat_amount' => 5000,
+        ]);
+        QuoteItem::factory()->for($source)->create(['title' => 'Reportage', 'unit_price' => 200000]);
+        $source->paymentStages()->create(['percent' => 100, 'label' => 'Bei der Zusage', 'sort_order' => 0]);
+
+        $this->actingAs(quoteOwner(), 'staff')
+            ->post("/angebote/{$source->public_id}/duplizieren")
+            ->assertRedirect();
+
+        $copy = Quote::where('id', '!=', $source->id)->firstOrFail();
+
+        expect($copy->project_id)->toBe($project->id)
+            ->and($copy->status)->toBe(QuoteStatus::Draft)
+            ->and($copy->number)->not->toBeNull()
+            ->and($copy->sent_at)->toBeNull()
+            ->and($copy->intro)->toBe('Liebe Grüße')
+            ->and($copy->discount_value)->toBe(1000)
+            ->and($copy->vat_mode)->toBeNull()
+            ->and($copy->items->pluck('title')->all())->toBe(['Reportage'])
+            ->and($copy->paymentStages->pluck('label')->all())->toBe(['Bei der Zusage'])
+            ->and($copy->total)->toBe($copy->items->first()->unit_price);
+    });
+
+    it('leaves the source quote untouched', function () {
+        $project = Project::factory()->create();
+        $source = Quote::factory()->for($project)->create(['status' => QuoteStatus::Accepted]);
+        QuoteItem::factory()->for($source)->create();
+
+        $this->actingAs(quoteOwner(), 'staff')->post("/angebote/{$source->public_id}/duplizieren");
+
+        expect($source->fresh()->status)->toBe(QuoteStatus::Accepted)
+            ->and($source->fresh()->items)->toHaveCount(1);
+    });
+});
+
+describe('deleting a quote', function () {
+    it('deletes a draft', function () {
+        $quote = Quote::factory()->create(['status' => QuoteStatus::Draft]);
+
+        $this->actingAs(quoteOwner(), 'staff')
+            ->delete("/angebote/{$quote->public_id}")
+            ->assertRedirect();
+
+        expect(Quote::find($quote->id))->toBeNull();
+    });
+
+    it('refuses to delete a sent quote', function () {
+        $quote = Quote::factory()->create(['status' => QuoteStatus::Sent]);
+
+        $this->actingAs(quoteOwner(), 'staff')
+            ->delete("/angebote/{$quote->public_id}")
+            ->assertStatus(422);
+
+        expect(Quote::find($quote->id))->not->toBeNull();
+    });
+
+    it('refuses to delete an accepted quote', function () {
+        $quote = Quote::factory()->create(['status' => QuoteStatus::Accepted]);
+
+        $this->actingAs(quoteOwner(), 'staff')
+            ->delete("/angebote/{$quote->public_id}")
+            ->assertStatus(422);
+
+        expect(Quote::find($quote->id))->not->toBeNull();
+    });
 });

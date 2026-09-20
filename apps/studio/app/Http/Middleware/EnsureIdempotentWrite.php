@@ -43,15 +43,25 @@ class EnsureIdempotentWrite
         $principal = $request->user('api');
         $fingerprint = hash('sha256', $request->method().'|'.$request->path().'|'.$request->getContent());
 
-        $existing = IdempotencyKey::query()
+        $scope = fn () => IdempotencyKey::query()
             ->where('principal_type', $principal::class)
             ->where('principal_id', $principal->getKey())
-            ->where('idempotency_key', $key)
+            ->where('idempotency_key', $key);
+
+        $existing = (clone $scope())
+            ->where('created_at', '>=', now()->subHours(IdempotencyKey::WINDOW_HOURS))
             ->first();
 
         if ($existing !== null) {
             return $this->respondFrom($existing, $fingerprint);
         }
+
+        // A claim outside the window no longer replays, but its unique
+        // index entry still blocks the insert below until Prunable's daily
+        // sweep reaches it — drop it here so the retry redoes the write now.
+        (clone $scope())
+            ->where('created_at', '<', now()->subHours(IdempotencyKey::WINDOW_HOURS))
+            ->delete();
 
         try {
             $claim = IdempotencyKey::create([

@@ -19,7 +19,7 @@ uses(RefreshDatabase::class);
 function draftContract(?Project $project = null): Contract
 {
     return Contract::factory()
-        ->for($project ?? contractProject())
+        ->for($project ?? bookedContactProject())
         ->for(DocumentTemplate::factory()->create(['body' => '<p>Vorlage</p>']), 'template')
         ->create(['state' => ContractState::Draft, 'version' => 1]);
 }
@@ -41,7 +41,7 @@ it('edits a draft Fassung in place and leaves the version number alone', functio
 it('starts the next Fassung instead of touching a sent one, and carries its signers over unsigned', function () {
     Queue::fake();
 
-    $project = contractProject();
+    $project = bookedContactProject();
     $contract = draftContract($project);
     $contact = $project->contacts()->sole();
     $contract->signers()->create(['contact_id' => $contact->id, 'signed_at' => now()]);
@@ -64,7 +64,7 @@ it('starts the next Fassung instead of touching a sent one, and carries its sign
 it('keeps the signed Fassung valid until the new one is sent', function () {
     Queue::fake();
 
-    $project = contractProject();
+    $project = bookedContactProject();
     $signed = draftContract($project);
     $signed->markSent();
 
@@ -108,7 +108,7 @@ it('refuses editing for a role without ManageContracts', function () {
 });
 
 it('adds only project contacts as signers, and never deletes one that has signed', function () {
-    $project = contractProject();
+    $project = bookedContactProject();
     $contract = draftContract($project);
     $contact = $project->contacts()->sole();
     $stranger = Contact::factory()->create();
@@ -136,7 +136,7 @@ it('adds only project contacts as signers, and never deletes one that has signed
 it('records a reminder without sending mail — there is no client-facing contract notification', function () {
     Notification::fake();
 
-    $project = contractProject();
+    $project = bookedContactProject();
     $contract = draftContract($project);
     $signer = $contract->signers()->create(['contact_id' => $project->contacts()->sole()->id]);
 
@@ -151,7 +151,7 @@ it('records a reminder without sending mail — there is no client-facing contra
 it('stamps the signer row when the contract is signed', function () {
     Storage::fake('local');
 
-    $project = contractProject();
+    $project = bookedContactProject();
     $contract = renderedContract($project);
     $contact = $project->contacts()->sole();
     $signer = $contract->signers()->create(['contact_id' => $contact->id]);
@@ -164,7 +164,7 @@ it('stamps the signer row when the contract is signed', function () {
 it('numbers a second contract for the same project as the next Fassung', function () {
     Queue::fake();
 
-    $project = contractProject();
+    $project = bookedContactProject();
     $template = DocumentTemplate::factory()->create();
     draftContract($project);
 

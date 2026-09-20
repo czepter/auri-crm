@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Automation\Actions\FireAutomationRule;
 use App\Automation\Models\AutomationRule;
-use App\Contracts\Models\Contract;
 use App\Crm\Actions\AdvanceShootStatus;
 use App\Crm\Actions\BookProject;
 use App\Crm\Enums\CrewRole;
@@ -12,7 +11,6 @@ use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
-use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Enums\TaskAudience;
@@ -66,7 +64,7 @@ class DemoCrmSeeder extends Seeder
         ['Annika Reuter', 'Finn Sölter', 'wedding', '2026-05-30', 'quote_sent', 3, 'wedding_fair', 'Elbspeicher', 'Hamburg'],
         ['Lea Hoffmann', 'Jonas Behr', 'wedding', '2026-10-03', 'quote_sent', 6, 'instagram', 'Gut Wulksfelde', 'Tangstedt'],
         ['Marie Ahrens', 'David Kroll', 'wedding', '2026-07-25', 'quote_accepted', 1, 'referral', 'Kaispeicher', 'Hamburg'],
-        ['Sophie Lang', 'Erik Voss', 'wedding', '2026-09-19', 'contract_sent', 2, 'website', 'Gut Basthorst', 'Basthorst'],
+        ['Sophie Lang', 'Erik Voss', 'wedding', '2026-09-19', 'quote_accepted', 2, 'website', 'Gut Basthorst', 'Basthorst'],
         ['Meier & Kowalski', null, 'wedding', '2026-06-14', 'booked', 12, 'referral', 'Gut Basthorst', 'Basthorst'],
     ];
 
@@ -117,7 +115,7 @@ class DemoCrmSeeder extends Seeder
 
             Shoot::create([
                 'project_id' => $project->id,
-                'kind' => $projectType === ProjectType::Wedding ? ShootKind::Wedding : ShootKind::Portrait,
+                'kind' => $projectType === ProjectType::Wedding ? 'Hochzeitstag' : 'Portrait',
                 'date' => $date,
                 'venue_name' => $venue,
                 'venue_city' => $city,
@@ -128,6 +126,7 @@ class DemoCrmSeeder extends Seeder
             $lead = Lead::factory()->for($project)->atStage(LeadStage::from($stage), $daysAgo)->create([
                 'source' => LeadSource::from($source),
                 'captured_by_id' => $staff->id,
+                'captured_at' => now()->subDays($daysAgo),
             ]);
 
             // The cast is built from models rather than CaptureInquiry, so the
@@ -224,7 +223,7 @@ class DemoCrmSeeder extends Seeder
     {
         foreach ([
             ['Ablauf bestätigen', TaskAudience::Client, -14, null],
-            ['Familienliste einholen', TaskAudience::Client, -7, ShootKind::Wedding],
+            ['Familienliste einholen', TaskAudience::Client, -7, 'Hochzeitstag'],
             ['Crew-Briefing verschicken', TaskAudience::Internal, -1, null],
         ] as [$title, $audience, $offset, $kind]) {
             TaskTemplate::updateOrCreate(
@@ -270,7 +269,7 @@ class DemoCrmSeeder extends Seeder
 
         $engagement = Shoot::create([
             'project_id' => $project->id,
-            'kind' => ShootKind::Engagement,
+            'kind' => 'Verlobungsshooting',
             'label' => 'Verlobungsshooting',
             'date' => now()->subDays(140)->format('Y-m-d'),
             'call_time' => '14:00',
@@ -282,7 +281,7 @@ class DemoCrmSeeder extends Seeder
 
         $registry = Shoot::create([
             'project_id' => $project->id,
-            'kind' => ShootKind::Reception,
+            'kind' => 'Feier',
             'label' => 'Standesamt',
             'date' => now()->subDays(37)->format('Y-m-d'),
             'call_time' => '11:00',
@@ -296,7 +295,7 @@ class DemoCrmSeeder extends Seeder
         // real state the screen has to render.
         $afterWedding = Shoot::create([
             'project_id' => $project->id,
-            'kind' => ShootKind::Portrait,
+            'kind' => 'Portrait',
             'label' => 'After-Wedding-Shooting',
             'date' => now()->addDays(26)->format('Y-m-d'),
             'sort_order' => 3,
@@ -369,8 +368,6 @@ class DemoCrmSeeder extends Seeder
         Artisan::call('automation:seed-default-rules');
 
         $this->seedChasedQuote($projects['Annika Reuter']);
-        $this->seedAcceptedQuoteWithoutContract($projects['Marie Ahrens']);
-        $this->seedUnsignedContract($projects['Sophie Lang']);
         $this->seedOverdueInstallment($projects['Meier & Kowalski']);
         $this->seedReferralAndExpiringGallery($projects['Meier & Kowalski'], $projects['Familie Osterhoff']);
         $this->seedUnansweredThread($projects['Annika Reuter']);
@@ -387,12 +384,13 @@ class DemoCrmSeeder extends Seeder
     {
         $project->primaryContact()?->update(['phone' => '+49 40 5550101']);
 
-        Quote::factory()->for($project)->create([
-            'status' => QuoteStatus::Sent,
-            'sent_at' => now()->subDays(9),
-            'valid_until' => now()->addDays(5),
-            'total' => 350000,
-        ]);
+        // Items first, on the still-mutable draft row: Quote::booted()'s guard
+        // refuses total/discount_amount/net once status reads sent, and
+        // recalculateTotal() writes all three.
+        $quote = Quote::factory()->for($project)->create();
+        $quote->items()->create(['title' => 'Hochzeitsreportage Ganztag', 'description' => 'bis 10 Std. am Hochzeitstag, Bearbeitung, Online-Galerie', 'quantity' => 1, 'unit_price' => 350000]);
+        $quote->recalculateTotal();
+        $quote->update(['status' => QuoteStatus::Sent, 'sent_at' => now()->subDays(9), 'valid_until' => now()->addDays(5)]);
 
         $rule = AutomationRule::query()->where('key', 'quote-follow-up')->firstOrFail();
         $fire = app(FireAutomationRule::class);
@@ -402,34 +400,6 @@ class DemoCrmSeeder extends Seeder
         // separate weeks, which is exactly what "2×" means on the row.
         $fire($rule, $project, now()->subDays(9)->toDateString());
         $fire($rule, $project, now()->subDays(2)->toDateString());
-    }
-
-    /** Accepted, and nothing has rendered a contract for it yet. */
-    private function seedAcceptedQuoteWithoutContract(Project $project): void
-    {
-        Quote::factory()->for($project)->create([
-            'status' => QuoteStatus::Accepted,
-            'sent_at' => now()->subDays(10),
-            'accepted_at' => now()->subDays(3),
-            'total' => 420000,
-        ]);
-    }
-
-    /** Rendered, aged past ReadInquiryColumn::UNSIGNED_AFTER_DAYS, still no signature. */
-    private function seedUnsignedContract(Project $project): void
-    {
-        $project->primaryContact()?->update(['phone' => '+49 40 5550102']);
-
-        $contract = Contract::factory()->for($project)->rendered()->create();
-
-        // created_at drives the row's "N Tage unsigniert" — timestamps only
-        // accept an override outside Eloquent's own auto-touch, which a plain
-        // create() array does not bypass.
-        $contract->timestamps = false;
-        $contract->forceFill([
-            'created_at' => now()->subDays(6),
-            'rendered_at' => now()->subDays(6),
-        ])->save();
     }
 
     /**

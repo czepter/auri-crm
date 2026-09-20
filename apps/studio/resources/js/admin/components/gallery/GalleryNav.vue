@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogBody,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogFooter,
@@ -182,7 +183,7 @@ function confirmRemove() {
         <AlertDialogTitle>{{ $t('galleryRecord.removeSet', { name: removing?.name ?? '' }) }}</AlertDialogTitle>
       </AlertDialogHeader>
 
-      <div class="px-[var(--s5)]">
+      <AlertDialogBody>
         <!-- Der leere Wert ist ein echter Platzhalter, keine Wahl: die
              zerstörende Möglichkeit darf nie die sein, die feuert, weil
              jemand bestätigt hat, ohne das Feld anzufassen. -->
@@ -195,7 +196,7 @@ function confirmRemove() {
             <SelectItem :value="DELETE_PICTURES">{{ $t('galleryRecord.removeSetPictures') }}</SelectItem>
           </SelectContent>
         </Select>
-      </div>
+      </AlertDialogBody>
 
       <AlertDialogFooter>
         <AlertDialogAction tone="destructive" :disabled="removeTarget === ''" @click="confirmRemove">{{ $t('galleryRecord.deleteSet') }}</AlertDialogAction>

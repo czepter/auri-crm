@@ -5,6 +5,7 @@ import { Input } from '@/ui/input'
 import { Textarea } from '@/ui/textarea'
 import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
+import { Checkbox } from '@/ui/checkbox'
 
 const props = defineProps<{
   settings: App.Settings.Data.StudioSettingsData
@@ -16,6 +17,7 @@ const form = useForm({
   mail_reply_to: props.settings.mailReplyTo ?? '',
   mail_bcc: props.settings.mailBcc ?? '',
   mail_signature: props.settings.mailSignature ?? '',
+  mail_clients_enabled: props.settings.mailClientsEnabled,
 })
 
 // Leert die beiden Spalten einer Bestandsinstallation, damit MAIL_FROM_*
@@ -30,6 +32,7 @@ function submit() {
       mail_reply_to: data.mail_reply_to || null,
       mail_bcc: data.mail_bcc || null,
       mail_signature: data.mail_signature || null,
+      mail_clients_enabled: data.mail_clients_enabled,
     }))
     .patch('/einstellungen/email', { preserveScroll: true, onSuccess: () => emit('saved') })
 }
@@ -85,6 +88,14 @@ defineExpose({ form, submit })
           <Label :for="id">{{ $t('settings.mailSignatureFieldLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
           <Textarea :id v-model="form.mail_signature" rows="4" />
         </Field>
+      </div>
+    </div>
+
+    <div class="mt-8 first-of-type:mt-6">
+      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.mailDeliveryLabel') }}</div>
+      <div class="mb-6 flex items-center gap-2.5">
+        <Checkbox id="cb-mail-clients-enabled" v-model="form.mail_clients_enabled" />
+        <Label variant="inline" for="cb-mail-clients-enabled">{{ $t('settings.mailClientsEnabledLabel') }}</Label>
       </div>
     </div>
   </form>

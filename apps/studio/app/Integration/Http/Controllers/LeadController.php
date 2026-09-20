@@ -5,6 +5,7 @@ namespace App\Integration\Http\Controllers;
 use App\Crm\Actions\AdvanceLeadStage;
 use App\Crm\Actions\CaptureInquiry;
 use App\Crm\Data\CaptureInquiryData;
+use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Lead;
@@ -39,17 +40,16 @@ class LeadController extends Controller
 
         return response()->json([
             'project' => ['id' => $project->public_id, 'name' => $project->name],
-            'lead' => ['id' => $lead->public_id, 'stage' => $lead->stage->key, 'source' => $lead->source->value],
+            'lead' => ['id' => $lead->public_id, 'stage' => $lead->stage->key, 'source' => $lead->source?->value],
         ], 201);
     }
 
     /**
      * The same capture, once per row.
      *
-     * One transaction, for the reason CommitHistoricalImport gives: a run
-     * that wrote 140 rows and refused the 141st leaves nothing to tell the
-     * imported rows from the ones that never landed, and a second attempt
-     * duplicates whatever the first one kept.
+     * One transaction: a run that wrote 140 rows and refused the 141st
+     * leaves nothing to tell the captured rows from the ones that never
+     * landed, and a second attempt duplicates whatever the first one kept.
      *
      * Rows are validated one at a time rather than through one `leads.*`
      * rule set: contact_name is `required_without:contact_id`, and under a
@@ -124,11 +124,18 @@ class LeadController extends Controller
         return $this->state($lead);
     }
 
-    /** #361: a capture's inquiry text was write-once on this surface. */
+    /**
+     * #361: a capture's inquiry text was write-once on this surface.
+     * #363: captured_via was too — neither field had a way back after
+     * capture. captured_via_other is cleared by Lead::booted() whenever the
+     * channel itself is not Other, the same as CaptureInquiry leaves it.
+     */
     public function update(Request $request, Lead $lead): JsonResponse
     {
         $validated = $request->validate([
             'inquiry_text' => ['present', 'nullable', 'string', 'max:10000'],
+            'captured_via' => ['sometimes', Rule::enum(CaptureChannel::class)],
+            'captured_via_other' => ['sometimes', 'nullable', 'string', 'max:120'],
         ]);
 
         $lead->update($validated);
@@ -136,6 +143,8 @@ class LeadController extends Controller
         return response()->json([
             'id' => $lead->public_id,
             'inquiryText' => $lead->inquiry_text,
+            'capturedVia' => $lead->captured_via?->value,
+            'capturedViaOther' => $lead->captured_via_other,
         ]);
     }
 

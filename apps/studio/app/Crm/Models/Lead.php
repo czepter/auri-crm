@@ -35,6 +35,7 @@ class Lead extends Model
 
     protected $fillable = [
         'project_id',
+        'package_id',
         'source',
         'source_other',
         'stage',
@@ -91,17 +92,17 @@ class Lead extends Model
         )->withoutObjectCaching();
     }
 
-    public function sourceLabel(): string
+    public function sourceLabel(): ?string
     {
         return $this->source_other === null
-            ? $this->source->label()
+            ? $this->source?->label()
             : $this->source->label().' — '.$this->source_other;
     }
 
-    public function capturedViaLabel(): string
+    public function capturedViaLabel(): ?string
     {
         return $this->captured_via_other === null
-            ? $this->captured_via->label()
+            ? $this->captured_via?->label()
             : $this->captured_via->label().' — '.$this->captured_via_other;
     }
 

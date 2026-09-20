@@ -2,6 +2,7 @@
 
 namespace App\Portal\Http\Controllers;
 
+use App\Catalog\Support\PortalOffers;
 use App\Contracts\Models\Contract;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
@@ -12,6 +13,7 @@ use App\Crm\Support\CrmVocabulary;
 use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
 use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
 use App\Portal\Actions\UpdateProjectDetails;
 use App\Portal\Support\PortalSettings;
@@ -45,7 +47,7 @@ use Inertia\Response;
  */
 class ProjectController extends Controller
 {
-    public function __invoke(string $project, StudioSettingsResolver $studio, PortalSettings $settings): Response
+    public function __invoke(string $project, StudioSettingsResolver $studio, PortalSettings $settings, PortalOffers $offers): Response
     {
         $contact = auth('portal')->user();
 
@@ -67,7 +69,14 @@ class ProjectController extends Controller
 
         return $editable
             ? Inertia::render('Projects/Inquiry', [...$shared, 'project' => $this->inquiry($found)])
-            : Inertia::render('Projects/Show', [...$shared, 'project' => $this->booking($found, $settings)]);
+            : Inertia::render('Projects/Show', [
+                ...$shared,
+                'project' => $this->booking($found, $settings),
+                // Die Übersicht überspringt, wer genau eine Buchung hat —
+                // ohne diese Stelle bliebe „Weitere Leistungen" für den
+                // häufigsten Fall unsichtbar.
+                'offers' => $offers->for(auth('portal')->user()),
+            ]);
     }
 
     /**
@@ -172,7 +181,7 @@ class ProjectController extends Controller
             'venue' => $found->primaryShoot?->venue(),
             'shoots' => $found->shoots->map(fn (Shoot $shoot) => [
                 'id' => $shoot->public_id,
-                'title' => $shoot->label ?? $shoot->kind->label(),
+                'title' => $shoot->label ?? $shoot->kind,
                 'date' => $shoot->date?->format('Y-m-d'),
                 'callTime' => $shoot->call_time === null ? null : substr((string) $shoot->call_time, 0, 5),
                 'venue' => $shoot->venue(),
@@ -203,6 +212,7 @@ class ProjectController extends Controller
                     ->values()->all(),
             ],
             'documents' => $this->documents($found, $settings),
+            'invoices' => $this->invoices($found, $settings),
             'questionnaires' => $this->questionnaires($found),
             'details' => [
                 'date' => $found->primaryShoot?->date?->format('Y-m-d'),
@@ -274,6 +284,34 @@ class ProjectController extends Controller
         }
 
         return $rows;
+    }
+
+    /**
+     * #415: every invoice this project has issued, newest number last — the
+     * client's own copy of the sequence. Behind the same switch the Zahlungen
+     * row is, because both lead into the payment screens.
+     */
+    private function invoices(Project $found, PortalSettings $settings): array
+    {
+        if (! $settings->paymentStatusEnabled(auth('portal')->user())) {
+            return [];
+        }
+
+        return Invoice::query()
+            ->where('project_id', $found->id)
+            ->with('installments')
+            ->orderBy('number')
+            ->get()
+            ->map(fn (Invoice $one) => [
+                'id' => $one->public_id,
+                'number' => $one->number,
+                'issuedOn' => $one->issued_at->format('Y-m-d'),
+                'amount' => $one->amount(),
+                'status' => __("payments.invoiceStatus.{$one->status()}"),
+                'settled' => $one->isPaid(),
+            ])
+            ->values()
+            ->all();
     }
 
     private function signedOn(Contract $contract): ?string

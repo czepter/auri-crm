@@ -4,6 +4,7 @@ namespace App\Quotes\Notifications;
 
 use App\Crm\Models\Contact;
 use App\Quotes\Models\Quote;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Number;
@@ -31,7 +32,16 @@ use Illuminate\Support\Number;
  */
 class QuoteSent extends Notification
 {
-    public function __construct(private readonly Quote $quote) {}
+    /**
+     * $customSubject and $customMessage: the compose screen's own fields —
+     * both null on every other caller (markSent's own direct send, the
+     * tests below), which keeps this exactly the mail it was before.
+     */
+    public function __construct(
+        private readonly Quote $quote,
+        private readonly ?string $customSubject = null,
+        private readonly ?string $customMessage = null,
+    ) {}
 
     /** @return list<string> */
     public function via(object $notifiable): array
@@ -41,10 +51,44 @@ class QuoteSent extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $message = (new MailMessage)
-            ->subject("Ihr Angebot {$this->quote->number}")
-            ->greeting('Hallo,')
-            ->line('Gesamtbetrag: '.Number::currency($this->quote->net / 100, in: 'EUR', locale: 'de'));
+        $possessive = [
+            'sie' => 'Ihr',
+            'du' => 'Dein',
+            'ihr' => 'Euer',
+        ][app(StudioSettingsResolver::class)->clientAddress($this->quote->project->contacts()->count())];
+
+        $message = (new MailMessage)->subject($this->customSubject ?: "{$possessive} Angebot {$this->quote->number}");
+
+        if ($this->customMessage !== null && trim($this->customMessage) !== '') {
+            // The compose screen's paragraphs, blank-line separated —
+            // already the studio's own greeting, so MailMessage's own
+            // ->greeting() would double it.
+            foreach (preg_split('/\n{2,}/', trim($this->customMessage)) as $paragraph) {
+                $message->line($paragraph);
+            }
+        } else {
+            $message->greeting('Hallo,');
+        }
+
+        // The same figure QuoteWorkspace's own summaryRows shows: Rabatt only
+        // when there is one, USt. only for a regelbesteuertes Studio — a
+        // Kleinunternehmer's net already is the amount due.
+        if ($this->quote->discount_amount > 0 && ! $this->quote->discount_hidden) {
+            $message
+                ->line('Zwischensumme: '.Number::currency($this->quote->total / 100, in: 'EUR', locale: 'de'))
+                ->line('Rabatt: −'.Number::currency($this->quote->discount_amount / 100, in: 'EUR', locale: 'de'));
+        }
+
+        if ($this->quote->vat_mode === 'standard') {
+            $rate = rtrim(rtrim(number_format($this->quote->vat_rate / 100, 2, ',', '.'), '0'), ',');
+
+            $message
+                ->line('Netto: '.Number::currency($this->quote->net / 100, in: 'EUR', locale: 'de'))
+                ->line("USt. {$rate} %: ".Number::currency(($this->quote->vat_amount ?? 0) / 100, in: 'EUR', locale: 'de'))
+                ->line('Gesamtbetrag: '.Number::currency(($this->quote->net + ($this->quote->vat_amount ?? 0)) / 100, in: 'EUR', locale: 'de'));
+        } else {
+            $message->line('Gesamtbetrag: '.Number::currency($this->quote->net / 100, in: 'EUR', locale: 'de'));
+        }
 
         if ($this->quote->valid_until !== null) {
             $message->line("Das Angebot ist gültig bis {$this->quote->valid_until->format('d.m.Y')}.");

@@ -1,8 +1,8 @@
 # Product Vision — Photography Studio Client Management Platform
 
 **Date:** 2026-08-07
-**Status:** Approved vision. Parent document only — each phase gets its own spec and implementation plan.
-**Scope:** CRM, client portal (contracts, questionnaires, payments, messaging), and client/guest photo gallery for a wedding and portrait photography studio.
+**Status:** Approved vision. Parent document only — each phase gets its own spec and implementation plan. Subordinate to [docs/purpose.md](../../purpose.md); where the two disagree, the purpose wins.
+**Scope:** CRM, client portal (quotes, questionnaires, payments, messaging), and client/guest photo gallery for a wedding and portrait photography studio.
 
 ---
 
@@ -150,12 +150,11 @@ Neither `Project` nor `Job` carries a pipeline status. A project whose engagemen
 - `Package`, `PackageItem` — the catalog; a starting point, never a live dependency
 - `Quote` (Angebot) — **lead-scoped**; the offer actually made to this client
 - `QuoteItem` — one line of that offer, priced or included
-- `Contract` — **job-scoped**; rendered PDF, template version, merge data, `signed_at`, `signer_ip`, `user_agent`, `document_sha256`
 - `PaymentPlan`, `PaymentInstallment` — **job-scoped**; due date, amount, Stripe references, status
 
-A quote is an artifact of the pursuit and belongs to the `Lead`; a lost lead keeps its quotes as the record of what was offered. A contract and its payment plan are artifacts of the commitment and belong to the `Job`, which does not exist until there is one.
+A quote is an artifact of the pursuit and belongs to the `Lead`; a lost lead keeps its quotes as the record of what was offered. A payment plan is an artifact of the commitment and belongs to the `Job`, which does not exist until there is one.
 
-**Snapshot rule:** quotes and contracts store price and terms snapshots; they never join live to `Package`. Changing a package price next year must not alter last year's contract.
+**Snapshot rule:** quotes store price and terms snapshots; they never join live to `Package`. Changing a package price next year must not alter last year's accepted quote.
 
 ### 3.2.1 Packages and the Angebot
 
@@ -215,7 +214,7 @@ While a quote is `draft`, a percentage recomputes its amount on every edit. On s
 
 **`Quote.number` is a business document number and deliberately sequential** (`AN-{year}-{counter}` per tenant), which sits in tension with §3.0's rule against enumerable identifiers. The tension resolves by separating the two: the quote's URL and every API reference use its `public_id` CUID2, while `number` exists only on the rendered document and in staff search. A sequential Angebotsnummer discloses roughly how many quotes the studio has issued this year — a disclosure every German business makes on every document it sends, and not the same risk class as a guessable URL.
 
-**Acceptance hands off to the contract.** Accepting records `accepted_at`, `accepted_by_contact_id`, and `accepted_ip`, and advances `Lead.stage` to `quote_accepted`. `Contract` is then rendered from the accepted quote and carries `quote_id`, so the signed document and the accepted offer are traceable to each other. Acceptance is not a signature and is not treated as one; its evidentiary weight comes later, from §7's signing flow.
+**Acceptance is the agreement.** Accepting records `accepted_at`, `accepted_by_contact_id`, and `accepted_ip`, and advances `Lead.stage` to `quote_accepted`. The accepted quote with its AGB and Widerruf text is what the client agreed to; Auri keeps no separate contract (#441). A studio that wants one makes it outside the app.
 
 **Packages do not touch shoots.** `PackageItem` has no `shoot_kind`, and accepting a quote creates no shoots and changes none. The shoots a client requested at inquiry stay exactly as requested, and staff reconcile coverage against the accepted quote by reading both. Stated plainly, the cost: a client who requested a fourth shoot the accepted package does not cover is caught by a human noticing, not by the system. Automating that check means teaching the catalog about shoot kinds, and it is worth doing only once the catalog has stabilised enough to be worth teaching.
 
@@ -260,7 +259,7 @@ Client-facing tasks render in the portal as a checklist — sign contract, compl
 
 ### 3.4 Media
 
-- `Gallery` — project-scoped with a nullable `shoot_id`; name, cover, access policy, `expires_at`, `requires_settled_balance`
+- `Gallery` — project-scoped with a nullable `shoot_id`; name, cover, access policy, `expires_at`
 - `GalleryVersion` — immutable published set
 - `Asset` — **shoot-scoped**; original S3 key, checksum, EXIF, capture time, original filename
 - `AssetDerivative` — size variant, S3 key, dimensions, bytes
@@ -278,8 +277,6 @@ What a separate gallery actually buys is separate access control and separate de
 
 `Asset.shoot_id` is where the real association lives, because an import belongs to one shooting day. Composing a gallery is then a query over a shoot rather than manual sorting of 1500 files, and "every frame from the reception" stays answerable however the client chose to group their galleries.
 
-`requires_settled_balance` makes §7's payment gate per-gallery. Blocking the engagement gallery in March because the wedding balance is outstanding would be absurd; blocking the final wedding gallery is the point.
-
 ### 3.5 Access
 
 - `User` — staff
@@ -290,7 +287,7 @@ What a separate gallery actually buys is separate access control and separate de
 
 ### 3.6 Cross-context events
 
-`ProjectBooked`, `ContractSigned`, `ShootDelivered`, `GalleryPublished`, `InstallmentPaid`, `InstallmentOverdue`, and similar. Listeners send mail, advance pipeline stages, and unlock galleries. CRM stays ignorant of Media internals, which is what allows Media to scale or split out later.
+`ProjectBooked`, `ShootDelivered`, `GalleryPublished`, `InstallmentPaid`, `InstallmentOverdue`, and similar. Listeners send mail, advance pipeline stages, and unlock galleries. CRM stays ignorant of Media internals, which is what allows Media to scale or split out later.
 
 `ProjectBooked` is the conversion event: it carries the new `Job` and the shoots that moved from `requested` to `booked`. Task templates and date-offset automations subscribe to it, and it sets `Project.portal_visible` if staff have not already.
 
@@ -416,17 +413,17 @@ No plugin in v1. Selection export produces a plain filename list and optional `.
 
 ---
 
-## 7. Journey, automation, payments, contracts
+## 7. Journey, automation, payments
 
 ### Two state machines
 
-`Lead.stage` is a sales funnel: `new → contacted → quote_sent → quote_accepted → contract_sent → booked`, with `lost(reason)` reachable from any stage. `quote_accepted` exists as its own stage because "they said yes, send the contract" is a distinct thing for staff to act on, and folding it into `quote_sent` hides the one moment in the funnel where the studio is the bottleneck. Date-availability checks at intake scan `shoots.date` for projects whose lead is not lost.
+`Lead.stage` is a sales funnel: `new → contacted → quote_sent → quote_accepted → booked`, with `lost(reason)` reachable from any stage. `quote_accepted` exists as its own stage because "they said yes, book it" is a distinct thing for staff to act on, and folding it into `quote_sent` hides the one moment in the funnel where the studio is the bottleneck. Date-availability checks at intake scan `shoots.date` for projects whose lead is not lost.
 
 `Shoot.status` is a forward-only production pipeline: `requested → booked → prep → shot → culling → editing → ready → delivered → archived`. Each transition emits a domain event.
 
 Keeping these separate avoids a fourteen-state enum in which half the transitions are illegal.
 
-**Conversion** happens when the contract is signed and the deposit is paid. It creates the `Job` under the existing `Project` and moves that project's shoots from `requested` to `booked`. Nothing is copied and nothing is retyped: a shoot is created at inquiry with the date the client asked for, and booking changes its state rather than producing a second record. The availability check that ran at intake ran against the row that is now booked.
+**Conversion** is a staff decision: a stage anchored `won` or the Buchen button, both through `BookProject`. It creates the `Job` under the existing `Project` and moves that project's shoots from `requested` to `booked`. Nothing is copied and nothing is retyped: a shoot is created at inquiry with the date the client asked for, and booking changes its state rather than producing a second record. The availability check that ran at intake ran against the row that is now booked.
 
 **The pipeline is per shoot, not per project.** The four shoots of a wedding run their pipelines independently and months apart — the engagement shoot reaches `delivered` while the wedding day is still `booked`.
 
@@ -470,15 +467,7 @@ No visual rule builder in v1. Rules are seeded from config and become editable o
 
 Each `PaymentInstallment` becomes a Stripe Invoice. Stripe owns the hosted payment page, card and SEPA handling, dunning email, VAT, and receipts — building EU tax handling and reminder logic in-house is months of work with tax-level consequences for getting it wrong.
 
-Webhooks (`invoice.paid`, `invoice.payment_failed`) reconcile back to the installment and emit `InstallmentPaid`, which completes the client task and optionally unlocks the gallery. Webhook handling is idempotent by Stripe event ID. Stripe, not the local record, is the source of truth for payment state.
-
-An optional gate blocks gallery download until the balance is settled. It is set per gallery via `Gallery.requires_settled_balance`, defaulting to off. Payment plans run against the `Job`, so a project-wide gate would hold back an engagement gallery in March over a balance not due until September.
-
-### Contracts
-
-A `ContractTemplate` with merge fields renders to PDF via headless Chrome (Gotenberg). The client reviews it in the portal, types their full name, and ticks an explicit consent checkbox; a signature block is appended, the PDF is hashed with SHA-256 and stored immutably alongside `signed_at`, `signer_ip`, `user_agent`, and the exact template version. Both parties are emailed the countersigned PDF.
-
-**Legal standing:** this is a *simple electronic signature* under eIDAS — admissible as evidence in the EU and standard practice for photography contracts, but not a qualified electronic signature and without its presumption of authenticity. The audit trail is what gives it evidentiary weight, which is why those fields are requirements rather than conveniences. Qualified signatures, if ever needed, are an integration with a trust service provider, not something to build.
+Webhooks (`invoice.paid`, `invoice.payment_failed`) reconcile back to the installment and emit `InstallmentPaid`, which completes the client task. Webhook handling is idempotent by Stripe event ID. Stripe, not the local record, is the source of truth for payment state.
 
 ---
 
@@ -492,7 +481,7 @@ A `ContractTemplate` with merge fields renders to PDF via headless Chrome (Goten
 | Surface isolation | The application is booted once per `APP_SURFACE` value and the registered route list asserted to contain that surface's routes and no other's. This is the test that makes the surface gate a guarantee rather than a convention. |
 | Inertia prop types | `spatie/typescript-transformer` regenerates `generated.d.ts` every CI run; a stale committed file fails the build. `vue-tsc` then typechecks every admin and portal page against it, so renaming a field in a PHP Data object fails in the pull request that renamed it. |
 | `packages/contracts` | Regenerated every CI run from the `api` surface's routes; the generated TypeScript client must typecheck against the gallery, so a breaking API change fails in the pull request that made it. |
-| Vue and Astro | Vitest for logic, Playwright for journeys. Playwright drives the Laravel server directly for admin and portal — there is no separate frontend server to orchestrate. Required end-to-end coverage: inquiry → booked; contract signing; gallery password → PIN → email → download; and a negative test proving a guest cannot obtain full resolution. |
+| Vue and Astro | Vitest for logic, Playwright for journeys. Playwright drives the Laravel server directly for admin and portal — there is no separate frontend server to orchestrate. Required end-to-end coverage: inquiry → booked; quote acceptance; gallery password → PIN → email → download; and a negative test proving a guest cannot obtain full resolution. |
 | Load | k6 against the gallery read path, targeting p95 under 400 ms for gallery HTML with images served from CDN, simulating 80 concurrent guests on publish day. |
 
 Test-driven development throughout, and especially for access-control rules, where a test that passes by accident is worse than no test.
@@ -538,7 +527,7 @@ A public inquiry form is deferred rather than abandoned. When it returns it brin
 | Phase | Scope | Milestone |
 |---|---|---|
 | **P1 CRM core** | Monorepo and CI, base schema with tenant seams, surface gating, staff auth (password + TOTP), Inertia admin surface with shadcn-vue, contacts, projects with leads and multiple requested shoots, conversion to job, derived pipeline board, manual lead entry with availability check over shoot dates, per-shoot crew assignment, internal notes, tasks and templates, calendar/ICS | Replaces spreadsheets; in daily use |
-| **P2 Sales** | Contact-scoped client auth (magic-link login form), Inertia portal surface with a project switcher, package catalog, Angebot derived from a package and customised, quote acceptance in the portal, VAT snapshot and §19 UStG handling, contract templates with PDF rendering and simple e-signature, payment plans, Stripe Invoicing and webhooks | Replaces the booking half of the incumbent |
+| **P2 Sales** | Contact-scoped client auth (magic-link login form), Inertia portal surface with a project switcher, package catalog, Angebot derived from a package and customised, quote acceptance in the portal, VAT snapshot and §19 UStG handling, payment plans, Stripe Invoicing and webhooks | Replaces the booking half of the incumbent |
 | **P3 Gallery** | Guest auth, the `api` surface, `packages/contracts` and OpenAPI generation, Media context with shoot-scoped assets and per-shoot or per-booking galleries, presigned multipart ingest, libvips derivative pipeline, gallery versioning, Astro gallery, password/PIN/email gates, ZIP builds, download audit, proofing with favorites and comments | Replaces WeTransfer and the incumbent gallery |
 | **P4 Engagement** | Form templates, instances and answers, timeline builder, shot lists, client threads, notification service, automation engine with seeded rules | Incumbent subscription can be cancelled |
 | **P5 Migration** | Import historical clients, jobs and contracts; backfill or link legacy galleries; cutover runbook; parallel-run period | Subscription ends |
@@ -552,6 +541,6 @@ A public inquiry form is deferred rather than abandoned. When it returns it brin
 ## 10. Success criteria
 
 - **Delivery:** galleries published within one business day of edit completion; guest gallery p95 under 400 ms; no support tickets about failed downloads
-- **Operations:** inquiry through contract-signed with no manual copy-paste between tools; days-to-delivery visible and trending down
+- **Operations:** inquiry through booked with no manual copy-paste between tools; days-to-delivery visible and trending down
 - **Cost:** total infrastructure and tooling below the incumbent subscription at 100 weddings per year
 - **Safety:** zero incidents of a guest obtaining full-resolution images, and zero incidents of internal notes appearing in the client portal

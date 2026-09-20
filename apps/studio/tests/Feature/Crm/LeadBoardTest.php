@@ -39,7 +39,7 @@ function boardProps(): array
         ->get('/anfragen')->assertOk()->viewData('page')['props'];
 }
 
-it('groups projects into the six funnel columns in order', function () {
+it('groups projects into the five funnel columns in order', function () {
     leadOn('2026-06-14', LeadStage::New);
     leadOn('2026-07-11', LeadStage::Contacted, name: 'Petersen');
     leadOn('2026-08-22', LeadStage::Booked, name: 'Vehse & Rieck');
@@ -47,12 +47,12 @@ it('groups projects into the six funnel columns in order', function () {
     $columns = boardProps()['columns'];
 
     expect(array_column($columns, 'stage'))
-        ->toBe(['new', 'contacted', 'quote_sent', 'quote_accepted', 'contract_sent', 'booked'])
+        ->toBe(['new', 'contacted', 'quote_sent', 'quote_accepted', 'booked'])
         ->and($columns[0]['label'])->toBe('Neu')
         ->and($columns[0]['cards'])->toHaveCount(1)
         ->and($columns[1]['cards'])->toHaveCount(1)
         ->and($columns[2]['cards'])->toHaveCount(0)
-        ->and($columns[5]['cards'])->toHaveCount(1);
+        ->and($columns[4]['cards'])->toHaveCount(1);
 });
 
 it('keeps lost leads off the board entirely', function () {
@@ -94,6 +94,18 @@ it('counts days in the current stage, not since creation', function () {
     leadOn('2026-06-14', LeadStage::Contacted, daysAgo: 8);
 
     expect(boardProps()['columns'][1]['cards'][0]['daysInStage'])->toBe(8);
+});
+
+it('marks a lead as lying from the first reminder rung, and never a booked one', function () {
+    leadOn('2026-06-14', LeadStage::New, daysAgo: 2);
+    leadOn('2026-07-11', LeadStage::Contacted, daysAgo: 3, name: 'Petersen');
+    leadOn('2026-08-22', LeadStage::Booked, daysAgo: 40, name: 'Vehse & Rieck');
+
+    $columns = boardProps()['columns'];
+
+    expect($columns[0]['cards'][0]['stale'])->toBeFalse()
+        ->and($columns[1]['cards'][0]['stale'])->toBeTrue()
+        ->and($columns[4]['cards'][0]['stale'])->toBeFalse();
 });
 
 it('renders a card with no date at all', function () {
@@ -369,7 +381,7 @@ it('falls back to the board when the user has chosen nothing', function () {
 // A booked record is a project and stands at /projekte. Leaving it here too
 // shows the same case twice, under two vocabularies.
 it('leaves booked cases off the board', function () {
-    $lead = leadOn('2026-06-14', LeadStage::ContractSent);
+    $lead = leadOn('2026-06-14', LeadStage::QuoteAccepted);
     Job::factory()->for($lead->project)->create();
 
     leadOn('2026-07-11', LeadStage::New, name: 'Petersen');

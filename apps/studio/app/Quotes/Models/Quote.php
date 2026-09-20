@@ -7,10 +7,13 @@ use App\Concerns\HasHourlyPricing;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
+use App\Payments\Support\PaymentStageSplitter;
 use App\Quotes\Enums\DiscountType;
 use App\Quotes\Enums\PricingMode;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Support\DiscountCalculator;
+use App\Quotes\Support\QuoteRange;
+use App\Quotes\Support\VatLines;
 use App\Settings\Support\StudioSettingsResolver;
 use Database\Factories\Quotes\QuoteFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -19,6 +22,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
@@ -39,7 +43,12 @@ class Quote extends Model
     use HasHourlyPricing;
     use HasPublicId;
 
-    protected $fillable = ['project_id', 'predecessor_id', 'is_addendum', 'status', 'pricing_mode', 'intro', 'outro', 'currency', 'valid_until', 'sent_at', 'sent_channel', 'number', 'total', 'discount_type', 'discount_value', 'discount_amount', 'net', 'vat_mode', 'vat_rate', 'vat_note', 'vat_amount', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id', 'hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours', 'time_title', 'time_description', 'recipient_contact_id', 'recipient_street', 'recipient_postcode', 'recipient_city'];
+    protected $fillable = ['project_id', 'predecessor_id', 'is_addendum', 'status', 'pricing_mode', 'intro', 'outro', 'currency', 'valid_until', 'sent_at', 'sent_channel', 'number', 'total', 'discount_type', 'discount_value', 'discount_amount', 'discount_hidden', 'net', 'vat_mode', 'vat_rate', 'vat_note', 'vat_amount', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id', 'hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours', 'time_title', 'time_description', 'time_sort_order', 'recipient_contact_id', 'recipient_street', 'recipient_postcode', 'recipient_city'];
+
+    // The bearer credential QuoteShareController checks — never worth
+    // serialising alongside the rest of the model, the same call
+    // HasPublicId's own $hidden makes for the raw id.
+    protected $hidden = ['share_token'];
 
     // Mirrors every column default in memory (the same reason Project's own
     // $attributes gives for portal_visible): without net and discount_amount
@@ -47,7 +56,7 @@ class Quote extends Model
     // reloaded, even though the row itself already holds the column
     // defaults — and Q-06's SendQuote can run against a quote that was never
     // re-fetched after creation.
-    protected $attributes = ['status' => 'draft', 'pricing_mode' => 'classic', 'currency' => 'EUR', 'total' => 0, 'discount_amount' => 0, 'net' => 0];
+    protected $attributes = ['status' => 'draft', 'pricing_mode' => 'classic', 'currency' => 'EUR', 'total' => 0, 'discount_amount' => 0, 'discount_hidden' => false, 'net' => 0, 'time_sort_order' => 0];
 
     protected function casts(): array
     {
@@ -59,6 +68,7 @@ class Quote extends Model
             'accepted_at' => 'immutable_datetime',
             'discount_type' => DiscountType::class,
             'is_addendum' => 'boolean',
+            'discount_hidden' => 'boolean',
         ];
     }
 
@@ -80,6 +90,14 @@ class Quote extends Model
      */
     protected static function booted(): void
     {
+        // The share link's whole credential (QuoteShareController) — a
+        // separate value from public_id because public_id already leaves the
+        // server toward an authenticated contact elsewhere; this one leaves
+        // toward whoever holds the link, no session required.
+        static::creating(function (self $quote) {
+            $quote->share_token ??= Str::random(40);
+        });
+
         static::updating(function (self $quote) {
             $original = $quote->getRawOriginal('status');
 
@@ -90,8 +108,13 @@ class Quote extends Model
             // Q-12: `hours` and `total` join the list by name rather than by
             // softening the guard. A slider quote turns from a configuration
             // into an amount at exactly one moment, and it is this one.
+            // #442: the chosen amount replaces the preselection's net and VAT,
+            // and with it the discount taken off that amount.
+            $sliderAcceptance = $quote->hasSlider() && $quote->status === QuoteStatus::Accepted
+                ? ['discount_amount', 'net', 'vat_amount']
+                : [];
             $allowed = $original === QuoteStatus::Sent->value
-                ? ['status', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id', 'hours', 'total']
+                ? ['status', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id', 'hours', 'total', ...$sliderAcceptance]
                 : [];
             $blocked = array_diff(array_keys($quote->getDirty()), $allowed);
 
@@ -117,6 +140,19 @@ class Quote extends Model
     public function paymentStages(): HasMany
     {
         return $this->hasMany(QuotePaymentStage::class)->orderBy('sort_order');
+    }
+
+    /**
+     * The stages in euros, against what the client pays in total: the same
+     * split CreatePaymentPlan charges at booking.
+     *
+     * @return list<array{label: string, amount: int}>
+     */
+    public function paymentSplit(): array
+    {
+        $base = $this->net + ($this->vat_mode === 'standard' ? ($this->vat_amount ?? 0) : 0);
+
+        return PaymentStageSplitter::split($base, $this->paymentStages);
     }
 
     /** The quote this one revises, if any — App\Quotes\Actions\ReviseQuote's own new row. */
@@ -149,6 +185,14 @@ class Quote extends Model
      */
     public function recalculateTotal(): void
     {
+        // Q-15: a slider quote has no total before acceptance, but snapshotVat()
+        // taxes net, so net follows the studio's preselection until AcceptQuote.
+        if ($this->hasSlider()) {
+            $this->update(['net' => QuoteRange::preselected($this->load('items'))]);
+
+            return;
+        }
+
         $this->update(self::computeTotals($this->items()->get(), $this->discount_type, $this->discount_value));
     }
 
@@ -184,6 +228,43 @@ class Quote extends Model
     }
 
     /**
+     * The quote as a client reads it. With discount_hidden, every discount is
+     * folded into the line prices: each rate's net from VatLines is shared
+     * out over that rate's lines, so the per-rate nets and the VAT a renderer
+     * recomputes from the lines match what the row froze. Never saved.
+     *
+     * ponytail: unit_price is floored to amount / quantity, so "3 × 68,52 €"
+     * can trail the line amount by up to quantity − 1 cents.
+     */
+    public function asSeenByClient(): self
+    {
+        if (! $this->discount_hidden || $this->hasSlider()) {
+            return $this;
+        }
+
+        $rate = (int) $this->vat_rate;
+        $nets = collect(VatLines::fromItems($this->items, $rate, (int) $this->net))->pluck('net', 'rate');
+        $items = $this->items->map(fn (QuoteItem $item) => clone $item);
+
+        foreach ($items->filter(fn (QuoteItem $item) => $item->discountedLineTotal() > 0)->groupBy(fn (QuoteItem $item) => $item->vat_rate ?? $rate) as $key => $group) {
+            $amounts = DiscountCalculator::spread($group->map(fn (QuoteItem $item) => $item->discountedLineTotal())->all(), $nets[$key] ?? 0);
+
+            foreach ($group as $index => $item) {
+                $item->unit_price = intdiv($amounts[$index], $item->quantity);
+                $item->discount_type = null;
+                $item->discount_value = null;
+                $item->discount_amount = $item->lineTotal() - $amounts[$index];
+            }
+        }
+
+        $client = clone $this;
+        $client->forceFill(['total' => $this->net, 'discount_type' => null, 'discount_value' => null, 'discount_amount' => 0]);
+        $client->setRelation('items', $items);
+
+        return $client;
+    }
+
+    /**
      * Freezes vat_mode, vat_rate, vat_note and vat_amount onto this quote
      * from the tenant's current settings and this quote's own already-
      * rounded net. App\Quotes\Actions\SendQuote is the only caller, and
@@ -198,7 +279,24 @@ class Quote extends Model
      */
     public function snapshotVat(StudioSettingsResolver $settings): void
     {
-        $this->update(self::computeVat($this->net, $settings));
+        $this->update(self::computeVat($this->net, $settings, $this->items()->get()));
+    }
+
+    /**
+     * #412: the Entgelt by tax rate — § 14 Abs. 4 Nr. 7 UStG. One line at the
+     * quote's own rate for every quote whose lines carry no rate of their
+     * own, which is every quote written before this existed; empty under the
+     * small-business rule, where there is no rate to break out.
+     *
+     * @return list<array{rate: int, net: int, vat: int}>
+     */
+    public function vatLines(): array
+    {
+        if ($this->vat_mode !== 'standard') {
+            return [];
+        }
+
+        return VatLines::fromItems($this->items, (int) $this->vat_rate, (int) $this->net);
     }
 
     /**
@@ -210,9 +308,14 @@ class Quote extends Model
      * discount is, round-half-up, computed off net (Q-03's one rounding),
      * never off an unrounded intermediate line.
      *
+     * #412: with lines at their own rates it is the sum over the rate lines
+     * instead — the same rounding, applied once per rate rather than once,
+     * so the total still matches the rows a client reads.
+     *
+     * @param  iterable<QuoteItem>  $items
      * @return array{vat_mode: string, vat_rate: int, vat_note: ?string, vat_amount: int}
      */
-    public static function computeVat(int $net, StudioSettingsResolver $settings): array
+    public static function computeVat(int $net, StudioSettingsResolver $settings, iterable $items = []): array
     {
         $mode = $settings->vatMode();
         $rate = $settings->effectiveVatRate();
@@ -224,7 +327,11 @@ class Quote extends Model
             // QuoteData: standard shows a computed VAT line instead, so it
             // has no use for the note text.
             'vat_note' => $mode === 'small_business' ? $settings->vatNote() : null,
-            'vat_amount' => DiscountCalculator::resolve($net, DiscountType::Percentage, $rate),
+            // § 19 UStG: no rate is charged, so a line's own rate is ignored
+            // rather than broken out against a base that carries no tax.
+            'vat_amount' => $mode === 'small_business'
+                ? 0
+                : collect(VatLines::fromItems($items, $rate, $net))->sum('vat'),
         ];
     }
 

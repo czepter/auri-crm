@@ -18,7 +18,7 @@ type Entry = {
     href: string | null;
 };
 
-type Activity = { text: string; when: string; fresh: boolean };
+type Activity = { text: string; href: string; when: string; fresh: boolean };
 
 const props = defineProps<{
     today: string;
@@ -170,7 +170,6 @@ const owes = computed(() => props.tasks.length > 0 || props.todo.length > 0);
 const footerRows = computed(() =>
     owes.value ? [...props.tasks.map(fromTask), ...props.todo.map(fromRow)].slice(0, 4) : props.quotesOut.slice(0, 4).map(fromRow),
 );
-const hasFooter = computed(() => footerRows.value.length > 0 || props.galleries.length > 0);
 
 function complete(task: App.Crm.Data.TaskRowData) {
     router.post(`/aufgaben/${task.id}/erledigt`, {}, { preserveScroll: true });
@@ -208,11 +207,8 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                     </Link>
                 </div>
 
-                <div
-                    class="grid max-w-[1180px] flex-1 grid-cols-4 gap-5 px-8 pt-5 pb-8"
-                    :class="hasFooter ? 'grid-rows-[252px_minmax(0,1fr)_252px]' : 'grid-rows-[252px_minmax(0,1fr)]'"
-                >
-                    <Panel class="col-span-2 row-span-2 flex flex-col" :title="$t('dashboard.upcoming')" :count="entries.length || null">
+                <div class="max-w-[1180px] columns-3 gap-5 px-8 pt-5 pb-8">
+                    <Panel class="mb-5 break-inside-avoid" :title="$t('dashboard.upcoming')" :count="entries.length || null">
                         <template #action>
                             <Link class="ml-auto text-[12px] tracking-[-0.01em] text-action no-underline hover:underline" href="/kalender">
                                 {{ $t("dashboard.calendar") }}
@@ -235,10 +231,10 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                                     <span v-if="entry.where" class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">{{ entry.where }}</span>
                                 </div>
                             </div>
-                            <Link class="mt-auto pt-3 text-[12px] font-medium text-action no-underline" href="/kalender">{{ $t("dashboard.allUpcoming") }}</Link>
+                            <Link class="block pt-3 text-[12px] font-medium text-action no-underline" href="/kalender">{{ $t("dashboard.allUpcoming") }}</Link>
                         </template>
 
-                        <div v-else class="flex flex-1 flex-col items-center justify-center gap-3.5">
+                        <div v-else class="flex flex-col items-center justify-center gap-3.5 py-8">
                             <svg class="size-10 fill-none stroke-faint stroke-[1.4] [stroke-linecap:round] [stroke-linejoin:round]" viewBox="0 0 24 24">
                                 <rect x="3" y="5" width="18" height="16" rx="2" />
                                 <path d="M8 3v4M16 3v4M3 10h18" />
@@ -247,7 +243,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                         </div>
                     </Panel>
 
-                    <Panel class="col-start-3 row-span-2 row-start-1 flex flex-col" :title="$t('dashboard.figures')">
+                    <Panel class="mb-5 break-inside-avoid" :title="$t('dashboard.figures')">
                         <template #action>
                             <Link class="ml-auto text-[12px] tracking-[-0.01em] text-action no-underline hover:underline" href="/auswertungen">
                                 {{ $t("dashboard.reports") }}
@@ -266,13 +262,13 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                         </div>
                     </Panel>
 
-                    <Panel class="col-start-4 row-start-1 flex flex-col" :title="$t('dashboard.create')">
-                        <div class="grid flex-1 auto-rows-fr gap-1.5">
+                    <Panel class="mb-5 break-inside-avoid" :title="$t('dashboard.create')">
+                        <div class="grid gap-1.5">
                             <Link
                                 v-for="action in PRIMARY"
                                 :key="action.href"
                                 :href="action.href"
-                                class="flex items-center gap-2.5 rounded-xl bg-paper px-3.5 text-[14px] font-medium tracking-[-0.01em] text-foreground no-underline hover:bg-sunk-2"
+                                class="flex items-center gap-2.5 rounded-xl bg-paper px-3.5 py-3 text-[14px] font-medium tracking-[-0.01em] text-foreground no-underline hover:bg-sunk-2"
                             >
                                 <svg
                                     class="size-[17px] flex-none fill-none stroke-ink-2 stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]"
@@ -289,19 +285,25 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                         </div>
                     </Panel>
 
-                    <Panel class="col-start-4 row-start-2" :class="hasFooter && 'row-span-2'" :title="$t('dashboard.activity')">
-                        <div v-for="entry in activity" :key="`${entry.when}${entry.text}`" class="flex gap-2.5 py-[9px]" :class="ROW">
+                    <Panel class="mb-5 break-inside-avoid" :title="$t('dashboard.activity')">
+                        <Link
+                            v-for="entry in activity"
+                            :key="`${entry.when}${entry.text}`"
+                            :href="entry.href"
+                            class="flex gap-2.5 py-[9px] text-foreground no-underline hover:text-action"
+                            :class="ROW"
+                        >
                             <i class="mt-[5px] size-[7px] flex-none rounded-full" :class="entry.fresh ? 'bg-action' : 'bg-mark'" />
                             <div class="text-[12.5px] leading-[1.4]">
                                 {{ entry.text }}
                                 <span class="mt-0.5 block text-[11px] text-faint">{{ entry.when }}</span>
                             </div>
-                        </div>
+                        </Link>
                     </Panel>
 
                     <Panel
                         v-if="footerRows.length"
-                        class="col-span-2 row-start-3"
+                        class="mb-5 break-inside-avoid"
                         :title="owes ? $t('dashboard.todo') : $t('dashboard.quotesOut')"
                         :count="owes ? openTasks + todo.length : quotesOut.length"
                     >
@@ -310,16 +312,15 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                         </template>
 
                         <div v-for="(row, index) in footerRows" :key="row.key" class="flex items-center gap-3 py-2" :class="ROW">
-                            <Link
-                                class="w-[186px] flex-none truncate text-[13.5px] font-semibold tracking-[-0.015em] text-foreground no-underline"
-                                :href="row.href"
-                            >
-                                {{ row.who }}
-                            </Link>
-                            <span class="min-w-0 flex-1 truncate text-[12.5px] text-ink-2 [&_em]:text-action [&_em]:not-italic">
-                                {{ row.what }} <em v-if="row.emphasis">{{ row.emphasis }}</em>
-                                <template v-if="row.whatTail">{{ row.whatTail }}</template>
-                            </span>
+                            <div class="min-w-0 flex-1">
+                                <Link class="block truncate text-[13.5px] font-semibold tracking-[-0.015em] text-foreground no-underline" :href="row.href">
+                                    {{ row.who }}
+                                </Link>
+                                <span class="block truncate text-[12.5px] text-ink-2 [&_em]:text-action [&_em]:not-italic">
+                                    {{ row.what }} <em v-if="row.emphasis">{{ row.emphasis }}</em>
+                                    <template v-if="row.whatTail">{{ row.whatTail }}</template>
+                                </span>
+                            </div>
                             <Button v-if="row.action" :as="Link" :variant="index === 0 ? 'pill' : 'pill-muted'" :href="row.action.target">
                                 {{ row.action.label }}
                             </Button>
@@ -329,7 +330,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                         </div>
                     </Panel>
 
-                    <Panel v-if="galleries.length" class="col-start-3 row-start-3" :title="$t('dashboard.galleries')" :count="galleries.length">
+                    <Panel v-if="galleries.length" class="mb-5 break-inside-avoid" :title="$t('dashboard.galleries')" :count="galleries.length">
                         <Link
                             v-for="row in galleries"
                             :key="`${row.projectId}${row.what}`"

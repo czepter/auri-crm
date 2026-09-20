@@ -2,6 +2,9 @@
 
 namespace App\Portal\Http\Controllers;
 
+use App\Documents\Support\DocumentMergeDataBuilder;
+use App\Documents\Support\InlineHtmlSanitizer;
+use App\Documents\Support\MergeFieldResolver;
 use App\Http\Controllers\Controller;
 use App\Quotes\Actions\AcceptQuote;
 use App\Quotes\Data\QuoteData;
@@ -9,6 +12,7 @@ use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -48,7 +52,13 @@ class QuoteController extends Controller
             // holen sich jede ihr Bild ueber ihren Index.
             'showcaseCount' => count($settings->showcasePaths()),
             'quote' => $quote === null ? null : [
-                ...QuoteData::fromModel($quote)->toArray(),
+                ...QuoteData::fromModel($quote->asSeenByClient())->toArray(),
+                // #480: the letter as the client reads it — fields filled, escaped.
+                ...collect(['intro' => $quote->intro, 'outro' => $quote->outro])->map(fn (?string $html) => MergeFieldResolver::resolve(
+                    InlineHtmlSanitizer::letter($html) ?? '',
+                    app(DocumentMergeDataBuilder::class)->fromProject($quote->project, $settings),
+                    escape: true,
+                ))->all(),
                 // Display only — see AcceptQuote for the re-check this
                 // flag has no say over. A stale tab keeps reading whatever
                 // it rendered; the server never trusts it back.
@@ -85,7 +95,7 @@ class QuoteController extends Controller
      * handed the screen — so a quote invalidated in the gap between the two
      * requests is refused here regardless of what was on screen.
      */
-    public function accept(Request $request, string $project, AcceptQuote $accept): RedirectResponse
+    public function accept(Request $request, string $project, AcceptQuote $accept, StudioSettingsResolver $studio): RedirectResponse
     {
         $contact = auth('portal')->user();
 
@@ -103,7 +113,10 @@ class QuoteController extends Controller
             'hours' => ['nullable', 'integer', 'min:0'],
             'items' => ['array'],
             'items.*' => ['string'],
-        ]);
+            // The acceptance stands in for a contract, so the AGB are part of
+            // it wherever the studio has any.
+            'terms' => Rule::when($studio->legalAgbUrl() !== null, ['accepted']),
+        ], ['terms.accepted' => __('portal.quote_terms_required')]);
 
         $accept(
             $found->latestQuote,

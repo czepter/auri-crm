@@ -54,6 +54,7 @@ class User extends Authenticatable
         'mfa_recovery_codes',
         'lead_view',
         'digest_frequency',
+        'last_quote_action',
     ];
 
     // calendar_token is a live credential — anyone holding it can read this

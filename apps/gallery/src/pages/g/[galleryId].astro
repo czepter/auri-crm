@@ -513,6 +513,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
                           maxlength="6"
                           placeholder="000000"
                           required
+                          data-code-input
                         />
                         <button class="btn" type="submit">Bestätigen</button>
                       </div>
@@ -536,6 +537,60 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
           }
 
           <script is:inline>
+            // Sechs Felder für die sechs Ziffern, die RequestGalleryGuestCode
+            // verschickt — gebaut statt gerendert, damit ohne JavaScript das
+            // eine Feld stehen bleibt, das der Server ohnehin ausliest.
+            const code = document.querySelector('[data-code-input]')
+
+            if (code) {
+              const pin = document.createElement('div')
+              pin.className = 'pin'
+
+              const boxes = Array.from({ length: 6 }, (_, index) => {
+                const box = document.createElement('input')
+                box.type = 'text'
+                box.inputMode = 'numeric'
+                box.maxLength = 1
+                box.autocomplete = index === 0 ? 'one-time-code' : 'off'
+                box.setAttribute('aria-label', `Stelle ${index + 1} von 6`)
+                pin.appendChild(box)
+
+                return box
+              })
+
+              const collect = () => (code.value = boxes.map((box) => box.value).join(''))
+              const submitWhenFull = () => code.value.length === 6 && code.form.requestSubmit()
+
+              boxes.forEach((box, index) => {
+                box.addEventListener('input', () => {
+                  box.value = box.value.replace(/\D/g, '').slice(0, 1)
+                  collect()
+                  if (box.value) boxes[index + 1]?.focus()
+                  submitWhenFull()
+                })
+
+                box.addEventListener('keydown', (event) => {
+                  if (event.key === 'Backspace' && !box.value) boxes[index - 1]?.focus()
+                })
+
+                box.addEventListener('paste', (event) => {
+                  const digits = (event.clipboardData?.getData('text') ?? '').replace(/\D/g, '').slice(0, 6)
+                  if (!digits) return
+
+                  event.preventDefault()
+                  digits.split('').forEach((digit, slot) => (boxes[slot].value = digit))
+                  collect()
+                  boxes[Math.min(digits.length, 5)].focus()
+                  submitWhenFull()
+                })
+              })
+
+              code.hidden = true
+              code.removeAttribute('required')
+              code.insertAdjacentElement('afterend', pin)
+              boxes[0].focus()
+            }
+
             document.querySelectorAll('[data-anonymous-id]').forEach((field) => {
               field.value = localStorage.getItem('gallery_guest_id') ?? ''
             })

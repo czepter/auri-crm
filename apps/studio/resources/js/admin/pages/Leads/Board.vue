@@ -16,6 +16,7 @@ import {
 import {
     AlertDialog,
     AlertDialogAction,
+    AlertDialogBody,
     AlertDialogCancel,
     AlertDialogContent,
     AlertDialogFooter,
@@ -80,7 +81,7 @@ const TYPE_DOT: Record<string, string> = {
     portrait: "bg-ok",
 };
 
-const DONE_STAGES = ["contract_sent", "booked"];
+const DONE_STAGES = ["booked"];
 
 function shortDate(date: string | null) {
     return date
@@ -213,6 +214,11 @@ function openMenu(event: MouseEvent, card: Card) {
 
 const query = ref("");
 const stage = ref<string | null>(null);
+const onlyStale = ref(false);
+
+const staleCount = computed(
+    () => props.groups.flatMap((group) => group.rows).filter((card) => card.stale).length,
+);
 
 const pills = computed(() =>
     props.columns
@@ -230,6 +236,14 @@ function pick(key: string) {
     stage.value = stage.value === key ? null : key;
 }
 
+const collapsed = ref<string[]>([]);
+
+function toggleGroup(key: string) {
+    collapsed.value = collapsed.value.includes(key)
+        ? collapsed.value.filter((k) => k !== key)
+        : [...collapsed.value, key];
+}
+
 const groupRows = computed(() => {
     const needle = query.value.trim().toLocaleLowerCase("de");
 
@@ -239,6 +253,7 @@ const groupRows = computed(() => {
             rows: group.rows.filter(
                 (card) =>
                     (!stage.value || card.stage === stage.value) &&
+                    (!onlyStale.value || card.stale) &&
                     (!needle ||
                         `${card.names} ${card.venue ?? ""}`
                             .toLocaleLowerCase("de")
@@ -405,6 +420,35 @@ const workflowAllowed = computed(() =>
                                         {{ $t("board.dateDoubled") }}
                                     </span>
                                 </span>
+
+                                <!-- Wert und Liegezeit teilen sich eine Zeile:
+                     was die Anfrage wert ist und wie lange sie schon
+                     liegt, sind die beiden Zahlen, nach denen die
+                     naechste Karte ausgesucht wird. -->
+                                <span
+                                    class="mt-[9px] flex items-center gap-2.5 border-t border-sunk-2 pt-2"
+                                >
+                                    <span
+                                        class="text-[13px] leading-none font-semibold tracking-[-0.02em] tabular-nums"
+                                    >
+                                        {{
+                                            card.value === null
+                                                ? "—"
+                                                : formatEurosRounded(card.value)
+                                        }}
+                                    </span>
+                                    <span
+                                        v-if="!DONE_STAGES.includes(column.stage)"
+                                        class="ml-auto inline-flex items-center bg-no-repeat bg-[length:11px_11px] text-[11.5px] leading-none tabular-nums"
+                                        :class="
+                                            card.stale
+                                                ? 'h-[19px] rounded-md whitespace-nowrap bg-due-bg pr-[7px] pl-[22px] bg-[position:7px_center] bg-icon-clock-due font-medium text-due'
+                                                : 'pl-4 bg-[position:left_center] bg-icon-clock text-ink-2'
+                                        "
+                                    >
+                                        {{ relative(card.lastAt) }}
+                                    </span>
+                                </span>
                             </Link>
                         </template>
 
@@ -429,6 +473,28 @@ const workflowAllowed = computed(() =>
                         >
                             {{ option.name }}<span class="text-[11.5px] tabular-nums opacity-60">{{ option.count }}</span>
                         </button>
+
+                        <!-- Quer zu den Stufen, deshalb hinter dem Strich: der
+                 Filter schneidet dieselbe Menge nach einer anderen
+                 Frage. -->
+                        <template v-if="staleCount">
+                            <span class="mx-1 self-center h-[18px] w-px bg-rule" />
+
+                            <button
+                                class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-pill)] bg-no-repeat bg-[length:12px_12px] bg-[position:12px_center] py-1.5 pr-3 pl-[28px] text-[12.5px]"
+                                :class="
+                                    onlyStale
+                                        ? 'bg-due-bg bg-icon-clock-due font-medium text-due'
+                                        : 'bg-sunk bg-icon-clock text-foreground'
+                                "
+                                type="button"
+                                :aria-pressed="onlyStale"
+                                @click="onlyStale = !onlyStale"
+                            >
+                                {{ $t("board.stale")
+                                }}<span class="text-[11.5px] tabular-nums opacity-60">{{ staleCount }}</span>
+                            </button>
+                        </template>
                     </div>
                     <Input v-model="query" class="ml-auto h-8 w-60" type="search" :placeholder="$t('board.searchPlaceholder')" />
                 </div>
@@ -450,10 +516,17 @@ const workflowAllowed = computed(() =>
                     </thead>
                     <tbody>
                         <template v-for="group in groupRows" :key="group.key">
-                            <TableGroupRow :colspan="6">
+                            <TableGroupRow
+                                :colspan="6"
+                                :open="!collapsed.includes(group.key)"
+                                @toggle="toggleGroup(group.key)"
+                            >
                                 {{ $t(`lead.group.${group.key}`) }}
                             </TableGroupRow>
-                            <TableRow v-for="card in group.rows" :key="card.id">
+                            <TableRow
+                                v-for="card in collapsed.includes(group.key) ? [] : group.rows"
+                                :key="card.id"
+                            >
                                 <TableCell tone="name">
                                     <Link :href="`/anfragen/${card.leadId}`">{{
                                         card.names
@@ -505,7 +578,15 @@ const workflowAllowed = computed(() =>
                                     }}
                                 </TableCell>
                                 <TableCell tone="muted" align="right">
-                                    {{ relative(card.lastAt) }}
+                                    <span
+                                        v-if="card.stale"
+                                        class="inline-flex items-center h-[19px] rounded-md whitespace-nowrap bg-due-bg bg-no-repeat bg-[length:11px_11px] bg-[position:7px_center] bg-icon-clock-due pr-[7px] pl-[22px] text-[11.5px] font-medium tabular-nums text-due"
+                                    >
+                                        {{ relative(card.lastAt) }}
+                                    </span>
+                                    <template v-else>{{
+                                        relative(card.lastAt)
+                                    }}</template>
                                 </TableCell>
                             </TableRow>
                         </template>
@@ -552,27 +633,29 @@ const workflowAllowed = computed(() =>
                             }}</AlertDialogTitle>
                         </AlertDialogHeader>
 
-                        <Field v-slot="{ id }" :label="$t('board.outcome')">
-                            <Select
-                                :model-value="closeForm.outcome"
-                                @update:model-value="(value) => (closeForm.outcome = String(value))"
-                            >
-                                <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="lost">{{ $t("board.outcomeLost") }}</SelectItem>
-                                    <SelectItem value="declined">{{ $t("board.outcomeDeclined") }}</SelectItem>
-                                    <SelectItem value="closed">{{ $t("board.outcomeClosed") }}</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </Field>
+                        <AlertDialogBody>
+                            <Field v-slot="{ id }" :label="$t('board.outcome')">
+                                <Select
+                                    :model-value="closeForm.outcome"
+                                    @update:model-value="(value) => (closeForm.outcome = String(value))"
+                                >
+                                    <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="lost">{{ $t("board.outcomeLost") }}</SelectItem>
+                                        <SelectItem value="declined">{{ $t("board.outcomeDeclined") }}</SelectItem>
+                                        <SelectItem value="closed">{{ $t("board.outcomeClosed") }}</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </Field>
 
-                        <Field
-                            v-slot="{ id }"
-                            :label="$t('board.closeReason')"
-                            :error="closeForm.errors.reason"
-                        >
-                            <Input :id="id" v-model="closeForm.reason" type="text" />
-                        </Field>
+                            <Field
+                                v-slot="{ id }"
+                                :label="$t('board.closeReason')"
+                                :error="closeForm.errors.reason"
+                            >
+                                <Input :id="id" v-model="closeForm.reason" type="text" />
+                            </Field>
+                        </AlertDialogBody>
 
                         <AlertDialogFooter>
                             <AlertDialogAction
@@ -591,7 +674,9 @@ const workflowAllowed = computed(() =>
                                 $t("board.bookTitle")
                             }}</AlertDialogTitle>
                         </AlertDialogHeader>
-                        <p>{{ $t("board.bookConsequence") }}</p>
+                        <AlertDialogBody>
+                            <p class="m-0">{{ $t("board.bookConsequence") }}</p>
+                        </AlertDialogBody>
                         <AlertDialogFooter>
                             <AlertDialogAction @click="book">{{
                                 $t("board.book")

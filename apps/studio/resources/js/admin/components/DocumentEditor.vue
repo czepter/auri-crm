@@ -16,7 +16,7 @@ import {
   PageBreakTool,
   SignatureTool,
   rowsTool,
-} from '@/admin/documents/blocks/contractTools'
+} from '@/admin/documents/blocks/printTools'
 import { ROW_SPECS } from '@/admin/documents/blocks/rowSpecs'
 import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/types'
 
@@ -30,6 +30,7 @@ import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/type
 const props = defineProps<{
   palette: PaletteEntry[]
   mergeFields: { path: string; sample: string }[]
+  minHeight?: number
 }>()
 
 const model = defineModel<EditorDocument>({ required: true })
@@ -67,7 +68,7 @@ function create(data: EditorDocument): EditorJS {
   return new EditorJS({
     holder: holder.value!,
     data,
-    minHeight: 240,
+    minHeight: props.minHeight ?? 240,
     placeholder: 'Text schreiben oder / für Bausteine',
     tools: {
       ...buildTools(props.palette, registry),

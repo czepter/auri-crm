@@ -30,16 +30,18 @@ it('updates the document defaults, redirects, and audits the owner', function ()
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')
+        ->from('/einstellungen?pane=documents')
         ->patch('/einstellungen/dokumente', [
             'quote_validity_days' => 30,
             'payment_term_days' => 21,
             'deposit_percentage' => 5000,
             'widerruf_included' => false,
             'widerruf_text' => 'Angepasster Widerrufstext.',
+            'quote_layout' => 'minimal',
             'document_letterhead_html' => '<header>Nordlicht</header>',
             'document_footer_html' => '<footer>Seite 1</footer>',
         ])
-        ->assertRedirect('/einstellungen');
+        ->assertRedirect('/einstellungen?pane=documents');
 
     $row = StudioSettings::query()->sole();
 
@@ -48,6 +50,7 @@ it('updates the document defaults, redirects, and audits the owner', function ()
         ->and($row->deposit_percentage)->toBe(5000)
         ->and($row->widerruf_included)->toBeFalse()
         ->and($row->widerruf_text)->toBe('Angepasster Widerrufstext.')
+        ->and($row->quote_layout)->toBe('minimal')
         ->and($row->document_letterhead_html)->toBe('<header>Nordlicht</header>')
         ->and($row->document_footer_html)->toBe('<footer>Seite 1</footer>')
         ->and(AuditLog::where('event', 'studio_settings.updated')->where('context->key', 'quote_validity_days')->sole()->actor_id)->toBe($owner->id);

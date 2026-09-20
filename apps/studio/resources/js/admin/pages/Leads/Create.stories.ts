@@ -34,6 +34,7 @@ const meta = {
     component: Create,
     parameters: { layout: 'fullscreen', url: '/anfragen/neu' },
     args: {
+        date: null,
         types,
         sources,
         channels,
@@ -48,8 +49,36 @@ type Story = StoryObj<typeof meta>
 /** Der Bildschirm beim Öffnen: nur die Suche, die Personenzeilen kommen erst nach ihr. */
 export const Leer: Story = {}
 
+/** Nach der Suche: Treffer über der Zeile, die einen neuen Kontakt anlegt. */
+export const KontaktSuche: Story = {
+    beforeEach: () => {
+        const original = window.fetch
+        const contacts: App.Crm.Data.ContactSuggestionData[] = [
+            { id: 'c-1', name: 'Elisabeth Zeller', email: 'e.zeller@example.de', phone: null, projectCount: 1 },
+        ]
+
+        window.fetch = ((input: RequestInfo | URL) =>
+            String(input).startsWith('/kontakte/suche')
+                ? Promise.resolve(new Response(JSON.stringify({ contacts })))
+                : original(input)) as typeof window.fetch
+
+        return () => {
+            window.fetch = original
+        }
+    },
+    play: async ({ canvasElement }) => {
+        const input = canvasElement.querySelector<HTMLInputElement>('input[placeholder="Suchen"]')
+
+        if (!input) return
+
+        input.value = 'Elisabeth Zepter'
+        input.dispatchEvent(new Event('input', { bubbles: true }))
+    },
+}
+
 /** Ein Wunschtermin, an dem schon etwas steht — die Meldung warnt, das Formular bleibt speicherbar. */
 export const MitKollision: Story = {
+    args: { date: '2027-06-12' },
     beforeEach: () => {
         const original = window.fetch
 
@@ -61,16 +90,5 @@ export const MitKollision: Story = {
         return () => {
             window.fetch = original
         }
-    },
-    play: async ({ canvasElement }) => {
-        const label = [...canvasElement.querySelectorAll('label')].find(
-            (node) => node.textContent?.trim() === 'Haupttermin',
-        )
-        const input = canvasElement.querySelector<HTMLInputElement>(`#${label?.htmlFor}`)
-
-        if (!input) return
-
-        input.value = '12.06.2027'
-        input.dispatchEvent(new Event('input', { bubbles: true }))
     },
 }

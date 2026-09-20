@@ -20,6 +20,13 @@ use App\Gallery\Support\GalleryGuestPass;
 use App\Media\Enums\MultipartUploadStatus;
 use App\Media\Models\MultipartUpload;
 use App\Models\User;
+use App\Payments\Actions\CreatePaymentPlan;
+use App\Payments\Actions\IssueInvoice;
+use App\Payments\Actions\MarkInstallmentPaid;
+use App\Payments\Enums\SettledVia;
+use App\Payments\Models\PaymentInstallment;
+use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Models\Quote;
 use App\Settings\Models\StudioSettings;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\Surface;
@@ -66,8 +73,16 @@ pest()->extend(TestCase::class)
         // earlier run would otherwise leak into this one. Flushing here is
         // the same fix StudioSettingsAdminTest's own beforeEach already
         // applies per-file; this makes it universal.
+        // Dieselbe Begründung für die Widerrufsbelehrung: MarkQuoteSent lässt
+        // kein Angebot hinaus, solange keine Quelle hinterlegt ist, und jeder
+        // Test, der ein Angebot versendet, spielt ein Studio, das im Betrieb
+        // steht. QuoteWiderrufGuardTest räumt die Spalte pro Test wieder ab
+        // und prüft die Sperre selbst.
         if (Schema::hasTable('studio_settings')) {
-            StudioSettings::query()->update(['onboarding_completed_at' => now()]);
+            StudioSettings::query()->update([
+                'onboarding_completed_at' => now(),
+                'portal_legal_widerruf_url' => 'https://example.test/widerruf',
+            ]);
             Cache::store('redis')->flush();
         }
     })
@@ -223,13 +238,12 @@ function bearerToken(mixed $tokenable): string
 }
 
 /**
- * A booked project with a primary contact — the fixture RenderContractJob's
- * merge fields resolve against (project.name, contact.name, job.bookedAt).
- * Lives here rather than in whichever Contracts test file happened to
- * declare it first: several do now, and a global function declared inside
- * one test file collides the moment a second file declares the same name.
+ * A booked project with a primary contact — the fixture the merge fields
+ * resolve against (project.name, contact.name, job.bookedAt). Lives here
+ * because a global function declared inside one test file collides the
+ * moment a second file declares the same name.
  */
-function contractProject(): Project
+function bookedContactProject(): Project
 {
     $project = Project::factory()->create(['name' => 'Hochzeit Meier & Kowalski']);
     $contact = Contact::factory()->create(['name' => 'Lena Meier', 'email' => 'lena@example.test']);
@@ -242,8 +256,7 @@ function contractProject(): Project
 /**
  * A Contract already in the `rendered` state, with real bytes sitting on the
  * faked `local` disk at its artifact_path — call Storage::fake('local')
- * before this. Several Contracts suites need "a rendered contract that
- * exists" without caring how it got there.
+ * before this.
  */
 function renderedContract(?Project $project = null, string $bytes = '%PDF-stored-bytes'): Contract
 {
@@ -353,7 +366,7 @@ function integerIdPaths(mixed $node, string $path = '$'): array
  * E-12's inbound-mail fixtures. Both InboundMailTest and
  * InboundMimeMessageTest need the same tenant secret and the same threaded
  * project, and a global function declared inside one test file collides the
- * moment a second file declares it — the reason contractProject() lives here
+ * moment a second file declares it — the reason bookedContactProject() lives here
  * too.
  */
 function inboundDomain(): string
@@ -363,7 +376,7 @@ function inboundDomain(): string
 
 function inboundThread(string $email = 'lena@example.test'): Thread
 {
-    $project = contractProject();
+    $project = bookedContactProject();
     $contact = $project->contacts()->sole();
     $contact->update(['email' => $email]);
 
@@ -401,6 +414,45 @@ function confirmedGuest(Gallery $gallery, string $email = 'gast@example.com', st
     ]);
 
     return [$guest, app(GalleryGuestPass::class)->issue($gallery, $guest)];
+}
+
+/**
+ * The first installment of a plan on a booked project — the setup
+ * every invoicing suite starts from. Moved out of InvoiceTest.php once #408
+ * needed it too, for the reason studioWithProject() above already gives.
+ */
+function invoiceablePlan(): PaymentInstallment
+{
+    $project = bookedContactProject();
+    // Accepted quotes carry the VAT snapshot MarkQuoteSent froze; InvoiceFigures
+    // reads the invoice's mode and note from there, not from the settings.
+    Quote::factory()->for($project)->create([
+        'status' => QuoteStatus::Accepted,
+        'accepted_at' => now(),
+        ...Quote::computeVat(0, app(StudioSettingsResolver::class)),
+    ]);
+
+    $plan = app(CreatePaymentPlan::class)($project->job()->sole(), 150_000, ['2026-09-01', '2026-10-01']);
+
+    return $plan->installments()->orderBy('sort_order')->first();
+}
+
+/**
+ * A paid, invoiced installment — the only state a Gutschrift may be written
+ * against. No Bus::fake(): the render jobs dispatch only where a template of
+ * their own type exists, so the tests that want one get it. Moved out of
+ * CreditNoteTest.php once the export suite needed it too, for the reason
+ * invoiceablePlan() above already gives.
+ */
+function creditableInstallment(SettledVia $via = SettledVia::Transfer, ?string $reference = null): PaymentInstallment
+{
+    Storage::fake('local');
+
+    $installment = invoiceablePlan();
+    app(IssueInvoice::class)($installment);
+    app(MarkInstallmentPaid::class)($installment->fresh(), $via, '2026-09-02', $reference);
+
+    return $installment->fresh();
 }
 
 /**

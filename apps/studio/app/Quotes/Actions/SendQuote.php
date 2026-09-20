@@ -26,12 +26,22 @@ class SendQuote
         private readonly NotificationService $notifications,
     ) {}
 
-    /** $at: when it went out, for a quote entered after the fact. */
-    public function __invoke(Quote $quote, ?User $actor = null, ?CarbonInterface $at = null): Quote
-    {
+    /**
+     * $at: when it went out, for a quote entered after the fact. $subject
+     * and $message: the compose screen's own fields (QuoteController::
+     * compose()) — both optional, and QuoteSent falls back to its own
+     * defaults when neither rides along.
+     */
+    public function __invoke(
+        Quote $quote,
+        ?User $actor = null,
+        ?CarbonInterface $at = null,
+        ?string $subject = null,
+        ?string $message = null,
+    ): Quote {
         ($this->mark)($quote, 'mail', $actor, $at);
 
-        $this->mail($quote->fresh());
+        $this->mail($quote->fresh(), $subject, $message);
 
         return $quote;
     }
@@ -53,7 +63,7 @@ class SendQuote
      * is what lets T-11's preferences and quiet hours apply; an on-demand
      * address carries no identity either could key on.
      */
-    private function mail(Quote $quote): void
+    private function mail(Quote $quote, ?string $subject, ?string $message): void
     {
         $contact = $quote->project->primaryContact();
 
@@ -61,6 +71,6 @@ class SendQuote
             return;
         }
 
-        $this->notifications->send($contact, new QuoteSent($quote));
+        $this->notifications->send($contact, new QuoteSent($quote, $subject, $message));
     }
 }

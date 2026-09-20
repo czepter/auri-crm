@@ -1,10 +1,17 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import Index from './Index.vue'
 
+const capabilities = [
+  { value: 'manage_leads', label: 'Anfragen verwalten' },
+  { value: 'view_all_projects', label: 'Alle Aufträge einsehen' },
+  { value: 'book_project', label: 'Aufträge buchen' },
+  { value: 'manage_staff', label: 'Team verwalten' },
+]
+
 const roles = [
-  { value: 'owner', label: 'Inhaber' },
-  { value: 'second_shooter', label: 'Zweitfotograf' },
-  { value: 'assistant', label: 'Assistenz' },
+  { value: 'owner', label: 'Inhaber', capabilities: capabilities.map((c) => c.value) },
+  { value: 'second_shooter', label: 'Zweitfotograf', capabilities: ['manage_leads'] },
+  { value: 'assistant', label: 'Assistenz', capabilities: ['manage_leads'] },
 ]
 
 const christian = {
@@ -42,6 +49,7 @@ const meta = {
       },
     ],
     roles,
+    capabilities,
   },
 } satisfies Meta<typeof Index>
 

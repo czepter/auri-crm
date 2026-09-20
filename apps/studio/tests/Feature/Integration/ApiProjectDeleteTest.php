@@ -1,6 +1,5 @@
 <?php
 
-use App\Contracts\Models\Contract;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\InternalNote;
@@ -61,7 +60,6 @@ it('refuses a project that something more than an import artifact hangs off', fu
 })->with([
     'job' => [fn (Project $project) => Job::factory()->for($project)->create(), 'job'],
     'quote' => [fn (Project $project) => Quote::factory()->for($project)->create(), 'quote'],
-    'contract' => [fn (Project $project) => Contract::factory()->for($project)->create(), 'contract'],
     'gallery' => [fn (Project $project) => Gallery::factory()->for($project)->create(), 'gallery'],
 ]);
 

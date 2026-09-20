@@ -59,7 +59,7 @@ return new class extends Migration
             [
                 'tenant_id' => $tenantId,
                 'public_id' => (string) new Cuid2,
-                'document_type' => DocumentType::Contract->value,
+                'document_type' => 'contract',
                 'prefix' => 'V',
                 'reset_rule' => 'yearly',
                 'starting_counter' => 1,

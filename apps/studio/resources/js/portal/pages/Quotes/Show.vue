@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useForm } from '@inertiajs/vue3'
+import { useForm, usePage } from '@inertiajs/vue3'
 import { basisPointsToPercent, formatEuros } from '@/admin/lib/money'
 import PortalDot from '@/portal/components/PortalDot.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
@@ -8,7 +8,10 @@ import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 import QuoteSlider from '@/portal/components/QuoteSlider.vue'
+import { splitStages } from '@/portal/lib/paymentStages'
 import { Button } from '@/ui/button'
+import { Checkbox } from '@/ui/checkbox'
+import { Label } from '@/ui/label'
 
 type QuoteItem = {
   id: string
@@ -34,7 +37,11 @@ type Quote = {
   vatRate: number | null
   vatNote: string | null
   vatAmount: number | null
+  vatLines: { rate: number; net: number; vat: number }[]
   items: QuoteItem[]
+  intro: string | null
+  outro: string | null
+  paymentStages: { id: string; percent: number; label: string; minimum: number }[]
   // Display only — see App\Quotes\Actions\AcceptQuote for the re-check that
   // actually gates acceptance. This flag never reaches the accept request.
   expired: boolean
@@ -53,22 +60,45 @@ const props = defineProps<{
   quote: Quote | null
   // Q-10: wie viele Schaufensterbilder es gibt. Null heisst kein Raster.
   showcaseCount: number
+  // QuoteShareController's own accept/image routes, for a quote opened
+  // through its share link rather than a portal session — same screen,
+  // different targets. Both default to the session routes every logged-in
+  // contact uses.
+  acceptUrl?: string
+  imageUrlBase?: string
 }>()
 
-const form = useForm({})
+const portalLegal = computed(() => usePage().props.portalLegal as { agbUrl: string | null; widerrufUrl: string | null } | undefined)
+const agbUrl = computed(() => portalLegal.value?.agbUrl ?? null)
+const widerrufUrl = computed(() => portalLegal.value?.widerrufUrl ?? null)
+
+const form = useForm({ terms: false })
 
 // AcceptQuote's own re-check rejects under a 'quote' key, not a field this
-// empty form ever declares — see App\Quotes\Actions\AcceptQuote.
-const rejection = computed(() => (form.errors as Record<string, string>).quote)
+// form declares — see App\Quotes\Actions\AcceptQuote.
+const rejection = computed(() => (form.errors as Record<string, string>).quote ?? (form.errors as Record<string, string>).terms)
 
 function accept() {
-  form.post(`/projekte/${props.project.id}/angebot/annehmen`, { preserveScroll: true })
+  form.post(props.acceptUrl ?? `/projekte/${props.project.id}/angebot/annehmen`, { preserveScroll: true })
 }
 
 
 // The dot says the same thing the label does, one beat earlier. Warm means
 // this one is waiting on the client.
 const state = computed(() => (props.quote?.status === 'accepted' ? 'done' : 'open'))
+
+// Choice mode already gets its own breakdown from QuoteSlider's own
+// `stages`; this is the classic-table half of the same split, against the
+// same gross total the table above already prints.
+const stages = computed(() => {
+  const quote = props.quote
+
+  if (!quote) return []
+
+  const gross = quote.net + (quote.vatMode === 'standard' ? (quote.vatAmount ?? 0) : 0)
+
+  return splitStages(gross, quote.paymentStages)
+})
 
 const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1.5] [&>td:last-child]:text-right [&>td:last-child]:tabular-nums [&>td:last-child]:whitespace-nowrap'
 </script>
@@ -85,12 +115,21 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
         </h1>
       </section>
 
+      <!-- #480: Editor.js-HTML, beim Speichern bereinigt, Felder escaped (QuoteController). -->
+      <div
+        v-if="quote?.intro"
+        class="animate-rise [animation-delay:190ms] motion-reduce:animate-none mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] [&_p+*]:mt-3 [&_*+p]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
+        v-html="quote.intro"
+      />
+
       <QuoteSlider
         v-if="quote && quote.hourlyRate !== null"
         class="animate-rise [animation-delay:230ms] motion-reduce:animate-none"
         :project="project"
         :quote="(quote as unknown as App.Quotes.Data.QuoteData)"
         :can-accept="canAccept"
+        :accept-url="acceptUrl"
+        :image-url-base="imageUrlBase"
         :expired="quote.expired"
         :accepted-at="quote.acceptedAt"
         :showcase-count="showcaseCount"
@@ -115,8 +154,8 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
           <tr v-for="item in quote.items" :key="item.id" :class="[ROW, item.isIncluded && '[&>td]:text-muted-foreground']">
             <td>
               {{ item.title }}
-              <div v-if="item.isIncluded || item.description" class="text-[13px] leading-[1.45] text-muted-foreground">
-                {{ item.isIncluded ? $t('quotes.included') : item.description }}
+              <div v-if="item.description" class="text-[13px] leading-[1.45] text-muted-foreground">
+                {{ item.description }}
               </div>
             </td>
             <td>{{ item.isIncluded ? $t('quotes.includedPrice') : formatEuros(item.netTotal) }}</td>
@@ -141,9 +180,10 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
             <td colspan="2">{{ quote.vatNote }}</td>
           </tr>
           <template v-else-if="quote.vatMode === 'standard'">
-            <tr :class="[ROW, '[&>td]:py-1! [&>td]:text-muted-foreground']">
-              <td>{{ $t('quotes.vat', { rate: basisPointsToPercent(quote.vatRate) }) }}</td>
-              <td>{{ formatEuros(quote.vatAmount ?? 0) }}</td>
+            <!-- #412: eine Zeile je Steuersatz (§ 14 Abs. 4 Nr. 7 UStG). -->
+            <tr v-for="line in quote.vatLines" :key="line.rate" :class="[ROW, '[&>td]:py-1! [&>td]:text-muted-foreground']">
+              <td>{{ $t('quotes.vat', { rate: basisPointsToPercent(line.rate) }) }}</td>
+              <td>{{ formatEuros(line.vat) }}</td>
             </tr>
             <tr :class="[ROW, '[&>td]:pt-2! [&>td]:font-serif [&>td]:text-[22px]!']">
               <td>{{ $t('quotes.total') }}</td>
@@ -151,6 +191,20 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
             </tr>
           </template>
         </table>
+
+        <table v-if="stages.length" class="mt-8 w-full max-w-[420px] border-collapse">
+          <tr :class="[ROW, '[&>td]:border-b-0']">
+            <td colspan="2" class="text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">
+              {{ $t('quotes.payment') }}
+            </td>
+          </tr>
+          <tr v-for="stage in stages" :key="stage.label" :class="[ROW, '[&>td]:text-muted-foreground']">
+            <td>{{ stage.label }}</td>
+            <td>{{ formatEuros(stage.amount) }}</td>
+          </tr>
+        </table>
+
+        <div v-if="quote.outro" class="mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] [&_p+*]:mt-3 [&_*+p]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5" v-html="quote.outro" />
 
         <p v-if="quote.status === 'accepted'" class="mt-8 text-[14.5px] text-muted-foreground">
           {{ $t('portal.quoteAccepted', { date: quote.acceptedAt }) }}
@@ -162,16 +216,30 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
 
           <!-- T-08: the button is the affordance — it never renders once the
                switch is off, matching the 404 the accept route itself gives. -->
-          <Button
-            v-if="canAccept"
-            class="mt-8"
-            variant="portal"
-            type="button"
-            :disabled="form.processing"
-            @click="accept"
-          >
-            {{ $t('portal.quoteAccept') }}
-          </Button>
+          <template v-if="canAccept">
+            <div
+              v-if="agbUrl || widerrufUrl"
+              class="mt-8 flex items-start gap-3.5 text-[13.5px] leading-[1.5] [&_[data-slot=checkbox]]:mt-0.5 [&_[data-slot=checkbox]]:size-[17px] [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action"
+            >
+              <Checkbox id="quote-terms" v-model="form.terms" required />
+              <Label variant="inline" for="quote-terms">
+                <a v-if="agbUrl" :href="agbUrl" target="_blank" rel="noopener" class="underline">{{ $t('portal.footerAgb') }}</a>
+                <template v-if="agbUrl && widerrufUrl"> {{ $t('portal.quoteTermsAnd') }} </template>
+                <a v-if="widerrufUrl" :href="widerrufUrl" target="_blank" rel="noopener" class="underline">{{ $t('portal.footerWiderruf') }}</a>
+                {{ $t('portal.quoteTerms') }}
+              </Label>
+            </div>
+
+            <Button
+              class="mt-8"
+              variant="portal"
+              type="button"
+              :disabled="form.processing || ((agbUrl !== null || widerrufUrl !== null) && !form.terms)"
+              @click="accept"
+            >
+              {{ $t('portal.quoteAccept') }}
+            </Button>
+          </template>
         </template>
       </div>
 

@@ -7,7 +7,7 @@ use App\Enums\Capability;
 use App\Models\User;
 
 /**
- * Templates are tenant-wide, not per-project — see ContractTemplatePolicy,
+ * Templates are tenant-wide, not per-project — see DocumentTemplatePolicy,
  * the same shape.
  */
 class FormTemplatePolicy

@@ -14,7 +14,7 @@ use Illuminate\Notifications\Notification;
 
 /**
  * E-07: the single fan-out choke point. Every notification in the system —
- * mail, in-app, and later a webhook transport (I-04) — leaves through here,
+ * mail and in-app — leaves through here,
  * never through Illuminate\Support\Facades\Notification or a model's own
  * ->notify() called straight from domain code. Domain code names the
  * notifiable and the Notification subclass describing what happened; that

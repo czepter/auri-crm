@@ -11,6 +11,7 @@ use App\Portal\Http\Controllers\ContractController;
 use App\Portal\Http\Controllers\GalleryController as PortalGalleryController;
 use App\Portal\Http\Controllers\HomeController;
 use App\Portal\Http\Controllers\ImpressumController;
+use App\Portal\Http\Controllers\LegalTextController;
 use App\Portal\Http\Controllers\MagicLinkController;
 use App\Portal\Http\Controllers\MailboxController;
 use App\Portal\Http\Controllers\PaymentCheckoutController;
@@ -18,6 +19,8 @@ use App\Portal\Http\Controllers\PaymentController;
 use App\Portal\Http\Controllers\ProjectController;
 use App\Portal\Http\Controllers\QuestionnaireController;
 use App\Portal\Http\Controllers\QuoteController;
+use App\Portal\Http\Controllers\QuoteShareController;
+use App\Portal\Http\Controllers\ServiceController;
 use App\Portal\Http\Controllers\UnsubscribeController;
 use Illuminate\Support\Facades\Route;
 
@@ -45,6 +48,17 @@ Route::middleware('portal.maintenance')->group(function () {
     // previewing a second client kept seeing the first, and a shared browser
     // showed one client another's portal.
     Route::get('/zugang/{token}', [MagicLinkController::class, 'consume'])->name('portal.access');
+
+    // The "abgespecktes Portal" a quote's share link opens — no session, no
+    // portal_visible, no contact required. share_token in the path is the
+    // whole credential, the same shape as /zugang/{token} above, except this
+    // one is reusable rather than spent on first use (QuoteShareController).
+    Route::get('/angebot/{quote:share_token}/teilen', [QuoteShareController::class, 'show'])
+        ->name('portal.quotes.share.show');
+    Route::get('/angebot/{quote:share_token}/teilen/bild/{item}', [QuoteShareController::class, 'image'])
+        ->name('portal.quotes.share.image');
+    Route::post('/angebot/{quote:share_token}/teilen/annehmen', [QuoteShareController::class, 'accept'])
+        ->name('portal.quotes.share.accept');
 
     Route::middleware('audience:portal')->group(function () {
         Route::post('/abmelden', [MagicLinkController::class, 'destroy'])->name('portal.logout');
@@ -127,6 +141,21 @@ Route::middleware('portal.maintenance')->group(function () {
             ->middleware('portal.capability:accept_quotes')
             ->name('portal.quotes.accept');
 
+        // Aftersales: was das Studio einem Bestandskunden über seine
+        // Buchungen hinaus anbietet, und der eine Klick, der daraus eine
+        // Anfrage macht. Hinter T-08s eigenem Schalter (Vorgabe aus), und
+        // anders als bei accept_quotes hängt hier auch die Ansicht daran —
+        // ein Regal, das ein Studio nicht aufgemacht hat, soll aussehen wie
+        // eine Funktion, die es nicht gibt.
+        Route::middleware('portal.capability:offers')->group(function () {
+            Route::get('/leistungen/{package}', [ServiceController::class, 'show'])
+                ->name('portal.services.show');
+            Route::get('/leistungen/{package}/bild', [ServiceController::class, 'image'])
+                ->name('portal.services.image');
+            Route::post('/leistungen/{package}/anfragen', [ServiceController::class, 'request'])
+                ->name('portal.services.request');
+        });
+
         // P-05 (#224): the account the portal never had. Contact details are
         // editable whatever phase a booking is in — those are the client's
         // own particulars, not contract content, which is the line P-03 and
@@ -194,12 +223,24 @@ Route::middleware('portal.maintenance')->group(function () {
             ->middleware('portal.capability:payment_status')
             ->name('portal.payments.checkout');
 
+        // #419. The invoice as a page, in the studio's own layout — the PDF
+        // below is the same document to keep rather than to read.
+        Route::get('/projekte/{project}/zahlungen/{invoice}', [PaymentController::class, 'show'])
+            ->middleware('portal.capability:payment_status')
+            ->name('portal.payments.invoice-page');
+
         // M-06. The invoice itself, behind the same gate as the screen that
         // links to it — a client who may not see payment status may not
         // download the paperwork behind it either.
-        Route::get('/projekte/{project}/zahlungen/{installment}/rechnung', [PaymentController::class, 'invoice'])
+        Route::get('/projekte/{project}/zahlungen/{invoice}/rechnung', [PaymentController::class, 'invoice'])
             ->middleware('portal.capability:payment_status')
             ->name('portal.payments.invoice');
+
+        // #409: the Gutschrift, behind the same gate as the invoice it
+        // corrects.
+        Route::get('/projekte/{project}/zahlungen/{invoice}/gutschrift/{creditNote}', [PaymentController::class, 'creditNote'])
+            ->middleware('portal.capability:payment_status')
+            ->name('portal.payments.credit-note');
     });
 });
 
@@ -222,6 +263,11 @@ Route::get('/e-mail-bestaetigen/{token}', [AccountController::class, 'confirmEma
 // § 5 TMG. Public and reachable regardless of the maintenance closure above —
 // see ImpressumController and EnsurePortalMaintenanceClosure's own note.
 Route::get('/impressum', ImpressumController::class)->name('portal.impressum');
+
+// Dieselbe Regel für die selbstgeschriebenen Texte: AGB und
+// Widerrufsbelehrung stehen beim Vertragsschluss neben dem Häkchen, also
+// auch dann, wenn das Portal geschlossen ist.
+Route::get('/rechtstexte/{text}', LegalTextController::class)->name('portal.legal-text');
 
 // G-06: the gallery guest's own way in — a different audience from the
 // client above (no Contact, no `audience:portal` session; see

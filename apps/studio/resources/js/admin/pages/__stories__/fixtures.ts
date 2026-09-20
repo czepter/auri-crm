@@ -38,13 +38,12 @@ export const channels: Option[] = [
     { value: 'other', label: 'Sonstige' },
 ]
 
-export const stages: Option[] = [
-    { value: 'new', label: 'Neu' },
-    { value: 'contacted', label: 'Kontaktiert' },
-    { value: 'quote_sent', label: 'Angebot' },
-    { value: 'quote_accepted', label: 'Angebot angenommen' },
-    { value: 'contract_sent', label: 'Vertrag' },
-    { value: 'booked', label: 'Gebucht' },
+export const stages: (Option & { anchor: string | null })[] = [
+    { value: 'new', label: 'Neu', anchor: 'entry' },
+    { value: 'contacted', label: 'Kontaktiert', anchor: null },
+    { value: 'quote_sent', label: 'Angebot', anchor: 'quote_sent' },
+    { value: 'quote_accepted', label: 'Angebot angenommen', anchor: 'quote_accepted' },
+    { value: 'booked', label: 'Gebucht', anchor: 'won' },
 ]
 
 export const presets = {
@@ -59,7 +58,6 @@ const leadTrack = [
     { key: 'contacted', label: 'Kontaktiert', pipeline: 'lead', state: 'done' },
     { key: 'quote_sent', label: 'Angebot', pipeline: 'lead', state: 'current' },
     { key: 'quote_accepted', label: 'Angebot angenommen', pipeline: 'lead', state: 'todo' },
-    { key: 'contract_sent', label: 'Vertrag', pipeline: 'lead', state: 'todo' },
     { key: 'booked', label: 'Gebucht', pipeline: 'lead', state: 'todo' },
 ]
 
@@ -238,6 +236,7 @@ export function quoteItem(
         discountValue: null,
         discountAmount: 0,
         netTotal: item.lineTotal,
+        vatRate: null,
         selectable: false,
         selected: true,
         outcome: null,
@@ -263,6 +262,7 @@ export function quoteOf(
         predecessorId: null,
         isAddendum: false,
         predecessorNumber: null,
+        vatLines: [],
         status: 'sent',
         statusLabel: 'Versendet',
         pricingMode: 'classic',
@@ -274,10 +274,11 @@ export function quoteOf(
         discountType: null,
         discountValue: null,
         discountAmount: 0,
+        discountHidden: false,
         vatMode: 'exempt',
-        vatRate: null,
+        vatRate: 0,
         vatNote: 'Kleinunternehmer nach § 19 UStG',
-        vatAmount: null,
+        vatAmount: 0,
         intro: null,
         outro: null,
         hourlyRate: null,
@@ -287,6 +288,7 @@ export function quoteOf(
         hours: null,
         timeTitle: null,
         timeDescription: null,
+        timeSortOrder: 0,
         rangeMin: null,
         rangeMax: null,
         paymentStages: [],
@@ -337,9 +339,17 @@ export const catalogPackages: App.Catalog.Data.PackageData[] = [
         isActive: true,
         itemCount: 2,
         items: [
-            { id: 'pi-1', title: 'Hochzeitsreportage Ganztag', description: 'bis 14 Std. am Hochzeitstag', quantity: 1, unitPrice: 300000, selectable: false, selected: true, outcome: null, hasImage: false },
-            { id: 'pi-2', title: 'Online-Galerie', description: null, quantity: 1, unitPrice: 0, selectable: false, selected: true, outcome: null, hasImage: false },
+            { id: 'pi-1', title: 'Hochzeitsreportage Ganztag', description: 'bis 14 Std. am Hochzeitstag', quantity: 1, unitPrice: 300000, vatRate: null, selectable: false, selected: true, outcome: null, hasImage: false },
+            { id: 'pi-2', title: 'Online-Galerie', description: null, quantity: 1, unitPrice: 0, vatRate: null, selectable: false, selected: true, outcome: null, hasImage: false },
         ],
+        portalOffered: false,
+        portalPriceMode: 'exact',
+        portalRequiresDate: true,
+        projectTypeKey: null,
+        portalHasImage: false,
+        price: 300000,
+        requestedCount: 0,
+        bookedCount: 0,
     },
 ]
 
@@ -353,16 +363,6 @@ export const catalogItems: App.Catalog.Data.CatalogItemData[] = [
     { id: 'ci-2', title: 'Fotobuch 30×30', description: '40 Seiten, Leinen', unitPrice: 48000 },
     { id: 'ci-3', title: 'Anreise über 50 km', description: null, unitPrice: 4500 },
 ]
-
-/** Der Angebotsreiter der Anfrage: was QuoteWorkspace unter einem Schlüssel bekommt. */
-export const workspace = {
-    quotes: [leadQuote],
-    packages: catalogPackages,
-    catalogItems,
-    contacts,
-    canManageCatalog: true,
-    paymentPlan: null,
-}
 
 /** Der Nachrichtenreiter: ein Thread, auf den die Kundin zuletzt geschrieben hat. */
 export const conversation: App.Engagement.Data.ThreadData = {
@@ -406,6 +406,7 @@ const permissions = {
     canManageQuotes: true,
     canManageContracts: true,
     canManagePaymentPlan: true,
+    primaryShootCancelled: false,
     canManageForms: true,
 }
 
@@ -437,7 +438,6 @@ export const header: App.Crm.Data.ProjectHeaderData = {
         { key: 'messages', label: 'project.messages', href: `/auftraege/${RAHN}/nachrichten`, count: 0, countTo: null, children: [] },
         { key: 'forms', label: 'project.forms', href: `/auftraege/${RAHN}/frageboegen`, count: 1, countTo: null, children: [] },
         { key: 'quotes', label: 'project.quotes', href: `/auftraege/${RAHN}/angebote`, count: null, countTo: null, children: [] },
-        { key: 'contract', label: 'project.contract', href: `/auftraege/${RAHN}/vertrag`, count: 1, countTo: null, children: [] },
     ],
     track: projectTrack,
     queue: [],
@@ -516,6 +516,53 @@ export const bookedLeadHeader: App.Crm.Data.ProjectHeaderData = {
         { key: 'messages', label: 'project.messages', href: `/auftraege/${BRANDT}/nachrichten`, count: 1, countTo: null, children: [] },
         { key: 'forms', label: 'project.forms', href: `/auftraege/${BRANDT}/frageboegen`, count: 0, countTo: null, children: [] },
         { key: 'quotes', label: 'project.quotes', href: `/auftraege/${BRANDT}/angebote`, count: null, countTo: null, children: [] },
-        { key: 'contract', label: 'project.contract', href: `/auftraege/${BRANDT}/vertrag`, count: null, countTo: null, children: [] },
     ],
+}
+
+export const studioSettings: App.Settings.Data.StudioSettingsData = {
+  id: 'st1',
+  displayName: 'Atelier Nordlicht',
+  legalName: 'Atelier Nordlicht — Christian Zepter',
+  legalForm: 'Einzelunternehmen',
+  street: 'Bei den Mühren 7',
+  postcode: '20457',
+  city: 'Hamburg',
+  country: 'Deutschland',
+  taxNumber: '43/123/45678',
+  vatId: 'DE812345678',
+  registerNumber: null,
+  registerCourt: null,
+  representative: 'Christian Zepter',
+  website: 'https://atelier-nordlicht.de',
+  accentColor: '#2F4858',
+  fontPair: 'fraunces',
+  logoUrl: null,
+  showcaseUrls: [],
+  bankAccountHolder: 'Christian Zepter',
+  bankIban: 'DE02120300000000202051',
+  bankBic: 'BYLADEM1001',
+  vatMode: 'standard',
+  vatRate: 1900,
+  vatNote: null,
+  quoteValidityDays: 14,
+  paymentTermDays: 14,
+  depositPercentage: 30,
+  widerrufIncluded: true,
+  widerrufText: null,
+  quoteLayout: 'classic',
+  clientRegister: 'informal',
+  documentLetterheadHtml: null,
+  documentFooterHtml: null,
+  timezone: 'Europe/Berlin',
+  locale: 'de',
+  workingDays: [1, 2, 3, 4, 5],
+  mailFromName: 'Atelier Nordlicht',
+  mailFromAddress: 'post@atelier-nordlicht.de',
+  mailReplyTo: 'christian@atelier-nordlicht.de',
+  mailSignature: 'Christian Zepter\nAtelier Nordlicht',
+  mailBcc: null,
+  mailClientsEnabled: true,
+  leadTypePresets: ['Hochzeit', 'Paarshooting', 'Familie'],
+  leadSourcePresets: ['Empfehlung', 'Instagram', 'Website'],
+  leadChannelPresets: ['E-Mail', 'Telefon', 'Kontaktformular'],
 }

@@ -23,7 +23,7 @@ use App\Crm\Models\Stage;
 use App\Crm\Support\CrmVocabulary;
 use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
-use App\Quotes\Actions\ReadQuoteWorkspace;
+use App\Quotes\Actions\ReadQuoteList;
 use App\Quotes\Data\QuoteData;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
@@ -78,7 +78,9 @@ class LeadCaseController extends Controller
             $project->name,
         );
 
-        $project->load(['contacts', 'shoots.crew.user', 'primaryShoot', 'job', 'tasks.project', 'tasks.assignee', 'notes.author', 'latestQuote.items']);
+        $project->load(['contacts', 'shoots.crew.user', 'primaryShoot', 'job', 'tasks.project', 'tasks.assignee', 'notes.author']);
+        // The studio works on drafts too; latestQuote() is the portal's, sent only.
+        $quote = $project->quotes()->where('status', '!=', QuoteStatus::Superseded)->with(['items', 'predecessor', 'paymentStages'])->latest('id')->first();
         $primary = $project->primaryShoot;
         $conversation = $project->latestThread()->with('messages.contact', 'messages.author')->first();
 
@@ -86,7 +88,7 @@ class LeadCaseController extends Controller
             'tab' => $tab,
             'header' => ProjectHeaderData::fromProject($project, app(DeriveProjectPosition::class)($project), queue: false),
             'conversation' => $conversation === null ? null : ThreadData::fromModel($conversation),
-            'workspace' => $tab !== 'quotes' ? null : app(ReadQuoteWorkspace::class)($project, auth('staff')->user()),
+            ...($tab === 'quotes' ? app(ReadQuoteList::class)($project) : ['quotes' => [], 'payments' => null]),
             'queue' => $this->leads->queue($lead),
             'lead' => [
                 'id' => $lead->public_id,
@@ -95,7 +97,7 @@ class LeadCaseController extends Controller
                 'type' => $project->type->key,
                 'typeOther' => $project->type_other,
                 'typeLabel' => $project->typeLabel(),
-                'source' => $lead->source->value,
+                'source' => $lead->source?->value,
                 'sourceOther' => $lead->source_other,
                 'sourceLabel' => $lead->sourceLabel(),
                 'stage' => $lead->stage->key,
@@ -117,7 +119,7 @@ class LeadCaseController extends Controller
             'shoots' => ShootData::collect(
                 $project->shoots->map(fn (Shoot $shoot) => ShootData::fromShoot($shoot))
             ),
-            'quote' => $project->latestQuote === null ? null : QuoteData::fromModel($project->latestQuote),
+            'quote' => $quote === null ? null : QuoteData::fromModel($quote),
             // Die ersetzten Fassungen tragen in der Übersicht nur ihren Preis:
             // was in ihnen stand, steht im Angebot selbst.
             'supersededQuotes' => $project->quotes()
@@ -132,7 +134,7 @@ class LeadCaseController extends Controller
             // Without a quote, the active packages with their item count and
             // sum — the next move is choosing one, so the screen offers the
             // choice rather than an empty section.
-            'packages' => $project->latestQuote !== null ? [] : Package::query()
+            'packages' => $quote !== null ? [] : Package::query()
                 ->where('is_active', true)
                 ->with('items')
                 ->orderBy('name')
@@ -162,7 +164,7 @@ class LeadCaseController extends Controller
             'conflicts' => $this->availability->forDate($primary?->date?->format('Y-m-d'), $project),
             'stages' => app(CrmVocabulary::class)->ordered(StagePipeline::Lead)
                 ->filter(fn (Stage $stage) => $stage->is_active)
-                ->map(fn (Stage $stage) => ['value' => $stage->key, 'label' => $stage->name])->values()->all(),
+                ->map(fn (Stage $stage) => ['value' => $stage->key, 'label' => $stage->name, 'anchor' => $stage->anchor?->value])->values()->all(),
         ]);
     }
 
@@ -197,7 +199,7 @@ class LeadCaseController extends Controller
         $validated = $request->validate([
             'type' => ['sometimes', 'required', Rule::exists('project_types', 'key')->where('is_active', true)],
             'type_other' => ['nullable', 'string', 'max:120'],
-            'source' => ['sometimes', 'required', Rule::enum(LeadSource::class)],
+            'source' => ['sometimes', 'nullable', Rule::enum(LeadSource::class)],
             'source_other' => ['nullable', 'string', 'max:120'],
             'inquiry_text' => ['sometimes', 'nullable', 'string', 'max:10000'],
             'people' => ['array'],

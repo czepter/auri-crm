@@ -76,6 +76,12 @@ const PUBLIC_ROUTES = [
     // AssetCommentController's own doc comment.
     'api' => [
         'api/health', 'api/stripe/webhook',
+        // N-04: RFC 9728's document, read by a client that holds no token
+        // yet to find out who hands one out. Gating it would close the only
+        // door in. The MCP endpoint it describes carries `audience:api` like
+        // every other route on this surface — see routes/mcp.php.
+        '.well-known/oauth-protected-resource',
+        '.well-known/oauth-protected-resource/{path}',
         // C-08. The one route in the system a stranger is meant to reach —
         // an audience guard on it would defeat the point. What stands in
         // for one is the honeypot, the timing floor, the per-IP and
@@ -122,7 +128,12 @@ const PUBLIC_ROUTES = [
     // a mail already delivered, with the contact's own public_id as the whole
     // credential, same shape as zugang/{token}.
     'portal' => [
-        'anmelden', 'zugang/{token}', 'branding/logo', 'impressum', 'abmelden/{contact}',
+        'anmelden', 'zugang/{token}', 'branding/logo', 'impressum', 'rechtstexte/{text}', 'abmelden/{contact}',
+        // The quote share link — reusable, unlike zugang/{token} above, but
+        // the same shape otherwise: share_token in the path is the whole
+        // credential, checked by QuoteShareController's own lookup rather
+        // than an `audience:` guard.
+        'angebot/{quote}/teilen', 'angebot/{quote}/teilen/bild/{item}', 'angebot/{quote}/teilen/annehmen',
         // Q-10: das Reglerraster. Oeffentlich aus demselben Grund wie das
         // Logo — Schaufensterbilder laedt der Fotograf hoch, um sie zu
         // zeigen, und das Raster steht, bevor irgendwer angenommen hat. Der

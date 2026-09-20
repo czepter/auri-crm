@@ -5,7 +5,7 @@ import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 
 // T-08: rendered by EnsurePortalMaintenanceClosure instead of whatever route
-// was actually requested — no project, quote, contract or payment data ever
+// was actually requested — no project, quote or payment data ever
 // reaches this component, because the middleware never calls the controller
 // that would have supplied it. `message` is the studio's own free text
 // (Settings/Portal.vue); falls back to a fixed, deliberately neutral default

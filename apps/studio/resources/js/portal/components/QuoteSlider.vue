@@ -8,11 +8,14 @@
  * Wachsen ist eine Blende und kein Umbau.
  */
 import { computed, ref } from 'vue'
-import { useForm } from '@inertiajs/vue3'
+import { useForm, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import { formatEuros } from '@/admin/lib/money'
+import { applyDiscount, quoteDiscount, spread } from '@/admin/components/quote/quoteTotals'
 import { splitStages } from '@/portal/lib/paymentStages'
 import { Button } from '@/ui/button'
+import { Checkbox } from '@/ui/checkbox'
+import { Label } from '@/ui/label'
 
 type Item = App.Quotes.Data.QuoteItemData
 type Quote = App.Quotes.Data.QuoteData
@@ -21,10 +24,17 @@ const props = defineProps<{
   project: { id: string; name: string }
   quote: Quote
   canAccept: boolean
+  // QuoteShareController's own accept/image routes, for a quote opened
+  // through its share link rather than a portal session. Both default to
+  // the session routes every logged-in contact uses.
+  acceptUrl?: string
+  imageUrlBase?: string
   expired: boolean
   acceptedAt: string | null
   showcaseCount: number
 }>()
+
+const imageUrl = (itemId: string) => `${props.imageUrlBase ?? `/projekte/${props.project.id}/angebot`}/bild/${itemId}`
 
 const { t } = useI18n()
 
@@ -34,8 +44,15 @@ const IMAGES_PER_TILE = 20
 const hours = ref(props.quote.hours ?? props.quote.minHours ?? 0)
 const chosen = ref(new Set(props.quote.items.filter((i) => i.selectable && i.selected).map((i) => i.id)))
 
-const form = useForm({})
-const rejection = computed(() => (form.errors as Record<string, string>).quote ?? (form.errors as Record<string, string>).hours)
+const portalLegal = computed(() => usePage().props.portalLegal as { agbUrl: string | null; widerrufUrl: string | null } | undefined)
+const agbUrl = computed(() => portalLegal.value?.agbUrl ?? null)
+const widerrufUrl = computed(() => portalLegal.value?.widerrufUrl ?? null)
+
+const form = useForm({ terms: false })
+const rejection = computed(() => {
+  const errors = form.errors as Record<string, string>
+  return errors.quote ?? errors.hours ?? errors.terms
+})
 
 const accepted = computed(() => props.quote.status === 'accepted')
 const images = computed(() => hours.value * (props.quote.imagesPerHour ?? 0))
@@ -45,12 +62,19 @@ const blocks = computed(() => props.quote.items.filter((item) => item.selectable
 const included = computed(() => props.quote.items.filter((item) => item.isIncluded))
 const fixed = computed(() => props.quote.items.filter((item) => !item.isIncluded && !item.selectable))
 
-const total = computed(
+const subtotal = computed(
   () =>
     hours.value * (props.quote.hourlyRate ?? 0) +
     fixed.value.reduce((sum, item) => sum + item.netTotal, 0) +
     blocks.value.filter((item) => chosen.value.has(item.id)).reduce((sum, item) => sum + item.netTotal, 0)
 )
+const total = computed(() => applyDiscount(subtotal.value, quoteDiscount(props.quote.discountType, props.quote.discountValue)))
+const hidden = computed(() => props.quote.discountHidden && total.value < subtotal.value)
+
+// Verborgen steckt der Rabatt anteilig in jedem Preis, den der Kunde liest.
+function price(amount: number) {
+  return hidden.value && subtotal.value > 0 ? Math.round((amount * total.value) / subtotal.value) : amount
+}
 
 const stages = computed(() =>
   splitStages(
@@ -72,14 +96,25 @@ const timeDetail = computed(() =>
 // Die Aufstellung sagt, was der Betrag deckt, in der Reihenfolge, in der er
 // entsteht: die Stunden, dann was ohne Aufpreis folgt, dann jeder gewählte
 // Baustein.
-const breakdown = computed(() => [
-  { label: props.quote.timeTitle ?? t('quotes.hoursCount', hours.value), amount: hours.value * (props.quote.hourlyRate ?? 0), lead: true },
-  ...(props.quote.timeTitle ? [{ label: timeDetail.value, amount: null, lead: false }] : []),
-  ...fixed.value.map((item) => ({ label: item.title, amount: item.netTotal, lead: false })),
-  ...(props.quote.timeTitle ? [] : [{ label: t('quotes.editedImages', { count: images.value }), amount: null, lead: false }]),
-  ...included.value.map((item) => ({ label: item.outcome ?? item.title, amount: null, lead: false })),
-  ...blocks.value.filter((item) => chosen.value.has(item.id)).map((item) => ({ label: item.title, amount: item.netTotal, lead: false })),
-])
+const breakdown = computed(() => {
+  const rows: { label: string; amount: number | null; lead: boolean }[] = [
+    { label: props.quote.timeTitle ?? t('quotes.hoursCount', hours.value), amount: hours.value * (props.quote.hourlyRate ?? 0), lead: true },
+    ...(props.quote.timeTitle ? [{ label: timeDetail.value, amount: null, lead: false }] : []),
+    ...fixed.value.map((item) => ({ label: item.title, amount: item.netTotal, lead: false })),
+    ...(props.quote.timeTitle ? [] : [{ label: t('quotes.editedImages', { count: images.value }), amount: null, lead: false }]),
+    ...included.value.map((item) => ({ label: item.outcome ?? item.title, amount: null, lead: false })),
+    ...blocks.value.filter((item) => chosen.value.has(item.id)).map((item) => ({ label: item.title, amount: item.netTotal, lead: false })),
+  ]
+
+  if (hidden.value) {
+    const priced = rows.filter((row) => row.amount !== null)
+    spread(priced.map((row) => row.amount!), total.value).forEach((amount, index) => (priced[index].amount = amount))
+  } else if (total.value < subtotal.value) {
+    rows.push({ label: t('quotes.discount'), amount: total.value - subtotal.value, lead: false })
+  }
+
+  return rows
+})
 
 function toggle(item: Item) {
   if (accepted.value) return
@@ -95,8 +130,8 @@ function tileImage(index: number) {
 
 function accept() {
   form
-    .transform(() => ({ hours: hours.value, items: [...chosen.value] }))
-    .post(`/projekte/${props.project.id}/angebot/annehmen`, { preserveScroll: true })
+    .transform((data) => ({ ...data, hours: hours.value, items: [...chosen.value] }))
+    .post(props.acceptUrl ?? `/projekte/${props.project.id}/angebot/annehmen`, { preserveScroll: true })
 }
 </script>
 
@@ -146,7 +181,7 @@ function accept() {
 
       <div class="mt-2.5 flex items-baseline justify-between gap-4">
         <span class="text-[13.5px] leading-[1.45] text-muted-foreground">
-          {{ $t('quotes.perHour', { amount: formatEuros(quote.hourlyRate ?? 0) }) }}
+          {{ $t('quotes.perHour', { amount: formatEuros(price(quote.hourlyRate ?? 0)) }) }}
         </span>
         <span class="hidden text-[16px] leading-[1.2] font-semibold text-[var(--accent)] tabular-nums lg:inline">
           {{ $t('quotes.imageCount', { count: images }) }}
@@ -185,7 +220,7 @@ function accept() {
             <img
               v-if="item.hasImage"
               class="block h-[104px] w-full object-cover"
-              :src="`/projekte/${project.id}/angebot/bild/${item.id}`"
+              :src="imageUrl(item.id)"
               alt=""
               loading="lazy"
             />
@@ -207,7 +242,7 @@ function accept() {
             <span
               class="mt-2.5 block text-[13px] leading-none font-semibold tabular-nums"
               :class="chosen.has(item.id) ? 'text-[var(--accent)]' : 'text-muted-foreground'"
-            >+ {{ formatEuros(item.netTotal) }}</span>
+            >+ {{ formatEuros(price(item.netTotal)) }}</span>
           </span>
         </button>
       </div>
@@ -259,16 +294,30 @@ function accept() {
         <p v-if="expired" class="mt-3.5 text-[13.5px] text-destructive">{{ $t('portal.quoteExpired') }}</p>
         <p v-if="rejection" class="mt-3.5 text-[13.5px] text-destructive">{{ rejection }}</p>
 
-        <Button
-          v-if="canAccept"
-          class="mt-3.5 w-full rounded-[var(--r-pill)] py-[17px] text-[15px] font-semibold"
-          variant="portal"
-          type="button"
-          :disabled="form.processing"
-          @click="accept"
-        >
-          {{ $t('portal.quoteAccept') }}
-        </Button>
+        <template v-if="canAccept">
+          <div
+            v-if="agbUrl || widerrufUrl"
+            class="mt-3.5 flex items-start gap-3 text-[13.5px] leading-[1.5] [&_[data-slot=checkbox]]:mt-0.5 [&_[data-slot=checkbox]]:size-[17px] [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action"
+          >
+            <Checkbox id="slider-terms" v-model="form.terms" required />
+            <Label variant="inline" for="slider-terms">
+              <a v-if="agbUrl" :href="agbUrl" target="_blank" rel="noopener" class="underline">{{ $t('portal.footerAgb') }}</a>
+              <template v-if="agbUrl && widerrufUrl"> {{ $t('portal.quoteTermsAnd') }} </template>
+              <a v-if="widerrufUrl" :href="widerrufUrl" target="_blank" rel="noopener" class="underline">{{ $t('portal.footerWiderruf') }}</a>
+              {{ $t('portal.quoteTerms') }}
+            </Label>
+          </div>
+
+          <Button
+            class="mt-3.5 w-full rounded-[var(--r-pill)] py-[17px] text-[15px] font-semibold"
+            variant="portal"
+            type="button"
+            :disabled="form.processing || ((agbUrl !== null || widerrufUrl !== null) && !form.terms)"
+            @click="accept"
+          >
+            {{ $t('portal.quoteAccept') }}
+          </Button>
+        </template>
 
         <p v-if="quote.validUntil" class="mt-4 text-[13px] text-muted-foreground max-lg:hidden">
           {{ $t('quotes.validUntil') }} {{ quote.validUntil }}

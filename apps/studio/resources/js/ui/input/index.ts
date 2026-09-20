@@ -14,7 +14,7 @@ export { default as Input } from "./Input.vue"
  */
 export const inputVariants = cva(
   [
-    "w-full min-w-0 appearance-none rounded-[var(--r-sm)] border border-input bg-background font-sans font-normal text-foreground",
+    "w-full min-w-0 appearance-none rounded-[6px] border border-input bg-background font-sans font-normal text-foreground",
     "transition-[border-color] duration-[120ms] ease-out",
     "placeholder:text-faint hover:border-line-hover",
     "focus:border-ring focus:outline-none",

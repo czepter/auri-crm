@@ -35,8 +35,8 @@ return [
         ],
     ],
 
-    // M-01: the `gotenberg` Compose service converts a rendered contract's
-    // HTML to PDF. The default already matches docker-compose.yml's service
+    // The `gotenberg` Compose service converts a rendered document's HTML to
+    // PDF. The default already matches docker-compose.yml's service
     // name and Gotenberg's own default port, so a Compose stack needs no
     // override — only a deploy environment naming the service differently
     // does. See App\Support\GotenbergClient.
@@ -63,8 +63,24 @@ return [
         'url' => rtrim((string) (env('API_URL') ?: env('APP_URL', 'http://localhost')), '/'),
     ],
 
+    // Der Admin-Container ist der OAuth-Aussteller für die MCP-Verbindung,
+    // und das Dokument, das darauf zeigt, liefert das api-Surface
+    // (OAuthProtectedResourceController) — das braucht die Adresse des
+    // anderen Containers.
+    'admin' => [
+        'url' => rtrim((string) (env('ADMIN_URL') ?: env('APP_URL', 'http://localhost')), '/'),
+    ],
+
+    // Die MCP-Adresse ist eine Route des api-Surface, keine eigene
+    // Bereitstellung mehr; MCP_URL bleibt für den Fall, dass ein Proxy sie
+    // anders veröffentlicht.
     'mcp' => [
-        'url' => rtrim((string) (env('MCP_URL') ?: env('APP_URL', 'http://localhost')), '/'),
+        'url' => env('MCP_URL')
+            ? rtrim((string) env('MCP_URL'), '/')
+            : rtrim((string) (env('API_URL') ?: env('APP_URL', 'http://localhost')), '/').'/mcp',
+        // Der Bearer, mit dem der stdio-Transport das api-Surface ruft; über
+        // HTTP kommt er stattdessen aus der Sitzung selbst (ApiCall).
+        'token' => env('MCP_API_TOKEN'),
     ],
 
     // #357: der Mercure-Hub im Admin-Container. `url` ist, wohin jeder

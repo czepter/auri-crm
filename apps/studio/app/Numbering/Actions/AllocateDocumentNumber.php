@@ -6,6 +6,7 @@ use App\Numbering\Enums\DocumentType;
 use App\Numbering\Enums\NumberRangeResetRule;
 use App\Numbering\Models\NumberCounter;
 use App\Settings\Models\NumberRange;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -34,6 +35,8 @@ use Illuminate\Support\Facades\DB;
  */
 class AllocateDocumentNumber
 {
+    public function __construct(private readonly StudioSettingsResolver $settings) {}
+
     /**
      * @return array{number: string, year: int, counter: int}
      */
@@ -43,7 +46,7 @@ class AllocateDocumentNumber
         DocumentType $documentType = DocumentType::Quote,
     ): array {
         $tenantId ??= config('tenancy.tenant_id');
-        $year ??= now('UTC')->year;
+        $year ??= now($this->settings->timezone())->year;
 
         return DB::transaction(function () use ($documentType, $tenantId, $year) {
             // withoutGlobalScope('tenant'): NumberRange carries BelongsToTenant
@@ -86,7 +89,7 @@ class AllocateDocumentNumber
      */
     public function preview(NumberRange $range): string
     {
-        $year = now('UTC')->year;
+        $year = now($this->settings->timezone())->year;
         $period = $this->period($range, $year);
         $counter = $this->nextCounter($range, $range->tenant_id, $period);
 
@@ -103,10 +106,10 @@ class AllocateDocumentNumber
     /**
      * 1 + the highest counter this range has issued for the period, or the
      * range's own starting_counter the first time anything is issued for
-     * it — T-04's whole point: X-01's historical import sets that starting
-     * point, and the first number this system ever issues for the range
-     * picks up from there instead of restarting at 1 under a number a client
-     * already holds.
+     * it — T-04's whole point: the settings screen sets that starting point,
+     * and the first number this system ever issues for the range picks up
+     * from there instead of restarting at 1 under a number a client already
+     * holds.
      */
     private function nextCounter(NumberRange $range, string $tenantId, int $period): int
     {

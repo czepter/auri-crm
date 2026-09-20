@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
-// contractProject() lives in tests/Pest.php — see the note there.
+// bookedContactProject() lives in tests/Pest.php — see the note there.
 
 /**
  * Gotenberg is not reachable from this test environment (no Testcontainers
@@ -28,7 +28,7 @@ uses(RefreshDatabase::class);
 it('dispatches onto the render queue and nothing runs inline', function () {
     Queue::fake();
 
-    $contract = Contract::factory()->for(contractProject())->create();
+    $contract = Contract::factory()->for(bookedContactProject())->create();
 
     RenderContractJob::dispatch($contract)->onQueue('render');
 
@@ -42,7 +42,7 @@ it('resolves merge fields from the project at render time and stores the artifac
     $template = DocumentTemplate::factory()->create([
         'body' => '<p>{{ contact.name }} — {{ project.name }} — gebucht am {{ job.bookedAt }}</p>',
     ]);
-    $project = contractProject();
+    $project = bookedContactProject();
     $contract = Contract::factory()->for($project)->for($template, 'template')->create();
 
     (new RenderContractJob($contract))->handle(app(EnsureContractArtifact::class));
@@ -78,7 +78,7 @@ it('resolves studio.* merge fields from T-02\'s settings row, including the one 
     $template = DocumentTemplate::factory()->create([
         'body' => '<p>{{ studio.name }}, {{ studio.city }} — Logo: {{ studio.logoPath }}</p>',
     ]);
-    $contract = Contract::factory()->for(contractProject())->for($template, 'template')->create();
+    $contract = Contract::factory()->for(bookedContactProject())->for($template, 'template')->create();
 
     (new RenderContractJob($contract))->handle(app(EnsureContractArtifact::class));
 
@@ -104,7 +104,7 @@ it('renders the configured Widerruf text when T-05\'s setting is switched on', f
     $settings->set('widerruf_text', 'Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen zu widerrufen.');
 
     $template = DocumentTemplate::factory()->create(['body' => '<p>{{ settings.widerrufText }}</p>']);
-    $contract = Contract::factory()->for(contractProject())->for($template, 'template')->create();
+    $contract = Contract::factory()->for(bookedContactProject())->for($template, 'template')->create();
 
     (new RenderContractJob($contract))->handle(app(EnsureContractArtifact::class));
 
@@ -123,7 +123,7 @@ it('renders nothing for the Widerruf merge field when the setting is switched of
     $settings->set('widerruf_text', 'Dieser Text darf niemals gerendert werden.');
 
     $template = DocumentTemplate::factory()->create(['body' => '<p>Vor[{{ settings.widerrufText }}]Nach</p>']);
-    $contract = Contract::factory()->for(contractProject())->for($template, 'template')->create();
+    $contract = Contract::factory()->for(bookedContactProject())->for($template, 'template')->create();
 
     (new RenderContractJob($contract))->handle(app(EnsureContractArtifact::class));
 
@@ -139,7 +139,7 @@ it('marks the contract failed and keeps the exception when Gotenberg errors', fu
     Storage::fake('local');
     Http::fake(['*/forms/chromium/convert/html' => Http::response('boom', 500)]);
 
-    $contract = Contract::factory()->for(contractProject())->create();
+    $contract = Contract::factory()->for(bookedContactProject())->create();
 
     expect(fn () => (new RenderContractJob($contract))->handle(app(EnsureContractArtifact::class)))
         ->toThrow(RequestException::class);
@@ -154,7 +154,7 @@ it('never re-renders an already-rendered contract', function () {
     Storage::fake('local');
     Http::fake(['*/forms/chromium/convert/html' => Http::response('%PDF-first', 200)]);
 
-    $contract = Contract::factory()->for(contractProject())->create();
+    $contract = Contract::factory()->for(bookedContactProject())->create();
     (new RenderContractJob($contract))->handle(app(EnsureContractArtifact::class));
 
     Http::assertSentCount(1);

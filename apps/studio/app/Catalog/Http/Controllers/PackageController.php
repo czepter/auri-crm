@@ -3,11 +3,17 @@
 namespace App\Catalog\Http\Controllers;
 
 use App\Catalog\Actions\SavePackage;
+use App\Catalog\Data\CatalogItemData;
 use App\Catalog\Data\PackageData;
+use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
 use App\Catalog\Models\PackageItem;
+use App\Crm\Models\Lead;
+use App\Crm\Models\ProjectType;
 use App\Http\Controllers\Controller;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -23,7 +29,7 @@ class PackageController extends Controller
 
         $packages = Package::query()
             ->with('items')
-            ->withCount('items')
+            ->withCount(['items', ...self::requestCounts()])
             ->orderBy('name')
             ->get();
 
@@ -36,7 +42,9 @@ class PackageController extends Controller
     {
         $this->authorize('create', Package::class);
 
-        return Inertia::render('Packages/Create');
+        return Inertia::render('Packages/Create', [
+            'catalogItems' => self::catalogItems(),
+        ]);
     }
 
     public function store(Request $request, SavePackage $save): RedirectResponse
@@ -55,12 +63,38 @@ class PackageController extends Controller
         return redirect('/pakete');
     }
 
-    public function edit(Package $package): Response
+    public function edit(Package $package, StudioSettingsResolver $studio): Response
     {
         $this->authorize('update', $package);
 
+        $package->loadCount(self::requestCounts());
+
         return Inertia::render('Packages/Edit', [
             'package' => PackageData::fromModel($package),
+            'catalogItems' => self::catalogItems(),
+            // Wie ServiceController::show(): ein Kleinunternehmer hat keinen
+            // Satz, und dann steht unter dem Preis nichts.
+            'vatRate' => $studio->effectiveVatRate() ?: null,
+            // Ohne Projekttyp hat eine Anfrage aus dem Portal keine Form —
+            // siehe App\Portal\Actions\RequestService.
+            'projectTypes' => ProjectType::query()->active()
+                ->orderBy('sort_order')->orderBy('name')
+                ->get(['key', 'name'])->all(),
+            // Die letzten Anfragen, die von diesem Paket ausgingen. Steht hier
+            // und nicht in der Übersicht: die Frage gilt diesem Paket.
+            'requests' => $package->leads()
+                ->with(['project.contacts', 'project.primaryShoot', 'project.job'])
+                ->orderByDesc('captured_at')
+                ->limit(10)
+                ->get()
+                ->map(fn (Lead $lead) => [
+                    'id' => $lead->public_id,
+                    'project' => $lead->project->public_id,
+                    'contact' => $lead->project->contactNames(),
+                    'requestedOn' => $lead->captured_at?->format('Y-m-d'),
+                    'date' => $lead->project->primaryShoot?->date?->format('Y-m-d'),
+                    'booked' => $lead->project->job !== null,
+                ])->all(),
         ]);
     }
 
@@ -74,6 +108,31 @@ class PackageController extends Controller
             event: 'package.updated',
             actor: auth('staff')->user(),
             context: ['name' => $package->name],
+            subject: $package->public_id,
+        );
+
+        // Wie Angebote (QuoteController::update): der Autosave feuert bei
+        // jeder Änderung und würde von einem festen Redirect ins Leere
+        // laufen — zurück auf dieselbe Seite ist, was ein Autosave braucht.
+        return back();
+    }
+
+    /**
+     * Positionen und Vorschläge fallen per Fremdschlüssel mit (cascadeOnDelete);
+     * eine Anfrage, die von hier ausging, bleibt stehen und verliert nur die
+     * Referenz (leads.package_id ist nullOnDelete, siehe die Migration).
+     */
+    public function destroy(Package $package): RedirectResponse
+    {
+        $this->authorize('delete', $package);
+
+        $name = $package->name;
+        $package->delete();
+
+        AuditLogger::record(
+            event: 'package.deleted',
+            actor: auth('staff')->user(),
+            context: ['name' => $name],
             subject: $package->public_id,
         );
 
@@ -164,4 +223,23 @@ class PackageController extends Controller
         return Storage::disk('local')->response($packageItem->image_path);
     }
 
+    /** @return CatalogItemData[] */
+    private static function catalogItems()
+    {
+        return CatalogItemData::collect(CatalogItem::query()->orderBy('title')->get());
+    }
+
+    /**
+     * Gebucht heißt: aus dem Vorgang wurde ein Job. Dieselbe Auskunft, die
+     * Lead::scopeUnbooked() umgekehrt gibt.
+     *
+     * @return array<int|string, string|\Closure>
+     */
+    private static function requestCounts(): array
+    {
+        return [
+            'leads as requested_count',
+            'leads as booked_count' => fn (Builder $query) => $query->whereHas('project.job'),
+        ];
+    }
 }

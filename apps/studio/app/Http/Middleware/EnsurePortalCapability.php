@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * T-08's capability gate: a client capability switched off refuses the
  * route it guards the same way a route that does not exist would (404,
- * never 403) — hiding the button on Contracts/Show.vue or Projects/Show.vue
+ * never 403) — hiding the button on Quotes/Show.vue or Projects/Show.vue
  * is the affordance half of that rule, this middleware is the authorisation
  * half. Applied per-route beside `audience:portal`, never folded into it —
  * a capability is a business switch the studio flips, not an identity check.
@@ -31,6 +31,7 @@ class EnsurePortalCapability
             'sign_contracts' => $settings->signContractsEnabled($contact),
             'payment_status' => $settings->paymentStatusEnabled($contact),
             'messaging' => $settings->messagingEnabled($contact),
+            'offers' => $settings->offersEnabled($contact),
             default => throw new InvalidArgumentException("Unknown portal capability \"{$capability}\"."),
         };
 

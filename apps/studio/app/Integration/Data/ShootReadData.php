@@ -2,6 +2,7 @@
 
 namespace App\Integration\Data;
 
+use App\Crm\Data\CrewMemberData;
 use App\Crm\Models\Shoot;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -14,6 +15,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 #[TypeScript]
 class ShootReadData extends Data
 {
+    /** @param list<CrewMemberData> $crew */
     public function __construct(
         public string $id,
         public string $projectId,
@@ -25,18 +27,20 @@ class ShootReadData extends Data
         public ?string $venueName,
         public ?string $venueCity,
         public string $status,
+        public bool $isPrimary,
         public ?string $cancelledAt,
         public ?string $cancelledReason,
+        public array $crew,
         public string $updatedAt,
     ) {}
 
-    /** Requires `project:id,public_id` already eager loaded — see CrmReadController. */
+    /** Requires `project:id,public_id` and `crew.user` already eager loaded — see CrmReadController. */
     public static function fromModel(Shoot $shoot): self
     {
         return new self(
             id: $shoot->public_id,
             projectId: $shoot->project->public_id,
-            kind: $shoot->kind->value,
+            kind: $shoot->kind,
             label: $shoot->label,
             date: $shoot->date?->format('Y-m-d'),
             callTime: $shoot->call_time === null ? null : substr((string) $shoot->call_time, 0, 5),
@@ -44,8 +48,10 @@ class ShootReadData extends Data
             venueName: $shoot->venue_name,
             venueCity: $shoot->venue_city,
             status: $shoot->status->key,
+            isPrimary: $shoot->is_primary,
             cancelledAt: $shoot->cancelled_at?->toIso8601String(),
             cancelledReason: $shoot->cancelled_reason,
+            crew: $shoot->crew->map(CrewMemberData::fromAssignment(...))->all(),
             updatedAt: $shoot->updated_at->toIso8601String(),
         );
     }

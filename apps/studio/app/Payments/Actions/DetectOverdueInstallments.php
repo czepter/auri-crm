@@ -45,6 +45,8 @@ use Illuminate\Support\Collection;
  */
 class DetectOverdueInstallments
 {
+    private const DUE_SOON_DAYS = 3;
+
     public function __construct(
         private readonly NotificationService $notifications,
         private readonly StudioAudience $audience,
@@ -60,19 +62,55 @@ class DetectOverdueInstallments
         // today (see PaymentPlan), which makes the clause inert rather than
         // wrong — and closes the trap before invoicing sets it.
         $installments = PaymentInstallment::query()
-            ->whereIn('status', [PaymentInstallmentStatus::Scheduled, PaymentInstallmentStatus::Invoiced])
+            ->whereIn('status', PaymentInstallmentStatus::open())
             ->whereNull('overdue_notified_at')
             ->whereDate('due_on', '<', now('UTC')->toDateString())
+            ->onLivePlan()
             ->get();
 
         foreach ($installments as $installment) {
             $this->markOverdue($installment);
         }
 
+        $this->announceDueSoon();
         $this->remindStudio();
         $this->remindClients();
 
         return $installments->count();
+    }
+
+    /**
+     * #417: three days out, and only for an invoice the client has actually
+     * been handed — a `scheduled` row is a date in a plan, not a demand
+     * anyone has to act on yet. Stamped rather than counted: one rung.
+     *
+     * The window is a range and not the single date `due_on - 3`, because a
+     * day the scheduler missed would otherwise skip the rung entirely. Rows
+     * already past due belong to the ladder below.
+     */
+    private function announceDueSoon(): void
+    {
+        $today = now('UTC')->toDateString();
+
+        $soon = PaymentInstallment::query()
+            ->whereIn('status', [PaymentInstallmentStatus::Invoiced, PaymentInstallmentStatus::Partial])
+            ->whereNull('before_due_reminder_sent_at')
+            ->whereDate('due_on', '>=', $today)
+            ->whereDate('due_on', '<=', now('UTC')->addDays(self::DUE_SOON_DAYS)->toDateString())
+            ->with('plan.job.project')
+            ->get();
+
+        if ($soon->isEmpty()) {
+            return;
+        }
+
+        foreach ($this->group($soon) as [$user, $installments]) {
+            $this->notifications->send($user, new Studio\InstallmentDueSoon($installments));
+        }
+
+        foreach ($soon as $installment) {
+            $installment->forceFill(['before_due_reminder_sent_at' => now('UTC')])->save();
+        }
     }
 
     /**
@@ -111,10 +149,8 @@ class DetectOverdueInstallments
      * is a transfer in flight; the studio may know that earlier and more
      * often than the client is asked about it.
      *
-     * Two switches, both the studio's: the Zahlungen pane for all of them,
-     * the payment plan for the one client somebody just spoke to. Nothing
-     * goes out while the portal is closed for maintenance — the link would
-     * land on the closure page.
+     * Nothing goes out while the portal is closed for maintenance — the link
+     * would land on the closure page.
      */
     private function remindClients(): void
     {
@@ -124,7 +160,6 @@ class DetectOverdueInstallments
 
         $due = PaymentInstallment::query()
             ->overdue()
-            ->whereHas('plan', fn ($plan) => $plan->where('client_reminders_enabled', true))
             ->with('plan.job.project')
             ->get()
             ->filter(fn (PaymentInstallment $installment) => FibonacciReminderSchedule::isDue(
@@ -178,9 +213,7 @@ class DetectOverdueInstallments
         PaymentInstallment $installment,
         OverdueReason $reason = OverdueReason::DueDatePassed,
     ): void {
-        $open = [PaymentInstallmentStatus::Scheduled, PaymentInstallmentStatus::Invoiced];
-
-        if (! in_array($installment->status, $open, true) || $installment->overdue_notified_at !== null) {
+        if (! in_array($installment->status, PaymentInstallmentStatus::open(), true) || $installment->overdue_notified_at !== null) {
             return;
         }
 

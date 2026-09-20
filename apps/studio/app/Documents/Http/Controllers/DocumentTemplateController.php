@@ -2,8 +2,8 @@
 
 namespace App\Documents\Http\Controllers;
 
-use App\Crm\Enums\ShootKind;
 use App\Crm\Models\Project;
+use App\Crm\Models\Shoot;
 use App\Documents\Data\DocumentTemplateData;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
@@ -28,10 +28,9 @@ use Inertia\Response;
 
 /**
  * CRUD over the current version of every template family, across every
- * App\Documents\Enums\DocumentTemplateType — T-12's generalisation of M-01's
- * ContractTemplateController. "Update" never writes to an existing row —
- * see DocumentTemplate::newVersion() — so a Contract already rendered from
- * an older version keeps pointing at a row this controller never touches
+ * App\Documents\Enums\DocumentTemplateType. "Update" never writes to an
+ * existing row — see DocumentTemplate::newVersion() — so a document already
+ * rendered from an older version keeps pointing at a row this controller never touches
  * again.
  */
 class DocumentTemplateController extends Controller
@@ -42,7 +41,7 @@ class DocumentTemplateController extends Controller
 
         return Inertia::render('DocumentTemplates/Create', [
             'types' => $this->typeOptions(),
-            'shootKinds' => $this->shootKindOptions(),
+            'shootKinds' => Shoot::kindSuggestions(),
             // Keyed by type: the create screen's type select changes the palette
             // without a round trip, and there are three small lists in total.
             'palettes' => collect(DocumentTemplateType::cases())
@@ -58,7 +57,7 @@ class DocumentTemplateController extends Controller
             // first — a template is written for the work in front of you.
             'projects' => Project::query()->latest()->limit(50)->get()
                 ->map(fn (Project $project) => ['id' => $project->public_id, 'name' => $project->name])->all(),
-            'starters' => StarterTemplateCatalog::byType(),
+            'starters' => StarterTemplateCatalog::byType(app(StudioSettingsResolver::class)->clientRegister()),
         ]);
     }
 
@@ -74,7 +73,7 @@ class DocumentTemplateController extends Controller
                 }
             }],
             'type' => ['required', Rule::enum(DocumentTemplateType::class)],
-            'shoot_kind' => ['nullable', Rule::enum(ShootKind::class)],
+            'shoot_kind' => ['nullable', 'string', 'max:255'],
             'blocks' => ['nullable', 'array'],
             'blocks.blocks' => ['nullable', 'array'],
             'blocks.blocks.*.type' => ['required_with:blocks.blocks', 'string'],
@@ -207,14 +206,6 @@ class DocumentTemplateController extends Controller
     {
         return collect(DocumentTemplateType::cases())
             ->map(fn (DocumentTemplateType $type) => ['value' => $type->value, 'label' => $type->label()])
-            ->all();
-    }
-
-    /** Same shape TaskTemplateController already builds for the identical select. */
-    private function shootKindOptions(): array
-    {
-        return collect(ShootKind::cases())
-            ->map(fn (ShootKind $kind) => ['value' => $kind->value, 'label' => $kind->label()])
             ->all();
     }
 

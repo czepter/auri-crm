@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
+import { ChevronDown } from 'lucide-vue-next'
+import { Button } from '@/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +41,35 @@ export const Dreipunktmenue: Story = {
             <DropdownMenuItem class="text-destructive">Löschen …</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+      </div>
+    `,
+  }),
+}
+
+/** Nächste Stufe als Knopf, alle Stufen hinter dem Pfeil — der Kopf einer Anfrage. */
+export const Stufenwahl: Story = {
+  render: (args) => ({
+    components: { ...parts, Button, ChevronDown },
+    setup: () => ({ args }),
+    template: `
+      <div style="height: 220px;">
+        <div class="flex">
+          <Button variant="pill" type="button" class="rounded-r-none">Angebot</Button>
+          <DropdownMenu v-bind="args">
+            <DropdownMenuTrigger as-child>
+              <Button variant="pill" type="button" class="rounded-l-none border-l border-white/30 px-2" aria-label="Stufe">
+                <ChevronDown class="size-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" class="w-[208px]">
+              <DropdownMenuItem>Neu</DropdownMenuItem>
+              <DropdownMenuItem disabled>Kontaktiert</DropdownMenuItem>
+              <DropdownMenuItem>Angebot</DropdownMenuItem>
+              <DropdownMenuItem>Angebot angenommen</DropdownMenuItem>
+              <DropdownMenuItem>Gebucht</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     `,
   }),

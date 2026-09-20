@@ -147,9 +147,8 @@ it('completes the authorization-code-with-PKCE flow end to end and mints a worki
     useSurface(Surface::API);
 
     $this->withHeader('Authorization', 'Bearer '.$token['access_token'])
-        ->getJson('/api/oauth/token-info')
-        ->assertOk()
-        ->assertJson(['clientId' => $user->public_id, 'scopes' => [Capability::ManageContacts->value]]);
+        ->getJson('/api/contacts')
+        ->assertOk();
 
     // Scoped to manage_contacts only — a leads route the token was never
     // granted must still refuse it, even though Photographer's own role

@@ -4,7 +4,6 @@ namespace App\Crm\Actions;
 
 use App\Crm\Data\CaptureInquiryData;
 use App\Crm\Enums\ProjectContactRole;
-use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Events\LeadCaptured;
@@ -67,11 +66,7 @@ class CaptureInquiry
                 }
 
                 $project->attachContact(
-                    Contact::create([
-                        'name' => $person['name'],
-                        'email' => $person['email'] ?? null,
-                        'phone' => $person['phone'] ?? null,
-                    ]),
+                    $this->contactFor($person['name'], $person['email'] ?? null, $person['phone'] ?? null),
                     ProjectContactRole::Partner,
                 );
             }
@@ -128,7 +123,7 @@ class CaptureInquiry
             AuditLogger::record(
                 event: 'lead.captured',
                 actor: $actor,
-                context: ['source' => $data->source->value, 'via' => $data->captured_via->value],
+                context: ['source' => $data->source?->value, 'via' => $data->captured_via?->value],
                 subject: $lead->public_id,
                 projectId: $lead->project_id,
                 occurredAt: $data->captured_at === null ? null : CarbonImmutable::parse($data->captured_at),
@@ -157,38 +152,34 @@ class CaptureInquiry
             return Contact::query()->where('public_id', $data->contact_id)->firstOrFail();
         }
 
-        $existing = filled($data->contact_email)
-            ? Contact::query()->where('email', $data->contact_email)->first()
+        return $this->contactFor($data->contact_name, $data->contact_email, $data->contact_phone);
+    }
+
+    private function contactFor(?string $name, ?string $email, ?string $phone): Contact
+    {
+        $existing = filled($email)
+            ? Contact::query()->where('email', $email)->first()
             : null;
 
         if ($existing !== null) {
             // A phone number the studio does not have yet is worth keeping;
             // one it already has is not worth overwriting from a form.
-            if (filled($data->contact_phone) && blank($existing->phone)) {
-                $existing->update(['phone' => $data->contact_phone]);
+            if (filled($phone) && blank($existing->phone)) {
+                $existing->update(['phone' => $phone]);
             }
 
             return $existing;
         }
 
         return Contact::create([
-            'name' => $data->contact_name,
-            'email' => $data->contact_email,
-            'phone' => $data->contact_phone,
+            'name' => $name,
+            'email' => $email,
+            'phone' => $phone,
         ]);
     }
 
-    /**
-     * The opening shoot of a project takes the project's own shape, where the
-     * two share a name. A studio's own type — "Elopement", "Neugeboren" — has
-     * no ShootKind of its own and opens as sonstige; the shoot's kind is
-     * editable on the project screen, and guessing it from the type's name
-     * would be wrong more often than blank is.
-     */
-    private function kindFor(ProjectType|string|null $type): ShootKind
+    private function kindFor(ProjectType|string|null $type): string
     {
-        $key = $type instanceof ProjectType ? $type->key : $type;
-
-        return ShootKind::tryFrom((string) $key) ?? ShootKind::Other;
+        return Shoot::kindFor(is_string($type) ? $this->stages->type($type) : $type);
     }
 }

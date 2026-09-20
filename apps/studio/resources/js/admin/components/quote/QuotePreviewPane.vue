@@ -1,47 +1,35 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useDebounceFn, useElementSize } from '@vueuse/core'
-import { buildQuotePayload, type QuoteDraft } from './quotePayload'
+import { ref, watch } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
+import PaperSheet from '@/admin/components/PaperSheet.vue'
+import { ChoiceGroup } from '@/ui/choice-group'
+import { buildQuotePayload, type QuoteDraft, type VatSettings } from './quotePayload'
+import QuotePortalPreview from './QuotePortalPreview.vue'
 
 // Server-rendered only — unlike DocumentPreviewPane there is no local instant
 // paint here, that half belongs to Editor.js and has no counterpart on a
 // quote draft.
+//
+// `draft` is only what a draft edits — a sent/accepted/superseded quote has
+// none, and its sheet never changes underneath it (Quote::booted() sees to
+// that), so it fetches the stored quote once over GET instead of re-posting
+// a draft on every keystroke.
 const props = defineProps<{
   quoteId: string
-  draft: QuoteDraft
-  canManageCatalog: boolean
+  draft?: QuoteDraft
+  canManageCatalog?: boolean
+  // Nur für den Portal-Modus: die Anrede-Zeile, die der Kunde über dem
+  // Angebot sieht (portal/pages/Quotes/Show.vue's project.name), und was
+  // Quote::computeVat() aus den aktuellen Studio-Einstellungen macht.
+  recipientName?: string
+  vatSettings?: VatSettings
 }>()
 
-// A4 at 96 dpi, matching DocumentPreviewPane's own sheet metrics — the same
-// paper RenderQuotePdf sends to Gotenberg.
-const SHEET_WIDTH = 794
-const SHEET_HEIGHT = 1123
-const SHEET_MARGIN = 38
-const PAD = 16
+const mode = ref<'pdf' | 'portal'>('portal')
 
 const html = ref('')
 const stale = ref(true)
 const fit = ref(true)
-
-const frame = ref<HTMLElement | null>(null)
-const { width: available } = useElementSize(frame)
-
-const scale = computed(() =>
-  fit.value && available.value > 0 ? Math.min(1, (available.value - PAD * 2) / SHEET_WIDTH) : 1,
-)
-
-const sheet = computed(() => {
-  const style = `<style>
-    @page { size: A4; margin: ${SHEET_MARGIN}px; }
-    html { background: #fff; }
-    body {
-      width: ${SHEET_WIDTH}px; min-height: ${SHEET_HEIGHT}px; margin: 0; padding: ${SHEET_MARGIN}px;
-      background-image: repeating-linear-gradient(to bottom, transparent 0 ${SHEET_HEIGHT - 1}px, #E9E9E7 ${SHEET_HEIGHT - 1}px ${SHEET_HEIGHT}px);
-    }
-  </style>`
-
-  return html.value.includes('</head>') ? html.value.replace('</head>', `${style}</head>`) : style + html.value
-})
 
 // useDebounceFn only cancels a pending, not-yet-started call — a monotonic
 // token is how a later edit's response wins even if it lands first.
@@ -50,7 +38,7 @@ let requestId = 0
 const refreshFromServer = useDebounceFn(async () => {
   const id = ++requestId
   const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
-  const body = buildQuotePayload(props.draft, { canManageCatalog: props.canManageCatalog })
+  const body = buildQuotePayload(props.draft as QuoteDraft, { canManageCatalog: props.canManageCatalog ?? false })
 
   try {
     const response = await fetch(`/angebote/${props.quoteId}/vorschau`, {
@@ -77,21 +65,43 @@ const refreshFromServer = useDebounceFn(async () => {
   }
 }, 400)
 
-watch(
-  () => [props.draft, props.canManageCatalog],
-  () => {
-    stale.value = true
-    refreshFromServer()
-  },
-  { deep: true, immediate: true },
-)
+// The stored quote's own sheet, fetched exactly once — nothing to debounce
+// or re-post, since there is no draft here to change it.
+async function loadStoredSheet() {
+  const response = await fetch(`/angebote/${props.quoteId}/vorschau`, { headers: { Accept: 'text/html' } })
+
+  if (response.ok) html.value = await response.text()
+}
+
+if (props.draft) {
+  watch(
+    () => [props.draft, props.canManageCatalog],
+    () => {
+      stale.value = true
+      refreshFromServer()
+    },
+    { deep: true, immediate: true },
+  )
+} else {
+  stale.value = false
+  loadStoredSheet()
+}
 </script>
 
 <template>
   <section class="flex min-w-0 flex-col">
     <div class="flex items-center gap-2.5 border-b border-border pb-2.5">
       <span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('quotes.preview') }}</span>
-      <div class="ml-auto flex items-center gap-1.5">
+
+      <ChoiceGroup
+        :model-value="mode"
+        :options="[{ value: 'pdf', label: $t('quotes.previewPdf') }, { value: 'portal', label: $t('quotes.previewPortal') }]"
+        variant="segmented"
+        class="ml-2.5"
+        @update:model-value="(value) => (mode = value as 'pdf' | 'portal')"
+      />
+
+      <div v-if="mode === 'pdf'" class="ml-auto flex items-center gap-1.5">
         <button
           v-for="option in [{ key: 'fit', on: true, label: 'quotes.zoomFit' }, { key: 'full', on: false, label: 'quotes.zoomFull' }]"
           :key="option.key"
@@ -101,30 +111,21 @@ watch(
           @click="fit = option.on"
         >{{ $t(option.label) }}</button>
       </div>
-      <span class="ml-2.5 text-[11px] leading-none" :class="stale ? 'text-due' : 'text-faint'">{{
+      <span v-if="mode === 'pdf' && draft" class="ml-2.5 text-[11px] leading-none" :class="stale ? 'text-due' : 'text-faint'">{{
         stale ? $t('quotes.previewStale') : $t('quotes.previewFresh')
       }}</span>
     </div>
 
-    <!-- sandbox="" (no allow-* tokens): the sheet is staff-authored HTML, not
-         trusted script — an empty sandbox keeps a <script> in it from ever
-         running with this session's origin. -->
-    <div
-      ref="frame"
-      class="mt-6 flex-1 overflow-auto bg-sunk"
-      :style="{ height: `${SHEET_HEIGHT * scale + PAD * 2}px`, padding: `${PAD}px` }"
-    >
-      <iframe
-        class="block border border-border bg-white shadow-[0_18px_40px_-24px_rgba(20,16,14,.28)]"
-        :srcdoc="sheet"
-        sandbox=""
-        :style="{
-          width: `${SHEET_WIDTH}px`,
-          height: `${SHEET_HEIGHT}px`,
-          transform: `scale(${scale})`,
-          transformOrigin: 'top left',
-        }"
-      ></iframe>
+    <PaperSheet v-if="mode === 'pdf'" :html="html" :fit="fit" />
+
+    <div v-else class="mt-6 flex-1 overflow-auto rounded-md border border-border bg-sunk p-4">
+      <QuotePortalPreview
+        v-if="draft && vatSettings"
+        :draft="draft"
+        :project-name="recipientName ?? ''"
+        :vat-settings="vatSettings"
+        class="rounded-[10px]"
+      />
     </div>
   </section>
 </template>

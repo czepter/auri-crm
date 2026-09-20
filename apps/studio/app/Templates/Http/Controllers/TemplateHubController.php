@@ -5,10 +5,10 @@ namespace App\Templates\Http\Controllers;
 use App\Crm\Actions\ApplyTaskTemplates;
 use App\Crm\Data\FormTemplateData;
 use App\Crm\Data\TaskTemplateData;
-use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Models\ProjectType;
+use App\Crm\Models\Shoot;
 use App\Crm\Models\TaskTemplate;
 use App\Crm\Support\CrmVocabulary;
 use App\Documents\Data\DocumentTemplateData;
@@ -45,7 +45,7 @@ class TemplateHubController extends Controller
             'typ' => ['nullable', Rule::in(self::KINDS)],
             'vorlage' => ['nullable', 'string'],
             'preview_date' => ['nullable', 'date'],
-            'preview_shoot_kind' => ['nullable', Rule::enum(ShootKind::class)],
+            'preview_shoot_kind' => ['nullable', 'string', 'max:255'],
         ]);
 
         $allowed = $this->allowedKinds();
@@ -84,7 +84,7 @@ class TemplateHubController extends Controller
             'documentUse' => $this->documentUse($documents),
             'galleryPresets' => GalleryPresetData::collect($presets),
             'audiences' => $this->options(TaskAudience::cases()),
-            'shootKinds' => $this->options(ShootKind::cases()),
+            'shootKinds' => Shoot::kindSuggestions(),
             'projectTypes' => app(CrmVocabulary::class)->types()
                 ->filter(fn (ProjectType $type) => $type->is_active)
                 ->map(fn (ProjectType $type) => ['value' => $type->key, 'label' => $type->name])
@@ -95,7 +95,7 @@ class TemplateHubController extends Controller
             'preview' => isset($validated['preview_date']) && in_array('aufgaben', $allowed, true)
                 ? $apply->preview(
                     CarbonImmutable::parse($validated['preview_date']),
-                    isset($validated['preview_shoot_kind']) ? ShootKind::from($validated['preview_shoot_kind']) : null,
+                    $validated['preview_shoot_kind'] ?? null,
                 )
                 : null,
         ]);
@@ -141,7 +141,7 @@ class TemplateHubController extends Controller
     }
 
     /**
-     * @param  list<TaskAudience|ShootKind>  $cases
+     * @param  list<TaskAudience>  $cases
      * @return list<array{value: string, label: string}>
      */
     private function options(array $cases): array

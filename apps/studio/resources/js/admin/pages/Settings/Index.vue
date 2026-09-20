@@ -166,6 +166,7 @@ const documentPreview = computed(() => {
     paymentTermDays: documents?.payment_term_days ?? props.settings.paymentTermDays,
     depositPercentage: documents?.deposit_percentage ?? basisPointsToPercent(props.settings.depositPercentage),
     widerrufIncluded: documents?.widerruf_included ?? props.settings.widerrufIncluded,
+    quoteLayout: documents?.quote_layout ?? props.settings.quoteLayout,
   }
 })
 
@@ -220,7 +221,7 @@ function submitGeneral() {
             <SettingsNav :active="pane" />
 
             <div class="max-w-[620px] min-w-0 flex-1">
-              <ProfileForm v-if="profileSection" ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="[profileSection]" />
+              <ProfileForm v-if="profileSection" ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="profileSection === 'legal' ? ['legal', 'tax'] : [profileSection]" />
               <VatForm v-else-if="pane === 'vat'" ref="vatRef" :settings="settings" />
               <DocumentsForm v-else-if="pane === 'documents'" ref="documentsRef" :settings="settings" />
               <EmailForm v-else-if="pane === 'email'" ref="emailRef" :settings="settings" :sender-from-env="mailSenderFromEnv" />

@@ -28,6 +28,11 @@ class ContactPolicy
         return $user->role->allows(Capability::ManagePortalAccess);
     }
 
+    public function sendPortalAccess(User $user, Contact $contact): bool
+    {
+        return $user->role->allows(Capability::ManagePortalAccess);
+    }
+
     /** X-04: download everything the studio holds about this contact. */
     public function exportDsgvoData(User $user, Contact $contact): bool
     {

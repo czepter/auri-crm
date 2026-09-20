@@ -8,7 +8,7 @@ namespace App\Documents\Support;
  * in by accident; this half is the one that actually holds, because `body`
  * arrives as a POST field and need never have passed through the editor.
  *
- * It matters most for mail: a Contract or Quote becomes a PDF we render
+ * It matters most for mail: a Quote or Invoice becomes a PDF we render
  * ourselves, but a mail body is HTML handed to an inbox we never render, so
  * a javascript:/data: href in it is a link someone else's client decides
  * what to do with.

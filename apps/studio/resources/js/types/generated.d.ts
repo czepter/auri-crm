@@ -18,6 +18,8 @@ eventLabel: string | null,
 anchor: string | null,
 offsetDays: number | null,
 direction: string | null,
+projectType: string | null,
+action: string,
 };
 export type AutomationRunData = {
 id: string,
@@ -28,11 +30,12 @@ statusLabel: string,
 };
 }
 namespace Enums {
-export type AutomationAnchor = 'per_shoot' | 'primary_shoot' | 'quote_validity' | 'installment_due' | 'contract_deadline' | 'gallery_expiry' | 'questionnaire_due';
-export type AutomationCondition = 'payment_open' | 'contract_unsigned' | 'questionnaire_open' | 'gallery_unopened';
+export type AutomationAction = 'notice' | 'task' | 'mail_draft';
+export type AutomationAnchor = 'per_shoot' | 'primary_shoot' | 'quote_validity' | 'installment_due' | 'gallery_expiry' | 'questionnaire_due' | 'delivered' | 'quote_sent' | 'inquiry_captured';
+export type AutomationCondition = 'payment_open' | 'questionnaire_open' | 'gallery_unopened';
 export type AutomationOffsetDirection = 'before' | 'after';
 export type AutomationRecipient = 'client' | 'crew' | 'studio';
-export type AutomationRunStatus = 'pending' | 'sent' | 'failed' | 'skipped';
+export type AutomationRunStatus = 'pending' | 'sent' | 'failed' | 'skipped' | 'awaiting_approval';
 export type AutomationTriggerType = 'event' | 'date_offset';
 }
 }
@@ -51,6 +54,14 @@ description: string | null,
 isActive: boolean,
 itemCount: number,
 items: App.Catalog.Data.PackageItemData[],
+portalOffered: boolean,
+portalPriceMode: string,
+portalRequiresDate: boolean,
+projectTypeKey: string | null,
+portalHasImage: boolean,
+price: number | null,
+requestedCount: number,
+bookedCount: number,
 };
 export type PackageItemData = {
 id: string,
@@ -58,11 +69,42 @@ title: string,
 description: string | null,
 quantity: number,
 unitPrice: number | null,
+vatRate: number | null,
 selectable: boolean,
 selected: boolean,
 outcome: string | null,
 hasImage: boolean,
 };
+export type PortalServiceData = {
+id: string,
+name: string,
+description: string | null,
+price: number | null,
+priceMode: string,
+requiresDate: boolean,
+hasImage: boolean,
+items: App.Catalog.Data.PortalServiceItemData[],
+};
+export type PortalServiceItemData = {
+title: string,
+description: string | null,
+selectable: boolean,
+selected: boolean,
+addOnPrice: number | null,
+};
+export type ServiceSuggestionData = {
+id: string,
+contact: string,
+package: string,
+packageName: string,
+note: string | null,
+author: string | null,
+suggestedOn: string,
+live: boolean,
+};
+}
+namespace Enums {
+export type PortalPriceMode = 'exact' | 'from' | 'on_request';
 }
 }
 namespace Contracts {
@@ -83,6 +125,19 @@ sentAt: string | null,
 downloadUrl: string | null,
 signDeadlineOn: string | null,
 signers: App.Contracts.Data.ContractSignerData[],
+};
+export type ContractRowData = {
+id: string,
+projectId: string,
+projectName: string,
+contact: string | null,
+version: number,
+state: string,
+status: string,
+sentOn: string | null,
+signedOn: string | null,
+deadlineOn: string | null,
+hasDocument: boolean,
 };
 export type ContractSignerData = {
 id: string,
@@ -228,9 +283,10 @@ names: string,
 date: string | null,
 shootCount: number,
 venue: string | null,
-source: string,
+source: string | null,
 stage: string,
 daysInStage: number,
+stale: boolean,
 value: number | null,
 lastAt: string,
 conflicts: App.Crm.Data.DateConflictData[],
@@ -288,6 +344,7 @@ canManagePortalVisibility: boolean,
 canManageQuotes: boolean,
 canManageContracts: boolean,
 canManagePaymentPlan: boolean,
+primaryShootCancelled: boolean,
 canManageForms: boolean,
 leadId: string | null,
 outcomeLabel: string | null,
@@ -435,7 +492,6 @@ dayOffset: number,
 anchor: string,
 anchorLabel: string,
 shootKind: string | null,
-shootKindLabel: string | null,
 isActive: boolean,
 sortOrder: number,
 };
@@ -458,19 +514,18 @@ isTransit: boolean,
 }
 namespace Enums {
 export type BookedVia = 'manual' | 'contract';
-export type CaptureChannel = 'phone' | 'email' | 'in_person' | 'web_form' | 'other';
+export type CaptureChannel = 'phone' | 'email' | 'in_person' | 'web_form' | 'portal' | 'other';
 export type CrewRole = 'lead_photographer' | 'second_shooter' | 'assistant';
 export type DueAnchor = 'stage' | 'shoot';
 export type FormFieldType = 'text' | 'short_text' | 'boolean' | 'select' | 'date' | 'time' | 'name_list' | 'group_photos' | 'file';
 export type LeadOutcome = 'lost' | 'declined' | 'closed';
 export type LeadSource = 'referral' | 'website' | 'instagram' | 'wedding_fair' | 'other';
-export type LeadStage = 'new' | 'contacted' | 'quote_sent' | 'quote_accepted' | 'contract_sent' | 'booked';
+export type LeadStage = 'new' | 'contacted' | 'quote_sent' | 'quote_accepted' | 'booked';
 export type ProjectContactRole = 'primary' | 'partner' | 'payer' | 'planner' | 'vendor';
 export type ProjectFieldType = 'text' | 'textarea' | 'number' | 'select' | 'tags' | 'date' | 'boolean';
 export type ProjectType = 'wedding' | 'portrait' | 'other';
-export type ShootKind = 'engagement' | 'wedding' | 'reception' | 'portrait' | 'other';
 export type ShootStatus = 'requested' | 'booked' | 'prep' | 'shot' | 'culling' | 'editing' | 'ready' | 'delivered' | 'archived';
-export type StageAnchor = 'entry' | 'quote_sent' | 'quote_accepted' | 'contract_sent' | 'won' | 'booked' | 'shot' | 'ready' | 'delivered' | 'archived';
+export type StageAnchor = 'entry' | 'quote_sent' | 'quote_accepted' | 'won' | 'booked' | 'shot' | 'ready' | 'delivered' | 'archived';
 export type StageColor = 'grey' | 'red' | 'amber' | 'olive' | 'green' | 'teal' | 'blue' | 'violet';
 export type StagePipeline = 'lead' | 'project';
 export type TaskAudience = 'internal' | 'client';
@@ -493,6 +548,7 @@ name: string,
 email: string,
 role: string,
 mfaConfirmed: boolean,
+lastQuoteAction: string | null,
 };
 }
 namespace Documents {
@@ -506,7 +562,6 @@ version: number,
 type: string,
 typeLabel: string,
 shootKind: string | null,
-shootKindLabel: string | null,
 };
 export type MailTemplateData = {
 id: string,
@@ -516,7 +571,7 @@ unknownFields: string[],
 };
 }
 namespace Enums {
-export type DocumentTemplateType = 'contract' | 'quote' | 'invoice' | 'mail';
+export type DocumentTemplateType = 'contract' | 'quote' | 'invoice' | 'credit_note' | 'mail' | 'legal';
 }
 }
 namespace Engagement {
@@ -574,7 +629,6 @@ name: string,
 design: Record<string, string> | null,
 expiryMode: string,
 expiryDays: number | null,
-requiresSettledBalance: boolean | null,
 downloadsEnabled: boolean | null,
 listsEnabled: boolean | null,
 commentsEnabled: boolean | null,
@@ -597,6 +651,46 @@ id: string,
 name: string,
 email: string | null,
 phone: string | null,
+street: string | null,
+postcode: string | null,
+city: string | null,
+updatedAt: string,
+};
+export type CrewAssignmentReadData = {
+id: string,
+shootId: string,
+userId: string,
+userName: string,
+role: string,
+};
+export type GalleryDetailData = {
+id: string,
+title: string,
+projectId: string | null,
+currentVersion: number | null,
+draftAssetCount: number,
+status: string,
+updatedAt: string,
+slug: string,
+url: string,
+isExternal: boolean,
+externalUrl: string | null,
+expiresAt: string | null,
+downloadsEnabled: boolean,
+listsEnabled: boolean,
+commentsEnabled: boolean,
+favoriteCount: number,
+downloadCount: number,
+commentCount: number,
+viewCount: number,
+};
+export type GalleryReadData = {
+id: string,
+title: string,
+projectId: string | null,
+currentVersion: number | null,
+draftAssetCount: number,
+status: string,
 updatedAt: string,
 };
 export type JobReadData = {
@@ -609,10 +703,14 @@ updatedAt: string,
 export type LeadReadData = {
 id: string,
 projectId: string,
-source: string,
+projectName: string,
+source: string | null,
 sourceOther: string | null,
 stage: string,
+stageEnteredAt: string | null,
 isLost: boolean,
+outcome: string | null,
+lostReason: string | null,
 capturedAt: string,
 lostAt: string | null,
 updatedAt: string,
@@ -622,6 +720,9 @@ id: string,
 name: string,
 email: string | null,
 phone: string | null,
+street: string | null,
+postcode: string | null,
+city: string | null,
 role: string,
 updatedAt: string,
 };
@@ -634,6 +735,8 @@ portalVisible: boolean,
 fields: object,
 updatedAt: string,
 lead: App.Integration.Data.ProjectLeadReadData | null,
+job: App.Integration.Data.JobReadData | null,
+openTaskCount: number,
 contacts: App.Integration.Data.ProjectContactReadData[],
 shoots: App.Integration.Data.ShootReadData[],
 quotes: App.Quotes.Data.QuoteData[],
@@ -650,16 +753,19 @@ allowNewOptions: boolean,
 };
 export type ProjectLeadReadData = {
 stage: string,
-source: string,
+source: string | null,
 sourceOther: string | null,
 inquiryText: string | null,
-capturedVia: string,
+capturedVia: string | null,
 capturedViaOther: string | null,
 capturedAt: string,
 stageEnteredAt: string | null,
 outcome: string | null,
 lostReason: string | null,
 lostAt: string | null,
+};
+export type ProjectMoneyReadData = {
+paymentPlan: App.Payments.Data.PaymentPlanData | null,
 };
 export type ProjectReadData = {
 id: string,
@@ -688,13 +794,51 @@ endTime: string | null,
 venueName: string | null,
 venueCity: string | null,
 status: string,
+isPrimary: boolean,
 cancelledAt: string | null,
 cancelledReason: string | null,
+crew: App.Crm.Data.CrewMemberData[],
 updatedAt: string,
 };
-}
-namespace Enums {
-export type WebhookDeliveryStatus = 'pending' | 'delivered' | 'failed';
+export type ShotListItemReadData = {
+id: string,
+label: string,
+checkedOff: boolean,
+};
+export type StaffReadData = {
+id: string,
+name: string,
+role: string,
+};
+export type StudioSettingsReadData = {
+vatMode: string,
+vatRate: number,
+quoteValidityDays: number,
+paymentTermDays: number,
+depositPercentage: number,
+};
+export type TaskReadData = {
+id: string,
+projectId: string,
+title: string,
+audience: string,
+dueOn: string | null,
+isDone: boolean,
+completedOn: string | null,
+shootId: string | null,
+dependsOnTaskId: string | null,
+isBlocked: boolean,
+assigneeId: string | null,
+updatedAt: string,
+};
+export type TimelineEntryReadData = {
+id: string,
+time: string,
+title: string,
+location: string | null,
+note: string | null,
+isTransit: boolean,
+};
 }
 }
 namespace Media {
@@ -720,12 +864,53 @@ export type NotificationMode = 'immediate' | 'briefing' | 'digest' | 'off';
 }
 namespace Numbering {
 namespace Enums {
-export type DocumentType = 'quote' | 'contract' | 'invoice';
+export type DocumentType = 'quote' | 'contract' | 'invoice' | 'credit_note';
 export type NumberRangeResetRule = 'yearly' | 'continuous';
 }
 }
 namespace Payments {
 namespace Data {
+export type CreditNoteRowData = {
+id: string,
+number: string,
+issuedOn: string,
+amount: number,
+reason: string | null,
+invoiceId: string,
+invoiceNumber: string,
+projectId: string | null,
+projectName: string | null,
+contact: string | null,
+hasDocument: boolean,
+};
+export type InvoiceRowData = {
+id: string,
+number: string,
+issuedOn: string,
+projectId: string | null,
+projectName: string | null,
+contact: string | null,
+amount: number,
+paidAmount: number,
+credited: number,
+dueOn: string | null,
+status: string,
+statusLabel: string,
+sentOn: string | null,
+viewedOn: string | null,
+hasDocument: boolean,
+openInstallments: {
+id: string,
+remaining: number,
+}[],
+creditNotes: {
+id: string,
+number: string,
+amount: number,
+issuedOn: string,
+hasDocument: boolean,
+}[],
+};
 export type PaymentInstallmentData = {
 id: string,
 amount: number,
@@ -738,24 +923,34 @@ settledVia: string | null,
 settledViaLabel: string | null,
 paidOn: string | null,
 paymentReference: string | null,
+paidAmount: number,
+remaining: number,
 isLate: boolean,
+invoiceId: string | null,
 invoiceNumber: string | null,
 invoicedOn: string | null,
 hasInvoiceDocument: boolean,
+creditNotes: {
+id: string,
+number: string,
+amount: number,
+issuedOn: string,
+hasDocument: boolean,
+}[],
 };
 export type PaymentPlanData = {
 id: string,
 total: number,
 openTotal: number,
-isEditable: boolean,
 reference: string | null,
-clientRemindersEnabled: boolean,
+settledOn: string | null,
 installments: App.Payments.Data.PaymentInstallmentData[],
 };
 }
 namespace Enums {
+export type CancellationKind = 'correction' | 'void';
 export type OverdueReason = 'due_date_passed' | 'payment_failed';
-export type PaymentInstallmentStatus = 'scheduled' | 'paid' | 'invoiced';
+export type PaymentInstallmentStatus = 'scheduled' | 'paid' | 'invoiced' | 'cancelled' | 'partial';
 export type SettledVia = 'stripe' | 'transfer' | 'manual';
 }
 }
@@ -778,11 +973,17 @@ total: number,
 discountType: string | null,
 discountValue: number | null,
 discountAmount: number,
+discountHidden: boolean,
 net: number,
-vatMode: string | null,
-vatRate: number | null,
+vatMode: string,
+vatRate: number,
 vatNote: string | null,
-vatAmount: number | null,
+vatAmount: number,
+vatLines: {
+rate: number,
+net: number,
+vat: number,
+}[],
 intro: string | null,
 outro: string | null,
 items: App.Quotes.Data.QuoteItemData[],
@@ -793,6 +994,7 @@ imagesPerHour: number | null,
 hours: number | null,
 timeTitle: string | null,
 timeDescription: string | null,
+timeSortOrder: number,
 rangeMin: number | null,
 rangeMax: number | null,
 paymentStages: {
@@ -819,16 +1021,34 @@ discountType: string | null,
 discountValue: number | null,
 discountAmount: number,
 netTotal: number,
+vatRate: number | null,
 selectable: boolean,
 selected: boolean,
 outcome: string | null,
 hasImage: boolean,
 };
+export type QuoteRowData = {
+id: string,
+projectName: string,
+contact: string | null,
+number: string | null,
+status: string,
+statusLabel: string,
+total: number,
+sentAt: string | null,
+createdAt: string | null,
+};
 }
 namespace Enums {
 export type DiscountType = 'percentage' | 'amount';
 export type PricingMode = 'classic' | 'choice';
+export type QuoteLayout = 'classic' | 'minimal' | 'letter' | 'header_band' | 'structured';
 export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'superseded' | 'expired';
+}
+}
+namespace Reporting {
+namespace Enums {
+export type ReportPeriod = '12m' | '6m' | 'jahr';
 }
 }
 namespace Settings {
@@ -836,7 +1056,6 @@ namespace Data {
 export type GallerySettingsData = {
 id: string,
 expiryDays: number | null,
-requiresSettledBalance: boolean,
 downloadsEnabled: boolean,
 listsEnabled: boolean,
 commentsEnabled: boolean,
@@ -869,10 +1088,15 @@ maintenanceMessage: string | null,
 welcomeText: string | null,
 datenschutzUrl: string | null,
 agbUrl: string | null,
+impressumUrl: string | null,
+widerrufUrl: string | null,
+legalFamilies: Record<string, string | null>,
 acceptQuotesEnabled: boolean,
 signContractsEnabled: boolean,
 paymentStatusEnabled: boolean,
+offersEnabled: boolean,
 messagingMode: string,
+clientRegister: string,
 welcomeInquiry: string | null,
 welcomeMany: string | null,
 dsgvoRecipient: string | null,
@@ -917,6 +1141,8 @@ paymentTermDays: number,
 depositPercentage: number,
 widerrufIncluded: boolean,
 widerrufText: string | null,
+quoteLayout: string,
+clientRegister: string,
 documentLetterheadHtml: string | null,
 documentFooterHtml: string | null,
 timezone: string,
@@ -927,6 +1153,7 @@ mailFromAddress: string,
 mailReplyTo: string | null,
 mailSignature: string | null,
 mailBcc: string | null,
+mailClientsEnabled: boolean,
 leadTypePresets: string[],
 leadSourcePresets: string[],
 leadChannelPresets: string[],

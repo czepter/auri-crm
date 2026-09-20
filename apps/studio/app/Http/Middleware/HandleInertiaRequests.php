@@ -5,10 +5,13 @@ namespace App\Http\Middleware;
 use App\Crm\Actions\OpenLeads;
 use App\Crm\Models\Project;
 use App\Data\StaffProfileData;
+use App\Documents\Support\DocumentBlockCatalog;
+use App\Documents\Support\MergeFieldVocabulary;
 use App\Help\Support\HelpIndex;
 use App\Models\User;
 use App\Portal\Support\PortalSettings;
 use App\Releases\Support\ReleaseLog;
+use App\Portal\Http\Controllers\LegalTextController;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\LiveUpdate;
 use App\Support\RecordVisit;
@@ -53,6 +56,15 @@ class HandleInertiaRequests extends Middleware
             'portalPreview' => $request->session()->get('portal_preview') === true,
             // Crew, assignees and bylines name the only person there is.
             'soloStudio' => fn () => $user !== null && User::soloStudio(),
+            // #480: what the letter fields of quotes and invoices offer —
+            // DocumentBlockCatalog's text blocks and every merge field.
+            'letterEditor' => fn () => $user === null ? null : [
+                'palette' => DocumentBlockCatalog::letter(),
+                'mergeFields' => collect(MergeFieldVocabulary::samples())
+                    ->map(fn (string $sample, string $path) => ['path' => $path, 'sample' => $sample])
+                    ->values()
+                    ->all(),
+            ],
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),
                 // P-06 (#225): a freshly set gallery secret, readable exactly
@@ -117,8 +129,7 @@ class HandleInertiaRequests extends Middleware
             // pays for a settings read it has no page for.
             //
             // Paths are hardcoded strings, not route(...) — the same choice
-            // every other portal URL in this codebase already makes (see
-            // ContractController's downloadUrl) rather than the named-route
+            // every other portal URL in this codebase already makes rather than the named-route
             // helper admin controllers use: the portal and admin surfaces
             // register their route names into one process-wide UrlGenerator
             // during the test suite's surface switching, and this surface's
@@ -136,16 +147,20 @@ class HandleInertiaRequests extends Middleware
                     'accentColor' => app(StudioSettingsResolver::class)->attributes()['accent_color'],
                     'address' => $this->studioAddress(),
                 ],
-                'portalLegal' => fn () => [
-                    'impressumUrl' => '/impressum',
-                    'datenschutzUrl' => app(StudioSettingsResolver::class)->legalDatenschutzUrl(),
-                    'agbUrl' => app(StudioSettingsResolver::class)->legalAgbUrl(),
-                ],
+                // Je Text die fremde Adresse, die eigene Seite oder nichts —
+                // siehe StudioSettingsResolver::legalUrl().
+                'portalLegal' => fn () => collect(LegalTextController::TEXTS)
+                    ->mapWithKeys(fn (string $text) => [
+                        $text.'Url' => app(StudioSettingsResolver::class)->legalUrl($text),
+                    ])
+                    ->all(),
                 // The header stands on every screen and its links are the
                 // same four everywhere, so what decides them is shared
                 // rather than passed per page. Null with nobody signed in:
                 // the sign-in screen has no navigation to draw.
                 'portalNav' => fn () => $this->portalNav($request),
+                // #439: picks the portal's Sie or ihr string set in portal/main.ts.
+                'clientRegister' => fn () => app(StudioSettingsResolver::class)->clientRegister(),
             ] : []),
         ];
     }

@@ -4,7 +4,6 @@ namespace App\Crm\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
-use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Support\CrmVocabulary;
 use BackedEnum;
@@ -74,10 +73,20 @@ class Shoot extends Model
         )->withoutObjectCaching();
     }
 
+    public static function kindFor(?ProjectType $type): string
+    {
+        return $type?->name ?? 'Sonstige';
+    }
+
+    /** @return list<string> */
+    public static function kindSuggestions(): array
+    {
+        return static::query()->distinct()->orderBy('kind')->pluck('kind')->all();
+    }
+
     protected function casts(): array
     {
         return [
-            'kind' => ShootKind::class,
             'date' => 'immutable_date',
             'status_entered_at' => 'immutable_datetime',
             'cancelled_at' => 'immutable_datetime',

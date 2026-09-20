@@ -2,7 +2,6 @@
 
 use App\Crm\Actions\ApplyTaskTemplates;
 use App\Crm\Actions\BookProject;
-use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -22,8 +21,8 @@ it('anchors each task to its own shoot date, not the project', function () {
     // The story's whole point: a project with an engagement session and a
     // wedding needs its briefing against the shoot it belongs to.
     $project = Project::factory()->create();
-    $engagement = Shoot::factory()->for($project)->on('2026-03-22')->create(['kind' => ShootKind::Engagement]);
-    $wedding = Shoot::factory()->for($project)->on('2026-06-14')->primary()->create(['kind' => ShootKind::Wedding]);
+    $engagement = Shoot::factory()->for($project)->on('2026-03-22')->create(['kind' => 'Verlobungsshooting']);
+    $wedding = Shoot::factory()->for($project)->on('2026-06-14')->primary()->create(['kind' => 'Hochzeitstag']);
 
     TaskTemplate::factory()->offset(-1)->create(['title' => 'Crew-Briefing verschicken']);
 
@@ -45,10 +44,10 @@ it('applies a positive offset after the shoot', function () {
 
 it('applies a template only to the kind of shoot it names', function () {
     $project = Project::factory()->create();
-    $wedding = Shoot::factory()->for($project)->on('2026-06-14')->create(['kind' => ShootKind::Wedding]);
-    Shoot::factory()->for($project)->on('2026-03-22')->create(['kind' => ShootKind::Engagement]);
+    $wedding = Shoot::factory()->for($project)->on('2026-06-14')->create(['kind' => 'Hochzeitstag']);
+    Shoot::factory()->for($project)->on('2026-03-22')->create(['kind' => 'Verlobungsshooting']);
 
-    TaskTemplate::factory()->forKind(ShootKind::Wedding)->create(['title' => 'Familienliste einholen']);
+    TaskTemplate::factory()->forKind('Hochzeitstag')->create(['title' => 'Familienliste einholen']);
 
     app(ApplyTaskTemplates::class)($project);
 
@@ -121,11 +120,11 @@ it('keeps a day and a title moved by hand when the stage runs again', function (
 it('produces each template against the correct shoot when a project is booked', function () {
     // The story's acceptance, through the real trigger.
     $project = Project::factory()->create();
-    Shoot::factory()->for($project)->on('2026-03-22')->create(['kind' => ShootKind::Engagement]);
-    Shoot::factory()->for($project)->on('2026-06-14')->create(['kind' => ShootKind::Wedding]);
+    Shoot::factory()->for($project)->on('2026-03-22')->create(['kind' => 'Verlobungsshooting']);
+    Shoot::factory()->for($project)->on('2026-06-14')->create(['kind' => 'Hochzeitstag']);
 
     TaskTemplate::factory()->offset(-1)->create(['title' => 'Crew-Briefing verschicken']);
-    TaskTemplate::factory()->offset(-7)->forKind(ShootKind::Wedding)->create(['title' => 'Familienliste einholen']);
+    TaskTemplate::factory()->offset(-7)->forKind('Hochzeitstag')->create(['title' => 'Familienliste einholen']);
 
     app(BookProject::class)($project, User::factory()->create());
 
@@ -173,13 +172,13 @@ it('previews the same due dates the real booking action produces for the same sh
     // dueFor()/appliesTo() rather than a second copy of the offset math, so
     // it can never drift from what a real booking produces.
     TaskTemplate::factory()->offset(-1)->create(['title' => 'Crew-Briefing verschicken']);
-    TaskTemplate::factory()->offset(-7)->forKind(ShootKind::Wedding)->create(['title' => 'Familienliste einholen']);
-    TaskTemplate::factory()->offset(14)->forKind(ShootKind::Engagement)->create(['title' => 'Nicht anwendbar']);
+    TaskTemplate::factory()->offset(-7)->forKind('Hochzeitstag')->create(['title' => 'Familienliste einholen']);
+    TaskTemplate::factory()->offset(14)->forKind('Verlobungsshooting')->create(['title' => 'Nicht anwendbar']);
 
-    $preview = app(ApplyTaskTemplates::class)->preview(CarbonImmutable::parse('2026-06-14'), ShootKind::Wedding);
+    $preview = app(ApplyTaskTemplates::class)->preview(CarbonImmutable::parse('2026-06-14'), 'Hochzeitstag');
 
     $project = Project::factory()->create();
-    Shoot::factory()->for($project)->on('2026-06-14')->create(['kind' => ShootKind::Wedding]);
+    Shoot::factory()->for($project)->on('2026-06-14')->create(['kind' => 'Hochzeitstag']);
     app(BookProject::class)($project, User::factory()->create());
 
     $actual = Task::query()->orderBy('title')->get()
@@ -200,4 +199,11 @@ it('leaves a due date that already lands on a working day untouched', function (
     app(ApplyTaskTemplates::class)($project);
 
     expect(Task::sole()->due_on->format('Y-m-d'))->toBe('2026-06-15');
+});
+
+it('matches a template to a shoot kind regardless of case', function () {
+    $template = TaskTemplate::factory()->forKind('hochzeitstag')->make();
+
+    expect($template->appliesTo(new Shoot(['kind' => 'Hochzeitstag'])))->toBeTrue()
+        ->and($template->appliesTo(new Shoot(['kind' => 'Feier'])))->toBeFalse();
 });

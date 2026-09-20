@@ -41,7 +41,7 @@ use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Quotes\Actions\ReadQuoteWorkspace;
+use App\Quotes\Actions\ReadQuoteList;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use App\Support\LiveUpdate;
@@ -96,6 +96,7 @@ class ProjectController extends Controller
         $delivered = $vocabulary->anchored(StagePipeline::Project, StageAnchor::Delivered)?->sort_order ?? PHP_INT_MAX;
 
         return Inertia::render('Projects/Index', [
+            'view' => request()->query('ansicht') === 'board' ? 'board' : 'liste',
             'projects' => ProjectRowData::collect(
                 $projects->map(fn (Project $project) => ProjectRowData::fromProject($project, $this->position))
             ),
@@ -143,6 +144,7 @@ class ProjectController extends Controller
         return Inertia::render('Projects/Show', [
             'header' => $this->header($project),
             'shoots' => ShootData::collect($this->shootsOf($project)),
+            'shootKinds' => Shoot::kindSuggestions(),
             // Open first and by due date, then the done ones: a card whose top
             // row is something already finished buries the work.
             'tasks' => TaskRowData::collect(
@@ -193,7 +195,7 @@ class ProjectController extends Controller
             'stage' => $project->job()->exists()
                 ? $this->position->leastAdvanced($project->shoots)?->status->key
                 : $project->lead?->stage->key,
-            'source' => $project->lead?->source->value,
+            'source' => $project->lead?->source?->value,
             'sourceOther' => $project->lead?->source_other,
             'sourceLabel' => $project->lead?->sourceLabel(),
             'inquiry' => $project->lead === null ? null : [
@@ -391,7 +393,7 @@ class ProjectController extends Controller
         return $project->shoots()->uncancelled()->get()
             ->map(fn (Shoot $shoot) => [
                 'value' => $shoot->public_id,
-                'label' => $shoot->label ?? $shoot->kind->label(),
+                'label' => $shoot->label ?? $shoot->kind,
             ])
             ->all();
     }
@@ -402,7 +404,7 @@ class ProjectController extends Controller
 
         return Inertia::render('Projects/Quotes', [
             'header' => $this->header($project),
-            ...app(ReadQuoteWorkspace::class)($project, $request->user('staff')),
+            ...app(ReadQuoteList::class)($project),
         ]);
     }
 
@@ -448,7 +450,7 @@ class ProjectController extends Controller
             'mailTemplates' => DocumentTemplate::query()
                 ->current()
                 ->ofType(DocumentTemplateType::Mail)
-                ->forShootKind($project->primaryShoot?->kind?->value)
+                ->forShootKind($project->primaryShoot?->kind)
                 ->orderBy('name')
                 ->get()
                 ->map(fn (DocumentTemplate $template) => MailTemplateData::fromModel($template, $project, $settings, $mergeData))

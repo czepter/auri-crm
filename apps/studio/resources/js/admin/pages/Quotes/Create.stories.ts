@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import Create from './Create.vue'
-import { catalogItems, catalogPackages, contacts, quoteItem, quoteOf } from '../__stories__/fixtures'
+import { catalogItems, catalogPackages, contacts, quoteItem, quoteOf, studioSettings } from '../__stories__/fixtures'
 
 const brandt: App.Crm.Data.ProjectSuggestionData = {
   id: 'p-brandt',
@@ -40,6 +40,7 @@ const auswahl = quoteOf({
   imagesPerHour: 40,
   timeTitle: 'Reportage',
   timeDescription: 'Trauung, Empfang, Paarshooting',
+  timeSortOrder: 0,
   items: [
     quoteItem({ id: 'qi-1', title: 'Galerie mit Download', lineTotal: 0, isIncluded: true }),
     quoteItem({ id: 'qi-2', title: 'Content Creator', lineTotal: 40000, selectable: true, selected: true, outcome: 'Reels und TikToks, hochkant' }),
@@ -74,6 +75,9 @@ const meta = {
     catalogItems,
     contacts,
     canManageCatalog: true,
+    vatSettings: { mode: 'standard', rate: 1900, note: null },
+    studioSettings,
+    missingBusinessData: [],
   },
 } satisfies Meta<typeof Create>
 
@@ -83,11 +87,13 @@ type Story = StoryObj<typeof meta>
 /** Aus der Übersicht geöffnet, noch ohne Projekt oder Anfrage. */
 export const Auswahl: Story = { args: { project: null, quotes: [] } }
 
-/** Anfrage gewählt, noch kein Entwurf. */
-export const OhneEntwurf: Story = { args: { quotes: [] } }
-
 /** Der Entwurf im Modus Auswahl: Zeit mit Spanne, Positionen mit Portal-Status. */
 export const ModusAuswahl: Story = {}
 
 /** Derselbe Entwurf klassisch: keine Zeit-Karte, feste Positionen. */
 export const ModusKlassisch: Story = { args: { quotes: [klassisch] } }
+
+/** Das erste Angebot eines Studios, dem die Impressumsdaten noch fehlen. */
+export const OhneGeschaeftsdaten: Story = {
+  args: { missingBusinessData: ['legal_name', 'street', 'postcode', 'city'] },
+}

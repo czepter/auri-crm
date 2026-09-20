@@ -85,7 +85,7 @@ it('creates a contact with its portal departures', function () {
 
     expect($overrides['accept_quotes'])->toBeFalse()
         ->and($overrides['messaging_mode'])->toBe('any')
-        ->and($overrides)->not->toHaveKey('sign_contracts');
+        ->and($overrides)->not->toHaveKey('payment_status');
 });
 
 it('refuses a portal value the sheet would refuse too', function () {

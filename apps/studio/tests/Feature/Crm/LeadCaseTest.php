@@ -34,7 +34,7 @@ function caseFor(LeadStage $stage = LeadStage::New, ?string $date = '2026-09-05'
 it('groups the queue by working state, not by funnel stage', function () {
     $open = caseFor(LeadStage::New);
     caseFor(LeadStage::QuoteSent, '2026-07-11');
-    caseFor(LeadStage::ContractSent, '2026-08-02');
+    caseFor(LeadStage::QuoteAccepted, '2026-08-02');
 
     $groups = collect(props("/anfragen/{$open->public_id}")['queue'])->keyBy('key');
 
@@ -157,6 +157,20 @@ it('saves the Sonstige detail from the case and drops it with the case', functio
 
     expect($lead->project->fresh()->type_other)->toBeNull()
         ->and($lead->fresh()->source_other)->toBeNull();
+});
+
+// The rail saves one select at a time.
+it('saves the source alone and leaves the occasion', function () {
+    $lead = caseFor();
+    $type = $lead->project->type->key;
+
+    test()->patch("/anfragen/{$lead->public_id}", [
+        'source' => 'other',
+        'source_other' => 'Messe',
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    expect($lead->fresh()->source_other)->toBe('Messe')
+        ->and($lead->project->fresh()->type->key)->toBe($type);
 });
 
 it('moves the shoot while it is an inquiry', function () {

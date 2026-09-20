@@ -54,6 +54,8 @@ class StudioSettingsData extends Data
         public int $depositPercentage,
         public bool $widerrufIncluded,
         public ?string $widerrufText,
+        public string $quoteLayout,
+        public string $clientRegister,
         public ?string $documentLetterheadHtml,
         public ?string $documentFooterHtml,
         public string $timezone,
@@ -65,6 +67,7 @@ class StudioSettingsData extends Data
         public ?string $mailReplyTo,
         public ?string $mailSignature,
         public ?string $mailBcc,
+        public bool $mailClientsEnabled,
         /** @var list<string> */
         public array $leadTypePresets,
         /** @var list<string> */
@@ -110,6 +113,8 @@ class StudioSettingsData extends Data
             depositPercentage: $settings->depositPercentage(),
             widerrufIncluded: $settings->widerrufIncluded(),
             widerrufText: $settings->widerrufText(),
+            quoteLayout: $settings->quoteLayout(),
+            clientRegister: $settings->clientRegister(),
             documentLetterheadHtml: $settings->documentLetterheadHtml(),
             documentFooterHtml: $settings->documentFooterHtml(),
             timezone: $settings->timezone(),
@@ -120,6 +125,7 @@ class StudioSettingsData extends Data
             mailReplyTo: $settings->mailReplyTo(),
             mailSignature: $settings->mailSignature(),
             mailBcc: $settings->mailBcc(),
+            mailClientsEnabled: $settings->clientMailEnabled(),
             leadTypePresets: $settings->leadPresets('type'),
             leadSourcePresets: $settings->leadPresets('source'),
             leadChannelPresets: $settings->leadPresets('channel'),

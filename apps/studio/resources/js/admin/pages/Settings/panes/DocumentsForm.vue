@@ -4,11 +4,20 @@ import { basisPointsToPercent, percentToBasisPoints } from '@/admin/lib/money'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Textarea } from '@/ui/textarea'
 import { Checkbox } from '@/ui/checkbox'
+import { RadioGroup, RadioGroupItem } from '@/ui/radio-group'
 import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
 
 const props = defineProps<{ settings: App.Settings.Data.StudioSettingsData }>()
 const emit = defineEmits<{ saved: [] }>()
+
+const QUOTE_LAYOUTS = [
+  { value: 'classic', labelKey: 'settings.quoteLayoutClassic', descKey: 'settings.quoteLayoutClassicDesc' },
+  { value: 'minimal', labelKey: 'settings.quoteLayoutMinimal', descKey: 'settings.quoteLayoutMinimalDesc' },
+  { value: 'letter', labelKey: 'settings.quoteLayoutLetter', descKey: 'settings.quoteLayoutLetterDesc' },
+  { value: 'header_band', labelKey: 'settings.quoteLayoutHeaderBand', descKey: 'settings.quoteLayoutHeaderBandDesc' },
+  { value: 'structured', labelKey: 'settings.quoteLayoutStructured', descKey: 'settings.quoteLayoutStructuredDesc' },
+] as const
 
 const form = useForm({
   quote_validity_days: props.settings.quoteValidityDays,
@@ -16,6 +25,7 @@ const form = useForm({
   deposit_percentage: basisPointsToPercent(props.settings.depositPercentage),
   widerruf_included: props.settings.widerrufIncluded,
   widerruf_text: props.settings.widerrufText ?? '',
+  quote_layout: props.settings.quoteLayout,
 })
 
 function submit() {
@@ -34,6 +44,32 @@ defineExpose({ form, submit })
 <template>
   <form id="documents-form" @submit.prevent="submit">
     <div class="mt-0">
+      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.documentsLayoutLabel') }}</div>
+      <div class="mb-6">
+        <RadioGroup
+          name="quotelayout"
+          class="grid grid-cols-2 gap-2.5"
+          :model-value="form.quote_layout"
+          @update:model-value="(value) => (form.quote_layout = String(value))"
+        >
+          <!-- The card is the radio: a <label> forwards its click to the
+               button reka renders, so the whole card is the hit area and the
+               dot itself has nothing to draw — same pattern as the Schriftpaar
+               picker in ProfileForm.vue. -->
+          <label
+            v-for="option in QUOTE_LAYOUTS"
+            :key="option.value"
+            class="block cursor-pointer rounded-md bg-muted px-4 pt-4 pb-6 shadow-[inset_0_0_0_1px_transparent] has-[[data-state=checked]]:shadow-[inset_0_0_0_2px_var(--accent)]"
+          >
+            <RadioGroupItem :value="option.value" class="sr-only" />
+            <b class="block text-[18px] leading-tight font-semibold text-foreground">{{ $t(option.labelKey) }}</b>
+            <em class="mt-2 block text-[12.5px] leading-[1.5] font-normal not-italic text-muted-foreground">{{ $t(option.descKey) }}</em>
+          </label>
+        </RadioGroup>
+      </div>
+    </div>
+
+    <div class="mt-8 first-of-type:mt-6">
       <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.documentsQuoteLabel') }}</div>
       <div class="mb-6">
         <Field

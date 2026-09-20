@@ -1,6 +1,5 @@
 <?php
 
-use App\Contracts\Models\ContractSignature;
 use App\Crm\Models\Job;
 use App\Payments\Actions\CreatePaymentPlan;
 use App\Quotes\Enums\QuoteStatus;
@@ -14,9 +13,7 @@ beforeEach(fn () => Storage::fake('local'));
 
 function bookedJobWithStages(int $total): Job
 {
-    $project = contractProject();
-    $contract = renderedContract($project);
-    ContractSignature::factory()->for($contract)->for($project->contacts()->sole())->create();
+    $project = bookedContactProject();
 
     $quote = Quote::factory()->create([
         'project_id' => $project->id,
@@ -45,7 +42,7 @@ it('materialises the installments from the accepted quote’s stages', function 
 
     $installments = $plan->installments()->orderBy('sort_order')->get();
 
-    expect($installments->pluck('amount')->all())->toBe([80_000, 108_000, 27_000])
+    expect($installments->pluck('amount')->all())->toBe([80_000, 107_500, 27_500])
         ->and($installments->pluck('title')->all())
         ->toBe(['Bei der Zusage', 'Vier Wochen vorher', 'Nach der Lieferung'])
         ->and($installments->sum('amount'))->toBe(215_000);
@@ -54,7 +51,7 @@ it('materialises the installments from the accepted quote’s stages', function 
 // Der bestehende Weg: ohne Stufen bleibt es die gleichmaessige Teilung.
 it('splits evenly where the project has no stages', function () {
     $job = bookedJobWithStages(120_000);
-    Quote::query()->update(['status' => QuoteStatus::Sent]);
+    Quote::query()->sole()->paymentStages()->delete();
 
     $plan = app(CreatePaymentPlan::class)($job, 120_000, [
         now()->toDateString(),

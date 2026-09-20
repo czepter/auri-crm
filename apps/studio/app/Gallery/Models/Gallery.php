@@ -47,14 +47,12 @@ class Gallery extends Model
 
     protected $fillable = [
         'project_id', 'shoot_id', 'title', 'slug', 'design',
-        'requires_settled_balance',
         'is_external', 'external_url', 'expires_at',
         'downloads_enabled', 'lists_enabled', 'comments_enabled',
         'event_date', 'cover_asset_id', 'cover_focal_x', 'cover_focal_y',
     ];
 
     protected $attributes = [
-        'requires_settled_balance' => false,
         'is_external' => false,
         'downloads_enabled' => true,
         'lists_enabled' => true,
@@ -73,7 +71,6 @@ class Gallery extends Model
             // means "as the studio has it", so a studio changing its own
             // default still reaches every gallery that never overrode one.
             'design' => 'array',
-            'requires_settled_balance' => 'boolean',
             'downloads_enabled' => 'boolean',
             'lists_enabled' => 'boolean',
             'comments_enabled' => 'boolean',
@@ -94,21 +91,6 @@ class Gallery extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
-    }
-
-    /**
-     * G-05: the studio ties this gallery's delivery to its invoice, and the
-     * invoice is not paid. The images stay visible — what is withheld is the
-     * archive, which is what the record screen's own flag says.
-     *
-     * Asked of the project at the moment it is decided. The cached column
-     * this used to read was written by an event listener, so a gallery
-     * created after the last instalment cleared kept its `false` default
-     * for ever, with no further InstallmentPaid coming to correct it.
-     */
-    public function balanceBlocksDownload(): bool
-    {
-        return $this->requires_settled_balance && ! ($this->project?->balanceSettled() ?? false);
     }
 
     public function shoot(): BelongsTo

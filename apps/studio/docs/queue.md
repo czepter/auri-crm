@@ -29,7 +29,7 @@ has no per-queue granularity, only Horizon's supervisors do.
 ## Running it
 
 `docker compose up` starts a `worker` container running `php artisan horizon`
-alongside `php`, `postgres`, `redis`, `mailpit` and `minio` (G-01a's local
+alongside `php`, `postgres`, `redis`, `mailpit` and `rustfs` (G-01a's local
 S3-compatible service — see docs/media.md). The dashboard is mounted
 on the admin surface at `/horizon`, behind the `ManageStaff` capability (see
 `App\Providers\HorizonServiceProvider` and
@@ -75,7 +75,7 @@ same-second jobs it was.
 
 `docker-compose.coolify.yml` runs the queue in a deployment: a `horizon`
 service running `php artisan horizon`, a password-protected Redis with
-`appendonly` on so a signed contract's render job survives a restart, and
+`appendonly` on so an invoice's render job survives a restart, and
 `QUEUE_CONNECTION=redis` baked into `docker/app/Dockerfile` — Horizon only
 supervises the redis connection, and the database driver it would otherwise
 inherit is invisible to it, so jobs would pile up unworked beneath a green

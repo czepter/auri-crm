@@ -113,6 +113,24 @@ it('accepts a sent, still-valid quote, recording accepted_at, accepted_ip and th
         ->and($row->context['contact'])->toBe($contact->public_id);
 });
 
+it('requires the AGB ticked once the studio has any', function () {
+    StudioSettings::query()->update(['portal_legal_agb_url' => 'https://studio.test/agb']);
+    $project = Project::factory()->create(['portal_visible' => true]);
+    $quote = sentQuote($project);
+    $contact = Contact::factory()->create();
+    $project->attachContact($contact, ProjectContactRole::Primary);
+
+    $this->actingAs($contact, 'portal')
+        ->post("/projekte/{$project->public_id}/angebot/annehmen")
+        ->assertSessionHasErrors(['terms' => 'Bitte die AGB akzeptieren.']);
+    expect($quote->fresh()->status)->toBe(QuoteStatus::Sent);
+
+    $this->actingAs($contact, 'portal')
+        ->post("/projekte/{$project->public_id}/angebot/annehmen", ['terms' => true])
+        ->assertSessionHasNoErrors();
+    expect($quote->fresh()->status)->toBe(QuoteStatus::Accepted);
+});
+
 it('is idempotent: a double submit accepts once', function () {
     $project = Project::factory()->create(['portal_visible' => true]);
     $quote = sentQuote($project);

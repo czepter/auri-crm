@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
-import type { QuoteContact } from '@/admin/components/quote/quotePayload'
+import type { QuoteContact, VatSettings } from '@/admin/components/quote/quotePayload'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import ProjectTypeahead from '@/admin/components/ProjectTypeahead.vue'
 import QuoteWorkspace from '@/admin/components/QuoteWorkspace.vue'
+import BusinessDataGate from '@/admin/pages/Settings/panes/BusinessDataGate.vue'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 
@@ -17,14 +18,29 @@ const props = defineProps<{
   catalogItems: App.Catalog.Data.CatalogItemData[]
   contacts: QuoteContact[]
   canManageCatalog: boolean
+  vatSettings: VatSettings
+  studioSettings: App.Settings.Data.StudioSettingsData
+  missingBusinessData: string[]
 }>()
+
+// Offen, solange Impressumsdaten fehlen; „Abbrechen" führt zurück, ohne zu
+// speichern, damit niemand im Formular festsitzt.
+const gateOpen = ref(props.missingBusinessData.length > 0)
 
 const project = ref(props.project)
 
 // Die Wahl steht in der Adresse: das Anlegen am Projekt kehrt mit back()
 // hierher zurück und findet den Entwurf nur so wieder.
 watch(project, (chosen) => {
-  router.get('/angebote/neu', chosen ? { projekt: chosen.id } : {}, { preserveState: true, replace: true })
+  router.get('/angebote/neu', chosen ? { projekt: chosen.id } : {}, {
+    preserveState: true,
+    replace: true,
+    onSuccess: () => {
+      if (chosen && !drafts.value.length) {
+        create()
+      }
+    },
+  })
 })
 
 const drafts = computed(() => props.quotes.filter((quote) => quote.status === 'draft'))
@@ -36,6 +52,14 @@ function create() {
     router.post(`/auftraege/${project.value.id}/angebote`)
   }
 }
+
+// Kommt das Projekt schon aus der Adresse (Anfrage, Auftrag), steht der
+// Entwurf ohne zweiten Klick da.
+onMounted(() => {
+  if (!drafts.value.length) {
+    create()
+  }
+})
 </script>
 
 <template>
@@ -64,10 +88,18 @@ function create() {
               :contacts="contacts"
               :can-manage-catalog="canManageCatalog"
               :payment-plan="null"
+              :vat-settings="vatSettings"
             />
           </div>
         </div>
       </div>
     </Page>
+
+    <BusinessDataGate
+      :open="gateOpen"
+      :settings="studioSettings"
+      @done="gateOpen = false"
+      @cancel="router.visit('/angebote')"
+    />
   </AdminLayout>
 </template>

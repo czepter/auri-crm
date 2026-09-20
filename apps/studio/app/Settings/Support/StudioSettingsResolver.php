@@ -65,6 +65,33 @@ class StudioSettingsResolver
         return $this->row()->vat_note;
     }
 
+    /** One of QuoteLayout's five values — see that enum for the closed domain the check constraint also enforces. */
+    public function quoteLayout(): string
+    {
+        return $this->row()->quote_layout;
+    }
+
+    /** 'formal' or 'informal' — see the studio_settings table's check constraint. */
+    public function clientRegister(): string
+    {
+        return $this->row()->client_register;
+    }
+
+    /**
+     * #439: how a client text addresses its readers. Informal splits on the
+     * count, so a couple reads "ihr" where a single contact reads "du".
+     *
+     * @return 'sie'|'du'|'ihr'
+     */
+    public function clientAddress(int $recipients = 1): string
+    {
+        return match (true) {
+            $this->clientRegister() === 'formal' => 'sie',
+            $recipients > 1 => 'ihr',
+            default => 'du',
+        };
+    }
+
     /**
      * T-09: the length ShootCalendar gives a shoot whose end_time is unset,
      * replacing the hardcoded addHours(2) that used to sit in that class
@@ -531,6 +558,12 @@ class StudioSettingsResolver
         return $this->row()->mail_bcc;
     }
 
+    /** Read by App\Notifications\Listeners\WithholdClientMail alone. */
+    public function clientMailEnabled(): bool
+    {
+        return $this->row()->mail_clients_enabled;
+    }
+
     /**
      * E-12: the secret every inbound address is minted from. Null until the
      * studio has one, which is also what makes ingest fall closed into
@@ -568,16 +601,44 @@ class StudioSettingsResolver
         return $this->row()->portal_welcome_text;
     }
 
-    /** External link — no local Datenschutzerklärung page exists or is planned here. */
-    public function legalDatenschutzUrl(): ?string
+    /**
+     * Wohin ein Rechtstext im Portal zeigt: auf die fremde Adresse, wenn eine
+     * hinterlegt ist, sonst auf die eigene Seite, wenn eine Vorlage gewählt
+     * wurde. Das Impressum hat immer eine Seite — es wird aus den
+     * Studio-Daten gezeichnet, wenn nichts anderes gesetzt ist.
+     */
+    public function legalUrl(string $text): ?string
     {
-        return $this->row()->portal_legal_datenschutz_url;
+        $row = $this->row();
+
+        return match (true) {
+            filled($row->{"portal_legal_{$text}_url"} ?? null) => $row->{"portal_legal_{$text}_url"},
+            filled($row->{"portal_legal_{$text}_family"} ?? null) => "/rechtstexte/{$text}",
+            $text === 'impressum' => '/impressum',
+            default => null,
+        };
     }
 
-    /** External link — no local AGB page exists or is planned here. */
+    /** Die Vorlagen-Familie hinter einem Rechtstext, sofern eine gewählt ist. */
+    public function legalFamily(string $text): ?string
+    {
+        return $this->row()->{"portal_legal_{$text}_family"} ?? null;
+    }
+
+    /** Die eingetragene fremde Adresse — was das Portal daraus macht, sagt legalUrl(). */
+    public function legalTextUrl(string $text): ?string
+    {
+        return $this->row()->{"portal_legal_{$text}_url"} ?? null;
+    }
+
+    public function legalDatenschutzUrl(): ?string
+    {
+        return $this->legalTextUrl('datenschutz');
+    }
+
     public function legalAgbUrl(): ?string
     {
-        return $this->row()->portal_legal_agb_url;
+        return $this->legalTextUrl('agb');
     }
 
     /** Gates Q-07's accept action. */
@@ -609,6 +670,12 @@ class StudioSettingsResolver
         return (string) $this->row()->portal_messaging_mode;
     }
 
+    /** Gates the portal's "Weitere Leistungen" — the shelf a client may ask from. */
+    public function offersEnabled(): bool
+    {
+        return (bool) $this->row()->portal_offers_enabled;
+    }
+
     /** P-09: what a new gallery starts as, so a studio stops setting it per delivery. */
     public function galleryDefaults(): array
     {
@@ -616,7 +683,6 @@ class StudioSettingsResolver
 
         return [
             'expiryDays' => $row->gallery_default_expiry_days,
-            'requiresSettledBalance' => (bool) $row->gallery_default_requires_settled_balance,
         ];
     }
 

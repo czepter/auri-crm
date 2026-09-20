@@ -14,7 +14,7 @@ uses(RefreshDatabase::class);
 it('creates a pending contract and dispatches the render job onto the render queue, without blocking the request', function () {
     Queue::fake();
 
-    $project = contractProject();
+    $project = bookedContactProject();
     $template = DocumentTemplate::factory()->create();
     $staff = staffMember(StaffRole::Owner);
 
@@ -35,7 +35,7 @@ it('creates a pending contract and dispatches the render job onto the render que
 it('refuses generation for a role without ManageContracts', function () {
     Queue::fake();
 
-    $project = contractProject();
+    $project = bookedContactProject();
     $template = DocumentTemplate::factory()->create();
 
     $this->actingAs(staffMember(StaffRole::SecondShooter), 'staff')
@@ -46,7 +46,7 @@ it('refuses generation for a role without ManageContracts', function () {
 });
 
 it('404s generation against a superseded template version', function () {
-    $project = contractProject();
+    $project = bookedContactProject();
     $template = DocumentTemplate::factory()->create();
     $template->newVersion(['name' => $template->name, 'body' => '<p>v2</p>']);
 

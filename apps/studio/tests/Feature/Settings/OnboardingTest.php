@@ -1,5 +1,6 @@
 <?php
 
+use App\Automation\Models\AutomationRule;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Enums\StaffRole;
@@ -27,13 +28,8 @@ it('redirects a GET to the wizard while onboarding is unfinished', function () {
 });
 
 it('does not redirect a PATCH to a settings endpoint — the wizard must be able to save itself', function () {
-    // tax_number/vat_id is required on every save regardless of onboarding
-    // (the bank fields are not) — a payload short of it fails validation for
-    // reasons unrelated to this middleware and back()s to '/' (no referer
-    // header in a test request),
-    // which would make this assertion indistinguishable from the redirect
-    // this test exists to rule out.
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->from('/einstellungen')
         ->patch('/einstellungen', [
             'display_name' => 'Studio Zepter',
             'tax_number' => '22/123/45678',
@@ -63,21 +59,42 @@ it('stamps completion and releases the dashboard', function () {
     $this->get('/')->assertOk();
 });
 
-it('writes the starter templates on finish, skipping included', function () {
+it('writes the starter templates on finish, the invoice aside', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->post('/einrichtung/studio/abschluss')
         ->assertRedirect('/');
 
-    expect(DocumentTemplate::query()->current()->ofType(DocumentTemplateType::Invoice)->pluck('name')->all())
-        ->toBe(['Rechnung']);
+    expect(DocumentTemplate::query()->current()->ofType(DocumentTemplateType::Quote)->pluck('name')->all())
+        ->toBe(['Angebot'])
+        ->and(DocumentTemplate::query()->current()->ofType(DocumentTemplateType::Invoice)->exists())
+        ->toBeFalse();
 });
 
-it('writes the Kleinunternehmer invoice when that is the mode the wizard left behind', function () {
+it('seeds the default automation rules on finish, in the studio register', function () {
+    app(StudioSettingsResolver::class)->set('client_register', 'informal', null);
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->post('/einrichtung/studio/abschluss')
+        ->assertRedirect('/');
+
+    expect(AutomationRule::query()->pluck('key')->all())
+        ->toEqualCanonicalizing(collect(config('automation.rules'))->pluck('key')->all())
+        ->and(AutomationRule::query()->where('key', 'booking-confirmation')->value('notification_subject'))
+        ->toBe('Deine Buchung ist bestätigt');
+});
+
+it('writes the Kleinunternehmer invoice when the first invoice is drafted in that mode', function () {
     app(StudioSettingsResolver::class)->set('vat_mode', 'small_business', null);
 
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->post('/einrichtung/studio/abschluss')
         ->assertRedirect('/');
+
+    expect(DocumentTemplate::query()->current()->ofType(DocumentTemplateType::Invoice)->exists())->toBeFalse();
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->get('/rechnungen/neu')
+        ->assertOk();
 
     expect(DocumentTemplate::query()->current()->ofType(DocumentTemplateType::Invoice)->pluck('name')->all())
         ->toBe(['Rechnung — Kleinunternehmer']);

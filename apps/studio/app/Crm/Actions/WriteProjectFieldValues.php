@@ -55,7 +55,7 @@ class WriteProjectFieldValues
         // stays where it is (a type change is reversible that way).
         $merged = array_merge($project->field_values ?? [], $clean);
 
-        $this->guardRequired($fields, $merged);
+        $this->guardRequired($fields, $merged, $clean);
 
         $changed = array_keys(array_filter(
             $clean,
@@ -166,13 +166,19 @@ class WriteProjectFieldValues
     }
 
     /**
+     * A required field only blocks a write that touches it: a gap a type
+     * change or an old project left behind is not this call's to fix. The
+     * admin screen's own save sends every field's current value, so a full
+     * save still enforces every required field the way it always did.
+     *
      * @param  Collection<string, ProjectField>  $fields
      * @param  array<string, mixed>  $merged
+     * @param  array<string, mixed>  $clean
      */
-    private function guardRequired(Collection $fields, array $merged): void
+    private function guardRequired(Collection $fields, array $merged, array $clean): void
     {
         $missing = $fields
-            ->filter(fn (ProjectField $field) => $field->required)
+            ->filter(fn (ProjectField $field) => $field->required && array_key_exists($field->key, $clean))
             ->filter(fn (ProjectField $field) => in_array($merged[$field->key] ?? null, [null, '', []], true))
             ->mapWithKeys(fn (ProjectField $field) => ["fields.{$field->key}" => "{$field->label} fehlt."]);
 

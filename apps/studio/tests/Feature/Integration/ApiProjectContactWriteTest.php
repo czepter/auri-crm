@@ -32,6 +32,17 @@ it('adds a partner to an existing project once, reusing a known address', functi
         ->toBe([[$known->id, ProjectContactRole::Partner->value]]);
 });
 
+it('accepts a role outside the enum, like the admin screen does', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
+    $project = Project::factory()->create();
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'officiant')
+        ->postJson("/api/projects/{$project->public_id}/contacts", ['name' => 'Pastor Klein', 'role' => 'Trauredner'])
+        ->assertCreated()
+        ->assertJson(['role' => 'Trauredner']);
+});
+
 it('refuses a second primary contact', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
     $project = Project::factory()->create();

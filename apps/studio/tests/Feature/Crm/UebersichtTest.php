@@ -144,11 +144,9 @@ it('never puts an integer identifier into the übersicht', function () {
     expect(integerIdPaths(props('/')))->toBe([]);
 });
 
-it('carries the rows owed on offers and payments under what is to do', function () {
+it('carries the rows owed on payments under what is to do', function () {
     $project = Project::factory()->create(['name' => 'Duhnkrack & W.']);
     $project->attachContact(Contact::factory()->create(['phone' => '+4940123']), ProjectContactRole::Primary);
-    Quote::factory()->for($project)->create(['status' => QuoteStatus::Accepted, 'accepted_at' => now()->subDay()]);
-
     $job = Job::factory()->for($project)->create();
     $plan = PaymentPlan::factory()->for($job)->create(['total' => 110000]);
     PaymentInstallment::factory()->for($plan, 'plan')->create([
@@ -159,7 +157,7 @@ it('carries the rows owed on offers and payments under what is to do', function 
 
     $todo = props('/')['todo'];
 
-    expect($todo)->toHaveCount(2)
+    expect($todo)->toHaveCount(1)
         ->and(collect($todo)->pluck('projectId')->unique()->all())->toBe([$project->public_id]);
 });
 
@@ -277,6 +275,10 @@ it('tells what moved across projects, from the history allow-list and gallery op
     $activity = props('/')['activity'];
 
     expect(collect($activity)->pluck('text')->all())->toBe(['Ahrens · Zahlung erhalten', 'Ahrens · Galerie geöffnet'])
+        ->and(collect($activity)->pluck('href')->all())->toBe([
+            '/auftraege/'.$project->public_id.'/angebote',
+            '/auftraege/'.$project->public_id.'/galerien',
+        ])
         ->and($activity[0]['fresh'])->toBeTrue()
         ->and($activity[1]['when'])->toBe('gestern');
 });

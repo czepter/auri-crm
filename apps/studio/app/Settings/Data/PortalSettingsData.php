@@ -2,6 +2,7 @@
 
 namespace App\Settings\Data;
 
+use App\Portal\Http\Controllers\LegalTextController;
 use App\Settings\Support\StudioSettingsResolver;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -27,10 +28,16 @@ class PortalSettingsData extends Data
         public ?string $welcomeText,
         public ?string $datenschutzUrl,
         public ?string $agbUrl,
+        public ?string $impressumUrl,
+        public ?string $widerrufUrl,
+        /** @var array<string, ?string> Vorlagen-Familie je Rechtstext */
+        public array $legalFamilies,
         public bool $acceptQuotesEnabled,
         public bool $signContractsEnabled,
         public bool $paymentStatusEnabled,
+        public bool $offersEnabled,
         public string $messagingMode,
+        public string $clientRegister,
         public ?string $welcomeInquiry,
         public ?string $welcomeMany,
         public ?string $dsgvoRecipient,
@@ -49,10 +56,17 @@ class PortalSettingsData extends Data
             welcomeText: $settings->portalWelcomeText(),
             datenschutzUrl: $settings->legalDatenschutzUrl(),
             agbUrl: $settings->legalAgbUrl(),
+            impressumUrl: $settings->legalTextUrl('impressum'),
+            widerrufUrl: $settings->legalTextUrl('widerruf'),
+            legalFamilies: collect(LegalTextController::TEXTS)
+                ->mapWithKeys(fn (string $text) => [$text => $settings->legalFamily($text)])
+                ->all(),
             acceptQuotesEnabled: $settings->acceptQuotesEnabled(),
             signContractsEnabled: $settings->signContractsEnabled(),
             paymentStatusEnabled: $settings->paymentStatusEnabled(),
+            offersEnabled: $settings->offersEnabled(),
             messagingMode: $settings->messagingMode(),
+            clientRegister: $settings->clientRegister(),
             welcomeInquiry: $settings->portalWelcomeInquiry(),
             welcomeMany: $settings->portalWelcomeMany(),
             dsgvoRecipient: $settings->dsgvoRequestRecipient(),

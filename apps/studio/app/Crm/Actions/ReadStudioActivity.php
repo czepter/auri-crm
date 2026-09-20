@@ -8,6 +8,7 @@ use App\Gallery\Models\GalleryView;
 use App\Models\AuditLog;
 use App\Models\User;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Str;
 
 /**
  * The Übersicht's Verlauf: what moved across every project the viewer may
@@ -22,7 +23,16 @@ class ReadStudioActivity
 {
     private const LIMIT = 8;
 
-    /** @return list<array{text: string, when: string, fresh: bool}> */
+    /** Project tab per event prefix; lead and project events open the overview. The payment plan lives on the quotes tab. */
+    private const TABS = [
+        'quote' => 'angebote',
+        'payment_plan' => 'angebote',
+        'payment_installment' => 'angebote',
+        'shoot' => 'shootings',
+        'form_instance' => 'frageboegen',
+    ];
+
+    /** @return list<array{text: string, href: string, when: string, fresh: bool}> */
     public function __invoke(User $viewer, CarbonInterface $since): array
     {
         $visible = Project::query()->visibleTo($viewer)->select('projects.id');
@@ -38,6 +48,7 @@ class ReadStudioActivity
             ->map(fn (AuditLog $log) => [
                 'project' => $log->project_id,
                 'label' => ProjectActivity::label($log),
+                'tab' => self::TABS[Str::before($log->event, '.')] ?? null,
                 'at' => $log->created_at,
                 'timed' => true,
             ]);
@@ -54,19 +65,22 @@ class ReadStudioActivity
             ->map(fn (GalleryView $view) => [
                 'project' => $view->gallery->project_id,
                 'label' => __('activity.gallery.viewed'),
+                'tab' => 'galerien',
                 'at' => $view->viewed_on,
                 'timed' => false,
             ]);
 
-        $names = Project::query()
+        $projects = Project::query()
             ->whereIn('id', $events->pluck('project')->concat($views->pluck('project'))->unique())
-            ->pluck('name', 'id');
+            ->get(['id', 'name', 'public_id'])
+            ->keyBy('id');
 
         return $events->concat($views)
             ->sortByDesc(fn (array $row) => $row['at']->getTimestamp())
             ->take(self::LIMIT)
             ->map(fn (array $row) => [
-                'text' => ($names[$row['project']] ?? '').' · '.$row['label'],
+                'text' => $projects[$row['project']]->name.' · '.$row['label'],
+                'href' => '/auftraege/'.$projects[$row['project']]->public_id.($row['tab'] ? '/'.$row['tab'] : ''),
                 'when' => $this->when($row['at'], $row['timed']),
                 'fresh' => $row['timed'] && $row['at']->greaterThan(now()->subDay()),
             ])

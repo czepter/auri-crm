@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 
@@ -7,6 +7,20 @@ const model = defineModel<App.Crm.Data.ProjectSuggestionData | null>({ required:
 
 const term = ref('')
 const results = ref<App.Crm.Data.ProjectSuggestionData[]>([])
+const suggestions = ref<App.Crm.Data.ProjectSuggestionData[]>([])
+
+async function search(value: string) {
+  const response = await fetch(`/projekte/suche?q=${encodeURIComponent(value)}`, {
+    headers: { Accept: 'application/json' },
+  })
+  return (await response.json()).projects
+}
+
+onMounted(async () => {
+  if (!model.value) {
+    suggestions.value = await search('')
+  }
+})
 
 let timer: ReturnType<typeof setTimeout> | undefined
 
@@ -19,12 +33,11 @@ watch(term, (value) => {
   }
 
   timer = setTimeout(async () => {
-    const response = await fetch(`/projekte/suche?q=${encodeURIComponent(value)}`, {
-      headers: { Accept: 'application/json' },
-    })
-    results.value = (await response.json()).projects
+    results.value = await search(value)
   }, 250)
 })
+
+const rows = computed(() => (term.value.trim().length < 2 ? suggestions.value : results.value))
 
 function choose(project: App.Crm.Data.ProjectSuggestionData) {
   model.value = project
@@ -60,9 +73,9 @@ const ROW = [
   <div v-else>
     <Input v-model="term" type="search" :placeholder="$t('create.pickPlaceholder')" />
 
-    <div v-if="results.length" class="mt-1.5">
+    <div v-if="rows.length" class="mt-1.5">
       <Button
-        v-for="project in results"
+        v-for="project in rows"
         :key="project.id"
         variant="ghost"
         :class="ROW"

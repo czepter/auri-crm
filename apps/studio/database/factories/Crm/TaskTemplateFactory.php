@@ -2,7 +2,6 @@
 
 namespace Database\Factories\Crm;
 
-use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\TaskTemplate;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -29,7 +28,7 @@ class TaskTemplateFactory extends Factory
         return $this->state(fn () => ['day_offset' => $days]);
     }
 
-    public function forKind(?ShootKind $kind): static
+    public function forKind(?string $kind): static
     {
         return $this->state(fn () => ['shoot_kind' => $kind]);
     }

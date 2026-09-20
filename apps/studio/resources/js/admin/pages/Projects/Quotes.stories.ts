@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import Quotes from './Quotes.vue'
-import { catalogItems, catalogPackages, contacts, header, quote } from '../__stories__/fixtures'
+import { header, quote } from '../__stories__/fixtures'
 
 /** Die Fassung vor der Zweitfotografin — angenommen wurde die nächste. */
 const ersetzt: App.Quotes.Data.QuoteData = {
@@ -29,11 +29,13 @@ const meta = {
     args: {
         header,
         quotes: [angenommen, ersetzt],
-        packages: catalogPackages,
-        catalogItems,
-        contacts,
-        canManageCatalog: true,
-        paymentPlan: null,
+        payments: {
+            number: angenommen.number,
+            rows: [
+                { label: 'Bei der Zusage', amount: 120000 },
+                { label: 'Nach der Galerie', amount: 300000 },
+            ],
+        },
     },
 } satisfies Meta<typeof Quotes>
 
@@ -45,5 +47,5 @@ export const Angenommen: Story = {}
 
 /** Gebucht, aber noch ohne Angebot im Auftrag. */
 export const OhneAngebot: Story = {
-    args: { quotes: [] },
+    args: { quotes: [], payments: null },
 }

@@ -2,13 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Contracts\Models\Contract;
 use App\Crm\Actions\BookProject;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
-use App\Crm\Enums\ShootKind;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
@@ -64,7 +62,7 @@ class MarketingScreenshotSeeder extends Seeder
 
             Shoot::create([
                 'project_id' => $project->id,
-                'kind' => $type === ProjectType::Wedding ? ShootKind::Wedding : ShootKind::Portrait,
+                'kind' => $type === ProjectType::Wedding ? 'Hochzeitstag' : 'Portrait',
                 'venue_name' => $venue,
                 'venue_city' => $city,
                 'is_primary' => true,
@@ -80,7 +78,7 @@ class MarketingScreenshotSeeder extends Seeder
         $this->seedBookedWedding($staff);
     }
 
-    /** Melissa & Jan Ahrens: a booked wedding carried through to an accepted quote, a rendered contract and a payment plan. */
+    /** Melissa & Jan Ahrens: a booked wedding carried through to an accepted quote and a payment plan. */
     private function seedBookedWedding(User $staff): void
     {
         $project = Project::create(['name' => 'Melissa & Jan Ahrens', 'type' => ProjectType::Wedding]);
@@ -90,7 +88,7 @@ class MarketingScreenshotSeeder extends Seeder
 
         Shoot::create([
             'project_id' => $project->id,
-            'kind' => ShootKind::Wedding,
+            'kind' => 'Hochzeitstag',
             'date' => '2026-10-17',
             'call_time' => '14:00',
             'venue_name' => 'Gut Basthorst',
@@ -121,8 +119,6 @@ class MarketingScreenshotSeeder extends Seeder
             'quantity' => 1,
             'unit_price' => 440000,
         ]);
-
-        Contract::factory()->for($project)->rendered()->create();
 
         // The deferred sum-matches-total constraint on payment_installments
         // only checks at COMMIT, so the plan and its installments have to

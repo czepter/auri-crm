@@ -7,8 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group'
+import { ChoiceGroup } from '@/ui/choice-group'
+import { requiresRegister } from '@/admin/lib/legalForm'
 
-type Section = 'legal' | 'brand' | 'bank'
+type Section = 'legal' | 'tax' | 'brand' | 'bank'
 
 const props = withDefaults(defineProps<{
   settings: App.Settings.Data.StudioSettingsData
@@ -17,11 +19,13 @@ const props = withDefaults(defineProps<{
   fontPairs?: { value: string; label: string; description: string }[]
   // The settings screen shows one fieldset per nav entry.
   sections?: Section[]
-  // First run asks for the studio's identity and stops there. Steuernummer,
-  // USt-ID and the register pair are what an invoice carries — the first
-  // invoice is early enough to ask for them.
+  // First run asks for the brand and stops there: the display name, the logo
+  // and the accent are what the portal header shows the client, and the
+  // portal goes live with the first quote. Firmierung and Anschrift ride
+  // along with that quote (they carry the Impressum), Steuernummer and the
+  // register pair with the first invoice.
   firstRun?: boolean
-}>(), { fontPairs: () => [], sections: () => ['legal', 'brand', 'bank'], firstRun: false })
+}>(), { fontPairs: () => [], sections: () => ['legal', 'tax', 'brand', 'bank'], firstRun: false })
 const emit = defineEmits<{ saved: [] }>()
 
 // A pane sends only its own fields. tax_number/vat_id are required_without
@@ -29,13 +33,13 @@ const emit = defineEmits<{ saved: [] }>()
 // field the screen is not showing — the controller's `sometimes` skips the
 // pair when neither key arrives.
 const SECTION_FIELDS: Record<Section, string[]> = {
-  legal: ['legal_name', 'legal_form', 'representative', 'street', 'postcode', 'city', 'country', 'tax_number', 'vat_id', 'register_number', 'register_court'],
+  legal: ['legal_name', 'legal_form', 'representative', 'street', 'postcode', 'city', 'country'],
+  tax: ['tax_number', 'vat_id', 'register_number', 'register_court'],
   brand: ['display_name', 'website', 'logo', 'accent_color', 'font_pair'],
   bank: ['bank_account_holder', 'bank_iban', 'bank_bic'],
 }
 
-const FIRST_RUN_SECTIONS: Section[] = ['legal', 'brand']
-const FIRST_RUN_OMITS = ['tax_number', 'vat_id', 'register_number', 'register_court', 'website', 'logo', 'accent_color']
+const FIRST_RUN_SECTIONS: Section[] = ['brand']
 
 const shownSections = computed(() => (props.firstRun ? FIRST_RUN_SECTIONS : props.sections))
 const shows = (section: Section) => shownSections.value.includes(section)
@@ -56,6 +60,7 @@ const form = useForm({
   website: props.settings.website ?? '',
   accent_color: props.settings.accentColor ?? '',
   font_pair: props.settings.fontPair ?? 'hanken',
+  client_register: props.settings.clientRegister,
   logo: null as File | null,
   bank_account_holder: props.settings.bankAccountHolder ?? '',
   bank_iban: props.settings.bankIban ?? '',
@@ -96,7 +101,7 @@ function submit() {
   const sent = new Set<string>(shownSections.value.flatMap((section) => SECTION_FIELDS[section]))
 
   if (props.firstRun) {
-    FIRST_RUN_OMITS.forEach((field) => sent.delete(field))
+    sent.add('client_register')
   }
 
   // Inertia's own documented workaround: a browser cannot send a real PUT
@@ -174,7 +179,11 @@ defineExpose({ form, submit })
           </Select>
         </Field>
       </div>
-      <div v-if="!firstRun" class="mb-6">
+    </div>
+
+    <div v-if="shows('tax')" class="mt-8 first:mt-0">
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.taxSection') }}</div>
+      <div class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.taxNumber')" id="p-steuernr" :error="form.errors.tax_number">
             <Input id="p-steuernr" v-model="form.tax_number" class="tabular-nums" type="text" />
@@ -186,7 +195,9 @@ defineExpose({ form, submit })
         </div>
         <span class="text-[11.5px] leading-[1.45] text-faint">{{ $t('settings.taxHint') }}</span>
       </div>
-      <div v-if="!firstRun" class="mb-6">
+      <!-- Einzelunternehmen und GbR stehen in keinem Register; dasselbe
+           Paar führt Impressum.vue. -->
+      <div v-if="requiresRegister(form.legal_form)" class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.registerNumber')" id="p-hrb" :error="form.errors.register_number">
             <Input id="p-hrb" v-model="form.register_number" class="tabular-nums" type="text" />
@@ -201,11 +212,11 @@ defineExpose({ form, submit })
     <div v-if="shows('brand')" class="mt-8 first:mt-0">
       <div v-if="shownSections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.brand') }}</div>
       <div class="mb-6">
-        <div :class="firstRun ? '' : 'grid grid-cols-2 gap-4'">
+        <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.displayName')" id="p-anzeigename" :error="form.errors.display_name">
             <Input id="p-anzeigename" v-model="form.display_name" type="text" />
           </Field>
-          <Field v-if="!firstRun" :label="$t('settings.website')" id="p-web" :error="form.errors.website">
+          <Field :label="$t('settings.website')" id="p-web" :error="form.errors.website">
             <InputGroup>
               <InputGroupAddon>https://</InputGroupAddon>
               <InputGroupInput id="p-web" v-model="websiteHost" type="text" />
@@ -213,8 +224,18 @@ defineExpose({ form, submit })
           </Field>
         </div>
       </div>
-      <div v-if="!firstRun" class="mb-6">
-        <div class="grid grid-cols-2 gap-4">
+      <div class="mb-6">
+        <ChoiceGroup
+          v-if="firstRun"
+          v-model="form.client_register"
+          class="mb-6"
+          :label="$t('settings.clientRegister')"
+          :options="[
+            { value: 'formal', label: $t('settings.clientRegisterFormal') },
+            { value: 'informal', label: $t('settings.clientRegisterInformal') },
+          ]"
+        />
+        <div :class="firstRun ? 'flex flex-col gap-6' : 'grid grid-cols-2 gap-4'">
           <Field :label="$t('settings.logo')" id="p-logo" :error="form.errors.logo" :hint="$t('settings.logoHint')">
             <div style="display: flex; align-items: center; gap: var(--s3)">
               <div v-if="settings.logoUrl" class="size-10 flex-none rounded-[6px] bg-muted object-cover">
@@ -225,6 +246,7 @@ defineExpose({ form, submit })
             </div>
           </Field>
           <Field
+            v-if="!firstRun"
             wide
             :label="$t('settings.showcase')"
             id="p-schaufenster"

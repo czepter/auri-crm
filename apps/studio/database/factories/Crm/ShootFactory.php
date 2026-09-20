@@ -2,7 +2,6 @@
 
 namespace Database\Factories\Crm;
 
-use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -20,7 +19,7 @@ class ShootFactory extends Factory
     {
         return [
             'project_id' => Project::factory(),
-            'kind' => ShootKind::Portrait,
+            'kind' => 'Portrait',
             'date' => fake()->dateTimeBetween('+1 month', '+18 months')->format('Y-m-d'),
             'status' => ShootStatus::Requested,
             'is_primary' => false,

@@ -37,7 +37,7 @@ class PortalSettings
     /** @var list<string> */
     public const OVERRIDABLE = [
         'welcome', 'accept_quotes', 'sign_contracts', 'payment_status', 'messaging_mode',
-        'gallery_downloads', 'gallery_lists', 'gallery_comments', 'portal_visible',
+        'gallery_downloads', 'gallery_lists', 'gallery_comments', 'portal_visible', 'offers',
     ];
 
     public function __construct(private readonly StudioSettingsResolver $studio) {}
@@ -55,6 +55,17 @@ class PortalSettings
     public function paymentStatusEnabled(?Contact $contact = null): bool
     {
         return (bool) $this->resolve($contact, 'payment_status', $this->studio->paymentStatusEnabled());
+    }
+
+    /**
+     * Ob dieser Kunde „Weitere Leistungen" sieht. Eigener Schalter und nicht
+     * an accept_quotes gehängt: ein Kunde mitten in einer Reklamation soll
+     * nichts angeboten bekommen, darf aber weiter annehmen, was er schon
+     * bekommen hat.
+     */
+    public function offersEnabled(?Contact $contact = null): bool
+    {
+        return (bool) $this->resolve($contact, 'offers', $this->studio->offersEnabled());
     }
 
     public function messagingMode(?Contact $contact = null): string

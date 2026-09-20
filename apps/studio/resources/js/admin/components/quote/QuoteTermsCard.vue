@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { StageRow } from './quotePayload'
 import ValidUntilField from '@/admin/components/ValidUntilField.vue'
 import { Button } from '@/ui/button'
@@ -7,6 +8,7 @@ import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Label } from '@/ui/label'
 
+const { t } = useI18n()
 const props = defineProps<{ quoteId: string }>()
 const validUntil = defineModel<string>('validUntil', { required: true })
 const stages = defineModel<StageRow[]>('stages', { required: true })
@@ -14,13 +16,25 @@ const emit = defineEmits<{ change: [] }>()
 
 const percentSum = computed(() => stages.value.reduce((sum, stage) => sum + (stage.percent || 0), 0))
 
+// Nie leer: eine Stufe mit 100 % ist die Zahlung "alles bei Zusage", nicht
+// "keine geplant" — eine leere Liste ist nur ein Angebot, das das noch nie
+// bediente.
+onMounted(() => {
+  if (stages.value.length === 0) {
+    stages.value = [{ percent: 100, label: t('quotes.stageDefaultLabel'), minimum: '' }]
+    emit('change')
+  }
+})
+
 function addStage() {
   stages.value = [...stages.value, { percent: 0, label: '', minimum: '' }]
   emit('change')
 }
 
 function removeStage(index: number) {
-  stages.value = stages.value.filter((_, i) => i !== index)
+  stages.value = stages.value.length > 1
+    ? stages.value.filter((_, i) => i !== index)
+    : [{ percent: 100, label: t('quotes.stageDefaultLabel'), minimum: '' }]
   emit('change')
 }
 </script>

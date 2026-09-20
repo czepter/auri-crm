@@ -1,7 +1,9 @@
 <?php
 
+use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
+use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,10 +23,17 @@ it('finds a project case-insensitively', function () {
     expect($response->json('projects.0.name'))->toBe('Basthorst 2026');
 });
 
-it('answers an empty list below two characters', function () {
-    Project::factory()->create(['name' => 'Basthorst 2026']);
+it('suggests open leads and projects newest first below two characters', function () {
+    $older = Lead::factory()->create();
+    $older->project->forceFill(['updated_at' => now()->subDay()])->save();
+    $newer = Lead::factory()->create();
+    Lead::factory()->create(['outcome' => LeadOutcome::Lost]);
+    $completed = Lead::factory()->create();
+    $completed->project->forceFill(['completed_at' => now()])->save();
 
-    expect($this->getJson('/projekte/suche?q=b')->json('projects'))->toBe([]);
+    $ids = collect($this->getJson('/projekte/suche?q=b')->json('projects'))->pluck('id')->all();
+
+    expect($ids)->toBe([$newer->project->public_id, $older->project->public_id]);
 });
 
 // Die drei Werte reisen mit dem Vorschlag, damit die Geburtskette im Formular

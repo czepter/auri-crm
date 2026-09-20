@@ -63,7 +63,7 @@ class ShootData extends Data
     {
         return new self(
             id: $shoot->public_id,
-            kind: $shoot->kind->label(),
+            kind: $shoot->kind,
             label: $shoot->label,
             date: $shoot->date?->format('Y-m-d'),
             // H:i, not the H:i:s the column returns — a call time is a clock

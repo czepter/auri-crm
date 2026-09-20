@@ -8,7 +8,7 @@
 # magic links) 404 without it.
 #
 # The gallery needs three more, and each one fails silently on its own:
-# minio holds the uploaded bytes, worker runs the media.ingest queue that turns
+# rustfs holds the uploaded bytes, worker runs the media.ingest queue that turns
 # them into assets, and gallery serves the address the studio hands a guest.
 # Without worker an upload reports success and the pictures never appear — the
 # jobs simply pile up in Redis; without gallery the guest link refuses the
@@ -28,8 +28,8 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# minio-init creates the bucket; api is what the gallery viewer reads from.
-docker compose up -d postgres redis gotenberg minio minio-init api portal worker gallery
+# rustfs-init creates the bucket; api is what the gallery viewer reads from.
+docker compose up -d postgres redis gotenberg rustfs rustfs-init api portal worker gallery
 
 docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
 # --no-reload keeps the compose environment reachable from a served request —

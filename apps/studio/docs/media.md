@@ -11,13 +11,12 @@ second abstraction on top of the one Flysystem already provides.
 `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`) is all the
 `s3` disk needs to point at any S3-compatible provider — self-hosted RustFS or
 MinIO, IONOS Object Storage, Hetzner Object Storage. Nothing in `app/` names
-one of these; only `docker-compose.yml`'s local `minio` service and its
+one of these; only the Compose files' `rustfs` service and its
 env values do, because that service has to be something.
 
-`docker compose up` starts `minio` (bitnami/minio) alongside `php` and
-`worker`, with a `media` bucket created on first boot
-(`MINIO_DEFAULT_BUCKETS`) and credentials set directly on the `php`/`worker`
-services' `environment:` — the same pattern `docker-compose.yml` already uses
+`docker compose up` starts `rustfs` alongside `php` and `worker`, with a
+`media` bucket created by `rustfs-init` and credentials set directly on the
+`php`/`worker` services' `environment:` — the same pattern `docker-compose.yml` already uses
 for `DB_HOST` and friends, so a plain `docker compose up` works without
 touching `.env`.
 

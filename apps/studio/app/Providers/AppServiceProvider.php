@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use App\Automation\Listeners\FireAutomationRulesForEvent;
 use App\Catalog\Models\Package;
-use App\Contracts\Events\ContractSigned;
 use App\Crm\Actions\RescheduleAnchoredTasks;
 use App\Crm\Events\LeadCaptured;
 use App\Crm\Events\LeadStageChanged;
@@ -12,7 +11,7 @@ use App\Crm\Events\ProjectBooked;
 use App\Crm\Events\ShootStatusChanged;
 use App\Crm\Listeners\ApplyTemplatesOnBooking;
 use App\Crm\Listeners\ApplyTemplatesOnStage;
-use App\Crm\Listeners\BookProjectOnContractAndDeposit;
+use App\Portal\Listeners\RevealProjectOnBooking;
 use App\Crm\Models\Contact;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Models\InternalNote;
@@ -26,15 +25,14 @@ use App\Crm\Models\TaskTemplate;
 use App\Crm\Support\CrmVocabulary;
 use App\Documents\Models\DocumentTemplate;
 use App\Gallery\Models\Gallery;
-use App\Integration\Listeners\DispatchWebhookNotifications;
 use App\Notifications\Listeners\NotifyStudioOfDomainEvent;
+use App\Notifications\Listeners\WithholdClientMail;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\NotificationPreferences;
 use App\Notifications\Support\QuietHours;
 use App\Notifications\Support\StudioMailFooter;
 use App\Notifications\Transports\InAppTransport;
 use App\Notifications\Transports\MailTransport;
-use App\Notifications\Transports\WebhookTransport;
 use App\Payments\Events\InstallmentOverdue;
 use App\Payments\Events\InstallmentPaid;
 use App\Policies\ContactPolicy;
@@ -58,6 +56,8 @@ use Dedoc\Scramble\Scramble;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Console\ServeCommand;
+use Illuminate\Notifications\Events\NotificationSending;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -88,13 +88,10 @@ class AppServiceProvider extends ServiceProvider
         // wired to a domain event directly — see NotificationService's own
         // docblock. NotificationPreferences and QuietHours are T-11's own
         // gates, autowired the same as any other constructor dependency.
-        // I-04: WebhookTransport is the third — registered here rather than
-        // subscribing to domain events on its own, per issue #86.
         $this->app->singleton(NotificationService::class, fn ($app) => new NotificationService(
             [
                 $app->make(MailTransport::class),
                 $app->make(InAppTransport::class),
-                $app->make(WebhookTransport::class),
             ],
             $app->make(NotificationPreferences::class),
             $app->make(QuietHours::class),
@@ -116,6 +113,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // #324: the e2e suite pins the clock for the seeder and every server,
+        // or seeded dates and pixel baselines age by a day each night.
+        if (config('app.e2e_now') !== null && ! $this->app->isProduction()) {
+            Carbon::setTestNow(config('app.e2e_now'));
+        }
+
         // The 'mail::' namespace (<x-mail::layout>, <x-mail::button>) only
         // exists while Illuminate\Mail\Markdown::render() is on the stack —
         // it registers it there and nowhere else, pointed at
@@ -139,7 +142,8 @@ class AppServiceProvider extends ServiceProvider
                 // The product mails' footer, here for the same reason brand is
                 // resolved here: one place, rather than the same string copied
                 // into four notification classes.
-                $view->with('mailFooter', 'Fragen: <a href="https://github.com/czepter/auri-crm/issues">github.com/czepter/auri-crm/issues</a>');
+                $address = e(config('mail.support_address'));
+                $view->with('mailFooter', $address ? "Fragen: <a href=\"mailto:{$address}\">{$address}</a>" : null);
 
                 return;
             }
@@ -196,6 +200,7 @@ class AppServiceProvider extends ServiceProvider
         // Registered by hand: auto-discovery only scans app/Listeners, and the
         // CRM keeps its listeners beside the events they answer to.
         Event::listen(ProjectBooked::class, ApplyTemplatesOnBooking::class);
+        Event::listen(ProjectBooked::class, RevealProjectOnBooking::class);
 
         // Every other stage of both pipelines. Booking stays above: it is
         // reachable without a lead stage ever changing.
@@ -213,28 +218,14 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
-        // P-05b: one listener, two triggers, converging on the same
-        // BookProject the manual button calls — see the class docblock.
-        Event::listen(ContractSigned::class, [BookProjectOnContractAndDeposit::class, 'handleContractSigned']);
-        Event::listen(InstallmentPaid::class, [BookProjectOnContractAndDeposit::class, 'handleInstallmentPaid']);
-
-        // I-04: wraps each domain event for NotificationService rather than
-        // handing WebhookTransport the event directly — see that listener's
-        // own docblock. ShootDelivered and GalleryPublished, the other two
-        // events issue #86 names, don't exist as classes yet; wiring them is
-        // one Event::listen line here once their own stories land.
-        Event::listen(ProjectBooked::class, [DispatchWebhookNotifications::class, 'handleProjectBooked']);
-        Event::listen(ContractSigned::class, [DispatchWebhookNotifications::class, 'handleContractSigned']);
-        Event::listen(InstallmentPaid::class, [DispatchWebhookNotifications::class, 'handleInstallmentPaid']);
-        Event::listen(InstallmentOverdue::class, [DispatchWebhookNotifications::class, 'handleInstallmentOverdue']);
-
         // T-11: the studio's own inbox. Three of the six events the profile
         // screen lists have a domain event; the other three call NotifyStudio
         // from their action — see the listener's own docblock.
         Event::listen(LeadCaptured::class, [NotifyStudioOfDomainEvent::class, 'handleLeadCaptured']);
-        Event::listen(ContractSigned::class, [NotifyStudioOfDomainEvent::class, 'handleContractSigned']);
         Event::listen(InstallmentPaid::class, [NotifyStudioOfDomainEvent::class, 'handleInstallmentPaid']);
         Event::listen(InstallmentOverdue::class, [NotifyStudioOfDomainEvent::class, 'handleInstallmentOverdue']);
+
+        Event::listen(NotificationSending::class, WithholdClientMail::class);
 
         // E-08: one wildcard subscription rather than one Event::listen()
         // per event class — an AutomationRule's own event_class column is

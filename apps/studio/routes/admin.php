@@ -1,8 +1,11 @@
 <?php
 
+use App\Automation\Http\Controllers\AutomationDraftController;
 use App\Automation\Http\Controllers\AutomationRuleController;
 use App\Catalog\Http\Controllers\PackageController;
+use App\Catalog\Http\Controllers\ServiceSuggestionController;
 use App\Contracts\Http\Controllers\ContractController;
+use App\Contracts\Http\Controllers\ContractIndexController;
 use App\Contracts\Http\Controllers\ContractSignerController;
 use App\Crm\Http\Controllers\AvailabilityController;
 use App\Crm\Http\Controllers\CalendarController;
@@ -63,11 +66,16 @@ use App\Http\Controllers\Staff\SetupController;
 use App\Media\Http\Controllers\FailedAssetController;
 use App\Media\Http\Controllers\MultipartUploadController;
 use App\Media\Http\Controllers\UploadPrecheckController;
+use App\Payments\Http\Controllers\CreditNoteController;
+use App\Payments\Http\Controllers\InvoiceController;
+use App\Payments\Http\Controllers\InvoiceExportController;
 use App\Payments\Http\Controllers\PaymentInstallmentController;
 use App\Payments\Http\Controllers\PaymentPlanController;
 use App\Quotes\Http\Controllers\QuoteController;
 use App\Releases\Http\Controllers\ReleaseController;
 use App\Reporting\Http\Controllers\ReportController;
+use App\Settings\Http\Controllers\ApiTokenController;
+use App\Settings\Http\Controllers\DataExportController;
 use App\Settings\Http\Controllers\GallerySettingsController;
 use App\Settings\Http\Controllers\NotificationSettingsController;
 use App\Settings\Http\Controllers\NumberRangeController;
@@ -202,11 +210,22 @@ Route::middleware('audience:staff')->group(function () {
         // the staff member to it. POST rather than a link in the page: a live
         // credential rendered into a prop is one in a browser history and in
         // a screenshot.
+        // Was das Studio diesem Kunden einzeln vorschlaegt — das Regal
+        // dagegen steht am Paket und gilt fuer alle.
+        Route::post('/kontakte/{contact}/leistungen', [ServiceSuggestionController::class, 'store'])
+            ->name('contacts.suggestions.store');
+        Route::delete('/kontakte/{contact}/leistungen/{serviceSuggestion}', [ServiceSuggestionController::class, 'destroy'])
+            ->name('contacts.suggestions.destroy');
+
         Route::post('/kontakte/{contact}/portal-vorschau', [ContactController::class, 'previewPortal'])
             ->name('contacts.portal.preview');
 
         Route::post('/kontakte/{contact}/portal-zugang/widerruf', [ContactController::class, 'revokePortalAccess'])
             ->name('contacts.portal-access.revoke');
+        Route::get('/kontakte/{contact}/portal-zugang/senden', [ContactController::class, 'composePortalAccess'])
+            ->name('contacts.portal-access.compose');
+        Route::post('/kontakte/{contact}/portal-zugang/versenden', [ContactController::class, 'sendPortalAccess'])
+            ->name('contacts.portal-access.send');
 
         // X-04: DSGVO subject-access export and deletion. Owner-only
         // (Capability::ManageDsgvo) — see ContactDsgvoController's own
@@ -225,6 +244,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/pakete', [PackageController::class, 'store'])->name('packages.store');
         Route::get('/pakete/{package}', [PackageController::class, 'edit'])->name('packages.edit');
         Route::patch('/pakete/{package}', [PackageController::class, 'update'])->name('packages.update');
+        Route::delete('/pakete/{package}', [PackageController::class, 'destroy'])->name('packages.destroy');
         Route::post('/pakete/{package}/status', [PackageController::class, 'toggle'])->name('packages.toggle');
         Route::post('/pakete/{package}/duplizieren', [PackageController::class, 'duplicate'])->name('packages.duplicate');
         // Q-10: das Bild der Baustein-Kachel, am Katalogeintrag gepflegt —
@@ -312,6 +332,12 @@ Route::middleware('audience:staff')->group(function () {
             ->name('inbox.close');
         Route::post('/posteingang/unterhaltung/{thread}/zuordnen', [InboxController::class, 'file'])
             ->name('inbox.thread.file');
+        Route::get('/posteingang/entwuerfe/{automationRun}/senden', [AutomationDraftController::class, 'compose'])
+            ->name('automation-drafts.compose');
+        Route::post('/posteingang/entwuerfe/{automationRun}/versenden', [AutomationDraftController::class, 'send'])
+            ->name('automation-drafts.send');
+        Route::post('/posteingang/entwuerfe/{automationRun}/verwerfen', [AutomationDraftController::class, 'discard'])
+            ->name('automation-drafts.discard');
 
         // S-13 + M-07. One screen: how the studio is doing, and what is
         // coming in. Gated on ViewAllProjects inside the controller — these
@@ -348,6 +374,8 @@ Route::middleware('audience:staff')->group(function () {
             ->whereNumber('index')->name('settings.showcase.destroy');
         Route::patch('/einstellungen/ust', [StudioSettingsController::class, 'updateVat'])->name('settings.vat.update');
         Route::patch('/einstellungen/dokumente', [StudioSettingsController::class, 'updateDocuments'])->name('settings.documents.update');
+        Route::get('/einstellungen/dokumente/angebot-vorschau', [StudioSettingsController::class, 'previewQuoteLayout'])
+            ->name('settings.documents.quote-layout-preview');
         Route::patch('/einstellungen/allgemein', [StudioSettingsController::class, 'updateGeneral'])->name('settings.general.update');
         Route::patch('/einstellungen/email', [StudioSettingsController::class, 'updateMail'])->name('settings.mail.update');
         Route::patch('/einstellungen/erfassung', [StudioSettingsController::class, 'updateCapture'])->name('settings.capture.update');
@@ -356,6 +384,12 @@ Route::middleware('audience:staff')->group(function () {
             ->name('number-ranges.index');
         Route::patch('/einstellungen/nummernkreise/{numberRange}', [NumberRangeController::class, 'update'])
             ->name('number-ranges.update');
+
+        Route::get('/einstellungen/rechnungen/export', InvoiceExportController::class)
+            ->name('invoices.export');
+        Route::get('/einstellungen/export', [DataExportController::class, 'index'])->name('settings.export');
+        Route::get('/einstellungen/export/kontakte', [DataExportController::class, 'contacts'])->name('settings.export.contacts');
+        Route::get('/einstellungen/export/projekte', [DataExportController::class, 'projects'])->name('settings.export.projects');
 
         Route::get('/einstellungen/verfuegbarkeit', [StudioClosureController::class, 'index'])
             ->name('availability.edit');
@@ -476,6 +510,13 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/einstellungen/benachrichtigungen', [NotificationSettingsController::class, 'update'])
             ->name('settings.notifications.update');
 
+        Route::get('/einstellungen/api-token', [ApiTokenController::class, 'index'])
+            ->name('api-tokens.index');
+        Route::post('/einstellungen/api-token', [ApiTokenController::class, 'store'])
+            ->name('api-tokens.store');
+        Route::delete('/einstellungen/api-token/{apiToken}', [ApiTokenController::class, 'destroy'])
+            ->name('api-tokens.destroy');
+
         // /anfragen/neu stays above /anfragen/{lead}/stufe for the same reason
         // /kontakte/suche stays above /kontakte/{contact}.
         Route::get('/anfragen/neu', [InquiryCaptureController::class, 'create'])->name('leads.create');
@@ -561,18 +602,29 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/auftraege/{project}/angebote', [ProjectController::class, 'quotes'])
             ->name('projects.quotes');
 
+        // The sidebar's own Angebote entry, between Anfragen and Projekte:
+        // every quote across every project, not one project's tab.
+        Route::get('/angebote', [QuoteController::class, 'index'])->name('quotes.index');
+
         Route::post('/auftraege/{project}/angebote', [QuoteController::class, 'store'])
             ->name('quotes.store');
         Route::get('/angebote/{quote}/positionen/{quoteItem}/bild', [QuoteController::class, 'itemImage'])
             ->name('quotes.items.image');
         Route::patch('/angebote/{quote}', [QuoteController::class, 'update'])->name('quotes.update');
         Route::post('/angebote/{quote}/vorschau', [QuoteController::class, 'preview'])->name('quotes.preview');
+        Route::get('/angebote/{quote}/vorschau', [QuoteController::class, 'previewSheet'])->name('quotes.preview.sheet');
+        Route::get('/angebote/{quote}/senden', [QuoteController::class, 'compose'])->name('quotes.compose');
         Route::post('/angebote/{quote}/versenden', [QuoteController::class, 'send'])->name('quotes.send');
         Route::post('/angebote/{quote}/versendet', [QuoteController::class, 'markSent'])->name('quotes.mark-sent');
+        Route::post('/angebote/{quote}/angenommen', [QuoteController::class, 'markAccepted'])->name('quotes.mark-accepted');
         Route::post('/angebote/{quote}/empfaenger-uebernehmen', [QuoteController::class, 'adoptRecipient'])
             ->name('quotes.adopt-recipient');
         Route::post('/angebote/{quote}/als-paket', [QuoteController::class, 'saveAsPackage'])->name('quotes.saveAsPackage');
+        Route::post('/angebote/{quote}/positionen/als-paket', [QuoteController::class, 'saveItemAsPackage'])->name('quotes.saveItemAsPackage');
         Route::get('/angebote/{quote}/pdf', [QuoteController::class, 'download'])->name('quotes.download');
+        Route::post('/angebote/letzte-aktion', [QuoteController::class, 'chooseLastAction'])->name('quotes.last-action');
+        Route::post('/angebote/{quote}/duplizieren', [QuoteController::class, 'duplicate'])->name('quotes.duplicate');
+        Route::delete('/angebote/{quote}', [QuoteController::class, 'destroy'])->name('quotes.destroy');
 
         // E-02: a project's own questionnaires, seeded from a FormTemplate
         // or started blank, then personalised freely — see FormInstance's
@@ -613,6 +665,8 @@ Route::middleware('audience:staff')->group(function () {
             ->name('contracts.update');
         Route::patch('/vertraege/{contract}/frist', [ContractController::class, 'deadline'])
             ->name('contracts.deadline');
+        Route::get('/vertraege/{contract}/senden', [ContractController::class, 'compose'])
+            ->name('contracts.compose');
         Route::post('/vertraege/{contract}/versenden', [ContractController::class, 'send'])
             ->name('contracts.send');
         Route::post('/vertraege/{contract}/unterzeichner', [ContractSignerController::class, 'store'])
@@ -639,6 +693,11 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/shootings/neu', [ShootController::class, 'create'])->name('shoots.wizard');
         Route::get('/angebote/neu', [QuoteController::class, 'create'])->name('quotes.wizard');
         Route::get('/frageboegen/neu', [FormInstanceController::class, 'create'])->name('form-instances.wizard');
+        // /angebote/neu bleibt über /angebote/{quote}, aus demselben Grund
+        // wie /galerien/neu über /galerien/{gallery}. The overview's row
+        // target: this one quote, capsuled, not the project's whole
+        // Angebote tab.
+        Route::get('/angebote/{quote}', [QuoteController::class, 'show'])->name('quotes.show');
         // Bereich, Set und Einstellungsabschnitt stehen im Pfad, nicht in
         // einem ref(): sonst wirft jedes Neuladen den Menschen zurueck auf
         // Bilder/Alle und die Zurueck-Taste verlaesst die Galerie. Das
@@ -734,6 +793,8 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/galerien/{gallery}/uploads/pruefen', UploadPrecheckController::class)
             ->name('galleries.uploads.precheck');
 
+        Route::get('/galerien/{gallery}/veroeffentlichen', [GalleryPublicationController::class, 'compose'])
+            ->name('galleries.publish.compose');
         Route::post('/galerien/{gallery}/veroeffentlichen', [GalleryPublicationController::class, 'store'])
             ->name('galleries.publish');
         Route::delete('/galerien/{gallery}/veroeffentlichung', [GalleryPublicationController::class, 'destroy'])
@@ -753,20 +814,45 @@ Route::middleware('audience:staff')->group(function () {
             ->name('payment-plans.store');
         Route::patch('/zahlungsplaene/{paymentPlan}', [PaymentPlanController::class, 'update'])
             ->name('payment-plans.update');
-        Route::patch('/zahlungsplaene/{paymentPlan}/erinnerungen', [PaymentPlanController::class, 'reminders'])
-            ->name('payment-plans.reminders');
+
+        // #418: one call closes the plan. See SettlePaymentPlan.
+        Route::post('/zahlungsplaene/{paymentPlan}/abwickeln', [PaymentPlanController::class, 'settle'])
+            ->name('payment-plans.settle');
 
         // T-07's staff action: date, method and reference, recorded once —
         // never a status flipped on its own. See MarkInstallmentPaid.
         Route::post('/raten/{installment}/bezahlt', [PaymentInstallmentController::class, 'markPaid'])
             ->name('payment-installments.mark-paid');
 
-        // M-06's "Fällig stellen" — the row S-09 deferred, because at the
-        // time no invoice state existed for it to move into.
+        // M-06's "Fällig stellen" for one rate on its own invoice.
         Route::post('/raten/{installment}/rechnung', [PaymentInstallmentController::class, 'issueInvoice'])
             ->name('payment-installments.issue-invoice');
-        Route::get('/raten/{installment}/rechnung', [PaymentInstallmentController::class, 'downloadInvoice'])
-            ->name('payment-installments.invoice');
+
+        // #480: the invoice as a document of its own. /rechnungen/neu stays
+        // above /rechnungen/{invoice}.
+        Route::get('/rechnungen', [InvoiceController::class, 'index'])->name('invoices.index');
+        Route::get('/rechnungen/neu', [InvoiceController::class, 'create'])->name('invoices.create');
+        Route::post('/rechnungen', [InvoiceController::class, 'store'])->name('invoices.store');
+        Route::post('/rechnungen/vorschau', [InvoiceController::class, 'preview'])->name('invoices.preview');
+        Route::get('/rechnungen/{invoice}/pdf', [InvoiceController::class, 'download'])->name('invoices.download');
+
+        // #415: the compose screen and the send. Issuing redirects into the
+        // first; nothing sends on its own.
+        Route::get('/rechnungen/{invoice}/versenden', [InvoiceController::class, 'sendView'])->name('invoices.send-view');
+        Route::post('/rechnungen/{invoice}/versenden', [InvoiceController::class, 'send'])->name('invoices.send');
+
+        // #408: the only way back out of an issued invoice. #409: what money
+        // already received gets instead.
+        Route::post('/rechnungen/{invoice}/storno', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
+        Route::post('/rechnungen/{invoice}/gutschrift', [InvoiceController::class, 'creditNote'])->name('invoices.credit-note');
+
+        // Die Gutschriften des ganzen Buchs. Eine Gutschrift haengt an ihrer
+        // Rechnung, die Frage nach allen stellt aber der Jahresabschluss.
+        Route::get('/gutschriften', CreditNoteController::class)->name('credit-notes.index');
+
+        Route::get('/vertraege', ContractIndexController::class)->name('contracts.index');
+        Route::get('/rechnungen/{invoice}/gutschrift/{creditNote}', [InvoiceController::class, 'downloadCreditNote'])
+            ->name('invoices.credit-note.download');
 
         Route::post('/auftraege/{project}/shootings', [ShootController::class, 'store'])
             ->name('shoots.store');

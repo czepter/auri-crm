@@ -8,12 +8,13 @@ use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Illuminate\Http\Response;
 
 /**
  * A person added to a project after capture — the partner a migration run
  * lost to partner_name (#355). Primary is refused: the one-primary index
- * would throw, and who booked is decided at capture.
+ * would throw, and who booked is decided at capture. Role is free text, the
+ * same rule LeadContactController gives the admin screen.
  */
 class ProjectContactController extends Controller
 {
@@ -24,14 +25,17 @@ class ProjectContactController extends Controller
             'name' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:64'],
-            'role' => ['nullable', Rule::enum(ProjectContactRole::class)->except(ProjectContactRole::Primary)],
+            'role' => ['nullable', 'string', 'max:60'],
         ]);
 
+        $role = $validated['role'] ?? ProjectContactRole::Partner->value;
+
+        abort_if($this->isPrimary($role), 422);
+
         $contact = $this->resolveContact($validated);
-        $role = ProjectContactRole::from($validated['role'] ?? ProjectContactRole::Partner->value);
 
         // unique(project_id, contact_id, role) would throw on a second attach.
-        if (! $project->contacts()->whereKey($contact->id)->wherePivot('role', $role->value)->exists()) {
+        if (! $project->contacts()->whereKey($contact->id)->wherePivot('role', $role)->exists()) {
             $project->attachContact($contact, $role);
         }
 
@@ -40,8 +44,31 @@ class ProjectContactController extends Controller
             'name' => $contact->name,
             'email' => $contact->email,
             'phone' => $contact->phone,
-            'role' => $role->value,
+            'role' => $role,
         ], 201);
+    }
+
+    /** Same both-spellings guard as LeadContactController::isPrimary. */
+    private function isPrimary(string $role): bool
+    {
+        return $role === ProjectContactRole::Primary->value
+            || $role === ProjectContactRole::Primary->label();
+    }
+
+    /**
+     * #400: a secondary contact only, same as the primary refusal on store()
+     * — the primary is decided at capture, the pivot's partial unique index
+     * depends on it staying that way.
+     */
+    public function destroy(Project $project, Contact $contact): Response
+    {
+        $role = $project->contacts()->whereKey($contact->id)->first()?->pivot->role;
+
+        abort_if($role === null || $this->isPrimary($role), 422);
+
+        $project->contacts()->detach($contact->id);
+
+        return response()->noContent();
     }
 
     /**

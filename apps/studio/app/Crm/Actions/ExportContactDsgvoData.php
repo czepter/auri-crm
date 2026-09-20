@@ -2,10 +2,16 @@
 
 namespace App\Crm\Actions;
 
+use App\Catalog\Models\ServiceSuggestion;
 use App\Crm\Models\Contact;
+use App\Crm\Models\FormAnswer;
 use App\Crm\Models\Project;
 use App\Engagement\Models\Message;
+use App\Engagement\Models\Thread;
+use App\Gallery\Models\AssetComment;
+use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\GalleryPrereleaseSignup;
+use App\Gallery\Models\GalleryView;
 use App\Models\AuditLog;
 use App\Notifications\Models\InAppNotification;
 use App\Notifications\Models\NotificationPreference;
@@ -40,6 +46,10 @@ class ExportContactDsgvoData
                 'name' => $contact->name,
                 'email' => $contact->email,
                 'phone' => $contact->phone,
+                'street' => $contact->street,
+                'postcode' => $contact->postcode,
+                'city' => $contact->city,
+                'portal_overrides' => $contact->portal_overrides,
                 'portal_access_revoked_at' => $contact->portal_access_revoked_at?->toIso8601String(),
                 'dsgvo_erased_at' => $contact->dsgvo_erased_at?->toIso8601String(),
                 'created_at' => $contact->created_at?->toIso8601String(),
@@ -50,6 +60,45 @@ class ExportContactDsgvoData
                 ->map(fn (Project $project) => $this->project($project, $contact))
                 ->values()
                 ->all(),
+            'threads' => $contact->threads()
+                ->whereNull('project_id')
+                ->get()
+                ->map(fn (Thread $thread) => $this->thread($thread, $contact))
+                ->all(),
+            'form_answers' => FormAnswer::query()
+                ->where('contact_id', $contact->id)
+                ->with('formInstanceField')
+                ->get()
+                ->map(fn (FormAnswer $answer) => [
+                    'label' => $answer->formInstanceField?->label,
+                    'value' => $answer->value,
+                    'created_at' => $answer->created_at?->toIso8601String(),
+                ])->all(),
+            'asset_comments' => AssetComment::query()
+                ->where('contact_id', $contact->id)
+                ->get()
+                ->map(fn (AssetComment $comment) => [
+                    'id' => $comment->public_id,
+                    'asset_key' => $comment->asset_key,
+                    'body' => $comment->body,
+                    'created_at' => $comment->created_at?->toIso8601String(),
+                ])->all(),
+            'asset_favorites' => AssetFavorite::query()
+                ->where('contact_id', $contact->id)
+                ->get()
+                ->map(fn (AssetFavorite $favorite) => [
+                    'id' => $favorite->public_id,
+                    'asset_key' => $favorite->asset_key,
+                    'created_at' => $favorite->created_at?->toIso8601String(),
+                ])->all(),
+            'gallery_views' => GalleryView::query()
+                ->where('contact_id', $contact->id)
+                ->with('gallery')
+                ->get()
+                ->map(fn (GalleryView $view) => [
+                    'gallery' => $view->gallery?->public_id,
+                    'viewed_on' => $view->viewed_on?->toDateString(),
+                ])->all(),
             'client_accesses' => ClientAccess::query()
                 ->where('contact_id', $contact->id)
                 ->get()
@@ -64,6 +113,17 @@ class ExportContactDsgvoData
             // export stays reachable for an already-erased contact — see
             // ContactDsgvoController::export(), which unlike erase() itself
             // carries no such guard), and there is no address left to match.
+            // Was das Studio dieser Person vorgeschlagen hat, samt Satz.
+            'service_suggestions' => ServiceSuggestion::query()
+                ->where('contact_id', $contact->id)
+                ->with('package')
+                ->get()
+                ->map(fn (ServiceSuggestion $suggestion) => [
+                    'id' => $suggestion->public_id,
+                    'package' => $suggestion->package?->name,
+                    'note' => $suggestion->note,
+                    'created_at' => $suggestion->created_at?->toIso8601String(),
+                ])->all(),
             'gallery_prerelease_signups' => $contact->email === null ? [] : GalleryPrereleaseSignup::query()
                 ->where('email', GalleryPrereleaseSignup::normalizeEmail($contact->email))
                 ->with('gallery')
@@ -98,7 +158,7 @@ class ExportContactDsgvoData
                     'enabled' => $p->enabled,
                 ])->all(),
             // AuditLogger::record only ever writes a Contact's identity as its
-            // opaque public_id (see SignContract, AcceptQuote) — these rows
+            // opaque public_id (see AcceptQuote) — these rows
             // are the append-only trail F-06 requires and are never purged by
             // erasure, so exporting them as-is leaks nothing erasure would
             // not already have made unresolvable.
@@ -120,7 +180,7 @@ class ExportContactDsgvoData
         return [
             'id' => $project->public_id,
             'name' => $project->name,
-            'type' => $project->type?->value,
+            'type' => $project->type?->key,
             'role' => $project->pivot->role,
             'lead' => $project->lead ? [
                 'source' => $project->lead->source?->value,
@@ -144,11 +204,11 @@ class ExportContactDsgvoData
             ] : null,
             'shoots' => $project->shoots->map(fn ($shoot) => [
                 'id' => $shoot->public_id,
-                'kind' => $shoot->kind?->value,
+                'kind' => $shoot->kind,
                 'label' => $shoot->label,
                 'date' => $shoot->date?->toIso8601String(),
                 'venue' => $shoot->venue(),
-                'status' => $shoot->status?->value,
+                'status' => $shoot->status?->key,
                 'timeline' => $shoot->timeline->map(fn ($t) => [
                     'time' => $t->time, 'title' => $t->title, 'location' => $t->location, 'note' => $t->note,
                 ])->all(),
@@ -162,22 +222,6 @@ class ExportContactDsgvoData
             'notes' => $project->notes->map(fn ($note) => [
                 'body' => $note->body, 'created_at' => $note->created_at?->toIso8601String(),
             ])->all(),
-            'contracts' => $project->contracts->map(function ($contract) use ($contact) {
-                $signature = $contract->signature;
-
-                return [
-                    'id' => $contract->public_id,
-                    'status' => $contract->status?->value,
-                    'rendered_at' => $contract->rendered_at?->toIso8601String(),
-                    // Only this contact's own signature — a co-signer's typed
-                    // name and IP are their own personal data.
-                    'signed_by_this_contact' => $signature !== null && $signature->contact_id === $contact->id ? [
-                        'typed_name' => $signature->typed_name,
-                        'consented_at' => $signature->consented_at?->toIso8601String(),
-                        'ip_address' => $signature->ip_address,
-                    ] : null,
-                ];
-            })->all(),
             'quotes' => $project->quotes->map(fn ($quote) => [
                 'id' => $quote->public_id,
                 'status' => $quote->status?->value,
@@ -205,22 +249,24 @@ class ExportContactDsgvoData
                     'answer' => $field->currentAnswer?->value,
                 ])->all(),
             ])->all(),
-            'threads' => $project->threads->map(function ($thread) use ($contact) {
-                return [
-                    'id' => $thread->public_id,
-                    'subject' => $thread->subject,
-                    'messages' => $thread->messages
-                        // Only this contact's own words and the studio's
-                        // replies — never another contact's message on a
-                        // shared project (see class docblock).
-                        ->filter(fn (Message $m) => $m->contact_id === $contact->id || $m->author_id !== null)
-                        ->map(fn (Message $m) => [
-                            'from' => $m->contact_id !== null ? 'contact' : 'staff',
-                            'body' => $m->body,
-                            'created_at' => $m->created_at?->toIso8601String(),
-                        ])->values()->all(),
-                ];
-            })->all(),
+            'threads' => $project->threads->map(fn (Thread $thread) => $this->thread($thread, $contact))->all(),
+        ];
+    }
+
+    private function thread(Thread $thread, Contact $contact): array
+    {
+        return [
+            'id' => $thread->public_id,
+            'subject' => $thread->subject,
+            'messages' => $thread->messages
+                // Only this contact's own words and the studio's replies —
+                // never another contact's message (see class docblock).
+                ->filter(fn (Message $m) => $m->contact_id === $contact->id || $m->author_id !== null)
+                ->map(fn (Message $m) => [
+                    'from' => $m->contact_id !== null ? 'contact' : 'staff',
+                    'body' => $m->body,
+                    'created_at' => $m->created_at?->toIso8601String(),
+                ])->values()->all(),
         ];
     }
 }

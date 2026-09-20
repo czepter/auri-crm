@@ -5,6 +5,8 @@ import PortalDot from '@/portal/components/PortalDot.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalLabel from '@/portal/components/PortalLabel.vue'
+import PortalOffers from '@/portal/components/PortalOffers.vue'
+import PortalSuggestion from '@/portal/components/PortalSuggestion.vue'
 import PortalPerson from '@/portal/components/PortalPerson.vue'
 import PortalRow from '@/portal/components/PortalRow.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
@@ -33,6 +35,20 @@ type Document = {
   settled: boolean
 }
 
+type Invoice = {
+  id: string
+  number: string
+  issuedOn: string | null
+  amount: number
+  status: string
+  settled: boolean
+}
+
+type Offers = {
+  suggestion: { service: App.Catalog.Data.PortalServiceData; note: string | null; author: string | null } | null
+  shelf: App.Catalog.Data.PortalServiceData[]
+}
+
 const props = defineProps<{
   contact: { name: string }
   showSwitcher: boolean
@@ -46,9 +62,11 @@ const props = defineProps<{
     shoots: Shoot[]
     gallery: { id: string; title: string | null; count: number; expiresAt: string | null; strip: string[] } | null
     documents: Document[]
+    invoices: Invoice[]
     questionnaires: { id: string; name: string; count: number; openCount: number }[]
     details: { date: string | null; callTime: string | null; venue: string | null; email: string | null; phone: string | null }
   }
+  offers: Offers
 }>()
 
 function longDate(iso: string) {
@@ -257,6 +275,24 @@ function documentNote(document: Document) {
         </div>
       </section>
 
+      <!-- #415: die eigene Kopie der Rechnungsfolge, eine Zeile je
+           ausgestellte Rate. -->
+      <section v-if="project.invoices.length" class="pt-12">
+        <div :class="BAND">
+          <PortalLabel class="mb-6">{{ $t('portal.invoicesTitle') }}</PortalLabel>
+          <PortalRow
+            v-for="invoice in project.invoices"
+            :key="invoice.id"
+            :href="`/projekte/${project.id}/zahlungen/${invoice.id}`"
+            :title="invoice.number"
+            :state="invoice.settled ? 'done' : 'open'"
+            :note="invoice.issuedOn ? `${invoice.status} · ${shortDate(invoice.issuedOn)}` : invoice.status"
+            :aside="formatEuros(invoice.amount)"
+            :aside-open="!invoice.settled"
+          />
+        </div>
+      </section>
+
       <!-- P-03 (#222): the questionnaire the inquiry screen has always linked
            to and nobody could fill in. Absent until the studio shares one. -->
       <section v-if="project.questionnaires.length" class="pt-12">
@@ -304,6 +340,10 @@ function documentNote(document: Document) {
           </p>
         </div>
       </section>
+
+      <PortalSuggestion v-if="offers.suggestion" :suggestion="offers.suggestion" class="mt-[var(--band)]" />
+
+      <PortalOffers :shelf="offers.shelf" class="mt-[var(--band)]" />
 
       <section v-if="reachable(studio)" class="pt-12">
         <div :class="BAND">

@@ -11,6 +11,7 @@ use App\Crm\Models\Project;
 use App\Models\User;
 use App\Payments\Data\PaymentPlanData;
 use App\Quotes\Data\QuoteData;
+use App\Settings\Support\StudioSettingsResolver;
 
 /**
  * What the quote editor needs, read the same on the project's Angebot tab and
@@ -18,6 +19,8 @@ use App\Quotes\Data\QuoteData;
  */
 class ReadQuoteWorkspace
 {
+    public function __construct(private StudioSettingsResolver $settings) {}
+
     public function __invoke(Project $project, ?User $user): array
     {
         return [
@@ -25,7 +28,7 @@ class ReadQuoteWorkspace
                 $project->quotes()->with(['items', 'predecessor', 'paymentStages'])->get()
             ),
             'paymentPlan' => $project->job?->paymentPlan
-                ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments'))
+                ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments.invoice.creditNotes'))
                 : null,
             // Beide Listen als Prop statt als Suchendpunkt: ein Studio führt
             // zweistellige Mengen, gefiltert wird in der Suchzeile selbst.
@@ -41,6 +44,14 @@ class ReadQuoteWorkspace
                 'city' => $contact->city,
             ])->all(),
             'canManageCatalog' => $user?->can('create', Package::class) ?? false,
+            // What Quote::computeVat() would freeze onto a draft right now —
+            // QuotePortalPreview.vue's own live mockup of the mode/rate the
+            // portal preview computes server-side, so the two never drift.
+            'vatSettings' => [
+                'mode' => $this->settings->vatMode(),
+                'rate' => $this->settings->effectiveVatRate(),
+                'note' => $this->settings->vatNote(),
+            ],
         ];
     }
 }

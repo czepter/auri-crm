@@ -31,6 +31,8 @@ const branding: App.Settings.Data.StudioSettingsData = {
   depositPercentage: 30,
   widerrufIncluded: true,
   widerrufText: null,
+  quoteLayout: 'classic',
+  clientRegister: 'formal',
   documentLetterheadHtml: null,
   documentFooterHtml: null,
   timezone: 'Europe/Berlin',
@@ -41,6 +43,7 @@ const branding: App.Settings.Data.StudioSettingsData = {
   mailReplyTo: 'christian@atelier-nordlicht.de',
   mailSignature: 'Christian Zepter\nAtelier Nordlicht',
   mailBcc: null,
+  mailClientsEnabled: true,
   leadTypePresets: ['Hochzeit', 'Paarshooting', 'Familie'],
   leadSourcePresets: ['Empfehlung', 'Instagram', 'Website'],
   leadChannelPresets: ['E-Mail', 'Telefon', 'Kontaktformular'],
@@ -53,10 +56,15 @@ const settings: App.Settings.Data.PortalSettingsData = {
   welcomeText: 'Hier liegen eure Termine, Unterlagen und Bilder.',
   datenschutzUrl: 'https://atelier-nordlicht.de/datenschutz',
   agbUrl: 'https://atelier-nordlicht.de/agb',
+  impressumUrl: null,
+  widerrufUrl: null,
+  legalFamilies: { impressum: null, datenschutz: null, agb: null, widerruf: null },
   acceptQuotesEnabled: true,
   signContractsEnabled: true,
   paymentStatusEnabled: true,
+  offersEnabled: true,
   messagingMode: 'booking',
+  clientRegister: 'formal',
   welcomeInquiry: 'Schön, dass ihr da seid.',
   welcomeMany: null,
   dsgvoRecipient: 'christian@atelier-nordlicht.de',
@@ -70,7 +78,8 @@ const meta = {
   title: 'Bildschirme/Einstellungen/Portal',
   component: Portal,
   parameters: { layout: 'fullscreen', url: '/einstellungen/portal' },
-  args: { settings, branding },
+  args: {
+    legalTemplates: [{ family: 'fam-widerruf-0000000000', name: 'Widerrufsbelehrung', updatedAt: '2026-06-12' }], settings, branding },
 } satisfies Meta<typeof Portal>
 
 export default meta
@@ -87,6 +96,30 @@ export const Wartung: Story = {
       maintenanceEnabled: true,
       maintenanceMessage: 'Wir sind Montag wieder erreichbar.',
       messagingMode: 'off',
+    },
+  },
+}
+
+/** Der Abschnitt Rechtliches: vier Texte, je Zeile Link oder Dokument. */
+export const Rechtliches: Story = {
+  parameters: { url: '/einstellungen/portal?pane=privacy' },
+  args: {
+    settings: {
+      ...settings,
+      widerrufUrl: null,
+      legalFamilies: { impressum: null, datenschutz: null, agb: null, widerruf: 'fam-widerruf-0000000000' },
+    },
+  },
+}
+
+/** Ohne Widerrufsbelehrung: das Angebot darf entstehen, aber nicht hinaus. */
+export const RechtlichesUnvollstaendig: Story = {
+  parameters: { url: '/einstellungen/portal?pane=privacy' },
+  args: {
+    settings: {
+      ...settings,
+      widerrufUrl: null,
+      legalFamilies: { impressum: null, datenschutz: null, agb: null, widerruf: null },
     },
   },
 }

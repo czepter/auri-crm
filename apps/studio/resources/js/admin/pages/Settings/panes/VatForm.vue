@@ -50,7 +50,7 @@ defineExpose({ form, submit })
         </RadioGroup>
         <p class="mt-2.5 text-[11.5px] leading-[1.45] text-destructive">{{ $t('settings.vatModeWarning') }}</p>
       </div>
-      <div class="mb-6">
+      <div v-if="form.vat_mode === 'standard'" class="mb-6">
         <Field
           id="v-satz"
           class="max-w-[160px]"
@@ -66,6 +66,7 @@ defineExpose({ form, submit })
       </div>
     </div>
 
+    <template v-if="form.vat_mode === 'small_business'">
     <div class="mt-8 first-of-type:mt-6">
       <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.vatNoteLabel') }}</div>
       <div class="mb-6">
@@ -86,5 +87,6 @@ defineExpose({ form, submit })
         <p v-else class="m-0 text-[11.5px] leading-[1.45] text-faint">{{ $t('settings.vatPreviewEmpty') }}</p>
       </div>
     </div>
+    </template>
   </form>
 </template>

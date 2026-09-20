@@ -17,8 +17,8 @@ use Illuminate\Database\Eloquent\Model;
  * locale and working_days are T-13's (Allgemein); the rest below is T-02's
  * Studio-Profil. quote_validity_days, payment_term_days,
  * deposit_percentage, widerruf_included and widerruf_text are T-05's
- * Dokumente pane — the values every new quote, payment plan and contract
- * render starts from, including the deposit and Zahlungsziel defaults
+ * Dokumente pane — the values every new quote and payment plan
+ * starts from, including the deposit and Zahlungsziel defaults
  * T-07's own issue also named; T-05 landed first, so T-07 reads those two
  * through T-05's columns rather than declaring a second pair. The
  * payments_* columns below are T-07's own remainder: Stripe as an optional
@@ -43,7 +43,7 @@ class StudioSettings extends Model
         'tax_number', 'vat_id', 'register_number', 'register_court', 'representative',
         'website', 'accent_color', 'logo_path', 'showcase_paths', 'font_pair',
         'bank_account_holder', 'bank_iban', 'bank_bic',
-        'vat_mode', 'vat_rate', 'vat_note',
+        'vat_mode', 'vat_rate', 'vat_note', 'quote_layout', 'client_register',
         'default_shoot_duration_minutes',
         'quote_validity_days', 'payment_term_days', 'deposit_percentage', 'widerruf_included', 'widerruf_text',
         'document_letterhead_html', 'document_footer_html',
@@ -52,13 +52,16 @@ class StudioSettings extends Model
         'payments_stripe_test_publishable_key', 'payments_stripe_test_secret_key',
         'payments_stripe_live_publishable_key', 'payments_stripe_live_secret_key',
         'payments_reminders_enabled',
-        'mail_from_name', 'mail_from_address', 'mail_reply_to', 'mail_signature', 'mail_bcc',
+        'mail_from_name', 'mail_from_address', 'mail_reply_to', 'mail_signature', 'mail_bcc', 'mail_clients_enabled',
         'portal_maintenance_enabled', 'portal_maintenance_message',
         'portal_welcome_text', 'portal_legal_datenschutz_url', 'portal_legal_agb_url',
+        'portal_legal_impressum_url', 'portal_legal_widerruf_url',
+        'portal_legal_impressum_family', 'portal_legal_datenschutz_family',
+        'portal_legal_agb_family', 'portal_legal_widerruf_family',
         'portal_accept_quotes_enabled', 'portal_sign_contracts_enabled',
-        'portal_payment_status_enabled', 'portal_messaging_mode',
+        'portal_payment_status_enabled', 'portal_messaging_mode', 'portal_offers_enabled',
         'portal_welcome_inquiry', 'portal_welcome_many',
-        'gallery_default_expiry_days', 'gallery_default_requires_settled_balance',
+        'gallery_default_expiry_days',
         'gallery_default_downloads_enabled', 'gallery_default_lists_enabled',
         'gallery_default_comments_enabled', 'gallery_default_design',
         'dsgvo_request_recipient', 'dsgvo_request_deadline_days',
@@ -90,11 +93,12 @@ class StudioSettings extends Model
             'payments_stripe_live_publishable_key' => 'encrypted',
             'payments_stripe_live_secret_key' => 'encrypted',
             'payments_reminders_enabled' => 'boolean',
+            'mail_clients_enabled' => 'boolean',
             'portal_maintenance_enabled' => 'boolean',
             'portal_accept_quotes_enabled' => 'boolean',
             'portal_sign_contracts_enabled' => 'boolean',
             'portal_payment_status_enabled' => 'boolean',
-            'gallery_default_requires_settled_balance' => 'boolean',
+            'portal_offers_enabled' => 'boolean',
             'gallery_default_downloads_enabled' => 'boolean',
             'gallery_default_lists_enabled' => 'boolean',
             'gallery_default_comments_enabled' => 'boolean',

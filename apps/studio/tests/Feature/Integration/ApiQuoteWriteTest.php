@@ -8,6 +8,7 @@ use App\Enums\Capability;
 use App\Integration\Models\ApiToken;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
+use App\Quotes\Models\QuoteItem;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -39,6 +40,35 @@ it('creates a draft quote and edits one field without losing the rest', function
         ->assertJsonPath('data.intro', 'Liebe Viktoria')
         ->assertJsonPath('data.items.0.title', 'Reportage 2')
         ->assertJsonPath('data.paymentStages.0.label', 'Anzahlung');
+});
+
+// #396: the API store created a quote with no number and no recipient,
+// unlike the admin store's (Quotes\Http\Controllers\QuoteController::store).
+it('gives a new quote a number and the project\'s payer as recipient, like the admin store does', function () {
+    $project = Project::factory()->create();
+    $payer = Contact::factory()->create();
+    $project->attachContact($payer, ProjectContactRole::Payer);
+
+    $this->withHeader('Idempotency-Key', 'quote-numbered')
+        ->postJson("/api/projects/{$project->public_id}/quotes", [])
+        ->assertCreated()
+        ->assertJsonPath('data.recipientContact', $payer->public_id)
+        ->tap(fn ($response) => expect($response->json('data.number'))->not->toBeNull());
+});
+
+it('switches the slider on when a rate arrives without a mode', function () {
+    $project = Project::factory()->create();
+
+    $id = $this->withHeader('Idempotency-Key', 'rate-no-mode')
+        ->postJson("/api/projects/{$project->public_id}/quotes", ['hourly_rate' => 25_000, 'min_hours' => 4, 'max_hours' => 10, 'hours' => 6])
+        ->assertCreated()
+        ->assertJsonPath('data.pricingMode', 'choice')
+        ->json('data.id');
+
+    $this->withHeader('Idempotency-Key', 'rate-cleared')
+        ->patchJson("/api/quotes/{$id}", ['hourly_rate' => null, 'min_hours' => null, 'max_hours' => null, 'hours' => null])
+        ->assertOk()
+        ->assertJsonPath('data.pricingMode', 'classic');
 });
 
 it('starts a quote from a listed package, keeping its lines under a new intro', function () {
@@ -74,8 +104,50 @@ it('records a past quote as sent and accepted, silently', function () {
         ->assertJsonPath('data.status', QuoteStatus::Accepted->value);
 
     expect($quote->fresh()->accepted_at->toDateString())->toBe('2018-12-03')
-        ->and($quote->fresh()->sent_at->toDateString())->toBe('2018-11-20');
+        ->and($quote->fresh()->sent_at->toDateString())->toBe('2018-11-20')
+        // #396: a silent send never left the app, so it is channel self —
+        // MarkQuoteSent's own value, not SendQuote's 'mail'.
+        ->and($quote->fresh()->sent_channel)->toBe('self');
     Notification::assertNothingSent();
+});
+
+// #396: AcceptQuote::configuration() deselects every switchable line the
+// caller does not name, and the API passed it none at all.
+it('keeps the add-ons the client switched on when accepting an hourly quote', function () {
+    $project = Project::factory()->create();
+    $project->attachContact($contact = Contact::factory()->create(), ProjectContactRole::Primary);
+    $quote = Quote::factory()->for($project)->create([
+        'status' => QuoteStatus::Sent,
+        'pricing_mode' => 'choice',
+        'hourly_rate' => 10000,
+        'min_hours' => 1,
+        'max_hours' => 10,
+    ]);
+    $addon = QuoteItem::factory()->for($quote)->create(['selectable' => true, 'selected' => false, 'unit_price' => 20000, 'quantity' => 1]);
+
+    $this->withHeader('Idempotency-Key', 'accept-addon')
+        ->postJson("/api/quotes/{$quote->public_id}/accept", ['hours' => 3, 'items' => [$addon->public_id]])
+        ->assertOk();
+
+    expect($addon->fresh()->selected)->toBeTrue();
+});
+
+it('refuses a re-accept that carries different hours than the one already recorded', function () {
+    $project = Project::factory()->create();
+    $project->attachContact(Contact::factory()->create(), ProjectContactRole::Primary);
+    $quote = Quote::factory()->for($project)->create([
+        'status' => QuoteStatus::Accepted,
+        'accepted_at' => now(),
+        'accepted_by_contact_id' => $project->primaryContact()->id,
+        'hours' => 4,
+    ]);
+
+    $this->withHeader('Idempotency-Key', 're-accept')
+        ->postJson("/api/quotes/{$quote->public_id}/accept", ['hours' => 9])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('quote');
+
+    expect($quote->fresh()->hours)->toBe(4);
 });
 
 it('refuses to edit a sent quote', function () {

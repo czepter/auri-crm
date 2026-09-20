@@ -7,25 +7,27 @@ import ContactTypeahead from "@/admin/components/ContactTypeahead.vue";
 import LeadQueue from "@/admin/components/LeadQueue.vue";
 import NoteThread from "@/admin/components/NoteThread.vue";
 import QuoteSummary from "@/admin/components/QuoteSummary.vue";
-import QuoteWorkspace from "@/admin/components/QuoteWorkspace.vue";
-import type { QuoteContact } from "@/admin/components/quote/quotePayload";
+import QuoteList from "@/admin/components/quote/QuoteList.vue";
 import MessageThread from "@/admin/components/MessageThread.vue";
 import ProjectShell from "@/admin/components/ProjectShell.vue";
 import RailHistory from "@/admin/components/RailHistory.vue";
 import ShootFields from "@/admin/components/ShootFields.vue";
 import ShootRow from "@/admin/components/ShootRow.vue";
 import { Button } from "@/ui/button";
-import { ChoiceGroup } from "@/ui/choice-group";
 import { DatePicker } from "@/ui/date-picker";
 import { Field } from "@/ui/field";
 import { Input } from "@/ui/input";
+import { Label } from "@/ui/label";
 import Rail from "@/ui/page/Rail.vue";
 import RailSection from "@/ui/page/RailSection.vue";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
+import { Switch } from "@/ui/switch";
 import { Textarea } from "@/ui/textarea";
-import { DropdownMenuItem } from "@/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui/dropdown-menu";
+import { ChevronDown } from "lucide-vue-next";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/admin/lib/money";
+import { quoteChipClass } from "@/admin/lib/quoteDisplay";
 import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
 import { dayWithWeekday as day } from "@/admin/lib/dates";
 
@@ -38,9 +40,9 @@ const props = defineProps<{
         type: string;
         typeOther: string | null;
         typeLabel: string;
-        source: string;
+        source: string | null;
         sourceOther: string | null;
-        sourceLabel: string;
+        sourceLabel: string | null;
         stage: string;
         stageLabel: string;
         inquiryText: string | null;
@@ -62,21 +64,16 @@ const props = defineProps<{
     presets: { type: string[]; source: string[] };
     week: { date: string; what: string; projectId: string }[];
     conflicts: App.Crm.Data.DateConflictData[];
-    stages: { value: string; label: string }[];
+    stages: { value: string; label: string; anchor: string | null }[];
     tab: "overview" | "quotes" | "messages";
     header: App.Crm.Data.ProjectHeaderData;
     conversation: App.Engagement.Data.ThreadData | null;
-    workspace: {
-        quotes: App.Quotes.Data.QuoteData[];
-        packages: App.Catalog.Data.PackageData[];
-        catalogItems: App.Catalog.Data.CatalogItemData[];
-        contacts: QuoteContact[];
-        canManageCatalog: boolean;
-        paymentPlan: App.Payments.Data.PaymentPlanData | null;
-    } | null;
+    quotes: App.Quotes.Data.QuoteData[];
+    payments: { number: string | null; rows: { label: string; amount: number }[] } | null;
 }>();
 
 const quoteTab = computed(() => `/anfragen/${props.lead.id}/angebot`);
+const newQuote = computed(() => `/angebote/neu?projekt=${props.lead.projectId}`);
 
 // Once booked, the case is the project's Anfrage tab.
 const active = computed(() => (props.lead.booked && props.tab === "overview" ? "lead" : props.tab));
@@ -147,12 +144,26 @@ const kontakteEditing = ref(false);
 const termineEditing = ref(false);
 
 const anfrage = useForm({
+    inquiry_text: props.lead.inquiryText ?? "",
+});
+
+// Typ und Quelle stehen in der Seitenspalte und speichern bei jeder Änderung:
+// zwei Auswahlen brauchen keinen Bearbeiten-Modus.
+const details = useForm({
     type: props.lead.type,
     type_other: props.lead.typeOther ?? "",
     source: props.lead.source,
     source_other: props.lead.sourceOther ?? "",
-    inquiry_text: props.lead.inquiryText ?? "",
 });
+
+function saveDetail(field: "type" | "source") {
+    details
+        .transform((data) => ({
+            [field]: data[field],
+            [`${field}_other`]: data[field] === "other" ? blank(data[`${field}_other`]) : null,
+        }))
+        .patch(`/anfragen/${props.lead.id}`, { preserveScroll: true });
+}
 
 const kontakte = useForm({
     people: props.people.map((person) => ({
@@ -260,7 +271,7 @@ function removeShoot(id: string) {
 
 // Was eine Karte sagt, wenn sie zu ist.
 const anfrageSummary = computed(() =>
-    [props.lead.typeLabel, props.lead.sourceLabel, day(props.lead.capturedAt)].filter(Boolean).join(" · "),
+    [props.lead.capturedVia, day(props.lead.capturedAt)].filter(Boolean).join(" · "),
 );
 
 const kontakteSummary = computed(() => props.people.map((person) => person.name).join(", "));
@@ -270,11 +281,7 @@ const termineSummary = computed(() =>
 );
 
 const quoteSummary = computed(() =>
-    props.quote === null
-        ? ""
-        : [props.quote.number, props.quote.statusLabel, formatEurosRounded(Number(props.quote.net))]
-              .filter(Boolean)
-              .join(" · "),
+    props.quote === null ? "" : formatEurosRounded(Number(props.quote.net)),
 );
 
 const taskSummary = computed(() => {
@@ -301,6 +308,10 @@ function move(stage: string) {
     router.post(`/anfragen/${props.lead.id}/stufe`, { stage }, { preserveScroll: true });
 }
 
+function togglePortal() {
+    router.post(`/auftraege/${props.header.id}/portal-sichtbarkeit`, {}, { preserveScroll: true });
+}
+
 function book() {
     router.post(`/anfragen/${props.lead.id}/stufe`, { stage: "booked" }, { preserveScroll: true });
     booking.value = false;
@@ -315,37 +326,9 @@ function addTask() {
     });
 }
 
-// Exactly one filled button, and it moves with the action that is due.
-const due = computed(() => {
-    if (props.lead.booked) {
-        return {
-            label: "lead.openProject",
-            href: `/auftraege/${props.lead.projectId}`,
-        };
-    }
-
-    // On its own tab the button writes the quote; everywhere else it leads
-    // there.
-    if (props.quote === null) {
-        return props.tab === "quotes"
-            ? { label: "lead.writeQuote", create: true }
-            : { label: "lead.writeQuote", href: quoteTab.value };
-    }
-
-    return props.lead.stage === "quote_accepted"
-        ? {
-              label: "lead.sendContract",
-              href: `/auftraege/${props.lead.projectId}/vertrag`,
-          }
-        : {
-              label: "lead.openQuote",
-              href: quoteTab.value,
-          };
-});
-
-function writeQuote() {
-    router.post(`/auftraege/${props.lead.projectId}/angebote`, {}, { preserveScroll: true });
-}
+const nextStage = computed(
+    () => props.stages[props.stages.findIndex((stage) => stage.value === props.lead.stage) + 1] ?? null,
+);
 </script>
 
 <template>
@@ -361,6 +344,60 @@ function writeQuote() {
                  by what is already on it. -->
             <template #rail>
                 <Rail>
+                    <RailSection :title="$t('project.lead')">
+                        <div class="flex flex-col gap-3">
+                            <Field v-slot="{ id }" :label="$t('leads.type')" :error="details.errors.type">
+                                <Select
+                                    v-model="details.type"
+                                    :disabled="!header.canManageShoots"
+                                    @update:model-value="saveDetail('type')"
+                                >
+                                    <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem v-for="option in types" :key="option.value" :value="option.value">{{ option.label }}</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <Input
+                                    v-if="details.type === 'other'"
+                                    v-model="details.type_other"
+                                    class="mt-2"
+                                    type="text"
+                                    list="type-presets"
+                                    :disabled="!header.canManageShoots"
+                                    @change="saveDetail('type')"
+                                />
+                                <datalist id="type-presets">
+                                    <option v-for="value in presets.type" :key="value" :value="value" />
+                                </datalist>
+                            </Field>
+
+                            <Field v-slot="{ id }" :label="$t('leads.source')" :error="details.errors.source">
+                                <Select
+                                    v-model="details.source"
+                                    :disabled="!header.canManageShoots"
+                                    @update:model-value="saveDetail('source')"
+                                >
+                                    <SelectTrigger :id="id"><SelectValue placeholder="—" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem v-for="option in sources" :key="option.value" :value="option.value">{{ option.label }}</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <Input
+                                    v-if="details.source === 'other'"
+                                    v-model="details.source_other"
+                                    class="mt-2"
+                                    type="text"
+                                    list="source-presets"
+                                    :disabled="!header.canManageShoots"
+                                    @change="saveDetail('source')"
+                                />
+                                <datalist id="source-presets">
+                                    <option v-for="value in presets.source" :key="value" :value="value" />
+                                </datalist>
+                            </Field>
+                        </div>
+                    </RailSection>
+
                     <RailSection :title="$t('lead.week')">
                         <template v-if="week.length">
                             <Link
@@ -399,26 +436,45 @@ function writeQuote() {
                 </Rail>
             </template>
 
-            <!-- Bearbeitet wird je Karte; im Kopf steht nur noch die eine
-                 Aktion, die gerade fällig ist. -->
-            <template #actions>
-                <Button v-if="due.create" variant="pill" type="button" @click="writeQuote">{{
-                    $t(due.label)
-                }}</Button>
-                <Button v-else :as="Link" variant="pill" :href="due.href">{{
-                    $t(due.label)
+            <template v-if="lead.booked" #actions>
+                <Button :as="Link" variant="pill" :href="`/auftraege/${lead.projectId}`">{{
+                    $t("lead.openProject")
                 }}</Button>
             </template>
 
-            <template v-if="!lead.outcomeLabel && !lead.booked" #menu>
-                <DropdownMenuItem
-                    v-for="stage in stages"
-                    :key="stage.value"
-                    :disabled="stage.value === lead.stage"
-                    @select="move(stage.value)"
-                >
-                    {{ stage.label }}
-                </DropdownMenuItem>
+            <template v-if="!lead.outcomeLabel && !lead.booked" #stage>
+                <div class="flex">
+                    <Button
+                        v-if="nextStage"
+                        variant="pill"
+                        type="button"
+                        class="rounded-r-none"
+                        @click="move(nextStage.value)"
+                        >{{ nextStage.label }}</Button
+                    >
+                    <DropdownMenu>
+                        <DropdownMenuTrigger as-child>
+                            <Button
+                                variant="pill"
+                                type="button"
+                                :class="nextStage ? 'rounded-l-none border-l border-white/30 px-2' : ''"
+                                :aria-label="$t('board.colStage')"
+                            >
+                                <ChevronDown class="size-3.5" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" class="w-[208px]">
+                            <DropdownMenuItem
+                                v-for="stage in stages"
+                                :key="stage.value"
+                                :disabled="stage.value === lead.stage"
+                                @select="move(stage.value)"
+                            >
+                                {{ stage.label }}
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </template>
 
             <AlertDialog v-model:open="booking">
@@ -444,64 +500,24 @@ function writeQuote() {
                         @cancel="anfrage.reset()"
                         @save="saveAnfrage"
                     >
-                        <!-- Der Anfragetext, darunter woher und wann. Die
-                             Personen stehen in ihrer eigenen Karte: eine
-                             Seitenspalte trägt keinen Zeileneditor. -->
+                        <template v-if="header.canManagePortalVisibility" #action>
+                            <div class="flex items-center gap-2" @click.stop>
+                                <Label for="lead-portal" variant="inline">{{ $t("project.portal") }}</Label>
+                                <Switch id="lead-portal" :model-value="header.portalVisible" @update:model-value="togglePortal" />
+                            </div>
+                        </template>
+
+                        <!-- Der Anfragetext. Die Personen stehen in ihrer
+                             eigenen Karte: eine Seitenspalte trägt keinen
+                             Zeileneditor. -->
                         <p class="m-0 max-w-[58ch] text-[14px] leading-[1.5] tracking-[-0.008em] whitespace-pre-line">
                             {{ lead.inquiryText ?? $t("lead.noText") }}
                         </p>
-
-                        <div class="mt-4 grid grid-cols-3 gap-[18px] pt-3.5 shadow-[inset_0_1px_0_var(--rule)] max-[640px]:grid-cols-1">
-                            <div>
-                                <div class="text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t("leads.type") }}</div>
-                                <div class="mt-1.5 text-[13.5px] leading-[1.35]">{{ lead.typeLabel }}</div>
-                            </div>
-                            <div>
-                                <div class="text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t("leads.source") }}</div>
-                                <div class="mt-1.5 text-[13.5px] leading-[1.35]">{{ lead.sourceLabel }}</div>
-                            </div>
-                            <div>
-                                <div class="text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t("leads.capturedAt") }}</div>
-                                <div class="mt-1.5 text-[13.5px] leading-[1.35]">
-                                    {{ lead.capturedVia ? `${lead.capturedVia} · ` : "" }}{{ day(lead.capturedAt) }}
-                                </div>
-                            </div>
-                        </div>
 
                         <template #edit>
                             <Field v-slot="{ id }" :label="$t('leads.inquiryText')" :error="anfrage.errors.inquiry_text">
                                 <Textarea :id="id" v-model="anfrage.inquiry_text" rows="6" />
                             </Field>
-
-                            <div class="mt-3.5 flex flex-wrap gap-3">
-                                <Field class="min-w-[220px] flex-1" :label="$t('leads.type')" :error="anfrage.errors.type">
-                                    <ChoiceGroup v-model="anfrage.type" :options="types" />
-                                    <Input
-                                        v-if="anfrage.type === 'other'"
-                                        v-model="anfrage.type_other"
-                                        class="mt-2"
-                                        type="text"
-                                        list="type-presets"
-                                    />
-                                    <datalist id="type-presets">
-                                        <option v-for="value in presets.type" :key="value" :value="value" />
-                                    </datalist>
-                                </Field>
-
-                                <Field class="min-w-[220px] flex-1" :label="$t('leads.source')" :error="anfrage.errors.source">
-                                    <ChoiceGroup v-model="anfrage.source" :options="sources" />
-                                    <Input
-                                        v-if="anfrage.source === 'other'"
-                                        v-model="anfrage.source_other"
-                                        class="mt-2"
-                                        type="text"
-                                        list="source-presets"
-                                    />
-                                    <datalist id="source-presets">
-                                        <option v-for="value in presets.source" :key="value" :value="value" />
-                                    </datalist>
-                                </Field>
-                            </div>
                         </template>
                     </Card>
 
@@ -637,7 +653,22 @@ function writeQuote() {
                         </template>
                     </Card>
 
-                    <Card :title="$t('lead.quote')" :summary="quoteSummary" :default-open="quote !== null">
+                    <Card
+                        :title="$t('lead.quote')"
+                        :summary="quoteSummary"
+                        :default-open="quote !== null"
+                    >
+                        <template v-if="quote" #meta>
+                            <span v-if="quote.number" class="text-[13.5px] leading-[1.2] tracking-[-0.015em] text-ink-2 tabular-nums">{{ quote.number }}</span>
+                            <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
+                        </template>
+                        <template v-if="header.canManageQuotes" #action>
+                            <Link
+                                class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
+                                :href="quote ? `/angebote/${quote.id}` : newQuote"
+                            >{{ quote ? $t("common.edit") : $t("quotes.create") }}</Link>
+                        </template>
+
                         <QuoteSummary
                             v-if="quote"
                             :quote="quote"
@@ -730,13 +761,12 @@ function writeQuote() {
                 </div>
                 </template>
 
-                <QuoteWorkspace
-                    v-else-if="tab === 'quotes' && workspace"
-                    v-bind="workspace"
+                <QuoteList
+                    v-else-if="tab === 'quotes'"
                     :project-id="lead.projectId"
                     :can-manage-quotes="header.canManageQuotes"
-                    :can-manage-payment-plan="header.canManagePaymentPlan"
-                    :only="['workspace']"
+                    :quotes="quotes"
+                    :payments="payments"
                 />
 
                 <Card v-else :title="$t('project.history')">

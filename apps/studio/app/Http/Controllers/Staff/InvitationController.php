@@ -45,7 +45,14 @@ class InvitationController extends Controller
                     'expiresOn' => $invitation->expires_at->format('Y-m-d'),
                 ]),
             'roles' => collect(StaffRole::cases())
-                ->map(fn (StaffRole $role) => ['value' => $role->value, 'label' => $role->label()])
+                ->map(fn (StaffRole $role) => [
+                    'value' => $role->value,
+                    'label' => $role->label(),
+                    'capabilities' => array_map(fn (Capability $capability) => $capability->value, $role->capabilities()),
+                ])
+                ->all(),
+            'capabilities' => collect(Capability::cases())
+                ->map(fn (Capability $capability) => ['value' => $capability->value, 'label' => $capability->label()])
                 ->all(),
         ]);
     }

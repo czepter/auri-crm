@@ -14,23 +14,23 @@ it('creates a first template version', function () {
     $staff = staffMember(StaffRole::Owner);
 
     $this->actingAs($staff, 'staff')
-        ->post('/dokumentvorlagen', ['name' => 'Hochzeit', 'body' => '<p>{{ project.name }}</p>', 'type' => 'contract'])
+        ->post('/dokumentvorlagen', ['name' => 'Hochzeit', 'body' => '<p>{{ project.name }}</p>', 'type' => 'quote'])
         ->assertRedirect('/dokumentvorlagen');
 
     $template = DocumentTemplate::sole();
     expect($template->version)->toBe(1)
         ->and($template->is_current)->toBeTrue()
-        ->and($template->type)->toBe(DocumentTemplateType::Contract)
+        ->and($template->type)->toBe(DocumentTemplateType::Quote)
         ->and(AuditLog::where('event', 'document_template.created')->sole()->actor_id)->toBe($staff->id);
 });
 
-it('creates a quote or mail template exactly the same way as a contract one', function (string $type) {
+it('creates an invoice or mail template exactly the same way as a quote one', function (string $type) {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->post('/dokumentvorlagen', ['name' => 'Standard', 'body' => '<p>{{ project.name }}</p>', 'type' => $type])
         ->assertRedirect('/dokumentvorlagen');
 
     expect(DocumentTemplate::sole()->type)->toBe(DocumentTemplateType::from($type));
-})->with(['quote', 'invoice', 'mail']);
+})->with(['invoice', 'mail']);
 
 it('rejects an unknown document type', function () {
     // 'invoice' was this test's example of an unknown type until T-15 made
@@ -42,7 +42,7 @@ it('rejects an unknown document type', function () {
 
 it('accepts an optional shoot kind variant', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->post('/dokumentvorlagen', ['name' => 'Hochzeit', 'body' => '<p>x</p>', 'type' => 'contract', 'shoot_kind' => 'wedding'])
+        ->post('/dokumentvorlagen', ['name' => 'Hochzeit', 'body' => '<p>x</p>', 'type' => 'quote', 'shoot_kind' => 'wedding'])
         ->assertRedirect('/dokumentvorlagen');
 
     expect(DocumentTemplate::sole()->shoot_kind)->toBe('wedding');
@@ -105,7 +105,7 @@ it('stores the editor blocks next to the serialized body', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->post('/dokumentvorlagen', [
             'name' => 'Fotovertrag',
-            'type' => 'contract',
+            'type' => 'quote',
             'shoot_kind' => null,
             'body' => '<p>Hallo</p>',
             'blocks' => ['blocks' => [['type' => 'paragraph', 'data' => ['text' => 'Hallo']]]],
@@ -140,7 +140,7 @@ it('accepts a template saved without blocks, the way an untouched legacy row is'
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->post('/dokumentvorlagen', [
             'name' => 'Alt',
-            'type' => 'contract',
+            'type' => 'quote',
             'shoot_kind' => null,
             'body' => '<p>alt</p>',
         ])
@@ -154,7 +154,7 @@ it('gives the create screen a palette for its type and the merge-field samples',
         ->get('/dokumentvorlagen/neu')
         ->assertInertia(fn ($page) => $page
             ->component('DocumentTemplates/Create')
-            ->has('palettes.contract')
+            ->has('palettes.quote')
             ->has('palettes.mail')
             ->has('mergeFields.0.path')
             ->has('mergeFields.0.sample'));
@@ -172,7 +172,7 @@ it('gives the edit screen the palette for the template it is editing', function 
             ->where('palette', fn ($palette) => collect($palette)
                 ->where('allowed', true)->pluck('type')->doesntContain('columns'))
             ->where('palette', fn ($palette) => collect($palette)
-                ->firstWhere('type', 'columns')['only'] === 'Vertrag und Angebot und Rechnung'));
+                ->firstWhere('type', 'columns')['only'] === 'Vertrag und Angebot und Rechnung und Gutschrift'));
 });
 
 it('refuses a body carrying an href with an unsafe scheme', function () {
@@ -192,7 +192,7 @@ it('sanitises block html on the way into storage, not merely on the way out', fu
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->post('/dokumentvorlagen', [
             'name' => 'Fotovertrag',
-            'type' => 'contract',
+            'type' => 'quote',
             'shoot_kind' => null,
             'body' => '<p>Hallo</p>',
             'blocks' => ['blocks' => [['type' => 'paragraph', 'data' => ['text' => 'Hallo <img src=x onerror=alert(1)>']]]],
@@ -211,16 +211,16 @@ it('opens the create screen on the catalog rather than on an empty canvas', func
         ->assertInertia(function ($page) {
             $starters = $page->toArray()['props']['starters'];
 
-            expect(array_keys($starters))->toContain('contract', 'quote', 'invoice', 'mail')
-                ->and($starters['contract'])->not->toBeEmpty()
+            expect(array_keys($starters))->toContain('quote', 'invoice', 'mail')
+                ->and($starters['quote'])->not->toBeEmpty()
                 // Blocks travel with the entry, so choosing one is a local
                 // edit rather than a second request.
-                ->and($starters['contract'][0])->toHaveKeys(['key', 'name', 'description', 'shootKind', 'blocks']);
+                ->and($starters['quote'][0])->toHaveKeys(['key', 'name', 'description', 'shootKind', 'blocks']);
         });
 });
 
 it('creates a tenant-owned first version whose blocks are the starter\'s own', function () {
-    $starter = StarterTemplateCatalog::find('contract-werkvertrag');
+    $starter = StarterTemplateCatalog::find('quote-generic');
     $body = StarterBlockSerializer::toHtml($starter['blocks']);
 
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
@@ -236,7 +236,7 @@ it('creates a tenant-owned first version whose blocks are the starter\'s own', f
 
     expect($template->version)->toBe(1)
         ->and($template->is_current)->toBeTrue()
-        ->and($template->blocks['blocks'][0]['data']['text'])->toBe('Fotovertrag')
+        ->and($template->blocks['blocks'][0]['data']['text'])->toBe('Angebot {{ project.name }}')
         // Nothing records which starter it came from: a later release editing
         // the catalog must not reach a template the studio has made its own.
         ->and($template->getAttributes())->not->toHaveKey('starter_key');

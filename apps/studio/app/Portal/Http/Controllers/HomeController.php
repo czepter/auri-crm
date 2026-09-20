@@ -2,6 +2,7 @@
 
 namespace App\Portal\Http\Controllers;
 
+use App\Catalog\Support\PortalOffers;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Engagement\Models\Thread;
@@ -36,7 +37,7 @@ use Inertia\Response;
  */
 class HomeController extends Controller
 {
-    public function __invoke(StudioSettingsResolver $studio, PortalSettings $settings): Response|RedirectResponse
+    public function __invoke(StudioSettingsResolver $studio, PortalSettings $settings, PortalOffers $offers): Response|RedirectResponse
     {
         $contact = auth('portal')->user();
 
@@ -69,6 +70,9 @@ class HomeController extends Controller
             'bookings' => $bookings->all(),
             'phaseCounts' => $bookings->countBy('phase')->all(),
             'galleries' => $this->galleries($projects),
+            // Steht im Entwurf unter den Galerien, nicht über dem Offenen:
+            // ein Angebot des Studios ist keine offene Handlung des Kunden.
+            'offers' => $offers->for($contact),
             'studio' => [
                 'name' => $studio->displayName(),
                 'messagingEnabled' => $settings->messagingEnabled($contact),

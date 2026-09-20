@@ -1,19 +1,16 @@
 name: Release images
 
 # Builds the deployment images ahead of the deploy rather than on the server.
-# docker-compose.coolify.yml names eight services off three images; letting
+# docker-compose.coolify.yml names seven services off two images; letting
 # Coolify build them would mean a VPS compiling PHP extensions and two
 # JavaScript bundles while the old containers are still serving, on hardware
 # sized for neither. Here the build is already cached, already tested by ci.yml
 # on the same commit, and the deploy is a pull.
 on:
   push:
-    branches: [main, dev]
+    branches: [main]
     paths:
       - 'apps/**'
-      # docker/mcp/Dockerfile builds packages/mcp and copies
-      # packages/contracts, so a change there is a changed image with no
-      # file under apps/ or docker/ to show for it.
       - 'packages/**'
       - 'docker/**'
       - 'package.json'
@@ -61,8 +58,6 @@ jobs:
             dockerfile: docker/app/Dockerfile
           - image: gallery
             dockerfile: docker/gallery/Dockerfile
-          - image: mcp
-            dockerfile: docker/mcp/Dockerfile
     steps:
       - uses: actions/checkout@v7
 

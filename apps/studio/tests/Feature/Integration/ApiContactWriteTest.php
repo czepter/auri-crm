@@ -48,3 +48,32 @@ it('refuses to create a contact without the manage_contacts scope', function () 
 
     expect(Contact::count())->toBe(0);
 });
+
+// #400: a caller resending only the phone number must not wipe the billing
+// address beside it — the merge the issue asks the api surface to hold to.
+it('updates a contact, leaving fields the request omits untouched', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageContacts)->create();
+    $contact = Contact::factory()->create(['name' => 'Lena Meier', 'street' => 'Hauptstraße 1', 'postcode' => '12345', 'city' => 'Berlin']);
+
+    $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'contact-update-1')
+        ->patchJson("/api/contacts/{$contact->public_id}", ['phone' => '0171 9999999']);
+
+    $response->assertOk()->assertJson(['name' => 'Lena Meier', 'phone' => '0171 9999999', 'street' => 'Hauptstraße 1']);
+
+    expect($contact->fresh()->street)->toBe('Hauptstraße 1')
+        ->and($contact->fresh()->phone)->toBe('0171 9999999')
+        ->and(integerIdPaths($response->json()))->toBe([]);
+});
+
+it('refuses to update a contact without the manage_contacts scope', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
+    $contact = Contact::factory()->create(['name' => 'Lena Meier']);
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'contact-update-scope')
+        ->patchJson("/api/contacts/{$contact->public_id}", ['name' => 'Someone Else'])
+        ->assertForbidden();
+
+    expect($contact->fresh()->name)->toBe('Lena Meier');
+});

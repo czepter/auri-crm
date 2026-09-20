@@ -4,9 +4,13 @@ use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Quotes\Actions\AcceptQuote;
+use App\Quotes\Actions\MarkQuoteSent;
+use App\Quotes\Actions\RenderQuotePdf;
+use App\Quotes\Actions\UpdateQuote;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Support\QuoteRange;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
@@ -86,6 +90,36 @@ it('refuses a line the studio never made switchable', function () {
     );
 })->throws(ValidationException::class);
 
+it('taxes the preselection at send and the chosen amount at acceptance', function () {
+    Notification::fake();
+    staffMember();
+    app(StudioSettingsResolver::class)->set('vat_mode', 'standard');
+    app(StudioSettingsResolver::class)->set('vat_rate', 1900);
+
+    $project = Project::factory()->create(['portal_visible' => true]);
+    $project->attachContact(Contact::factory()->create(), ProjectContactRole::Primary);
+    $quote = Quote::factory()->slider()->create(['project_id' => $project->id]);
+
+    app(UpdateQuote::class)($quote, [
+        'pricing_mode' => 'choice',
+        'hourly_rate' => 25_000,
+        'min_hours' => 4,
+        'max_hours' => 10,
+        'hours' => 8,
+        'items' => [['title' => 'Album', 'quantity' => 1, 'unit_price' => 40_000, 'selectable' => true, 'selected' => true]],
+    ]);
+    app(MarkQuoteSent::class)($quote->fresh(), 'email');
+
+    // 8 h * 250 € + 400 € Album.
+    expect($quote->fresh()->vat_amount)->toBe(45_600);
+
+    $accepted = app(AcceptQuote::class)($quote->fresh(['items', 'project']), $project->primaryContact(), '127.0.0.1', hours: 6);
+
+    // 6 h * 250 €, Album abgewaehlt.
+    expect($accepted->net)->toBe(150_000)
+        ->and($accepted->vat_amount)->toBe(28_500);
+});
+
 // Die Weiche: ohne Stundensatz aendert sich nichts.
 it('leaves a classic quote untouched', function () {
     Notification::fake();
@@ -105,4 +139,40 @@ it('leaves a classic quote untouched', function () {
     expect($accepted->total)->toBe(120_000)
         ->and($accepted->hours)->toBeNull()
         ->and($quote->hasSlider())->toBeFalse();
+});
+
+it('takes the quote discount off the range and the accepted amount, and hides it in print on request', function () {
+    Notification::fake();
+    staffMember();
+
+    $project = Project::factory()->create(['portal_visible' => true]);
+    $project->attachContact(Contact::factory()->create(), ProjectContactRole::Primary);
+    $quote = Quote::factory()->slider()->create(['project_id' => $project->id]);
+
+    app(UpdateQuote::class)($quote, [
+        'pricing_mode' => 'choice',
+        'hourly_rate' => 25_000,
+        'min_hours' => 4,
+        'max_hours' => 10,
+        'hours' => 8,
+        'discount_type' => 'percentage',
+        'discount_value' => 1000,
+        'discount_hidden' => true,
+        'items' => [['title' => 'Album', 'quantity' => 1, 'unit_price' => 40_000, 'selectable' => true, 'selected' => true]],
+    ]);
+
+    // 4 h * 250 € = 1.000 €, 10 % runter.
+    expect(QuoteRange::min($quote->fresh('items')))->toBe(90_000);
+
+    app(MarkQuoteSent::class)($quote->fresh(), 'email');
+    $accepted = app(AcceptQuote::class)($quote->fresh(['items', 'project']), $project->primaryContact(), '127.0.0.1', hours: 6);
+
+    expect($accepted->total)->toBe(150_000)
+        ->and($accepted->discount_amount)->toBe(15_000)
+        ->and($accepted->net)->toBe(135_000);
+
+    $html = app(RenderQuotePdf::class)->html($accepted->fresh(['items', 'project', 'paymentStages']));
+
+    expect($html)->not->toContain('Rabatt')
+        ->and($html)->toContain('1.350,00');
 });

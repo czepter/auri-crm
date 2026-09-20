@@ -4,6 +4,9 @@ namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
+use App\Quotes\Actions\RenderQuotePdf;
+use App\Quotes\Enums\QuoteLayout;
+use App\Quotes\Support\SampleQuoteData;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Enums\FontPair;
 use App\Settings\Models\StudioSettings;
@@ -11,6 +14,7 @@ use App\Settings\Rules\ValidIban;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -90,6 +94,8 @@ class StudioSettingsController extends Controller
             // #234: an enum, never free text — the cases are the pairs this
             // product licensed and self-hosts.
             'font_pair' => ['sometimes', 'nullable', Rule::enum(FontPair::class)],
+            // #439: the onboarding's first step asks this beside the identity.
+            'client_register' => ['sometimes', 'required', 'in:formal,informal'],
             // SVG deliberately excluded: served inline from this app's own
             // origin (logo(), below), an uploaded SVG can carry a <script>
             // and execute as this app rather than as an image.
@@ -113,7 +119,7 @@ class StudioSettingsController extends Controller
             $settings->setLogo($request->file('logo'), $actor);
         }
 
-        return redirect('/einstellungen');
+        return back();
     }
 
     /**
@@ -198,7 +204,7 @@ class StudioSettingsController extends Controller
         $settings->set('vat_rate', $validated['vat_rate'], $actor);
         $settings->set('vat_note', $validated['vat_note'] ?? null, $actor);
 
-        return redirect('/einstellungen');
+        return back();
     }
 
     /**
@@ -218,6 +224,7 @@ class StudioSettingsController extends Controller
             'deposit_percentage' => ['required', 'integer', 'min:0', 'max:10000'],
             'widerruf_included' => ['required', 'boolean'],
             'widerruf_text' => ['nullable', 'string', 'max:5000'],
+            'quote_layout' => ['required', Rule::enum(QuoteLayout::class)],
             // T-12: the shared PDF shell App\Documents\Support\DocumentRenderer
             // wraps a Contract or Quote's resolved body in — this pane's the
             // one place either is set, rather than pasted into each template.
@@ -231,10 +238,32 @@ class StudioSettingsController extends Controller
         $settings->set('deposit_percentage', $validated['deposit_percentage'], $actor);
         $settings->set('widerruf_included', $validated['widerruf_included'], $actor);
         $settings->set('widerruf_text', $validated['widerruf_text'] ?? null, $actor);
+        $settings->set('quote_layout', $validated['quote_layout'], $actor);
         $settings->set('document_letterhead_html', $validated['document_letterhead_html'] ?? null, $actor);
         $settings->set('document_footer_html', $validated['document_footer_html'] ?? null, $actor);
 
-        return redirect('/einstellungen');
+        return back();
+    }
+
+    /**
+     * T-05 follow-up: the Layout radio in the Dokumente pane needs to show
+     * what each of the five App\Quotes\Enums\QuoteLayout cases actually
+     * renders like — with real markup, not the skeleton bars every other
+     * pane's DocumentPreview.vue shows. App\Quotes\Support\SampleQuoteData
+     * never touches the database, so this route needs no project or quote.
+     */
+    public function previewQuoteLayout(Request $request, RenderQuotePdf $render, StudioSettingsResolver $settings): HttpResponse
+    {
+        $this->authorizeSettings();
+
+        $validated = $request->validate([
+            'layout' => ['nullable', Rule::enum(QuoteLayout::class)],
+        ]);
+
+        $layout = isset($validated['layout']) ? QuoteLayout::from($validated['layout']) : null;
+        $sample = SampleQuoteData::build($settings);
+
+        return response($render->html($sample, $layout))->header('Content-Type', 'text/html; charset=utf-8');
     }
 
     /**
@@ -265,7 +294,7 @@ class StudioSettingsController extends Controller
         $settings->set('locale', $validated['locale'] ?? null, $actor);
         $settings->set('working_days', array_values($validated['working_days']), $actor);
 
-        return redirect('/einstellungen');
+        return back();
     }
 
     /**
@@ -317,6 +346,7 @@ class StudioSettingsController extends Controller
             'mail_reply_to' => ['nullable', 'string', 'max:255', 'email'],
             'mail_bcc' => ['nullable', 'string', 'max:255', 'email'],
             'mail_signature' => ['nullable', 'string', 'max:1000'],
+            'mail_clients_enabled' => ['sometimes', 'boolean'],
             'mail_sender_reset' => ['sometimes', 'boolean'],
         ]);
 
@@ -331,9 +361,6 @@ class StudioSettingsController extends Controller
             $settings->set($key, $value, $actor);
         }
 
-        // The pane lives inside this same shell (client-side switching, no
-        // route of its own to GET back to) — same target every other
-        // non-profile pane on this controller redirects to.
-        return redirect('/einstellungen');
+        return back();
     }
 }

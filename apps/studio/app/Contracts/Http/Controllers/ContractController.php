@@ -7,6 +7,8 @@ use App\Contracts\Enums\ContractState;
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Jobs\RenderContractJob;
 use App\Contracts\Models\Contract;
+use App\Contracts\Notifications\ContractSent;
+use App\Contracts\Support\ClauseCatalog;
 use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Data\ProjectHeaderData;
 use App\Crm\Enums\ProjectContactRole;
@@ -17,7 +19,11 @@ use App\Documents\Support\DocumentBlockCatalog;
 use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Documents\Support\SafeHtml;
+use App\Documents\Support\StarterBlockSerializer;
 use App\Http\Controllers\Controller;
+use App\Notifications\NotificationService;
+use App\Notifications\Support\MailPreview;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Closure;
 use Illuminate\Http\RedirectResponse;
@@ -67,7 +73,7 @@ class ContractController extends Controller
                 (new DeriveProjectPosition)($project),
             ),
             'templates' => DocumentTemplate::current()->ofType(DocumentTemplateType::Contract)
-                ->forShootKind($project->primaryShoot?->kind?->value)
+                ->forShootKind($project->primaryShoot?->kind)
                 ->orderBy('name')->get()
                 ->map(fn (DocumentTemplate $t) => ['value' => $t->public_id, 'label' => "{$t->name} · v{$t->version}"])
                 ->values(),
@@ -80,6 +86,11 @@ class ContractController extends Controller
                 ->map(fn ($contact) => ['value' => $contact->public_id, 'label' => $contact->name])
                 ->values(),
             'palette' => DocumentBlockCatalog::paletteFor(DocumentTemplateType::Contract),
+            'clauses' => ClauseCatalog::forTemplate(
+                DocumentTemplate::current()->ofType(DocumentTemplateType::Contract)
+                    ->forShootKind($project->primaryShoot?->kind)
+                    ->orderBy('name')->first(),
+            ),
             'mergeFields' => collect(MergeFieldVocabulary::samples())
                 ->map(fn (string $sample, string $path) => ['path' => $path, 'sample' => $sample])
                 ->values()->all(),
@@ -90,10 +101,22 @@ class ContractController extends Controller
     {
         $this->authorize('manageContracts', $project);
 
-        $validated = $request->validate(['template' => ['required', 'string']]);
+        $validated = $request->validate([
+            'template' => ['required', 'string'],
+            'clauses' => ['nullable', 'array'],
+            'clauses.*.title' => ['required_with:clauses', 'string', 'max:200'],
+            'clauses.*.text' => ['required_with:clauses', 'string', 'max:10000'],
+        ]);
 
         $template = DocumentTemplate::current()->ofType(DocumentTemplateType::Contract)
             ->where('public_id', $validated['template'])->firstOrFail();
+
+        $blocks = isset($validated['clauses'])
+            ? ['blocks' => array_map(
+                fn (array $clause) => ['type' => 'clause', 'data' => ['title' => $clause['title'], 'text' => $clause['text']]],
+                array_values($validated['clauses']),
+            )]
+            : null;
 
         $contract = Contract::create([
             'project_id' => $project->id,
@@ -102,6 +125,10 @@ class ContractController extends Controller
             'status' => ContractStatus::Pending,
             'state' => ContractState::Draft,
             'version' => $this->nextVersion($project),
+            // Der Schnellbau schreibt eine eigene Fassung; ohne ihn bleibt die
+            // Vorlage der Wortlaut (Contract::resolvedBody()).
+            'body' => $blocks === null ? null : StarterBlockSerializer::toHtml($blocks),
+            'blocks' => $blocks,
         ]);
 
         RenderContractJob::dispatch($contract)->onQueue('render');
@@ -168,12 +195,39 @@ class ContractController extends Controller
         return back();
     }
 
-    /** Sending is what makes a Fassung the valid one — see Contract::markSent(). */
-    public function send(Contract $contract): RedirectResponse
+    public function compose(Contract $contract, StudioSettingsResolver $settings): Response
+    {
+        $this->authorize('manageContracts', $contract->project);
+
+        abort_unless($contract->state === ContractState::Draft, 404);
+
+        $recipients = $this->recipients($contract);
+
+        return Inertia::render('Contracts/Send', [
+            'projectId' => $contract->project->public_id,
+            'contractId' => $contract->public_id,
+            'recipients' => $recipients
+                ->map(fn ($contact) => ['name' => $contact->name, 'email' => $contact->email])
+                ->values(),
+            'mailHtml' => MailPreview::html(new ContractSent($contract, '', MailPreview::MESSAGE, $settings), $recipients->first() ?? (object) []),
+        ]);
+    }
+
+    /**
+     * Sending is what makes a Fassung the valid one — see Contract::markSent().
+     * Mails every signer only when the compose screen posted a subject; a
+     * Fassung without signers is sent straight from the tab's button.
+     */
+    public function send(Request $request, Contract $contract, NotificationService $notifications, StudioSettingsResolver $settings): RedirectResponse
     {
         $this->authorize('manageContracts', $contract->project);
 
         abort_unless($contract->state === ContractState::Draft, 422);
+
+        $validated = $request->validate([
+            'subject' => ['nullable', 'string', 'max:255'],
+            'message' => ['nullable', 'string'],
+        ]);
 
         $contract->markSent();
 
@@ -189,7 +243,22 @@ class ContractController extends Controller
             projectId: $contract->project_id,
         );
 
-        return back();
+        if (blank($validated['subject'] ?? null)) {
+            return back();
+        }
+
+        foreach ($this->recipients($contract) as $contact) {
+            $notifications->send($contact, new ContractSent($contract, $validated['subject'], $validated['message'] ?? null, $settings));
+        }
+
+        return redirect("/auftraege/{$contract->project->public_id}/vertrag");
+    }
+
+    private function recipients(Contract $contract): Collection
+    {
+        return $contract->signers()->with('contact')->get()
+            ->pluck('contact')
+            ->filter(fn ($contact) => filled($contact?->email));
     }
 
     /**

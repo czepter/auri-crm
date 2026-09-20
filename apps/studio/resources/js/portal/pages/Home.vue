@@ -5,6 +5,8 @@ import PortalDot from '@/portal/components/PortalDot.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalLabel from '@/portal/components/PortalLabel.vue'
+import PortalOffers from '@/portal/components/PortalOffers.vue'
+import PortalSuggestion from '@/portal/components/PortalSuggestion.vue'
 import PortalPerson from '@/portal/components/PortalPerson.vue'
 import PortalRow from '@/portal/components/PortalRow.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
@@ -37,6 +39,11 @@ type Booking = {
   cover: string | null
 }
 
+type Offers = {
+  suggestion: { service: App.Catalog.Data.PortalServiceData; note: string | null; author: string | null } | null
+  shelf: App.Catalog.Data.PortalServiceData[]
+}
+
 const props = defineProps<{
   contact: { name: string }
   // T-08: the portal home's own welcome text (studio_settings.portal_welcome_text) —
@@ -46,6 +53,8 @@ const props = defineProps<{
   bookings: Booking[]
   phaseCounts: Partial<Record<Phase, number>>
   galleries: { id: string; title: string | null; count: number; expiresAt: string | null; cover: string | null }[]
+  // Leer, wenn das Studio nichts anbietet oder es diesem Kunden nicht zeigt.
+  offers: Offers
   studio: Studio
 }>()
 
@@ -87,6 +96,7 @@ function shortDate(iso: string) {
 function phaseState(phase: Phase) {
   return phase === 'delivered' ? 'done' : phase === 'open' ? 'open' : 'neutral'
 }
+
 </script>
 
 <template>
@@ -131,6 +141,12 @@ function phaseState(phase: Phase) {
               />
             </div>
           </section>
+
+          <PortalSuggestion
+            v-if="offers.suggestion"
+            :suggestion="offers.suggestion"
+            class="animate-rise [animation-delay:230ms] motion-reduce:animate-none"
+          />
 
           <!-- A person, not a contact form. Absent when there is nobody to
                name: a label over an empty card is not an empty state. -->
@@ -255,6 +271,8 @@ function phaseState(phase: Phase) {
               </a>
             </div>
           </section>
+
+          <PortalOffers :shelf="offers.shelf" class="animate-rise [animation-delay:320ms] motion-reduce:animate-none" />
         </div>
       </div>
     </PortalWrap>

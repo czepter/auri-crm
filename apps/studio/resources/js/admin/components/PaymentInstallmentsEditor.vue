@@ -6,15 +6,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/ui/label'
 
 export type PaymentInstallmentRow = {
+  id: string | null
   dueOn: string
   amount: string
   status: 'scheduled' | 'paid'
+  invoiceNumber: string | null
 }
 
 const installments = defineModel<PaymentInstallmentRow[]>({ required: true })
 
 function addRow() {
-  installments.value = [...installments.value, { dueOn: '', amount: '', status: 'scheduled' }]
+  installments.value = [
+    ...installments.value,
+    { id: null, dueOn: '', amount: '', status: 'scheduled', invoiceNumber: null },
+  ]
 }
 
 function removeRow(index: number) {
@@ -30,8 +35,14 @@ function setStatus(installment: PaymentInstallmentRow, value: unknown) {
   <div>
     <div v-for="(installment, index) in installments" :key="index" class="card static grp">
       <div class="cardhead">
-        <span class="kick">{{ $t('payments.installments') }} {{ index + 1 }}</span>
-        <Button variant="outline" tone="accent" type="button" @click="removeRow(index)">{{ $t('common.remove') }}</Button>
+        <span class="kick">{{ installment.invoiceNumber ?? `${$t('payments.installments')} ${index + 1}` }}</span>
+        <Button
+          v-if="installment.invoiceNumber === null"
+          variant="outline"
+          tone="accent"
+          type="button"
+          @click="removeRow(index)"
+        >{{ $t('common.remove') }}</Button>
       </div>
 
       <div class="fgrid">
@@ -41,7 +52,8 @@ function setStatus(installment: PaymentInstallmentRow, value: unknown) {
         </div>
         <div class="fld">
           <Label :for="`installment-amount-${index}`">{{ $t('payments.amount') }}</Label>
-          <InputGroup>
+          <span v-if="installment.invoiceNumber !== null" class="tabular-nums">{{ installment.amount }} €</span>
+          <InputGroup v-else>
             <InputGroupInput
               :id="`installment-amount-${index}`"
               v-model="installment.amount"
@@ -53,7 +65,7 @@ function setStatus(installment: PaymentInstallmentRow, value: unknown) {
             <InputGroupAddon align="inline-end">€</InputGroupAddon>
           </InputGroup>
         </div>
-        <div class="fld">
+        <div v-if="installment.invoiceNumber === null" class="fld">
           <Label :for="`installment-status-${index}`">{{ $t('payments.status') }}</Label>
           <Select
             :model-value="installment.status"

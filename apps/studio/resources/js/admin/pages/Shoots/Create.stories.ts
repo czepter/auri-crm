@@ -14,11 +14,11 @@ const meta = {
       galleryDefaults: { downloads: null, lists: null, comments: null },
     },
     kinds: [
-      { value: 'engagement', label: 'Verlobungsshooting' },
-      { value: 'wedding', label: 'Hochzeitstag' },
-      { value: 'reception', label: 'Feier' },
-      { value: 'portrait', label: 'Portrait' },
-      { value: 'other', label: 'Sonstige' },
+      'Verlobungsshooting',
+      'Hochzeitstag',
+      'Feier',
+      'Portrait',
+      'Sonstige',
     ],
   },
 } satisfies Meta<typeof Create>

@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import { Calendar } from "@/ui/calendar"
 import { inputVariants } from "@/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/ui/popover"
-import { toGerman, toIso } from "./parse"
+import { toGerman, toIso, withDots } from "./parse"
 
 const props = defineProps<{
   id?: string
@@ -68,7 +68,10 @@ const calendarValue = computed({
 })
 
 function onInput(event: Event) {
-  text.value = (event.target as HTMLInputElement).value
+  const input = event.target as HTMLInputElement
+  // Direkt ins DOM: ändert withDots nichts an text (neunte Ziffer), patcht Vue nicht.
+  input.value = withDots(input.value)
+  text.value = input.value
   emits("update:modelValue", toIso(text.value) ?? "")
 }
 

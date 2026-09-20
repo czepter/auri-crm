@@ -1,11 +1,11 @@
 <?php
 
+use App\Crm\Actions\ReadProjectScreen;
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Models\Contract;
 use App\Contracts\Models\ContractSignature;
 use App\Crm\Enums\CrewRole;
 use App\Crm\Enums\LeadStage;
-use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\CrewAssignment;
@@ -53,7 +53,7 @@ it('renders the project overview with a derived header', function () {
 
 it('shows only the tabs whose feature exists', function () {
     // Mockup 04 shows seven. A tab appears when the feature behind it lands,
-    // never as an empty shell. Vertrag is M-01, Kommunikation is E-06,
+    // never as an empty shell. Vertrag ist optional, Kommunikation is E-06,
     // Fragebögen is E-02.
     $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
 
@@ -152,7 +152,7 @@ it('reads the lead stage in the header when no uncancelled shoot exists', functi
 
 it('adds a shoot to a project', function () {
     $this->post("/auftraege/{$this->project->public_id}/shootings", [
-        'kind' => ShootKind::Engagement->value,
+        'kind' => 'Verlobungsshooting',
         'label' => 'Verlobungsshooting',
         'date' => '2026-03-22',
         'call_time' => '14:00',
@@ -162,7 +162,7 @@ it('adds a shoot to a project', function () {
 
     $shoot = $this->project->shoots()->sole();
 
-    expect($shoot->kind)->toBe(ShootKind::Engagement)
+    expect($shoot->kind)->toBe('Verlobungsshooting')
         ->and($shoot->status->key)->toBe(ShootStatus::Requested->value)
         ->and($shoot->is_primary)->toBeFalse();
 });
@@ -500,4 +500,12 @@ it('carries the key figures with the proof under each', function () {
 
     expect($figures)->toHaveKeys(['phase', 'nextDate', 'value', 'open', 'portal'])
         ->and($figures['nextDate']['value'])->toBe(now()->addMonth()->format('Y-m-d'));
+});
+
+it('keeps the main date once it lies behind us', function () {
+    $project = Project::factory()->create();
+    Shoot::factory()->for($project)->primary()->on(now()->subDays(119)->format('Y-m-d'))->create();
+
+    expect(app(ReadProjectScreen::class)->figures($project)['nextDate']['value'])
+        ->toBe(now()->subDays(119)->format('Y-m-d'));
 });

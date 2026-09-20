@@ -1,5 +1,6 @@
 <?php
 
+use App\Integration\Models\IdempotencyKey;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -52,3 +53,7 @@ Schedule::command('notifications:remind-onboarding')->dailyAt('09:00')->timezone
 // geschnitten wird und der Punkt in der Seitenleiste ein paar Stunden später
 // früh genug steht. Der Screen liest nur den Cache, den dieser Lauf schreibt.
 Schedule::command('releases:fetch')->dailyAt('04:00')->timezone($studioTimezone);
+
+// #395: rows past IdempotencyKey::WINDOW_HOURS no longer replay anything —
+// this just reclaims the table.
+Schedule::command('model:prune', ['--model' => [IdempotencyKey::class]])->daily();

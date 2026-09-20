@@ -2,6 +2,10 @@
 
 namespace App\Crm\Http\Controllers;
 
+use App\Catalog\Data\PackageData;
+use App\Catalog\Enums\PortalPriceMode;
+use App\Catalog\Models\Package;
+use App\Catalog\Models\ServiceSuggestion;
 use App\Crm\Data\ContactRowData;
 use App\Crm\Data\ContactSuggestionData;
 use App\Crm\Models\Contact;
@@ -12,8 +16,11 @@ use App\Enums\Capability;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryView;
 use App\Http\Controllers\Controller;
+use App\Notifications\NotificationService;
+use App\Notifications\Support\MailPreview;
 use App\Portal\Models\ClientAccess;
 use App\Portal\Models\DsgvoRequest;
+use App\Portal\Notifications\PortalAccessInvitation;
 use App\Portal\Support\PortalSettings;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
@@ -32,12 +39,12 @@ class ContactController extends Controller
     /** P-09 (#228): what may depart from the studio's default — on the sheet and at creation. */
     private const PORTAL_RULES = [
         'accept_quotes' => ['nullable', 'boolean'],
-        'sign_contracts' => ['nullable', 'boolean'],
         'payment_status' => ['nullable', 'boolean'],
         'messaging_mode' => ['nullable', 'in:off,booking,any'],
         'gallery_downloads' => ['nullable', 'boolean'],
         'gallery_lists' => ['nullable', 'boolean'],
         'gallery_comments' => ['nullable', 'boolean'],
+        'offers' => ['nullable', 'boolean'],
         'portal_visible' => ['nullable', 'boolean'],
         'welcome' => ['nullable', 'string', 'max:2000'],
     ];
@@ -47,14 +54,32 @@ class ContactController extends Controller
     {
         return [
             'accept_quotes' => $settings->acceptQuotesEnabled(),
-            'sign_contracts' => $settings->signContractsEnabled(),
             'payment_status' => $settings->paymentStatusEnabled(),
             'messaging_mode' => $settings->messagingMode(),
             'gallery_downloads' => $settings->galleryDownloadsEnabled(),
             'gallery_lists' => $settings->galleryListsEnabled(),
             'gallery_comments' => $settings->galleryCommentsEnabled(),
+            'offers' => $settings->offersEnabled(),
             'welcome' => $settings->portalWelcomeText(),
             'portal_visible' => $portal->projectsVisibleByDefault(),
+        ];
+    }
+
+    /** @return array{count: int, firstAt: ?string, lastAt: ?string} */
+    private function portalLogins(Contact $contact): array
+    {
+        $consumed = ClientAccess::query()
+            ->where('contact_id', $contact->id)
+            ->whereNotNull('consumed_at')
+            ->whereNull('preview_by_id')
+            ->orderBy('consumed_at')
+            ->get(['consumed_at'])
+            ->pluck('consumed_at');
+
+        return [
+            'count' => $consumed->count(),
+            'firstAt' => $consumed->first()?->toIso8601String(),
+            'lastAt' => $consumed->last()?->toIso8601String(),
         ];
     }
 
@@ -169,8 +194,41 @@ class ContactController extends Controller
                     'name' => $other->name,
                     'role' => $other->projects->first()?->pivot->role,
                 ])->all(),
+            // Was dieses Studio diesem Kunden einzeln vorgeschlagen hat, und
+            // woraus es waehlen kann. Beides nur aus dem, was im Portal
+            // angeboten wird — ein Vorschlag auf eine zurueckgezogene Leistung
+            // waere einer ins Leere.
+            'suggestions' => ServiceSuggestion::query()
+                ->where('contact_id', $contact->id)
+                ->with(['package', 'suggestedBy'])
+                ->get()
+                ->map(fn (ServiceSuggestion $suggestion) => [
+                    'id' => $suggestion->public_id,
+                    'package' => $suggestion->package->public_id,
+                    'name' => $suggestion->package->name,
+                    'note' => $suggestion->note,
+                    'author' => $suggestion->suggestedBy?->name,
+                    'suggestedOn' => $suggestion->created_at?->format('Y-m-d'),
+                    'live' => $suggestion->package->portal_offered,
+                ])->all(),
+            'offerablePackages' => Package::query()->portalOffered()->orderBy('name')
+                ->with('items')
+                ->get()
+                ->map(fn (Package $package) => [
+                    'id' => $package->public_id,
+                    'name' => $package->name,
+                    'price' => PackageData::fromModel($package)->price,
+                    'priceMode' => ($package->portal_price_mode ?? PortalPriceMode::Exact)->value,
+                    'requiresDate' => $package->portal_requires_date,
+                ])
+                ->all(),
+            // Wann dieser Kunde im Portal war und wie oft. Aus den
+            // eingelösten Links: eine Vorschau des Studios ist kein Besuch
+            // des Kunden und zählt deshalb nicht mit.
+            'portalLogins' => $this->portalLogins($contact),
             'portalAccessRevokedAt' => $contact->portal_access_revoked_at?->toIso8601String(),
             'canRevokePortalAccess' => $user?->can('revokePortalAccess', $contact) ?? false,
+            'canSendPortalAccess' => filled($contact->email) && ($user?->can('sendPortalAccess', $contact) ?? false),
             'dsgvoErasedAt' => $contact->dsgvo_erased_at?->toIso8601String(),
             'canManageDsgvo' => $user?->can('eraseDsgvoData', $contact) ?? false,
             // P-09 (#228): what the portal does for THIS client. Per contact
@@ -320,6 +378,58 @@ class ContactController extends Controller
         );
 
         return Inertia::location(config('portal.url')."/zugang/{$token}");
+    }
+
+    public function composePortalAccess(Contact $contact, StudioSettingsResolver $settings): Response
+    {
+        $this->authorize('sendPortalAccess', $contact);
+        abort_if($contact->portal_access_revoked_at !== null || blank($contact->email), 404);
+
+        return Inertia::render('Contacts/SendPortalAccess', [
+            'contactId' => $contact->public_id,
+            'recipients' => [['name' => $contact->name, 'email' => $contact->email]],
+            'mailHtml' => MailPreview::html(
+                new PortalAccessInvitation(config('portal.url').'/zugang/…', '', MailPreview::MESSAGE, $settings),
+                $contact,
+            ),
+        ]);
+    }
+
+    /** The same ClientAccess row a requested link is, only longer-lived — see INVITATION_VALID_FOR_DAYS. */
+    public function sendPortalAccess(Request $request, Contact $contact, StudioSettingsResolver $settings, NotificationService $notifications): RedirectResponse
+    {
+        $this->authorize('sendPortalAccess', $contact);
+        abort_if($contact->portal_access_revoked_at !== null || blank($contact->email), 404);
+
+        $validated = $request->validate([
+            'subject' => ['required', 'string', 'max:255'],
+            'message' => ['nullable', 'string'],
+        ]);
+
+        $token = bin2hex(random_bytes(32));
+
+        ClientAccess::create([
+            'contact_id' => $contact->id,
+            'token_hash' => ClientAccess::hash($token),
+            'expires_at' => now()->addDays(ClientAccess::INVITATION_VALID_FOR_DAYS),
+            'requested_ip' => $request->ip(),
+        ]);
+
+        $notifications->send($contact, new PortalAccessInvitation(
+            config('portal.url')."/zugang/{$token}",
+            $validated['subject'],
+            $validated['message'] ?? null,
+            $settings,
+        ));
+
+        AuditLogger::record(
+            event: 'portal.invitation_issued',
+            actor: auth('staff')->user(),
+            context: ['contact' => $contact->public_id],
+            subject: $contact->public_id,
+        );
+
+        return redirect("/kontakte/{$contact->public_id}");
     }
 
     /**

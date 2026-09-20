@@ -13,21 +13,22 @@ feat/* fix/* chore/* ...  ->  dev  ->  main
    `git switch dev && git pull && git switch -c feat/lead-board`
 2. Name them `<type>/<slug>`, where type is one of
    `feat feature fix bugfix hotfix chore docs refactor ci test`.
-3. Open the pull request against `dev`. CI rejects any other base.
+3. Open the pull request against `dev`.
 4. `main` accepts pull requests from `dev`, `hotfix/*` or `release/*` only.
 5. A `hotfix/*` merged into `main` gets merged back into `dev` immediately, so
    `dev` never falls behind `main`.
 
-The `branch-rules` job in `.github/workflows/ci.yml` enforces rules 2–4 on
-every pull request. The rest is convention.
+CI runs only on pull requests into `main`, where the `branch-rules` job in
+`.github/workflows/ci.yml` enforces rule 4. The rest is convention.
 
 ## Branch protection
 
 The CI job reports a failure, but only GitHub branch protection can stop a
-merge. Once the repository has a remote, protect `main` and `dev` with:
+merge. `dev` has no CI, so its protection requires no checks. Protect `main`
+with:
 
 ```sh
-for BRANCH in main dev; do
+for BRANCH in main; do
   gh api -X PUT "repos/{owner}/{repo}/branches/$BRANCH/protection" \
     -F required_status_checks[strict]=true \
     -f 'required_status_checks[contexts][]=branch-rules' \

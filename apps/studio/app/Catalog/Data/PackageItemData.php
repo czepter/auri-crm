@@ -15,6 +15,8 @@ class PackageItemData extends Data
         public ?string $description,
         public int $quantity,
         public ?int $unitPrice,
+        // #412: null heisst der Satz des Angebots, nicht null Prozent.
+        public ?int $vatRate = null,
         // Q-09/Q-10: der Baustein-Teil einer Zeile.
         public bool $selectable = false,
         public bool $selected = false,
@@ -30,6 +32,7 @@ class PackageItemData extends Data
             description: $item->description,
             quantity: $item->quantity,
             unitPrice: $item->unit_price,
+            vatRate: $item->vat_rate,
             selectable: $item->selectable,
             selected: $item->selected,
             outcome: $item->outcome,

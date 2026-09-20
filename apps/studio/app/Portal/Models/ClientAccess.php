@@ -29,6 +29,12 @@ class ClientAccess extends Model
      */
     public const VALID_FOR_MINUTES = 15;
 
+    /**
+     * A link the studio sends unasked waits in an inbox until the client gets
+     * to it: StaffInvitation's seven days, still single use.
+     */
+    public const INVITATION_VALID_FOR_DAYS = 7;
+
     protected $fillable = ['contact_id', 'token_hash', 'expires_at', 'requested_ip', 'preview_by_id'];
 
     protected $hidden = ['token_hash'];

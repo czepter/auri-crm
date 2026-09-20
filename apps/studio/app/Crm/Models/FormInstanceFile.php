@@ -17,8 +17,7 @@ use Illuminate\Support\Facades\Storage;
  * Deliberately not a Media\Asset either — that family is the gallery's
  * S3 quarantine-ingest pipeline (multipart, EXIF, derivatives, blurhash,
  * checksum dedup) and none of it applies to a PDF somebody attaches to a
- * question. Answer files ride the private local disk next to contracts and
- * invoices, which is already where this app keeps client documents.
+ * question. Answer files ride the private local disk next to invoices, which is already where this app keeps client documents.
  */
 class FormInstanceFile extends Model
 {

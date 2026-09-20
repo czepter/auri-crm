@@ -15,11 +15,11 @@ uses(RefreshDatabase::class);
 it('resolves a stage anchor to the day the lead entered it, plus the offset', function () {
     $project = Project::factory()->create();
     Lead::factory()->for($project)->create([
-        'stage' => LeadStage::ContractSent,
+        'stage' => LeadStage::QuoteAccepted,
         'stage_entered_at' => '2026-08-03 09:00:00',
     ]);
 
-    expect(app(TaskAnchors::class)->dueOn($project, 'stage:contract_sent', 10)?->format('Y-m-d'))
+    expect(app(TaskAnchors::class)->dueOn($project, 'stage:quote_accepted', 10)?->format('Y-m-d'))
         ->toBe('2026-08-13');
 });
 
@@ -28,12 +28,12 @@ it('reads the day a stage was entered from the ledger, not from where the lead s
     $lead = Lead::factory()->for($project)->create(['stage' => LeadStage::QuoteSent]);
 
     $this->travelTo('2026-08-03 09:00:00');
-    app(AdvanceLeadStage::class)($lead, stage(LeadStage::ContractSent), staffMember(StaffRole::Owner));
+    app(AdvanceLeadStage::class)($lead, stage(LeadStage::QuoteAccepted), staffMember(StaffRole::Owner));
     $this->travelBack();
 
     app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), staffMember(StaffRole::Owner));
 
-    expect(app(TaskAnchors::class)->dueOn($project->fresh(), 'stage:contract_sent', 0)?->format('Y-m-d'))
+    expect(app(TaskAnchors::class)->dueOn($project->fresh(), 'stage:quote_accepted', 0)?->format('Y-m-d'))
         ->toBe('2026-08-03');
 });
 

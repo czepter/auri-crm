@@ -9,7 +9,7 @@ use Illuminate\Notifications\Notification;
  * Notifications\NotificationService is the only thing that ever calls
  * send() — a Transport never subscribes to a domain event on its own, so
  * there is exactly one fan-out path to look at when nobody got notified.
- * Registering a new channel (I-04's outbound webhooks, some day) means
+ * Registering a new channel means
  * writing one of these and adding it to the service's registry, never
  * wiring a new Event::listen() straight to the transport itself.
  */

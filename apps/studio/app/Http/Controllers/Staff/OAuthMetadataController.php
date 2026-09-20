@@ -13,8 +13,8 @@ use Illuminate\Http\JsonResponse;
  *
  * Only RFC 8414, the authorization server half — "where do I send the user,
  * and where do I register." RFC 9728's companion document belongs to the
- * resource, and packages/mcp serves its own at the host it actually runs on;
- * a second copy here would describe a service this app does not host.
+ * resource, which is the api surface's MCP endpoint, and is served there
+ * (App\Integration\Http\Controllers\OAuthProtectedResourceController).
  */
 class OAuthMetadataController extends Controller
 {

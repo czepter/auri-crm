@@ -5,19 +5,18 @@ import Page from '@/ui/page/Page.vue'
 import ProjectQueue from '@/admin/components/ProjectQueue.vue'
 import StageTrack from '@/admin/components/StageTrack.vue'
 import RailHistory from '@/admin/components/RailHistory.vue'
+import SettlePlanDialog from '@/admin/components/SettlePlanDialog.vue'
 import Rail from '@/ui/page/Rail.vue'
 import RailItem from '@/ui/page/RailItem.vue'
 import RailSection from '@/ui/page/RailSection.vue'
 import { formatEurosRounded } from '@/admin/lib/money'
 import { dayWithWeekday as day } from '@/admin/lib/dates'
 import { Button } from '@/ui/button'
-import { Checkbox } from '@/ui/checkbox'
-import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
+import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
 
 /*
  * The frame around every project screen: the other projects on the left, the
@@ -60,14 +59,6 @@ function reopenProject() {
   router.delete(`/auftraege/${props.header.id}/abschluss`, { preserveScroll: true })
 }
 
-function toggleReminders(value: boolean | 'indeterminate') {
-  router.patch(
-    `/zahlungsplaene/${props.header.paymentPlan?.id}/erinnerungen`,
-    { client_reminders_enabled: value === true },
-    { preserveScroll: true },
-  )
-}
-
 function destroy() {
   router.delete(`/auftraege/${props.header.id}`)
 }
@@ -99,10 +90,11 @@ function destroy() {
               <span>{{ formatEurosRounded(Number(instalment.amount)) }}</span>
             </div>
 
-            <div class="mt-2 flex items-center gap-2">
-              <Checkbox id="cb-plan-reminders" :model-value="header.paymentPlan.clientRemindersEnabled" @update:model-value="toggleReminders" />
-              <Label variant="inline" for="cb-plan-reminders">{{ $t('payments.clientReminders') }}</Label>
-            </div>
+            <SettlePlanDialog
+              v-if="header.canManagePaymentPlan && header.primaryShootCancelled && !header.paymentPlan.settledOn"
+              class="mt-2"
+              :plan="header.paymentPlan"
+            />
           </RailSection>
 
           <RailSection v-if="header.galleries.length" :title="$t('contacts.galleries')">
@@ -136,9 +128,10 @@ function destroy() {
 
           <div class="ml-auto flex items-center gap-2">
             <slot name="actions" />
+            <slot name="stage" />
 
             <!-- A page with a stage menu books through it. -->
-            <AlertDialog v-if="!header.isBooked && header.canBook && !$slots.menu">
+            <AlertDialog v-if="!header.isBooked && header.canBook && !$slots.stage">
               <AlertDialogTrigger as-child>
                 <Button variant="pill" type="button">{{ $t('project.book') }}</Button>
               </AlertDialogTrigger>
@@ -153,7 +146,7 @@ function destroy() {
               </AlertDialogContent>
             </AlertDialog>
 
-            <DropdownMenu v-if="$slots.menu || (header.canComplete && !header.isCompleted) || (header.canClose && !header.outcomeLabel) || header.canDelete">
+            <DropdownMenu v-if="(header.canComplete && !header.isCompleted) || (header.canClose && !header.outcomeLabel) || header.canDelete">
               <DropdownMenuTrigger
                 class="flex size-8 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2"
                 :aria-label="$t('project.more')"
@@ -163,13 +156,11 @@ function destroy() {
                 </svg>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" class="w-[208px]">
-                <slot name="menu" />
                 <DropdownMenuItem v-if="header.canComplete && !header.isCompleted" @select="complete">
                   {{ $t('project.completeMenu') }}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   v-if="header.canClose && !header.outcomeLabel"
-                  :class="{ 'border-t border-rule': $slots.menu }"
                   @select="closing = true"
                 >
                   {{ $t('project.closeMenu') }}
@@ -225,19 +216,21 @@ function destroy() {
           <AlertDialogHeader>
             <AlertDialogTitle>{{ $t('project.closeTitle') }}</AlertDialogTitle>
           </AlertDialogHeader>
-          <Field v-slot="{ id }" :label="$t('board.outcome')">
-            <Select v-model="closeForm.outcome">
-              <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="lost">{{ $t('board.outcomeLost') }}</SelectItem>
-                <SelectItem value="declined">{{ $t('board.outcomeDeclined') }}</SelectItem>
-                <SelectItem value="closed">{{ $t('board.outcomeClosed') }}</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field v-slot="{ id }" :label="$t('board.closeReason')" :error="closeForm.errors.reason">
-            <Input :id="id" v-model="closeForm.reason" type="text" />
-          </Field>
+          <AlertDialogBody>
+            <Field v-slot="{ id }" :label="$t('board.outcome')">
+              <Select v-model="closeForm.outcome">
+                <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="lost">{{ $t('board.outcomeLost') }}</SelectItem>
+                  <SelectItem value="declined">{{ $t('board.outcomeDeclined') }}</SelectItem>
+                  <SelectItem value="closed">{{ $t('board.outcomeClosed') }}</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field v-slot="{ id }" :label="$t('board.closeReason')" :error="closeForm.errors.reason">
+              <Input :id="id" v-model="closeForm.reason" type="text" />
+            </Field>
+          </AlertDialogBody>
           <AlertDialogFooter>
             <AlertDialogAction :disabled="!closeForm.reason || closeForm.processing" @click.prevent="close">
               {{ $t('board.close') }}

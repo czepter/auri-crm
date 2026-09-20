@@ -83,7 +83,7 @@ class CrewAvailability
                         // project's own second shoot that day, where the name
                         // would say nothing.
                         note: $other->project_id === $shoot->project_id
-                            ? ($other->label ?? $other->kind->label())
+                            ? ($other->label ?? $other->kind)
                             : $other->project->name,
                     );
                 }

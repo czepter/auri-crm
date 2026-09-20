@@ -16,17 +16,19 @@ class InstallmentPaid extends StudioEventNotification
 
     public function body(): string
     {
-        return $this->project()->name;
+        return $this->project()?->name ?? "Rechnung {$this->installment->invoice?->number}";
     }
 
     /* Payments have no screen of their own; the project detail carries them. */
     public function url(): string
     {
-        return "/auftraege/{$this->project()->public_id}";
+        $project = $this->project();
+
+        return $project === null ? '/rechnungen' : "/auftraege/{$project->public_id}";
     }
 
-    public function project(): Project
+    public function project(): ?Project
     {
-        return $this->installment->plan->job->project;
+        return $this->installment->project();
     }
 }

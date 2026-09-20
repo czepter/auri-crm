@@ -27,9 +27,9 @@ const EVENT_KEYS = [
   'inquiryReceived',
   'clientMessage',
   'quoteAccepted',
-  'contractSigned',
   'questionnaireSubmitted',
   'installmentPaid',
+  'installmentDueSoon',
   'assetCommented',
   'assetFavorited',
 ] as const

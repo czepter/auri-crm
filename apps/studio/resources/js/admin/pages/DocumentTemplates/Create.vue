@@ -16,7 +16,7 @@ import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/type
 
 const props = defineProps<{
   types: { value: string; label: string }[]
-  shootKinds: { value: string; label: string }[]
+  shootKinds: string[]
   palettes: Record<string, PaletteEntry[]>
   mergeFields: { path: string; sample: string }[]
   starters: Record<string, Starter[]>
@@ -37,7 +37,7 @@ type Starter = {
 const project = ref<string | null>(null)
 
 // The scope of a starter, in the two numbers that say whether it is a page or
-// a contract: how many blocks, and how many placeholders it will ask the
+// a whole document: how many blocks, and how many placeholders it will ask the
 // project for.
 function scopeOf(starter: Starter) {
   const text = JSON.stringify(starter.blocks)
@@ -49,7 +49,7 @@ function scopeOf(starter: Starter) {
 }
 
 const doc = ref<EditorDocument>({ blocks: [] })
-const form = useForm({ name: '', body: '', blocks: doc.value, type: 'contract', shoot_kind: '' })
+const form = useForm({ name: '', body: '', blocks: doc.value, type: 'quote', shoot_kind: '' })
 
 // T-16: the screen opens on a choice rather than on an empty canvas. A
 // starter is a starting point and not a link — choosing one copies its blocks
@@ -90,7 +90,7 @@ function submit() {
   <AdminLayout active="vorlagen">
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
-        <PageHead :kicker="$t('documentTemplates.title')" :title="$t('documentTemplates.createTitle')">
+        <PageHead :kicker="$t('documentTemplates.title')" kicker-href="/vorlagen?typ=dokumente" :title="$t('documentTemplates.createTitle')">
           <Button as="a" class="ml-auto" href="/vorlagen?typ=dokumente" variant="ghost">{{ $t('common.cancel') }}</Button>
           <!-- Nothing to save until a starting point is chosen, and a back that
                returns to the choice rather than leaving the screen. -->
@@ -119,16 +119,10 @@ function submit() {
             </div>
             <div v-if="chosen !== null" class="flex min-w-0 flex-col gap-1.5 max-w-[240px]">
               <Label for="shoot_kind">{{ $t('documentTemplates.shootKind') }}</Label>
-              <!-- reka-ui reserves the empty string for "nothing selected", so the
-                   "Beliebig" choice needs the NONE stand-in while the model keeps
-                   storing '' — see resources/js/lib/select.ts. -->
-              <Select :model-value="toOption(form.shoot_kind)" @update:model-value="(value) => (form.shoot_kind = fromOption(value))">
-                <SelectTrigger id="shoot_kind"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem :value="NONE">{{ $t('documentTemplates.shootKindAny') }}</SelectItem>
-                  <SelectItem v-for="kind in shootKinds" :key="kind.value" :value="kind.value">{{ kind.label }}</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input id="shoot_kind" v-model="form.shoot_kind" type="text" maxlength="255" list="shoot-kinds" :placeholder="$t('documentTemplates.shootKindAny')" />
+              <datalist id="shoot-kinds">
+                <option v-for="kind in shootKinds" :key="kind" :value="kind" />
+              </datalist>
             </div>
             <div v-if="chosen !== null" class="flex min-w-0 flex-col gap-1.5 max-w-[240px]">
               <Label for="name">{{ $t('documentTemplates.name') }}</Label>
@@ -139,7 +133,7 @@ function submit() {
 
           <!-- The screen opens on a choice rather than on an empty page. Each card
                states its scope, because "14 Blöcke · 9 Platzhalter" is what says
-               whether this is a page or a contract. The blank one is the last card
+               whether this is a page or a whole document. The blank one is the last card
                and carries no surface: it is a choice, not the default. -->
           <section v-if="chosen === null" data-tokens>
             <div class="grid grid-cols-3 gap-3">

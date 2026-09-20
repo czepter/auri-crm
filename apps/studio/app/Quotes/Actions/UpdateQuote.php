@@ -2,6 +2,7 @@
 
 namespace App\Quotes\Actions;
 
+use App\Documents\Support\InlineHtmlSanitizer;
 use App\Quotes\Enums\PricingMode;
 use App\Quotes\Models\Quote;
 use Illuminate\Validation\Rule;
@@ -29,10 +30,11 @@ class UpdateQuote
             'recipient_street' => ['nullable', 'string', 'max:255'],
             'recipient_postcode' => ['nullable', 'string', 'max:32'],
             'recipient_city' => ['nullable', 'string', 'max:255'],
-            'intro' => ['nullable', 'string', 'max:5000'],
-            'outro' => ['nullable', 'string', 'max:5000'],
+            'intro' => ['nullable', 'string', 'max:20000'],
+            'outro' => ['nullable', 'string', 'max:20000'],
             'discount_type' => ['nullable', 'in:percentage,amount', 'required_with:discount_value'],
             'discount_value' => ['nullable', 'integer', 'min:1', 'required_with:discount_type'],
+            'discount_hidden' => ['sometimes', 'boolean'],
             'items' => ['array'],
             'items.*.title' => ['required', 'string', 'max:255'],
             'items.*.description' => ['nullable', 'string', 'max:2000'],
@@ -40,14 +42,19 @@ class UpdateQuote
             'items.*.unit_price' => ['nullable', 'integer', 'min:0'],
             'items.*.discount_type' => ['nullable', 'in:percentage,amount', 'required_with:items.*.discount_value'],
             'items.*.discount_value' => ['nullable', 'integer', 'min:1', 'required_with:items.*.discount_type'],
-            // Q-08/Q-09/Q-11: der Reglerteil, Pflicht nur im Modus choice.
-            'hourly_rate' => ['nullable', 'integer', 'min:1', 'required_if:pricing_mode,choice'],
-            'min_hours' => ['nullable', 'integer', 'min:1', 'max:2000', 'required_if:pricing_mode,choice'],
-            'max_hours' => ['nullable', 'integer', 'min:1', 'max:2000', 'required_if:pricing_mode,choice', 'gte:min_hours'],
+            // #412: Basispunkte, leer = der Satz des Angebots. 0 waere ein
+            // eigener Satz von null Prozent und ist etwas anderes.
+            'items.*.vat_rate' => ['nullable', 'integer', 'min:1', 'max:10000'],
+            // Q-08/Q-09/Q-11: der Reglerteil, optional, damit ein Entwurf ohne Stundensatz speichert.
+            'hourly_rate' => ['nullable', 'integer', 'min:1'],
+            'min_hours' => ['nullable', 'integer', 'min:1', 'max:2000'],
+            'max_hours' => ['nullable', 'integer', 'min:1', 'max:2000', 'gte:min_hours'],
             'images_per_hour' => ['nullable', 'integer', 'min:1', 'max:2000'],
             'hours' => ['nullable', 'integer', 'min:1', 'max:2000', 'gte:min_hours', 'lte:max_hours'],
             'time_title' => ['nullable', 'string', 'max:255'],
             'time_description' => ['nullable', 'string', 'max:255'],
+            // Wo die Zeitzeile zwischen den Positionen steht, 0 = vor der ersten.
+            'time_sort_order' => ['nullable', 'integer', 'min:0', 'max:2000'],
             // `id`, nie der Pfad: das Portal liefert dieses Bild an den
             // Kunden aus, und ein aus einem Formular uebernommener Pfad
             // waere das Lesen jeder Datei auf dem Disk — die Vertraege
@@ -113,13 +120,15 @@ class UpdateQuote
             'valid_until' => $validated['valid_until'] ?? null,
             'pricing_mode' => $mode,
             ...$recipientFields,
-            'intro' => $validated['intro'] ?? null,
-            'outro' => $validated['outro'] ?? null,
+            'intro' => InlineHtmlSanitizer::letter($validated['intro'] ?? null),
+            'outro' => InlineHtmlSanitizer::letter($validated['outro'] ?? null),
             'discount_type' => $validated['discount_type'] ?? null,
             'discount_value' => $validated['discount_value'] ?? null,
+            'discount_hidden' => $validated['discount_hidden'] ?? $quote->discount_hidden,
             ...$slider,
             'time_title' => $validated['time_title'] ?? null,
             'time_description' => $validated['time_description'] ?? null,
+            'time_sort_order' => $validated['time_sort_order'] ?? $quote->time_sort_order,
         ]);
 
         // Vor dem Loeschen gelesen: die Zeilen tragen die einzigen Pfade,
@@ -138,6 +147,7 @@ class UpdateQuote
                     'sort_order' => $index,
                     'discount_type' => $item['discount_type'] ?? null,
                     'discount_value' => $item['discount_value'] ?? null,
+                    'vat_rate' => $item['vat_rate'] ?? null,
                     'selectable' => $item['selectable'] ?? false,
                     'selected' => $item['selected'] ?? false,
                     'outcome' => $item['outcome'] ?? null,
@@ -161,11 +171,6 @@ class UpdateQuote
                 ->all()
         );
 
-        // Q-15: ein Regler-Angebot hat vor der Zusage keine Summe, sondern
-        // eine Spanne. AcceptQuote schreibt total; bis dahin wuerde diese
-        // Ableitung eine zweite, falsche Wahrheit hinstellen.
-        if (! $quote->fresh()->hasSlider()) {
-            $quote->recalculateTotal();
-        }
+        $quote->recalculateTotal();
     }
 }

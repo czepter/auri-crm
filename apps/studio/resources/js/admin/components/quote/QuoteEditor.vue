@@ -2,13 +2,13 @@
 import { computed, reactive } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
-import type { PricingMode, QuoteContact, QuoteDraft } from './quotePayload'
+import type { PricingMode, QuoteContact, QuoteDraft, VatSettings } from './quotePayload'
 import { quoteRowToLine } from './quotePayload'
 import { subtotal } from './quoteTotals'
 import { eurosToCents, formatEuros } from '@/admin/lib/money'
 import { monthDate } from '@/admin/lib/dates'
 import { ChoiceGroup } from '@/ui/choice-group'
-import { Textarea } from '@/ui/textarea'
+import LetterField from '@/admin/components/LetterField.vue'
 import { Label } from '@/ui/label'
 import { Button } from '@/ui/button'
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/ui/dialog'
@@ -26,6 +26,7 @@ const props = defineProps<{
   contacts: QuoteContact[]
   packages: App.Catalog.Data.PackageData[]
   catalogItems: App.Catalog.Data.CatalogItemData[]
+  vatSettings: VatSettings
 }>()
 
 const draft = defineModel<QuoteDraft>({ required: true })
@@ -96,11 +97,11 @@ const termsSummary = computed(() => {
   return parts.join(' · ')
 })
 
-const textSummary = computed(() => draft.value.intro.split('\n')[0] ?? '')
+const textSummary = computed(() => new DOMParser().parseFromString(draft.value.intro, 'text/html').body.firstElementChild?.textContent ?? '')
 </script>
 
 <template>
-  <div class="mx-auto flex w-fit max-w-full gap-6">
+  <div class="flex w-fit max-w-full gap-6">
     <div class="flex w-[720px] max-w-full flex-col gap-3">
       <div class="flex items-center gap-2.5">
         <ChoiceGroup
@@ -119,7 +120,7 @@ const textSummary = computed(() => draft.value.intro.split('\n')[0] ?? '')
           </DialogTrigger>
           <DialogContent class="max-w-[860px]">
             <DialogTitle class="sr-only">{{ $t('quotes.preview') }}</DialogTitle>
-            <QuotePreviewPane :quote-id="quoteId" :draft="draft" :can-manage-catalog="canManageCatalog" />
+            <QuotePreviewPane :quote-id="quoteId" :draft="draft" :can-manage-catalog="canManageCatalog" :recipient-name="recipientName ?? ''" :vat-settings="vatSettings" />
           </DialogContent>
         </Dialog>
       </div>
@@ -144,7 +145,6 @@ const textSummary = computed(() => draft.value.intro.split('\n')[0] ?? '')
           v-model:time-title="draft.timeTitle"
           v-model:time-description="draft.timeDescription"
           v-model:slider="draft.slider"
-          :rows="draft.rows"
           @change="emit('change')"
         />
       </QuoteCard>
@@ -157,6 +157,7 @@ const textSummary = computed(() => draft.value.intro.split('\n')[0] ?? '')
           :can-manage-catalog="canManageCatalog"
           :packages="packages"
           :catalog-items="catalogItems"
+          :vat-settings="vatSettings"
           @change="emit('change')"
         />
       </QuoteCard>
@@ -174,18 +175,18 @@ const textSummary = computed(() => draft.value.intro.split('\n')[0] ?? '')
         <div class="flex flex-col gap-4">
           <div class="flex min-w-0 flex-col gap-1.5">
             <Label>{{ $t('quotes.intro') }}</Label>
-            <Textarea v-model="draft.intro" rows="3" @blur="emit('change')" />
+            <LetterField v-model="draft.intro" @update:model-value="emit('change')" />
           </div>
           <div class="flex min-w-0 flex-col gap-1.5">
             <Label>{{ $t('quotes.outro') }}</Label>
-            <Textarea v-model="draft.outro" rows="3" @blur="emit('change')" />
+            <LetterField v-model="draft.outro" @update:model-value="emit('change')" />
           </div>
         </div>
       </QuoteCard>
     </div>
 
-    <div class="hidden w-[420px] flex-none min-[1180px]:block">
-      <QuotePreviewPane v-if="showPreviewColumn" :quote-id="quoteId" :draft="draft" :can-manage-catalog="canManageCatalog" />
+    <div class="hidden w-[420px] flex-none min-[1180px]:block min-[1440px]:w-[560px] min-[1700px]:w-[680px]">
+      <QuotePreviewPane v-if="showPreviewColumn" :quote-id="quoteId" :draft="draft" :can-manage-catalog="canManageCatalog" :recipient-name="recipientName ?? ''" :vat-settings="vatSettings" />
     </div>
   </div>
 </template>

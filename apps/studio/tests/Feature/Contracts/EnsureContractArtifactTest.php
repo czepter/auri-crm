@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
-// contractProject() and renderedContract() live in tests/Pest.php.
+// bookedContactProject() and renderedContract() live in tests/Pest.php.
 
 /**
  * A contract row can say "rendered" with nothing behind it — a render lost
@@ -30,7 +30,7 @@ it('renders the missing artifact from the database when the client opens the con
     Http::fake(['*/forms/chromium/convert/html' => Http::response('%PDF-rendered-on-view', 200)]);
 
     $template = DocumentTemplate::factory()->create(['body' => '<p>{{ contact.name }} — {{ project.name }}</p>']);
-    $project = contractProject();
+    $project = bookedContactProject();
     $project->update(['portal_visible' => true]);
     $contract = Contract::factory()->for($project)->for($template, 'template')->create([
         // The shape the symptom arrived in: rendered, pointing at nothing.

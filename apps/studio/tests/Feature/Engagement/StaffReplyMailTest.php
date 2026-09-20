@@ -18,7 +18,7 @@ uses(RefreshDatabase::class);
 
 function threadWithClient(): Thread
 {
-    $project = contractProject();
+    $project = bookedContactProject();
     $contact = $project->contacts()->sole();
     $contact->update(['email' => 'lena@example.test']);
 
@@ -86,7 +86,7 @@ it('writes one message id per message and never two the same', function () {
 it('sends nothing, and claims nothing, when no participant has an address', function () {
     Notification::fake();
 
-    $project = contractProject();
+    $project = bookedContactProject();
     $project->contacts()->sole()->update(['email' => null]);
     $thread = Thread::factory()->for($project)->create();
     $thread->participants()->create(['contact_id' => $project->contacts()->sole()->id]);
@@ -101,7 +101,7 @@ it('sends nothing, and claims nothing, when no participant has an address', func
 it('shows a contact every thread they are on, across projects', function () {
     Notification::fake();
 
-    // One contact on two projects. contractProject() is not reused for the
+    // One contact on two projects. bookedContactProject() is not reused for the
     // second: it mints its own contact at a fixed address, and C-01's
     // partial unique index on (tenant_id, email) means a second row with
     // that address cannot exist — the same rule C-08 relies on.

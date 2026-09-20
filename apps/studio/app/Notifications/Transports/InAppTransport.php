@@ -4,6 +4,7 @@ namespace App\Notifications\Transports;
 
 use App\Notifications\Contracts\Transport;
 use App\Notifications\Models\InAppNotification;
+use App\Notifications\Studio\StudioEventNotification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notification;
 use RuntimeException;
@@ -35,6 +36,9 @@ class InAppTransport implements Transport
             'notifiable_id' => $notifiable->getKey(),
             'type' => $notification::class,
             'data' => $notification->toArray($notifiable),
+            'project_id' => $notification instanceof StudioEventNotification
+                ? $notification->project()?->getKey()
+                : null,
         ]);
     }
 }

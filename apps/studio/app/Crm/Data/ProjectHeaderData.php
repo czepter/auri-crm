@@ -53,6 +53,9 @@ class ProjectHeaderData extends Data
         public bool $canManageQuotes,
         public bool $canManageContracts,
         public bool $canManagePaymentPlan,
+        // #418: the one condition the "Zahlungsplan abwickeln" link hangs
+        // off, beside the plan's own settled_at.
+        public bool $primaryShootCancelled,
         public bool $canManageForms,
         public ?string $leadId,
         public ?string $outcomeLabel,
@@ -95,6 +98,7 @@ class ProjectHeaderData extends Data
             canManageQuotes: $user?->can('manageQuotes', $project) ?? false,
             canManageContracts: $user?->can('manageContracts', $project) ?? false,
             canManagePaymentPlan: $user?->can('managePaymentPlan', $project) ?? false,
+            primaryShootCancelled: $project->primaryShoot?->isCancelled() ?? false,
             canManageForms: $user?->can('manageForms', $project) ?? false,
             leadId: $project->lead?->public_id,
             outcomeLabel: $project->lead?->outcome?->label(),
@@ -131,7 +135,7 @@ class ProjectHeaderData extends Data
             queue: $user === null || ! $queue ? [] : app(OpenProjects::class)->queue($user, $project),
             people: $project->contacts->map(ProjectPersonData::fromContact(...))->all(),
             paymentPlan: $project->job?->paymentPlan
-                ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments'))
+                ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments.invoice.creditNotes'))
                 : null,
             galleries: $project->galleries()->get()->map(fn ($gallery) => [
                 'id' => $gallery->public_id,

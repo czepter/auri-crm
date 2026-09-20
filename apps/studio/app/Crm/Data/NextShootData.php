@@ -41,7 +41,7 @@ class NextShootData extends Data
             projectId: $shoot->project->public_id,
             projectName: $shoot->project->name,
             shootId: $shoot->public_id,
-            title: $shoot->label ?? $shoot->kind->label(),
+            title: $shoot->label ?? $shoot->kind,
             date: $shoot->date->format('Y-m-d'),
             callTime: $shoot->call_time === null ? null : substr((string) $shoot->call_time, 0, 5),
             endTime: $shoot->end_time === null ? null : substr((string) $shoot->end_time, 0, 5),

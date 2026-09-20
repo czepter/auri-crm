@@ -22,7 +22,7 @@ use Illuminate\Support\Str;
  *
  * No mockup shows this button yet, and the Bilder tab (Galleries/Record.vue)
  * does not link to it either. This ships as a route+action a future screen
- * can link to, same shape as contracts.download.
+ * can link to.
  */
 class GalleryLightroomExportController extends Controller
 {

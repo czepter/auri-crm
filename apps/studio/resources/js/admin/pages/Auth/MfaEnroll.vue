@@ -5,12 +5,17 @@ import { useForm } from '@inertiajs/vue3'
 import { toDataURL } from 'qrcode'
 import { ref, watchEffect } from 'vue'
 import { Button } from '@/ui/button'
-import { Input } from '@/ui/input'
+import { PinInput, PinInputGroup, PinInputSlot } from '@/ui/pin-input'
 import { Label } from '@/ui/label'
 
 const props = defineProps<{ secret: string; otpauthUri: string }>()
 
+// google2fa prüft sechs Ziffern; Wiederherstellungscodes gibt es hier noch
+// nicht, die entstehen erst mit diesem Schritt.
+const TOTP_LENGTH = 6
+
 const form = useForm({ code: '' })
+const digits = ref<string[]>([])
 const qrCodeDataUrl = ref('')
 
 // Rendered client-side so the secret embedded in the otpauth URI never
@@ -21,7 +26,14 @@ watchEffect(async () => {
 })
 
 function submit() {
-  form.post('/auth/mfa/confirm', { onFinish: () => form.reset('code') })
+  form
+    .transform(() => ({ code: digits.value.join('') }))
+    .post('/auth/mfa/confirm', {
+      onFinish: () => {
+        digits.value = []
+        form.reset('code')
+      },
+    })
 }
 </script>
 
@@ -54,13 +66,11 @@ function submit() {
 
       <Field class="mb-6">
         <Label for="code">{{ $t('auth.mfaCode') }}</Label>
-        <Input
-          id="code"
-          v-model="form.code" class="tabular-nums"
-          type="text"
-          inputmode="numeric"
-          autocomplete="one-time-code"
-          required />
+        <PinInput v-model="digits" @complete="submit">
+          <PinInputGroup>
+            <PinInputSlot v-for="index in TOTP_LENGTH" :key="index" :id="index === 1 ? 'code' : undefined" :index="index - 1" />
+          </PinInputGroup>
+        </PinInput>
       </Field>
 
       <Button type="submit" class="w-full justify-center" :disabled="form.processing">

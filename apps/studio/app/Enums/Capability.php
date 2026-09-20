@@ -78,10 +78,10 @@ enum Capability: string
     case ManageQuotes = 'manage_quotes';
 
     /**
-     * Author contract templates and generate a rendered contract for a
-     * project (M-01). Narrower than ManagePackages: a contract is what a
-     * client signs, so this stays with the roles ManageShoots already
-     * trusts rather than opening to every crew role the way the catalog does.
+     * Author document templates, draft a contract for a project and manage
+     * its payment plan. A contract is what a client signs, so this stays with
+     * the roles ManageShoots already trusts rather than opening to every crew
+     * role the way the catalog does.
      */
     case ManageContracts = 'manage_contracts';
 

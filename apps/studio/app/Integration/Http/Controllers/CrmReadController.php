@@ -15,6 +15,7 @@ use App\Integration\Data\ContactReadData;
 use App\Integration\Data\JobReadData;
 use App\Integration\Data\LeadReadData;
 use App\Integration\Data\ProjectDetailReadData;
+use App\Integration\Data\ProjectMoneyReadData;
 use App\Integration\Data\ProjectReadData;
 use App\Integration\Data\ShootReadData;
 use Illuminate\Database\Eloquent\Builder;
@@ -72,6 +73,12 @@ class CrmReadController extends Controller
         return response()->json(['data' => ProjectDetailReadData::fromModel($project)]);
     }
 
+    /** #402: the payment plan ProjectDetailReadData leaves out. */
+    public function money(Project $project): JsonResponse
+    {
+        return response()->json(['data' => ProjectMoneyReadData::fromModel($project)]);
+    }
+
     /**
      * `closed` rather than a stage key for the end of the funnel — a
      * closed lead keeps the stage it died in, so the two are independent
@@ -89,7 +96,7 @@ class CrmReadController extends Controller
         ]);
 
         $query = Lead::query()
-            ->with('project:id,public_id')
+            ->with('project:id,public_id,name')
             ->when($filters['stage'] ?? null, fn (Builder $q, string $stage) => $q->where('stage', $stage))
             ->when($request->has('closed'), fn (Builder $q) => $request->boolean('closed')
                 ? $q->whereNotNull('outcome')
@@ -123,7 +130,7 @@ class CrmReadController extends Controller
         $cancelled = array_key_exists('cancelled', $range) ? $request->boolean('cancelled') : null;
 
         $query = Shoot::query()
-            ->with('project:id,public_id')
+            ->with(['project:id,public_id', 'crew.user'])
             ->when($range['from'] ?? null, fn (Builder $q, string $from) => $q->whereDate('date', '>=', $from))
             ->when($range['to'] ?? null, fn (Builder $q, string $to) => $q->whereDate('date', '<=', $to))
             ->when($cancelled !== null, fn (Builder $q) => $cancelled ? $q->whereNotNull('cancelled_at') : $q->uncancelled());
@@ -154,11 +161,13 @@ class CrmReadController extends Controller
             ->get()
             ->mapWithKeys(fn (Lead $lead) => [$lead->stage->key => (int) $lead->count]);
 
-        $stages = app(CrmVocabulary::class)->ordered(StagePipeline::Lead)->map(fn (Stage $stage) => [
-            'stage' => $stage->key,
-            'label' => $stage->name,
-            'count' => $counts[$stage->key] ?? 0,
-        ])->all();
+        $stages = app(CrmVocabulary::class)->ordered(StagePipeline::Lead)
+            ->filter(fn (Stage $stage) => $stage->is_active)
+            ->map(fn (Stage $stage) => [
+                'stage' => $stage->key,
+                'label' => $stage->name,
+                'count' => $counts[$stage->key] ?? 0,
+            ])->all();
 
         return response()->json(['data' => $stages]);
     }
@@ -168,13 +177,16 @@ class CrmReadController extends Controller
      */
     private function page(Builder $query, Request $request, string $dataClass): JsonResponse
     {
-        $since = $request->validate(['since' => ['sometimes', 'date']])['since'] ?? null;
+        $filters = $request->validate([
+            'since' => ['sometimes', 'date'],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+        ]);
 
         /** @var CursorPaginator $paginator */
         $paginator = $query
-            ->when($since, fn (Builder $q) => $q->where('updated_at', '>=', $since))
+            ->when($filters['since'] ?? null, fn (Builder $q, string $since) => $q->where('updated_at', '>=', $since))
             ->orderBy('id')
-            ->cursorPaginate(25);
+            ->cursorPaginate($filters['per_page'] ?? 25);
 
         // Captured before through() below replaces every item with its
         // *ReadData: a cursor is built from whatever `id` property the

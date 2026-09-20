@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Link, usePage } from '@inertiajs/vue3'
+import { Link, router, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
@@ -15,6 +15,7 @@ import { isoDate } from '@/admin/lib/dates'
 type Phase = App.Crm.Data.ProjectRowData['phase']
 
 const props = defineProps<{
+  view: 'liste' | 'board'
   projects: App.Crm.Data.ProjectRowData[]
   stages: { key: string; name: string; phase: Phase }[]
   stageSettings: Omit<InstanceType<typeof ProjectSettings>['$props'], 'workflow' | 'canManageTasks'> | null
@@ -24,10 +25,14 @@ const props = defineProps<{
 const settingsOpen = ref(false)
 const workflowAllowed = computed(() => (usePage().props.auth.can ?? []).includes('manage_tasks'))
 
-const view = ref('liste')
 const scope = ref('running')
 const stage = ref<string | null>(null)
 const query = ref('')
+const collapsed = ref<Phase[]>([])
+
+function toggle(phase: Phase) {
+  collapsed.value = collapsed.value.includes(phase) ? collapsed.value.filter((p) => p !== phase) : [...collapsed.value, phase]
+}
 
 const today = isoDate(new Date())
 
@@ -99,13 +104,14 @@ function reset() {
         <PageHead :title="$t('projects.title')">
           <ChoiceGroup
             v-if="projects.length"
-            v-model="view"
+            :model-value="view"
             class="ml-3"
             :options="[
               { value: 'liste', label: $t('projects.viewList') },
               { value: 'board', label: $t('projects.viewBoard') },
             ]"
             variant="segmented"
+            @update:model-value="(ansicht) => router.get('/projekte', { ansicht }, { preserveScroll: true, preserveState: true })"
           />
           <Button v-if="stageSettings" class="ml-auto" type="button" variant="pill-muted" @click="settingsOpen = true">
             {{ $t('stages.entry') }}
@@ -152,11 +158,11 @@ function reset() {
             </thead>
             <tbody>
               <template v-for="group in groups" :key="group.phase">
-                <TableGroupRow :colspan="6">
+                <TableGroupRow :colspan="6" :open="!collapsed.includes(group.phase)" @toggle="toggle(group.phase)">
                   {{ $t(`projects.phase.${group.phase}`) }}
                   <span class="ml-1.5 font-normal">{{ group.rows.length }}</span>
                 </TableGroupRow>
-                <TableRow v-for="project in group.rows" :key="project.id">
+                <TableRow v-for="project in collapsed.includes(group.phase) ? [] : group.rows" :key="project.id">
                   <TableCell tone="name">
                     <Link :href="`/auftraege/${project.id}`">{{ project.name }}</Link>
                   </TableCell>

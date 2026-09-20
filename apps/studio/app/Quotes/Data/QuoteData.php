@@ -4,13 +4,18 @@ namespace App\Quotes\Data;
 
 use App\Quotes\Models\Quote;
 use App\Quotes\Support\QuoteRange;
+use App\Quotes\Support\VatLines;
+use App\Settings\Support\StudioSettingsResolver;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 #[TypeScript]
 class QuoteData extends Data
 {
-    /** @param list<QuoteItemData> $items */
+    /**
+     * @param  list<QuoteItemData>  $items
+     * @param  list<array{rate: int, net: int, vat: int}>  $vatLines
+     */
     public function __construct(
         public string $id,
         public ?string $predecessorId,
@@ -31,16 +36,23 @@ class QuoteData extends Data
         public ?string $discountType,
         public ?int $discountValue,
         public int $discountAmount,
+        public bool $discountHidden,
         public int $net,
-        // Q-04: null on every quote until Q-06 sends it and calls
-        // Quote::snapshotVat() — read straight off the quote's own columns,
-        // never re-derived from the tenant's live settings, so this is the
-        // one place the screen has to look regardless of what the studio's
-        // VAT mode is set to right now.
-        public ?string $vatMode,
-        public ?int $vatRate,
+        // Q-04: frozen by Q-06's send onto the quote's own columns — read
+        // straight off the row once populated, so a later change to the
+        // tenant's VAT mode alters nothing an already-sent quote shows.
+        // Never null here, though: a draft has nothing frozen yet, so
+        // fromModel() fills these with what sending it right now would
+        // produce (Quote::computeVat()) — a live preview, not a value this
+        // quote's row carries.
+        public string $vatMode,
+        public int $vatRate,
         public ?string $vatNote,
-        public ?int $vatAmount,
+        public int $vatAmount,
+        // #412: das Entgelt je Steuersatz (§ 14 Abs. 4 Nr. 7 UStG). Ein
+        // Angebot mit einem Satz hat genau einen Eintrag; leer bei
+        // Kleinunternehmerregelung, wo kein Satz auszuweisen ist.
+        public array $vatLines,
         // Anschreiben, roh mit Merge-Feldern — aufgelöst wird erst beim
         // Rendern (App\Quotes\Actions\RenderQuotePdf), damit der Schirm
         // bearbeitet, was gespeichert ist.
@@ -54,6 +66,7 @@ class QuoteData extends Data
         public ?int $hours = null,
         public ?string $timeTitle = null,
         public ?string $timeDescription = null,
+        public int $timeSortOrder = 0,
         // Q-15: vor der Zusage hat ein Regler-Angebot keinen Betrag, sondern
         // einen Bereich — berechnet, nie gespeichert.
         public ?int $rangeMin = null,
@@ -64,13 +77,22 @@ class QuoteData extends Data
         public ?string $recipientStreet = null,
         public ?string $recipientPostcode = null,
         public ?string $recipientCity = null,
-        // Wie in App\Quotes\Notifications\QuoteSent: config('portal.url') und
-        // nur, wenn der Kunde das Portal überhaupt sehen darf.
+        // Der Freigabe-Link (QuoteShareController) — unabhängig von
+        // portal_visible und ohne Login, share_token ist sein ganzer
+        // Zugriffsschutz. Wie in App\Quotes\Notifications\QuoteSent:
+        // config('portal.url') statt route(), die Route existiert im
+        // Admin-Prozess nicht.
         public ?string $portalUrl = null,
     ) {}
 
     public static function fromModel(Quote $quote): self
     {
+        // Frozen once sent; for a draft, computeVat() gives the screen the
+        // same shape from the tenant's current settings instead of nulls.
+        $vat = $quote->vat_mode !== null
+            ? ['vat_mode' => $quote->vat_mode, 'vat_rate' => $quote->vat_rate, 'vat_note' => $quote->vat_note, 'vat_amount' => $quote->vat_amount]
+            : Quote::computeVat($quote->net, app(StudioSettingsResolver::class));
+
         return new self(
             id: $quote->public_id,
             // The predecessor is a Quote row too, referenced here the same
@@ -91,11 +113,15 @@ class QuoteData extends Data
             discountType: $quote->discount_type?->value,
             discountValue: $quote->discount_value,
             discountAmount: $quote->discount_amount,
+            discountHidden: $quote->discount_hidden,
             net: $quote->net,
-            vatMode: $quote->vat_mode,
-            vatRate: $quote->vat_rate,
-            vatNote: $quote->vat_note,
-            vatAmount: $quote->vat_amount,
+            vatMode: $vat['vat_mode'],
+            vatRate: $vat['vat_rate'],
+            vatNote: $vat['vat_note'],
+            vatAmount: $vat['vat_amount'],
+            vatLines: $vat['vat_mode'] === 'standard'
+                ? VatLines::fromItems($quote->items, (int) $vat['vat_rate'], $quote->net)
+                : [],
             intro: $quote->intro,
             outro: $quote->outro,
             items: $quote->items->map(QuoteItemData::fromModel(...))->all(),
@@ -106,6 +132,7 @@ class QuoteData extends Data
             hours: $quote->hours,
             timeTitle: $quote->time_title,
             timeDescription: $quote->time_description,
+            timeSortOrder: $quote->time_sort_order,
             rangeMin: $quote->hasSlider() ? QuoteRange::min($quote) : null,
             rangeMax: $quote->hasSlider() ? QuoteRange::max($quote) : null,
             paymentStages: $quote->paymentStages->map(fn ($stage) => [
@@ -118,9 +145,7 @@ class QuoteData extends Data
             recipientStreet: $quote->recipient_street,
             recipientPostcode: $quote->recipient_postcode,
             recipientCity: $quote->recipient_city,
-            portalUrl: $quote->project->portal_visible
-                ? config('portal.url')."/projekte/{$quote->project->public_id}/angebot"
-                : null,
+            portalUrl: config('portal.url')."/angebot/{$quote->share_token}/teilen",
         );
     }
 }

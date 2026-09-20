@@ -12,6 +12,7 @@ import { Button } from '@/ui/button'
 const props = defineProps<{
   settings: App.Settings.Data.PortalSettingsData
   branding: App.Settings.Data.StudioSettingsData
+  legalTemplates: { family: string; name: string; updatedAt: string | null }[]
 }>()
 
 // Same query-pane shell as Settings/Index.vue, for the same reason: the rail
@@ -77,7 +78,7 @@ const preview = computed(() => {
             <SettingsNav :active="pane" />
 
             <div class="max-w-[620px] min-w-0 flex-1">
-              <PortalForm :key="pane" ref="formRef" :settings="settings" :sections="[pane]" />
+              <PortalForm :key="pane" ref="formRef" :settings="settings" :sections="[pane]" :legal-templates="legalTemplates" />
             </div>
 
             <PortalPreview :branding="branding" :portal="preview" />

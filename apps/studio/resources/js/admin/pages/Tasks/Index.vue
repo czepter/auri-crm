@@ -65,7 +65,7 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
 </script>
 
 <template>
-  <AdminLayout active="uebersicht">
+  <AdminLayout active="aufgaben">
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('tasks.kicker')" :title="$t('tasks.title')" />

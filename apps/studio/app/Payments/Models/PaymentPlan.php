@@ -5,7 +5,6 @@ namespace App\Payments\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\Job;
-use App\Payments\Enums\PaymentInstallmentStatus;
 use Database\Factories\Payments\PaymentPlanFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -33,13 +32,11 @@ class PaymentPlan extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['job_id', 'total', 'reference', 'client_reminders_enabled'];
-
-    protected $attributes = ['client_reminders_enabled' => true];
+    protected $fillable = ['job_id', 'total', 'reference', 'settled_at'];
 
     protected function casts(): array
     {
-        return ['client_reminders_enabled' => 'boolean'];
+        return ['settled_at' => 'immutable_datetime'];
     }
 
     public function job(): BelongsTo
@@ -52,18 +49,10 @@ class PaymentPlan extends Model
         return $this->hasMany(PaymentInstallment::class)->orderBy('sort_order');
     }
 
-    /**
-     * A plan stays editable until its first installment (by sort order) is
-     * invoiced. Nothing in M-03 ever writes PaymentInstallmentStatus::Invoiced
-     * — this guard exists now, defensively, so M-04's real invoicing does not
-     * have to revisit it: the moment something sets that status, editing
-     * stops here without this method changing at all.
-     */
-    public function isEditable(): bool
+    /** #418: closed. Nothing chases it, nothing charges on it, nothing edits it. */
+    public function isSettled(): bool
     {
-        $first = $this->installments()->orderBy('sort_order')->first();
-
-        return $first === null || $first->status !== PaymentInstallmentStatus::Invoiced;
+        return $this->settled_at !== null;
     }
 
     protected static function newFactory(): Factory

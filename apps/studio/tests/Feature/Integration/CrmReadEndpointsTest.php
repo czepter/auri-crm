@@ -1,9 +1,11 @@
 <?php
 
+use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
+use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
@@ -88,6 +90,23 @@ it('cursors rather than repeats: the second page never holds the first page\'s r
     expect($firstIds->intersect($secondIds))->toBeEmpty();
 });
 
+it('caps the page size at per_page, up to the max of 100', function () {
+    Contact::factory()->count(10)->create();
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ManageContacts))
+        ->getJson('/api/contacts?per_page=3')
+        ->assertOk()->json();
+
+    expect($body['data'])->toHaveCount(3);
+    expect($body['meta']['per_page'])->toBe(3);
+});
+
+it('rejects a per_page above the api surface\'s max', function () {
+    $this->withHeader('Authorization', bearerFor(Capability::ManageContacts))
+        ->getJson('/api/contacts?per_page=101')
+        ->assertStatus(422);
+});
+
 it('filters out rows updated before the since timestamp', function () {
     $old = $this->travelTo(now()->subDays(5), fn () => Contact::factory()->create());
     $recent = Contact::factory()->create();
@@ -121,7 +140,8 @@ it('searches contacts by name or email, case-insensitively', function () {
 // The search the page-local filter could never do: the match is on the last
 // page, so a filter over the first page returns nothing at all.
 it('finds a contact that the first page does not contain', function () {
-    Contact::factory()->count(30)->create(['name' => 'Meier']);
+    // Faker emails come from surnames, so a random one can contain "steffens".
+    Contact::factory()->count(30)->sequence(fn ($s) => ['email' => "meier{$s->index}@example.test"])->create(['name' => 'Meier']);
     $needle = Contact::factory()->create(['name' => 'Steffens']);
 
     $body = $this->withHeader('Authorization', bearerFor(Capability::ManageContacts))
@@ -129,6 +149,19 @@ it('finds a contact that the first page does not contain', function () {
         ->assertOk()->json();
 
     expect(collect($body['data'])->pluck('id')->all())->toBe([$needle->public_id]);
+});
+
+it('carries a contact\'s address', function () {
+    $contact = Contact::factory()->create(['street' => 'Marktstraße 1', 'postcode' => '07743', 'city' => 'Jena']);
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ManageContacts))
+        ->getJson('/api/contacts')->assertOk()->json();
+
+    expect($body['data'][0])->toMatchArray([
+        'street' => 'Marktstraße 1',
+        'postcode' => '07743',
+        'city' => 'Jena',
+    ]);
 });
 
 it('rejects a since value that is not a valid date', function () {
@@ -213,6 +246,24 @@ it('carries a lead\'s source detail, capture moment and close moment', function 
     expect($body['data'][0]['lostAt'])->toBe($lead->lost_at->toIso8601String());
 });
 
+// #399: isLost alone cannot tell a lost lead from a declined one, and the
+// project a lead hangs off had no name attached at all.
+it('carries a lead\'s outcome, lost reason, stage entry and project name', function () {
+    $project = Project::factory()->create(['name' => 'Meier Hochzeit']);
+    $lead = Lead::factory()->for($project)->atStage(LeadStage::QuoteSent)->create([
+        'outcome' => LeadOutcome::Declined,
+        'lost_reason' => 'Zu teuer',
+    ]);
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ManageLeads))
+        ->getJson('/api/leads')->assertOk()->json();
+
+    expect($body['data'][0]['projectName'])->toBe('Meier Hochzeit');
+    expect($body['data'][0]['outcome'])->toBe('declined');
+    expect($body['data'][0]['lostReason'])->toBe('Zu teuer');
+    expect($body['data'][0]['stageEnteredAt'])->toBe($lead->stage_entered_at?->toIso8601String());
+});
+
 // N-02: GET /api/projects/{project:public_id} — the single-resource read
 // the index alone can't answer.
 
@@ -274,6 +325,38 @@ it('carries the lead, the contacts with their roles, and the shoots', function (
     expect($body['contacts'][0]['role'])->toBe('primary');
     expect(collect($body['shoots'])->pluck('id')->all())->toBe([$shoot->public_id]);
     expect(integerIdPaths($body))->toBe([]);
+});
+
+// #399: booked/job status, the primary-shoot flag, crew per shoot and open
+// tasks were all unreachable from get_project before this.
+it('carries the project\'s job, its shoots\' crew and primary flag, and its open task count', function () {
+    $project = Project::factory()->create();
+    Job::factory()->for($project)->create(['booked_via' => 'manual']);
+    $shoot = Shoot::factory()->for($project)->create(['is_primary' => true]);
+    CrewAssignment::factory()->for($shoot)->create();
+    $project->tasks()->create(['title' => 'Vertrag verschicken', 'audience' => 'internal']);
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))
+        ->getJson("/api/projects/{$project->public_id}")
+        ->assertOk()->json('data');
+
+    expect($body['job'])->not->toBeNull();
+    expect($body['job']['bookedVia'])->toBe('manual');
+    expect($body['shoots'][0]['isPrimary'])->toBeTrue();
+    expect($body['shoots'][0]['crew'])->toHaveCount(1);
+    expect($body['openTaskCount'])->toBe(1);
+    expect(integerIdPaths($body))->toBe([]);
+});
+
+it('leaves a project without a job with a null job', function () {
+    $project = Project::factory()->create();
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))
+        ->getJson("/api/projects/{$project->public_id}")
+        ->assertOk()->json('data');
+
+    expect($body['job'])->toBeNull();
+    expect($body['openTaskCount'])->toBe(0);
 });
 
 it('leaves a project without a lead with a null lead rather than an absent one', function () {
@@ -379,6 +462,19 @@ it('filters shoots by cancelled, and keeps both without it', function () {
     expect($body[0]['cancelledAt'])->not->toBeNull();
 });
 
+it('carries a shoot\'s crew and primary flag', function () {
+    $shoot = Shoot::factory()->create(['date' => '2026-03-15', 'is_primary' => true]);
+    CrewAssignment::factory()->for($shoot)->create();
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))
+        ->getJson('/api/shoots?from=2026-03-01&to=2026-03-31')
+        ->assertOk()->json('data');
+
+    expect($body[0]['isPrimary'])->toBeTrue();
+    expect($body[0]['crew'])->toHaveCount(1);
+    expect(integerIdPaths($body))->toBe([]);
+});
+
 it('rejects a shoots date range where to precedes from', function () {
     $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))
         ->getJson('/api/shoots?from=2026-03-31&to=2026-03-01')
@@ -401,9 +497,21 @@ it('summarises the lead pipeline as a count per stage, in funnel order', functio
         ['stage' => 'contacted', 'label' => 'Kontaktiert', 'count' => 1],
         ['stage' => 'quote_sent', 'label' => 'Angebot', 'count' => 0],
         ['stage' => 'quote_accepted', 'label' => 'Angebot angenommen', 'count' => 0],
-        ['stage' => 'contract_sent', 'label' => 'Vertrag', 'count' => 0],
         ['stage' => 'booked', 'label' => 'Gebucht', 'count' => 0],
     ]);
+});
+
+// #399: LeadBoardController already drops an inactive stage from the board;
+// the snapshot showed it anyway, at a count of 0.
+it('leaves an inactive stage out of the pipeline snapshot', function () {
+    Lead::factory()->atStage(LeadStage::New)->create();
+    stage(LeadStage::Contacted)->update(['is_active' => false]);
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ManageLeads))
+        ->getJson('/api/pipeline-snapshot')
+        ->assertOk()->json();
+
+    expect(collect($body['data'])->pluck('stage')->all())->not->toContain('contacted');
 });
 
 it('refuses the pipeline snapshot to a token that does not hold ManageLeads', function () {

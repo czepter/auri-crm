@@ -2,6 +2,7 @@
 
 use App\Catalog\Models\Package;
 use App\Catalog\Models\PackageItem;
+use App\Crm\Models\Lead;
 use App\Models\AuditLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -77,7 +78,7 @@ it('replaces a package\'s items wholesale on update, and logs it', function () {
         'items' => [
             ['title' => 'Neue Leistung', 'description' => null, 'quantity' => 2, 'unit_price' => 5000],
         ],
-    ])->assertRedirect('/pakete');
+    ])->assertRedirect();
 
     $package->refresh();
 
@@ -144,6 +145,8 @@ it('gives copyItems a deep, disconnected copy that a later edit cannot touch', f
             'description' => 'Inklusive Anfahrt',
             'quantity' => 1,
             'unit_price' => 129900,
+            // #412 rides along too: the rate is part of the line.
+            'vat_rate' => null,
             // Q-09/Q-10 ride along, and just as deadly copied.
             'selectable' => false,
             'selected' => false,
@@ -155,6 +158,7 @@ it('gives copyItems a deep, disconnected copy that a later edit cannot touch', f
             'description' => null,
             'quantity' => 1,
             'unit_price' => null,
+            'vat_rate' => null,
             'selectable' => false,
             'selected' => false,
             'outcome' => null,
@@ -204,4 +208,21 @@ it('logs a duplicate as a package creation carrying its source', function () {
     $this->actingAs(staffMember(), 'staff')->post("/pakete/{$original->public_id}/duplizieren");
 
     expect(AuditLog::where('event', 'package.created')->sole()->context['source'])->toBe('duplicate');
+});
+
+it('deletes a package, its items, and logs it — but keeps a lead that started from it', function () {
+    $user = staffMember();
+    $package = Package::factory()->has(PackageItem::factory()->count(2), 'items')->create(['name' => 'Hochzeit Basis']);
+    $lead = Lead::factory()->create(['package_id' => $package->id]);
+
+    $this->actingAs($user, 'staff')
+        ->delete("/pakete/{$package->public_id}")
+        ->assertRedirect('/pakete');
+
+    expect(Package::find($package->id))->toBeNull()
+        ->and(PackageItem::where('package_id', $package->id)->count())->toBe(0)
+        ->and($lead->refresh()->package_id)->toBeNull();
+
+    expect(AuditLog::where('event', 'package.deleted')->where('subject', $package->public_id)->sole()->context['name'])
+        ->toBe('Hochzeit Basis');
 });

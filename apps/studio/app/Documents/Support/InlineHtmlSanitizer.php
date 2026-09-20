@@ -35,6 +35,24 @@ class InlineHtmlSanitizer
         'span' => ['class', 'data-mf'],
     ];
 
+    /**
+     * #480: the letter text around a quote's or an invoice's positions — the
+     * text blocks DocumentBlockCatalog::letter() offers, and nothing a
+     * layout would have to make room for.
+     */
+    private const LETTER = [
+        'p' => [],
+        'h1' => [],
+        'h2' => [],
+        'h3' => [],
+        'ul' => [],
+        'ol' => [],
+        'li' => [],
+        'blockquote' => [],
+        'cite' => [],
+        'hr' => ['class'],
+    ];
+
     private const SAFE_SCHEME = '/^(https?:|mailto:)/i';
 
     /**
@@ -48,6 +66,18 @@ class InlineHtmlSanitizer
     private const DROP_WHOLE = ['script', 'style', 'img', 'iframe', 'object', 'embed'];
 
     public static function inline(string $html): string
+    {
+        return self::sanitize($html, self::ALLOW);
+    }
+
+    /** Block-level letter HTML: shown in the portal as markup, so held to the same list. */
+    public static function letter(?string $html): ?string
+    {
+        return $html === null ? null : self::sanitize($html, self::ALLOW + self::LETTER);
+    }
+
+    /** @param  array<string, list<string>>  $allow */
+    private static function sanitize(string $html, array $allow): string
     {
         if (trim($html) === '') {
             return $html;
@@ -72,7 +102,7 @@ class InlineHtmlSanitizer
             return '';
         }
 
-        self::clean($body);
+        self::clean($body, $allow);
 
         $out = '';
 
@@ -118,7 +148,8 @@ class InlineHtmlSanitizer
         return $clean;
     }
 
-    private static function clean(DOMNode $node): void
+    /** @param  array<string, list<string>>  $allow */
+    private static function clean(DOMNode $node, array $allow): void
     {
         // Snapshot first: the loop mutates the live child list.
         foreach (iterator_to_array($node->childNodes) as $child) {
@@ -126,7 +157,7 @@ class InlineHtmlSanitizer
                 continue;
             }
 
-            self::clean($child);
+            self::clean($child, $allow);
 
             $tag = strtolower($child->tagName);
 
@@ -136,14 +167,14 @@ class InlineHtmlSanitizer
                 continue;
             }
 
-            if (! array_key_exists($tag, self::ALLOW)) {
+            if (! array_key_exists($tag, $allow)) {
                 self::unwrap($child);
 
                 continue;
             }
 
             foreach (iterator_to_array($child->attributes) as $attribute) {
-                if (! in_array($attribute->name, self::ALLOW[$tag], true)) {
+                if (! in_array($attribute->name, $allow[$tag], true)) {
                     $child->removeAttribute($attribute->name);
                 }
             }
