@@ -28,6 +28,7 @@ const items: { group?: string; key?: string; href?: string; label?: string; exte
   // ist einer von vielen Auslösern, nicht ihr Zuhause.
   { key: 'email', href: '/einstellungen/email', label: 'settings.navMail' },
   { key: 'audit', href: '/einstellungen/protokoll', label: 'settings.navAudit' },
+  { key: 'retention', href: '/einstellungen/aufbewahrung', label: 'settings.navRetention' },
 
   { group: 'settings.groupBilling' },
   { key: 'payment', href: '/einstellungen/zahlung', label: 'settings.navPayment' },

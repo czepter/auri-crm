@@ -755,6 +755,12 @@ class StudioSettingsResolver
         return $this->row()->onboarding_reminder_sent_at !== null;
     }
 
+    /** Frist der automatischen Löschung in Monaten; null ist aus. */
+    public function retentionMonths(): ?int
+    {
+        return $this->row()->retention_months;
+    }
+
     /** Der Löschtag: Tag des Antrags plus Frist, in der Zeit des Studios. Ab dessen Morgen läuft DeleteTenant. */
     public function deletionDate(): ?CarbonImmutable
     {

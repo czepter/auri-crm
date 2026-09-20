@@ -46,7 +46,7 @@ use Illuminate\Support\Facades\Storage;
  */
 class EraseContactDsgvo
 {
-    public function __invoke(Contact $contact, User $actor): void
+    public function __invoke(Contact $contact, ?User $actor = null): void
     {
         DB::transaction(function () use ($contact, $actor) {
             foreach ($contact->projects()->get() as $project) {

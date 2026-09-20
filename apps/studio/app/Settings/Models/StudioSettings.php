@@ -66,6 +66,7 @@ class StudioSettings extends Model
         'portal_contact_name', 'portal_contact_phone', 'portal_contact_email',
         'portal_contact_response_time', 'portal_contact_avatar_path',
         'onboarding_completed_at', 'onboarding_reminder_sent_at', 'deletion_requested_at',
+        'retention_months',
     ];
 
     // Defence in depth beside StudioSettingsResolver never exposing these
@@ -104,6 +105,7 @@ class StudioSettings extends Model
             'onboarding_completed_at' => 'datetime',
             'onboarding_reminder_sent_at' => 'datetime',
             'deletion_requested_at' => 'datetime',
+            'retention_months' => 'integer',
         ];
     }
 }

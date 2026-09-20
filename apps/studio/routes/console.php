@@ -61,3 +61,6 @@ Schedule::command('model:prune', ['--model' => [IdempotencyKey::class, StudioExp
 
 // #490: der Löschtag zählt in Studiozeit.
 Schedule::command('studio:delete-due')->dailyAt('03:00')->timezone($studioTimezone);
+
+// #501: nur aktiv, wenn das Studio eine Frist gesetzt hat.
+Schedule::command('retention:erase')->dailyAt('03:30')->timezone($studioTimezone);

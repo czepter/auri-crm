@@ -99,6 +99,7 @@ return [
     'quote.revised' => 'Angebot überarbeitet',
     'quote.sent' => 'Angebot gesendet',
     'quote.updated' => 'Angebot geändert',
+    'retention.erased' => 'Abgelaufene Anfragen gelöscht',
     'service_suggestion.removed' => 'Leistungsvorschlag entfernt',
     'service_suggestion.saved' => 'Leistungsvorschlag gespeichert',
     'settings.inbound_secret_rotated' => 'Postfach-Geheimnis erneuert',

@@ -80,6 +80,7 @@ use App\Settings\Http\Controllers\AuditLogController;
 use App\Settings\Http\Controllers\DataExportController;
 use App\Settings\Http\Controllers\GallerySettingsController;
 use App\Settings\Http\Controllers\NumberRangeController;
+use App\Settings\Http\Controllers\RetentionController;
 use App\Settings\Http\Controllers\PaymentSettingsController;
 use App\Settings\Http\Controllers\PortalSettingsController;
 use App\Settings\Http\Controllers\StudioClosureController;
@@ -412,6 +413,9 @@ Route::middleware('audience:staff')->group(function () {
             ->name('settings.export.archive.download');
 
         Route::get('/einstellungen/protokoll', [AuditLogController::class, 'index'])->name('settings.audit-log');
+
+        Route::get('/einstellungen/aufbewahrung', [RetentionController::class, 'show'])->name('settings.retention');
+        Route::patch('/einstellungen/aufbewahrung', [RetentionController::class, 'update'])->name('settings.retention.update');
 
         Route::get('/einstellungen/studio-loeschen', [StudioDeletionController::class, 'show'])->name('settings.deletion');
         Route::post('/einstellungen/studio-loeschen/code', [StudioDeletionController::class, 'code'])->name('settings.deletion.code');
