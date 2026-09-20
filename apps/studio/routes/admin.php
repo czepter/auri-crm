@@ -482,6 +482,15 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/einstellungen/portal', [PortalSettingsController::class, 'update'])
             ->name('settings.portal.update');
 
+        Route::get('/einstellungen/portal/kontakt', [PortalSettingsController::class, 'contact'])
+            ->name('settings.portal.contact');
+        Route::patch('/einstellungen/portal/kontakt', [PortalSettingsController::class, 'updateContact'])
+            ->name('settings.portal.contact.update');
+        Route::get('/einstellungen/portal/kontakt/bild', [PortalSettingsController::class, 'contactAvatar'])
+            ->name('settings.portal.contact.avatar');
+        Route::delete('/einstellungen/portal/kontakt/bild', [PortalSettingsController::class, 'destroyContactAvatar'])
+            ->name('settings.portal.contact.avatar.destroy');
+
         // G-14: die Vorgaben werden auf /galerien bedient, wie Stufen auf
         // /auftraege. Ein Lesezeichen auf den alten Screen landet dort, wo sie
         // jetzt stehen.

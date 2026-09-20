@@ -11,8 +11,10 @@ use App\Portal\Http\Controllers\LegalTextController;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * T-08's "Portal" pane, mockup 14's own "bald" placeholder finally wired
@@ -84,7 +86,7 @@ class PortalSettingsController extends Controller
                 'displayName' => $settings->displayName() ?? config('app.name'),
                 'logoUrl' => $settings->logoPath() !== null ? '/branding/logo' : null,
                 'accentColor' => $settings->attributes()['accent_color'],
-                'address' => $request->query('kontakt'),
+                'address' => $settings->postalLine(),
             ],
             'portalLegal' => collect(LegalTextController::TEXTS)
                 ->mapWithKeys(fn (string $text) => [$text.'Url' => $settings->legalUrl($text)])
@@ -153,6 +155,73 @@ class PortalSettingsController extends Controller
         };
     }
 
+    /**
+     * Wer im Portal ansprechbar ist — eigener Bildschirm, weil das eine
+     * Person ist und keine Freigabe: Name, Bild, Telefon, E-Mail und die
+     * Antwortzeit stehen auf der Kundenseite zusammen in einer Karte.
+     */
+    public function contact(StudioSettingsResolver $settings): Response
+    {
+        $this->authorizeSettings();
+
+        return Inertia::render('Settings/PortalContact', [
+            'settings' => PortalSettingsData::fromResolver($settings),
+            // Die Vorschau zeigt, was ohne eigenen Namen dort stünde: die Marke.
+            'branding' => StudioSettingsData::fromResolver($settings),
+        ]);
+    }
+
+    public function updateContact(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    {
+        $this->authorizeSettings();
+
+        $validated = $request->validate([
+            'portal_contact_name' => ['nullable', 'string', 'max:255'],
+            // Nur Plus und Ziffern, Leerzeichen zum Gruppieren. Was hier
+            // steht, wird auf der Kontaktkarte zu einem tel:-Link.
+            'portal_contact_phone' => ['nullable', 'string', 'max:64', 'regex:/^\+?[0-9 ]+$/'],
+            'portal_contact_email' => ['nullable', 'email', 'max:255'],
+            'portal_contact_response_time' => ['nullable', 'string', 'max:120'],
+            // Niemals SVG: das Bild geht öffentlich raus, und Markup liefe
+            // dann auf unserer Herkunft — dieselbe Grenze wie bei den
+            // Beispielbildern.
+            'portal_contact_avatar' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp', 'max:2048'],
+        ]);
+
+        $actor = auth('staff')->user();
+
+        foreach (collect($validated)->except('portal_contact_avatar') as $key => $value) {
+            $settings->set($key, $value, $actor);
+        }
+
+        if ($request->hasFile('portal_contact_avatar')) {
+            $settings->setPortalContactAvatar($request->file('portal_contact_avatar'), $actor);
+        }
+
+        return back();
+    }
+
+    public function destroyContactAvatar(StudioSettingsResolver $settings): RedirectResponse
+    {
+        $this->authorizeSettings();
+
+        $settings->removePortalContactAvatar(auth('staff')->user());
+
+        return back();
+    }
+
+    /** Der eigene Blick auf das Bild; das Portal liefert dieselbe Datei öffentlich aus. */
+    public function contactAvatar(StudioSettingsResolver $settings): StreamedResponse
+    {
+        $this->authorizeSettings();
+
+        $path = $settings->portalContactAvatarPath();
+
+        abort_if($path === null, 404);
+
+        return Storage::disk('local')->response($path);
+    }
+
     public function update(Request $request, StudioSettingsResolver $settings): RedirectResponse
     {
         $this->authorizeSettings();
@@ -176,9 +245,6 @@ class PortalSettingsController extends Controller
             'portal_welcome_inquiry' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'portal_welcome_active' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'portal_welcome_done' => ['sometimes', 'nullable', 'string', 'max:2000'],
-            'portal_contact_phone' => ['sometimes', 'nullable', 'string', 'max:64'],
-            'portal_contact_email' => ['sometimes', 'nullable', 'email', 'max:255'],
-            'portal_contact_response_time' => ['sometimes', 'nullable', 'string', 'max:120'],
         ]);
 
         $actor = auth('staff')->user();

@@ -121,14 +121,15 @@ const PUBLIC_ROUTES = [
 
     // The client's way in. Public by necessity — the only person who needs it
     // is one who cannot sign in — and the token in the path is the whole
-    // credential, spent the moment it works. branding/logo and impressum are
-    // T-08's: a brand mark is not a secret, and a legal notice has to be
-    // reachable from any page a client can see, including one it has not
-    // signed into yet. abmelden/{contact} is T-11's unsubscribe: reached from
-    // a mail already delivered, with the contact's own public_id as the whole
-    // credential, same shape as zugang/{token}.
+    // credential, spent the moment it works. branding/logo, branding/kontakt
+    // and impressum are T-08's: a brand mark and the face on the contact card
+    // are not secrets, and a legal notice has to be reachable from any page a
+    // client can see, including one it has not signed into yet.
+    // abmelden/{contact} is T-11's unsubscribe: reached from a mail already
+    // delivered, with the contact's own public_id as the whole credential,
+    // same shape as zugang/{token}.
     'portal' => [
-        'anmelden', 'zugang/{token}', 'branding/logo', 'impressum', 'rechtstexte/{text}', 'abmelden/{contact}',
+        'anmelden', 'zugang/{token}', 'branding/logo', 'branding/kontakt', 'impressum', 'rechtstexte/{text}', 'abmelden/{contact}',
         // The quote share link — reusable, unlike zugang/{token} above, but
         // the same shape otherwise: share_token in the path is the whole
         // credential, checked by QuoteShareController's own lookup rather

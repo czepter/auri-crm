@@ -40,6 +40,8 @@ const items = [
 
   { group: 'settings.groupPortal' },
   { key: 'portal', href: '/einstellungen/portal', label: 'settings.navPortal' },
+  // Eine Person, keine Freigabe: Name, Bild und die zwei Wege zu ihr.
+  { key: 'portal-contact', href: '/einstellungen/portal/kontakt', label: 'settings.navPortalContact' },
 
   { group: 'settings.groupInterfaces' },
   // Schlüssel, Test- und Live-Umschaltung: eine Anbindung wie die beiden

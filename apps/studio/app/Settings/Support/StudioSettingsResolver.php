@@ -3,6 +3,7 @@
 namespace App\Settings\Support;
 
 use App\Gallery\Models\GalleryPreset;
+use App\Gallery\Support\ImageVariant;
 use App\Models\User;
 use App\Settings\Enums\FontPair;
 use App\Settings\Models\StudioSettings;
@@ -265,6 +266,26 @@ class StudioSettingsResolver
     }
 
     /**
+     * T-02's postal particulars as the one line a footer wears. Composed
+     * from the parts a studio filled in rather than demanding all of them:
+     * a studio with a city and no street still has an address to name.
+     *
+     * Stand in HandleInertiaRequests; die Portal-Vorschau der Einstellungen
+     * trug dort die Kontaktdaten ein, weil sie diese Zeile nicht erreichte.
+     */
+    public function postalLine(): ?string
+    {
+        $attributes = $this->attributes();
+
+        $line = implode(', ', array_filter([
+            $attributes['street'],
+            implode(' ', array_filter([$attributes['postcode'], $attributes['city']])),
+        ]));
+
+        return $line === '' ? null : $line;
+    }
+
+    /**
      * The logo is stored once (T-02's acceptance criterion) — a re-upload
      * replaces the same tenant's file and removes whatever it replaces,
      * rather than accumulating a second one under a second name. Uses the
@@ -295,9 +316,61 @@ class StudioSettingsResolver
         );
     }
 
+    /**
+     * Denselben Weg wie das Logo, mit zwei Unterschieden: niemals SVG — das
+     * Bild geht öffentlich über BrandingController raus, und eine SVG-Datei
+     * ist Markup — und die Datei wird nicht abgelegt, wie sie ankommt.
+     *
+     * Aus einer Kamera kommen acht Megapixel für einen Kreis von 54. Abgelegt
+     * wird deshalb nur, was die Karte braucht: 320 Pixel breit, als WebP,
+     * über dieselbe GD-Strecke, die die Galerie für ihre Varianten fährt.
+     */
+    public function setPortalContactAvatar(UploadedFile $file, ?User $actor = null): void
+    {
+        $row = StudioSettings::query()->firstOrFail();
+        $old = $row->portal_contact_avatar_path;
 
+        $path = "branding/{$row->tenant_id}/kontakt.webp";
 
+        Storage::disk('local')->put(
+            $path,
+            ImageVariant::resizeAndEncode($file->get(), 320, 'webp'),
+        );
 
+        if ($old !== null && $old !== $path) {
+            Storage::disk('local')->delete($old);
+        }
+
+        $this->writeContactAvatar($row, $path, $old, $actor);
+    }
+
+    public function removePortalContactAvatar(?User $actor = null): void
+    {
+        $row = StudioSettings::query()->firstOrFail();
+        $old = $row->portal_contact_avatar_path;
+
+        if ($old === null) {
+            return;
+        }
+
+        Storage::disk('local')->delete($old);
+
+        $this->writeContactAvatar($row, null, $old, $actor);
+    }
+
+    private function writeContactAvatar(StudioSettings $row, ?string $path, ?string $old, ?User $actor): void
+    {
+        $row->update(['portal_contact_avatar_path' => $path]);
+
+        Cache::store('redis')->forget($this->cacheKey());
+
+        AuditLogger::record(
+            event: 'studio_settings.updated',
+            actor: $actor,
+            context: ['key' => 'portal_contact_avatar_path', 'old' => $old, 'new' => $path],
+            subject: $row->public_id,
+        );
+    }
 
     /**
      * Writes one column, busts the cache both processes read through, and
@@ -658,6 +731,20 @@ class StudioSettingsResolver
     public function dsgvoRequestDeadlineDays(): int
     {
         return (int) $this->row()->dsgvo_request_deadline_days;
+    }
+
+    /**
+     * Wer im Portal ansprechbar ist. Ohne eigenen Namen steht dort die
+     * Marke — ein Ein-Personen-Studio trägt beides ohnehin.
+     */
+    public function portalContactName(): ?string
+    {
+        return $this->row()->portal_contact_name;
+    }
+
+    public function portalContactAvatarPath(): ?string
+    {
+        return $this->row()->portal_contact_avatar_path;
     }
 
     public function portalContactPhone(): ?string

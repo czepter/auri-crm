@@ -4,7 +4,9 @@ use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Settings\Models\StudioSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -162,4 +164,97 @@ it('leaves the settings a pane does not show untouched', function () {
         ->and($row->portal_maintenance_enabled)->toBeTrue()
         ->and($row->portal_messaging_mode)->toBe('any')
         ->and($row->portal_accept_quotes_enabled)->toBeTrue();
+});
+
+// Der Kontakt ist eine Person und steht deshalb auf einem eigenen Bildschirm:
+// Name und Bild waren vorher nirgends zu hinterlegen.
+it('stores the portal contact person, its picture and serves the picture on both surfaces', function () {
+    Storage::fake('local');
+    $owner = staffMember(StaffRole::Owner);
+
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen/portal/kontakt', [
+            'portal_contact_name' => 'Jana Wolf',
+            'portal_contact_phone' => '+49 40 4321987',
+            'portal_contact_email' => 'jana@atelier-nordlicht.de',
+            'portal_contact_response_time' => 'Antwort binnen 24 Stunden',
+            'portal_contact_avatar' => UploadedFile::fake()->image('kontakt.png'),
+        ])
+        ->assertSessionHasNoErrors();
+
+    $row = StudioSettings::query()->sole();
+
+    expect($row->portal_contact_name)->toBe('Jana Wolf')
+        ->and($row->portal_contact_response_time)->toBe('Antwort binnen 24 Stunden')
+        ->and($row->portal_contact_avatar_path)->not->toBeNull();
+
+    Storage::disk('local')->assertExists($row->portal_contact_avatar_path);
+
+    expect(AuditLog::where('event', 'studio_settings.updated')
+        ->where('context->key', 'portal_contact_avatar_path')->sole()->actor_id)->toBe($owner->id);
+
+    $props = $this->get('/einstellungen/portal/kontakt')->assertOk()->viewData('page')['props'];
+
+    expect($props['settings']['contactName'])->toBe('Jana Wolf');
+
+    $this->get($props['settings']['contactAvatarUrl'])->assertOk();
+});
+
+it('removes the contact picture and the file behind it', function () {
+    Storage::fake('local');
+    $owner = staffMember(StaffRole::Owner);
+
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen/portal/kontakt', [
+            'portal_contact_avatar' => UploadedFile::fake()->image('kontakt.png'),
+        ])
+        ->assertSessionHasNoErrors();
+
+    $path = StudioSettings::query()->sole()->portal_contact_avatar_path;
+
+    $this->actingAs($owner, 'staff')
+        ->delete('/einstellungen/portal/kontakt/bild')
+        ->assertRedirect();
+
+    expect(StudioSettings::query()->sole()->portal_contact_avatar_path)->toBeNull();
+    Storage::disk('local')->assertMissing($path);
+});
+
+// Aus einer Kamera kommen acht Megapixel für einen Kreis von 54. Was ankommt,
+// ist nicht, was liegen bleibt.
+it('shrinks the uploaded contact picture to the width the card needs', function () {
+    Storage::fake('local');
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->patch('/einstellungen/portal/kontakt', [
+            'portal_contact_avatar' => UploadedFile::fake()->image('kontakt.jpg', 2400, 1600),
+        ])
+        ->assertSessionHasNoErrors();
+
+    $path = StudioSettings::query()->sole()->portal_contact_avatar_path;
+    $stored = imagecreatefromstring(Storage::disk('local')->get($path));
+
+    expect($path)->toEndWith('.webp')
+        ->and(imagesx($stored))->toBe(320)
+        ->and(imagesy($stored))->toBe(213);
+});
+
+// Der Browser zeigte seine eigene Sprechblase und das Formular kam nie beim
+// Server an; jetzt steht der Fehler unter dem Feld.
+it('rejects a contact address that is not one, and a number that is not digits', function () {
+    $owner = staffMember(StaffRole::Owner);
+
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen/portal/kontakt', [
+            'portal_contact_email' => 'hi@czepter,de',
+            'portal_contact_phone' => '017678697329as dasd',
+        ])
+        ->assertSessionHasErrors(['portal_contact_email', 'portal_contact_phone']);
+
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen/portal/kontakt', [
+            'portal_contact_email' => 'hi@czepter.de',
+            'portal_contact_phone' => '+49 176 78697329',
+        ])
+        ->assertSessionHasNoErrors();
 });

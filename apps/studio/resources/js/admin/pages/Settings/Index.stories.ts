@@ -79,6 +79,8 @@ const portal: App.Settings.Data.PortalSettingsData = {
   welcomeDone: null,
   dsgvoRecipient: 'datenschutz@atelier-nordlicht.de',
   dsgvoDeadlineDays: 30,
+  contactName: null,
+  contactAvatarUrl: null,
   contactPhone: null,
   contactEmail: null,
   contactResponseTime: null,

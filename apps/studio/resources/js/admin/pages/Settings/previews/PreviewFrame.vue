@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps<{ label: string }>()
+defineProps<{ label: string; hint?: string }>()
 </script>
 
 <!--
@@ -14,6 +14,7 @@ defineProps<{ label: string }>()
 <template>
   <aside class="sticky top-6 w-[352px] flex-none max-[1440px]:static max-[1440px]:w-full">
     <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ label }}</div>
+    <p v-if="hint" class="mb-2.5 text-[11.5px] leading-[1.45] text-faint">{{ hint }}</p>
     <div class="rounded-lg bg-muted p-4">
       <slot />
     </div>

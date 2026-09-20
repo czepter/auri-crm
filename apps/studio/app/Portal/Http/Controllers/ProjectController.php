@@ -18,7 +18,6 @@ use App\Payments\Models\PaymentInstallment;
 use App\Portal\Actions\UpdateProjectDetails;
 use App\Portal\Support\PortalSettings;
 use App\Quotes\Enums\QuoteStatus;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -47,7 +46,7 @@ use Inertia\Response;
  */
 class ProjectController extends Controller
 {
-    public function __invoke(string $project, StudioSettingsResolver $studio, PortalSettings $settings, PortalOffers $offers): Response
+    public function __invoke(string $project, PortalSettings $settings, PortalOffers $offers): Response
     {
         $contact = auth('portal')->user();
 
@@ -61,7 +60,6 @@ class ProjectController extends Controller
             // write to stands on every client screen, so it is composed the
             // same way on all of them.
             'studio' => [
-                'name' => $studio->displayName(),
                 'messagingEnabled' => $settings->messagingEnabled($contact),
                 ...$settings->contactLine(),
             ],

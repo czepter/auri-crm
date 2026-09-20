@@ -135,16 +135,20 @@ class PortalSettings
     }
 
     /**
-     * The footer's contact line, which had no source before P-09.
+     * Wer auf der Kontaktkarte steht, und womit sie erreichbar ist.
      *
-     * The number falls back to the owner's own, so a studio that never
-     * opened /einstellungen/portal is still reachable. The address does not:
-     * an owner's login is a credential, not something a client screen may
-     * start showing on its own.
+     * Der Name fällt auf die Marke zurück: ein Ein-Personen-Studio trägt
+     * beides, und eine Karte ohne Namen liest sich als Ladefehler (siehe
+     * portal/lib/studio's `reachable`). Die Nummer fällt auf die des
+     * Inhabers zurück, damit ein Studio, das nie in den Einstellungen war,
+     * erreichbar bleibt. Die Adresse nicht: ein Login ist ein Zugangsdatum
+     * und nichts, was ein Kundenbildschirm von sich aus zeigen darf.
      */
     public function contactLine(): array
     {
         return [
+            'name' => $this->studio->portalContactName() ?? $this->studio->displayName(),
+            'avatarUrl' => $this->studio->portalContactAvatarPath() !== null ? '/branding/kontakt' : null,
             'phone' => $this->studio->portalContactPhone() ?? $this->ownerPhone(),
             'email' => $this->studio->portalContactEmail(),
             'responseTime' => $this->studio->portalContactResponseTime(),

@@ -36,8 +36,6 @@ const source = computed(() => {
     query.set('text', form[`portal_welcome_${state.value}`])
     query.set('geschlossen', form.portal_maintenance_enabled ? '1' : '0')
     query.set('hinweis', form.portal_maintenance_message)
-    query.set('kontakt', [form.portal_contact_phone, form.portal_contact_email, form.portal_contact_response_time]
-      .filter(Boolean).join(' · '))
   }
 
   return `/einstellungen/portal/vorschau?${query}`

@@ -145,7 +145,7 @@ class HandleInertiaRequests extends Middleware
                         ? '/branding/logo'
                         : null,
                     'accentColor' => app(StudioSettingsResolver::class)->attributes()['accent_color'],
-                    'address' => $this->studioAddress(),
+                    'address' => app(StudioSettingsResolver::class)->postalLine(),
                 ],
                 // Je Text die fremde Adresse, die eigene Seite oder nichts —
                 // siehe StudioSettingsResolver::legalUrl().
@@ -163,23 +163,6 @@ class HandleInertiaRequests extends Middleware
                 'clientRegister' => fn () => app(StudioSettingsResolver::class)->clientRegister(),
             ] : []),
         ];
-    }
-
-    /**
-     * T-02's postal particulars as the one line a footer wears. Composed
-     * from the parts a studio filled in rather than demanding all of them:
-     * a studio with a city and no street still has an address to name.
-     */
-    private function studioAddress(): ?string
-    {
-        $attributes = app(StudioSettingsResolver::class)->attributes();
-
-        $street = $attributes['street'];
-        $city = implode(' ', array_filter([$attributes['postcode'], $attributes['city']]));
-
-        $line = implode(', ', array_filter([$street, $city]));
-
-        return $line === '' ? null : $line;
     }
 
     /**

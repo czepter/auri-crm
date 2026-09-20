@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
-import { Input } from '@/ui/input'
 import { Textarea } from '@/ui/textarea'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
@@ -29,9 +28,6 @@ const form = useForm({
   portal_welcome_inquiry: props.settings.welcomeInquiry ?? '',
   portal_welcome_active: props.settings.welcomeActive ?? '',
   portal_welcome_done: props.settings.welcomeDone ?? '',
-  portal_contact_phone: props.settings.contactPhone ?? '',
-  portal_contact_email: props.settings.contactEmail ?? '',
-  portal_contact_response_time: props.settings.contactResponseTime ?? '',
 })
 
 const CAPABILITIES = [
@@ -58,9 +54,6 @@ function submit() {
       portal_welcome_inquiry: data.portal_welcome_inquiry || null,
       portal_welcome_active: data.portal_welcome_active || null,
       portal_welcome_done: data.portal_welcome_done || null,
-      portal_contact_phone: data.portal_contact_phone || null,
-      portal_contact_email: data.portal_contact_email || null,
-      portal_contact_response_time: data.portal_contact_response_time || null,
     }))
     .patch('/einstellungen/portal', { preserveScroll: true, onSuccess: () => emit('saved') })
 }
@@ -135,28 +128,6 @@ defineExpose({ form, submit })
         </div>
       </div>
       <span class="text-[11.5px] leading-[1.45] text-faint">{{ $t('portalSettings.perContactHint') }}</span>
-    </div>
-
-    <!-- The portal footer's contact line had no source: portalBranding
-         carries only the logo, the accent colour and the display name. -->
-    <div class="mt-8">
-      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('portalSettings.contactSection') }}</div>
-      <div class="mb-6">
-        <div class="grid grid-cols-2 gap-4">
-          <Field v-slot="{ id }">
-            <Label :for="id">{{ $t('portalSettings.contactPhoneLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
-            <Input :id v-model="form.portal_contact_phone" type="tel" />
-          </Field>
-          <Field :error="form.errors.portal_contact_email" v-slot="{ id }">
-            <Label :for="id">{{ $t('portalSettings.contactEmailLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
-            <Input :id v-model="form.portal_contact_email" type="email" />
-          </Field>
-          <Field wide v-slot="{ id }">
-            <Label :for="id">{{ $t('portalSettings.contactResponseLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
-            <Input :id v-model="form.portal_contact_response_time" type="text" />
-          </Field>
-        </div>
-      </div>
     </div>
   </form>
 </template>

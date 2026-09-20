@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import Portal from './Portal.vue'
 
-const branding: App.Settings.Data.StudioSettingsData = {
+export const branding: App.Settings.Data.StudioSettingsData = {
   id: 'st1',
   displayName: 'Atelier Nordlicht',
   legalName: 'Atelier Nordlicht — Christian Zepter',
@@ -49,7 +49,7 @@ const branding: App.Settings.Data.StudioSettingsData = {
   leadChannelPresets: ['E-Mail', 'Telefon', 'Kontaktformular'],
 }
 
-const settings: App.Settings.Data.PortalSettingsData = {
+export const settings: App.Settings.Data.PortalSettingsData = {
   id: 'po1',
   maintenanceEnabled: false,
   maintenanceMessage: null,
@@ -72,6 +72,8 @@ const settings: App.Settings.Data.PortalSettingsData = {
   welcomeDone: null,
   dsgvoRecipient: 'christian@atelier-nordlicht.de',
   dsgvoDeadlineDays: 30,
+  contactName: 'Jana Wolf',
+  contactAvatarUrl: null,
   contactPhone: '+49 40 4321987',
   contactEmail: 'post@atelier-nordlicht.de',
   contactResponseTime: 'werktags binnen 24 Stunden',

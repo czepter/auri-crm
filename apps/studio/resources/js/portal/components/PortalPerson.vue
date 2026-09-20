@@ -33,8 +33,14 @@ const CHIP
 
 <template>
   <div class="flex flex-wrap items-center gap-6 rounded-md border border-border p-6">
+    <img
+      v-if="studio.avatarUrl"
+      :src="studio.avatarUrl"
+      alt=""
+      class="size-[54px] flex-none rounded-full bg-sunk object-cover"
+    />
     <span
-      v-if="named"
+      v-else-if="named"
       class="grid size-[54px] flex-none place-items-center rounded-full bg-sunk font-serif text-[19px] leading-none text-muted-foreground"
     >
       {{ initials(studio.name) }}
@@ -57,6 +63,11 @@ const CHIP
       <a v-if="studio.phone" :class="CHIP" :href="`tel:${studio.phone.replace(/\s/g, '')}`">
         <svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a1 1 0 01-1 1A16 16 0 014 5a1 1 0 011-1z" /></svg>
         {{ studio.phone }}
+      </a>
+      <a v-if="studio.email" :class="CHIP" :href="`mailto:${studio.email}`">
+        <!-- Das @ und nicht der Umschlag: der steht schon auf „Schreiben“. -->
+        <svg viewBox="0 0 24 24"><path d="M16 12a4 4 0 10-1.2 2.9M16 8v5a2.5 2.5 0 005 0v-1a9 9 0 10-3.4 7.1" /></svg>
+        {{ studio.email }}
       </a>
     </span>
   </div>

@@ -5,6 +5,7 @@ namespace App\Portal\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Settings\Support\LogoResponse;
 use App\Settings\Support\StudioSettingsResolver;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -26,4 +27,17 @@ class BrandingController extends Controller
         return LogoResponse::for($path);
     }
 
+    /**
+     * Das Gesicht auf der Kontaktkarte. Öffentlich aus demselben Grund wie
+     * das Logo: es steht auf jedem Kundenbildschirm, und SVG kommt hier gar
+     * nicht erst an — siehe StudioSettingsResolver::setPortalContactAvatar().
+     */
+    public function contactAvatar(StudioSettingsResolver $settings): StreamedResponse
+    {
+        $path = $settings->portalContactAvatarPath();
+
+        abort_if($path === null, 404);
+
+        return Storage::disk('local')->response($path);
+    }
 }

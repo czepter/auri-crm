@@ -12,7 +12,6 @@ use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Portal\Support\PortalSettings;
 use App\Quotes\Enums\QuoteStatus;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -37,7 +36,7 @@ use Inertia\Response;
  */
 class HomeController extends Controller
 {
-    public function __invoke(StudioSettingsResolver $studio, PortalSettings $settings, PortalOffers $offers): Response|RedirectResponse
+    public function __invoke(PortalSettings $settings, PortalOffers $offers): Response|RedirectResponse
     {
         $contact = auth('portal')->user();
 
@@ -71,9 +70,7 @@ class HomeController extends Controller
             // ein Angebot des Studios ist keine offene Handlung des Kunden.
             'offers' => $offers->for($contact),
             'studio' => [
-                'name' => $studio->displayName(),
                 'messagingEnabled' => $settings->messagingEnabled($contact),
-                // The footer's contact line had no source at all before P-09.
                 ...$settings->contactLine(),
             ],
         ]);
