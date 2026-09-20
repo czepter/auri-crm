@@ -106,18 +106,24 @@ const width = computed(() => {
             </div>
 
             <aside class="sticky top-6 min-w-[360px] flex-1">
-              <div class="mb-2.5 flex items-center gap-3">
-                <span class="text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.previewPortal') }}</span>
-                <ChoiceGroup v-model="device" class="ml-auto" variant="segmented" :options="deviceOptions">
+              <div class="mb-2.5 flex flex-wrap items-center gap-2">
+                <span class="mr-auto text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.previewPortal') }}</span>
+                <ChoiceGroup v-model="state" variant="segmented" :options="stateOptions" />
+                <ChoiceGroup v-model="device" icon variant="segmented" :options="deviceOptions">
                   <template #option="{ option }">
-                    <component :is="deviceOptions.find((row) => row.value === option.value)!.icon" class="size-4" />
+                    <component :is="deviceOptions.find((row) => row.value === option.value)!.icon" />
                   </template>
                 </ChoiceGroup>
-                <Button :aria-label="$t('portalSettings.previewExpand')" type="button" variant="outline" @click="expanded = true">
+                <Button
+                  :aria-label="$t('portalSettings.previewExpand')"
+                  class="size-[30px] justify-center px-0"
+                  type="button"
+                  variant="outline"
+                  @click="expanded = true"
+                >
                   <Maximize2 />
                 </Button>
               </div>
-              <ChoiceGroup v-model="state" class="mb-3" variant="segmented" :options="stateOptions" />
               <div class="rounded-lg bg-muted p-3">
                 <iframe
                   :src="src"
@@ -132,14 +138,20 @@ const width = computed(() => {
                  hinpassen und das Portal erst dort seine zweite Spalte
                  aufmacht. -->
             <div v-if="expanded" class="fixed inset-0 z-50 overflow-y-auto bg-background/95 p-6 backdrop-blur-[12px]">
-              <div class="mx-auto flex max-w-[1180px] items-center gap-3 pb-3">
-                <ChoiceGroup v-model="device" variant="segmented" :options="deviceOptions">
+              <div class="mx-auto flex max-w-[1180px] flex-wrap items-center gap-2 pb-3">
+                <ChoiceGroup v-model="state" variant="segmented" :options="stateOptions" />
+                <ChoiceGroup v-model="device" icon variant="segmented" :options="deviceOptions">
                   <template #option="{ option }">
-                    <component :is="deviceOptions.find((row) => row.value === option.value)!.icon" class="size-4" />
+                    <component :is="deviceOptions.find((row) => row.value === option.value)!.icon" />
                   </template>
                 </ChoiceGroup>
-                <ChoiceGroup v-model="state" variant="segmented" :options="stateOptions" />
-                <Button :aria-label="$t('common.close')" class="ml-auto" type="button" variant="outline" @click="expanded = false">
+                <Button
+                  :aria-label="$t('common.close')"
+                  class="ml-auto size-[30px] justify-center px-0"
+                  type="button"
+                  variant="outline"
+                  @click="expanded = false"
+                >
                   <X />
                 </Button>
               </div>

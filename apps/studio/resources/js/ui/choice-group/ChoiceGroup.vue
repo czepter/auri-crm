@@ -26,8 +26,10 @@ const props = withDefaults(defineProps<{
   options: { value: string; label: string }[]
   label?: string
   variant?: "default" | "segmented"
+  /** Zeichen statt Wort: quadratische Felder, die Beschriftung trägt das Eingabefeld. */
+  icon?: boolean
   class?: HTMLAttributes["class"]
-}>(), { variant: "default" })
+}>(), { variant: "default", icon: false })
 
 const emits = defineEmits<{
   (e: "update:modelValue", payload: string): void
@@ -53,6 +55,11 @@ const ITEM = {
   segmented:
     "inline-block cursor-pointer rounded-[6px] px-3.5 py-1 text-[12.5px] leading-[1.4] font-normal text-foreground transition-colors duration-[120ms] ease-out peer-checked:bg-paper peer-checked:font-medium",
 }
+
+/* Ein Zeichen füllt keine Textzeile: es steht mittig in einem Feld, das so
+   hoch ist wie breit, sonst liegt es in einer flachen Pille. */
+const ICON_ITEM
+  = "flex size-[26px] cursor-pointer items-center justify-center rounded-[6px] text-foreground transition-colors duration-[120ms] ease-out peer-checked:bg-paper [&_svg]:size-[15px] [&_svg]:stroke-[1.75]"
 </script>
 
 <template>
@@ -82,7 +89,7 @@ const ITEM = {
         <!-- Der Slot ist für die Fälle, in denen ein Zeichen kürzer ist als
              sein Wort — die Beschriftung bleibt am Eingabefeld und damit für
              den Screenreader stehen. -->
-        <span :class="ITEM[variant]"><slot name="option" :option="option">{{ option.label }}</slot></span>
+        <span :class="icon ? ICON_ITEM : ITEM[variant]"><slot name="option" :option="option">{{ option.label }}</slot></span>
       </label>
     </div>
   </component>

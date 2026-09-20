@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalLabel from '@/portal/components/PortalLabel.vue'
@@ -19,34 +20,21 @@ import PortalWrap from '@/portal/components/PortalWrap.vue'
  * PortalSettingsController::preview hier genauso setzt wie
  * HandleInertiaRequests sie auf der Portal-Oberfläche setzt.
  */
+type Booking = { title: string; note: string; state: 'open' | 'done' | 'neutral'; aside: string | null; year: string }
+
 const props = defineProps<{
   welcomeText: string | null
   maintenanceMessage: string | null
   closed: boolean
-  state: 'inquiry' | 'active' | 'done'
   client: string
+  bookings: Booking[]
+  pending: { title: string; note: string; aside: string }[]
 }>()
 
-const BOOKINGS = {
-  inquiry: [],
-  active: [
-    { title: 'Hochzeit im Gut Wehlitz', note: '12.06.2026', state: 'open' as const, aside: '2.400,00 €' },
-    { title: 'Standesamt Leipzig', note: '08.05.2026', state: 'neutral' as const, aside: null },
-  ],
-  done: [
-    { title: 'Hochzeit im Gut Wehlitz', note: 'Bilder liegen bereit', state: 'done' as const, aside: null },
-    { title: 'Paarshooting Auwald', note: 'Bilder liegen bereit', state: 'done' as const, aside: null },
-  ],
-}
-
-const PENDING = {
-  inquiry: [{ title: 'Angebot', note: 'Gültig bis 04.10.2026', aside: '3.900,00 €' }],
-  active: [{ title: 'Rate', note: 'Fällig am 01.10.2026', aside: '1.200,00 €' }],
-  done: [],
-}
-
-const bookings = () => BOOKINGS[props.state]
-const pending = () => PENDING[props.state]
+// Nach Jahr, wie die Startseite selbst: eine Liste ohne die Jahreszeile
+// zeigte eine Ordnung, die es dort nicht gibt.
+const years = computed(() => [...new Set(props.bookings.map((row) => row.year))]
+  .map((year) => ({ year, rows: props.bookings.filter((row) => row.year === year) })))
 </script>
 
 <template>
@@ -71,11 +59,11 @@ const pending = () => PENDING[props.state]
           </section>
 
           <div class="grid items-start gap-[var(--band)] pt-[var(--band)] min-[1080px]:grid-cols-[minmax(0,1fr)_348px] min-[1080px]:gap-x-12">
-            <div v-if="pending().length" class="min-[1080px]:col-start-2">
+            <div v-if="pending.length" class="min-[1080px]:col-start-2">
               <PortalLabel class="mb-6">{{ $t('portal.pendingTitle') }}</PortalLabel>
               <div class="border-t border-border">
                 <PortalRow
-                  v-for="row in pending()"
+                  v-for="row in pending"
                   :key="row.title"
                   :title="row.title"
                   :note="row.note"
@@ -86,18 +74,23 @@ const pending = () => PENDING[props.state]
               </div>
             </div>
 
-            <div v-if="bookings().length" class="min-[1080px]:col-start-1 min-[1080px]:row-start-1">
-              <PortalLabel class="mb-6">{{ $t('portal.bookingsTitle') }}</PortalLabel>
-              <div class="border-t border-border">
+            <div v-if="bookings.length" class="min-[1080px]:col-start-1 min-[1080px]:row-start-1">
+              <PortalLabel>{{ $t('portal.bookingsTitle') }}</PortalLabel>
+
+              <template v-for="group in years" :key="group.year">
+                <div class="flex items-baseline gap-4 pt-8 pb-3 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">
+                  <span>{{ group.year }}</span>
+                  <i class="h-px flex-1 bg-border" />
+                </div>
                 <PortalRow
-                  v-for="row in bookings()"
+                  v-for="row in group.rows"
                   :key="row.title"
                   :title="row.title"
                   :note="row.note"
                   :aside="row.aside"
                   :state="row.state"
                 />
-              </div>
+              </template>
             </div>
           </div>
         </template>

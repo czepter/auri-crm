@@ -3,6 +3,7 @@
 namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
+use Carbon\CarbonImmutable;
 use App\Http\Controllers\Controller;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
@@ -92,6 +93,8 @@ class PortalSettingsController extends Controller
 
         return Inertia::render('Settings/PortalHomePreview', [
             'state' => $state,
+            'bookings' => $this->sampleBookings($state),
+            'pending' => $this->samplePending($state),
             // Eine erfundene Kundin, damit die Seite jemandem gehört: ein
             // echter Kontakt müsste erst gesucht werden, und seine Buchungen
             // sagen über die Einstellung nichts.
@@ -110,6 +113,66 @@ class PortalSettingsController extends Controller
                 ->all(),
             'portalNav' => null,
         ]);
+    }
+
+    /**
+     * Die Buchungen der Musterkundin, gerechnet ab heute: ein laufender
+     * Termin, der in der Vergangenheit liegt, wäre keiner.
+     *
+     * @return list<array{title: string, note: string, state: string, aside: ?string, year: string}>
+     */
+    private function sampleBookings(string $state): array
+    {
+        $now = CarbonImmutable::now();
+
+        return match ($state) {
+            'inquiry' => [],
+            'done' => [
+                $this->booking('Hochzeit im Gut Wehlitz', $now->subMonths(4), 'done', 'Bilder liegen bereit'),
+                $this->booking('Paarshooting Auwald', $now->subMonths(10), 'done', 'Bilder liegen bereit'),
+            ],
+            default => [
+                $this->booking('Hochzeit im Gut Wehlitz', $now->addMonths(3), 'open', null, '2.400,00 €'),
+                $this->booking('Standesamt Leipzig', $now->addWeeks(5), 'neutral'),
+            ],
+        };
+    }
+
+    /** @return array{title: string, note: string, state: string, aside: ?string, year: string} */
+    private function booking(string $title, CarbonImmutable $date, string $state, ?string $note = null, ?string $aside = null): array
+    {
+        return [
+            'title' => $title,
+            'note' => $note ?? $date->format('d.m.Y'),
+            'state' => $state,
+            'aside' => $aside,
+            'year' => $date->format('Y'),
+        ];
+    }
+
+    /**
+     * Was auf die Kundin wartet: vor der Buchung das Angebot, danach die
+     * nächste Rate, und wenn alles geliefert ist, nichts.
+     *
+     * @return list<array{title: string, note: string, aside: string}>
+     */
+    private function samplePending(string $state): array
+    {
+        $now = CarbonImmutable::now();
+
+        return match ($state) {
+            'inquiry' => [[
+                'title' => 'Angebot',
+                'note' => 'Gültig bis '.$now->addDays(14)->format('d.m.Y'),
+                'aside' => '3.900,00 €',
+            ]],
+            'done' => [],
+            default => [[
+                'title' => 'Rate',
+                'note' => 'Fällig am '.$now->addDays(10)->format('d.m.Y'),
+                'aside' => '1.200,00 €',
+            ]],
+        };
     }
 
     /**
