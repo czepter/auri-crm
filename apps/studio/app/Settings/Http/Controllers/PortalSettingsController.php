@@ -99,6 +99,12 @@ class PortalSettingsController extends Controller
             'portal_sign_contracts_enabled' => ['sometimes', 'required', 'boolean'],
             'portal_payment_status_enabled' => ['sometimes', 'required', 'boolean'],
             'portal_offers_enabled' => ['sometimes', 'required', 'boolean'],
+            // Was der Kunde in einer Galerie darf, ist dieselbe Sorte
+            // Freigabe wie die vier darüber — die Vorgaben einer neuen
+            // Galerie (Frist, Gestaltung) bleiben auf /galerien.
+            'gallery_default_downloads_enabled' => ['sometimes', 'required', 'boolean'],
+            'gallery_default_lists_enabled' => ['sometimes', 'required', 'boolean'],
+            'gallery_default_comments_enabled' => ['sometimes', 'required', 'boolean'],
             // P-09 (#228): everything Sprint 25's seven portal screens do
             // that T-08's four switches never described.
             'portal_messaging_mode' => ['sometimes', 'required', 'in:off,booking,any'],

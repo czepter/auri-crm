@@ -36,12 +36,6 @@ type Section = 'standardwerte' | 'gestaltung' | 'vorlagen'
 
 const SECTIONS: Section[] = ['standardwerte', 'gestaltung', 'vorlagen']
 
-const GATES = [
-  { field: 'gallery_default_downloads_enabled', label: 'gallerySettings.downloadsLabel' },
-  { field: 'gallery_default_lists_enabled', label: 'gallerySettings.listsLabel' },
-  { field: 'gallery_default_comments_enabled', label: 'gallerySettings.commentsLabel' },
-] as const
-
 const DESIGN = [
   { key: 'cover', label: 'galleryRecord.cover', options: ['full', 'split', 'plain'], prefix: 'cover' },
   { key: 'colour', label: 'galleryRecord.colour', options: ['light', 'dark', 'warm'], prefix: 'colour' },
@@ -66,9 +60,6 @@ const open = ref<Section>(props.section)
 
 const form = useForm({
   gallery_default_expiry_days: props.settings.expiryDays ?? ('' as string | number),
-  gallery_default_downloads_enabled: props.settings.downloadsEnabled,
-  gallery_default_lists_enabled: props.settings.listsEnabled,
-  gallery_default_comments_enabled: props.settings.commentsEnabled,
   gallery_default_design: { ...props.settings.design },
 })
 
@@ -157,16 +148,18 @@ function removePreset() {
 const presetPreview = computed(() => ({
   design: presetForm.design ?? form.gallery_default_design,
   offers: {
-    downloads: presetForm.downloads_enabled === '' ? form.gallery_default_downloads_enabled : presetForm.downloads_enabled === '1',
-    lists: presetForm.lists_enabled === '' ? form.gallery_default_lists_enabled : presetForm.lists_enabled === '1',
-    comments: presetForm.comments_enabled === '' ? form.gallery_default_comments_enabled : presetForm.comments_enabled === '1',
+    downloads: presetForm.downloads_enabled === '' ? props.settings.downloadsEnabled : presetForm.downloads_enabled === '1',
+    lists: presetForm.lists_enabled === '' ? props.settings.listsEnabled : presetForm.lists_enabled === '1',
+    comments: presetForm.comments_enabled === '' ? props.settings.commentsEnabled : presetForm.comments_enabled === '1',
   },
 }))
 
+// Die drei Tore stehen unter Einstellungen → Portal; hier zeigt die
+// Vorschau nur, was sie bewirken.
 const studioOffers = computed(() => ({
-  downloads: form.gallery_default_downloads_enabled,
-  lists: form.gallery_default_lists_enabled,
-  comments: form.gallery_default_comments_enabled,
+  downloads: props.settings.downloadsEnabled,
+  lists: props.settings.listsEnabled,
+  comments: props.settings.commentsEnabled,
 }))
 </script>
 
@@ -228,10 +221,6 @@ const studioOffers = computed(() => ({
               </Field>
             </div>
 
-            <div v-for="gate in GATES" :key="gate.field" class="mb-6 flex items-center gap-2.5">
-              <Checkbox :id="`cb-${gate.field}`" v-model="form[gate.field]" @update:model-value="save" />
-              <Label :for="`cb-${gate.field}`" variant="inline">{{ $t(gate.label) }}</Label>
-            </div>
           </div>
 
           <aside class="min-w-0 flex-1">
