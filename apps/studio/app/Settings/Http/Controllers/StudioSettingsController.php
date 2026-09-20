@@ -174,48 +174,57 @@ class StudioSettingsController extends Controller
     }
 
     /**
-     * T-05's own save action, same reasoning as updateVat() above: the
-     * Dokumente pane is its own form with its own "Speichern" button.
+     * Zahlung and Belege are two pages with their own "Speichern", so each
+     * validates only its own fields (`sometimes`): a page sends what it shows.
      *
      * deposit_percentage arrives already in basis points, same boundary
      * vat_rate crosses in updateVat().
      */
-    public function updateDocuments(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    public function updatePayment(Request $request, StudioSettingsResolver $settings): RedirectResponse
     {
         $this->authorizeSettings();
 
         $validated = $request->validate([
-            'quote_validity_days' => ['required', 'integer', 'min:0', 'max:3650'],
-            'payment_term_days' => ['required', 'integer', 'min:0', 'max:3650'],
-            'deposit_percentage' => ['required', 'integer', 'min:0', 'max:10000'],
-            'quote_layout' => ['required', Rule::enum(QuoteLayout::class)],
+            'payment_term_days' => ['sometimes', 'required', 'integer', 'min:0', 'max:3650'],
+            'deposit_percentage' => ['sometimes', 'required', 'integer', 'min:0', 'max:10000'],
             // Eine Mahnstufe ist eine Frist: sie stand bei Stripe, weil das
             // Geld dort eingeht, gehört aber zu den Fristen daneben.
             'payments_reminders_enabled' => ['sometimes', 'required', 'boolean'],
-            // T-12: the shared PDF shell App\Documents\Support\DocumentRenderer
-            // wraps a Contract or Quote's resolved body in — this pane's the
-            // one place either is set, rather than pasted into each template.
-            'document_letterhead_html' => ['nullable', 'string', 'max:20000'],
-            'document_footer_html' => ['nullable', 'string', 'max:20000'],
         ]);
 
         $actor = auth('staff')->user();
-        $settings->set('quote_validity_days', $validated['quote_validity_days'], $actor);
-        $settings->set('payment_term_days', $validated['payment_term_days'], $actor);
-        $settings->set('deposit_percentage', $validated['deposit_percentage'], $actor);
-        $settings->set('quote_layout', $validated['quote_layout'], $actor);
-        $settings->set('document_letterhead_html', $validated['document_letterhead_html'] ?? null, $actor);
-        $settings->set('document_footer_html', $validated['document_footer_html'] ?? null, $actor);
 
-        if (array_key_exists('payments_reminders_enabled', $validated)) {
-            $settings->set('payments_reminders_enabled', $validated['payments_reminders_enabled'], $actor);
+        foreach ($validated as $key => $value) {
+            $settings->set($key, $value, $actor);
+        }
+
+        return back();
+    }
+
+    public function updateReceipts(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    {
+        $this->authorizeSettings();
+
+        $validated = $request->validate([
+            'quote_validity_days' => ['sometimes', 'required', 'integer', 'min:0', 'max:3650'],
+            'document_layout' => ['sometimes', 'required', Rule::enum(QuoteLayout::class)],
+            // T-12: the shared PDF shell App\Documents\Support\DocumentRenderer
+            // wraps a Contract or Quote's resolved body in.
+            'document_letterhead_html' => ['sometimes', 'nullable', 'string', 'max:20000'],
+            'document_footer_html' => ['sometimes', 'nullable', 'string', 'max:20000'],
+        ]);
+
+        $actor = auth('staff')->user();
+
+        foreach ($validated as $key => $value) {
+            $settings->set($key, $value, $actor);
         }
 
         return back();
     }
 
     /**
-     * T-05 follow-up: the Layout radio in the Dokumente pane needs to show
+     * T-05 follow-up: the Layout radio on the Belege page needs to show
      * what each of the five App\Quotes\Enums\QuoteLayout cases actually
      * renders like — with real markup, not the skeleton bars every other
      * pane's DocumentPreview.vue shows. App\Quotes\Support\SampleQuoteData

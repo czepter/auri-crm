@@ -25,9 +25,8 @@ const items = [
   { key: 'email', href: '/einstellungen/email', label: 'settings.navMail' },
 
   { group: 'settings.groupBilling' },
-  // Bankverbindung und Umsatzsteuer landen beide im Fuß derselben Rechnung.
-  { key: 'invoice', href: '/einstellungen/rechnungsdaten', label: 'settings.navInvoiceData' },
-  { key: 'documents', href: '/einstellungen/dokumente', label: 'settings.navDocuments' },
+  { key: 'payment', href: '/einstellungen/zahlung', label: 'settings.navPayment' },
+  { key: 'receipts', href: '/einstellungen/belege', label: 'settings.navDocuments' },
   { key: 'numbering', href: '/einstellungen/nummernkreise', label: 'settings.navNumbering' },
 
   { group: 'settings.groupWork' },

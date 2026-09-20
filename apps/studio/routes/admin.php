@@ -373,14 +373,17 @@ Route::middleware('audience:staff')->group(function () {
         Route::redirect('/einstellungen/rechtliche-einheit', '/einstellungen/allgemein');
         Route::get('/einstellungen/allgemein', [StudioSettingsController::class, 'edit'])->defaults('pane', 'general');
         Route::get('/einstellungen/email', [StudioSettingsController::class, 'edit'])->defaults('pane', 'email');
-        Route::get('/einstellungen/rechnungsdaten', [StudioSettingsController::class, 'edit'])->defaults('pane', 'invoice');
-        Route::get('/einstellungen/dokumente', [StudioSettingsController::class, 'edit'])->defaults('pane', 'documents');
+        Route::redirect('/einstellungen/rechnungsdaten', '/einstellungen/zahlung');
+        Route::redirect('/einstellungen/dokumente', '/einstellungen/belege');
+        Route::get('/einstellungen/zahlung', [StudioSettingsController::class, 'edit'])->defaults('pane', 'payment');
+        Route::get('/einstellungen/belege', [StudioSettingsController::class, 'edit'])->defaults('pane', 'receipts');
         Route::patch('/einstellungen', [StudioSettingsController::class, 'update'])->name('settings.update');
         Route::get('/einstellungen/logo', [StudioSettingsController::class, 'logo'])->name('settings.logo');
         Route::patch('/einstellungen/ust', [StudioSettingsController::class, 'updateVat'])->name('settings.vat.update');
-        Route::patch('/einstellungen/dokumente', [StudioSettingsController::class, 'updateDocuments'])->name('settings.documents.update');
-        Route::get('/einstellungen/dokumente/angebot-vorschau', [StudioSettingsController::class, 'previewQuoteLayout'])
-            ->name('settings.documents.quote-layout-preview');
+        Route::patch('/einstellungen/zahlung', [StudioSettingsController::class, 'updatePayment'])->name('settings.payment.update');
+        Route::patch('/einstellungen/belege', [StudioSettingsController::class, 'updateReceipts'])->name('settings.receipts.update');
+        Route::get('/einstellungen/belege/angebot-vorschau', [StudioSettingsController::class, 'previewQuoteLayout'])
+            ->name('settings.receipts.quote-layout-preview');
         Route::patch('/einstellungen/email', [StudioSettingsController::class, 'updateMail'])->name('settings.mail.update');
 
         Route::get('/einstellungen/nummernkreise', [NumberRangeController::class, 'index'])

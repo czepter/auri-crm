@@ -548,7 +548,7 @@ export const studioSettings: App.Settings.Data.StudioSettingsData = {
   quoteValidityDays: 14,
   paymentTermDays: 14,
   depositPercentage: 30,
-  quoteLayout: 'classic',
+  documentLayout: 'classic',
   remindersEnabled: true,
   clientRegister: 'informal',
   documentLetterheadHtml: null,

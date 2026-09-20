@@ -6,7 +6,7 @@ use App\Payments\Support\InvoiceDocument;
 
 /**
  * #419. One implementation per App\Quotes\Enums\QuoteLayout case — the same
- * five, read from the same `quote_layout` setting, because a studio picks a
+ * five, read from the same `document_layout` setting, because a studio picks a
  * look for its documents rather than one per document type.
  *
  * Every implementation emits the CSS classes its quote twin already emits

@@ -25,17 +25,11 @@ it('defaults Stripe to off', function () {
         ->and($props['settings']['hasStripeLiveKeys'])->toBeFalse();
 });
 
-// Die Mahnstufe steht bei Belege & Fristen: sie hängt an der Frist, nicht an
+// Die Mahnstufe steht bei Zahlung: sie hängt an der Frist, nicht an
 // der Anbindung, über die das Geld hereinkommt.
-it('saves the reminders default on the documents route', function () {
+it('saves the reminders default on the payment route', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->patch('/einstellungen/dokumente', [
-            'quote_validity_days' => 14,
-            'payment_term_days' => 14,
-            'deposit_percentage' => 3000,
-            'quote_layout' => 'classic',
-            'payments_reminders_enabled' => false,
-        ])
+        ->patch('/einstellungen/zahlung', ['payments_reminders_enabled' => false])
         ->assertRedirect();
 
     expect(StudioSettings::query()->sole()->payments_reminders_enabled)->toBeFalse();

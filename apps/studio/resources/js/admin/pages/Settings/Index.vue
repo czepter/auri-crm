@@ -6,42 +6,43 @@ import PageHead from '@/ui/page/PageHead.vue'
 import SettingsNav from '@/admin/components/SettingsNav.vue'
 import ProfileForm from './panes/ProfileForm.vue'
 import VatForm from './panes/VatForm.vue'
-import DocumentsForm from './panes/DocumentsForm.vue'
+import PaymentForm from './panes/PaymentForm.vue'
+import ReceiptsForm from './panes/ReceiptsForm.vue'
 import EmailForm from './panes/EmailForm.vue'
 import BrandPreview from './previews/BrandPreview.vue'
 import DocumentPreview from './previews/DocumentPreview.vue'
 import MailPreview from './previews/MailPreview.vue'
-import { basisPointsToPercent } from '@/admin/lib/money'
 import { Button } from '@/ui/button'
 
 const props = defineProps<{
-  pane: 'invoice' | 'documents' | 'email' | 'general'
+  pane: 'payment' | 'receipts' | 'email' | 'general'
   fontPairs: { value: string; label: string; description: string }[]
   mailSenderFromEnv: { name: boolean; address: boolean }
   settings: App.Settings.Data.StudioSettingsData
 }>()
 
-// Template refs onto the four extracted panes — each exposes { form, submit }
-// (see panes/ProfileForm.vue and its siblings). Only one is ever mounted at a
-// time (v-if/v-else-if below), so only one of these is non-null at once.
+// Template refs onto the extracted panes — each exposes { form, submit }
+// (see panes/ProfileForm.vue and its siblings). Only the panes of the current
+// page are mounted (v-if/v-else-if below).
 const profileRef = ref<InstanceType<typeof ProfileForm>>()
 const vatRef = ref<InstanceType<typeof VatForm>>()
-const documentsRef = ref<InstanceType<typeof DocumentsForm>>()
+const paymentRef = ref<InstanceType<typeof PaymentForm>>()
+const receiptsRef = ref<InstanceType<typeof ReceiptsForm>>()
 const emailRef = ref<InstanceType<typeof EmailForm>>()
 
 // isDirty is Inertia's own useForm computed, comparing current values to the
 // defaults the form was built with — not a bespoke computed re-implementing
 // that comparison, the same thing Packages/Edit.vue and Projects/Quotes.vue
 // would reach for too if either needed a dirty state.
-// Rechnungsdaten zeigt zwei Formulare — Bankverbindung schreibt nach
-// /einstellungen, die Umsatzsteuer nach /einstellungen/ust, weil der
-// Onboarding-Schritt dasselbe VatForm benutzt. Der Kopf speichert deshalb,
-// was schmutzig ist, statt ein einzelnes form-Attribut zu tragen.
+// Allgemein und Zahlung zeigen zwei Formulare — Stammdaten und Bankverbindung
+// schreiben nach /einstellungen, die Umsatzsteuer nach /einstellungen/ust und
+// die Fristen nach /einstellungen/zahlung. Der Kopf speichert deshalb, was
+// schmutzig ist, statt ein einzelnes form-Attribut zu tragen.
 const activePanes = computed(() => {
-  if (props.pane === 'invoice') return [profileRef.value, vatRef.value]
-  if (props.pane === 'documents') return [documentsRef.value]
-  if (props.pane === 'email') return [emailRef.value]
-  return [profileRef.value]
+  if (props.pane === 'general') return [profileRef.value, vatRef.value]
+  if (props.pane === 'payment') return [profileRef.value, paymentRef.value]
+  if (props.pane === 'receipts') return [receiptsRef.value]
+  return [emailRef.value]
 })
 
 const dirty = computed(() => activePanes.value.some((entry) => entry?.form.isDirty))
@@ -52,49 +53,19 @@ function save() {
 }
 
 const paneTitle = computed(() => {
-  if (props.pane === 'invoice') return 'settings.navInvoiceData'
-  if (props.pane === 'documents') return 'settings.documentsTitle'
+  if (props.pane === 'payment') return 'settings.navPayment'
+  if (props.pane === 'receipts') return 'settings.documentsTitle'
   if (props.pane === 'email') return 'settings.mailTitle'
   return 'settings.generalTitle'
 })
 
-// The sample sheet Bankverbindung, Zahlungsdaten & USt and
-// Dokumente share: saved settings underneath, whatever the mounted form holds
-// on top, so the field being typed is the one moving in the preview. Only one
-// pane is mounted at a time, so at most one of the three refs contributes.
-const DOCUMENT_PANES = ['invoice', 'documents']
+// The sample sheet Zahlung and Belege share: the saved layout underneath,
+// whatever the mounted form holds on top.
+const DOCUMENT_PANES = ['payment', 'receipts']
 
-const documentPreview = computed(() => {
-  const profile = profileRef.value?.form
-  const vat = vatRef.value?.form
-  const documents = documentsRef.value?.form
-
-  return {
-    displayName: props.settings.displayName ?? '',
-    logoUrl: props.settings.logoUrl,
-    fontPair: props.settings.fontPair ?? 'hanken',
-    accentColor: props.settings.accentColor,
-    legalName: profile?.legal_name ?? props.settings.legalName ?? '',
-    legalForm: profile?.legal_form ?? props.settings.legalForm ?? '',
-    street: profile?.street ?? props.settings.street ?? '',
-    postcode: profile?.postcode ?? props.settings.postcode ?? '',
-    city: profile?.city ?? props.settings.city ?? '',
-    representative: profile?.representative ?? props.settings.representative ?? '',
-    taxNumber: profile?.tax_number ?? props.settings.taxNumber ?? '',
-    vatId: profile?.vat_id ?? props.settings.vatId ?? '',
-    registerNumber: profile?.register_number ?? props.settings.registerNumber ?? '',
-    registerCourt: profile?.register_court ?? props.settings.registerCourt ?? '',
-    bankAccountHolder: profile?.bank_account_holder ?? props.settings.bankAccountHolder ?? '',
-    bankIban: profile?.bank_iban ?? props.settings.bankIban ?? '',
-    bankBic: profile?.bank_bic ?? props.settings.bankBic ?? '',
-    vatMode: vat?.vat_mode ?? props.settings.vatMode,
-    vatRate: vat?.vat_rate ?? basisPointsToPercent(props.settings.vatRate),
-    quoteValidityDays: documents?.quote_validity_days ?? props.settings.quoteValidityDays,
-    paymentTermDays: documents?.payment_term_days ?? props.settings.paymentTermDays,
-    depositPercentage: documents?.deposit_percentage ?? basisPointsToPercent(props.settings.depositPercentage),
-    quoteLayout: documents?.quote_layout ?? props.settings.quoteLayout,
-  }
-})
+const documentPreview = computed(() => ({
+  documentLayout: receiptsRef.value?.form.document_layout ?? props.settings.documentLayout,
+}))
 
 const mailPreview = computed(() => {
   const mail = emailRef.value?.form
@@ -132,18 +103,20 @@ const mailPreview = computed(() => {
             <SettingsNav :active="pane" />
 
             <div class="max-w-[620px] min-w-0 flex-1">
-              <ProfileForm v-if="pane === 'general'" ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="['brand', 'legal', 'tax', 'general']" />
+              <template v-if="pane === 'general'">
+                <ProfileForm ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="['brand', 'legal', 'general', 'tax']" />
+                <VatForm ref="vatRef" :settings="settings" />
+              </template>
 
-              <template v-else-if="pane === 'invoice'">
+              <template v-else-if="pane === 'payment'">
                 <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.bank') }}</div>
                 <ProfileForm ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="['bank']" />
                 <div class="mt-8">
-                  <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.vatSection') }}</div>
-                  <VatForm ref="vatRef" :settings="settings" />
+                  <PaymentForm ref="paymentRef" :settings="settings" />
                 </div>
               </template>
 
-              <DocumentsForm v-else-if="pane === 'documents'" ref="documentsRef" :settings="settings" />
+              <ReceiptsForm v-else-if="pane === 'receipts'" ref="receiptsRef" :settings="settings" />
               <EmailForm v-else-if="pane === 'email'" ref="emailRef" :settings="settings" :sender-from-env="mailSenderFromEnv" />
 
             </div>

@@ -254,34 +254,6 @@ defineExpose({ form, submit })
       </div>
     </div>
 
-    <div v-if="shows('tax')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.taxSection') }}</div>
-      <div class="mb-6">
-        <div class="grid grid-cols-2 gap-4">
-          <Field :label="$t('settings.taxNumber')" id="p-steuernr" :error="form.errors.tax_number">
-            <Input id="p-steuernr" v-model="form.tax_number" class="tabular-nums" type="text" />
-          </Field>
-          <Field :error="form.errors.vat_id" v-slot="{ id }">
-            <Label :for="id">{{ $t('settings.vatId') }} <em>{{ $t('settings.optional') }}</em></Label>
-            <Input :id v-model="form.vat_id" class="tabular-nums" type="text" />
-          </Field>
-        </div>
-        <span class="text-[11.5px] leading-[1.45] text-faint">{{ $t('settings.taxHint') }}</span>
-      </div>
-      <!-- Einzelunternehmen und GbR stehen in keinem Register; dasselbe
-           Paar führt Impressum.vue. -->
-      <div v-if="requiresRegister(form.legal_form)" class="mb-6">
-        <div class="grid grid-cols-2 gap-4">
-          <Field :label="$t('settings.registerNumber')" id="p-hrb" :error="form.errors.register_number">
-            <Input id="p-hrb" v-model="form.register_number" class="tabular-nums" type="text" />
-          </Field>
-          <Field :label="$t('settings.registerCourt')" id="p-gericht" :error="form.errors.register_court">
-            <Input id="p-gericht" v-model="form.register_court" type="text" />
-          </Field>
-        </div>
-      </div>
-    </div>
-
     <div v-if="shows('general')" class="mt-8 first:mt-0">
       <div v-if="shownSections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.timezoneLabel') }}</div>
       <div class="mb-6">
@@ -310,6 +282,34 @@ defineExpose({ form, submit })
             >
               {{ $t('settings.timezoneFromBrowser', { zone: browserZone }) }}
             </button>
+          </Field>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="shows('tax')" class="mt-8 first:mt-0">
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.taxSection') }}</div>
+      <div class="mb-6">
+        <div class="grid grid-cols-2 gap-4">
+          <Field :label="$t('settings.taxNumber')" id="p-steuernr" :error="form.errors.tax_number">
+            <Input id="p-steuernr" v-model="form.tax_number" class="tabular-nums" type="text" />
+          </Field>
+          <Field :error="form.errors.vat_id" v-slot="{ id }">
+            <Label :for="id">{{ $t('settings.vatId') }} <em>{{ $t('settings.optional') }}</em></Label>
+            <Input :id v-model="form.vat_id" class="tabular-nums" type="text" />
+          </Field>
+        </div>
+        <span class="text-[11.5px] leading-[1.45] text-faint">{{ $t('settings.taxHint') }}</span>
+      </div>
+      <!-- Einzelunternehmen und GbR stehen in keinem Register; dasselbe
+           Paar führt Impressum.vue. -->
+      <div v-if="requiresRegister(form.legal_form)" class="mb-6">
+        <div class="grid grid-cols-2 gap-4">
+          <Field :label="$t('settings.registerNumber')" id="p-hrb" :error="form.errors.register_number">
+            <Input id="p-hrb" v-model="form.register_number" class="tabular-nums" type="text" />
+          </Field>
+          <Field :label="$t('settings.registerCourt')" id="p-gericht" :error="form.errors.register_court">
+            <Input id="p-gericht" v-model="form.register_court" type="text" />
           </Field>
         </div>
       </div>

@@ -86,8 +86,17 @@ it('serves every settings pane on its own path', function (string $path, string 
 })->with([
     ['/einstellungen/allgemein', 'general'],
     ['/einstellungen/email', 'email'],
-    ['/einstellungen/rechnungsdaten', 'invoice'],
-    ['/einstellungen/dokumente', 'documents'],
+    ['/einstellungen/zahlung', 'payment'],
+    ['/einstellungen/belege', 'receipts'],
+]);
+
+it('sends the former billing addresses to their new pages', function (string $from, string $to) {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->get($from)
+        ->assertRedirect($to);
+})->with([
+    ['/einstellungen/rechnungsdaten', '/einstellungen/zahlung'],
+    ['/einstellungen/dokumente', '/einstellungen/belege'],
 ]);
 
 it('updates the display name, redirects, and leaves an audit row naming the owner', function () {

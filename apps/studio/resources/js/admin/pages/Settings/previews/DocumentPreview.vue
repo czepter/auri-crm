@@ -4,10 +4,9 @@ import { useElementSize } from '@vueuse/core'
 import PreviewFrame from './PreviewFrame.vue'
 
 /**
- * The one sheet Rechtliches, Bankverbindung, Zahlungsdaten & USt and
- * Dokumente all land on — four panes whose fields were, until now, only
- * visible in a rendered PDF. Index.vue merges the live form on top of the
- * saved settings, so the pane being edited moves this in place.
+ * The one sheet Zahlung and Belege land on: fields that were only visible
+ * in a rendered PDF. Index.vue merges the live form on top of the saved
+ * settings, so the pane being edited moves this in place.
  *
  * Sheet metrics and the scale-to-fit transform are QuotePreviewPane's own
  * pattern (SHEET_WIDTH/SHEET_HEIGHT, useElementSize, transform: scale) — an
@@ -16,7 +15,7 @@ import PreviewFrame from './PreviewFrame.vue'
  */
 const props = defineProps<{
   doc: {
-    quoteLayout: string
+    documentLayout: string
   }
 }>()
 
@@ -34,14 +33,14 @@ const scale = computed(() => (available.value > 0 ? Math.min(1, available.value 
 
 async function load() {
   const response = await fetch(
-    `/einstellungen/dokumente/angebot-vorschau?layout=${encodeURIComponent(props.doc.quoteLayout ?? '')}`,
+    `/einstellungen/belege/angebot-vorschau?layout=${encodeURIComponent(props.doc.documentLayout ?? '')}`,
     { headers: { Accept: 'text/html' } },
   )
 
   if (response.ok) html.value = await response.text()
 }
 
-watch(() => props.doc.quoteLayout, load, { immediate: true })
+watch(() => props.doc.documentLayout, load, { immediate: true })
 </script>
 
 <template>

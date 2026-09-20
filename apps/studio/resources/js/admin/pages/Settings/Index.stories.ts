@@ -35,7 +35,7 @@ const settings: App.Settings.Data.StudioSettingsData = {
   quoteValidityDays: 14,
   paymentTermDays: 14,
   depositPercentage: 30,
-  quoteLayout: 'classic',
+  documentLayout: 'classic',
   remindersEnabled: true,
   clientRegister: 'formal',
   documentLetterheadHtml: null,
@@ -73,6 +73,18 @@ export const EMail: Story = {
   name: 'E-Mail',
   args: { pane: 'email' },
   parameters: { url: '/einstellungen/email' },
+}
+
+/** Bankverbindung, Zahlungsziel, Anzahlung und Mahnungen. */
+export const Zahlung: Story = {
+  args: { pane: 'payment' },
+  parameters: { url: '/einstellungen/zahlung' },
+}
+
+/** Layout für Angebot, Rechnung, Gutschrift und Storno, dazu die Gültigkeit des Angebots. */
+export const Belege: Story = {
+  args: { pane: 'receipts' },
+  parameters: { url: '/einstellungen/belege' },
 }
 
 /** Ein gerade angelegtes Studio: nur der Name steht, der Absender kommt aus der Umgebung. */

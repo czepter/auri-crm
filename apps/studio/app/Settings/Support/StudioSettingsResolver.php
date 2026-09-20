@@ -67,9 +67,9 @@ class StudioSettingsResolver
     }
 
     /** One of QuoteLayout's five values — see that enum for the closed domain the check constraint also enforces. */
-    public function quoteLayout(): string
+    public function documentLayout(): string
     {
-        return $this->row()->quote_layout;
+        return $this->row()->document_layout;
     }
 
     /** 'formal' or 'informal' — see the studio_settings table's check constraint. */

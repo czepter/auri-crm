@@ -86,7 +86,7 @@ it('prints the Netto → Umsatzsteuer → Gesamtbetrag chain in every layout at 
 ]);
 
 it('reads the layout from the same setting the quote reads', function () {
-    app(StudioSettingsResolver::class)->set('quote_layout', 'header_band', null);
+    app(StudioSettingsResolver::class)->set('document_layout', 'header_band', null);
 
     $html = app(RenderInvoicePdf::class)->forInvoice(layoutInvoice());
 
