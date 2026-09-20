@@ -67,10 +67,16 @@ class Contact extends Model implements Authenticatable
                 return;
             }
 
-            $welcome = app(StudioSettingsResolver::class)->portalWelcomeText();
+            $studio = app(StudioSettingsResolver::class);
 
-            if (filled($welcome)) {
-                $contact->portal_overrides = ['welcome' => $welcome];
+            $welcome = array_filter([
+                'welcome_inquiry' => $studio->portalWelcomeInquiry(),
+                'welcome_active' => $studio->portalWelcomeActive(),
+                'welcome_done' => $studio->portalWelcomeDone(),
+            ], 'filled');
+
+            if ($welcome !== []) {
+                $contact->portal_overrides = $welcome;
             }
         });
     }

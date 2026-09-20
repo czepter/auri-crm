@@ -23,12 +23,19 @@ const items = [
   { key: 'legal', href: '/einstellungen?pane=legal', label: 'settings.legalEntity' },
   { key: 'bank', href: '/einstellungen?pane=bank', label: 'settings.bank' },
   { key: 'general', href: '/einstellungen?pane=general', label: 'settings.navGeneral' },
+  // Absender und Ruhezeiten gelten studioweit, für jede Mail — das Portal
+  // ist einer von vielen Auslösern, nicht ihr Zuhause.
+  { key: 'email', href: '/einstellungen?pane=email', label: 'settings.navMail' },
+  { key: 'notifications', href: '/einstellungen/benachrichtigungen', label: 'settings.navNotifications' },
 
   { group: 'settings.groupBilling' },
   { key: 'documents', href: '/einstellungen?pane=documents', label: 'settings.navDocuments' },
   { key: 'numbering', href: '/einstellungen/nummernkreise', label: 'settings.navNumbering' },
   { key: 'vat', href: '/einstellungen?pane=vat', label: 'settings.navVat' },
   { key: 'payments', href: '/einstellungen/zahlungen', label: 'settings.navPayments' },
+  // Ohne Widerrufsbelehrung geht kein Angebot hinaus; die Rechtstexte hängen
+  // am Versand, nicht am Portal.
+  { key: 'legal-texts', href: '/einstellungen/rechtstexte', label: 'settings.navLegalTexts' },
 
   { group: 'settings.groupWork' },
   { key: 'availability', href: '/einstellungen/verfuegbarkeit', label: 'settings.navAvailability' },
@@ -37,10 +44,6 @@ const items = [
 
   { group: 'settings.groupPortal' },
   { key: 'portal', href: '/einstellungen/portal', label: 'settings.navPortal' },
-  { key: 'home', href: '/einstellungen/portal?pane=home', label: 'portalSettings.homeSection' },
-  { key: 'privacy', href: '/einstellungen/portal?pane=privacy', label: 'portalSettings.dsgvoSection' },
-  { key: 'email', href: '/einstellungen?pane=email', label: 'settings.navMail' },
-  { key: 'notifications', href: '/einstellungen/benachrichtigungen', label: 'settings.navNotifications' },
 
   { group: 'settings.groupInterfaces' },
   { key: 'api-tokens', href: '/einstellungen/api-token', label: 'apiTokens.title' },

@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import PreviewFrame from './PreviewFrame.vue'
+import { ChoiceGroup } from '@/ui/choice-group'
 
 const props = defineProps<{
+  /** Welcher der drei Begrüßungszustände gezeigt wird. */
+  state: 'inquiry' | 'active' | 'done'
   branding: { displayName: string | null; logoUrl: string | null; fontPair: string | null; accentColor: string | null }
   portal: {
     maintenanceEnabled: boolean
@@ -20,6 +24,15 @@ const props = defineProps<{
   }
 }>()
 
+const emit = defineEmits<{ 'update:state': [value: string] }>()
+
+const { t } = useI18n()
+
+const stateOptions = ['inquiry', 'active', 'done'].map((state) => ({
+  value: state,
+  label: t(`portalSettings.welcomeState.${state}`),
+}))
+
 const rows = computed(() => [
   { on: props.portal.acceptQuotes, label: 'portalSettings.acceptQuotesEnabledLabel' },
   { on: props.portal.signContracts, label: 'portalSettings.signContractsEnabledLabel' },
@@ -33,6 +46,13 @@ const contact = computed(() =>
 
 <template>
   <PreviewFrame :label="$t('settings.previewPortal')">
+    <ChoiceGroup
+      class="mb-4"
+      variant="segmented"
+      :model-value="state"
+      :options="stateOptions"
+      @update:model-value="(value) => emit('update:state', String(value))"
+    />
     <div
       class="rounded-md bg-background text-[11px] leading-[1.5] text-foreground"
       :data-font="branding.fontPair ?? undefined"

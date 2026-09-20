@@ -5,6 +5,7 @@ use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Engagement\Models\Thread;
 use App\Enums\StaffRole;
+use App\Gallery\Models\Gallery;
 use App\Portal\Support\PortalSettings;
 use App\Settings\Models\StudioSettings;
 use App\Support\Surface;
@@ -99,18 +100,17 @@ it('refuses a thread without a booking while messaging is booking-only', functio
 it('greets each opening state with its own text', function () {
     StudioSettings::query()->update([
         'portal_welcome_inquiry' => 'Wir haben eure Anfrage.',
-        'portal_welcome_text' => 'Schön, dass ihr da seid.',
-        'portal_welcome_many' => 'Alle eure Termine auf einen Blick.',
+        'portal_welcome_active' => 'Alle eure Termine auf einen Blick.',
+        'portal_welcome_done' => 'Eure Bilder liegen weiter hier.',
     ]);
 
-    // Without a greeting of their own — a new contact is given the studio's
-    // as their own, and that one beats all three states.
+    // Ohne eigene Begrüßung: die des Studios, je Zustand.
     $contact = Contact::factory()->create(['portal_overrides' => null]);
 
     expect(test()->actingAs($contact, 'portal')->get('/')->viewData('page')['props']['welcomeText'])->toBe('Wir haben eure Anfrage.');
 
-    // A single booking is opened directly, so the home's other room is the
-    // one with several.
+    // A single booking is opened directly, so the home's other rooms need
+    // two. Ein Termin steht noch aus: das ist „Laufend".
     foreach ([Project::factory()->create(['portal_visible' => true]), Project::factory()->create(['portal_visible' => true])] as $project) {
         $project->attachContact($contact, ProjectContactRole::Primary);
     }
@@ -120,26 +120,59 @@ it('greets each opening state with its own text', function () {
 
 // Neuanlage: the studio's text becomes the contact's own, so it can be
 // rewritten for them without touching anybody else's.
-it('gives a new contact the studio greeting as their own', function () {
-    StudioSettings::query()->update(['portal_welcome_text' => 'Schön, dass ihr da seid.']);
+// Der Fremde mit einer Anfrage und der Kunde, dessen Bilder fertig sind,
+// bekamen früher denselben Satz.
+it('greets a client whose bookings are all delivered with the closing text', function () {
+    StudioSettings::query()->update([
+        'portal_welcome_active' => 'Alle eure Termine auf einen Blick.',
+        'portal_welcome_done' => 'Eure Bilder liegen weiter hier.',
+    ]);
+
+    $contact = Contact::factory()->create(['portal_overrides' => null]);
+
+    foreach ([Project::factory()->create(['portal_visible' => true]), Project::factory()->create(['portal_visible' => true])] as $project) {
+        $project->attachContact($contact, ProjectContactRole::Primary);
+        Gallery::factory()->for($project)->create()->publish();
+    }
+
+    expect(test()->actingAs($contact, 'portal')->get('/')->viewData('page')['props']['welcomeText'])->toBe('Eure Bilder liegen weiter hier.');
+});
+
+it('gives a new contact the studio greetings as their own', function () {
+    StudioSettings::query()->update([
+        'portal_welcome_inquiry' => 'Schön, dass ihr da seid.',
+        'portal_welcome_active' => 'Hier liegen eure Termine.',
+        'portal_welcome_done' => null,
+    ]);
 
     expect(Contact::factory()->create()->portal_overrides)
-        ->toBe(['welcome' => 'Schön, dass ihr da seid.']);
+        ->toBe(['welcome_inquiry' => 'Schön, dass ihr da seid.', 'welcome_active' => 'Hier liegen eure Termine.']);
 });
 
 it('leaves a contact created with their own greeting alone', function () {
-    StudioSettings::query()->update(['portal_welcome_text' => 'Schön, dass ihr da seid.']);
+    StudioSettings::query()->update(['portal_welcome_inquiry' => 'Schön, dass ihr da seid.']);
 
-    expect(Contact::factory()->create(['portal_overrides' => ['welcome' => 'Hallo ihr zwei.']])->portal_overrides)
-        ->toBe(['welcome' => 'Hallo ihr zwei.']);
+    expect(Contact::factory()->create(['portal_overrides' => ['welcome_inquiry' => 'Hallo ihr zwei.']])->portal_overrides)
+        ->toBe(['welcome_inquiry' => 'Hallo ihr zwei.']);
 });
 
-it('lets a contact carry their own greeting whatever state they are in', function () {
-    StudioSettings::query()->update(['portal_welcome_text' => 'Schön, dass ihr da seid.']);
+// Der Kunde hat dieselben drei Zustände wie das Studio: was für ihn
+// geschrieben ist, gilt in seinem Zustand und nur dort.
+it('lets a contact carry their own greeting per state', function () {
+    StudioSettings::query()->update([
+        'portal_welcome_inquiry' => 'Wir haben eure Anfrage.',
+        'portal_welcome_active' => 'Alle eure Termine auf einen Blick.',
+    ]);
 
-    $contact = Contact::factory()->create(['portal_overrides' => ['welcome' => 'Hallo ihr zwei.']]);
+    $contact = Contact::factory()->create(['portal_overrides' => ['welcome_inquiry' => 'Hallo ihr zwei.']]);
 
     expect(test()->actingAs($contact, 'portal')->get('/')->viewData('page')['props']['welcomeText'])->toBe('Hallo ihr zwei.');
+
+    foreach ([Project::factory()->create(['portal_visible' => true]), Project::factory()->create(['portal_visible' => true])] as $project) {
+        $project->attachContact($contact, ProjectContactRole::Primary);
+    }
+
+    expect(test()->actingAs($contact, 'portal')->get('/')->viewData('page')['props']['welcomeText'])->toBe('Alle eure Termine auf einen Blick.');
 });
 
 // Written keys only: a "Standard" choice must be removed, never frozen as a
@@ -154,7 +187,7 @@ it('stores only the keys that actually depart from the default', function () {
         ->patch("/kontakte/{$contact->public_id}/portal", [
             'accept_quotes' => true,
             'messaging_mode' => null,
-            'welcome' => '',
+            'welcome_inquiry' => '',
         ])
         ->assertRedirect();
 

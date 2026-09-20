@@ -157,8 +157,7 @@
       "gallery_lists": "Galerie-Listen",
       "gallery_comments": "Galerie-Kommentare",
       "portal_visible": "Neue Projekte sichtbar",
-      "offers": "Weitere Leistungen",
-      "welcome": "Begrüßung"
+      "offers": "Weitere Leistungen"
     },
     "portalPreview": "Vorschau als Kunde",
     "portalPermissions": "Freigaben",
@@ -1182,7 +1181,8 @@
     "navGalleryDefaults": "Standardwerte",
     "navGalleryPresets": "Vorlagen",
     "mailSenderFromEnv": "Serverkonfiguration",
-    "mailSenderReset": "Zurücksetzen"
+    "mailSenderReset": "Zurücksetzen",
+    "navLegalTexts": "Rechtstexte"
   },
   "notifications": {
     "title": "Benachrichtigungen",
@@ -1345,10 +1345,9 @@
     "title": "Benachrichtigungen",
     "quietHoursSection": "Ruhezeiten",
     "quietHoursEnabledLabel": "Ruhezeiten aktivieren",
-    "quietHoursEnabledHint": "Mails in diesem Fenster werden erst danach zugestellt.",
     "quietHoursStartLabel": "Von",
     "quietHoursEndLabel": "Bis",
-    "quietHoursHint": "Studioweit, in der Zeitzone aus Allgemein."
+    "quietHoursHint": "Zeitzone aus Allgemein"
   },
   "formTemplates": {
     "kicker": "Einstellungen · Fragebogen-Vorlagen",
@@ -1424,11 +1423,8 @@
   "portalSettings": {
     "title": "Portal",
     "maintenanceSection": "Wartung",
-    "maintenanceEnabledLabel": "Portal vorübergehend schließen",
-    "maintenanceEnabledHint": "Kunden sehen nur den Hinweistext, keine Projektdaten.",
-    "maintenanceMessageLabel": "Hinweistext",
-    "homeSection": "Startseite",
-    "welcomeTextLabel": "Willkommenstext",
+    "maintenanceEnabledLabel": "Portal schließen",
+    "maintenanceMessageLabel": "Hinweistext beim Schließen",
     "legalSection": "Rechtliches",
     "datenschutzUrlLabel": "Datenschutzerklärung",
     "agbUrlLabel": "AGB",
@@ -1446,27 +1442,37 @@
     "legalUrlLabel": "Adresse",
     "legalTemplateLabel": "Vorlage",
     "legalOpenImpressum": "Impressum ansehen",
-    "legalNewTemplate": "Rechtstext schreiben",
+    "legalNewTemplate": "Vorlage anlegen",
     "legalMissing": "Fehlt vor dem ersten Versand",
     "capabilitiesSection": "Freigaben",
-    "acceptQuotesEnabledLabel": "Angebote online annehmen",
-    "signContractsEnabledLabel": "Verträge online unterschreiben",
+    "acceptQuotesEnabledLabel": "Angebote annehmen",
+    "signContractsEnabledLabel": "Verträge unterschreiben",
     "paymentStatusEnabledLabel": "Zahlungsstatus einsehen",
     "offersEnabledLabel": "Weitere Leistungen anbieten",
-    "welcomeInquiryLabel": "Begrüßung vor der ersten Buchung",
-    "welcomeManyLabel": "Begrüßung bei vielen Buchungen",
-    "dsgvoSection": "Datenschutz-Anfragen",
+    "dsgvoSection": "Anfragen von Kunden",
     "dsgvoRecipientLabel": "Empfänger",
     "dsgvoDeadlineLabel": "Frist in Tagen",
-    "contactSection": "Kontakt im Portal-Fuß",
+    "contactSection": "Kontakt im Fuß",
     "contactPhoneLabel": "Telefon",
     "contactEmailLabel": "E-Mail",
     "contactResponseLabel": "Antwortzeit",
     "messagingLabel": "Nachrichten",
     "messagingMode": {
       "off": "Aus",
-      "booking": "Nur zu einer Buchung",
-      "any": "Auch ohne Buchung"
+      "booking": "Zu einer Buchung",
+      "any": "Immer"
+    },
+    "perContactHint": "Voreinstellung, pro Kunde änderbar.",
+    "welcomeSection": "Begrüßung",
+    "welcomeState": {
+      "inquiry": "Anfrage",
+      "active": "Laufend",
+      "done": "Abgeschlossen"
+    },
+    "welcomeWhen": {
+      "inquiry": "Noch nie gebucht",
+      "active": "Termin steht oder Bilder in Arbeit",
+      "done": "Alles geliefert, nichts offen"
     }
   },
   "gallerySettings": {

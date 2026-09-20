@@ -36,7 +36,8 @@ class PortalSettings
 
     /** @var list<string> */
     public const OVERRIDABLE = [
-        'welcome', 'accept_quotes', 'sign_contracts', 'payment_status', 'messaging_mode',
+        'welcome_inquiry', 'welcome_active', 'welcome_done',
+        'accept_quotes', 'sign_contracts', 'payment_status', 'messaging_mode',
         'gallery_downloads', 'gallery_lists', 'gallery_comments', 'portal_visible', 'offers',
     ];
 
@@ -102,12 +103,13 @@ class PortalSettings
 
     /**
      * The greeting for the state the client is actually in. Three rooms:
-     * before the first booking, with one, and with a stock of them. A
-     * sentence written for one reads as a mistake in the others.
+     * nothing booked yet, a booking under way, and everything delivered. A
+     * sentence written for one reads as a mistake in the others — and the
+     * stranger with an inquiry is not the client whose pictures are done.
      */
     public function welcomeText(?Contact $contact, string $state): ?string
     {
-        $own = $this->overrides($contact)['welcome'] ?? null;
+        $own = $this->overrides($contact)["welcome_{$state}"] ?? null;
 
         if ($own !== null) {
             return $own;
@@ -115,9 +117,9 @@ class PortalSettings
 
         return match ($state) {
             'inquiry' => $this->studio->portalWelcomeInquiry(),
-            'many' => $this->studio->portalWelcomeMany(),
-            default => $this->studio->portalWelcomeText(),
-        } ?? $this->studio->portalWelcomeText();
+            'done' => $this->studio->portalWelcomeDone(),
+            default => $this->studio->portalWelcomeActive(),
+        };
     }
 
     /**

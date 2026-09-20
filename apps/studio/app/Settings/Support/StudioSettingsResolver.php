@@ -595,12 +595,6 @@ class StudioSettingsResolver
         return $this->row()->portal_maintenance_message;
     }
 
-    /** P-01's room: exactly one booking. The column T-08 shipped, unrenamed so nothing a studio wrote is lost. */
-    public function portalWelcomeText(): ?string
-    {
-        return $this->row()->portal_welcome_text;
-    }
-
     /**
      * Wohin ein Rechtstext im Portal zeigt: auf die fremde Adresse, wenn eine
      * hinterlegt ist, sonst auf die eigene Seite, wenn eine Vorlage gewählt
@@ -739,16 +733,22 @@ class StudioSettingsResolver
         return $this->row()->portal_contact_response_time;
     }
 
-    /** P-03's room: no booking yet. */
+    /** Noch nie gebucht: es liegt nur eine Anfrage vor. */
     public function portalWelcomeInquiry(): ?string
     {
         return $this->row()->portal_welcome_inquiry;
     }
 
-    /** P-02's room: a stock of bookings rather than one. */
-    public function portalWelcomeMany(): ?string
+    /** Mindestens eine Buchung steht noch aus oder ist in Arbeit. */
+    public function portalWelcomeActive(): ?string
     {
-        return $this->row()->portal_welcome_many;
+        return $this->row()->portal_welcome_active;
+    }
+
+    /** Alles geliefert, nichts offen — der Bestandskunde, nicht der Fremde. */
+    public function portalWelcomeDone(): ?string
+    {
+        return $this->row()->portal_welcome_done;
     }
 
     /** Whether the first-run wizard (App\Http\Middleware\RequireStudioOnboarding) has been completed. */

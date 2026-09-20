@@ -24,7 +24,7 @@ it('hands the timezone, locale and working days to the settings screen', functio
         ->toHaveKey('workingDays', [1, 2, 3, 4, 5, 6, 7]);
 });
 
-it('updates timezone, locale and working days, redirects, and audits the owner', function () {
+it('updates timezone, locale, working days and the register, redirects, and audits the owner', function () {
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')
@@ -33,6 +33,7 @@ it('updates timezone, locale and working days, redirects, and audits the owner',
             'timezone' => 'Europe/Vienna',
             'locale' => 'de_AT',
             'working_days' => [1, 2, 3, 4, 5],
+            'client_register' => 'informal',
         ])
         ->assertRedirect('/einstellungen?pane=general');
 
@@ -41,6 +42,7 @@ it('updates timezone, locale and working days, redirects, and audits the owner',
     expect($row->timezone)->toBe('Europe/Vienna')
         ->and($row->locale)->toBe('de_AT')
         ->and($row->working_days)->toBe([1, 2, 3, 4, 5])
+        ->and($row->client_register)->toBe('informal')
         ->and(AuditLog::where('event', 'studio_settings.updated')
             ->where('context->key', 'timezone')->sole()->actor_id)->toBe($owner->id);
 });

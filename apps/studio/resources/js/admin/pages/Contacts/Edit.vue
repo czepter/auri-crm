@@ -124,7 +124,9 @@ const portal = useForm({
   gallery_lists: asChoice(props.portalOverrides.gallery_lists),
   gallery_comments: asChoice(props.portalOverrides.gallery_comments),
   offers: asChoice(props.portalOverrides.offers),
-  welcome: (props.portalOverrides.welcome as string) ?? '',
+  welcome_inquiry: (props.portalOverrides.welcome_inquiry as string) ?? '',
+  welcome_active: (props.portalOverrides.welcome_active as string) ?? '',
+  welcome_done: (props.portalOverrides.welcome_done as string) ?? '',
 })
 
 function asChoice(value: string | boolean | undefined) {
@@ -489,7 +491,7 @@ function eraseDsgvoData() {
 
             <div v-else-if="tab === 'portal'" class="flex items-start gap-6 max-[1180px]:flex-col">
               <div class="min-w-0 flex-1 space-y-7">
-                <Panel :title="$t('contacts.portalKey.welcome')">
+                <Panel :title="$t('portalSettings.welcomeSection')">
                   <ContactPortalFields group="welcome" :portal="portal" :defaults="portalDefaults" @change="savePortal" />
                 </Panel>
 

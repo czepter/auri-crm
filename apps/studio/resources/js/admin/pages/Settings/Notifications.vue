@@ -72,7 +72,6 @@ function submit() {
                     <Checkbox id="cb-quiet-hours-enabled" v-model="form.quiet_hours_enabled" />
                     <Label variant="inline" for="cb-quiet-hours-enabled">{{ $t('notificationSettings.quietHoursEnabledLabel') }}</Label>
                   </div>
-                  <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('notificationSettings.quietHoursEnabledHint') }}</span>
                 </div>
                 <div class="mb-6">
                   <div class="grid grid-cols-2 gap-4">

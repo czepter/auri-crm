@@ -42,17 +42,38 @@ class PortalSettingsController extends Controller
             'branding' => StudioSettingsData::fromResolver($settings),
             // Die Rechtstexte, die das Studio selbst geschrieben hat — als
             // Familie, weil die Zeile auf die jeweils aktuelle Fassung zeigt.
-            'legalTemplates' => DocumentTemplate::query()
-                ->current()
-                ->ofType(DocumentTemplateType::Legal)
-                ->orderBy('name')
-                ->get()
-                ->map(fn (DocumentTemplate $template) => [
-                    'family' => $template->family_id,
-                    'name' => $template->name,
-                    'updatedAt' => $template->updated_at?->toDateString(),
-                ])
-                ->all(),
+            'legalTemplates' => $this->legalTemplates(),
+        ]);
+    }
+
+    /** @return list<array{family: string, name: string, updatedAt: ?string}> */
+    private function legalTemplates(): array
+    {
+        return DocumentTemplate::query()
+            ->current()
+            ->ofType(DocumentTemplateType::Legal)
+            ->orderBy('name')
+            ->get()
+            ->map(fn (DocumentTemplate $template) => [
+                'family' => $template->family_id,
+                'name' => $template->name,
+                'updatedAt' => $template->updated_at?->toDateString(),
+            ])
+            ->all();
+    }
+
+    /**
+     * Impressum, Datenschutz, AGB und Widerruf — plus wohin eine
+     * Datenschutz-Anfrage geht. Steht unter Abrechnung statt unter Portal:
+     * ohne Widerrufsbelehrung geht kein Angebot hinaus, mit oder ohne Portal.
+     */
+    public function legal(StudioSettingsResolver $settings): Response
+    {
+        $this->authorizeSettings();
+
+        return Inertia::render('Settings/LegalTexts', [
+            'settings' => PortalSettingsData::fromResolver($settings),
+            'legalTemplates' => $this->legalTemplates(),
         ]);
     }
 
@@ -63,7 +84,6 @@ class PortalSettingsController extends Controller
         $validated = $request->validate([
             'portal_maintenance_enabled' => ['sometimes', 'required', 'boolean'],
             'portal_maintenance_message' => ['sometimes', 'nullable', 'string', 'max:2000'],
-            'portal_welcome_text' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'portal_legal_datenschutz_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
             'portal_legal_agb_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
             'portal_legal_impressum_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
@@ -82,9 +102,9 @@ class PortalSettingsController extends Controller
             // P-09 (#228): everything Sprint 25's seven portal screens do
             // that T-08's four switches never described.
             'portal_messaging_mode' => ['sometimes', 'required', 'in:off,booking,any'],
-            'client_register' => ['sometimes', 'required', 'in:formal,informal'],
             'portal_welcome_inquiry' => ['sometimes', 'nullable', 'string', 'max:2000'],
-            'portal_welcome_many' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'portal_welcome_active' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'portal_welcome_done' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'dsgvo_request_recipient' => ['sometimes', 'nullable', 'email', 'max:255'],
             'dsgvo_request_deadline_days' => ['sometimes', 'required', 'integer', 'min:1', 'max:365'],
             'portal_contact_phone' => ['sometimes', 'nullable', 'string', 'max:64'],
@@ -98,6 +118,6 @@ class PortalSettingsController extends Controller
             $settings->set($key, $value, $actor);
         }
 
-        return redirect('/einstellungen/portal');
+        return back();
     }
 }

@@ -287,12 +287,19 @@ class StudioSettingsController extends Controller
             'locale' => ['nullable', Rule::in(['de', 'de_DE', 'de_AT', 'de_CH'])],
             'working_days' => ['required', 'array', 'min:1'],
             'working_days.*' => ['integer', 'between:1,7', 'distinct'],
+            // Gilt für Portal, Mails und Belege gleichermaßen — deshalb hier
+            // und nicht mehr unter Portal.
+            'client_register' => ['sometimes', 'required', Rule::in(['formal', 'informal'])],
         ]);
 
         $actor = auth('staff')->user();
         $settings->set('timezone', $validated['timezone'] ?? null, $actor);
         $settings->set('locale', $validated['locale'] ?? null, $actor);
         $settings->set('working_days', array_values($validated['working_days']), $actor);
+
+        if (array_key_exists('client_register', $validated)) {
+            $settings->set('client_register', $validated['client_register'], $actor);
+        }
 
         return back();
     }

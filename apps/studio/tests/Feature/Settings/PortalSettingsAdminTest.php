@@ -32,7 +32,7 @@ it('updates the maintenance switch, its message, the welcome text and the legal 
         ->patch('/einstellungen/portal', [
             'portal_maintenance_enabled' => true,
             'portal_maintenance_message' => 'Das Portal ist gerade nicht erreichbar.',
-            'portal_welcome_text' => 'Schön, dass Sie da sind.',
+            'portal_welcome_active' => 'Schön, dass Sie da sind.',
             'portal_legal_datenschutz_url' => 'https://atelier-nordlicht.de/datenschutz',
             'portal_legal_agb_url' => 'https://atelier-nordlicht.de/agb',
             'portal_accept_quotes_enabled' => false,
@@ -40,13 +40,13 @@ it('updates the maintenance switch, its message, the welcome text and the legal 
             'portal_messaging_mode' => 'booking',
             'dsgvo_request_deadline_days' => 30,
         ])
-        ->assertRedirect('/einstellungen/portal');
+        ->assertRedirect();
 
     $row = StudioSettings::query()->sole();
 
     expect($row->portal_maintenance_enabled)->toBeTrue()
         ->and($row->portal_maintenance_message)->toBe('Das Portal ist gerade nicht erreichbar.')
-        ->and($row->portal_welcome_text)->toBe('Schön, dass Sie da sind.')
+        ->and($row->portal_welcome_active)->toBe('Schön, dass Sie da sind.')
         ->and($row->portal_legal_datenschutz_url)->toBe('https://atelier-nordlicht.de/datenschutz')
         ->and($row->portal_legal_agb_url)->toBe('https://atelier-nordlicht.de/agb')
         ->and($row->portal_payment_status_enabled)->toBeTrue()
@@ -106,14 +106,14 @@ it('leaves the settings a pane does not show untouched', function () {
             'portal_payment_status_enabled' => false,
             'portal_messaging_mode' => 'any',
         ])
-        ->assertRedirect('/einstellungen/portal');
+        ->assertRedirect();
 
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen/portal', [
             'dsgvo_request_recipient' => 'datenschutz@atelier-nordlicht.de',
             'dsgvo_request_deadline_days' => 14,
         ])
-        ->assertRedirect('/einstellungen/portal');
+        ->assertRedirect();
 
     $row = StudioSettings::query()->sole();
 

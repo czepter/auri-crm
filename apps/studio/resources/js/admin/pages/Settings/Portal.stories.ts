@@ -53,7 +53,6 @@ const settings: App.Settings.Data.PortalSettingsData = {
   id: 'po1',
   maintenanceEnabled: false,
   maintenanceMessage: null,
-  welcomeText: 'Hier liegen eure Termine, Unterlagen und Bilder.',
   datenschutzUrl: 'https://atelier-nordlicht.de/datenschutz',
   agbUrl: 'https://atelier-nordlicht.de/agb',
   impressumUrl: null,
@@ -66,7 +65,8 @@ const settings: App.Settings.Data.PortalSettingsData = {
   messagingMode: 'booking',
   clientRegister: 'formal',
   welcomeInquiry: 'Schön, dass ihr da seid.',
-  welcomeMany: null,
+  welcomeActive: 'Hier liegen eure Termine, Unterlagen und Bilder.',
+  welcomeDone: null,
   dsgvoRecipient: 'christian@atelier-nordlicht.de',
   dsgvoDeadlineDays: 30,
   contactPhone: '+49 40 4321987',
@@ -78,8 +78,7 @@ const meta = {
   title: 'Bildschirme/Einstellungen/Portal',
   component: Portal,
   parameters: { layout: 'fullscreen', url: '/einstellungen/portal' },
-  args: {
-    legalTemplates: [{ family: 'fam-widerruf-0000000000', name: 'Widerrufsbelehrung', updatedAt: '2026-06-12' }], settings, branding },
+  args: { settings, branding },
 } satisfies Meta<typeof Portal>
 
 export default meta
@@ -96,30 +95,6 @@ export const Wartung: Story = {
       maintenanceEnabled: true,
       maintenanceMessage: 'Wir sind Montag wieder erreichbar.',
       messagingMode: 'off',
-    },
-  },
-}
-
-/** Der Abschnitt Rechtliches: vier Texte, je Zeile Link oder Dokument. */
-export const Rechtliches: Story = {
-  parameters: { url: '/einstellungen/portal?pane=privacy' },
-  args: {
-    settings: {
-      ...settings,
-      widerrufUrl: null,
-      legalFamilies: { impressum: null, datenschutz: null, agb: null, widerruf: 'fam-widerruf-0000000000' },
-    },
-  },
-}
-
-/** Ohne Widerrufsbelehrung: das Angebot darf entstehen, aber nicht hinaus. */
-export const RechtlichesUnvollstaendig: Story = {
-  parameters: { url: '/einstellungen/portal?pane=privacy' },
-  args: {
-    settings: {
-      ...settings,
-      widerrufUrl: null,
-      legalFamilies: { impressum: null, datenschutz: null, agb: null, widerruf: null },
     },
   },
 }

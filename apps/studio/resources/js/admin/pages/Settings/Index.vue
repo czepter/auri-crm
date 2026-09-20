@@ -18,6 +18,7 @@ import { Button } from '@/ui/button'
 import { Combobox, ComboboxAnchor, ComboboxContent, ComboboxInput, ComboboxItem } from '@/ui/combobox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Checkbox } from '@/ui/checkbox'
+import { ChoiceGroup } from '@/ui/choice-group'
 import { Textarea } from '@/ui/textarea'
 import { Label } from '@/ui/label'
 
@@ -66,6 +67,9 @@ const generalForm = useForm({
   timezone: props.settings.timezone,
   locale: props.settings.locale,
   working_days: [...props.settings.workingDays] as number[],
+  // Die Anrede trägt jede Mail, jedes Angebot und das Portal — sie stand
+  // unter Portal und gilt überall.
+  client_register: props.settings.clientRegister,
 })
 
 // Der Browser kennt die Zone des Geräts; die Zeile darunter bietet sie an,
@@ -209,6 +213,7 @@ function submitGeneral() {
       timezone: data.timezone || null,
       locale: data.locale || null,
       working_days: data.working_days,
+      client_register: data.client_register,
     }))
     .patch('/einstellungen/allgemein', { preserveScroll: true })
 }
@@ -319,6 +324,18 @@ function submitGeneral() {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                <div class="mt-8 first-of-type:mt-6">
+                  <ChoiceGroup
+                    v-model="generalForm.client_register"
+                    class="mb-6"
+                    :label="$t('settings.clientRegister')"
+                    :options="[
+                      { value: 'formal', label: $t('settings.clientRegisterFormal') },
+                      { value: 'informal', label: $t('settings.clientRegisterInformal') },
+                    ]"
+                  />
                 </div>
 
                 <div class="mt-8 first-of-type:mt-6">

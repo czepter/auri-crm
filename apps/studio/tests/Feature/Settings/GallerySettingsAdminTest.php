@@ -26,7 +26,7 @@ it('updates the gallery defaults without touching the portal switches', function
             'portal_accept_quotes_enabled' => true,
             'portal_payment_status_enabled' => false,
             'portal_messaging_mode' => 'any',
-        ])->assertRedirect('/einstellungen/portal');
+        ])->assertRedirect();
 
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen/galerien', [
@@ -49,7 +49,7 @@ it('updates the gallery defaults without touching the portal switches', function
 it('no longer accepts a gallery default on the portal route', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->patch('/einstellungen/portal', ['gallery_default_expiry_days' => 5])
-        ->assertRedirect('/einstellungen/portal');
+        ->assertRedirect();
 
     expect(StudioSettings::query()->sole()->gallery_default_expiry_days)->toBeNull();
 });
