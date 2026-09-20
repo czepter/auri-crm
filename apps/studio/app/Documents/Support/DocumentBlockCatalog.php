@@ -52,7 +52,7 @@ class DocumentBlockCatalog
         'paymentPlan' => ['group' => 'data', 'label' => 'Zahlungsplan', 'types' => ['contract', 'quote', 'invoice', 'credit_note']],
         'deliverables' => ['group' => 'data', 'label' => 'Lieferumfang', 'types' => ['contract', 'quote']],
         'schedule' => ['group' => 'data', 'label' => 'Ablaufplan', 'types' => ['contract', 'quote']],
-        'mergeField' => ['group' => 'data', 'label' => 'Feld', 'types' => ['contract', 'quote', 'invoice', 'credit_note', 'mail'], 'inline' => true],
+        'mergeField' => ['group' => 'data', 'label' => 'Feld', 'types' => ['contract', 'quote', 'invoice', 'credit_note', 'mail', 'legal'], 'inline' => true],
     ];
 
     /**

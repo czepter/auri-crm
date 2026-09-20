@@ -4,6 +4,8 @@ namespace App\Portal\Http\Controllers;
 
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
+use App\Documents\Support\DocumentMergeDataBuilder;
+use App\Documents\Support\MergeFieldResolver;
 use App\Http\Controllers\Controller;
 use App\Settings\Support\StudioSettingsResolver;
 use Inertia\Inertia;
@@ -23,7 +25,7 @@ class LegalTextController extends Controller
 {
     public const TEXTS = ['impressum', 'datenschutz', 'agb', 'widerruf'];
 
-    public function __invoke(string $text, StudioSettingsResolver $settings): Response
+    public function __invoke(string $text, StudioSettingsResolver $settings, DocumentMergeDataBuilder $merge): Response
     {
         abort_unless(in_array($text, self::TEXTS, true), 404);
 
@@ -39,7 +41,7 @@ class LegalTextController extends Controller
 
         return Inertia::render('Rechtstext', [
             'title' => $template->name,
-            'body' => $template->body,
+            'body' => MergeFieldResolver::resolve($template->body, $merge->fromStudio($settings)),
         ]);
     }
 }

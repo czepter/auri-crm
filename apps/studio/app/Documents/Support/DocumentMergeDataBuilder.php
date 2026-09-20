@@ -129,6 +129,24 @@ class DocumentMergeDataBuilder
         ];
     }
 
+    /**
+     * A legal text belongs to the studio, not to a job: an Impressum or a
+     * Widerrufsbelehrung names the same address whoever reads it. Everything
+     * a project would fill stays out, so `{{ contact.name }}` on such a
+     * template resolves to nothing rather than to the last reader.
+     *
+     * @return array<string, mixed>
+     */
+    public function fromStudio(StudioSettingsResolver $settings): array
+    {
+        return [
+            'studio' => $this->studio($settings),
+            'settings' => [
+                'widerrufText' => $settings->widerrufIncluded() ? ($settings->widerrufText() ?? '') : '',
+            ],
+        ];
+    }
+
     /** @return array<string, string> */
     private function studio(StudioSettingsResolver $settings): array
     {
