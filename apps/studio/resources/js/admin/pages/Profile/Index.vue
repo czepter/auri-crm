@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Link, router, useForm, usePage } from '@inertiajs/vue3'
+import { Link, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
@@ -10,6 +10,7 @@ import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 
 const props = defineProps<{
+  pane: 'konto' | 'sicherheit' | 'benachrichtigungen' | 'kalender'
   user: { name: string; email: string; phone: string | null; role: string }
   pendingEmail: string | null
   mfaConfirmed: boolean
@@ -50,27 +51,15 @@ function modesFor(key: string): Mode[] {
 // sentinel pairing Settings/TaskTemplates.vue uses for its own empty option.
 const NO_DIGEST = 'none'
 
-// Same shell as /einstellungen: the pane rides in the query so a link can
-// name one.
-const PANES = ['konto', 'sicherheit', 'benachrichtigungen', 'kalender'] as const
-
 const NAV = [
   { key: 'konto', href: '/profil', label: 'profile.navAccount' },
-  { key: 'sicherheit', href: '/profil?pane=sicherheit', label: 'profile.navSecurity' },
-  { key: 'benachrichtigungen', href: '/profil?pane=benachrichtigungen', label: 'profile.navNotifications' },
-  { key: 'kalender', href: '/profil?pane=kalender', label: 'calendar.subscribe' },
+  { key: 'sicherheit', href: '/profil/sicherheit', label: 'profile.navSecurity' },
+  { key: 'benachrichtigungen', href: '/profil/benachrichtigungen', label: 'profile.navNotifications' },
+  { key: 'kalender', href: '/profil/kalender', label: 'calendar.subscribe' },
   // The own-absences screen already exists and is open to every role; this is
   // the way to it from here, not a second copy of it.
   { key: 'abwesenheiten', href: '/abwesenheiten', label: 'profile.navAbsences' },
 ]
-
-const page = usePage()
-
-const pane = computed(() => {
-  const asked = new URL(page.url, 'http://profile').searchParams.get('pane')
-
-  return PANES.find((known) => known === asked) ?? 'konto'
-})
 
 const accountForm = useForm({
   name: props.user.name,
@@ -97,18 +86,18 @@ const eventsForm = useForm({
 })
 
 const activeForm = computed(() => {
-  if (pane.value === 'sicherheit') return passwordForm
-  if (pane.value === 'benachrichtigungen') return eventsForm
-  if (pane.value === 'kalender') return undefined
+  if (props.pane === 'sicherheit') return passwordForm
+  if (props.pane === 'benachrichtigungen') return eventsForm
+  if (props.pane === 'kalender') return undefined
   return accountForm
 })
 
-const formId = computed(() => `profile-${pane.value}-form`)
+const formId = computed(() => `profile-${props.pane}-form`)
 
 const paneTitle = computed(() => {
-  if (pane.value === 'sicherheit') return 'profile.securityTitle'
-  if (pane.value === 'benachrichtigungen') return 'profile.notificationsTitle'
-  if (pane.value === 'kalender') return 'calendar.subscribe'
+  if (props.pane === 'sicherheit') return 'profile.securityTitle'
+  if (props.pane === 'benachrichtigungen') return 'profile.notificationsTitle'
+  if (props.pane === 'kalender') return 'calendar.subscribe'
   return 'profile.accountTitle'
 })
 

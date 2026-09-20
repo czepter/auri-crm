@@ -38,7 +38,7 @@ function t07ValidBankFields(): array
 
 it('renders the settings shell for an owner', function () {
     $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get('/einstellungen')
+        ->get('/einstellungen/allgemein')
         ->assertOk()
         ->viewData('page')['props'];
 
@@ -48,6 +48,27 @@ it('renders the settings shell for an owner', function () {
         ->and($props['settings'])->toHaveKey('bankIban')
         ->and($props['settings']['logoUrl'])->toBeNull();
 });
+
+it('sends the settings root to the first pane', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->get('/einstellungen')
+        ->assertRedirect('/einstellungen/allgemein');
+});
+
+it('serves every settings pane on its own path', function (string $path, string $pane) {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->get($path)
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('pane', $pane));
+})->with([
+    ['/einstellungen/allgemein', 'general'],
+    ['/einstellungen/marke', 'brand'],
+    ['/einstellungen/rechtliche-einheit', 'legal'],
+    ['/einstellungen/email', 'email'],
+    ['/einstellungen/rechnungsdaten', 'invoice'],
+    ['/einstellungen/dokumente', 'documents'],
+    ['/einstellungen/erfassung', 'capture'],
+]);
 
 it('updates the display name, redirects, and leaves an audit row naming the owner', function () {
     $owner = staffMember(StaffRole::Owner);
@@ -203,7 +224,7 @@ it('stores an uploaded logo once and serves it from one route, with an audit row
     expect(AuditLog::where('event', 'studio_settings.updated')->where('context->key', 'logo_path')->sole()->actor_id)
         ->toBe($owner->id);
 
-    $props = $this->get('/einstellungen')->assertOk()->viewData('page')['props'];
+    $props = $this->get('/einstellungen/allgemein')->assertOk()->viewData('page')['props'];
     expect($props['settings']['logoUrl'])->not->toBeNull();
 
     $this->get($props['settings']['logoUrl'])->assertOk();
@@ -284,7 +305,7 @@ it('replaces the logo on a second upload rather than keeping both', function () 
 it('opens the settings screen to the owner, and gives every other role the same response as a route that does not exist', function (StaffRole $role, int $status) {
     $missing = $this->actingAs(staffMember($role), 'staff')->get('/this-route-does-not-exist-xyz');
 
-    $response = $this->actingAs(staffMember($role), 'staff')->get('/einstellungen');
+    $response = $this->actingAs(staffMember($role), 'staff')->get('/einstellungen/allgemein');
 
     $response->assertStatus($status);
 

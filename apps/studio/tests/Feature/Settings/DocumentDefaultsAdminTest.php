@@ -14,7 +14,7 @@ beforeEach(fn () => Cache::store('redis')->flush());
 
 it('hands the document defaults to the settings screen', function () {
     $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get('/einstellungen')
+        ->get('/einstellungen/allgemein')
         ->assertOk()
         ->viewData('page')['props'];
 
@@ -30,7 +30,7 @@ it('updates the document defaults, redirects, and audits the owner', function ()
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')
-        ->from('/einstellungen?pane=documents')
+        ->from('/einstellungen/dokumente')
         ->patch('/einstellungen/dokumente', [
             'quote_validity_days' => 30,
             'payment_term_days' => 21,
@@ -41,7 +41,7 @@ it('updates the document defaults, redirects, and audits the owner', function ()
             'document_letterhead_html' => '<header>Nordlicht</header>',
             'document_footer_html' => '<footer>Seite 1</footer>',
         ])
-        ->assertRedirect('/einstellungen?pane=documents');
+        ->assertRedirect('/einstellungen/dokumente');
 
     $row = StudioSettings::query()->sole();
 

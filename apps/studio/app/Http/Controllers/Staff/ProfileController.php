@@ -34,11 +34,12 @@ use Inertia\Response;
  */
 class ProfileController extends Controller
 {
-    public function edit(Request $request, NotificationPreferences $preferences): Response
+    public function edit(Request $request, NotificationPreferences $preferences, string $pane = 'konto'): Response
     {
         $user = $request->user('staff');
 
         return Inertia::render('Profile/Index', [
+            'pane' => $pane,
             'user' => [
                 'name' => $user->name,
                 'email' => $user->email,
@@ -52,7 +53,7 @@ class ProfileController extends Controller
             'mfaConfirmed' => $user->hasConfirmedMfa(),
             // Nur auf der Kalender-Seite: calendarToken() prägt das Geheimnis
             // beim ersten Aufruf, und /profil ruft jeder auf.
-            'calendarFeedUrl' => $request->query('pane') === 'kalender'
+            'calendarFeedUrl' => $pane === 'kalender'
                 ? url('/kalender/'.$user->calendarToken().'/shootings.ics')
                 : null,
             'recoveryCodesLeft' => count($user->mfa_recovery_codes ?? []),

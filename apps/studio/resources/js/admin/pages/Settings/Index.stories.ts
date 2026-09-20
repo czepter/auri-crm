@@ -89,8 +89,9 @@ const portal: App.Settings.Data.PortalSettingsData = {
 const meta = {
   title: 'Bildschirme/Einstellungen/Studio',
   component: Index,
-  parameters: { layout: 'fullscreen', url: '/einstellungen' },
+  parameters: { layout: 'fullscreen', url: '/einstellungen/marke' },
   args: {
+    pane: 'brand',
     fontPairs,
     mailSenderFromEnv: { name: false, address: false },
     settings,
@@ -107,13 +108,15 @@ export const Marke: Story = {}
 
 /** Rechtsform, Anschrift und Steuernummern — die Fläche hinter dem Briefkopf. */
 export const Rechtliches: Story = {
-  parameters: { url: '/einstellungen?pane=legal' },
+  args: { pane: 'legal' },
+  parameters: { url: '/einstellungen/rechtliche-einheit' },
 }
 
 /** Absender, Antwortadresse und Signatur der ausgehenden Post. */
 export const EMail: Story = {
   name: 'E-Mail',
-  parameters: { url: '/einstellungen?pane=email' },
+  args: { pane: 'email' },
+  parameters: { url: '/einstellungen/email' },
 }
 
 /** Ein gerade angelegtes Studio: nur der Name steht, der Absender kommt aus der Umgebung. */

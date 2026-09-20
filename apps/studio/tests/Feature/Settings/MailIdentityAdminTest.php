@@ -17,7 +17,7 @@ it('hands the resolved mail identity to the settings screen', function () {
     config(['mail.from.address' => 'hello@example.com', 'mail.from.name' => 'Example']);
 
     $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get('/einstellungen')
+        ->get('/einstellungen/allgemein')
         ->assertOk()
         ->viewData('page')['props'];
 
@@ -33,14 +33,14 @@ it('updates the mail identity, redirects to the shell, and audits the owner', fu
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')
-        ->from('/einstellungen?pane=email')
+        ->from('/einstellungen/email')
         ->patch('/einstellungen/email', [
             'mail_reply_to' => 'buero@nordlicht.test',
             'mail_bcc' => 'ablage@nordlicht.test',
             'mail_signature' => 'Herzliche Grüße, das Team von Atelier Nordlicht',
             'mail_clients_enabled' => false,
         ])
-        ->assertRedirect('/einstellungen?pane=email');
+        ->assertRedirect('/einstellungen/email');
 
     $row = StudioSettings::query()->sole();
 
@@ -64,9 +64,9 @@ it('leaves the sender to the environment: no field writes it, and a reset emptie
     (new StudioSettingsResolver)->set('mail_from_address', 'studio@nordlicht.test', $owner);
 
     $this->actingAs($owner, 'staff')
-        ->from('/einstellungen?pane=email')
+        ->from('/einstellungen/email')
         ->patch('/einstellungen/email', ['mail_sender_reset' => true])
-        ->assertRedirect('/einstellungen?pane=email');
+        ->assertRedirect('/einstellungen/email');
 
     $row = StudioSettings::query()->sole();
 

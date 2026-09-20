@@ -16,7 +16,7 @@ it('stores the Sonstige suggestions trimmed, without blanks and without repeats'
             'lead_source_presets' => ['Zeitungsartikel'],
             'lead_channel_presets' => [],
         ])
-        ->assertRedirect('/einstellungen?pane=capture');
+        ->assertRedirect('/einstellungen/erfassung');
 
     $row = StudioSettings::query()->sole();
 

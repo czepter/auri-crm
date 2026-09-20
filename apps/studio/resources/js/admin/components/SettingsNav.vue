@@ -19,23 +19,23 @@ onMounted(() => bar.value?.querySelector('[data-open]')?.scrollIntoView({ inline
 // heading, everything after it belongs to it until the next one.
 const items = [
   { group: 'settings.groupStudio' },
-  { key: 'brand', href: '/einstellungen', label: 'settings.brand' },
-  { key: 'legal', href: '/einstellungen?pane=legal', label: 'settings.legalEntity' },
-  { key: 'general', href: '/einstellungen?pane=general', label: 'settings.navGeneral' },
+  { key: 'general', href: '/einstellungen/allgemein', label: 'settings.navGeneral' },
+  { key: 'brand', href: '/einstellungen/marke', label: 'settings.brand' },
+  { key: 'legal', href: '/einstellungen/rechtliche-einheit', label: 'settings.legalEntity' },
   // Absender und Ruhezeiten gelten studioweit, für jede Mail — das Portal
   // ist einer von vielen Auslösern, nicht ihr Zuhause.
-  { key: 'email', href: '/einstellungen?pane=email', label: 'settings.navMail' },
+  { key: 'email', href: '/einstellungen/email', label: 'settings.navMail' },
   { key: 'notifications', href: '/einstellungen/benachrichtigungen', label: 'settings.navNotifications' },
 
   { group: 'settings.groupBilling' },
   // Bankverbindung und Umsatzsteuer landen beide im Fuß derselben Rechnung.
-  { key: 'invoice', href: '/einstellungen?pane=invoice', label: 'settings.navInvoiceData' },
-  { key: 'documents', href: '/einstellungen?pane=documents', label: 'settings.navDocuments' },
+  { key: 'invoice', href: '/einstellungen/rechnungsdaten', label: 'settings.navInvoiceData' },
+  { key: 'documents', href: '/einstellungen/dokumente', label: 'settings.navDocuments' },
   { key: 'numbering', href: '/einstellungen/nummernkreise', label: 'settings.navNumbering' },
 
   { group: 'settings.groupWork' },
   { key: 'availability', href: '/einstellungen/verfuegbarkeit', label: 'settings.navAvailability' },
-  { key: 'capture', href: '/einstellungen?pane=capture', label: 'settings.navCapture' },
+  { key: 'capture', href: '/einstellungen/erfassung', label: 'settings.navCapture' },
   { key: 'automations', href: '/einstellungen/automationen', label: 'automations.title' },
 
   { group: 'settings.groupPortal' },

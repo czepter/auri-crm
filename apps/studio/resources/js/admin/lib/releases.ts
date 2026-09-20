@@ -92,5 +92,5 @@ function compare(a: string, b: string): number {
 
 /** Das Bild eines Releases liegt beim Dienst, nicht in diesem Build. */
 export function mediaUrl(base: string | null, src: string | null | undefined): string | null {
-  return base && src ? `${base}${src}` : null
+  return base && src ? `${base}/${src.replace(/^\//, '')}` : null
 }

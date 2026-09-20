@@ -298,6 +298,9 @@ Route::middleware('audience:staff')->group(function () {
         // is the account whoever is signed in holds. Ungated: everybody with
         // a session has one.
         Route::get('/profil', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::get('/profil/sicherheit', [ProfileController::class, 'edit'])->defaults('pane', 'sicherheit');
+        Route::get('/profil/benachrichtigungen', [ProfileController::class, 'edit'])->defaults('pane', 'benachrichtigungen');
+        Route::get('/profil/kalender', [ProfileController::class, 'edit'])->defaults('pane', 'kalender');
         Route::patch('/profil', [ProfileController::class, 'update'])->name('profile.update');
         Route::put('/profil/passwort', [ProfileController::class, 'updatePassword'])
             ->name('profile.password');
@@ -366,7 +369,14 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/abwesenheiten/{absence}', [AbsenceController::class, 'update'])->name('absences.update');
         Route::delete('/abwesenheiten/{absence}', [AbsenceController::class, 'destroy'])->name('absences.destroy');
 
-        Route::get('/einstellungen', [StudioSettingsController::class, 'edit'])->name('settings.edit');
+        Route::redirect('/einstellungen', '/einstellungen/allgemein');
+        Route::get('/einstellungen/marke', [StudioSettingsController::class, 'edit'])->defaults('pane', 'brand');
+        Route::get('/einstellungen/rechtliche-einheit', [StudioSettingsController::class, 'edit'])->defaults('pane', 'legal');
+        Route::get('/einstellungen/allgemein', [StudioSettingsController::class, 'edit'])->defaults('pane', 'general');
+        Route::get('/einstellungen/email', [StudioSettingsController::class, 'edit'])->defaults('pane', 'email');
+        Route::get('/einstellungen/rechnungsdaten', [StudioSettingsController::class, 'edit'])->defaults('pane', 'invoice');
+        Route::get('/einstellungen/dokumente', [StudioSettingsController::class, 'edit'])->defaults('pane', 'documents');
+        Route::get('/einstellungen/erfassung', [StudioSettingsController::class, 'edit'])->defaults('pane', 'capture');
         Route::patch('/einstellungen', [StudioSettingsController::class, 'update'])->name('settings.update');
         Route::get('/einstellungen/logo', [StudioSettingsController::class, 'logo'])->name('settings.logo');
         Route::patch('/einstellungen/ust', [StudioSettingsController::class, 'updateVat'])->name('settings.vat.update');
@@ -618,6 +628,12 @@ Route::middleware('audience:staff')->group(function () {
             ->name('quotes.store');
         Route::get('/angebote/{quote}/positionen/{quoteItem}/bild', [QuoteController::class, 'itemImage'])
             ->name('quotes.items.image');
+        Route::post('/angebote/{quote}/schaufenster', [QuoteController::class, 'storeShowcase'])
+            ->name('quotes.showcase.store');
+        Route::get('/angebote/{quote}/schaufenster/{index}', [QuoteController::class, 'showcase'])
+            ->whereNumber('index')->name('quotes.showcase');
+        Route::delete('/angebote/{quote}/schaufenster/{index}', [QuoteController::class, 'destroyShowcase'])
+            ->whereNumber('index')->name('quotes.showcase.destroy');
         Route::patch('/angebote/{quote}', [QuoteController::class, 'update'])->name('quotes.update');
         Route::post('/angebote/{quote}/vorschau', [QuoteController::class, 'preview'])->name('quotes.preview');
         Route::get('/angebote/{quote}/vorschau', [QuoteController::class, 'previewSheet'])->name('quotes.preview.sheet');
@@ -637,12 +653,6 @@ Route::middleware('audience:staff')->group(function () {
         // E-02: a project's own questionnaires, seeded from a FormTemplate
         // or started blank, then personalised freely — see FormInstance's
         // own doc comment.
-        Route::post('/angebote/{quote}/schaufenster', [QuoteController::class, 'storeShowcase'])
-            ->name('quotes.showcase.store');
-        Route::get('/angebote/{quote}/schaufenster/{index}', [QuoteController::class, 'showcase'])
-            ->whereNumber('index')->name('quotes.showcase');
-        Route::delete('/angebote/{quote}/schaufenster/{index}', [QuoteController::class, 'destroyShowcase'])
-            ->whereNumber('index')->name('quotes.showcase.destroy');
         Route::get('/auftraege/{project}/frageboegen', [ProjectController::class, 'forms'])
             ->name('projects.forms');
         Route::post('/auftraege/{project}/frageboegen', [FormInstanceController::class, 'store'])

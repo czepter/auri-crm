@@ -21,7 +21,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -40,13 +39,14 @@ class StudioSettingsController extends Controller
 {
     use AuthorizesStaffSettings;
 
-    public function edit(StudioSettingsResolver $settings): Response
+    public function edit(StudioSettingsResolver $settings, string $pane): Response
     {
         $this->authorizeSettings();
 
         $row = StudioSettings::query()->firstOrFail();
 
         return Inertia::render('Settings/Index', [
+            'pane' => $pane,
             // #234: the four pairs, each with what it is — the screen draws
             // the choice as a preview and not as a sample line.
             'fontPairs' => collect(FontPair::cases())->map(fn (FontPair $pair) => [
@@ -334,7 +334,7 @@ class StudioSettingsController extends Controller
                 ->all(), $actor);
         }
 
-        return redirect('/einstellungen?pane=capture');
+        return redirect('/einstellungen/erfassung');
     }
 
     /**

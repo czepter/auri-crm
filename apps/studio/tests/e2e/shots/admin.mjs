@@ -100,7 +100,7 @@ const screens = [
   ['vorlagen-galerien', '/vorlagen?typ=galerien'],
   ['dokumentvorlagen-neu', '/dokumentvorlagen/neu'],
   ['dokumentvorlage-detail', ids.documentTemplate],
-  ['einstellungen', '/einstellungen'],
+  ['einstellungen', '/einstellungen/allgemein'],
   ['einstellungen-nummernkreise', '/einstellungen/nummernkreise'],
   ['einstellungen-verfuegbarkeit', '/einstellungen/verfuegbarkeit'],
   ['einstellungen-zahlungen', '/einstellungen/zahlungen'],

@@ -1427,7 +1427,7 @@
   },
   "portalSettings": {
     "title": "Portal",
-    "maintenanceSection": "Wartung",
+    "maintenanceSection": "Zugang",
     "maintenanceEnabledLabel": "Portal schließen",
     "maintenanceMessageLabel": "Hinweistext beim Schließen",
     "legalSection": "Rechtliches",

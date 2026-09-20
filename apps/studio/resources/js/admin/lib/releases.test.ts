@@ -53,6 +53,9 @@ describe('mediaUrl', () => {
     expect(mediaUrl('https://release-log.example', '/media/0.9.1.png')).toBe(
       'https://release-log.example/media/0.9.1.png',
     )
+    expect(mediaUrl('https://release-log.example', 'media/0.9.1.png')).toBe(
+      'https://release-log.example/media/0.9.1.png',
+    )
   })
 
   it('gibt nichts zurück, solange kein Dienst konfiguriert ist', () => {

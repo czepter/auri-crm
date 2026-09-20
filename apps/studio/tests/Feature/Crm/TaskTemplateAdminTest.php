@@ -165,7 +165,7 @@ it('reaches on ManageTasks alone — the same role a ManageSettings-only pane 40
 
     // Photographer has no ManageSettings (AuthorizesStaffSettings 404s it out
     // of every other T-0x settings pane), but does have ManageTasks.
-    $this->actingAs($photographer, 'staff')->get('/einstellungen')->assertNotFound();
+    $this->actingAs($photographer, 'staff')->get('/einstellungen/allgemein')->assertNotFound();
     $this->actingAs($photographer, 'staff')->get('/vorlagen?typ=aufgaben')->assertOk();
 });
 

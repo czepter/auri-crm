@@ -14,7 +14,7 @@ beforeEach(fn () => Cache::store('redis')->flush());
 
 it('hands the VAT mode, rate and note to the settings screen', function () {
     $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get('/einstellungen')
+        ->get('/einstellungen/allgemein')
         ->assertOk()
         ->viewData('page')['props'];
 
@@ -28,13 +28,13 @@ it('updates vat_mode, vat_rate and vat_note, redirects, and audits the owner', f
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')
-        ->from('/einstellungen?pane=vat')
+        ->from('/einstellungen/rechnungsdaten')
         ->patch('/einstellungen/ust', [
             'vat_mode' => 'small_business',
             'vat_rate' => 1900,
             'vat_note' => 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.',
         ])
-        ->assertRedirect('/einstellungen?pane=vat');
+        ->assertRedirect('/einstellungen/rechnungsdaten');
 
     $row = StudioSettings::query()->sole();
 

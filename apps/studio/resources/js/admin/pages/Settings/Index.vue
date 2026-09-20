@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useForm, usePage } from '@inertiajs/vue3'
+import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
@@ -24,7 +24,7 @@ import { Textarea } from '@/ui/textarea'
 import { Label } from '@/ui/label'
 
 const props = defineProps<{
-
+  pane: 'brand' | 'legal' | 'invoice' | 'documents' | 'email' | 'capture' | 'general'
   fontPairs: { value: string; label: string; description: string }[]
   mailSenderFromEnv: { name: boolean; address: boolean }
   settings: App.Settings.Data.StudioSettingsData
@@ -33,26 +33,11 @@ const props = defineProps<{
   legalTemplates: { family: string; name: string; updatedAt: string | null }[]
 }>()
 
-// Which pane of the section shell is showing. In the query rather than in a
-// ref, because SettingsNav reaches these four from the sibling settings
-// screens too — a pane only this component could switch to was a pane those
-// screens had to render as "bald".
-// The studio profile is one form split over three nav entries, so each of
-// them is its own pane and ProfileForm renders only that section.
-const PROFILE_SECTIONS = ['brand', 'legal', 'bank'] as const
+// Der Studio-Steckbrief ist ein Formular auf zwei Einträgen: ProfileForm
+// zeigt nur den Abschnitt, der zum Pane gehört.
 // Bankverbindung und Umsatzsteuer stehen auf demselben Beleg und deshalb auf
 // einem Blatt: „invoice" zeigt beide Formulare untereinander.
-const PANES = [...PROFILE_SECTIONS, 'invoice', 'vat', 'documents', 'email', 'capture', 'general'] as const
-
-const page = usePage()
-
-const pane = computed(() => {
-  const asked = new URL(page.url, 'http://settings').searchParams.get('pane')
-
-  return PANES.find((known) => known === asked) ?? 'brand'
-})
-
-const profileSection = computed(() => PROFILE_SECTIONS.find((section) => section === pane.value))
+const profileSection = computed(() => (props.pane === 'brand' || props.pane === 'legal' ? props.pane : undefined))
 
 // Mo..So, ISO weekday order — matches the integers StudioSettingsController
 // validates working_days.* against and TaskTemplate::dueFor() rolls over.
@@ -145,12 +130,11 @@ const emailRef = ref<InstanceType<typeof EmailForm>>()
 // Onboarding-Schritt dasselbe VatForm benutzt. Der Kopf speichert deshalb,
 // was schmutzig ist, statt ein einzelnes form-Attribut zu tragen.
 const activePanes = computed(() => {
-  if (pane.value === 'invoice') return [profileRef.value, vatRef.value]
-  if (pane.value === 'vat') return [vatRef.value]
-  if (pane.value === 'documents') return [documentsRef.value]
-  if (pane.value === 'email') return [emailRef.value]
-  if (pane.value === 'capture') return [{ form: captureForm, submit: submitCapture }]
-  if (pane.value === 'general') return [{ form: generalForm, submit: submitGeneral }]
+  if (props.pane === 'invoice') return [profileRef.value, vatRef.value]
+  if (props.pane === 'documents') return [documentsRef.value]
+  if (props.pane === 'email') return [emailRef.value]
+  if (props.pane === 'capture') return [{ form: captureForm, submit: submitCapture }]
+  if (props.pane === 'general') return [{ form: generalForm, submit: submitGeneral }]
   return [profileRef.value]
 })
 
@@ -162,14 +146,12 @@ function save() {
 }
 
 const paneTitle = computed(() => {
-  if (pane.value === 'invoice') return 'settings.navInvoiceData'
-  if (pane.value === 'vat') return 'settings.vatTitle'
-  if (pane.value === 'documents') return 'settings.documentsTitle'
-  if (pane.value === 'email') return 'settings.mailTitle'
-  if (pane.value === 'capture') return 'settings.captureTitle'
-  if (pane.value === 'general') return 'settings.generalTitle'
-  if (pane.value === 'legal') return 'settings.legalEntity'
-  if (pane.value === 'bank') return 'settings.bank'
+  if (props.pane === 'invoice') return 'settings.navInvoiceData'
+  if (props.pane === 'documents') return 'settings.documentsTitle'
+  if (props.pane === 'email') return 'settings.mailTitle'
+  if (props.pane === 'capture') return 'settings.captureTitle'
+  if (props.pane === 'general') return 'settings.generalTitle'
+  if (props.pane === 'legal') return 'settings.legalEntity'
   return 'settings.brand'
 })
 
@@ -177,7 +159,7 @@ const paneTitle = computed(() => {
 // Dokumente share: saved settings underneath, whatever the mounted form holds
 // on top, so the field being typed is the one moving in the preview. Only one
 // pane is mounted at a time, so at most one of the three refs contributes.
-const DOCUMENT_PANES = ['legal', 'bank', 'invoice', 'vat', 'documents']
+const DOCUMENT_PANES = ['legal', 'invoice', 'documents']
 
 const documentPreview = computed(() => {
   const profile = profileRef.value?.form
@@ -284,7 +266,6 @@ function submitGeneral() {
                 </div>
               </template>
 
-              <VatForm v-else-if="pane === 'vat'" ref="vatRef" :settings="settings" />
               <DocumentsForm v-else-if="pane === 'documents'" ref="documentsRef" :settings="settings" />
               <EmailForm v-else-if="pane === 'email'" ref="emailRef" :settings="settings" :sender-from-env="mailSenderFromEnv" />
 

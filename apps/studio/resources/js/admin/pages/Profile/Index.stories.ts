@@ -20,6 +20,7 @@ const meta = {
   component: Index,
   parameters: { layout: 'fullscreen', url: '/profil' },
   args: {
+    pane: 'konto',
     user: {
       name: 'Christian Zepter',
       email: 'christian@atelier-nordlicht.de',
@@ -48,23 +49,27 @@ export const Konto: Story = {}
 
 /** Zweiter Faktor bestätigt, acht Wiederherstellungscodes übrig. */
 export const Sicherheit: Story = {
-  parameters: { url: '/profil?pane=sicherheit' },
+  args: { pane: 'sicherheit' },
+  parameters: { url: '/profil/sicherheit' },
 }
 
 /** Je Ereignis ein Kanal, dazu der Rhythmus der Zusammenfassung. */
 export const Benachrichtigungen: Story = {
-  parameters: { url: '/profil?pane=benachrichtigungen' },
+  args: { pane: 'benachrichtigungen' },
+  parameters: { url: '/profil/benachrichtigungen' },
 }
 
 /** Die Abo-Adresse des Termin-Feeds. */
 export const Kalender: Story = {
-  parameters: { url: '/profil?pane=kalender' },
+  args: { pane: 'kalender' },
+  parameters: { url: '/profil/kalender' },
 }
 
 /** Adresswechsel noch nicht bestätigt, zweiter Faktor nicht eingerichtet. */
 export const NochNichtBestaetigt: Story = {
-  parameters: { url: '/profil?pane=sicherheit' },
+  parameters: { url: '/profil/sicherheit' },
   args: {
+    pane: 'sicherheit',
     pendingEmail: 'christian@nordlicht.studio',
     mfaConfirmed: false,
     recoveryCodesLeft: 0,

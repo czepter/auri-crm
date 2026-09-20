@@ -37,7 +37,7 @@ class CalendarController extends Controller
      * The subscription URL is not on this screen any more. It is a credential
      * — anyone holding it reads this person's schedule — and it was the
      * widest block above the working area; it lives under
-     * /profil?pane=kalender now.
+     * /profil/kalender now.
      */
     public function index(Request $request, CrmVocabulary $vocabulary): InertiaResponse
     {

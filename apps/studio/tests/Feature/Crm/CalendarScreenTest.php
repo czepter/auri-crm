@@ -134,7 +134,7 @@ it('keeps the feed url off the calendar and puts it in the profile', function ()
     expect($props)->not->toHaveKey('feedUrl');
 
     $profile = test()->actingAs(test()->staff, 'staff')
-        ->get('/profil?pane=kalender')->assertOk()->viewData('page')['props'];
+        ->get('/profil/kalender')->assertOk()->viewData('page')['props'];
 
     expect($profile['calendarFeedUrl'])->toContain('/shootings.ics');
 });

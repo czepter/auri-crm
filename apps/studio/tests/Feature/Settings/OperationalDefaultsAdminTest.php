@@ -14,7 +14,7 @@ beforeEach(fn () => Cache::store('redis')->flush());
 
 it('hands the timezone, locale and working days to the settings screen', function () {
     $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get('/einstellungen')
+        ->get('/einstellungen/allgemein')
         ->assertOk()
         ->viewData('page')['props'];
 
@@ -28,14 +28,14 @@ it('updates timezone, locale, working days and the register, redirects, and audi
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')
-        ->from('/einstellungen?pane=general')
+        ->from('/einstellungen/allgemein')
         ->patch('/einstellungen/allgemein', [
             'timezone' => 'Europe/Vienna',
             'locale' => 'de_AT',
             'working_days' => [1, 2, 3, 4, 5],
             'client_register' => 'informal',
         ])
-        ->assertRedirect('/einstellungen?pane=general');
+        ->assertRedirect('/einstellungen/allgemein');
 
     $row = StudioSettings::query()->sole();
 
