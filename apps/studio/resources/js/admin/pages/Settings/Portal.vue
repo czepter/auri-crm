@@ -5,11 +5,10 @@ import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import SettingsNav from '@/admin/components/SettingsNav.vue'
 import PortalForm from './panes/PortalForm.vue'
-import PreviewFrame from './previews/PreviewFrame.vue'
 import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { useI18n } from 'vue-i18n'
-import { refDebounced } from '@vueuse/core'
+import { refDebounced, useElementSize } from '@vueuse/core'
 
 defineProps<{
   settings: App.Settings.Data.PortalSettingsData
@@ -49,6 +48,26 @@ const stateOptions = ['inquiry', 'active', 'done'].map((value) => ({
   value,
   label: t(`portalSettings.welcomeState.${value}`),
 }))
+
+// Die Seite steht neben dem Formular, also in einer Spalte, die schmaler ist
+// als das Portal breit ist. Gerendert wird trotzdem in der echten Breite —
+// 1180px am Schreibtisch, 390px am Telefon — und das Ganze auf die Spalte
+// heruntergerechnet, damit der Umbruch der ist, den der Kunde sieht, und
+// nicht einer, den die Rahmenbreite erfindet.
+const DEVICES = { desktop: { width: 1180, height: 900 }, mobile: { width: 390, height: 844 } }
+
+const device = ref<keyof typeof DEVICES>('desktop')
+
+const deviceOptions = (Object.keys(DEVICES) as (keyof typeof DEVICES)[]).map((value) => ({
+  value,
+  label: t(`portalSettings.device.${value}`),
+}))
+
+const rail = ref<HTMLElement>()
+const { width: railWidth } = useElementSize(rail)
+
+const frame = computed(() => DEVICES[device.value])
+const scale = computed(() => Math.min(1, (railWidth.value || frame.value.width) / frame.value.width))
 </script>
 
 <template>
@@ -73,16 +92,32 @@ const stateOptions = ['inquiry', 'active', 'done'].map((value) => ({
           <div class="flex flex-wrap items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
             <SettingsNav active="portal" />
 
-            <div class="max-w-[620px] min-w-0 flex-1">
+            <div class="w-[620px] max-w-full min-w-0 flex-none">
               <PortalForm ref="formRef" :settings="settings" />
             </div>
 
-            <PreviewFrame class="w-[1180px]" :label="$t('settings.previewPortal')">
-              <ChoiceGroup v-model="state" class="mb-4" variant="segmented" :options="stateOptions" />
-              <!-- Die echte Seite, in ihrer eigenen Breite: das Portal misst
-                   1180px, und darunter fällt es in sein Handy-Layout. -->
-              <iframe :src="src" class="h-[900px] w-full rounded-md border-0 bg-background" title="" />
-            </PreviewFrame>
+            <aside ref="rail" class="sticky top-6 min-w-[360px] flex-1">
+              <div class="mb-2.5 flex flex-wrap items-center gap-3">
+                <span class="text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.previewPortal') }}</span>
+                <ChoiceGroup v-model="device" class="ml-auto" variant="segmented" :options="deviceOptions" />
+              </div>
+              <ChoiceGroup v-model="state" class="mb-3" variant="segmented" :options="stateOptions" />
+              <div class="rounded-lg bg-muted p-3">
+                <div class="overflow-hidden" :style="{ height: `${frame.height * scale}px` }">
+                  <iframe
+                    :src="src"
+                    class="rounded-md border-0 bg-background"
+                    :style="{
+                      width: `${frame.width}px`,
+                      height: `${frame.height}px`,
+                      transform: `scale(${scale})`,
+                      transformOrigin: 'top left',
+                    }"
+                    title=""
+                  />
+                </div>
+              </div>
+            </aside>
           </div>
         </div>
       </div>

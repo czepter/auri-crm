@@ -1473,6 +1473,10 @@
       "inquiry": "Noch nie gebucht",
       "active": "Termin steht oder Bilder in Arbeit",
       "done": "Alles geliefert, nichts offen"
+    },
+    "device": {
+      "desktop": "Schreibtisch",
+      "mobile": "Telefon"
     }
   },
   "gallerySettings": {

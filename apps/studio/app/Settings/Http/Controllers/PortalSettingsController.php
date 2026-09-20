@@ -78,7 +78,9 @@ class PortalSettingsController extends Controller
     {
         $this->authorizeSettings();
 
-        $state = $request->query('zustand');
+        $state = in_array($request->query('zustand'), ['inquiry', 'active', 'done'], true)
+            ? $request->query('zustand')
+            : 'inquiry';
 
         // Getippt statt gespeichert: das Formular schickt, was gerade im Feld
         // steht, damit die Vorschau mitläuft.
@@ -89,6 +91,11 @@ class PortalSettingsController extends Controller
         });
 
         return Inertia::render('Settings/PortalHomePreview', [
+            'state' => $state,
+            // Eine erfundene Kundin, damit die Seite jemandem gehört: ein
+            // echter Kontakt müsste erst gesucht werden, und seine Buchungen
+            // sagen über die Einstellung nichts.
+            'client' => 'Maxi Musterfrau',
             'welcomeText' => $welcome,
             'closed' => $request->boolean('geschlossen'),
             'maintenanceMessage' => $request->query('hinweis', $settings->maintenanceMessage()),
