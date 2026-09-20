@@ -33,8 +33,8 @@ class TasksDue extends StudioEventNotification
 
         return $this->tasks
             ->map(fn (Task $task) => $task->due_on->lt($today)
-                ? sprintf('%s — %s, seit %d Tagen überfällig', $task->project->name, $task->title, (int) $task->due_on->diffInDays($today))
-                : sprintf('%s — %s, heute fällig', $task->project->name, $task->title))
+                ? sprintf('%s, seit %d Tagen überfällig', $task->summary(), (int) $task->due_on->diffInDays($today))
+                : sprintf('%s, heute fällig', $task->summary()))
             ->values()
             ->all();
     }

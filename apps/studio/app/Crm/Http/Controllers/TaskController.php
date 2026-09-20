@@ -3,6 +3,7 @@
 namespace App\Crm\Http\Controllers;
 
 use App\Crm\Enums\TaskAudience;
+use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Crm\Models\Task;
 use App\Crm\Support\TaskAnchors;
@@ -72,6 +73,32 @@ class TaskController extends Controller
                 : null,
             'depends_on_task_id' => $predecessor?->id,
             'assignee_id' => $this->assigneeId($validated['assignee'] ?? null),
+        ]);
+
+        return back();
+    }
+
+    /** Studio work with no project behind it. Always internal: a client task needs a project to be about. */
+    public function storeStudio(Request $request): RedirectResponse
+    {
+        $this->authorize('create', Task::class);
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'audience' => ['prohibited'],
+            'due_on' => ['nullable', 'date'],
+            'assignee' => ['nullable', 'string', Rule::exists('users', 'public_id')],
+            'contact' => ['nullable', 'string', Rule::exists('contacts', 'public_id')],
+        ]);
+
+        Task::create([
+            'title' => $validated['title'],
+            'audience' => TaskAudience::Internal,
+            'due_on' => $validated['due_on'] ?? null,
+            'assignee_id' => $this->assigneeId($validated['assignee'] ?? null),
+            'contact_id' => isset($validated['contact'])
+                ? Contact::query()->where('public_id', $validated['contact'])->value('id')
+                : null,
         ]);
 
         return back();

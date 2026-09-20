@@ -464,8 +464,8 @@ crewConflicts: App.Crm.Data.DateConflictData[],
 };
 export type TaskRowData = {
 id: string,
-projectId: string,
-projectName: string,
+projectId: string | null,
+projectName: string | null,
 title: string,
 dueOn: string | null,
 isOverdue: boolean,
@@ -480,6 +480,8 @@ completedOn: string | null,
 dueAnchorLabel: string | null,
 assigneeId: string | null,
 assigneeName: string | null,
+contactId: string | null,
+contactName: string | null,
 };
 export type TaskTemplateData = {
 id: string,
@@ -820,7 +822,8 @@ depositPercentage: number,
 };
 export type TaskReadData = {
 id: string,
-projectId: string,
+projectId: string | null,
+contactId: string | null,
 title: string,
 audience: string,
 dueOn: string | null,

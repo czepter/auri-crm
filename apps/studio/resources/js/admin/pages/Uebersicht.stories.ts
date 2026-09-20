@@ -34,6 +34,8 @@ const task = (id: string, projectId: string, projectName: string, title: string,
   dueAnchorLabel: null,
   assigneeId: 'u1',
   assigneeName: 'Christian Zepter',
+  contactId: null,
+  contactName: null,
 })
 
 const meta = {

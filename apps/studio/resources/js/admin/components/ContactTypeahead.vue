@@ -9,6 +9,7 @@ import { Input } from '@/ui/input'
 // which makes "create new" unreachable until the existing matches have been
 // seen. A plain text field cannot do this — it just lets you type a fresh name.
 const model = defineModel<App.Crm.Data.ContactSuggestionData | null>({ required: true })
+const { creatable = true } = defineProps<{ creatable?: boolean }>()
 const emit = defineEmits<{ createNew: [term: string] }>()
 
 const term = ref('')
@@ -114,7 +115,7 @@ const ROW = [
           </span>
         </Button>
 
-        <Button variant="ghost" :class="[ROW, 'bg-muted']" type="button" @click="emit('createNew', term)">
+        <Button v-if="creatable" variant="ghost" :class="[ROW, 'bg-muted']" type="button" @click="emit('createNew', term)">
           <span class="flex size-[26px] flex-none items-center justify-center rounded-full bg-foreground text-[14px] leading-none font-semibold text-background">+</span>
           <span class="text-[12.5px] leading-[1.25] font-semibold">{{ $t('leads.contactCreate', { term }) }}</span>
         </Button>

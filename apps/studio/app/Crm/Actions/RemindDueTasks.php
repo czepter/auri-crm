@@ -75,7 +75,7 @@ class RemindDueTasks
             ->where('audience', TaskAudience::Internal)
             ->whereNotNull('due_on')
             ->whereDate('due_on', '<=', now()->toDateString())
-            ->with(['project', 'assignee', 'dependsOn'])
+            ->with(['project', 'contact', 'assignee', 'dependsOn'])
             // Overdue first, then today's — the order the mail is read in.
             ->orderBy('due_on')
             ->get()

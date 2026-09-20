@@ -927,6 +927,7 @@ Route::middleware('audience:staff')->group(function () {
         // an mir offen" — die Frage, die eine Zuweisung ueberhaupt erst stellt.
         Route::get('/aufgaben', TaskBoardController::class)->name('tasks.index');
 
+        Route::post('/aufgaben', [TaskController::class, 'storeStudio'])->name('tasks.store-studio');
         Route::post('/auftraege/{project}/aufgaben', [TaskController::class, 'store'])
             ->name('tasks.store');
         Route::post('/aufgaben/{task}/erledigt', [TaskController::class, 'complete'])

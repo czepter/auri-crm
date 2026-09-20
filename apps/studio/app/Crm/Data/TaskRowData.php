@@ -15,8 +15,8 @@ class TaskRowData extends Data
 {
     public function __construct(
         public string $id,
-        public string $projectId,
-        public string $projectName,
+        public ?string $projectId,
+        public ?string $projectName,
         public string $title,
         public ?string $dueOn,
         public bool $isOverdue,
@@ -40,14 +40,17 @@ class TaskRowData extends Data
         // Auflösung steht in StudioAudience::forTask().
         public ?string $assigneeId = null,
         public ?string $assigneeName = null,
+        // Studio-Aufgaben haben kein Projekt; ihr Kontakt steht an dessen Stelle.
+        public ?string $contactId = null,
+        public ?string $contactName = null,
     ) {}
 
     public static function fromTask(Task $task): self
     {
         return new self(
             id: $task->public_id,
-            projectId: $task->project->public_id,
-            projectName: $task->project->name,
+            projectId: $task->project?->public_id,
+            projectName: $task->project?->name,
             title: $task->title,
             dueOn: $task->due_on?->format('Y-m-d'),
             // Today is not late. A task due today is the day's work, and
@@ -68,6 +71,8 @@ class TaskRowData extends Data
             dueAnchorLabel: $task->dueAnchorLabel(),
             assigneeId: $task->assignee?->public_id,
             assigneeName: $task->assignee?->name,
+            contactId: $task->contact?->public_id,
+            contactName: $task->contact?->name,
         );
     }
 }

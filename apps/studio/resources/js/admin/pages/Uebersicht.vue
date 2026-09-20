@@ -150,8 +150,8 @@ type FooterRow = {
 function fromTask(task: App.Crm.Data.TaskRowData): FooterRow {
     return {
         key: `task:${task.id}`,
-        who: task.projectName,
-        href: `/auftraege/${task.projectId}`,
+        who: task.projectName ?? task.contactName ?? '',
+        href: task.projectId ? `/auftraege/${task.projectId}` : task.contactId ? `/kontakte/${task.contactId}` : '/aufgaben',
         what: task.title,
         emphasis: task.isOverdue && task.dueOn ? dayOf(task.dueOn) : null,
         whatTail: !task.isOverdue && task.dueOn ? ` · ${dayOf(task.dueOn)}` : null,

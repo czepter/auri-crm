@@ -106,12 +106,12 @@ class BuildMorningBriefing
             ->where('audience', TaskAudience::Internal)
             ->whereNotNull('due_on')
             ->whereDate('due_on', '<=', now()->toDateString())
-            ->with(['project', 'assignee', 'dependsOn'])
+            ->with(['project', 'contact', 'assignee', 'dependsOn'])
             ->orderBy('due_on')
             ->get()
             ->reject(fn (Task $task) => $task->isBlocked())
             ->filter(fn (Task $task) => $this->audience->forTask($task)->contains('id', $user->id))
-            ->map(fn (Task $task) => "{$task->project->name} — {$task->title} ({$task->due_on->format('d.m.Y')})")
+            ->map(fn (Task $task) => "{$task->summary()} ({$task->due_on->format('d.m.Y')})")
             ->values()
             ->all();
     }

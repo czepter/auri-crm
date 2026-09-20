@@ -61,6 +61,7 @@ class EraseContactDsgvo
                 $this->purgeSoleContactProject($project);
             }
 
+            Task::where('contact_id', $contact->id)->update(['contact_id' => null]);
             Message::where('contact_id', $contact->id)->delete();
             ThreadParticipant::where('contact_id', $contact->id)->delete();
             AssetComment::where('contact_id', $contact->id)->delete();

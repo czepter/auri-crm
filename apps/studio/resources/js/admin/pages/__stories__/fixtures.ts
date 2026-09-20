@@ -153,6 +153,8 @@ function task(row: Partial<App.Crm.Data.TaskRowData> & Pick<App.Crm.Data.TaskRow
         dueAnchorLabel: null,
         assigneeId: null,
         assigneeName: null,
+        contactId: null,
+        contactName: null,
         ...row,
     }
 }
