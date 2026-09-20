@@ -43,7 +43,6 @@ const settings: App.Settings.Data.StudioSettingsData = {
   documentLetterheadHtml: null,
   documentFooterHtml: null,
   timezone: 'Europe/Berlin',
-  locale: 'de',
   workingDays: [1, 2, 3, 4, 5],
   mailFromName: 'Atelier Nordlicht',
   mailFromAddress: 'post@atelier-nordlicht.de',

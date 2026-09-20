@@ -184,19 +184,6 @@ class StudioSettingsResolver
     }
 
     /**
-     * Carbon's formatting locale for the three DACH variants T-02's own
-     * country select already offers (de_DE/de_AT/de_CH) — never
-     * config('app.locale')'s translation locale, which stays 'de' and
-     * env-independent on purpose (see config/app.php). Same fallback shape
-     * as timezone() above: the tenant value once set, the environment
-     * otherwise.
-     */
-    public function locale(): string
-    {
-        return $this->row()->locale ?? config('app.locale');
-    }
-
-    /**
      * ISO weekday integers (1 Monday .. 7 Sunday) the studio works —
      * TaskTemplate::dueFor() rolls a due date forward off any day not in
      * this set. Guards an empty array (should never reach the database
@@ -542,7 +529,7 @@ class StudioSettingsResolver
 
     /**
      * config('mail.from.name')'s per-tenant replacement — the same fallback
-     * shape as timezone()/locale() above: the tenant value once T-06's
+     * shape as timezone() above: the tenant value once T-06's
      * E-Mail pane has set one, the environment default otherwise.
      */
     public function mailFromName(): string

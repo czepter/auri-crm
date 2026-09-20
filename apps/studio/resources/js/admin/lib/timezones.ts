@@ -1,19 +1,15 @@
 // Die Zonenliste kommt aus Intl statt aus einem Paket: der Browser trägt die
 // aktuelle tzdata, ein mitgeliefertes JSON altert zwischen zwei Releases.
 
-function intlLocale(locale: string): string {
-  return locale.replace('_', '-')
-}
-
 export function browserTimezone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone
 }
 
-export function timezoneLabel(zone: string, locale: string): string {
+export function timezoneLabel(zone: string): string {
   const now = new Date()
 
   try {
-    const name = new Intl.DateTimeFormat(intlLocale(locale), { timeZone: zone, timeZoneName: 'long' })
+    const name = new Intl.DateTimeFormat('de', { timeZone: zone, timeZoneName: 'long' })
       .formatToParts(now)
       .find((part) => part.type === 'timeZoneName')?.value
     const offset = new Intl.DateTimeFormat('en', { timeZone: zone, timeZoneName: 'longOffset' })

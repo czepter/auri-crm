@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { searchTimezones, timezoneLabel } from './timezones'
 
 describe('timezoneLabel', () => {
-  it('names the zone in the given locale', () => {
-    expect(timezoneLabel('Europe/Berlin', 'de_DE')).toMatch(/^Europe\/Berlin · Mitteleuropäische .+ \(UTC\+0[12]:00\)$/)
+  it('names the zone in German', () => {
+    expect(timezoneLabel('Europe/Berlin')).toMatch(/^Europe\/Berlin · Mitteleuropäische .+ \(UTC\+0[12]:00\)$/)
   })
 
   it('falls back to the identifier for a zone Intl does not know', () => {
-    expect(timezoneLabel('Mars/Olympus', 'de')).toBe('Mars/Olympus')
+    expect(timezoneLabel('Mars/Olympus')).toBe('Mars/Olympus')
   })
 })
 

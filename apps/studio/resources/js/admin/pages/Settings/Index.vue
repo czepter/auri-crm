@@ -17,7 +17,6 @@ import { basisPointsToPercent } from '@/admin/lib/money'
 import { browserTimezone, searchTimezones, timezoneLabel } from '@/admin/lib/timezones'
 import { Button } from '@/ui/button'
 import { Combobox, ComboboxAnchor, ComboboxContent, ComboboxInput, ComboboxItem } from '@/ui/combobox'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Checkbox } from '@/ui/checkbox'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Textarea } from '@/ui/textarea'
@@ -56,7 +55,6 @@ const weekdays = [
 // at the wire boundary, same as every other field here.
 const generalForm = useForm({
   timezone: props.settings.timezone,
-  locale: props.settings.locale,
   working_days: [...props.settings.workingDays] as number[],
   // Die Anrede trägt jede Mail, jedes Angebot und das Portal — sie stand
   // unter Portal und gilt überall.
@@ -213,7 +211,6 @@ function submitGeneral() {
   generalForm
     .transform((data) => ({
       timezone: data.timezone || null,
-      locale: data.locale || null,
       working_days: data.working_days,
       client_register: data.client_register,
       portal_legal_impressum_url: data.portal_legal_impressum_url || null,
@@ -289,7 +286,6 @@ function submitGeneral() {
 
               <form v-else id="general-form" @submit.prevent="submitGeneral">
                 <div>
-                  <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.timezoneLocaleLabel') }}</div>
                   <div class="mb-6">
                     <div class="grid grid-cols-2 gap-4">
                       <div class="flex min-w-0 flex-col gap-1.5">
@@ -298,7 +294,7 @@ function submitGeneral() {
                           <ComboboxAnchor>
                             <ComboboxInput
                               id="g-zeitzone"
-                              :model-value="zoneTerm ?? timezoneLabel(generalForm.timezone, generalForm.locale)"
+                              :model-value="zoneTerm ?? timezoneLabel(generalForm.timezone)"
                               @update:model-value="zoneTerm = String($event)"
                             />
                           </ComboboxAnchor>
@@ -309,7 +305,7 @@ function submitGeneral() {
                               :value="zone"
                               @select="chooseZone(zone)"
                             >
-                              {{ timezoneLabel(zone, generalForm.locale) }}
+                              {{ timezoneLabel(zone) }}
                             </ComboboxItem>
                           </ComboboxContent>
                         </Combobox>
@@ -322,24 +318,6 @@ function submitGeneral() {
                           {{ $t('settings.timezoneFromBrowser', { zone: browserZone }) }}
                         </button>
                         <p v-if="generalForm.errors.timezone" class="text-[11.5px] leading-[1.45] text-destructive">{{ generalForm.errors.timezone }}</p>
-                      </div>
-                      <div class="flex min-w-0 flex-col gap-1.5">
-                        <Label for="g-sprache">{{ $t('settings.localeLabel') }}</Label>
-                        <Select
-                          :model-value="generalForm.locale"
-                          @update:model-value="(value) => (generalForm.locale = String(value))"
-                        >
-                          <SelectTrigger id="g-sprache">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="de">{{ $t('settings.localeDe') }}</SelectItem>
-                            <SelectItem value="de_DE">{{ $t('settings.localeDeDe') }}</SelectItem>
-                            <SelectItem value="de_AT">{{ $t('settings.localeDeAt') }}</SelectItem>
-                            <SelectItem value="de_CH">{{ $t('settings.localeDeCh') }}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <p v-if="generalForm.errors.locale" class="text-[11.5px] leading-[1.45] text-destructive">{{ generalForm.errors.locale }}</p>
                       </div>
                     </div>
                   </div>

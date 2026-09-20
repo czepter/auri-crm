@@ -15,11 +15,10 @@ uses(RefreshDatabase::class);
 
 beforeEach(fn () => Cache::store('redis')->flush());
 
-it('seeds a null timezone and locale, and every day as a working day', function () {
+it('seeds a null timezone and every day as a working day', function () {
     $row = StudioSettings::query()->sole();
 
     expect($row->timezone)->toBeNull()
-        ->and($row->locale)->toBeNull()
         ->and($row->working_days)->toBe([1, 2, 3, 4, 5, 6, 7]);
 });
 
@@ -39,21 +38,6 @@ it('returns the tenant timezone once set, not the environment fallback', functio
         ->and($resolver->timezone())->not->toBe(config('app.timezone'));
 });
 
-it('falls back to config(app.locale) while the tenant locale is unset', function () {
-    $resolver = app(StudioSettingsResolver::class);
-
-    expect($resolver->locale())->toBe(config('app.locale'));
-});
-
-it('returns the tenant locale once set, not the environment fallback', function () {
-    $owner = staffMember(StaffRole::Owner);
-    $resolver = new StudioSettingsResolver;
-
-    $resolver->set('locale', 'de_AT', $owner);
-
-    expect($resolver->locale())->toBe('de_AT');
-});
-
 it('treats an empty working_days set as every day, guarding the roll in dueFor() against looping forever', function () {
     // Bypasses the controller's own min:1 validation on purpose, to prove
     // the resolver's own guard holds even if a row were ever corrupted.
@@ -69,12 +53,10 @@ it('writes one audit row per changed operational-defaults field', function () {
     $resolver = new StudioSettingsResolver;
 
     $resolver->set('timezone', 'Europe/Zurich', $owner);
-    $resolver->set('locale', 'de_CH', $owner);
     $resolver->set('working_days', [1, 2, 3, 4, 5], $owner);
 
-    expect(AuditLog::where('event', 'studio_settings.updated')->count())->toBe(3)
+    expect(AuditLog::where('event', 'studio_settings.updated')->count())->toBe(2)
         ->and(AuditLog::where('context->key', 'timezone')->sole()->context['new'])->toBe('Europe/Zurich')
-        ->and(AuditLog::where('context->key', 'locale')->sole()->context['new'])->toBe('de_CH')
         ->and(AuditLog::where('context->key', 'working_days')->sole()->context['new'])->toBe([1, 2, 3, 4, 5]);
 });
 

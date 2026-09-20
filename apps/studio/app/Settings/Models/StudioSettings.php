@@ -13,8 +13,8 @@ use Illuminate\Database\Eloquent\Model;
  * row. display_name is T-01's scaffolding column; vat_mode, vat_rate and
  * vat_note are T-03's (Zahlungsdaten & USt — Q-04 reads these once it
  * ships); default_shoot_duration_minutes is T-09's (Verfügbarkeit —
- * ShootCalendar reads it instead of a hardcoded addHours(2)); timezone,
- * locale and working_days are T-13's (Allgemein); the rest below is T-02's
+ * ShootCalendar reads it instead of a hardcoded addHours(2)); timezone
+ * and working_days are T-13's (Allgemein); the rest below is T-02's
  * Studio-Profil. quote_validity_days, payment_term_days,
  * deposit_percentage, widerruf_included and widerruf_text are T-05's
  * Dokumente pane — the values every new quote and payment plan
@@ -45,7 +45,7 @@ class StudioSettings extends Model
         'default_shoot_duration_minutes',
         'quote_validity_days', 'payment_term_days', 'deposit_percentage', 'widerruf_included', 'widerruf_text',
         'document_letterhead_html', 'document_footer_html',
-        'timezone', 'locale', 'working_days',
+        'timezone', 'working_days',
         'payments_stripe_enabled', 'payments_stripe_mode',
         'payments_stripe_test_publishable_key', 'payments_stripe_test_secret_key',
         'payments_stripe_live_publishable_key', 'payments_stripe_live_secret_key',

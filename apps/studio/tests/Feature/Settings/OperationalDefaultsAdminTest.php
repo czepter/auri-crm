@@ -12,7 +12,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(fn () => Cache::store('redis')->flush());
 
-it('hands the timezone, locale and working days to the settings screen', function () {
+it('hands the timezone and working days to the settings screen', function () {
     $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->get('/einstellungen/allgemein')
         ->assertOk()
@@ -20,18 +20,16 @@ it('hands the timezone, locale and working days to the settings screen', functio
 
     expect($props['settings'])
         ->toHaveKey('timezone', config('app.timezone'))
-        ->toHaveKey('locale', config('app.locale'))
         ->toHaveKey('workingDays', [1, 2, 3, 4, 5, 6, 7]);
 });
 
-it('updates timezone, locale, working days and the register, redirects, and audits the owner', function () {
+it('updates timezone, working days and the register, redirects, and audits the owner', function () {
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')
         ->from('/einstellungen/allgemein')
         ->patch('/einstellungen/allgemein', [
             'timezone' => 'Europe/Vienna',
-            'locale' => 'de_AT',
             'working_days' => [1, 2, 3, 4, 5],
             'client_register' => 'informal',
         ])
@@ -40,44 +38,34 @@ it('updates timezone, locale, working days and the register, redirects, and audi
     $row = StudioSettings::query()->sole();
 
     expect($row->timezone)->toBe('Europe/Vienna')
-        ->and($row->locale)->toBe('de_AT')
         ->and($row->working_days)->toBe([1, 2, 3, 4, 5])
         ->and($row->client_register)->toBe('informal')
         ->and(AuditLog::where('event', 'studio_settings.updated')
             ->where('context->key', 'timezone')->sole()->actor_id)->toBe($owner->id);
 });
 
-it('clears the tenant timezone and locale back to the environment fallback when submitted blank', function () {
+it('clears the tenant timezone back to the environment fallback when submitted blank', function () {
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')->patch('/einstellungen/allgemein', [
         'timezone' => 'Europe/Vienna',
-        'locale' => 'de_AT',
         'working_days' => [1, 2, 3, 4, 5],
     ]);
 
     $this->actingAs($owner, 'staff')->patch('/einstellungen/allgemein', [
         'timezone' => null,
-        'locale' => null,
         'working_days' => [1, 2, 3, 4, 5],
     ]);
 
     $row = StudioSettings::query()->sole();
 
-    expect($row->timezone)->toBeNull()
-        ->and($row->locale)->toBeNull();
+    expect($row->timezone)->toBeNull();
 });
 
 it('rejects a timezone that is not a real IANA identifier', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->patch('/einstellungen/allgemein', ['timezone' => 'Nonsense/Place', 'working_days' => [1, 2, 3, 4, 5]])
         ->assertInvalid(['timezone']);
-});
-
-it('rejects a locale outside the three DACH variants', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->patch('/einstellungen/allgemein', ['locale' => 'en_US', 'working_days' => [1, 2, 3, 4, 5]])
-        ->assertInvalid(['locale']);
 });
 
 it('rejects an empty working-days selection', function () {

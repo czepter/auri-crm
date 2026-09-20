@@ -56,7 +56,6 @@ class StudioSettingsData extends Data
         public ?string $documentLetterheadHtml,
         public ?string $documentFooterHtml,
         public string $timezone,
-        public string $locale,
         /** @var list<int> */
         public array $workingDays,
         public string $mailFromName,
@@ -112,7 +111,6 @@ class StudioSettingsData extends Data
             documentLetterheadHtml: $settings->documentLetterheadHtml(),
             documentFooterHtml: $settings->documentFooterHtml(),
             timezone: $settings->timezone(),
-            locale: $settings->locale(),
             workingDays: $settings->workingDays(),
             mailFromName: $settings->mailFromName(),
             mailFromAddress: $settings->mailFromAddress(),
