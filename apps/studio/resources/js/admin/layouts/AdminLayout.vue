@@ -117,8 +117,6 @@ const documentsOpen = ref(documentKeys.includes(props.active));
                     >
                 </button>
 
-                <HelpButton />
-
                 <template v-for="item in items" :key="item.key ?? item.group">
                     <template v-if="item.group">
                         <div class="h-4.5 max-[640px]:hidden" />
@@ -249,9 +247,10 @@ const documentsOpen = ref(documentKeys.includes(props.active));
              "Benachrichtigungen" und hiess im Deutschen fast dasselbe.
              mt-auto sitzt hier statt am Konto darunter, damit beide zusammen
              am Fuss der Leiste stehen. -->
-                <div v-if="release" class="mt-auto max-[1080px]:hidden">
+                <div class="mt-auto mb-1.5 flex items-center gap-1 max-[1080px]:hidden">
                     <Link
-                        class="mb-1.5 flex items-center gap-[7px] rounded-lg px-2.5 py-1.5 text-[11.5px] leading-none tabular-nums text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground"
+                        v-if="release"
+                        class="flex items-center gap-[7px] rounded-lg px-2.5 py-1.5 text-[11.5px] leading-none tabular-nums text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground"
                         :class="props.active === 'neuigkeiten' && 'bg-sunk-2 font-semibold text-foreground'"
                         href="/neuigkeiten"
                     >
@@ -262,6 +261,7 @@ const documentsOpen = ref(documentKeys.includes(props.active));
                             :title="$t('releases.available')"
                         />
                     </Link>
+                    <HelpButton class="ml-auto" />
                 </div>
 
                 <!-- The effective style here is the cascade of both sheets: crm.css
@@ -269,7 +269,6 @@ const documentsOpen = ref(documentKeys.includes(props.active));
              centring inside the avatar. -->
                 <DropdownMenu>
                     <DropdownMenuTrigger
-                        :class="release ? undefined : 'mt-auto'"
                         class="flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent p-2.5 text-left text-[12.5px] leading-none font-medium text-foreground transition-colors duration-[120ms] ease-out hover:bg-sunk data-[state=open]:bg-sunk max-[1080px]:hidden"
                     >
                         <span
@@ -288,9 +287,6 @@ const documentsOpen = ref(documentKeys.includes(props.active));
                     <DropdownMenuContent side="top" class="w-[190px]">
                         <DropdownMenuItem as-child>
                             <Link href="/profil">{{ $t("profile.nav") }}</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem as-child>
-                            <Link href="/hilfe">{{ $t("help.title") }}</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem @select="router.post('/logout')">
                             {{ $t("common.signOut") }}

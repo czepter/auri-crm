@@ -33,9 +33,13 @@ beforeEach(() => {
 })
 
 describe('HelpButton', () => {
-  it('zeigt nichts, wenn es für den Screen keinen Artikel gibt', async () => {
+  it('verlinkt auf die Übersicht, wenn es für den Screen keinen Artikel gibt', async () => {
     helpPanel.dockt.value = true
-    expect(await render([])).not.toContain(de.help.open)
+
+    const html = await render([])
+
+    expect(html).toContain('href="/hilfe"')
+    expect(html).toContain(de.help.open)
   })
 
   it('öffnet die Spalte per Button, wenn sie andocken würde', async () => {
