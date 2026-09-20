@@ -5630,14 +5630,14 @@
                                                     "string",
                                                     "null"
                                                 ],
-                                                "maxLength": 5000
+                                                "maxLength": 20000
                                             },
                                             "outro": {
                                                 "type": [
                                                     "string",
                                                     "null"
                                                 ],
-                                                "maxLength": 5000
+                                                "maxLength": 20000
                                             },
                                             "discount_type": {
                                                 "type": [
@@ -5656,6 +5656,9 @@
                                                     "null"
                                                 ],
                                                 "minimum": 1
+                                            },
+                                            "discount_hidden": {
+                                                "type": "boolean"
                                             },
                                             "items": {
                                                 "type": "array",
@@ -5941,14 +5944,14 @@
                                                     "string",
                                                     "null"
                                                 ],
-                                                "maxLength": 5000
+                                                "maxLength": 20000
                                             },
                                             "outro": {
                                                 "type": [
                                                     "string",
                                                     "null"
                                                 ],
-                                                "maxLength": 5000
+                                                "maxLength": 20000
                                             },
                                             "discount_type": {
                                                 "type": [
@@ -5967,6 +5970,9 @@
                                                     "null"
                                                 ],
                                                 "minimum": 1
+                                            },
+                                            "discount_hidden": {
+                                                "type": "boolean"
                                             },
                                             "items": {
                                                 "type": "array",
@@ -8865,14 +8871,14 @@
                             "string",
                             "null"
                         ],
-                        "maxLength": 5000
+                        "maxLength": 20000
                     },
                     "outro": {
                         "type": [
                             "string",
                             "null"
                         ],
-                        "maxLength": 5000
+                        "maxLength": 20000
                     },
                     "discount_type": {
                         "type": [
@@ -8891,6 +8897,9 @@
                             "null"
                         ],
                         "minimum": 1
+                    },
+                    "discount_hidden": {
+                        "type": "boolean"
                     },
                     "items": {
                         "type": "array",
