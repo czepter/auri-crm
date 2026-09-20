@@ -32,6 +32,7 @@ const branding: App.Settings.Data.StudioSettingsData = {
   widerrufIncluded: true,
   widerrufText: null,
   quoteLayout: 'classic',
+  remindersEnabled: true,
   clientRegister: 'formal',
   documentLetterheadHtml: null,
   documentFooterHtml: null,

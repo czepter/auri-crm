@@ -469,7 +469,6 @@ class StudioSettingsResolver
      * @param  array{
      *     payments_stripe_enabled: bool,
      *     payments_stripe_mode: string,
-     *     payments_reminders_enabled: bool,
      *     payments_stripe_test_publishable_key?: ?string,
      *     payments_stripe_test_secret_key?: ?string,
      *     payments_stripe_live_publishable_key?: ?string,
@@ -480,9 +479,7 @@ class StudioSettingsResolver
     {
         $row = StudioSettings::query()->firstOrFail();
 
-        $plainKeys = [
-            'payments_stripe_enabled', 'payments_stripe_mode', 'payments_reminders_enabled',
-        ];
+        $plainKeys = ['payments_stripe_enabled', 'payments_stripe_mode'];
         $keyColumns = [
             'payments_stripe_test_publishable_key', 'payments_stripe_test_secret_key',
             'payments_stripe_live_publishable_key', 'payments_stripe_live_secret_key',

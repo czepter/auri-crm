@@ -40,7 +40,9 @@ const props = defineProps<{
 // The studio profile is one form split over three nav entries, so each of
 // them is its own pane and ProfileForm renders only that section.
 const PROFILE_SECTIONS = ['brand', 'legal', 'bank'] as const
-const PANES = [...PROFILE_SECTIONS, 'vat', 'documents', 'email', 'capture', 'general'] as const
+// Bankverbindung und Umsatzsteuer stehen auf demselben Beleg und deshalb auf
+// einem Blatt: „invoice" zeigt beide Formulare untereinander.
+const PANES = [...PROFILE_SECTIONS, 'invoice', 'vat', 'documents', 'email', 'capture', 'general'] as const
 
 const page = usePage()
 
@@ -138,25 +140,29 @@ const emailRef = ref<InstanceType<typeof EmailForm>>()
 // defaults the form was built with — not a bespoke computed re-implementing
 // that comparison, the same thing Packages/Edit.vue and Projects/Quotes.vue
 // would reach for too if either needed a dirty state.
-const activeForm = computed(() => {
-  if (pane.value === 'vat') return vatRef.value?.form
-  if (pane.value === 'documents') return documentsRef.value?.form
-  if (pane.value === 'email') return emailRef.value?.form
-  if (pane.value === 'capture') return captureForm
-  if (pane.value === 'general') return generalForm
-  return profileRef.value?.form
+// Rechnungsdaten zeigt zwei Formulare — Bankverbindung schreibt nach
+// /einstellungen, die Umsatzsteuer nach /einstellungen/ust, weil der
+// Onboarding-Schritt dasselbe VatForm benutzt. Der Kopf speichert deshalb,
+// was schmutzig ist, statt ein einzelnes form-Attribut zu tragen.
+const activePanes = computed(() => {
+  if (pane.value === 'invoice') return [profileRef.value, vatRef.value]
+  if (pane.value === 'vat') return [vatRef.value]
+  if (pane.value === 'documents') return [documentsRef.value]
+  if (pane.value === 'email') return [emailRef.value]
+  if (pane.value === 'capture') return [{ form: captureForm, submit: submitCapture }]
+  if (pane.value === 'general') return [{ form: generalForm, submit: submitGeneral }]
+  return [profileRef.value]
 })
 
-const formId = computed(() => {
-  if (pane.value === 'vat') return 'vat-form'
-  if (pane.value === 'documents') return 'documents-form'
-  if (pane.value === 'email') return 'mail-form'
-  if (pane.value === 'capture') return 'capture-form'
-  if (pane.value === 'general') return 'general-form'
-  return 'settings-form'
-})
+const dirty = computed(() => activePanes.value.some((entry) => entry?.form.isDirty))
+const processing = computed(() => activePanes.value.some((entry) => entry?.form.processing))
+
+function save() {
+  activePanes.value.filter((entry) => entry?.form.isDirty).forEach((entry) => entry!.submit())
+}
 
 const paneTitle = computed(() => {
+  if (pane.value === 'invoice') return 'settings.navInvoiceData'
   if (pane.value === 'vat') return 'settings.vatTitle'
   if (pane.value === 'documents') return 'settings.documentsTitle'
   if (pane.value === 'email') return 'settings.mailTitle'
@@ -171,7 +177,7 @@ const paneTitle = computed(() => {
 // Dokumente share: saved settings underneath, whatever the mounted form holds
 // on top, so the field being typed is the one moving in the preview. Only one
 // pane is mounted at a time, so at most one of the three refs contributes.
-const DOCUMENT_PANES = ['legal', 'bank', 'vat', 'documents']
+const DOCUMENT_PANES = ['legal', 'bank', 'invoice', 'vat', 'documents']
 
 const documentPreview = computed(() => {
   const profile = profileRef.value?.form
@@ -249,14 +255,14 @@ function submitGeneral() {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('settings.kicker')" :title="$t(paneTitle)">
-          <span v-if="activeForm?.isDirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due">{{ $t('settings.unsaved') }}</span>
+          <span v-if="dirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due">{{ $t('settings.unsaved') }}</span>
           <Button
-            v-if="activeForm?.isDirty"
+            v-if="dirty"
             class="ml-auto"
             variant="pill"
-            type="submit"
-            :form="formId"
-            :disabled="activeForm?.processing"
+            type="button"
+            :disabled="processing"
+            @click="save"
           >
             {{ $t('common.save') }}
           </Button>
@@ -268,6 +274,16 @@ function submitGeneral() {
 
             <div class="max-w-[620px] min-w-0 flex-1">
               <ProfileForm v-if="profileSection" ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="profileSection === 'legal' ? ['legal', 'tax'] : [profileSection]" />
+
+              <template v-else-if="pane === 'invoice'">
+                <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.bank') }}</div>
+                <ProfileForm ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="['bank']" />
+                <div class="mt-8">
+                  <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.vatSection') }}</div>
+                  <VatForm ref="vatRef" :settings="settings" />
+                </div>
+              </template>
+
               <VatForm v-else-if="pane === 'vat'" ref="vatRef" :settings="settings" />
               <DocumentsForm v-else-if="pane === 'documents'" ref="documentsRef" :settings="settings" />
               <EmailForm v-else-if="pane === 'email'" ref="emailRef" :settings="settings" :sender-from-env="mailSenderFromEnv" />

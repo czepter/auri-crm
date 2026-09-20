@@ -244,6 +244,9 @@ class StudioSettingsController extends Controller
             'widerruf_included' => ['required', 'boolean'],
             'widerruf_text' => ['nullable', 'string', 'max:5000'],
             'quote_layout' => ['required', Rule::enum(QuoteLayout::class)],
+            // Eine Mahnstufe ist eine Frist: sie stand bei Stripe, weil das
+            // Geld dort eingeht, gehört aber zu den Fristen daneben.
+            'payments_reminders_enabled' => ['sometimes', 'required', 'boolean'],
             // T-12: the shared PDF shell App\Documents\Support\DocumentRenderer
             // wraps a Contract or Quote's resolved body in — this pane's the
             // one place either is set, rather than pasted into each template.
@@ -260,6 +263,10 @@ class StudioSettingsController extends Controller
         $settings->set('quote_layout', $validated['quote_layout'], $actor);
         $settings->set('document_letterhead_html', $validated['document_letterhead_html'] ?? null, $actor);
         $settings->set('document_footer_html', $validated['document_footer_html'] ?? null, $actor);
+
+        if (array_key_exists('payments_reminders_enabled', $validated)) {
+            $settings->set('payments_reminders_enabled', $validated['payments_reminders_enabled'], $actor);
+        }
 
         return back();
     }

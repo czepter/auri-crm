@@ -28,13 +28,10 @@ const items = [
   { key: 'notifications', href: '/einstellungen/benachrichtigungen', label: 'settings.navNotifications' },
 
   { group: 'settings.groupBilling' },
-  // Die Bankverbindung steht auf jeder Rechnung; sie gehört zum Geld, nicht
-  // zum Steckbrief des Studios.
-  { key: 'bank', href: '/einstellungen?pane=bank', label: 'settings.bank' },
+  // Bankverbindung und Umsatzsteuer landen beide im Fuß derselben Rechnung.
+  { key: 'invoice', href: '/einstellungen?pane=invoice', label: 'settings.navInvoiceData' },
   { key: 'documents', href: '/einstellungen?pane=documents', label: 'settings.navDocuments' },
   { key: 'numbering', href: '/einstellungen/nummernkreise', label: 'settings.navNumbering' },
-  { key: 'vat', href: '/einstellungen?pane=vat', label: 'settings.navVat' },
-  { key: 'payments', href: '/einstellungen/zahlungen', label: 'settings.navPayments' },
 
   { group: 'settings.groupWork' },
   { key: 'availability', href: '/einstellungen/verfuegbarkeit', label: 'settings.navAvailability' },
@@ -45,6 +42,9 @@ const items = [
   { key: 'portal', href: '/einstellungen/portal', label: 'settings.navPortal' },
 
   { group: 'settings.groupInterfaces' },
+  // Schlüssel, Test- und Live-Umschaltung: eine Anbindung wie die beiden
+  // darunter, keine Rechnungsangabe.
+  { key: 'payments', href: '/einstellungen/zahlungen', label: 'paymentSettings.title' },
   { key: 'api-tokens', href: '/einstellungen/api-token', label: 'apiTokens.title' },
   { key: 'export', href: '/einstellungen/export', label: 'settings.navExport' },
 

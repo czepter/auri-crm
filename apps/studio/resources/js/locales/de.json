@@ -1181,7 +1181,9 @@
     "navGalleryDefaults": "Standardwerte",
     "navGalleryPresets": "Vorlagen",
     "mailSenderFromEnv": "Serverkonfiguration",
-    "mailSenderReset": "Zurücksetzen"
+    "mailSenderReset": "Zurücksetzen",
+    "navInvoiceData": "Rechnungsdaten",
+    "vatSection": "Umsatzsteuer"
   },
   "notifications": {
     "title": "Benachrichtigungen",
@@ -1283,7 +1285,7 @@
     "emailConfirm": "Bestätigen"
   },
   "paymentSettings": {
-    "title": "Zahlungen",
+    "title": "Stripe",
     "stripeSection": "Stripe",
     "stripeEnabled": "Online-Zahlung per Karte (Stripe)",
     "stripeEnabledHint": "Kunden wählen dann je Zahlung zwischen Überweisung und Karte.",
