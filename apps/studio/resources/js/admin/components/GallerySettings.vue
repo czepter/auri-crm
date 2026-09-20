@@ -56,10 +56,19 @@ const PRESET_GATES = [
   { field: 'comments_enabled', label: 'gallerySettings.commentsLabel' },
 ] as const
 
+const STUDIO_GATES = [
+  { field: 'gallery_default_downloads_enabled', label: 'gallerySettings.downloadsLabel' },
+  { field: 'gallery_default_lists_enabled', label: 'gallerySettings.listsLabel' },
+  { field: 'gallery_default_comments_enabled', label: 'gallerySettings.commentsLabel' },
+] as const
+
 const open = ref<Section>(props.section)
 
 const form = useForm({
   gallery_default_expiry_days: props.settings.expiryDays ?? ('' as string | number),
+  gallery_default_downloads_enabled: props.settings.downloadsEnabled,
+  gallery_default_lists_enabled: props.settings.listsEnabled,
+  gallery_default_comments_enabled: props.settings.commentsEnabled,
   gallery_default_design: { ...props.settings.design },
 })
 
@@ -154,12 +163,10 @@ const presetPreview = computed(() => ({
   },
 }))
 
-// Die drei Tore stehen unter Einstellungen → Portal; hier zeigt die
-// Vorschau nur, was sie bewirken.
 const studioOffers = computed(() => ({
-  downloads: props.settings.downloadsEnabled,
-  lists: props.settings.listsEnabled,
-  comments: props.settings.commentsEnabled,
+  downloads: form.gallery_default_downloads_enabled,
+  lists: form.gallery_default_lists_enabled,
+  comments: form.gallery_default_comments_enabled,
 }))
 </script>
 
@@ -221,6 +228,10 @@ const studioOffers = computed(() => ({
               </Field>
             </div>
 
+            <div v-for="gate in STUDIO_GATES" :key="gate.field" class="flex items-center gap-4 border-b border-border py-2.5">
+              <Label class="flex-1" :for="gate.field" variant="inline">{{ $t(gate.label) }}</Label>
+              <Switch :id="gate.field" v-model="form[gate.field]" @update:model-value="save" />
+            </div>
           </div>
 
           <aside class="min-w-0 flex-1">

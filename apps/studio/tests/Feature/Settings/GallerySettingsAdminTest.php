@@ -1,6 +1,8 @@
 <?php
 
+use App\Crm\Models\Contact;
 use App\Enums\StaffRole;
+use App\Portal\Support\PortalSettings;
 use App\Settings\Models\StudioSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -42,29 +44,35 @@ it('updates the gallery defaults without touching the portal switches', function
         ->and($row->portal_messaging_mode)->toBe('any');
 });
 
-// Was der Kunde in einer Galerie darf, ist eine Freigabe wie die vier
-// daneben — die Vorgaben einer neuen Galerie bleiben auf /galerien.
-it('takes the three gallery permissions on the portal route', function () {
+it('takes the three gallery switches on the gallery route and lets a contact override them', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->patch('/einstellungen/portal', [
-            'gallery_default_downloads_enabled' => true,
+        ->patch('/einstellungen/galerien', [
+            'gallery_default_downloads_enabled' => false,
             'gallery_default_lists_enabled' => false,
             'gallery_default_comments_enabled' => true,
-        ])->assertRedirect();
+        ])->assertRedirect('/galerien');
 
     $row = StudioSettings::query()->sole();
 
-    expect($row->gallery_default_downloads_enabled)->toBeTrue()
+    expect($row->gallery_default_downloads_enabled)->toBeFalse()
         ->and($row->gallery_default_lists_enabled)->toBeFalse()
         ->and($row->gallery_default_comments_enabled)->toBeTrue();
+
+    Cache::store('redis')->flush();
+    $portal = app(PortalSettings::class);
+    $overridden = Contact::factory()->create(['portal_overrides' => ['gallery_downloads' => true]]);
+
+    expect($portal->galleryDownloadsEnabled(Contact::factory()->create()))->toBeFalse()
+        ->and($portal->galleryDownloadsEnabled($overridden))->toBeTrue()
+        ->and($portal->galleryCommentsEnabled())->toBeTrue();
 });
 
-it('no longer accepts a gallery permission on the gallery route', function () {
+it('no longer accepts a gallery switch on the portal route', function () {
     StudioSettings::query()->update(['gallery_default_lists_enabled' => false]);
 
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->patch('/einstellungen/galerien', ['gallery_default_lists_enabled' => true])
-        ->assertRedirect('/galerien');
+        ->patch('/einstellungen/portal', ['gallery_default_lists_enabled' => true])
+        ->assertRedirect();
 
     expect(StudioSettings::query()->sole()->gallery_default_lists_enabled)->toBeFalse();
 });

@@ -22,9 +22,6 @@ const form = useForm({
   portal_payment_status_enabled: props.settings.paymentStatusEnabled,
   portal_offers_enabled: props.settings.offersEnabled,
   portal_messaging_mode: props.settings.messagingMode,
-  gallery_default_downloads_enabled: props.settings.galleryDownloadsEnabled,
-  gallery_default_lists_enabled: props.settings.galleryListsEnabled,
-  gallery_default_comments_enabled: props.settings.galleryCommentsEnabled,
   portal_welcome_inquiry: props.settings.welcomeInquiry ?? '',
   portal_welcome_active: props.settings.welcomeActive ?? '',
   portal_welcome_done: props.settings.welcomeDone ?? '',
@@ -38,12 +35,6 @@ const CAPABILITIES = [
   // mitten in einer Reklamation soll nichts angeboten bekommen, darf aber
   // weiter annehmen, was er schon hat.
   { field: 'portal_offers_enabled', label: 'portalSettings.offersEnabledLabel' },
-  // Was der Kunde in einer Galerie darf, stand auf /galerien zwischen
-  // Frist und Gestaltung — das sind Vorgaben einer Galerie, dies ist
-  // eine Freigabe an den Kunden.
-  { field: 'gallery_default_downloads_enabled', label: 'gallerySettings.downloadsLabel' },
-  { field: 'gallery_default_lists_enabled', label: 'gallerySettings.listsLabel' },
-  { field: 'gallery_default_comments_enabled', label: 'gallerySettings.commentsLabel' },
 ] as const
 
 function submit() {
