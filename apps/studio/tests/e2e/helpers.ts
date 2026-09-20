@@ -34,7 +34,7 @@ export async function signIn(page: Page): Promise<void> {
   await submitLogin(page, ACCOUNTS.mfa)
 
   await expect(page).toHaveURL('/auth/mfa')
-  await page.getByLabel('6-stelliger Code').fill(authenticator.generate(MFA_SECRET))
+  await page.getByLabel('Code aus der App').fill(authenticator.generate(MFA_SECRET))
   await page.getByRole('button', { name: 'Bestätigen' }).click()
 
   await expect(page).toHaveURL('/')
