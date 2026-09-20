@@ -56,6 +56,33 @@ it('updates the maintenance switch, its message, the welcome text and the legal 
             ->where('context->key', 'portal_maintenance_enabled')->sole()->actor_id)->toBe($owner->id);
 });
 
+// Die Vorschau neben dem Formular ist die Portal-Startseite selbst. Sie
+// zeigt den Text des Zustands, den der Umschalter nennt.
+it('renders the portal home preview with the greeting of the asked state', function () {
+    StudioSettings::query()->update([
+        'portal_welcome_inquiry' => 'Wir haben eure Anfrage.',
+        'portal_welcome_done' => 'Eure Bilder liegen weiter hier.',
+    ]);
+
+    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->get('/einstellungen/portal/vorschau?zustand=done')
+        ->viewData('page')['props'];
+
+    expect($props['welcomeText'])->toBe('Eure Bilder liegen weiter hier.')
+        ->and($props['portalBranding'])->toHaveKey('displayName')
+        ->and($props['portalLegal'])->toHaveKey('impressumUrl');
+});
+
+// Getippt schlägt gespeichert, sonst stünde die Vorschau still, bis jemand
+// speichert.
+it('prefers the typed greeting over the saved one', function () {
+    StudioSettings::query()->update(['portal_welcome_inquiry' => 'Wir haben eure Anfrage.']);
+
+    expect($this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->get('/einstellungen/portal/vorschau?zustand=inquiry&text=Noch+nicht+gespeichert')
+        ->viewData('page')['props']['welcomeText'])->toBe('Noch nicht gespeichert');
+});
+
 it('rejects a Datenschutz link that is not a URL', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->patch('/einstellungen/portal', [

@@ -8,6 +8,7 @@ use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Settings\Data\PortalSettingsData;
 use App\Settings\Data\StudioSettingsData;
+use App\Portal\Http\Controllers\LegalTextController;
 use App\Settings\Rules\LegalTemplateFamily;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
@@ -60,6 +61,48 @@ class PortalSettingsController extends Controller
                 'updatedAt' => $template->updated_at?->toDateString(),
             ])
             ->all();
+    }
+
+    /**
+     * Die Portal-Startseite selbst, für den iframe neben dem Formular. Sie
+     * steht auf der Admin-Oberfläche und nicht hinter einer Portal-Sitzung:
+     * es gibt hier keinen Kunden, dessen Portal gezeigt werden könnte, und
+     * das Studio soll nicht erst einen suchen müssen, um die eigene
+     * Begrüßung zu sehen.
+     *
+     * Die Marke, die Rechtstexte und die Anrede kommen als dieselben
+     * geteilten Props herein, die HandleInertiaRequests der Portal-Oberfläche
+     * gibt — die Bauteile des Portals lesen sie dort.
+     */
+    public function preview(Request $request, StudioSettingsResolver $settings): Response
+    {
+        $this->authorizeSettings();
+
+        $state = $request->query('zustand');
+
+        // Getippt statt gespeichert: das Formular schickt, was gerade im Feld
+        // steht, damit die Vorschau mitläuft.
+        $welcome = $request->query('text', match ($state) {
+            'inquiry' => $settings->portalWelcomeInquiry(),
+            'done' => $settings->portalWelcomeDone(),
+            default => $settings->portalWelcomeActive(),
+        });
+
+        return Inertia::render('Settings/PortalHomePreview', [
+            'welcomeText' => $welcome,
+            'closed' => $request->boolean('geschlossen'),
+            'maintenanceMessage' => $request->query('hinweis', $settings->maintenanceMessage()),
+            'portalBranding' => [
+                'displayName' => $settings->displayName() ?? config('app.name'),
+                'logoUrl' => $settings->logoPath() !== null ? '/branding/logo' : null,
+                'accentColor' => $settings->attributes()['accent_color'],
+                'address' => $request->query('kontakt'),
+            ],
+            'portalLegal' => collect(LegalTextController::TEXTS)
+                ->mapWithKeys(fn (string $text) => [$text.'Url' => $settings->legalUrl($text)])
+                ->all(),
+            'portalNav' => null,
+        ]);
     }
 
     /**

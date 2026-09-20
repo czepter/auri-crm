@@ -5,13 +5,18 @@ import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import SettingsNav from '@/admin/components/SettingsNav.vue'
 import PortalForm from './panes/PortalForm.vue'
-import PortalPreview from './previews/PortalPreview.vue'
+import PreviewFrame from './previews/PreviewFrame.vue'
 import { Button } from '@/ui/button'
+import { ChoiceGroup } from '@/ui/choice-group'
+import { useI18n } from 'vue-i18n'
+import { refDebounced } from '@vueuse/core'
 
-const props = defineProps<{
+defineProps<{
   settings: App.Settings.Data.PortalSettingsData
   branding: App.Settings.Data.StudioSettingsData
 }>()
+
+const { t } = useI18n()
 
 const formRef = ref<InstanceType<typeof PortalForm>>()
 
@@ -19,24 +24,31 @@ const formRef = ref<InstanceType<typeof PortalForm>>()
 // Zustände, die HomeController aus den Buchungen ableitet.
 const state = ref<'inquiry' | 'active' | 'done'>('inquiry')
 
-const preview = computed(() => {
+// Die Vorschau ist die Portal-Startseite selbst, in einem iframe: dieselben
+// Bauteile, die der Kunde sieht. Was getippt wird, reist als Query mit, damit
+// sie mitläuft, ohne dass gespeichert sein muss — entprellt, weil jede
+// Änderung den Rahmen neu lädt.
+const source = computed(() => {
   const form = formRef.value?.form
+  const query = new URLSearchParams({ zustand: state.value })
 
-  return {
-    maintenanceEnabled: form?.portal_maintenance_enabled ?? props.settings.maintenanceEnabled,
-    maintenanceMessage: form?.portal_maintenance_message ?? props.settings.maintenanceMessage ?? '',
-    welcomeText: form?.[`portal_welcome_${state.value}`] ?? '',
-    acceptQuotes: form?.portal_accept_quotes_enabled ?? props.settings.acceptQuotesEnabled,
-    signContracts: form?.portal_sign_contracts_enabled ?? props.settings.signContractsEnabled,
-    paymentStatus: form?.portal_payment_status_enabled ?? props.settings.paymentStatusEnabled,
-    messagingMode: form?.portal_messaging_mode ?? props.settings.messagingMode,
-    contactPhone: form?.portal_contact_phone ?? props.settings.contactPhone ?? '',
-    contactEmail: form?.portal_contact_email ?? props.settings.contactEmail ?? '',
-    contactResponseTime: form?.portal_contact_response_time ?? props.settings.contactResponseTime ?? '',
-    datenschutzUrl: props.settings.datenschutzUrl ?? '',
-    agbUrl: props.settings.agbUrl ?? '',
+  if (form) {
+    query.set('text', form[`portal_welcome_${state.value}`])
+    query.set('geschlossen', form.portal_maintenance_enabled ? '1' : '0')
+    query.set('hinweis', form.portal_maintenance_message)
+    query.set('kontakt', [form.portal_contact_phone, form.portal_contact_email, form.portal_contact_response_time]
+      .filter(Boolean).join(' · '))
   }
+
+  return `/einstellungen/portal/vorschau?${query}`
 })
+
+const src = refDebounced(source, 400)
+
+const stateOptions = ['inquiry', 'active', 'done'].map((value) => ({
+  value,
+  label: t(`portalSettings.welcomeState.${value}`),
+}))
 </script>
 
 <template>
@@ -65,7 +77,12 @@ const preview = computed(() => {
               <PortalForm ref="formRef" :settings="settings" />
             </div>
 
-            <PortalPreview v-model:state="state" :branding="branding" :portal="preview" />
+            <PreviewFrame class="w-[1180px]" :label="$t('settings.previewPortal')">
+              <ChoiceGroup v-model="state" class="mb-4" variant="segmented" :options="stateOptions" />
+              <!-- Die echte Seite, in ihrer eigenen Breite: das Portal misst
+                   1180px, und darunter fällt es in sein Handy-Layout. -->
+              <iframe :src="src" class="h-[900px] w-full rounded-md border-0 bg-background" title="" />
+            </PreviewFrame>
           </div>
         </div>
       </div>
