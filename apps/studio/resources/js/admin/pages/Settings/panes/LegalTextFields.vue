@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Input } from '@/ui/input'
@@ -10,6 +9,14 @@ import { ChoiceGroup } from '@/ui/choice-group'
 import { missingLegalTexts } from '@/admin/lib/legalTexts'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
+/*
+ * Impressum, Datenschutz, AGB und Widerruf — und wohin eine
+ * Datenschutz-Anfrage geht. Beides gehört dem Studio, nicht dem Portal, und
+ * steht deshalb im Formular von Allgemein statt in einem eigenen.
+ *
+ * Die Felder gehören dem Formular der Seite: sie werden mit ihr gespeichert,
+ * und ein eigenes useForm hier wäre ein zweiter Speicherknopf auf einem Blatt.
+ */
 // Reihenfolge der Zeilen; dieselben Schlüssel führt LegalTextController::TEXTS
 // und die Portal-Route /rechtstexte/{text}.
 const LEGAL_TEXTS = ['impressum', 'datenschutz', 'agb', 'widerruf'] as const
@@ -19,25 +26,19 @@ type LegalText = (typeof LEGAL_TEXTS)[number]
 type LegalTemplate = { family: string; name: string; updatedAt: string | null }
 
 const props = withDefaults(defineProps<{
-  settings: App.Settings.Data.PortalSettingsData
-  /** Rechtstexte aus dem Dokumenteneditor, als Quelle wählbar. */
+  /*
+   * Das Formular der Seite, dessen Felder diese Zeilen bedienen. Die
+   * Schlüssel werden zusammengesetzt (`portal_legal_${text}_url`), was
+   * Inertias useForm-Typ nicht hergibt — deshalb die lose Signatur.
+   */
+  form: Record<string, any>
+  families: Record<string, string | null>
   legalTemplates?: LegalTemplate[]
 }>(), { legalTemplates: () => [] })
-const emit = defineEmits<{ saved: [] }>()
+
 const { t } = useI18n()
 
-const form = useForm({
-  portal_legal_impressum_url: props.settings.impressumUrl ?? '',
-  portal_legal_datenschutz_url: props.settings.datenschutzUrl ?? '',
-  portal_legal_agb_url: props.settings.agbUrl ?? '',
-  portal_legal_widerruf_url: props.settings.widerrufUrl ?? '',
-  portal_legal_impressum_family: props.settings.legalFamilies.impressum ?? '',
-  portal_legal_datenschutz_family: props.settings.legalFamilies.datenschutz ?? '',
-  portal_legal_agb_family: props.settings.legalFamilies.agb ?? '',
-  portal_legal_widerruf_family: props.settings.legalFamilies.widerruf ?? '',
-  dsgvo_request_recipient: props.settings.dsgvoRecipient ?? '',
-  dsgvo_request_deadline_days: props.settings.dsgvoDeadlineDays,
-})
+const form = computed(() => props.form)
 
 type Source = 'studio' | 'link' | 'document'
 
@@ -45,8 +46,8 @@ type Source = 'studio' | 'link' | 'document'
 // Vorlage, und beim Impressum bleibt die Seite aus den Studio-Daten, solange
 // keins von beiden gesetzt ist.
 function sourceOf(text: LegalText): Source {
-  if (form[`portal_legal_${text}_url`]) return 'link'
-  if (form[`portal_legal_${text}_family`]) return 'document'
+  if (form.value[`portal_legal_${text}_url`]) return 'link'
+  if (form.value[`portal_legal_${text}_family`]) return 'document'
 
   return text === 'impressum' ? 'studio' : 'link'
 }
@@ -61,32 +62,21 @@ function sourceOptions(text: LegalText) {
 
 // Ohne Widerrufsbelehrung darf ein Angebot entstehen, aber nicht hinausgehen.
 const missingBeforeSend = computed(() => missingLegalTexts(Object.fromEntries(
-  LEGAL_TEXTS.map((text) => [text, { url: form[`portal_legal_${text}_url`], family: form[`portal_legal_${text}_family`] }]),
+  LEGAL_TEXTS.map((text) => [text, {
+    url: String(form.value[`portal_legal_${text}_url`] ?? ''),
+    family: String(form.value[`portal_legal_${text}_family`] ?? ''),
+  }]),
 )))
 
 function chooseSource(text: LegalText, source: Source) {
-  form[`portal_legal_${text}_url`] = ''
-  form[`portal_legal_${text}_family`] = source === 'document' ? (props.settings.legalFamilies[text] ?? '') : ''
+  form.value[`portal_legal_${text}_url`] = ''
+  form.value[`portal_legal_${text}_family`] = source === 'document' ? (props.families[text] ?? '') : ''
 }
 
-function submit() {
-  form
-    .transform((data) => ({
-      ...data,
-      ...Object.fromEntries(LEGAL_TEXTS.flatMap((text) => [
-        [`portal_legal_${text}_url`, data[`portal_legal_${text}_url`] || null],
-        [`portal_legal_${text}_family`, data[`portal_legal_${text}_family`] || null],
-      ])),
-      dsgvo_request_recipient: data.dsgvo_request_recipient || null,
-    }))
-    .patch('/einstellungen/portal', { preserveScroll: true, onSuccess: () => emit('saved') })
-}
-
-defineExpose({ form, submit })
 </script>
 
 <template>
-  <form id="legal-texts-form" @submit.prevent="submit">
+  <div>
     <div class="mt-0 mb-6 flex flex-col gap-3">
       <div v-for="text in LEGAL_TEXTS" :key="text" class="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-[12px] border border-border p-4" :class="missingBeforeSend.includes(text) && 'bg-due-bg'">
         <div class="w-[200px] flex-none">
@@ -161,5 +151,5 @@ defineExpose({ form, submit })
         </div>
       </div>
     </div>
-  </form>
+  </div>
 </template>

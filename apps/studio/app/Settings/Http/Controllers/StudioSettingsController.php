@@ -3,13 +3,17 @@
 namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
+use App\Documents\Enums\DocumentTemplateType;
+use App\Documents\Models\DocumentTemplate;
 use App\Http\Controllers\Controller;
 use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Enums\QuoteLayout;
 use App\Quotes\Support\SampleQuoteData;
+use App\Settings\Data\PortalSettingsData;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Enums\FontPair;
 use App\Settings\Models\StudioSettings;
+use App\Settings\Rules\LegalTemplateFamily;
 use App\Settings\Rules\ValidIban;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
@@ -58,6 +62,21 @@ class StudioSettingsController extends Controller
                 'address' => $row->mail_from_address === null,
             ],
             'settings' => StudioSettingsData::fromResolver($settings),
+            // Rechtstexte und Datenschutz-Anfragen stehen im Abschnitt
+            // Allgemein: beides sagt etwas über das Studio, nichts über das
+            // Portal, in dem es nur auftaucht.
+            'portal' => PortalSettingsData::fromResolver($settings),
+            'legalTemplates' => DocumentTemplate::query()
+                ->current()
+                ->ofType(DocumentTemplateType::Legal)
+                ->orderBy('name')
+                ->get()
+                ->map(fn (DocumentTemplate $template) => [
+                    'family' => $template->family_id,
+                    'name' => $template->name,
+                    'updatedAt' => $template->updated_at?->toDateString(),
+                ])
+                ->all(),
         ]);
     }
 
@@ -290,6 +309,18 @@ class StudioSettingsController extends Controller
             // Gilt für Portal, Mails und Belege gleichermaßen — deshalb hier
             // und nicht mehr unter Portal.
             'client_register' => ['sometimes', 'required', Rule::in(['formal', 'informal'])],
+            'portal_legal_impressum_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
+            'portal_legal_datenschutz_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
+            'portal_legal_agb_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
+            'portal_legal_widerruf_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
+            // Die Vorlage wird als Familie gespeichert, damit das Portal die
+            // jeweils aktuelle Fassung zeigt.
+            'portal_legal_impressum_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
+            'portal_legal_datenschutz_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
+            'portal_legal_agb_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
+            'portal_legal_widerruf_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
+            'dsgvo_request_recipient' => ['sometimes', 'nullable', 'email', 'max:255'],
+            'dsgvo_request_deadline_days' => ['sometimes', 'required', 'integer', 'min:1', 'max:365'],
         ]);
 
         $actor = auth('staff')->user();
@@ -297,8 +328,8 @@ class StudioSettingsController extends Controller
         $settings->set('locale', $validated['locale'] ?? null, $actor);
         $settings->set('working_days', array_values($validated['working_days']), $actor);
 
-        if (array_key_exists('client_register', $validated)) {
-            $settings->set('client_register', $validated['client_register'], $actor);
+        foreach (Arr::except($validated, ['timezone', 'locale', 'working_days']) as $key => $value) {
+            $settings->set($key, $value, $actor);
         }
 
         return back();

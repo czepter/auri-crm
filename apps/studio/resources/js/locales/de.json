@@ -1181,8 +1181,7 @@
     "navGalleryDefaults": "Standardwerte",
     "navGalleryPresets": "Vorlagen",
     "mailSenderFromEnv": "Serverkonfiguration",
-    "mailSenderReset": "Zurücksetzen",
-    "navObligations": "Pflichtangaben"
+    "mailSenderReset": "Zurücksetzen"
   },
   "notifications": {
     "title": "Benachrichtigungen",
@@ -1449,7 +1448,7 @@
     "signContractsEnabledLabel": "Verträge unterschreiben",
     "paymentStatusEnabledLabel": "Zahlungsstatus einsehen",
     "offersEnabledLabel": "Weitere Leistungen anbieten",
-    "dsgvoSection": "Anfragen von Kunden",
+    "dsgvoSection": "Datenschutz-Anfragen",
     "dsgvoRecipientLabel": "Empfänger",
     "dsgvoDeadlineLabel": "Frist in Tagen",
     "contactSection": "Kontakt im Fuß",

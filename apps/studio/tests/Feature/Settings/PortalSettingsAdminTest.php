@@ -25,7 +25,7 @@ it('hands every portal setting to the settings screen, every capability switch o
         ->toHaveKey('messagingMode', 'off');
 });
 
-it('updates the maintenance switch, its message, the welcome text and the legal links, and audits the owner', function () {
+it('updates the maintenance switch, its message and the welcome text, and audits the owner', function () {
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')
@@ -33,12 +33,9 @@ it('updates the maintenance switch, its message, the welcome text and the legal 
             'portal_maintenance_enabled' => true,
             'portal_maintenance_message' => 'Das Portal ist gerade nicht erreichbar.',
             'portal_welcome_active' => 'Schön, dass Sie da sind.',
-            'portal_legal_datenschutz_url' => 'https://atelier-nordlicht.de/datenschutz',
-            'portal_legal_agb_url' => 'https://atelier-nordlicht.de/agb',
             'portal_accept_quotes_enabled' => false,
             'portal_payment_status_enabled' => true,
             'portal_messaging_mode' => 'booking',
-            'dsgvo_request_deadline_days' => 30,
         ])
         ->assertRedirect();
 
@@ -47,8 +44,6 @@ it('updates the maintenance switch, its message, the welcome text and the legal 
     expect($row->portal_maintenance_enabled)->toBeTrue()
         ->and($row->portal_maintenance_message)->toBe('Das Portal ist gerade nicht erreichbar.')
         ->and($row->portal_welcome_active)->toBe('Schön, dass Sie da sind.')
-        ->and($row->portal_legal_datenschutz_url)->toBe('https://atelier-nordlicht.de/datenschutz')
-        ->and($row->portal_legal_agb_url)->toBe('https://atelier-nordlicht.de/agb')
         ->and($row->portal_payment_status_enabled)->toBeTrue()
         ->and($row->portal_accept_quotes_enabled)->toBeFalse()
         ->and($row->portal_messaging_mode)->toBe('booking')
@@ -83,17 +78,36 @@ it('prefers the typed greeting over the saved one', function () {
         ->viewData('page')['props']['welcomeText'])->toBe('Noch nicht gespeichert');
 });
 
+// Die Rechtstexte stehen unter Allgemein: sie sagen etwas über das Studio,
+// nicht über das Portal, in dem sie nur auftauchen.
 it('rejects a Datenschutz link that is not a URL', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->patch('/einstellungen/portal', [
-            'portal_maintenance_enabled' => false,
-            'portal_accept_quotes_enabled' => false,
-            'portal_payment_status_enabled' => false,
-            'portal_messaging_mode' => 'off',
-            'dsgvo_request_deadline_days' => 30,
+        ->patch('/einstellungen/allgemein', [
+            'working_days' => [1, 2, 3, 4, 5],
             'portal_legal_datenschutz_url' => 'not-a-url',
         ])
         ->assertInvalid(['portal_legal_datenschutz_url']);
+});
+
+it('stores the legal links and where a privacy request goes on the general route', function () {
+    $owner = staffMember(StaffRole::Owner);
+
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen/allgemein', [
+            'working_days' => [1, 2, 3, 4, 5],
+            'portal_legal_datenschutz_url' => 'https://atelier-nordlicht.de/datenschutz',
+            'portal_legal_agb_url' => 'https://atelier-nordlicht.de/agb',
+            'dsgvo_request_recipient' => 'datenschutz@atelier-nordlicht.de',
+            'dsgvo_request_deadline_days' => 14,
+        ])
+        ->assertRedirect();
+
+    $row = StudioSettings::query()->sole();
+
+    expect($row->portal_legal_datenschutz_url)->toBe('https://atelier-nordlicht.de/datenschutz')
+        ->and($row->portal_legal_agb_url)->toBe('https://atelier-nordlicht.de/agb')
+        ->and($row->dsgvo_request_recipient)->toBe('datenschutz@atelier-nordlicht.de')
+        ->and($row->dsgvo_request_deadline_days)->toBe(14);
 });
 
 it('gives every non-owner role the same response on the portal settings route as a route that does not exist', function (StaffRole $role, int $status) {
@@ -136,9 +150,9 @@ it('leaves the settings a pane does not show untouched', function () {
         ->assertRedirect();
 
     $this->actingAs($owner, 'staff')
-        ->patch('/einstellungen/portal', [
+        ->patch('/einstellungen/allgemein', [
+            'working_days' => [1, 2, 3, 4, 5],
             'dsgvo_request_recipient' => 'datenschutz@atelier-nordlicht.de',
-            'dsgvo_request_deadline_days' => 14,
         ])
         ->assertRedirect();
 

@@ -9,6 +9,7 @@ import ProfileForm from './panes/ProfileForm.vue'
 import VatForm from './panes/VatForm.vue'
 import DocumentsForm from './panes/DocumentsForm.vue'
 import EmailForm from './panes/EmailForm.vue'
+import LegalTextFields from './panes/LegalTextFields.vue'
 import BrandPreview from './previews/BrandPreview.vue'
 import DocumentPreview from './previews/DocumentPreview.vue'
 import MailPreview from './previews/MailPreview.vue'
@@ -27,6 +28,9 @@ const props = defineProps<{
   fontPairs: { value: string; label: string; description: string }[]
   mailSenderFromEnv: { name: boolean; address: boolean }
   settings: App.Settings.Data.StudioSettingsData
+  /** Rechtstexte und Datenschutz-Anfragen stehen im Abschnitt Allgemein. */
+  portal: App.Settings.Data.PortalSettingsData
+  legalTemplates: { family: string; name: string; updatedAt: string | null }[]
 }>()
 
 // Which pane of the section shell is showing. In the query rather than in a
@@ -70,6 +74,18 @@ const generalForm = useForm({
   // Die Anrede trägt jede Mail, jedes Angebot und das Portal — sie stand
   // unter Portal und gilt überall.
   client_register: props.settings.clientRegister,
+  // Die vier Rechtstexte und wohin eine Datenschutz-Anfrage geht: Angaben
+  // über das Studio, wie Zeitzone und Arbeitstage daneben.
+  portal_legal_impressum_url: props.portal.impressumUrl ?? '',
+  portal_legal_datenschutz_url: props.portal.datenschutzUrl ?? '',
+  portal_legal_agb_url: props.portal.agbUrl ?? '',
+  portal_legal_widerruf_url: props.portal.widerrufUrl ?? '',
+  portal_legal_impressum_family: props.portal.legalFamilies.impressum ?? '',
+  portal_legal_datenschutz_family: props.portal.legalFamilies.datenschutz ?? '',
+  portal_legal_agb_family: props.portal.legalFamilies.agb ?? '',
+  portal_legal_widerruf_family: props.portal.legalFamilies.widerruf ?? '',
+  dsgvo_request_recipient: props.portal.dsgvoRecipient ?? '',
+  dsgvo_request_deadline_days: props.portal.dsgvoDeadlineDays,
 })
 
 // Der Browser kennt die Zone des Geräts; die Zeile darunter bietet sie an,
@@ -214,6 +230,15 @@ function submitGeneral() {
       locale: data.locale || null,
       working_days: data.working_days,
       client_register: data.client_register,
+      portal_legal_impressum_url: data.portal_legal_impressum_url || null,
+      portal_legal_datenschutz_url: data.portal_legal_datenschutz_url || null,
+      portal_legal_agb_url: data.portal_legal_agb_url || null,
+      portal_legal_widerruf_url: data.portal_legal_widerruf_url || null,
+      portal_legal_impressum_family: data.portal_legal_impressum_family || null,
+      portal_legal_datenschutz_family: data.portal_legal_datenschutz_family || null,
+      portal_legal_agb_family: data.portal_legal_agb_family || null,
+      portal_legal_widerruf_family: data.portal_legal_widerruf_family || null,
+      dsgvo_request_recipient: data.dsgvo_request_recipient || null,
     }))
     .patch('/einstellungen/allgemein', { preserveScroll: true })
 }
@@ -355,6 +380,10 @@ function submitGeneral() {
                     <p v-if="generalForm.errors.working_days" class="text-[11.5px] leading-[1.45] text-destructive">{{ generalForm.errors.working_days }}</p>
                   </div>
                 </div>
+                <div class="mt-8">
+                  <LegalTextFields :form="generalForm" :families="portal.legalFamilies" :legal-templates="legalTemplates" />
+                </div>
+
               </form>
             </div>
 

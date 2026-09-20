@@ -21,7 +21,6 @@ const items = [
   { group: 'settings.groupStudio' },
   { key: 'brand', href: '/einstellungen', label: 'settings.brand' },
   { key: 'legal', href: '/einstellungen?pane=legal', label: 'settings.legalEntity' },
-  { key: 'bank', href: '/einstellungen?pane=bank', label: 'settings.bank' },
   { key: 'general', href: '/einstellungen?pane=general', label: 'settings.navGeneral' },
   // Absender und Ruhezeiten gelten studioweit, für jede Mail — das Portal
   // ist einer von vielen Auslösern, nicht ihr Zuhause.
@@ -29,13 +28,13 @@ const items = [
   { key: 'notifications', href: '/einstellungen/benachrichtigungen', label: 'settings.navNotifications' },
 
   { group: 'settings.groupBilling' },
+  // Die Bankverbindung steht auf jeder Rechnung; sie gehört zum Geld, nicht
+  // zum Steckbrief des Studios.
+  { key: 'bank', href: '/einstellungen?pane=bank', label: 'settings.bank' },
   { key: 'documents', href: '/einstellungen?pane=documents', label: 'settings.navDocuments' },
   { key: 'numbering', href: '/einstellungen/nummernkreise', label: 'settings.navNumbering' },
   { key: 'vat', href: '/einstellungen?pane=vat', label: 'settings.navVat' },
   { key: 'payments', href: '/einstellungen/zahlungen', label: 'settings.navPayments' },
-  // Ohne Widerrufsbelehrung geht kein Angebot hinaus; die Rechtstexte hängen
-  // am Versand, nicht am Portal.
-  { key: 'obligations', href: '/einstellungen/pflichtangaben', label: 'settings.navObligations' },
 
   { group: 'settings.groupWork' },
   { key: 'availability', href: '/einstellungen/verfuegbarkeit', label: 'settings.navAvailability' },
