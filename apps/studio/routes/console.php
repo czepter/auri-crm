@@ -1,6 +1,7 @@
 <?php
 
 use App\Integration\Models\IdempotencyKey;
+use App\Settings\Models\StudioExport;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -55,5 +56,5 @@ Schedule::command('notifications:remind-onboarding')->dailyAt('09:00')->timezone
 Schedule::command('releases:fetch')->dailyAt('04:00')->timezone($studioTimezone);
 
 // #395: rows past IdempotencyKey::WINDOW_HOURS no longer replay anything —
-// this just reclaims the table.
-Schedule::command('model:prune', ['--model' => [IdempotencyKey::class]])->daily();
+// this just reclaims the table. A StudioExport past its expiry (#489) loses its archive.
+Schedule::command('model:prune', ['--model' => [IdempotencyKey::class, StudioExport::class]])->daily();

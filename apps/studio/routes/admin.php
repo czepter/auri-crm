@@ -83,6 +83,7 @@ use App\Settings\Http\Controllers\NumberRangeController;
 use App\Settings\Http\Controllers\PaymentSettingsController;
 use App\Settings\Http\Controllers\PortalSettingsController;
 use App\Settings\Http\Controllers\StudioClosureController;
+use App\Settings\Http\Controllers\StudioExportController;
 use App\Settings\Http\Controllers\StudioOnboardingController;
 use App\Settings\Http\Controllers\StudioSettingsController;
 use App\Templates\Http\Controllers\TemplateHubController;
@@ -404,6 +405,10 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/einstellungen/export', [DataExportController::class, 'index'])->name('settings.export');
         Route::get('/einstellungen/export/kontakte', [DataExportController::class, 'contacts'])->name('settings.export.contacts');
         Route::get('/einstellungen/export/projekte', [DataExportController::class, 'projects'])->name('settings.export.projects');
+        Route::post('/einstellungen/export/archiv', [StudioExportController::class, 'store'])->name('settings.export.archive.store');
+        Route::get('/einstellungen/export/archiv/{studioExport}', [StudioExportController::class, 'download'])
+            ->middleware('signed')
+            ->name('settings.export.archive.download');
 
         Route::get('/einstellungen/protokoll', [AuditLogController::class, 'index'])->name('settings.audit-log');
 

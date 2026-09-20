@@ -135,6 +135,8 @@ return [
     'studio_closure.created' => 'Schließzeit angelegt',
     'studio_closure.deleted' => 'Schließzeit gelöscht',
     'studio_closure.updated' => 'Schließzeit geändert',
+    'studio_export.downloaded' => 'Export geladen',
+    'studio_export.requested' => 'Export angefordert',
     'studio_settings.updated' => 'Einstellungen geändert',
     'task.completed' => 'Aufgabe erledigt',
     'task.reopened' => 'Aufgabe wieder geöffnet',

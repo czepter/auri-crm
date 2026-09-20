@@ -3,80 +3,79 @@
 namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
-use App\Crm\Actions\DeriveProjectPosition;
-use App\Crm\Data\ProjectRowData;
-use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
+use App\Enums\StaffRole;
+use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
-use Illuminate\Database\Eloquent\Builder;
+use App\Media\Models\Asset;
+use App\Settings\Enums\StudioExportKind;
+use App\Settings\Models\StudioExport;
+use App\Settings\Support\StudioRecords;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * The studio's records as spreadsheets, beside the invoice list the
- * Steuerberater asks for (InvoiceExportController). Same file shape as that
- * one — semicolons and a BOM — for the same reason: Excel.
+ * Steuerberater asks for (InvoiceExportController).
  */
 class DataExportController extends Controller
 {
     use AuthorizesStaffSettings;
 
-    public function index(): Response
+    public function index(StudioRecords $records): Response
     {
         $this->authorizeSettings();
 
         return Inertia::render('Settings/Export', [
-            'contacts' => $this->contactQuery()->count(),
-            'projects' => $this->projectQuery()->count(),
+            'contacts' => $records->contactQuery()->count(),
+            'projects' => $records->projectQuery()->count(),
+            'archives' => auth('staff')->user()->role === StaffRole::Owner ? $this->archives() : null,
         ]);
     }
 
-    public function contacts(): StreamedResponse
+    /** @return array{daten: array<string, mixed>|null, galleries: list<array<string, mixed>>} */
+    private function archives(): array
+    {
+        $exports = StudioExport::query()->orderByDesc('id')->get();
+        $latest = fn (StudioExportKind $kind, ?int $galleryId) => $exports
+            ->first(fn (StudioExport $export) => $export->kind === $kind && $export->gallery_id === $galleryId)
+            ?->asRow();
+
+        $sizes = Asset::query()->inDraft()->groupBy('gallery_id')->selectRaw('gallery_id, sum(byte_size) as size')->pluck('size', 'gallery_id');
+
+        return [
+            'daten' => $latest(StudioExportKind::Daten, null),
+            'galleries' => Gallery::query()->whereIn('id', $sizes->keys())->orderBy('title')->get()
+                ->map(fn (Gallery $gallery) => [
+                    'id' => $gallery->public_id,
+                    'title' => $gallery->title,
+                    'size' => (int) $sizes[$gallery->id],
+                    'archive' => $latest(StudioExportKind::Galerie, $gallery->id),
+                ])->all(),
+        ];
+    }
+
+    public function contacts(StudioRecords $records): StreamedResponse
     {
         $this->authorizeSettings();
 
-        return $this->csv('kontakte.csv', ['Name', 'E-Mail', 'Telefon', 'Straße', 'PLZ', 'Ort'], $this->contactQuery()->get()
-            ->map(fn (Contact $contact) => [$contact->name, $contact->email, $contact->phone, $contact->street, $contact->postcode, $contact->city]));
+        return $this->csv('kontakte.csv', StudioRecords::CONTACT_COLUMNS, $records->contactRows());
     }
 
-    public function projects(DeriveProjectPosition $position): StreamedResponse
+    public function projects(StudioRecords $records): StreamedResponse
     {
         $this->authorizeSettings();
 
-        return $this->csv('projekte.csv', ['Projekt', 'Haupttermin', 'Ort', 'Stand', 'Kontakt'], $this->projectQuery()
-            ->with(['primaryShoot', 'lead', 'job', 'shoots', 'contacts'])
-            ->get()
-            ->map(fn (Project $project) => ProjectRowData::fromProject($project, $position))
-            ->map(fn (ProjectRowData $row) => [$row->name, $row->date, $row->venue, $row->position, $row->contact]));
-    }
-
-    /** Erased contacts are placeholders now; a spreadsheet of them is noise. */
-    private function contactQuery(): Builder
-    {
-        return Contact::query()->whereNull('dsgvo_erased_at')->orderBy('name');
-    }
-
-    /** Booked only, as on /projekte: before the booking a project is an inquiry. */
-    private function projectQuery(): Builder
-    {
-        return Project::query()->whereHas('job')->orderBy('name');
+        return $this->csv('projekte.csv', StudioRecords::PROJECT_COLUMNS, $records->projectRows());
     }
 
     /** @param iterable<array<int, string|null>> $rows */
     private function csv(string $name, array $columns, iterable $rows): StreamedResponse
     {
-        return response()->streamDownload(function () use ($columns, $rows) {
-            $out = fopen('php://output', 'w');
-
-            fwrite($out, "\u{FEFF}");
-            fputcsv($out, $columns, ';');
-
-            foreach ($rows as $row) {
-                fputcsv($out, $row, ';');
-            }
-
-            fclose($out);
-        }, $name, ['Content-Type' => 'text/csv; charset=UTF-8']);
+        return response()->streamDownload(
+            fn () => print StudioRecords::csv($columns, $rows),
+            $name,
+            ['Content-Type' => 'text/csv; charset=UTF-8'],
+        );
     }
 }

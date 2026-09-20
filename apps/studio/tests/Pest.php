@@ -31,6 +31,7 @@ use App\Settings\Models\StudioSettings;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\Surface;
 use Aws\MockHandler;
+use Aws\Result;
 use Aws\S3\S3Client;
 use Illuminate\Routing\RouteCollection;
 use Illuminate\Support\Facades\Auth;
@@ -465,4 +466,59 @@ function stage(LeadStage|ShootStatus|string $stage, ?StagePipeline $pipeline = n
     $key = $stage instanceof BackedEnum ? $stage->value : $stage;
 
     return app(CrmVocabulary::class)->byKey($pipeline, $key);
+}
+
+/**
+ * A working Aws\S3\S3Client stand-in for the whole multipart-upload
+ * lifecycle (CreateMultipartUpload, UploadPart, ListParts,
+ * CompleteMultipartUpload, AbortMultipartUpload) that actually retains every
+ * uploaded part's bytes in $captured, keyed by upload id then part number —
+ * exactly the "no fake for that boundary exists yet" gap
+ * ReapIncompleteMultipartUploadsTest and MultipartUploadGatewayTest already
+ * flag, extended here so a test can reassemble what was "uploaded" and
+ * assert it is a genuinely valid, openable ZIP — not just that the right
+ * AWS calls happened.
+ *
+ * @param  array<string, array<int, array{body: string, etag: string}>>  $captured
+ */
+function zipMultipartMock(array &$captured, array &$aborted): S3Client
+{
+    $nextUploadId = 0;
+
+    $respond = function ($command) use (&$captured, &$aborted, &$nextUploadId) {
+        return match ($command->getName()) {
+            'CreateMultipartUpload' => new Result(['UploadId' => 'upload-'.(++$nextUploadId)]),
+            'UploadPart' => (function () use ($command, &$captured) {
+                $uploadId = $command['UploadId'];
+                $partNumber = $command['PartNumber'];
+                $etag = "\"part-{$uploadId}-{$partNumber}\"";
+                $captured[$uploadId][$partNumber] = ['body' => (string) $command['Body'], 'etag' => $etag];
+
+                return new Result(['ETag' => $etag]);
+            })(),
+            'ListParts' => new Result([
+                'Parts' => collect($captured[$command['UploadId']] ?? [])
+                    ->map(fn ($part, $number) => ['PartNumber' => $number, 'Size' => strlen($part['body']), 'ETag' => $part['etag']])
+                    ->values()->all(),
+                'IsTruncated' => false,
+            ]),
+            'CompleteMultipartUpload' => new Result(['ETag' => '"final"']),
+            'AbortMultipartUpload' => (function () use ($command, &$aborted) {
+                $aborted[] = $command['UploadId'];
+
+                return new Result([]);
+            })(),
+            default => throw new RuntimeException("Unexpected S3 call: {$command->getName()}"),
+        };
+    };
+
+    return mockS3Client(new MockHandler(array_fill(0, 200, $respond)));
+}
+
+/** The bytes captured for one upload id, reassembled in part order — the exact object App\Media\Services\MultipartZipUploader would have produced on S3. */
+function assembledUpload(array $captured, string $uploadId): string
+{
+    ksort($captured[$uploadId]);
+
+    return implode('', array_map(fn ($part) => $part['body'], $captured[$uploadId]));
 }
