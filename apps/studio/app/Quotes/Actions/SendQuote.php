@@ -60,8 +60,8 @@ class SendQuote
      * E-07/T-11: through NotificationService, addressed to the Contact
      * itself rather than Notification::route('mail', ...) — the on-demand
      * shape this used before Contact carried Notifiable. Naming the Contact
-     * is what lets T-11's preferences and quiet hours apply; an on-demand
-     * address carries no identity either could key on.
+     * is what lets T-11's preferences apply; an on-demand address carries
+     * no identity they could key on.
      */
     private function mail(Quote $quote, ?string $subject, ?string $message): void
     {

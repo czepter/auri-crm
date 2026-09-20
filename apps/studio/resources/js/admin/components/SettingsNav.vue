@@ -22,10 +22,9 @@ const items = [
   { key: 'general', href: '/einstellungen/allgemein', label: 'settings.navGeneral' },
   { key: 'brand', href: '/einstellungen/marke', label: 'settings.brand' },
   { key: 'legal', href: '/einstellungen/rechtliche-einheit', label: 'settings.legalEntity' },
-  // Absender und Ruhezeiten gelten studioweit, für jede Mail — das Portal
+  // Der Absender gilt studioweit, für jede Mail — das Portal
   // ist einer von vielen Auslösern, nicht ihr Zuhause.
   { key: 'email', href: '/einstellungen/email', label: 'settings.navMail' },
-  { key: 'notifications', href: '/einstellungen/benachrichtigungen', label: 'settings.navNotifications' },
 
   { group: 'settings.groupBilling' },
   // Bankverbindung und Umsatzsteuer landen beide im Fuß derselben Rechnung.

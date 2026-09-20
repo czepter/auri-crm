@@ -19,9 +19,9 @@ use Illuminate\Support\Facades\Notification as NotificationFacade;
  * containers that run workers had a DSN.
  *
  * Calls the mail channel directly rather than re-entering
- * NotificationService::send() the way DeferredNotification does: the fan-out
- * already happened when this was dispatched, and going back through it would
- * write the in-app row a second time.
+ * NotificationService::send(): the fan-out already happened when this was
+ * dispatched, and going back through it would write the in-app row a second
+ * time.
  */
 class SendMailNotification implements ShouldQueue
 {

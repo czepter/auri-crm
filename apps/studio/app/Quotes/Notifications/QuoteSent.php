@@ -96,9 +96,9 @@ class QuoteSent extends Notification
 
         // Both links below are portal paths, so they compose against
         // config('portal.url') and never url(): SendQuote runs on the admin
-        // surface, and a quiet-hours DeferredNotification re-renders this on
-        // the worker, which is admin too. url() would put the studio's host
-        // in front of a route only the portal serves.
+        // surface, and the mail queue re-renders this on the worker, which is
+        // admin too. url() would put the studio's host in front of a route
+        // only the portal serves.
         if ($this->quote->project->portal_visible) {
             $message->action(
                 'Angebot ansehen',

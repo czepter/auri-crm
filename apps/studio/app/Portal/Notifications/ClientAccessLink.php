@@ -12,7 +12,7 @@ use Illuminate\Notifications\Notification;
 
 /**
  * T-11: Transactional — the client is waiting on this magic link right now,
- * so no preference and no quiet-hours window ever holds it back.
+ * so no preference ever holds it back.
  */
 class ClientAccessLink extends Notification implements Transactional
 {

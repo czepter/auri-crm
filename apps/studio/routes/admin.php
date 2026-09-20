@@ -77,7 +77,6 @@ use App\Reporting\Http\Controllers\ReportController;
 use App\Settings\Http\Controllers\ApiTokenController;
 use App\Settings\Http\Controllers\DataExportController;
 use App\Settings\Http\Controllers\GallerySettingsController;
-use App\Settings\Http\Controllers\NotificationSettingsController;
 use App\Settings\Http\Controllers\NumberRangeController;
 use App\Settings\Http\Controllers\PaymentSettingsController;
 use App\Settings\Http\Controllers\PortalSettingsController;
@@ -519,14 +518,6 @@ Route::middleware('audience:staff')->group(function () {
             ->name('gallery-presets.default');
         Route::delete('/einstellungen/galerie-vorlagen/{galleryPreset}', [GalleryPresetController::class, 'destroy'])
             ->name('gallery-presets.destroy');
-
-        // T-11: quiet hours only — see NotificationSettingsController's own
-        // doc comment for why no per-event toggle grid ships in this route
-        // group yet.
-        Route::get('/einstellungen/benachrichtigungen', [NotificationSettingsController::class, 'edit'])
-            ->name('settings.notifications.edit');
-        Route::patch('/einstellungen/benachrichtigungen', [NotificationSettingsController::class, 'update'])
-            ->name('settings.notifications.update');
 
         Route::get('/einstellungen/api-token', [ApiTokenController::class, 'index'])
             ->name('api-tokens.index');

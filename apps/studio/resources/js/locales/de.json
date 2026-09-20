@@ -1077,7 +1077,6 @@
     "navFormTemplates": "Fragebogen-Vorlagen",
     "navPortal": "Portal",
     "navPortalContact": "Kontakt",
-    "navNotifications": "Benachrichtigungen",
     "navGeneral": "Allgemein",
     "navExport": "Export",
     "exportInvoices": "Rechnungen",
@@ -1345,14 +1344,6 @@
     "revoke": "Widerrufen",
     "revokeTitle": "Token widerrufen?",
     "mcpHelp": "Claude verbinden"
-  },
-  "notificationSettings": {
-    "title": "Benachrichtigungen",
-    "quietHoursSection": "Ruhezeiten",
-    "quietHoursEnabledLabel": "Ruhezeiten aktivieren",
-    "quietHoursStartLabel": "Von",
-    "quietHoursEndLabel": "Bis",
-    "quietHoursHint": "Zeitzone aus Allgemein"
   },
   "formTemplates": {
     "kicker": "Einstellungen · Fragebogen-Vorlagen",

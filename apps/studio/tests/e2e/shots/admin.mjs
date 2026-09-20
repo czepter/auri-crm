@@ -107,7 +107,6 @@ const screens = [
   ['einstellungen-fragebogen-vorlagen-neu', '/einstellungen/fragebogen-vorlagen/neu'],
   ['einstellungen-fragebogen-vorlage-detail', ids.formTemplate],
   ['einstellungen-portal', '/einstellungen/portal'],
-  ['einstellungen-benachrichtigungen', '/einstellungen/benachrichtigungen'],
   ['auftrag-uebersicht', project],
   ['auftrag-shootings', `${project}/shootings`],
   ['auftrag-nachrichten', `${project}/nachrichten`],
