@@ -77,7 +77,7 @@ const meta = {
     title: 'Bildschirme/Projektliste',
     component: Index,
     parameters: { layout: 'fullscreen', url: '/auftraege' },
-    args: { view: 'liste', projects, stages, stageSettings: null, workflow: null },
+    args: { view: 'liste', projects, stages, stageSettings: null, settingsSelection: null, returnTo: null, workflow: null },
 } satisfies Meta<typeof Index>
 
 export default meta

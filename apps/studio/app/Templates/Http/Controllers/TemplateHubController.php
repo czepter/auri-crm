@@ -108,7 +108,7 @@ class TemplateHubController extends Controller
      *
      * @return list<string>
      */
-    private function allowedKinds(): array
+    public function allowedKinds(): array
     {
         $checks = [
             'aufgaben' => Gate::allows('viewAny', TaskTemplate::class),

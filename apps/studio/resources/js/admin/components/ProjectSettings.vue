@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watchEffect } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
+import { useEventListener } from '@vueuse/core'
 import { Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
@@ -51,6 +52,8 @@ const props = defineProps<{
   fieldTypes: { value: string; label: string; hasOptions: boolean }[]
   workflow?: Record<string, unknown> | null
   canManageTasks?: boolean
+  selection: { kind: 'pipeline' | 'type'; key: string }
+  returnTo?: string | null
 }>()
 
 const emit = defineEmits<{ close: [] }>()
@@ -58,21 +61,39 @@ const emit = defineEmits<{ close: [] }>()
 // C-25: one settings room instead of three buttons. What the left rail
 // selects is what the right pane edits — a pipeline's stages, or one type
 // with its own two tabs.
-const selected = ref<{ kind: 'pipeline' | 'type'; key: string }>({
-  kind: 'pipeline',
-  key: props.pipelines[0]?.value ?? '',
-})
+const selected = ref({ ...props.selection })
 const tab = ref<'general' | 'workflow'>('general')
 
 const pipeline = computed(() => props.pipelines.find((one) => one.value === selected.value.key) ?? null)
 const type = computed(() => props.types.find((one) => one.key === selected.value.key) ?? null)
 
-function chooseType(next: Type) {
-  selected.value = { kind: 'type', key: next.key }
+// Der Bildschirm unter dem Overlay folgt der Auswahl: Anfrage-Stufen liegen
+// über /anfragen, Projekt-Stufen und Typen über der Projektliste.
+function choose(next: { kind: 'pipeline' | 'type'; key: string }) {
+  selected.value = next
+
+  const path = next.kind === 'type'
+    ? `/auftraege/einstellungen/typen/${next.key}`
+    : `/${next.key === 'lead' ? 'anfragen' : 'auftraege'}/einstellungen/stufen`
+
+  router.visit(path, {
+    data: props.returnTo ? { return: props.returnTo } : {},
+    replace: true,
+    preserveState: true,
+    preserveScroll: true,
+    only: ['settingsSelection', 'returnTo'],
+    onFinish: () => next.kind === 'type' && tab.value === 'workflow' && loadWorkflow(),
+  })
+}
+
+function fillTypeForm(next: Type) {
   typeForm.defaults({ name: next.name, is_active: next.isActive, is_default: next.isDefault, duration_minutes: next.durationMinutes })
   typeForm.reset()
+}
 
-  if (tab.value === 'workflow') loadWorkflow()
+function chooseType(next: Type) {
+  choose({ kind: 'type', key: next.key })
+  fillTypeForm(next)
 }
 
 // Die Spalten kommen erst beim Öffnen des Tabs mit — der Panel-Prop ist
@@ -94,6 +115,17 @@ const newStageForm = useForm({ pipeline: 'lead', name: '', color: 'blue', after:
 const deleteForm = useForm({ move_to: null as string | null })
 const typeForm = useForm({ name: '', is_active: true, is_default: false, duration_minutes: 120 })
 const newTypeForm = useForm({ name: '' })
+
+if (type.value) fillTypeForm(type.value)
+
+// Capture: runs before a dialog's own Escape handler has closed it, so an
+// open dialog still swallows the key. A key pressed in a field is the field's.
+useEventListener(window, 'keydown', (event: KeyboardEvent) => {
+  if (event.key !== 'Escape' || open.value !== null) return
+  if ((event.target as HTMLElement).closest?.('input, textarea, select, [role=combobox], [role=listbox], [role=dialog]')) return
+
+  emit('close')
+}, { capture: true })
 
 function editStage(stage: Stage) {
   editing.value = stage
@@ -305,7 +337,7 @@ function release(row: Stage | Field) {
             class="block w-full cursor-pointer rounded-lg border-0 bg-transparent px-2.5 py-[7px] text-left text-[13px] leading-[1.3]"
             :class="selected.kind === 'pipeline' && selected.key === one.value ? 'bg-sunk-2 font-semibold' : 'text-ink-2'"
             type="button"
-            @click="selected = { kind: 'pipeline', key: one.value }"
+            @click="choose({ kind: 'pipeline', key: one.value })"
           >
             {{ one.label }}
           </button>

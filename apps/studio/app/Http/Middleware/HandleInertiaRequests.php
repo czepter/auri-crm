@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Crm\Actions\OpenLeads;
 use App\Crm\Models\Project;
+use App\Crm\Models\Stage;
 use App\Data\StaffProfileData;
 use App\Documents\Support\DocumentBlockCatalog;
 use App\Documents\Support\MergeFieldVocabulary;
@@ -16,7 +17,9 @@ use App\Settings\Support\StudioSettingsResolver;
 use App\Support\LiveUpdate;
 use App\Support\RecordVisit;
 use App\Support\Surface;
+use App\Templates\Http\Controllers\TemplateHubController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -44,6 +47,12 @@ class HandleInertiaRequests extends Middleware
                 'can' => $user === null
                     ? []
                     : array_map(fn ($capability) => $capability->value, $user->role->capabilities()),
+            ],
+            // Where the settings menu points outside the settings: the stage
+            // overlay and the template hub, each behind its own gate.
+            'settingsLinks' => fn () => $user === null ? null : [
+                'stages' => Gate::allows('viewAny', Stage::class),
+                'templates' => app(TemplateHubController::class)->allowedKinds() !== [],
             ],
             // The studio's own name. Shared on every surface rather than only
             // in the portal's branding block: the admin wordmark and the

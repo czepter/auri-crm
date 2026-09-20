@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { computed, onMounted, ref } from 'vue'
+import { Link, usePage } from '@inertiajs/vue3'
 
 defineProps<{ active: string }>()
+
+const page = usePage()
+const here = page.url.split('?')[0]
 
 // Liegend sind es zwanzig Einträge in einer Zeile, und der offene steht weit
 // rechts. Ohne das sieht man beim Öffnen nur den Anfang der Liste und nicht,
@@ -17,9 +20,10 @@ onMounted(() => bar.value?.querySelector('[data-open]')?.scrollIntoView({ inline
 //
 // Grouped the same way AdminLayout's own sidebar groups: a `group` entry is a
 // heading, everything after it belongs to it until the next one.
-const items = [
+const items: { group?: string; key?: string; href?: string; label?: string; external?: boolean }[] = [
   { group: 'settings.groupStudio' },
   { key: 'general', href: '/einstellungen/allgemein', label: 'settings.navGeneral' },
+  { key: 'availability', href: '/einstellungen/verfuegbarkeit', label: 'settings.navAvailability' },
   // Der Absender gilt studioweit, für jede Mail — das Portal
   // ist einer von vielen Auslösern, nicht ihr Zuhause.
   { key: 'email', href: '/einstellungen/email', label: 'settings.navMail' },
@@ -30,7 +34,9 @@ const items = [
   { key: 'numbering', href: '/einstellungen/nummernkreise', label: 'settings.navNumbering' },
 
   { group: 'settings.groupWork' },
-  { key: 'availability', href: '/einstellungen/verfuegbarkeit', label: 'settings.navAvailability' },
+  // Verweise auf die Stellen, an denen sie bedient werden; nie der offene Eintrag.
+  { key: 'stages', href: `/auftraege/einstellungen/stufen?return=${encodeURIComponent(here)}`, label: 'settings.navStages', external: true },
+  { key: 'templates', href: '/vorlagen', label: 'settings.navTemplates', external: true },
   { key: 'automations', href: '/einstellungen/automationen', label: 'automations.title' },
 
   { group: 'settings.groupPortal' },
@@ -48,6 +54,9 @@ const items = [
 
 ]
 
+// Die Ziele der Verweise verlangen andere Rechte als die Einstellungen.
+const shown = computed(() => items.filter((item) => !item.external || page.props.settingsLinks?.[item.key as 'stages' | 'templates']))
+
 /* tokens.css .nav — the sidebar row, reused for the settings rail. */
 /* tokens.css .nav. The two states are written out rather than layered:
    two font-weight utilities on one element are decided by bundle order. */
@@ -61,7 +70,7 @@ const items = [
     ref="bar"
     class="flex w-[196px] flex-none flex-col gap-0.5 max-[640px]:w-full max-[640px]:flex-row max-[640px]:overflow-x-auto max-[640px]:pb-1"
   >
-    <template v-for="item in items" :key="item.key ?? item.group">
+    <template v-for="item in shown" :key="item.key ?? item.group">
       <div
         v-if="item.group"
         class="mt-4 px-2.5 pb-1 text-[10.5px] tracking-[0.06em] uppercase text-ink-2 first:mt-0 max-[640px]:hidden"
@@ -71,11 +80,11 @@ const items = [
       <Link
         v-else
         class="flex items-center gap-2.5 rounded-[7px] px-2.5 py-[9px] text-[14px] leading-none whitespace-nowrap no-underline transition-[background-color] duration-[.12s] ease-out hover:bg-muted [&_svg]:size-[17px]" :class="
-          item.key === active
+          item.key === active && !item.external
             ? 'font-semibold text-foreground [&_svg]:opacity-100'
             : 'font-normal text-muted-foreground [&_svg]:opacity-75'
         "
-        :data-open="item.key === active || undefined"
+        :data-open="(item.key === active && !item.external) || undefined"
         :href="item.href!"
       >{{ $t(item.label!) }}</Link>
     </template>

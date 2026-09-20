@@ -18,11 +18,12 @@ const props = defineProps<{
   view: 'liste' | 'board'
   projects: App.Crm.Data.ProjectRowData[]
   stages: { key: string; name: string; phase: Phase }[]
-  stageSettings: Omit<InstanceType<typeof ProjectSettings>['$props'], 'workflow' | 'canManageTasks'> | null
+  stageSettings: Omit<InstanceType<typeof ProjectSettings>['$props'], 'workflow' | 'canManageTasks' | 'selection' | 'returnTo'> | null
   workflow?: Record<string, unknown> | null
+  settingsSelection: InstanceType<typeof ProjectSettings>['$props']['selection'] | null
+  returnTo: string | null
 }>()
 
-const settingsOpen = ref(false)
 const workflowAllowed = computed(() => (usePage().props.auth.can ?? []).includes('manage_tasks'))
 
 const scope = ref('running')
@@ -113,7 +114,7 @@ function reset() {
             variant="segmented"
             @update:model-value="(ansicht) => router.get('/projekte', { ansicht }, { preserveScroll: true, preserveState: true })"
           />
-          <Button v-if="stageSettings" class="ml-auto" type="button" variant="pill-muted" @click="settingsOpen = true">
+          <Button v-if="stageSettings" :as="Link" class="ml-auto" variant="pill-muted" href="/auftraege/einstellungen/stufen">
             {{ $t('stages.entry') }}
           </Button>
         </PageHead>
@@ -223,11 +224,13 @@ function reset() {
           <Button :as="Link" variant="pill" href="/anfragen/neu">{{ $t('leads.createKicker') }}</Button>
         </Empty>
         <ProjectSettings
-          v-if="settingsOpen && stageSettings"
+          v-if="settingsSelection && stageSettings"
           v-bind="stageSettings"
+          :selection="settingsSelection"
+          :return-to="returnTo"
           :can-manage-tasks="workflowAllowed"
           :workflow="workflow"
-          @close="settingsOpen = false"
+          @close="router.visit(returnTo ?? '/projekte', { preserveState: true, preserveScroll: true })"
         />
       </div>
     </Page>

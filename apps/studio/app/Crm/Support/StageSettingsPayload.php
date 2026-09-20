@@ -8,6 +8,8 @@ use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\ProjectField;
 use App\Crm\Models\ProjectType;
 use App\Crm\Models\Stage;
+use App\Support\LocalPath;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 /**
@@ -67,6 +69,39 @@ class StageSettingsPayload
                 ->map(fn (StageColor $color) => ['value' => $color->value, 'label' => $color->label(), 'css' => $color->css()])
                 ->all(),
         ];
+    }
+
+    /**
+     * What the overlay opens on, from the address it was reached by; null on
+     * the plain list. The addresses exist only for whoever may edit the
+     * funnel, and a type key names a type or nothing.
+     *
+     * @return array{kind: string, key: string}|null
+     */
+    public function selection(Request $request): ?array
+    {
+        $pipeline = $request->route('pipeline');
+        $type = $request->route('key');
+
+        if ($pipeline === null && $type === null) {
+            return null;
+        }
+
+        abort_if(Gate::denies('viewAny', Stage::class), 404);
+
+        if ($type === null) {
+            return ['kind' => 'pipeline', 'key' => $pipeline];
+        }
+
+        abort_if($this->vocabulary->type($type) === null, 404);
+
+        return ['kind' => 'type', 'key' => $type];
+    }
+
+    /** Where "Fertig" leads back to: the page the studio came from, if it named a local one. */
+    public function returnTo(Request $request): ?string
+    {
+        return LocalPath::from($request->query('return'));
     }
 
     /** @return array<string, mixed> */

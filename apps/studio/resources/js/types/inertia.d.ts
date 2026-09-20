@@ -11,6 +11,7 @@ declare module '@inertiajs/core' {
       flash: { status: string | null; secret: string | null }
       portalPreview: boolean
       soloStudio: boolean
+      settingsLinks: { stages: boolean; templates: boolean } | null
       brand: string
     }
   }

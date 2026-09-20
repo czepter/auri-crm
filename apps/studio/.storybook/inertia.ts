@@ -31,6 +31,7 @@ export const SHARED: PageProps = {
     brand: 'Atelier Nordlicht',
     portalPreview: false,
     soloStudio: false,
+    settingsLinks: { stages: true, templates: true },
     flash: { status: null, secret: null },
     errors: {},
     nav: { leads: 4, unread: 2, projects: 11 },

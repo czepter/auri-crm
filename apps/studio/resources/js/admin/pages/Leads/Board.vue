@@ -47,13 +47,14 @@ const props = defineProps<{
     view: string;
     stageSettings: Omit<
         InstanceType<typeof ProjectSettings>["$props"],
-        "workflow" | "canManageTasks"
+        "workflow" | "canManageTasks" | "selection" | "returnTo"
     > | null;
     workflow?: Record<string, unknown> | null;
+    settingsSelection: InstanceType<typeof ProjectSettings>["$props"]["selection"] | null;
+    returnTo: string | null;
 }>();
 
 const view = ref(props.view);
-const stagesOpen = ref(false);
 
 // The switch writes the URL without a navigation and stores the choice, so a
 // link stays shareable and the next visit opens on the same one.
@@ -296,10 +297,10 @@ const workflowAllowed = computed(() =>
 
                     <Button
                         v-if="stageSettings"
+                        :as="Link"
                         class="ml-auto"
                         variant="pill-muted"
-                        type="button"
-                        @click="stagesOpen = true"
+                        href="/anfragen/einstellungen/stufen"
                     >
                         {{ $t("stages.entry") }}
                     </Button>
@@ -690,11 +691,13 @@ const workflowAllowed = computed(() =>
             </div>
 
             <ProjectSettings
-                v-if="stagesOpen && stageSettings"
+                v-if="settingsSelection && stageSettings"
                 v-bind="stageSettings"
+                :selection="settingsSelection"
+                :return-to="returnTo"
                 :can-manage-tasks="workflowAllowed"
                 :workflow="workflow"
-                @close="stagesOpen = false"
+                @close="router.visit(returnTo ?? '/anfragen', { preserveState: true, preserveScroll: true })"
             />
         </Page>
     </AdminLayout>

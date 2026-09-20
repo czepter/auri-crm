@@ -67,6 +67,8 @@ class LeadBoardController extends Controller
             'queue' => $leads->queue(),
             'view' => $this->view($request),
             'stageSettings' => $settings(),
+            'settingsSelection' => $settings->selection($request),
+            'returnTo' => $settings->returnTo($request),
             // Only fetched when the panel opens (a partial reload asking for
             // it), and only for whoever may edit the templates at all.
             'workflow' => Inertia::optional(

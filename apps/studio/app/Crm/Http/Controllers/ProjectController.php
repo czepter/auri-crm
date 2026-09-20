@@ -108,6 +108,8 @@ class ProjectController extends Controller
                 ->map(fn (Stage $stage) => ['key' => $stage->key, 'name' => $stage->name, 'phase' => $vocabulary->phase($stage)])
                 ->values(),
             'stageSettings' => app(StageSettingsPayload::class)(),
+            'settingsSelection' => app(StageSettingsPayload::class)->selection(request()),
+            'returnTo' => app(StageSettingsPayload::class)->returnTo(request()),
             'workflow' => Inertia::optional(function () {
                 if (! request()->user('staff')->can('viewAny', TaskTemplate::class)) {
                     return null;

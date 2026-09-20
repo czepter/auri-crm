@@ -536,6 +536,12 @@ Route::middleware('audience:staff')->group(function () {
         // /kontakte/suche stays above /kontakte/{contact}.
         Route::get('/anfragen/neu', [InquiryCaptureController::class, 'create'])->name('leads.create');
         Route::get('/anfragen', [LeadBoardController::class, '__invoke'])->name('leads.index');
+        // The stage overlay has real addresses, the way a gallery's settings
+        // do: the list renders underneath, the overlay opens on what the path
+        // names.
+        Route::get('/anfragen/einstellungen/stufen', [LeadBoardController::class, '__invoke'])
+            ->defaults('pipeline', 'lead')
+            ->name('leads.settings');
         // C-07 (#241): the view the user last chose, kept on the user.
         Route::post('/anfragen/ansicht', [LeadBoardController::class, 'chooseView'])
             ->name('leads.view');
@@ -572,6 +578,11 @@ Route::middleware('audience:staff')->group(function () {
         // the list covers every project whether or not one exists yet.
         Route::get('/projekte', [ProjectController::class, 'index'])->name('projects.index');
         Route::get('/projekte/suche', ProjectSearchController::class)->name('projects.search');
+        Route::get('/auftraege/einstellungen/stufen', [ProjectController::class, 'index'])
+            ->defaults('pipeline', 'project')
+            ->name('projects.settings.stages');
+        Route::get('/auftraege/einstellungen/typen/{key}', [ProjectController::class, 'index'])
+            ->name('projects.settings.type');
 
         // The project screen. Shoot and crew mutations hang off /shootings
         // rather than under the project, because the shoot's public id already
