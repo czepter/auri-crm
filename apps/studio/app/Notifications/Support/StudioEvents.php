@@ -21,6 +21,7 @@ final class StudioEvents
     public const ALL = [
         'inquiryReceived' => Studio\InquiryReceived::class,
         'clientMessage' => Studio\ClientMessagePosted::class,
+        'dsgvoRequested' => Studio\DsgvoRequested::class,
         'quoteAccepted' => Studio\QuoteAccepted::class,
         'contractSigned' => Studio\ContractSigned::class,
         'questionnaireSubmitted' => Studio\QuestionnaireSubmitted::class,

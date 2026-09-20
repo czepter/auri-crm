@@ -5,6 +5,7 @@ namespace App\Crm\Http\Controllers;
 use App\Crm\Actions\EraseContactDsgvo;
 use App\Crm\Actions\ExportContactDsgvoData;
 use App\Crm\Models\Contact;
+use App\Crm\Models\Task;
 use App\Http\Controllers\Controller;
 use App\Portal\Models\DsgvoRequest;
 use Illuminate\Http\RedirectResponse;
@@ -53,9 +54,14 @@ class ContactDsgvoController extends Controller
      */
     private function close(Contact $contact, string $kind): void
     {
-        DsgvoRequest::query()->open()
+        $open = DsgvoRequest::query()->open()
             ->where('contact_id', $contact->id)
-            ->where('kind', $kind)
-            ->update(['handled_at' => now(), 'handled_by_id' => auth('staff')->id()]);
+            ->where('kind', $kind);
+
+        Task::query()->open()
+            ->whereIn('id', (clone $open)->select('task_id'))
+            ->update(['completed_at' => now(), 'completed_by_id' => auth('staff')->id()]);
+
+        $open->update(['handled_at' => now(), 'handled_by_id' => auth('staff')->id()]);
     }
 }

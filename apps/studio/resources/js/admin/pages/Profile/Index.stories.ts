@@ -4,6 +4,7 @@ import Index from './Index.vue'
 const events = {
   inquiryReceived: 'immediate',
   clientMessage: 'immediate',
+  dsgvoRequested: 'immediate',
   quoteAccepted: 'immediate',
   questionnaireSubmitted: 'digest',
   installmentPaid: 'digest',

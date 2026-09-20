@@ -28,6 +28,7 @@ type Mode = 'immediate' | 'briefing' | 'digest' | 'off'
 const EVENT_KEYS = [
   'inquiryReceived',
   'clientMessage',
+  'dsgvoRequested',
   'quoteAccepted',
   'questionnaireSubmitted',
   'installmentPaid',

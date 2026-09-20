@@ -5,7 +5,9 @@ namespace App\Portal\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\Contact;
+use App\Crm\Models\Task;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -33,7 +35,7 @@ class DsgvoRequest extends Model
 
     public const ERASURE = 'erasure';
 
-    protected $fillable = ['contact_id', 'kind'];
+    protected $fillable = ['contact_id', 'kind', 'task_id'];
 
     protected function casts(): array
     {
@@ -43,6 +45,22 @@ class DsgvoRequest extends Model
     public function contact(): BelongsTo
     {
         return $this->belongsTo(Contact::class);
+    }
+
+    public function task(): BelongsTo
+    {
+        return $this->belongsTo(Task::class);
+    }
+
+    public function label(): string
+    {
+        return $this->kind === self::EXPORT ? 'Datenkopie' : 'Löschung';
+    }
+
+    /** Art. 12 Abs. 3 DSGVO: one month after receipt. */
+    public function dueOn(): CarbonImmutable
+    {
+        return $this->created_at->toImmutable()->addMonthNoOverflow()->startOfDay();
     }
 
     public function handledBy(): BelongsTo

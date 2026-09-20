@@ -1228,6 +1228,7 @@
     "event": {
       "inquiryReceived": "Neue Anfrage",
       "clientMessage": "Nachricht im Portal",
+      "dsgvoRequested": "Datenschutz-Anfrage",
       "quoteAccepted": "Angebot angenommen",
       "contractSigned": "Vertrag unterschrieben",
       "questionnaireSubmitted": "Fragebogen ausgefüllt",
