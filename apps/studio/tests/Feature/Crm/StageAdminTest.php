@@ -136,6 +136,17 @@ it('adds a project type and keeps one default', function () {
         ->and(ProjectType::default()->key)->toBe('elopement');
 });
 
+it('sets the shoot duration of a type and refuses a value outside a day', function () {
+    $type = ProjectType::query()->where('key', 'wedding')->sole();
+
+    $this->patch('/projekttypen/'.$type->public_id, ['name' => $type->name, 'duration_minutes' => 480])->assertRedirect();
+
+    expect($type->fresh()->duration_minutes)->toBe(480);
+
+    $this->patch('/projekttypen/'.$type->public_id, ['name' => $type->name, 'duration_minutes' => 1441])
+        ->assertSessionHasErrors('duration_minutes');
+});
+
 it('refuses to delete a type that projects still carry', function () {
     $type = ProjectType::query()->where('key', 'wedding')->sole();
     Project::factory()->create(['type' => $type->key]);

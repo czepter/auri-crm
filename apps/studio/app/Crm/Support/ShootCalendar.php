@@ -4,7 +4,6 @@ namespace App\Crm\Support;
 
 use App\Crm\Models\Shoot;
 use App\Crm\Support\Concerns\FormatsIcs;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Support\Collection;
 
 /**
@@ -19,8 +18,6 @@ use Illuminate\Support\Collection;
 class ShootCalendar
 {
     use FormatsIcs;
-
-    public function __construct(private readonly StudioSettingsResolver $settings) {}
 
     /** @param  Collection<int, Shoot>  $shoots */
     public function render(Collection $shoots, string $name): string
@@ -107,7 +104,7 @@ class ShootCalendar
         // Carbon::addMinutes() mutates in place, and without it $end would be
         // the same object as $start rather than a value derived from it.
         $end = $shoot->end_time === null
-            ? $start->copy()->addMinutes($this->settings->defaultShootDurationMinutes())
+            ? $start->copy()->addMinutes($shoot->defaultDurationMinutes())
             : $this->atVenue($date, substr((string) $shoot->end_time, 0, 8));
 
         if ($end <= $start) {

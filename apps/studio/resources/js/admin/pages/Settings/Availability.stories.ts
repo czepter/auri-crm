@@ -6,7 +6,6 @@ const meta = {
   component: Availability,
   parameters: { layout: 'fullscreen', url: '/einstellungen/verfuegbarkeit' },
   args: {
-    defaultShootDurationMinutes: 480,
     closures: [
       { id: 'c1', label: 'Weihnachtspause', startsOn: '2026-12-23', endsOn: '2027-01-04' },
       { id: 'c2', label: 'Lofoten', startsOn: '2027-02-08', endsOn: '2027-02-22' },
@@ -17,8 +16,8 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-/** Regeldauer eines Termins und zwei eingetragene Schließzeiten. */
+/** Zwei eingetragene Schließzeiten. */
 export const MitSchliesszeiten: Story = {}
 
-/** Nur die Regeldauer, keine Schließzeit eingetragen. */
+/** Keine Schließzeit eingetragen. */
 export const OhneSchliesszeiten: Story = { args: { closures: [] } }

@@ -4,6 +4,7 @@ import { router, useForm } from '@inertiajs/vue3'
 import { Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
@@ -41,7 +42,7 @@ type Field = {
   isActive: boolean
 }
 
-type Type = { id: string; key: string; name: string; isActive: boolean; isDefault: boolean; fields: Field[] }
+type Type = { id: string; key: string; name: string; isActive: boolean; isDefault: boolean; durationMinutes: number; fields: Field[] }
 
 const props = defineProps<{
   pipelines: Pipeline[]
@@ -68,7 +69,7 @@ const type = computed(() => props.types.find((one) => one.key === selected.value
 
 function chooseType(next: Type) {
   selected.value = { kind: 'type', key: next.key }
-  typeForm.defaults({ name: next.name, is_active: next.isActive, is_default: next.isDefault })
+  typeForm.defaults({ name: next.name, is_active: next.isActive, is_default: next.isDefault, duration_minutes: next.durationMinutes })
   typeForm.reset()
 
   if (tab.value === 'workflow') loadWorkflow()
@@ -91,7 +92,7 @@ const editing = ref<Stage | null>(null)
 const stageForm = useForm({ name: '', color: 'grey', is_active: true })
 const newStageForm = useForm({ pipeline: 'lead', name: '', color: 'blue', after: null as string | null })
 const deleteForm = useForm({ move_to: null as string | null })
-const typeForm = useForm({ name: '', is_active: true, is_default: false })
+const typeForm = useForm({ name: '', is_active: true, is_default: false, duration_minutes: 120 })
 const newTypeForm = useForm({ name: '' })
 
 function editStage(stage: Stage) {
@@ -414,6 +415,21 @@ function release(row: Stage | Field) {
                   :model-value="typeForm.is_default"
                   @update:model-value="((typeForm.is_default = $event), saveType())"
                 />
+              </div>
+              <div class="flex items-center gap-4 border-b border-border py-3">
+                <Label class="flex-1" for="type-duration" variant="inline">{{ $t('stages.durationField') }}</Label>
+                <InputGroup class="max-w-[140px]">
+                  <InputGroupInput
+                    id="type-duration"
+                    v-model.number="typeForm.duration_minutes"
+                    class="tabular-nums"
+                    max="1440"
+                    min="1"
+                    type="number"
+                    @change="saveType"
+                  />
+                  <InputGroupAddon align="inline-end">{{ $t('common.unitMinutes') }}</InputGroupAddon>
+                </InputGroup>
               </div>
             </div>
 

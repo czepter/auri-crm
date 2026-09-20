@@ -6,7 +6,6 @@ use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
 use App\Settings\Data\StudioClosureData;
 use App\Settings\Models\StudioClosure;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,10 +13,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * T-09's Verfügbarkeit pane: the default shoot duration (a StudioSettings
- * column ShootCalendar reads instead of its old hardcoded addHours(2)) and
- * StudioClosure — a date range with a label, CheckDateAvailability's second
- * conflict source. Sits beside StudioSettingsController and
+ * T-09's Verfügbarkeit pane: StudioClosure — a date range with a label,
+ * CheckDateAvailability's second conflict source. Sits beside StudioSettingsController and
  * NumberRangeController under the same /einstellungen shell and the same
  * ManageSettings gate — see AuthorizesStaffSettings for why that gate is a
  * 404, not a 403.
@@ -26,39 +23,15 @@ class StudioClosureController extends Controller
 {
     use AuthorizesStaffSettings;
 
-    public function index(StudioSettingsResolver $settings): Response
+    public function index(): Response
     {
         $this->authorizeSettings();
 
         $closures = StudioClosure::query()->orderBy('starts_on')->get();
 
         return Inertia::render('Settings/Availability', [
-            'defaultShootDurationMinutes' => $settings->defaultShootDurationMinutes(),
             'closures' => $closures->map(StudioClosureData::fromModel(...))->all(),
         ]);
-    }
-
-    /**
-     * Its own save action, separate from the closures below: one field with
-     * its own "Speichern" button, the same reasoning
-     * StudioSettingsController::updateVat gives for splitting Zahlungsdaten
-     * & USt from Studio-Profil.
-     */
-    public function updateDuration(Request $request, StudioSettingsResolver $settings): RedirectResponse
-    {
-        $this->authorizeSettings();
-
-        $validated = $request->validate([
-            'default_shoot_duration_minutes' => ['required', 'integer', 'min:1', 'max:1440'],
-        ]);
-
-        $settings->set(
-            'default_shoot_duration_minutes',
-            $validated['default_shoot_duration_minutes'],
-            auth('staff')->user(),
-        );
-
-        return redirect('/einstellungen/verfuegbarkeit');
     }
 
     public function store(Request $request): RedirectResponse

@@ -7,21 +7,11 @@ import SettingsNav from '@/admin/components/SettingsNav.vue'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Label } from '@/ui/label'
 
 const props = defineProps<{
-  defaultShootDurationMinutes: number
   closures: App.Settings.Data.StudioClosureData[]
 }>()
-
-const durationForm = useForm({
-  default_shoot_duration_minutes: props.defaultShootDurationMinutes,
-})
-
-function saveDuration() {
-  durationForm.patch('/einstellungen/verfuegbarkeit/dauer', { preserveScroll: true })
-}
 
 // One form per closure, keyed by its id — an independent draft per row,
 // matching how Settings/Numbering.vue edits its number ranges.
@@ -61,37 +51,6 @@ function addClosure() {
             <SettingsNav active="availability" />
 
             <div style="flex: 1; min-width: 0; max-width: 620px">
-              <div>
-                <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.durationLabel') }}</div>
-                <form id="duration-form" @submit.prevent="saveDuration">
-                  <div class="mb-6">
-                    <div class="flex min-w-0 flex-col gap-1.5" style="max-width: 160px">
-                      <Label for="dauer-minuten">{{ $t('settings.durationLabel') }}</Label>
-                      <InputGroup>
-                        <InputGroupInput
-                          id="dauer-minuten"
-                          v-model.number="durationForm.default_shoot_duration_minutes" class="tabular-nums"
-                          type="number"
-                          min="1"
-                          max="1440" />
-                        <InputGroupAddon align="inline-end">{{ $t('common.unitMinutes') }}</InputGroupAddon>
-                      </InputGroup>
-                      <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('settings.durationHint') }}</span>
-                      <p v-if="durationForm.errors.default_shoot_duration_minutes" class="text-[11.5px] leading-[1.45] text-destructive">
-                        {{ durationForm.errors.default_shoot_duration_minutes }}
-                      </p>
-                    </div>
-                  </div>
-                  <div v-if="durationForm.isDirty" class="mt-6 flex items-center gap-4 [&_[data-slot=button][data-variant=default]]:ml-0">
-                    <Button type="submit" :disabled="durationForm.processing">
-                      <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" /></svg>
-                      {{ $t('settings.durationSave') }}
-                    </Button>
-                    <span class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
-                  </div>
-                </form>
-              </div>
-
               <div class="mt-8 first-of-type:mt-6">
                 <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.closuresLabel') }}</div>
 

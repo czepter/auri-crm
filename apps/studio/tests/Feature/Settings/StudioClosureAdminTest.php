@@ -3,7 +3,6 @@
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Settings\Models\StudioClosure;
-use App\Settings\Models\StudioSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 
@@ -13,7 +12,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(fn () => Cache::store('redis')->flush());
 
-it('renders the availability pane with the default duration and every closure', function () {
+it('renders the availability pane with every closure', function () {
     StudioClosure::factory()->spanning('2026-12-24', '2026-12-31')->create(['label' => 'Weihnachtspause']);
 
     $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
@@ -21,8 +20,7 @@ it('renders the availability pane with the default duration and every closure', 
         ->assertOk()
         ->viewData('page')['props'];
 
-    expect($props['defaultShootDurationMinutes'])->toBe(120)
-        ->and($props['closures'])->toHaveCount(1)
+    expect($props['closures'])->toHaveCount(1)
         ->and($props['closures'][0]['label'])->toBe('Weihnachtspause')
         ->and($props['closures'][0]['startsOn'])->toBe('2026-12-24')
         ->and($props['closures'][0]['endsOn'])->toBe('2026-12-31');
@@ -97,25 +95,6 @@ it('binds the closure route on the public id, not the primary key', function () 
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->delete("/einstellungen/verfuegbarkeit/schliesszeiten/{$closure->id}")
         ->assertNotFound();
-});
-
-it('saves the default shoot duration and leaves an audit row', function () {
-    $owner = staffMember(StaffRole::Owner);
-
-    $this->actingAs($owner, 'staff')
-        ->patch('/einstellungen/verfuegbarkeit/dauer', ['default_shoot_duration_minutes' => 90])
-        ->assertRedirect('/einstellungen/verfuegbarkeit');
-
-    expect(StudioSettings::query()->sole()->default_shoot_duration_minutes)->toBe(90)
-        ->and(AuditLog::where('event', 'studio_settings.updated')->where('context->key', 'default_shoot_duration_minutes')->sole()->actor_id)
-        ->toBe($owner->id);
-});
-
-it('rejects a non-positive default shoot duration', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->from('/einstellungen/verfuegbarkeit')
-        ->patch('/einstellungen/verfuegbarkeit/dauer', ['default_shoot_duration_minutes' => 0])
-        ->assertSessionHasErrors('default_shoot_duration_minutes');
 });
 
 it('gives every non-owner role the same 404 every other settings screen gives', function (StaffRole $role, int $status) {

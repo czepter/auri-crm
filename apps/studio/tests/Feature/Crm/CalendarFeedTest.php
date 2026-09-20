@@ -2,10 +2,10 @@
 
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Project;
+use App\Crm\Models\ProjectType;
 use App\Crm\Models\Shoot;
 use App\Models\Absence;
 use App\Models\User;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -132,10 +132,7 @@ it('folds a long line without splitting a character in half', function () {
     expect(mb_check_encoding(str_replace("\r\n ", '', $body), 'UTF-8'))->toBeTrue();
 });
 
-it('ends a shoot with no end_time at the configured default duration', function () {
-    // T-09: retires the hardcoded addHours(2), which this default (120)
-    // reproduces exactly — every studio keeps today's behaviour until it
-    // changes the setting.
+it('ends a shoot with no end_time at the default duration of its project type', function () {
     $user = User::factory()->create();
     $shoot = Shoot::factory()->on('2026-06-14')->create(['call_time' => '09:00', 'end_time' => null]);
     CrewAssignment::factory()->for($shoot)->for($user)->create();
@@ -146,18 +143,21 @@ it('ends a shoot with no end_time at the configured default duration', function 
         ->and($body)->toContain('DTEND:20260614T090000Z');
 });
 
-it('follows a changed default shoot duration setting', function () {
-    (new StudioSettingsResolver)->set('default_shoot_duration_minutes', 90);
+it('takes the duration from the type of the shoot project, and lets an end_time win', function () {
+    ProjectType::query()->where('key', 'wedding')->update(['duration_minutes' => 480]);
 
     $user = User::factory()->create();
-    $shoot = Shoot::factory()->on('2026-06-14')->create(['call_time' => '09:00', 'end_time' => null]);
-    CrewAssignment::factory()->for($shoot)->for($user)->create();
+    $project = Project::factory()->wedding()->create();
+    $open = Shoot::factory()->for($project)->on('2026-06-14')->create(['call_time' => '09:00', 'end_time' => null]);
+    $closed = Shoot::factory()->for($project)->on('2026-06-15')->create(['call_time' => '09:00', 'end_time' => '10:00']);
+    CrewAssignment::factory()->for($open)->for($user)->create();
+    CrewAssignment::factory()->for($closed)->for($user)->create();
 
     $body = $this->get("/kalender/{$user->calendarToken()}/shootings.ics")->getContent();
 
-    // 09:00 + 90 minutes = 10:30 Berlin time, 08:30Z in June.
-    expect($body)->toContain('DTSTART:20260614T070000Z')
-        ->and($body)->toContain('DTEND:20260614T083000Z');
+    // 09:00 + 8 hours = 17:00 Berlin time, 15:00Z in June.
+    expect($body)->toContain('DTEND:20260614T150000Z')
+        ->and($body)->toContain('DTEND:20260615T080000Z');
 });
 
 /**

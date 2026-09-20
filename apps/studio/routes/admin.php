@@ -397,8 +397,6 @@ Route::middleware('audience:staff')->group(function () {
 
         Route::get('/einstellungen/verfuegbarkeit', [StudioClosureController::class, 'index'])
             ->name('availability.edit');
-        Route::patch('/einstellungen/verfuegbarkeit/dauer', [StudioClosureController::class, 'updateDuration'])
-            ->name('availability.duration.update');
         Route::post('/einstellungen/verfuegbarkeit/schliesszeiten', [StudioClosureController::class, 'store'])
             ->name('studio-closures.store');
         Route::patch('/einstellungen/verfuegbarkeit/schliesszeiten/{studioClosure}', [StudioClosureController::class, 'update'])

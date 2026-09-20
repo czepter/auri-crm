@@ -51,6 +51,7 @@ class StageSettingsPayload
                 'name' => $type->name,
                 'isActive' => $type->is_active,
                 'isDefault' => $type->is_default,
+                'durationMinutes' => $type->duration_minutes,
                 // C-25: the definitions themselves, not a count — the pane
                 // that lists them is the pane that edits them.
                 'fields' => $type->fields->map(self::field(...))->values()->all(),

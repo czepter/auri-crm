@@ -12,8 +12,7 @@ use Illuminate\Database\Eloquent\Model;
  * the web and worker processes share, and what turns a write into an audit
  * row. display_name is T-01's scaffolding column; vat_mode, vat_rate and
  * vat_note are T-03's (Zahlungsdaten & USt — Q-04 reads these once it
- * ships); default_shoot_duration_minutes is T-09's (Verfügbarkeit —
- * ShootCalendar reads it instead of a hardcoded addHours(2)); timezone
+ * ships); timezone
  * and working_days are T-13's (Allgemein); the rest below is T-02's
  * Studio-Profil. quote_validity_days, payment_term_days,
  * deposit_percentage, widerruf_included and widerruf_text are T-05's
@@ -42,7 +41,6 @@ class StudioSettings extends Model
         'website', 'accent_color', 'logo_path', 'font_pair',
         'bank_account_holder', 'bank_iban', 'bank_bic',
         'vat_mode', 'vat_rate', 'vat_note', 'quote_layout', 'client_register',
-        'default_shoot_duration_minutes',
         'quote_validity_days', 'payment_term_days', 'deposit_percentage', 'widerruf_included', 'widerruf_text',
         'document_letterhead_html', 'document_footer_html',
         'timezone', 'working_days',

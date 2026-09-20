@@ -78,6 +78,12 @@ class Shoot extends Model
         return $type?->name ?? 'Sonstige';
     }
 
+    /** How long a shoot without an end_time runs: what its project's type says. */
+    public function defaultDurationMinutes(): int
+    {
+        return $this->project->type?->duration_minutes ?? 120;
+    }
+
     /** @return list<string> */
     public static function kindSuggestions(): array
     {

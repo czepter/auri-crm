@@ -1,10 +1,10 @@
 <?php
 
 use App\Crm\Models\Project;
+use App\Crm\Models\ProjectType;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\TimelineEntry;
 use App\Enums\StaffRole;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Support\Facades\Http;
@@ -131,12 +131,12 @@ it('exports the timeline as an ICS feed with one VEVENT per entry', function () 
         ->and($body)->toContain('LOCATION:Hotel Louis C. Jacob');
 });
 
-it('gives the last entry the configured default duration', function () {
-    $user = staffMember(StaffRole::Owner);
-    $shoot = Shoot::factory()->on('2026-06-14')->create();
-    TimelineEntry::factory()->for($shoot)->at('20:00')->create(['title' => 'Eröffnungstanz']);
+it('gives the last entry the default duration of the project type', function () {
+    ProjectType::query()->where('key', 'wedding')->update(['duration_minutes' => 90]);
 
-    (new StudioSettingsResolver)->set('default_shoot_duration_minutes', 90);
+    $user = staffMember(StaffRole::Owner);
+    $shoot = Shoot::factory()->for(Project::factory()->wedding())->on('2026-06-14')->create();
+    TimelineEntry::factory()->for($shoot)->at('20:00')->create(['title' => 'Eröffnungstanz']);
 
     $body = $this->actingAs($user, 'staff')->get("/shootings/{$shoot->public_id}/ablauf.ics")->getContent();
 
