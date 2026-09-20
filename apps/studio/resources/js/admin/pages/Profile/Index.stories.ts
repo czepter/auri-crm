@@ -30,6 +30,7 @@ const meta = {
     mfaConfirmed: true,
     recoveryCodesLeft: 8,
     digestFrequency: 'weekly',
+    calendarFeedUrl: 'https://atelier-nordlicht.de/kalender/8f3c1a9e27b4/shootings.ics',
     events: { ...events },
     briefable: {
       tasksDue: true,
@@ -53,6 +54,11 @@ export const Sicherheit: Story = {
 /** Je Ereignis ein Kanal, dazu der Rhythmus der Zusammenfassung. */
 export const Benachrichtigungen: Story = {
   parameters: { url: '/profil?pane=benachrichtigungen' },
+}
+
+/** Die Abo-Adresse des Termin-Feeds. */
+export const Kalender: Story = {
+  parameters: { url: '/profil?pane=kalender' },
 }
 
 /** Adresswechsel noch nicht bestätigt, zweiter Faktor nicht eingerichtet. */

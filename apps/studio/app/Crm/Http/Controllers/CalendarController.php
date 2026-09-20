@@ -37,7 +37,7 @@ class CalendarController extends Controller
      * The subscription URL is not on this screen any more. It is a credential
      * — anyone holding it reads this person's schedule — and it was the
      * widest block above the working area; it lives under
-     * /einstellungen/kalender now.
+     * /profil?pane=kalender now.
      */
     public function index(Request $request, CrmVocabulary $vocabulary): InertiaResponse
     {
@@ -178,18 +178,6 @@ class CalendarController extends Controller
                     ])->all(),
             ],
         ];
-    }
-
-    /**
-     * The subscription secret, on its own screen under the settings. Built
-     * here rather than shared, so it only ever reaches the one screen that
-     * has a reason to show it.
-     */
-    public function subscription(): InertiaResponse
-    {
-        return Inertia::render('Settings/Calendar', [
-            'feedUrl' => url('/kalender/'.auth('staff')->user()->calendarToken().'/shootings.ics'),
-        ]);
     }
 
     private function month(Request $request): CarbonImmutable

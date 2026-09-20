@@ -25,6 +25,9 @@ use Inertia\Response;
  * screen configures — /einstellungen is the studio's, this is the person's.
  * No capability gate: everyone with a session has one of these.
  *
+ * Der Kalender-Abo-Link ist eine Pane hier: ein Geheimnis pro Person, kein
+ * Studio-Setting.
+ *
  * Absences are not a pane here. /abwesenheiten is already per-person and
  * open to every role; the nav links it rather than growing a second screen
  * onto the same table.
@@ -47,6 +50,11 @@ class ProfileController extends Controller
                 ->latest()
                 ->first()?->new_email,
             'mfaConfirmed' => $user->hasConfirmedMfa(),
+            // Nur auf der Kalender-Seite: calendarToken() prägt das Geheimnis
+            // beim ersten Aufruf, und /profil ruft jeder auf.
+            'calendarFeedUrl' => $request->query('pane') === 'kalender'
+                ? url('/kalender/'.$user->calendarToken().'/shootings.ics')
+                : null,
             'recoveryCodesLeft' => count($user->mfa_recovery_codes ?? []),
             'digestFrequency' => $user->digest_frequency,
             'events' => collect(StudioEvents::ALL)

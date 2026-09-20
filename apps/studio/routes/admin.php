@@ -346,10 +346,6 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/auswertungen', ReportController::class)->name('reports.index');
 
         Route::get('/kalender', [CalendarController::class, 'index'])->name('calendar.index');
-        // C-13 (#249): the subscription secret is a credential and belongs in
-        // the settings, not as the widest block over the working area.
-        Route::get('/einstellungen/kalender', [CalendarController::class, 'subscription'])
-            ->name('settings.calendar');
         Route::post('/kalender/abo', [CalendarController::class, 'regenerate'])
             ->name('calendar.regenerate');
 

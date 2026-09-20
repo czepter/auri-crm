@@ -18,10 +18,6 @@ onMounted(() => bar.value?.querySelector('[data-open]')?.scrollIntoView({ inline
 // Grouped the same way AdminLayout's own sidebar groups: a `group` entry is a
 // heading, everything after it belongs to it until the next one.
 const items = [
-  { group: 'settings.groupPersonal' },
-  { key: 'profile', href: '/profil', label: 'profile.nav' },
-  { key: 'calendar', href: '/einstellungen/kalender', label: 'calendar.subscribe' },
-
   { group: 'settings.groupStudio' },
   { key: 'brand', href: '/einstellungen', label: 'settings.brand' },
   { key: 'legal', href: '/einstellungen?pane=legal', label: 'settings.legalEntity' },

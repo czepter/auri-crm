@@ -127,14 +127,21 @@ it('sends the season on request, without holds', function () {
 });
 
 // The subscription secret was the widest block over the working area. It is a
-// credential, and it belongs in the settings.
-it('keeps the feed url off the calendar and puts it under the settings', function () {
+// credential of one person, so it sits in that person's profile.
+it('keeps the feed url off the calendar and puts it in the profile', function () {
     $props = test()->actingAs(test()->staff, 'staff')->get('/kalender')->assertOk()->viewData('page')['props'];
 
     expect($props)->not->toHaveKey('feedUrl');
 
-    $settings = test()->actingAs(test()->staff, 'staff')
-        ->get('/einstellungen/kalender')->assertOk()->viewData('page')['props'];
+    $profile = test()->actingAs(test()->staff, 'staff')
+        ->get('/profil?pane=kalender')->assertOk()->viewData('page')['props'];
 
-    expect($settings['feedUrl'])->toContain('/shootings.ics');
+    expect($profile['calendarFeedUrl'])->toContain('/shootings.ics');
+});
+
+it('mints no calendar token on the other profile panes', function () {
+    $props = test()->actingAs(test()->staff, 'staff')->get('/profil')->assertOk()->viewData('page')['props'];
+
+    expect($props['calendarFeedUrl'])->toBeNull()
+        ->and(test()->staff->fresh()->calendar_token)->toBeNull();
 });
