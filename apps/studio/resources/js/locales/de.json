@@ -703,6 +703,14 @@
     "password": "Neues Passwort",
     "submit": "Passwort speichern"
   },
+  "audit": {
+    "event": "Ereignis",
+    "person": "Person",
+    "from": "Von",
+    "to": "Bis",
+    "all": "Alle",
+    "older": "Ältere"
+  },
   "team": {
     "title": "Team",
     "invite": "Einladen",
@@ -1084,6 +1092,7 @@
     "navImprintTerms": "Impressum & AGB",
     "navGeneral": "Allgemein",
     "navExport": "Export",
+    "navAudit": "Protokoll",
     "optional": "optional",
     "vatTitle": "Zahlungsdaten & USt",
     "vatModeLabel": "Modus",
