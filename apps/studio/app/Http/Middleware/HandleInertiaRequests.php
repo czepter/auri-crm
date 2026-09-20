@@ -51,7 +51,7 @@ class HandleInertiaRequests extends Middleware
             // Where the settings menu points outside the settings: the stage
             // overlay and the template hub, each behind its own gate.
             'settingsLinks' => fn () => $user === null ? null : [
-                'stages' => Gate::allows('viewAny', Stage::class),
+                'stages' => Gate::forUser($user)->allows('viewAny', Stage::class),
                 'templates' => app(TemplateHubController::class)->allowedKinds() !== [],
             ],
             // The studio's own name. Shared on every surface rather than only
