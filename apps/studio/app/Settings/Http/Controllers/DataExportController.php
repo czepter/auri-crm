@@ -8,7 +8,6 @@ use App\Crm\Data\ProjectRowData;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
-use App\Payments\Models\Invoice;
 use Illuminate\Database\Eloquent\Builder;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -30,12 +29,6 @@ class DataExportController extends Controller
         return Inertia::render('Settings/Export', [
             'contacts' => $this->contactQuery()->count(),
             'projects' => $this->projectQuery()->count(),
-            'invoiceYears' => Invoice::query()
-                ->pluck('issued_at')
-                ->map(fn ($at) => (int) $at->format('Y'))
-                ->unique()
-                ->sortDesc()
-                ->values(),
         ]);
     }
 

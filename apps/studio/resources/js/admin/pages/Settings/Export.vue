@@ -8,7 +8,6 @@ import { Button } from '@/ui/button'
 defineProps<{
   contacts: number
   projects: number
-  invoiceYears: number[]
 }>()
 </script>
 
@@ -32,18 +31,6 @@ defineProps<{
                 <span class="flex-1 text-[14px] font-semibold">{{ $t('projects.title') }}</span>
                 <span class="text-[12.5px] tabular-nums text-ink-2">{{ projects }}</span>
                 <Button as="a" variant="outline" href="/einstellungen/export/projekte">CSV</Button>
-              </div>
-              <div v-if="invoiceYears.length" class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]">
-                <span class="flex-1 text-[14px] font-semibold">{{ $t('settings.exportInvoices') }}</span>
-                <Button
-                  v-for="year in invoiceYears"
-                  :key="year"
-                  as="a"
-                  variant="outline"
-                  :href="`/einstellungen/rechnungen/export?jahr=${year}`"
-                >
-                  {{ $t('settings.invoiceExport', { year }) }}
-                </Button>
               </div>
             </div>
           </div>
