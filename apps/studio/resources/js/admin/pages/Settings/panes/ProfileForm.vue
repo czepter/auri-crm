@@ -103,6 +103,9 @@ function chooseZone(zone: string) {
 const pickedLogo = useObjectUrl(computed(() => form.logo ?? undefined))
 const logoPreview = computed(() => pickedLogo.value ?? props.settings.logoUrl)
 
+// Gesetzt vom Dialog auf Allgemein, wenn die Anrede wechselt.
+const adaptExisting = ref(false)
+
 function submit() {
   const sent = new Set<string>(shownSections.value.flatMap((section) => SECTION_FIELDS[section]))
 
@@ -112,12 +115,18 @@ function submit() {
   form
     .transform((data) => ({
       ...Object.fromEntries(Object.entries({ ...data, timezone: data.timezone || null }).filter(([field]) => sent.has(field))),
+      ...(adaptExisting.value ? { adapt_existing: true } : {}),
       _method: 'patch',
     }))
-    .post('/einstellungen', { forceFormData: true, preserveScroll: true, onSuccess: () => emit('saved') })
+    .post('/einstellungen', {
+      forceFormData: true,
+      preserveScroll: true,
+      onSuccess: () => emit('saved'),
+      onFinish: () => (adaptExisting.value = false),
+    })
 }
 
-defineExpose({ form, submit })
+defineExpose({ form, submit, adaptExisting })
 </script>
 
 <template>

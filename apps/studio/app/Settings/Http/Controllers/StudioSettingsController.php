@@ -7,12 +7,15 @@ use App\Http\Controllers\Controller;
 use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Enums\QuoteLayout;
 use App\Quotes\Support\SampleQuoteData;
+use App\Settings\Actions\AdaptClientRegister;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Enums\FontPair;
 use App\Settings\Models\StudioSettings;
 use App\Settings\Rules\ValidIban;
 use App\Settings\Support\LogoResponse;
 use App\Settings\Support\StudioSettingsResolver;
+use App\Support\AuditLogger;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
@@ -70,7 +73,7 @@ class StudioSettingsController extends Controller
      * Onboarding still posts all of them in one step; the loop below
      * writes whatever arrived either way.
      */
-    public function update(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    public function update(Request $request, StudioSettingsResolver $settings, AdaptClientRegister $adaptRegister): RedirectResponse
     {
         $this->authorizeSettings();
 
@@ -97,6 +100,7 @@ class StudioSettingsController extends Controller
             'font_pair' => ['sometimes', 'nullable', Rule::enum(FontPair::class)],
             // #439: the onboarding's first step asks this beside the identity.
             'client_register' => ['sometimes', 'required', 'in:formal,informal'],
+            'adapt_existing' => ['sometimes', 'boolean', 'prohibited_unless:client_register,formal,informal'],
             // Blank returns the tenant to config('app.timezone'), per
             // StudioSettingsResolver's fallback contract.
             'timezone' => ['sometimes', 'nullable', 'timezone'],
@@ -114,8 +118,9 @@ class StudioSettingsController extends Controller
         ]);
 
         $actor = auth('staff')->user();
+        $registerChanged = isset($validated['client_register']) && $validated['client_register'] !== $settings->clientRegister();
 
-        foreach (collect($validated)->except('logo') as $key => $value) {
+        foreach (collect($validated)->except('logo', 'adapt_existing') as $key => $value) {
             $settings->set($key, $value, $actor);
         }
 
@@ -123,7 +128,24 @@ class StudioSettingsController extends Controller
             $settings->setLogo($request->file('logo'), $actor);
         }
 
+        if ($registerChanged && ($validated['adapt_existing'] ?? false)) {
+            $counts = $adaptRegister($validated['client_register']);
+
+            AuditLogger::record('studio.register_adapted', $actor, ['to' => $validated['client_register'], ...$counts]);
+
+            return back()->with('status', __('settings.register_adapted', $counts));
+        }
+
         return back();
+    }
+
+    public function registerPreview(Request $request, AdaptClientRegister $adaptRegister): JsonResponse
+    {
+        $this->authorizeSettings();
+
+        $validated = $request->validate(['ziel' => ['required', 'in:formal,informal']]);
+
+        return response()->json($adaptRegister($validated['ziel'], dryRun: true));
     }
 
     /**

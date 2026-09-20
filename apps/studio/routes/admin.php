@@ -378,6 +378,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/einstellungen/zahlung', [StudioSettingsController::class, 'edit'])->defaults('pane', 'payment');
         Route::get('/einstellungen/belege', [StudioSettingsController::class, 'edit'])->defaults('pane', 'receipts');
         Route::patch('/einstellungen', [StudioSettingsController::class, 'update'])->name('settings.update');
+        Route::get('/einstellungen/anrede-vorschau', [StudioSettingsController::class, 'registerPreview'])->name('settings.register-preview');
         Route::get('/einstellungen/logo', [StudioSettingsController::class, 'logo'])->name('settings.logo');
         Route::patch('/einstellungen/ust', [StudioSettingsController::class, 'updateVat'])->name('settings.vat.update');
         Route::patch('/einstellungen/zahlung', [StudioSettingsController::class, 'updatePayment'])->name('settings.payment.update');

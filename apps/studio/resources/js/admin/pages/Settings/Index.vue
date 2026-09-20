@@ -13,6 +13,7 @@ import BrandPreview from './previews/BrandPreview.vue'
 import DocumentPreview from './previews/DocumentPreview.vue'
 import MailPreview from './previews/MailPreview.vue'
 import { Button } from '@/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 
 const props = defineProps<{
   pane: 'payment' | 'receipts' | 'email' | 'general'
@@ -48,8 +49,30 @@ const activePanes = computed(() => {
 const dirty = computed(() => activePanes.value.some((entry) => entry?.form.isDirty))
 const processing = computed(() => activePanes.value.some((entry) => entry?.form.processing))
 
-function save() {
+function saveDirty() {
   activePanes.value.filter((entry) => entry?.form.isDirty).forEach((entry) => entry!.submit())
+}
+
+// Eine andere Anrede fragt vor dem Speichern, ob Vorlagen und Automationen
+// mitziehen. Gibt es nichts umzustellen, wird ohne Frage gespeichert.
+const register = ref<{ adapted: number; skipped: number } | null>(null)
+
+async function save() {
+  const profile = profileRef.value?.form
+
+  if (props.pane !== 'general' || !profile || profile.client_register === props.settings.clientRegister) return saveDirty()
+
+  const response = await fetch(`/einstellungen/anrede-vorschau?ziel=${profile.client_register}`, { headers: { Accept: 'application/json' } })
+  const counts = response.ok ? await response.json() : null
+
+  if (counts?.adapted > 0) register.value = counts
+  else saveDirty()
+}
+
+function saveWithRegister(adapt: boolean) {
+  if (profileRef.value) profileRef.value.adaptExisting = adapt
+  register.value = null
+  saveDirty()
 }
 
 const paneTitle = computed(() => {
@@ -136,5 +159,21 @@ const mailPreview = computed(() => {
         </div>
       </div>
     </Page>
+
+    <Dialog :open="register !== null" @update:open="(value) => value || (register = null)">
+      <DialogContent class="max-w-[440px]">
+        <DialogHeader>
+          <DialogTitle>{{ $t('settings.registerAdaptTitle') }}</DialogTitle>
+          <DialogDescription>
+            {{ $t('settings.registerAdaptBody', { adapted: register?.adapted, target: $t(profileRef?.form.client_register === 'informal' ? 'settings.clientRegisterInformal' : 'settings.clientRegisterFormal') }) }}
+            <template v-if="register?.skipped">{{ $t('settings.registerAdaptSkipped', { skipped: register.skipped }) }}</template>
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter class="justify-end">
+          <Button variant="outline" type="button" @click="saveWithRegister(false)">{{ $t('settings.registerAdaptNo') }}</Button>
+          <Button type="button" @click="saveWithRegister(true)">{{ $t('settings.registerAdaptYes') }}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </AdminLayout>
 </template>
