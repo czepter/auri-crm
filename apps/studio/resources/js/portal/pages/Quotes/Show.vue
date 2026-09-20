@@ -67,9 +67,9 @@ const props = defineProps<{
   imageUrlBase?: string
 }>()
 
-const portalLegal = computed(() => usePage().props.portalLegal as { agbUrl: string | null; widerrufUrl: string | null } | undefined)
-const agbUrl = computed(() => portalLegal.value?.agbUrl ?? null)
-const widerrufUrl = computed(() => portalLegal.value?.widerrufUrl ?? null)
+const attached = computed(() => usePage().props.portalQuoteLegal as { agb?: string; widerruf?: string } | undefined)
+const agbUrl = computed(() => attached.value?.agb ?? null)
+const widerrufUrl = computed(() => attached.value?.widerruf ?? null)
 
 const form = useForm({ terms: false })
 

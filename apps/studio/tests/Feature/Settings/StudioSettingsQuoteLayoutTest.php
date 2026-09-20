@@ -26,7 +26,6 @@ it('saves quote_layout through the Dokumente pane', function () {
         'quote_validity_days' => 14,
         'payment_term_days' => 14,
         'deposit_percentage' => 3000,
-        'widerruf_included' => false,
         'quote_layout' => 'minimal',
     ])->assertRedirect();
 
@@ -40,7 +39,6 @@ it('rejects an unknown quote_layout', function () {
         'quote_validity_days' => 14,
         'payment_term_days' => 14,
         'deposit_percentage' => 3000,
-        'widerruf_included' => false,
         'quote_layout' => 'not-a-layout',
     ])->assertSessionHasErrors('quote_layout');
 });

@@ -132,22 +132,10 @@ class StudioSettingsResolver
         return $this->row()->deposit_percentage;
     }
 
-    /** Whether a rendered contract's `settings.widerrufText` merge field carries any text at all. */
-    public function widerrufIncluded(): bool
-    {
-        return $this->row()->widerruf_included;
-    }
-
-    public function widerrufText(): ?string
-    {
-        return $this->row()->widerruf_text;
-    }
-
     /**
      * T-12: the PDF shell App\Documents\Support\DocumentRenderer wraps a
      * Contract or Quote's resolved body in, above it. Null renders as no
-     * letterhead at all — the same "unset is a valid, working state"
-     * convention widerrufText() above already carries.
+     * letterhead at all.
      */
     public function documentLetterheadHtml(): ?string
     {
@@ -597,6 +585,26 @@ class StudioSettingsResolver
     public function legalFamily(string $text): ?string
     {
         return $this->row()->{"portal_legal_{$text}_family"} ?? null;
+    }
+
+    /** Ob AGB oder Widerrufsbelehrung dem Angebot beiliegen. */
+    public function legalAttach(string $text): bool
+    {
+        return (bool) ($this->row()->{"portal_legal_{$text}_attach"} ?? false);
+    }
+
+    /**
+     * Was dem Angebot beiliegt: je eingeschaltetem Text seine Adresse, wie
+     * legalUrl() sie liefert — relativ, wenn der Text im Portal liegt.
+     *
+     * @return array<string, string>
+     */
+    public function attachedLegalUrls(): array
+    {
+        return collect(['agb', 'widerruf'])
+            ->filter(fn (string $text) => $this->legalAttach($text) && $this->legalUrl($text) !== null)
+            ->mapWithKeys(fn (string $text) => [$text => $this->legalUrl($text)])
+            ->all();
     }
 
     /** Die eingetragene fremde Adresse — was das Portal daraus macht, sagt legalUrl(). */

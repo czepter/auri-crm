@@ -3,17 +3,13 @@
 namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
-use App\Documents\Enums\DocumentTemplateType;
-use App\Documents\Models\DocumentTemplate;
 use App\Http\Controllers\Controller;
 use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Enums\QuoteLayout;
 use App\Quotes\Support\SampleQuoteData;
-use App\Settings\Data\PortalSettingsData;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Enums\FontPair;
 use App\Settings\Models\StudioSettings;
-use App\Settings\Rules\LegalTemplateFamily;
 use App\Settings\Rules\ValidIban;
 use App\Settings\Support\LogoResponse;
 use App\Settings\Support\StudioSettingsResolver;
@@ -63,21 +59,6 @@ class StudioSettingsController extends Controller
                 'address' => $row->mail_from_address === null,
             ],
             'settings' => StudioSettingsData::fromResolver($settings),
-            // Rechtstexte und Datenschutz-Anfragen stehen im Abschnitt
-            // Allgemein: beides sagt etwas über das Studio, nichts über das
-            // Portal, in dem es nur auftaucht.
-            'portal' => PortalSettingsData::fromResolver($settings),
-            'legalTemplates' => DocumentTemplate::query()
-                ->current()
-                ->ofType(DocumentTemplateType::Legal)
-                ->orderBy('name')
-                ->get()
-                ->map(fn (DocumentTemplate $template) => [
-                    'family' => $template->family_id,
-                    'name' => $template->name,
-                    'updatedAt' => $template->updated_at?->toDateString(),
-                ])
-                ->all(),
         ]);
     }
 
@@ -204,8 +185,6 @@ class StudioSettingsController extends Controller
             'quote_validity_days' => ['required', 'integer', 'min:0', 'max:3650'],
             'payment_term_days' => ['required', 'integer', 'min:0', 'max:3650'],
             'deposit_percentage' => ['required', 'integer', 'min:0', 'max:10000'],
-            'widerruf_included' => ['required', 'boolean'],
-            'widerruf_text' => ['nullable', 'string', 'max:5000'],
             'quote_layout' => ['required', Rule::enum(QuoteLayout::class)],
             // Eine Mahnstufe ist eine Frist: sie stand bei Stripe, weil das
             // Geld dort eingeht, gehört aber zu den Fristen daneben.
@@ -221,8 +200,6 @@ class StudioSettingsController extends Controller
         $settings->set('quote_validity_days', $validated['quote_validity_days'], $actor);
         $settings->set('payment_term_days', $validated['payment_term_days'], $actor);
         $settings->set('deposit_percentage', $validated['deposit_percentage'], $actor);
-        $settings->set('widerruf_included', $validated['widerruf_included'], $actor);
-        $settings->set('widerruf_text', $validated['widerruf_text'] ?? null, $actor);
         $settings->set('quote_layout', $validated['quote_layout'], $actor);
         $settings->set('document_letterhead_html', $validated['document_letterhead_html'] ?? null, $actor);
         $settings->set('document_footer_html', $validated['document_footer_html'] ?? null, $actor);
@@ -272,16 +249,6 @@ class StudioSettingsController extends Controller
             // Gilt für Portal, Mails und Belege gleichermaßen — deshalb hier
             // und nicht mehr unter Portal.
             'client_register' => ['sometimes', 'required', Rule::in(['formal', 'informal'])],
-            'portal_legal_impressum_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
-            'portal_legal_datenschutz_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
-            'portal_legal_agb_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
-            'portal_legal_widerruf_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
-            // Die Vorlage wird als Familie gespeichert, damit das Portal die
-            // jeweils aktuelle Fassung zeigt.
-            'portal_legal_impressum_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
-            'portal_legal_datenschutz_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
-            'portal_legal_agb_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
-            'portal_legal_widerruf_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
         ]);
 
         $actor = auth('staff')->user();

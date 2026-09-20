@@ -498,6 +498,11 @@ Route::middleware('audience:staff')->group(function () {
         Route::delete('/einstellungen/portal/kontakt/bild', [PortalSettingsController::class, 'destroyContactAvatar'])
             ->name('settings.portal.contact.avatar.destroy');
 
+        Route::get('/einstellungen/impressum-agb', [PortalSettingsController::class, 'imprintTerms'])
+            ->name('settings.imprint-terms');
+        Route::patch('/einstellungen/impressum-agb', [PortalSettingsController::class, 'updateImprintTerms'])
+            ->name('settings.imprint-terms.update');
+
         // G-14: die Vorgaben werden auf /galerien bedient, wie Stufen auf
         // /auftraege. Ein Lesezeichen auf den alten Screen landet dort, wo sie
         // jetzt stehen.

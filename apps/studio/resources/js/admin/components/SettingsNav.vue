@@ -40,6 +40,7 @@ const items = [
   { key: 'portal', href: '/einstellungen/portal', label: 'settings.navPortal' },
   // Eine Person, keine Freigabe: Name, Bild und die zwei Wege zu ihr.
   { key: 'portal-contact', href: '/einstellungen/portal/kontakt', label: 'settings.navPortalContact' },
+  { key: 'imprint-terms', href: '/einstellungen/impressum-agb', label: 'settings.navImprintTerms' },
 
   { group: 'settings.groupInterfaces' },
   // Schlüssel, Test- und Live-Umschaltung: eine Anbindung wie die beiden

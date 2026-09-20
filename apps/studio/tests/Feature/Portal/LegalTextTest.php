@@ -54,6 +54,30 @@ it('keeps the generated Impressum page when nothing else is set', function () {
     expect(app(StudioSettingsResolver::class)->legalUrl('impressum'))->toBe('/impressum');
 });
 
+it('keeps all four legal links in the footer and lists only attached ones beside the quote', function () {
+    $template = legalTemplate();
+    pointAt('impressum', null, 'https://example.test/impressum');
+    pointAt('datenschutz', null, 'https://example.test/datenschutz');
+    pointAt('agb', null, 'https://example.test/agb');
+    pointAt('widerruf', $template->family_id);
+
+    $this->get('/rechtstexte/widerruf')
+        ->assertInertia(fn ($page) => $page
+            ->where('portalLegal.impressumUrl', 'https://example.test/impressum')
+            ->where('portalLegal.datenschutzUrl', 'https://example.test/datenschutz')
+            ->where('portalLegal.agbUrl', 'https://example.test/agb')
+            ->where('portalLegal.widerrufUrl', '/rechtstexte/widerruf')
+            ->where('portalQuoteLegal', []));
+
+    app(StudioSettingsResolver::class)->set('portal_legal_widerruf_attach', true, null);
+    Cache::store('redis')->flush();
+
+    $this->get('/rechtstexte/widerruf')
+        ->assertInertia(fn ($page) => $page
+            ->where('portalLegal.agbUrl', 'https://example.test/agb')
+            ->where('portalQuoteLegal', ['widerruf' => '/rechtstexte/widerruf']));
+});
+
 it('has no page for a text nobody wrote', function () {
     $this->get('/rechtstexte/agb')->assertNotFound();
 });

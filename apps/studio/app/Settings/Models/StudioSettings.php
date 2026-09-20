@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Model;
  * ships); timezone
  * and working_days are T-13's (Allgemein); the rest below is T-02's
  * Studio-Profil. quote_validity_days, payment_term_days,
- * deposit_percentage, widerruf_included and widerruf_text are T-05's
+ * and deposit_percentage are T-05's
  * Dokumente pane — the values every new quote and payment plan
  * starts from, including the deposit and Zahlungsziel defaults
  * T-07's own issue also named; T-05 landed first, so T-07 reads those two
@@ -41,7 +41,7 @@ class StudioSettings extends Model
         'website', 'accent_color', 'logo_path', 'font_pair',
         'bank_account_holder', 'bank_iban', 'bank_bic',
         'vat_mode', 'vat_rate', 'vat_note', 'quote_layout', 'client_register',
-        'quote_validity_days', 'payment_term_days', 'deposit_percentage', 'widerruf_included', 'widerruf_text',
+        'quote_validity_days', 'payment_term_days', 'deposit_percentage',
         'document_letterhead_html', 'document_footer_html',
         'timezone', 'working_days',
         'payments_stripe_enabled', 'payments_stripe_mode',
@@ -54,6 +54,7 @@ class StudioSettings extends Model
         'portal_legal_impressum_url', 'portal_legal_widerruf_url',
         'portal_legal_impressum_family', 'portal_legal_datenschutz_family',
         'portal_legal_agb_family', 'portal_legal_widerruf_family',
+        'portal_legal_agb_attach', 'portal_legal_widerruf_attach',
         'portal_accept_quotes_enabled', 'portal_sign_contracts_enabled',
         'portal_payment_status_enabled', 'portal_messaging_mode', 'portal_offers_enabled',
         'portal_welcome_inquiry', 'portal_welcome_active', 'portal_welcome_done',
@@ -77,7 +78,8 @@ class StudioSettings extends Model
     protected function casts(): array
     {
         return [
-            'widerruf_included' => 'boolean',
+            'portal_legal_agb_attach' => 'boolean',
+            'portal_legal_widerruf_attach' => 'boolean',
             // ISO weekday integers (1 Monday .. 7 Sunday) — see
             // StudioSettingsResolver::workingDays().
             'working_days' => 'array',

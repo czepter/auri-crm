@@ -3,15 +3,13 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
+import { Checkbox } from '@/ui/checkbox'
 import { Field } from '@/ui/field'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { missingLegalTexts } from '@/admin/lib/legalTexts'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
 /*
- * Impressum, Datenschutz, AGB und Widerruf gehören dem Studio, nicht dem
- * Portal, und stehen deshalb im Formular von Allgemein statt in einem eigenen.
- *
  * Die Felder gehören dem Formular der Seite: sie werden mit ihr gespeichert,
  * und ein eigenes useForm hier wäre ein zweiter Speicherknopf auf einem Blatt.
  */
@@ -79,7 +77,7 @@ function chooseSource(text: LegalText, source: Source) {
       <div v-for="text in LEGAL_TEXTS" :key="text" class="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-[12px] border border-border p-4" :class="missingBeforeSend.includes(text) && 'bg-due-bg'">
         <div class="w-[200px] flex-none">
           <span class="block text-[14px] leading-none font-semibold tracking-[-0.01em] text-foreground">{{ $t(`portalSettings.legal_${text}`) }}</span>
-          <span class="mt-1.5 block text-[12px] text-muted-foreground">{{ $t(`portalSettings.legalNote_${text}`) }}</span>
+          <span v-if="text === 'widerruf'" class="mt-1.5 block text-[12px] text-muted-foreground">{{ $t('portalSettings.legalNote_widerruf') }}</span>
         </div>
 
         <ChoiceGroup
@@ -123,6 +121,11 @@ function chooseSource(text: LegalText, source: Source) {
         <!-- Die Zeile trägt ihren eigenen Stand; ein Balken unter der Liste
              wiederholte, was hier schon steht. -->
         <span v-if="missingBeforeSend.includes(text)" class="flex-none text-[12.5px] font-semibold text-due">{{ $t('portalSettings.legalMissing') }}</span>
+
+        <div v-if="text === 'agb' || text === 'widerruf'" class="flex basis-full items-center gap-2.5">
+          <Checkbox :id="`legal-attach-${text}`" v-model="form[`portal_legal_${text}_attach`]" />
+          <Label variant="inline" :for="`legal-attach-${text}`">{{ $t('portalSettings.legalAttach') }}</Label>
+        </div>
       </div>
 
       <a class="text-[13px] font-medium text-action no-underline" href="/dokumentvorlagen/neu">

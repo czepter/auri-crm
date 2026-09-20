@@ -21,9 +21,7 @@ it('hands the document defaults to the settings screen', function () {
     expect($props['settings'])
         ->toHaveKey('quoteValidityDays', 14)
         ->toHaveKey('paymentTermDays', 14)
-        ->toHaveKey('depositPercentage', 3000)
-        ->toHaveKey('widerrufIncluded', true)
-        ->toHaveKey('widerrufText');
+        ->toHaveKey('depositPercentage', 3000);
 });
 
 it('updates the document defaults, redirects, and audits the owner', function () {
@@ -35,8 +33,6 @@ it('updates the document defaults, redirects, and audits the owner', function ()
             'quote_validity_days' => 30,
             'payment_term_days' => 21,
             'deposit_percentage' => 5000,
-            'widerruf_included' => false,
-            'widerruf_text' => 'Angepasster Widerrufstext.',
             'quote_layout' => 'minimal',
             'document_letterhead_html' => '<header>Nordlicht</header>',
             'document_footer_html' => '<footer>Seite 1</footer>',
@@ -48,8 +44,6 @@ it('updates the document defaults, redirects, and audits the owner', function ()
     expect($row->quote_validity_days)->toBe(30)
         ->and($row->payment_term_days)->toBe(21)
         ->and($row->deposit_percentage)->toBe(5000)
-        ->and($row->widerruf_included)->toBeFalse()
-        ->and($row->widerruf_text)->toBe('Angepasster Widerrufstext.')
         ->and($row->quote_layout)->toBe('minimal')
         ->and($row->document_letterhead_html)->toBe('<header>Nordlicht</header>')
         ->and($row->document_footer_html)->toBe('<footer>Seite 1</footer>')
@@ -62,7 +56,6 @@ it('rejects a deposit_percentage outside 0-10000 basis points', function () {
             'quote_validity_days' => 14,
             'payment_term_days' => 14,
             'deposit_percentage' => 10001,
-            'widerruf_included' => true,
         ])
         ->assertInvalid(['deposit_percentage']);
 });
@@ -73,7 +66,6 @@ it('rejects a negative quote_validity_days or payment_term_days', function () {
             'quote_validity_days' => -1,
             'payment_term_days' => 14,
             'deposit_percentage' => 3000,
-            'widerruf_included' => true,
         ])
         ->assertInvalid(['quote_validity_days']);
 });
@@ -86,7 +78,6 @@ it('gives every non-owner role the same response on the document defaults route 
             'quote_validity_days' => 14,
             'payment_term_days' => 14,
             'deposit_percentage' => 3000,
-            'widerruf_included' => true,
         ]);
 
     $response->assertStatus($status);

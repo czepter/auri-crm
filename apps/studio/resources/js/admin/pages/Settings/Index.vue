@@ -9,7 +9,6 @@ import ProfileForm from './panes/ProfileForm.vue'
 import VatForm from './panes/VatForm.vue'
 import DocumentsForm from './panes/DocumentsForm.vue'
 import EmailForm from './panes/EmailForm.vue'
-import LegalTextFields from './panes/LegalTextFields.vue'
 import BrandPreview from './previews/BrandPreview.vue'
 import DocumentPreview from './previews/DocumentPreview.vue'
 import MailPreview from './previews/MailPreview.vue'
@@ -25,9 +24,6 @@ const props = defineProps<{
   fontPairs: { value: string; label: string; description: string }[]
   mailSenderFromEnv: { name: boolean; address: boolean }
   settings: App.Settings.Data.StudioSettingsData
-  /** Rechtstexte und Datenschutz-Anfragen stehen im Abschnitt Allgemein. */
-  portal: App.Settings.Data.PortalSettingsData
-  legalTemplates: { family: string; name: string; updatedAt: string | null }[]
 }>()
 
 // Der Studio-Steckbrief ist ein Formular auf zwei Einträgen: ProfileForm
@@ -41,15 +37,6 @@ const generalForm = useForm({
   // Die Anrede trägt jede Mail, jedes Angebot und das Portal — sie stand
   // unter Portal und gilt überall.
   client_register: props.settings.clientRegister,
-  // Die vier Rechtstexte: Angaben über das Studio, wie die Zeitzone daneben.
-  portal_legal_impressum_url: props.portal.impressumUrl ?? '',
-  portal_legal_datenschutz_url: props.portal.datenschutzUrl ?? '',
-  portal_legal_agb_url: props.portal.agbUrl ?? '',
-  portal_legal_widerruf_url: props.portal.widerrufUrl ?? '',
-  portal_legal_impressum_family: props.portal.legalFamilies.impressum ?? '',
-  portal_legal_datenschutz_family: props.portal.legalFamilies.datenschutz ?? '',
-  portal_legal_agb_family: props.portal.legalFamilies.agb ?? '',
-  portal_legal_widerruf_family: props.portal.legalFamilies.widerruf ?? '',
 })
 
 // Der Browser kennt die Zone des Geräts; die Zeile darunter bietet sie an,
@@ -141,7 +128,6 @@ const documentPreview = computed(() => {
     quoteValidityDays: documents?.quote_validity_days ?? props.settings.quoteValidityDays,
     paymentTermDays: documents?.payment_term_days ?? props.settings.paymentTermDays,
     depositPercentage: documents?.deposit_percentage ?? basisPointsToPercent(props.settings.depositPercentage),
-    widerrufIncluded: documents?.widerruf_included ?? props.settings.widerrufIncluded,
     quoteLayout: documents?.quote_layout ?? props.settings.quoteLayout,
   }
 })
@@ -163,14 +149,6 @@ function submitGeneral() {
     .transform((data) => ({
       timezone: data.timezone || null,
       client_register: data.client_register,
-      portal_legal_impressum_url: data.portal_legal_impressum_url || null,
-      portal_legal_datenschutz_url: data.portal_legal_datenschutz_url || null,
-      portal_legal_agb_url: data.portal_legal_agb_url || null,
-      portal_legal_widerruf_url: data.portal_legal_widerruf_url || null,
-      portal_legal_impressum_family: data.portal_legal_impressum_family || null,
-      portal_legal_datenschutz_family: data.portal_legal_datenschutz_family || null,
-      portal_legal_agb_family: data.portal_legal_agb_family || null,
-      portal_legal_widerruf_family: data.portal_legal_widerruf_family || null,
     }))
     .patch('/einstellungen/allgemein', { preserveScroll: true })
 }
@@ -262,10 +240,6 @@ function submitGeneral() {
                       { value: 'informal', label: $t('settings.clientRegisterInformal') },
                     ]"
                   />
-                </div>
-
-                <div class="mt-8">
-                  <LegalTextFields :form="generalForm" :families="portal.legalFamilies" :legal-templates="legalTemplates" />
                 </div>
 
               </form>

@@ -35,8 +35,6 @@ const settings: App.Settings.Data.StudioSettingsData = {
   quoteValidityDays: 14,
   paymentTermDays: 14,
   depositPercentage: 30,
-  widerrufIncluded: true,
-  widerrufText: null,
   quoteLayout: 'classic',
   remindersEnabled: true,
   clientRegister: 'formal',
@@ -52,34 +50,6 @@ const settings: App.Settings.Data.StudioSettingsData = {
   mailClientsEnabled: true,
 }
 
-const portal: App.Settings.Data.PortalSettingsData = {
-  id: 'po1',
-  maintenanceEnabled: false,
-  maintenanceMessage: null,
-  datenschutzUrl: 'https://atelier-nordlicht.de/datenschutz',
-  agbUrl: null,
-  impressumUrl: null,
-  widerrufUrl: null,
-  legalFamilies: { impressum: null, datenschutz: null, agb: null, widerruf: null },
-  acceptQuotesEnabled: true,
-  signContractsEnabled: true,
-  paymentStatusEnabled: true,
-  offersEnabled: true,
-  galleryDownloadsEnabled: true,
-  galleryListsEnabled: true,
-  galleryCommentsEnabled: false,
-  messagingMode: 'booking',
-  clientRegister: 'formal',
-  welcomeInquiry: null,
-  welcomeActive: null,
-  welcomeDone: null,
-  contactName: null,
-  contactAvatarUrl: null,
-  contactPhone: null,
-  contactEmail: null,
-  contactResponseTime: null,
-}
-
 const meta = {
   title: 'Bildschirme/Einstellungen/Studio',
   component: Index,
@@ -89,8 +59,6 @@ const meta = {
     fontPairs,
     mailSenderFromEnv: { name: false, address: false },
     settings,
-    portal,
-    legalTemplates: [{ family: 'fam-widerruf-0000000000', name: 'Widerrufsbelehrung', updatedAt: '2026-06-12' }],
   },
 } satisfies Meta<typeof Index>
 

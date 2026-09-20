@@ -82,7 +82,7 @@ class QuoteShareController extends Controller
             'hours' => ['nullable', 'integer', 'min:0'],
             'items' => ['array'],
             'items.*' => ['string'],
-            'terms' => Rule::when($studio->legalAgbUrl() !== null, ['accepted']),
+            'terms' => Rule::when($studio->attachedLegalUrls() !== [], ['accepted']),
         ], ['terms.accepted' => __('portal.quote_terms_required')]);
 
         $accept(

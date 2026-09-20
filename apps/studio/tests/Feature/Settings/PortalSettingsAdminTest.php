@@ -80,30 +80,55 @@ it('prefers the typed greeting over the saved one', function () {
         ->viewData('page')['props']['welcomeText'])->toBe('Noch nicht gespeichert');
 });
 
-// Die Rechtstexte stehen unter Allgemein: sie sagen etwas über das Studio,
-// nicht über das Portal, in dem sie nur auftauchen.
+it('hands the four legal texts and their templates to the Impressum & AGB screen', function () {
+    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->get('/einstellungen/impressum-agb')
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect($props['settings'])
+        ->toHaveKeys(['impressumUrl', 'datenschutzUrl', 'agbUrl', 'widerrufUrl', 'legalFamilies'])
+        ->toHaveKey('agbAttach', false)
+        ->toHaveKey('widerrufAttach', false)
+        ->and($props)->toHaveKey('legalTemplates');
+});
+
 it('rejects a Datenschutz link that is not a URL', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->patch('/einstellungen/allgemein', [
+        ->patch('/einstellungen/impressum-agb', [
             'portal_legal_datenschutz_url' => 'not-a-url',
         ])
         ->assertInvalid(['portal_legal_datenschutz_url']);
 });
 
-it('stores the legal links on the general route', function () {
+it('stores the legal links and the attach switches on the Impressum & AGB route', function () {
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')
-        ->patch('/einstellungen/allgemein', [
+        ->patch('/einstellungen/impressum-agb', [
             'portal_legal_datenschutz_url' => 'https://atelier-nordlicht.de/datenschutz',
             'portal_legal_agb_url' => 'https://atelier-nordlicht.de/agb',
+            'portal_legal_agb_attach' => true,
         ])
         ->assertRedirect();
 
     $row = StudioSettings::query()->sole();
 
     expect($row->portal_legal_datenschutz_url)->toBe('https://atelier-nordlicht.de/datenschutz')
-        ->and($row->portal_legal_agb_url)->toBe('https://atelier-nordlicht.de/agb');
+        ->and($row->portal_legal_agb_url)->toBe('https://atelier-nordlicht.de/agb')
+        ->and($row->portal_legal_agb_attach)->toBeTrue()
+        ->and($row->portal_legal_widerruf_attach)->toBeFalse();
+});
+
+it('no longer takes the legal texts on the general route', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->patch('/einstellungen/allgemein', [
+            'timezone' => 'Europe/Vienna',
+            'portal_legal_agb_url' => 'https://atelier-nordlicht.de/agb',
+        ])
+        ->assertRedirect();
+
+    expect(StudioSettings::query()->sole()->portal_legal_agb_url)->toBeNull();
 });
 
 it('gives every non-owner role the same response on the portal settings route as a route that does not exist', function (StaffRole $role, int $status) {
@@ -146,7 +171,7 @@ it('leaves the settings a pane does not show untouched', function () {
         ->assertRedirect();
 
     $this->actingAs($owner, 'staff')
-        ->patch('/einstellungen/allgemein', [
+        ->patch('/einstellungen/impressum-agb', [
             'portal_legal_datenschutz_url' => 'https://atelier-nordlicht.de/datenschutz',
         ])
         ->assertRedirect();

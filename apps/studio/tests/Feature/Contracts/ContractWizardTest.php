@@ -49,13 +49,13 @@ it('leaves the template as the wording when no clause was picked', function () {
 it('prefers a clause the studio wrote into its template over the catalog default', function () {
     $template = DocumentTemplate::factory()->create([
         'blocks' => ['blocks' => [
-            ['type' => 'clause', 'data' => ['title' => 'Widerruf', 'text' => 'Unser eigener Wortlaut.']],
+            ['type' => 'clause', 'data' => ['title' => 'Datenschutz', 'text' => 'Unser eigener Wortlaut.']],
         ]],
     ]);
 
     $clauses = collect(ClauseCatalog::forTemplate($template))->keyBy('key');
 
-    expect($clauses['widerruf']['text'])->toBe('Unser eigener Wortlaut.')
+    expect($clauses['privacy']['text'])->toBe('Unser eigener Wortlaut.')
         ->and($clauses['scope']['text'])->toBe(collect(ClauseCatalog::all())->firstWhere('key', 'scope')['text']);
 });
 

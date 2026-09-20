@@ -33,7 +33,6 @@ it('saves the reminders default on the documents route', function () {
             'quote_validity_days' => 14,
             'payment_term_days' => 14,
             'deposit_percentage' => 3000,
-            'widerruf_included' => true,
             'quote_layout' => 'classic',
             'payments_reminders_enabled' => false,
         ])

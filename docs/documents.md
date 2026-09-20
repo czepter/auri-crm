@@ -47,7 +47,6 @@ look like at the moment a render runs:
 | `studio.bankHolder`  | Account holder (T-02, Bank fieldset). |
 | `studio.bankIban`    | |
 | `studio.bankBic`     | |
-| `settings.widerrufText` | The configured Widerrufsbelehrung (T-05, Dokumente pane) when the studio has it switched on — an empty string, never the stored text, when it is switched off. |
 
 ## Starter templates
 

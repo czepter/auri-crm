@@ -85,9 +85,6 @@ class DocumentMergeDataBuilder
             // something that does not exist.
             'gallery' => $this->gallery($project),
             'studio' => $this->studio($settings),
-            'settings' => [
-                'widerrufText' => $settings->widerrufIncluded() ? ($settings->widerrufText() ?? '') : '',
-            ],
         ];
     }
 
@@ -123,9 +120,6 @@ class DocumentMergeDataBuilder
             'quote' => ['validUntil' => '', 'vatNote' => ''],
             'gallery' => array_fill_keys(['title', 'link', 'password', 'downloadPin', 'expiresOn'], ''),
             'studio' => $this->studio($settings),
-            'settings' => [
-                'widerrufText' => $settings->widerrufIncluded() ? ($settings->widerrufText() ?? '') : '',
-            ],
         ];
     }
 
@@ -141,9 +135,6 @@ class DocumentMergeDataBuilder
     {
         return [
             'studio' => $this->studio($settings),
-            'settings' => [
-                'widerrufText' => $settings->widerrufIncluded() ? ($settings->widerrufText() ?? '') : '',
-            ],
         ];
     }
 

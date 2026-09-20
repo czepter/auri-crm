@@ -154,6 +154,9 @@ class HandleInertiaRequests extends Middleware
                         $text.'Url' => app(StudioSettingsResolver::class)->legalUrl($text),
                     ])
                     ->all(),
+                // AGB und Widerruf, die dem Angebot beiliegen: nur diese
+                // stehen neben „Angebot annehmen“.
+                'portalQuoteLegal' => fn () => app(StudioSettingsResolver::class)->attachedLegalUrls(),
                 // The header stands on every screen and its links are the
                 // same four everywhere, so what decides them is shared
                 // rather than passed per page. Null with nobody signed in:

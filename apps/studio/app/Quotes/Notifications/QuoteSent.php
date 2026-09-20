@@ -94,6 +94,12 @@ class QuoteSent extends Notification
             $message->line("Das Angebot ist gültig bis {$this->quote->valid_until->format('d.m.Y')}.");
         }
 
+        // A text hosted in the portal comes back as a relative path.
+        foreach (app(StudioSettingsResolver::class)->attachedLegalUrls() as $text => $url) {
+            $label = $text === 'agb' ? 'AGB' : 'Widerrufsbelehrung';
+            $message->line("[{$label}](".(str_starts_with($url, '/') ? config('portal.url').$url : $url).')');
+        }
+
         // Both links below are portal paths, so they compose against
         // config('portal.url') and never url(): SendQuote runs on the admin
         // surface, and the mail queue re-renders this on the worker, which is

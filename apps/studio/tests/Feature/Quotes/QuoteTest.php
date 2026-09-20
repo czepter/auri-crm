@@ -20,6 +20,7 @@ use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Quotes\Notifications\QuoteSent;
 use App\Quotes\Support\DiscountCalculator;
+use App\Settings\Models\StudioSettings;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -783,6 +784,46 @@ describe('Q-06: sending a quote', function () {
             ->and($body)->toContain("https://kunden.example.test/abmelden/{$contact->public_id}")
             ->and($body)->not->toContain('studio.example.test/projekte')
             ->and($body)->not->toContain('studio.example.test/abmelden');
+    });
+
+    it('names an attached text in the mail, as an absolute address', function () {
+        config(['portal.url' => 'https://kunden.example.test']);
+        StudioSettings::query()->update([
+            'portal_legal_agb_url' => 'https://studio.example.test/agb',
+            'portal_legal_agb_attach' => true,
+            'portal_legal_widerruf_url' => null,
+            'portal_legal_widerruf_family' => 'fam-widerruf-000000',
+            'portal_legal_widerruf_attach' => true,
+        ]);
+        Cache::store('redis')->flush();
+
+        $contact = Contact::factory()->create(['email' => 'lena@example.test']);
+        $project = Project::factory()->create();
+        $project->attachContact($contact, ProjectContactRole::Primary);
+        $quote = Quote::factory()->for($project)->create();
+
+        $body = (string) (new QuoteSent($quote))->toMail($contact)->render();
+
+        expect($body)->toContain('https://studio.example.test/agb')
+            ->and($body)->toContain('https://kunden.example.test/rechtstexte/widerruf');
+    });
+
+    it('leaves the legal texts out of the mail while they are not attached', function () {
+        StudioSettings::query()->update([
+            'portal_legal_agb_url' => 'https://studio.example.test/agb',
+            'portal_legal_widerruf_attach' => true,
+            'portal_legal_widerruf_url' => null,
+        ]);
+        Cache::store('redis')->flush();
+
+        $contact = Contact::factory()->create(['email' => 'lena@example.test']);
+        $project = Project::factory()->create();
+        $project->attachContact($contact, ProjectContactRole::Primary);
+
+        $body = (string) (new QuoteSent(Quote::factory()->for($project)->create()))->toMail($contact)->render();
+
+        expect($body)->not->toContain('studio.example.test/agb')
+            ->and($body)->not->toContain('/rechtstexte/');
     });
 
     it('sends no mail when the project has no contactable primary contact', function () {

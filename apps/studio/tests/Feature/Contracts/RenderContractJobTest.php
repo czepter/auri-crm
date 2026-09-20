@@ -95,46 +95,6 @@ it('resolves studio.* merge fields from T-02\'s settings row, including the one 
     });
 });
 
-it('renders the configured Widerruf text when T-05\'s setting is switched on', function () {
-    Storage::fake('local');
-    Http::fake(['*/forms/chromium/convert/html' => Http::response('%PDF-fake-bytes', 200)]);
-
-    $settings = new StudioSettingsResolver;
-    $settings->set('widerruf_included', true);
-    $settings->set('widerruf_text', 'Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen zu widerrufen.');
-
-    $template = DocumentTemplate::factory()->create(['body' => '<p>{{ settings.widerrufText }}</p>']);
-    $contract = Contract::factory()->for(bookedContactProject())->for($template, 'template')->create();
-
-    (new RenderContractJob($contract))->handle(app(EnsureContractArtifact::class));
-
-    Http::assertSent(fn (HttpRequest $request) => str_contains(
-        (string) $request->body(),
-        'Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen zu widerrufen.'
-    ));
-});
-
-it('renders nothing for the Widerruf merge field when the setting is switched off', function () {
-    Storage::fake('local');
-    Http::fake(['*/forms/chromium/convert/html' => Http::response('%PDF-fake-bytes', 200)]);
-
-    $settings = new StudioSettingsResolver;
-    $settings->set('widerruf_included', false);
-    $settings->set('widerruf_text', 'Dieser Text darf niemals gerendert werden.');
-
-    $template = DocumentTemplate::factory()->create(['body' => '<p>Vor[{{ settings.widerrufText }}]Nach</p>']);
-    $contract = Contract::factory()->for(bookedContactProject())->for($template, 'template')->create();
-
-    (new RenderContractJob($contract))->handle(app(EnsureContractArtifact::class));
-
-    Http::assertSent(function (HttpRequest $request) {
-        $body = (string) $request->body();
-
-        return str_contains($body, 'Vor[]Nach')
-            && ! str_contains($body, 'Dieser Text darf niemals gerendert werden.');
-    });
-});
-
 it('marks the contract failed and keeps the exception when Gotenberg errors', function () {
     Storage::fake('local');
     Http::fake(['*/forms/chromium/convert/html' => Http::response('boom', 500)]);

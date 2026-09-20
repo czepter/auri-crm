@@ -43,7 +43,6 @@ class ClauseCatalog
             self::clause('lateFee', 'ausfall', 'Zahlungsverzug', 'Nach Ablauf des Zahlungsziels werden Verzugszinsen nach § 288 BGB berechnet.', on: false),
 
             self::clause('privacy', 'recht', 'Datenschutz', 'Personenbezogene Daten werden ausschließlich zur Durchführung dieses Vertrags verarbeitet. Einzelheiten regelt die Datenschutzerklärung des Fotografen.'),
-            self::clause('widerruf', 'recht', 'Widerruf', '{{ settings.widerrufText }}'),
             self::clause('final', 'recht', 'Schlussbestimmungen', 'Änderungen bedürfen der Textform. Sollte eine Bestimmung unwirksam sein, bleibt der übrige Vertrag wirksam.'),
         ];
     }

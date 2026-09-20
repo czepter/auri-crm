@@ -4,10 +4,13 @@ namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use Carbon\CarbonImmutable;
+use App\Documents\Enums\DocumentTemplateType;
+use App\Documents\Models\DocumentTemplate;
 use App\Http\Controllers\Controller;
 use App\Settings\Data\PortalSettingsData;
 use App\Settings\Data\StudioSettingsData;
 use App\Portal\Http\Controllers\LegalTextController;
+use App\Settings\Rules\LegalTemplateFamily;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -196,6 +199,55 @@ class PortalSettingsController extends Controller
 
         if ($request->hasFile('portal_contact_avatar')) {
             $settings->setPortalContactAvatar($request->file('portal_contact_avatar'), $actor);
+        }
+
+        return back();
+    }
+
+    /** Was Kunden im Portal lesen: die vier Rechtstexte, je als Link oder Dokumentvorlage. */
+    public function imprintTerms(StudioSettingsResolver $settings): Response
+    {
+        $this->authorizeSettings();
+
+        return Inertia::render('Settings/ImprintTerms', [
+            'settings' => PortalSettingsData::fromResolver($settings),
+            'legalTemplates' => DocumentTemplate::query()
+                ->current()
+                ->ofType(DocumentTemplateType::Legal)
+                ->orderBy('name')
+                ->get()
+                ->map(fn (DocumentTemplate $template) => [
+                    'family' => $template->family_id,
+                    'name' => $template->name,
+                    'updatedAt' => $template->updated_at?->toDateString(),
+                ])
+                ->all(),
+        ]);
+    }
+
+    public function updateImprintTerms(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    {
+        $this->authorizeSettings();
+
+        $validated = $request->validate([
+            'portal_legal_impressum_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
+            'portal_legal_datenschutz_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
+            'portal_legal_agb_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
+            'portal_legal_widerruf_url' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
+            // Die Vorlage wird als Familie gespeichert, damit das Portal die
+            // jeweils aktuelle Fassung zeigt.
+            'portal_legal_impressum_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
+            'portal_legal_datenschutz_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
+            'portal_legal_agb_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
+            'portal_legal_widerruf_family' => ['sometimes', 'nullable', 'string', 'size:24', new LegalTemplateFamily],
+            'portal_legal_agb_attach' => ['sometimes', 'boolean'],
+            'portal_legal_widerruf_attach' => ['sometimes', 'boolean'],
+        ]);
+
+        $actor = auth('staff')->user();
+
+        foreach ($validated as $key => $value) {
+            $settings->set($key, $value, $actor);
         }
 
         return back();

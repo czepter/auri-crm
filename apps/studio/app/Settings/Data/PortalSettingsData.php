@@ -29,6 +29,8 @@ class PortalSettingsData extends Data
         public ?string $agbUrl,
         public ?string $impressumUrl,
         public ?string $widerrufUrl,
+        public bool $agbAttach,
+        public bool $widerrufAttach,
         /** @var array<string, ?string> Vorlagen-Familie je Rechtstext */
         public array $legalFamilies,
         public bool $acceptQuotesEnabled,
@@ -60,6 +62,8 @@ class PortalSettingsData extends Data
             agbUrl: $settings->legalAgbUrl(),
             impressumUrl: $settings->legalTextUrl('impressum'),
             widerrufUrl: $settings->legalTextUrl('widerruf'),
+            agbAttach: $settings->legalAttach('agb'),
+            widerrufAttach: $settings->legalAttach('widerruf'),
             legalFamilies: collect(LegalTextController::TEXTS)
                 ->mapWithKeys(fn (string $text) => [$text => $settings->legalFamily($text)])
                 ->all(),

@@ -125,8 +125,8 @@ class QuoteController extends Controller
             'items' => ['array'],
             'items.*' => ['string'],
             // The acceptance stands in for a contract, so the AGB are part of
-            // it wherever the studio has any.
-            'terms' => Rule::when($studio->legalAgbUrl() !== null, ['accepted']),
+            // it wherever the studio attaches any.
+            'terms' => Rule::when($studio->attachedLegalUrls() !== [], ['accepted']),
         ], ['terms.accepted' => __('portal.quote_terms_required')]);
 
         $accept(

@@ -548,8 +548,6 @@ export const studioSettings: App.Settings.Data.StudioSettingsData = {
   quoteValidityDays: 14,
   paymentTermDays: 14,
   depositPercentage: 30,
-  widerrufIncluded: true,
-  widerrufText: null,
   quoteLayout: 'classic',
   remindersEnabled: true,
   clientRegister: 'informal',
