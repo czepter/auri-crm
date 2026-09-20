@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Settings\Enums\FontPair;
 use App\Settings\Models\StudioSettings;
 use App\Support\AuditLogger;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
@@ -752,6 +753,21 @@ class StudioSettingsResolver
     public function onboardingReminderSent(): bool
     {
         return $this->row()->onboarding_reminder_sent_at !== null;
+    }
+
+    /** Der Löschtag: Tag des Antrags plus Frist, in der Zeit des Studios. Ab dessen Morgen läuft DeleteTenant. */
+    public function deletionDate(): ?CarbonImmutable
+    {
+        return $this->row()->deletion_requested_at
+            ?->toImmutable()
+            ->setTimezone($this->timezone())
+            ->addDays(StudioSettings::DELETION_GRACE_DAYS)
+            ->startOfDay();
+    }
+
+    public function forget(): void
+    {
+        Cache::store('redis')->forget($this->cacheKey());
     }
 
     private function row(): StudioSettings

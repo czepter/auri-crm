@@ -26,6 +26,7 @@ use App\Notifications\Console\Commands\BuildMailTemplatesCommand;
 use App\Notifications\Console\Commands\RemindOnboardingCommand;
 use App\Notifications\Console\Commands\SendStudioDigestsCommand;
 use App\Payments\Console\Commands\DetectOverdueInstallmentsCommand;
+use App\Settings\Console\Commands\DeleteDueStudio;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\Surface;
 use Illuminate\Console\Scheduling\Schedule;
@@ -62,6 +63,7 @@ return Application::configure(basePath: dirname(__DIR__))
         BuildMailTemplatesCommand::class,
         RemindOnboardingCommand::class,
         SendStudioDigestsCommand::class,
+        DeleteDueStudio::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         // G-01a's one lifecycle rule (issue #50) — see the command's own

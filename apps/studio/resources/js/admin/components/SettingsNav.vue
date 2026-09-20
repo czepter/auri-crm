@@ -20,7 +20,7 @@ onMounted(() => bar.value?.querySelector('[data-open]')?.scrollIntoView({ inline
 //
 // Grouped the same way AdminLayout's own sidebar groups: a `group` entry is a
 // heading, everything after it belongs to it until the next one.
-const items: { group?: string; key?: string; href?: string; label?: string; external?: boolean }[] = [
+const items: { group?: string; key?: string; href?: string; label?: string; external?: boolean; owner?: boolean }[] = [
   { group: 'settings.groupStudio' },
   { key: 'general', href: '/einstellungen/allgemein', label: 'settings.navGeneral' },
   { key: 'availability', href: '/einstellungen/verfuegbarkeit', label: 'settings.navAvailability' },
@@ -53,10 +53,14 @@ const items: { group?: string; key?: string; href?: string; label?: string; exte
   { key: 'api-tokens', href: '/einstellungen/api-token', label: 'apiTokens.title' },
   { key: 'export', href: '/einstellungen/export', label: 'settings.navExport' },
 
+  // Ganz unten und nur für den Inhaber, abgesetzt von allen Gruppen.
+  { key: 'deletion', href: '/einstellungen/studio-loeschen', label: 'settings.navDeleteStudio', owner: true },
 ]
 
 // Die Ziele der Verweise verlangen andere Rechte als die Einstellungen.
-const shown = computed(() => items.filter((item) => !item.external || page.props.settingsLinks?.[item.key as 'stages' | 'templates']))
+const shown = computed(() =>
+  items.filter((item) => (!item.external || page.props.settingsLinks?.[item.key as 'stages' | 'templates']) && (!item.owner || page.props.auth.user?.role === 'owner')),
+)
 
 /* tokens.css .nav — the sidebar row, reused for the settings rail. */
 /* tokens.css .nav. The two states are written out rather than layered:
@@ -80,11 +84,12 @@ const shown = computed(() => items.filter((item) => !item.external || page.props
       </div>
       <Link
         v-else
-        class="flex items-center gap-2.5 rounded-[7px] px-2.5 py-[9px] text-[14px] leading-none whitespace-nowrap no-underline transition-[background-color] duration-[.12s] ease-out hover:bg-muted [&_svg]:size-[17px]" :class="
+        class="flex items-center gap-2.5 rounded-[7px] px-2.5 py-[9px] text-[14px] leading-none whitespace-nowrap no-underline transition-[background-color] duration-[.12s] ease-out hover:bg-muted [&_svg]:size-[17px]" :class="[
           item.key === active && !item.external
             ? 'font-semibold text-foreground [&_svg]:opacity-100'
-            : 'font-normal text-muted-foreground [&_svg]:opacity-75'
-        "
+            : 'font-normal text-muted-foreground [&_svg]:opacity-75',
+          item.owner && 'mt-4 max-[640px]:mt-0',
+        ]"
         :data-open="(item.key === active && !item.external) || undefined"
         :href="item.href!"
       >{{ $t(item.label!) }}</Link>

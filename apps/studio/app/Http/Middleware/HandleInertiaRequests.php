@@ -54,6 +54,8 @@ class HandleInertiaRequests extends Middleware
                 'stages' => Gate::forUser($user)->allows('viewAny', Stage::class),
                 'templates' => app(TemplateHubController::class)->allowedKinds() !== [],
             ],
+            // #490: der Löschtag, solange das Studio zum Löschen vorgemerkt ist.
+            'studioDeletion' => fn () => $user === null ? null : app(StudioSettingsResolver::class)->deletionDate()?->format('d.m.Y'),
             // The studio's own name. Shared on every surface rather than only
             // in the portal's branding block: the admin wordmark and the
             // sign-in screens wear it with nobody signed in yet. Falls back

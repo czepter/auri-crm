@@ -10,6 +10,8 @@ import {
 } from "@/ui/dropdown-menu";
 import { Toaster } from "@/ui/sonner";
 import CommandPalette from "@/admin/components/CommandPalette.vue";
+import { Alert } from "@/ui/alert";
+import { Button } from "@/ui/button";
 import HelpButton from "@/ui/page/HelpButton.vue";
 import { documentKeys, navItems, studioKeys } from "@/admin/lib/nav";
 
@@ -299,6 +301,22 @@ const documentsOpen = ref(documentKeys.includes(props.active));
         </div>
 
         <main class="flex min-w-0 flex-1 flex-col pl-12 max-[640px]:order-1">
+            <Alert
+                v-if="page.props.studioDeletion"
+                variant="destructive"
+                class="mt-3 mr-8 max-[640px]:mr-4"
+            >
+                {{ $t("settings.deletionOn", { date: page.props.studioDeletion }) }}
+                <Button
+                    v-if="user?.role === 'owner'"
+                    class="ml-auto"
+                    variant="outline"
+                    type="button"
+                    @click="router.delete('/einstellungen/studio-loeschen', { preserveScroll: true })"
+                >
+                    {{ $t("common.cancel") }}
+                </Button>
+            </Alert>
             <slot />
         </main>
 

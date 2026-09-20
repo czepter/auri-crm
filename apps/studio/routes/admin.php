@@ -83,6 +83,7 @@ use App\Settings\Http\Controllers\NumberRangeController;
 use App\Settings\Http\Controllers\PaymentSettingsController;
 use App\Settings\Http\Controllers\PortalSettingsController;
 use App\Settings\Http\Controllers\StudioClosureController;
+use App\Settings\Http\Controllers\StudioDeletionController;
 use App\Settings\Http\Controllers\StudioExportController;
 use App\Settings\Http\Controllers\StudioOnboardingController;
 use App\Settings\Http\Controllers\StudioSettingsController;
@@ -411,6 +412,11 @@ Route::middleware('audience:staff')->group(function () {
             ->name('settings.export.archive.download');
 
         Route::get('/einstellungen/protokoll', [AuditLogController::class, 'index'])->name('settings.audit-log');
+
+        Route::get('/einstellungen/studio-loeschen', [StudioDeletionController::class, 'show'])->name('settings.deletion');
+        Route::post('/einstellungen/studio-loeschen/code', [StudioDeletionController::class, 'code'])->name('settings.deletion.code');
+        Route::post('/einstellungen/studio-loeschen', [StudioDeletionController::class, 'store'])->name('settings.deletion.store');
+        Route::delete('/einstellungen/studio-loeschen', [StudioDeletionController::class, 'destroy'])->name('settings.deletion.destroy');
 
         Route::get('/einstellungen/verfuegbarkeit', [StudioClosureController::class, 'index'])
             ->name('availability.edit');

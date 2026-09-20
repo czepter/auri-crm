@@ -25,9 +25,10 @@ const page = reactive({
 /** Die geteilten Werte, die HandleInertiaRequests auf jeden Bildschirm legt. */
 export const SHARED: PageProps = {
     auth: {
-        user: { id: 'u1', name: 'Christian Zepter', email: 'christian@atelier-nordlicht.de' },
+        user: { id: 'u1', name: 'Christian Zepter', email: 'christian@atelier-nordlicht.de', role: 'owner' },
         can: [],
     },
+    studioDeletion: null,
     brand: 'Atelier Nordlicht',
     portalPreview: false,
     soloStudio: false,

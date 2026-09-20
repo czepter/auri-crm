@@ -58,3 +58,6 @@ Schedule::command('releases:fetch')->dailyAt('04:00')->timezone($studioTimezone)
 // #395: rows past IdempotencyKey::WINDOW_HOURS no longer replay anything —
 // this just reclaims the table. A StudioExport past its expiry (#489) loses its archive.
 Schedule::command('model:prune', ['--model' => [IdempotencyKey::class, StudioExport::class]])->daily();
+
+// #490: der Löschtag zählt in Studiozeit.
+Schedule::command('studio:delete-due')->dailyAt('03:00')->timezone($studioTimezone);

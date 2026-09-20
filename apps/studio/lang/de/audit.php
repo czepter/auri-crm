@@ -131,6 +131,7 @@ return [
     'staff.setup_completed' => 'Studio eingerichtet',
     'stage.created' => 'Stufe angelegt',
     'stage.deleted' => 'Stufe gelöscht',
+    'studio.deleted' => 'Studio gelöscht',
     'studio.register_adapted' => 'Anrede angepasst',
     'studio_closure.created' => 'Schließzeit angelegt',
     'studio_closure.deleted' => 'Schließzeit gelöscht',

@@ -34,6 +34,8 @@ class StudioSettings extends Model
     use BelongsToTenant;
     use HasPublicId;
 
+    public const DELETION_GRACE_DAYS = 30;
+
     protected $fillable = [
         'display_name',
         'legal_name', 'legal_form', 'street', 'postcode', 'city', 'country',
@@ -63,7 +65,7 @@ class StudioSettings extends Model
         'gallery_default_comments_enabled', 'gallery_default_design',
         'portal_contact_name', 'portal_contact_phone', 'portal_contact_email',
         'portal_contact_response_time', 'portal_contact_avatar_path',
-        'onboarding_completed_at', 'onboarding_reminder_sent_at',
+        'onboarding_completed_at', 'onboarding_reminder_sent_at', 'deletion_requested_at',
     ];
 
     // Defence in depth beside StudioSettingsResolver never exposing these
@@ -101,6 +103,7 @@ class StudioSettings extends Model
             'gallery_default_design' => 'array',
             'onboarding_completed_at' => 'datetime',
             'onboarding_reminder_sent_at' => 'datetime',
+            'deletion_requested_at' => 'datetime',
         ];
     }
 }
