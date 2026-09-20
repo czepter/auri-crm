@@ -380,11 +380,11 @@ Route::middleware('audience:staff')->group(function () {
         Route::redirect('/einstellungen', '/einstellungen/allgemein');
         Route::redirect('/einstellungen/marke', '/einstellungen/allgemein');
         Route::redirect('/einstellungen/rechtliche-einheit', '/einstellungen/allgemein');
-        Route::get('/einstellungen/allgemein', [StudioSettingsController::class, 'edit'])->defaults('pane', 'general');
+        Route::get('/einstellungen/allgemein', [StudioSettingsController::class, 'edit'])->defaults('pane', 'general')->name('settings.general');
         Route::get('/einstellungen/email', [StudioSettingsController::class, 'edit'])->defaults('pane', 'email');
         Route::redirect('/einstellungen/rechnungsdaten', '/einstellungen/zahlung');
         Route::redirect('/einstellungen/dokumente', '/einstellungen/belege');
-        Route::get('/einstellungen/zahlung', [StudioSettingsController::class, 'edit'])->defaults('pane', 'payment');
+        Route::get('/einstellungen/zahlung', [StudioSettingsController::class, 'edit'])->defaults('pane', 'payment')->name('settings.payment');
         Route::get('/einstellungen/belege', [StudioSettingsController::class, 'edit'])->defaults('pane', 'receipts');
         Route::patch('/einstellungen', [StudioSettingsController::class, 'update'])->name('settings.update');
         Route::get('/einstellungen/anrede-vorschau', [StudioSettingsController::class, 'registerPreview'])->name('settings.register-preview');
