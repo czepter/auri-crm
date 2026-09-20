@@ -77,7 +77,7 @@ describe('Anfrage head action', () => {
         expect(html).not.toContain('Angebot schreiben')
     })
 
-    it('offers the quote once the stage before the quote stage is reached', async () => {
-        expect(await headAction('contacted')).toContain('Angebot schreiben')
+    it('offers the quote in the Angebot card, whatever the stage', async () => {
+        expect(await headAction('contacted')).toContain('/angebote/neu?projekt=p-brandt')
     })
 })

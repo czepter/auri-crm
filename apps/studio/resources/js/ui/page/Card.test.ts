@@ -23,11 +23,13 @@ const read = () => h('p', 'gelesen')
 const fields = () => h('p', 'bearbeitet')
 
 describe('Card', () => {
-    it('writes the summary beside the title', async () => {
-        const html = await render({ title: 'Termine', summary: '2 Termine · ab 11.06.2027' })
+    it('writes the summary beside the title while it is shut', async () => {
+        const props = { title: 'Termine', summary: '2 Termine · ab 11.06.2027' }
+        const open = await render({ ...props })
+        const shut = await render({ ...props, defaultOpen: false })
 
-        expect(html).toContain('Termine')
-        expect(html).toContain('2 Termine · ab 11.06.2027')
+        expect(shut).toContain('2 Termine · ab 11.06.2027')
+        expect(open).not.toContain('2 Termine · ab 11.06.2027')
     })
 
     it('leaves the body away while it is shut', async () => {
