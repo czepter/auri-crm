@@ -286,3 +286,22 @@ it('rejects a contact phone that is not a phone number', function () {
         ->patch('/einstellungen/portal/kontakt', ['portal_contact_phone' => '+49 40 123456-7'])
         ->assertSessionHasNoErrors();
 });
+
+it('draws the preview with the brand as typed, and ignores what is not a colour or a local blob', function () {
+    $owner = staffMember(StaffRole::Owner);
+
+    $typed = $this->actingAs($owner, 'staff')
+        ->get('/einstellungen/portal/vorschau?name=Atelier+Neu&akzent=%23112233&schrift=cormorant&logo=blob:http://x/1&adresse=Hafen+1')
+        ->viewData('page')['props'];
+
+    expect($typed['portalBranding'])->toMatchArray(['displayName' => 'Atelier Neu', 'accentColor' => '#112233', 'logoUrl' => 'blob:http://x/1', 'address' => 'Hafen 1'])
+        ->and($typed['fontPair'])->toBe('cormorant');
+
+    $refused = $this->actingAs($owner, 'staff')
+        ->get('/einstellungen/portal/vorschau?akzent=red&logo=https://evil.example/p.gif&schrift=nope')
+        ->viewData('page')['props'];
+
+    expect($refused['portalBranding']['accentColor'])->not->toBe('red')
+        ->and($refused['portalBranding']['logoUrl'])->not->toBe('https://evil.example/p.gif')
+        ->and($refused['fontPair'])->not->toBe('nope');
+});

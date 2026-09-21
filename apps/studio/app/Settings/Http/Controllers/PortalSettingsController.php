@@ -10,6 +10,7 @@ use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Http\Controllers\Controller;
 use App\Settings\Data\PortalSettingsData;
+use App\Settings\Enums\FontPair;
 use App\Settings\Data\StudioSettingsData;
 use App\Portal\Http\Controllers\LegalTextController;
 use App\Settings\Rules\LegalTemplateFamily;
@@ -17,6 +18,7 @@ use App\Settings\Rules\ValidFormat;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -89,11 +91,17 @@ class PortalSettingsController extends Controller
             'closed' => $request->boolean('geschlossen'),
             'shelf' => $request->boolean('leistungen', $settings->offersEnabled()) ? $this->sampleShelf() : [],
             'maintenanceMessage' => $request->query('hinweis', $settings->maintenanceMessage()),
+            'fontPair' => (FontPair::tryFrom((string) $request->query('schrift')) ?? $settings->fontPair())->value,
+            // Getippt schlägt gespeichert, wie beim Text: die Seite Allgemein
+            // schickt Name, Farbe, Logo und Anschrift, wie sie im Formular stehen.
             'portalBranding' => [
-                'displayName' => $settings->displayName() ?? config('app.name'),
-                'logoUrl' => $settings->logoPath() !== null ? '/branding/logo' : null,
-                'accentColor' => $settings->attributes()['accent_color'],
-                'address' => $settings->postalLine(),
+                'displayName' => Str::limit(trim((string) $request->query('name')), 120, '') ?: ($settings->displayName() ?? config('app.name')),
+                // Nur ein Blob des eigenen Browsers: ein fremder Wert in einem <img> wäre ein Tracking-Pixel.
+                'logoUrl' => str_starts_with((string) $request->query('logo'), 'blob:')
+                    ? $request->query('logo')
+                    : ($settings->logoPath() !== null ? '/einstellungen/logo' : null),
+                'accentColor' => preg_match('/^#[0-9A-Fa-f]{6}$/', (string) $request->query('akzent')) ? $request->query('akzent') : $settings->attributes()['accent_color'],
+                'address' => $request->has('adresse') ? Str::limit(trim((string) $request->query('adresse')), 200, '') : $settings->postalLine(),
             ],
             'portalLegal' => collect(LegalTextController::TEXTS)
                 ->mapWithKeys(fn (string $text) => [$text.'Url' => $settings->legalUrl($text)])

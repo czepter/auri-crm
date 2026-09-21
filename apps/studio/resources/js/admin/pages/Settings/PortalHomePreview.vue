@@ -27,6 +27,7 @@ const props = defineProps<{
   welcomeText: string | null
   maintenanceMessage: string | null
   closed: boolean
+  fontPair: string
   client: string
   bookings: Booking[]
   pending: { title: string; note: string; aside: string }[]
@@ -41,7 +42,7 @@ const years = computed(() => [...new Set(props.bookings.map((row) => row.year))]
 
 <template>
   <!-- inert: ein Klick im Rahmen soll die Einstellungen darunter nicht verlassen. -->
-  <div data-theme="portal" inert>
+  <div data-theme="portal" :data-font="fontPair" inert>
     <PortalShell>
       <PortalHeader />
 

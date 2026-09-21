@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useObjectUrl } from '@vueuse/core'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
@@ -9,7 +10,7 @@ import VatForm from './panes/VatForm.vue'
 import PaymentForm from './panes/PaymentForm.vue'
 import ReceiptsForm from './panes/ReceiptsForm.vue'
 import EmailForm from './panes/EmailForm.vue'
-import BrandPreview from './previews/BrandPreview.vue'
+import PortalFrame from './previews/PortalFrame.vue'
 import DocumentPreview from './previews/DocumentPreview.vue'
 import MailPreview from './previews/MailPreview.vue'
 import { Button } from '@/ui/button'
@@ -90,6 +91,20 @@ const documentPreview = computed(() => ({
   documentLayout: receiptsRef.value?.form.document_layout ?? props.settings.documentLayout,
 }))
 
+// Was das Portal an Marke zeigt, wie es im Formular steht.
+const logoPicked = useObjectUrl(computed(() => profileRef.value?.form.logo ?? undefined))
+const brandQuery = computed(() => {
+  const form = profileRef.value?.form
+
+  return Object.fromEntries(Object.entries({
+    name: form?.display_name,
+    akzent: form?.accent_color,
+    schrift: form?.font_pair,
+    logo: logoPicked.value,
+    adresse: [form?.street, [form?.postcode, form?.city].filter(Boolean).join(' ')].filter(Boolean).join(', '),
+  }).filter(([, value]) => value !== undefined && value !== null)) as Record<string, string>
+})
+
 const mailPreview = computed(() => {
   const mail = emailRef.value?.form
 
@@ -144,15 +159,7 @@ const mailPreview = computed(() => {
 
             </div>
 
-            <BrandPreview
-              v-if="pane === 'general' && profileRef"
-              :display-name="profileRef.form.display_name"
-              :website="profileRef.form.website"
-              :accent-color="profileRef.form.accent_color"
-              :font-pair="profileRef.form.font_pair"
-              :logo-file="profileRef.form.logo"
-              :logo-url="settings.logoUrl"
-            />
+            <PortalFrame v-if="pane === 'general' && profileRef" :query="brandQuery" />
             <DocumentPreview v-else-if="DOCUMENT_PANES.includes(pane)" :doc="documentPreview" />
             <MailPreview v-else-if="pane === 'email'" :mail="mailPreview" />
           </div>
