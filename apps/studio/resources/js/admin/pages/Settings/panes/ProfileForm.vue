@@ -10,6 +10,7 @@ import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group'
 import { ChoiceGroup } from '@/ui/choice-group'
+import { ColorPicker } from '@/ui/color-picker'
 import { Combobox, ComboboxAnchor, ComboboxContent, ComboboxInput, ComboboxItem } from '@/ui/combobox'
 import { browserTimezone, searchTimezones, timezoneLabel } from '@/admin/lib/timezones'
 import { requiresRegister } from '@/admin/lib/legalForm'
@@ -166,15 +167,7 @@ defineExpose({ form, submit, adaptExisting })
           </Field>
 
           <Field :label="$t('settings.accentColor')" id="p-akzent" :error="form.errors.accent_color">
-            <InputGroup>
-              <InputGroupAddon>
-                <span
-                  class="size-4 flex-none rounded-[3px] border border-border"
-                  :style="{ background: form.accent_color || 'transparent' }"
-                />
-              </InputGroupAddon>
-              <InputGroupInput id="p-akzent" v-model="form.accent_color" class="tabular-nums" rule="color" type="text" placeholder="#1C6870" />
-            </InputGroup>
+            <ColorPicker id="p-akzent" v-model="form.accent_color" rule="color" placeholder="#1C6870" :aria-label="$t('settings.accentColor')" />
           </Field>
         </div>
 
