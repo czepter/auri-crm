@@ -28,6 +28,9 @@ const i18n = createI18n({
 // runtime. The admin's entrypoint says the same thing about its own.
 const pages = import.meta.glob<{ default: DefineComponent }>('./pages/**/*.vue')
 
+// The browser's validation bubble stays off; Field words the reason itself.
+document.addEventListener('invalid', (event) => event.preventDefault(), true)
+
 createInertiaApp({
   title: (title) => (title ? `${title} · Studio` : 'Studio'),
   resolve: (name) => {

@@ -1,5 +1,17 @@
 {
   "common": {
+    "invalid": {
+      "valueMissing": "Pflichtfeld",
+      "email": "Keine gültige E-Mail-Adresse",
+      "url": "Keine gültige Adresse",
+      "pattern": "Ungültiges Format",
+      "tooShort": "Zu kurz",
+      "tooLong": "Zu lang",
+      "tooSmall": "Zu klein",
+      "tooBig": "Zu groß",
+      "badInput": "Ungültiger Wert",
+      "step": "Ungültiger Wert"
+    },
     "cancel": "Abbrechen",
     "save": "Speichern",
     "edit": "Ändern",

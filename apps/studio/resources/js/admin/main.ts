@@ -34,6 +34,9 @@ const pages = import.meta.glob<{ default: DefineComponent }>('./pages/**/*.vue')
 
 router.on('navigate', (event) => followLiveUpdates(event.detail.page.props.live))
 
+// The browser's validation bubble stays off; Field words the reason itself.
+document.addEventListener('invalid', (event) => event.preventDefault(), true)
+
 createInertiaApp({
   title: (title) => (title ? `${title} · Studio` : 'Studio'),
   resolve: (name) => {
