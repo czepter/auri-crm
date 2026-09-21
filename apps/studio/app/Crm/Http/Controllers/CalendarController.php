@@ -10,10 +10,13 @@ use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
 use App\Crm\Support\ShootCalendar;
+use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Models\Absence;
 use App\Models\User;
+use App\Settings\Data\StudioClosureData;
 use App\Settings\Models\StudioClosure;
+use App\Settings\Support\StudioSettingsResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -39,9 +42,12 @@ class CalendarController extends Controller
      * widest block above the working area; it lives under
      * /profil/kalender now.
      */
-    public function index(Request $request, CrmVocabulary $vocabulary): InertiaResponse
+    public function index(Request $request, CrmVocabulary $vocabulary, StudioSettingsResolver $settings): InertiaResponse
     {
         $user = auth('staff')->user();
+        $manages = $user->role->allows(Capability::ManageSettings);
+
+        abort_if($request->route('settings') === true && ! $manages, 404);
         $month = $this->month($request);
         $view = in_array($request->query('ansicht'), ['monat', 'liste', 'saison'], true) ? $request->query('ansicht') : 'monat';
 
@@ -131,6 +137,11 @@ class CalendarController extends Controller
                 ->pluck('public_id')
                 ->values(),
             'season' => $view === 'saison' ? $this->season($user, $vocabulary) : null,
+            'availability' => $manages ? [
+                'workingDays' => $settings->workingDays(),
+                'closures' => StudioClosure::query()->orderBy('starts_on')->get()->map(StudioClosureData::fromModel(...))->all(),
+            ] : null,
+            'settingsOpen' => $request->route('settings') === true,
         ]);
     }
 

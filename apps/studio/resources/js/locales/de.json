@@ -518,6 +518,7 @@
   },
   "calendar": {
     "title": "Kalender",
+    "settingsTitle": "Kalender-Einstellungen",
     "subscribe": "Kalender abonnieren",
     "revoke": "Adresse zurückziehen",
     "viewMonth": "Monat",
@@ -1100,7 +1101,6 @@
     "groupInterfaces": "Schnittstellen",
     "navVat": "Zahlungsdaten & USt",
     "navNumbering": "Nummernkreise",
-    "navAvailability": "Verfügbarkeit",
     "navStages": "Stufen & Projekttypen",
     "navTemplates": "Vorlagen",
     "navDocuments": "Belege",
@@ -1181,7 +1181,6 @@
     "mailSignatureFieldLabel": "Text",
     "mailDeliveryLabel": "Versand",
     "mailClientsEnabledLabel": "E-Mails an Kunden",
-    "availabilityTitle": "Verfügbarkeit",
     "closuresLabel": "Schließzeiten",
     "closureLabelField": "Bezeichnung",
     "closureMessageField": "Hinweis im Portal",

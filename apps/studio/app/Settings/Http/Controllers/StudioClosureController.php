@@ -4,37 +4,21 @@ namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
-use App\Settings\Data\StudioClosureData;
 use App\Settings\Models\StudioClosure;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 
 /**
- * T-09's Verfügbarkeit pane: StudioClosure — a date range with a label,
- * CheckDateAvailability's second conflict source. Sits beside StudioSettingsController and
- * NumberRangeController under the same /einstellungen shell and the same
- * ManageSettings gate — see AuthorizesStaffSettings for why that gate is a
- * 404, not a 403.
+ * T-09's StudioClosure — a date range with a label, CheckDateAvailability's
+ * second conflict source. Edited in the calendar's settings overlay under the
+ * same ManageSettings gate as every settings screen — see
+ * AuthorizesStaffSettings for why that gate is a 404, not a 403.
  */
 class StudioClosureController extends Controller
 {
     use AuthorizesStaffSettings;
-
-    public function index(StudioSettingsResolver $settings): Response
-    {
-        $this->authorizeSettings();
-
-        $closures = StudioClosure::query()->orderBy('starts_on')->get();
-
-        return Inertia::render('Settings/Availability', [
-            'workingDays' => $settings->workingDays(),
-            'closures' => $closures->map(StudioClosureData::fromModel(...))->all(),
-        ]);
-    }
 
     // At least one day: an empty selection leaves TaskTemplate::dueFor() nothing to roll onto.
     public function updateWorkingDays(Request $request, StudioSettingsResolver $settings): RedirectResponse
@@ -66,7 +50,7 @@ class StudioClosureController extends Controller
             subject: $closure->public_id,
         );
 
-        return redirect('/einstellungen/verfuegbarkeit');
+        return back();
     }
 
     public function update(Request $request, StudioClosure $studioClosure): RedirectResponse
@@ -84,7 +68,7 @@ class StudioClosureController extends Controller
             subject: $studioClosure->public_id,
         );
 
-        return redirect('/einstellungen/verfuegbarkeit');
+        return back();
     }
 
     public function destroy(StudioClosure $studioClosure): RedirectResponse
@@ -103,7 +87,7 @@ class StudioClosureController extends Controller
             subject: $publicId,
         );
 
-        return redirect('/einstellungen/verfuegbarkeit');
+        return back();
     }
 
     /** @return array{label: string, starts_on: string, ends_on: string, message?: ?string} */

@@ -23,7 +23,6 @@ onMounted(() => bar.value?.querySelector('[data-open]')?.scrollIntoView({ inline
 const items: { group?: string; key?: string; href?: string; label?: string; external?: boolean; owner?: boolean }[] = [
   { group: 'settings.groupStudio' },
   { key: 'general', href: '/einstellungen/allgemein', label: 'settings.navGeneral' },
-  { key: 'availability', href: '/einstellungen/verfuegbarkeit', label: 'settings.navAvailability' },
   // Der Absender gilt studioweit, für jede Mail — das Portal
   // ist einer von vielen Auslösern, nicht ihr Zuhause.
   { key: 'email', href: '/einstellungen/email', label: 'settings.navMail' },

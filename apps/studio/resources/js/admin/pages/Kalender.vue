@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import CalendarSeason from '@/admin/components/CalendarSeason.vue'
+import CalendarSettings from '@/admin/components/CalendarSettings.vue'
 import Page from '@/ui/page/Page.vue'
 import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
@@ -21,6 +22,8 @@ const props = defineProps<{
   projects: Record<string, { id: string; name: string }>
   mine: string[]
   season: InstanceType<typeof CalendarSeason>['$props']['season'] | null
+  availability: { workingDays: number[]; closures: App.Settings.Data.StudioClosureData[] } | null
+  settingsOpen: boolean
 }>()
 
 const seasonLabel = ref('')
@@ -91,6 +94,15 @@ function shortDate(date: string | null) {
             variant="segmented"
             @update:model-value="(next) => go(month, next)"
           />
+
+          <Button
+            v-if="availability"
+            :as="Link"
+            variant="pill-muted"
+            :href="`/kalender/einstellungen?monat=${month}&ansicht=${view}`"
+          >
+            {{ $t('stages.entry') }}
+          </Button>
 
           <Button
             v-for="step in ([['←', previous], ['→', next]] as const)"
@@ -197,6 +209,12 @@ function shortDate(date: string | null) {
             </template>
           </tbody>
         </Table>
+
+        <CalendarSettings
+          v-if="settingsOpen && availability"
+          v-bind="availability"
+          @close="go(month)"
+        />
       </div>
     </Page>
   </AdminLayout>
