@@ -12,7 +12,7 @@ const src = refDebounced(source, 400)
 </script>
 
 <template>
-  <PreviewFrame :label="$t('settings.previewPortal')">
-    <iframe :src class="block h-[640px] w-full rounded-md border-0 bg-background" title="" />
+  <PreviewFrame :label="$t('settings.previewPortal')" wide>
+    <iframe :src class="block h-[760px] w-full rounded-md border-0 bg-background" title="" />
   </PreviewFrame>
 </template>
