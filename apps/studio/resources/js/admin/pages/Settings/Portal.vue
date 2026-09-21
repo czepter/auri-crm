@@ -9,7 +9,7 @@ import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { useI18n } from 'vue-i18n'
 import { onKeyStroke, refDebounced } from '@vueuse/core'
-import { Maximize2, Monitor, Smartphone, X } from 'lucide-vue-next'
+import { Eye, Maximize2, Monitor, Smartphone, X } from 'lucide-vue-next'
 
 defineProps<{
   settings: App.Settings.Data.PortalSettingsData
@@ -104,7 +104,7 @@ const width = computed(() => {
               <PortalForm ref="formRef" :settings="settings" />
             </div>
 
-            <aside class="sticky top-6 min-w-[360px] flex-1">
+            <aside class="sticky top-6 min-w-[360px] flex-1 max-[1440px]:hidden">
               <div class="mb-2.5 flex flex-wrap items-center gap-2">
                 <span class="mr-auto text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.previewPortal') }}</span>
                 <ChoiceGroup v-model="state" variant="segmented" :options="stateOptions" />
@@ -132,6 +132,16 @@ const width = computed(() => {
                 />
               </div>
             </aside>
+
+            <Button
+              class="fixed right-6 bottom-6 z-40 shadow-[0_8px_24px_rgb(20_16_14_/_0.16)] min-[1441px]:hidden"
+              variant="pill"
+              type="button"
+              @click="expanded = true"
+            >
+              <Eye />
+              {{ $t('settings.previewShow') }}
+            </Button>
 
             <!-- Aufgeklappt, weil 1180px neben einem Formular nirgends
                  hinpassen und das Portal erst dort seine zweite Spalte
