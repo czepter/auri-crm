@@ -29,12 +29,12 @@ cleanup() {
 trap cleanup EXIT
 
 # rustfs-init creates the bucket; api is what the gallery viewer reads from.
-docker compose up -d postgres redis gotenberg rustfs rustfs-init api portal worker gallery
+docker compose up -d postgres redis gotenberg rustfs rustfs-init api portal worker gallery --remove-orphans
 
 docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
 # --no-reload keeps the compose environment reachable from a served request —
 # see the portal service in docker-compose.yml.
-docker compose run --rm --service-ports -e APP_SURFACE=admin -d --name "$CONTAINER" \
+docker compose run --remove-orphans --rm --service-ports -e APP_SURFACE=admin -d --name "$CONTAINER" \
   php php artisan serve --host=0.0.0.0 --port=8000 --no-reload >/dev/null
 
 echo "Admin:   http://localhost:8000"
