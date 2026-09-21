@@ -17,11 +17,9 @@ import { Button } from "@/ui/button";
 import { DatePicker } from "@/ui/date-picker";
 import { Field } from "@/ui/field";
 import { Input } from "@/ui/input";
-import { Label } from "@/ui/label";
 import Rail from "@/ui/page/Rail.vue";
 import RailSection from "@/ui/page/RailSection.vue";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
-import { Switch } from "@/ui/switch";
 import { Textarea } from "@/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui/dropdown-menu";
 import { ChevronDown } from "lucide-vue-next";
@@ -48,7 +46,6 @@ const props = defineProps<{
         inquiryText: string | null;
         capturedVia: string | null;
         capturedAt: string;
-        booked: boolean;
         lostReason: string | null;
         outcomeLabel: string | null;
     };
@@ -74,9 +71,6 @@ const props = defineProps<{
 
 const quoteTab = computed(() => `/anfragen/${props.lead.id}/angebot`);
 const newQuote = computed(() => `/angebote/neu?projekt=${props.lead.projectId}`);
-
-// Once booked, the case is the project's Anfrage tab.
-const active = computed(() => (props.lead.booked && props.tab === "overview" ? "lead" : props.tab));
 
 // The inquiry is the conversation's first line, written before there was a
 // thread to hold it.
@@ -308,10 +302,6 @@ function move(stage: string) {
     router.post(`/anfragen/${props.lead.id}/stufe`, { stage }, { preserveScroll: true });
 }
 
-function togglePortal() {
-    router.post(`/auftraege/${props.header.id}/portal-sichtbarkeit`, {}, { preserveScroll: true });
-}
-
 function book() {
     router.post(`/anfragen/${props.lead.id}/stufe`, { stage: "booked" }, { preserveScroll: true });
     booking.value = false;
@@ -333,7 +323,7 @@ const nextStage = computed(
 
 <template>
     <AdminLayout active="anfragen">
-        <ProjectShell :header="header" :active="active">
+        <ProjectShell :header="header" :active="tab">
             <!-- Grouped by working state, not by the six funnel stages: six stages
                  are the view of the funnel, three groups the view of the day. -->
             <template #left>
@@ -436,13 +426,7 @@ const nextStage = computed(
                 </Rail>
             </template>
 
-            <template v-if="lead.booked" #actions>
-                <Button :as="Link" variant="pill" :href="`/auftraege/${lead.projectId}`">{{
-                    $t("lead.openProject")
-                }}</Button>
-            </template>
-
-            <template v-if="!lead.outcomeLabel && !lead.booked" #stage>
+            <template v-if="!lead.outcomeLabel" #stage>
                 <div class="flex">
                     <Button
                         v-if="nextStage"
@@ -500,13 +484,6 @@ const nextStage = computed(
                         @cancel="anfrage.reset()"
                         @save="saveAnfrage"
                     >
-                        <template v-if="header.canManagePortalVisibility" #action>
-                            <div class="flex items-center gap-2" @click.stop>
-                                <Label for="lead-portal" variant="inline">{{ $t("project.portal") }}</Label>
-                                <Switch id="lead-portal" :model-value="header.portalVisible" @update:model-value="togglePortal" />
-                            </div>
-                        </template>
-
                         <!-- Der Anfragetext. Die Personen stehen in ihrer
                              eigenen Karte: eine Seitenspalte trägt keinen
                              Zeileneditor. -->

@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import Show from './Show.vue'
 import {
-    bookedLeadHeader,
     conflicts,
     conversation,
     lead,
@@ -72,14 +71,6 @@ export const Angebote: Story = {
 /** Zuletzt hat die Kundin geschrieben. */
 export const Nachrichten: Story = {
     args: { tab: 'messages' },
-}
-
-/** Nach dem Buchen: der Fall hängt am Auftrag, die Kopfaktion führt dorthin. */
-export const Gebucht: Story = {
-    args: {
-        header: bookedLeadHeader,
-        lead: { ...lead, booked: true, stage: 'booked', stageLabel: 'Gebucht' },
-    },
 }
 
 /** Abgesagt und geschlossen: kein Stufenmenü mehr, nur der Grund im Kopf. */

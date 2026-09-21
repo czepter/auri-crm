@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import Page from '@/ui/page/Page.vue'
 import ProjectQueue from '@/admin/components/ProjectQueue.vue'
@@ -14,6 +14,8 @@ import { dayWithWeekday as day } from '@/admin/lib/dates'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
+import { Label } from '@/ui/label'
+import { Switch } from '@/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
@@ -27,10 +29,19 @@ import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, Ale
  * stand still while the tabs change. Which tool is open is the tab that is
  * lit, so the heading never has to say it twice.
  */
-const props = defineProps<{ header: App.Crm.Data.ProjectHeaderData; active: string }>()
+const props = withDefaults(
+  defineProps<{ header: App.Crm.Data.ProjectHeaderData; active: string; child?: string; people?: boolean }>(),
+  { people: true },
+)
+
+const subTabs = computed(() => props.header.tabs.find((tab) => tab.key === props.active)?.children ?? [])
 
 function book() {
   router.post(`/auftraege/${props.header.id}/buchung`, {}, { preserveScroll: true })
+}
+
+function togglePortal() {
+  router.post(`/auftraege/${props.header.id}/portal-sichtbarkeit`, {}, { preserveScroll: true })
 }
 
 const closing = ref(false)
@@ -76,7 +87,7 @@ function destroy() {
       <slot name="rail">
         <Rail>
           <slot name="people">
-            <RailSection :title="$t('lead.people')">
+            <RailSection v-if="people" :title="$t('lead.people')">
               <div v-for="person in header.people" :key="person.id" class="flex items-center gap-2 py-[5px] text-[12.5px] leading-[1.47]">
                 <Link :href="`/kontakte/${person.id}`">{{ person.name }}</Link>
                 <span class="ml-auto text-[11.5px] leading-[1.47] text-[#3F6B4A]">{{ $t(`contacts.role.${person.role}`) }}</span>
@@ -146,6 +157,11 @@ function destroy() {
               </AlertDialogContent>
             </AlertDialog>
 
+            <div v-if="header.canManagePortalVisibility" class="flex items-center gap-2">
+              <Label for="portal-visible" variant="inline">{{ $t('project.portal') }}</Label>
+              <Switch id="portal-visible" :model-value="header.portalVisible" @update:model-value="togglePortal" />
+            </div>
+
             <DropdownMenu v-if="(header.canComplete && !header.isCompleted) || (header.canClose && !header.outcomeLabel) || header.canDelete">
               <DropdownMenuTrigger
                 class="flex size-8 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2"
@@ -187,6 +203,22 @@ function destroy() {
             :aria-current="tab.key === active ? 'page' : undefined"
           >
             {{ $t(tab.label) }}<span v-if="tab.count" class="ml-1 text-[11.5px]">{{ tab.count }}</span>
+          </Link>
+        </nav>
+
+        <nav
+          v-if="subTabs.length"
+          class="flex gap-[18px] py-2.5 text-[12.5px] shadow-[inset_0_-1px_0_var(--rule)]"
+        >
+          <Link
+            v-for="entry in subTabs"
+            :key="entry.key"
+            :href="entry.href"
+            class="whitespace-nowrap no-underline"
+            :class="entry.key === child ? 'font-semibold text-foreground' : 'text-ink-2 hover:text-foreground'"
+            :aria-current="entry.key === child ? 'page' : undefined"
+          >
+            {{ $t(entry.label) }}<span v-if="entry.count" class="ml-1 text-[11.5px]">{{ entry.count }}</span>
           </Link>
         </nav>
       </div>

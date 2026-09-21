@@ -42,6 +42,7 @@ use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Quotes\Actions\ReadCaseQuote;
 use App\Quotes\Actions\ReadQuoteList;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
@@ -166,8 +167,6 @@ class ProjectController extends Controller
             // does not render this key. An internal trace on a client page
             // would disclose staff names and internal event vocabulary.
             'thread' => ($this->thread)($project),
-            // C-11 (#247): the key figures, each with the line that proves it.
-            'figures' => $this->screen->figures($project),
             // The scope as it actually stands, not a copy of the quote. The
             // divergence is the difference between the draft at this project
             // and the accepted quote; nothing is locked, because the order
@@ -175,6 +174,7 @@ class ProjectController extends Controller
             // it and you get a scope that is wrong while the work happens
             // anyway.
             'scope' => $this->screen->scope($project),
+            ...app(ReadCaseQuote::class)($project),
             'people' => ProjectPersonData::collect(
                 $project->contacts->map(ProjectPersonData::fromContact(...))
             ),

@@ -50,13 +50,9 @@ const meta = {
         shootOptions: [{ value: 's-rahn', label: 'Hochzeit · 13.09.2026' }],
         staffOptions: [{ value: 'u1', label: 'Christian Zepter' }],
         anchors: [],
-        figures: {
-            phase: { value: 'Gebucht', proof: 'Empfehlung' },
-            nextDate: { value: '2026-09-13', proof: null },
-            value: { value: '426000', proof: '2026-0031' },
-            open: { value: '298200', proof: '2' },
-            portal: { value: 'on', proof: null },
-        },
+        quote,
+        supersededQuotes: [],
+        packages: [],
         scope: { items: scopeItems, delta: 0, hasDraft: false },
         people,
         fields,
@@ -108,13 +104,7 @@ export const Stillstand: Story = {
 /** Auftrag ohne angenommenes Angebot: kein Leistungsumfang, kein Betrag. */
 export const OhneAngebot: Story = {
     args: {
-        figures: {
-            phase: { value: 'Gebucht', proof: 'Empfehlung' },
-            nextDate: { value: '2026-09-13', proof: null },
-            value: { value: null, proof: null },
-            open: { value: null, proof: null },
-            portal: { value: 'off', proof: null },
-        },
+        quote: null,
         scope: { items: [], delta: 0, hasDraft: false },
     },
 }

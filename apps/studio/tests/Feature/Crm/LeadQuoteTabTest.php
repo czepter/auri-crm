@@ -57,7 +57,7 @@ it('takes the payments from the accepted quote’s stages', function () {
     ]);
 });
 
-it('shows the inquiry tabs until the booking and the project tabs after it', function () {
+it('shows the inquiry tabs until the booking and sends the booked inquiry to its project', function () {
     $project = Project::factory()->create();
     $lead = Lead::factory()->for($project)->create();
 
@@ -68,8 +68,7 @@ it('shows the inquiry tabs until the booking and the project tabs after it', fun
 
     app(BookProject::class)($project, auth('staff')->user());
 
-    expect(collect(props("/anfragen/{$lead->public_id}")['header']['tabs'])->pluck('key'))
-        ->toContain('lead', 'shoots', 'quotes');
+    test()->get("/anfragen/{$lead->public_id}")->assertRedirect("/auftraege/{$project->public_id}");
 });
 
 it('shows the draft quote on the overview', function () {

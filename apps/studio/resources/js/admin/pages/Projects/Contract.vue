@@ -125,7 +125,7 @@ function day(value: string | null): string {
 
 <template>
   <AdminLayout active="anfragen">
-    <ProjectShell :header="header" active="contract">
+    <ProjectShell :header="header" active="documents" child="contract">
       <template #rail>
         <Rail v-if="contract">
           <h3 class="m-0 text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">

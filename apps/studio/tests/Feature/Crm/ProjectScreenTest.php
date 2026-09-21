@@ -1,6 +1,5 @@
 <?php
 
-use App\Crm\Actions\ReadProjectScreen;
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Models\Contract;
 use App\Contracts\Models\ContractSignature;
@@ -57,7 +56,7 @@ it('shows only the tabs whose feature exists', function () {
     // Fragebögen is E-02.
     $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
 
-    expect(array_column($tabs, 'key'))->toBe(['overview', 'shoots', 'tasks', 'galleries', 'messages', 'forms', 'quotes', 'contract']);
+    expect(array_column($tabs, 'key'))->toBe(['overview', 'shoots', 'messages', 'galleries', 'documents']);
 });
 
 it('names its tabs with keys the catalogue answers', function () {
@@ -70,6 +69,17 @@ it('names its tabs with keys the catalogue answers', function () {
     foreach (array_column($tabs, 'label') as $key) {
         expect(data_get($catalogue, $key))->toBeString("{$key} is missing from de.json");
     }
+});
+
+it('carries the quote block the inquiry overview carries', function () {
+    expect(props("/auftraege/{$this->project->public_id}")['quote'])->toBeNull();
+
+    Quote::factory()->for($this->project)->create(['total' => 590000, 'sent_at' => now()->subDay()]);
+
+    $props = props("/auftraege/{$this->project->public_id}");
+
+    expect($props['quote']['total'])->toBe(590000)
+        ->and($props['packages'])->toBe([]);
 });
 
 it('counts the threads waiting for an answer', function () {
@@ -101,7 +111,10 @@ it('counts the questionnaires the client has not answered', function () {
 
     $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
 
-    expect(collect($tabs)->firstWhere('key', 'forms')['count'])->toBe(1);
+    $documents = collect($tabs)->firstWhere('key', 'documents');
+
+    expect(collect($documents['children'])->firstWhere('key', 'forms')['count'])->toBe(1)
+        ->and($documents['count'])->toBe(1);
 });
 
 it('counts the quotes the client has not answered', function () {
@@ -113,7 +126,7 @@ it('counts the quotes the client has not answered', function () {
 
     $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
 
-    expect(collect($tabs)->firstWhere('key', 'quotes')['count'])->toBe(1);
+    expect(collect(collect($tabs)->firstWhere('key', 'documents')['children'])->firstWhere('key', 'quotes')['count'])->toBe(1);
 });
 
 it('counts the contracts still waiting for a signature', function () {
@@ -126,7 +139,7 @@ it('counts the contracts still waiting for a signature', function () {
 
     $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
 
-    expect(collect($tabs)->firstWhere('key', 'contract')['count'])->toBe(1);
+    expect(collect(collect($tabs)->firstWhere('key', 'documents')['children'])->firstWhere('key', 'contract')['count'])->toBe(1);
 });
 
 it('agrees with the board about an unbooked project', function () {
@@ -487,25 +500,4 @@ it('saves the name, the stage and the shoot blocks from the project screen', fun
         ->and($lead->fresh()->stage->key)->toBe(LeadStage::Contacted->value)
         ->and($shoot->fresh()->date->format('Y-m-d'))->toBe('2026-06-20')
         ->and($shoot->fresh()->venue_name)->toBe('Gut Basthorst');
-});
-
-// The value follows from the line items, not the other way round — so the
-// screen ships the figures with their source rather than a disabled field.
-it('carries the key figures with the proof under each', function () {
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->primary()->on(now()->addMonth()->format('Y-m-d'))->create();
-
-    $figures = test()->actingAs(test()->staff, 'staff')
-        ->get("/auftraege/{$project->public_id}")->assertOk()->viewData('page')['props']['figures'];
-
-    expect($figures)->toHaveKeys(['phase', 'nextDate', 'value', 'open', 'portal'])
-        ->and($figures['nextDate']['value'])->toBe(now()->addMonth()->format('Y-m-d'));
-});
-
-it('keeps the main date once it lies behind us', function () {
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->primary()->on(now()->subDays(119)->format('Y-m-d'))->create();
-
-    expect(app(ReadProjectScreen::class)->figures($project)['nextDate']['value'])
-        ->toBe(now()->subDays(119)->format('Y-m-d'));
 });

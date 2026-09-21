@@ -123,7 +123,7 @@ function summary(instance: App.Crm.Data.FormInstanceData): string {
 
 <template>
   <AdminLayout active="anfragen">
-    <ProjectShell :header="header" active="forms">
+    <ProjectShell :header="header" active="documents" child="forms">
       <template v-if="header.canManageForms" #actions>
         <Button
           v-for="template in formTemplates"
