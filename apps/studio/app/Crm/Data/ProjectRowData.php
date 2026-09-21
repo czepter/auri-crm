@@ -25,6 +25,8 @@ class ProjectRowData extends Data
     public function __construct(
         public string $id,
         public string $name,
+        public string $type,
+        public string $typeKey,
         public ?string $date,
         public ?string $venue,
         public string $position,
@@ -33,6 +35,8 @@ class ProjectRowData extends Data
         public ?string $contact,
         public int $openTasks,
         public int $taskCount,
+        public ?int $value,
+        public ?string $lastAt,
     ) {}
 
     public static function fromProject(Project $project, DeriveProjectPosition $position): self
@@ -45,6 +49,8 @@ class ProjectRowData extends Data
         return new self(
             id: $project->public_id,
             name: $project->name,
+            type: $project->type->name,
+            typeKey: $project->type->key,
             date: $shoot?->date?->format('Y-m-d'),
             venue: $shoot?->venue(),
             position: $at->label,
@@ -57,6 +63,10 @@ class ProjectRowData extends Data
             contact: $project->primaryContact()?->name,
             openTasks: (int) ($project->open_tasks_count ?? 0),
             taskCount: (int) ($project->tasks_count ?? 0),
+            value: $project->latestQuote?->total,
+            lastAt: $at->source === 'shoot'
+                ? $position->leastAdvanced($project->shoots)?->status_entered_at?->toIso8601String()
+                : null,
         );
     }
 }

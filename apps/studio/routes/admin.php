@@ -622,6 +622,8 @@ Route::middleware('audience:staff')->group(function () {
         // the same record.
         Route::patch('/auftraege/{project}', [ProjectController::class, 'update'])
             ->name('projects.update');
+        Route::post('/auftraege/{project}/stufe', [ProjectController::class, 'stage'])
+            ->name('projects.stage');
         Route::get('/auftraege/{project}/shootings', [ProjectController::class, 'shoots'])
             ->name('projects.shoots');
         Route::get('/auftraege/{project}/aufgaben', [ProjectController::class, 'tasks'])

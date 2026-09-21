@@ -24,6 +24,7 @@ import {
     AlertDialogTitle,
 } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/admin/lib/money";
+import { relative, TYPE_DOT } from "@/admin/lib/boardCard";
 import { Button } from "@/ui/button";
 import { ChoiceGroup } from "@/ui/choice-group";
 import { Field } from "@/ui/field";
@@ -74,14 +75,6 @@ function choose(next: string) {
 
 // Grey rather than faded: opacity would have pushed the text under the
 // legibility floor, the same trap as a third grey.
-// Ueber den Schluessel, nicht ueber den Namen: den Namen aendert das Studio.
-// Ein selbst angelegter Typ bekommt den grauen Punkt, bis project_types eine
-// eigene Farbe traegt — dort gehoert sie hin, nicht in diese Tabelle.
-const TYPE_DOT: Record<string, string> = {
-    wedding: "bg-action",
-    portrait: "bg-ok",
-};
-
 const DONE_STAGES = ["booked"];
 
 function shortDate(date: string | null) {
@@ -92,17 +85,6 @@ function shortDate(date: string | null) {
               year: "2-digit",
           })
         : null;
-}
-
-function relative(at: string) {
-    const days = Math.round((Date.now() - new Date(at).getTime()) / 86400000);
-
-    return days < 1
-        ? "heute"
-        : new Intl.RelativeTimeFormat("de-DE", { numeric: "auto" }).format(
-              -days,
-              "day",
-          );
 }
 
 // Nothing travels with the pointer, so the row itself has to say it is under

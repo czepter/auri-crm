@@ -47,7 +47,7 @@ class StudioRecords
     public function projectRows(): Collection
     {
         return $this->projectQuery()
-            ->with(['primaryShoot', 'lead', 'job', 'shoots', 'contacts'])
+            ->with(['primaryShoot', 'lead', 'job', 'shoots', 'contacts', 'latestQuote'])
             ->get()
             ->map(fn (Project $project) => ProjectRowData::fromProject($project, $this->position))
             ->map(fn (ProjectRowData $row) => [$row->name, $row->date, $row->venue, $row->position, $row->contact]);

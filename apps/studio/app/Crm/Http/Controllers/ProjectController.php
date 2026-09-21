@@ -47,6 +47,7 @@ use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use App\Support\LiveUpdate;
 use App\Support\RecordVisit;
+use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -83,7 +84,7 @@ class ProjectController extends Controller
             // the board at /anfragen; listing it here shows the same record
             // twice under two vocabularies.
             ->whereHas('job')
-            ->with(['primaryShoot', 'lead', 'job', 'shoots', 'contacts'])
+            ->with(['primaryShoot', 'lead', 'job', 'shoots', 'contacts', 'latestQuote'])
             // What the workflow produced, as the list's own column: a workflow
             // nobody can see the effect of is a settings screen again.
             ->withCount(['tasks', 'tasks as open_tasks_count' => fn ($query) => $query->whereNull('completed_at')])
@@ -279,21 +280,8 @@ class ProjectController extends Controller
                 }
             }
 
-            // A booked project's Stand is its least-advanced shoot, so setting
-            // it moves every open shoot. Only when it changed: the details card
-            // sends the Stand along with every save, and resending the same
-            // value would drag an ahead shoot back to it.
-            $shoots = $project->shoots()->uncancelled()->get();
-
-            if (
-                isset($validated['stage'])
-                && $project->job()->exists()
-                && $validated['stage'] !== $this->position->leastAdvanced($shoots)?->status->key
-            ) {
-                $status = app(CrmVocabulary::class)->byKey(StagePipeline::Project, $validated['stage']);
-
-                $shoots->reject(fn (Shoot $shoot) => $shoot->status->is($status))
-                    ->each(fn (Shoot $shoot) => app(AdvanceShootStatus::class)($shoot, $status, auth('staff')->user()));
+            if (isset($validated['stage']) && $project->job()->exists()) {
+                $this->moveShoots($project, $validated['stage']);
             }
 
             foreach ($validated['people'] ?? [] as $person) {
@@ -322,6 +310,44 @@ class ProjectController extends Controller
         });
 
         return back();
+    }
+
+    public function stage(Request $request, Project $project): RedirectResponse
+    {
+        $this->authorize('manageShoots', $project);
+        abort_unless($project->job()->exists(), 404);
+
+        $validated = $request->validate([
+            'stage' => ['required', Rule::exists('stages', 'key')->where('pipeline', StagePipeline::Project->value)->where('is_active', true)],
+        ]);
+
+        try {
+            $this->moveShoots($project, $validated['stage']);
+        } catch (DomainException $e) {
+            throw ValidationException::withMessages(['stage' => $e->getMessage()]);
+        }
+
+        return back(fallback: '/projekte');
+    }
+
+    /**
+     * A booked project's Stand is its least-advanced shoot, so setting it
+     * moves every open shoot. Only when it changed: the details card sends the
+     * Stand along with every save, and resending the same value would drag an
+     * ahead shoot back to it.
+     */
+    private function moveShoots(Project $project, string $key): void
+    {
+        $shoots = $project->shoots()->uncancelled()->get();
+
+        if ($key === $this->position->leastAdvanced($shoots)?->status->key) {
+            return;
+        }
+
+        $status = app(CrmVocabulary::class)->byKey(StagePipeline::Project, $key);
+
+        $shoots->reject(fn (Shoot $shoot) => $shoot->status->is($status))
+            ->each(fn (Shoot $shoot) => app(AdvanceShootStatus::class)($shoot, $status, auth('staff')->user()));
     }
 
     public function shoots(Project $project, CrewAvailability $crew): Response

@@ -412,6 +412,8 @@ open: boolean,
 export type ProjectRowData = {
 id: string,
 name: string,
+type: string,
+typeKey: string,
 date: string | null,
 venue: string | null,
 position: string,
@@ -420,6 +422,8 @@ phase: string,
 contact: string | null,
 openTasks: number,
 taskCount: number,
+value: number | null,
+lastAt: string | null,
 };
 export type ProjectSuggestionData = {
 id: string,
