@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import PortalOffers from '@/portal/components/PortalOffers.vue'
 import PortalLabel from '@/portal/components/PortalLabel.vue'
 import PortalRow from '@/portal/components/PortalRow.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
@@ -29,6 +30,7 @@ const props = defineProps<{
   client: string
   bookings: Booking[]
   pending: { title: string; note: string; aside: string }[]
+  shelf: App.Catalog.Data.PortalServiceData[]
 }>()
 
 // Nach Jahr, wie die Startseite selbst: eine Liste ohne die Jahreszeile
@@ -92,6 +94,8 @@ const years = computed(() => [...new Set(props.bookings.map((row) => row.year))]
                 />
               </template>
             </div>
+
+            <PortalOffers :shelf="shelf" class="min-[1080px]:col-start-1" />
           </div>
         </template>
       </PortalWrap>

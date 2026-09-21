@@ -34,6 +34,7 @@ const source = computed(() => {
 
   if (form) {
     query.set('text', form[`portal_welcome_${state.value}`])
+    query.set('leistungen', form.portal_offers_enabled ? '1' : '0')
     query.set('geschlossen', form.portal_maintenance_enabled ? '1' : '0')
     query.set('hinweis', form.portal_maintenance_message)
   }

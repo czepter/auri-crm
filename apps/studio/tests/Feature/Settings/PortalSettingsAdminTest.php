@@ -265,3 +265,12 @@ it('rejects a contact address that is not one, and a number that is not digits',
         ])
         ->assertSessionHasNoErrors();
 });
+
+it('shows the offer shelf in the preview only while the switch is on', function () {
+    $owner = staffMember(StaffRole::Owner);
+
+    $on = $this->actingAs($owner, 'staff')->get('/einstellungen/portal/vorschau?leistungen=1')->viewData('page')['props']['shelf'];
+    $off = $this->actingAs($owner, 'staff')->get('/einstellungen/portal/vorschau?leistungen=0')->viewData('page')['props']['shelf'];
+
+    expect($on)->not->toBeEmpty()->and($off)->toBe([]);
+});

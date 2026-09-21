@@ -2,6 +2,8 @@
 
 namespace App\Settings\Http\Controllers;
 
+use App\Catalog\Data\PortalServiceData;
+use App\Catalog\Models\Package;
 use App\Concerns\AuthorizesStaffSettings;
 use Carbon\CarbonImmutable;
 use App\Documents\Enums\DocumentTemplateType;
@@ -84,6 +86,7 @@ class PortalSettingsController extends Controller
             'client' => 'Maxi Musterfrau',
             'welcomeText' => $welcome,
             'closed' => $request->boolean('geschlossen'),
+            'shelf' => $request->boolean('leistungen', $settings->offersEnabled()) ? $this->sampleShelf() : [],
             'maintenanceMessage' => $request->query('hinweis', $settings->maintenanceMessage()),
             'portalBranding' => [
                 'displayName' => $settings->displayName() ?? config('app.name'),
@@ -96,6 +99,27 @@ class PortalSettingsController extends Controller
                 ->all(),
             'portalNav' => null,
         ]);
+    }
+
+    /**
+     * Das Regal, das die Übersicht unter den Galerien zeigt: die angebotenen
+     * Pakete des Studios, sonst zwei Muster, damit der Schalter etwas zeigt.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function sampleShelf(): array
+    {
+        $packages = Package::query()->portalOffered()->with('items')->orderBy('name')->get();
+
+        if ($packages->isNotEmpty()) {
+            return PortalServiceData::collect($packages->values())->toArray();
+        }
+
+        return collect([['Mini-Shooting', 'Eine Stunde, 15 Bilder.', 19000], ['Fotobuch', 'Aus euren Lieblingsbildern.', 24900]])
+            ->map(fn (array $row, int $i) => [
+                'id' => "muster-{$i}", 'name' => $row[0], 'description' => $row[1], 'price' => $row[2],
+                'priceMode' => 'exact', 'requiresDate' => false, 'hasImage' => false, 'items' => [],
+            ])->all();
     }
 
     /**
