@@ -10,7 +10,12 @@
       "tooSmall": "Zu klein",
       "tooBig": "Zu groß",
       "badInput": "Ungültiger Wert",
-      "step": "Ungültiger Wert"
+      "step": "Ungültiger Wert",
+      "iban": "Ungültige IBAN, die Prüfsumme stimmt nicht",
+      "bic": "Ungültige BIC",
+      "vatId": "Ungültige USt-IdNr.",
+      "taxNumber": "Ungültige Steuernummer",
+      "color": "Farbe als #RRGGBB"
     },
     "cancel": "Abbrechen",
     "save": "Speichern",

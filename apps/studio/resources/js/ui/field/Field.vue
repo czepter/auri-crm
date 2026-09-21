@@ -37,6 +37,8 @@ const native = ref("")
 function reason(control: HTMLInputElement) {
   const v = control.validity
 
+  if (v.customError) return null
+
   if (v.valueMissing) return "valueMissing"
   if (v.typeMismatch) return control.type === "email" ? "email" : "url"
   if (v.patternMismatch) return "pattern"
@@ -53,7 +55,9 @@ function checkNative(event: Event) {
   const control = event.type === "invalid"
     ? (event.target as HTMLInputElement)
     : (event.currentTarget as HTMLElement).querySelector<HTMLInputElement>(":user-invalid")
-  native.value = control ? t(`common.invalid.${reason(control)}`) : ""
+  const key = control ? reason(control) : null
+
+  native.value = key ? t(`common.invalid.${key}`) : control?.validationMessage ?? ""
 }
 
 const fallback = useId()

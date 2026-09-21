@@ -173,7 +173,7 @@ defineExpose({ form, submit, adaptExisting })
                   :style="{ background: form.accent_color || 'transparent' }"
                 />
               </InputGroupAddon>
-              <InputGroupInput id="p-akzent" v-model="form.accent_color" class="tabular-nums" type="text" placeholder="#1C6870" />
+              <InputGroupInput id="p-akzent" v-model="form.accent_color" class="tabular-nums" rule="color" type="text" placeholder="#1C6870" />
             </InputGroup>
           </Field>
         </div>
@@ -308,11 +308,11 @@ defineExpose({ form, submit, adaptExisting })
       <div class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.taxNumber')" id="p-steuernr" :error="form.errors.tax_number">
-            <Input id="p-steuernr" v-model="form.tax_number" class="tabular-nums" type="text" />
+            <Input id="p-steuernr" v-model="form.tax_number" class="tabular-nums" rule="taxNumber" type="text" />
           </Field>
           <Field :error="form.errors.vat_id" v-slot="{ id }">
             <Label :for="id">{{ $t('settings.vatId') }} <em>{{ $t('settings.optional') }}</em></Label>
-            <Input :id v-model="form.vat_id" class="tabular-nums" type="text" />
+            <Input :id v-model="form.vat_id" class="tabular-nums" rule="vatId" type="text" />
           </Field>
         </div>
         <span class="text-[11.5px] leading-[1.45] text-faint">{{ $t('settings.taxHint') }}</span>
@@ -341,10 +341,10 @@ defineExpose({ form, submit, adaptExisting })
       <div class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.bankIban')" id="p-iban" :error="form.errors.bank_iban">
-            <Input id="p-iban" v-model="form.bank_iban" class="tabular-nums" type="text" />
+            <Input id="p-iban" v-model="form.bank_iban" class="tabular-nums" rule="iban" type="text" />
           </Field>
           <Field :label="$t('settings.bankBic')" id="p-bic" :error="form.errors.bank_bic">
-            <Input id="p-bic" v-model="form.bank_bic" class="tabular-nums" type="text" />
+            <Input id="p-bic" v-model="form.bank_bic" class="tabular-nums" rule="bic" type="text" />
           </Field>
         </div>
       </div>
