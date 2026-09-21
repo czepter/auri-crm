@@ -22,7 +22,7 @@ const props = defineProps<{
   projects: Record<string, { id: string; name: string }>
   mine: string[]
   season: InstanceType<typeof CalendarSeason>['$props']['season'] | null
-  availability: { workingDays: number[]; closures: App.Settings.Data.StudioClosureData[] } | null
+  workingDays: number[] | null
   settingsOpen: boolean
 }>()
 
@@ -96,7 +96,7 @@ function shortDate(date: string | null) {
           />
 
           <Button
-            v-if="availability"
+            v-if="workingDays"
             :as="Link"
             variant="pill-muted"
             :href="`/kalender/einstellungen?monat=${month}&ansicht=${view}`"
@@ -211,8 +211,8 @@ function shortDate(date: string | null) {
         </Table>
 
         <CalendarSettings
-          v-if="settingsOpen && availability"
-          v-bind="availability"
+          v-if="settingsOpen && workingDays"
+          :working-days="workingDays"
           @close="go(month)"
         />
       </div>

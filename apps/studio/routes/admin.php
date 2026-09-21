@@ -426,14 +426,16 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/einstellungen/studio-loeschen', [StudioDeletionController::class, 'store'])->name('settings.deletion.store');
         Route::delete('/einstellungen/studio-loeschen', [StudioDeletionController::class, 'destroy'])->name('settings.deletion.destroy');
 
-        Route::redirect('/einstellungen/verfuegbarkeit', '/kalender/einstellungen');
+        Route::redirect('/einstellungen/verfuegbarkeit', '/schliesszeiten');
         Route::patch('/kalender/einstellungen/arbeitstage', [StudioClosureController::class, 'updateWorkingDays'])
             ->name('availability.working-days.update');
-        Route::post('/kalender/einstellungen/schliesszeiten', [StudioClosureController::class, 'store'])
+        Route::get('/schliesszeiten', [StudioClosureController::class, 'index'])
+            ->name('studio-closures.index');
+        Route::post('/schliesszeiten', [StudioClosureController::class, 'store'])
             ->name('studio-closures.store');
-        Route::patch('/kalender/einstellungen/schliesszeiten/{studioClosure}', [StudioClosureController::class, 'update'])
+        Route::patch('/schliesszeiten/{studioClosure}', [StudioClosureController::class, 'update'])
             ->name('studio-closures.update');
-        Route::delete('/kalender/einstellungen/schliesszeiten/{studioClosure}', [StudioClosureController::class, 'destroy'])
+        Route::delete('/schliesszeiten/{studioClosure}', [StudioClosureController::class, 'destroy'])
             ->name('studio-closures.destroy');
 
         // E-14: die Fläche, die es zu E-08 nicht gab — Regeln entstanden bis

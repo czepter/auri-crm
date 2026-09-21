@@ -4,21 +4,33 @@ namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
+use App\Settings\Data\StudioClosureData;
 use App\Settings\Models\StudioClosure;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 /**
  * T-09's StudioClosure — a date range with a label, CheckDateAvailability's
- * second conflict source. Edited in the calendar's settings overlay under the
- * same ManageSettings gate as every settings screen — see
- * AuthorizesStaffSettings for why that gate is a 404, not a 403.
+ * second conflict source. Listed under Kalender, behind the same
+ * ManageSettings gate as every settings screen — see AuthorizesStaffSettings
+ * for why that gate is a 404, not a 403.
  */
 class StudioClosureController extends Controller
 {
     use AuthorizesStaffSettings;
+
+    public function index(): Response
+    {
+        $this->authorizeSettings();
+
+        return Inertia::render('Closures/Index', [
+            'closures' => StudioClosure::query()->orderBy('starts_on')->get()->map(StudioClosureData::fromModel(...))->all(),
+        ]);
+    }
 
     // At least one day: an empty selection leaves TaskTemplate::dueFor() nothing to roll onto.
     public function updateWorkingDays(Request $request, StudioSettingsResolver $settings): RedirectResponse

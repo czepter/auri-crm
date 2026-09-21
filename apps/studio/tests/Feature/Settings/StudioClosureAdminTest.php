@@ -13,13 +13,13 @@ uses(RefreshDatabase::class);
 
 beforeEach(fn () => Cache::store('redis')->flush());
 
-it('hands every closure to the calendar overlay', function () {
+it('lists every closure', function () {
     StudioClosure::factory()->spanning('2026-12-24', '2026-12-31')->create(['label' => 'Weihnachtspause']);
 
     $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get('/kalender/einstellungen')
+        ->get('/schliesszeiten')
         ->assertOk()
-        ->viewData('page')['props']['availability'];
+        ->viewData('page')['props'];
 
     expect($props['closures'])->toHaveCount(1)
         ->and($props['closures'][0]['label'])->toBe('Weihnachtspause')
@@ -31,7 +31,7 @@ it('hands the working days to the calendar overlay', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->get('/kalender/einstellungen')
         ->assertOk()
-        ->assertInertia(fn ($page) => $page->where('settingsOpen', true)->where('availability.workingDays', [1, 2, 3, 4, 5, 6, 7]));
+        ->assertInertia(fn ($page) => $page->where('settingsOpen', true)->where('workingDays', [1, 2, 3, 4, 5, 6, 7]));
 });
 
 it('saves the working days and audits the owner', function () {
@@ -59,14 +59,14 @@ it('creates a closure and leaves an audit row naming the actor', function () {
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')
-        ->from('/kalender/einstellungen')
-        ->post('/kalender/einstellungen/schliesszeiten', [
+        ->from('/schliesszeiten')
+        ->post('/schliesszeiten', [
             'label' => 'Weihnachtspause',
             'starts_on' => '2026-12-24',
             'ends_on' => '2026-12-31',
             'message' => 'Zurück am 2. Januar.',
         ])
-        ->assertRedirect('/kalender/einstellungen');
+        ->assertRedirect('/schliesszeiten');
 
     $closure = StudioClosure::query()->sole();
 
@@ -77,13 +77,13 @@ it('creates a closure and leaves an audit row naming the actor', function () {
 
 it('rejects a closure whose end is before its start', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->from('/kalender/einstellungen')
-        ->post('/kalender/einstellungen/schliesszeiten', [
+        ->from('/schliesszeiten')
+        ->post('/schliesszeiten', [
             'label' => 'Ungültig',
             'starts_on' => '2026-12-31',
             'ends_on' => '2026-12-24',
         ])
-        ->assertRedirect('/kalender/einstellungen')
+        ->assertRedirect('/schliesszeiten')
         ->assertSessionHasErrors('ends_on');
 
     expect(StudioClosure::count())->toBe(0);
@@ -94,13 +94,13 @@ it('updates a closure and leaves an audit row', function () {
     $closure = StudioClosure::factory()->spanning('2026-12-24', '2026-12-31')->create(['label' => 'Weihnachtspause']);
 
     $this->actingAs($owner, 'staff')
-        ->from('/kalender/einstellungen')
-        ->patch("/kalender/einstellungen/schliesszeiten/{$closure->public_id}", [
+        ->from('/schliesszeiten')
+        ->patch("/schliesszeiten/{$closure->public_id}", [
             'label' => 'Winterpause',
             'starts_on' => '2026-12-20',
             'ends_on' => '2027-01-02',
         ])
-        ->assertRedirect('/kalender/einstellungen');
+        ->assertRedirect('/schliesszeiten');
 
     $closure->refresh();
 
@@ -115,9 +115,9 @@ it('deletes a closure and leaves an audit row', function () {
     $closure = StudioClosure::factory()->create();
 
     $this->actingAs($owner, 'staff')
-        ->from('/kalender/einstellungen')
-        ->delete("/kalender/einstellungen/schliesszeiten/{$closure->public_id}")
-        ->assertRedirect('/kalender/einstellungen');
+        ->from('/schliesszeiten')
+        ->delete("/schliesszeiten/{$closure->public_id}")
+        ->assertRedirect('/schliesszeiten');
 
     expect(StudioClosure::count())->toBe(0)
         ->and(AuditLog::where('event', 'studio_closure.deleted')->sole()->actor_id)->toBe($owner->id);
@@ -127,14 +127,14 @@ it('binds the closure route on the public id, not the primary key', function () 
     $closure = StudioClosure::factory()->create();
 
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->delete("/kalender/einstellungen/schliesszeiten/{$closure->id}")
+        ->delete("/schliesszeiten/{$closure->id}")
         ->assertNotFound();
 });
 
 it('gives every non-owner role the same 404 every other settings screen gives', function (StaffRole $role, int $status) {
-    $response = $this->actingAs(staffMember($role), 'staff')->get('/kalender/einstellungen');
-
-    $response->assertStatus($status);
+    foreach (['/schliesszeiten', '/kalender/einstellungen'] as $path) {
+        $this->actingAs(staffMember($role), 'staff')->get($path)->assertStatus($status);
+    }
 })->with([
     [StaffRole::Owner, 200],
     [StaffRole::Photographer, 404],
@@ -143,11 +143,11 @@ it('gives every non-owner role the same 404 every other settings screen gives', 
     [StaffRole::Assistant, 404],
 ]);
 
-it('puts no integer identifier on the calendar overlay', function () {
+it('puts no integer identifier on the closures page', function () {
     StudioClosure::factory()->create();
 
     $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get('/kalender/einstellungen')
+        ->get('/schliesszeiten')
         ->assertOk()
         ->viewData('page')['props'];
 
@@ -158,11 +158,11 @@ it('gives the plain calendar no overlay data to a role without ManageSettings', 
     $this->actingAs(staffMember(StaffRole::Photographer), 'staff')
         ->get('/kalender')
         ->assertOk()
-        ->assertInertia(fn ($page) => $page->where('availability', null)->where('settingsOpen', false));
+        ->assertInertia(fn ($page) => $page->where('workingDays', null)->where('settingsOpen', false));
 });
 
-it('sends the old availability address to the calendar overlay', function () {
+it('sends the old availability address to the closures page', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->get('/einstellungen/verfuegbarkeit')
-        ->assertRedirect('/kalender/einstellungen');
+        ->assertRedirect('/schliesszeiten');
 });

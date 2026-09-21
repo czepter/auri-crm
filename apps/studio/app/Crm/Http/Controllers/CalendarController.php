@@ -14,7 +14,6 @@ use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Models\Absence;
 use App\Models\User;
-use App\Settings\Data\StudioClosureData;
 use App\Settings\Models\StudioClosure;
 use App\Settings\Support\StudioSettingsResolver;
 use Carbon\CarbonImmutable;
@@ -137,10 +136,7 @@ class CalendarController extends Controller
                 ->pluck('public_id')
                 ->values(),
             'season' => $view === 'saison' ? $this->season($user, $vocabulary) : null,
-            'availability' => $manages ? [
-                'workingDays' => $settings->workingDays(),
-                'closures' => StudioClosure::query()->orderBy('starts_on')->get()->map(StudioClosureData::fromModel(...))->all(),
-            ] : null,
+            'workingDays' => $manages ? $settings->workingDays() : null,
             'settingsOpen' => $request->route('settings') === true,
         ]);
     }

@@ -117,12 +117,7 @@ const meta = {
       's-ahrens-standesamt': { id: 'p-ahrens', name: 'Ahrens, Sophie & Tim' },
     },
     mine: ['s-rahn-feier'],
-    availability: {
-      workingDays: [1, 2, 3, 4, 5],
-      closures: [
-        { id: 'c1', label: 'Weihnachtspause', startsOn: '2026-12-23', endsOn: '2027-01-04', message: 'Zurück am 5. Januar.' },
-      ],
-    },
+    workingDays: [1, 2, 3, 4, 5],
     settingsOpen: false,
     season: {
       shoots: [
@@ -165,5 +160,5 @@ export const SaisonFastLeer: Story = {
 /** Ein Monat ohne Termine, in der Liste. */
 export const ListeLeer: Story = { args: { view: 'liste', shoots: [] } }
 
-/** Arbeitstage und Schließzeiten über dem Monat. */
+/** Arbeitstage über dem Monat. */
 export const Einstellungen: Story = { args: { settingsOpen: true } }

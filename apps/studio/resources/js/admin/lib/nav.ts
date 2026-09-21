@@ -24,9 +24,6 @@ export type NavCounts = {
 /** Die Zeilen, die "Studio" zuklappt. */
 export const studioKeys = ['pakete', 'vorlagen', 'team', 'einstellungen']
 
-/** Die Zeilen unter "Unterlagen". */
-export const documentKeys = ['angebote', 'vertraege', 'rechnungen', 'gutschriften']
-
 // C-02 (#236), jetzt in vier Bloecken statt einem. Oben steht, was ohne
 // einzelnen Auftrag gilt; "Arbeit" ist, was heute ansteht, "Auftraege" sind
 // die Datensaetze — dieselbe Trennung, die eine Aufgabenliste von einem
@@ -35,6 +32,9 @@ export const documentKeys = ['angebote', 'vertraege', 'rechnungen', 'gutschrifte
 //
 // "Studio" faltet zu: seine Zeilen sind Einrichtung, nicht Alltag. Wer darin
 // steht, sieht sie aufgeklappt, sonst kostet der Block eine Zeile.
+//
+// "Kalender" buendelt Termine, Abwesenheiten und Schliesszeiten: was das
+// Studio an einem Tag bindet oder sperrt.
 //
 // "Unterlagen" buendelt Angebote, Vertraege, Rechnungen und Gutschriften.
 // Der Vertrag steht zwischen Angebot und Rechnung, weil er dort entsteht,
@@ -101,19 +101,30 @@ export function navItems(can: Capability[], counts: NavCounts = {}): NavEntry[] 
             icon: '<path d="M4 6.5 5.8 8.3 9 5"/><path d="M4 12.5 5.8 14.3 9 11"/><path d="M4 18.5 5.8 20.3 9 17"/><path d="M12.5 6.5H20M12.5 12.5H20M12.5 18.5H20"/>',
         },
         {
-            key: 'kalender',
+            key: 'planung',
             label: 'Kalender',
-            href: '/kalender',
             icon: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/>',
-        },
-        {
-            // T-10. Bleibt eine eigene Zeile: C-13 (#249) faltet Abwesenheiten in
-            // das Monatsraster, und bis dahin waere ein Aufklapper fuer einen
-            // einzigen Untereintrag mehr Mechanik als Nutzen.
-            key: 'abwesenheiten',
-            label: 'Abwesenheiten',
-            href: '/abwesenheiten',
-            icon: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="M8 14h3M13 14h3M8 17h3"/>',
+            children: [
+                {
+                    key: 'kalender',
+                    label: 'Termine',
+                    href: '/kalender',
+                    icon: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/>',
+                },
+                {
+                    key: 'abwesenheiten',
+                    label: 'Abwesenheiten',
+                    href: '/abwesenheiten',
+                    icon: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="M8 14h3M13 14h3M8 17h3"/>',
+                },
+                {
+                    key: 'schliesszeiten',
+                    label: 'Schließzeiten',
+                    href: '/schliesszeiten',
+                    needs: 'manage_settings',
+                    icon: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="m9.5 13.5 5 4M14.5 13.5l-5 4"/>',
+                },
+            ],
         },
         { group: 'Aufträge' },
         {
