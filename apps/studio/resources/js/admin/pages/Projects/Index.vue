@@ -288,7 +288,7 @@ function reset() {
                   {{ project.name }}
                 </span>
                 <span class="mt-0.5 block text-[12px]" :class="moving?.id === project.id ? 'text-mark' : 'text-ink-2'">
-                  {{ project.date ? day(project.date) : $t('board.openDate') }}
+                  <span :class="late(project) && moving?.id !== project.id && 'font-medium text-destructive'">{{ project.date ? day(project.date) : $t('board.openDate') }}</span>
                   <template v-if="project.venue"> · {{ project.venue }}</template>
                 </span>
                 <span class="mt-1.5 flex items-center gap-1.5">
@@ -304,10 +304,7 @@ function reset() {
                   </span>
                   <span
                     v-if="project.lastAt"
-                    class="ml-auto inline-flex items-center bg-no-repeat bg-[length:11px_11px] text-[11.5px] leading-none tabular-nums"
-                    :class="late(project)
-                      ? 'h-[19px] rounded-md whitespace-nowrap bg-due-bg pr-[7px] pl-[22px] bg-[position:7px_center] bg-icon-clock-due font-medium text-due'
-                      : 'pl-4 bg-[position:left_center] bg-icon-clock text-ink-2'"
+                    class="ml-auto inline-flex items-center bg-no-repeat bg-[length:11px_11px] pl-4 bg-[position:left_center] bg-icon-clock text-[11.5px] leading-none tabular-nums text-ink-2"
                   >
                     {{ relative(project.lastAt) }}
                   </span>
