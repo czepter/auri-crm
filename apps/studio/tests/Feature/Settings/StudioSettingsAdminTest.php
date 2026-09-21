@@ -391,3 +391,15 @@ it('stores the chosen font pair and refuses one that is not licensed', function 
 it('falls back to Hanken while nothing is chosen', function () {
     expect(app(StudioSettingsResolver::class)->fontPair())->toBe(FontPair::Hanken);
 });
+
+it('rejects a malformed BIC, USt-IdNr. and Steuernummer', function () {
+    $owner = staffMember(StaffRole::Owner);
+
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen', ['bank_bic' => 'BYLA', 'vat_id' => 'DE81', 'tax_number' => '43/12'])
+        ->assertSessionHasErrors(['bank_bic', 'vat_id', 'tax_number']);
+
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen', ['bank_bic' => 'BYLADEM1001', 'vat_id' => 'DE812345678', 'tax_number' => '43/123/45678'])
+        ->assertSessionHasNoErrors();
+});

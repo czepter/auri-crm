@@ -11,6 +11,7 @@ use App\Settings\Actions\AdaptClientRegister;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Enums\FontPair;
 use App\Settings\Models\StudioSettings;
+use App\Settings\Rules\ValidFormat;
 use App\Settings\Rules\ValidIban;
 use App\Settings\Support\LogoResponse;
 use App\Settings\Support\StudioSettingsResolver;
@@ -88,8 +89,8 @@ class StudioSettingsController extends Controller
             // At least one of the two — a document carrying neither is not
             // invoiceable. required_without on both sides is what makes
             // "at least one" true without a bespoke closure rule.
-            'tax_number' => ['sometimes', 'nullable', 'string', 'max:50', 'required_without:vat_id'],
-            'vat_id' => ['sometimes', 'nullable', 'string', 'max:50', 'required_without:tax_number'],
+            'tax_number' => ['sometimes', 'nullable', 'string', 'max:50', 'required_without:vat_id', new ValidFormat('tax_number')],
+            'vat_id' => ['sometimes', 'nullable', 'string', 'max:50', 'required_without:tax_number', new ValidFormat('vat_id')],
             'register_number' => ['sometimes', 'nullable', 'string', 'max:100'],
             'register_court' => ['sometimes', 'nullable', 'string', 'max:255'],
             'representative' => ['sometimes', 'nullable', 'string', 'max:255'],
@@ -114,7 +115,7 @@ class StudioSettingsController extends Controller
             // itself when there is none (portal/pages/Payments/Show.vue).
             'bank_account_holder' => ['sometimes', 'nullable', 'string', 'max:255'],
             'bank_iban' => ['sometimes', 'nullable', 'string', new ValidIban],
-            'bank_bic' => ['sometimes', 'nullable', 'string', 'max:11'],
+            'bank_bic' => ['sometimes', 'nullable', 'string', 'max:11', new ValidFormat('bic')],
         ]);
 
         $actor = auth('staff')->user();
