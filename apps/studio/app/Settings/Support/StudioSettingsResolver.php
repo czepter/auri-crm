@@ -252,7 +252,15 @@ class StudioSettingsResolver
         $row = StudioSettings::query()->firstOrFail();
         $old = $row->logo_path;
 
-        $path = $file->storeAs("branding/{$row->tenant_id}", 'logo.'.$file->extension(), 'local');
+        // SVG bleibt, wie es ankommt. Alles andere wird auf die Breite gebracht,
+        // die ein Beleg braucht: aus einer Kamera oder einem Export kommen
+        // Megapixel für ein Zeichen von wenigen Zentimetern.
+        if ($file->extension() === 'svg') {
+            $path = $file->storeAs("branding/{$row->tenant_id}", 'logo.svg', 'local');
+        } else {
+            $path = "branding/{$row->tenant_id}/logo.webp";
+            Storage::disk('local')->put($path, ImageVariant::resizeAndEncode($file->get(), 800, 'webp'));
+        }
 
         if ($old !== null && $old !== $path) {
             Storage::disk('local')->delete($old);

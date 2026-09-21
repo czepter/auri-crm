@@ -267,7 +267,9 @@ it('takes a logo as PNG, JPEG, WebP or SVG', function (string $file, string $mim
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->patch('/einstellungen', [
             'tax_number' => '22/123/45678',
-            'logo' => UploadedFile::fake()->create($file, 12, $mime),
+            'logo' => $mime === 'image/svg+xml'
+                ? UploadedFile::fake()->create($file, 12, $mime)
+                : UploadedFile::fake()->image($file, 40, 40),
             ...t07ValidBankFields(),
         ])
         ->assertSessionHasNoErrors();
@@ -279,6 +281,27 @@ it('takes a logo as PNG, JPEG, WebP or SVG', function (string $file, string $mim
     ['logo.webp', 'image/webp'],
     ['logo.svg', 'image/svg+xml'],
 ]);
+
+// Ein Kamera-Export soll nicht in voller Größe auf jedem Beleg liegen; SVG
+// wird nicht angefasst.
+it('shrinks a large logo to 800 px and leaves an SVG alone', function () {
+    Storage::fake('local');
+    $owner = staffMember(StaffRole::Owner);
+
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen', ['tax_number' => '22/123/45678', 'logo' => UploadedFile::fake()->image('logo.png', 2400, 1200), ...t07ValidBankFields()])
+        ->assertSessionHasNoErrors();
+
+    $path = StudioSettings::query()->sole()->logo_path;
+    expect(getimagesizefromstring(Storage::disk('local')->get($path))[0])->toBe(800);
+
+    $svg = UploadedFile::fake()->createWithContent('logo.svg', '<svg xmlns="http://www.w3.org/2000/svg"/>');
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen', ['tax_number' => '22/123/45678', 'logo' => $svg, ...t07ValidBankFields()])
+        ->assertSessionHasNoErrors();
+
+    expect(Storage::disk('local')->get(StudioSettings::query()->sole()->logo_path))->toContain('<svg');
+});
 
 it('refuses a logo that is not an image at all', function () {
     Storage::fake('local');

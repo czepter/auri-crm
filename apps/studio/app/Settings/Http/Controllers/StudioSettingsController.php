@@ -108,7 +108,7 @@ class StudioSettingsController extends Controller
             // SVG ist erlaubt, weil App\Settings\Support\LogoResponse die
             // Datei mit Sandbox-CSP ausliefert; ohne die beiden Kopfzeilen
             // liefe ein <script> darin auf unserer Herkunft.
-            'logo' => ['sometimes', 'nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:2048'],
+            'logo' => ['sometimes', 'nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:10240'],
             // Optional: a studio that only takes card payments (or none yet
             // during onboarding) has no IBAN to file. What is entered still
             // has to be a real IBAN — the portal's "Überweisen" block hides
