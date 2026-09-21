@@ -13,6 +13,7 @@ use App\Notifications\Support\NotificationPreferences;
 use App\Portal\Models\DsgvoRequest;
 use App\Portal\Models\EmailChange;
 use App\Portal\Notifications\EmailChangeConfirmation;
+use App\Settings\Rules\ValidFormat;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
@@ -83,7 +84,7 @@ class AccountController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:64'],
+            'phone' => ['nullable', 'string', 'max:64', new ValidFormat('phone')],
             'street' => ['nullable', 'string', 'max:255'],
             'postcode' => ['nullable', 'string', 'max:16'],
             'city' => ['nullable', 'string', 'max:255'],

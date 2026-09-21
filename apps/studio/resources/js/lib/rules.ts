@@ -1,4 +1,4 @@
-export type Rule = 'iban' | 'bic' | 'vatId' | 'taxNumber' | 'color'
+export type Rule = 'iban' | 'bic' | 'vatId' | 'taxNumber' | 'color' | 'phone'
 
 // Spiegel von App\Settings\Rules\ValidIban: ISO 7064 MOD 97-10.
 function ibanValid(value: string): boolean {
@@ -24,6 +24,8 @@ const checks: Record<Rule, (value: string) => boolean> = {
   },
   // 10 bis 13 Ziffern, Schrägstriche und Leerzeichen sind Trenner (Landesformate und ELSTER).
   taxNumber: (value) => /^[0-9/\s]+$/.test(value) && /^\d{10,13}$/.test(value.replace(/[/\s]/g, '')),
+  // Ziffern mit + ( ) / . - und Leerzeichen; fünf bis fünfzehn Ziffern.
+  phone: (value) => /^\+?[0-9\s()/.-]+$/.test(value) && /^\d{5,15}$/.test(value.replace(/\D/g, '')),
   color: (value) => /^#[0-9A-Fa-f]{6}$/.test(value),
 }
 

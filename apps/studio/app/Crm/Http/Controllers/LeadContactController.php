@@ -6,6 +6,7 @@ use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
 use App\Http\Controllers\Controller;
+use App\Settings\Rules\ValidFormat;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -32,7 +33,7 @@ class LeadContactController extends Controller
             'contact_id' => ['nullable', 'string', 'size:24', 'required_without:name'],
             'name' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:64'],
+            'phone' => ['nullable', 'string', 'max:64', new ValidFormat('phone')],
             'role' => ['nullable', 'string', 'max:60'],
         ]);
 

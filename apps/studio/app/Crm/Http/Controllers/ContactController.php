@@ -22,6 +22,7 @@ use App\Portal\Models\ClientAccess;
 use App\Portal\Models\DsgvoRequest;
 use App\Portal\Notifications\PortalAccessInvitation;
 use App\Portal\Support\PortalSettings;
+use App\Settings\Rules\ValidFormat;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use App\Support\RecordVisit;
@@ -277,7 +278,7 @@ class ContactController extends Controller
                 // should show a field error.
                 Rule::unique('contacts', 'email')->where('tenant_id', config('tenancy.tenant_id')),
             ],
-            'phone' => ['nullable', 'string', 'max:64'],
+            'phone' => ['nullable', 'string', 'max:64', new ValidFormat('phone')],
             'street' => ['nullable', 'string', 'max:255'],
             'postcode' => ['nullable', 'string', 'max:32'],
             'city' => ['nullable', 'string', 'max:255'],
@@ -320,7 +321,7 @@ class ContactController extends Controller
                     ->where('tenant_id', config('tenancy.tenant_id'))
                     ->ignore($contact->id),
             ],
-            'phone' => ['nullable', 'string', 'max:64'],
+            'phone' => ['nullable', 'string', 'max:64', new ValidFormat('phone')],
             // M-06: the billing address §14 UStG wants on an invoice. All
             // three nullable — a lead that never becomes a paying client
             // never needs one, and demanding it at capture would slow down

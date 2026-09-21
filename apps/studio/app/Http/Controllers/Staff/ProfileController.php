@@ -10,6 +10,7 @@ use App\Notifications\Jobs\SendMailNotification;
 use App\Notifications\StaffEmailChangeConfirmation;
 use App\Notifications\Support\NotificationPreferences;
 use App\Notifications\Support\StudioEvents;
+use App\Settings\Rules\ValidFormat;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
@@ -96,7 +97,7 @@ class ProfileController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:64'],
+            'phone' => ['nullable', 'string', 'max:64', new ValidFormat('phone')],
             'email' => [
                 'required', 'email', 'max:255',
                 Rule::unique('users', 'email')->ignore($user->id),

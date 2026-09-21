@@ -20,5 +20,8 @@ describe('ruleValid', () => {
     expect(ruleValid('taxNumber', '43/12')).toBe(false)
     expect(ruleValid('color', '#2F4858')).toBe(true)
     expect(ruleValid('color', '2F4858')).toBe(false)
+    expect(ruleValid('phone', '+49 40 123456-7')).toBe(true)
+    expect(ruleValid('phone', 'sadsdfdfs sdfsdfsd')).toBe(false)
+    expect(ruleValid('phone', '123')).toBe(false)
   })
 })

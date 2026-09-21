@@ -274,3 +274,15 @@ it('shows the offer shelf in the preview only while the switch is on', function 
 
     expect($on)->not->toBeEmpty()->and($off)->toBe([]);
 });
+
+it('rejects a contact phone that is not a phone number', function () {
+    $owner = staffMember(StaffRole::Owner);
+
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen/portal/kontakt', ['portal_contact_phone' => 'sadsdfdfs sdfsdfsd'])
+        ->assertSessionHasErrors('portal_contact_phone');
+
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen/portal/kontakt', ['portal_contact_phone' => '+49 40 123456-7'])
+        ->assertSessionHasNoErrors();
+});

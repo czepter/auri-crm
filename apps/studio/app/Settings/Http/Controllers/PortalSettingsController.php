@@ -13,6 +13,7 @@ use App\Settings\Data\PortalSettingsData;
 use App\Settings\Data\StudioSettingsData;
 use App\Portal\Http\Controllers\LegalTextController;
 use App\Settings\Rules\LegalTemplateFamily;
+use App\Settings\Rules\ValidFormat;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -206,7 +207,7 @@ class PortalSettingsController extends Controller
             'portal_contact_name' => ['nullable', 'string', 'max:255'],
             // Nur Plus und Ziffern, Leerzeichen zum Gruppieren. Was hier
             // steht, wird auf der Kontaktkarte zu einem tel:-Link.
-            'portal_contact_phone' => ['nullable', 'string', 'max:64', 'regex:/^\+?[0-9 ]+$/'],
+            'portal_contact_phone' => ['nullable', 'string', 'max:64', new ValidFormat('phone')],
             'portal_contact_email' => ['nullable', 'email', 'max:255'],
             'portal_contact_response_time' => ['nullable', 'string', 'max:120'],
             // Niemals SVG: das Bild geht öffentlich raus, und Markup liefe

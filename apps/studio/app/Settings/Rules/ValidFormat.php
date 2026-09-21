@@ -15,9 +15,10 @@ class ValidFormat implements ValidationRule
         'bic' => 'Ungültige BIC',
         'vat_id' => 'Ungültige USt-IdNr.',
         'tax_number' => 'Ungültige Steuernummer',
+        'phone' => 'Ungültige Telefonnummer',
     ];
 
-    /** @param 'bic'|'vat_id'|'tax_number' $format */
+    /** @param 'bic'|'vat_id'|'tax_number'|'phone' $format */
     public function __construct(private readonly string $format) {}
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
@@ -32,6 +33,8 @@ class ValidFormat implements ValidationRule
         return match ($this->format) {
             'bic' => (bool) preg_match('/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/', strtoupper(preg_replace('/\s/', '', $value))),
             'vat_id' => $this->vatId(strtoupper(preg_replace('/[\s.-]/', '', $value))),
+            'phone' => (bool) preg_match('/^\+?[0-9\s()\/.-]+$/', $value)
+                && preg_match('/^\d{5,15}$/', preg_replace('/\D/', '', $value)) === 1,
             'tax_number' => (bool) preg_match('/^[0-9\/\s]+$/', $value)
                 && preg_match('/^\d{10,13}$/', preg_replace('/[\/\s]/', '', $value)) === 1,
         };

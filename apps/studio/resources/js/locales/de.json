@@ -15,7 +15,8 @@
       "bic": "Ungültige BIC",
       "vatId": "Ungültige USt-IdNr.",
       "taxNumber": "Ungültige Steuernummer",
-      "color": "Farbe als #RRGGBB"
+      "color": "Farbe als #RRGGBB",
+      "phone": "Ungültige Telefonnummer"
     },
     "cancel": "Abbrechen",
     "save": "Speichern",

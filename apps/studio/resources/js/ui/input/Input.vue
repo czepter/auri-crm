@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from "vue"
 import type { InputVariants } from "."
-import { ref } from "vue"
+import { ref, useAttrs } from "vue"
 import { useVModel } from "@vueuse/core"
 import type { Rule } from "@/lib/rules"
 import { cn } from "@/lib/utils"
@@ -26,7 +26,8 @@ const modelValue = useVModel(props, "modelValue", emits, {
 })
 
 const el = ref<HTMLInputElement | null>(null)
-useRule(el, () => props.rule, () => modelValue.value)
+const attrs = useAttrs()
+useRule(el, () => props.rule ?? (attrs.type === "tel" ? "phone" : undefined), () => modelValue.value)
 </script>
 
 <template>

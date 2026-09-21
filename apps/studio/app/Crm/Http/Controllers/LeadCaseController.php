@@ -28,6 +28,7 @@ use App\Quotes\Actions\ReadQuoteList;
 use App\Quotes\Data\QuoteData;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
+use App\Settings\Rules\ValidFormat;
 use App\Support\RecordVisit;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
@@ -205,7 +206,7 @@ class LeadCaseController extends Controller
             'people.*.id' => ['required', 'string', 'size:24'],
             'people.*.name' => ['required', 'string', 'max:255'],
             'people.*.email' => ['nullable', 'email', 'max:255'],
-            'people.*.phone' => ['nullable', 'string', 'max:64'],
+            'people.*.phone' => ['nullable', 'string', 'max:64', new ValidFormat('phone')],
             // Freitext: „Trauredner" ist eine Rolle, die in keiner Aufzählung
             // steht. ProjectContactRole bleibt die Liste der Vorschläge.
             'people.*.role' => ['nullable', 'string', 'max:60'],
