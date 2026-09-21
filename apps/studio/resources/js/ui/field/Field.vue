@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from "vue"
-import { useId } from "vue"
+import { ref, useId } from "vue"
 import { Label } from "@/ui/label"
 import { cn } from "@/lib/utils"
 
@@ -28,15 +28,27 @@ const props = defineProps<{
   class?: HTMLAttributes["class"]
 }>()
 
+// Live validation is the browser's own: :user-invalid turns on once the
+// person has touched a control, and validationMessage is its sentence.
+const native = ref("")
+function checkNative(event: Event) {
+  const control = (event.currentTarget as HTMLElement).querySelector<HTMLInputElement>(":user-invalid")
+  native.value = control?.validationMessage ?? ""
+}
+
 const fallback = useId()
 const id = () => props.id ?? fallback
 </script>
 
 <template>
-  <div :class="cn('flex min-w-0 flex-col gap-1.5', dense && 'gap-1', wide && 'col-span-full', props.class)">
+  <div
+    :class="cn('flex min-w-0 flex-col gap-1.5', dense && 'gap-1', wide && 'col-span-full', props.class)"
+    @input="checkNative"
+    @focusout="checkNative"
+  >
     <Label v-if="label" :for="id()" :variant="dense ? 'micro' : 'field'">{{ label }}</Label>
     <slot :id="id()" />
     <span v-if="hint" class="text-[11.5px] leading-[1.45] text-faint">{{ hint }}</span>
-    <p v-if="error" class="text-[11.5px] leading-[1.45] text-destructive">{{ error }}</p>
+    <p v-if="error || native" class="text-[11.5px] leading-[1.45] text-destructive">{{ error || native }}</p>
   </div>
 </template>
