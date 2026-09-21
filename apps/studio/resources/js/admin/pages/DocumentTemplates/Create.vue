@@ -6,6 +6,7 @@ import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import DocumentEditor from '@/admin/components/DocumentEditor.vue'
 import DocumentPreviewPane from '@/admin/components/DocumentPreviewPane.vue'
+import { PreviewOverlay } from '@/ui/preview-overlay'
 import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Input } from '@/ui/input'
@@ -190,18 +191,20 @@ function submit() {
               class="flex cursor-col-resize items-center justify-center before:block before:h-full before:w-px before:bg-border before:content-[''] max-[1100px]:hidden"
             />
 
-            <DocumentPreviewPane :type="form.type" :doc="doc" :samples="samples" :project="project">
-              <Select
-                :model-value="toOption(project)"
-                @update:model-value="(value) => project = fromOption(value) || null"
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem :value="NONE">{{ $t('documentTemplates.previewSamples') }}</SelectItem>
-                  <SelectItem v-for="option in projects" :key="option.id" :value="option.id">{{ option.name }}</SelectItem>
-                </SelectContent>
-              </Select>
-            </DocumentPreviewPane>
+            <PreviewOverlay :min="1101" :label="$t('common.preview')" wrapper-class="contents">
+              <DocumentPreviewPane :type="form.type" :doc="doc" :samples="samples" :project="project">
+                <Select
+                  :model-value="toOption(project)"
+                  @update:model-value="(value) => project = fromOption(value) || null"
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem :value="NONE">{{ $t('documentTemplates.previewSamples') }}</SelectItem>
+                    <SelectItem v-for="option in projects" :key="option.id" :value="option.id">{{ option.name }}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </DocumentPreviewPane>
+            </PreviewOverlay>
           </div>
         </div>
       </div>

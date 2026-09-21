@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { router, useForm } from '@inertiajs/vue3'
 import GalleryPreview from '@/admin/components/gallery/GalleryPreview.vue'
+import { PreviewOverlay } from '@/ui/preview-overlay'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { ChoiceGroup } from '@/ui/choice-group'
@@ -234,7 +235,7 @@ const studioOffers = computed(() => ({
             </div>
           </div>
 
-          <aside class="min-w-0 flex-1">
+          <PreviewOverlay :min="1121" :label="$t('common.preview')" wrapper-class="min-w-0 flex-1">
             <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
               {{ $t('galleryRecord.preview') }}
             </div>
@@ -244,7 +245,7 @@ const studioOffers = computed(() => ({
               :title="previewTitle"
               :url="galleryHost"
             />
-          </aside>
+          </PreviewOverlay>
         </section>
 
         <section v-else-if="open === 'gestaltung'" class="flex min-w-0 flex-1 gap-8 max-[1120px]:flex-col">
@@ -263,7 +264,7 @@ const studioOffers = computed(() => ({
             </div>
           </div>
 
-          <aside class="min-w-0 flex-1">
+          <PreviewOverlay :min="1121" :label="$t('common.preview')" wrapper-class="min-w-0 flex-1">
             <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
               {{ $t('galleryRecord.preview') }}
             </div>
@@ -273,7 +274,7 @@ const studioOffers = computed(() => ({
               :title="previewTitle"
               :url="galleryHost"
             />
-          </aside>
+          </PreviewOverlay>
         </section>
 
         <section v-else class="min-w-0 flex-1">
@@ -361,7 +362,7 @@ const studioOffers = computed(() => ({
               </Button>
             </div>
 
-            <aside v-if="preset" class="min-w-0 flex-1">
+            <PreviewOverlay v-if="preset" :min="1121" :label="$t('common.preview')" wrapper-class="min-w-0 flex-1">
               <div class="mb-2.5 flex items-baseline gap-2">
                 <span class="text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
                   {{ $t('galleryRecord.preview') }}
@@ -376,7 +377,7 @@ const studioOffers = computed(() => ({
                 :title="previewTitle"
                 :url="galleryHost"
               />
-            </aside>
+            </PreviewOverlay>
           </div>
         </section>
       </div>

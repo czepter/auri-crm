@@ -7,6 +7,7 @@ import ProjectShell from '@/admin/components/ProjectShell.vue'
 import ContractWizard from '@/admin/components/ContractWizard.vue'
 import DocumentEditor from '@/admin/components/DocumentEditor.vue'
 import DocumentPreviewPane from '@/admin/components/DocumentPreviewPane.vue'
+import { PreviewOverlay } from '@/ui/preview-overlay'
 import Card from '@/ui/page/Card.vue'
 import Rail from '@/ui/page/Rail.vue'
 import Section from '@/ui/page/Section.vue'
@@ -235,18 +236,20 @@ function day(value: string | null): string {
 
           <div class="flex items-center justify-center before:block before:h-full before:w-px before:bg-border before:content-[''] max-[1100px]:hidden" />
 
-          <DocumentPreviewPane type="contract" :doc="doc" :samples="samples" :project="previewProject">
-            <Select
-              :model-value="toOption(previewProject)"
-              @update:model-value="(value) => (previewProject = fromOption(value) || null)"
-            >
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem :value="header.id">{{ $t('project.contractProjectData') }}</SelectItem>
-                <SelectItem :value="NONE">{{ $t('documentTemplates.previewSamples') }}</SelectItem>
-              </SelectContent>
-            </Select>
-          </DocumentPreviewPane>
+          <PreviewOverlay :min="1101" :label="$t('common.preview')" wrapper-class="contents">
+            <DocumentPreviewPane type="contract" :doc="doc" :samples="samples" :project="previewProject">
+              <Select
+                :model-value="toOption(previewProject)"
+                @update:model-value="(value) => (previewProject = fromOption(value) || null)"
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem :value="header.id">{{ $t('project.contractProjectData') }}</SelectItem>
+                  <SelectItem :value="NONE">{{ $t('documentTemplates.previewSamples') }}</SelectItem>
+                </SelectContent>
+              </Select>
+            </DocumentPreviewPane>
+          </PreviewOverlay>
         </div>
       </Card>
 

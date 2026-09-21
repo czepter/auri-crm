@@ -11,6 +11,7 @@ import { debounced } from '@/admin/lib/autosave'
 import PackageItemsEditor from '@/admin/components/PackageItemsEditor.vue'
 import ShowcaseImages from '@/admin/components/ShowcaseImages.vue'
 import PackagePortalPreview, { type PreviewItem } from '@/admin/components/PackagePortalPreview.vue'
+import { PreviewOverlay } from '@/ui/preview-overlay'
 import PackagePriceSummary from '@/admin/components/PackagePriceSummary.vue'
 import { centsToEuros, eurosToCents } from '@/admin/lib/money'
 import { Button } from '@/ui/button'
@@ -250,20 +251,22 @@ watch(() => form.data(), autosave, { deep: true })
           <div class="sticky top-7 min-w-[380px] flex-1">
             <PackagePriceSummary :items="form.items" />
 
-            <div class="mt-6 overflow-hidden rounded-[10px] border border-border">
-              <div class="border-b border-border px-[26px] py-4 text-[11px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">
-                {{ $t('packages.preview') }}
+            <PreviewOverlay :min="1280" :label="$t('common.preview')" wrapper-class="mt-6">
+              <div class="overflow-hidden rounded-[10px] border border-border">
+                <div class="border-b border-border px-[26px] py-4 text-[11px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">
+                  {{ $t('packages.preview') }}
+                </div>
+                <PackagePortalPreview
+                  :name="form.name"
+                  :description="form.description || null"
+                  :price="previewPrice"
+                  :price-mode="form.portal_price_mode"
+                  :requires-date="form.portal_requires_date"
+                  :items="previewItems"
+                  :vat-rate="vatRate"
+                />
               </div>
-              <PackagePortalPreview
-                :name="form.name"
-                :description="form.description || null"
-                :price="previewPrice"
-                :price-mode="form.portal_price_mode"
-                :requires-date="form.portal_requires_date"
-                :items="previewItems"
-                :vat-rate="vatRate"
-              />
-            </div>
+            </PreviewOverlay>
           </div>
         </form>
 

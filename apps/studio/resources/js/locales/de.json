@@ -1,5 +1,6 @@
 {
   "common": {
+    "preview": "Vorschau",
     "invalid": {
       "valueMissing": "Pflichtfeld",
       "email": "Keine gültige E-Mail-Adresse",
