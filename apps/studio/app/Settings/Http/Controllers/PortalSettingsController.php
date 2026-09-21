@@ -213,7 +213,7 @@ class PortalSettingsController extends Controller
             // Niemals SVG: das Bild geht öffentlich raus, und Markup liefe
             // dann auf unserer Herkunft — dieselbe Grenze wie bei den
             // Beispielbildern.
-            'portal_contact_avatar' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp', 'max:2048'],
+            'portal_contact_avatar' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp', 'max:10240'],
         ]);
 
         $actor = auth('staff')->user();

@@ -13,6 +13,31 @@ return [
     |
     */
 
+    'uploaded' => 'Die Datei für :attribute konnte nicht hochgeladen werden, sie ist zu groß.',
+    'mimes' => 'Das Feld :attribute muss den Dateityp :values haben.',
+    'image' => 'Das Feld :attribute muss ein Bild sein.',
+    'url' => 'Das Feld :attribute muss eine gültige Adresse sein.',
+    'timezone' => 'Das Feld :attribute muss eine gültige Zeitzone sein.',
+    'distinct' => 'Das Feld :attribute enthält einen doppelten Wert.',
+    'filled' => 'Das Feld :attribute darf nicht leer sein.',
+    'gte' => [
+        'array' => 'Das Feld :attribute muss mindestens :value Einträge haben.',
+        'file' => 'Das Feld :attribute muss mindestens :value Kilobyte groß sein.',
+        'numeric' => 'Das Feld :attribute muss mindestens :value sein.',
+        'string' => 'Das Feld :attribute muss mindestens :value Zeichen lang sein.',
+    ],
+    'lte' => [
+        'array' => 'Das Feld :attribute darf höchstens :value Einträge haben.',
+        'file' => 'Das Feld :attribute darf höchstens :value Kilobyte groß sein.',
+        'numeric' => 'Das Feld :attribute darf höchstens :value sein.',
+        'string' => 'Das Feld :attribute darf höchstens :value Zeichen lang sein.',
+    ],
+    'between' => [
+        'array' => 'Das Feld :attribute muss zwischen :min und :max Einträge haben.',
+        'file' => 'Das Feld :attribute muss zwischen :min und :max Kilobyte groß sein.',
+        'numeric' => 'Das Feld :attribute muss zwischen :min und :max liegen.',
+        'string' => 'Das Feld :attribute muss zwischen :min und :max Zeichen lang sein.',
+    ],
     'accepted' => 'Das Feld :attribute muss akzeptiert werden.',
     'after' => 'Das Feld :attribute muss ein Datum nach dem :date sein.',
     'after_or_equal' => 'Das Feld :attribute muss ein Datum nach dem :date oder gleich diesem sein.',

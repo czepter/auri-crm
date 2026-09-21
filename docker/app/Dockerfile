@@ -18,7 +18,8 @@ FROM dunglas/frankenphp:1-php8.5 AS base
 # opcache, which the dev image has no use for, and zip, which Composer needs to
 # unpack a dist archive at all.
 RUN install-php-extensions pdo_pgsql bcmath gd intl exif pcntl opcache zip \
-    && mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+    && mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
+    && printf 'upload_max_filesize=12M\npost_max_size=14M\n' > "$PHP_INI_DIR/conf.d/zz-uploads.ini"
 
 # Neither of these is a PHP extension, which is why install-php-extensions
 # above cannot carry them and docker/php/Dockerfile installs them by apt too.
