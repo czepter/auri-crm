@@ -14,7 +14,7 @@ import { NONE, fromOption, toOption } from '@/lib/select'
 type Option = { value: string; label: string }
 
 const props = defineProps<{
-  entries: { id: string; at: string; actor: string | null; label: string; target: { name: string; href: string } | null }[]
+  entries: { id: string; at: string; actor: string | null; label: string; detail: string[]; target: { name: string; href: string } | null }[]
   nextCursor: string | null
   filters: { ereignis: string; person: string; von: string; bis: string }
   events: Option[]
@@ -77,11 +77,14 @@ function at(iso: string) {
               <div
                 v-for="entry in entries"
                 :key="entry.id"
-                class="flex items-center gap-4 py-2.5 shadow-[inset_0_-1px_0_var(--rule)]"
+                class="flex items-start gap-4 py-2.5 shadow-[inset_0_-1px_0_var(--rule)]"
               >
                 <span class="w-36 flex-none text-[12.5px] tabular-nums text-ink-2">{{ at(entry.at) }}</span>
                 <span class="w-36 flex-none truncate text-[13px]">{{ entry.actor ?? '—' }}</span>
-                <span class="min-w-0 flex-1 truncate text-[13.5px] font-semibold">{{ entry.label }}</span>
+                <div class="min-w-0 flex-1">
+                  <div class="truncate text-[13.5px] font-semibold">{{ entry.label }}</div>
+                  <div v-for="line in entry.detail" :key="line" class="mt-0.5 text-[12.5px] break-words text-ink-2">{{ line }}</div>
+                </div>
                 <Link v-if="entry.target" class="max-w-48 flex-none truncate text-[12.5px] text-inherit" :href="entry.target.href">{{ entry.target.name }}</Link>
               </div>
 

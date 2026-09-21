@@ -102,3 +102,17 @@ it('has a plain-text label for every event AuditLogger::record is called with', 
 
     expect($unread)->toBe([])->and($missing)->toBe([]);
 });
+
+it('shows old and new value of a settings change', function () {
+    $owner = staffMember(StaffRole::Owner);
+
+    AuditLogger::record('studio_settings.updated', $owner, ['key' => 'retention_months', 'old' => 24, 'new' => 36]);
+    AuditLogger::record('studio_settings.updated', $owner, ['keys' => ['payments_stripe_mode', 'payments_stripe_test_secret_key'], 'changes' => ['payments_stripe_mode' => ['test', 'live']]]);
+
+    $this->actingAs($owner, 'staff');
+
+    expect(array_column(auditEntries(), 'detail'))->toBe([
+        ['Stripe-Modus: test → live', 'Stripe Testschlüssel (geheim)'],
+        ['Aufbewahrung (Monate): 24 → 36'],
+    ]);
+});

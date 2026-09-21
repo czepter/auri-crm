@@ -2,31 +2,31 @@
 
 namespace App\Settings\Http\Controllers;
 
-use App\Concerns\AuthorizesStaffSettings;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
+use App\Enums\StaffRole;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
  * Read-only view of audit_logs for the owner. `context` is never sent: it can
- * carry personal data, and the page has no use for it.
+ * carry personal data. The one exception is a settings change, where old and
+ * new value are the whole point of the row.
  */
 class AuditLogController extends Controller
 {
-    use AuthorizesStaffSettings;
-
     private const PER_PAGE = 50;
 
     public function index(Request $request, StudioSettingsResolver $settings): Response
     {
-        $this->authorizeSettings();
+        abort_unless(auth('staff')->user()?->role === StaffRole::Owner, 404);
 
         $filters = $request->validate([
             'ereignis' => ['nullable', 'string'],
@@ -59,6 +59,7 @@ class AuditLogController extends Controller
                 'at' => $log->created_at->toIso8601String(),
                 'actor' => $log->actor?->name,
                 'label' => self::label($log->event),
+                'detail' => $log->event === 'studio_settings.updated' ? self::settingsDetail($log->context ?? []) : [],
                 'target' => match (true) {
                     $projects->has($log->project_id) => [
                         'name' => $projects[$log->project_id]->name,
@@ -93,5 +94,35 @@ class AuditLogController extends Controller
     private static function label(string $event): string
     {
         return trans()->has("audit.{$event}") ? __("audit.{$event}") : $event;
+    }
+
+    /** @return list<string> */
+    private static function settingsDetail(array $context): array
+    {
+        $changes = isset($context['key'])
+            ? [$context['key'] => [$context['old'] ?? null, $context['new'] ?? null]]
+            : ($context['changes'] ?? []);
+
+        $lines = [];
+
+        foreach ($context['keys'] ?? array_keys($changes) as $key) {
+            $label = trans()->has("audit.fields.{$key}") ? __("audit.fields.{$key}") : $key;
+
+            $lines[] = isset($changes[$key])
+                ? "{$label}: ".self::value($changes[$key][0]).' → '.self::value($changes[$key][1])
+                : $label;
+        }
+
+        return $lines;
+    }
+
+    private static function value(mixed $value): string
+    {
+        return match (true) {
+            $value === null || $value === '' => '—',
+            is_bool($value) => $value ? 'Ja' : 'Nein',
+            is_array($value) => implode(', ', $value),
+            default => Str::limit(strip_tags((string) $value), 60),
+        };
     }
 }

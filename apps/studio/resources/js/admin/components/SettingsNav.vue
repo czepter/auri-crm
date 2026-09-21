@@ -20,13 +20,12 @@ onMounted(() => bar.value?.querySelector('[data-open]')?.scrollIntoView({ inline
 //
 // Grouped the same way AdminLayout's own sidebar groups: a `group` entry is a
 // heading, everything after it belongs to it until the next one.
-const items: { group?: string; key?: string; href?: string; label?: string; external?: boolean; owner?: boolean }[] = [
+const items: { group?: string; key?: string; href?: string; label?: string; external?: boolean; owner?: boolean; apart?: boolean }[] = [
   { group: 'settings.groupStudio' },
   { key: 'general', href: '/einstellungen/allgemein', label: 'settings.navGeneral' },
   // Der Absender gilt studioweit, für jede Mail — das Portal
   // ist einer von vielen Auslösern, nicht ihr Zuhause.
   { key: 'email', href: '/einstellungen/email', label: 'settings.navMail' },
-  { key: 'audit', href: '/einstellungen/protokoll', label: 'settings.navAudit' },
   { key: 'retention', href: '/einstellungen/aufbewahrung', label: 'settings.navRetention' },
 
   { group: 'settings.groupBilling' },
@@ -53,7 +52,8 @@ const items: { group?: string; key?: string; href?: string; label?: string; exte
   { key: 'api-tokens', href: '/einstellungen/api-token', label: 'apiTokens.title' },
   { key: 'export', href: '/einstellungen/export', label: 'settings.navExport' },
 
-  // Ganz unten und nur für den Inhaber, abgesetzt von allen Gruppen.
+  // Ganz unten, abgesetzt von allen Gruppen und nur für den Inhaber.
+  { key: 'audit', href: '/einstellungen/protokoll', label: 'settings.navAudit', owner: true, apart: true },
   { key: 'deletion', href: '/einstellungen/studio-loeschen', label: 'settings.navDeleteStudio', owner: true },
 ]
 
@@ -88,7 +88,7 @@ const shown = computed(() =>
           item.key === active && !item.external
             ? 'font-semibold text-foreground [&_svg]:opacity-100'
             : 'font-normal text-muted-foreground [&_svg]:opacity-75',
-          item.owner && 'mt-4 max-[640px]:mt-0',
+          item.apart && 'mt-4 max-[640px]:mt-0',
         ]"
         :data-open="(item.key === active && !item.external) || undefined"
         :href="item.href!"
