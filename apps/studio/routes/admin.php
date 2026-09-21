@@ -420,6 +420,7 @@ Route::middleware('audience:staff')->group(function () {
 
         Route::get('/einstellungen/aufbewahrung', [RetentionController::class, 'show'])->name('settings.retention');
         Route::patch('/einstellungen/aufbewahrung', [RetentionController::class, 'update'])->name('settings.retention.update');
+        Route::post('/einstellungen/aufbewahrung/durchfuehren', [RetentionController::class, 'run'])->name('settings.retention.run');
 
         Route::get('/einstellungen/studio-loeschen', [StudioDeletionController::class, 'show'])->name('settings.deletion');
         Route::post('/einstellungen/studio-loeschen/code', [StudioDeletionController::class, 'code'])->name('settings.deletion.code');

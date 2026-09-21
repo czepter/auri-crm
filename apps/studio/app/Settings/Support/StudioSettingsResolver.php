@@ -5,6 +5,7 @@ namespace App\Settings\Support;
 use App\Gallery\Models\GalleryPreset;
 use App\Gallery\Support\ImageVariant;
 use App\Models\User;
+use App\Settings\Data\RetentionPolicyData;
 use App\Settings\Enums\FontPair;
 use App\Settings\Models\StudioSettings;
 use App\Support\AuditLogger;
@@ -767,6 +768,12 @@ class StudioSettingsResolver
     public function retentionMonths(): ?int
     {
         return $this->row()->retention_months;
+    }
+
+    /** Was der Lauf mit einer abgelaufenen Anfrage tut; ohne Wahl wird anonymisiert. */
+    public function retentionPolicy(): RetentionPolicyData
+    {
+        return RetentionPolicyData::fromStored($this->row()->retention_policy);
     }
 
     /** Der Löschtag: Tag des Antrags plus Frist, in der Zeit des Studios. Ab dessen Morgen läuft DeleteTenant. */

@@ -30,7 +30,7 @@ class BookingFunnel
      * the anchor it carries. Null keeps the filter from matching anything,
      * which is the honest answer when no stage claims the anchor.
      */
-    private static function wonKey(): ?string
+    public static function wonKey(): ?string
     {
         return app(CrmVocabulary::class)->anchored(StagePipeline::Lead, StageAnchor::Won)?->key;
     }

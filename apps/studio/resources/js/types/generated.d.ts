@@ -1109,6 +1109,28 @@ contactPhone: string | null,
 contactEmail: string | null,
 contactResponseTime: string | null,
 };
+export type RetentionCandidateData = {
+id: string,
+name: string,
+type: string,
+text: string | null,
+outcome: string,
+outcomeLabel: string,
+idleMonths: number,
+invoiced: boolean,
+leads: number,
+messages: number,
+offers: number,
+galleries: number,
+};
+export type RetentionPolicyData = {
+name: boolean,
+text: boolean,
+messages: boolean,
+offers: boolean,
+galleries: boolean,
+order: boolean,
+};
 export type StudioClosureData = {
 id: string,
 label: string,
@@ -1160,6 +1182,7 @@ mailClientsEnabled: boolean,
 }
 namespace Enums {
 export type FontPair = 'hanken' | 'fraunces' | 'cormorant' | 'grotesk';
+export type StudioExportKind = 'daten' | 'galerie';
 }
 }
 }

@@ -2,59 +2,23 @@
 
 namespace App\Settings\Console\Commands;
 
-use App\Crm\Actions\EraseContactDsgvo;
-use App\Crm\Enums\LeadOutcome;
-use App\Crm\Models\Contact;
-use App\Payments\Models\Invoice;
+use App\Settings\Actions\ApplyRetention;
 use App\Settings\Support\StudioSettingsResolver;
-use App\Support\AuditLogger;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
-/**
- * #501: löscht Kontakte, deren sämtliche Projekte unbuchte, verlorene oder
- * abgelehnte Anfragen sind, die seit `retention_months` nicht angefasst wurden.
- * Rechnungen (§ 147 AO) bleiben: wer eine hat, direkt oder über ein Projekt, fällt heraus.
- */
+/** #501: der tägliche Lauf der Löschfrist; was er tut, bestimmt `retention_policy`. */
 class EraseExpiredInquiries extends Command
 {
     protected $signature = 'retention:erase';
 
-    protected $description = 'Löscht abgelaufene verlorene und abgelehnte Anfragen samt Kontakt, wenn das Studio eine Frist gesetzt hat.';
+    protected $description = 'Anonymisiert oder löscht abgelaufene verlorene und abgelehnte Anfragen, wenn das Studio eine Frist gesetzt hat.';
 
-    public function handle(StudioSettingsResolver $settings, EraseContactDsgvo $erase): int
+    public function handle(StudioSettingsResolver $settings, ApplyRetention $apply): int
     {
         $months = $settings->retentionMonths();
+        $count = $months === null ? 0 : $apply($months);
 
-        if ($months === null) {
-            return self::SUCCESS;
-        }
-
-        $cutoff = now()->subMonths($months);
-        $count = 0;
-
-        Contact::query()
-            ->whereNull('dsgvo_erased_at')
-            ->whereHas('projects')
-            ->whereDoesntHave('projects', fn ($project) => $project->where(fn ($p) => $p
-                ->whereDoesntHave('lead', fn ($lead) => $lead
-                    ->whereIn('outcome', [LeadOutcome::Lost, LeadOutcome::Declined])
-                    ->where('updated_at', '<', $cutoff))
-                ->orWhereHas('job')))
-            ->whereNotIn('id', Invoice::query()->whereNotNull('contact_id')->select('contact_id'))
-            ->whereNotIn('id', DB::table('project_contacts')
-                ->whereIn('project_id', Invoice::query()->whereNotNull('project_id')->select('project_id'))
-                ->select('contact_id'))
-            ->each(function (Contact $contact) use ($erase, &$count) {
-                $erase($contact);
-                $count++;
-            });
-
-        if ($count > 0) {
-            AuditLogger::record('retention.erased', context: ['count' => $count, 'months' => $months]);
-        }
-
-        $this->info("{$count} gelöscht.");
+        $this->info("{$count} bearbeitet.");
 
         return self::SUCCESS;
     }
