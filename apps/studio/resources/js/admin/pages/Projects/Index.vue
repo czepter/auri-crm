@@ -299,8 +299,8 @@ function reset() {
                   </span>
                 </span>
                 <span class="mt-[9px] flex items-center gap-2.5 border-t border-sunk-2 pt-2">
-                  <span class="text-[13px] leading-none font-semibold tracking-[-0.02em] tabular-nums">
-                    {{ project.value === null ? '—' : formatEurosRounded(project.value) }}
+                  <span v-if="project.value !== null" class="text-[13px] leading-none font-semibold tracking-[-0.02em] tabular-nums">
+                    {{ formatEurosRounded(project.value) }}
                   </span>
                   <span
                     v-if="project.lastAt"
