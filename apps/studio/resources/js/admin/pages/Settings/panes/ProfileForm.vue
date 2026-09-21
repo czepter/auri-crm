@@ -269,16 +269,23 @@ defineExpose({ form, submit, adaptExisting })
         <div class="grid grid-cols-2 gap-4">
           <Field :error="form.errors.timezone" v-slot="{ id }">
             <Label :for="id" class="sr-only">{{ $t('settings.timezoneLabel') }}</Label>
-            <Combobox ignore-filter>
+            <Combobox
+              :model-value="form.timezone"
+              ignore-filter
+              open-on-focus
+              open-on-click
+              @update:model-value="chooseZone(String($event))"
+              @update:open="zoneTerm = undefined"
+            >
               <ComboboxAnchor>
                 <ComboboxInput
                   :id
-                  :model-value="zoneTerm ?? timezoneLabel(form.timezone)"
-                  @update:model-value="zoneTerm = String($event)"
+                  :display-value="() => timezoneLabel(form.timezone)"
+                  @input="zoneTerm = ($event.target as HTMLInputElement).value"
                 />
               </ComboboxAnchor>
               <ComboboxContent>
-                <ComboboxItem v-for="zone in zoneChoices" :key="zone" :value="zone" @select="chooseZone(zone)">
+                <ComboboxItem v-for="zone in zoneChoices" :key="zone" :value="zone">
                   {{ timezoneLabel(zone) }}
                 </ComboboxItem>
               </ComboboxContent>
