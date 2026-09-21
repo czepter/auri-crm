@@ -82,7 +82,7 @@ function shortDate(date: string | null) {
   <AdminLayout active="kalender">
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
-        <PageHead :kicker="view === 'saison' ? seasonLabel : label" :title="$t('calendar.title')">
+        <PageHead :kicker="$t('calendar.title')" :title="view === 'saison' ? seasonLabel : label">
           <ChoiceGroup
             :model-value="view"
             class="ml-auto"
