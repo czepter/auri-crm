@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { refDebounced } from '@vueuse/core'
 import PreviewFrame from './PreviewFrame.vue'
 
-defineProps<{
+const props = defineProps<{
   mail: {
     fromName: string
     fromAddress: string
@@ -10,36 +12,30 @@ defineProps<{
     signature: string
   }
 }>()
+
+const source = computed(() => `/einstellungen/email/vorschau?${new URLSearchParams({ signatur: props.mail.signature })}`)
+const src = refDebounced(source, 400)
 </script>
 
 <template>
-  <PreviewFrame :label="$t('settings.previewMail')">
-    <div class="rounded-md bg-background p-4 text-[11px] leading-[1.5] text-foreground">
-      <div class="space-y-1 border-b border-border pb-3">
+  <PreviewFrame :label="$t('settings.previewMail')" wide>
+    <div class="overflow-hidden rounded-md bg-background text-[12px] leading-[1.5] text-foreground">
+      <div class="space-y-1 border-b border-border px-4 py-3">
         <div class="flex gap-2">
-          <span class="w-14 flex-none text-faint">{{ $t('settings.previewMailFrom') }}</span>
+          <span class="w-16 flex-none text-faint">{{ $t('settings.previewMailFrom') }}</span>
           <span class="min-w-0 truncate">{{ mail.fromName }} &lt;{{ mail.fromAddress }}&gt;</span>
         </div>
         <div v-if="mail.replyTo" class="flex gap-2">
-          <span class="w-14 flex-none text-faint">{{ $t('settings.previewMailReplyTo') }}</span>
+          <span class="w-16 flex-none text-faint">{{ $t('settings.previewMailReplyTo') }}</span>
           <span class="min-w-0 truncate">{{ mail.replyTo }}</span>
         </div>
         <div v-if="mail.bcc" class="flex gap-2">
-          <span class="w-14 flex-none text-faint">{{ $t('settings.mailBccLabel') }}</span>
+          <span class="w-16 flex-none text-faint">{{ $t('settings.mailBccLabel') }}</span>
           <span class="min-w-0 truncate">{{ mail.bcc }}</span>
         </div>
       </div>
 
-      <div class="space-y-1.5 py-3">
-        <div class="h-1.5 w-full rounded-full bg-muted" />
-        <div class="h-1.5 w-11/12 rounded-full bg-muted" />
-        <div class="h-1.5 w-2/3 rounded-full bg-muted" />
-      </div>
-
-      <div
-        v-if="mail.signature"
-        class="border-t border-border pt-3 text-[10.5px] whitespace-pre-line text-muted-foreground"
-      >{{ mail.signature }}</div>
+      <iframe :src class="block h-[560px] w-full border-0 bg-background" title="" />
     </div>
   </PreviewFrame>
 </template>

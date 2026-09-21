@@ -125,3 +125,21 @@ it('declares an audience on the mail identity route, same as every other admin r
     expect($route)->not->toBeNull()
         ->and(collect($route->gatherMiddleware())->contains(fn ($m) => str_starts_with((string) $m, 'audience:')))->toBeTrue();
 });
+
+it('previews the client mail with the typed signature in its footer', function () {
+    [$user] = studioWithProject();
+
+    $response = $this->actingAs($user, 'staff')->get('/einstellungen/email/vorschau?signatur=Herzlich,+Muster');
+
+    $response->assertOk();
+    expect($response->getContent())->toContain('Herzlich, Muster')->toContain('Kundenbereich öffnen');
+});
+
+it('addresses the fallback link line in the studio register', function (string $register, string $expected) {
+    [$user] = studioWithProject();
+    app(StudioSettingsResolver::class)->set('client_register', $register);
+
+    $this->actingAs($user, 'staff')->get('/einstellungen/email/vorschau')
+        ->assertOk()
+        ->assertSee($expected);
+})->with([['informal', 'öffne diesen Link'], ['formal', 'öffnen Sie diesen Link']]);

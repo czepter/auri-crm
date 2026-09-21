@@ -4,6 +4,8 @@ namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
+use App\Notifications\Support\MailPreview;
+use App\Portal\Notifications\PortalAccessInvitation;
 use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Enums\QuoteLayout;
 use App\Quotes\Support\SampleQuoteData;
@@ -21,6 +23,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -138,6 +141,36 @@ class StudioSettingsController extends Controller
         }
 
         return back();
+    }
+
+    /**
+     * Die Kundenmail, wie sie ankommt: dieselbe Vorlage mit Signatur und
+     * Anschrift im Fuß. Die Signatur kommt getippt statt gespeichert, damit
+     * die Vorschau mitläuft.
+     */
+    public function previewMail(Request $request, StudioSettingsResolver $settings): HttpResponse
+    {
+        $this->authorizeSettings();
+
+        if ($request->has('signatur')) {
+            $settings = new class(Str::limit((string) $request->query('signatur'), 1000, '')) extends StudioSettingsResolver
+            {
+                public function __construct(private readonly string $signature) {}
+
+                public function mailSignature(): ?string
+                {
+                    return $this->signature ?: null;
+                }
+            };
+            app()->instance(StudioSettingsResolver::class, $settings);
+        }
+
+        $html = MailPreview::html(
+            new PortalAccessInvitation(config('portal.url').'/zugang/…', '', 'Hallo Maxi Musterfrau,', $settings),
+            (object) [],
+        );
+
+        return response($html, 200, ['Content-Type' => 'text/html']);
     }
 
     public function registerPreview(Request $request, AdaptClientRegister $adaptRegister): JsonResponse
