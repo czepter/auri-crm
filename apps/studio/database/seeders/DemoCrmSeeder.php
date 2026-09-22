@@ -246,11 +246,11 @@ class DemoCrmSeeder extends Seeder
     {
         $christian = User::updateOrCreate(
             ['email' => 'christian@nordlicht.test'],
-            ['name' => 'Christian Bergmann', 'password' => 'password', 'role' => StaffRole::Owner],
+            ['name' => 'Christian Bergmann', 'password' => 'password', 'role' => StaffRole::Admin],
         );
         $nina = User::updateOrCreate(
             ['email' => 'nina@nordlicht.test'],
-            ['name' => 'Nina Sturm', 'password' => 'password', 'role' => StaffRole::SecondShooter],
+            ['name' => 'Nina Sturm', 'password' => 'password', 'role' => StaffRole::Contributor],
         );
 
         // The primary shoot already exists from the cast; this is the wedding

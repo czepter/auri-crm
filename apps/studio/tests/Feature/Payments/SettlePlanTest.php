@@ -67,7 +67,7 @@ function threeStatePlan(): array
 it('deletes the unissued rate, voids the issued one and keeps the paid one', function () {
     [$plan, $paid, $issued, $open] = threeStatePlan();
 
-    app(SettlePaymentPlan::class)($plan, [], staffMember(StaffRole::Owner));
+    app(SettlePaymentPlan::class)($plan, [], staffMember(StaffRole::Admin));
 
     expect(PaymentInstallment::query()->whereKey($open->id)->exists())->toBeFalse()
         ->and($issued->fresh()->status)->toBe(PaymentInstallmentStatus::Cancelled)
@@ -82,7 +82,7 @@ it('deletes the unissued rate, voids the issued one and keeps the paid one', fun
 it('writes the decisions into the audit log', function () {
     [$plan, $paid] = threeStatePlan();
 
-    app(SettlePaymentPlan::class)($plan, [], staffMember(StaffRole::Owner));
+    app(SettlePaymentPlan::class)($plan, [], staffMember(StaffRole::Admin));
 
     $entry = AuditLog::query()->where('event', 'payment_plan.settled')->sole();
 
@@ -95,7 +95,7 @@ it('turns a credit decision into a Gutschrift', function () {
 
     app(SettlePaymentPlan::class)($plan, [
         $paid->public_id => ['action' => 'credit', 'amount' => 20_000],
-    ], staffMember(StaffRole::Owner));
+    ], staffMember(StaffRole::Admin));
 
     $note = $paid->fresh()->invoice->creditNotes->sole();
 

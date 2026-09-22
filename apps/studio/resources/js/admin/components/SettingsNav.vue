@@ -59,7 +59,7 @@ const items: { group?: string; key?: string; href?: string; label?: string; exte
 
 // Die Ziele der Verweise verlangen andere Rechte als die Einstellungen.
 const shown = computed(() =>
-  items.filter((item) => (!item.external || page.props.settingsLinks?.[item.key as 'stages' | 'templates']) && (!item.owner || page.props.auth.user?.role === 'owner')),
+  items.filter((item) => (!item.external || page.props.settingsLinks?.[item.key as 'stages' | 'templates']) && (!item.owner || page.props.auth.user?.role === 'admin')),
 )
 
 /* tokens.css .nav — the sidebar row, reused for the settings rail. */

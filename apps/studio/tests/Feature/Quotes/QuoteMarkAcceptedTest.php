@@ -37,7 +37,7 @@ it('nimmt ein versendetes Angebot für den Hauptkontakt an und bucht einmal', fu
 it('nimmt an, bucht aber nicht ohne Buchungsrecht', function () {
     $quote = Quote::factory()->for($this->project)->create(['status' => QuoteStatus::Sent]);
 
-    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Editor]), 'staff')
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Manager]), 'staff')
         ->post("/angebote/{$quote->public_id}/angenommen")
         ->assertRedirect();
 
@@ -59,7 +59,7 @@ it('lehnt einen Entwurf ab', function () {
 it('verweigert ohne manageQuotes', function () {
     $quote = Quote::factory()->for($this->project)->create(['status' => QuoteStatus::Sent]);
 
-    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::SecondShooter]), 'staff')
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Contributor]), 'staff')
         ->post("/angebote/{$quote->public_id}/angenommen")
         ->assertForbidden();
 

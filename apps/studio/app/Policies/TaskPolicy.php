@@ -18,12 +18,12 @@ class TaskPolicy
     public function update(User $user, Task $task): bool
     {
         return $task->project === null
-            ? $user->role->allows(Capability::ManageTasks)
+            ? $user->can(Capability::ManageTasks->value)
             : $this->projects->manageTasks($user, $task->project);
     }
 
     public function create(User $user): bool
     {
-        return $user->role->allows(Capability::ManageTasks);
+        return $user->can(Capability::ManageTasks->value);
     }
 }

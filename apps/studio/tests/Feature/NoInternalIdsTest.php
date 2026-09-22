@@ -140,7 +140,7 @@ it('never puts an integer identifier into a project\'s quotes page once a quote 
 });
 
 it('never puts an integer identifier into the settings screen', function () {
-    $user = User::factory()->withMfa()->create(['role' => StaffRole::Owner]);
+    $user = User::factory()->withMfa()->create(['role' => StaffRole::Admin]);
 
     $props = $this->actingAs($user, 'staff')->get('/einstellungen/allgemein')->assertOk()->viewData('page')['props'];
 

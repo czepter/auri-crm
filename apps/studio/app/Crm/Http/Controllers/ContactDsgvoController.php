@@ -14,7 +14,7 @@ use Illuminate\Http\Response;
 /**
  * X-04: DSGVO subject-access export and deletion, as admin actions rather
  * than a support ticket — the obligation carries a deadline a manual
- * database procedure will miss. Both actions are Owner-only
+ * database procedure will miss. Both actions are Admin-only
  * (Capability::ManageDsgvo); see ContactPolicy for why.
  */
 class ContactDsgvoController extends Controller

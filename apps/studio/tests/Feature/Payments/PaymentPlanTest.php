@@ -338,7 +338,7 @@ it('lets a plan whose installments genuinely sum to its total commit cleanly', f
 it('creates a payment plan through the admin screen, split evenly across the due dates given', function () {
     Storage::fake('local');
     $job = acceptedQuoteJob();
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
 
     $this->actingAs($user, 'staff')
         ->post("/auftraege/{$job->project->public_id}/zahlungsplan", [
@@ -358,7 +358,7 @@ it('creates a payment plan through the admin screen, split evenly across the due
 
 it('refuses to create a plan for a project with no job at all', function () {
     $project = Project::factory()->create();
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
 
     $this->actingAs($user, 'staff')
         ->post("/auftraege/{$project->public_id}/zahlungsplan", [
@@ -373,7 +373,7 @@ it('updates a plan through the admin screen, rejecting a submission whose instal
     $job = Job::factory()->for($project)->create();
     $plan = PaymentPlan::factory()->for($job)->create(['total' => 200]);
     PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 200, 'sort_order' => 0]);
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
 
     $this->actingAs($user, 'staff')
         ->patch("/zahlungsplaene/{$plan->public_id}", [
@@ -409,7 +409,7 @@ it('sums an issued row at its stored amount, and takes no status for it', functi
     $issued = issuedInstallment($plan, 100);
     PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 200, 'sort_order' => 1]);
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch("/zahlungsplaene/{$plan->public_id}", [
             'total' => 500,
             'installments' => [
@@ -436,11 +436,10 @@ it('refuses a role without ManageContracts, and lets one with it through', funct
         ])
         ->assertStatus($status);
 })->with([
-    [StaffRole::Owner, 302],
-    [StaffRole::Photographer, 302],
-    [StaffRole::Editor, 302],
-    [StaffRole::SecondShooter, 403],
-    [StaffRole::Assistant, 403],
+    [StaffRole::Admin, 302],
+    [StaffRole::Manager, 302],
+    [StaffRole::Contributor, 403],
+    [StaffRole::Reader, 403],
 ]);
 
 // --- No float, anywhere in the path ----------------------------------------
@@ -450,7 +449,7 @@ it('sends the payment plan to the overview screen as integer minor units, never 
     $job = acceptedQuoteJob();
     app(CreatePaymentPlan::class)($job, 100001, ['2026-09-01', '2026-10-01', '2026-11-01']);
 
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $props = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get("/auftraege/{$job->project->public_id}")
         ->assertOk()
         ->viewData('page')['props']['header'];

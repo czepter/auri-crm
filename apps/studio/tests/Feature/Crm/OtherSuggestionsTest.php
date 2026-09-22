@@ -18,7 +18,7 @@ it('suggests each Sonstige text once, the most used first, without blanks', func
     expect(OtherSuggestions::for('source'))->toBe(['Firmenevent', 'Zeitungsartikel'])
         ->and(OtherSuggestions::for('channel'))->toBe(['Messe']);
 
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $props = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/anfragen/neu')
         ->assertOk()
         ->viewData('page')['props'];

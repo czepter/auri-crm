@@ -29,7 +29,7 @@ beforeEach(function () {
 
 it('sends the ready mail carrying the inbound address on completion', function () {
     Notification::fake();
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')->post('/einrichtung/studio/abschluss')->assertRedirect('/');
 
@@ -43,7 +43,7 @@ it('sends the ready mail carrying the inbound address on completion', function (
 it('drops the inbound block when the studio never rotated an inbound secret', function () {
     StudioSettings::query()->update(['inbound_secret' => null]);
     Notification::fake();
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')->post('/einrichtung/studio/abschluss')->assertRedirect('/');
 

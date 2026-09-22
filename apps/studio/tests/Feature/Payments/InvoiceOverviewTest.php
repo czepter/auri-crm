@@ -54,7 +54,7 @@ it('offers the years that have invoices to the export, newest first', function (
     $years = fn (StaffRole $role) => $this->actingAs(staffMember($role), 'staff')->get('/rechnungen')
         ->assertOk()->viewData('page')['props']['exportYears'];
 
-    expect($years(StaffRole::Owner))->toBe([2026, 2025]);
+    expect($years(StaffRole::Admin))->toBe([2026, 2025]);
 });
 
 it('refuses a role that may not manage payment plans', function () {

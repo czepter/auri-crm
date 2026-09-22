@@ -21,7 +21,7 @@ class ContractIndexController extends Controller
     {
         $viewer = $request->user('staff');
 
-        abort_unless($viewer?->role->allows(Capability::ManageContracts), 403);
+        abort_unless($viewer?->can(Capability::ManageContracts->value), 403);
 
         $contracts = Contract::query()
             ->whereNotNull('sent_at')

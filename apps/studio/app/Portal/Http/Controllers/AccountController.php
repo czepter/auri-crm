@@ -27,7 +27,7 @@ use Inertia\Response;
 /**
  * P-05 (#224). The portal had no account at all: contact details were the
  * studio's to change, access was the studio's to revoke, and subject access
- * lived behind an Owner capability in the admin.
+ * lived behind an Admin capability in the admin.
  *
  * Four blocks, and the boundaries between them are the design:
  *

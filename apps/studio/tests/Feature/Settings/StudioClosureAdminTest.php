@@ -16,7 +16,7 @@ beforeEach(fn () => Cache::store('redis')->flush());
 it('lists every closure', function () {
     StudioClosure::factory()->spanning('2026-12-24', '2026-12-31')->create(['label' => 'Weihnachtspause']);
 
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $props = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/schliesszeiten')
         ->assertOk()
         ->viewData('page')['props'];
@@ -28,14 +28,14 @@ it('lists every closure', function () {
 });
 
 it('hands the working days to the calendar overlay', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/kalender/einstellungen')
         ->assertOk()
         ->assertInertia(fn ($page) => $page->where('settingsOpen', true)->where('workingDays', [1, 2, 3, 4, 5, 6, 7]));
 });
 
 it('saves the working days and audits the owner', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->from('/kalender/einstellungen')
@@ -47,7 +47,7 @@ it('saves the working days and audits the owner', function () {
 });
 
 it('rejects an empty or out-of-range working-days selection', function (array $days, string $key) {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch('/kalender/einstellungen/arbeitstage', ['working_days' => $days])
         ->assertInvalid([$key]);
 })->with([
@@ -56,7 +56,7 @@ it('rejects an empty or out-of-range working-days selection', function (array $d
 ]);
 
 it('creates a closure and leaves an audit row naming the actor', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->from('/schliesszeiten')
@@ -76,7 +76,7 @@ it('creates a closure and leaves an audit row naming the actor', function () {
 });
 
 it('rejects a closure whose end is before its start', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->from('/schliesszeiten')
         ->post('/schliesszeiten', [
             'label' => 'Ungültig',
@@ -90,7 +90,7 @@ it('rejects a closure whose end is before its start', function () {
 });
 
 it('updates a closure and leaves an audit row', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $closure = StudioClosure::factory()->spanning('2026-12-24', '2026-12-31')->create(['label' => 'Weihnachtspause']);
 
     $this->actingAs($owner, 'staff')
@@ -111,7 +111,7 @@ it('updates a closure and leaves an audit row', function () {
 });
 
 it('deletes a closure and leaves an audit row', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $closure = StudioClosure::factory()->create();
 
     $this->actingAs($owner, 'staff')
@@ -126,7 +126,7 @@ it('deletes a closure and leaves an audit row', function () {
 it('binds the closure route on the public id, not the primary key', function () {
     $closure = StudioClosure::factory()->create();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->delete("/schliesszeiten/{$closure->id}")
         ->assertNotFound();
 });
@@ -136,17 +136,17 @@ it('gives every non-owner role the same 404 every other settings screen gives', 
         $this->actingAs(staffMember($role), 'staff')->get($path)->assertStatus($status);
     }
 })->with([
-    [StaffRole::Owner, 200],
-    [StaffRole::Photographer, 404],
-    [StaffRole::Editor, 404],
-    [StaffRole::SecondShooter, 404],
-    [StaffRole::Assistant, 404],
+    [StaffRole::Admin, 200],
+    [StaffRole::Manager, 404],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Contributor, 404],
 ]);
 
 it('puts no integer identifier on the closures page', function () {
     StudioClosure::factory()->create();
 
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $props = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/schliesszeiten')
         ->assertOk()
         ->viewData('page')['props'];
@@ -155,14 +155,14 @@ it('puts no integer identifier on the closures page', function () {
 });
 
 it('gives the plain calendar no overlay data to a role without ManageSettings', function () {
-    $this->actingAs(staffMember(StaffRole::Photographer), 'staff')
+    $this->actingAs(staffMember(StaffRole::Manager), 'staff')
         ->get('/kalender')
         ->assertOk()
         ->assertInertia(fn ($page) => $page->where('workingDays', null)->where('settingsOpen', false));
 });
 
 it('sends the old availability address to the closures page', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/einstellungen/verfuegbarkeit')
         ->assertRedirect('/schliesszeiten');
 });

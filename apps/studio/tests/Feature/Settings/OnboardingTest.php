@@ -22,13 +22,13 @@ beforeEach(function () {
 });
 
 it('redirects a GET to the wizard while onboarding is unfinished', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/')
         ->assertRedirect('/einrichtung/studio');
 });
 
 it('does not redirect a PATCH to a settings endpoint — the wizard must be able to save itself', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->from('/einstellungen')
         ->patch('/einstellungen', [
             'display_name' => 'Studio Zepter',
@@ -44,13 +44,13 @@ it('does not redirect a role without ManageSettings', function () {
     // Photographer holds no Capability::ManageSettings (StaffRole::capabilities()),
     // so AuthorizesStaffSettings would 404 them on every settings screen anyway —
     // RequireStudioOnboarding must not catch them in its redirect either.
-    $this->actingAs(staffMember(StaffRole::Photographer), 'staff')
+    $this->actingAs(staffMember(StaffRole::Manager), 'staff')
         ->get('/')
         ->assertOk();
 });
 
 it('stamps completion and releases the dashboard', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/einrichtung/studio/abschluss')
         ->assertRedirect('/');
 
@@ -60,7 +60,7 @@ it('stamps completion and releases the dashboard', function () {
 });
 
 it('writes the starter templates on finish, the invoice aside', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/einrichtung/studio/abschluss')
         ->assertRedirect('/');
 
@@ -73,7 +73,7 @@ it('writes the starter templates on finish, the invoice aside', function () {
 it('seeds the default automation rules on finish, in the studio register', function () {
     app(StudioSettingsResolver::class)->set('client_register', 'informal', null);
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/einrichtung/studio/abschluss')
         ->assertRedirect('/');
 
@@ -86,13 +86,13 @@ it('seeds the default automation rules on finish, in the studio register', funct
 it('writes the Kleinunternehmer invoice when the first invoice is drafted in that mode', function () {
     app(StudioSettingsResolver::class)->set('vat_mode', 'small_business', null);
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/einrichtung/studio/abschluss')
         ->assertRedirect('/');
 
     expect(DocumentTemplate::query()->current()->ofType(DocumentTemplateType::Invoice)->exists())->toBeFalse();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/rechnungen/neu')
         ->assertOk();
 
@@ -101,7 +101,7 @@ it('writes the Kleinunternehmer invoice when the first invoice is drafted in tha
 });
 
 it('opens the wizard screen itself without redirecting', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/einrichtung/studio')
         ->assertOk();
 });

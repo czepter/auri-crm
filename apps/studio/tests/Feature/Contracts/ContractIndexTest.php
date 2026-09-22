@@ -12,7 +12,7 @@ it('lists the contracts that went out and leaves the drafts at the project', fun
     $sent = Contract::factory()->for($project)->create();
     Contract::factory()->draft()->for($project)->create(['version' => 2]);
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff');
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff');
 
     $rows = props('/vertraege')['contracts'];
 
@@ -22,7 +22,7 @@ it('lists the contracts that went out and leaves the drafts at the project', fun
 });
 
 it('refuses the screen to a role without ManageContracts', function () {
-    $this->actingAs(staffMember(StaffRole::SecondShooter), 'staff')
+    $this->actingAs(staffMember(StaffRole::Contributor), 'staff')
         ->get('/vertraege')
         ->assertForbidden();
 });

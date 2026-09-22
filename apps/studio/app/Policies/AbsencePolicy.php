@@ -18,7 +18,7 @@ class AbsencePolicy
 {
     public function view(User $user, Absence $absence): bool
     {
-        return $this->owns($user, $absence) || $user->role->allows(Capability::ManageCrew);
+        return $this->owns($user, $absence) || $user->can(Capability::ManageCrew->value);
     }
 
     public function update(User $user, Absence $absence): bool

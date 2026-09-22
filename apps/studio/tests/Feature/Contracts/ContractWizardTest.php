@@ -16,7 +16,7 @@ it('writes the picked clauses as the draft wording, in the order the catalog giv
     $project = bookedContactProject();
     $template = DocumentTemplate::factory()->create();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/auftraege/{$project->public_id}/vertraege", [
             'template' => $template->public_id,
             'clauses' => [
@@ -40,7 +40,7 @@ it('leaves the template as the wording when no clause was picked', function () {
     $project = bookedContactProject();
     $template = DocumentTemplate::factory()->create();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/auftraege/{$project->public_id}/vertraege", ['template' => $template->public_id]);
 
     expect(Contract::sole()->body)->toBeNull();

@@ -56,7 +56,7 @@ class QuoteController extends Controller
     public function index(Request $request): InertiaResponse
     {
         $viewer = $request->user('staff');
-        abort_unless($viewer->role->allows(Capability::ManageQuotes), 403);
+        abort_unless($viewer->can(Capability::ManageQuotes->value), 403);
 
         $quotes = Quote::query()
             ->whereHas('project', fn ($query) => $query->visibleTo($viewer))
@@ -128,7 +128,7 @@ class QuoteController extends Controller
     public function create(Request $request, ReadQuoteWorkspace $workspace, StudioSettingsResolver $settings): InertiaResponse
     {
         $viewer = $request->user('staff');
-        abort_unless($viewer->role->allows(Capability::ManageQuotes), 403);
+        abort_unless($viewer->can(Capability::ManageQuotes->value), 403);
 
         $project = $request->filled('projekt')
             ? Project::query()->visibleTo($viewer)->where('public_id', $request->query('projekt'))->first()
@@ -398,7 +398,7 @@ class QuoteController extends Controller
 
         $accept($quote, $contact, null);
 
-        // Every role manages quotes, but booking is Owner-only (StaffRole):
+        // Every role manages quotes, but booking is Admin-only (StaffRole):
         // the yes is recorded either way, the job only when this user may book.
         if (Gate::allows('book', $quote->project)) {
             $book($quote->project, auth('staff')->user());

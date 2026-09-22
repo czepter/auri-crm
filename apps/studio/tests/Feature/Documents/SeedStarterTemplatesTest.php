@@ -11,7 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 it('finishes onboarding with a current template for the quote and the mails', function () {
-    app(SeedStarterTemplates::class)(StarterTemplateCatalog::onboardingDefaults(), staffMember(StaffRole::Owner));
+    app(SeedStarterTemplates::class)(StarterTemplateCatalog::onboardingDefaults(), staffMember(StaffRole::Admin));
 
     foreach ([DocumentTemplateType::Quote, DocumentTemplateType::Mail] as $type) {
         expect(DocumentTemplate::query()->current()->ofType($type)->exists())->toBeTrue("no {$type->value} template");
@@ -23,7 +23,7 @@ it('finishes onboarding with a current template for the quote and the mails', fu
 });
 
 it('writes a first version through the ordinary path, body and blocks alike', function () {
-    app(SeedStarterTemplates::class)(['quote-generic'], staffMember(StaffRole::Owner));
+    app(SeedStarterTemplates::class)(['quote-generic'], staffMember(StaffRole::Admin));
 
     $template = DocumentTemplate::sole();
 
@@ -37,7 +37,7 @@ it('writes a first version through the ordinary path, body and blocks alike', fu
 
 it('leaves the template count unchanged when the step runs twice', function () {
     $seed = app(SeedStarterTemplates::class);
-    $actor = staffMember(StaffRole::Owner);
+    $actor = staffMember(StaffRole::Admin);
 
     $first = $seed(StarterTemplateCatalog::onboardingDefaults(), $actor);
     $second = $seed(StarterTemplateCatalog::onboardingDefaults(), $actor);
@@ -49,19 +49,19 @@ it('leaves the template count unchanged when the step runs twice', function () {
 
 it('never imposes a second copy on a studio that renamed its own', function () {
     $seed = app(SeedStarterTemplates::class);
-    $seed(['quote-generic'], staffMember(StaffRole::Owner));
+    $seed(['quote-generic'], staffMember(StaffRole::Admin));
 
     // The studio edits the wording and keeps the name. Re-running the step
     // must not put the original back beside it.
     DocumentTemplate::sole()->update(['body' => '<p>Unsere eigene Fassung.</p>']);
-    $seed(['quote-generic'], staffMember(StaffRole::Owner));
+    $seed(['quote-generic'], staffMember(StaffRole::Admin));
 
     expect(DocumentTemplate::count())->toBe(1)
         ->and(DocumentTemplate::sole()->body)->toBe('<p>Unsere eigene Fassung.</p>');
 });
 
 it('records who accepted each seeded template', function () {
-    app(SeedStarterTemplates::class)(['quote-generic', 'invoice-standard'], staffMember(StaffRole::Owner));
+    app(SeedStarterTemplates::class)(['quote-generic', 'invoice-standard'], staffMember(StaffRole::Admin));
 
     $rows = AuditLog::where('event', 'document_template.seeded')->get();
 
@@ -71,7 +71,7 @@ it('records who accepted each seeded template', function () {
 });
 
 it('ignores a key the catalog does not know rather than failing the step', function () {
-    $written = app(SeedStarterTemplates::class)(['nope', 'quote-generic'], staffMember(StaffRole::Owner));
+    $written = app(SeedStarterTemplates::class)(['nope', 'quote-generic'], staffMember(StaffRole::Admin));
 
     expect($written)->toBe(1);
 });

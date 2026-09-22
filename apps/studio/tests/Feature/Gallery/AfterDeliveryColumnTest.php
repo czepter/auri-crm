@@ -90,7 +90,7 @@ it('shows a crew member only their own projects', function () {
     $project = Project::factory()->create();
     Gallery::factory()->for($project)->create(['expires_at' => now()->addDays(12)]);
 
-    $crew = User::factory()->withMfa()->create(['role' => StaffRole::SecondShooter]);
+    $crew = User::factory()->withMfa()->create(['role' => StaffRole::Contributor]);
 
     expect(app(ReadAfterDeliveryColumn::class)($crew))->toBeEmpty();
 });

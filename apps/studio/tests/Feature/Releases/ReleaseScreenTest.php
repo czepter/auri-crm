@@ -33,7 +33,7 @@ beforeEach(function () {
 });
 
 it('lists every release release-log knows', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/neuigkeiten')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
@@ -48,7 +48,7 @@ it('lists every release release-log knows', function () {
 });
 
 it('shows one release with its entries', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/neuigkeiten/0.9.1')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
@@ -57,7 +57,7 @@ it('shows one release with its entries', function () {
 });
 
 it('has nothing to show for a version release-log does not carry', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/neuigkeiten/0.8.0')
         ->assertNotFound();
 });
@@ -67,7 +67,7 @@ it('has nothing to show for a version release-log does not carry', function () {
 it('carries the running version into every admin screen', function () {
     config(['app.version' => '0.9.1']);
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page

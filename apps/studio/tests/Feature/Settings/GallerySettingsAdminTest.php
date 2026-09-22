@@ -14,13 +14,13 @@ beforeEach(fn () => Cache::store('redis')->flush());
 // G-14: der eigene Screen ist weg, die Vorgaben stehen auf /galerien. Ein
 // Lesezeichen darauf landet im richtigen Abschnitt.
 it('sends the old gallery settings screen to the room', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/einstellungen/galerien')
         ->assertRedirect('/galerien?einstellungen=standardwerte');
 });
 
 it('updates the gallery defaults without touching the portal switches', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen/portal', [
@@ -45,7 +45,7 @@ it('updates the gallery defaults without touching the portal switches', function
 });
 
 it('takes the three gallery switches on the gallery route and lets a contact override them', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch('/einstellungen/galerien', [
             'gallery_default_downloads_enabled' => false,
             'gallery_default_lists_enabled' => false,
@@ -70,7 +70,7 @@ it('takes the three gallery switches on the gallery route and lets a contact ove
 it('no longer accepts a gallery switch on the portal route', function () {
     StudioSettings::query()->update(['gallery_default_lists_enabled' => false]);
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch('/einstellungen/portal', ['gallery_default_lists_enabled' => true])
         ->assertRedirect();
 
@@ -78,7 +78,7 @@ it('no longer accepts a gallery switch on the portal route', function () {
 });
 
 it('no longer accepts a gallery default on the portal route', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch('/einstellungen/portal', ['gallery_default_expiry_days' => 5])
         ->assertRedirect();
 
@@ -103,11 +103,11 @@ it('gives every non-owner role the same response on the gallery settings write a
         expect($response->status())->toBe($missing->status());
     }
 })->with([
-    [StaffRole::Owner, 302],
-    [StaffRole::Photographer, 404],
-    [StaffRole::Editor, 404],
-    [StaffRole::SecondShooter, 404],
-    [StaffRole::Assistant, 404],
+    [StaffRole::Admin, 302],
+    [StaffRole::Manager, 404],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Contributor, 404],
 ]);
 
 it('declares an audience on the gallery settings route, same as every other admin route', function () {

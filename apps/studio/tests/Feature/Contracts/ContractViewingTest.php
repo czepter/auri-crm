@@ -22,7 +22,7 @@ it('never dispatches a render or calls Gotenberg when the admin views an already
     Http::fake();
 
     $contract = renderedContract();
-    $staff = staffMember(StaffRole::Owner);
+    $staff = staffMember(StaffRole::Admin);
 
     $this->actingAs($staff, 'staff')->get("/auftraege/{$contract->project->public_id}/vertrag")->assertOk();
 
@@ -36,7 +36,7 @@ it('never dispatches a render or calls Gotenberg when downloading an admin contr
     Http::fake();
 
     $contract = renderedContract();
-    $staff = staffMember(StaffRole::Owner);
+    $staff = staffMember(StaffRole::Admin);
 
     $this->actingAs($staff, 'staff')->get("/vertraege/{$contract->public_id}/pdf")->assertOk();
 
@@ -66,7 +66,7 @@ it('serves the stored artifact byte-for-byte rather than anything freshly render
     Storage::fake('local');
 
     $contract = renderedContract(bytes: '%PDF-stored-bytes');
-    $staff = staffMember(StaffRole::Owner);
+    $staff = staffMember(StaffRole::Admin);
 
     $response = $this->actingAs($staff, 'staff')->get("/vertraege/{$contract->public_id}/pdf");
 
@@ -79,7 +79,7 @@ it('404s a download for a contract that has not rendered yet', function () {
 
     $project = Project::factory()->create();
     $contract = Contract::factory()->for($project)->create(['status' => ContractStatus::Pending]);
-    $staff = staffMember(StaffRole::Owner);
+    $staff = staffMember(StaffRole::Admin);
 
     $this->actingAs($staff, 'staff')->get("/vertraege/{$contract->public_id}/pdf")->assertNotFound();
 });

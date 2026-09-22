@@ -19,9 +19,9 @@ function candidate(array $candidates, User $user): CrewCandidateData
 }
 
 it('answers free, absent or busy for every candidate on the shooting day', function () {
-    $free = User::factory()->withMfa()->create(['role' => StaffRole::Photographer, 'name' => 'Ada Frei']);
-    $away = User::factory()->withMfa()->create(['role' => StaffRole::SecondShooter, 'name' => 'Nina Sturm']);
-    $busy = User::factory()->withMfa()->create(['role' => StaffRole::SecondShooter, 'name' => 'Tom Boll']);
+    $free = User::factory()->withMfa()->create(['role' => StaffRole::Manager, 'name' => 'Ada Frei']);
+    $away = User::factory()->withMfa()->create(['role' => StaffRole::Contributor, 'name' => 'Nina Sturm']);
+    $busy = User::factory()->withMfa()->create(['role' => StaffRole::Contributor, 'name' => 'Tom Boll']);
 
     Absence::factory()->for($away)->spanning('2026-09-01', '2026-09-07')->create(['category' => 'holiday']);
 
@@ -43,7 +43,7 @@ it('answers free, absent or busy for every candidate on the shooting day', funct
 });
 
 it('does not call somebody busy for the very shoot they are being picked for', function () {
-    $tom = staffMember(StaffRole::SecondShooter);
+    $tom = staffMember(StaffRole::Contributor);
 
     $project = Project::factory()->create();
     $shoot = Shoot::factory()->for($project)->on('2026-09-03')->create();
@@ -55,7 +55,7 @@ it('does not call somebody busy for the very shoot they are being picked for', f
 });
 
 it('leaves everybody free on a shoot that has no date yet', function () {
-    $nina = staffMember(StaffRole::SecondShooter);
+    $nina = staffMember(StaffRole::Contributor);
     Absence::factory()->for($nina)->spanning('2026-09-01', '2026-09-07')->create();
 
     $project = Project::factory()->create();

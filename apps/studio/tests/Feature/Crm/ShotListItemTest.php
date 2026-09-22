@@ -22,7 +22,7 @@ it('belongs to a shoot and starts unchecked', function () {
 
 it('adds a shot list item through the admin screen', function () {
     $shoot = Shoot::factory()->create();
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
 
     $this->actingAs($user, 'staff')
         ->post("/shootings/{$shoot->public_id}/checkliste", ['label' => 'Erster Kuss'])
@@ -35,7 +35,7 @@ it('adds a shot list item through the admin screen', function () {
 
 it('checks a shot list item off, and off again reopens it', function () {
     $item = ShotListItem::factory()->create();
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
 
     $this->actingAs($user, 'staff')
         ->post("/checkliste/{$item->public_id}/erledigt")
@@ -50,7 +50,7 @@ it('checks a shot list item off, and off again reopens it', function () {
 
 it('leaves an audit row when a shot list item is checked off', function () {
     $item = ShotListItem::factory()->create(['label' => 'Erster Tanz']);
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
 
     $this->actingAs($user, 'staff')->post("/checkliste/{$item->public_id}/erledigt")->assertRedirect();
 
@@ -61,7 +61,7 @@ it('leaves an audit row when a shot list item is checked off', function () {
 
 it('removes a shot list item through the admin screen', function () {
     $item = ShotListItem::factory()->create();
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
 
     $this->actingAs($user, 'staff')
         ->delete("/checkliste/{$item->public_id}")
@@ -77,9 +77,8 @@ it('refuses a role without ManageShoots, and lets one with it through', function
         ->post("/shootings/{$shoot->public_id}/checkliste", ['label' => 'Familienfoto'])
         ->assertStatus($status);
 })->with([
-    [StaffRole::Owner, 302],
-    [StaffRole::Photographer, 302],
-    [StaffRole::Editor, 302],
-    [StaffRole::SecondShooter, 403],
-    [StaffRole::Assistant, 403],
+    [StaffRole::Admin, 302],
+    [StaffRole::Manager, 302],
+    [StaffRole::Contributor, 403],
+    [StaffRole::Reader, 403],
 ]);

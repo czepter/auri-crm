@@ -18,13 +18,13 @@ beforeEach(function () {
 it('shows the dsgvo actions only to the owner', function () {
     $contact = Contact::factory()->create();
 
-    $owner = User::factory()->withMfa()->create(['role' => StaffRole::Owner]);
+    $owner = User::factory()->withMfa()->create(['role' => StaffRole::Admin]);
     $props = $this->actingAs($owner, 'staff')->get("/kontakte/{$contact->public_id}")->viewData('page')['props'];
     expect($props['canManageDsgvo'])->toBeTrue()
         ->and($props['dsgvoErasedAt'])->toBeNull()
         ->and(integerIdPaths($props))->toBe([]);
 
-    $photographer = User::factory()->withMfa()->create(['role' => StaffRole::Photographer]);
+    $photographer = User::factory()->withMfa()->create(['role' => StaffRole::Manager]);
     expect($this->actingAs($photographer, 'staff')->get("/kontakte/{$contact->public_id}")->viewData('page')['props']['canManageDsgvo'])
         ->toBeFalse();
 });

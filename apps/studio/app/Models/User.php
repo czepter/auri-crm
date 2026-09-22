@@ -16,6 +16,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 /**
  * HasApiTokens (N-04): a staff user can hold their own Sanctum personal
@@ -24,6 +25,11 @@ use Laravel\Sanctum\HasApiTokens;
  * caller. See App\Http\Controllers\Staff\OAuthAuthorizationController for
  * where one gets minted and why its abilities can never exceed this user's
  * own StaffRole::capabilities().
+ *
+ * HasRoles (spatie/laravel-permission) is the actual authority check —
+ * policies call $user->can(Capability::X->value). The `role` column stays
+ * as the one StaffRole a person carries; booted() below keeps the two in
+ * sync so nothing that writes `role` needs to know spatie exists.
  */
 class User extends Authenticatable
 {
@@ -31,7 +37,25 @@ class User extends Authenticatable
     use HasApiTokens;
     use HasFactory;
     use HasPublicId;
+    use HasRoles;
     use Notifiable;
+
+    /**
+     * Fixed rather than resolved from config('auth.defaults.guard'): that
+     * default flips per request (AppServiceProvider calls Auth::shouldUse()
+     * per surface), but a User is always staff regardless of which surface
+     * is currently handling the request.
+     */
+    protected $guard_name = 'staff';
+
+    protected static function booted(): void
+    {
+        static::saved(function (User $user) {
+            if ($user->role instanceof StaffRole && ! $user->hasRole($user->role->value)) {
+                $user->syncRoles([$user->role->value]);
+            }
+        });
+    }
 
     public static function soloStudio(): bool
     {

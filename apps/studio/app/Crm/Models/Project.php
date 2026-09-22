@@ -286,7 +286,7 @@ class Project extends Model
     /** Projects this person may see, for the reads that list many at once. */
     public function scopeVisibleTo(Builder $query, User $user): void
     {
-        if ($user->role->allows(Capability::ViewAllProjects)) {
+        if ($user->can(Capability::ViewAllProjects->value)) {
             return;
         }
 

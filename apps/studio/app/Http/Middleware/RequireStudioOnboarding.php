@@ -27,7 +27,7 @@ class RequireStudioOnboarding
         $user = $request->user('staff');
 
         if ($request->isMethod('GET')
-            && ($user?->role->allows(Capability::ManageSettings) ?? false)
+            && ($user?->can(Capability::ManageSettings->value) ?? false)
             && ! $this->settings->onboardingCompleted()
         ) {
             return redirect('/einrichtung/studio');

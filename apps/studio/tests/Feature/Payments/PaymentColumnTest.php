@@ -77,7 +77,7 @@ it('does not row an installment that has since been paid', function () {
 it('shows a crew member only their own projects', function () {
     overdueInstallment('Nicht meins', notifiedDaysAgo: 9);
 
-    $crew = User::factory()->withMfa()->create(['role' => StaffRole::SecondShooter]);
+    $crew = User::factory()->withMfa()->create(['role' => StaffRole::Contributor]);
 
     expect(app(ReadPaymentColumn::class)($crew))->toBeEmpty();
 });

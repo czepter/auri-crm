@@ -140,7 +140,7 @@ it('stamps a number and a date on the invoice and moves the rate to Invoiced', f
     $installment = invoiceablePlan();
     expect($installment->isInvoiced())->toBeFalse();
 
-    $invoice = app(IssueInvoice::class)($installment, staffMember(StaffRole::Owner));
+    $invoice = app(IssueInvoice::class)($installment, staffMember(StaffRole::Admin));
 
     expect($invoice->number)->toStartWith('RE-')
         ->and($invoice->issued_at)->not->toBeNull()
@@ -225,7 +225,7 @@ it('records who issued the invoice', function () {
     Storage::fake('local');
     Bus::fake();
 
-    app(IssueInvoice::class)(invoiceablePlan(), staffMember(StaffRole::Owner));
+    app(IssueInvoice::class)(invoiceablePlan(), staffMember(StaffRole::Admin));
 
     expect(AuditLog::where('event', 'payments.invoice.issued')->count())->toBe(1);
 });
@@ -325,7 +325,7 @@ it('lets staff issue an invoice without a project to a new contact', function ()
     Storage::fake('local');
     Bus::fake();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/rechnungen', [
             'contact' => ['name' => 'Jonas Gast', 'city' => 'Jena'],
             'due_on' => '2026-10-01',
@@ -396,11 +396,11 @@ it('lets staff issue and then download the invoice', function () {
 
     $installment = invoiceablePlan();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/raten/{$installment->public_id}/rechnung")
         ->assertRedirect();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/rechnungen/'.Invoice::sole()->public_id.'/pdf')
         ->assertOk()
         ->assertHeader('content-type', 'application/pdf');

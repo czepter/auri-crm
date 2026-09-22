@@ -28,7 +28,7 @@ class DeleteDueStudio extends Command
             $delete(config('tenancy.tenant_id'), 'deletion_requested');
             $this->info('Studio gelöscht.');
         } elseif ($date->subDay()->toDateString() === now($date->timezone)->toDateString()) {
-            $owner = User::query()->where('role', StaffRole::Owner)->first();
+            $owner = User::query()->where('role', StaffRole::Admin)->first();
 
             if ($owner !== null) {
                 $notifications->send($owner, new StudioDeletionReminder($owner->name, $date));

@@ -172,21 +172,20 @@ it('personalises an instance\'s fields and name, wholesale replacing what was th
 it('opens the project forms screen to whoever can view the project, regardless of ManageFormTemplates', function (StaffRole $role, int $status) {
     // The screen itself only gates on Project::view — the same rule every
     // other project tab uses (ProjectController::quotes(), ::shoots()) — so
-    // SecondShooter and Assistant, who hold no ViewAllProjects capability
-    // and are not crewed on this uncrewed project, get 403 here just as they
-    // would on /shootings or /angebote. canManageForms is what the screen
-    // itself uses to decide whether to render the editing controls.
+    // Contributor, who holds no ViewAllProjects capability and is not
+    // crewed on this uncrewed project, gets 403 here just as it would on
+    // /shootings or /angebote. canManageForms is what the screen itself
+    // uses to decide whether to render the editing controls.
     $project = Project::factory()->create();
 
     $this->actingAs(staffMember($role), 'staff')
         ->get("/auftraege/{$project->public_id}/frageboegen")
         ->assertStatus($status);
 })->with([
-    [StaffRole::Owner, 200],
-    [StaffRole::Photographer, 200],
-    [StaffRole::Editor, 200],
-    [StaffRole::SecondShooter, 403],
-    [StaffRole::Assistant, 403],
+    [StaffRole::Admin, 200],
+    [StaffRole::Manager, 200],
+    [StaffRole::Contributor, 403],
+    [StaffRole::Reader, 200],
 ]);
 
 it('lists a project\'s form instances with their fields on the project screen', function () {
@@ -279,7 +278,7 @@ it('rejects answering a field to a staff member without ManageFormTemplates', fu
     $instance = FormInstance::factory()->for($project)->create();
     $field = FormInstanceField::factory()->for($instance, 'formInstance')->create();
 
-    $this->actingAs(staffMember(StaffRole::SecondShooter), 'staff')
+    $this->actingAs(staffMember(StaffRole::Contributor), 'staff')
         ->patch("/frageboegen-felder/{$field->public_id}/antwort", ['value' => 'Strand'])
         ->assertForbidden();
 
@@ -378,7 +377,7 @@ it('rejects uploading to a file field for a staff member without ManageFormTempl
     Storage::fake('local');
     $field = fileField();
 
-    $this->actingAs(staffMember(StaffRole::SecondShooter), 'staff')
+    $this->actingAs(staffMember(StaffRole::Contributor), 'staff')
         ->post("/frageboegen-felder/{$field->public_id}/datei", [
             'file' => UploadedFile::fake()->create('ablauf.pdf', 10, 'application/pdf'),
         ])

@@ -87,7 +87,7 @@ class E2eSeeder extends Seeder
             [
                 'name' => 'E2E Basic',
                 'password' => 'correct-horse',
-                'role' => StaffRole::Owner,
+                'role' => StaffRole::Admin,
             ],
         );
 
@@ -96,7 +96,7 @@ class E2eSeeder extends Seeder
             [
                 'name' => 'E2E MFA',
                 'password' => 'correct-horse',
-                'role' => StaffRole::Owner,
+                'role' => StaffRole::Admin,
                 'mfa_secret' => 'JBSWY3DPEHPK3PXP',
                 'mfa_confirmed_at' => now(),
                 'mfa_recovery_codes' => [],
@@ -121,7 +121,7 @@ class E2eSeeder extends Seeder
             ['email' => 'e2e-eingeladen@studio.test'],
             [
                 'name' => 'E2E Eingeladen',
-                'role' => StaffRole::Photographer,
+                'role' => StaffRole::Manager,
                 'token_hash' => StaffInvitation::hash(self::INVITATION_TOKEN),
                 'expires_at' => now()->addDays(StaffInvitation::VALID_FOR_DAYS),
                 'accepted_at' => null,

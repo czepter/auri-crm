@@ -37,7 +37,7 @@ class GalleryIndexController extends Controller
         // G-14: die Vorgaben reisen mit der Liste, weil der Raum ueber ihr
         // aufgeht. Wer sie nicht bearbeiten darf, bekommt sie nicht — die
         // Pille im Kopf haengt an genau diesem null.
-        $mayManage = auth('staff')->user()?->role->allows(Capability::ManageSettings) ?? false;
+        $mayManage = auth('staff')->user()?->can(Capability::ManageSettings->value) ?? false;
 
         $galleries = Gallery::query()
             ->with(['project', 'currentVersion'])

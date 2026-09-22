@@ -9,7 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Owner]), 'staff');
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Admin]), 'staff');
 });
 
 it('ships the defaults and the presets with the list', function () {
@@ -24,7 +24,7 @@ it('ships the defaults and the presets with the list', function () {
 });
 
 it('keeps the defaults from a role that may not edit them', function () {
-    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Photographer]), 'staff');
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Manager]), 'staff');
 
     $this->get('/galerien')
         ->assertInertia(fn ($page) => $page->where('settings', null)->where('presets', []));

@@ -24,7 +24,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  * already gates the settings screen, but a gate on a screen is not a gate on
  * an operation: a second route reaching this later would arrive ungated, and
  * this is not an operation to leave depending on where it was called from.
- * `ManageSettings` is Owner-only (see App\Enums\StaffRole::capabilities()).
+ * `ManageSettings` is Admin-only (see App\Enums\StaffRole::capabilities()).
  *
  * **Staff surface only.** No `api` route calls this, no `I-01` token scope
  * grants it, and no `N-03` MCP tool exposes it. I-01's own rule is that a
@@ -40,7 +40,7 @@ class RotateInboundSecret
 {
     public function __invoke(?User $actor): string
     {
-        if (! ($actor?->role->allows(Capability::ManageSettings) ?? false)) {
+        if (! ($actor?->can(Capability::ManageSettings->value) ?? false)) {
             throw new HttpException(403, 'Only the Inhaber may rotate the inbound address secret.');
         }
 

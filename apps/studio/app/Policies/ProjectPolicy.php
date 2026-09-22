@@ -28,7 +28,7 @@ class ProjectPolicy
      */
     public function view(User $user, Project $project): bool
     {
-        if ($user->role->allows(Capability::ViewAllProjects)) {
+        if ($user->can(Capability::ViewAllProjects->value)) {
             return true;
         }
 
@@ -38,51 +38,51 @@ class ProjectPolicy
     /** A closed pursuit is not bookable again until it is reopened. */
     public function book(User $user, Project $project): bool
     {
-        return $user->role->allows(Capability::BookProject)
+        return $user->can(Capability::BookProject->value)
             && ! ($project->lead?->isLost() ?? false);
     }
 
     /** The capability that captures an inquiry may take it back, as on the API. */
     public function delete(User $user, Project $project): bool
     {
-        return $user->role->allows(Capability::ManageLeads) && $this->view($user, $project);
+        return $user->can(Capability::ManageLeads->value) && $this->view($user, $project);
     }
 
     public function manageShoots(User $user, Project $project): bool
     {
-        return $user->role->allows(Capability::ManageShoots) && $this->view($user, $project);
+        return $user->can(Capability::ManageShoots->value) && $this->view($user, $project);
     }
 
     public function manageCrew(User $user, Project $project): bool
     {
-        return $user->role->allows(Capability::ManageCrew) && $this->view($user, $project);
+        return $user->can(Capability::ManageCrew->value) && $this->view($user, $project);
     }
 
     public function manageTasks(User $user, Project $project): bool
     {
-        return $user->role->allows(Capability::ManageTasks) && $this->view($user, $project);
+        return $user->can(Capability::ManageTasks->value) && $this->view($user, $project);
     }
 
     public function manageNotes(User $user, Project $project): bool
     {
-        return $user->role->allows(Capability::ManageNotes) && $this->view($user, $project);
+        return $user->can(Capability::ManageNotes->value) && $this->view($user, $project);
     }
 
     /** Reply on this project's Thread (E-06) — never originate one; see StartThread. */
     public function manageMessages(User $user, Project $project): bool
     {
-        return $user->role->allows(Capability::ManageMessages) && $this->view($user, $project);
+        return $user->can(Capability::ManageMessages->value) && $this->view($user, $project);
     }
 
     /** Flip portal_visible for this one project (A-04) — never a contact. */
     public function manageVisibility(User $user, Project $project): bool
     {
-        return $user->role->allows(Capability::ManagePortalAccess) && $this->view($user, $project);
+        return $user->can(Capability::ManagePortalAccess->value) && $this->view($user, $project);
     }
 
     public function manageQuotes(User $user, Project $project): bool
     {
-        return $user->role->allows(Capability::ManageQuotes) && $this->view($user, $project);
+        return $user->can(Capability::ManageQuotes->value) && $this->view($user, $project);
     }
 
     /**
@@ -93,13 +93,13 @@ class ProjectPolicy
      */
     public function manageForms(User $user, Project $project): bool
     {
-        return $user->role->allows(Capability::ManageFormTemplates) && $this->view($user, $project);
+        return $user->can(Capability::ManageFormTemplates->value) && $this->view($user, $project);
     }
 
     /** Draft, render and send a contract for this project. Never required — nothing waits for one. */
     public function manageContracts(User $user, Project $project): bool
     {
-        return $user->role->allows(Capability::ManageContracts) && $this->view($user, $project);
+        return $user->can(Capability::ManageContracts->value) && $this->view($user, $project);
     }
 
     /**
@@ -110,6 +110,6 @@ class ProjectPolicy
      */
     public function managePaymentPlan(User $user, Project $project): bool
     {
-        return $user->role->allows(Capability::ManageContracts) && $this->view($user, $project);
+        return $user->can(Capability::ManageContracts->value) && $this->view($user, $project);
     }
 }

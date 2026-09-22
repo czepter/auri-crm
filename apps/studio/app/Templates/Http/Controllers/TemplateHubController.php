@@ -116,7 +116,7 @@ class TemplateHubController extends Controller
             'aufgaben' => $gate->allows('viewAny', TaskTemplate::class),
             'fragebogen' => $gate->allows('viewAny', FormTemplate::class),
             'dokumente' => $gate->allows('viewAny', DocumentTemplate::class),
-            'galerien' => $staff?->role->allows(Capability::ManageSettings) ?? false,
+            'galerien' => $staff?->can(Capability::ManageSettings->value) ?? false,
         ];
 
         return array_keys(array_filter($checks));

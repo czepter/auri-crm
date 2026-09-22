@@ -2,8 +2,8 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import Absences from './Absences.vue'
 
 const staff: App.Data.StaffProfileData[] = [
-  { id: 'u1', name: 'Christian Zepter', email: 'christian@atelier-nordlicht.de', role: 'owner', mfaConfirmed: true, lastQuoteAction: null },
-  { id: 'u2', name: 'Marie Ohlsen', email: 'marie@atelier-nordlicht.de', role: 'second_shooter', mfaConfirmed: false, lastQuoteAction: null },
+  { id: 'u1', name: 'Christian Zepter', email: 'christian@atelier-nordlicht.de', role: 'admin', mfaConfirmed: true, lastQuoteAction: null },
+  { id: 'u2', name: 'Marie Ohlsen', email: 'marie@atelier-nordlicht.de', role: 'contributor', mfaConfirmed: false, lastQuoteAction: null },
 ]
 
 const meta = {

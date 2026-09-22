@@ -56,7 +56,7 @@ it('antwortet 404 statt 403, wenn die Fähigkeit fehlt', function () {
     // ohne etwas zu prüfen.
     gesperrterArtikel();
 
-    $user = User::factory()->withMfa()->create(['role' => StaffRole::Photographer]);
+    $user = User::factory()->withMfa()->create(['role' => StaffRole::Manager]);
 
     $this->actingAs($user, 'staff')
         ->get('/hilfe/gesperrte-probe')
@@ -66,7 +66,7 @@ it('antwortet 404 statt 403, wenn die Fähigkeit fehlt', function () {
 it('lässt einen Artikel ohne Fähigkeit aus der Suche weg', function () {
     gesperrterArtikel();
 
-    $user = User::factory()->withMfa()->create(['role' => StaffRole::Photographer]);
+    $user = User::factory()->withMfa()->create(['role' => StaffRole::Manager]);
 
     $treffer = $this->actingAs($user, 'staff')->getJson('/hilfe/suche')->json();
 

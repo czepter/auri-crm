@@ -11,7 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->staff = User::factory()->withMfa()->create(['role' => StaffRole::Owner]);
+    $this->staff = User::factory()->withMfa()->create(['role' => StaffRole::Admin]);
 });
 
 /**
@@ -78,7 +78,7 @@ it('records a distinct audit event naming which state the project ended up in', 
 it('refuses a role without portal access management', function () {
     $project = Project::factory()->create(['portal_visible' => true]);
 
-    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Assistant]), 'staff')
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Contributor]), 'staff')
         ->post("/auftraege/{$project->public_id}/portal-sichtbarkeit")
         ->assertForbidden();
 });

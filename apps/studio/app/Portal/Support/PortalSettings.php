@@ -180,7 +180,7 @@ class PortalSettings
 
     private function ownerPhone(): ?string
     {
-        return User::query()->where('role', StaffRole::Owner)->value('phone');
+        return User::query()->where('role', StaffRole::Admin)->value('phone');
     }
 
     /**

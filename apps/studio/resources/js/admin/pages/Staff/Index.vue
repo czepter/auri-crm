@@ -33,7 +33,7 @@ defineProps<{
 }>()
 
 const inviting = ref(false)
-const form = useForm({ name: '', email: '', role: 'second_shooter' })
+const form = useForm({ name: '', email: '', role: 'contributor' })
 
 function invite() {
   form.post('/team/einladungen', {

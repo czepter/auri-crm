@@ -20,7 +20,7 @@ it('creates the first owner, signs them in, and sends them to the studio wizard'
 
     $user = User::where('email', 'christian@nordlicht.test')->sole();
 
-    expect($user->role)->toBe(StaffRole::Owner);
+    expect($user->role)->toBe(StaffRole::Admin);
     $this->assertAuthenticatedAs($user, 'staff');
 });
 

@@ -8,7 +8,7 @@ uses(RefreshDatabase::class);
 
 // staffMember() lives in tests/Pest.php.
 beforeEach(function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff');
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff');
 });
 
 it('opens the overlay over the board on the pipeline or type its address names', function (string $path, string $component, array $selection) {
@@ -40,7 +40,7 @@ it('leaves the plain lists without an overlay', function () {
 });
 
 it('refuses the addresses to a role that may not configure the funnel', function (string $path) {
-    $this->actingAs(staffMember(StaffRole::SecondShooter), 'staff')->get($path)->assertNotFound();
+    $this->actingAs(staffMember(StaffRole::Contributor), 'staff')->get($path)->assertNotFound();
 })->with([
     '/anfragen/einstellungen/stufen',
     '/auftraege/einstellungen/stufen',
@@ -63,7 +63,7 @@ it('hands on a local return path and ignores anything that leaves the domain', f
 it('shows the settings menu links only to who may open their targets', function () {
     $this->get('/anfragen')->assertInertia(fn ($page) => $page->where('settingsLinks', ['stages' => true, 'templates' => true]));
 
-    $this->actingAs(staffMember(StaffRole::SecondShooter), 'staff')
+    $this->actingAs(staffMember(StaffRole::Contributor), 'staff')
         ->get('/anfragen')
         ->assertInertia(fn ($page) => $page->where('settingsLinks.stages', false));
 });

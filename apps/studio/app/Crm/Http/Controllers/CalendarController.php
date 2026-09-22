@@ -44,7 +44,7 @@ class CalendarController extends Controller
     public function index(Request $request, CrmVocabulary $vocabulary, StudioSettingsResolver $settings): InertiaResponse
     {
         $user = auth('staff')->user();
-        $manages = $user->role->allows(Capability::ManageSettings);
+        $manages = $user->can(Capability::ManageSettings->value);
 
         abort_if($request->route('settings') === true && ! $manages, 404);
         $month = $this->month($request);

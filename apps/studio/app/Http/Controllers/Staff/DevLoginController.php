@@ -41,7 +41,7 @@ class DevLoginController extends Controller
             [
                 'name' => 'Dev Login',
                 'password' => Str::random(48),
-                'role' => StaffRole::Owner,
+                'role' => StaffRole::Admin,
                 'mfa_secret' => 'JBSWY3DPEHPK3PXP',
                 'mfa_confirmed_at' => now(),
                 'mfa_recovery_codes' => [],

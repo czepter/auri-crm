@@ -36,7 +36,7 @@ it('returns the stored rate as the effective rate under standard mode', function
 });
 
 it('forces the effective rate to zero under small_business, regardless of what vat_rate holds', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $resolver = new StudioSettingsResolver;
 
     // A deliberately non-zero, non-default rate left on the row — proving
@@ -50,7 +50,7 @@ it('forces the effective rate to zero under small_business, regardless of what v
 });
 
 it('reverts to the stored rate the moment mode switches back to standard', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $resolver = new StudioSettingsResolver;
 
     $resolver->set('vat_rate', 2100, $owner);
@@ -65,7 +65,7 @@ it('reverts to the stored rate the moment mode switches back to standard', funct
 });
 
 it('writes one audit row per changed VAT field', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $resolver = new StudioSettingsResolver;
 
     $resolver->set('vat_mode', 'small_business', $owner);

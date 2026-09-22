@@ -24,7 +24,7 @@ it('falls back to config(mail.from.*) until a studio sets its own', function () 
 });
 
 it('resolves the tenant value the moment it is set, with no deploy', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     (new StudioSettingsResolver)->set('mail_from_address', 'studio@nordlicht.test', $owner);
     (new StudioSettingsResolver)->set('mail_from_name', 'Atelier Nordlicht', $owner);

@@ -13,7 +13,7 @@ uses(RefreshDatabase::class);
 beforeEach(fn () => Cache::store('redis')->flush());
 
 it('hands the VAT mode, rate and note to the settings screen', function () {
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $props = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/einstellungen/allgemein')
         ->assertOk()
         ->viewData('page')['props'];
@@ -25,7 +25,7 @@ it('hands the VAT mode, rate and note to the settings screen', function () {
 });
 
 it('updates vat_mode, vat_rate and vat_note, redirects, and audits the owner', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->from('/einstellungen/allgemein')
@@ -44,13 +44,13 @@ it('updates vat_mode, vat_rate and vat_note, redirects, and audits the owner', f
 });
 
 it('rejects a vat_mode outside standard and small_business', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch('/einstellungen/ust', ['vat_mode' => 'nonsense', 'vat_rate' => 1900])
         ->assertInvalid(['vat_mode']);
 });
 
 it('rejects a vat_rate outside 0-10000 basis points', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch('/einstellungen/ust', ['vat_mode' => 'standard', 'vat_rate' => 10001])
         ->assertInvalid(['vat_rate']);
 });
@@ -67,11 +67,11 @@ it('gives every non-owner role the same response on the VAT route as a route tha
         expect($response->status())->toBe($missing->status());
     }
 })->with([
-    [StaffRole::Owner, 302],
-    [StaffRole::Photographer, 404],
-    [StaffRole::Editor, 404],
-    [StaffRole::SecondShooter, 404],
-    [StaffRole::Assistant, 404],
+    [StaffRole::Admin, 302],
+    [StaffRole::Manager, 404],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Contributor, 404],
 ]);
 
 it('declares an audience on the VAT settings route, same as every other admin route', function () {

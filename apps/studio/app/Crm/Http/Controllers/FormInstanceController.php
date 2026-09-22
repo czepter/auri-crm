@@ -38,7 +38,7 @@ class FormInstanceController extends Controller
     public function create(Request $request): Response
     {
         $viewer = $request->user('staff');
-        abort_unless($viewer->role->allows(Capability::ManageFormTemplates), 403);
+        abort_unless($viewer->can(Capability::ManageFormTemplates->value), 403);
 
         $project = $request->filled('projekt')
             ? Project::query()->visibleTo($viewer)->where('public_id', $request->query('projekt'))->first()

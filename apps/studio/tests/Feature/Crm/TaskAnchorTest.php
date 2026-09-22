@@ -28,10 +28,10 @@ it('reads the day a stage was entered from the ledger, not from where the lead s
     $lead = Lead::factory()->for($project)->create(['stage' => LeadStage::QuoteSent]);
 
     $this->travelTo('2026-08-03 09:00:00');
-    app(AdvanceLeadStage::class)($lead, stage(LeadStage::QuoteAccepted), staffMember(StaffRole::Owner));
+    app(AdvanceLeadStage::class)($lead, stage(LeadStage::QuoteAccepted), staffMember(StaffRole::Admin));
     $this->travelBack();
 
-    app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), staffMember(StaffRole::Owner));
+    app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), staffMember(StaffRole::Admin));
 
     expect(app(TaskAnchors::class)->dueOn($project->fresh(), 'stage:quote_accepted', 0)?->format('Y-m-d'))
         ->toBe('2026-08-03');
@@ -88,7 +88,7 @@ it('stores a task on an anchor and writes the day it falls on', function () {
     $project = Project::factory()->create();
     $shoot = Shoot::factory()->for($project)->on('2026-08-28')->create();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/auftraege/{$project->public_id}/aufgaben", [
             'title' => 'Akkus und Karten packen',
             'audience' => 'internal',
@@ -106,7 +106,7 @@ it('refuses an anchor the project can no longer reach', function () {
     $project = Project::factory()->create();
     $shoot = Shoot::factory()->for($project)->cancelled('Abgesagt')->create();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/auftraege/{$project->public_id}/aufgaben", [
             'title' => 'Ablauf bestätigen',
             'audience' => 'internal',
@@ -123,7 +123,7 @@ it('reopens a completed task', function () {
         'completed_at' => now(),
     ]);
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/aufgaben/{$task->public_id}/wieder-oeffnen")
         ->assertRedirect();
 

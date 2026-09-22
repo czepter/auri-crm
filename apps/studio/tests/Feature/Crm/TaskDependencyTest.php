@@ -52,7 +52,7 @@ it('unblocks the dependent when its predecessor is completed', function () {
 it('refuses to complete a blocked task, and still allows reopening one', function () {
     [, $first, $second] = chainedTasks();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/aufgaben/{$second->public_id}/erledigt")
         ->assertInvalid(['task']);
 
@@ -64,7 +64,7 @@ it('refuses to complete a blocked task, and still allows reopening one', functio
     $second->forceFill(['completed_at' => now()])->save();
     $first->forceFill(['completed_at' => null])->save();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/aufgaben/{$second->public_id}/erledigt")
         ->assertRedirect();
 
@@ -77,7 +77,7 @@ it('refuses a cycle at write time rather than discovering one at read time', fun
     expect(TaskDependencyGraph::wouldCycle($first, $second))->toBeTrue()
         ->and(TaskDependencyGraph::wouldCycle($first, $first))->toBeTrue();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/aufgaben/{$first->public_id}/abhaengigkeit", ['depends_on' => $second->public_id])
         ->assertInvalid(['depends_on']);
 
@@ -88,7 +88,7 @@ it('accepts a dependency that does not close a loop', function () {
     [$project, $first, $second] = chainedTasks();
     $third = $project->tasks()->create(['title' => 'Galerie liefern', 'audience' => 'internal']);
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/aufgaben/{$third->public_id}/abhaengigkeit", ['depends_on' => $second->public_id])
         ->assertRedirect();
 
@@ -102,7 +102,7 @@ it('refuses a dependency on another project\'s task', function () {
     // second one.
     $stranger = Project::factory()->create()->tasks()->create(['title' => 'Fremd', 'audience' => 'internal']);
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/aufgaben/{$second->public_id}/abhaengigkeit", ['depends_on' => $stranger->public_id])
         ->assertStatus(422);
 });

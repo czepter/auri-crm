@@ -75,7 +75,7 @@ class InboxController extends Controller
             'catchAll' => $secret === null
                 ? null
                 : InboundAddress::catchAll($settings->displayName() ?? '', $secret),
-            'canRotate' => $user?->role->allows(Capability::ManageSettings) ?? false,
+            'canRotate' => $user?->can(Capability::ManageSettings->value) ?? false,
             'pending' => InboundMessage::query()
                 ->whereIn('state', [InboundMessageState::Triage, InboundMessageState::Quarantined])
                 ->with('thread.project')
@@ -306,7 +306,7 @@ class InboxController extends Controller
     private function authorizeInbox(): void
     {
         abort_unless(
-            auth('staff')->user()?->role->allows(Capability::ManageMessages) ?? false,
+            auth('staff')->user()?->can(Capability::ManageMessages->value) ?? false,
             403,
         );
     }

@@ -9,7 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 it('lets a second shooter record their own absence without ManageStaff', function () {
-    $nina = staffMember(StaffRole::SecondShooter);
+    $nina = staffMember(StaffRole::Contributor);
 
     expect($nina->role->allows(Capability::ManageStaff))->toBeFalse();
 
@@ -27,8 +27,8 @@ it('lets a second shooter record their own absence without ManageStaff', functio
 });
 
 it('refuses a second shooter recording an absence for somebody else', function () {
-    $nina = staffMember(StaffRole::SecondShooter);
-    $other = staffMember(StaffRole::Photographer);
+    $nina = staffMember(StaffRole::Contributor);
+    $other = staffMember(StaffRole::Manager);
 
     $this->actingAs($nina, 'staff')
         ->post('/abwesenheiten', [
@@ -42,8 +42,8 @@ it('refuses a second shooter recording an absence for somebody else', function (
 });
 
 it('lets ManageCrew record an absence on behalf of somebody else', function () {
-    $owner = staffMember(StaffRole::Owner);
-    $nina = staffMember(StaffRole::SecondShooter);
+    $owner = staffMember(StaffRole::Admin);
+    $nina = staffMember(StaffRole::Contributor);
 
     expect($owner->role->allows(Capability::ManageCrew))->toBeTrue();
 
@@ -59,8 +59,8 @@ it('lets ManageCrew record an absence on behalf of somebody else', function () {
 });
 
 it('shows only your own absences to a role without ManageCrew', function () {
-    $nina = staffMember(StaffRole::SecondShooter);
-    $someoneElse = staffMember(StaffRole::Photographer);
+    $nina = staffMember(StaffRole::Contributor);
+    $someoneElse = staffMember(StaffRole::Manager);
 
     Absence::factory()->for($nina)->create();
     Absence::factory()->for($someoneElse)->create();
@@ -73,9 +73,9 @@ it('shows only your own absences to a role without ManageCrew', function () {
 });
 
 it('shows every absence to a role with ManageCrew', function () {
-    $owner = staffMember(StaffRole::Owner);
-    $nina = staffMember(StaffRole::SecondShooter);
-    $mia = staffMember(StaffRole::Photographer);
+    $owner = staffMember(StaffRole::Admin);
+    $nina = staffMember(StaffRole::Contributor);
+    $mia = staffMember(StaffRole::Manager);
 
     Absence::factory()->for($nina)->create();
     Absence::factory()->for($mia)->create();
@@ -87,8 +87,8 @@ it('shows every absence to a role with ManageCrew', function () {
 });
 
 it('holds that rule on the calendar and the week beside it', function () {
-    $nina = staffMember(StaffRole::SecondShooter);
-    $mia = staffMember(StaffRole::Photographer);
+    $nina = staffMember(StaffRole::Contributor);
+    $mia = staffMember(StaffRole::Manager);
 
     Absence::factory()->for($mia)->create([
         'starts_on' => now()->addDay()->toDateString(),
@@ -104,8 +104,8 @@ it('holds that rule on the calendar and the week beside it', function () {
 });
 
 it('refuses a second shooter editing somebody else\'s absence', function () {
-    $nina = staffMember(StaffRole::SecondShooter);
-    $mia = staffMember(StaffRole::Photographer);
+    $nina = staffMember(StaffRole::Contributor);
+    $mia = staffMember(StaffRole::Manager);
     $absence = Absence::factory()->for($mia)->create();
 
     $this->actingAs($nina, 'staff')
@@ -117,7 +117,7 @@ it('refuses a second shooter editing somebody else\'s absence', function () {
 });
 
 it('lets a second shooter edit their own absence, leaving the category alone', function () {
-    $nina = staffMember(StaffRole::SecondShooter);
+    $nina = staffMember(StaffRole::Contributor);
     $absence = Absence::factory()->for($nina)->create(['category' => 'other']);
 
     $this->actingAs($nina, 'staff')
@@ -133,8 +133,8 @@ it('lets a second shooter edit their own absence, leaving the category alone', f
 });
 
 it('lets ManageCrew edit and delete anybody\'s absence', function () {
-    $owner = staffMember(StaffRole::Owner);
-    $nina = staffMember(StaffRole::SecondShooter);
+    $owner = staffMember(StaffRole::Admin);
+    $nina = staffMember(StaffRole::Contributor);
     $absence = Absence::factory()->for($nina)->create();
 
     $this->actingAs($owner, 'staff')

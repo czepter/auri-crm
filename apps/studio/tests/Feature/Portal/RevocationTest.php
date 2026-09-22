@@ -28,7 +28,7 @@ function revokeFromAdmin(Contact $contact): void
 {
     useSurface(Surface::ADMIN);
 
-    $staff = User::factory()->withMfa()->create(['role' => StaffRole::Owner]);
+    $staff = User::factory()->withMfa()->create(['role' => StaffRole::Admin]);
 
     test()->actingAs($staff, 'staff')
         ->post("/kontakte/{$contact->public_id}/portal-zugang/widerruf")

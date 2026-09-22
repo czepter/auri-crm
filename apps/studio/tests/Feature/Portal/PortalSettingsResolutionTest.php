@@ -210,7 +210,7 @@ it('clears the whole override set when every row is back on Standard', function 
 // never opened /einstellungen/portal is reached on.
 it('takes the contact number from the owner when the studio names none', function () {
     StudioSettings::query()->update(['portal_contact_phone' => null]);
-    staffMember(StaffRole::Owner)->update(['phone' => '0171 3948820']);
+    staffMember(StaffRole::Admin)->update(['phone' => '0171 3948820']);
 
     expect(settings()->contactLine()['phone'])->toBe('0171 3948820');
 

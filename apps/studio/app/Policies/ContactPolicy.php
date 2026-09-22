@@ -14,34 +14,34 @@ class ContactPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->role->allows(Capability::ManageContacts);
+        return $user->can(Capability::ManageContacts->value);
     }
 
     public function update(User $user, Contact $contact): bool
     {
-        return $user->role->allows(Capability::ManageContacts);
+        return $user->can(Capability::ManageContacts->value);
     }
 
     /** Cut this one contact's portal access off entirely (A-04) — never a project. */
     public function revokePortalAccess(User $user, Contact $contact): bool
     {
-        return $user->role->allows(Capability::ManagePortalAccess);
+        return $user->can(Capability::ManagePortalAccess->value);
     }
 
     public function sendPortalAccess(User $user, Contact $contact): bool
     {
-        return $user->role->allows(Capability::ManagePortalAccess);
+        return $user->can(Capability::ManagePortalAccess->value);
     }
 
     /** X-04: download everything the studio holds about this contact. */
     public function exportDsgvoData(User $user, Contact $contact): bool
     {
-        return $user->role->allows(Capability::ManageDsgvo);
+        return $user->can(Capability::ManageDsgvo->value);
     }
 
     /** X-04: erase this contact, and everything reachable from them, for good. */
     public function eraseDsgvoData(User $user, Contact $contact): bool
     {
-        return $user->role->allows(Capability::ManageDsgvo);
+        return $user->can(Capability::ManageDsgvo->value);
     }
 }

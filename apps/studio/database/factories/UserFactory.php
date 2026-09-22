@@ -15,7 +15,7 @@ class UserFactory extends Factory
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'password' => 'password',
-            'role' => \App\Enums\StaffRole::Owner,
+            'role' => \App\Enums\StaffRole::Admin,
         ];
     }
 
