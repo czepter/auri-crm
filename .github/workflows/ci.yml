@@ -22,7 +22,7 @@ jobs:
   # Enforces docs/branching.md rule 4. Deliberately has no `needs`, so it
   # reports a verdict even while the test jobs are still running.
   branch-rules:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     steps:
       - name: Check the pull request head branch
         env:
@@ -38,7 +38,7 @@ jobs:
           echo "OK: $HEAD -> main"
 
   changes:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     outputs:
       php: ${{ steps.filter.outputs.php }}
       web: ${{ steps.filter.outputs.web }}
@@ -93,7 +93,7 @@ jobs:
   studio:
     needs: changes
     if: needs.changes.outputs.php == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     services:
       postgres:
         image: postgres:18-alpine
@@ -210,7 +210,7 @@ jobs:
   web:
     needs: changes
     if: needs.changes.outputs.web == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     steps:
       - uses: actions/checkout@v7
       # No version here on purpose. package.json's packageManager field pins
@@ -227,7 +227,7 @@ jobs:
   e2e:
     needs: changes
     if: needs.changes.outputs.e2e == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     services:
       postgres:
         image: postgres:18-alpine
