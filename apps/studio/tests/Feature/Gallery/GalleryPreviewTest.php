@@ -30,13 +30,13 @@ it('mints a short-lived preview pass for the head button', function () {
 });
 
 it('refuses the head button for a role without manageMedia', function () {
-    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Assistant]), 'staff');
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Contributor]), 'staff');
 
     $this->post("/galerien/{$this->gallery->public_id}/vorschau")->assertForbidden();
 });
 
 it('refuses "Vorschaulink erzeugen" for a role without publish', function () {
-    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::SecondShooter]), 'staff');
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Contributor]), 'staff');
 
     $this->post("/galerien/{$this->gallery->public_id}/vorschau-link")->assertForbidden();
 });

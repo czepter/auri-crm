@@ -19,7 +19,7 @@ beforeEach(function () {
 });
 
 it('renders the numbering settings shell for an owner, one row per document type with a preview', function () {
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $props = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/einstellungen/nummernkreise')
         ->assertOk()
         ->viewData('page')['props'];
@@ -36,7 +36,7 @@ it('renders the numbering settings shell for an owner, one row per document type
 });
 
 it('updates a range and leaves an audit row naming the owner and every changed value', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $range = ($this->quoteRange)();
 
     $this->actingAs($owner, 'staff')
@@ -58,7 +58,7 @@ it('updates a range and leaves an audit row naming the owner and every changed v
 });
 
 it('raises the starting counter before anything has been issued, and the next allocation reflects it', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $range = ($this->quoteRange)();
 
     $this->actingAs($owner, 'staff')
@@ -75,7 +75,7 @@ it('raises the starting counter before anything has been issued, and the next al
 });
 
 it('refuses the same starting counter change once a document has been issued for the period', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $range = ($this->quoteRange)();
 
     app(AllocateDocumentNumber::class)(config('tenancy.tenant_id'), now('UTC')->year, DocumentType::Quote);
@@ -92,7 +92,7 @@ it('refuses the same starting counter change once a document has been issued for
 });
 
 it('still allows a prefix or reset rule change after a document has been issued, informationally only', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $range = ($this->quoteRange)();
 
     app(AllocateDocumentNumber::class)(config('tenancy.tenant_id'), now('UTC')->year, DocumentType::Quote);
@@ -112,7 +112,7 @@ it('still allows a prefix or reset rule change after a document has been issued,
 it('marks the starting counter as no longer settable in the settings props once a document has been issued', function () {
     app(AllocateDocumentNumber::class)(config('tenancy.tenant_id'), now('UTC')->year, DocumentType::Quote);
 
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $props = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/einstellungen/nummernkreise')
         ->assertOk()
         ->viewData('page')['props'];
@@ -124,7 +124,7 @@ it('marks the starting counter as no longer settable in the settings props once 
 it('rejects a prefix that is not all uppercase letters', function () {
     $range = ($this->quoteRange)();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch("/einstellungen/nummernkreise/{$range->public_id}", [
             'prefix' => 'an-2026',
             'reset_rule' => 'yearly',
@@ -144,11 +144,11 @@ it('opens the numbering screen to the owner, and gives every other role the same
         expect($response->status())->toBe($missing->status());
     }
 })->with([
-    [StaffRole::Owner, 200],
-    [StaffRole::Photographer, 404],
-    [StaffRole::Editor, 404],
-    [StaffRole::SecondShooter, 404],
-    [StaffRole::Assistant, 404],
+    [StaffRole::Admin, 200],
+    [StaffRole::Manager, 404],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Contributor, 404],
 ]);
 
 it('declares an audience on the numbering routes, same as every other admin route', function () {

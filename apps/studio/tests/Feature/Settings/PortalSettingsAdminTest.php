@@ -15,7 +15,7 @@ uses(RefreshDatabase::class);
 beforeEach(fn () => Cache::store('redis')->flush());
 
 it('hands every portal setting to the settings screen, every capability switch off by default', function () {
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $props = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/einstellungen/portal')
         ->assertOk()
         ->viewData('page')['props'];
@@ -28,7 +28,7 @@ it('hands every portal setting to the settings screen, every capability switch o
 });
 
 it('updates the maintenance switch, its message and the welcome text, and audits the owner', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen/portal', [
@@ -61,7 +61,7 @@ it('renders the portal home preview with the greeting of the asked state', funct
         'portal_welcome_done' => 'Eure Bilder liegen weiter hier.',
     ]);
 
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $props = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/einstellungen/portal/vorschau?zustand=done')
         ->viewData('page')['props'];
 
@@ -75,13 +75,13 @@ it('renders the portal home preview with the greeting of the asked state', funct
 it('prefers the typed greeting over the saved one', function () {
     StudioSettings::query()->update(['portal_welcome_inquiry' => 'Wir haben eure Anfrage.']);
 
-    expect($this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    expect($this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/einstellungen/portal/vorschau?zustand=inquiry&text=Noch+nicht+gespeichert')
         ->viewData('page')['props']['welcomeText'])->toBe('Noch nicht gespeichert');
 });
 
 it('hands the four legal texts and their templates to the Impressum & AGB screen', function () {
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $props = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/einstellungen/impressum-agb')
         ->assertOk()
         ->viewData('page')['props'];
@@ -94,7 +94,7 @@ it('hands the four legal texts and their templates to the Impressum & AGB screen
 });
 
 it('rejects a Datenschutz link that is not a URL', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch('/einstellungen/impressum-agb', [
             'portal_legal_datenschutz_url' => 'not-a-url',
         ])
@@ -102,7 +102,7 @@ it('rejects a Datenschutz link that is not a URL', function () {
 });
 
 it('stores the legal links and the attach switches on the Impressum & AGB route', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen/impressum-agb', [
@@ -131,11 +131,11 @@ it('gives every non-owner role the same response on the portal settings route as
         expect($response->status())->toBe($missing->status());
     }
 })->with([
-    [StaffRole::Owner, 200],
-    [StaffRole::Photographer, 404],
-    [StaffRole::Editor, 404],
-    [StaffRole::SecondShooter, 404],
-    [StaffRole::Assistant, 404],
+    [StaffRole::Admin, 200],
+    [StaffRole::Manager, 404],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Contributor, 404],
 ]);
 
 it('declares an audience on the portal settings route, same as every other admin route', function () {
@@ -148,7 +148,7 @@ it('declares an audience on the portal settings route, same as every other admin
 });
 
 it('leaves the settings a pane does not show untouched', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen/portal', [
@@ -177,7 +177,7 @@ it('leaves the settings a pane does not show untouched', function () {
 // Name und Bild waren vorher nirgends zu hinterlegen.
 it('stores the portal contact person, its picture and serves the picture on both surfaces', function () {
     Storage::fake('local');
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen/portal/kontakt', [
@@ -209,7 +209,7 @@ it('stores the portal contact person, its picture and serves the picture on both
 
 it('removes the contact picture and the file behind it', function () {
     Storage::fake('local');
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen/portal/kontakt', [
@@ -232,7 +232,7 @@ it('removes the contact picture and the file behind it', function () {
 it('shrinks the uploaded contact picture to the width the card needs', function () {
     Storage::fake('local');
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch('/einstellungen/portal/kontakt', [
             'portal_contact_avatar' => UploadedFile::fake()->image('kontakt.jpg', 2400, 1600),
         ])
@@ -249,7 +249,7 @@ it('shrinks the uploaded contact picture to the width the card needs', function 
 // Der Browser zeigte seine eigene Sprechblase und das Formular kam nie beim
 // Server an; jetzt steht der Fehler unter dem Feld.
 it('rejects a contact address that is not one, and a number that is not digits', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen/portal/kontakt', [
@@ -267,7 +267,7 @@ it('rejects a contact address that is not one, and a number that is not digits',
 });
 
 it('shows the offer shelf in the preview only while the switch is on', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $on = $this->actingAs($owner, 'staff')->get('/einstellungen/portal/vorschau?leistungen=1')->viewData('page')['props']['shelf'];
     $off = $this->actingAs($owner, 'staff')->get('/einstellungen/portal/vorschau?leistungen=0')->viewData('page')['props']['shelf'];
@@ -276,7 +276,7 @@ it('shows the offer shelf in the preview only while the switch is on', function 
 });
 
 it('rejects a contact phone that is not a phone number', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen/portal/kontakt', ['portal_contact_phone' => 'sadsdfdfs sdfsdfsd'])
@@ -288,7 +288,7 @@ it('rejects a contact phone that is not a phone number', function () {
 });
 
 it('draws the preview with the brand as typed, and ignores what is not a colour or a local blob', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $typed = $this->actingAs($owner, 'staff')
         ->get('/einstellungen/portal/vorschau?name=Atelier+Neu&akzent=%23112233&schrift=cormorant&logo=blob:http://x/1&adresse=Hafen+1')

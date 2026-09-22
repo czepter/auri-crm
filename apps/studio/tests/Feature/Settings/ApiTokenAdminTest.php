@@ -9,7 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 it('shows the plaintext token once, right after creating it', function () {
-    test()->actingAs(staffMember(StaffRole::Owner), 'staff')
+    test()->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/einstellungen/api-token', ['name' => 'n8n', 'scopes' => ['manage_contacts']])
         ->assertRedirect('/einstellungen/api-token');
 
@@ -23,7 +23,7 @@ it('shows the plaintext token once, right after creating it', function () {
 });
 
 it('rejects an unknown scope', function () {
-    test()->actingAs(staffMember(StaffRole::Owner), 'staff')
+    test()->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/einstellungen/api-token', ['name' => 'n8n', 'scopes' => ['not_a_capability']])
         ->assertInvalid(['scopes.0']);
 });
@@ -32,7 +32,7 @@ it('revokes a token so the API refuses it', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageContacts)->create();
     $bearer = 'Bearer '.bearerToken($token);
 
-    test()->actingAs(staffMember(StaffRole::Owner), 'staff')
+    test()->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->delete("/einstellungen/api-token/{$token->public_id}")
         ->assertRedirect('/einstellungen/api-token');
 
@@ -55,4 +55,4 @@ it('hides the api token screen from every non-owner role', function (StaffRole $
 
     expect(ApiToken::query()->count())->toBe(1)
         ->and($token->fresh()->isRevoked())->toBeFalse();
-})->with([StaffRole::Photographer, StaffRole::Editor, StaffRole::SecondShooter, StaffRole::Assistant]);
+})->with([StaffRole::Manager, StaffRole::Contributor, StaffRole::Contributor, StaffRole::Contributor]);

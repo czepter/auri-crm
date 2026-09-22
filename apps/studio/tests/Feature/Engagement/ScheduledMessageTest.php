@@ -32,7 +32,7 @@ it('holds a scheduled message in the thread instead of sending it', function () 
     $thread = scheduledThread();
     $when = now()->addDays(3);
 
-    $message = app(PostMessage::class)($thread, staffMember(StaffRole::Owner), 'Bis Montag.', $when);
+    $message = app(PostMessage::class)($thread, staffMember(StaffRole::Admin), 'Bis Montag.', $when);
 
     Notification::assertNothingSent();
     Bus::assertDispatched(SendScheduledMessage::class);
@@ -45,7 +45,7 @@ it('sends immediately when no time is given', function () {
     Notification::fake();
 
     $thread = scheduledThread();
-    $message = app(PostMessage::class)($thread, staffMember(StaffRole::Owner), 'Sofort.');
+    $message = app(PostMessage::class)($thread, staffMember(StaffRole::Admin), 'Sofort.');
 
     expect($message->fresh()->delivery_state)->toBe('sent')
         ->and($message->fresh()->scheduled_for)->toBeNull();
@@ -57,7 +57,7 @@ it('sends through the same path when the job fires', function () {
 
     $thread = scheduledThread();
     $when = now()->addDay();
-    $message = app(PostMessage::class)($thread, staffMember(StaffRole::Owner), 'Später.', $when);
+    $message = app(PostMessage::class)($thread, staffMember(StaffRole::Admin), 'Später.', $when);
 
     (new SendScheduledMessage($message, $when->toIso8601String()))->handle(app(SendStaffReply::class));
 
@@ -74,7 +74,7 @@ it('sends nothing when the message was cancelled before its job fired', function
 
     $thread = scheduledThread();
     $when = now()->addDay();
-    $message = app(PostMessage::class)($thread, staffMember(StaffRole::Owner), 'Doch nicht.', $when);
+    $message = app(PostMessage::class)($thread, staffMember(StaffRole::Admin), 'Doch nicht.', $when);
     $id = $message->id;
 
     $message->delete();
@@ -91,7 +91,7 @@ it('lets a stale job expire silently when the message was rescheduled', function
 
     $thread = scheduledThread();
     $original = now()->addDay();
-    $message = app(PostMessage::class)($thread, staffMember(StaffRole::Owner), 'Verschoben.', $original);
+    $message = app(PostMessage::class)($thread, staffMember(StaffRole::Admin), 'Verschoben.', $original);
 
     $message->update(['scheduled_for' => now()->addWeek()]);
 
@@ -109,7 +109,7 @@ it('never sends one message twice, however often its job runs', function () {
 
     $thread = scheduledThread();
     $when = now()->addDay();
-    $message = app(PostMessage::class)($thread, staffMember(StaffRole::Owner), 'Einmal.', $when);
+    $message = app(PostMessage::class)($thread, staffMember(StaffRole::Admin), 'Einmal.', $when);
     $send = app(SendStaffReply::class);
 
     (new SendScheduledMessage($message, $when->toIso8601String()))->handle($send);
@@ -129,7 +129,7 @@ it('never sends one message twice, however often its job runs', function () {
 it('refuses a send time already in the past', function () {
     $thread = scheduledThread();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/auftraege/{$thread->project->public_id}/nachrichten", [
             'body' => 'Rückwirkend.',
             'scheduled_for' => now()->subHour()->format('Y-m-d\TH:i'),
@@ -142,14 +142,14 @@ it('cancels a pending message from the thread screen, and only a pending one', f
     Bus::fake();
 
     $thread = scheduledThread();
-    $pending = app(PostMessage::class)($thread, staffMember(StaffRole::Owner), 'Wartet.', now()->addDay());
-    $sent = app(PostMessage::class)($thread, staffMember(StaffRole::Owner), 'Ist raus.');
+    $pending = app(PostMessage::class)($thread, staffMember(StaffRole::Admin), 'Wartet.', now()->addDay());
+    $sent = app(PostMessage::class)($thread, staffMember(StaffRole::Admin), 'Ist raus.');
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->delete("/auftraege/{$thread->project->public_id}/nachrichten/{$pending->public_id}")
         ->assertRedirect();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->delete("/auftraege/{$thread->project->public_id}/nachrichten/{$sent->public_id}")
         ->assertStatus(422);
 

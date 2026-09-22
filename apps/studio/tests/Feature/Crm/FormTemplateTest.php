@@ -126,18 +126,17 @@ it('deletes a template and logs it — nothing references it yet, so nothing to 
         ->and(AuditLog::where('event', 'form_template.deleted')->where('subject', $template->public_id)->exists())->toBeTrue();
 });
 
-it('opens the builder to every role ManageFormTemplates reaches — Owner, Photographer, Editor', function (StaffRole $role, int $status) {
+it('opens the builder to every role ManageFormTemplates reaches — Admin, Manager', function (StaffRole $role, int $status) {
     $this->actingAs(staffMember($role), 'staff')
         ->get('/vorlagen?typ=fragebogen')
         ->assertStatus($status);
 })->with([
-    [StaffRole::Owner, 200],
-    [StaffRole::Photographer, 200],
-    [StaffRole::Editor, 200],
+    [StaffRole::Admin, 200],
+    [StaffRole::Manager, 200],
     // Der Hub zeigt nur die Arten, die die Rolle führen darf — eine, die
     // Fragebögen nicht führt, findet die Ansicht gar nicht erst.
-    [StaffRole::SecondShooter, 404],
-    [StaffRole::Assistant, 404],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Reader, 404],
 ]);
 
 it('declares an audience on every form-template route, same as every other admin route', function () {

@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\DB;
 uses(RefreshDatabase::class);
 
 it('creates a staff user with a role, a tenant, and a public id', function () {
-    $user = User::factory()->create(['role' => StaffRole::Photographer]);
+    $user = User::factory()->create(['role' => StaffRole::Manager]);
 
-    expect($user->role)->toBe(StaffRole::Photographer)
+    expect($user->role)->toBe(StaffRole::Manager)
         ->and($user->tenant_id)->toBe(config('tenancy.tenant_id'))
         ->and($user->public_id)->toHaveLength(24)
         ->and($user->hasConfirmedMfa())->toBeFalse();

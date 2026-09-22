@@ -104,7 +104,7 @@ enum Capability: string
 
     /**
      * X-04: export or erase everything the studio holds about one contact.
-     * Owner-only like ManageStaff — this is not reversible work an audit
+     * Admin-only like ManageStaff — this is not reversible work an audit
      * trail can undo, it is the mechanism that answers a legal deadline, so
      * the same narrowness applies.
      */

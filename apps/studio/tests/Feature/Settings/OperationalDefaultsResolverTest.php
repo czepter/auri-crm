@@ -29,7 +29,7 @@ it('falls back to config(app.timezone) while the tenant timezone is unset', func
 });
 
 it('returns the tenant timezone once set, not the environment fallback', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $resolver = new StudioSettingsResolver;
 
     $resolver->set('timezone', 'Europe/Vienna', $owner);
@@ -49,7 +49,7 @@ it('treats an empty working_days set as every day, guarding the roll in dueFor()
 });
 
 it('writes one audit row per changed operational-defaults field', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $resolver = new StudioSettingsResolver;
 
     $resolver->set('timezone', 'Europe/Zurich', $owner);
@@ -65,7 +65,7 @@ it('leaves an existing stored timestamp exactly as it was, unaffected by an oper
     // never storage. A row's own created_at, read straight off the
     // database rather than through Eloquent's timezone-aware accessor, is
     // the one place a silent rewrite would actually show up.
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $project = Project::factory()->create();
     $before = DB::table('projects')->where('id', $project->id)->value('created_at');
 

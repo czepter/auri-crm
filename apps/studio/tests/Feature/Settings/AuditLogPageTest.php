@@ -17,7 +17,7 @@ function auditEntries(array $query = []): array
 }
 
 it('lists the entries newest first with a plain-text event, without the context', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $project = Project::factory()->create();
 
     AuditLogger::record('staff.logout', $owner);
@@ -33,14 +33,14 @@ it('lists the entries newest first with a plain-text event, without the context'
 });
 
 it('hides the page from everybody but the owner', function () {
-    $this->actingAs(staffMember(StaffRole::Photographer), 'staff')
+    $this->actingAs(staffMember(StaffRole::Manager), 'staff')
         ->get('/einstellungen/protokoll')
         ->assertNotFound();
 });
 
 it('filters by event, person and period', function () {
-    $owner = staffMember(StaffRole::Owner);
-    $other = staffMember(StaffRole::Photographer);
+    $owner = staffMember(StaffRole::Admin);
+    $other = staffMember(StaffRole::Manager);
 
     AuditLogger::record('staff.logout', $owner);
     AuditLogger::record('staff.logout', $other);
@@ -104,7 +104,7 @@ it('has a plain-text label for every event AuditLogger::record is called with', 
 });
 
 it('shows old and new value of a settings change', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     AuditLogger::record('studio_settings.updated', $owner, ['key' => 'retention_months', 'old' => 24, 'new' => 36]);
     AuditLogger::record('studio_settings.updated', $owner, ['keys' => ['payments_stripe_mode', 'payments_stripe_test_secret_key'], 'changes' => ['payments_stripe_mode' => ['test', 'live']]]);

@@ -12,7 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 it('previews a quote body against sample data with no unresolved placeholder', function () {
-    $response = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $response = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/dokumentvorlagen/vorschau', [
             'type' => 'quote',
             'body' => '<p>Angebot für {{ contact.name }} über {{ project.name }}.</p>',
@@ -26,7 +26,7 @@ it('previews a quote body against sample data with no unresolved placeholder', f
 });
 
 it('previews a mail body unwrapped, while a quote preview carries the letterhead shell', function () {
-    $mail = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $mail = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/dokumentvorlagen/vorschau', ['type' => 'mail', 'body' => '<p>Hallo {{ contact.name }}</p>'])
         ->assertOk();
 
@@ -34,13 +34,13 @@ it('previews a mail body unwrapped, while a quote preview carries the letterhead
 });
 
 it('refuses a preview for a role without ManageContracts', function () {
-    $this->actingAs(staffMember(StaffRole::SecondShooter), 'staff')
+    $this->actingAs(staffMember(StaffRole::Contributor), 'staff')
         ->post('/dokumentvorlagen/vorschau', ['type' => 'quote', 'body' => '<p>x</p>'])
         ->assertForbidden();
 });
 
 it('rejects a preview with an unknown document type', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/dokumentvorlagen/vorschau', ['type' => 'receipt', 'body' => '<p>x</p>'])
         ->assertInvalid(['type']);
 });
@@ -54,7 +54,7 @@ it('renders the preview against a chosen project', function () {
     $project = Project::factory()->create(['name' => 'Hochzeit Kowalski']);
     $project->attachContact(Contact::factory()->create(['name' => 'Lena Meier']), ProjectContactRole::Primary);
 
-    $html = test()->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $html = test()->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/dokumentvorlagen/vorschau', [
             'type' => 'mail',
             'body' => '<p>Hallo {{ contact.name }}, {{ project.name }}</p>',
@@ -68,7 +68,7 @@ it('renders the preview against a chosen project', function () {
 });
 
 it('falls back to the sample values when no project is chosen', function () {
-    $html = test()->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $html = test()->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/dokumentvorlagen/vorschau', [
             'type' => 'mail',
             'body' => '<p>{{ contact.name }}</p>',

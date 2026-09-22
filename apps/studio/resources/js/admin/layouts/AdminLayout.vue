@@ -316,7 +316,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
             >
                 {{ $t("settings.deletionOn", { date: page.props.studioDeletion }) }}
                 <Button
-                    v-if="user?.role === 'owner'"
+                    v-if="user?.role === 'admin'"
                     class="ml-auto"
                     variant="outline"
                     type="button"

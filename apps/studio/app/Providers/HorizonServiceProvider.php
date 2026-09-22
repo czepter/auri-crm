@@ -45,6 +45,6 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
      */
     protected function gate(): void
     {
-        Gate::define('viewHorizon', fn (?User $user) => $user?->role->allows(Capability::ManageStaff) ?? false);
+        Gate::define('viewHorizon', fn (?User $user) => $user?->can(Capability::ManageStaff->value) ?? false);
     }
 }

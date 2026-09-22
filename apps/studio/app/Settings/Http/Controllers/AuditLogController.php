@@ -26,7 +26,7 @@ class AuditLogController extends Controller
 
     public function index(Request $request, StudioSettingsResolver $settings): Response
     {
-        abort_unless(auth('staff')->user()?->role === StaffRole::Owner, 404);
+        abort_unless(auth('staff')->user()?->role === StaffRole::Admin, 404);
 
         $filters = $request->validate([
             'ereignis' => ['nullable', 'string'],

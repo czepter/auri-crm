@@ -16,7 +16,7 @@ it('names exactly the contacts a staff reply would reach', function () {
     $thread->participants()->create(['contact_id' => $contact->id]);
     // The staff member PostMessage records on a reply is a participant too,
     // and never a recipient.
-    $thread->participants()->create(['user_id' => staffMember(StaffRole::Owner)->id]);
+    $thread->participants()->create(['user_id' => staffMember(StaffRole::Admin)->id]);
 
     expect(ThreadData::fromModel($thread->fresh())->recipients)->toBe(['Lena Meier']);
 });

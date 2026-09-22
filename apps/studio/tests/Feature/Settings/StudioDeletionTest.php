@@ -68,7 +68,7 @@ function requestDeletionAt(string $when): void
 it('leaves no row in any table with a tenant_id', function () {
     Queue::fake();
     app(StudioSettingsResolver::class)->set('tax_number', '22/123/45678', null);
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $installment = creditableInstallment();
     $project = $installment->invoice->project;
     app(IssueCreditNote::class)($installment->invoice, 25_000, 'Nachlass');
@@ -117,7 +117,7 @@ it('removes the files of the studio from both disks and only those', function ()
 });
 
 it('keeps the studio until the day, then deletes it and reminds the day before', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     requestDeletionAt(now()->toDateTimeString());
     $day = app(StudioSettingsResolver::class)->deletionDate();
 
@@ -139,7 +139,7 @@ it('keeps the studio until the day, then deletes it and reminds the day before',
 });
 
 it('does nothing without a deletion request', function () {
-    staffMember(StaffRole::Owner);
+    staffMember(StaffRole::Admin);
 
     $this->artisan('studio:delete-due')->assertSuccessful();
 
@@ -147,7 +147,7 @@ it('does nothing without a deletion request', function () {
 });
 
 it('withdraws the request on cancel', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     requestDeletionAt(now()->toDateTimeString());
 
     $this->actingAs($owner, 'staff')->delete(CODE_PATH)->assertRedirect();
@@ -161,7 +161,7 @@ it('withdraws the request on cancel', function () {
 });
 
 it('hides the page and every action from everybody but the owner', function () {
-    $photographer = staffMember(StaffRole::Photographer);
+    $photographer = staffMember(StaffRole::Manager);
 
     $this->actingAs($photographer, 'staff')->get(CODE_PATH)->assertNotFound();
     $this->actingAs($photographer, 'staff')->post(CODE_PATH.'/code')->assertNotFound();
@@ -173,7 +173,7 @@ it('hides the page and every action from everybody but the owner', function () {
 });
 
 it('marks the studio only for the code that was mailed, once', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')->post(CODE_PATH, ['code' => '123456'])->assertSessionHasErrors('code');
 
@@ -195,7 +195,7 @@ it('marks the studio only for the code that was mailed, once', function () {
 });
 
 it('rejects an expired code and a replaced one', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')->post(CODE_PATH.'/code');
     $first = mailedCode($owner);
@@ -217,7 +217,7 @@ it('rejects an expired code and a replaced one', function () {
 });
 
 it('locks out after five wrong codes, even for the right one', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')->post(CODE_PATH.'/code');
     $code = mailedCode($owner);
@@ -231,7 +231,7 @@ it('locks out after five wrong codes, even for the right one', function () {
 });
 
 it('names the code and the day in the mails', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     expect((string) (new StudioDeletionCode($owner->name, '482913'))->toMail($owner)->render())->toContain('482913')->toContain('30 Tagen')
         ->and((string) (new StudioDeletionReminder($owner->name, now()->setDate(2026, 10, 21)))->toMail($owner)->render())->toContain('21.10.2026');

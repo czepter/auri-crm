@@ -13,7 +13,7 @@ uses(RefreshDatabase::class);
 beforeEach(fn () => Cache::store('redis')->flush());
 
 it('hands the payment and receipt defaults to their pages', function (string $path, string $pane) {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get($path)
         ->assertOk()
         ->assertInertia(fn ($page) => $page->where('pane', $pane)->has('settings', fn ($settings) => $settings
@@ -30,7 +30,7 @@ it('hands the payment and receipt defaults to their pages', function (string $pa
 ]);
 
 it('updates the payment defaults, redirects, and audits the owner', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->from('/einstellungen/zahlung')
@@ -50,7 +50,7 @@ it('updates the payment defaults, redirects, and audits the owner', function () 
 });
 
 it('updates the receipt settings and leaves the payment fields alone', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->from('/einstellungen/belege')
         ->patch('/einstellungen/belege', [
             'quote_validity_days' => 30,
@@ -71,7 +71,7 @@ it('updates the receipt settings and leaves the payment fields alone', function 
 });
 
 it('saves only the fields a page sends', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')->patch('/einstellungen/belege', ['quote_validity_days' => 30]);
     $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlung', ['payment_term_days' => 7]);
@@ -85,13 +85,13 @@ it('saves only the fields a page sends', function () {
 });
 
 it('rejects a deposit_percentage outside 0-10000 basis points', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch('/einstellungen/zahlung', ['deposit_percentage' => 10001])
         ->assertInvalid(['deposit_percentage']);
 });
 
 it('rejects a negative payment_term_days or quote_validity_days', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlung', ['payment_term_days' => -1])->assertInvalid(['payment_term_days']);
     $this->actingAs($owner, 'staff')->patch('/einstellungen/belege', ['quote_validity_days' => -1])->assertInvalid(['quote_validity_days']);
@@ -109,11 +109,11 @@ it('gives every non-owner role the same response on the payment route as a route
         expect($response->status())->toBe($missing->status());
     }
 })->with([
-    [StaffRole::Owner, 302],
-    [StaffRole::Photographer, 404],
-    [StaffRole::Editor, 404],
-    [StaffRole::SecondShooter, 404],
-    [StaffRole::Assistant, 404],
+    [StaffRole::Admin, 302],
+    [StaffRole::Manager, 404],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Contributor, 404],
 ]);
 
 it('declares an audience on the payment and receipt routes, same as every other admin route', function (string $uri) {

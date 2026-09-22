@@ -29,7 +29,7 @@ it('edits a draft Fassung in place and leaves the version number alone', functio
 
     $contract = draftContract();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch("/vertraege/{$contract->public_id}", ['body' => '<p>§ 1 Gegenstand</p>'])
         ->assertRedirect();
 
@@ -47,7 +47,7 @@ it('starts the next Fassung instead of touching a sent one, and carries its sign
     $contract->signers()->create(['contact_id' => $contact->id, 'signed_at' => now()]);
     $contract->markSent();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch("/vertraege/{$contract->public_id}", ['body' => '<p>§ 4 Zweitfotografin</p>'])
         ->assertRedirect();
 
@@ -73,7 +73,7 @@ it('keeps the signed Fassung valid until the new one is sent', function () {
 
     expect($signed->fresh()->state)->toBe(ContractState::Valid);
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/vertraege/{$draft->public_id}/versenden")
         ->assertRedirect();
 
@@ -86,7 +86,7 @@ it('refuses to send anything but a draft', function () {
     $contract = draftContract();
     $contract->markSent();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/vertraege/{$contract->public_id}/versenden")
         ->assertStatus(422);
 });
@@ -102,7 +102,7 @@ it('renders the Fassung’s own wording rather than the template it started from
 it('refuses editing for a role without ManageContracts', function () {
     $contract = draftContract();
 
-    $this->actingAs(staffMember(StaffRole::SecondShooter), 'staff')
+    $this->actingAs(staffMember(StaffRole::Contributor), 'staff')
         ->patch("/vertraege/{$contract->public_id}", ['body' => '<p>x</p>'])
         ->assertForbidden();
 });
@@ -112,7 +112,7 @@ it('adds only project contacts as signers, and never deletes one that has signed
     $contract = draftContract($project);
     $contact = $project->contacts()->sole();
     $stranger = Contact::factory()->create();
-    $staff = staffMember(StaffRole::Owner);
+    $staff = staffMember(StaffRole::Admin);
 
     $this->actingAs($staff, 'staff')
         ->post("/vertraege/{$contract->public_id}/unterzeichner", ['contact' => $stranger->public_id])
@@ -140,7 +140,7 @@ it('records a reminder without sending mail — there is no client-facing contra
     $contract = draftContract($project);
     $signer = $contract->signers()->create(['contact_id' => $project->contacts()->sole()->id]);
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/unterzeichner/{$signer->public_id}/erinnerung")
         ->assertRedirect();
 
@@ -168,7 +168,7 @@ it('numbers a second contract for the same project as the next Fassung', functio
     $template = DocumentTemplate::factory()->create();
     draftContract($project);
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/auftraege/{$project->public_id}/vertraege", ['template' => $template->public_id])
         ->assertRedirect();
 

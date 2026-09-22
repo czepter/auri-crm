@@ -17,7 +17,7 @@ trait AuthorizesStaffSettings
     private function authorizeSettings(): void
     {
         abort_unless(
-            auth('staff')->user()?->role->allows(Capability::ManageSettings) ?? false,
+            auth('staff')->user()?->can(Capability::ManageSettings->value) ?? false,
             404,
         );
     }

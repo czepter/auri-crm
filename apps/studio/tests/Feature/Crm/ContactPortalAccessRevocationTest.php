@@ -12,7 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->staff = User::factory()->withMfa()->create(['role' => StaffRole::Owner]);
+    $this->staff = User::factory()->withMfa()->create(['role' => StaffRole::Admin]);
 });
 
 /**
@@ -98,7 +98,7 @@ it('distinguishes hiding a project from revoking a contact in the audit log', fu
 it('refuses a role without portal access management', function () {
     $contact = Contact::factory()->create();
 
-    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Assistant]), 'staff')
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Contributor]), 'staff')
         ->post("/kontakte/{$contact->public_id}/portal-zugang/widerruf")
         ->assertForbidden();
 });

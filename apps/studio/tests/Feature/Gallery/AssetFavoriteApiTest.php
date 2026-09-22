@@ -134,7 +134,7 @@ it('returns an empty list for a pass-less read rather than every guest\'s favori
 it('notifies every staff user of the tenant through the unread stream when a favorite is added', function () {
     $version = publishedVersionWithAssets();
     [$me, $pass] = confirmedGuest($version->gallery);
-    $staff = User::factory()->create(['role' => StaffRole::Owner]);
+    $staff = User::factory()->create(['role' => StaffRole::Admin]);
 
     $this->postJson(
         "/api/gallery-versions/{$version->public_id}/favorites/galleries/g1/a.jpg",
@@ -147,7 +147,7 @@ it('notifies every staff user of the tenant through the unread stream when a fav
 it('does not notify the studio when a favorite is removed', function () {
     $version = publishedVersionWithAssets();
     [$me, $pass] = confirmedGuest($version->gallery);
-    $staff = User::factory()->create(['role' => StaffRole::Owner]);
+    $staff = User::factory()->create(['role' => StaffRole::Admin]);
     $path = "/api/gallery-versions/{$version->public_id}/favorites/galleries/g1/a.jpg";
 
     $this->postJson($path, ['guest_pass' => $pass])->assertOk()->assertJson(['favorited' => true]);

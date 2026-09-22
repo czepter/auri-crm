@@ -11,7 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff');
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff');
     $this->type = ProjectType::query()->where('key', 'wedding')->sole();
 });
 
@@ -137,7 +137,7 @@ it('hands the panel the fields of every type', function () {
 it('withholds the fields from a role that may not configure them', function () {
     field();
 
-    $this->actingAs(staffMember(StaffRole::SecondShooter), 'staff')
+    $this->actingAs(staffMember(StaffRole::Contributor), 'staff')
         ->post("/projekttypen/{$this->type->public_id}/felder", [
             'label' => 'Gäste',
             'type' => ProjectFieldType::Number->value,

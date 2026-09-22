@@ -45,7 +45,7 @@ class Absence extends Model
      */
     public function scopeVisibleTo(Builder $query, User $user): void
     {
-        if ($user->role->allows(Capability::ManageCrew)) {
+        if ($user->can(Capability::ManageCrew->value)) {
             return;
         }
 

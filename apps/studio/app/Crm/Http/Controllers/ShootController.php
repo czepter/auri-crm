@@ -28,7 +28,7 @@ class ShootController extends Controller
     public function create(Request $request): Response
     {
         $viewer = $request->user('staff');
-        abort_unless($viewer->role->allows(Capability::ManageShoots), 403);
+        abort_unless($viewer->can(Capability::ManageShoots->value), 403);
 
         $project = $request->filled('projekt')
             ? Project::query()->visibleTo($viewer)->where('public_id', $request->query('projekt'))->first()

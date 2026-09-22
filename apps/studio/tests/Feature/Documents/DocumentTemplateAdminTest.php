@@ -11,7 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 it('creates a first template version', function () {
-    $staff = staffMember(StaffRole::Owner);
+    $staff = staffMember(StaffRole::Admin);
 
     $this->actingAs($staff, 'staff')
         ->post('/dokumentvorlagen', ['name' => 'Hochzeit', 'body' => '<p>{{ project.name }}</p>', 'type' => 'quote'])
@@ -25,7 +25,7 @@ it('creates a first template version', function () {
 });
 
 it('creates an invoice or mail template exactly the same way as a quote one', function (string $type) {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/dokumentvorlagen', ['name' => 'Standard', 'body' => '<p>{{ project.name }}</p>', 'type' => $type])
         ->assertRedirect('/dokumentvorlagen');
 
@@ -35,13 +35,13 @@ it('creates an invoice or mail template exactly the same way as a quote one', fu
 it('rejects an unknown document type', function () {
     // 'invoice' was this test's example of an unknown type until T-15 made
     // it the fourth real one.
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/dokumentvorlagen', ['name' => 'X', 'body' => '<p>x</p>', 'type' => 'receipt'])
         ->assertInvalid(['type']);
 });
 
 it('accepts an optional shoot kind variant', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/dokumentvorlagen', ['name' => 'Hochzeit', 'body' => '<p>x</p>', 'type' => 'quote', 'shoot_kind' => 'wedding'])
         ->assertRedirect('/dokumentvorlagen');
 
@@ -49,7 +49,7 @@ it('accepts an optional shoot kind variant', function () {
 });
 
 it('creates a new version rather than mutating on update', function () {
-    $staff = staffMember(StaffRole::Owner);
+    $staff = staffMember(StaffRole::Admin);
     $template = DocumentTemplate::factory()->create(['body' => '<p>v1</p>']);
 
     $this->actingAs($staff, 'staff')
@@ -70,7 +70,7 @@ it('creates a new version rather than mutating on update', function () {
 it('keeps block content through a new version, and sanitises it on the way', function () {
     $template = DocumentTemplate::factory()->create();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch("/dokumentvorlagen/{$template->public_id}", [
             'name' => $template->name,
             'body' => '<p>Neu</p>',
@@ -84,7 +84,7 @@ it('keeps block content through a new version, and sanitises it on the way', fun
 });
 
 it('404s editing a superseded version', function () {
-    $staff = staffMember(StaffRole::Owner);
+    $staff = staffMember(StaffRole::Admin);
     $template = DocumentTemplate::factory()->create();
     $template->newVersion(['name' => $template->name, 'body' => '<p>v2</p>']);
 
@@ -94,15 +94,14 @@ it('404s editing a superseded version', function () {
 it('opens the template list to every role that manages contracts, and refuses the ones that cannot', function (StaffRole $role, int $status) {
     $this->actingAs(staffMember($role), 'staff')->get('/vorlagen?typ=dokumente')->assertStatus($status);
 })->with([
-    [StaffRole::Owner, 200],
-    [StaffRole::Photographer, 200],
-    [StaffRole::Editor, 200],
-    [StaffRole::SecondShooter, 404],
-    [StaffRole::Assistant, 404],
+    [StaffRole::Admin, 200],
+    [StaffRole::Manager, 200],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Reader, 404],
 ]);
 
 it('stores the editor blocks next to the serialized body', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/dokumentvorlagen', [
             'name' => 'Fotovertrag',
             'type' => 'quote',
@@ -123,7 +122,7 @@ it('stores the editor blocks next to the serialized body', function () {
 });
 
 it('refuses a block the document type may not use', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/dokumentvorlagen', [
             'name' => 'Angebotsmail',
             'type' => 'mail',
@@ -137,7 +136,7 @@ it('refuses a block the document type may not use', function () {
 });
 
 it('accepts a template saved without blocks, the way an untouched legacy row is', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/dokumentvorlagen', [
             'name' => 'Alt',
             'type' => 'quote',
@@ -150,7 +149,7 @@ it('accepts a template saved without blocks, the way an untouched legacy row is'
 });
 
 it('gives the create screen a palette for its type and the merge-field samples', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/dokumentvorlagen/neu')
         ->assertInertia(fn ($page) => $page
             ->component('DocumentTemplates/Create')
@@ -163,7 +162,7 @@ it('gives the create screen a palette for its type and the merge-field samples',
 it('gives the edit screen the palette for the template it is editing', function () {
     $template = DocumentTemplate::factory()->create(['type' => 'mail']);
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get("/dokumentvorlagen/{$template->public_id}")
         ->assertInertia(fn ($page) => $page
             ->component('DocumentTemplates/Edit')
@@ -176,7 +175,7 @@ it('gives the edit screen the palette for the template it is editing', function 
 });
 
 it('refuses a body carrying an href with an unsafe scheme', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/dokumentvorlagen', [
             'name' => 'Angebotsmail',
             'type' => 'mail',
@@ -189,7 +188,7 @@ it('refuses a body carrying an href with an unsafe scheme', function () {
 });
 
 it('sanitises block html on the way into storage, not merely on the way out', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/dokumentvorlagen', [
             'name' => 'Fotovertrag',
             'type' => 'quote',
@@ -205,7 +204,7 @@ it('sanitises block html on the way into storage, not merely on the way out', fu
 // --- T-16: starters on the create screen --------------------------------
 
 it('opens the create screen on the catalog rather than on an empty canvas', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/dokumentvorlagen/neu')
         ->assertOk()
         ->assertInertia(function ($page) {
@@ -223,7 +222,7 @@ it('creates a tenant-owned first version whose blocks are the starter\'s own', f
     $starter = StarterTemplateCatalog::find('quote-generic');
     $body = StarterBlockSerializer::toHtml($starter['blocks']);
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/dokumentvorlagen', [
             'name' => $starter['name'],
             'type' => $starter['type'],

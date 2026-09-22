@@ -66,7 +66,7 @@ it('refuses staff a reply when no thread exists yet, rather than starting one on
 });
 
 it('lets a second shooter reply on the thread of a project they are crewed on', function () {
-    $nina = User::factory()->withMfa()->create(['role' => StaffRole::SecondShooter]);
+    $nina = User::factory()->withMfa()->create(['role' => StaffRole::Contributor]);
     $project = Project::factory()->create();
     $shoot = Shoot::factory()->for($project)->create();
     CrewAssignment::factory()->for($shoot)->for($nina)->create();
@@ -81,7 +81,7 @@ it('lets a second shooter reply on the thread of a project they are crewed on', 
 });
 
 it('refuses a second shooter the thread of a project they are not crewed on', function () {
-    $nina = User::factory()->withMfa()->create(['role' => StaffRole::SecondShooter]);
+    $nina = User::factory()->withMfa()->create(['role' => StaffRole::Contributor]);
     $project = Project::factory()->create();
     Shoot::factory()->for($project)->create();
     $contact = Contact::factory()->create();

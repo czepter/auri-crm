@@ -41,7 +41,7 @@ function t06Invitation(): StaffInvitation
     return StaffInvitation::create([
         'email' => 'nina@nordlicht.test',
         'name' => 'Nina Sturm',
-        'role' => StaffRole::SecondShooter,
+        'role' => StaffRole::Contributor,
         'token_hash' => StaffInvitation::hash('raw-token'),
         'expires_at' => now()->addDays(7),
         'invited_by_id' => User::factory()->create()->id,
@@ -49,7 +49,7 @@ function t06Invitation(): StaffInvitation
 }
 
 it("leaves ClientAccessLink's mail under the tenant's own address, sourced live at send time with no deploy", function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $contact = Contact::factory()->create();
 
     // First send, before any tenant override — the env default.
@@ -74,7 +74,7 @@ it("leaves ClientAccessLink's mail under the tenant's own address, sourced live 
 });
 
 it('sets reply-to and BCC on ClientAccessLink only when the tenant configured them', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $contact = Contact::factory()->create();
 
     $bare = (new ClientAccessLink($contact, 'https://example.test/zugang', new StudioSettingsResolver))->toMail($contact);
@@ -90,7 +90,7 @@ it('sets reply-to and BCC on ClientAccessLink only when the tenant configured th
 });
 
 it("appends the studio's signature block as its own line on ClientAccessLink", function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $contact = Contact::factory()->create();
     (new StudioSettingsResolver)->set('mail_signature', 'Herzliche Grüße, das Team von Atelier Nordlicht', $owner);
 
@@ -102,7 +102,7 @@ it("appends the studio's signature block as its own line on ClientAccessLink", f
 it(
     "carries the same legal particulars in ClientAccessLink's footer that the studio.* merge fields read, from one source",
     function () {
-        $owner = staffMember(StaffRole::Owner);
+        $owner = staffMember(StaffRole::Admin);
         $contact = Contact::factory()->create();
         $settings = new StudioSettingsResolver;
         $settings->set('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
@@ -141,7 +141,7 @@ it('omits the footer line entirely when the studio has entered no legal particul
 });
 
 it("leaves StaffInvited's mail under the tenant's own address, resolved live at send time", function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $invitation = t06Invitation();
 
     $first = (new StaffInvited($invitation, 'https://example.test/einladung/raw', new StudioSettingsResolver))
@@ -160,7 +160,7 @@ it("leaves StaffInvited's mail under the tenant's own address, resolved live at 
 it(
     "carries the same legal particulars in StaffInvited's footer that the studio.* merge fields read",
     function () {
-        $owner = staffMember(StaffRole::Owner);
+        $owner = staffMember(StaffRole::Admin);
         $invitation = t06Invitation();
         (new StudioSettingsResolver)->set('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
         (new StudioSettingsResolver)->set('city', 'Hamburg', $owner);
@@ -175,7 +175,7 @@ it(
 );
 
 it("renders the studio's legal particulars inside the layout's footer zone, not as a body paragraph", function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $contact = Contact::factory()->create();
     $settings = new StudioSettingsResolver;
     $settings->set('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);

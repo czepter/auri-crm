@@ -10,13 +10,13 @@ uses(RefreshDatabase::class);
 // "/team" tests lean on. Passed explicitly below anyway, so which role is
 // being asserted is visible at the call site.
 it('lets a ManageStaff session reach horizon', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')->get('/horizon')->assertOk();
 });
 
 it('refuses horizon to a staff session without ManageStaff', function () {
-    $photographer = staffMember(StaffRole::Photographer);
+    $photographer = staffMember(StaffRole::Manager);
 
     $this->actingAs($photographer, 'staff')->get('/horizon')->assertForbidden();
 });
@@ -32,7 +32,7 @@ it('still denies a session without ManageStaff in the local environment', functi
     // drop it; this fails on the stock behaviour and passes on the override.
     app()->instance('env', 'local');
 
-    $photographer = staffMember(StaffRole::Photographer);
+    $photographer = staffMember(StaffRole::Manager);
 
     $this->actingAs($photographer, 'staff')->get('/horizon')->assertForbidden();
 });

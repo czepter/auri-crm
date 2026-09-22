@@ -16,7 +16,7 @@ beforeEach(fn () => Cache::store('redis')->flush());
 it('hands the resolved mail identity to the settings screen', function () {
     config(['mail.from.address' => 'hello@example.com', 'mail.from.name' => 'Example']);
 
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $props = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/einstellungen/allgemein')
         ->assertOk()
         ->viewData('page')['props'];
@@ -30,7 +30,7 @@ it('hands the resolved mail identity to the settings screen', function () {
 });
 
 it('updates the mail identity, redirects to the shell, and audits the owner', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->from('/einstellungen/email')
@@ -52,7 +52,7 @@ it('updates the mail identity, redirects to the shell, and audits the owner', fu
 });
 
 it('leaves the sender to the environment: no field writes it, and a reset empties an inherited one', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')->patch('/einstellungen/email', [
         'mail_from_name' => 'Atelier Nordlicht',
@@ -75,7 +75,7 @@ it('leaves the sender to the environment: no field writes it, and a reset emptie
 });
 
 it('rejects a reply-to or bcc address that is not a valid email', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch('/einstellungen/email', [
             'mail_reply_to' => 'not-an-email',
             'mail_bcc' => 'also-not-an-email',
@@ -84,7 +84,7 @@ it('rejects a reply-to or bcc address that is not a valid email', function () {
 });
 
 it('clears an optional field back to null when submitted blank', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')->patch('/einstellungen/email', [
         'mail_reply_to' => 'buero@nordlicht.test',
@@ -110,11 +110,11 @@ it('opens the mail identity route to the owner, and gives every other role the s
         expect($response->status())->toBe($missing->status());
     }
 })->with([
-    [StaffRole::Owner, 302],
-    [StaffRole::Photographer, 404],
-    [StaffRole::Editor, 404],
-    [StaffRole::SecondShooter, 404],
-    [StaffRole::Assistant, 404],
+    [StaffRole::Admin, 302],
+    [StaffRole::Manager, 404],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Contributor, 404],
 ]);
 
 it('declares an audience on the mail identity route, same as every other admin route', function () {

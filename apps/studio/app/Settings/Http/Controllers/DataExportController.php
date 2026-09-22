@@ -29,7 +29,7 @@ class DataExportController extends Controller
         return Inertia::render('Settings/Export', [
             'contacts' => $records->contactQuery()->count(),
             'projects' => $records->projectQuery()->count(),
-            'archives' => auth('staff')->user()->role === StaffRole::Owner ? $this->archives() : null,
+            'archives' => auth('staff')->user()->role === StaffRole::Admin ? $this->archives() : null,
         ]);
     }
 

@@ -40,7 +40,7 @@ it('resolves the seeded row through a plain, container-constructed instance', fu
 });
 
 it('makes a write visible to a completely fresh resolver instance, with no cache-clear command', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     // Warm the cache the way a long-running worker process would — reading
     // once before anything changes.
@@ -59,7 +59,7 @@ it('makes a write visible to a completely fresh resolver instance, with no cache
 });
 
 it('lets a job popped by a real queue worker read a setting the web process changed', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     (new StudioSettingsResolver)->set('display_name', 'Atelier Nordlicht', $owner);
 
@@ -80,7 +80,7 @@ it('lets a job popped by a real queue worker read a setting the web process chan
 });
 
 it('writes an audit row naming the actor, the key and both values', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     (new StudioSettingsResolver)->set('display_name', 'Atelier Nordlicht', $owner);
 
@@ -93,7 +93,7 @@ it('writes an audit row naming the actor, the key and both values', function () 
 });
 
 it('leaves no audit row for a write that changes nothing', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $resolver = new StudioSettingsResolver;
 
     $resolver->set('display_name', null, $owner);
@@ -102,7 +102,7 @@ it('leaves no audit row for a write that changes nothing', function () {
 });
 
 it('returns T-02\'s legal-entity, brand and bank columns as one plain array', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     (new StudioSettingsResolver)->set('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
 
     $attributes = (new StudioSettingsResolver)->attributes();
@@ -113,7 +113,7 @@ it('returns T-02\'s legal-entity, brand and bank columns as one plain array', fu
 
 it('stores the uploaded logo once and resolves the same path from an independent instance — what a PDF render and a portal read would both consume', function () {
     Storage::fake('local');
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     (new StudioSettingsResolver)->setLogo(UploadedFile::fake()->image('logo.png'), $owner);
 
@@ -128,7 +128,7 @@ it('stores the uploaded logo once and resolves the same path from an independent
 
 it('deletes the previous logo file when a new one replaces it', function () {
     Storage::fake('local');
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     (new StudioSettingsResolver)->setLogo(UploadedFile::fake()->image('first.png'), $owner);
     $firstPath = (new StudioSettingsResolver)->logoPath();
@@ -143,7 +143,7 @@ it('deletes the previous logo file when a new one replaces it', function () {
 
 it('writes an audit row for a logo upload naming the actor', function () {
     Storage::fake('local');
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     (new StudioSettingsResolver)->setLogo(UploadedFile::fake()->image('logo.png'), $owner);
 

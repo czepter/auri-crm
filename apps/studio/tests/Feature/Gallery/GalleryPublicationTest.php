@@ -90,7 +90,7 @@ it('keeps publishing away from a role that may not show things to clients', func
     // the right capability rather than merely to "has no capabilities at
     // all". SecondShooter holds neither and would pass just as well if
     // the policy checked ManageShoots by mistake.
-    $editor = User::factory()->withMfa()->create(['role' => StaffRole::Editor]);
+    $editor = User::factory()->withMfa()->create(['role' => StaffRole::Contributor]);
 
     $this->actingAs($editor, 'staff')
         ->post("/galerien/{$this->gallery->public_id}/veroeffentlichen")

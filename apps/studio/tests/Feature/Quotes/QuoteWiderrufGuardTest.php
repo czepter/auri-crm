@@ -30,7 +30,7 @@ function draftQuote(): Quote
 it('refuses to send while no Widerrufsbelehrung is set', function () {
     $quote = draftQuote();
 
-    expect(fn () => app(MarkQuoteSent::class)($quote, 'mail', staffMember(StaffRole::Owner)))
+    expect(fn () => app(MarkQuoteSent::class)($quote, 'mail', staffMember(StaffRole::Admin)))
         ->toThrow(ValidationException::class);
 
     expect($quote->fresh()->status)->toBe(QuoteStatus::Draft);
@@ -39,7 +39,7 @@ it('refuses to send while no Widerrufsbelehrung is set', function () {
 it('refuses the self-sent channel for the same reason', function () {
     $quote = draftQuote();
 
-    expect(fn () => app(MarkQuoteSent::class)($quote, 'self', staffMember(StaffRole::Owner)))
+    expect(fn () => app(MarkQuoteSent::class)($quote, 'self', staffMember(StaffRole::Admin)))
         ->toThrow(ValidationException::class);
 });
 
@@ -48,7 +48,7 @@ it('lets the quote out once an address is on file', function () {
     Cache::store('redis')->flush();
 
     $quote = draftQuote();
-    app(MarkQuoteSent::class)($quote, 'mail', staffMember(StaffRole::Owner));
+    app(MarkQuoteSent::class)($quote, 'mail', staffMember(StaffRole::Admin));
 
     expect($quote->fresh()->status)->toBe(QuoteStatus::Sent);
 });
@@ -58,7 +58,7 @@ it('takes a template as the source just as well', function () {
     Cache::store('redis')->flush();
 
     $quote = draftQuote();
-    app(MarkQuoteSent::class)($quote, 'mail', staffMember(StaffRole::Owner));
+    app(MarkQuoteSent::class)($quote, 'mail', staffMember(StaffRole::Admin));
 
     expect($quote->fresh()->status)->toBe(QuoteStatus::Sent);
 });

@@ -26,7 +26,7 @@ function opsToken(Capability ...$scopes): string
 it('assigns crew, lists it and removes an assignment', function () {
     $this->withHeader('Authorization', 'Bearer '.opsToken(Capability::ManageCrew));
     $shoot = Shoot::factory()->create();
-    $user = User::factory()->create(['role' => StaffRole::SecondShooter]);
+    $user = User::factory()->create(['role' => StaffRole::Contributor]);
 
     $staffId = $this->getJson('/api/staff')->assertOk()->json('data.0.id');
     expect($staffId)->not->toBeNull();

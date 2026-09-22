@@ -15,7 +15,7 @@ function invite(array $overrides = []): StaffInvitation
     return StaffInvitation::create([
         'email' => 'nina@nordlicht.test',
         'name' => 'Nina Sturm',
-        'role' => StaffRole::SecondShooter,
+        'role' => StaffRole::Contributor,
         'token_hash' => StaffInvitation::hash('raw-token'),
         'expires_at' => now()->addDays(7),
         'invited_by_id' => User::factory()->create()->id,
@@ -28,20 +28,20 @@ it('lets only a role with staff management invite', function (StaffRole $role, i
         ->get('/team')
         ->assertStatus($status);
 })->with([
-    [StaffRole::Owner, 200],
-    [StaffRole::Photographer, 403],
-    [StaffRole::Editor, 403],
-    [StaffRole::SecondShooter, 403],
+    [StaffRole::Admin, 200],
+    [StaffRole::Manager, 403],
+    [StaffRole::Contributor, 403],
+    [StaffRole::Contributor, 403],
 ]);
 
 it('sends an invitation carrying a link', function () {
     Notification::fake();
 
-    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Owner]), 'staff')
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Admin]), 'staff')
         ->post('/team/einladungen', [
             'email' => 'nina@nordlicht.test',
             'name' => 'Nina Sturm',
-            'role' => StaffRole::SecondShooter->value,
+            'role' => StaffRole::Contributor->value,
         ])->assertRedirect();
 
     expect(StaffInvitation::sole()->email)->toBe('nina@nordlicht.test');
@@ -61,11 +61,11 @@ it('stores the token as a hash and never in the clear', function () {
 it('keeps the token out of the audit row', function () {
     Notification::fake();
 
-    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Owner]), 'staff')
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Admin]), 'staff')
         ->post('/team/einladungen', [
             'email' => 'nina@nordlicht.test',
             'name' => 'Nina Sturm',
-            'role' => StaffRole::SecondShooter->value,
+            'role' => StaffRole::Contributor->value,
         ]);
 
     $context = App\Models\AuditLog::where('event', 'staff.invited')->sole()->context;
@@ -99,7 +99,7 @@ it('creates the account with the invited role and signs them in directly — MFA
 
     $user = User::where('email', 'nina@nordlicht.test')->sole();
 
-    expect($user->role)->toBe(StaffRole::SecondShooter)
+    expect($user->role)->toBe(StaffRole::Contributor)
         ->and($user->hasConfirmedMfa())->toBeFalse();
 
     $this->get('/')->assertOk();
@@ -109,11 +109,11 @@ it('refuses to invite an address that already has an account', function () {
     Notification::fake();
     User::factory()->create(['email' => 'nina@nordlicht.test']);
 
-    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Owner]), 'staff')
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Admin]), 'staff')
         ->post('/team/einladungen', [
             'email' => 'nina@nordlicht.test',
             'name' => 'Nina Sturm',
-            'role' => StaffRole::SecondShooter->value,
+            'role' => StaffRole::Contributor->value,
         ])->assertSessionHasErrors('email');
 });
 
@@ -121,11 +121,11 @@ it('replaces a live invitation rather than leaving two open', function () {
     Notification::fake();
     invite();
 
-    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Owner]), 'staff')
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Admin]), 'staff')
         ->post('/team/einladungen', [
             'email' => 'nina@nordlicht.test',
             'name' => 'Nina Sturm',
-            'role' => StaffRole::Assistant->value,
+            'role' => StaffRole::Contributor->value,
         ]);
 
     expect(StaffInvitation::count())->toBe(1);
@@ -142,7 +142,7 @@ it('replaces a live invitation rather than leaving two open', function () {
 it('stops a revoked invitation from being accepted', function () {
     $invitation = invite();
 
-    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Owner]), 'staff')
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Admin]), 'staff')
         ->delete("/team/einladungen/{$invitation->public_id}")
         ->assertRedirect();
 
@@ -157,7 +157,7 @@ it('stops a revoked invitation from being accepted', function () {
 });
 
 it('renders the calendar and reply blocks, and drops the 2FA line', function () {
-    $owner = User::factory()->create(['role' => StaffRole::Owner]);
+    $owner = User::factory()->create(['role' => StaffRole::Admin]);
     $invitation = invite(['invited_by_id' => $owner->id]);
 
     $html = (string) (new StaffInvited($invitation, 'https://example.test/einladung/abc', app(StudioSettingsResolver::class)))
@@ -171,10 +171,10 @@ it('renders the calendar and reply blocks, and drops the 2FA line', function () 
 });
 
 it('shows each role with the capabilities the enum grants it', function () {
-    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Owner]), 'staff')
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Admin]), 'staff')
         ->get('/team')
         ->assertInertia(fn ($page) => $page
-            ->where('roles.1.value', StaffRole::Photographer->value)
-            ->where('roles.1.capabilities', array_map(fn ($capability) => $capability->value, StaffRole::Photographer->capabilities()))
+            ->where('roles.1.value', StaffRole::Manager->value)
+            ->where('roles.1.capabilities', array_map(fn ($capability) => $capability->value, StaffRole::Manager->capabilities()))
             ->has('capabilities', count(App\Enums\Capability::cases())));
 });

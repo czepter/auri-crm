@@ -25,7 +25,7 @@ const REDIRECT_URI = 'http://127.0.0.1:33418/callback';
 const CLAUDE_REDIRECT_URI = 'https://claude.ai/api/mcp/auth_callback';
 
 it('shows the consent screen scoped to the signed-in staff member\'s own role', function () {
-    $user = staffMember(StaffRole::SecondShooter);
+    $user = staffMember(StaffRole::Contributor);
     [, $challenge] = pkcePair();
 
     $props = $this->actingAs($user, 'staff')->get('/oauth/authorize?'.http_build_query([
@@ -40,7 +40,7 @@ it('shows the consent screen scoped to the signed-in staff member\'s own role', 
     $granted = collect($props['scopes'])->pluck('value')->all();
 
     expect($granted)->toEqualCanonicalizing(
-        array_map(fn (Capability $c) => $c->value, StaffRole::SecondShooter->capabilities())
+        array_map(fn (Capability $c) => $c->value, StaffRole::Contributor->capabilities())
     )->and($granted)->not->toContain(Capability::ManageStaff->value);
 
     expect(integerIdPaths($props))->toBe([]);
@@ -112,7 +112,7 @@ it('sends the consent screen back to the client as a page visit, not an XHR redi
 });
 
 it('completes the authorization-code-with-PKCE flow end to end and mints a working token', function () {
-    $user = staffMember(StaffRole::Photographer);
+    $user = staffMember(StaffRole::Manager);
     [$verifier, $challenge] = pkcePair();
 
     $authorize = $this->actingAs($user, 'staff')->post('/oauth/authorize', [
@@ -159,7 +159,7 @@ it('completes the authorization-code-with-PKCE flow end to end and mints a worki
 });
 
 it('grants the caller\'s full role when no scope is requested', function () {
-    $user = staffMember(StaffRole::Editor);
+    $user = staffMember(StaffRole::Contributor);
     [$verifier, $challenge] = pkcePair();
 
     $authorize = $this->actingAs($user, 'staff')->get('/oauth/authorize?'.http_build_query([
@@ -191,7 +191,7 @@ it('grants the caller\'s full role when no scope is requested', function () {
     ])->assertOk()->json();
 
     expect(explode(' ', $token['scope']))->toEqualCanonicalizing(
-        array_map(fn (Capability $c) => $c->value, StaffRole::Editor->capabilities())
+        array_map(fn (Capability $c) => $c->value, StaffRole::Contributor->capabilities())
     );
 });
 
@@ -283,7 +283,7 @@ it('refuses a code redeemed against a different redirect_uri', function () {
 });
 
 it('attributes a lead captured through a staff member\'s own OAuth token to that user', function () {
-    $user = staffMember(StaffRole::Photographer);
+    $user = staffMember(StaffRole::Manager);
     [$verifier, $challenge] = pkcePair();
 
     $approve = $this->actingAs($user, 'staff')->post('/oauth/authorize', [
@@ -384,7 +384,7 @@ it('refuses to pretend a client has a secret', function () {
 
 it('completes the whole flow for a client that registered itself', function () {
     $client = registerClient();
-    $user = staffMember(StaffRole::Photographer);
+    $user = staffMember(StaffRole::Manager);
     [$verifier, $challenge] = pkcePair();
 
     $props = $this->actingAs($user, 'staff')->get('/oauth/authorize?'.http_build_query([

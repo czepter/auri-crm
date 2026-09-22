@@ -19,7 +19,7 @@ beforeEach(function () {
     $this->artisan('automation:seed-default-rules');
     (new SeedStarterTemplates)(['mail-quote-sent', 'mail-invoice-sent'], null, 'formal');
 
-    $this->owner = staffMember(StaffRole::Owner);
+    $this->owner = staffMember(StaffRole::Admin);
 });
 
 function currentMail(string $name): DocumentTemplate

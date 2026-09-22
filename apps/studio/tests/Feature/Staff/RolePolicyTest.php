@@ -37,18 +37,17 @@ it('lets only the owner commit the studio', function (StaffRole $role, bool $all
     // in sprint 3, and this is what closes it.
     expect($role->allows(Capability::BookProject))->toBe($allowed);
 })->with([
-    [StaffRole::Owner, true],
-    [StaffRole::Photographer, false],
-    [StaffRole::Editor, false],
-    [StaffRole::SecondShooter, false],
-    [StaffRole::Assistant, false],
+    [StaffRole::Admin, true],
+    [StaffRole::Manager, false],
+    [StaffRole::Contributor, false],
+    [StaffRole::Reader, false],
 ]);
 
 it('refuses to book for a role without the capability', function () {
     $project = Project::factory()->create();
     Shoot::factory()->for($project)->create();
 
-    $this->actingAs(staff(StaffRole::Photographer), 'staff')
+    $this->actingAs(staff(StaffRole::Manager), 'staff')
         ->post("/auftraege/{$project->public_id}/buchung")
         ->assertForbidden();
 
@@ -59,7 +58,7 @@ it('lets the owner book', function () {
     $project = Project::factory()->create();
     Shoot::factory()->for($project)->create();
 
-    $this->actingAs(staff(StaffRole::Owner), 'staff')
+    $this->actingAs(staff(StaffRole::Admin), 'staff')
         ->post("/auftraege/{$project->public_id}/buchung")
         ->assertRedirect();
 
@@ -71,7 +70,7 @@ it('refuses to book a lost project', function () {
     Shoot::factory()->for($project)->create();
     Lead::factory()->for($project)->lost()->create();
 
-    $this->actingAs(staff(StaffRole::Owner), 'staff')
+    $this->actingAs(staff(StaffRole::Admin), 'staff')
         ->post("/auftraege/{$project->public_id}/buchung")
         ->assertForbidden();
 
@@ -86,7 +85,7 @@ it('opens the funnel to every staff role', function (StaffRole $role) {
 })->with(StaffRole::cases());
 
 it('records who moved a lead, which is what makes the funnel open', function () {
-    $nina = staff(StaffRole::SecondShooter);
+    $nina = staff(StaffRole::Contributor);
     $lead = Lead::factory()->atStage(LeadStage::New)->create();
 
     $this->actingAs($nina, 'staff')
@@ -104,17 +103,17 @@ it('records who moved a lead, which is what makes the funnel open', function () 
 it('keeps the address book to the roles that hold the relationship', function (StaffRole $role, int $status) {
     $this->actingAs(staff($role), 'staff')->get('/kontakte')->assertStatus($status);
 })->with([
-    [StaffRole::Owner, 200],
-    [StaffRole::Photographer, 200],
-    [StaffRole::Editor, 403],
-    [StaffRole::SecondShooter, 403],
+    [StaffRole::Admin, 200],
+    [StaffRole::Manager, 200],
+    [StaffRole::Contributor, 403],
+    [StaffRole::Reader, 403],
 ]);
 
 /*
  * The review question this sprint is measured on, in both halves.
  */
 it('lets a second shooter reach exactly the shoots they are assigned to', function () {
-    $nina = staff(StaffRole::SecondShooter);
+    $nina = staff(StaffRole::Contributor);
     $mine = crewedProject($nina);
 
     $this->actingAs($nina, 'staff')
@@ -123,7 +122,7 @@ it('lets a second shooter reach exactly the shoots they are assigned to', functi
 });
 
 it('refuses a second shooter a project they are not crewed on', function () {
-    $nina = staff(StaffRole::SecondShooter);
+    $nina = staff(StaffRole::Contributor);
     $theirs = Project::factory()->create();
     Shoot::factory()->for($theirs)->create();
 
@@ -136,7 +135,7 @@ it('shows a second shooter only their own projects in the project list', functio
     // The screens that list many projects scope rather than refuse, so the
     // list has to be filtered as well as the detail page guarded. C-02 (#236)
     // moved that list off the Übersicht and onto /projekte.
-    $nina = staff(StaffRole::SecondShooter);
+    $nina = staff(StaffRole::Contributor);
     $mine = crewedProject($nina);
     Job::factory()->for($mine)->create();
 
@@ -150,39 +149,27 @@ it('shows a second shooter only their own projects in the project list', functio
         ->not->toContain('Fremdes Projekt');
 });
 
-it('lets an editor move post-production but never commit the studio', function () {
-    $editor = staff(StaffRole::Editor);
-    $project = Project::factory()->create();
-    $shoot = Shoot::factory()->for($project)->atStatus(ShootStatus::Culling)->create();
+it('lets a contributor move a shoot they are crewed on, but never reassign the crew', function () {
+    $nina = staff(StaffRole::Contributor);
+    $project = crewedProject($nina);
+    $shoot = $project->shoots()->sole()->fresh();
+    $shoot->update(['status' => \App\Crm\Enums\ShootStatus::Culling]);
 
-    $this->actingAs($editor, 'staff')
+    $this->actingAs($nina, 'staff')
         ->post("/shootings/{$shoot->public_id}/status", ['status' => 'editing'])
         ->assertRedirect();
 
-    expect($shoot->fresh()->status->key)->toBe(ShootStatus::Editing->value);
+    $this->post("/shootings/{$shoot->public_id}/crew", [
+        'user' => $nina->public_id,
+        'role' => 'contributor',
+    ])->assertForbidden();
 
     // Booking is the line no amount of after-the-fact logging substitutes for.
     $this->post("/auftraege/{$project->public_id}/buchung")->assertForbidden();
 });
 
-it('refuses a second shooter the shoot controls even on their own project', function () {
-    // Being on the day is not authority over the day.
-    $nina = staff(StaffRole::SecondShooter);
-    $project = crewedProject($nina);
-    $shoot = $project->shoots()->sole();
-
-    $this->actingAs($nina, 'staff')
-        ->post("/shootings/{$shoot->public_id}/status", ['status' => 'booked'])
-        ->assertForbidden();
-
-    $this->post("/shootings/{$shoot->public_id}/crew", [
-        'user' => $nina->public_id,
-        'role' => 'assistant',
-    ])->assertForbidden();
-});
-
 it('lets a second shooter work the tasks and notes of their own project', function () {
-    $nina = staff(StaffRole::SecondShooter);
+    $nina = staff(StaffRole::Contributor);
     $project = crewedProject($nina);
     $task = Task::factory()->for($project)->create();
 
@@ -199,7 +186,7 @@ it('lets a second shooter work the tasks and notes of their own project', functi
 });
 
 it('refuses a second shooter the tasks of a project they are not on', function () {
-    $nina = staff(StaffRole::SecondShooter);
+    $nina = staff(StaffRole::Contributor);
     $task = Task::factory()->create();
 
     $this->actingAs($nina, 'staff')
@@ -215,19 +202,19 @@ it('leaves a denied control out of the markup rather than hiding it', function (
     $project = Project::factory()->create();
     Shoot::factory()->for($project)->create();
 
-    $this->actingAs(staff(StaffRole::Photographer), 'staff');
+    $this->actingAs(staff(StaffRole::Manager), 'staff');
     $header = props("/auftraege/{$project->public_id}")['header'];
 
     expect($header['canBook'])->toBeFalse()
         ->and($header['canManageShoots'])->toBeTrue();
 
-    $this->actingAs(staff(StaffRole::Owner), 'staff');
+    $this->actingAs(staff(StaffRole::Admin), 'staff');
 
     expect(props("/auftraege/{$project->public_id}")['header']['canBook'])->toBeTrue();
 });
 
 it('tells the sidebar only what this role may reach', function () {
-    $this->actingAs(staff(StaffRole::SecondShooter), 'staff');
+    $this->actingAs(staff(StaffRole::Contributor), 'staff');
 
     expect(props('/')['auth']['can'])
         ->toContain('manage_leads')
@@ -249,17 +236,16 @@ it('opens document templates to the roles ManageShoots already trusts, and refus
     // doc comment).
     $this->actingAs(staff($role), 'staff')->get('/vorlagen?typ=dokumente')->assertStatus($status);
 })->with([
-    [StaffRole::Owner, 200],
-    [StaffRole::Photographer, 200],
-    [StaffRole::Editor, 200],
-    [StaffRole::SecondShooter, 404],
-    [StaffRole::Assistant, 404],
+    [StaffRole::Admin, 200],
+    [StaffRole::Manager, 200],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Reader, 404],
 ]);
 
 it('gives every role a capability set that is a subset of the owner', function () {
     // A role that could do something the owner cannot would be a hole in the
     // model rather than a feature.
-    $owner = array_map(fn (Capability $c) => $c->value, StaffRole::Owner->capabilities());
+    $owner = array_map(fn (Capability $c) => $c->value, StaffRole::Admin->capabilities());
 
     foreach (StaffRole::cases() as $role) {
         $held = array_map(fn (Capability $c) => $c->value, $role->capabilities());

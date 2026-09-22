@@ -19,7 +19,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     Notification::fake();
 
-    $this->owner = staffMember(StaffRole::Owner);
+    $this->owner = staffMember(StaffRole::Admin);
     $this->contact = Contact::factory()->create();
     $project = Project::factory()->create(['name' => 'Hochzeit Meier', 'portal_visible' => true]);
     $project->attachContact($this->contact, ProjectContactRole::Primary);

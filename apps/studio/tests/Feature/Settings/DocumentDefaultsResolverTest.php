@@ -22,7 +22,7 @@ it('seeds sensible document defaults on the migration itself', function () {
 });
 
 it('writes each document default through set(), busts the cache, and audits the actor', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     (new StudioSettingsResolver)->set('quote_validity_days', 30, $owner);
     (new StudioSettingsResolver)->set('payment_term_days', 21, $owner);
