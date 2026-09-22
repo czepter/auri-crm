@@ -16,16 +16,16 @@ class DocumentTemplatePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->role->allows(Capability::ManageContracts);
+        return $user->can(Capability::ManageContracts->value);
     }
 
     public function create(User $user): bool
     {
-        return $user->role->allows(Capability::ManageContracts);
+        return $user->can(Capability::ManageContracts->value);
     }
 
     public function update(User $user, DocumentTemplate $template): bool
     {
-        return $user->role->allows(Capability::ManageContracts);
+        return $user->can(Capability::ManageContracts->value);
     }
 }

@@ -37,7 +37,7 @@ class ReportController extends Controller
     public function __invoke(Request $request): Response
     {
         abort_unless(
-            auth('staff')->user()?->role->allows(Capability::ViewAllProjects) ?? false,
+            auth('staff')->user()?->can(Capability::ViewAllProjects->value) ?? false,
             403,
         );
 

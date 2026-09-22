@@ -11,21 +11,21 @@ class ProjectTypePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->role->allows(Capability::ManageSettings);
+        return $user->can(Capability::ManageSettings->value);
     }
 
     public function create(User $user): bool
     {
-        return $user->role->allows(Capability::ManageSettings);
+        return $user->can(Capability::ManageSettings->value);
     }
 
     public function update(User $user, ProjectType $type): bool
     {
-        return $user->role->allows(Capability::ManageSettings);
+        return $user->can(Capability::ManageSettings->value);
     }
 
     public function delete(User $user, ProjectType $type): bool
     {
-        return $user->role->allows(Capability::ManageSettings);
+        return $user->can(Capability::ManageSettings->value);
     }
 }

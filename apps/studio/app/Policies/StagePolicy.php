@@ -15,21 +15,21 @@ class StagePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->role->allows(Capability::ManageSettings);
+        return $user->can(Capability::ManageSettings->value);
     }
 
     public function create(User $user): bool
     {
-        return $user->role->allows(Capability::ManageSettings);
+        return $user->can(Capability::ManageSettings->value);
     }
 
     public function update(User $user, Stage $stage): bool
     {
-        return $user->role->allows(Capability::ManageSettings);
+        return $user->can(Capability::ManageSettings->value);
     }
 
     public function delete(User $user, Stage $stage): bool
     {
-        return $user->role->allows(Capability::ManageSettings);
+        return $user->can(Capability::ManageSettings->value);
     }
 }

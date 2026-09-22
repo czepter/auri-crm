@@ -11,7 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 it('lists the rules and edits one', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $rule = AutomationRule::factory()->create(['name' => 'Shooting-Erinnerung']);
 
     $this->actingAs($owner, 'staff')
@@ -43,7 +43,7 @@ it('lists the rules and edits one', function () {
 it('saves an event rule, which carries no anchor', function () {
     $rule = AutomationRule::factory()->event(ProjectBooked::class)->create();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch("/einstellungen/automationen/{$rule->public_id}", [
             'name' => 'Buchungsbestätigung',
             'recipient_type' => 'client',
@@ -61,7 +61,7 @@ it('saves an event rule, which carries no anchor', function () {
 // AuthorizesStaffSettings antwortet mit 404, nicht 403: eine Flaeche, die
 // diese Rolle nicht hat, existiert fuer sie nicht.
 it('keeps the screen away from a role that may not manage settings', function () {
-    $this->actingAs(staffMember(StaffRole::Photographer), 'staff')
+    $this->actingAs(staffMember(StaffRole::Manager), 'staff')
         ->get('/einstellungen/automationen')
         ->assertNotFound();
 });

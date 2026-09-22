@@ -29,7 +29,7 @@ it('lets anyone with ManageShoots manage a gallery that has no project', functio
 
 it('refuses a role without ManageShoots', function () {
     $gallery = Gallery::factory()->create(['project_id' => null]);
-    $viewer = User::factory()->withMfa()->create(['role' => StaffRole::Assistant]);
+    $viewer = User::factory()->withMfa()->create(['role' => StaffRole::Reader]);
 
     expect($viewer->can('manageMedia', $gallery))->toBeFalse();
 });

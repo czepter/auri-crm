@@ -18,7 +18,7 @@ it('renders every template, active and inactive both, with a preview when a date
     TaskTemplate::factory()->create(['title' => 'Crew-Briefing verschicken']);
     TaskTemplate::factory()->inactive()->create(['title' => 'Nicht mehr in Gebrauch']);
 
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $props = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/vorlagen?typ=aufgaben&preview_date=2026-06-14')
         ->assertOk()
         ->viewData('page')['props'];
@@ -32,7 +32,7 @@ it('renders every template, active and inactive both, with a preview when a date
 it('renders no preview until a date is asked for', function () {
     TaskTemplate::factory()->create();
 
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $props = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/vorlagen?typ=aufgaben')
         ->assertOk()
         ->viewData('page')['props'];
@@ -41,7 +41,7 @@ it('renders no preview until a date is asked for', function () {
 });
 
 it('creates a template and leaves an audit row naming the actor', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->from('/einstellungen/aufgabenvorlagen')
@@ -62,7 +62,7 @@ it('creates a template and leaves an audit row naming the actor', function () {
 });
 
 it('rejects a title over the column limit', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/einstellungen/aufgabenvorlagen', [
             'title' => str_repeat('x', 256),
             'audience' => 'internal',
@@ -75,7 +75,7 @@ it('rejects a title over the column limit', function () {
 });
 
 it("edits a template's offset and it reaches the next booking, never one already made — the story's own acceptance", function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $template = TaskTemplate::factory()->offset(-1)->create(['title' => 'Crew-Briefing verschicken']);
 
     $alreadyBooked = Project::factory()->create();
@@ -103,7 +103,7 @@ it("edits a template's offset and it reaches the next booking, never one already
 });
 
 it('deactivating a template leaves the tasks it already created alone', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $template = TaskTemplate::factory()->create(['title' => 'Familienliste einholen']);
 
     $project = Project::factory()->create();
@@ -131,7 +131,7 @@ it('deactivating a template leaves the tasks it already created alone', function
 });
 
 it('deletes a template without touching the tasks it already created', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $template = TaskTemplate::factory()->create();
 
     $project = Project::factory()->create();
@@ -153,15 +153,15 @@ it('opens the hub to every role that manages tasks — the whole crew today', fu
         ->get('/vorlagen?typ=aufgaben')
         ->assertStatus($status);
 })->with([
-    [StaffRole::Owner, 200],
-    [StaffRole::Photographer, 200],
-    [StaffRole::Editor, 200],
-    [StaffRole::SecondShooter, 200],
-    [StaffRole::Assistant, 200],
+    [StaffRole::Admin, 200],
+    [StaffRole::Manager, 200],
+    [StaffRole::Contributor, 200],
+    [StaffRole::Contributor, 200],
+    [StaffRole::Contributor, 200],
 ]);
 
 it('reaches on ManageTasks alone — the same role a ManageSettings-only pane 404s out reaches this one fine', function () {
-    $photographer = staffMember(StaffRole::Photographer);
+    $photographer = staffMember(StaffRole::Manager);
 
     // Photographer has no ManageSettings (AuthorizesStaffSettings 404s it out
     // of every other T-0x settings pane), but does have ManageTasks.
@@ -185,7 +185,7 @@ it('declares an audience on every task-template route, same as every other admin
 it('carries no integer identifier in the props', function () {
     TaskTemplate::factory()->create();
 
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $props = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/vorlagen?typ=aufgaben')
         ->assertOk()
         ->viewData('page')['props'];

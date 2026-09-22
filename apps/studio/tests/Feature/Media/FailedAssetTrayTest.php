@@ -25,7 +25,7 @@ it('lists this gallery\'s Failed assets on its record, and none of another galle
     Asset::factory()->for($gallery)->create(['status' => AssetStatus::Ready]);
     Asset::factory()->for($otherGallery)->create(['status' => AssetStatus::Failed]);
 
-    $response = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $response = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get("/galerien/{$gallery->public_id}")
         ->assertOk();
 
@@ -45,7 +45,7 @@ it('retries a Failed asset and sends the browser back to the record', function (
     $failed = Asset::factory()->for($gallery)->create(['status' => AssetStatus::Failed]);
     $upload = MultipartUpload::factory()->for($gallery)->create(['asset_id' => $failed->id, 'processed_at' => now()]);
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->from("/galerien/{$gallery->public_id}")
         ->post("/medien/{$failed->public_id}/wiederholen")
         ->assertRedirect("/galerien/{$gallery->public_id}");
@@ -60,7 +60,7 @@ it('refuses to retry an asset that is not Failed', function () {
     $gallery = Gallery::factory()->create();
     $ready = Asset::factory()->for($gallery)->create(['status' => AssetStatus::Ready]);
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/medien/{$ready->public_id}/wiederholen")
         ->assertStatus(409);
 
@@ -76,9 +76,8 @@ it('refuses a role without ManageShoots, and lets one with it through', function
         ->post("/medien/{$failed->public_id}/wiederholen")
         ->assertStatus($status);
 })->with([
-    [StaffRole::Owner, 302],
-    [StaffRole::Photographer, 302],
-    [StaffRole::Editor, 302],
-    [StaffRole::SecondShooter, 403],
-    [StaffRole::Assistant, 403],
+    [StaffRole::Admin, 302],
+    [StaffRole::Manager, 302],
+    [StaffRole::Contributor, 403],
+    [StaffRole::Reader, 403],
 ]);

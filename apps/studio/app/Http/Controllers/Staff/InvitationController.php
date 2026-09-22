@@ -32,7 +32,7 @@ class InvitationController extends Controller
         return Inertia::render('Staff/Index', [
             'staff' => User::query()->orderBy('name')->get()->map(fn (User $user) => [
                 'id' => $user->public_id,
-                'transferable' => $viewer->role === StaffRole::Owner && ! $user->is($viewer),
+                'transferable' => $viewer->role === StaffRole::Admin && ! $user->is($viewer),
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role->value,
@@ -167,7 +167,7 @@ class InvitationController extends Controller
     private function authorizeStaffManagement(): void
     {
         abort_unless(
-            auth('staff')->user()?->role->allows(Capability::ManageStaff) ?? false,
+            auth('staff')->user()?->can(Capability::ManageStaff->value) ?? false,
             403,
         );
     }

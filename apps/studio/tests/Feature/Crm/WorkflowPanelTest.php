@@ -53,7 +53,7 @@ it('leaves a template of another project type out of the column', function () {
 });
 
 it('keeps the panel off a plain board load — it costs a query nobody asked for', function () {
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $props = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/anfragen')
         ->assertOk()
         ->viewData('page')['props'];
@@ -72,7 +72,7 @@ it('writes the task the stage owes when a lead reaches it, counted from the day 
         'day_offset' => 5,
     ]);
 
-    app(AdvanceLeadStage::class)($lead, stage('quote_sent'), staffMember(StaffRole::Owner));
+    app(AdvanceLeadStage::class)($lead, stage('quote_sent'), staffMember(StaffRole::Admin));
 
     $task = Task::sole();
 
@@ -84,7 +84,7 @@ it('writes the task the stage owes when a lead reaches it, counted from the day 
 
 it('writes the task once, however often the stage is re-entered', function () {
     $lead = Lead::factory()->create(['stage_entered_at' => now()]);
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     TaskTemplate::factory()->create([
         'pipeline' => StagePipeline::Lead,
@@ -102,7 +102,7 @@ it('writes the task once, however often the stage is re-entered', function () {
 });
 
 it('refuses a stage that belongs to the other pipeline', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->from('/anfragen')
         ->post('/einstellungen/aufgabenvorlagen', [
             'title' => 'Auswahl freigeben',

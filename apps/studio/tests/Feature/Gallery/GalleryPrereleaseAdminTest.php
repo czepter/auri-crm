@@ -62,7 +62,7 @@ it('refuses to start pre-release on an external gallery', function () {
 // makes the gallery's title reachable by anyone holding the link, same as
 // deciding a gallery is presentable at all.
 it('keeps starting pre-release away from a role that may not show things to clients', function () {
-    $editor = User::factory()->withMfa()->create(['role' => StaffRole::Editor]);
+    $editor = User::factory()->withMfa()->create(['role' => StaffRole::Contributor]);
 
     $this->actingAs($editor, 'staff')
         ->post("/galerien/{$this->gallery->public_id}/pre-release")

@@ -23,7 +23,7 @@ class OwnershipController extends Controller
     ): RedirectResponse {
         $actor = $request->user('staff');
 
-        abort_unless($actor->role === StaffRole::Owner && ! $user->is($actor), 404);
+        abort_unless($actor->role === StaffRole::Admin && ! $user->is($actor), 404);
 
         $request->validate(['current_password' => ['required', 'current_password:staff']]);
 
@@ -31,10 +31,10 @@ class OwnershipController extends Controller
             $rows = User::query()->whereKey([$actor->id, $user->id])->orderBy('id')->lockForUpdate()->get()->keyBy('id');
 
             // A second transfer that raced this one finds the role already gone.
-            abort_unless($rows[$actor->id]->role === StaffRole::Owner, 404);
+            abort_unless($rows[$actor->id]->role === StaffRole::Admin, 404);
 
-            $rows[$actor->id]->update(['role' => StaffRole::Photographer]);
-            $rows[$user->id]->update(['role' => StaffRole::Owner]);
+            $rows[$actor->id]->update(['role' => StaffRole::Manager]);
+            $rows[$user->id]->update(['role' => StaffRole::Admin]);
 
             AuditLogger::record('staff.ownership_transferred', $actor, subject: $user->public_id);
         });

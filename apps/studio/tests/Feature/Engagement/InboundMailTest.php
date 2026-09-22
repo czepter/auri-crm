@@ -219,7 +219,7 @@ it('refuses everything when no signing secret is configured', function () {
 // --- rotation is the Inhaber's -----------------------------------------
 
 it('lets the Inhaber rotate the secret, and records it', function () {
-    $secret = app(RotateInboundSecret::class)(staffMember(StaffRole::Owner));
+    $secret = app(RotateInboundSecret::class)(staffMember(StaffRole::Admin));
 
     expect($secret)->toHaveLength(48)
         ->and(StudioSettings::query()->firstOrFail()->inbound_secret)->toBe($secret)
@@ -227,11 +227,11 @@ it('lets the Inhaber rotate the secret, and records it', function () {
 });
 
 it('refuses rotation in the action, not merely on the screen', function () {
-    app(RotateInboundSecret::class)(staffMember(StaffRole::Photographer));
+    app(RotateInboundSecret::class)(staffMember(StaffRole::Manager));
 })->throws(HttpException::class);
 
 it('never writes the secret into the audit row', function () {
-    $secret = app(RotateInboundSecret::class)(staffMember(StaffRole::Owner));
+    $secret = app(RotateInboundSecret::class)(staffMember(StaffRole::Admin));
 
     $row = AuditLog::where('event', 'settings.inbound_secret_rotated')->sole();
 
@@ -282,7 +282,7 @@ it('shows the studio its own catch-all on the Posteingang screen', function () {
     StudioSettings::query()->firstOrFail()->forceFill(['display_name' => 'Atelier Nordlicht'])->save();
     app()->forgetInstance(StudioSettingsResolver::class);
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/posteingang')
         ->assertOk()
         ->assertInertia(function ($page) {

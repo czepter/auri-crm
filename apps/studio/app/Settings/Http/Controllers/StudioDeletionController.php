@@ -58,6 +58,6 @@ class StudioDeletionController extends Controller
 
     private static function authorizeOwner(): void
     {
-        abort_unless(auth('staff')->user()?->role === StaffRole::Owner, 404);
+        abort_unless(auth('staff')->user()?->role === StaffRole::Admin, 404);
     }
 }

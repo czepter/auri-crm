@@ -57,7 +57,7 @@ it('sends mail templates to the composer, resolved against this project', functi
         'body' => '<p>Hallo {{ contact.name }},</p><p>bis bald.</p>',
     ]);
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get("/auftraege/{$project->public_id}/nachrichten")
         ->assertOk()
         ->assertInertia(function ($page) use ($project) {
@@ -80,7 +80,7 @@ it('marks a template that references a field the vocabulary does not have', func
         'body' => '<p>Hallo {{ contact.nickname }}</p>',
     ]);
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get("/auftraege/{$project->public_id}/nachrichten")
         ->assertOk()
         ->assertInertia(function ($page) {
@@ -95,7 +95,7 @@ it('offers only mail templates, never a quote or an invoice one', function () {
     DocumentTemplate::factory()->create(['type' => DocumentTemplateType::Quote, 'name' => 'Angebot']);
     DocumentTemplate::factory()->create(['type' => DocumentTemplateType::Invoice, 'name' => 'Rechnung']);
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get("/auftraege/{$project->public_id}/nachrichten")
         ->assertOk()
         ->assertInertia(function ($page) {
@@ -108,7 +108,7 @@ it('offers only mail templates, never a quote or an invoice one', function () {
 it('refuses to send a message that still carries a merge field', function () {
     $project = threadedProject();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/auftraege/{$project->public_id}/nachrichten", ['body' => 'Hallo {{ contact.name }}'])
         ->assertInvalid(['body']);
 
@@ -118,7 +118,7 @@ it('refuses to send a message that still carries a merge field', function () {
 it('sends an ordinary reply unchanged', function () {
     $project = threadedProject();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/auftraege/{$project->public_id}/nachrichten", ['body' => 'Hallo Lena, bis bald.'])
         ->assertRedirect();
 

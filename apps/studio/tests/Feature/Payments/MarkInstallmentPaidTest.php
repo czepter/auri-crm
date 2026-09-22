@@ -60,7 +60,7 @@ it('is idempotent: marking an already-paid installment paid again writes nothing
 });
 
 it('leaves an audit row naming the method, date and reference', function () {
-    $actor = staffMember(StaffRole::Owner);
+    $actor = staffMember(StaffRole::Admin);
     $installment = PaymentInstallment::factory()->create();
 
     app(MarkInstallmentPaid::class)($installment, SettledVia::Transfer, '2026-09-01', 'RE-2026-1', $actor);
@@ -115,7 +115,7 @@ it('defaults the booked amount to what is still owed', function () {
 });
 
 it('records the booked amount and what is left in the audit context', function () {
-    $actor = staffMember(StaffRole::Owner);
+    $actor = staffMember(StaffRole::Admin);
     $installment = PaymentInstallment::factory()->create(['amount' => 100000]);
 
     app(MarkInstallmentPaid::class)($installment, SettledVia::Transfer, '2026-09-01', null, $actor, 40000);
@@ -129,7 +129,7 @@ it('books a partial payment through the admin screen', function () {
     $plan = t07PaidPlan();
     $installment = $plan->installments->sole();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/raten/{$installment->public_id}/bezahlt", [
             'paid_on' => '2026-09-01',
             'method' => 'transfer',
@@ -154,7 +154,7 @@ function t07PaidPlan(): PaymentPlan
 it('marks an installment paid through the admin screen', function () {
     $plan = t07PaidPlan();
     $installment = $plan->installments->sole();
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
 
     $this->actingAs($user, 'staff')
         ->post("/raten/{$installment->public_id}/bezahlt", [
@@ -174,7 +174,7 @@ it('emits exactly one InstallmentPaid event when the same mark-paid request is s
 
     $plan = t07PaidPlan();
     $installment = $plan->installments->sole();
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
 
     $payload = ['paid_on' => '2026-09-01', 'method' => 'transfer', 'reference' => $plan->reference];
 
@@ -195,17 +195,16 @@ it('refuses a role without ManageContracts, and lets one with it through', funct
         ])
         ->assertStatus($status);
 })->with([
-    [StaffRole::Owner, 302],
-    [StaffRole::Photographer, 302],
-    [StaffRole::Editor, 302],
-    [StaffRole::SecondShooter, 403],
-    [StaffRole::Assistant, 403],
+    [StaffRole::Admin, 302],
+    [StaffRole::Manager, 302],
+    [StaffRole::Contributor, 403],
+    [StaffRole::Reader, 403],
 ]);
 
 it('rejects an unknown settlement method', function () {
     $plan = t07PaidPlan();
     $installment = $plan->installments->sole();
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
 
     $this->actingAs($user, 'staff')
         ->from('/auftraege/xyz')

@@ -137,7 +137,7 @@ it('refuses to issue a second invoice for a cancelled rate', function () {
 it('records the kind and the reason', function () {
     $installment = stornoableInstallment();
 
-    app(CancelInvoice::class)($installment->invoice, CancellationKind::Void, 'Termin abgesagt', staffMember(StaffRole::Owner));
+    app(CancelInvoice::class)($installment->invoice, CancellationKind::Void, 'Termin abgesagt', staffMember(StaffRole::Admin));
 
     $log = AuditLog::where('event', 'payments.invoice.cancelled')->sole();
 
@@ -149,7 +149,7 @@ it('records the kind and the reason', function () {
 it('lets staff storno through the route', function () {
     $installment = stornoableInstallment();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/rechnungen/{$installment->invoice->public_id}/storno", ['kind' => 'correction', 'reason' => 'Falscher Betrag'])
         ->assertRedirect();
 
@@ -175,7 +175,7 @@ it('still edits a plan that carries a cancelled rate', function () {
     app(CancelInvoice::class)($installment->invoice, CancellationKind::Correction, 'Falscher Empfänger');
     $plan = $installment->plan->fresh();
 
-    test()->actingAs(staffMember(StaffRole::Owner), 'staff')
+    test()->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch("/zahlungsplaene/{$plan->public_id}", [
             'total' => $plan->total,
             'installments' => $plan->installments->map(fn ($row) => [

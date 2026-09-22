@@ -71,7 +71,7 @@ class InvoiceController extends Controller
         return Inertia::render('Invoices/Index', [
             'invoices' => InvoiceRowData::collect($invoices->map(InvoiceRowData::fromModel(...))),
             // The export route is gated by ManageSettings, so the years appear only for roles it lets in.
-            'exportYears' => $viewer->role->allows(Capability::ManageSettings)
+            'exportYears' => $viewer->can(Capability::ManageSettings->value)
                 ? Invoice::query()->pluck('issued_at')->map(fn ($at) => (int) $at->format('Y'))->unique()->sortDesc()->values()
                 : [],
         ]);
@@ -437,7 +437,7 @@ class InvoiceController extends Controller
         $user = auth('staff')->user();
 
         abort_unless(
-            $project === null ? $user->role->allows(Capability::ManageContracts) : $user->can('managePaymentPlan', $project),
+            $project === null ? $user->can(Capability::ManageContracts->value) : $user->can('managePaymentPlan', $project),
             403,
         );
     }

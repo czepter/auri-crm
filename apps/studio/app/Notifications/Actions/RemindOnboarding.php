@@ -26,7 +26,7 @@ class RemindOnboarding
             return 0;
         }
 
-        $owner = User::query()->where('role', StaffRole::Owner)->oldest('created_at')->first();
+        $owner = User::query()->where('role', StaffRole::Admin)->oldest('created_at')->first();
 
         if ($owner === null || $owner->created_at->gt(now()->subDays(2))) {
             return 0;

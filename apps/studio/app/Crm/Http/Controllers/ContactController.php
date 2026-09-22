@@ -246,7 +246,7 @@ class ContactController extends Controller
             // link itself is minted on POST, not rendered into the page — a
             // live credential in a prop is a live credential in a browser
             // history and a screenshot.
-            'canPreviewPortal' => $user?->role->allows(Capability::ManageSettings) ?? false,
+            'canPreviewPortal' => $user?->can(Capability::ManageSettings->value) ?? false,
             // P-05 (#224): what the client asked for from inside the portal.
             // A request nobody at the studio ever sees is worse than no
             // button at all, and the deadline is legal rather than polite.
@@ -362,7 +362,7 @@ class ContactController extends Controller
      */
     public function previewPortal(Contact $contact): HttpResponse
     {
-        abort_unless(auth('staff')->user()?->role->allows(Capability::ManageSettings) ?? false, 403);
+        abort_unless(auth('staff')->user()?->can(Capability::ManageSettings->value) ?? false, 403);
         abort_if($contact->portal_access_revoked_at !== null, 404);
 
         $token = bin2hex(random_bytes(32));

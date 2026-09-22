@@ -135,7 +135,7 @@ it('writes no credit note when the Stripe refund fails', function () {
 it('records the number, the invoice it credits and the reason', function () {
     $installment = creditableInstallment();
 
-    app(IssueCreditNote::class)($installment->invoice, 25_000, 'Nachlass', staffMember(StaffRole::Owner));
+    app(IssueCreditNote::class)($installment->invoice, 25_000, 'Nachlass', staffMember(StaffRole::Admin));
 
     $log = AuditLog::where('event', 'payments.credit_note.issued')->sole();
 
@@ -194,13 +194,13 @@ it('lets staff issue a Gutschrift through the route and download it', function (
 
     $installment = creditableInstallment();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/rechnungen/{$installment->invoice->public_id}/gutschrift", ['amount' => 25_000, 'reason' => 'Nachlass'])
         ->assertRedirect();
 
     $note = CreditNote::sole();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get("/rechnungen/{$installment->invoice->public_id}/gutschrift/{$note->public_id}")
         ->assertOk()
         ->assertHeader('content-type', 'application/pdf');
@@ -225,7 +225,7 @@ it('renders the project quote tab once a Gutschrift exists', function () {
     $installment = creditableInstallment();
     app(IssueCreditNote::class)($installment->invoice, 25_000, 'Nachlass');
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get("/auftraege/{$installment->plan->job->project->public_id}/angebote")
         ->assertOk();
 });

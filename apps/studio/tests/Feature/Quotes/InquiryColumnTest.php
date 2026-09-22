@@ -97,7 +97,7 @@ it('shows a crew member only their own projects', function () {
         'accepted_at' => now()->subDay(),
     ]);
 
-    $crew = User::factory()->withMfa()->create(['role' => StaffRole::SecondShooter]);
+    $crew = User::factory()->withMfa()->create(['role' => StaffRole::Contributor]);
 
     expect(app(ReadInquiryColumn::class)($crew))->toBeEmpty();
 });

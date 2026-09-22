@@ -17,21 +17,21 @@ class TaskTemplatePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->role->allows(Capability::ManageTasks);
+        return $user->can(Capability::ManageTasks->value);
     }
 
     public function create(User $user): bool
     {
-        return $user->role->allows(Capability::ManageTasks);
+        return $user->can(Capability::ManageTasks->value);
     }
 
     public function update(User $user, TaskTemplate $template): bool
     {
-        return $user->role->allows(Capability::ManageTasks);
+        return $user->can(Capability::ManageTasks->value);
     }
 
     public function delete(User $user, TaskTemplate $template): bool
     {
-        return $user->role->allows(Capability::ManageTasks);
+        return $user->can(Capability::ManageTasks->value);
     }
 }

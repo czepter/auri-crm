@@ -23,7 +23,7 @@ it('orders the timeline by time regardless of creation order, breaking ties by s
 });
 
 it('adds a timeline entry to a shoot', function () {
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
     $shoot = Shoot::factory()->create();
 
     $this->actingAs($user, 'staff')->post("/shootings/{$shoot->public_id}/ablauf", [
@@ -41,7 +41,7 @@ it('adds a timeline entry to a shoot', function () {
 });
 
 it('adds a transit entry with no location', function () {
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
     $shoot = Shoot::factory()->create();
 
     $this->actingAs($user, 'staff')->post("/shootings/{$shoot->public_id}/ablauf", [
@@ -54,7 +54,7 @@ it('adds a transit entry with no location', function () {
 });
 
 it('refuses a role with no manageShoots capability', function () {
-    $user = staffMember(StaffRole::SecondShooter);
+    $user = staffMember(StaffRole::Contributor);
     $shoot = Shoot::factory()->create();
 
     $this->actingAs($user, 'staff')->post("/shootings/{$shoot->public_id}/ablauf", [
@@ -66,7 +66,7 @@ it('refuses a role with no manageShoots capability', function () {
 });
 
 it('deletes a timeline entry', function () {
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
     $entry = TimelineEntry::factory()->create();
 
     $this->actingAs($user, 'staff')->delete("/ablauf/{$entry->public_id}")->assertRedirect();
@@ -77,7 +77,7 @@ it('deletes a timeline entry', function () {
 it('exports the timeline as a PDF through Gotenberg', function () {
     Http::fake(['*/forms/chromium/convert/html' => Http::response('%PDF-fake-bytes', 200)]);
 
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
     $project = Project::factory()->create(['name' => 'Meier & Kowalski']);
     $shoot = Shoot::factory()->for($project)->on('2026-06-14')->create(['label' => 'Hochzeitstag']);
     TimelineEntry::factory()->for($shoot)->at('09:00')->create(['title' => 'Getting Ready']);
@@ -98,14 +98,14 @@ it('exports the timeline as a PDF through Gotenberg', function () {
 });
 
 it('refuses to export a PDF for a shoot with no date', function () {
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
     $shoot = Shoot::factory()->create(['date' => null]);
 
     $this->actingAs($user, 'staff')->get("/shootings/{$shoot->public_id}/ablauf.pdf")->assertNotFound();
 });
 
 it('exports the timeline as an ICS feed with one VEVENT per entry', function () {
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
     $project = Project::factory()->create(['name' => 'Meier & Kowalski']);
     $shoot = Shoot::factory()->for($project)->on('2026-06-14')->create(['label' => 'Hochzeitstag']);
     TimelineEntry::factory()->for($shoot)->at('09:00')->create([
@@ -134,7 +134,7 @@ it('exports the timeline as an ICS feed with one VEVENT per entry', function () 
 it('gives the last entry the default duration of the project type', function () {
     ProjectType::query()->where('key', 'wedding')->update(['duration_minutes' => 90]);
 
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
     $shoot = Shoot::factory()->for(Project::factory()->wedding())->on('2026-06-14')->create();
     TimelineEntry::factory()->for($shoot)->at('20:00')->create(['title' => 'Eröffnungstanz']);
 
@@ -146,14 +146,14 @@ it('gives the last entry the default duration of the project type', function () 
 });
 
 it('refuses to export an ICS feed for a shoot with no date', function () {
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
     $shoot = Shoot::factory()->create(['date' => null]);
 
     $this->actingAs($user, 'staff')->get("/shootings/{$shoot->public_id}/ablauf.ics")->assertNotFound();
 });
 
 it('escapes a value that would otherwise break the ICS format', function () {
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
     $shoot = Shoot::factory()->on('2026-06-14')->create();
     TimelineEntry::factory()->for($shoot)->at('09:00')->create(['title' => 'Halt; Gruppe, hier']);
 

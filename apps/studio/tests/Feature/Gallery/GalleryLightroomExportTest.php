@@ -22,7 +22,7 @@ it('exports every favorited asset\'s original filename, one per line, deduplicat
     AssetFavorite::factory()->for($version, 'galleryVersion')->create(['asset_key' => 'originals/asset1/IMG_4788.jpg', 'guest_identifier' => 'guest-2']);
     AssetFavorite::factory()->for($version, 'galleryVersion')->create(['asset_key' => 'originals/asset2/IMG_4877.jpg', 'guest_identifier' => 'guest-1']);
 
-    $staff = staffMember(StaffRole::Owner);
+    $staff = staffMember(StaffRole::Admin);
 
     $response = $this->actingAs($staff, 'staff')->get("/galerien/{$gallery->public_id}/lightroom-export");
 
@@ -36,7 +36,7 @@ it('exports nothing for a version with no favorites', function () {
     $gallery = Gallery::factory()->create();
     $gallery->publish();
 
-    $staff = staffMember(StaffRole::Owner);
+    $staff = staffMember(StaffRole::Admin);
 
     $response = $this->actingAs($staff, 'staff')->get("/galerien/{$gallery->public_id}/lightroom-export");
 
@@ -46,7 +46,7 @@ it('exports nothing for a version with no favorites', function () {
 
 it('404s a gallery that has never been published', function () {
     $gallery = Gallery::factory()->create();
-    $staff = staffMember(StaffRole::Owner);
+    $staff = staffMember(StaffRole::Admin);
 
     $this->actingAs($staff, 'staff')->get("/galerien/{$gallery->public_id}/lightroom-export")->assertNotFound();
 });
@@ -54,7 +54,7 @@ it('404s a gallery that has never been published', function () {
 it('rejects a staff member without media-management capability', function () {
     $gallery = Gallery::factory()->create();
     $gallery->publish();
-    $staff = staffMember(StaffRole::Assistant);
+    $staff = staffMember(StaffRole::Contributor);
 
     $this->actingAs($staff, 'staff')->get("/galerien/{$gallery->public_id}/lightroom-export")->assertForbidden();
 });

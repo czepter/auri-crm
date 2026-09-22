@@ -37,7 +37,7 @@ it('starts a fresh multipart upload under the quarantine prefix', function () {
     $handler = new MockHandler([new Result(['UploadId' => 'upload-abc'])]);
     app()->instance(S3Client::class, mockS3Client($handler));
 
-    $response = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $response = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->postJson("/galerien/{$gallery->public_id}/uploads", m01FileFingerprint($gallery))
         ->assertOk();
 
@@ -64,7 +64,7 @@ it('never puts a storage path, bucket name or upload id in the response body', f
     $handler = new MockHandler([new Result(['UploadId' => 'super-secret-upload-id'])]);
     app()->instance(S3Client::class, mockS3Client($handler));
 
-    $response = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $response = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->postJson("/galerien/{$gallery->public_id}/uploads", m01FileFingerprint($gallery));
 
     expect($response->getContent())
@@ -83,7 +83,7 @@ it('resumes the same in-progress session for a returning tab, asking the bucket 
     // single test method does not.
     $gallery = Gallery::factory()->create();
     $fingerprint = m01FileFingerprint($gallery);
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
 
     $handler = new MockHandler([
         new Result(['UploadId' => 'upload-abc']),
@@ -113,7 +113,7 @@ it('echoes the resumed session\'s own set, not the one the second request named,
     $gallery = Gallery::factory()->create();
     $trauung = GallerySet::factory()->for($gallery)->create(['name' => 'Trauung', 'position' => 1]);
     $fotobox = GallerySet::factory()->for($gallery)->create(['name' => 'Fotobox', 'position' => 2]);
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
 
     $handler = new MockHandler([
         new Result(['UploadId' => 'upload-abc']),
@@ -153,7 +153,7 @@ it('refuses a set that belongs to another gallery', function () {
     $foreignSet = GallerySet::where('gallery_id', $otherGallery->id)->sole();
     app()->instance(S3Client::class, mockS3Client(new MockHandler));
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->postJson("/galerien/{$gallery->public_id}/uploads", [
             'gallery_set_id' => $foreignSet->public_id,
             'filename' => 'IMG_9002.jpg',
@@ -169,7 +169,7 @@ it('refuses a replaces_asset_id that belongs to another gallery', function () {
     $foreignAsset = Asset::factory()->create(['gallery_id' => $otherGallery->id]);
     app()->instance(S3Client::class, mockS3Client(new MockHandler));
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->postJson("/galerien/{$gallery->public_id}/uploads", [
             ...m01FileFingerprint($gallery),
             'replaces_asset_id' => $foreignAsset->public_id,
@@ -180,7 +180,7 @@ it('refuses a replaces_asset_id that belongs to another gallery', function () {
 it('retires a stale session and starts fresh when the bucket no longer knows its uploadId', function () {
     $gallery = Gallery::factory()->create();
     $fingerprint = m01FileFingerprint($gallery);
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
 
     $handler = new MockHandler([
         new Result(['UploadId' => 'upload-old']),
@@ -211,7 +211,7 @@ it('streams a part straight through to UploadPart and hands back its etag', func
     app()->instance(S3Client::class, mockS3Client($handler));
 
     $bytes = str_repeat('x', 1024);
-    $response = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $response = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->call(
             'PUT',
             "/uploads/{$upload->public_id}/teile/1",
@@ -242,7 +242,7 @@ it('rejects a part number outside the S3 1..10000 range', function () {
     $upload = MultipartUpload::factory()->create();
     app()->instance(S3Client::class, mockS3Client(new MockHandler));
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->call('PUT', "/uploads/{$upload->public_id}/teile/10001", [], [], [], $this->transformHeadersToServerVars([
             'Content-Length' => '3',
         ]), 'abc')
@@ -253,7 +253,7 @@ it('refuses to upload a part into a session that is no longer in progress', func
     $upload = MultipartUpload::factory()->create(['status' => MultipartUploadStatus::Completed]);
     app()->instance(S3Client::class, mockS3Client(new MockHandler));
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->call('PUT', "/uploads/{$upload->public_id}/teile/1", [], [], [], $this->transformHeadersToServerVars([
             'Content-Length' => '3',
         ]), 'abc')
@@ -279,7 +279,7 @@ it('completes an upload by assembling the parts list from ListParts, never from 
     ]);
     app()->instance(S3Client::class, mockS3Client($handler));
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->postJson("/uploads/{$upload->public_id}/abschluss")
         ->assertOk()
         ->assertJson(['status' => 'completed']);
@@ -302,7 +302,7 @@ it('refuses to complete an upload twice', function () {
     $upload = MultipartUpload::factory()->create(['status' => MultipartUploadStatus::Completed]);
     app()->instance(S3Client::class, mockS3Client(new MockHandler));
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->postJson("/uploads/{$upload->public_id}/abschluss")
         ->assertStatus(409);
 });
@@ -312,7 +312,7 @@ it('aborts an in-progress upload on the operator\'s own cancel', function () {
     $handler = new MockHandler([new Result([])]);
     app()->instance(S3Client::class, mockS3Client($handler));
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->deleteJson("/uploads/{$upload->public_id}")
         ->assertOk()
         ->assertJson(['status' => 'aborted']);
@@ -333,17 +333,16 @@ it('refuses a role without ManageShoots, and lets one with it through', function
         ->postJson("/galerien/{$gallery->public_id}/uploads", m01FileFingerprint($gallery))
         ->assertStatus($status);
 })->with([
-    [StaffRole::Owner, 200],
-    [StaffRole::Photographer, 200],
-    [StaffRole::Editor, 200],
-    [StaffRole::SecondShooter, 403],
-    [StaffRole::Assistant, 403],
+    [StaffRole::Admin, 200],
+    [StaffRole::Manager, 200],
+    [StaffRole::Contributor, 403],
+    [StaffRole::Reader, 403],
 ]);
 
 it('reaches the record authenticated, with no integer id among its props', function () {
     $gallery = Gallery::factory()->create(['title' => 'Hochzeitstag']);
 
-    $response = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $response = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get("/galerien/{$gallery->public_id}")
         ->assertOk();
 
@@ -358,7 +357,7 @@ it('reaches the record authenticated, with no integer id among its props', funct
 it('starts an upload with the exact target the record itself handed the browser', function () {
     $gallery = Gallery::factory()->create();
     app()->instance(S3Client::class, mockS3Client(new MockHandler([new Result(['UploadId' => 'upload-abc'])])));
-    $user = staffMember(StaffRole::Owner);
+    $user = staffMember(StaffRole::Admin);
 
     $setId = $this->actingAs($user, 'staff')
         ->get("/galerien/{$gallery->public_id}")

@@ -11,7 +11,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Storage::fake('local');
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff');
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff');
 });
 
 it('stores a block picture under the tenant’s own catalogue folder', function () {

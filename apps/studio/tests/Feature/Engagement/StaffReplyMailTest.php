@@ -32,7 +32,7 @@ it('mails a staff reply to the client and keeps the row as the record', function
     Notification::fake();
 
     $thread = threadWithClient();
-    $message = app(PostMessage::class)($thread, staffMember(StaffRole::Owner), 'Die Bilder sind fertig.');
+    $message = app(PostMessage::class)($thread, staffMember(StaffRole::Admin), 'Die Bilder sind fertig.');
 
     // participants() now holds two rows — PostMessage records the staff
     // member as one the moment they reply — so the recipient is picked by
@@ -65,7 +65,7 @@ it('knows the Message-ID before the send, so a reply has something to thread aga
     Notification::fake();
 
     $thread = threadWithClient();
-    $message = app(PostMessage::class)($thread, staffMember(StaffRole::Owner), 'Kurz zurück.');
+    $message = app(PostMessage::class)($thread, staffMember(StaffRole::Admin), 'Kurz zurück.');
 
     expect($message->fresh()->email_message_id)
         ->toBe(MessageIdentifier::for($message))
@@ -77,8 +77,8 @@ it('writes one message id per message and never two the same', function () {
     Notification::fake();
 
     $thread = threadWithClient();
-    $first = app(PostMessage::class)($thread, staffMember(StaffRole::Owner), 'Eins.');
-    $second = app(PostMessage::class)($thread, staffMember(StaffRole::Owner), 'Zwei.');
+    $first = app(PostMessage::class)($thread, staffMember(StaffRole::Admin), 'Eins.');
+    $second = app(PostMessage::class)($thread, staffMember(StaffRole::Admin), 'Zwei.');
 
     expect($first->fresh()->email_message_id)->not->toBe($second->fresh()->email_message_id);
 });
@@ -91,7 +91,7 @@ it('sends nothing, and claims nothing, when no participant has an address', func
     $thread = Thread::factory()->for($project)->create();
     $thread->participants()->create(['contact_id' => $project->contacts()->sole()->id]);
 
-    $message = app(PostMessage::class)($thread, staffMember(StaffRole::Owner), 'Hallo?');
+    $message = app(PostMessage::class)($thread, staffMember(StaffRole::Admin), 'Hallo?');
 
     Notification::assertNothingSent();
     expect($message->fresh()->delivery_state)->toBeNull()
@@ -113,10 +113,10 @@ it('shows a contact every thread they are on, across projects', function () {
 
         $thread = Thread::factory()->for($project)->create();
         $thread->participants()->create(['contact_id' => $contact->id]);
-        app(PostMessage::class)($thread, staffMember(StaffRole::Owner), "Nachricht zu {$name}");
+        app(PostMessage::class)($thread, staffMember(StaffRole::Admin), "Nachricht zu {$name}");
     }
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get("/kontakte/{$contact->public_id}")
         ->assertOk()
         ->assertInertia(function ($page) {

@@ -21,12 +21,12 @@ class GalleryPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->role->allows(Capability::ManageShoots);
+        return $user->can(Capability::ManageShoots->value);
     }
 
     public function create(User $user): bool
     {
-        return $user->role->allows(Capability::ManageShoots);
+        return $user->can(Capability::ManageShoots->value);
     }
 
     /**
@@ -38,7 +38,7 @@ class GalleryPolicy
     public function manageMedia(User $user, Gallery $gallery): bool
     {
         return $gallery->project === null
-            ? $user->role->allows(Capability::ManageShoots)
+            ? $user->can(Capability::ManageShoots->value)
             : $this->projects->manageShoots($user, $gallery->project);
     }
 
@@ -53,7 +53,7 @@ class GalleryPolicy
     public function publish(User $user, Gallery $gallery): bool
     {
         return $gallery->project === null
-            ? $user->role->allows(Capability::ManagePortalAccess)
+            ? $user->can(Capability::ManagePortalAccess->value)
             : $this->projects->manageVisibility($user, $gallery->project);
     }
 }

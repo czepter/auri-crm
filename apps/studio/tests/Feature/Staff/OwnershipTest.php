@@ -13,21 +13,21 @@ uses(RefreshDatabase::class);
 
 function owner(): User
 {
-    return User::factory()->withMfa()->create(['role' => StaffRole::Owner, 'password' => Hash::make('correct-horse')]);
+    return User::factory()->withMfa()->create(['role' => StaffRole::Admin, 'password' => Hash::make('correct-horse')]);
 }
 
 it('hands the role over and leaves exactly one owner', function () {
     Notification::fake();
 
     $owner = owner();
-    $nina = staffMember(StaffRole::SecondShooter);
+    $nina = staffMember(StaffRole::Contributor);
 
     $this->actingAs($owner, 'staff')
         ->post("/team/{$nina->public_id}/inhaber", ['current_password' => 'correct-horse'])
         ->assertRedirect();
 
-    expect(User::where('role', StaffRole::Owner)->pluck('id')->all())->toBe([$nina->id])
-        ->and($owner->fresh()->role)->toBe(StaffRole::Photographer)
+    expect(User::where('role', StaffRole::Admin)->pluck('id')->all())->toBe([$nina->id])
+        ->and($owner->fresh()->role)->toBe(StaffRole::Manager)
         ->and(AuditLog::where('event', 'staff.ownership_transferred')->count())->toBe(1);
 
     Notification::assertSentTo([$owner, $nina], StaffOwnershipTransferred::class);
@@ -35,18 +35,18 @@ it('hands the role over and leaves exactly one owner', function () {
 
 it('refuses a wrong password', function () {
     $owner = owner();
-    $nina = staffMember(StaffRole::SecondShooter);
+    $nina = staffMember(StaffRole::Contributor);
 
     $this->actingAs($owner, 'staff')
         ->post("/team/{$nina->public_id}/inhaber", ['current_password' => 'wrong'])
         ->assertSessionHasErrors('current_password');
 
-    expect($owner->fresh()->role)->toBe(StaffRole::Owner);
+    expect($owner->fresh()->role)->toBe(StaffRole::Admin);
 });
 
 it('hides the transfer from everybody but the owner, and from the owner to themselves', function () {
     $owner = owner();
-    $nina = staffMember(StaffRole::SecondShooter);
+    $nina = staffMember(StaffRole::Contributor);
 
     $this->actingAs($nina, 'staff')
         ->post("/team/{$owner->public_id}/inhaber", ['current_password' => 'x'])
@@ -56,12 +56,12 @@ it('hides the transfer from everybody but the owner, and from the owner to thems
         ->post("/team/{$owner->public_id}/inhaber", ['current_password' => 'correct-horse'])
         ->assertNotFound();
 
-    expect($owner->fresh()->role)->toBe(StaffRole::Owner);
+    expect($owner->fresh()->role)->toBe(StaffRole::Admin);
 });
 
 it('offers the transfer for everybody but the viewer', function () {
     $owner = owner();
-    $nina = staffMember(StaffRole::SecondShooter);
+    $nina = staffMember(StaffRole::Contributor);
 
     $staff = $this->actingAs($owner, 'staff')->get('/team')->assertOk()->viewData('page')['props']['staff'];
 
@@ -71,10 +71,10 @@ it('offers the transfer for everybody but the viewer', function () {
 
 it('tells each side of the transfer something different', function () {
     $owner = owner();
-    $nina = staffMember(StaffRole::SecondShooter);
-    $owner->role = StaffRole::Photographer;
+    $nina = staffMember(StaffRole::Contributor);
+    $owner->role = StaffRole::Manager;
     $mail = new StaffOwnershipTransferred($owner, $nina, app(StudioSettingsResolver::class));
 
     expect((string) $mail->toMail($nina)->render())->toContain('hat dir die Inhaberschaft')
-        ->and((string) $mail->toMail($owner)->render())->toContain('bist jetzt Fotograf');
+        ->and((string) $mail->toMail($owner)->render())->toContain('bist jetzt Manager');
 });

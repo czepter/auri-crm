@@ -12,7 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->owner = User::factory()->withMfa()->create(['role' => StaffRole::Owner]);
+    $this->owner = User::factory()->withMfa()->create(['role' => StaffRole::Admin]);
 });
 
 it('exports everything the studio holds about a contact as downloadable json', function () {
@@ -80,7 +80,7 @@ it('refuses every role but the owner', function (StaffRole $role) {
     $this->actingAs(User::factory()->withMfa()->create(['role' => $role]), 'staff')
         ->get("/kontakte/{$contact->public_id}/dsgvo/export")
         ->assertForbidden();
-})->with([StaffRole::Photographer, StaffRole::Editor, StaffRole::SecondShooter, StaffRole::Assistant]);
+})->with([StaffRole::Manager, StaffRole::Contributor, StaffRole::Contributor, StaffRole::Contributor]);
 
 it('rejects unauthenticated access', function () {
     $contact = Contact::factory()->create();

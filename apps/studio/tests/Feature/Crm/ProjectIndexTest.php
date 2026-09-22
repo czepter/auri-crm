@@ -100,7 +100,7 @@ it('shows a second shooter only the projects they are crewed on', function () {
     $project = bookedProject('Vehse');
     Shoot::factory()->for($project)->primary()->on('2026-09-12')->create();
 
-    $crew = User::factory()->withMfa()->create(['role' => StaffRole::SecondShooter]);
+    $crew = User::factory()->withMfa()->create(['role' => StaffRole::Contributor]);
 
     expect(projectRows($crew))->toBe([]);
 });

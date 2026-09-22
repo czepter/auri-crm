@@ -99,10 +99,10 @@ it('keeps a contact who has an invoice, directly or through a project', function
 });
 
 it('shows the page and saves the deadline for the owner only', function () {
-    $this->actingAs(staffMember(StaffRole::Photographer), 'staff')->get('/einstellungen/aufbewahrung')->assertNotFound();
-    $this->actingAs(staffMember(StaffRole::Photographer), 'staff')->patch('/einstellungen/aufbewahrung', ['retention_months' => 6])->assertNotFound();
+    $this->actingAs(staffMember(StaffRole::Manager), 'staff')->get('/einstellungen/aufbewahrung')->assertNotFound();
+    $this->actingAs(staffMember(StaffRole::Manager), 'staff')->patch('/einstellungen/aufbewahrung', ['retention_months' => 6])->assertNotFound();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff');
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff');
     $this->get('/einstellungen/aufbewahrung')->assertOk()->assertInertia(fn ($page) => $page->where('months', null));
     $this->patch('/einstellungen/aufbewahrung', ['retention_months' => 6, 'policy' => ['name' => true, 'text' => true, 'messages' => true, 'offers' => true, 'galleries' => true, 'order' => false]])->assertRedirect();
     expect(app(StudioSettingsResolver::class)->retentionMonths())->toBe(6);
@@ -136,7 +136,7 @@ it('drops only the texts and leaves the name when that is the policy, and does n
 });
 
 it('runs now only with the owner\'s password, and saves what was chosen', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $this->actingAs($owner, 'staff');
     $contact = inquiry();
     $body = ['retention_months' => 12, 'policy' => ['name' => false, 'text' => true, 'messages' => false, 'offers' => false, 'galleries' => false, 'order' => false]];
@@ -152,7 +152,7 @@ it('runs now only with the owner\'s password, and saves what was chosen', functi
 });
 
 it('offers every candidate to the page, with its age and whether an invoice keeps it', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff');
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff');
     inquiry(LeadOutcome::Lost, 14);
     $kept = inquiry(LeadOutcome::Declined, 3);
     Invoice::create(['number' => 'RE-3', 'issued_at' => now(), 'contact_id' => $kept->id]);

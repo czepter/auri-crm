@@ -9,17 +9,18 @@ const capabilities = [
 ]
 
 const roles = [
-  { value: 'owner', label: 'Inhaber', capabilities: capabilities.map((c) => c.value) },
-  { value: 'second_shooter', label: 'Zweitfotograf', capabilities: ['manage_leads'] },
-  { value: 'assistant', label: 'Assistenz', capabilities: ['manage_leads'] },
+  { value: 'admin', label: 'Admin', capabilities: capabilities.map((c) => c.value) },
+  { value: 'manager', label: 'Manager', capabilities: ['manage_leads', 'view_all_projects'] },
+  { value: 'contributor', label: 'Mitwirkende', capabilities: ['manage_leads'] },
+  { value: 'reader', label: 'Leser', capabilities: ['view_all_projects'] },
 ]
 
 const christian = {
   id: 'u1',
   name: 'Christian Zepter',
   email: 'christian@atelier-nordlicht.de',
-  role: 'owner',
-  roleLabel: 'Inhaber',
+  role: 'admin',
+  roleLabel: 'Admin',
   mfaConfirmed: true,
   transferable: false,
 }
@@ -35,8 +36,8 @@ const meta = {
         id: 'u2',
         name: 'Marie Ohlsen',
         email: 'marie@atelier-nordlicht.de',
-        role: 'second_shooter',
-        roleLabel: 'Zweitfotograf',
+        role: 'contributor',
+        roleLabel: 'Mitwirkende',
         mfaConfirmed: false,
         transferable: true,
       },
@@ -46,7 +47,7 @@ const meta = {
         id: 'i1',
         email: 'jonas@atelier-nordlicht.de',
         name: 'Jonas Reincke',
-        roleLabel: 'Assistenz',
+        roleLabel: 'Mitwirkende',
         expiresOn: '19.09.2026',
       },
     ],

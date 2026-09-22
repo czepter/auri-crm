@@ -162,7 +162,7 @@ it('closes the request when the studio answers it', function () {
     $contact = Contact::factory()->create();
     DsgvoRequest::create(['contact_id' => $contact->id, 'kind' => DsgvoRequest::EXPORT]);
 
-    test()->actingAs(staffMember(App\Enums\StaffRole::Owner), 'staff')
+    test()->actingAs(staffMember(App\Enums\StaffRole::Admin), 'staff')
         ->get("/kontakte/{$contact->public_id}/dsgvo/export")
         ->assertOk();
 
@@ -196,7 +196,7 @@ it('completes the task when the studio answers the request', function () {
     $task = Task::factory()->create(['project_id' => null, 'contact_id' => $contact->id]);
     DsgvoRequest::create(['contact_id' => $contact->id, 'kind' => DsgvoRequest::EXPORT, 'task_id' => $task->id]);
 
-    test()->actingAs(staffMember(App\Enums\StaffRole::Owner), 'staff')
+    test()->actingAs(staffMember(App\Enums\StaffRole::Admin), 'staff')
         ->get("/kontakte/{$contact->public_id}/dsgvo/export")
         ->assertOk();
 

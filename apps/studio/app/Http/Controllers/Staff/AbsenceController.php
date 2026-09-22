@@ -29,7 +29,7 @@ class AbsenceController extends Controller
     public function index(): Response
     {
         $viewer = auth('staff')->user();
-        $canManageCrew = $viewer->role->allows(Capability::ManageCrew);
+        $canManageCrew = $viewer->can(Capability::ManageCrew->value);
 
         $absences = Absence::query()
             ->with('user')
@@ -65,7 +65,7 @@ class AbsenceController extends Controller
         // Your own row needs nothing beyond an account. Anyone else's needs
         // ManageCrew — the same line AbsencePolicy draws for viewing and
         // editing a row that already exists.
-        abort_unless($subject->is($viewer) || $viewer->role->allows(Capability::ManageCrew), 403);
+        abort_unless($subject->is($viewer) || $viewer->can(Capability::ManageCrew->value), 403);
 
         $absence = Absence::create([
             'user_id' => $subject->id,

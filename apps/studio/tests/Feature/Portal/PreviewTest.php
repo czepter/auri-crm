@@ -186,7 +186,7 @@ it('mints a preview link for an owner and refuses everyone else', function () {
 
     // As the button sends it: a form POST into a second tab, so the answer
     // is a redirect that tab follows onto the portal's own origin.
-    $response = test()->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $response = test()->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/kontakte/{$contact->public_id}/portal-vorschau")
         ->assertStatus(302);
 
@@ -196,7 +196,7 @@ it('mints a preview link for an owner and refuses everyone else', function () {
     expect(ClientAccess::query()->whereNotNull('preview_by_id')->count())->toBe(1)
         ->and(AuditLog::where('event', 'portal.preview_issued')->count())->toBe(1);
 
-    test()->actingAs(staffMember(StaffRole::Assistant), 'staff')
+    test()->actingAs(staffMember(StaffRole::Contributor), 'staff')
         ->post("/kontakte/{$contact->public_id}/portal-vorschau")
         ->assertForbidden();
 
@@ -218,7 +218,7 @@ it('never renders a live preview credential into the page', function () {
 
     $contact = Contact::factory()->create();
 
-    $body = test()->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $body = test()->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get("/kontakte/{$contact->public_id}")
         ->assertOk()
         ->getContent();

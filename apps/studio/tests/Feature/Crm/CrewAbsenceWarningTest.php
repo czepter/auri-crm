@@ -17,8 +17,8 @@ uses(RefreshDatabase::class);
  * with — and never blocks the assignment itself.
  */
 it('still allows assigning someone during their own recorded absence, but warns on the shoot they are put on', function () {
-    $owner = staffMember(StaffRole::Owner);
-    $nina = User::factory()->withMfa()->create(['role' => StaffRole::SecondShooter, 'name' => 'Nina Sturm']);
+    $owner = staffMember(StaffRole::Admin);
+    $nina = User::factory()->withMfa()->create(['role' => StaffRole::Contributor, 'name' => 'Nina Sturm']);
     Absence::factory()->for($nina)->spanning('2026-09-01', '2026-09-07')->create(['category' => 'holiday']);
 
     $project = Project::factory()->create();
@@ -27,7 +27,7 @@ it('still allows assigning someone during their own recorded absence, but warns 
     $this->actingAs($owner, 'staff')
         ->post("/shootings/{$shoot->public_id}/crew", [
             'user' => $nina->public_id,
-            'role' => 'second_shooter',
+            'role' => 'contributor',
         ])
         ->assertRedirect();
 
@@ -44,8 +44,8 @@ it('still allows assigning someone during their own recorded absence, but warns 
 });
 
 it('shows no crew conflict for a shoot whose crew has no absence covering its date', function () {
-    $owner = staffMember(StaffRole::Owner);
-    $nina = staffMember(StaffRole::SecondShooter);
+    $owner = staffMember(StaffRole::Admin);
+    $nina = staffMember(StaffRole::Contributor);
 
     $project = Project::factory()->create();
     $shoot = Shoot::factory()->for($project)->on('2026-09-03')->create();
@@ -59,8 +59,8 @@ it('shows no crew conflict for a shoot whose crew has no absence covering its da
 });
 
 it('does not warn about an absence belonging to somebody not crewed on the shoot', function () {
-    $owner = staffMember(StaffRole::Owner);
-    $mia = staffMember(StaffRole::Photographer);
+    $owner = staffMember(StaffRole::Admin);
+    $mia = staffMember(StaffRole::Manager);
     Absence::factory()->for($mia)->spanning('2026-09-01', '2026-09-07')->create();
 
     $project = Project::factory()->create();
@@ -75,7 +75,7 @@ it('does not warn about an absence belonging to somebody not crewed on the shoot
 });
 
 it('flags a studio with a single user so the shoot hides its crew', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $project = Project::factory()->create();
     $this->actingAs($owner, 'staff');
 

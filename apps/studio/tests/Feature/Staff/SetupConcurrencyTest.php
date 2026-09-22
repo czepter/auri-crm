@@ -49,7 +49,7 @@ it('serializes two concurrent setup submissions on an empty table, so only one b
         'name' => 'Christian Zepter',
         'email' => $email,
         'password' => 'ein-sehr-langes-passwort',
-        'role' => StaffRole::Owner,
+        'role' => StaffRole::Admin,
     ];
 
     // Request A: the same sequence as SetupController::store()'s
@@ -89,6 +89,6 @@ it('serializes two concurrent setup submissions on an empty table, so only one b
     });
 
     expect(User::query()->count())->toBe(1);
-    expect(User::where('role', StaffRole::Owner)->count())->toBe(1);
+    expect(User::where('role', StaffRole::Admin)->count())->toBe(1);
     expect(User::where('email', 'zweite@nordlicht.test')->exists())->toBeFalse();
 });

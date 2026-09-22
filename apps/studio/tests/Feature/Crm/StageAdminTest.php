@@ -15,7 +15,7 @@ uses(RefreshDatabase::class);
 
 // staffMember() lives in tests/Pest.php.
 beforeEach(function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff');
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff');
 });
 
 it('hands both lists the funnel they order', function () {
@@ -32,7 +32,7 @@ it('hands both lists the funnel they order', function () {
 });
 
 it('withholds the funnel from a role that may not configure it', function () {
-    $this->actingAs(staffMember(StaffRole::SecondShooter), 'staff')
+    $this->actingAs(staffMember(StaffRole::Contributor), 'staff')
         ->get('/anfragen')
         ->assertOk()
         ->assertInertia(fn ($page) => $page->where('stageSettings', null));

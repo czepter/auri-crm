@@ -82,7 +82,7 @@ class AutomationDraftController extends Controller
 
     private function authorizeDraft(AutomationRun $run): void
     {
-        abort_unless(auth('staff')->user()?->role->allows(Capability::ManageMessages) ?? false, 403);
+        abort_unless(auth('staff')->user()?->can(Capability::ManageMessages->value) ?? false, 403);
         abort_unless($run->status === AutomationRunStatus::AwaitingApproval, 404);
     }
 }

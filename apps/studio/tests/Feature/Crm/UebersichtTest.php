@@ -288,7 +288,7 @@ it('counts only what the viewer may open', function () {
     Quote::factory()->for($hidden)->create(['status' => QuoteStatus::Sent, 'total' => 250_00]);
     AuditLogger::record(event: 'payment_installment.paid', projectId: $hidden->id);
 
-    $this->actingAs(staffMember(StaffRole::Assistant), 'staff');
+    $this->actingAs(staffMember(StaffRole::Contributor), 'staff');
 
     $props = props('/');
 

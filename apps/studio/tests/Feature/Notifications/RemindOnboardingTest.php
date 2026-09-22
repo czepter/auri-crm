@@ -20,7 +20,7 @@ beforeEach(function () {
 
 it('reminds the earliest owner once the studio is unfinished after two days', function () {
     Notification::fake();
-    $owner = User::factory()->create(['role' => StaffRole::Owner, 'created_at' => now()->subDays(3)]);
+    $owner = User::factory()->create(['role' => StaffRole::Admin, 'created_at' => now()->subDays(3)]);
 
     $count = app(RemindOnboarding::class)();
 
@@ -31,7 +31,7 @@ it('reminds the earliest owner once the studio is unfinished after two days', fu
 
 it('sends nothing before two days have passed', function () {
     Notification::fake();
-    User::factory()->create(['role' => StaffRole::Owner, 'created_at' => now()->subHours(12)]);
+    User::factory()->create(['role' => StaffRole::Admin, 'created_at' => now()->subHours(12)]);
 
     expect(app(RemindOnboarding::class)())->toBe(0);
     Notification::assertNothingSent();
@@ -39,7 +39,7 @@ it('sends nothing before two days have passed', function () {
 
 it('sends nothing once onboarding is complete', function () {
     Notification::fake();
-    User::factory()->create(['role' => StaffRole::Owner, 'created_at' => now()->subDays(3)]);
+    User::factory()->create(['role' => StaffRole::Admin, 'created_at' => now()->subDays(3)]);
     StudioSettings::query()->update(['onboarding_completed_at' => now()]);
     Cache::store('redis')->flush();
 
@@ -49,7 +49,7 @@ it('sends nothing once onboarding is complete', function () {
 
 it('does not send a second reminder on a repeated run', function () {
     Notification::fake();
-    User::factory()->create(['role' => StaffRole::Owner, 'created_at' => now()->subDays(3)]);
+    User::factory()->create(['role' => StaffRole::Admin, 'created_at' => now()->subDays(3)]);
 
     app(RemindOnboarding::class)();
     $count = app(RemindOnboarding::class)();

@@ -14,21 +14,21 @@ class FormTemplatePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->role->allows(Capability::ManageFormTemplates);
+        return $user->can(Capability::ManageFormTemplates->value);
     }
 
     public function create(User $user): bool
     {
-        return $user->role->allows(Capability::ManageFormTemplates);
+        return $user->can(Capability::ManageFormTemplates->value);
     }
 
     public function update(User $user, FormTemplate $template): bool
     {
-        return $user->role->allows(Capability::ManageFormTemplates);
+        return $user->can(Capability::ManageFormTemplates->value);
     }
 
     public function delete(User $user, FormTemplate $template): bool
     {
-        return $user->role->allows(Capability::ManageFormTemplates);
+        return $user->can(Capability::ManageFormTemplates->value);
     }
 }

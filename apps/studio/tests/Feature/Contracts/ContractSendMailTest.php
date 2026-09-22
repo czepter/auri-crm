@@ -19,7 +19,7 @@ beforeEach(function () {
     // Only the render: MailTransport queues the mail itself.
     Queue::fake([RenderContractJob::class]);
 
-    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Owner]), 'staff');
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Admin]), 'staff');
     $this->project = Project::factory()->create(['portal_visible' => true]);
     $this->contract = Contract::factory()
         ->for($this->project)

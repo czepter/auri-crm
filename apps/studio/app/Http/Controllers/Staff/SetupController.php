@@ -43,7 +43,7 @@ class SetupController extends Controller
         ]);
 
         // Re-checked inside the lock: two tabs submitting at once must not
-        // both become Owner. EnsureNoStaffExists ran before either request
+        // both become Admin. EnsureNoStaffExists ran before either request
         // reached here and cannot see the other. Postgres's SELECT ... FOR
         // UPDATE only locks rows a query actually returns — on an empty
         // table that's zero rows, so lockForUpdate() here would take no
@@ -61,7 +61,7 @@ class SetupController extends Controller
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => $validated['password'],
-                'role' => StaffRole::Owner,
+                'role' => StaffRole::Admin,
             ]);
         });
 

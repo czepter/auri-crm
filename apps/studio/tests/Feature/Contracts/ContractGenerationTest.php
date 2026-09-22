@@ -16,7 +16,7 @@ it('creates a pending contract and dispatches the render job onto the render que
 
     $project = bookedContactProject();
     $template = DocumentTemplate::factory()->create();
-    $staff = staffMember(StaffRole::Owner);
+    $staff = staffMember(StaffRole::Admin);
 
     $this->actingAs($staff, 'staff')
         ->post("/auftraege/{$project->public_id}/vertraege", ['template' => $template->public_id])
@@ -38,7 +38,7 @@ it('refuses generation for a role without ManageContracts', function () {
     $project = bookedContactProject();
     $template = DocumentTemplate::factory()->create();
 
-    $this->actingAs(staffMember(StaffRole::SecondShooter), 'staff')
+    $this->actingAs(staffMember(StaffRole::Contributor), 'staff')
         ->post("/auftraege/{$project->public_id}/vertraege", ['template' => $template->public_id])
         ->assertForbidden();
 
@@ -50,7 +50,7 @@ it('404s generation against a superseded template version', function () {
     $template = DocumentTemplate::factory()->create();
     $template->newVersion(['name' => $template->name, 'body' => '<p>v2</p>']);
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/auftraege/{$project->public_id}/vertraege", ['template' => $template->public_id])
         ->assertNotFound();
 });

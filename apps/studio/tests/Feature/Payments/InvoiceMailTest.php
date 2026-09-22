@@ -39,7 +39,7 @@ it('sends the issue button into the compose screen', function () {
 
     $installment = invoiceablePlan();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/raten/{$installment->public_id}/rechnung")
         ->assertRedirect('/rechnungen/'.$installment->fresh()->invoice->public_id.'/versenden');
 });
@@ -47,7 +47,7 @@ it('sends the issue button into the compose screen', function () {
 it('renders the compose screen with the recipient and the invoice card data', function () {
     $invoice = mailableInvoice();
 
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $props = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get("/rechnungen/{$invoice->public_id}/versenden")
         ->assertOk()
         ->viewData('page')['props'];
@@ -64,7 +64,7 @@ it('attaches the PDF to the mail and stamps sent_at once', function () {
 
     $invoice = mailableInvoice();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/rechnungen/{$invoice->public_id}/versenden", [
             'subject' => "Rechnung {$invoice->number}",
             'message' => "Hallo Lena,\n\nanbei die Rechnung.",
@@ -88,7 +88,7 @@ it('attaches the PDF to the mail and stamps sent_at once', function () {
     expect($sentAt)->not->toBeNull();
 
     $this->travel(1)->day();
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/rechnungen/{$invoice->public_id}/versenden", ['subject' => 'Nochmal']);
 
     expect($invoice->fresh()->sent_at->equalTo($sentAt))->toBeTrue();

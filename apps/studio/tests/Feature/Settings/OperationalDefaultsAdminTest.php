@@ -13,7 +13,7 @@ uses(RefreshDatabase::class);
 beforeEach(fn () => Cache::store('redis')->flush());
 
 it('hands the timezone to the settings screen', function () {
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $props = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/einstellungen/allgemein')
         ->assertOk()
         ->viewData('page')['props'];
@@ -22,7 +22,7 @@ it('hands the timezone to the settings screen', function () {
 });
 
 it('updates timezone and the register, redirects, and audits the owner', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->from('/einstellungen/allgemein')
@@ -41,7 +41,7 @@ it('updates timezone and the register, redirects, and audits the owner', functio
 });
 
 it('clears the tenant timezone back to the environment fallback when submitted blank', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')->patch('/einstellungen', ['timezone' => 'Europe/Vienna']);
 
@@ -53,7 +53,7 @@ it('clears the tenant timezone back to the environment fallback when submitted b
 });
 
 it('rejects a timezone that is not a real IANA identifier', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch('/einstellungen', ['timezone' => 'Nonsense/Place'])
         ->assertInvalid(['timezone']);
 });
@@ -70,11 +70,11 @@ it('gives every non-owner role the same response on the general settings route a
         expect($response->status())->toBe($missing->status());
     }
 })->with([
-    [StaffRole::Owner, 302],
-    [StaffRole::Photographer, 404],
-    [StaffRole::Editor, 404],
-    [StaffRole::SecondShooter, 404],
-    [StaffRole::Assistant, 404],
+    [StaffRole::Admin, 302],
+    [StaffRole::Manager, 404],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Contributor, 404],
 ]);
 
 it('declares an audience on the general settings route, same as every other admin route', function () {

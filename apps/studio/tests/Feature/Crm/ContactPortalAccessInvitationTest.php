@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Notification;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Owner]), 'staff');
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Admin]), 'staff');
     $this->contact = Contact::factory()->create(['name' => 'Lena Brandt', 'email' => 'lena@example.test']);
 });
 

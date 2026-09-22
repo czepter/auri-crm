@@ -37,7 +37,7 @@ function t07ValidBankFields(): array
 }
 
 it('renders the settings shell for an owner', function () {
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $props = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/einstellungen/allgemein')
         ->assertOk()
         ->viewData('page')['props'];
@@ -52,13 +52,13 @@ it('renders the settings shell for an owner', function () {
 });
 
 it('sends the brand and legal-entity paths to Allgemein', function (string $path) {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get($path)
         ->assertRedirect('/einstellungen/allgemein');
 })->with(['/einstellungen/marke', '/einstellungen/rechtliche-einheit']);
 
 it('saves the form of address and the timezone with the rest of the profile', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch('/einstellungen', ['display_name' => 'Atelier Nordlicht', 'client_register' => 'informal', 'timezone' => 'Europe/Vienna'])
         ->assertSessionHasNoErrors();
 
@@ -67,19 +67,19 @@ it('saves the form of address and the timezone with the rest of the profile', fu
     expect($row->client_register)->toBe('informal')
         ->and($row->timezone)->toBe('Europe/Vienna');
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch('/einstellungen', ['timezone' => 'Nonsense/Place'])
         ->assertInvalid(['timezone']);
 });
 
 it('sends the settings root to the first pane', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/einstellungen')
         ->assertRedirect('/einstellungen/allgemein');
 });
 
 it('serves every settings pane on its own path', function (string $path, string $pane) {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get($path)
         ->assertOk()
         ->assertInertia(fn ($page) => $page->where('pane', $pane));
@@ -91,7 +91,7 @@ it('serves every settings pane on its own path', function (string $path, string 
 ]);
 
 it('sends the former billing addresses to their new pages', function (string $from, string $to) {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get($from)
         ->assertRedirect($to);
 })->with([
@@ -100,7 +100,7 @@ it('sends the former billing addresses to their new pages', function (string $fr
 ]);
 
 it('updates the display name, redirects, and leaves an audit row naming the owner', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->from('/einstellungen')
@@ -115,7 +115,7 @@ it('updates the display name, redirects, and leaves an audit row naming the owne
 });
 
 it('saves the full legal-entity, brand and bank fieldset in one submit', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')->from('/einstellungen')->patch('/einstellungen', [
         'display_name' => 'Atelier Nordlicht',
@@ -153,7 +153,7 @@ it('saves the full legal-entity, brand and bank fieldset in one submit', functio
 });
 
 it('rejects saving with neither Steuernummer nor USt-IdNr present', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $response = $this->actingAs($owner, 'staff')
         ->from('/einstellungen')
@@ -166,7 +166,7 @@ it('rejects saving with neither Steuernummer nor USt-IdNr present', function () 
 });
 
 it('saves the Marke fieldset alone without demanding the tax fields it does not show', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->from('/einstellungen')
@@ -181,7 +181,7 @@ it('saves the Marke fieldset alone without demanding the tax fields it does not 
 });
 
 it('accepts saving with only the USt-IdNr present', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen', ['vat_id' => 'DE284957312', ...t07ValidBankFields()])
@@ -191,7 +191,7 @@ it('accepts saving with only the USt-IdNr present', function () {
 });
 
 it('rejects an IBAN with a transposed digit pair on save, with a field-level message', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $response = $this->actingAs($owner, 'staff')
         ->from('/einstellungen')
@@ -208,7 +208,7 @@ it('rejects an IBAN with a transposed digit pair on save, with a field-level mes
 });
 
 it('accepts and stores a checksum-valid IBAN', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen', [
@@ -223,7 +223,7 @@ it('accepts and stores a checksum-valid IBAN', function () {
 });
 
 it('saves without bank details — the fieldset is optional, the portal hides "Überweisen" when there is no IBAN', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->from('/einstellungen')
@@ -236,7 +236,7 @@ it('saves without bank details — the fieldset is optional, the portal hides "�
 
 it('stores an uploaded logo once and serves it from one route, with an audit row', function () {
     Storage::fake('local');
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen', [
@@ -264,7 +264,7 @@ it('stores an uploaded logo once and serves it from one route, with an audit row
 it('takes a logo as PNG, JPEG, WebP or SVG', function (string $file, string $mime) {
     Storage::fake('local');
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch('/einstellungen', [
             'tax_number' => '22/123/45678',
             'logo' => $mime === 'image/svg+xml'
@@ -286,7 +286,7 @@ it('takes a logo as PNG, JPEG, WebP or SVG', function (string $file, string $mim
 // wird nicht angefasst.
 it('shrinks a large logo to 800 px and leaves an SVG alone', function () {
     Storage::fake('local');
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen', ['tax_number' => '22/123/45678', 'logo' => UploadedFile::fake()->image('logo.png', 2400, 1200), ...t07ValidBankFields()])
@@ -306,7 +306,7 @@ it('shrinks a large logo to 800 px and leaves an SVG alone', function () {
 it('refuses a logo that is not an image at all', function () {
     Storage::fake('local');
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch('/einstellungen', [
             'tax_number' => '22/123/45678',
             'logo' => UploadedFile::fake()->create('logo.pdf', 12, 'application/pdf'),
@@ -320,7 +320,7 @@ it('refuses a logo that is not an image at all', function () {
 it('serves the logo sandboxed, so an SVG cannot run as this app', function () {
     Storage::fake('local');
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')->patch('/einstellungen', [
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')->patch('/einstellungen', [
         'tax_number' => '22/123/45678',
         'logo' => UploadedFile::fake()->create('logo.svg', 12, 'image/svg+xml'),
         ...t07ValidBankFields(),
@@ -334,7 +334,7 @@ it('serves the logo sandboxed, so an SVG cannot run as this app', function () {
 
 it('replaces the logo on a second upload rather than keeping both', function () {
     Storage::fake('local');
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')->patch('/einstellungen', [
         'tax_number' => '22/123/45678',
@@ -365,11 +365,11 @@ it('opens the settings screen to the owner, and gives every other role the same 
         expect($response->status())->toBe($missing->status());
     }
 })->with([
-    [StaffRole::Owner, 200],
-    [StaffRole::Photographer, 404],
-    [StaffRole::Editor, 404],
-    [StaffRole::SecondShooter, 404],
-    [StaffRole::Assistant, 404],
+    [StaffRole::Admin, 200],
+    [StaffRole::Manager, 404],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Contributor, 404],
 ]);
 
 it('declares an audience on the settings routes, same as every other admin route', function () {
@@ -384,17 +384,17 @@ it('declares an audience on the settings routes, same as every other admin route
 });
 
 it('lists Einstellungen in the sidebar only for a role that manages settings', function () {
-    $owner = $this->actingAs(staffMember(StaffRole::Owner), 'staff')->get('/')->assertOk();
+    $owner = $this->actingAs(staffMember(StaffRole::Admin), 'staff')->get('/')->assertOk();
     expect($owner->viewData('page')['props']['auth']['can'])->toContain('manage_settings');
 
-    $photographer = $this->actingAs(staffMember(StaffRole::Photographer), 'staff')->get('/')->assertOk();
+    $photographer = $this->actingAs(staffMember(StaffRole::Manager), 'staff')->get('/')->assertOk();
     expect($photographer->viewData('page')['props']['auth']['can'])->not->toContain('manage_settings');
 });
 
 // #234: an enum, never free text — the cases are the pairs this product has
 // licensed and self-hosts, and a fifth name would be a font nobody may serve.
 it('stores the chosen font pair and refuses one that is not licensed', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->from('/einstellungen')
         ->patch('/einstellungen', [
             'display_name' => 'Atelier Nordlicht', 'tax_number' => '22/123/45678',
@@ -416,7 +416,7 @@ it('falls back to Hanken while nothing is chosen', function () {
 });
 
 it('rejects a malformed BIC, USt-IdNr. and Steuernummer', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen', ['bank_bic' => 'BYLA', 'vat_id' => 'DE81', 'tax_number' => '43/12'])

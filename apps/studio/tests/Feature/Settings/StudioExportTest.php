@@ -61,7 +61,7 @@ function packedExport(StudioExport $export): array
 }
 
 it('packs contacts, projects, documents and messages into the Daten archive', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $installment = creditableInstallment();
     $invoice = $installment->invoice;
     $project = $invoice->project;
@@ -121,7 +121,7 @@ it('packs contacts, projects, documents and messages into the Daten archive', fu
 });
 
 it('packs the originals of one gallery with their numbers', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $gallery = Gallery::factory()->create(['title' => 'Hochzeit']);
     foreach (['IMG_1.jpg' => 'aaa', 'IMG_2.jpg' => 'bbbb'] as $filename => $bytes) {
         $asset = Asset::factory()->for($gallery)->create([
@@ -143,7 +143,7 @@ it('packs the originals of one gallery with their numbers', function () {
 });
 
 it('marks the export failed when a member cannot be read', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $gallery = Gallery::factory()->create();
     Asset::factory()->for($gallery)->create(['status' => AssetStatus::Ready, 'key' => 'galleries/t/missing.jpg', 'byte_size' => 10]);
 
@@ -154,7 +154,7 @@ it('marks the export failed when a member cannot be read', function () {
 });
 
 it('starts one job per kind and gallery, however often it is asked', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $gallery = Gallery::factory()->create();
 
     $this->actingAs($owner, 'staff')->post('/einstellungen/export/archiv')->assertRedirect();
@@ -167,7 +167,7 @@ it('starts one job per kind and gallery, however often it is asked', function ()
 });
 
 it('hides creating and loading archives from everybody but the owner', function () {
-    $photographer = staffMember(StaffRole::Photographer);
+    $photographer = staffMember(StaffRole::Manager);
     $export = StudioExport::create(['kind' => StudioExportKind::Daten, 'status' => ZipBuildStatus::Ready, 'path' => 'exports/x.zip', 'expires_at' => now()->addDay()]);
     $url = URL::temporarySignedRoute('settings.export.archive.download', now()->addHour(), ['studioExport' => $export->public_id]);
 
@@ -177,7 +177,7 @@ it('hides creating and loading archives from everybody but the owner', function 
 });
 
 it('sends the owner to a short-lived bucket link and audits the download', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     Storage::disk('s3')->buildTemporaryUrlsUsing(fn (string $path) => "https://bucket.test/{$path}");
     $export = StudioExport::create(['kind' => StudioExportKind::Daten, 'status' => ZipBuildStatus::Ready, 'path' => 'exports/x.zip', 'expires_at' => now()->addDay()]);
 
@@ -191,7 +191,7 @@ it('sends the owner to a short-lived bucket link and audits the download', funct
 });
 
 it('serves nothing once the archive has expired', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
     $export = StudioExport::create(['kind' => StudioExportKind::Daten, 'status' => ZipBuildStatus::Ready, 'path' => 'exports/x.zip', 'expires_at' => now()->subMinute()]);
     $url = URL::temporarySignedRoute('settings.export.archive.download', now()->addHour(), ['studioExport' => $export->public_id]);
 

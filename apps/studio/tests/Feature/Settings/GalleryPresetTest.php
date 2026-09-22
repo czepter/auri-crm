@@ -9,7 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->staff = User::factory()->withMfa()->create(['role' => StaffRole::Owner]);
+    $this->staff = User::factory()->withMfa()->create(['role' => StaffRole::Admin]);
     $this->actingAs($this->staff, 'staff');
 });
 
@@ -63,7 +63,7 @@ it('refuses a mode the resolution does not know', function () {
 // Der 404-statt-403-Riegel, den AuthorizesStaffSettings für jeden
 // Einstellungsscreen setzt.
 it('answers 404 for a role without ManageSettings', function () {
-    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Assistant]), 'staff');
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Contributor]), 'staff');
 
     $this->get('/vorlagen?typ=galerien')->assertNotFound();
 });
@@ -105,7 +105,7 @@ it('says never for a gallery that does not expire', function () {
 
 it('refuses to save a gallery as a preset without ManageSettings', function () {
     $gallery = Gallery::factory()->create();
-    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Editor]), 'staff');
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Contributor]), 'staff');
 
     $this->post("/galerien/{$gallery->public_id}/vorlage", ['name' => 'Nein'])->assertNotFound();
 
@@ -166,7 +166,7 @@ it('applies a preset\'s design and offers to an existing gallery', function () {
 it('refuses to apply a preset without manageMedia', function () {
     $gallery = Gallery::factory()->create();
     $preset = GalleryPreset::factory()->create();
-    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Assistant]), 'staff');
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Contributor]), 'staff');
 
     $this->post("/galerien/{$gallery->public_id}/vorlage-anwenden", ['gallery_preset_id' => $preset->public_id])
         ->assertForbidden();

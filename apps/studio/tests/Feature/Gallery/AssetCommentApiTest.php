@@ -141,8 +141,8 @@ it('returns an empty list for an unknown or missing asset_key rather than every 
 it('notifies every staff user of the tenant through the unread stream when a comment lands', function () {
     $version = publishedVersionWithCommentableAssets();
     [$me, $pass] = confirmedGuest($version->gallery);
-    $staffOne = User::factory()->create(['role' => StaffRole::Owner]);
-    $staffTwo = User::factory()->create(['role' => StaffRole::Photographer]);
+    $staffOne = User::factory()->create(['role' => StaffRole::Admin]);
+    $staffTwo = User::factory()->create(['role' => StaffRole::Manager]);
 
     $this->postJson("/api/gallery-versions/{$version->public_id}/comments", [
         'guest_pass' => $pass, 'asset_key' => 'galleries/g1/a.jpg', 'body' => 'Bitte ins Album.',

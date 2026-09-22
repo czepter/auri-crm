@@ -14,7 +14,7 @@ uses(RefreshDatabase::class);
 beforeEach(fn () => Cache::store('redis')->flush());
 
 it('defaults Stripe to off', function () {
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $props = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/einstellungen/zahlungen')
         ->assertOk()
         ->viewData('page')['props'];
@@ -28,7 +28,7 @@ it('defaults Stripe to off', function () {
 // Die Mahnstufe steht bei Zahlung: sie hängt an der Frist, nicht an
 // der Anbindung, über die das Geld hereinkommt.
 it('saves the reminders default on the payment route', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch('/einstellungen/zahlung', ['payments_reminders_enabled' => false])
         ->assertRedirect();
 
@@ -36,7 +36,7 @@ it('saves the reminders default on the payment route', function () {
 });
 
 it('switches Stripe on and stores a test key pair, encrypted at rest', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen/zahlungen', [
@@ -60,7 +60,7 @@ it('switches Stripe on and stores a test key pair, encrypted at rest', function 
 });
 
 it('leaves an existing key pair untouched when the write-only fields are submitted blank', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlungen', [
         'payments_stripe_enabled' => true,
@@ -83,7 +83,7 @@ it('leaves an existing key pair untouched when the write-only fields are submitt
 });
 
 it('keeps both mode key pairs independently — switching modes never requires re-entering keys', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlungen', [
         'payments_stripe_enabled' => true,
@@ -107,7 +107,7 @@ it('keeps both mode key pairs independently — switching modes never requires r
 });
 
 it('never puts the Stripe secret key in any response body — the edit screen or the update redirect', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlungen', [
         'payments_stripe_enabled' => true,
@@ -134,7 +134,7 @@ it('never puts the Stripe secret key in any response body — the edit screen or
 });
 
 it('leaves an audit row naming the changed keys by name only, never by value', function () {
-    $owner = staffMember(StaffRole::Owner);
+    $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlungen', [
         'payments_stripe_enabled' => true,
@@ -158,9 +158,9 @@ it('opens the payments settings screen to the owner, and gives every other role 
         expect($response->status())->toBe($missing->status());
     }
 })->with([
-    [StaffRole::Owner, 200],
-    [StaffRole::Photographer, 404],
-    [StaffRole::Editor, 404],
-    [StaffRole::SecondShooter, 404],
-    [StaffRole::Assistant, 404],
+    [StaffRole::Admin, 200],
+    [StaffRole::Manager, 404],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Contributor, 404],
+    [StaffRole::Contributor, 404],
 ]);

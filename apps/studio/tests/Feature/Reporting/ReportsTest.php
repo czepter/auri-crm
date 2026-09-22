@@ -239,7 +239,7 @@ it('books the past series on the settlement month and counts the projects behind
 });
 
 it('renders the Auswertungen screen for a role that sees every project', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/auswertungen')
         ->assertOk()
         ->assertInertia(function ($page) {
@@ -251,7 +251,7 @@ it('renders the Auswertungen screen for a role that sees every project', functio
 });
 
 it('refuses a role that only reaches the projects it is crewed on', function () {
-    $this->actingAs(staffMember(StaffRole::SecondShooter), 'staff')
+    $this->actingAs(staffMember(StaffRole::Contributor), 'staff')
         ->get('/auswertungen')
         ->assertForbidden();
 });
@@ -259,7 +259,7 @@ it('refuses a role that only reaches the projects it is crewed on', function () 
 it('shows an empty studio empty figures rather than zeroes', function () {
     Project::query()->delete();
 
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/auswertungen')
         ->assertOk()
         ->assertInertia(function ($page) {
@@ -302,7 +302,7 @@ it('narrows every figure to one project type when the filter asks for one', func
 });
 
 it('keeps the filter in the URL so a filtered report is a link', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/auswertungen?zeitraum=6m&typ=portrait')
         ->assertOk()
         ->assertInertia(function ($page) {

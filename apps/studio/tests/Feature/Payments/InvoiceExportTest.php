@@ -24,7 +24,7 @@ it('exports one line per issued invoice of the year, with a BOM and the header r
 
     $issued = app(IssueInvoice::class)(invoiceablePlan());
 
-    $csv = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $csv = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/einstellungen/rechnungen/export?jahr=2026')
         ->assertOk()
         ->streamedContent();
@@ -47,7 +47,7 @@ it('leaves another year out', function () {
     $this->travelTo('2026-05-04 10:00:00');
     app(IssueInvoice::class)(invoiceablePlan());
 
-    $csv = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+    $csv = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/einstellungen/rechnungen/export?jahr=2025')
         ->assertOk()
         ->streamedContent();
@@ -56,7 +56,7 @@ it('leaves another year out', function () {
 });
 
 it('404s a role without ManageSettings', function () {
-    $this->actingAs(staffMember(StaffRole::Assistant), 'staff')
+    $this->actingAs(staffMember(StaffRole::Contributor), 'staff')
         ->get('/einstellungen/rechnungen/export?jahr=2026')
         ->assertNotFound();
 });
