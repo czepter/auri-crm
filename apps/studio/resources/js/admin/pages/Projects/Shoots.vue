@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
+import { ChevronDown } from 'lucide-vue-next'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/ProjectShell.vue'
 import { chipClass } from '@/admin/lib/shoots'
@@ -11,7 +12,7 @@ import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
 import Card from '@/ui/page/Card.vue'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 import { TimePicker } from '@/ui/time-picker'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
@@ -24,7 +25,6 @@ const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
   shoots: App.Crm.Data.ShootData[]
   crewAvailability: Record<string, App.Crm.Data.CrewCandidateData[]>
-  crewRoles: { value: string; label: string }[]
   soloStudio: boolean
   shootKinds: string[]
 }>()
@@ -41,8 +41,10 @@ const form = useForm({
   venue_city: '',
 })
 
-// E-04: which shoot's Ablauf is open for editing, at most one at a time.
-const editingTimeline = ref<string | null>(null)
+// Der Ablauf wächst zeilenweise: Uhrzeit und Titel reichen für den Regelfall,
+// Ort/Hinweis/Fahrt stehen hinter "…ergänzen" statt bei jeder Zeile mit.
+const addingTimelineFor = ref<string | null>(null)
+const timelineDetails = ref(false)
 const timelineForm = useForm({
   time: '',
   title: '',
@@ -51,15 +53,46 @@ const timelineForm = useForm({
   is_transit: false,
 })
 
-function toggleTimelineEdit(shoot: App.Crm.Data.ShootData) {
-  editingTimeline.value = editingTimeline.value === shoot.id ? null : shoot.id
+function startTimelineEntry(shoot: App.Crm.Data.ShootData) {
+  addingTimelineFor.value = shoot.id
+  timelineDetails.value = false
   timelineForm.reset()
 }
 
 function addTimelineEntry(shoot: App.Crm.Data.ShootData) {
   timelineForm.post(`/shootings/${shoot.id}/ablauf`, {
     preserveScroll: true,
-    onSuccess: () => timelineForm.reset(),
+    onSuccess: () => {
+      timelineForm.reset()
+      timelineDetails.value = false
+    },
+  })
+}
+
+// Eine Zeile ändern heißt: an Ort und Stelle zum Formular werden, nicht
+// löschen und neu anlegen.
+const editingTimelineEntry = ref<string | null>(null)
+const editTimelineForm = useForm({
+  time: '',
+  title: '',
+  location: '',
+  note: '',
+  is_transit: false,
+})
+
+function startEditTimelineEntry(entry: App.Crm.Data.TimelineEntryData) {
+  editingTimelineEntry.value = entry.id
+  editTimelineForm.time = entry.time
+  editTimelineForm.title = entry.title
+  editTimelineForm.location = entry.location ?? ''
+  editTimelineForm.note = entry.note ?? ''
+  editTimelineForm.is_transit = entry.isTransit
+}
+
+function saveTimelineEntry(entry: App.Crm.Data.TimelineEntryData) {
+  editTimelineForm.patch(`/ablauf/${entry.id}`, {
+    preserveScroll: true,
+    onSuccess: () => (editingTimelineEntry.value = null),
   })
 }
 
@@ -156,29 +189,27 @@ function designatePrimary(shoot: App.Crm.Data.ShootData) {
   router.post(`/shootings/${shoot.id}/haupttermin`, {}, { preserveScroll: true })
 }
 
-const assigning = ref<App.Crm.Data.ShootData | null>(null)
-const crewUser = ref('')
-const crewRole = ref(props.crewRoles[0].value)
+// Die ID, nicht das Objekt: nach jedem Zuweisen liefert Inertia die Shoots
+// neu, und der Dialog soll die frische Liste zeigen, nicht die vom Öffnen.
+const assigningId = ref<string | null>(null)
+const assigningShoot = computed(() => props.shoots.find((shoot) => shoot.id === assigningId.value) ?? null)
 
 function openAssign(shoot: App.Crm.Data.ShootData) {
-  assigning.value = shoot
-  crewUser.value = ''
-  crewRole.value = props.crewRoles[0].value
+  assigningId.value = shoot.id
 }
 
-const assignedIds = computed(() => new Set(assigning.value?.crew.map((member) => member.userId) ?? []))
+const assignedIds = computed(() => new Set(assigningShoot.value?.crew.map((member) => member.userId) ?? []))
 // CrewAvailability answered this for the shoot's own day, for everybody —
 // not only for those already on it.
-const candidates = computed(() => (assigning.value ? props.crewAvailability[assigning.value.id] ?? [] : []))
+const candidates = computed(() => (assigningShoot.value ? props.crewAvailability[assigningShoot.value.id] ?? [] : []))
 
-function confirmAssign() {
-  const shoot = assigning.value
-  if (!shoot || !crewUser.value) return
+// Ein Tap weist zu, der Dialog bleibt offen: die nächste Person braucht
+// keinen neuen Dialog-Aufruf.
+function assignCandidate(user: string) {
+  const shoot = assigningShoot.value
+  if (!shoot) return
 
-  router.post(`/shootings/${shoot.id}/crew`, { user: crewUser.value, role: crewRole.value }, {
-    preserveScroll: true,
-    onSuccess: () => (assigning.value = null),
-  })
+  router.post(`/shootings/${shoot.id}/crew`, { user }, { preserveScroll: true })
 }
 
 function unassign(member: App.Crm.Data.CrewMemberData) {
@@ -314,6 +345,48 @@ const TONE: Record<string, string> = {
               <span :class="['rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase', TONE[chipClass(shoot, header.position.value)]]">
                 {{ shoot.statusLabel }}
               </span>
+
+              <div v-if="!shoot.isCancelled && header.canManageShoots" class="flex items-center gap-2">
+                <div v-if="shoot.forwardStatuses.length" class="flex">
+                  <Button
+                    variant="pill"
+                    type="button"
+                    class="rounded-r-none"
+                    @click="advance(shoot, shoot.forwardStatuses[0].value)"
+                  >{{ shoot.forwardStatuses[0].label }}</Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger as-child>
+                      <Button variant="pill" type="button" class="rounded-l-none border-l border-white/30 px-2" :aria-label="$t('project.advance')">
+                        <ChevronDown class="size-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" class="w-[208px]">
+                      <DropdownMenuItem v-for="status in shoot.forwardStatuses" :key="status.value" @select="advance(shoot, status.value)">
+                        {{ status.label }}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    class="flex size-8 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2"
+                    :aria-label="$t('project.more')"
+                  >
+                    <svg class="size-4 fill-current" viewBox="0 0 24 24">
+                      <circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" />
+                    </svg>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" class="w-[208px]">
+                    <DropdownMenuItem v-if="!shoot.isPrimary" @select="designatePrimary(shoot)">
+                      {{ $t('project.makePrimary') }}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem class="text-destructive" @select="openCancel(shoot)">
+                      {{ $t('project.cancel') }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </template>
 
             <Alert v-if="shoot.isCancelled" variant="destructive">
@@ -337,7 +410,6 @@ const TONE: Record<string, string> = {
                 <div v-for="member in shoot.crew" :key="member.id" class="mt-1.5 flex items-center gap-2.5">
                   <span class="flex size-[22px] flex-none items-center justify-center rounded-full bg-sunk-2 text-[9.5px] leading-none font-semibold text-ink-2">{{ member.initials }}</span>
                   <span class="min-w-0 flex-1 text-[12.5px] leading-[1.35]">{{ member.name }}</span>
-                  <span class="text-[11.5px] leading-[1.35] text-ink-2">{{ member.roleLabel }}</span>
                   <Button v-if="header.canManageCrew" type="button" variant="ghost" @click="unassign(member)">
                     {{ $t('project.unassign') }}
                   </Button>
@@ -365,100 +437,92 @@ const TONE: Record<string, string> = {
               <div v-if="shoot.date || shoot.timeline.length" class="mt-4 pt-3 shadow-[inset_0_1px_0_var(--rule)]">
                 <div class="text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('project.timeline') }}</div>
 
-                <div
-                  v-for="entry in shoot.timeline"
-                  :key="entry.id"
-                  class="flex gap-3 py-1.5 text-[12.5px] leading-[1.35]"
-                  :class="entry.isTransit && 'text-ink-2 italic'"
-                >
-                  <span class="w-[52px] flex-none tabular-nums text-ink-2">{{ entry.time }}</span>
-                  <span class="min-w-0 flex-1">
-                    {{ entry.title }}
-                    <span v-if="entry.location" class="ml-1.5 text-ink-2">{{ entry.location }}</span>
-                    <span v-if="entry.note" class="ml-1.5 text-faint">{{ entry.note }}</span>
-                  </span>
-                  <Button
-                    v-if="editingTimeline === shoot.id && header.canManageShoots"
-                    type="button"
-                    variant="ghost"
-                    @click="removeTimelineEntry(entry)"
-                  >
-                    {{ $t('project.timelineRemove') }}
-                  </Button>
+                <!-- Der Ablauf als Zeitstrahl: eine Linie verbindet die
+                     Punkte, ein Fahrt/Übergang-Eintrag steht gedimmt und
+                     kursiv dazwischen statt wie ein echter Programmpunkt. -->
+                <div class="mt-1.5 ml-[3px] flex flex-col border-l border-rule pl-3.5">
+                  <div v-for="entry in shoot.timeline" :key="entry.id" class="py-1.5">
+                    <form
+                      v-if="editingTimelineEntry === entry.id"
+                      class="flex flex-col gap-2 rounded-md bg-sunk p-2.5"
+                      @submit.prevent="saveTimelineEntry(entry)"
+                    >
+                      <div class="flex gap-2">
+                        <Label :for="`tl-edit-time-${entry.id}`" class="sr-only">{{ $t('project.timelineTime') }}</Label>
+                        <TimePicker :id="`tl-edit-time-${entry.id}`" v-model="editTimelineForm.time" class="w-[104px]" required />
+                        <Label :for="`tl-edit-title-${entry.id}`" class="sr-only">{{ $t('project.timelineTitle') }}</Label>
+                        <Input :id="`tl-edit-title-${entry.id}`" v-model="editTimelineForm.title" class="min-w-0 flex-1" type="text" required />
+                      </div>
+                      <div class="flex gap-2">
+                        <Label :for="`tl-edit-location-${entry.id}`" class="sr-only">{{ $t('project.timelineLocation') }}</Label>
+                        <Input :id="`tl-edit-location-${entry.id}`" v-model="editTimelineForm.location" class="min-w-0 flex-1" type="text" :placeholder="$t('project.timelineLocation')" />
+                        <Label :for="`tl-edit-note-${entry.id}`" class="sr-only">{{ $t('project.timelineNote') }}</Label>
+                        <Input :id="`tl-edit-note-${entry.id}`" v-model="editTimelineForm.note" class="min-w-0 flex-1" type="text" :placeholder="$t('project.timelineNote')" />
+                      </div>
+                      <div class="flex items-center gap-1.5">
+                        <Checkbox id="tl-edit-transit" v-model="editTimelineForm.is_transit" />
+                        <Label variant="inline" for="tl-edit-transit">{{ $t('project.timelineTransit') }}</Label>
+                      </div>
+                      <div class="flex items-center gap-3 [&_[data-slot=button][data-variant=default]]:ml-0">
+                        <Button type="submit" :disabled="editTimelineForm.processing">{{ $t('common.save') }}</Button>
+                        <Button type="button" variant="ghost" @click="editingTimelineEntry = null">{{ $t('common.cancel') }}</Button>
+                      </div>
+                    </form>
+
+                    <div v-else class="group flex items-center gap-3 text-[12.5px] leading-[1.35]" :class="entry.isTransit && 'text-ink-2 italic'">
+                      <span class="w-[44px] flex-none tabular-nums">{{ entry.time }}</span>
+                      <span class="min-w-0 flex-1">
+                        {{ entry.title }}
+                        <span v-if="entry.location" class="ml-1.5 text-ink-2">{{ entry.location }}</span>
+                        <span v-if="entry.note" class="ml-1.5 text-faint">{{ entry.note }}</span>
+                      </span>
+                      <span v-if="header.canManageShoots" class="hidden flex-none items-center gap-2.5 group-hover:flex">
+                        <button type="button" class="cursor-pointer text-[11.5px] text-action" @click="startEditTimelineEntry(entry)">{{ $t('common.edit') }}</button>
+                        <button type="button" class="cursor-pointer text-[11.5px] text-ink-2" @click="removeTimelineEntry(entry)">{{ $t('project.timelineRemove') }}</button>
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
+                <!-- Uhrzeit und Titel reichen für die meisten Zeilen; Ort,
+                     Hinweis und Fahrt/Übergang stehen erst hinter dem Link,
+                     damit ein ganzer Ablauf nicht ein Formular pro Zeile ist. -->
                 <form
-                  v-if="shoot.date && editingTimeline === shoot.id && header.canManageShoots"
-                  class="mt-2.5 grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-6 gap-y-4"
+                  v-if="shoot.date && addingTimelineFor === shoot.id"
+                  class="mt-2.5 flex flex-col gap-2 rounded-md bg-sunk p-2.5"
                   @submit.prevent="addTimelineEntry(shoot)"
                 >
-                  <div class="flex min-w-0 flex-col gap-1.5">
-                    <Label for="tl-time">{{ $t('project.timelineTime') }}</Label>
-                    <TimePicker id="tl-time" v-model="timelineForm.time" required />
+                  <div class="flex gap-2">
+                    <Label :for="`tl-time-${shoot.id}`" class="sr-only">{{ $t('project.timelineTime') }}</Label>
+                    <TimePicker :id="`tl-time-${shoot.id}`" v-model="timelineForm.time" class="w-[104px]" required />
+                    <Label :for="`tl-title-${shoot.id}`" class="sr-only">{{ $t('project.timelineTitle') }}</Label>
+                    <Input :id="`tl-title-${shoot.id}`" v-model="timelineForm.title" class="min-w-0 flex-1" type="text" :placeholder="$t('project.timelineTitle')" required />
+                    <Button type="submit" variant="outline" class="px-2.5" :disabled="timelineForm.processing" :aria-label="$t('common.save')">
+                      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+                    </Button>
                   </div>
-                  <div class="col-span-full flex min-w-0 flex-col gap-1.5">
-                    <Label for="tl-title">{{ $t('project.timelineTitle') }}</Label>
-                    <Input id="tl-title" v-model="timelineForm.title" type="text" required />
+                  <div v-if="timelineDetails" class="flex gap-2">
+                    <Label :for="`tl-location-${shoot.id}`" class="sr-only">{{ $t('project.timelineLocation') }}</Label>
+                    <Input :id="`tl-location-${shoot.id}`" v-model="timelineForm.location" class="min-w-0 flex-1" type="text" :placeholder="$t('project.timelineLocation')" />
+                    <Label :for="`tl-note-${shoot.id}`" class="sr-only">{{ $t('project.timelineNote') }}</Label>
+                    <Input :id="`tl-note-${shoot.id}`" v-model="timelineForm.note" class="min-w-0 flex-1" type="text" :placeholder="$t('project.timelineNote')" />
                   </div>
-                  <div class="flex min-w-0 flex-col gap-1.5">
-                    <Label for="tl-location">
-                      {{ $t('project.timelineLocation') }}<em>{{ $t('project.optional') }}</em>
-                    </Label>
-                    <Input id="tl-location" v-model="timelineForm.location" type="text" />
-                  </div>
-                  <div class="flex min-w-0 flex-col gap-1.5">
-                    <Label for="tl-note">
-                      {{ $t('project.timelineNote') }}<em>{{ $t('project.optional') }}</em>
-                    </Label>
-                    <Input id="tl-note" v-model="timelineForm.note" type="text" />
-                  </div>
-                  <div class="col-span-full flex items-center gap-1.5">
+                  <div v-if="timelineDetails" class="flex items-center gap-1.5">
                     <Checkbox id="tl-transit" v-model="timelineForm.is_transit" />
                     <Label variant="inline" for="tl-transit">{{ $t('project.timelineTransit') }}</Label>
                   </div>
-
-                  <div class="col-span-full [&_[data-slot=button][data-variant=default]]:ml-0">
-                    <Button type="submit" :disabled="timelineForm.processing">
-                      {{ $t('common.save') }}
-                    </Button>
-                  </div>
+                  <button v-else type="button" class="w-fit cursor-pointer text-left text-[11.5px] text-ink-2" @click="timelineDetails = true">
+                    {{ $t('project.timelineMore') }}
+                  </button>
                 </form>
 
                 <div class="mt-2.5 flex items-center gap-2">
-                  <Button v-if="header.canManageShoots" type="button" variant="outline" @click="toggleTimelineEdit(shoot)">
-                    {{ $t(editingTimeline === shoot.id ? 'project.timelineDone' : 'project.timelineEdit') }}
+                  <Button v-if="shoot.date && header.canManageShoots" type="button" variant="outline" @click="addingTimelineFor === shoot.id ? (addingTimelineFor = null) : startTimelineEntry(shoot)">
+                    {{ $t(addingTimelineFor === shoot.id ? 'project.timelineDone' : 'project.timelineEdit') }}
                   </Button>
                   <Button as="a" variant="outline" :href="shoot.pdfUrl" download>{{ $t('project.timelinePdf') }}</Button>
                   <Button as="a" variant="outline" :href="shoot.icsUrl" download>{{ $t('project.timelineIcs') }}</Button>
                 </div>
-              </div>
-
-              <div v-if="header.canManageShoots" class="mt-4 flex items-center gap-2.5 pt-3 shadow-[inset_0_1px_0_var(--rule)] [&_[data-slot=button][data-variant=default]]:ml-0">
-                <!-- A menu of actions, not a field: nothing stores what was
-                     picked, so model-value is pinned to '' and the control falls
-                     straight back to its own name. -->
-                <Select
-                  model-value=""
-                  :disabled="!shoot.forwardStatuses.length"
-                  @update:model-value="(value) => advance(shoot, String(value))"
-                >
-                  <SelectTrigger size="sm" style="width: auto" :aria-label="$t('project.advance')">
-                    <SelectValue :placeholder="$t('project.advance')" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="status in shoot.forwardStatuses" :key="status.value" :value="status.value">
-                      {{ status.label }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Button v-if="!shoot.isPrimary" type="button" variant="outline" @click="designatePrimary(shoot)">
-                  {{ $t('project.makePrimary') }}
-                </Button>
-
-                <Button type="button" variant="outline" tone="accent" @click="openCancel(shoot)">
-                  {{ $t('project.cancel') }}
-                </Button>
               </div>
             </template>
           </Card>
@@ -499,60 +563,49 @@ const TONE: Record<string, string> = {
           </DialogContent>
         </Dialog>
 
+        <!-- Bleibt offen, bis jemand Fertig tippt: jede Zeile weist für sich
+             zu, sodass eine zweite Person keinen neuen Dialog braucht. -->
         <Dialog
-          :open="assigning !== null"
-          @update:open="(open) => { if (!open) assigning = null }"
+          :open="assigningId !== null"
+          @update:open="(open) => { if (!open) assigningId = null }"
         >
           <DialogContent class="max-w-[440px]">
             <DialogHeader>
               <DialogTitle>{{ $t('project.assignCrew') }}</DialogTitle>
-              <DialogDescription v-if="assigning">
-                {{ assigning.label ?? assigning.kind }}
+              <DialogDescription v-if="assigningShoot">
+                {{ assigningShoot.label ?? assigningShoot.kind }}
               </DialogDescription>
             </DialogHeader>
 
             <DialogBody>
               <div class="flex flex-col gap-0.5">
-                <button
+                <div
                   v-for="member in candidates"
                   :key="member.id"
-                  type="button"
-                  class="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-[12.5px] leading-[1.35] hover:bg-muted"
-                  :class="crewUser === member.id && 'bg-muted'"
-                  @click="crewUser = member.id"
+                  class="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-[12.5px] leading-[1.35]"
+                  :class="(assignedIds.has(member.id) || member.status !== 'free') && 'opacity-55'"
                 >
                   <span class="min-w-0 flex-1">{{ member.name }}</span>
-                  <span v-if="assignedIds.has(member.id)" class="text-[11.5px] text-ink-2">{{ $t('project.crewAssigned') }}</span>
+                  <span v-if="assignedIds.has(member.id)" class="flex items-center gap-1.5 text-[11.5px] font-medium text-ok">
+                    <svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6" /></svg>
+                    {{ $t('project.crewAssigned') }}
+                  </span>
                   <span v-else-if="member.status === 'absent'" class="text-[11.5px] text-due">
                     {{ $t('project.crewAway') }} · {{ member.note }}
                   </span>
                   <span v-else-if="member.status === 'busy'" class="text-[11.5px] text-ink-2">
                     {{ $t('project.crewBusy') }} · {{ member.note }}
                   </span>
-                </button>
-              </div>
-
-              <div class="mt-4 flex min-w-0 flex-col gap-1.5">
-                <Label for="crew-role">{{ $t('project.crewRoleLabel') }}</Label>
-                <Select :model-value="crewRole" @update:model-value="(value) => (crewRole = String(value))">
-                  <SelectTrigger id="crew-role">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="role in crewRoles" :key="role.value" :value="role.value">
-                      {{ role.label }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                  <Button v-else type="button" variant="outline" @click="assignCandidate(member.id)">
+                    {{ $t('project.crewAdd') }}
+                  </Button>
+                </div>
               </div>
             </DialogBody>
 
             <DialogFooter>
-              <Button type="button" :disabled="!crewUser" @click="confirmAssign">
-                {{ $t('common.save') }}
-              </Button>
               <DialogClose as-child>
-                <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
+                <Button type="button">{{ $t('common.close') }}</Button>
               </DialogClose>
             </DialogFooter>
           </DialogContent>

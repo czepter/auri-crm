@@ -65,7 +65,7 @@ class ShootCalendar
             $lines[] = 'LOCATION:'.$this->escape($shoot->venue());
         }
 
-        $crew = $shoot->crew->map(fn ($assignment) => $assignment->user->name.' ('.$assignment->role->label().')');
+        $crew = $shoot->crew->map(fn ($assignment) => $assignment->user->name);
 
         if ($crew->isNotEmpty()) {
             $lines[] = 'DESCRIPTION:'.$this->escape('Crew: '.$crew->join(', '));

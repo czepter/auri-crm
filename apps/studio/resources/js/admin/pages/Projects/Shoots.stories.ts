@@ -43,11 +43,6 @@ const meta = {
                 { id: 'u3', name: 'Paul Riedel', status: 'busy', note: 'Hochzeit Ahrens & Kroll' },
             ],
         },
-        crewRoles: [
-            { value: 'lead', label: 'Hauptfotograf' },
-            { value: 'second', label: 'Zweitfotograf' },
-            { value: 'assistant', label: 'Assistenz' },
-        ],
         soloStudio: false,
         shootKinds: ['Verlobungsshooting', 'Hochzeitstag'],
     },

@@ -3,7 +3,6 @@
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Models\Contract;
 use App\Contracts\Models\ContractSignature;
-use App\Crm\Enums\CrewRole;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\TaskAudience;
@@ -262,29 +261,23 @@ it('assigns crew to a shoot by public id and renders them', function () {
 
     $this->post("/shootings/{$shoot->public_id}/crew", [
         'user' => $photographer->public_id,
-        'role' => CrewRole::SecondShooter->value,
     ])->assertRedirect();
 
     $crew = props("/auftraege/{$this->project->public_id}/shootings")['shoots'][0]['crew'];
 
     expect($crew)->toHaveCount(1)
-        ->and($crew[0]['initials'])->toBe('NW')
-        ->and($crew[0]['roleLabel'])->toBe('Zweitfotograf');
+        ->and($crew[0]['initials'])->toBe('NW');
 });
 
-it('re-roles rather than duplicating someone already on the shoot', function () {
+it('does not duplicate someone already on the shoot', function () {
     $shoot = Shoot::factory()->for($this->project)->create();
     $user = User::factory()->create();
-    $payload = ['user' => $user->public_id, 'role' => CrewRole::Assistant->value];
+    $payload = ['user' => $user->public_id];
 
     $this->post("/shootings/{$shoot->public_id}/crew", $payload)->assertRedirect();
-    $this->post("/shootings/{$shoot->public_id}/crew", [
-        ...$payload,
-        'role' => CrewRole::LeadPhotographer->value,
-    ])->assertRedirect();
+    $this->post("/shootings/{$shoot->public_id}/crew", $payload)->assertRedirect();
 
-    expect($shoot->crew()->count())->toBe(1)
-        ->and($shoot->crew()->sole()->role)->toBe(CrewRole::LeadPhotographer);
+    expect($shoot->crew()->count())->toBe(1);
 });
 
 it('removes a crew assignment', function () {

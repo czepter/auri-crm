@@ -940,6 +940,8 @@ Route::middleware('audience:staff')->group(function () {
         // read the same `timeline` relation, just rendered differently.
         Route::post('/shootings/{shoot}/ablauf', [TimelineController::class, 'store'])
             ->name('timeline.store');
+        Route::patch('/ablauf/{entry}', [TimelineController::class, 'update'])
+            ->name('timeline.update');
         Route::delete('/ablauf/{entry}', [TimelineController::class, 'destroy'])
             ->name('timeline.destroy');
         Route::get('/shootings/{shoot}/ablauf.pdf', [TimelineController::class, 'pdf'])

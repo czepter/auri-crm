@@ -12,7 +12,7 @@ defineProps<{ crew: App.Crm.Data.CrewMemberData[] }>()
       v-for="member in crew"
       :key="member.id"
       class="av"
-      :title="`${member.name} · ${member.roleLabel}`"
+      :title="member.name"
     >
       {{ member.initials }}
     </span>

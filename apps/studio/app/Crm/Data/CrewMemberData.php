@@ -19,8 +19,6 @@ class CrewMemberData extends Data
         public string $userId,
         public string $name,
         public string $initials,
-        public string $role,
-        public string $roleLabel,
     ) {}
 
     public static function fromAssignment(CrewAssignment $assignment): self
@@ -30,8 +28,6 @@ class CrewMemberData extends Data
             userId: $assignment->user->public_id,
             name: $assignment->user->name,
             initials: $assignment->user->initials(),
-            role: $assignment->role->value,
-            roleLabel: $assignment->role->label(),
         );
     }
 }
