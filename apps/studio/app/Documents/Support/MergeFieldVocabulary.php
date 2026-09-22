@@ -67,7 +67,6 @@ class MergeFieldVocabulary
         'studio.bankHolder' => 'Atelier Nordlicht Fotografie GmbH',
         'studio.bankIban' => 'DE02 1203 0000 0000 2020 51',
         'studio.bankBic' => 'BYLADEM1001',
-        'settings.widerrufText' => 'Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen zu widerrufen.',
         // M-06 / T-15: the §14 UStG particulars an invoice carries and no
         // other document does. Every one of these resolves off the issued
         // installment; on any other document type they resolve to empty,

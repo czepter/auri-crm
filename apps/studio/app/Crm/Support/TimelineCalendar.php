@@ -5,7 +5,6 @@ namespace App\Crm\Support;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\TimelineEntry;
 use App\Crm\Support\Concerns\FormatsIcs;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Support\Carbon;
 
 /**
@@ -19,8 +18,6 @@ use Illuminate\Support\Carbon;
 class TimelineCalendar
 {
     use FormatsIcs;
-
-    public function __construct(private readonly StudioSettingsResolver $settings) {}
 
     /** $shoot must have `timeline` and `project` loaded, and carry a date. */
     public function render(Shoot $shoot): string
@@ -36,9 +33,10 @@ class TimelineCalendar
 
         $entries = $shoot->timeline;
         $date = $shoot->date->format('Y-m-d');
+        $minutes = $shoot->defaultDurationMinutes();
 
         foreach ($entries as $index => $entry) {
-            $lines = [...$lines, ...$this->event($entry, $date, $entries->get($index + 1))];
+            $lines = [...$lines, ...$this->event($entry, $date, $entries->get($index + 1), $minutes)];
         }
 
         $lines[] = 'END:VCALENDAR';
@@ -54,9 +52,9 @@ class TimelineCalendar
     }
 
     /** @return list<string> */
-    private function event(TimelineEntry $entry, string $date, ?TimelineEntry $next): array
+    private function event(TimelineEntry $entry, string $date, ?TimelineEntry $next, int $minutes): array
     {
-        [$start, $end] = $this->timing($entry, $date, $next);
+        [$start, $end] = $this->timing($entry, $date, $next, $minutes);
 
         $lines = [
             'BEGIN:VEVENT',
@@ -86,18 +84,18 @@ class TimelineCalendar
      * An entry runs until the next one starts — the honest reading of a
      * day-of schedule, where "First Look" simply lasts until "Trauung"
      * begins. The last entry has no next one to borrow an end from, so it
-     * takes the studio's configured default length instead (T-09's setting,
-     * same one ShootCalendar falls back to for a shoot with no end_time).
+     * takes the default length of its project's type instead, the same one
+     * ShootCalendar falls back to for a shoot with no end_time.
      *
      * @return array{0: Carbon, 1: Carbon}
      */
-    private function timing(TimelineEntry $entry, string $date, ?TimelineEntry $next): array
+    private function timing(TimelineEntry $entry, string $date, ?TimelineEntry $next, int $minutes): array
     {
         $start = $this->atVenue($date, substr((string) $entry->time, 0, 8));
 
         $end = $next !== null
             ? $this->atVenue($date, substr((string) $next->time, 0, 8))
-            : $start->copy()->addMinutes($this->settings->defaultShootDurationMinutes());
+            : $start->copy()->addMinutes($minutes);
 
         // A schedule that runs past midnight would otherwise end before it
         // starts; the end simply moves to the next day.

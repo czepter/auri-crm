@@ -3,7 +3,6 @@
 namespace App\Crm\Http\Controllers;
 
 use App\Crm\Data\TaskRowData;
-use App\Crm\Models\Project;
 use App\Crm\Models\Task;
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -26,10 +25,10 @@ class TaskBoardController extends Controller
         return Inertia::render('Tasks/Index', [
             'tasks' => TaskRowData::collect(
                 Task::query()
-                    ->whereIn('project_id', Project::query()->visibleTo($viewer)->select('projects.id'))
+                    ->visibleTo($viewer)
                     ->orderByRaw('completed_at is not null')
                     ->byDueDate()
-                    ->with(['project', 'shoot', 'assignee', 'dependsOn'])
+                    ->with(['project', 'contact', 'shoot', 'assignee', 'dependsOn'])
                     ->get()
                     ->map(TaskRowData::fromTask(...))
                     ->values()

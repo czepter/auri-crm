@@ -6,7 +6,6 @@ use App\Automation\Actions\FireAutomationRule;
 use App\Automation\Models\AutomationRule;
 use App\Crm\Actions\AdvanceShootStatus;
 use App\Crm\Actions\BookProject;
-use App\Crm\Enums\CrewRole;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
@@ -317,26 +316,10 @@ class DemoCrmSeeder extends Seeder
 
         $advance($wedding->refresh(), $stage(ShootStatus::Prep), $christian);
 
-        CrewAssignment::create([
-            'shoot_id' => $wedding->id,
-            'user_id' => $christian->id,
-            'role' => CrewRole::LeadPhotographer,
-        ]);
-        CrewAssignment::create([
-            'shoot_id' => $wedding->id,
-            'user_id' => $nina->id,
-            'role' => CrewRole::SecondShooter,
-        ]);
-        CrewAssignment::create([
-            'shoot_id' => $engagement->id,
-            'user_id' => $christian->id,
-            'role' => CrewRole::LeadPhotographer,
-        ]);
-        CrewAssignment::create([
-            'shoot_id' => $afterWedding->id,
-            'user_id' => $nina->id,
-            'role' => CrewRole::Assistant,
-        ]);
+        CrewAssignment::create(['shoot_id' => $wedding->id, 'user_id' => $christian->id]);
+        CrewAssignment::create(['shoot_id' => $wedding->id, 'user_id' => $nina->id]);
+        CrewAssignment::create(['shoot_id' => $engagement->id, 'user_id' => $christian->id]);
+        CrewAssignment::create(['shoot_id' => $afterWedding->id, 'user_id' => $nina->id]);
 
         foreach ([
             [$christian, 'Großmutter (Lenas Seite) reist gegen 18 Uhr ab — Gruppenfotos deshalb direkt an den Anfang des Empfangs gezogen. Im Ablauf schon berücksichtigt, Wunschliste Gruppe 1 zuerst.'],

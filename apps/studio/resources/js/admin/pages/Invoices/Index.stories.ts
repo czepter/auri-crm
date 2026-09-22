@@ -18,6 +18,7 @@ const meta = {
   component: Index,
   parameters: { layout: 'fullscreen', url: '/rechnungen', page },
   args: {
+    exportYears: [2026, 2025],
     invoices: [
       {
         id: 'in-14',
@@ -95,5 +96,5 @@ type Story = StoryObj<typeof meta>
 export const Liste: Story = {}
 
 export const Leer: Story = {
-  args: { invoices: [] },
+  args: { invoices: [], exportYears: [] },
 }

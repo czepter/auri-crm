@@ -40,6 +40,23 @@ it('lists invoices, not rates — with and without a project, newest first', fun
         ->and($rows[1]['openInstallments'])->toHaveCount(2);
 });
 
+it('offers the years that have invoices to the export, newest first', function () {
+    $this->travelTo('2025-03-01 10:00:00');
+    app(IssueInvoice::class)->positions(
+        Contact::factory()->create(),
+        null,
+        [['title' => 'Abzüge', 'quantity' => 1, 'unit_price' => 1_000, 'vat_rate' => 1900]],
+        now()->addWeek()->toDateString(),
+    );
+    $this->travelTo('2026-05-04 10:00:00');
+    app(IssueInvoice::class)(invoiceablePlan());
+
+    $years = fn (StaffRole $role) => $this->actingAs(staffMember($role), 'staff')->get('/rechnungen')
+        ->assertOk()->viewData('page')['props']['exportYears'];
+
+    expect($years(StaffRole::Owner))->toBe([2026, 2025]);
+});
+
 it('refuses a role that may not manage payment plans', function () {
     $role = collect(StaffRole::cases())->first(fn (StaffRole $role) => ! $role->allows(Capability::ManageContracts));
 

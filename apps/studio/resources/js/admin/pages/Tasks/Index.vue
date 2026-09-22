@@ -8,8 +8,9 @@
  * übernimmt niemand.
  */
 import { computed, ref } from 'vue'
-import { router, usePage } from '@inertiajs/vue3'
+import { Link, router, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import StudioTaskCreateDialog from '@/admin/components/StudioTaskCreateDialog.vue'
 import Page from '@/ui/page/Page.vue'
 import Empty from '@/ui/page/Empty.vue'
 import PageHead from '@/ui/page/PageHead.vue'
@@ -68,7 +69,9 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
   <AdminLayout active="aufgaben">
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
-        <PageHead :kicker="$t('tasks.kicker')" :title="$t('tasks.title')" />
+        <PageHead :kicker="$t('tasks.kicker')" :title="$t('tasks.title')">
+          <StudioTaskCreateDialog :staff-options="staffOptions" />
+        </PageHead>
 
         <div class="px-8 pt-4 pb-8">
           <div class="mb-4 flex gap-5">
@@ -102,7 +105,10 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
 
               <span class="min-w-0 flex-1">
                 <span class="block truncate text-[13.5px]">{{ task.title }}</span>
-                <span class="block truncate text-[12px] text-ink-2">{{ task.projectName }}</span>
+                <span class="block truncate text-[12px] text-ink-2">
+                  <Link v-if="task.contactId" class="text-inherit" :href="`/kontakte/${task.contactId}`">{{ task.contactName }}</Link>
+                  <template v-else>{{ task.projectName }}</template>
+                </span>
               </span>
 
               <span v-if="!solo && task.assigneeName" class="flex w-44 flex-none items-center gap-2">

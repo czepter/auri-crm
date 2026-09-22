@@ -104,3 +104,16 @@ it('shows a second shooter only the projects they are crewed on', function () {
 
     expect(projectRows($crew))->toBe([]);
 });
+
+it('moves every open shoot to the stage a card is dropped on', function () {
+    $project = bookedProject();
+    $first = Shoot::factory()->for($project)->primary()->on('2026-06-14')->atStatus(ShootStatus::Booked)->create();
+    $second = Shoot::factory()->for($project)->on('2026-06-15')->atStatus(ShootStatus::Booked)->create();
+
+    test()->actingAs(test()->staff, 'staff')
+        ->post("/auftraege/{$project->public_id}/stufe", ['stage' => ShootStatus::Culling->value])
+        ->assertRedirect();
+
+    expect($first->fresh()->status->key)->toBe(ShootStatus::Culling->value)
+        ->and($second->fresh()->status->key)->toBe(ShootStatus::Culling->value);
+});

@@ -14,8 +14,7 @@ use Illuminate\Notifications\Notification;
  * Sent to the NEW address and nowhere else — following it is the proof that
  * the address exists and belongs to whoever asked. Transactional for the
  * same reason the magic link is: the client is waiting on it, and a client
- * mid-way through changing their login is not someone to hold in a
- * quiet-hours queue.
+ * mid-way through changing their login is not someone to keep waiting.
  */
 class EmailChangeConfirmation extends Notification implements Transactional
 {

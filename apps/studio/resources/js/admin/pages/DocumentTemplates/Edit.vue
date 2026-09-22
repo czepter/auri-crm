@@ -6,6 +6,7 @@ import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import DocumentEditor from '@/admin/components/DocumentEditor.vue'
 import DocumentPreviewPane from '@/admin/components/DocumentPreviewPane.vue'
+import { PreviewOverlay } from '@/ui/preview-overlay'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
@@ -90,7 +91,9 @@ function submit() {
               class="flex cursor-col-resize items-center justify-center before:block before:h-full before:w-px before:bg-border before:content-[''] max-[1100px]:hidden"
             />
 
-            <DocumentPreviewPane :type="template.type" :doc="doc" :samples="samples" />
+            <PreviewOverlay :min="1101" :label="$t('common.preview')" wrapper-class="contents">
+              <DocumentPreviewPane :type="template.type" :doc="doc" :samples="samples" />
+            </PreviewOverlay>
           </div>
         </div>
       </div>

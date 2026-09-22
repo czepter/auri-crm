@@ -11,8 +11,7 @@ use Illuminate\Notifications\Notification;
  * what "reaches the studio through the unread stream" means (issue #71's own
  * acceptance wording), not a mail per comment. The first notification in this
  * codebase to address a staff member about a business event rather than a
- * client — see NotificationSettingsController's own doc comment, written
- * before this one existed.
+ * client.
  */
 class AssetCommented extends Notification
 {

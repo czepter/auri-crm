@@ -8,11 +8,11 @@ use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
- * T-08's own pane, extended by P-09 (#228): the maintenance closure, three
- * welcome texts for the portal's three opening states, the two external legal
+ * T-08's own pane, extended by P-09 (#228): the maintenance closure, one
+ * welcome text per opening state (nothing booked, a booking under way,
+ * everything delivered), the two external legal
  * links, the client capability switches (messaging among them, as three
- * states rather than a boolean — see P-04), where a DSGVO request goes and by
- * when, and the contact line the portal footer had no source for.
+ * states rather than a boolean — see P-04), and the contact line the portal footer had no source for.
  * Deliberately carries none of T-02's branding fields (logo, accent colour,
  * display name) a second time — those are edited on Studio-Profil and read
  * portal-wide through HandleInertiaRequests's `portalBranding` prop, never
@@ -25,11 +25,12 @@ class PortalSettingsData extends Data
         public string $id,
         public bool $maintenanceEnabled,
         public ?string $maintenanceMessage,
-        public ?string $welcomeText,
         public ?string $datenschutzUrl,
         public ?string $agbUrl,
         public ?string $impressumUrl,
         public ?string $widerrufUrl,
+        public bool $agbAttach,
+        public bool $widerrufAttach,
         /** @var array<string, ?string> Vorlagen-Familie je Rechtstext */
         public array $legalFamilies,
         public bool $acceptQuotesEnabled,
@@ -39,9 +40,10 @@ class PortalSettingsData extends Data
         public string $messagingMode,
         public string $clientRegister,
         public ?string $welcomeInquiry,
-        public ?string $welcomeMany,
-        public ?string $dsgvoRecipient,
-        public int $dsgvoDeadlineDays,
+        public ?string $welcomeActive,
+        public ?string $welcomeDone,
+        public ?string $contactName,
+        public ?string $contactAvatarUrl,
         public ?string $contactPhone,
         public ?string $contactEmail,
         public ?string $contactResponseTime,
@@ -53,11 +55,12 @@ class PortalSettingsData extends Data
             id: $settings->publicId(),
             maintenanceEnabled: $settings->maintenanceEnabled(),
             maintenanceMessage: $settings->maintenanceMessage(),
-            welcomeText: $settings->portalWelcomeText(),
             datenschutzUrl: $settings->legalDatenschutzUrl(),
             agbUrl: $settings->legalAgbUrl(),
             impressumUrl: $settings->legalTextUrl('impressum'),
             widerrufUrl: $settings->legalTextUrl('widerruf'),
+            agbAttach: $settings->legalAttach('agb'),
+            widerrufAttach: $settings->legalAttach('widerruf'),
             legalFamilies: collect(LegalTextController::TEXTS)
                 ->mapWithKeys(fn (string $text) => [$text => $settings->legalFamily($text)])
                 ->all(),
@@ -68,9 +71,10 @@ class PortalSettingsData extends Data
             messagingMode: $settings->messagingMode(),
             clientRegister: $settings->clientRegister(),
             welcomeInquiry: $settings->portalWelcomeInquiry(),
-            welcomeMany: $settings->portalWelcomeMany(),
-            dsgvoRecipient: $settings->dsgvoRequestRecipient(),
-            dsgvoDeadlineDays: $settings->dsgvoRequestDeadlineDays(),
+            welcomeActive: $settings->portalWelcomeActive(),
+            welcomeDone: $settings->portalWelcomeDone(),
+            contactName: $settings->portalContactName(),
+            contactAvatarUrl: $settings->portalContactAvatarPath() !== null ? route('settings.portal.contact.avatar') : null,
             contactPhone: $settings->portalContactPhone(),
             contactEmail: $settings->portalContactEmail(),
             contactResponseTime: $settings->portalContactResponseTime(),

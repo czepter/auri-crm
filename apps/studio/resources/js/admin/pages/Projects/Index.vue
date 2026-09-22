@@ -11,6 +11,8 @@ import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Input } from '@/ui/input'
 import { isoDate } from '@/admin/lib/dates'
+import { formatEurosRounded } from '@/admin/lib/money'
+import { relative, TYPE_DOT } from '@/admin/lib/boardCard'
 
 type Phase = App.Crm.Data.ProjectRowData['phase']
 
@@ -18,11 +20,12 @@ const props = defineProps<{
   view: 'liste' | 'board'
   projects: App.Crm.Data.ProjectRowData[]
   stages: { key: string; name: string; phase: Phase }[]
-  stageSettings: Omit<InstanceType<typeof ProjectSettings>['$props'], 'workflow' | 'canManageTasks'> | null
+  stageSettings: Omit<InstanceType<typeof ProjectSettings>['$props'], 'workflow' | 'canManageTasks' | 'selection' | 'returnTo'> | null
   workflow?: Record<string, unknown> | null
+  settingsSelection: InstanceType<typeof ProjectSettings>['$props']['selection'] | null
+  returnTo: string | null
 }>()
 
-const settingsOpen = ref(false)
 const workflowAllowed = computed(() => (usePage().props.auth.can ?? []).includes('manage_tasks'))
 
 const scope = ref('running')
@@ -64,7 +67,68 @@ const groups = computed(() => PHASES
 
 const columns = computed(() => props.stages
   .filter((option) => option.phase !== 'delivered')
-  .map((option) => ({ ...option, cards: props.projects.filter((project) => project.positionKey === option.key) })))
+  .map((option) => {
+    const cards = props.projects.filter((project) => project.positionKey === option.key)
+
+    return { ...option, cards, total: cards.reduce((sum, project) => sum + (project.value ?? 0), 0) }
+  }))
+
+// Nothing travels with the pointer, so the card itself has to say it is under
+// way. The insertion mark is the only thing that moves.
+const moving = ref<{ id: string; column: number } | null>(null)
+const target = ref<number | null>(null)
+const insertAt = ref<number | null>(null)
+
+function onDragStart(event: DragEvent, project: App.Crm.Data.ProjectRowData, column: number) {
+  moving.value = { id: project.id, column }
+  if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
+}
+
+function onDragOver(event: DragEvent, column: number, row: number | null) {
+  if (moving.value === null || moving.value.column === column) return
+
+  event.preventDefault()
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+  target.value = column
+  insertAt.value = row
+}
+
+function onDrop(column: number) {
+  if (moving.value === null || moving.value.column === column) return
+
+  move(moving.value.id, columns.value[column].key)
+  endDrag()
+}
+
+function endDrag() {
+  moving.value = null
+  target.value = null
+  insertAt.value = null
+}
+
+function move(id: string, key: string) {
+  router.post(`/auftraege/${id}/stufe`, { stage: key }, { preserveScroll: true })
+}
+
+// Without a mouse: dragging a card across five columns is unusable on an iPad.
+function onKey(event: KeyboardEvent, project: App.Crm.Data.ProjectRowData, column: number) {
+  if (!event.metaKey && !event.ctrlKey) return
+
+  const to = event.key === 'ArrowRight' ? column + 1 : event.key === 'ArrowLeft' ? column - 1 : null
+  const key = to === null ? null : columns.value[to]?.key
+
+  if (key) {
+    event.preventDefault()
+    move(project.id, key)
+  }
+}
+
+const menu = ref<{ project: App.Crm.Data.ProjectRowData; x: number; y: number } | null>(null)
+
+function openMenu(event: MouseEvent, project: App.Crm.Data.ProjectRowData) {
+  event.preventDefault()
+  menu.value = { project, x: event.clientX, y: event.clientY }
+}
 
 function day(iso: string) {
   return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
@@ -99,7 +163,7 @@ function reset() {
     <!-- The first screen on the CRM sheet (C-01, #235). Its own theme root
          rather than the layout's, so the screens that have not been ported
          keep the stylesheet they were built on. -->
-    <Page data-tokens wide>
+    <Page data-tokens wide @click="menu = null">
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('projects.title')">
           <ChoiceGroup
@@ -113,7 +177,7 @@ function reset() {
             variant="segmented"
             @update:model-value="(ansicht) => router.get('/projekte', { ansicht }, { preserveScroll: true, preserveState: true })"
           />
-          <Button v-if="stageSettings" class="ml-auto" type="button" variant="pill-muted" @click="settingsOpen = true">
+          <Button v-if="stageSettings" :as="Link" class="ml-auto" variant="pill-muted" href="/auftraege/einstellungen/stufen">
             {{ $t('stages.entry') }}
           </Button>
         </PageHead>
@@ -190,32 +254,83 @@ function reset() {
           </Button>
         </template>
 
-        <div
-          v-else-if="projects.length"
-          class="grid items-start gap-3 px-8 pt-5.5 pb-8"
-          :style="{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }"
-        >
-          <div v-for="column in columns" :key="column.key" class="flex min-w-0 flex-col gap-2">
-            <div class="flex items-baseline gap-2 px-0.5 pb-1">
-              <b class="text-[12px] leading-none font-semibold tracking-[0.03em] uppercase">{{ column.name }}</b>
-              <span class="ml-auto rounded-[5px] bg-sunk-2 px-[7px] py-0.5 text-[11px] font-medium text-ink-2">{{ column.cards.length }}</span>
-            </div>
-            <Link
-              v-for="project in column.cards"
-              :key="project.id"
-              class="flex flex-col gap-1 rounded-lg border border-rule px-3 py-2.5 text-inherit no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk"
-              :href="`/auftraege/${project.id}`"
+        <div v-else-if="projects.length" class="flex items-stretch gap-2.5 overflow-x-auto px-5 pt-5 pb-7">
+          <section
+            v-for="(column, index) in columns"
+            :key="column.key"
+            class="flex min-w-0 shrink-0 grow basis-[200px] flex-col gap-2 rounded-xl bg-sunk p-2.5"
+            :class="target === index && 'bg-sunk-2'"
+            @dragover="onDragOver($event, index, null)"
+            @drop.prevent="onDrop(index)"
+          >
+            <header class="flex items-baseline gap-1.5 px-1 pt-0.5 pb-1">
+              <b class="text-[11px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ column.name }}</b>
+              <span class="ml-auto text-[11px] tabular-nums text-ink-2">
+                {{ column.cards.length }}<template v-if="column.total"> · {{ formatEurosRounded(column.total) }}</template>
+              </span>
+            </header>
+
+            <template v-for="(project, row) in column.cards" :key="project.id">
+              <div v-if="target === index && insertAt === row" class="-mx-1.5 h-0.5 rounded-[1px] bg-action" />
+
+              <Link
+                class="relative block cursor-grab rounded-lg border border-border bg-paper px-2.5 py-[9px] text-inherit no-underline transition-[background,border-color] duration-[120ms] ease-out hover:border-line-hover"
+                :class="moving?.id === project.id && 'cursor-grabbing'"
+                :href="`/auftraege/${project.id}`"
+                draggable="true"
+                @dragstart="onDragStart($event, project, index)"
+                @dragend="endDrag"
+                @dragover="onDragOver($event, index, row)"
+                @keydown="onKey($event, project, index)"
+                @contextmenu="openMenu($event, project)"
+              >
+                <span class="block text-[13.5px] leading-[1.3] font-semibold tracking-[-0.014em]" :class="moving?.id === project.id && 'font-medium text-ink-2'">
+                  {{ project.name }}
+                </span>
+                <span class="mt-0.5 block text-[12px]" :class="moving?.id === project.id ? 'text-mark' : 'text-ink-2'">
+                  <span :class="late(project) && moving?.id !== project.id && 'font-medium text-destructive'">{{ project.date ? day(project.date) : $t('board.openDate') }}</span>
+                  <template v-if="project.venue"> · {{ project.venue }}</template>
+                </span>
+                <span class="mt-1.5 flex items-center gap-1.5">
+                  <span class="size-1.5 flex-none rounded-full" :class="TYPE_DOT[project.typeKey] ?? 'bg-faint'" />
+                  <span class="text-[11.5px] leading-none text-muted-foreground">{{ project.type }}</span>
+                  <span v-if="project.taskCount" class="ml-auto text-[11.5px] leading-none tabular-nums text-ink-2">
+                    {{ project.taskCount - project.openTasks }}/{{ project.taskCount }}
+                  </span>
+                </span>
+                <span class="mt-[9px] flex items-center gap-2.5 border-t border-sunk-2 pt-2">
+                  <span v-if="project.value !== null" class="text-[13px] leading-none font-semibold tracking-[-0.02em] tabular-nums">
+                    {{ formatEurosRounded(project.value) }}
+                  </span>
+                  <span
+                    v-if="project.lastAt"
+                    class="ml-auto inline-flex items-center bg-no-repeat bg-[length:11px_11px] pl-4 bg-[position:left_center] bg-icon-clock text-[11.5px] leading-none tabular-nums text-ink-2"
+                  >
+                    {{ relative(project.lastAt) }}
+                  </span>
+                </span>
+              </Link>
+            </template>
+
+            <!-- An empty stage keeps its height, or there is no target there. -->
+            <div :class="target === index && 'min-h-11'" />
+          </section>
+
+          <div
+            v-if="menu"
+            class="fixed z-20 w-[208px] rounded-[12px] bg-paper p-[5px] shadow-[0_8px_24px_rgba(0,0,0,0.16)]"
+            :style="{ left: `${menu.x}px`, top: `${menu.y}px` }"
+            @click.stop
+          >
+            <div
+              v-for="column in columns"
+              :key="column.key"
+              class="rounded-lg px-[9px] py-1.5 text-[12.5px]"
+              :class="column.key === menu.project.positionKey ? 'cursor-default text-mark' : 'cursor-pointer hover:bg-sunk'"
+              @click="column.key !== menu.project.positionKey && move(menu.project.id, column.key)"
             >
-              <span class="text-[13px] leading-[1.3] font-semibold tracking-[-0.01em]">{{ project.name }}</span>
-              <span class="flex gap-2 text-[11.5px] leading-[1.4] text-ink-2">
-                <span v-if="project.date" class="tabular-nums" :class="late(project) && 'font-medium text-destructive'">{{ day(project.date) }}</span>
-                <span class="truncate">{{ project.venue ?? project.contact }}</span>
-              </span>
-              <span v-if="project.taskCount" class="mt-1 flex items-center gap-2">
-                <span class="bar flex-1"><i :style="{ width: `${Math.round((1 - project.openTasks / project.taskCount) * 100)}%` }" /></span>
-                <span class="text-[11px] text-faint tabular-nums">{{ project.taskCount - project.openTasks }}/{{ project.taskCount }}</span>
-              </span>
-            </Link>
+              {{ column.name }}
+            </div>
           </div>
         </div>
 
@@ -223,11 +338,13 @@ function reset() {
           <Button :as="Link" variant="pill" href="/anfragen/neu">{{ $t('leads.createKicker') }}</Button>
         </Empty>
         <ProjectSettings
-          v-if="settingsOpen && stageSettings"
+          v-if="settingsSelection && stageSettings"
           v-bind="stageSettings"
+          :selection="settingsSelection"
+          :return-to="returnTo"
           :can-manage-tasks="workflowAllowed"
           :workflow="workflow"
-          @close="settingsOpen = false"
+          @close="router.visit(returnTo ?? '/projekte', { preserveState: true, preserveScroll: true })"
         />
       </div>
     </Page>

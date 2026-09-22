@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useMediaQuery } from '@vueuse/core'
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
@@ -12,6 +11,7 @@ import LetterField from '@/admin/components/LetterField.vue'
 import QuotePositionsCard from '@/admin/components/quote/QuotePositionsCard.vue'
 import { buildQuotePayload, type QuoteDraft, type VatSettings } from '@/admin/components/quote/quotePayload'
 import InvoiceDataGate from '@/admin/pages/Settings/panes/InvoiceDataGate.vue'
+import { PreviewOverlay } from '@/ui/preview-overlay'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
 import { Field } from '@/ui/field'
@@ -110,7 +110,6 @@ function submit() {
   form.transform(() => payload.value).post('/rechnungen')
 }
 
-const showPreview = useMediaQuery('(min-width: 1180px)')
 </script>
 
 <template>
@@ -180,9 +179,9 @@ const showPreview = useMediaQuery('(min-width: 1180px)')
             </div>
           </form>
 
-          <div class="hidden min-w-[420px] flex-1 min-[1180px]:block">
-            <InvoicePreviewPane v-if="showPreview" :payload="payload" />
-          </div>
+          <PreviewOverlay :min="1180" :label="$t('common.preview')" wrapper-class="min-w-[420px] flex-1">
+            <InvoicePreviewPane :payload="payload" />
+          </PreviewOverlay>
         </div>
       </div>
     </Page>

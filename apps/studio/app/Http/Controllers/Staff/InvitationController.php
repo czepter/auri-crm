@@ -27,9 +27,12 @@ class InvitationController extends Controller
     {
         $this->authorizeStaffManagement();
 
+        $viewer = auth('staff')->user();
+
         return Inertia::render('Staff/Index', [
             'staff' => User::query()->orderBy('name')->get()->map(fn (User $user) => [
                 'id' => $user->public_id,
+                'transferable' => $viewer->role === StaffRole::Owner && ! $user->is($viewer),
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role->value,

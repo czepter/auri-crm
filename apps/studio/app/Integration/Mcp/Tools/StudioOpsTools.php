@@ -81,7 +81,7 @@ final class StudioOpsTools
             new ToolDefinition(
                 name: 'list_studio_closures',
                 title: 'List studio closures',
-                description: 'The studio\'s own closed date ranges, the second conflict source shoots_in_date_range does not see on its own.',
+                description: 'The studio\'s own closed date ranges, the second conflict source shoots_in_date_range does not see on its own. A message, when set, is the notice clients read in the portal.',
                 method: 'GET',
                 path: '/studio-closures',
                 schema: fn (JsonSchema $schema) => [],

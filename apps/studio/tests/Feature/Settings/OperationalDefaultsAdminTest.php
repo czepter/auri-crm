@@ -12,89 +12,57 @@ uses(RefreshDatabase::class);
 
 beforeEach(fn () => Cache::store('redis')->flush());
 
-it('hands the timezone, locale and working days to the settings screen', function () {
+it('hands the timezone to the settings screen', function () {
     $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get('/einstellungen')
+        ->get('/einstellungen/allgemein')
         ->assertOk()
         ->viewData('page')['props'];
 
-    expect($props['settings'])
-        ->toHaveKey('timezone', config('app.timezone'))
-        ->toHaveKey('locale', config('app.locale'))
-        ->toHaveKey('workingDays', [1, 2, 3, 4, 5, 6, 7]);
+    expect($props['settings'])->toHaveKey('timezone', config('app.timezone'));
 });
 
-it('updates timezone, locale and working days, redirects, and audits the owner', function () {
+it('updates timezone and the register, redirects, and audits the owner', function () {
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')
-        ->from('/einstellungen?pane=general')
-        ->patch('/einstellungen/allgemein', [
+        ->from('/einstellungen/allgemein')
+        ->patch('/einstellungen', [
             'timezone' => 'Europe/Vienna',
-            'locale' => 'de_AT',
-            'working_days' => [1, 2, 3, 4, 5],
+            'client_register' => 'informal',
         ])
-        ->assertRedirect('/einstellungen?pane=general');
+        ->assertRedirect('/einstellungen/allgemein');
 
     $row = StudioSettings::query()->sole();
 
     expect($row->timezone)->toBe('Europe/Vienna')
-        ->and($row->locale)->toBe('de_AT')
-        ->and($row->working_days)->toBe([1, 2, 3, 4, 5])
+        ->and($row->client_register)->toBe('informal')
         ->and(AuditLog::where('event', 'studio_settings.updated')
             ->where('context->key', 'timezone')->sole()->actor_id)->toBe($owner->id);
 });
 
-it('clears the tenant timezone and locale back to the environment fallback when submitted blank', function () {
+it('clears the tenant timezone back to the environment fallback when submitted blank', function () {
     $owner = staffMember(StaffRole::Owner);
 
-    $this->actingAs($owner, 'staff')->patch('/einstellungen/allgemein', [
-        'timezone' => 'Europe/Vienna',
-        'locale' => 'de_AT',
-        'working_days' => [1, 2, 3, 4, 5],
-    ]);
+    $this->actingAs($owner, 'staff')->patch('/einstellungen', ['timezone' => 'Europe/Vienna']);
 
-    $this->actingAs($owner, 'staff')->patch('/einstellungen/allgemein', [
-        'timezone' => null,
-        'locale' => null,
-        'working_days' => [1, 2, 3, 4, 5],
-    ]);
+    $this->actingAs($owner, 'staff')->patch('/einstellungen', ['timezone' => null]);
 
     $row = StudioSettings::query()->sole();
 
-    expect($row->timezone)->toBeNull()
-        ->and($row->locale)->toBeNull();
+    expect($row->timezone)->toBeNull();
 });
 
 it('rejects a timezone that is not a real IANA identifier', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->patch('/einstellungen/allgemein', ['timezone' => 'Nonsense/Place', 'working_days' => [1, 2, 3, 4, 5]])
+        ->patch('/einstellungen', ['timezone' => 'Nonsense/Place'])
         ->assertInvalid(['timezone']);
-});
-
-it('rejects a locale outside the three DACH variants', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->patch('/einstellungen/allgemein', ['locale' => 'en_US', 'working_days' => [1, 2, 3, 4, 5]])
-        ->assertInvalid(['locale']);
-});
-
-it('rejects an empty working-days selection', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->patch('/einstellungen/allgemein', ['working_days' => []])
-        ->assertInvalid(['working_days']);
-});
-
-it('rejects a working day outside 1-7', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->patch('/einstellungen/allgemein', ['working_days' => [0, 1, 2]])
-        ->assertInvalid(['working_days.0']);
 });
 
 it('gives every non-owner role the same response on the general settings route as a route that does not exist', function (StaffRole $role, int $status) {
     $missing = $this->actingAs(staffMember($role), 'staff')->get('/this-route-does-not-exist-xyz');
 
     $response = $this->actingAs(staffMember($role), 'staff')
-        ->patch('/einstellungen/allgemein', ['working_days' => [1, 2, 3, 4, 5]]);
+        ->patch('/einstellungen', ['timezone' => 'Europe/Vienna']);
 
     $response->assertStatus($status);
 

@@ -45,7 +45,7 @@ class StaffInvited extends Notification implements Transactional
                         'heading' => 'Deine Termine im eigenen Kalender',
                         'body' => 'Die Shootings, für die du eingeteilt bist, kannst du in deiner Kalender-App abonnieren.',
                         'buttonLabel' => 'Kalender abonnieren',
-                        'buttonUrl' => url('/einstellungen/kalender'),
+                        'buttonUrl' => url('/profil/kalender'),
                     ],
                     [
                         'heading' => 'Antworten am Auftrag',

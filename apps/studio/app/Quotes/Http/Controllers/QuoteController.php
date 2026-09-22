@@ -240,6 +240,43 @@ class QuoteController extends Controller
     }
 
     /**
+     * Q-10: die Schaufensterbilder dieses Angebots — das Raster hinter dem
+     * Regler. Vom Paket vorbelegt (SeedQuoteFromPackage), hier für dieses
+     * eine Angebot überschrieben.
+     */
+    public function storeShowcase(Request $request, Quote $quote): RedirectResponse
+    {
+        $this->authorize('update', $quote->project);
+
+        $request->validate(['image' => ['required', 'file', 'mimes:png,jpg,jpeg', 'max:4096']]);
+
+        $quote->addShowcaseImage($request->file('image'));
+
+        return back();
+    }
+
+    public function destroyShowcase(Quote $quote, int $index): RedirectResponse
+    {
+        $this->authorize('update', $quote->project);
+
+        $quote->removeShowcaseImage($index);
+
+        return back();
+    }
+
+    /** Indiziert statt benannt, dieselbe Regel wie itemImage() darunter. */
+    public function showcase(Quote $quote, int $index): StreamedResponse
+    {
+        $this->authorize('view', $quote->project);
+
+        $path = $quote->showcasePaths()[$index] ?? null;
+
+        abort_if($path === null, 404);
+
+        return Storage::disk('local')->response($path);
+    }
+
+    /**
      * Q-14: das kopierte Bild einer Baustein-Zeile, für die Anzeige im
      * Editor. Über die Zeile aufgelöst und nicht über den Pfad — dieselbe
      * Regel, die update() oben trägt.

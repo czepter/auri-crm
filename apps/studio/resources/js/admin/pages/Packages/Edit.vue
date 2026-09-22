@@ -9,7 +9,9 @@ import type { PackageItemRow } from '@/admin/lib/packageItem'
 import { lineTotal } from '@/admin/lib/packageItem'
 import { debounced } from '@/admin/lib/autosave'
 import PackageItemsEditor from '@/admin/components/PackageItemsEditor.vue'
+import ShowcaseImages from '@/admin/components/ShowcaseImages.vue'
 import PackagePortalPreview, { type PreviewItem } from '@/admin/components/PackagePortalPreview.vue'
+import { PreviewOverlay } from '@/ui/preview-overlay'
 import PackagePriceSummary from '@/admin/components/PackagePriceSummary.vue'
 import { centsToEuros, eurosToCents } from '@/admin/lib/money'
 import { Button } from '@/ui/button'
@@ -186,6 +188,12 @@ watch(() => form.data(), autosave, { deep: true })
             <PackageItemsEditor v-model="form.items" :package-id="package.id" :catalog-items="catalogItems" />
           </div>
 
+          <div class="mt-8">
+            <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.showcase') }}</div>
+            <ShowcaseImages :base="`/pakete/${package.id}/schaufenster`" :count="package.showcaseCount" />
+            <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('packages.showcaseHint') }}</span>
+          </div>
+
           <!-- Ein Paket ist eine Angebotsvorlage. Diese Felder machen daraus
                eine Leistung, die ein Bestandskunde ansehen und anfragen kann,
                und sie stehen deshalb hier und nicht bei den Positionen: in das
@@ -243,20 +251,22 @@ watch(() => form.data(), autosave, { deep: true })
           <div class="sticky top-7 min-w-[380px] flex-1">
             <PackagePriceSummary :items="form.items" />
 
-            <div class="mt-6 overflow-hidden rounded-[10px] border border-border">
-              <div class="border-b border-border px-[26px] py-4 text-[11px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">
-                {{ $t('packages.preview') }}
+            <PreviewOverlay :min="1280" :label="$t('common.preview')" wrapper-class="mt-6">
+              <div class="overflow-hidden rounded-[10px] border border-border">
+                <div class="border-b border-border px-[26px] py-4 text-[11px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">
+                  {{ $t('packages.preview') }}
+                </div>
+                <PackagePortalPreview
+                  :name="form.name"
+                  :description="form.description || null"
+                  :price="previewPrice"
+                  :price-mode="form.portal_price_mode"
+                  :requires-date="form.portal_requires_date"
+                  :items="previewItems"
+                  :vat-rate="vatRate"
+                />
               </div>
-              <PackagePortalPreview
-                :name="form.name"
-                :description="form.description || null"
-                :price="previewPrice"
-                :price-mode="form.portal_price_mode"
-                :requires-date="form.portal_requires_date"
-                :items="previewItems"
-                :vat-rate="vatRate"
-              />
-            </div>
+            </PreviewOverlay>
           </div>
         </form>
 

@@ -78,7 +78,7 @@ class RenderQuotePdf
 
     private function layoutRenderer(?QuoteLayout $override = null): QuoteLayoutRenderer
     {
-        $layout = $override ?? QuoteLayout::tryFrom($this->settings->quoteLayout()) ?? QuoteLayout::Classic;
+        $layout = $override ?? QuoteLayout::tryFrom($this->settings->documentLayout()) ?? QuoteLayout::Classic;
 
         return match ($layout) {
             QuoteLayout::Classic => new ClassicQuoteLayout,

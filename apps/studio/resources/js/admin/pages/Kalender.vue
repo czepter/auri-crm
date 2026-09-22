@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import CalendarSeason from '@/admin/components/CalendarSeason.vue'
+import CalendarSettings from '@/admin/components/CalendarSettings.vue'
 import Page from '@/ui/page/Page.vue'
 import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
@@ -21,6 +22,8 @@ const props = defineProps<{
   projects: Record<string, { id: string; name: string }>
   mine: string[]
   season: InstanceType<typeof CalendarSeason>['$props']['season'] | null
+  workingDays: number[] | null
+  settingsOpen: boolean
 }>()
 
 const seasonLabel = ref('')
@@ -79,7 +82,7 @@ function shortDate(date: string | null) {
   <AdminLayout active="kalender">
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
-        <PageHead :kicker="view === 'saison' ? seasonLabel : label" :title="$t('calendar.title')">
+        <PageHead :kicker="$t('calendar.title')" :title="view === 'saison' ? seasonLabel : label">
           <ChoiceGroup
             :model-value="view"
             class="ml-auto"
@@ -91,6 +94,15 @@ function shortDate(date: string | null) {
             variant="segmented"
             @update:model-value="(next) => go(month, next)"
           />
+
+          <Button
+            v-if="workingDays"
+            :as="Link"
+            variant="pill-muted"
+            :href="`/kalender/einstellungen?monat=${month}&ansicht=${view}`"
+          >
+            {{ $t('stages.entry') }}
+          </Button>
 
           <Button
             v-for="step in ([['←', previous], ['→', next]] as const)"
@@ -197,6 +209,12 @@ function shortDate(date: string | null) {
             </template>
           </tbody>
         </Table>
+
+        <CalendarSettings
+          v-if="settingsOpen && workingDays"
+          :working-days="workingDays"
+          @close="go(month)"
+        />
       </div>
     </Page>
   </AdminLayout>

@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Crm\Actions\OpenLeads;
 use App\Crm\Models\Project;
+use App\Crm\Models\Stage;
 use App\Data\StaffProfileData;
 use App\Documents\Support\DocumentBlockCatalog;
 use App\Documents\Support\MergeFieldVocabulary;
@@ -16,7 +17,9 @@ use App\Settings\Support\StudioSettingsResolver;
 use App\Support\LiveUpdate;
 use App\Support\RecordVisit;
 use App\Support\Surface;
+use App\Templates\Http\Controllers\TemplateHubController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -45,6 +48,14 @@ class HandleInertiaRequests extends Middleware
                     ? []
                     : array_map(fn ($capability) => $capability->value, $user->role->capabilities()),
             ],
+            // Where the settings menu points outside the settings: the stage
+            // overlay and the template hub, each behind its own gate.
+            'settingsLinks' => fn () => $user === null ? null : [
+                'stages' => Gate::forUser($user)->allows('viewAny', Stage::class),
+                'templates' => app(TemplateHubController::class)->allowedKinds() !== [],
+            ],
+            // #490: der Löschtag, solange das Studio zum Löschen vorgemerkt ist.
+            'studioDeletion' => fn () => $user === null ? null : app(StudioSettingsResolver::class)->deletionDate()?->format('d.m.Y'),
             // The studio's own name. Shared on every surface rather than only
             // in the portal's branding block: the admin wordmark and the
             // sign-in screens wear it with nobody signed in yet. Falls back
@@ -145,7 +156,7 @@ class HandleInertiaRequests extends Middleware
                         ? '/branding/logo'
                         : null,
                     'accentColor' => app(StudioSettingsResolver::class)->attributes()['accent_color'],
-                    'address' => $this->studioAddress(),
+                    'address' => app(StudioSettingsResolver::class)->postalLine(),
                 ],
                 // Je Text die fremde Adresse, die eigene Seite oder nichts —
                 // siehe StudioSettingsResolver::legalUrl().
@@ -154,6 +165,9 @@ class HandleInertiaRequests extends Middleware
                         $text.'Url' => app(StudioSettingsResolver::class)->legalUrl($text),
                     ])
                     ->all(),
+                // AGB und Widerruf, die dem Angebot beiliegen: nur diese
+                // stehen neben „Angebot annehmen“.
+                'portalQuoteLegal' => fn () => app(StudioSettingsResolver::class)->attachedLegalUrls(),
                 // The header stands on every screen and its links are the
                 // same four everywhere, so what decides them is shared
                 // rather than passed per page. Null with nobody signed in:
@@ -163,23 +177,6 @@ class HandleInertiaRequests extends Middleware
                 'clientRegister' => fn () => app(StudioSettingsResolver::class)->clientRegister(),
             ] : []),
         ];
-    }
-
-    /**
-     * T-02's postal particulars as the one line a footer wears. Composed
-     * from the parts a studio filled in rather than demanding all of them:
-     * a studio with a city and no street still has an address to name.
-     */
-    private function studioAddress(): ?string
-    {
-        $attributes = app(StudioSettingsResolver::class)->attributes();
-
-        $street = $attributes['street'];
-        $city = implode(' ', array_filter([$attributes['postcode'], $attributes['city']]));
-
-        $line = implode(', ', array_filter([$street, $city]));
-
-        return $line === '' ? null : $line;
     }
 
     /**

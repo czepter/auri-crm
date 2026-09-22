@@ -20,7 +20,6 @@ use App\Crm\Data\ProjectPersonData;
 use App\Crm\Data\ProjectRowData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
-use App\Crm\Enums\CrewRole;
 use App\Crm\Enums\FormFieldType;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\ProjectContactRole;
@@ -32,6 +31,7 @@ use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
 use App\Crm\Models\TaskTemplate;
 use App\Crm\Support\CrmVocabulary;
+use App\Crm\Support\OtherSuggestions;
 use App\Crm\Support\StageSettingsPayload;
 use App\Crm\Support\TaskAnchors;
 use App\Documents\Data\MailTemplateData;
@@ -41,11 +41,13 @@ use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Quotes\Actions\ReadCaseQuote;
 use App\Quotes\Actions\ReadQuoteList;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use App\Support\LiveUpdate;
 use App\Support\RecordVisit;
+use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -59,7 +61,6 @@ class ProjectController extends Controller
     public function __construct(
         private readonly DeriveProjectPosition $position,
         private readonly CheckDateAvailability $availability,
-        private readonly StudioSettingsResolver $settings,
         private readonly BuildThread $thread,
         private readonly ReadProjectScreen $screen,
     ) {}
@@ -83,7 +84,7 @@ class ProjectController extends Controller
             // the board at /anfragen; listing it here shows the same record
             // twice under two vocabularies.
             ->whereHas('job')
-            ->with(['primaryShoot', 'lead', 'job', 'shoots', 'contacts'])
+            ->with(['primaryShoot', 'lead', 'job', 'shoots', 'contacts', 'latestQuote'])
             // What the workflow produced, as the list's own column: a workflow
             // nobody can see the effect of is a settings screen again.
             ->withCount(['tasks', 'tasks as open_tasks_count' => fn ($query) => $query->whereNull('completed_at')])
@@ -108,6 +109,8 @@ class ProjectController extends Controller
                 ->map(fn (Stage $stage) => ['key' => $stage->key, 'name' => $stage->name, 'phase' => $vocabulary->phase($stage)])
                 ->values(),
             'stageSettings' => app(StageSettingsPayload::class)(),
+            'settingsSelection' => app(StageSettingsPayload::class)->selection(request()),
+            'returnTo' => app(StageSettingsPayload::class)->returnTo(request()),
             'workflow' => Inertia::optional(function () {
                 if (! request()->user('staff')->can('viewAny', TaskTemplate::class)) {
                     return null;
@@ -163,8 +166,6 @@ class ProjectController extends Controller
             // does not render this key. An internal trace on a client page
             // would disclose staff names and internal event vocabulary.
             'thread' => ($this->thread)($project),
-            // C-11 (#247): the key figures, each with the line that proves it.
-            'figures' => $this->screen->figures($project),
             // The scope as it actually stands, not a copy of the quote. The
             // divergence is the difference between the draft at this project
             // and the accepted quote; nothing is locked, because the order
@@ -172,6 +173,7 @@ class ProjectController extends Controller
             // it and you get a scope that is wrong while the work happens
             // anyway.
             'scope' => $this->screen->scope($project),
+            ...app(ReadCaseQuote::class)($project),
             'people' => ProjectPersonData::collect(
                 $project->contacts->map(ProjectPersonData::fromContact(...))
             ),
@@ -191,7 +193,7 @@ class ProjectController extends Controller
                 ->map(fn (LeadSource $source) => ['value' => $source->value, 'label' => $source->label()])->all(),
             'roles' => collect(ProjectContactRole::cases())
                 ->map(fn (ProjectContactRole $role) => ['value' => $role->value, 'label' => $role->value])->all(),
-            'presets' => ['source' => $this->settings->leadPresets('source')],
+            'presets' => ['source' => OtherSuggestions::for('source')],
             'stage' => $project->job()->exists()
                 ? $this->position->leastAdvanced($project->shoots)?->status->key
                 : $project->lead?->stage->key,
@@ -277,21 +279,8 @@ class ProjectController extends Controller
                 }
             }
 
-            // A booked project's Stand is its least-advanced shoot, so setting
-            // it moves every open shoot. Only when it changed: the details card
-            // sends the Stand along with every save, and resending the same
-            // value would drag an ahead shoot back to it.
-            $shoots = $project->shoots()->uncancelled()->get();
-
-            if (
-                isset($validated['stage'])
-                && $project->job()->exists()
-                && $validated['stage'] !== $this->position->leastAdvanced($shoots)?->status->key
-            ) {
-                $status = app(CrmVocabulary::class)->byKey(StagePipeline::Project, $validated['stage']);
-
-                $shoots->reject(fn (Shoot $shoot) => $shoot->status->is($status))
-                    ->each(fn (Shoot $shoot) => app(AdvanceShootStatus::class)($shoot, $status, auth('staff')->user()));
+            if (isset($validated['stage']) && $project->job()->exists()) {
+                $this->moveShoots($project, $validated['stage']);
             }
 
             foreach ($validated['people'] ?? [] as $person) {
@@ -322,6 +311,44 @@ class ProjectController extends Controller
         return back();
     }
 
+    public function stage(Request $request, Project $project): RedirectResponse
+    {
+        $this->authorize('manageShoots', $project);
+        abort_unless($project->job()->exists(), 404);
+
+        $validated = $request->validate([
+            'stage' => ['required', Rule::exists('stages', 'key')->where('pipeline', StagePipeline::Project->value)->where('is_active', true)],
+        ]);
+
+        try {
+            $this->moveShoots($project, $validated['stage']);
+        } catch (DomainException $e) {
+            throw ValidationException::withMessages(['stage' => $e->getMessage()]);
+        }
+
+        return back(fallback: '/projekte');
+    }
+
+    /**
+     * A booked project's Stand is its least-advanced shoot, so setting it
+     * moves every open shoot. Only when it changed: the details card sends the
+     * Stand along with every save, and resending the same value would drag an
+     * ahead shoot back to it.
+     */
+    private function moveShoots(Project $project, string $key): void
+    {
+        $shoots = $project->shoots()->uncancelled()->get();
+
+        if ($key === $this->position->leastAdvanced($shoots)?->status->key) {
+            return;
+        }
+
+        $status = app(CrmVocabulary::class)->byKey(StagePipeline::Project, $key);
+
+        $shoots->reject(fn (Shoot $shoot) => $shoot->status->is($status))
+            ->each(fn (Shoot $shoot) => app(AdvanceShootStatus::class)($shoot, $status, auth('staff')->user()));
+    }
+
     public function shoots(Project $project, CrewAvailability $crew): Response
     {
         $this->authorize('view', $project);
@@ -332,9 +359,6 @@ class ProjectController extends Controller
             // Wer an dem Tag kann, nicht nur wer existiert: frei, abwesend
             // oder auf einem anderen Shooting.
             'crewAvailability' => $crew->forProject($project),
-            'crewRoles' => collect(CrewRole::cases())
-                ->map(fn (CrewRole $role) => ['value' => $role->value, 'label' => $role->label()])
-                ->all(),
         ]);
     }
 

@@ -60,6 +60,7 @@ use App\Http\Controllers\Staff\OAuthClientRegistrationController;
 use App\Http\Controllers\Staff\OAuthMetadataController;
 use App\Http\Controllers\Staff\OAuthTokenController;
 use App\Http\Controllers\Staff\PasswordResetController;
+use App\Http\Controllers\Staff\OwnershipController;
 use App\Http\Controllers\Staff\ProfileController;
 use App\Http\Controllers\Staff\SessionController;
 use App\Http\Controllers\Staff\SetupController;
@@ -75,13 +76,16 @@ use App\Quotes\Http\Controllers\QuoteController;
 use App\Releases\Http\Controllers\ReleaseController;
 use App\Reporting\Http\Controllers\ReportController;
 use App\Settings\Http\Controllers\ApiTokenController;
+use App\Settings\Http\Controllers\AuditLogController;
 use App\Settings\Http\Controllers\DataExportController;
 use App\Settings\Http\Controllers\GallerySettingsController;
-use App\Settings\Http\Controllers\NotificationSettingsController;
 use App\Settings\Http\Controllers\NumberRangeController;
+use App\Settings\Http\Controllers\RetentionController;
 use App\Settings\Http\Controllers\PaymentSettingsController;
 use App\Settings\Http\Controllers\PortalSettingsController;
 use App\Settings\Http\Controllers\StudioClosureController;
+use App\Settings\Http\Controllers\StudioDeletionController;
+use App\Settings\Http\Controllers\StudioExportController;
 use App\Settings\Http\Controllers\StudioOnboardingController;
 use App\Settings\Http\Controllers\StudioSettingsController;
 use App\Templates\Http\Controllers\TemplateHubController;
@@ -253,6 +257,14 @@ Route::middleware('audience:staff')->group(function () {
             ->name('packages.items.image.store');
         Route::get('/pakete/{package}/positionen/{packageItem}/bild', [PackageController::class, 'image'])
             ->name('packages.items.image');
+        // Q-10: die Schaufensterbilder des Reglerrasters, neben den
+        // Stundenwerten gepflegt, die es illustriert.
+        Route::post('/pakete/{package}/schaufenster', [PackageController::class, 'storeShowcase'])
+            ->name('packages.showcase.store');
+        Route::get('/pakete/{package}/schaufenster/{index}', [PackageController::class, 'showcase'])
+            ->whereNumber('index')->name('packages.showcase');
+        Route::delete('/pakete/{package}/schaufenster/{index}', [PackageController::class, 'destroyShowcase'])
+            ->whereNumber('index')->name('packages.showcase.destroy');
 
         Route::get('/vorlagen', [TemplateHubController::class, 'index'])->name('templates.index');
 
@@ -290,9 +302,16 @@ Route::middleware('audience:staff')->group(function () {
         // is the account whoever is signed in holds. Ungated: everybody with
         // a session has one.
         Route::get('/profil', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::get('/profil/sicherheit', [ProfileController::class, 'edit'])->defaults('pane', 'sicherheit');
+        Route::get('/profil/benachrichtigungen', [ProfileController::class, 'edit'])->defaults('pane', 'benachrichtigungen');
+        Route::get('/profil/kalender', [ProfileController::class, 'edit'])->defaults('pane', 'kalender');
         Route::patch('/profil', [ProfileController::class, 'update'])->name('profile.update');
         Route::put('/profil/passwort', [ProfileController::class, 'updatePassword'])
             ->name('profile.password');
+        Route::delete('/profil/sitzungen/{id}', [ProfileController::class, 'destroySession'])
+            ->name('profile.sessions.destroy');
+        Route::delete('/profil/sitzungen', [ProfileController::class, 'destroyOtherSessions'])
+            ->name('profile.sessions.destroy-others');
         Route::post('/profil/wiederherstellungscodes', [ProfileController::class, 'regenerateRecoveryCodes'])
             ->name('profile.recovery-codes');
         Route::patch('/profil/benachrichtigungen', [ProfileController::class, 'updateNotifications'])
@@ -302,6 +321,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/team/einladungen', [InvitationController::class, 'store'])->name('staff.invite');
         Route::delete('/team/einladungen/{invitation}', [InvitationController::class, 'destroy'])
             ->name('staff.invitation.destroy');
+        Route::post('/team/{user}/inhaber', [OwnershipController::class, 'update'])->name('staff.ownership');
 
         // Suche und Artikel-JSON vor dem Platzhalter registriert, sonst
         // schluckt /hilfe/{slug} beide.
@@ -346,10 +366,9 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/auswertungen', ReportController::class)->name('reports.index');
 
         Route::get('/kalender', [CalendarController::class, 'index'])->name('calendar.index');
-        // C-13 (#249): the subscription secret is a credential and belongs in
-        // the settings, not as the widest block over the working area.
-        Route::get('/einstellungen/kalender', [CalendarController::class, 'subscription'])
-            ->name('settings.calendar');
+        Route::get('/kalender/einstellungen', [CalendarController::class, 'index'])
+            ->defaults('settings', true)
+            ->name('calendar.settings');
         Route::post('/kalender/abo', [CalendarController::class, 'regenerate'])
             ->name('calendar.regenerate');
 
@@ -362,23 +381,25 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/abwesenheiten/{absence}', [AbsenceController::class, 'update'])->name('absences.update');
         Route::delete('/abwesenheiten/{absence}', [AbsenceController::class, 'destroy'])->name('absences.destroy');
 
-        Route::get('/einstellungen', [StudioSettingsController::class, 'edit'])->name('settings.edit');
+        Route::redirect('/einstellungen', '/einstellungen/allgemein');
+        Route::redirect('/einstellungen/marke', '/einstellungen/allgemein');
+        Route::redirect('/einstellungen/rechtliche-einheit', '/einstellungen/allgemein');
+        Route::get('/einstellungen/allgemein', [StudioSettingsController::class, 'edit'])->defaults('pane', 'general')->name('settings.general');
+        Route::get('/einstellungen/email', [StudioSettingsController::class, 'edit'])->defaults('pane', 'email');
+        Route::redirect('/einstellungen/rechnungsdaten', '/einstellungen/zahlung');
+        Route::redirect('/einstellungen/dokumente', '/einstellungen/belege');
+        Route::get('/einstellungen/zahlung', [StudioSettingsController::class, 'edit'])->defaults('pane', 'payment')->name('settings.payment');
+        Route::get('/einstellungen/belege', [StudioSettingsController::class, 'edit'])->defaults('pane', 'receipts');
         Route::patch('/einstellungen', [StudioSettingsController::class, 'update'])->name('settings.update');
+        Route::get('/einstellungen/anrede-vorschau', [StudioSettingsController::class, 'registerPreview'])->name('settings.register-preview');
         Route::get('/einstellungen/logo', [StudioSettingsController::class, 'logo'])->name('settings.logo');
-        // Q-10: die Schaufensterbilder, neben dem Logo gepflegt.
-        Route::post('/einstellungen/schaufenster', [StudioSettingsController::class, 'storeShowcase'])
-            ->name('settings.showcase.store');
-        Route::get('/einstellungen/schaufenster/{index}', [StudioSettingsController::class, 'showcase'])
-            ->whereNumber('index')->name('settings.showcase');
-        Route::delete('/einstellungen/schaufenster/{index}', [StudioSettingsController::class, 'destroyShowcase'])
-            ->whereNumber('index')->name('settings.showcase.destroy');
         Route::patch('/einstellungen/ust', [StudioSettingsController::class, 'updateVat'])->name('settings.vat.update');
-        Route::patch('/einstellungen/dokumente', [StudioSettingsController::class, 'updateDocuments'])->name('settings.documents.update');
-        Route::get('/einstellungen/dokumente/angebot-vorschau', [StudioSettingsController::class, 'previewQuoteLayout'])
-            ->name('settings.documents.quote-layout-preview');
-        Route::patch('/einstellungen/allgemein', [StudioSettingsController::class, 'updateGeneral'])->name('settings.general.update');
+        Route::patch('/einstellungen/zahlung', [StudioSettingsController::class, 'updatePayment'])->name('settings.payment.update');
+        Route::patch('/einstellungen/belege', [StudioSettingsController::class, 'updateReceipts'])->name('settings.receipts.update');
+        Route::get('/einstellungen/belege/angebot-vorschau', [StudioSettingsController::class, 'previewQuoteLayout'])
+            ->name('settings.receipts.quote-layout-preview');
+        Route::get('/einstellungen/email/vorschau', [StudioSettingsController::class, 'previewMail'])->name('settings.mail.preview');
         Route::patch('/einstellungen/email', [StudioSettingsController::class, 'updateMail'])->name('settings.mail.update');
-        Route::patch('/einstellungen/erfassung', [StudioSettingsController::class, 'updateCapture'])->name('settings.capture.update');
 
         Route::get('/einstellungen/nummernkreise', [NumberRangeController::class, 'index'])
             ->name('number-ranges.index');
@@ -390,16 +411,32 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/einstellungen/export', [DataExportController::class, 'index'])->name('settings.export');
         Route::get('/einstellungen/export/kontakte', [DataExportController::class, 'contacts'])->name('settings.export.contacts');
         Route::get('/einstellungen/export/projekte', [DataExportController::class, 'projects'])->name('settings.export.projects');
+        Route::post('/einstellungen/export/archiv', [StudioExportController::class, 'store'])->name('settings.export.archive.store');
+        Route::get('/einstellungen/export/archiv/{studioExport}', [StudioExportController::class, 'download'])
+            ->middleware('signed')
+            ->name('settings.export.archive.download');
 
-        Route::get('/einstellungen/verfuegbarkeit', [StudioClosureController::class, 'index'])
-            ->name('availability.edit');
-        Route::patch('/einstellungen/verfuegbarkeit/dauer', [StudioClosureController::class, 'updateDuration'])
-            ->name('availability.duration.update');
-        Route::post('/einstellungen/verfuegbarkeit/schliesszeiten', [StudioClosureController::class, 'store'])
+        Route::get('/einstellungen/protokoll', [AuditLogController::class, 'index'])->name('settings.audit-log');
+
+        Route::get('/einstellungen/aufbewahrung', [RetentionController::class, 'show'])->name('settings.retention');
+        Route::patch('/einstellungen/aufbewahrung', [RetentionController::class, 'update'])->name('settings.retention.update');
+        Route::post('/einstellungen/aufbewahrung/durchfuehren', [RetentionController::class, 'run'])->name('settings.retention.run');
+
+        Route::get('/einstellungen/studio-loeschen', [StudioDeletionController::class, 'show'])->name('settings.deletion');
+        Route::post('/einstellungen/studio-loeschen/code', [StudioDeletionController::class, 'code'])->name('settings.deletion.code');
+        Route::post('/einstellungen/studio-loeschen', [StudioDeletionController::class, 'store'])->name('settings.deletion.store');
+        Route::delete('/einstellungen/studio-loeschen', [StudioDeletionController::class, 'destroy'])->name('settings.deletion.destroy');
+
+        Route::redirect('/einstellungen/verfuegbarkeit', '/schliesszeiten');
+        Route::patch('/kalender/einstellungen/arbeitstage', [StudioClosureController::class, 'updateWorkingDays'])
+            ->name('availability.working-days.update');
+        Route::get('/schliesszeiten', [StudioClosureController::class, 'index'])
+            ->name('studio-closures.index');
+        Route::post('/schliesszeiten', [StudioClosureController::class, 'store'])
             ->name('studio-closures.store');
-        Route::patch('/einstellungen/verfuegbarkeit/schliesszeiten/{studioClosure}', [StudioClosureController::class, 'update'])
+        Route::patch('/schliesszeiten/{studioClosure}', [StudioClosureController::class, 'update'])
             ->name('studio-closures.update');
-        Route::delete('/einstellungen/verfuegbarkeit/schliesszeiten/{studioClosure}', [StudioClosureController::class, 'destroy'])
+        Route::delete('/schliesszeiten/{studioClosure}', [StudioClosureController::class, 'destroy'])
             ->name('studio-closures.destroy');
 
         // E-14: die Fläche, die es zu E-08 nicht gab — Regeln entstanden bis
@@ -480,8 +517,24 @@ Route::middleware('audience:staff')->group(function () {
 
         Route::get('/einstellungen/portal', [PortalSettingsController::class, 'edit'])
             ->name('settings.portal.edit');
+        Route::get('/einstellungen/portal/vorschau', [PortalSettingsController::class, 'preview'])
+            ->name('settings.portal.preview');
         Route::patch('/einstellungen/portal', [PortalSettingsController::class, 'update'])
             ->name('settings.portal.update');
+
+        Route::get('/einstellungen/portal/kontakt', [PortalSettingsController::class, 'contact'])
+            ->name('settings.portal.contact');
+        Route::patch('/einstellungen/portal/kontakt', [PortalSettingsController::class, 'updateContact'])
+            ->name('settings.portal.contact.update');
+        Route::get('/einstellungen/portal/kontakt/bild', [PortalSettingsController::class, 'contactAvatar'])
+            ->name('settings.portal.contact.avatar');
+        Route::delete('/einstellungen/portal/kontakt/bild', [PortalSettingsController::class, 'destroyContactAvatar'])
+            ->name('settings.portal.contact.avatar.destroy');
+
+        Route::get('/einstellungen/impressum-agb', [PortalSettingsController::class, 'imprintTerms'])
+            ->name('settings.imprint-terms');
+        Route::patch('/einstellungen/impressum-agb', [PortalSettingsController::class, 'updateImprintTerms'])
+            ->name('settings.imprint-terms.update');
 
         // G-14: die Vorgaben werden auf /galerien bedient, wie Stufen auf
         // /auftraege. Ein Lesezeichen auf den alten Screen landet dort, wo sie
@@ -502,14 +555,6 @@ Route::middleware('audience:staff')->group(function () {
         Route::delete('/einstellungen/galerie-vorlagen/{galleryPreset}', [GalleryPresetController::class, 'destroy'])
             ->name('gallery-presets.destroy');
 
-        // T-11: quiet hours only — see NotificationSettingsController's own
-        // doc comment for why no per-event toggle grid ships in this route
-        // group yet.
-        Route::get('/einstellungen/benachrichtigungen', [NotificationSettingsController::class, 'edit'])
-            ->name('settings.notifications.edit');
-        Route::patch('/einstellungen/benachrichtigungen', [NotificationSettingsController::class, 'update'])
-            ->name('settings.notifications.update');
-
         Route::get('/einstellungen/api-token', [ApiTokenController::class, 'index'])
             ->name('api-tokens.index');
         Route::post('/einstellungen/api-token', [ApiTokenController::class, 'store'])
@@ -521,6 +566,12 @@ Route::middleware('audience:staff')->group(function () {
         // /kontakte/suche stays above /kontakte/{contact}.
         Route::get('/anfragen/neu', [InquiryCaptureController::class, 'create'])->name('leads.create');
         Route::get('/anfragen', [LeadBoardController::class, '__invoke'])->name('leads.index');
+        // The stage overlay has real addresses, the way a gallery's settings
+        // do: the list renders underneath, the overlay opens on what the path
+        // names.
+        Route::get('/anfragen/einstellungen/stufen', [LeadBoardController::class, '__invoke'])
+            ->defaults('pipeline', 'lead')
+            ->name('leads.settings');
         // C-07 (#241): the view the user last chose, kept on the user.
         Route::post('/anfragen/ansicht', [LeadBoardController::class, 'chooseView'])
             ->name('leads.view');
@@ -557,6 +608,11 @@ Route::middleware('audience:staff')->group(function () {
         // the list covers every project whether or not one exists yet.
         Route::get('/projekte', [ProjectController::class, 'index'])->name('projects.index');
         Route::get('/projekte/suche', ProjectSearchController::class)->name('projects.search');
+        Route::get('/auftraege/einstellungen/stufen', [ProjectController::class, 'index'])
+            ->defaults('pipeline', 'project')
+            ->name('projects.settings.stages');
+        Route::get('/auftraege/einstellungen/typen/{key}', [ProjectController::class, 'index'])
+            ->name('projects.settings.type');
 
         // The project screen. Shoot and crew mutations hang off /shootings
         // rather than under the project, because the shoot's public id already
@@ -566,6 +622,8 @@ Route::middleware('audience:staff')->group(function () {
         // the same record.
         Route::patch('/auftraege/{project}', [ProjectController::class, 'update'])
             ->name('projects.update');
+        Route::post('/auftraege/{project}/stufe', [ProjectController::class, 'stage'])
+            ->name('projects.stage');
         Route::get('/auftraege/{project}/shootings', [ProjectController::class, 'shoots'])
             ->name('projects.shoots');
         Route::get('/auftraege/{project}/aufgaben', [ProjectController::class, 'tasks'])
@@ -610,6 +668,12 @@ Route::middleware('audience:staff')->group(function () {
             ->name('quotes.store');
         Route::get('/angebote/{quote}/positionen/{quoteItem}/bild', [QuoteController::class, 'itemImage'])
             ->name('quotes.items.image');
+        Route::post('/angebote/{quote}/schaufenster', [QuoteController::class, 'storeShowcase'])
+            ->name('quotes.showcase.store');
+        Route::get('/angebote/{quote}/schaufenster/{index}', [QuoteController::class, 'showcase'])
+            ->whereNumber('index')->name('quotes.showcase');
+        Route::delete('/angebote/{quote}/schaufenster/{index}', [QuoteController::class, 'destroyShowcase'])
+            ->whereNumber('index')->name('quotes.showcase.destroy');
         Route::patch('/angebote/{quote}', [QuoteController::class, 'update'])->name('quotes.update');
         Route::post('/angebote/{quote}/vorschau', [QuoteController::class, 'preview'])->name('quotes.preview');
         Route::get('/angebote/{quote}/vorschau', [QuoteController::class, 'previewSheet'])->name('quotes.preview.sheet');
@@ -876,6 +940,8 @@ Route::middleware('audience:staff')->group(function () {
         // read the same `timeline` relation, just rendered differently.
         Route::post('/shootings/{shoot}/ablauf', [TimelineController::class, 'store'])
             ->name('timeline.store');
+        Route::patch('/ablauf/{entry}', [TimelineController::class, 'update'])
+            ->name('timeline.update');
         Route::delete('/ablauf/{entry}', [TimelineController::class, 'destroy'])
             ->name('timeline.destroy');
         Route::get('/shootings/{shoot}/ablauf.pdf', [TimelineController::class, 'pdf'])
@@ -895,6 +961,7 @@ Route::middleware('audience:staff')->group(function () {
         // an mir offen" — die Frage, die eine Zuweisung ueberhaupt erst stellt.
         Route::get('/aufgaben', TaskBoardController::class)->name('tasks.index');
 
+        Route::post('/aufgaben', [TaskController::class, 'storeStudio'])->name('tasks.store-studio');
         Route::post('/auftraege/{project}/aufgaben', [TaskController::class, 'store'])
             ->name('tasks.store');
         Route::post('/aufgaben/{task}/erledigt', [TaskController::class, 'complete'])

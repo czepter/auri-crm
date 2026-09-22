@@ -2,13 +2,18 @@
 
 namespace App\Portal\Http\Controllers;
 
+use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Contact;
+use App\Crm\Models\Task;
 use App\Http\Controllers\Controller;
+use App\Notifications\Actions\NotifyStudio;
 use App\Notifications\Jobs\SendMailNotification;
+use App\Notifications\Studio\DsgvoRequested;
 use App\Notifications\Support\NotificationPreferences;
 use App\Portal\Models\DsgvoRequest;
 use App\Portal\Models\EmailChange;
 use App\Portal\Notifications\EmailChangeConfirmation;
+use App\Settings\Rules\ValidFormat;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
@@ -79,7 +84,7 @@ class AccountController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:64'],
+            'phone' => ['nullable', 'string', 'max:64', new ValidFormat('phone')],
             'street' => ['nullable', 'string', 'max:255'],
             'postcode' => ['nullable', 'string', 'max:16'],
             'city' => ['nullable', 'string', 'max:255'],
@@ -151,7 +156,7 @@ class AccountController extends Controller
     }
 
     /** Art. 15 and Art. 17, as requests. Clicking twice is impatience, not a second obligation. */
-    public function requestDsgvo(Request $request): RedirectResponse
+    public function requestDsgvo(Request $request, NotifyStudio $notifyStudio): RedirectResponse
     {
         $contact = auth('portal')->user();
 
@@ -165,9 +170,18 @@ class AccountController extends Controller
             ->exists();
 
         if (! $already) {
-            DsgvoRequest::create(['contact_id' => $contact->id, 'kind' => $kind]);
+            $dsgvoRequest = DsgvoRequest::create(['contact_id' => $contact->id, 'kind' => $kind]);
+            $task = Task::create([
+                'title' => "Datenschutz-Anfrage: {$dsgvoRequest->label()}",
+                'audience' => TaskAudience::Internal,
+                'due_on' => $dsgvoRequest->dueOn(),
+                'contact_id' => $contact->id,
+            ]);
+            $dsgvoRequest->update(['task_id' => $task->id]);
 
             AuditLogger::record('portal.account.dsgvo_requested', null, ['kind' => $kind], $contact->public_id);
+
+            $notifyStudio(new DsgvoRequested($dsgvoRequest));
         }
 
         return back();

@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { router, useForm } from '@inertiajs/vue3'
 import GalleryPreview from '@/admin/components/gallery/GalleryPreview.vue'
+import { PreviewOverlay } from '@/ui/preview-overlay'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { ChoiceGroup } from '@/ui/choice-group'
@@ -36,12 +37,6 @@ type Section = 'standardwerte' | 'gestaltung' | 'vorlagen'
 
 const SECTIONS: Section[] = ['standardwerte', 'gestaltung', 'vorlagen']
 
-const GATES = [
-  { field: 'gallery_default_downloads_enabled', label: 'gallerySettings.downloadsLabel' },
-  { field: 'gallery_default_lists_enabled', label: 'gallerySettings.listsLabel' },
-  { field: 'gallery_default_comments_enabled', label: 'gallerySettings.commentsLabel' },
-] as const
-
 const DESIGN = [
   { key: 'cover', label: 'galleryRecord.cover', options: ['full', 'split', 'plain'], prefix: 'cover' },
   { key: 'colour', label: 'galleryRecord.colour', options: ['light', 'dark', 'warm'], prefix: 'colour' },
@@ -60,6 +55,12 @@ const PRESET_GATES = [
   { field: 'downloads_enabled', label: 'gallerySettings.downloadsLabel' },
   { field: 'lists_enabled', label: 'gallerySettings.listsLabel' },
   { field: 'comments_enabled', label: 'gallerySettings.commentsLabel' },
+] as const
+
+const STUDIO_GATES = [
+  { field: 'gallery_default_downloads_enabled', label: 'gallerySettings.downloadsLabel' },
+  { field: 'gallery_default_lists_enabled', label: 'gallerySettings.listsLabel' },
+  { field: 'gallery_default_comments_enabled', label: 'gallerySettings.commentsLabel' },
 ] as const
 
 const open = ref<Section>(props.section)
@@ -157,9 +158,9 @@ function removePreset() {
 const presetPreview = computed(() => ({
   design: presetForm.design ?? form.gallery_default_design,
   offers: {
-    downloads: presetForm.downloads_enabled === '' ? form.gallery_default_downloads_enabled : presetForm.downloads_enabled === '1',
-    lists: presetForm.lists_enabled === '' ? form.gallery_default_lists_enabled : presetForm.lists_enabled === '1',
-    comments: presetForm.comments_enabled === '' ? form.gallery_default_comments_enabled : presetForm.comments_enabled === '1',
+    downloads: presetForm.downloads_enabled === '' ? props.settings.downloadsEnabled : presetForm.downloads_enabled === '1',
+    lists: presetForm.lists_enabled === '' ? props.settings.listsEnabled : presetForm.lists_enabled === '1',
+    comments: presetForm.comments_enabled === '' ? props.settings.commentsEnabled : presetForm.comments_enabled === '1',
   },
 }))
 
@@ -228,13 +229,13 @@ const studioOffers = computed(() => ({
               </Field>
             </div>
 
-            <div v-for="gate in GATES" :key="gate.field" class="mb-6 flex items-center gap-2.5">
-              <Checkbox :id="`cb-${gate.field}`" v-model="form[gate.field]" @update:model-value="save" />
-              <Label :for="`cb-${gate.field}`" variant="inline">{{ $t(gate.label) }}</Label>
+            <div v-for="gate in STUDIO_GATES" :key="gate.field" class="flex items-center gap-4 border-b border-border py-2.5">
+              <Label class="flex-1" :for="gate.field" variant="inline">{{ $t(gate.label) }}</Label>
+              <Switch :id="gate.field" v-model="form[gate.field]" @update:model-value="save" />
             </div>
           </div>
 
-          <aside class="min-w-0 flex-1">
+          <PreviewOverlay :min="1121" :label="$t('common.preview')" wrapper-class="min-w-0 flex-1">
             <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
               {{ $t('galleryRecord.preview') }}
             </div>
@@ -244,7 +245,7 @@ const studioOffers = computed(() => ({
               :title="previewTitle"
               :url="galleryHost"
             />
-          </aside>
+          </PreviewOverlay>
         </section>
 
         <section v-else-if="open === 'gestaltung'" class="flex min-w-0 flex-1 gap-8 max-[1120px]:flex-col">
@@ -263,7 +264,7 @@ const studioOffers = computed(() => ({
             </div>
           </div>
 
-          <aside class="min-w-0 flex-1">
+          <PreviewOverlay :min="1121" :label="$t('common.preview')" wrapper-class="min-w-0 flex-1">
             <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
               {{ $t('galleryRecord.preview') }}
             </div>
@@ -273,7 +274,7 @@ const studioOffers = computed(() => ({
               :title="previewTitle"
               :url="galleryHost"
             />
-          </aside>
+          </PreviewOverlay>
         </section>
 
         <section v-else class="min-w-0 flex-1">
@@ -361,7 +362,7 @@ const studioOffers = computed(() => ({
               </Button>
             </div>
 
-            <aside v-if="preset" class="min-w-0 flex-1">
+            <PreviewOverlay v-if="preset" :min="1121" :label="$t('common.preview')" wrapper-class="min-w-0 flex-1">
               <div class="mb-2.5 flex items-baseline gap-2">
                 <span class="text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
                   {{ $t('galleryRecord.preview') }}
@@ -376,7 +377,7 @@ const studioOffers = computed(() => ({
                 :title="previewTitle"
                 :url="galleryHost"
               />
-            </aside>
+            </PreviewOverlay>
           </div>
         </section>
       </div>

@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from "vue"
+import { ref } from "vue"
 import { useVModel } from "@vueuse/core"
+import type { Rule } from "@/lib/rules"
+import { useRule } from "@/ui/input/useRule"
 import { cn } from "@/lib/utils"
 
 /*
@@ -13,6 +16,7 @@ import { cn } from "@/lib/utils"
 const props = defineProps<{
   defaultValue?: string | number
   modelValue?: string | number
+  rule?: Rule
   class?: HTMLAttributes["class"]
 }>()
 
@@ -24,10 +28,14 @@ const modelValue = useVModel(props, "modelValue", emits, {
   passive: true,
   defaultValue: props.defaultValue,
 })
+
+const el = ref<HTMLInputElement | null>(null)
+useRule(el, () => props.rule, () => modelValue.value)
 </script>
 
 <template>
   <input
+    ref="el"
     v-model="modelValue"
     data-slot="input-group-input"
     :class="cn(

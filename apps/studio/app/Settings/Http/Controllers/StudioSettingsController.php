@@ -4,19 +4,26 @@ namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
+use App\Notifications\Support\MailPreview;
+use App\Portal\Notifications\PortalAccessInvitation;
 use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Enums\QuoteLayout;
 use App\Quotes\Support\SampleQuoteData;
+use App\Settings\Actions\AdaptClientRegister;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Enums\FontPair;
 use App\Settings\Models\StudioSettings;
+use App\Settings\Rules\ValidFormat;
 use App\Settings\Rules\ValidIban;
+use App\Settings\Support\LogoResponse;
 use App\Settings\Support\StudioSettingsResolver;
+use App\Support\AuditLogger;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -26,8 +33,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * The section shell T-00 mocked as screen 14. Studio-Profil — legal entity,
  * brand, bank, T-02's three fieldsets on the one route T-01 scaffolded —
  * with enough save and dirty-state plumbing already in place from that
- * story. Zahlungsdaten & USt is T-03's own pane, Allgemein (timezone,
- * locale, working days) is T-13's; every remaining group renders as a
+ * story. Zahlungsdaten & USt is T-03's own pane, and Allgemein carries
+ * brand, legal entity, tax and timezone on one page; every remaining group renders as a
  * disabled "bald" nav entry: AdminLayout's own sidebar already rules out a
  * link with nothing behind it, and the same call applies one level down.
  */
@@ -35,13 +42,14 @@ class StudioSettingsController extends Controller
 {
     use AuthorizesStaffSettings;
 
-    public function edit(StudioSettingsResolver $settings): Response
+    public function edit(StudioSettingsResolver $settings, string $pane): Response
     {
         $this->authorizeSettings();
 
         $row = StudioSettings::query()->firstOrFail();
 
         return Inertia::render('Settings/Index', [
+            'pane' => $pane,
             // #234: the four pairs, each with what it is — the screen draws
             // the choice as a preview and not as a sample line.
             'fontPairs' => collect(FontPair::cases())->map(fn (FontPair $pair) => [
@@ -69,7 +77,7 @@ class StudioSettingsController extends Controller
      * Onboarding still posts all of them in one step; the loop below
      * writes whatever arrived either way.
      */
-    public function update(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    public function update(Request $request, StudioSettingsResolver $settings, AdaptClientRegister $adaptRegister): RedirectResponse
     {
         $this->authorizeSettings();
 
@@ -84,8 +92,8 @@ class StudioSettingsController extends Controller
             // At least one of the two — a document carrying neither is not
             // invoiceable. required_without on both sides is what makes
             // "at least one" true without a bespoke closure rule.
-            'tax_number' => ['sometimes', 'nullable', 'string', 'max:50', 'required_without:vat_id'],
-            'vat_id' => ['sometimes', 'nullable', 'string', 'max:50', 'required_without:tax_number'],
+            'tax_number' => ['sometimes', 'nullable', 'string', 'max:50', 'required_without:vat_id', new ValidFormat('tax_number')],
+            'vat_id' => ['sometimes', 'nullable', 'string', 'max:50', 'required_without:tax_number', new ValidFormat('vat_id')],
             'register_number' => ['sometimes', 'nullable', 'string', 'max:100'],
             'register_court' => ['sometimes', 'nullable', 'string', 'max:255'],
             'representative' => ['sometimes', 'nullable', 'string', 'max:255'],
@@ -96,22 +104,27 @@ class StudioSettingsController extends Controller
             'font_pair' => ['sometimes', 'nullable', Rule::enum(FontPair::class)],
             // #439: the onboarding's first step asks this beside the identity.
             'client_register' => ['sometimes', 'required', 'in:formal,informal'],
-            // SVG deliberately excluded: served inline from this app's own
-            // origin (logo(), below), an uploaded SVG can carry a <script>
-            // and execute as this app rather than as an image.
-            'logo' => ['sometimes', 'nullable', 'file', 'mimes:png', 'max:2048'],
+            'adapt_existing' => ['sometimes', 'boolean', 'prohibited_unless:client_register,formal,informal'],
+            // Blank returns the tenant to config('app.timezone'), per
+            // StudioSettingsResolver's fallback contract.
+            'timezone' => ['sometimes', 'nullable', 'timezone'],
+            // SVG ist erlaubt, weil App\Settings\Support\LogoResponse die
+            // Datei mit Sandbox-CSP ausliefert; ohne die beiden Kopfzeilen
+            // liefe ein <script> darin auf unserer Herkunft.
+            'logo' => ['sometimes', 'nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:10240'],
             // Optional: a studio that only takes card payments (or none yet
             // during onboarding) has no IBAN to file. What is entered still
             // has to be a real IBAN — the portal's "Überweisen" block hides
             // itself when there is none (portal/pages/Payments/Show.vue).
             'bank_account_holder' => ['sometimes', 'nullable', 'string', 'max:255'],
             'bank_iban' => ['sometimes', 'nullable', 'string', new ValidIban],
-            'bank_bic' => ['sometimes', 'nullable', 'string', 'max:11'],
+            'bank_bic' => ['sometimes', 'nullable', 'string', 'max:11', new ValidFormat('bic')],
         ]);
 
         $actor = auth('staff')->user();
+        $registerChanged = isset($validated['client_register']) && $validated['client_register'] !== $settings->clientRegister();
 
-        foreach (collect($validated)->except('logo') as $key => $value) {
+        foreach (collect($validated)->except('logo', 'adapt_existing') as $key => $value) {
             $settings->set($key, $value, $actor);
         }
 
@@ -119,7 +132,54 @@ class StudioSettingsController extends Controller
             $settings->setLogo($request->file('logo'), $actor);
         }
 
+        if ($registerChanged && ($validated['adapt_existing'] ?? false)) {
+            $counts = $adaptRegister($validated['client_register']);
+
+            AuditLogger::record('studio.register_adapted', $actor, ['to' => $validated['client_register'], ...$counts]);
+
+            return back()->with('status', __('settings.register_adapted', $counts));
+        }
+
         return back();
+    }
+
+    /**
+     * Die Kundenmail, wie sie ankommt: dieselbe Vorlage mit Signatur und
+     * Anschrift im Fuß. Die Signatur kommt getippt statt gespeichert, damit
+     * die Vorschau mitläuft.
+     */
+    public function previewMail(Request $request, StudioSettingsResolver $settings): HttpResponse
+    {
+        $this->authorizeSettings();
+
+        if ($request->has('signatur')) {
+            $settings = new class(Str::limit((string) $request->query('signatur'), 1000, '')) extends StudioSettingsResolver
+            {
+                public function __construct(private readonly string $signature) {}
+
+                public function mailSignature(): ?string
+                {
+                    return $this->signature ?: null;
+                }
+            };
+            app()->instance(StudioSettingsResolver::class, $settings);
+        }
+
+        $html = MailPreview::html(
+            new PortalAccessInvitation(config('portal.url').'/zugang/…', '', 'Hallo Maxi Musterfrau,', $settings),
+            (object) [],
+        );
+
+        return response($html, 200, ['Content-Type' => 'text/html']);
+    }
+
+    public function registerPreview(Request $request, AdaptClientRegister $adaptRegister): JsonResponse
+    {
+        $this->authorizeSettings();
+
+        $validated = $request->validate(['ziel' => ['required', 'in:formal,informal']]);
+
+        return response()->json($adaptRegister($validated['ziel'], dryRun: true));
     }
 
     /**
@@ -138,45 +198,7 @@ class StudioSettingsController extends Controller
 
         abort_if($path === null, 404);
 
-        return Storage::disk('local')->response($path);
-    }
-
-    /**
-     * Q-10: one shop-window picture, appended. PNG and JPEG only, and never
-     * SVG — served inline from this app's own origin, an uploaded SVG can
-     * carry a <script> and execute as this app rather than as an image. The
-     * same exclusion the logo above documents.
-     */
-    public function storeShowcase(Request $request, StudioSettingsResolver $settings): RedirectResponse
-    {
-        $this->authorizeSettings();
-
-        $request->validate(['image' => ['required', 'file', 'mimes:png,jpg,jpeg', 'max:4096']]);
-
-        $settings->addShowcaseImage($request->file('image'), auth('staff')->user());
-
-        return back();
-    }
-
-    public function destroyShowcase(int $index, StudioSettingsResolver $settings): RedirectResponse
-    {
-        $this->authorizeSettings();
-
-        $settings->removeShowcaseImage($index, auth('staff')->user());
-
-        return back();
-    }
-
-    /** The studio's own read of one, behind the settings gate — the portal serves the same file publicly. */
-    public function showcase(int $index, StudioSettingsResolver $settings): StreamedResponse
-    {
-        $this->authorizeSettings();
-
-        $path = $settings->showcasePaths()[$index] ?? null;
-
-        abort_if($path === null, 404);
-
-        return Storage::disk('local')->response($path);
+        return LogoResponse::for($path);
     }
 
     /**
@@ -208,45 +230,57 @@ class StudioSettingsController extends Controller
     }
 
     /**
-     * T-05's own save action, same reasoning as updateVat() above: the
-     * Dokumente pane is its own form with its own "Speichern" button.
+     * Zahlung and Belege are two pages with their own "Speichern", so each
+     * validates only its own fields (`sometimes`): a page sends what it shows.
      *
      * deposit_percentage arrives already in basis points, same boundary
      * vat_rate crosses in updateVat().
      */
-    public function updateDocuments(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    public function updatePayment(Request $request, StudioSettingsResolver $settings): RedirectResponse
     {
         $this->authorizeSettings();
 
         $validated = $request->validate([
-            'quote_validity_days' => ['required', 'integer', 'min:0', 'max:3650'],
-            'payment_term_days' => ['required', 'integer', 'min:0', 'max:3650'],
-            'deposit_percentage' => ['required', 'integer', 'min:0', 'max:10000'],
-            'widerruf_included' => ['required', 'boolean'],
-            'widerruf_text' => ['nullable', 'string', 'max:5000'],
-            'quote_layout' => ['required', Rule::enum(QuoteLayout::class)],
-            // T-12: the shared PDF shell App\Documents\Support\DocumentRenderer
-            // wraps a Contract or Quote's resolved body in — this pane's the
-            // one place either is set, rather than pasted into each template.
-            'document_letterhead_html' => ['nullable', 'string', 'max:20000'],
-            'document_footer_html' => ['nullable', 'string', 'max:20000'],
+            'payment_term_days' => ['sometimes', 'required', 'integer', 'min:0', 'max:3650'],
+            'deposit_percentage' => ['sometimes', 'required', 'integer', 'min:0', 'max:10000'],
+            // Eine Mahnstufe ist eine Frist: sie stand bei Stripe, weil das
+            // Geld dort eingeht, gehört aber zu den Fristen daneben.
+            'payments_reminders_enabled' => ['sometimes', 'required', 'boolean'],
         ]);
 
         $actor = auth('staff')->user();
-        $settings->set('quote_validity_days', $validated['quote_validity_days'], $actor);
-        $settings->set('payment_term_days', $validated['payment_term_days'], $actor);
-        $settings->set('deposit_percentage', $validated['deposit_percentage'], $actor);
-        $settings->set('widerruf_included', $validated['widerruf_included'], $actor);
-        $settings->set('widerruf_text', $validated['widerruf_text'] ?? null, $actor);
-        $settings->set('quote_layout', $validated['quote_layout'], $actor);
-        $settings->set('document_letterhead_html', $validated['document_letterhead_html'] ?? null, $actor);
-        $settings->set('document_footer_html', $validated['document_footer_html'] ?? null, $actor);
+
+        foreach ($validated as $key => $value) {
+            $settings->set($key, $value, $actor);
+        }
+
+        return back();
+    }
+
+    public function updateReceipts(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    {
+        $this->authorizeSettings();
+
+        $validated = $request->validate([
+            'quote_validity_days' => ['sometimes', 'required', 'integer', 'min:0', 'max:3650'],
+            'document_layout' => ['sometimes', 'required', Rule::enum(QuoteLayout::class)],
+            // T-12: the shared PDF shell App\Documents\Support\DocumentRenderer
+            // wraps a Contract or Quote's resolved body in.
+            'document_letterhead_html' => ['sometimes', 'nullable', 'string', 'max:20000'],
+            'document_footer_html' => ['sometimes', 'nullable', 'string', 'max:20000'],
+        ]);
+
+        $actor = auth('staff')->user();
+
+        foreach ($validated as $key => $value) {
+            $settings->set($key, $value, $actor);
+        }
 
         return back();
     }
 
     /**
-     * T-05 follow-up: the Layout radio in the Dokumente pane needs to show
+     * T-05 follow-up: the Layout radio on the Belege page needs to show
      * what each of the five App\Quotes\Enums\QuoteLayout cases actually
      * renders like — with real markup, not the skeleton bars every other
      * pane's DocumentPreview.vue shows. App\Quotes\Support\SampleQuoteData
@@ -264,69 +298,6 @@ class StudioSettingsController extends Controller
         $sample = SampleQuoteData::build($settings);
 
         return response($render->html($sample, $layout))->header('Content-Type', 'text/html; charset=utf-8');
-    }
-
-    /**
-     * T-13's own save action, same reasoning as updateVat() above: Allgemein
-     * is its own form with its own "Speichern" button, so an unrelated
-     * pane's validation error never blocks this one's save.
-     *
-     * timezone and locale are nullable — clearing either back to blank
-     * returns the tenant to config('app.timezone')/config('app.locale'),
-     * per StudioSettingsResolver's fallback contract. working_days is not:
-     * an empty selection would leave TaskTemplate::dueFor() nothing to
-     * roll onto, so at least one day is required here rather than only
-     * guarded defensively in the resolver.
-     */
-    public function updateGeneral(Request $request, StudioSettingsResolver $settings): RedirectResponse
-    {
-        $this->authorizeSettings();
-
-        $validated = $request->validate([
-            'timezone' => ['nullable', 'timezone'],
-            'locale' => ['nullable', Rule::in(['de', 'de_DE', 'de_AT', 'de_CH'])],
-            'working_days' => ['required', 'array', 'min:1'],
-            'working_days.*' => ['integer', 'between:1,7', 'distinct'],
-        ]);
-
-        $actor = auth('staff')->user();
-        $settings->set('timezone', $validated['timezone'] ?? null, $actor);
-        $settings->set('locale', $validated['locale'] ?? null, $actor);
-        $settings->set('working_days', array_values($validated['working_days']), $actor);
-
-        return back();
-    }
-
-    /**
-     * The suggestion lists the three "Sonstige" fields at capture offer.
-     * Free text stays free text — these only spare the studio retyping the
-     * kinds of work it does every week.
-     */
-    public function updateCapture(Request $request, StudioSettingsResolver $settings): RedirectResponse
-    {
-        $this->authorizeSettings();
-
-        $validated = $request->validate([
-            'lead_type_presets' => ['array'],
-            'lead_type_presets.*' => ['nullable', 'string', 'max:120'],
-            'lead_source_presets' => ['array'],
-            'lead_source_presets.*' => ['nullable', 'string', 'max:120'],
-            'lead_channel_presets' => ['array'],
-            'lead_channel_presets.*' => ['nullable', 'string', 'max:120'],
-        ]);
-
-        $actor = auth('staff')->user();
-
-        foreach (['lead_type_presets', 'lead_source_presets', 'lead_channel_presets'] as $key) {
-            $settings->set($key, collect($validated[$key] ?? [])
-                ->map(fn (?string $value) => trim((string) $value))
-                ->filter()
-                ->unique()
-                ->values()
-                ->all(), $actor);
-        }
-
-        return redirect('/einstellungen?pane=capture');
     }
 
     /**

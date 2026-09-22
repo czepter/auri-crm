@@ -6,6 +6,7 @@ use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
 use App\Payments\Models\Invoice;
 use App\Payments\Support\InvoiceFigures;
+use App\Settings\Support\StudioRecords;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -67,19 +68,13 @@ class InvoiceExportController extends Controller
             $invoice->issued_at->format('d.m.Y'),
             $invoice->contact?->name ?? '',
             $invoice->project?->name ?? '',
-            $this->euro($figures->net),
+            StudioRecords::euro($figures->net),
             $figures->ratePercentage(),
-            $this->euro($figures->vat),
-            $this->euro($figures->gross),
+            StudioRecords::euro($figures->vat),
+            StudioRecords::euro($figures->gross),
             $invoice->isPaid() ? $invoice->installments->max('paid_on')->format('d.m.Y') : '',
             __("payments.invoiceStatus.{$invoice->status()}"),
-            $credited === 0 ? '' : $this->euro($credited),
+            $credited === 0 ? '' : StudioRecords::euro($credited),
         ];
-    }
-
-    /** No thousands separator: a grouped number is a second thing for Excel to parse. */
-    private function euro(int $minorUnits): string
-    {
-        return number_format($minorUnits / 100, 2, ',', '');
     }
 }

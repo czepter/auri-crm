@@ -1,6 +1,8 @@
 <?php
 
+use App\Crm\Models\Contact;
 use App\Enums\StaffRole;
+use App\Portal\Support\PortalSettings;
 use App\Settings\Models\StudioSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -26,30 +28,59 @@ it('updates the gallery defaults without touching the portal switches', function
             'portal_accept_quotes_enabled' => true,
             'portal_payment_status_enabled' => false,
             'portal_messaging_mode' => 'any',
-        ])->assertRedirect('/einstellungen/portal');
+        ])->assertRedirect();
 
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen/galerien', [
             'gallery_default_expiry_days' => 90,
-            'gallery_default_downloads_enabled' => true,
-            'gallery_default_lists_enabled' => false,
-            'gallery_default_comments_enabled' => false,
             'gallery_default_design' => ['cover' => 'split', 'type' => 'serif', 'colour' => 'warm', 'grid' => 'dense'],
         ])->assertRedirect('/galerien');
 
     $row = StudioSettings::query()->sole();
 
     expect($row->gallery_default_expiry_days)->toBe(90)
-        ->and($row->gallery_default_lists_enabled)->toBeFalse()
         ->and($row->gallery_default_design['colour'])->toBe('warm')
         ->and($row->portal_maintenance_enabled)->toBeTrue()
         ->and($row->portal_messaging_mode)->toBe('any');
 });
 
+it('takes the three gallery switches on the gallery route and lets a contact override them', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->patch('/einstellungen/galerien', [
+            'gallery_default_downloads_enabled' => false,
+            'gallery_default_lists_enabled' => false,
+            'gallery_default_comments_enabled' => true,
+        ])->assertRedirect('/galerien');
+
+    $row = StudioSettings::query()->sole();
+
+    expect($row->gallery_default_downloads_enabled)->toBeFalse()
+        ->and($row->gallery_default_lists_enabled)->toBeFalse()
+        ->and($row->gallery_default_comments_enabled)->toBeTrue();
+
+    Cache::store('redis')->flush();
+    $portal = app(PortalSettings::class);
+    $overridden = Contact::factory()->create(['portal_overrides' => ['gallery_downloads' => true]]);
+
+    expect($portal->galleryDownloadsEnabled(Contact::factory()->create()))->toBeFalse()
+        ->and($portal->galleryDownloadsEnabled($overridden))->toBeTrue()
+        ->and($portal->galleryCommentsEnabled())->toBeTrue();
+});
+
+it('no longer accepts a gallery switch on the portal route', function () {
+    StudioSettings::query()->update(['gallery_default_lists_enabled' => false]);
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->patch('/einstellungen/portal', ['gallery_default_lists_enabled' => true])
+        ->assertRedirect();
+
+    expect(StudioSettings::query()->sole()->gallery_default_lists_enabled)->toBeFalse();
+});
+
 it('no longer accepts a gallery default on the portal route', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->patch('/einstellungen/portal', ['gallery_default_expiry_days' => 5])
-        ->assertRedirect('/einstellungen/portal');
+        ->assertRedirect();
 
     expect(StudioSettings::query()->sole()->gallery_default_expiry_days)->toBeNull();
 });

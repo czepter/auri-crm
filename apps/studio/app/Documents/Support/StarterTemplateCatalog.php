@@ -250,10 +250,7 @@ class StarterTemplateCatalog
                 self::header('8. Datenschutz', 3),
                 self::paragraph('Personenbezogene Daten werden ausschließlich zur Durchführung dieses Vertrags verarbeitet. Einzelheiten regelt die Datenschutzerklärung des Fotografen.'),
 
-                self::header('9. Widerruf', 3),
-                self::paragraph('{{ settings.widerrufText }}'),
-
-                self::header('10. Schlussbestimmungen', 3),
+                self::header('9. Schlussbestimmungen', 3),
                 self::paragraph('Änderungen bedürfen der Textform. Sollte eine Bestimmung unwirksam sein, bleibt der übrige Vertrag wirksam.'),
             ]],
         ];

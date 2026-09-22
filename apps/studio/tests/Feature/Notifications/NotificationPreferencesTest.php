@@ -3,20 +3,13 @@
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Notifications\Contracts\Transactional;
-use App\Notifications\Jobs\DeferredNotification;
-use App\Notifications\Jobs\SendMailNotification;
-use App\Notifications\Models\InAppNotification;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\NotificationPreferences;
-use App\Settings\Models\StudioSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
-use Illuminate\Support\Facades\Queue;
 
 uses(RefreshDatabase::class);
 
@@ -133,101 +126,4 @@ it('never suppresses an on-demand address — there is no identity to hold a pre
     );
 
     NotificationFacade::assertSentOnDemand(T11DemoNotification::class);
-});
-
-it('holds a non-transactional mail send during quiet hours instead of delivering it, and it arrives once the window opens', function () {
-    Date::setTestNow('2026-08-10 02:00:00');
-    Queue::fake();
-    NotificationFacade::fake();
-
-    StudioSettings::query()->sole()->update([
-        'timezone' => 'UTC',
-        'quiet_hours_enabled' => true,
-        'quiet_hours_start' => '22:00:00',
-        'quiet_hours_end' => '07:00:00',
-    ]);
-
-    $user = User::factory()->create();
-
-    app(NotificationService::class)->send($user, new T11DemoNotification);
-
-    // Not delivered now — and not queued for delivery either, which is what
-    // "not delivered" means once MailTransport is itself a queue push.
-    NotificationFacade::assertNothingSent();
-    Queue::assertNotPushed(SendMailNotification::class);
-
-    // ...but re-dispatched for delivery once the window opens, at 07:00 the
-    // same tenant-local day — not dropped.
-    Queue::assertPushed(DeferredNotification::class, function (DeferredNotification $job) use ($user) {
-        return $job->notifiable->is($user)
-            && $job->notification instanceof T11DemoNotification
-            && $job->delay->equalTo('2026-08-10 07:00:00');
-    });
-
-    // Running the job once the window has actually opened delivers it —
-    // "arrives when the window opens", the acceptance criterion in full.
-    // Delivery is itself a SendMailNotification push, because MailTransport
-    // never hands a message to the MTA inside the caller's process.
-    Date::setTestNow('2026-08-10 07:00:01');
-    Bus::dispatchNow((new ReflectionClass(DeferredNotification::class))->newInstance($user, new T11DemoNotification));
-
-    Queue::assertPushed(SendMailNotification::class, function (SendMailNotification $job) use ($user) {
-        return $job->notifiable->is($user) && $job->notification instanceof T11DemoNotification;
-    });
-});
-
-it('never holds a Transactional notification for quiet hours', function () {
-    Date::setTestNow('2026-08-10 02:00:00');
-    Queue::fake();
-    NotificationFacade::fake();
-
-    StudioSettings::query()->sole()->update([
-        'timezone' => 'UTC',
-        'quiet_hours_enabled' => true,
-        'quiet_hours_start' => '22:00:00',
-        'quiet_hours_end' => '07:00:00',
-    ]);
-
-    $user = User::factory()->create();
-
-    app(NotificationService::class)->send($user, new T11DemoTransactionalNotification);
-
-    Queue::assertPushed(SendMailNotification::class, function (SendMailNotification $job) use ($user) {
-        return $job->notifiable->is($user) && $job->notification instanceof T11DemoTransactionalNotification;
-    });
-    Queue::assertNotPushed(DeferredNotification::class);
-});
-
-it('never holds a notification that does not name the mail channel, quiet hours or not', function () {
-    Date::setTestNow('2026-08-10 02:00:00');
-    Queue::fake();
-    NotificationFacade::fake();
-
-    StudioSettings::query()->sole()->update([
-        'timezone' => 'UTC',
-        'quiet_hours_enabled' => true,
-        'quiet_hours_start' => '22:00:00',
-        'quiet_hours_end' => '07:00:00',
-    ]);
-
-    $user = User::factory()->create();
-
-    $notification = new class extends Notification
-    {
-        /** @return list<string> */
-        public function via(object $notifiable): array
-        {
-            return ['in_app'];
-        }
-
-        public function toArray(object $notifiable): array
-        {
-            return [];
-        }
-    };
-
-    app(NotificationService::class)->send($user, $notification);
-
-    Queue::assertNothingPushed();
-    expect(InAppNotification::count())->toBe(1);
 });

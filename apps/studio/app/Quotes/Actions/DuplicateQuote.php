@@ -51,6 +51,8 @@ class DuplicateQuote
                 'recipient_city' => $source->recipient_city,
             ]);
 
+            $quote->update(['showcase_paths' => $source->copyShowcasePaths($quote->showcaseDirectory())]);
+
             $quote->items()->createMany(
                 $source->items->map(fn ($item) => $item->only([
                     'title', 'description', 'quantity', 'unit_price', 'sort_order',

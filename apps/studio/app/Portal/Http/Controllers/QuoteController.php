@@ -48,9 +48,6 @@ class QuoteController extends Controller
             // half via `portal.capability:accept_quotes`. Never hides an
             // already-accepted quote — only the button that would accept one.
             'canAccept' => $settings->acceptQuotesEnabled(),
-            // Q-10: die Zahl reicht — die Kacheln zaehlen zyklisch durch und
-            // holen sich jede ihr Bild ueber ihren Index.
-            'showcaseCount' => count($settings->showcasePaths()),
             'quote' => $quote === null ? null : [
                 ...QuoteData::fromModel($quote->asSeenByClient())->toArray(),
                 // #480: the letter as the client reads it — fields filled, escaped.
@@ -74,6 +71,20 @@ class QuoteController extends Controller
      * itself lives beside every other tenant's under catalog/, and a
      * guessable filename in a URL would be the whole access rule.
      */
+    /** Q-10: eine Kachel des Reglerrasters, ueber denselben Weg wie image() darunter. */
+    public function showcase(string $project, int $index): StreamedResponse
+    {
+        $contact = auth('portal')->user();
+
+        $found = $contact->visibleProjects()->where('projects.public_id', $project)->firstOrFail();
+
+        $path = $found->latestQuote?->showcasePaths()[$index] ?? null;
+
+        abort_if($path === null, 404);
+
+        return Storage::disk('local')->response($path);
+    }
+
     public function image(string $project, string $item): StreamedResponse
     {
         $contact = auth('portal')->user();
@@ -114,8 +125,8 @@ class QuoteController extends Controller
             'items' => ['array'],
             'items.*' => ['string'],
             // The acceptance stands in for a contract, so the AGB are part of
-            // it wherever the studio has any.
-            'terms' => Rule::when($studio->legalAgbUrl() !== null, ['accepted']),
+            // it wherever the studio attaches any.
+            'terms' => Rule::when($studio->attachedLegalUrls() !== [], ['accepted']),
         ], ['terms.accepted' => __('portal.quote_terms_required')]);
 
         $accept(

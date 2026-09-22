@@ -21,6 +21,7 @@ const GANZTAG: App.Catalog.Data.PackageData = {
   price: 426000,
   requestedCount: 7,
   bookedCount: 4,
+  showcaseCount: 0,
 }
 
 const TRAUUNG: App.Catalog.Data.PackageData = {
@@ -42,6 +43,7 @@ const TRAUUNG: App.Catalog.Data.PackageData = {
   price: 348000,
   requestedCount: 0,
   bookedCount: 0,
+  showcaseCount: 0,
 }
 
 const meta = {

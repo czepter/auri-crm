@@ -48,6 +48,7 @@ class ProjectTypeController extends Controller
             'name' => ['required', 'string', 'max:120'],
             'is_active' => ['boolean'],
             'is_default' => ['boolean'],
+            'duration_minutes' => ['sometimes', 'integer', 'min:1', 'max:1440'],
         ]);
 
         DB::transaction(function () use ($projectType, $validated) {

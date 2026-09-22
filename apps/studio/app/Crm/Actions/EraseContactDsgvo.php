@@ -25,6 +25,7 @@ use App\Notifications\Models\InAppNotification;
 use App\Notifications\Models\NotificationPreference;
 use App\Portal\Models\ClientAccess;
 use App\Quotes\Models\Quote;
+use App\Settings\Data\RetentionPolicyData;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -43,26 +44,40 @@ use Illuminate\Support\Facades\Storage;
  * never touched beyond this contact's own fingerprints on it — the other
  * party's lawful basis for the studio holding that data does not end when
  * this one asks to be forgotten.
+ *
+ * The retention run passes a narrower policy: only the parts it names go, and
+ * without `order` the lead and its project stay behind so the reports keep
+ * counting them.
  */
 class EraseContactDsgvo
 {
-    public function __invoke(Contact $contact, User $actor): void
+    public function __invoke(Contact $contact, ?User $actor = null, ?RetentionPolicyData $policy = null): void
     {
-        DB::transaction(function () use ($contact, $actor) {
+        $policy ??= RetentionPolicyData::everything();
+
+        DB::transaction(function () use ($contact, $actor, $policy) {
             foreach ($contact->projects()->get() as $project) {
                 $sharedWithSomeoneElse = $project->contacts()->whereKeyNot($contact->id)->exists();
 
                 if ($sharedWithSomeoneElse) {
-                    $project->contacts()->detach($contact->id);
+                    $policy->order && $project->contacts()->detach($contact->id);
 
                     continue;
                 }
 
-                $this->purgeSoleContactProject($project);
+                $this->purgeSoleContactProject($project, $policy);
             }
 
-            Message::where('contact_id', $contact->id)->delete();
-            ThreadParticipant::where('contact_id', $contact->id)->delete();
+            if ($policy->messages) {
+                Task::where('contact_id', $contact->id)->update(['contact_id' => null]);
+                Message::where('contact_id', $contact->id)->delete();
+                ThreadParticipant::where('contact_id', $contact->id)->delete();
+            }
+
+            if (! $policy->name) {
+                return;
+            }
+
             AssetComment::where('contact_id', $contact->id)->delete();
             AssetFavorite::where('contact_id', $contact->id)->delete();
             GalleryView::where('contact_id', $contact->id)->delete();
@@ -126,8 +141,14 @@ class EraseContactDsgvo
      * invoices, which § 147 AO requires kept (Art. 17(3)(b) DSGVO) and which
      * UnbookProject refuses to drop for the same reason.
      */
-    private function purgeSoleContactProject(Project $project): void
+    private function purgeSoleContactProject(Project $project, RetentionPolicyData $policy): void
     {
+        if (! $policy->order) {
+            $this->purgeParts($project, $policy);
+
+            return;
+        }
+
         $keepsInvoices = Job::where('project_id', $project->id)->whereHas('paymentPlan')->exists();
 
         $this->purgeStorageObjects($project);
@@ -155,6 +176,29 @@ class EraseContactDsgvo
 
         Job::where('project_id', $project->id)->delete();
         $project->delete();
+    }
+
+    private function purgeParts(Project $project, RetentionPolicyData $policy): void
+    {
+        $policy->text && Lead::where('project_id', $project->id)->update(['inquiry_text' => null]);
+
+        if ($policy->messages) {
+            Thread::where('project_id', $project->id)->delete();
+            Task::where('project_id', $project->id)->delete();
+            InternalNote::where('project_id', $project->id)->delete();
+        }
+
+        if ($policy->offers) {
+            Quote::where('project_id', $project->id)->delete();
+            $project->formInstances()->delete();
+        }
+
+        if ($policy->galleries) {
+            $this->purgeStorageObjects($project);
+            Gallery::where('project_id', $project->id)->delete();
+        }
+
+        $policy->name && $project->forceFill(['name' => '[gelöscht]', 'type_other' => null, 'field_values' => null])->save();
     }
 
     private function purgeStorageObjects(Project $project): void

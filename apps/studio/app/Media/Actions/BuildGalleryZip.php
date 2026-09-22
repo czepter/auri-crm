@@ -103,6 +103,26 @@ class BuildGalleryZip
     private function buildVolume(ZipBuild $zipBuild, FilesystemAdapter $disk, array $members, int $partNumber): void
     {
         $key = $this->partKey($zipBuild, $partNumber);
+        $bytes = $this->stream($key, fn (ZipStream $zip) => $this->addMembers($zip, $disk, $members));
+
+        ZipBuildPart::create([
+            'zip_build_id' => $zipBuild->id,
+            'part_number' => $partNumber,
+            'key' => $key,
+            'byte_size' => $bytes,
+        ]);
+    }
+
+    /**
+     * One archive volume, streamed into a multipart upload at $key. Also the
+     * way StudioExport writes its archives; ZIP64 stays off unless the
+     * caller's archive can outgrow a volume.
+     *
+     * @param  callable(ZipStream): void  $fill
+     * @return int the object's size in bytes
+     */
+    public function stream(string $key, callable $fill, bool $zip64 = false): int
+    {
         $uploader = new MultipartZipUploader($this->gateway, $key);
 
         try {
@@ -111,24 +131,11 @@ class BuildGalleryZip
             $zip = new ZipStream(
                 outputStream: $output,
                 sendHttpHeaders: false,
-                enableZip64: false,
+                enableZip64: $zip64,
                 defaultCompressionMethod: CompressionMethod::STORE,
             );
 
-            foreach ($members as $member) {
-                $stream = $disk->readStream($member->key);
-                if ($stream === null || $stream === false) {
-                    throw new RuntimeException("Unable to open {$member->key} for reading.");
-                }
-
-                try {
-                    $zip->addFileFromStream(fileName: $member->name, stream: $stream, exactSize: $member->size);
-                } finally {
-                    if (is_resource($stream)) {
-                        fclose($stream);
-                    }
-                }
-            }
+            $fill($zip);
 
             $zip->finish();
             fclose($output);
@@ -139,12 +146,28 @@ class BuildGalleryZip
             throw $e;
         }
 
-        ZipBuildPart::create([
-            'zip_build_id' => $zipBuild->id,
-            'part_number' => $partNumber,
-            'key' => $key,
-            'byte_size' => $uploader->totalBytes(),
-        ]);
+        return $uploader->totalBytes();
+    }
+
+    /**
+     * @param  list<ZipBuildMember>  $members
+     */
+    public function addMembers(ZipStream $zip, FilesystemAdapter $disk, array $members): void
+    {
+        foreach ($members as $member) {
+            $stream = $disk->readStream($member->key);
+            if ($stream === null || $stream === false) {
+                throw new RuntimeException("Unable to open {$member->key} for reading.");
+            }
+
+            try {
+                $zip->addFileFromStream(fileName: $member->name, stream: $stream, exactSize: $member->size);
+            } finally {
+                if (is_resource($stream)) {
+                    fclose($stream);
+                }
+            }
+        }
     }
 
     /**

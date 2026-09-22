@@ -40,6 +40,25 @@ class TimelineController extends Controller
         return back();
     }
 
+    public function update(Request $request, TimelineEntry $entry): RedirectResponse
+    {
+        $this->authorize('update', $entry->shoot);
+
+        $validated = $request->validate([
+            'time' => ['required', 'date_format:H:i'],
+            'title' => ['required', 'string', 'max:255'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'note' => ['nullable', 'string', 'max:255'],
+            'is_transit' => ['nullable', 'boolean'],
+        ]);
+
+        $entry->update($validated);
+
+        LiveUpdate::publish();
+
+        return back();
+    }
+
     public function destroy(TimelineEntry $entry): RedirectResponse
     {
         $this->authorize('update', $entry->shoot);

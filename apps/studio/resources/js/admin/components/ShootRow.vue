@@ -3,9 +3,17 @@
  * One shooting day as the case and the project screen read it: when, where,
  * who. The same row on both, so a change to it cannot land on one screen only.
  */
+import { router } from "@inertiajs/vue3";
+import { ChevronDown } from "lucide-vue-next";
+import { Button } from "@/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui/dropdown-menu";
 import { dayWithWeekday } from "@/admin/lib/dates";
 
-defineProps<{ shoot: App.Crm.Data.ShootData }>();
+const props = defineProps<{ shoot: App.Crm.Data.ShootData; manageable?: boolean }>();
+
+function advance(status: string) {
+    router.post(`/shootings/${props.shoot.id}/status`, { status }, { preserveScroll: true });
+}
 </script>
 
 <template>
@@ -28,5 +36,27 @@ defineProps<{ shoot: App.Crm.Data.ShootData }>();
         <span v-if="!$page.props.soloStudio" class="w-[118px] flex-none text-right text-[12px] leading-[1.47] text-ink-2">{{
             shoot.crew.map((member) => member.name).join(", ") || "—"
         }}</span>
+        <div v-if="manageable && shoot.forwardStatuses.length" class="flex flex-none">
+            <Button variant="pill" type="button" class="rounded-r-none" @click="advance(shoot.forwardStatuses[0].value)">
+                {{ shoot.forwardStatuses[0].label }}
+            </Button>
+            <DropdownMenu>
+                <DropdownMenuTrigger as-child>
+                    <Button
+                        variant="pill"
+                        type="button"
+                        class="rounded-l-none border-l border-white/30 px-2"
+                        :aria-label="$t('board.colStage')"
+                    >
+                        <ChevronDown class="size-3.5" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" class="w-[208px]">
+                    <DropdownMenuItem v-for="status in shoot.forwardStatuses" :key="status.value" @select="advance(status.value)">
+                        {{ status.label }}
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
     </div>
 </template>

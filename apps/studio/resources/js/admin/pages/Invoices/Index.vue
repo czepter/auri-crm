@@ -10,13 +10,14 @@ import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
 import { Input } from '@/ui/input'
 import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 import InstallmentPaidDialog from '@/admin/components/InstallmentPaidDialog.vue'
 import InstallmentStornoDialog from '@/admin/components/InstallmentStornoDialog.vue'
 import CreditNoteDialog from '@/admin/components/CreditNoteDialog.vue'
 import { formatEuros } from '@/admin/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 
-const props = defineProps<{ invoices: App.Payments.Data.InvoiceRowData[] }>()
+const props = defineProps<{ invoices: App.Payments.Data.InvoiceRowData[], exportYears: number[] }>()
 
 const { t } = useI18n()
 
@@ -42,7 +43,19 @@ const shown = computed(() => {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('invoicesOverview.title')">
-          <Button :as="Link" variant="pill" class="ml-auto" href="/rechnungen/neu">{{ $t('invoicesOverview.create') }}</Button>
+          <div class="ml-auto flex items-center gap-2">
+            <DropdownMenu v-if="exportYears.length">
+              <DropdownMenuTrigger as-child>
+                <Button variant="outline" type="button">{{ $t('invoicesOverview.export') }}</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem v-for="year in exportYears" :key="year" as-child>
+                  <a :href="`/einstellungen/rechnungen/export?jahr=${year}`">{{ $t('invoicesOverview.exportYear', { year }) }}</a>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button :as="Link" variant="pill" href="/rechnungen/neu">{{ $t('invoicesOverview.create') }}</Button>
+          </div>
         </PageHead>
 
         <template v-if="invoices.length">

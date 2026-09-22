@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { Link, router, useForm, usePage } from '@inertiajs/vue3'
+import { computed, ref } from 'vue'
+import { Link, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
@@ -8,13 +8,17 @@ import { Button } from '@/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
+import SessionList from './SessionList.vue'
 
 const props = defineProps<{
+  pane: 'konto' | 'sicherheit' | 'benachrichtigungen' | 'kalender'
   user: { name: string; email: string; phone: string | null; role: string }
   pendingEmail: string | null
   mfaConfirmed: boolean
+  sessions: { id: string; device: string; ip: string | null; lastActiveAt: string; current: boolean }[]
   recoveryCodesLeft: number
   digestFrequency: string | null
+  calendarFeedUrl: string | null
   events: Record<string, Mode>
   briefable: Record<string, boolean>
 }>()
@@ -26,6 +30,7 @@ type Mode = 'immediate' | 'briefing' | 'digest' | 'off'
 const EVENT_KEYS = [
   'inquiryReceived',
   'clientMessage',
+  'dsgvoRequested',
   'quoteAccepted',
   'questionnaireSubmitted',
   'installmentPaid',
@@ -49,26 +54,15 @@ function modesFor(key: string): Mode[] {
 // sentinel pairing Settings/TaskTemplates.vue uses for its own empty option.
 const NO_DIGEST = 'none'
 
-// Same shell as /einstellungen: the pane rides in the query so a link can
-// name one.
-const PANES = ['konto', 'sicherheit', 'benachrichtigungen'] as const
-
 const NAV = [
   { key: 'konto', href: '/profil', label: 'profile.navAccount' },
-  { key: 'sicherheit', href: '/profil?pane=sicherheit', label: 'profile.navSecurity' },
-  { key: 'benachrichtigungen', href: '/profil?pane=benachrichtigungen', label: 'profile.navNotifications' },
+  { key: 'sicherheit', href: '/profil/sicherheit', label: 'profile.navSecurity' },
+  { key: 'benachrichtigungen', href: '/profil/benachrichtigungen', label: 'profile.navNotifications' },
+  { key: 'kalender', href: '/profil/kalender', label: 'calendar.subscribe' },
   // The own-absences screen already exists and is open to every role; this is
   // the way to it from here, not a second copy of it.
   { key: 'abwesenheiten', href: '/abwesenheiten', label: 'profile.navAbsences' },
 ]
-
-const page = usePage()
-
-const pane = computed(() => {
-  const asked = new URL(page.url, 'http://profile').searchParams.get('pane')
-
-  return PANES.find((known) => known === asked) ?? 'konto'
-})
 
 const accountForm = useForm({
   name: props.user.name,
@@ -95,16 +89,18 @@ const eventsForm = useForm({
 })
 
 const activeForm = computed(() => {
-  if (pane.value === 'sicherheit') return passwordForm
-  if (pane.value === 'benachrichtigungen') return eventsForm
+  if (props.pane === 'sicherheit') return passwordForm
+  if (props.pane === 'benachrichtigungen') return eventsForm
+  if (props.pane === 'kalender') return undefined
   return accountForm
 })
 
-const formId = computed(() => `profile-${pane.value}-form`)
+const formId = computed(() => `profile-${props.pane}-form`)
 
 const paneTitle = computed(() => {
-  if (pane.value === 'sicherheit') return 'profile.securityTitle'
-  if (pane.value === 'benachrichtigungen') return 'profile.notificationsTitle'
+  if (props.pane === 'sicherheit') return 'profile.securityTitle'
+  if (props.pane === 'benachrichtigungen') return 'profile.notificationsTitle'
+  if (props.pane === 'kalender') return 'calendar.subscribe'
   return 'profile.accountTitle'
 })
 
@@ -125,6 +121,19 @@ function submitPassword() {
 function submitEvents() {
   eventsForm.patch('/profil/benachrichtigungen', { preserveScroll: true })
 }
+
+const copied = ref(false)
+
+function copyFeedUrl(url: string) {
+  navigator.clipboard
+    ?.writeText(url)
+    .then(() => (copied.value = true))
+    .catch(() => (copied.value = false))
+}
+
+function regenerateFeedUrl() {
+  router.post('/kalender/abo', {}, { preserveScroll: true })
+}
 </script>
 
 <template>
@@ -132,14 +141,14 @@ function submitEvents() {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('profile.kicker')" :title="$t(paneTitle)">
-          <span v-if="activeForm.isDirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due">{{ $t('settings.unsaved') }}</span>
+          <span v-if="activeForm?.isDirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due">{{ $t('settings.unsaved') }}</span>
           <Button
-            v-if="activeForm.isDirty"
+            v-if="activeForm?.isDirty"
             class="ml-auto"
             variant="pill"
             type="submit"
             :form="formId"
-            :disabled="activeForm.processing"
+            :disabled="activeForm?.processing"
           >
             {{ $t('common.save') }}
           </Button>
@@ -241,7 +250,7 @@ function submitEvents() {
                 </div>
               </form>
 
-              <form v-else id="profile-benachrichtigungen-form" @submit.prevent="submitEvents">
+              <form v-else-if="pane === 'benachrichtigungen'" id="profile-benachrichtigungen-form" @submit.prevent="submitEvents">
                 <div class="mt-8 first:mt-0">
                   <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('profile.backlogSection') }}</div>
                   <div class="mb-6">
@@ -319,6 +328,23 @@ function submitEvents() {
                   </Field>
                 </div>
               </form>
+
+              <!-- C-13 (#249): die Abo-Adresse ist ein Geheimnis pro Person,
+                   also steht sie neben dem Weg, sie zurückzuziehen. -->
+              <div v-else>
+                <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('calendar.feedUrl') }}</div>
+                <code class="block text-[13px] leading-[1.5] break-all">{{ calendarFeedUrl }}</code>
+                <div class="mt-4 flex items-center gap-2">
+                  <Button type="button" variant="pill-muted" @click="copyFeedUrl(calendarFeedUrl!)">
+                    {{ copied ? $t('gallery.copied') : $t('gallery.copy') }}
+                  </Button>
+                  <Button type="button" variant="pill-muted" @click="regenerateFeedUrl()">
+                    {{ $t('calendar.revoke') }}
+                  </Button>
+                </div>
+              </div>
+
+              <SessionList v-if="pane === 'sicherheit'" :sessions="sessions" />
             </div>
           </div>
         </div>

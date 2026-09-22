@@ -38,7 +38,7 @@ function t07ValidBankFields(): array
 
 it('renders the settings shell for an owner', function () {
     $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get('/einstellungen')
+        ->get('/einstellungen/allgemein')
         ->assertOk()
         ->viewData('page')['props'];
 
@@ -46,8 +46,58 @@ it('renders the settings shell for an owner', function () {
         ->and($props['settings'])->toHaveKey('displayName')
         ->and($props['settings'])->toHaveKey('legalName')
         ->and($props['settings'])->toHaveKey('bankIban')
+        ->and($props['settings'])->toHaveKeys(['accentColor', 'fontPair', 'clientRegister', 'taxNumber', 'vatId', 'registerNumber', 'timezone'])
+        ->and($props)->toHaveKey('fontPairs')
         ->and($props['settings']['logoUrl'])->toBeNull();
 });
+
+it('sends the brand and legal-entity paths to Allgemein', function (string $path) {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->get($path)
+        ->assertRedirect('/einstellungen/allgemein');
+})->with(['/einstellungen/marke', '/einstellungen/rechtliche-einheit']);
+
+it('saves the form of address and the timezone with the rest of the profile', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->patch('/einstellungen', ['display_name' => 'Atelier Nordlicht', 'client_register' => 'informal', 'timezone' => 'Europe/Vienna'])
+        ->assertSessionHasNoErrors();
+
+    $row = StudioSettings::query()->sole();
+
+    expect($row->client_register)->toBe('informal')
+        ->and($row->timezone)->toBe('Europe/Vienna');
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->patch('/einstellungen', ['timezone' => 'Nonsense/Place'])
+        ->assertInvalid(['timezone']);
+});
+
+it('sends the settings root to the first pane', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->get('/einstellungen')
+        ->assertRedirect('/einstellungen/allgemein');
+});
+
+it('serves every settings pane on its own path', function (string $path, string $pane) {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->get($path)
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('pane', $pane));
+})->with([
+    ['/einstellungen/allgemein', 'general'],
+    ['/einstellungen/email', 'email'],
+    ['/einstellungen/zahlung', 'payment'],
+    ['/einstellungen/belege', 'receipts'],
+]);
+
+it('sends the former billing addresses to their new pages', function (string $from, string $to) {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->get($from)
+        ->assertRedirect($to);
+})->with([
+    ['/einstellungen/rechnungsdaten', '/einstellungen/zahlung'],
+    ['/einstellungen/dokumente', '/einstellungen/belege'],
+]);
 
 it('updates the display name, redirects, and leaves an audit row naming the owner', function () {
     $owner = staffMember(StaffRole::Owner);
@@ -203,10 +253,83 @@ it('stores an uploaded logo once and serves it from one route, with an audit row
     expect(AuditLog::where('event', 'studio_settings.updated')->where('context->key', 'logo_path')->sole()->actor_id)
         ->toBe($owner->id);
 
-    $props = $this->get('/einstellungen')->assertOk()->viewData('page')['props'];
+    $props = $this->get('/einstellungen/allgemein')->assertOk()->viewData('page')['props'];
     expect($props['settings']['logoUrl'])->not->toBeNull();
 
     $this->get($props['settings']['logoUrl'])->assertOk();
+});
+
+// Vier Formate, weil ein Studio sein Zeichen als Vektor hat, wenn es Glück
+// hat. SVG geht nur mit den Kopfzeilen darunter.
+it('takes a logo as PNG, JPEG, WebP or SVG', function (string $file, string $mime) {
+    Storage::fake('local');
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->patch('/einstellungen', [
+            'tax_number' => '22/123/45678',
+            'logo' => $mime === 'image/svg+xml'
+                ? UploadedFile::fake()->create($file, 12, $mime)
+                : UploadedFile::fake()->image($file, 40, 40),
+            ...t07ValidBankFields(),
+        ])
+        ->assertSessionHasNoErrors();
+
+    expect(StudioSettings::query()->sole()->logo_path)->not->toBeNull();
+})->with([
+    ['logo.png', 'image/png'],
+    ['logo.jpg', 'image/jpeg'],
+    ['logo.webp', 'image/webp'],
+    ['logo.svg', 'image/svg+xml'],
+]);
+
+// Ein Kamera-Export soll nicht in voller Größe auf jedem Beleg liegen; SVG
+// wird nicht angefasst.
+it('shrinks a large logo to 800 px and leaves an SVG alone', function () {
+    Storage::fake('local');
+    $owner = staffMember(StaffRole::Owner);
+
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen', ['tax_number' => '22/123/45678', 'logo' => UploadedFile::fake()->image('logo.png', 2400, 1200), ...t07ValidBankFields()])
+        ->assertSessionHasNoErrors();
+
+    $path = StudioSettings::query()->sole()->logo_path;
+    expect(getimagesizefromstring(Storage::disk('local')->get($path))[0])->toBe(800);
+
+    $svg = UploadedFile::fake()->createWithContent('logo.svg', '<svg xmlns="http://www.w3.org/2000/svg"/>');
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen', ['tax_number' => '22/123/45678', 'logo' => $svg, ...t07ValidBankFields()])
+        ->assertSessionHasNoErrors();
+
+    expect(Storage::disk('local')->get(StudioSettings::query()->sole()->logo_path))->toContain('<svg');
+});
+
+it('refuses a logo that is not an image at all', function () {
+    Storage::fake('local');
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->patch('/einstellungen', [
+            'tax_number' => '22/123/45678',
+            'logo' => UploadedFile::fake()->create('logo.pdf', 12, 'application/pdf'),
+            ...t07ValidBankFields(),
+        ])
+        ->assertInvalid(['logo']);
+});
+
+// Eine SVG-Datei ist Markup: ohne diese Kopfzeilen liefe ein <script> darin
+// auf unserer Herkunft, sobald jemand die Adresse direkt öffnet.
+it('serves the logo sandboxed, so an SVG cannot run as this app', function () {
+    Storage::fake('local');
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')->patch('/einstellungen', [
+        'tax_number' => '22/123/45678',
+        'logo' => UploadedFile::fake()->create('logo.svg', 12, 'image/svg+xml'),
+        ...t07ValidBankFields(),
+    ]);
+
+    $this->get('/einstellungen/logo')
+        ->assertOk()
+        ->assertHeader('X-Content-Type-Options', 'nosniff')
+        ->assertHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; sandbox");
 });
 
 it('replaces the logo on a second upload rather than keeping both', function () {
@@ -234,7 +357,7 @@ it('replaces the logo on a second upload rather than keeping both', function () 
 it('opens the settings screen to the owner, and gives every other role the same response as a route that does not exist', function (StaffRole $role, int $status) {
     $missing = $this->actingAs(staffMember($role), 'staff')->get('/this-route-does-not-exist-xyz');
 
-    $response = $this->actingAs(staffMember($role), 'staff')->get('/einstellungen');
+    $response = $this->actingAs(staffMember($role), 'staff')->get('/einstellungen/allgemein');
 
     $response->assertStatus($status);
 
@@ -290,4 +413,16 @@ it('stores the chosen font pair and refuses one that is not licensed', function 
 // A studio that never opens the setting keeps the product default.
 it('falls back to Hanken while nothing is chosen', function () {
     expect(app(StudioSettingsResolver::class)->fontPair())->toBe(FontPair::Hanken);
+});
+
+it('rejects a malformed BIC, USt-IdNr. and Steuernummer', function () {
+    $owner = staffMember(StaffRole::Owner);
+
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen', ['bank_bic' => 'BYLA', 'vat_id' => 'DE81', 'tax_number' => '43/12'])
+        ->assertSessionHasErrors(['bank_bic', 'vat_id', 'tax_number']);
+
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen', ['bank_bic' => 'BYLADEM1001', 'vat_id' => 'DE812345678', 'tax_number' => '43/123/45678'])
+        ->assertSessionHasNoErrors();
 });

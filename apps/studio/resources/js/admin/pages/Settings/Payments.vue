@@ -5,14 +5,11 @@ import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import SettingsNav from '@/admin/components/SettingsNav.vue'
-import { basisPointsToPercent } from '@/admin/lib/money'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
-import { Switch } from '@/ui/switch'
 
 const props = defineProps<{ settings: App.Settings.Data.PaymentSettingsData }>()
 
@@ -22,7 +19,6 @@ const props = defineProps<{ settings: App.Settings.Data.PaymentSettingsData }>()
 const form = useForm({
   payments_stripe_enabled: props.settings.stripeEnabled,
   payments_stripe_mode: props.settings.stripeMode,
-  payments_reminders_enabled: props.settings.remindersEnabled,
   payments_stripe_test_publishable_key: '',
   payments_stripe_test_secret_key: '',
   payments_stripe_live_publishable_key: '',
@@ -156,57 +152,6 @@ function submit() {
                 </div>
               </div>
 
-              <div class="mt-8 first-of-type:mt-6">
-                <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('paymentSettings.remindersSection') }}</div>
-                <div class="mb-6 rounded-[10px] border border-rule px-5 py-4">
-                  <div class="flex items-start gap-3">
-                    <Switch id="sw-payments-reminders-enabled" v-model="form.payments_reminders_enabled" class="mt-0.5" />
-                    <div class="flex flex-col gap-1">
-                      <label class="text-[13.5px] leading-none" for="sw-payments-reminders-enabled">{{ $t('paymentSettings.remindersEnabled') }}</label>
-                      <span class="text-[11.5px] leading-[1.45] text-faint">{{ $t('paymentSettings.remindersCadence') }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="mt-8">
-                <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('paymentSettings.defaultsSection') }}</div>
-
-                <!-- Deposit percentage and Zahlungsziel are T-05's own Dokumente
-                     fields (studio_settings.deposit_percentage / payment_term_days)
-                     — read-only here for context, edited there, never a second
-                     writable copy. -->
-                <div class="mb-6">
-                  <div class="grid grid-cols-2 gap-4">
-                    <div class="flex min-w-0 flex-col gap-1.5">
-                      <Label>{{ $t('paymentSettings.depositPercent') }}</Label>
-                      <InputGroup class="pointer-events-none bg-muted">
-                        <InputGroupInput
-                          :model-value="basisPointsToPercent(settings.depositPercent)"
-                          class="tabular-nums"
-                          readonly
-                        />
-                        <InputGroupAddon align="inline-end">%</InputGroupAddon>
-                      </InputGroup>
-                    </div>
-                    <div class="flex min-w-0 flex-col gap-1.5">
-                      <Label>{{ $t('paymentSettings.zahlungszielDays') }}</Label>
-                      <InputGroup class="pointer-events-none bg-muted">
-                        <InputGroupInput
-                          :model-value="settings.zahlungszielDays"
-                          class="tabular-nums"
-                          readonly
-                        />
-                        <InputGroupAddon align="inline-end">{{ $t('common.unitDays') }}</InputGroupAddon>
-                      </InputGroup>
-                    </div>
-                  </div>
-                  <span class="text-[11.5px] leading-[1.45] font-normal text-faint">
-                    {{ $t('paymentSettings.defaultsReadOnlyHint') }}
-                    <a href="/einstellungen">{{ $t('settings.navDocuments') }}</a>
-                  </span>
-                </div>
-              </div>
             </form>
           </div>
         </div>

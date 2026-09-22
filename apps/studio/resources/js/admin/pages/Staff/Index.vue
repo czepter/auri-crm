@@ -20,6 +20,7 @@ type Member = {
   role: string
   roleLabel: string
   mfaConfirmed: boolean
+  transferable: boolean
 }
 
 type Invitation = { id: string; email: string; name: string; roleLabel: string; expiresOn: string }
@@ -40,6 +41,19 @@ function invite() {
     onSuccess: () => {
       form.reset()
       inviting.value = false
+    },
+  })
+}
+
+const transferring = ref<Member | null>(null)
+const transferForm = useForm({ current_password: '' })
+
+function transfer() {
+  transferForm.post(`/team/${transferring.value!.id}/inhaber`, {
+    preserveScroll: true,
+    onSuccess: () => {
+      transferForm.reset()
+      transferring.value = null
     },
   })
 }
@@ -158,8 +172,32 @@ function initials(name: string) {
               >
                 {{ member.mfaConfirmed ? $t('team.mfaOn') : $t('team.mfaPending') }}
               </span>
+              <Button v-if="member.transferable" type="button" variant="outline" @click="transferring = member">{{ $t('team.transfer') }}</Button>
             </div>
           </section>
+
+          <Dialog :open="transferring !== null" @update:open="(open) => { if (!open) transferring = null }">
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{{ $t('team.transferTitle', { name: transferring?.name }) }}</DialogTitle>
+              </DialogHeader>
+
+              <DialogBody>
+                <form id="team-transfer-form" @submit.prevent="transfer">
+                  <Field id="transfer-password" :label="$t('profile.currentPassword')" :error="transferForm.errors.current_password">
+                    <Input id="transfer-password" v-model="transferForm.current_password" type="password" autocomplete="current-password" required />
+                  </Field>
+                </form>
+              </DialogBody>
+
+              <DialogFooter>
+                <Button type="submit" form="team-transfer-form" :disabled="transferForm.processing">{{ $t('team.transferConfirm') }}</Button>
+                <DialogClose as-child>
+                  <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           <section class="mt-7">
             <h2 class="m-0 text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ $t('team.permissions') }}</h2>

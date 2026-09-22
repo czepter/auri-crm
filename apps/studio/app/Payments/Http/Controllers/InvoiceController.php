@@ -70,6 +70,10 @@ class InvoiceController extends Controller
 
         return Inertia::render('Invoices/Index', [
             'invoices' => InvoiceRowData::collect($invoices->map(InvoiceRowData::fromModel(...))),
+            // The export route is gated by ManageSettings, so the years appear only for roles it lets in.
+            'exportYears' => $viewer->role->allows(Capability::ManageSettings)
+                ? Invoice::query()->pluck('issued_at')->map(fn ($at) => (int) $at->format('Y'))->unique()->sortDesc()->values()
+                : [],
         ]);
     }
 

@@ -5,42 +5,34 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('defaults quote_layout to classic', function () {
+it('defaults document_layout to classic', function () {
     [$user, $project] = studioWithProject();
 
-    expect(app(StudioSettingsResolver::class)->quoteLayout())->toBe('classic');
+    expect(app(StudioSettingsResolver::class)->documentLayout())->toBe('classic');
 });
 
-it('reads back a saved quote_layout', function () {
+it('reads back a saved document_layout', function () {
     [$user, $project] = studioWithProject();
 
-    app(StudioSettingsResolver::class)->set('quote_layout', 'header_band');
+    app(StudioSettingsResolver::class)->set('document_layout', 'header_band');
 
-    expect(app(StudioSettingsResolver::class)->quoteLayout())->toBe('header_band');
+    expect(app(StudioSettingsResolver::class)->documentLayout())->toBe('header_band');
 });
 
-it('saves quote_layout through the Dokumente pane', function () {
+it('saves document_layout through the Belege page', function () {
     [$user, $project] = studioWithProject();
 
-    $this->actingAs($user, 'staff')->patch('/einstellungen/dokumente', [
-        'quote_validity_days' => 14,
-        'payment_term_days' => 14,
-        'deposit_percentage' => 3000,
-        'widerruf_included' => false,
-        'quote_layout' => 'minimal',
+    $this->actingAs($user, 'staff')->patch('/einstellungen/belege', [
+        'document_layout' => 'minimal',
     ])->assertRedirect();
 
-    expect(app(StudioSettingsResolver::class)->quoteLayout())->toBe('minimal');
+    expect(app(StudioSettingsResolver::class)->documentLayout())->toBe('minimal');
 });
 
-it('rejects an unknown quote_layout', function () {
+it('rejects an unknown document_layout', function () {
     [$user, $project] = studioWithProject();
 
-    $this->actingAs($user, 'staff')->patch('/einstellungen/dokumente', [
-        'quote_validity_days' => 14,
-        'payment_term_days' => 14,
-        'deposit_percentage' => 3000,
-        'widerruf_included' => false,
-        'quote_layout' => 'not-a-layout',
-    ])->assertSessionHasErrors('quote_layout');
+    $this->actingAs($user, 'staff')->patch('/einstellungen/belege', [
+        'document_layout' => 'not-a-layout',
+    ])->assertSessionHasErrors('document_layout');
 });

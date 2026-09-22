@@ -3,6 +3,7 @@
 namespace App\Portal\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Settings\Support\LogoResponse;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -23,19 +24,17 @@ class BrandingController extends Controller
 
         abort_if($path === null, 404);
 
-        return Storage::disk('local')->response($path);
+        return LogoResponse::for($path);
     }
 
     /**
-     * Q-10: one shop-window picture from the slider's grid. Public for the
-     * same reason the logo is — these are pictures the photographer uploaded
-     * to show, the way one puts them on a website, and the grid renders
-     * before any quote is accepted. Indexed rather than named, so no stored
-     * filename ever reaches a URL.
+     * Das Gesicht auf der Kontaktkarte. Öffentlich aus demselben Grund wie
+     * das Logo: es steht auf jedem Kundenbildschirm, und SVG kommt hier gar
+     * nicht erst an — siehe StudioSettingsResolver::setPortalContactAvatar().
      */
-    public function showcase(int $index, StudioSettingsResolver $settings): StreamedResponse
+    public function contactAvatar(StudioSettingsResolver $settings): StreamedResponse
     {
-        $path = $settings->showcasePaths()[$index] ?? null;
+        $path = $settings->portalContactAvatarPath();
 
         abort_if($path === null, 404);
 

@@ -32,14 +32,14 @@ it('assigns crew, lists it and removes an assignment', function () {
     expect($staffId)->not->toBeNull();
 
     $assignmentId = $this->withHeader('Idempotency-Key', 'crew-1')
-        ->postJson("/api/shoots/{$shoot->public_id}/crew", ['user' => $user->public_id, 'role' => 'second_shooter'])
+        ->postJson("/api/shoots/{$shoot->public_id}/crew", ['user' => $user->public_id])
         ->assertCreated()
         ->assertJsonPath('data.userName', $user->name)
         ->json('data.id');
 
     $this->getJson("/api/shoots/{$shoot->public_id}/crew")
         ->assertOk()
-        ->assertJsonPath('data.0.role', 'second_shooter');
+        ->assertJsonPath('data.0.userName', $user->name);
 
     $this->withHeader('Idempotency-Key', 'crew-2')
         ->deleteJson("/api/crew/{$assignmentId}")
@@ -50,10 +50,10 @@ it('assigns crew, lists it and removes an assignment', function () {
 
 it('reads studio settings, closures and number ranges', function () {
     $this->withHeader('Authorization', 'Bearer '.opsToken(Capability::ManageSettings));
-    StudioClosure::factory()->spanning('2026-12-24', '2026-12-31')->create(['label' => 'Weihnachtspause']);
+    StudioClosure::factory()->spanning('2026-12-24', '2026-12-31')->create(['label' => 'Weihnachtspause', 'message' => 'Zurück am 2. Januar.']);
 
     $this->getJson('/api/studio-settings')->assertOk()->assertJsonStructure(['data' => ['vatMode', 'vatRate', 'quoteValidityDays']]);
-    $this->getJson('/api/studio-closures')->assertOk()->assertJsonPath('data.0.label', 'Weihnachtspause');
+    $this->getJson('/api/studio-closures')->assertOk()->assertJsonPath('data.0.label', 'Weihnachtspause')->assertJsonPath('data.0.message', 'Zurück am 2. Januar.');
     $this->getJson('/api/number-ranges')->assertOk()->assertJsonCount(NumberRange::query()->count(), 'data');
 });
 

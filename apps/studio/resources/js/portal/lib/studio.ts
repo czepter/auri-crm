@@ -1,6 +1,7 @@
 /** The studio as a client meets it: a name, and at most two ways to reach it. */
 export type Studio = {
   name: string | null
+  avatarUrl: string | null
   messagingEnabled: boolean
   phone: string | null
   email: string | null
@@ -15,5 +16,5 @@ export type Studio = {
  * interface-review.md names: a section exists when it has content.
  */
 export function reachable(studio: Studio): boolean {
-  return (studio.name ?? '').trim() !== '' || studio.phone !== null || studio.messagingEnabled
+  return (studio.name ?? '').trim() !== '' || studio.phone !== null || studio.email !== null || studio.messagingEnabled
 }

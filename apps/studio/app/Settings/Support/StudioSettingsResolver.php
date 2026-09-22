@@ -3,10 +3,13 @@
 namespace App\Settings\Support;
 
 use App\Gallery\Models\GalleryPreset;
+use App\Gallery\Support\ImageVariant;
 use App\Models\User;
+use App\Settings\Data\RetentionPolicyData;
 use App\Settings\Enums\FontPair;
 use App\Settings\Models\StudioSettings;
 use App\Support\AuditLogger;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
@@ -66,9 +69,9 @@ class StudioSettingsResolver
     }
 
     /** One of QuoteLayout's five values — see that enum for the closed domain the check constraint also enforces. */
-    public function quoteLayout(): string
+    public function documentLayout(): string
     {
-        return $this->row()->quote_layout;
+        return $this->row()->document_layout;
     }
 
     /** 'formal' or 'informal' — see the studio_settings table's check constraint. */
@@ -90,17 +93,6 @@ class StudioSettingsResolver
             $recipients > 1 => 'ihr',
             default => 'du',
         };
-    }
-
-    /**
-     * T-09: the length ShootCalendar gives a shoot whose end_time is unset,
-     * replacing the hardcoded addHours(2) that used to sit in that class
-     * directly. Minutes, not hours — a shorter session needs finer
-     * granularity than that constant offered.
-     */
-    public function defaultShootDurationMinutes(): int
-    {
-        return $this->row()->default_shoot_duration_minutes;
     }
 
     /**
@@ -142,22 +134,10 @@ class StudioSettingsResolver
         return $this->row()->deposit_percentage;
     }
 
-    /** Whether a rendered contract's `settings.widerrufText` merge field carries any text at all. */
-    public function widerrufIncluded(): bool
-    {
-        return $this->row()->widerruf_included;
-    }
-
-    public function widerrufText(): ?string
-    {
-        return $this->row()->widerruf_text;
-    }
-
     /**
      * T-12: the PDF shell App\Documents\Support\DocumentRenderer wraps a
      * Contract or Quote's resolved body in, above it. Null renders as no
-     * letterhead at all — the same "unset is a valid, working state"
-     * convention widerrufText() above already carries.
+     * letterhead at all.
      */
     public function documentLetterheadHtml(): ?string
     {
@@ -183,19 +163,6 @@ class StudioSettingsResolver
     }
 
     /**
-     * Carbon's formatting locale for the three DACH variants T-02's own
-     * country select already offers (de_DE/de_AT/de_CH) — never
-     * config('app.locale')'s translation locale, which stays 'de' and
-     * env-independent on purpose (see config/app.php). Same fallback shape
-     * as timezone() above: the tenant value once set, the environment
-     * otherwise.
-     */
-    public function locale(): string
-    {
-        return $this->row()->locale ?? config('app.locale');
-    }
-
-    /**
      * ISO weekday integers (1 Monday .. 7 Sunday) the studio works —
      * TaskTemplate::dueFor() rolls a due date forward off any day not in
      * this set. Guards an empty array (should never reach the database
@@ -210,17 +177,6 @@ class StudioSettingsResolver
         $days = $this->row()->working_days;
 
         return empty($days) ? [1, 2, 3, 4, 5, 6, 7] : $days;
-    }
-
-    /**
-     * The details this studio keeps typing under "Sonstige" at capture —
-     * offered as suggestions on the three fields, never as a closed list.
-     *
-     * @return list<string>
-     */
-    public function leadPresets(string $kind): array
-    {
-        return $this->row()->{"lead_{$kind}_presets"} ?? [];
     }
 
     /**
@@ -265,6 +221,26 @@ class StudioSettingsResolver
     }
 
     /**
+     * T-02's postal particulars as the one line a footer wears. Composed
+     * from the parts a studio filled in rather than demanding all of them:
+     * a studio with a city and no street still has an address to name.
+     *
+     * Stand in HandleInertiaRequests; die Portal-Vorschau der Einstellungen
+     * trug dort die Kontaktdaten ein, weil sie diese Zeile nicht erreichte.
+     */
+    public function postalLine(): ?string
+    {
+        $attributes = $this->attributes();
+
+        $line = implode(', ', array_filter([
+            $attributes['street'],
+            implode(' ', array_filter([$attributes['postcode'], $attributes['city']])),
+        ]));
+
+        return $line === '' ? null : $line;
+    }
+
+    /**
      * The logo is stored once (T-02's acceptance criterion) — a re-upload
      * replaces the same tenant's file and removes whatever it replaces,
      * rather than accumulating a second one under a second name. Uses the
@@ -277,7 +253,15 @@ class StudioSettingsResolver
         $row = StudioSettings::query()->firstOrFail();
         $old = $row->logo_path;
 
-        $path = $file->storeAs("branding/{$row->tenant_id}", 'logo.'.$file->extension(), 'local');
+        // SVG bleibt, wie es ankommt. Alles andere wird auf die Breite gebracht,
+        // die ein Beleg braucht: aus einer Kamera oder einem Export kommen
+        // Megapixel für ein Zeichen von wenigen Zentimetern.
+        if ($file->extension() === 'svg') {
+            $path = $file->storeAs("branding/{$row->tenant_id}", 'logo.svg', 'local');
+        } else {
+            $path = "branding/{$row->tenant_id}/logo.webp";
+            Storage::disk('local')->put($path, ImageVariant::resizeAndEncode($file->get(), 800, 'webp'));
+        }
 
         if ($old !== null && $old !== $path) {
             Storage::disk('local')->delete($old);
@@ -296,60 +280,57 @@ class StudioSettingsResolver
     }
 
     /**
-     * Q-10: the shop-window pictures, in the order they were uploaded. The
-     * slider's 24 tiles are laid over them cyclically; under six the repeat
-     * is visible, and with none the grid is left out entirely and the slider
-     * stands on its two numbers.
+     * Denselben Weg wie das Logo, mit zwei Unterschieden: niemals SVG — das
+     * Bild geht öffentlich über BrandingController raus, und eine SVG-Datei
+     * ist Markup — und die Datei wird nicht abgelegt, wie sie ankommt.
      *
-     * @return list<string>
+     * Aus einer Kamera kommen acht Megapixel für einen Kreis von 54. Abgelegt
+     * wird deshalb nur, was die Karte braucht: 320 Pixel breit, als WebP,
+     * über dieselbe GD-Strecke, die die Galerie für ihre Varianten fährt.
      */
-    public function showcasePaths(): array
-    {
-        return array_values($this->row()->showcase_paths ?? []);
-    }
-
-    /**
-     * The same road the logo takes — storeAs() onto the local disk under the
-     * tenant's own folder, no media library and no second disk. Appends
-     * rather than replaces: a set is what the grid needs.
-     */
-    public function addShowcaseImage(UploadedFile $file, ?User $actor = null): void
+    public function setPortalContactAvatar(UploadedFile $file, ?User $actor = null): void
     {
         $row = StudioSettings::query()->firstOrFail();
-        $paths = array_values($row->showcase_paths ?? []);
+        $old = $row->portal_contact_avatar_path;
 
-        $paths[] = $file->store("showcase/{$row->tenant_id}", 'local');
+        $path = "branding/{$row->tenant_id}/kontakt.webp";
 
-        $this->writeShowcase($row, $paths, $actor);
+        Storage::disk('local')->put(
+            $path,
+            ImageVariant::resizeAndEncode($file->get(), 320, 'webp'),
+        );
+
+        if ($old !== null && $old !== $path) {
+            Storage::disk('local')->delete($old);
+        }
+
+        $this->writeContactAvatar($row, $path, $old, $actor);
     }
 
-    /** Removes one picture and the file behind it. An index nobody holds is a no-op. */
-    public function removeShowcaseImage(int $index, ?User $actor = null): void
+    public function removePortalContactAvatar(?User $actor = null): void
     {
         $row = StudioSettings::query()->firstOrFail();
-        $paths = array_values($row->showcase_paths ?? []);
+        $old = $row->portal_contact_avatar_path;
 
-        if (! array_key_exists($index, $paths)) {
+        if ($old === null) {
             return;
         }
 
-        Storage::disk('local')->delete($paths[$index]);
-        unset($paths[$index]);
+        Storage::disk('local')->delete($old);
 
-        $this->writeShowcase($row, array_values($paths), $actor);
+        $this->writeContactAvatar($row, null, $old, $actor);
     }
 
-    /** @param list<string> $paths */
-    private function writeShowcase(StudioSettings $row, array $paths, ?User $actor): void
+    private function writeContactAvatar(StudioSettings $row, ?string $path, ?string $old, ?User $actor): void
     {
-        $row->update(['showcase_paths' => $paths]);
+        $row->update(['portal_contact_avatar_path' => $path]);
 
         Cache::store('redis')->forget($this->cacheKey());
 
         AuditLogger::record(
             event: 'studio_settings.updated',
             actor: $actor,
-            context: ['key' => 'showcase_paths', 'count' => count($paths)],
+            context: ['key' => 'portal_contact_avatar_path', 'old' => $old, 'new' => $path],
             subject: $row->public_id,
         );
     }
@@ -469,7 +450,6 @@ class StudioSettingsResolver
      * @param  array{
      *     payments_stripe_enabled: bool,
      *     payments_stripe_mode: string,
-     *     payments_reminders_enabled: bool,
      *     payments_stripe_test_publishable_key?: ?string,
      *     payments_stripe_test_secret_key?: ?string,
      *     payments_stripe_live_publishable_key?: ?string,
@@ -480,9 +460,7 @@ class StudioSettingsResolver
     {
         $row = StudioSettings::query()->firstOrFail();
 
-        $plainKeys = [
-            'payments_stripe_enabled', 'payments_stripe_mode', 'payments_reminders_enabled',
-        ];
+        $plainKeys = ['payments_stripe_enabled', 'payments_stripe_mode'];
         $keyColumns = [
             'payments_stripe_test_publishable_key', 'payments_stripe_test_secret_key',
             'payments_stripe_live_publishable_key', 'payments_stripe_live_secret_key',
@@ -527,7 +505,7 @@ class StudioSettingsResolver
 
     /**
      * config('mail.from.name')'s per-tenant replacement — the same fallback
-     * shape as timezone()/locale() above: the tenant value once T-06's
+     * shape as timezone() above: the tenant value once T-06's
      * E-Mail pane has set one, the environment default otherwise.
      */
     public function mailFromName(): string
@@ -595,12 +573,6 @@ class StudioSettingsResolver
         return $this->row()->portal_maintenance_message;
     }
 
-    /** P-01's room: exactly one booking. The column T-08 shipped, unrenamed so nothing a studio wrote is lost. */
-    public function portalWelcomeText(): ?string
-    {
-        return $this->row()->portal_welcome_text;
-    }
-
     /**
      * Wohin ein Rechtstext im Portal zeigt: auf die fremde Adresse, wenn eine
      * hinterlegt ist, sonst auf die eigene Seite, wenn eine Vorlage gewählt
@@ -623,6 +595,26 @@ class StudioSettingsResolver
     public function legalFamily(string $text): ?string
     {
         return $this->row()->{"portal_legal_{$text}_family"} ?? null;
+    }
+
+    /** Ob AGB oder Widerrufsbelehrung dem Angebot beiliegen. */
+    public function legalAttach(string $text): bool
+    {
+        return (bool) ($this->row()->{"portal_legal_{$text}_attach"} ?? false);
+    }
+
+    /**
+     * Was dem Angebot beiliegt: je eingeschaltetem Text seine Adresse, wie
+     * legalUrl() sie liefert — relativ, wenn der Text im Portal liegt.
+     *
+     * @return array<string, string>
+     */
+    public function attachedLegalUrls(): array
+    {
+        return collect(['agb', 'widerruf'])
+            ->filter(fn (string $text) => $this->legalAttach($text) && $this->legalUrl($text) !== null)
+            ->mapWithKeys(fn (string $text) => [$text => $this->legalUrl($text)])
+            ->all();
     }
 
     /** Die eingetragene fremde Adresse — was das Portal daraus macht, sagt legalUrl(). */
@@ -713,15 +705,18 @@ class StudioSettingsResolver
         return (bool) $this->row()->gallery_default_comments_enabled;
     }
 
-    /** P-05 (#224)'s requests need a recipient and a deadline; both were missing. */
-    public function dsgvoRequestRecipient(): ?string
+    /**
+     * Wer im Portal ansprechbar ist. Ohne eigenen Namen steht dort die
+     * Marke — ein Ein-Personen-Studio trägt beides ohnehin.
+     */
+    public function portalContactName(): ?string
     {
-        return $this->row()->dsgvo_request_recipient;
+        return $this->row()->portal_contact_name;
     }
 
-    public function dsgvoRequestDeadlineDays(): int
+    public function portalContactAvatarPath(): ?string
     {
-        return (int) $this->row()->dsgvo_request_deadline_days;
+        return $this->row()->portal_contact_avatar_path;
     }
 
     public function portalContactPhone(): ?string
@@ -739,16 +734,22 @@ class StudioSettingsResolver
         return $this->row()->portal_contact_response_time;
     }
 
-    /** P-03's room: no booking yet. */
+    /** Noch nie gebucht: es liegt nur eine Anfrage vor. */
     public function portalWelcomeInquiry(): ?string
     {
         return $this->row()->portal_welcome_inquiry;
     }
 
-    /** P-02's room: a stock of bookings rather than one. */
-    public function portalWelcomeMany(): ?string
+    /** Mindestens eine Buchung steht noch aus oder ist in Arbeit. */
+    public function portalWelcomeActive(): ?string
     {
-        return $this->row()->portal_welcome_many;
+        return $this->row()->portal_welcome_active;
+    }
+
+    /** Alles geliefert, nichts offen — der Bestandskunde, nicht der Fremde. */
+    public function portalWelcomeDone(): ?string
+    {
+        return $this->row()->portal_welcome_done;
     }
 
     /** Whether the first-run wizard (App\Http\Middleware\RequireStudioOnboarding) has been completed. */
@@ -763,25 +764,31 @@ class StudioSettingsResolver
         return $this->row()->onboarding_reminder_sent_at !== null;
     }
 
-    // --- T-11: quiet hours — App\Notifications\Support\QuietHours is the
-    // only reader of these three, the same "raw values here, logic in the
-    // domain class" split T-13's workingDays()/TaskTemplate::dueFor() already
-    // draws.
-
-    public function quietHoursEnabled(): bool
+    /** Frist der automatischen Löschung in Monaten; null ist aus. */
+    public function retentionMonths(): ?int
     {
-        return $this->row()->quiet_hours_enabled;
+        return $this->row()->retention_months;
     }
 
-    /** "HH:MM:SS", tenant-local — null whenever quietHoursEnabled() is false. */
-    public function quietHoursStart(): ?string
+    /** Was der Lauf mit einer abgelaufenen Anfrage tut; ohne Wahl wird anonymisiert. */
+    public function retentionPolicy(): RetentionPolicyData
     {
-        return $this->row()->quiet_hours_start;
+        return RetentionPolicyData::fromStored($this->row()->retention_policy);
     }
 
-    public function quietHoursEnd(): ?string
+    /** Der Löschtag: Tag des Antrags plus Frist, in der Zeit des Studios. Ab dessen Morgen läuft DeleteTenant. */
+    public function deletionDate(): ?CarbonImmutable
     {
-        return $this->row()->quiet_hours_end;
+        return $this->row()->deletion_requested_at
+            ?->toImmutable()
+            ->setTimezone($this->timezone())
+            ->addDays(StudioSettings::DELETION_GRACE_DAYS)
+            ->startOfDay();
+    }
+
+    public function forget(): void
+    {
+        Cache::store('redis')->forget($this->cacheKey());
     }
 
     private function row(): StudioSettings

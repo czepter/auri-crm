@@ -14,51 +14,37 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * T-09's Verfügbarkeit pane: the default shoot duration (a StudioSettings
- * column ShootCalendar reads instead of its old hardcoded addHours(2)) and
- * StudioClosure — a date range with a label, CheckDateAvailability's second
- * conflict source. Sits beside StudioSettingsController and
- * NumberRangeController under the same /einstellungen shell and the same
- * ManageSettings gate — see AuthorizesStaffSettings for why that gate is a
- * 404, not a 403.
+ * T-09's StudioClosure — a date range with a label, CheckDateAvailability's
+ * second conflict source. Listed under Kalender, behind the same
+ * ManageSettings gate as every settings screen — see AuthorizesStaffSettings
+ * for why that gate is a 404, not a 403.
  */
 class StudioClosureController extends Controller
 {
     use AuthorizesStaffSettings;
 
-    public function index(StudioSettingsResolver $settings): Response
+    public function index(): Response
     {
         $this->authorizeSettings();
 
-        $closures = StudioClosure::query()->orderBy('starts_on')->get();
-
-        return Inertia::render('Settings/Availability', [
-            'defaultShootDurationMinutes' => $settings->defaultShootDurationMinutes(),
-            'closures' => $closures->map(StudioClosureData::fromModel(...))->all(),
+        return Inertia::render('Closures/Index', [
+            'closures' => StudioClosure::query()->orderBy('starts_on')->get()->map(StudioClosureData::fromModel(...))->all(),
         ]);
     }
 
-    /**
-     * Its own save action, separate from the closures below: one field with
-     * its own "Speichern" button, the same reasoning
-     * StudioSettingsController::updateVat gives for splitting Zahlungsdaten
-     * & USt from Studio-Profil.
-     */
-    public function updateDuration(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    // At least one day: an empty selection leaves TaskTemplate::dueFor() nothing to roll onto.
+    public function updateWorkingDays(Request $request, StudioSettingsResolver $settings): RedirectResponse
     {
         $this->authorizeSettings();
 
         $validated = $request->validate([
-            'default_shoot_duration_minutes' => ['required', 'integer', 'min:1', 'max:1440'],
+            'working_days' => ['required', 'array', 'min:1'],
+            'working_days.*' => ['integer', 'between:1,7', 'distinct'],
         ]);
 
-        $settings->set(
-            'default_shoot_duration_minutes',
-            $validated['default_shoot_duration_minutes'],
-            auth('staff')->user(),
-        );
+        $settings->set('working_days', array_values($validated['working_days']), auth('staff')->user());
 
-        return redirect('/einstellungen/verfuegbarkeit');
+        return back();
     }
 
     public function store(Request $request): RedirectResponse
@@ -76,7 +62,7 @@ class StudioClosureController extends Controller
             subject: $closure->public_id,
         );
 
-        return redirect('/einstellungen/verfuegbarkeit');
+        return back();
     }
 
     public function update(Request $request, StudioClosure $studioClosure): RedirectResponse
@@ -94,7 +80,7 @@ class StudioClosureController extends Controller
             subject: $studioClosure->public_id,
         );
 
-        return redirect('/einstellungen/verfuegbarkeit');
+        return back();
     }
 
     public function destroy(StudioClosure $studioClosure): RedirectResponse
@@ -113,16 +99,17 @@ class StudioClosureController extends Controller
             subject: $publicId,
         );
 
-        return redirect('/einstellungen/verfuegbarkeit');
+        return back();
     }
 
-    /** @return array{label: string, starts_on: string, ends_on: string} */
+    /** @return array{label: string, starts_on: string, ends_on: string, message?: ?string} */
     private function validateClosure(Request $request): array
     {
         return $request->validate([
             'label' => ['required', 'string', 'max:255'],
             'starts_on' => ['required', 'date'],
             'ends_on' => ['required', 'date', 'after_or_equal:starts_on'],
+            'message' => ['nullable', 'string', 'max:2000'],
         ]);
     }
 }

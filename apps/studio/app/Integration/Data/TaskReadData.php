@@ -16,7 +16,8 @@ class TaskReadData extends Data
 {
     public function __construct(
         public string $id,
-        public string $projectId,
+        public ?string $projectId,
+        public ?string $contactId,
         public string $title,
         public string $audience,
         public ?string $dueOn,
@@ -34,7 +35,8 @@ class TaskReadData extends Data
     {
         return new self(
             id: $task->public_id,
-            projectId: $task->project->public_id,
+            projectId: $task->project?->public_id,
+            contactId: $task->contact?->public_id,
             title: $task->title,
             audience: $task->audience->value,
             dueOn: $task->due_on?->format('Y-m-d'),

@@ -39,7 +39,7 @@ jobs:
   # it checks produces a stack that deploys green with an empty secret or a
   # misrouted domain. Its own job so the matrix below does not run it twice.
   check:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     steps:
       - uses: actions/checkout@v7
       - name: Check the Compose file against Coolify's parser rules
@@ -47,7 +47,7 @@ jobs:
 
   build:
     needs: check
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     strategy:
       fail-fast: false
       matrix:

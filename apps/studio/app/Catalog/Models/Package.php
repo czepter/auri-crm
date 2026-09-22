@@ -6,6 +6,7 @@ use App\Catalog\Enums\PortalPriceMode;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasHourlyPricing;
 use App\Concerns\HasPublicId;
+use App\Concerns\HasShowcaseImages;
 use App\Crm\Models\Lead;
 use App\Crm\Models\ProjectType;
 use Database\Factories\Catalog\PackageFactory;
@@ -32,10 +33,11 @@ class Package extends Model
     use HasFactory;
     use HasHourlyPricing;
     use HasPublicId;
+    use HasShowcaseImages;
 
     protected $fillable = [
         'name', 'description', 'is_active', 'hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours',
-        'portal_offered', 'portal_price_mode', 'portal_requires_date', 'project_type_key',
+        'portal_offered', 'portal_price_mode', 'portal_requires_date', 'project_type_key', 'showcase_paths',
     ];
 
     protected $attributes = ['is_active' => true, 'portal_offered' => false, 'portal_requires_date' => true];
@@ -47,6 +49,7 @@ class Package extends Model
             'portal_offered' => 'boolean',
             'portal_requires_date' => 'boolean',
             'portal_price_mode' => PortalPriceMode::class,
+            'showcase_paths' => 'array',
         ];
     }
 

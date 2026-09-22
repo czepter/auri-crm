@@ -13,7 +13,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(fn () => Cache::store('redis')->flush());
 
-it('defaults Stripe to off, with the reminders default already set', function () {
+it('defaults Stripe to off', function () {
     $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->get('/einstellungen/zahlungen')
         ->assertOk()
@@ -22,40 +22,17 @@ it('defaults Stripe to off, with the reminders default already set', function ()
     expect($props['settings']['stripeEnabled'])->toBeFalse()
         ->and($props['settings']['stripeMode'])->toBe('test')
         ->and($props['settings']['hasStripeTestKeys'])->toBeFalse()
-        ->and($props['settings']['hasStripeLiveKeys'])->toBeFalse()
-        ->and($props['settings']['remindersEnabled'])->toBeBool();
+        ->and($props['settings']['hasStripeLiveKeys'])->toBeFalse();
 });
 
-it('shows the deposit percentage and Zahlungsziel read-only, sourced from T-05\'s own Dokumente columns', function () {
-    StudioSettings::query()->update(['deposit_percentage' => 4500, 'payment_term_days' => 21]);
+// Die Mahnstufe steht bei Zahlung: sie hängt an der Frist, nicht an
+// der Anbindung, über die das Geld hereinkommt.
+it('saves the reminders default on the payment route', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->patch('/einstellungen/zahlung', ['payments_reminders_enabled' => false])
+        ->assertRedirect();
 
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get('/einstellungen/zahlungen')
-        ->assertOk()
-        ->viewData('page')['props'];
-
-    expect($props['settings']['depositPercent'])->toBe(4500)
-        ->and($props['settings']['zahlungszielDays'])->toBe(21);
-});
-
-it('saves the reminders default without touching Stripe or T-05\'s deposit/Zahlungsziel columns', function () {
-    $owner = staffMember(StaffRole::Owner);
-    StudioSettings::query()->update(['deposit_percentage' => 3000, 'payment_term_days' => 14]);
-
-    $this->actingAs($owner, 'staff')
-        ->patch('/einstellungen/zahlungen', [
-            'payments_stripe_enabled' => false,
-            'payments_stripe_mode' => 'test',
-            'payments_reminders_enabled' => false,
-        ])
-        ->assertRedirect('/einstellungen/zahlungen');
-
-    $row = StudioSettings::query()->sole();
-    expect($row->payments_reminders_enabled)->toBeFalse()
-        ->and($row->payments_stripe_enabled)->toBeFalse()
-        // Untouched — this endpoint never writes T-05's own columns.
-        ->and($row->deposit_percentage)->toBe(3000)
-        ->and($row->payment_term_days)->toBe(14);
+    expect(StudioSettings::query()->sole()->payments_reminders_enabled)->toBeFalse();
 });
 
 it('switches Stripe on and stores a test key pair, encrypted at rest', function () {
@@ -65,7 +42,6 @@ it('switches Stripe on and stores a test key pair, encrypted at rest', function 
         ->patch('/einstellungen/zahlungen', [
             'payments_stripe_enabled' => true,
             'payments_stripe_mode' => 'test',
-            'payments_reminders_enabled' => true,
             'payments_stripe_test_publishable_key' => 'pk_test_abc123',
             'payments_stripe_test_secret_key' => 'sk_test_verySecretValue',
         ])
@@ -89,7 +65,6 @@ it('leaves an existing key pair untouched when the write-only fields are submitt
     $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlungen', [
         'payments_stripe_enabled' => true,
         'payments_stripe_mode' => 'test',
-        'payments_reminders_enabled' => true,
         'payments_stripe_test_publishable_key' => 'pk_test_abc123',
         'payments_stripe_test_secret_key' => 'sk_test_original',
     ]);
@@ -99,14 +74,12 @@ it('leaves an existing key pair untouched when the write-only fields are submitt
     $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlungen', [
         'payments_stripe_enabled' => true,
         'payments_stripe_mode' => 'test',
-        'payments_reminders_enabled' => false,
         'payments_stripe_test_publishable_key' => '',
         'payments_stripe_test_secret_key' => '',
     ]);
 
     $row = StudioSettings::query()->sole();
-    expect($row->payments_reminders_enabled)->toBeFalse()
-        ->and($row->payments_stripe_test_secret_key)->toBe('sk_test_original');
+    expect($row->payments_stripe_test_secret_key)->toBe('sk_test_original');
 });
 
 it('keeps both mode key pairs independently — switching modes never requires re-entering keys', function () {
@@ -115,7 +88,6 @@ it('keeps both mode key pairs independently — switching modes never requires r
     $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlungen', [
         'payments_stripe_enabled' => true,
         'payments_stripe_mode' => 'test',
-        'payments_reminders_enabled' => true,
         'payments_stripe_test_publishable_key' => 'pk_test_abc123',
         'payments_stripe_test_secret_key' => 'sk_test_abc123',
     ]);
@@ -123,7 +95,6 @@ it('keeps both mode key pairs independently — switching modes never requires r
     $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlungen', [
         'payments_stripe_enabled' => true,
         'payments_stripe_mode' => 'live',
-        'payments_reminders_enabled' => true,
         'payments_stripe_live_publishable_key' => 'pk_live_xyz789',
         'payments_stripe_live_secret_key' => 'sk_live_xyz789',
     ]);
@@ -141,7 +112,6 @@ it('never puts the Stripe secret key in any response body — the edit screen or
     $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlungen', [
         'payments_stripe_enabled' => true,
         'payments_stripe_mode' => 'test',
-        'payments_reminders_enabled' => true,
         'payments_stripe_test_publishable_key' => 'pk_test_abc123',
         'payments_stripe_test_secret_key' => 'sk_test_topSecretValue',
     ]);
@@ -151,7 +121,6 @@ it('never puts the Stripe secret key in any response body — the edit screen or
     $updateResponse = $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlungen', [
         'payments_stripe_enabled' => true,
         'payments_stripe_mode' => 'test',
-        'payments_reminders_enabled' => false,
     ]);
     expect($updateResponse->getContent())->not->toContain($secret);
 
@@ -170,7 +139,6 @@ it('leaves an audit row naming the changed keys by name only, never by value', f
     $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlungen', [
         'payments_stripe_enabled' => true,
         'payments_stripe_mode' => 'test',
-        'payments_reminders_enabled' => true,
         'payments_stripe_test_publishable_key' => 'pk_test_abc123',
         'payments_stripe_test_secret_key' => 'sk_test_topSecretValue',
     ]);

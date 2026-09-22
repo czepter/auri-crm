@@ -59,7 +59,6 @@ const props = defineProps<{
   canAccept: boolean
   quote: Quote | null
   // Q-10: wie viele Schaufensterbilder es gibt. Null heisst kein Raster.
-  showcaseCount: number
   // QuoteShareController's own accept/image routes, for a quote opened
   // through its share link rather than a portal session — same screen,
   // different targets. Both default to the session routes every logged-in
@@ -68,9 +67,9 @@ const props = defineProps<{
   imageUrlBase?: string
 }>()
 
-const portalLegal = computed(() => usePage().props.portalLegal as { agbUrl: string | null; widerrufUrl: string | null } | undefined)
-const agbUrl = computed(() => portalLegal.value?.agbUrl ?? null)
-const widerrufUrl = computed(() => portalLegal.value?.widerrufUrl ?? null)
+const attached = computed(() => usePage().props.portalQuoteLegal as { agb?: string; widerruf?: string } | undefined)
+const agbUrl = computed(() => attached.value?.agb ?? null)
+const widerrufUrl = computed(() => attached.value?.widerruf ?? null)
 
 const form = useForm({ terms: false })
 
@@ -132,7 +131,6 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
         :image-url-base="imageUrlBase"
         :expired="quote.expired"
         :accepted-at="quote.acceptedAt"
-        :showcase-count="showcaseCount"
       />
 
       <div v-else-if="quote" class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 max-w-[680px] border-t border-border pt-8">

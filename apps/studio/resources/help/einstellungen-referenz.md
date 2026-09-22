@@ -2,7 +2,7 @@
 titel: Studio-Profil — Begriffe und Regeln
 beschreibung: Wo Firmierung, Anzeigename und Bankverbindung außerhalb dieses Bildschirms auftauchen.
 art: referenz
-screens: [settings.edit]
+screens: [settings.general, settings.payment]
 faehigkeit: manage_settings
 ---
 
@@ -35,9 +35,9 @@ Angenommen wird das Logo als PNG, und sonst in keinem Format.
 Die Schaufensterbilder sieht der Kunde im Portal über dem Regler eines
 Angebots mit Stundensatz, und nur dort.
 
-## Drei Formulare
+## Getrennte Formulare
 
-Rechtliche Einheit, Marke und Bankverbindung speichern getrennt. Ein Fehler
-in einem hält die anderen nicht auf.
+Umsatzsteuer und Bankverbindung speichern getrennt vom Rest. Ein Fehler in
+einem hält die anderen nicht auf.
 
 Jede Änderung hier wird mit Zeitpunkt und Person festgehalten.

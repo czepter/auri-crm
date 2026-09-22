@@ -2,7 +2,6 @@
 
 namespace App\Integration\Http\Controllers;
 
-use App\Crm\Enums\CrewRole;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Shoot;
 use App\Http\Controllers\Controller;
@@ -14,9 +13,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 /**
- * Mirrors App\Crm\Http\Controllers\CrewController: the same updateOrCreate
- * on the unique (shoot_id, user_id) index, a role change rides along instead
- * of failing the write.
+ * Mirrors App\Crm\Http\Controllers\CrewController: the same firstOrCreate
+ * on the unique (shoot_id, user_id) index.
  */
 class CrewController extends Controller
 {
@@ -31,15 +29,11 @@ class CrewController extends Controller
     {
         $validated = $request->validate([
             'user' => ['required', 'string', Rule::exists('users', 'public_id')],
-            'role' => ['required', Rule::enum(CrewRole::class)],
         ]);
 
         $user = User::findByPublicId($validated['user']);
 
-        $assignment = $shoot->crew()->updateOrCreate(
-            ['user_id' => $user->id],
-            ['role' => $validated['role']],
-        );
+        $assignment = $shoot->crew()->firstOrCreate(['user_id' => $user->id]);
         $assignment->setRelation('shoot', $shoot)->setRelation('user', $user);
 
         return response()->json(['data' => CrewAssignmentReadData::fromModel($assignment)], 201);

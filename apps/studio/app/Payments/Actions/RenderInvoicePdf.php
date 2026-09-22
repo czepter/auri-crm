@@ -22,7 +22,7 @@ use App\Settings\Support\StudioSettingsResolver;
 
 /**
  * #419. What RenderQuotePdf does for an Angebot, for the Rechnung and the
- * Gutschrift: the layout comes from the studio's one `quote_layout` setting,
+ * Gutschrift: the layout comes from the studio's one `document_layout` setting,
  * and the template supplies prose only.
  *
  * Before this, the invoice was entirely template content — address, meta
@@ -90,7 +90,7 @@ class RenderInvoicePdf
     /** The same five as the quote, read from the same setting — see QuoteLayout. */
     private function layoutRenderer(?QuoteLayout $override = null): InvoiceLayoutRenderer
     {
-        $layout = $override ?? QuoteLayout::tryFrom($this->settings->quoteLayout()) ?? QuoteLayout::Classic;
+        $layout = $override ?? QuoteLayout::tryFrom($this->settings->documentLayout()) ?? QuoteLayout::Classic;
 
         return match ($layout) {
             QuoteLayout::Classic => new ClassicInvoiceLayout,

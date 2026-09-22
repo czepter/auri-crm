@@ -17,7 +17,7 @@ it('hands the resolved mail identity to the settings screen', function () {
     config(['mail.from.address' => 'hello@example.com', 'mail.from.name' => 'Example']);
 
     $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get('/einstellungen')
+        ->get('/einstellungen/allgemein')
         ->assertOk()
         ->viewData('page')['props'];
 
@@ -33,14 +33,14 @@ it('updates the mail identity, redirects to the shell, and audits the owner', fu
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')
-        ->from('/einstellungen?pane=email')
+        ->from('/einstellungen/email')
         ->patch('/einstellungen/email', [
             'mail_reply_to' => 'buero@nordlicht.test',
             'mail_bcc' => 'ablage@nordlicht.test',
             'mail_signature' => 'Herzliche Grüße, das Team von Atelier Nordlicht',
             'mail_clients_enabled' => false,
         ])
-        ->assertRedirect('/einstellungen?pane=email');
+        ->assertRedirect('/einstellungen/email');
 
     $row = StudioSettings::query()->sole();
 
@@ -64,9 +64,9 @@ it('leaves the sender to the environment: no field writes it, and a reset emptie
     (new StudioSettingsResolver)->set('mail_from_address', 'studio@nordlicht.test', $owner);
 
     $this->actingAs($owner, 'staff')
-        ->from('/einstellungen?pane=email')
+        ->from('/einstellungen/email')
         ->patch('/einstellungen/email', ['mail_sender_reset' => true])
-        ->assertRedirect('/einstellungen?pane=email');
+        ->assertRedirect('/einstellungen/email');
 
     $row = StudioSettings::query()->sole();
 
@@ -125,3 +125,21 @@ it('declares an audience on the mail identity route, same as every other admin r
     expect($route)->not->toBeNull()
         ->and(collect($route->gatherMiddleware())->contains(fn ($m) => str_starts_with((string) $m, 'audience:')))->toBeTrue();
 });
+
+it('previews the client mail with the typed signature in its footer', function () {
+    [$user] = studioWithProject();
+
+    $response = $this->actingAs($user, 'staff')->get('/einstellungen/email/vorschau?signatur=Herzlich,+Muster');
+
+    $response->assertOk();
+    expect($response->getContent())->toContain('Herzlich, Muster')->toContain('Kundenbereich öffnen');
+});
+
+it('addresses the fallback link line in the studio register', function (string $register, string $expected) {
+    [$user] = studioWithProject();
+    app(StudioSettingsResolver::class)->set('client_register', $register);
+
+    $this->actingAs($user, 'staff')->get('/einstellungen/email/vorschau')
+        ->assertOk()
+        ->assertSee($expected);
+})->with([['informal', 'öffne diesen Link'], ['formal', 'öffnen Sie diesen Link']]);

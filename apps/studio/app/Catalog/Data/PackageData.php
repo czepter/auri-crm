@@ -27,6 +27,7 @@ class PackageData extends Data
         public ?int $price = null,
         public int $requestedCount = 0,
         public int $bookedCount = 0,
+        public int $showcaseCount = 0,
     ) {}
 
     public static function fromModel(Package $package): self
@@ -56,6 +57,8 @@ class PackageData extends Data
             // Wie items_count nur auf der Übersicht gezählt.
             requestedCount: (int) ($package->requested_count ?? 0),
             bookedCount: (int) ($package->booked_count ?? 0),
+            // Q-10: der Startsatz fürs Reglerraster, den SeedQuoteFromPackage kopiert.
+            showcaseCount: count($package->showcasePaths()),
         );
     }
 }

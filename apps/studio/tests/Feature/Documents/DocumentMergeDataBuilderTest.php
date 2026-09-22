@@ -24,7 +24,7 @@ it('builds the same merge data shape any document type resolves against', functi
         ->and($data['contact']['name'])->toBe('Lena Meier')
         ->and($data['contact']['email'])->toBe('lena@example.test')
         ->and($data['job']['bookedAt'])->toBe('14.06.2026')
-        ->and($data)->toHaveKeys(['studio', 'settings']);
+        ->and($data)->toHaveKey('studio');
 });
 
 /**

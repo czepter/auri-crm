@@ -19,7 +19,7 @@ export const inputVariants = cva(
     "placeholder:text-faint hover:border-line-hover",
     "focus:border-ring focus:outline-none",
     "disabled:cursor-not-allowed disabled:opacity-50",
-    "aria-invalid:border-destructive",
+    "aria-invalid:border-destructive user-invalid:border-destructive user-invalid:focus:border-destructive",
     "file:border-0 file:bg-transparent file:font-medium file:text-foreground",
   ],
   {

@@ -77,6 +77,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # that passes here passes there.
 RUN printf 'memory_limit=-1\n' > /usr/local/etc/php/conf.d/zz-memory-limit.ini
 
+# A camera JPEG is 5 to 15 MB; the 2M default fails the upload before any
+# validation rule runs.
+RUN printf 'upload_max_filesize=12M\npost_max_size=14M\n' > /usr/local/etc/php/conf.d/zz-uploads.ini
+
 # F-11: release tracking for GlitchTip (config/sentry.php's SENTRY_RELEASE)
 # from the git SHA at build time, so an error is attributable to the deploy
 # that shipped it. Empty by default — `docker compose build` never passes

@@ -47,7 +47,6 @@ class PaymentSettingsController extends Controller
         $validated = $request->validate([
             'payments_stripe_enabled' => ['required', 'boolean'],
             'payments_stripe_mode' => ['required', 'in:test,live'],
-            'payments_reminders_enabled' => ['required', 'boolean'],
             // Write-only: absent or blank leaves the stored pair alone. Never
             // echoed back — see StudioSettingsResolver::setPaymentSettings().
             'payments_stripe_test_publishable_key' => ['nullable', 'string', 'max:1000'],

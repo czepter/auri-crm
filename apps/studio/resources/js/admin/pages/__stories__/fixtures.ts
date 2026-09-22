@@ -120,7 +120,7 @@ export const shoots: App.Crm.Data.ShootData[] = [
         statusLabel: 'Gebucht',
         forwardStatuses: [{ value: 'shot', label: 'Fotografiert' }],
         crew: [
-            { id: 'cr-1', userId: 'u1', name: 'Christian Zepter', initials: 'CZ', role: 'lead', roleLabel: 'Hauptfotograf' },
+            { id: 'cr-1', userId: 'u1', name: 'Christian Zepter', initials: 'CZ' },
         ],
     }),
 ]
@@ -153,6 +153,8 @@ function task(row: Partial<App.Crm.Data.TaskRowData> & Pick<App.Crm.Data.TaskRow
         dueAnchorLabel: null,
         assigneeId: null,
         assigneeName: null,
+        contactId: null,
+        contactName: null,
         ...row,
     }
 }
@@ -259,6 +261,7 @@ export function quoteOf(
     row: Partial<App.Quotes.Data.QuoteData> & Pick<App.Quotes.Data.QuoteData, 'id' | 'number' | 'net' | 'items'>,
 ): App.Quotes.Data.QuoteData {
     return {
+        showcaseCount: 0,
         predecessorId: null,
         isAddendum: false,
         predecessorNumber: null,
@@ -350,6 +353,7 @@ export const catalogPackages: App.Catalog.Data.PackageData[] = [
         price: 300000,
         requestedCount: 0,
         bookedCount: 0,
+        showcaseCount: 0,
     },
 ]
 
@@ -431,13 +435,21 @@ export const header: App.Crm.Data.ProjectHeaderData = {
     canDelete: false,
     tabs: [
         { key: 'overview', label: 'project.overview', href: `/auftraege/${RAHN}`, count: null, countTo: null, children: [] },
-        { key: 'lead', label: 'project.lead', href: '/anfragen/l-rahn', count: null, countTo: null, children: [] },
         { key: 'shoots', label: 'project.shoots', href: `/auftraege/${RAHN}/shootings`, count: null, countTo: null, children: [] },
-        { key: 'tasks', label: 'project.tasks', href: `/auftraege/${RAHN}/aufgaben`, count: 2, countTo: 3, children: [] },
-        { key: 'galleries', label: 'contacts.galleries', href: `/auftraege/${RAHN}/galerien`, count: 0, countTo: null, children: [] },
         { key: 'messages', label: 'project.messages', href: `/auftraege/${RAHN}/nachrichten`, count: 0, countTo: null, children: [] },
-        { key: 'forms', label: 'project.forms', href: `/auftraege/${RAHN}/frageboegen`, count: 1, countTo: null, children: [] },
-        { key: 'quotes', label: 'project.quotes', href: `/auftraege/${RAHN}/angebote`, count: null, countTo: null, children: [] },
+        { key: 'galleries', label: 'contacts.galleries', href: `/auftraege/${RAHN}/galerien`, count: 0, countTo: null, children: [] },
+        {
+            key: 'documents',
+            label: 'project.documents',
+            href: `/auftraege/${RAHN}/angebote`,
+            count: 1,
+            countTo: null,
+            children: [
+                { key: 'quotes', label: 'project.quotes', translate: true, href: `/auftraege/${RAHN}/angebote`, count: 0, reorderable: false },
+                { key: 'contract', label: 'project.contract', translate: true, href: `/auftraege/${RAHN}/vertrag`, count: 0, reorderable: false },
+                { key: 'forms', label: 'project.forms', translate: true, href: `/auftraege/${RAHN}/frageboegen`, count: 1, reorderable: false },
+            ],
+        },
     ],
     track: projectTrack,
     queue: [],
@@ -496,27 +508,8 @@ export const lead = {
         'Hallo, wir heiraten am 12. Juni 2027 auf Gut Basthorst. Die freie Trauung hält Kerstin Voß, danach Sektempfang im Innenhof und abends Feier in der Scheune. Wir sind ungefähr 70 Gäste und suchen jemanden, der den ganzen Tag dabei ist.',
     capturedVia: 'Über die Website',
     capturedAt: '2026-09-04T08:45:00+02:00',
-    booked: false,
     lostReason: null as string | null,
     outcomeLabel: null as string | null,
-}
-
-/** Dieselbe Anfrage nach dem Buchen: der Fall wandert unter /auftraege und bekommt die Projektreiter. */
-export const bookedLeadHeader: App.Crm.Data.ProjectHeaderData = {
-    ...leadHeader,
-    isBooked: true,
-    position: { source: 'shoot', value: 'booked', label: 'Gebucht' },
-    track: projectTrack,
-    tabs: [
-        { key: 'overview', label: 'project.overview', href: `/auftraege/${BRANDT}`, count: null, countTo: null, children: [] },
-        { key: 'lead', label: 'project.lead', href: `/anfragen/${LEAD}`, count: null, countTo: null, children: [] },
-        { key: 'shoots', label: 'project.shoots', href: `/auftraege/${BRANDT}/shootings`, count: null, countTo: null, children: [] },
-        { key: 'tasks', label: 'project.tasks', href: `/auftraege/${BRANDT}/aufgaben`, count: 1, countTo: 1, children: [] },
-        { key: 'galleries', label: 'contacts.galleries', href: `/auftraege/${BRANDT}/galerien`, count: 0, countTo: null, children: [] },
-        { key: 'messages', label: 'project.messages', href: `/auftraege/${BRANDT}/nachrichten`, count: 1, countTo: null, children: [] },
-        { key: 'forms', label: 'project.forms', href: `/auftraege/${BRANDT}/frageboegen`, count: 0, countTo: null, children: [] },
-        { key: 'quotes', label: 'project.quotes', href: `/auftraege/${BRANDT}/angebote`, count: null, countTo: null, children: [] },
-    ],
 }
 
 export const studioSettings: App.Settings.Data.StudioSettingsData = {
@@ -537,7 +530,6 @@ export const studioSettings: App.Settings.Data.StudioSettingsData = {
   accentColor: '#2F4858',
   fontPair: 'fraunces',
   logoUrl: null,
-  showcaseUrls: [],
   bankAccountHolder: 'Christian Zepter',
   bankIban: 'DE02120300000000202051',
   bankBic: 'BYLADEM1001',
@@ -547,14 +539,12 @@ export const studioSettings: App.Settings.Data.StudioSettingsData = {
   quoteValidityDays: 14,
   paymentTermDays: 14,
   depositPercentage: 30,
-  widerrufIncluded: true,
-  widerrufText: null,
-  quoteLayout: 'classic',
+  documentLayout: 'classic',
+  remindersEnabled: true,
   clientRegister: 'informal',
   documentLetterheadHtml: null,
   documentFooterHtml: null,
   timezone: 'Europe/Berlin',
-  locale: 'de',
   workingDays: [1, 2, 3, 4, 5],
   mailFromName: 'Atelier Nordlicht',
   mailFromAddress: 'post@atelier-nordlicht.de',
@@ -562,7 +552,4 @@ export const studioSettings: App.Settings.Data.StudioSettingsData = {
   mailSignature: 'Christian Zepter\nAtelier Nordlicht',
   mailBcc: null,
   mailClientsEnabled: true,
-  leadTypePresets: ['Hochzeit', 'Paarshooting', 'Familie'],
-  leadSourcePresets: ['Empfehlung', 'Instagram', 'Website'],
-  leadChannelPresets: ['E-Mail', 'Telefon', 'Kontaktformular'],
 }

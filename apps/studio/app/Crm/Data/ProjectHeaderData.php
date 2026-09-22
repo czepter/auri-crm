@@ -107,29 +107,16 @@ class ProjectHeaderData extends Data
             isCompleted: $project->isCompleted(),
             canComplete: $project->job !== null && ($user?->can('manageShoots', $project) ?? false),
             canDelete: ($user?->can('delete', $project) ?? false) && $project->deletionBlockers()->isEmpty(),
-            // Galerien (G-05, already in P3) appends a line here on the
-            // sprint it lands. Zahlungen (M-03) does not: mockup
-            // 04-auftrag's own comment keeps it and Aufgaben as "previews,
-            // compressed into the Übersicht tab rather than built as full
-            // tab panels" (mockups/_shared/admin-extra.css) — so it lives on
-            // the overview screen instead, never as a tab.
-            //
-            // Q-02 landed the quote half of "Angebot & Vertrag" under one
-            // combined tab; M-01 splits Vertrag into its own tab now that it
-            // has a screen of its own. E-06's Kommunikation and E-02's
-            // Fragebögen both sit between Shootings and Angebot, matching
-            // mockup 04's own tab order (mockups/_shared/layout.js's
-            // PROJECT_TABS).
+            // Anfrage and Aufgaben are no tabs of a project: the overview is the
+            // inquiry's own page carried on, and holds the task list. Angebot,
+            // Vertrag and Fragebögen are one tab, Dokumente, with the three as
+            // its children.
             tabs: $project->job === null && $project->lead !== null ? self::leadTabs($project) : [
                 ['key' => 'overview', 'label' => 'project.overview', 'href' => "/auftraege/{$project->public_id}", 'count' => null, 'countTo' => null, 'children' => []],
-                ...($project->lead ? [['key' => 'lead', 'label' => 'project.lead', 'href' => "/anfragen/{$project->lead->public_id}", 'count' => null, 'countTo' => null, 'children' => []]] : []),
                 ['key' => 'shoots', 'label' => 'project.shoots', 'href' => "/auftraege/{$project->public_id}/shootings", 'count' => null, 'countTo' => null, 'children' => []],
-                ['key' => 'tasks', 'label' => 'project.tasks', 'href' => "/auftraege/{$project->public_id}/aufgaben", 'count' => $project->tasks()->whereNull('completed_at')->count(), 'countTo' => $project->tasks()->count(), 'children' => []],
-                ['key' => 'galleries', 'label' => 'contacts.galleries', 'href' => "/auftraege/{$project->public_id}/galerien", 'count' => $project->galleries()->count(), 'countTo' => null, 'children' => []],
                 ['key' => 'messages', 'label' => 'project.messages', 'href' => "/auftraege/{$project->public_id}/nachrichten", 'count' => self::waitingThreads($project), 'countTo' => null, 'children' => []],
-                ['key' => 'forms', 'label' => 'project.forms', 'href' => "/auftraege/{$project->public_id}/frageboegen", 'count' => self::unansweredForms($project), 'countTo' => null, 'children' => []],
-                ['key' => 'quotes', 'label' => 'project.quotes', 'href' => "/auftraege/{$project->public_id}/angebote", 'count' => $project->quotes()->where('status', QuoteStatus::Sent)->count(), 'countTo' => null, 'children' => []],
-                ['key' => 'contract', 'label' => 'project.contract', 'href' => "/auftraege/{$project->public_id}/vertrag", 'count' => self::unsignedContracts($project), 'countTo' => null, 'children' => []],
+                ['key' => 'galleries', 'label' => 'contacts.galleries', 'href' => "/auftraege/{$project->public_id}/galerien", 'count' => $project->galleries()->count(), 'countTo' => null, 'children' => []],
+                self::documentsTab($project),
             ],
             track: app(ReadStageTrack::class)($position),
             queue: $user === null || ! $queue ? [] : app(OpenProjects::class)->queue($user, $project),
@@ -144,6 +131,29 @@ class ProjectHeaderData extends Data
             ])->all(),
             history: app(BuildThread::class)($project),
         );
+    }
+
+    /**
+     * Angebot, Vertrag and Fragebögen under one tab. The tab opens on the
+     * quotes and carries what each of the three still owes as one number.
+     */
+    private static function documentsTab(Project $project): array
+    {
+        $base = "/auftraege/{$project->public_id}";
+        $children = [
+            ['key' => 'quotes', 'label' => 'project.quotes', 'translate' => true, 'href' => "{$base}/angebote", 'count' => $project->quotes()->where('status', QuoteStatus::Sent)->count(), 'reorderable' => false],
+            ['key' => 'contract', 'label' => 'project.contract', 'translate' => true, 'href' => "{$base}/vertrag", 'count' => self::unsignedContracts($project), 'reorderable' => false],
+            ['key' => 'forms', 'label' => 'project.forms', 'translate' => true, 'href' => "{$base}/frageboegen", 'count' => self::unansweredForms($project), 'reorderable' => false],
+        ];
+
+        return [
+            'key' => 'documents',
+            'label' => 'project.documents',
+            'href' => $children[0]['href'],
+            'count' => array_sum(array_column($children, 'count')) ?: null,
+            'countTo' => null,
+            'children' => $children,
+        ];
     }
 
     /**

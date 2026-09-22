@@ -5,15 +5,15 @@ import { Link, router, useForm } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/alert";
 import { Button } from "@/ui/button";
-import BandCell from "@/admin/components/BandCell.vue";
-import BandValue from "@/admin/components/BandValue.vue";
 import LineItems from "@/admin/components/LineItems.vue";
 import NoteThread from "@/admin/components/NoteThread.vue";
+import QuoteSummary from "@/admin/components/QuoteSummary.vue";
 import ShootFields from "@/admin/components/ShootFields.vue";
 import ShootRow from "@/admin/components/ShootRow.vue";
 import { Field } from "@/ui/field";
 import { Input } from "@/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
+import { Textarea } from "@/ui/textarea";
 import ProjectFields from "@/admin/components/ProjectFields.vue";
 import type { ProjectFieldValues } from "@/admin/components/ProjectFields.vue";
 import ProjectShell from "@/admin/components/ProjectShell.vue";
@@ -22,9 +22,9 @@ import Card from "@/ui/page/Card.vue";
 import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
 import Section from "@/ui/page/Section.vue";
 import { formatEurosRounded } from "@/admin/lib/money";
+import { quoteChipClass } from "@/admin/lib/quoteDisplay";
 import { dayWithWeekday as day } from "@/admin/lib/dates";
 
-type Figure = { value: string | null; proof: string | null };
 type ProjectFieldDefinition = InstanceType<typeof ProjectFields>["$props"]["fields"][number];
 
 const props = defineProps<{
@@ -36,7 +36,9 @@ const props = defineProps<{
     staffOptions: { value: string; label: string }[];
     // Kommt von ProjectController@show; bis dahin bleibt die Ankerliste leer.
     anchors?: { value: string; label: string; group: string; on: string | null }[];
-    figures: Record<string, Figure>;
+    quote: App.Quotes.Data.QuoteData | null;
+    supersededQuotes: { id: string; number: string | null; net: number }[];
+    packages: { id: string; name: string; itemCount: number; total: number }[];
     scope: {
         items: {
             id: string;
@@ -109,6 +111,7 @@ const showDone = ref(false);
  * PATCH /auftraege/{id} — wer die Termine speichert, hat die Eckdaten nicht in
  * der Hand.
  */
+const anfrageEditing = ref(false);
 const detailsEditing = ref(false);
 const datesEditing = ref(false);
 
@@ -119,6 +122,23 @@ const details = useForm({
     source_other: props.sourceOther ?? "",
     fields: { ...props.fieldValues },
 });
+
+const anfrage = useForm({ inquiry_text: props.inquiry?.text ?? "" });
+
+function saveAnfrage() {
+    anfrage
+        .transform((data) => ({ ...data, inquiry_text: blank(data.inquiry_text) }))
+        .patch(`/anfragen/${props.header.leadId}`, {
+            preserveScroll: true,
+            onSuccess: () => (anfrageEditing.value = false),
+        });
+}
+
+const anfrageSummary = computed(() =>
+    [props.inquiry?.capturedVia, props.inquiry ? day(props.inquiry.capturedAt) : null].filter(Boolean).join(" · "),
+);
+
+const quoteSummary = computed(() => (props.quote === null ? "" : euro(props.quote.net)));
 
 // Die Rolle hing am Bearbeiten-Modus der rechten Leiste. Der ist weg, also
 // steht sie hier — Freitext wie am Fall, die bekannten als Vorschlag.
@@ -204,14 +224,6 @@ const taskSummary = computed(() =>
 
 const notes = computed(() => props.thread.filter((entry) => !entry.system));
 
-function togglePortal() {
-    router.post(
-        `/auftraege/${props.header.id}/portal-sichtbarkeit`,
-        {},
-        { preserveScroll: true },
-    );
-}
-
 function complete(row: App.Crm.Data.TaskRowData) {
     router.post(`/aufgaben/${row.id}/erledigt`, {}, { preserveScroll: true });
 }
@@ -219,22 +231,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
 
 <template>
     <AdminLayout active="projekte">
-        <ProjectShell :header="header" active="overview">
-                    <Section v-if="inquiry" :title="$t('project.lead')">
-                        <div class="flex max-[1080px]:flex-col max-[1080px]:gap-3">
-                            <p class="m-0 max-w-[58ch] min-w-0 flex-1 text-[14px] leading-[1.5] tracking-[-0.008em] whitespace-pre-line">
-                                {{ inquiry.text ?? $t("lead.noText") }}
-                            </p>
-                            <div
-                                class="w-[238px] flex-none pl-[22px] text-[12.5px] leading-[1.35] text-ink-2 shadow-[inset_1px_0_0_var(--rule)] max-[1080px]:w-auto max-[1080px]:pl-0 max-[1080px]:shadow-none [&_b]:block [&_b]:text-[13px] [&_b]:font-semibold [&_b]:tracking-[-0.012em] [&_b]:text-foreground"
-                            >
-                                <div><b>{{ inquiry.typeLabel }}</b>{{ inquiry.sourceLabel }}</div>
-                                <div class="mt-[11px] pt-[11px] shadow-[inset_0_1px_0_var(--rule)]">
-                                    <b>{{ inquiry.capturedVia ?? $t("leads.capturedAt") }}</b>{{ day(inquiry.capturedAt) }}
-                                </div>
-                            </div>
-                        </div>
-                    </Section>
+        <ProjectShell :header="header" active="overview" :people="false">
 
                     <Alert
                         v-if="stalled"
@@ -257,82 +254,209 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         </div>
                     </Alert>
 
-                    <!-- Master data across, each value with its proof underneath.
-                         Where the project stands is the track in the head; the
-                         stage stays here only as the field that changes it. -->
-                    <div class="mt-5 mb-5 flex">
-                        <BandCell
-                            v-if="figures.nextDate.value"
-                            :label="$t('project.mainDateLabel')"
-                            :sub="$t('board.shootCount', shoots.length)"
-                        >
-                            <BandValue plain>{{ day(figures.nextDate.value) }}</BandValue>
-                        </BandCell>
+                    <div class="mt-5 flex flex-col gap-3">
+                    <Card
+                        v-if="inquiry"
+                        v-model:editing="anfrageEditing"
+                        :title="$t('project.lead')"
+                        :summary="anfrageSummary"
+                        editable
+                        @cancel="anfrage.reset()"
+                        @save="saveAnfrage"
+                    >
+                        <p class="m-0 max-w-[58ch] text-[14px] leading-[1.5] tracking-[-0.008em] whitespace-pre-line">
+                            {{ inquiry.text ?? $t("lead.noText") }}
+                        </p>
+                        <p class="mt-2 mb-0 text-[12.5px] text-ink-2">
+                            {{ [inquiry.typeLabel, inquiry.sourceLabel].filter(Boolean).join(" · ") }}
+                        </p>
 
-                        <BandCell
-                            v-if="figures.value.value !== null || header.canManageQuotes"
-                            :label="$t('board.colValue')"
-                            :sub="figures.value.proof"
-                        >
-                            <BandValue v-if="figures.value.value !== null">{{ euro(figures.value.value) }}</BandValue>
-                            <Button v-else class="mt-[5px]" variant="outline" as-child>
-                                <Link :href="`/auftraege/${header.id}/angebote`">{{ $t("project.quoteAdd") }}</Link>
-                            </Button>
-                        </BandCell>
+                        <template #edit>
+                            <Field v-slot="{ id }" :label="$t('leads.inquiryText')" :error="anfrage.errors.inquiry_text">
+                                <Textarea :id="id" v-model="anfrage.inquiry_text" rows="6" />
+                            </Field>
+                        </template>
+                    </Card>
 
-                        <BandCell
-                            v-if="figures.open.value !== null"
-                            :label="$t('project.openAmount')"
-                            :sub="
-                                figures.open.proof
-                                    ? $t('project.instalments', Number(figures.open.proof))
-                                    : null
-                            "
+                    <Card
+                        v-model:editing="kontakteEditing"
+                        :title="$t('contacts.title')"
+                        :summary="kontakteSummary"
+                        editable
+                        @cancel="kontakte.reset()"
+                        @save="saveKontakte"
+                    >
+                        <div
+                            v-for="person in people"
+                            :key="person.id"
+                            class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
                         >
-                            <BandValue :warn="Number(figures.open.value ?? 0) > 0">{{
-                                euro(figures.open.value)
-                            }}</BandValue>
-                        </BandCell>
+                            <Link
+                                class="w-[168px] flex-none text-[13px] leading-[1.35] font-semibold tracking-[-0.012em] text-foreground no-underline underline-offset-[3px] hover:underline"
+                                :href="`/kontakte/${person.id}`"
+                            >
+                                {{ person.name }}
+                            </Link>
+                            <span class="rounded-[var(--r-pill)] bg-sunk-2 px-[9px] py-0.5 text-[10.5px] leading-[1.4] tracking-[0.05em] uppercase text-ink-2">
+                                {{ roleLabel(person.role) }}
+                            </span>
+                            <a v-if="person.email" class="text-[12.5px] text-action no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
+                            <a v-if="person.phone" class="ml-auto text-[12.5px] tabular-nums text-action no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
+                        </div>
 
-                        <BandCell :label="$t('project.tasks')">
-                            <BandValue plain>
-                                {{ open.length }}
-                                <span class="text-[12.5px] font-normal text-ink-2">{{
-                                    $t("project.tasksOf", { all: tasks.length })
-                                }}</span>
-                            </BandValue>
-                            <div v-if="overdue" class="mt-[3px] text-[11.5px] text-action">
-                                {{ $t("project.tasksOverdue", overdue) }}
+                        <template #edit>
+                            <datalist id="rollen">
+                                <option v-for="value in ROLE_SUGGESTIONS" :key="value" :value="value" />
+                            </datalist>
+
+                            <div
+                                v-for="(person, index) in kontakte.people"
+                                :key="person.id"
+                                class="flex items-center gap-3 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+                            >
+                                <span class="w-[168px] flex-none text-[13px] leading-[1.35] font-semibold tracking-[-0.012em]">
+                                    {{ people[index].name }}
+                                </span>
+                                <Field v-slot="{ id }" dense class="w-[168px] flex-none" :label="$t('leads.role')">
+                                    <Input :id="id" v-model="person.role" type="text" list="rollen" />
+                                </Field>
                             </div>
-                        </BandCell>
+                        </template>
+                    </Card>
 
-                        <BandCell :label="$t('project.portal')">
-                            <!-- The figure and the switch that changes it, in one cell: this
-                                 is the one key value that is a decision rather than a
-                                 derivation, so it is the one with a control. -->
-                            <BandValue plain class="flex items-center gap-3">
-                                {{
-                                    figures.portal.value === "on"
-                                        ? $t("contacts.portalOn")
-                                        : $t("contacts.portalOff")
-                                }}
-                                <span
-                                    v-if="header.canManagePortalVisibility"
-                                    class="relative h-6 w-10 flex-none cursor-pointer rounded-[var(--r-pill)] after:absolute after:top-[3px] after:left-[3px] after:size-[18px] after:rounded-full after:bg-paper after:transition-transform after:duration-[.16s] after:ease-out after:content-['']"
-                                    :class="
-                                        figures.portal.value === 'on'
-                                            ? 'bg-action after:translate-x-4'
-                                            : 'bg-sunk-2'
-                                    "
-                                    role="button"
-                                    :aria-label="$t('project.portalToggle')"
-                                    @click="togglePortal"
+                    <Card
+                        v-model:editing="datesEditing"
+                        :title="$t('lead.dates')"
+                        :summary="datesSummary"
+                        editable
+                        @cancel="dates.reset()"
+                        @save="saveDates"
+                    >
+                        <template v-if="header.canManageShoots" #action>
+                            <Button variant="outline" as-child>
+                                <Link :href="`/auftraege/${header.id}/shootings`">
+                                    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+                                    {{ $t("project.shootAdd") }}
+                                </Link>
+                            </Button>
+                        </template>
+
+                        <div class="[&>div]:py-[9px] [&>div]:shadow-none">
+                            <ShootRow v-for="shoot in shoots" :key="shoot.id" :shoot="shoot" :manageable="header.canManageShoots" />
+                        </div>
+
+                        <template #edit>
+                            <div class="max-w-[820px]">
+                                <ShootFields
+                                    v-for="shoot in dates.shoots"
+                                    :key="shoot.id"
+                                    :shoot="shoot"
                                 />
-                            </BandValue>
-                        </BandCell>
-                    </div>
+                            </div>
+                        </template>
+                    </Card>
 
-                    <div class="flex flex-col gap-3">
+                    <Card :title="$t('lead.quote')" :summary="quoteSummary" :default-open="quote !== null">
+                        <template v-if="quote" #meta>
+                            <span v-if="quote.number" class="text-[13.5px] leading-[1.2] tracking-[-0.015em] text-ink-2 tabular-nums">{{ quote.number }}</span>
+                            <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
+                        </template>
+                        <template v-if="header.canManageQuotes" #action>
+                            <Link
+                                class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
+                                :href="quote ? `/angebote/${quote.id}` : `/angebote/neu?projekt=${header.id}`"
+                            >{{ quote ? $t("common.edit") : $t("quotes.create") }}</Link>
+                        </template>
+                        <QuoteSummary
+                            v-if="quote"
+                            :quote="quote"
+                            :superseded="supersededQuotes"
+                            :valid-until-label="quote.validUntil ? $t('lead.validUntil', { date: day(quote.validUntil) }) : null"
+                        />
+                        <div v-else class="flex flex-wrap gap-2">
+                            <Link
+                                v-for="pkg in packages"
+                                :key="pkg.id"
+                                class="cursor-pointer rounded-[var(--r-pill)] border-0 bg-sunk px-[11px] py-[5px] text-[12px] leading-[1.4] font-normal text-ink-2 hover:bg-sunk-2"
+                                :href="`/auftraege/${header.id}/angebote`"
+                                method="post"
+                                as="button"
+                                :data="{ package: pkg.id }"
+                            >
+                                <b>{{ pkg.name }}</b>
+                                {{ $t("packages.itemCount", pkg.itemCount) }} ·
+                                {{ formatEurosRounded(pkg.total) }}
+                            </Link>
+                        </div>
+                    </Card>
+
+                    <Card :title="$t('project.tasks')" :summary="taskSummary" :default-open="overdue > 0">
+                        <div class="mb-1.5 flex items-center gap-2.5">
+                            <span class="inline-flex gap-0.5 rounded-[var(--r-pill)] bg-sunk-2 p-0.5">
+                                <button
+                                    class="cursor-pointer rounded-[var(--r-pill)] px-[11px] py-1 text-[11.5px] leading-none"
+                                    :class="showDone ? 'text-ink-2' : 'bg-paper font-semibold'"
+                                    type="button"
+                                    @click="showDone = false"
+                                >
+                                    {{ $t("project.tasksOpen", { count: open.length }) }}
+                                </button>
+                                <button
+                                    class="cursor-pointer rounded-[var(--r-pill)] px-[11px] py-1 text-[11.5px] leading-none"
+                                    :class="showDone ? 'bg-paper font-semibold' : 'text-ink-2'"
+                                    type="button"
+                                    @click="showDone = true"
+                                >
+                                    {{ $t("project.tasksDone", { count: done.length }) }}
+                                </button>
+                            </span>
+
+                            <TaskCreateDialog
+                                v-if="header.canManageTasks"
+                                :project-id="header.id"
+                                :shoot-options="shootOptions"
+                                :staff-options="staffOptions"
+                                :anchors="anchors ?? []"
+                            />
+                        </div>
+
+                        <div
+                            v-for="row in showDone ? done : open"
+                            :key="row.id"
+                            class="flex items-center gap-3 py-[9px]"
+                        >
+                            <span
+                                v-if="row.isDone"
+                                class="flex size-[15px] flex-none items-center justify-center rounded-[5px] bg-ok-bg text-ok"
+                            >
+                                <svg
+                                    class="size-[9px] fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:3]"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path d="M4 12l5 5L20 6" />
+                                </svg>
+                            </span>
+                            <button
+                                v-else
+                                class="size-[15px] flex-none rounded-[5px] bg-sunk-2"
+                                type="button"
+                                @click="complete(row)"
+                            />
+                            <span class="text-[13.5px] leading-[1.47]" :class="row.isDone && 'text-ink-2'">{{
+                                row.title
+                            }}</span>
+                            <span
+                                class="text-[10.5px] leading-[1.47] tracking-[0.05em] uppercase text-ink-2"
+                            >{{ row.audienceLabel }}</span>
+                            <span v-if="row.shootLabel" class="text-[11.5px] leading-[1.47] text-faint">{{
+                                row.shootLabel
+                            }}</span>
+                            <span
+                                class="ml-auto text-[12px] leading-[1.47] tabular-nums"
+                                :class="row.isOverdue && !row.isDone ? 'text-action' : 'text-ink-2'"
+                            >{{ row.dueOn ? day(row.dueOn) : "" }}</span>
+                        </div>
+                    </Card>
                     <Card
                         v-model:editing="detailsEditing"
                         :title="$t('project.details')"
@@ -403,152 +527,6 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 :fields="fields"
                             />
                         </template>
-                    </Card>
-
-                    <Card
-                        v-model:editing="kontakteEditing"
-                        :title="$t('contacts.title')"
-                        :summary="kontakteSummary"
-                        editable
-                        @cancel="kontakte.reset()"
-                        @save="saveKontakte"
-                    >
-                        <div
-                            v-for="person in people"
-                            :key="person.id"
-                            class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
-                        >
-                            <Link
-                                class="w-[168px] flex-none text-[13px] leading-[1.35] font-semibold tracking-[-0.012em] text-foreground no-underline underline-offset-[3px] hover:underline"
-                                :href="`/kontakte/${person.id}`"
-                            >
-                                {{ person.name }}
-                            </Link>
-                            <span class="rounded-[var(--r-pill)] bg-sunk-2 px-[9px] py-0.5 text-[10.5px] leading-[1.4] tracking-[0.05em] uppercase text-ink-2">
-                                {{ roleLabel(person.role) }}
-                            </span>
-                            <a v-if="person.email" class="text-[12.5px] text-action no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
-                            <a v-if="person.phone" class="ml-auto text-[12.5px] tabular-nums text-action no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
-                        </div>
-
-                        <template #edit>
-                            <datalist id="rollen">
-                                <option v-for="value in ROLE_SUGGESTIONS" :key="value" :value="value" />
-                            </datalist>
-
-                            <div
-                                v-for="(person, index) in kontakte.people"
-                                :key="person.id"
-                                class="flex items-center gap-3 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
-                            >
-                                <span class="w-[168px] flex-none text-[13px] leading-[1.35] font-semibold tracking-[-0.012em]">
-                                    {{ people[index].name }}
-                                </span>
-                                <Field v-slot="{ id }" dense class="w-[168px] flex-none" :label="$t('leads.role')">
-                                    <Input :id="id" v-model="person.role" type="text" list="rollen" />
-                                </Field>
-                            </div>
-                        </template>
-                    </Card>
-
-                    <Card
-                        v-model:editing="datesEditing"
-                        :title="$t('lead.dates')"
-                        :summary="datesSummary"
-                        editable
-                        @cancel="dates.reset()"
-                        @save="saveDates"
-                    >
-                        <template v-if="header.canManageShoots" #action>
-                            <Button variant="outline" as-child>
-                                <Link :href="`/auftraege/${header.id}/shootings`">
-                                    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
-                                    {{ $t("project.shootAdd") }}
-                                </Link>
-                            </Button>
-                        </template>
-
-                        <div class="[&>div]:py-[9px] [&>div]:shadow-none">
-                            <ShootRow v-for="shoot in shoots" :key="shoot.id" :shoot="shoot" />
-                        </div>
-
-                        <template #edit>
-                            <div class="max-w-[820px]">
-                                <ShootFields
-                                    v-for="shoot in dates.shoots"
-                                    :key="shoot.id"
-                                    :shoot="shoot"
-                                />
-                            </div>
-                        </template>
-                    </Card>
-
-                    <Card :title="$t('project.tasks')" :summary="taskSummary" :default-open="false">
-                        <div class="mb-1.5 flex items-center gap-2.5">
-                            <span class="inline-flex gap-0.5 rounded-[var(--r-pill)] bg-sunk-2 p-0.5">
-                                <button
-                                    class="cursor-pointer rounded-[var(--r-pill)] px-[11px] py-1 text-[11.5px] leading-none"
-                                    :class="showDone ? 'text-ink-2' : 'bg-paper font-semibold'"
-                                    type="button"
-                                    @click="showDone = false"
-                                >
-                                    {{ $t("project.tasksOpen", { count: open.length }) }}
-                                </button>
-                                <button
-                                    class="cursor-pointer rounded-[var(--r-pill)] px-[11px] py-1 text-[11.5px] leading-none"
-                                    :class="showDone ? 'bg-paper font-semibold' : 'text-ink-2'"
-                                    type="button"
-                                    @click="showDone = true"
-                                >
-                                    {{ $t("project.tasksDone", { count: done.length }) }}
-                                </button>
-                            </span>
-
-                            <TaskCreateDialog
-                                v-if="header.canManageTasks"
-                                :project-id="header.id"
-                                :shoot-options="shootOptions"
-                                :staff-options="staffOptions"
-                                :anchors="anchors ?? []"
-                            />
-                        </div>
-
-                        <div
-                            v-for="row in showDone ? done : open"
-                            :key="row.id"
-                            class="flex items-center gap-3 py-[9px]"
-                        >
-                            <span
-                                v-if="row.isDone"
-                                class="flex size-[15px] flex-none items-center justify-center rounded-[5px] bg-ok-bg text-ok"
-                            >
-                                <svg
-                                    class="size-[9px] fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:3]"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path d="M4 12l5 5L20 6" />
-                                </svg>
-                            </span>
-                            <button
-                                v-else
-                                class="size-[15px] flex-none rounded-[5px] bg-sunk-2"
-                                type="button"
-                                @click="complete(row)"
-                            />
-                            <span class="text-[13.5px] leading-[1.47]" :class="row.isDone && 'text-ink-2'">{{
-                                row.title
-                            }}</span>
-                            <span
-                                class="text-[10.5px] leading-[1.47] tracking-[0.05em] uppercase text-ink-2"
-                            >{{ row.audienceLabel }}</span>
-                            <span v-if="row.shootLabel" class="text-[11.5px] leading-[1.47] text-faint">{{
-                                row.shootLabel
-                            }}</span>
-                            <span
-                                class="ml-auto text-[12px] leading-[1.47] tabular-nums"
-                                :class="row.isOverdue && !row.isDone ? 'text-action' : 'text-ink-2'"
-                            >{{ row.dueOn ? day(row.dueOn) : "" }}</span>
-                        </div>
                     </Card>
                     </div>
 

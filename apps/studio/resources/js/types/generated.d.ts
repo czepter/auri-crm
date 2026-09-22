@@ -62,6 +62,7 @@ portalHasImage: boolean,
 price: number | null,
 requestedCount: number,
 bookedCount: number,
+showcaseCount: number,
 };
 export type PackageItemData = {
 id: string,
@@ -195,8 +196,6 @@ id: string,
 userId: string,
 name: string,
 initials: string,
-role: string,
-roleLabel: string,
 };
 export type DateConflictData = {
 source: string,
@@ -411,6 +410,8 @@ open: boolean,
 export type ProjectRowData = {
 id: string,
 name: string,
+type: string,
+typeKey: string,
 date: string | null,
 venue: string | null,
 position: string,
@@ -419,6 +420,8 @@ phase: string,
 contact: string | null,
 openTasks: number,
 taskCount: number,
+value: number | null,
+lastAt: string | null,
 };
 export type ProjectSuggestionData = {
 id: string,
@@ -463,8 +466,8 @@ crewConflicts: App.Crm.Data.DateConflictData[],
 };
 export type TaskRowData = {
 id: string,
-projectId: string,
-projectName: string,
+projectId: string | null,
+projectName: string | null,
 title: string,
 dueOn: string | null,
 isOverdue: boolean,
@@ -479,6 +482,8 @@ completedOn: string | null,
 dueAnchorLabel: string | null,
 assigneeId: string | null,
 assigneeName: string | null,
+contactId: string | null,
+contactName: string | null,
 };
 export type TaskTemplateData = {
 id: string,
@@ -515,7 +520,6 @@ isTransit: boolean,
 namespace Enums {
 export type BookedVia = 'manual' | 'contract';
 export type CaptureChannel = 'phone' | 'email' | 'in_person' | 'web_form' | 'portal' | 'other';
-export type CrewRole = 'lead_photographer' | 'second_shooter' | 'assistant';
 export type DueAnchor = 'stage' | 'shoot';
 export type FormFieldType = 'text' | 'short_text' | 'boolean' | 'select' | 'date' | 'time' | 'name_list' | 'group_photos' | 'file';
 export type LeadOutcome = 'lost' | 'declined' | 'closed';
@@ -661,7 +665,6 @@ id: string,
 shootId: string,
 userId: string,
 userName: string,
-role: string,
 };
 export type GalleryDetailData = {
 id: string,
@@ -819,7 +822,8 @@ depositPercentage: number,
 };
 export type TaskReadData = {
 id: string,
-projectId: string,
+projectId: string | null,
+contactId: string | null,
 title: string,
 audience: string,
 dueOn: string | null,
@@ -1008,6 +1012,7 @@ recipientStreet: string | null,
 recipientPostcode: string | null,
 recipientCity: string | null,
 portalUrl: string | null,
+showcaseCount: number,
 };
 export type QuoteItemData = {
 id: string,
@@ -1077,19 +1082,17 @@ stripeEnabled: boolean,
 stripeMode: string,
 hasStripeTestKeys: boolean,
 hasStripeLiveKeys: boolean,
-remindersEnabled: boolean,
-depositPercent: number,
-zahlungszielDays: number,
 };
 export type PortalSettingsData = {
 id: string,
 maintenanceEnabled: boolean,
 maintenanceMessage: string | null,
-welcomeText: string | null,
 datenschutzUrl: string | null,
 agbUrl: string | null,
 impressumUrl: string | null,
 widerrufUrl: string | null,
+agbAttach: boolean,
+widerrufAttach: boolean,
 legalFamilies: Record<string, string | null>,
 acceptQuotesEnabled: boolean,
 signContractsEnabled: boolean,
@@ -1098,18 +1101,42 @@ offersEnabled: boolean,
 messagingMode: string,
 clientRegister: string,
 welcomeInquiry: string | null,
-welcomeMany: string | null,
-dsgvoRecipient: string | null,
-dsgvoDeadlineDays: number,
+welcomeActive: string | null,
+welcomeDone: string | null,
+contactName: string | null,
+contactAvatarUrl: string | null,
 contactPhone: string | null,
 contactEmail: string | null,
 contactResponseTime: string | null,
+};
+export type RetentionCandidateData = {
+id: string,
+name: string,
+type: string,
+text: string | null,
+outcome: string,
+outcomeLabel: string,
+idleMonths: number,
+invoiced: boolean,
+leads: number,
+messages: number,
+offers: number,
+galleries: number,
+};
+export type RetentionPolicyData = {
+name: boolean,
+text: boolean,
+messages: boolean,
+offers: boolean,
+galleries: boolean,
+order: boolean,
 };
 export type StudioClosureData = {
 id: string,
 label: string,
 startsOn: string,
 endsOn: string,
+message: string | null,
 };
 export type StudioSettingsData = {
 id: string,
@@ -1129,7 +1156,6 @@ website: string | null,
 accentColor: string | null,
 fontPair: string | null,
 logoUrl: string | null,
-showcaseUrls: string[],
 bankAccountHolder: string | null,
 bankIban: string | null,
 bankBic: string | null,
@@ -1139,14 +1165,12 @@ vatNote: string | null,
 quoteValidityDays: number,
 paymentTermDays: number,
 depositPercentage: number,
-widerrufIncluded: boolean,
-widerrufText: string | null,
-quoteLayout: string,
+documentLayout: string,
+remindersEnabled: boolean,
 clientRegister: string,
 documentLetterheadHtml: string | null,
 documentFooterHtml: string | null,
 timezone: string,
-locale: string,
 workingDays: number[],
 mailFromName: string,
 mailFromAddress: string,
@@ -1154,13 +1178,11 @@ mailReplyTo: string | null,
 mailSignature: string | null,
 mailBcc: string | null,
 mailClientsEnabled: boolean,
-leadTypePresets: string[],
-leadSourcePresets: string[],
-leadChannelPresets: string[],
 };
 }
 namespace Enums {
 export type FontPair = 'hanken' | 'fraunces' | 'cormorant' | 'grotesk';
+export type StudioExportKind = 'daten' | 'galerie';
 }
 }
 }

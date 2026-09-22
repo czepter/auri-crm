@@ -114,7 +114,7 @@ const meta = {
     title: 'Bildschirme/Anfragen',
     component: Board,
     parameters: { layout: 'fullscreen', url: '/anfragen' },
-    args: { columns, groups, queue, view: 'board', stageSettings: null, workflow: null },
+    args: { columns, groups, queue, view: 'board', stageSettings: null, settingsSelection: null, returnTo: null, workflow: null },
 } satisfies Meta<typeof Board>
 
 export default meta

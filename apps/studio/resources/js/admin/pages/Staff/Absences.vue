@@ -18,7 +18,7 @@ const props = defineProps<{
 }>()
 
 // One form per row, keyed by its id — an independent draft per row, the same
-// pattern Settings/Availability.vue's closures editor already uses.
+// pattern Closures/Index.vue's rows use.
 const rowForms = Object.fromEntries(
   props.absences.map((absence) => [
     absence.id,

@@ -1,6 +1,6 @@
 ---
 titel: Benachrichtigungen — Begriffe und Regeln
-beschreibung: Was die vier Zustellwege bedeuten, wer ein Ereignis überhaupt erfährt und was die Ruhezeit aufhält.
+beschreibung: Was die vier Zustellwege bedeuten, und wer ein Ereignis überhaupt erfährt.
 art: referenz
 screens: [notifications.index]
 ---
@@ -32,15 +32,10 @@ eingeteilt, das ganze Studio — sonst erführe eine unbesetzte Anfrage niemand.
 Bei einer Aufgabe: die zuständige Person, wenn eine eingetragen ist, sonst
 dieselbe Runde wie beim Auftrag.
 
-## Ruhezeit
-
-Fällt eine Benachrichtigung mit Mail in dein Ruhefenster, wartet sie
-vollständig — Mail und Eintrag zusammen — und geht raus, wenn das Fenster
-öffnet. Das Fenster darf über Mitternacht laufen; es steht mit der Zeitzone
-des Studios unter Einstellungen.
+## Was nie ausbleibt
 
 Was zum Ablauf eines Vorgangs gehört, etwa eine Einladung oder eine
-Adressbestätigung, hält weder die Ruhezeit noch eine Einstellung auf.
+Adressbestätigung, hält keine Einstellung auf.
 
 ## Diese Liste
 

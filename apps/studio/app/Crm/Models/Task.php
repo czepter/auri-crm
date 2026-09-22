@@ -26,6 +26,7 @@ class Task extends Model
 
     protected $fillable = [
         'project_id',
+        'contact_id',
         'shoot_id',
         'title',
         'audience',
@@ -93,6 +94,11 @@ class Task extends Model
         return $this->belongsTo(Project::class);
     }
 
+    public function contact(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class);
+    }
+
     public function shoot(): BelongsTo
     {
         return $this->belongsTo(Shoot::class);
@@ -117,6 +123,22 @@ class Task extends Model
     public function scopeOpen(Builder $query): void
     {
         $query->whereNull('completed_at');
+    }
+
+    /** Studio tasks belong to no project and are every staff member's to see. */
+    public function scopeVisibleTo(Builder $query, User $viewer): void
+    {
+        $query->where(fn (Builder $query) => $query
+            ->whereNull('project_id')
+            ->orWhereIn('project_id', Project::query()->visibleTo($viewer)->select('projects.id')));
+    }
+
+    /** What a notification names the task by: its project, its contact, or nothing. */
+    public function summary(): string
+    {
+        $subject = $this->project?->name ?? $this->contact?->name;
+
+        return $subject === null ? $this->title : "{$subject} — {$this->title}";
     }
 
     /** Undated tasks sort last: they are owed, but not owed on any given day. */

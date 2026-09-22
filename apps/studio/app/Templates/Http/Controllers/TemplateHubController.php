@@ -108,13 +108,15 @@ class TemplateHubController extends Controller
      *
      * @return list<string>
      */
-    private function allowedKinds(): array
+    public function allowedKinds(): array
     {
+        $staff = auth('staff')->user();
+        $gate = Gate::forUser($staff);
         $checks = [
-            'aufgaben' => Gate::allows('viewAny', TaskTemplate::class),
-            'fragebogen' => Gate::allows('viewAny', FormTemplate::class),
-            'dokumente' => Gate::allows('viewAny', DocumentTemplate::class),
-            'galerien' => auth('staff')->user()?->role->allows(Capability::ManageSettings) ?? false,
+            'aufgaben' => $gate->allows('viewAny', TaskTemplate::class),
+            'fragebogen' => $gate->allows('viewAny', FormTemplate::class),
+            'dokumente' => $gate->allows('viewAny', DocumentTemplate::class),
+            'galerien' => $staff?->role->allows(Capability::ManageSettings) ?? false,
         ];
 
         return array_keys(array_filter($checks));

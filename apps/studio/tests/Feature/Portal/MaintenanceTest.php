@@ -111,7 +111,7 @@ it('leaves the admin surface untouched by the portal maintenance switch', functi
     useSurface(Surface::ADMIN);
 
     $owner = staffMember(\App\Enums\StaffRole::Owner);
-    $page = $this->actingAs($owner, 'staff')->get('/einstellungen')->assertOk()->viewData('page');
+    $page = $this->actingAs($owner, 'staff')->get('/einstellungen/allgemein')->assertOk()->viewData('page');
 
     expect($page['component'])->toBe('Settings/Index');
 });

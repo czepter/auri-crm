@@ -1,173 +1,108 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Link, useForm, usePage } from '@inertiajs/vue3'
+import { useObjectUrl } from '@vueuse/core'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import SettingsNav from '@/admin/components/SettingsNav.vue'
 import ProfileForm from './panes/ProfileForm.vue'
 import VatForm from './panes/VatForm.vue'
-import DocumentsForm from './panes/DocumentsForm.vue'
+import PaymentForm from './panes/PaymentForm.vue'
+import ReceiptsForm from './panes/ReceiptsForm.vue'
 import EmailForm from './panes/EmailForm.vue'
-import BrandPreview from './previews/BrandPreview.vue'
+import PortalFrame from './previews/PortalFrame.vue'
 import DocumentPreview from './previews/DocumentPreview.vue'
 import MailPreview from './previews/MailPreview.vue'
-import { basisPointsToPercent } from '@/admin/lib/money'
 import { Button } from '@/ui/button'
-import { Input } from '@/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
-import { Checkbox } from '@/ui/checkbox'
-import { Textarea } from '@/ui/textarea'
-import { Label } from '@/ui/label'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 
 const props = defineProps<{
-
+  pane: 'payment' | 'receipts' | 'email' | 'general'
   fontPairs: { value: string; label: string; description: string }[]
   mailSenderFromEnv: { name: boolean; address: boolean }
   settings: App.Settings.Data.StudioSettingsData
 }>()
 
-// Which pane of the section shell is showing. In the query rather than in a
-// ref, because SettingsNav reaches these four from the sibling settings
-// screens too — a pane only this component could switch to was a pane those
-// screens had to render as "bald".
-// The studio profile is one form split over three nav entries, so each of
-// them is its own pane and ProfileForm renders only that section.
-const PROFILE_SECTIONS = ['brand', 'legal', 'bank'] as const
-const PANES = [...PROFILE_SECTIONS, 'vat', 'documents', 'email', 'capture', 'general'] as const
-
-const page = usePage()
-
-const pane = computed(() => {
-  const asked = new URL(page.url, 'http://settings').searchParams.get('pane')
-
-  return PANES.find((known) => known === asked) ?? 'brand'
-})
-
-const profileSection = computed(() => PROFILE_SECTIONS.find((section) => section === pane.value))
-
-// Mo..So, ISO weekday order — matches the integers StudioSettingsController
-// validates working_days.* against and TaskTemplate::dueFor() rolls over.
-const weekdays = [
-  { value: 1, key: 'settings.dayMon' },
-  { value: 2, key: 'settings.dayTue' },
-  { value: 3, key: 'settings.dayWed' },
-  { value: 4, key: 'settings.dayThu' },
-  { value: 5, key: 'settings.dayFri' },
-  { value: 6, key: 'settings.daySat' },
-  { value: 7, key: 'settings.daySun' },
-] as const
-
-// working_days travels the form as the array of ISO weekday integers
-// StudioSettingsController validates directly — no bitmask, no translation
-// at the wire boundary, same as every other field here.
-const generalForm = useForm({
-  timezone: props.settings.timezone,
-  locale: props.settings.locale,
-  working_days: [...props.settings.workingDays] as number[],
-})
-
-// The three suggestion lists the "Sonstige" fields at capture offer, one
-// entry per line — the list is short and typed rarely, so a textarea beats a
-// tag editor nobody asked for.
-const captureForm = useForm({
-  lead_type_presets: props.settings.leadTypePresets.join('\n'),
-  lead_source_presets: props.settings.leadSourcePresets.join('\n'),
-  lead_channel_presets: props.settings.leadChannelPresets.join('\n'),
-})
-
-function lines(value: string) {
-  return value.split('\n').map((line) => line.trim()).filter(Boolean)
-}
-
-function submitCapture() {
-  captureForm
-    .transform((data) => ({
-      lead_type_presets: lines(data.lead_type_presets),
-      lead_source_presets: lines(data.lead_source_presets),
-      lead_channel_presets: lines(data.lead_channel_presets),
-    }))
-    .patch('/einstellungen/erfassung', { preserveScroll: true })
-}
-
-// Template refs onto the four extracted panes — each exposes { form, submit }
-// (see panes/ProfileForm.vue and its siblings). Only one is ever mounted at a
-// time (v-if/v-else-if below), so only one of these is non-null at once.
+// Template refs onto the extracted panes — each exposes { form, submit }
+// (see panes/ProfileForm.vue and its siblings). Only the panes of the current
+// page are mounted (v-if/v-else-if below).
 const profileRef = ref<InstanceType<typeof ProfileForm>>()
 const vatRef = ref<InstanceType<typeof VatForm>>()
-const documentsRef = ref<InstanceType<typeof DocumentsForm>>()
+const paymentRef = ref<InstanceType<typeof PaymentForm>>()
+const receiptsRef = ref<InstanceType<typeof ReceiptsForm>>()
 const emailRef = ref<InstanceType<typeof EmailForm>>()
 
 // isDirty is Inertia's own useForm computed, comparing current values to the
 // defaults the form was built with — not a bespoke computed re-implementing
 // that comparison, the same thing Packages/Edit.vue and Projects/Quotes.vue
 // would reach for too if either needed a dirty state.
-const activeForm = computed(() => {
-  if (pane.value === 'vat') return vatRef.value?.form
-  if (pane.value === 'documents') return documentsRef.value?.form
-  if (pane.value === 'email') return emailRef.value?.form
-  if (pane.value === 'capture') return captureForm
-  if (pane.value === 'general') return generalForm
-  return profileRef.value?.form
+// Allgemein und Zahlung zeigen zwei Formulare — Stammdaten und Bankverbindung
+// schreiben nach /einstellungen, die Umsatzsteuer nach /einstellungen/ust und
+// die Fristen nach /einstellungen/zahlung. Der Kopf speichert deshalb, was
+// schmutzig ist, statt ein einzelnes form-Attribut zu tragen.
+const activePanes = computed(() => {
+  if (props.pane === 'general') return [profileRef.value, vatRef.value]
+  if (props.pane === 'payment') return [profileRef.value, paymentRef.value]
+  if (props.pane === 'receipts') return [receiptsRef.value]
+  return [emailRef.value]
 })
 
-const formId = computed(() => {
-  if (pane.value === 'vat') return 'vat-form'
-  if (pane.value === 'documents') return 'documents-form'
-  if (pane.value === 'email') return 'mail-form'
-  if (pane.value === 'capture') return 'capture-form'
-  if (pane.value === 'general') return 'general-form'
-  return 'settings-form'
-})
+const dirty = computed(() => activePanes.value.some((entry) => entry?.form.isDirty))
+const processing = computed(() => activePanes.value.some((entry) => entry?.form.processing))
+
+function saveDirty() {
+  activePanes.value.filter((entry) => entry?.form.isDirty).forEach((entry) => entry!.submit())
+}
+
+// Eine andere Anrede fragt vor dem Speichern, ob Vorlagen und Automationen
+// mitziehen. Gibt es nichts umzustellen, wird ohne Frage gespeichert.
+const register = ref<{ adapted: number; skipped: number } | null>(null)
+
+async function save() {
+  const profile = profileRef.value?.form
+
+  if (props.pane !== 'general' || !profile || profile.client_register === props.settings.clientRegister) return saveDirty()
+
+  const response = await fetch(`/einstellungen/anrede-vorschau?ziel=${profile.client_register}`, { headers: { Accept: 'application/json' } })
+  const counts = response.ok ? await response.json() : null
+
+  if (counts?.adapted > 0) register.value = counts
+  else saveDirty()
+}
+
+function saveWithRegister(adapt: boolean) {
+  if (profileRef.value) profileRef.value.adaptExisting = adapt
+  register.value = null
+  saveDirty()
+}
 
 const paneTitle = computed(() => {
-  if (pane.value === 'vat') return 'settings.vatTitle'
-  if (pane.value === 'documents') return 'settings.documentsTitle'
-  if (pane.value === 'email') return 'settings.mailTitle'
-  if (pane.value === 'capture') return 'settings.captureTitle'
-  if (pane.value === 'general') return 'settings.generalTitle'
-  if (pane.value === 'legal') return 'settings.legalEntity'
-  if (pane.value === 'bank') return 'settings.bank'
-  return 'settings.brand'
+  if (props.pane === 'payment') return 'settings.navPayment'
+  if (props.pane === 'receipts') return 'settings.documentsTitle'
+  if (props.pane === 'email') return 'settings.mailTitle'
+  return 'settings.generalTitle'
 })
 
-// The sample sheet Rechtliches, Bankverbindung, Zahlungsdaten & USt and
-// Dokumente share: saved settings underneath, whatever the mounted form holds
-// on top, so the field being typed is the one moving in the preview. Only one
-// pane is mounted at a time, so at most one of the three refs contributes.
-const DOCUMENT_PANES = ['legal', 'bank', 'vat', 'documents']
+// The sample sheet Zahlung and Belege share: the saved layout underneath,
+// whatever the mounted form holds on top.
+const DOCUMENT_PANES = ['payment', 'receipts']
 
-const documentPreview = computed(() => {
-  const profile = profileRef.value?.form
-  const vat = vatRef.value?.form
-  const documents = documentsRef.value?.form
+const documentPreview = computed(() => ({
+  documentLayout: receiptsRef.value?.form.document_layout ?? props.settings.documentLayout,
+}))
 
-  return {
-    displayName: props.settings.displayName ?? '',
-    logoUrl: props.settings.logoUrl,
-    fontPair: props.settings.fontPair ?? 'hanken',
-    accentColor: props.settings.accentColor,
-    legalName: profile?.legal_name ?? props.settings.legalName ?? '',
-    legalForm: profile?.legal_form ?? props.settings.legalForm ?? '',
-    street: profile?.street ?? props.settings.street ?? '',
-    postcode: profile?.postcode ?? props.settings.postcode ?? '',
-    city: profile?.city ?? props.settings.city ?? '',
-    representative: profile?.representative ?? props.settings.representative ?? '',
-    taxNumber: profile?.tax_number ?? props.settings.taxNumber ?? '',
-    vatId: profile?.vat_id ?? props.settings.vatId ?? '',
-    registerNumber: profile?.register_number ?? props.settings.registerNumber ?? '',
-    registerCourt: profile?.register_court ?? props.settings.registerCourt ?? '',
-    bankAccountHolder: profile?.bank_account_holder ?? props.settings.bankAccountHolder ?? '',
-    bankIban: profile?.bank_iban ?? props.settings.bankIban ?? '',
-    bankBic: profile?.bank_bic ?? props.settings.bankBic ?? '',
-    vatMode: vat?.vat_mode ?? props.settings.vatMode,
-    vatRate: vat?.vat_rate ?? basisPointsToPercent(props.settings.vatRate),
-    quoteValidityDays: documents?.quote_validity_days ?? props.settings.quoteValidityDays,
-    paymentTermDays: documents?.payment_term_days ?? props.settings.paymentTermDays,
-    depositPercentage: documents?.deposit_percentage ?? basisPointsToPercent(props.settings.depositPercentage),
-    widerrufIncluded: documents?.widerruf_included ?? props.settings.widerrufIncluded,
-    quoteLayout: documents?.quote_layout ?? props.settings.quoteLayout,
-  }
+// Was das Portal an Marke zeigt, wie es im Formular steht.
+const logoPicked = useObjectUrl(computed(() => profileRef.value?.form.logo ?? undefined))
+const brandQuery = computed(() => {
+  const form = profileRef.value?.form
+
+  return Object.fromEntries(Object.entries({
+    name: form?.display_name,
+    akzent: form?.accent_color,
+    schrift: form?.font_pair,
+    logo: logoPicked.value,
+    adresse: [form?.street, [form?.postcode, form?.city].filter(Boolean).join(' ')].filter(Boolean).join(', '),
+  }).filter(([, value]) => value !== undefined && value !== null)) as Record<string, string>
 })
 
 const mailPreview = computed(() => {
@@ -181,21 +116,6 @@ const mailPreview = computed(() => {
     signature: mail?.mail_signature ?? props.settings.mailSignature ?? '',
   }
 })
-
-function toggleWorkingDay(day: number) {
-  const days = generalForm.working_days
-  generalForm.working_days = days.includes(day) ? days.filter((d) => d !== day) : [...days, day].sort()
-}
-
-function submitGeneral() {
-  generalForm
-    .transform((data) => ({
-      timezone: data.timezone || null,
-      locale: data.locale || null,
-      working_days: data.working_days,
-    }))
-    .patch('/einstellungen/allgemein', { preserveScroll: true })
-}
 </script>
 
 <template>
@@ -203,14 +123,14 @@ function submitGeneral() {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('settings.kicker')" :title="$t(paneTitle)">
-          <span v-if="activeForm?.isDirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due">{{ $t('settings.unsaved') }}</span>
+          <span v-if="dirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due">{{ $t('settings.unsaved') }}</span>
           <Button
-            v-if="activeForm?.isDirty"
+            v-if="dirty"
             class="ml-auto"
             variant="pill"
-            type="submit"
-            :form="formId"
-            :disabled="activeForm?.processing"
+            type="button"
+            :disabled="processing"
+            @click="save"
           >
             {{ $t('common.save') }}
           </Button>
@@ -221,101 +141,46 @@ function submitGeneral() {
             <SettingsNav :active="pane" />
 
             <div class="max-w-[620px] min-w-0 flex-1">
-              <ProfileForm v-if="profileSection" ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="profileSection === 'legal' ? ['legal', 'tax'] : [profileSection]" />
-              <VatForm v-else-if="pane === 'vat'" ref="vatRef" :settings="settings" />
-              <DocumentsForm v-else-if="pane === 'documents'" ref="documentsRef" :settings="settings" />
+              <template v-if="pane === 'general'">
+                <ProfileForm ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="['brand', 'legal', 'general', 'tax']" />
+                <VatForm ref="vatRef" :settings="settings" />
+              </template>
+
+              <template v-else-if="pane === 'payment'">
+                <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.bank') }}</div>
+                <ProfileForm ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="['bank']" />
+                <div class="mt-8">
+                  <PaymentForm ref="paymentRef" :settings="settings" />
+                </div>
+              </template>
+
+              <ReceiptsForm v-else-if="pane === 'receipts'" ref="receiptsRef" :settings="settings" />
               <EmailForm v-else-if="pane === 'email'" ref="emailRef" :settings="settings" :sender-from-env="mailSenderFromEnv" />
 
-              <form v-else-if="pane === 'capture'" id="capture-form" @submit.prevent="submitCapture">
-                <div>
-                  <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.capturePresetsLabel') }}</div>
-                  <div class="mb-6">
-                    <div class="flex min-w-0 flex-col gap-1.5">
-                      <Label for="c-typ">{{ $t('leads.type') }}</Label>
-                      <Textarea id="c-typ" v-model="captureForm.lead_type_presets" rows="4" />
-                    </div>
-                    <div class="mt-4 flex min-w-0 flex-col gap-1.5">
-                      <Label for="c-quelle">{{ $t('leads.source') }}</Label>
-                      <Textarea id="c-quelle" v-model="captureForm.lead_source_presets" rows="4" />
-                    </div>
-                    <div class="mt-4 flex min-w-0 flex-col gap-1.5">
-                      <Label for="c-kanal">{{ $t('leads.capturedVia') }}</Label>
-                      <Textarea id="c-kanal" v-model="captureForm.lead_channel_presets" rows="4" />
-                    </div>
-                    <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('settings.capturePresetsHint') }}</span>
-                  </div>
-                </div>
-              </form>
-
-              <form v-else id="general-form" @submit.prevent="submitGeneral">
-                <div>
-                  <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.timezoneLocaleLabel') }}</div>
-                  <div class="mb-6">
-                    <div class="grid grid-cols-2 gap-4">
-                      <div class="flex min-w-0 flex-col gap-1.5">
-                        <Label for="g-zeitzone">{{ $t('settings.timezoneLabel') }}</Label>
-                        <Input id="g-zeitzone" v-model="generalForm.timezone" type="text" placeholder="Europe/Berlin" />
-                        <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('settings.timezoneHint') }}</span>
-                        <p v-if="generalForm.errors.timezone" class="text-[11.5px] leading-[1.45] text-destructive">{{ generalForm.errors.timezone }}</p>
-                      </div>
-                      <div class="flex min-w-0 flex-col gap-1.5">
-                        <Label for="g-sprache">{{ $t('settings.localeLabel') }}</Label>
-                        <Select
-                          :model-value="generalForm.locale"
-                          @update:model-value="(value) => (generalForm.locale = String(value))"
-                        >
-                          <SelectTrigger id="g-sprache">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="de">{{ $t('settings.localeDe') }}</SelectItem>
-                            <SelectItem value="de_DE">{{ $t('settings.localeDeDe') }}</SelectItem>
-                            <SelectItem value="de_AT">{{ $t('settings.localeDeAt') }}</SelectItem>
-                            <SelectItem value="de_CH">{{ $t('settings.localeDeCh') }}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <p v-if="generalForm.errors.locale" class="text-[11.5px] leading-[1.45] text-destructive">{{ generalForm.errors.locale }}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="mt-8 first-of-type:mt-6">
-                  <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.workingDaysLabel') }}</div>
-                  <div class="mb-6">
-                    <div class="flex flex-wrap gap-4">
-                      <div v-for="day in weekdays" :key="day.value" class="flex items-center gap-2">
-                        <Checkbox
-                          :id="`wd-${day.value}`"
-                          :model-value="generalForm.working_days.includes(day.value)"
-                          @update:model-value="toggleWorkingDay(day.value)"
-                        />
-                        <Label :for="`wd-${day.value}`">{{ $t(day.key) }}</Label>
-                      </div>
-                    </div>
-                    <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('settings.workingDaysHint') }}</span>
-                    <p v-if="generalForm.errors.working_days" class="text-[11.5px] leading-[1.45] text-destructive">{{ generalForm.errors.working_days }}</p>
-                  </div>
-                </div>
-              </form>
             </div>
 
-            <BrandPreview
-              v-if="pane === 'brand' && profileRef"
-              :display-name="profileRef.form.display_name"
-              :website="profileRef.form.website"
-              :accent-color="profileRef.form.accent_color"
-              :font-pair="profileRef.form.font_pair"
-              :logo-file="profileRef.form.logo"
-              :logo-url="settings.logoUrl"
-            />
+            <PortalFrame v-if="pane === 'general' && profileRef" :query="brandQuery" />
             <DocumentPreview v-else-if="DOCUMENT_PANES.includes(pane)" :doc="documentPreview" />
             <MailPreview v-else-if="pane === 'email'" :mail="mailPreview" />
           </div>
-
-          <Link href="/hilfe" class="mt-6 inline-block text-[13px] text-ink-2 underline">{{ $t('help.title') }}</Link>
         </div>
       </div>
     </Page>
+
+    <Dialog :open="register !== null" @update:open="(value) => value || (register = null)">
+      <DialogContent class="max-w-[440px]">
+        <DialogHeader>
+          <DialogTitle>{{ $t('settings.registerAdaptTitle') }}</DialogTitle>
+          <DialogDescription>
+            {{ $t('settings.registerAdaptBody', { adapted: register?.adapted, target: $t(profileRef?.form.client_register === 'informal' ? 'settings.clientRegisterInformal' : 'settings.clientRegisterFormal') }) }}
+            <template v-if="register?.skipped">{{ $t('settings.registerAdaptSkipped', { skipped: register.skipped }) }}</template>
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter class="justify-end">
+          <Button variant="outline" type="button" @click="saveWithRegister(false)">{{ $t('settings.registerAdaptNo') }}</Button>
+          <Button type="button" @click="saveWithRegister(true)">{{ $t('settings.registerAdaptYes') }}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </AdminLayout>
 </template>

@@ -6,7 +6,9 @@ import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import DocumentEditor from '@/admin/components/DocumentEditor.vue'
 import DocumentPreviewPane from '@/admin/components/DocumentPreviewPane.vue'
+import { PreviewOverlay } from '@/ui/preview-overlay'
 import { Button } from '@/ui/button'
+import { ChoiceGroup } from '@/ui/choice-group'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
@@ -107,14 +109,10 @@ function submit() {
           <p v-if="form.errors.body" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.body }}</p>
 
           <div class="mt-4 flex gap-6">
-            <div class="flex min-w-0 flex-col gap-1.5 max-w-[240px]">
-              <Label for="type">{{ $t('documentTemplates.type') }}</Label>
-              <Select :model-value="form.type" @update:model-value="(value) => (form.type = String(value))">
-                <SelectTrigger id="type"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem v-for="option in types" :key="option.value" :value="option.value">{{ option.label }}</SelectItem>
-                </SelectContent>
-              </Select>
+            <!-- Sechs feste Werte, einmal gewählt: nebeneinander sind sie
+                 schneller getroffen als ein Menü geöffnet ist. -->
+            <div class="flex min-w-0 flex-col gap-1.5">
+              <ChoiceGroup v-model="form.type" :label="$t('documentTemplates.type')" :options="types" />
               <p v-if="form.errors.type" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.type }}</p>
             </div>
             <div v-if="chosen !== null" class="flex min-w-0 flex-col gap-1.5 max-w-[240px]">
@@ -193,18 +191,20 @@ function submit() {
               class="flex cursor-col-resize items-center justify-center before:block before:h-full before:w-px before:bg-border before:content-[''] max-[1100px]:hidden"
             />
 
-            <DocumentPreviewPane :type="form.type" :doc="doc" :samples="samples" :project="project">
-              <Select
-                :model-value="toOption(project)"
-                @update:model-value="(value) => project = fromOption(value) || null"
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem :value="NONE">{{ $t('documentTemplates.previewSamples') }}</SelectItem>
-                  <SelectItem v-for="option in projects" :key="option.id" :value="option.id">{{ option.name }}</SelectItem>
-                </SelectContent>
-              </Select>
-            </DocumentPreviewPane>
+            <PreviewOverlay :min="1101" :label="$t('common.preview')" wrapper-class="contents">
+              <DocumentPreviewPane :type="form.type" :doc="doc" :samples="samples" :project="project">
+                <Select
+                  :model-value="toOption(project)"
+                  @update:model-value="(value) => project = fromOption(value) || null"
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem :value="NONE">{{ $t('documentTemplates.previewSamples') }}</SelectItem>
+                    <SelectItem v-for="option in projects" :key="option.id" :value="option.id">{{ option.name }}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </DocumentPreviewPane>
+            </PreviewOverlay>
           </div>
         </div>
       </div>

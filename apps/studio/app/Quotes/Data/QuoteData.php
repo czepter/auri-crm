@@ -83,6 +83,9 @@ class QuoteData extends Data
         // config('portal.url') statt route(), die Route existiert im
         // Admin-Prozess nicht.
         public ?string $portalUrl = null,
+        // Q-10: die Bilder des Reglerrasters liegen am Angebot; die Zahl
+        // reicht, jede Kachel holt ihres über ihren Index.
+        public int $showcaseCount = 0,
     ) {}
 
     public static function fromModel(Quote $quote): self
@@ -133,6 +136,7 @@ class QuoteData extends Data
             timeTitle: $quote->time_title,
             timeDescription: $quote->time_description,
             timeSortOrder: $quote->time_sort_order,
+            showcaseCount: count($quote->showcasePaths()),
             rangeMin: $quote->hasSlider() ? QuoteRange::min($quote) : null,
             rangeMax: $quote->hasSlider() ? QuoteRange::max($quote) : null,
             paymentStages: $quote->paymentStages->map(fn ($stage) => [

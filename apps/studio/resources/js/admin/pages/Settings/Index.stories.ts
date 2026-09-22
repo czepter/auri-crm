@@ -26,7 +26,6 @@ const settings: App.Settings.Data.StudioSettingsData = {
   accentColor: '#2F4858',
   fontPair: 'fraunces',
   logoUrl: null,
-  showcaseUrls: [],
   bankAccountHolder: 'Christian Zepter',
   bankIban: 'DE02120300000000202051',
   bankBic: 'BYLADEM1001',
@@ -36,14 +35,12 @@ const settings: App.Settings.Data.StudioSettingsData = {
   quoteValidityDays: 14,
   paymentTermDays: 14,
   depositPercentage: 30,
-  widerrufIncluded: true,
-  widerrufText: null,
-  quoteLayout: 'classic',
+  documentLayout: 'classic',
+  remindersEnabled: true,
   clientRegister: 'formal',
   documentLetterheadHtml: null,
   documentFooterHtml: null,
   timezone: 'Europe/Berlin',
-  locale: 'de',
   workingDays: [1, 2, 3, 4, 5],
   mailFromName: 'Atelier Nordlicht',
   mailFromAddress: 'post@atelier-nordlicht.de',
@@ -51,16 +48,14 @@ const settings: App.Settings.Data.StudioSettingsData = {
   mailSignature: 'Christian Zepter\nAtelier Nordlicht',
   mailBcc: null,
   mailClientsEnabled: true,
-  leadTypePresets: ['Hochzeit', 'Paarshooting', 'Familie'],
-  leadSourcePresets: ['Empfehlung', 'Instagram', 'Website'],
-  leadChannelPresets: ['E-Mail', 'Telefon', 'Kontaktformular'],
 }
 
 const meta = {
   title: 'Bildschirme/Einstellungen/Studio',
   component: Index,
-  parameters: { layout: 'fullscreen', url: '/einstellungen' },
+  parameters: { layout: 'fullscreen', url: '/einstellungen/allgemein' },
   args: {
+    pane: 'general',
     fontPairs,
     mailSenderFromEnv: { name: false, address: false },
     settings,
@@ -70,18 +65,26 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-/** Marke, Schrift und Akzentfarbe eines eingerichteten Studios. */
-export const Marke: Story = {}
-
-/** Rechtsform, Anschrift und Steuernummern — die Fläche hinter dem Briefkopf. */
-export const Rechtliches: Story = {
-  parameters: { url: '/einstellungen?pane=legal' },
-}
+/** Marke, Anrede, Rechtsform, Anschrift, Steuerangaben und Zeitzone eines eingerichteten Studios. */
+export const Allgemein: Story = {}
 
 /** Absender, Antwortadresse und Signatur der ausgehenden Post. */
 export const EMail: Story = {
   name: 'E-Mail',
-  parameters: { url: '/einstellungen?pane=email' },
+  args: { pane: 'email' },
+  parameters: { url: '/einstellungen/email' },
+}
+
+/** Bankverbindung, Zahlungsziel, Anzahlung und Mahnungen. */
+export const Zahlung: Story = {
+  args: { pane: 'payment' },
+  parameters: { url: '/einstellungen/zahlung' },
+}
+
+/** Layout für Angebot, Rechnung, Gutschrift und Storno, dazu die Gültigkeit des Angebots. */
+export const Belege: Story = {
+  args: { pane: 'receipts' },
+  parameters: { url: '/einstellungen/belege' },
 }
 
 /** Ein gerade angelegtes Studio: nur der Name steht, der Absender kommt aus der Umgebung. */
@@ -106,9 +109,6 @@ export const FrischAngelegt: Story = {
       bankBic: null,
       mailReplyTo: null,
       mailSignature: null,
-      leadTypePresets: [],
-      leadSourcePresets: [],
-      leadChannelPresets: [],
     },
   },
 }

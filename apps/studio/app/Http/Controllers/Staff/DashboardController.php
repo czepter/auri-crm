@@ -88,7 +88,7 @@ class DashboardController extends Controller
             ],
             'activity' => $activity($viewer, $since),
             'tasks' => $this->tasks($viewer),
-            'openTasks' => Task::query()->open()->whereIn('project_id', $this->visible($viewer))->count(),
+            'openTasks' => Task::query()->open()->visibleTo($viewer)->count(),
             'todo' => $inquiries($viewer)->concat($payments($viewer))->values(),
             'quotesOut' => $this->quotesOut($viewer),
             'galleries' => $afterDelivery($viewer),
@@ -162,9 +162,9 @@ class DashboardController extends Controller
         return TaskRowData::collect(
             Task::query()
                 ->open()
-                ->whereIn('project_id', $this->visible($viewer))
+                ->visibleTo($viewer)
                 ->byDueDate()
-                ->with(['project', 'assignee'])
+                ->with(['project', 'contact', 'assignee'])
                 ->limit(self::TASKS)
                 ->get()
                 ->map(TaskRowData::fromTask(...))

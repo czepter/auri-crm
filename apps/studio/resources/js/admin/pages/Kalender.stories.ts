@@ -51,8 +51,8 @@ const shootRahn: App.Crm.Data.ShootData = {
   isCancelled: false,
   cancelledReason: null,
   crew: [
-    { id: 'c-1', userId: 'u1', name: 'Christian Zepter', initials: 'CZ', role: 'lead_photographer', roleLabel: 'Hauptfotograf' },
-    { id: 'c-2', userId: 'u2', name: 'Lena Krohn', initials: 'LK', role: 'second_shooter', roleLabel: 'Zweitfotograf' },
+    { id: 'c-1', userId: 'u1', name: 'Christian Zepter', initials: 'CZ' },
+    { id: 'c-2', userId: 'u2', name: 'Lena Krohn', initials: 'LK' },
   ],
   forwardStatuses: [{ value: 'shot', label: 'Fotografiert' }],
   timeline: [],
@@ -77,7 +77,7 @@ const shootAhrens: App.Crm.Data.ShootData = {
   isCancelled: false,
   cancelledReason: null,
   crew: [
-    { id: 'c-3', userId: 'u1', name: 'Christian Zepter', initials: 'CZ', role: 'lead_photographer', roleLabel: 'Hauptfotograf' },
+    { id: 'c-3', userId: 'u1', name: 'Christian Zepter', initials: 'CZ' },
   ],
   forwardStatuses: [{ value: 'confirmed', label: 'Bestätigt' }],
   timeline: [],
@@ -117,6 +117,8 @@ const meta = {
       's-ahrens-standesamt': { id: 'p-ahrens', name: 'Ahrens, Sophie & Tim' },
     },
     mine: ['s-rahn-feier'],
+    workingDays: [1, 2, 3, 4, 5],
+    settingsOpen: false,
     season: {
       shoots: [
         ...samstage(2026, 18, 36, 'delivered', 'Ausgeliefert'),
@@ -157,3 +159,6 @@ export const SaisonFastLeer: Story = {
 
 /** Ein Monat ohne Termine, in der Liste. */
 export const ListeLeer: Story = { args: { view: 'liste', shoots: [] } }
+
+/** Arbeitstage über dem Monat. */
+export const Einstellungen: Story = { args: { settingsOpen: true } }

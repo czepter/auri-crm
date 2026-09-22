@@ -22,9 +22,9 @@ class ProjectType extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['key', 'name', 'sort_order', 'is_active', 'is_default'];
+    protected $fillable = ['key', 'name', 'sort_order', 'is_active', 'is_default', 'duration_minutes'];
 
-    protected $attributes = ['is_active' => true, 'is_default' => false, 'sort_order' => 0];
+    protected $attributes = ['is_active' => true, 'is_default' => false, 'sort_order' => 0, 'duration_minutes' => 120];
 
     protected function casts(): array
     {

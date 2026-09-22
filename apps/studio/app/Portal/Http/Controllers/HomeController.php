@@ -12,7 +12,6 @@ use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Portal\Support\PortalSettings;
 use App\Quotes\Enums\QuoteStatus;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -37,7 +36,7 @@ use Inertia\Response;
  */
 class HomeController extends Controller
 {
-    public function __invoke(StudioSettingsResolver $studio, PortalSettings $settings, PortalOffers $offers): Response|RedirectResponse
+    public function __invoke(PortalSettings $settings, PortalOffers $offers): Response|RedirectResponse
     {
         $contact = auth('portal')->user();
 
@@ -62,10 +61,7 @@ class HomeController extends Controller
 
         return Inertia::render('Home', [
             'contact' => ['name' => $contact->name],
-            // P-09 (#228): a sentence written for somebody who has not
-            // booked anything reads as a mistake to a venue with forty. The
-            // third room, the single booking, no longer lands here.
-            'welcomeText' => $settings->welcomeText($contact, $bookings->isEmpty() ? 'inquiry' : 'many'),
+            'welcomeText' => $settings->welcomeText($contact, $this->welcomeState($bookings->all())),
             'pending' => $this->pending($contact, $projects, $settings),
             'bookings' => $bookings->all(),
             'phaseCounts' => $bookings->countBy('phase')->all(),
@@ -74,12 +70,28 @@ class HomeController extends Controller
             // ein Angebot des Studios ist keine offene Handlung des Kunden.
             'offers' => $offers->for($contact),
             'studio' => [
-                'name' => $studio->displayName(),
                 'messagingEnabled' => $settings->messagingEnabled($contact),
-                // The footer's contact line had no source at all before P-09.
                 ...$settings->contactLine(),
             ],
         ]);
+    }
+
+    /**
+     * Which of the three greetings this client is owed. Nothing booked is
+     * the stranger with an inquiry; everything delivered is the client whose
+     * pictures are done — the two used to share one text.
+     *
+     * @param  list<array{phase: string}>  $bookings
+     */
+    private function welcomeState(array $bookings): string
+    {
+        if ($bookings === []) {
+            return 'inquiry';
+        }
+
+        return collect($bookings)->every(fn (array $booking) => $booking['phase'] === 'delivered')
+            ? 'done'
+            : 'active';
     }
 
     /**

@@ -37,7 +37,6 @@ class QuoteShareController extends Controller
             'showSwitcher' => false,
             'project' => ['id' => $quote->project->public_id, 'name' => $quote->project->name],
             'canAccept' => $settings->acceptQuotesEnabled(),
-            'showcaseCount' => count($settings->showcasePaths()),
             'acceptUrl' => "/angebot/{$quote->share_token}/teilen/annehmen",
             'imageUrlBase' => "/angebot/{$quote->share_token}/teilen",
             'quote' => [
@@ -52,6 +51,15 @@ class QuoteShareController extends Controller
                 'acceptedAt' => $quote->accepted_at?->format('Y-m-d'),
             ],
         ]);
+    }
+
+    public function showcase(Quote $quote, int $index): StreamedResponse
+    {
+        $path = $quote->showcasePaths()[$index] ?? null;
+
+        abort_if($path === null, 404);
+
+        return Storage::disk('local')->response($path);
     }
 
     public function image(Quote $quote, string $item): StreamedResponse
@@ -74,7 +82,7 @@ class QuoteShareController extends Controller
             'hours' => ['nullable', 'integer', 'min:0'],
             'items' => ['array'],
             'items.*' => ['string'],
-            'terms' => Rule::when($studio->legalAgbUrl() !== null, ['accepted']),
+            'terms' => Rule::when($studio->attachedLegalUrls() !== [], ['accepted']),
         ], ['terms.accepted' => __('portal.quote_terms_required')]);
 
         $accept(

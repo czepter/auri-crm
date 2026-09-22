@@ -196,6 +196,7 @@ export function buildPreviewQuote(draft: QuoteDraft, vat: VatSettings): App.Quot
 
   return {
     id: 'preview',
+    showcaseCount: 0,
     predecessorId: null,
     isAddendum: false,
     predecessorNumber: null,

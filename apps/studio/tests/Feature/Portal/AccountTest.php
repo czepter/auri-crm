@@ -1,6 +1,8 @@
 <?php
 
 use App\Crm\Models\Contact;
+use App\Crm\Models\Task;
+use App\Notifications\Studio\DsgvoRequested;
 use App\Portal\Models\DsgvoRequest;
 use App\Portal\Models\EmailChange;
 use App\Portal\Notifications\EmailChangeConfirmation;
@@ -165,4 +167,38 @@ it('closes the request when the studio answers it', function () {
         ->assertOk();
 
     expect(DsgvoRequest::query()->open()->count())->toBe(0);
+});
+
+it('hands the studio a mail and a task due one month after the request', function () {
+    Notification::fake();
+    $staff = staffMember();
+    $contact = Contact::factory()->create();
+
+    test()->travelTo('2026-01-31 10:00');
+    test()->actingAs($contact, 'portal')->post('/einstellungen/datenschutz', ['kind' => 'export']);
+    test()->post('/einstellungen/datenschutz', ['kind' => 'export']);
+
+    $task = Task::sole();
+
+    expect($task->title)->toBe('Datenschutz-Anfrage: Datenkopie')
+        ->and($task->project_id)->toBeNull()
+        ->and($task->contact_id)->toBe($contact->id)
+        ->and($task->due_on->toDateString())->toBe('2026-02-28')
+        ->and(DsgvoRequest::sole()->task_id)->toBe($task->id);
+
+    Notification::assertSentToTimes($staff, DsgvoRequested::class, 1);
+});
+
+it('completes the task when the studio answers the request', function () {
+    useSurface(Surface::ADMIN);
+
+    $contact = Contact::factory()->create();
+    $task = Task::factory()->create(['project_id' => null, 'contact_id' => $contact->id]);
+    DsgvoRequest::create(['contact_id' => $contact->id, 'kind' => DsgvoRequest::EXPORT, 'task_id' => $task->id]);
+
+    test()->actingAs(staffMember(App\Enums\StaffRole::Owner), 'staff')
+        ->get("/kontakte/{$contact->public_id}/dsgvo/export")
+        ->assertOk();
+
+    expect($task->fresh()->isDone())->toBeTrue();
 });

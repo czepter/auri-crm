@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/ui/dialog'
 import QuoteCard from './QuoteCard.vue'
 import QuoteRecipientCard from './QuoteRecipientCard.vue'
 import QuoteTimeCard from './QuoteTimeCard.vue'
+import ShowcaseImages from '@/admin/components/ShowcaseImages.vue'
 import QuotePositionsCard from './QuotePositionsCard.vue'
 import QuoteTermsCard from './QuoteTermsCard.vue'
 import QuotePreviewPane from './QuotePreviewPane.vue'
@@ -147,6 +148,12 @@ const textSummary = computed(() => new DOMParser().parseFromString(draft.value.i
           v-model:slider="draft.slider"
           @change="emit('change')"
         />
+
+        <div class="mt-6">
+          <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('quotes.showcase') }}</div>
+          <ShowcaseImages :base="`/angebote/${quoteId}/schaufenster`" :count="quote.showcaseCount" />
+          <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('quotes.showcaseHint') }}</span>
+        </div>
       </QuoteCard>
 
       <QuoteCard v-model:open="open.positions" :title="$t('quotes.items')" :summary="positionsSummary">

@@ -39,10 +39,6 @@ class StudioSettingsData extends Data
         /** #234: which of the four licensed pairs this studio writes in. */
         public ?string $fontPair,
         public ?string $logoUrl,
-        // Q-10: die Schaufensterbilder als Routen, nie als Pfade — dieselbe
-        // Regel, die logoUrl daneben schon traegt.
-        /** @var list<string> */
-        public array $showcaseUrls,
         public ?string $bankAccountHolder,
         public ?string $bankIban,
         public ?string $bankBic,
@@ -52,14 +48,12 @@ class StudioSettingsData extends Data
         public int $quoteValidityDays,
         public int $paymentTermDays,
         public int $depositPercentage,
-        public bool $widerrufIncluded,
-        public ?string $widerrufText,
-        public string $quoteLayout,
+        public string $documentLayout,
+        public bool $remindersEnabled,
         public string $clientRegister,
         public ?string $documentLetterheadHtml,
         public ?string $documentFooterHtml,
         public string $timezone,
-        public string $locale,
         /** @var list<int> */
         public array $workingDays,
         public string $mailFromName,
@@ -68,12 +62,6 @@ class StudioSettingsData extends Data
         public ?string $mailSignature,
         public ?string $mailBcc,
         public bool $mailClientsEnabled,
-        /** @var list<string> */
-        public array $leadTypePresets,
-        /** @var list<string> */
-        public array $leadSourcePresets,
-        /** @var list<string> */
-        public array $leadChannelPresets,
     ) {}
 
     public static function fromResolver(StudioSettingsResolver $settings): self
@@ -98,10 +86,6 @@ class StudioSettingsData extends Data
             accentColor: $attrs['accent_color'],
             fontPair: $attrs['font_pair'] ?? null,
             logoUrl: $settings->logoPath() !== null ? route('settings.logo') : null,
-            showcaseUrls: collect($settings->showcasePaths())
-                ->keys()
-                ->map(fn (int $index) => route('settings.showcase', $index))
-                ->all(),
             bankAccountHolder: $attrs['bank_account_holder'],
             bankIban: $attrs['bank_iban'],
             bankBic: $attrs['bank_bic'],
@@ -111,14 +95,12 @@ class StudioSettingsData extends Data
             quoteValidityDays: $settings->quoteValidityDays(),
             paymentTermDays: $settings->paymentTermDays(),
             depositPercentage: $settings->depositPercentage(),
-            widerrufIncluded: $settings->widerrufIncluded(),
-            widerrufText: $settings->widerrufText(),
-            quoteLayout: $settings->quoteLayout(),
+            documentLayout: $settings->documentLayout(),
+            remindersEnabled: $settings->remindersEnabled(),
             clientRegister: $settings->clientRegister(),
             documentLetterheadHtml: $settings->documentLetterheadHtml(),
             documentFooterHtml: $settings->documentFooterHtml(),
             timezone: $settings->timezone(),
-            locale: $settings->locale(),
             workingDays: $settings->workingDays(),
             mailFromName: $settings->mailFromName(),
             mailFromAddress: $settings->mailFromAddress(),
@@ -126,9 +108,6 @@ class StudioSettingsData extends Data
             mailSignature: $settings->mailSignature(),
             mailBcc: $settings->mailBcc(),
             mailClientsEnabled: $settings->clientMailEnabled(),
-            leadTypePresets: $settings->leadPresets('type'),
-            leadSourcePresets: $settings->leadPresets('source'),
-            leadChannelPresets: $settings->leadPresets('channel'),
         );
     }
 }

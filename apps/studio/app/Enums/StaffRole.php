@@ -8,10 +8,8 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * What someone is employed as, and — through the map below — what that lets
  * them do.
  *
- * Not CrewRole. That one says what a person does on a shooting day; an editor
- * never attends one. Keeping them apart is what lets "a second shooter sees
- * the shoots they are assigned to" be a policy over CrewAssignment rather than
- * a coincidence of two enums sharing a word.
+ * Not the same thing as being on a shoot's crew: an editor never attends one,
+ * and being crewed is a row in CrewAssignment, not a role in this enum.
  */
 #[TypeScript]
 enum StaffRole: string

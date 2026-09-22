@@ -10,8 +10,10 @@ import {
 } from "@/ui/dropdown-menu";
 import { Toaster } from "@/ui/sonner";
 import CommandPalette from "@/admin/components/CommandPalette.vue";
+import { Alert } from "@/ui/alert";
+import { Button } from "@/ui/button";
 import HelpButton from "@/ui/page/HelpButton.vue";
-import { documentKeys, navItems, studioKeys } from "@/admin/lib/nav";
+import { navItems, studioKeys } from "@/admin/lib/nav";
 
 const props = defineProps<{ active: string }>();
 
@@ -53,11 +55,19 @@ const can = computed(() => page.props.auth.can ?? []);
 // gemountete Komponente pruefbar ist.
 const items = computed(() => navItems(can.value, nav.value ?? {}));
 
-// Zwei Aufklapper, beide ohne gespeicherten Zustand: wer in einem Zweig steht,
+// Die Aufklapper ohne gespeicherten Zustand: wer in einem Zweig steht,
 // sieht ihn offen, und beim Verlassen faellt er wieder zu. Das ist der Zustand,
 // den man ohnehin will, und spart den Speicher dafuer.
 const studioOpen = ref(studioKeys.includes(props.active));
-const documentsOpen = ref(documentKeys.includes(props.active));
+const collectorsOpen = ref<Record<string, boolean>>(
+    Object.fromEntries(
+        items.value.flatMap((item) =>
+            item.children
+                ? [[item.key, item.children.some((child) => child.key === props.active)]]
+                : [],
+        ),
+    ),
+);
 </script>
 
 <template>
@@ -117,8 +127,6 @@ const documentsOpen = ref(documentKeys.includes(props.active));
                     >
                 </button>
 
-                <HelpButton />
-
                 <template v-for="item in items" :key="item.key ?? item.group">
                     <template v-if="item.group">
                         <div class="h-4.5 max-[640px]:hidden" />
@@ -156,13 +164,13 @@ const documentsOpen = ref(documentKeys.includes(props.active));
                         <button
                             class="mb-px flex w-full cursor-pointer items-center gap-2.25 rounded-lg border-0 bg-transparent px-2.5 py-1.5 text-left text-[13px] tracking-[-0.01em] text-foreground transition-colors duration-[120ms] ease-out hover:bg-sunk max-[1080px]:hidden"
                             type="button"
-                            :aria-expanded="documentsOpen"
-                            @click="documentsOpen = !documentsOpen"
+                            :aria-expanded="collectorsOpen[item.key!]"
+                            @click="collectorsOpen[item.key!] = !collectorsOpen[item.key!]"
                         >
                             <svg
                                 class="size-4.25 flex-none fill-none stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]"
                                 :class="
-                                    documentsOpen
+                                    collectorsOpen[item.key!]
                                         ? 'stroke-foreground'
                                         : 'stroke-ink-2'
                                 "
@@ -172,7 +180,7 @@ const documentsOpen = ref(documentKeys.includes(props.active));
                             <span>{{ item.label }}</span>
                             <svg
                                 class="ml-auto size-3.5 flex-none fill-none stroke-ink-2 stroke-[1.8] [stroke-linecap:round] [stroke-linejoin:round] transition-transform duration-[120ms] ease-out"
-                                :class="documentsOpen && 'rotate-180'"
+                                :class="collectorsOpen[item.key!] && 'rotate-180'"
                                 viewBox="0 0 24 24"
                             >
                                 <path d="m6 9 6 6 6-6" />
@@ -180,7 +188,7 @@ const documentsOpen = ref(documentKeys.includes(props.active));
                         </button>
                         <div
                             class="mb-px ml-[19px] border-l border-rule pl-1.5 max-[1080px]:ml-0 max-[1080px]:border-0 max-[1080px]:pl-0"
-                            :class="!documentsOpen && 'hidden max-[1080px]:block'"
+                            :class="!collectorsOpen[item.key!] && 'hidden max-[1080px]:block'"
                         >
                             <Link
                                 v-for="child in item.children"
@@ -249,9 +257,10 @@ const documentsOpen = ref(documentKeys.includes(props.active));
              "Benachrichtigungen" und hiess im Deutschen fast dasselbe.
              mt-auto sitzt hier statt am Konto darunter, damit beide zusammen
              am Fuss der Leiste stehen. -->
-                <div v-if="release" class="mt-auto max-[1080px]:hidden">
+                <div class="mt-auto mb-1.5 flex items-center gap-1 max-[1080px]:hidden">
                     <Link
-                        class="mb-1.5 flex items-center gap-[7px] rounded-lg px-2.5 py-1.5 text-[11.5px] leading-none tabular-nums text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground"
+                        v-if="release"
+                        class="flex items-center gap-[7px] rounded-lg px-2.5 py-1.5 text-[11.5px] leading-none tabular-nums text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground"
                         :class="props.active === 'neuigkeiten' && 'bg-sunk-2 font-semibold text-foreground'"
                         href="/neuigkeiten"
                     >
@@ -262,6 +271,7 @@ const documentsOpen = ref(documentKeys.includes(props.active));
                             :title="$t('releases.available')"
                         />
                     </Link>
+                    <HelpButton class="ml-auto" />
                 </div>
 
                 <!-- The effective style here is the cascade of both sheets: crm.css
@@ -269,7 +279,6 @@ const documentsOpen = ref(documentKeys.includes(props.active));
              centring inside the avatar. -->
                 <DropdownMenu>
                     <DropdownMenuTrigger
-                        :class="release ? undefined : 'mt-auto'"
                         class="flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent p-2.5 text-left text-[12.5px] leading-none font-medium text-foreground transition-colors duration-[120ms] ease-out hover:bg-sunk data-[state=open]:bg-sunk max-[1080px]:hidden"
                     >
                         <span
@@ -289,9 +298,6 @@ const documentsOpen = ref(documentKeys.includes(props.active));
                         <DropdownMenuItem as-child>
                             <Link href="/profil">{{ $t("profile.nav") }}</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem as-child>
-                            <Link href="/hilfe">{{ $t("help.title") }}</Link>
-                        </DropdownMenuItem>
                         <DropdownMenuItem @select="router.post('/logout')">
                             {{ $t("common.signOut") }}
                         </DropdownMenuItem>
@@ -303,6 +309,22 @@ const documentsOpen = ref(documentKeys.includes(props.active));
         </div>
 
         <main class="flex min-w-0 flex-1 flex-col pl-12 max-[640px]:order-1">
+            <Alert
+                v-if="page.props.studioDeletion"
+                variant="destructive"
+                class="mt-3 mr-8 max-[640px]:mr-4"
+            >
+                {{ $t("settings.deletionOn", { date: page.props.studioDeletion }) }}
+                <Button
+                    v-if="user?.role === 'owner'"
+                    class="ml-auto"
+                    variant="outline"
+                    type="button"
+                    @click="router.delete('/einstellungen/studio-loeschen', { preserveScroll: true })"
+                >
+                    {{ $t("common.cancel") }}
+                </Button>
+            </Alert>
             <slot />
         </main>
 

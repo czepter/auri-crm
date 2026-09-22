@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { computed, onMounted, ref } from 'vue'
+import { Link, usePage } from '@inertiajs/vue3'
 
 defineProps<{ active: string }>()
+
+const page = usePage()
+const here = page.url.split('?')[0]
 
 // Liegend sind es zwanzig Einträge in einer Zeile, und der offene steht weit
 // rechts. Ohne das sieht man beim Öffnen nur den Anfang der Liste und nicht,
@@ -17,40 +20,47 @@ onMounted(() => bar.value?.querySelector('[data-open]')?.scrollIntoView({ inline
 //
 // Grouped the same way AdminLayout's own sidebar groups: a `group` entry is a
 // heading, everything after it belongs to it until the next one.
-const items = [
-  { group: 'settings.groupPersonal' },
-  { key: 'profile', href: '/profil', label: 'profile.nav' },
-  { key: 'calendar', href: '/einstellungen/kalender', label: 'calendar.subscribe' },
-
+const items: { group?: string; key?: string; href?: string; label?: string; external?: boolean; owner?: boolean; apart?: boolean }[] = [
   { group: 'settings.groupStudio' },
-  { key: 'brand', href: '/einstellungen', label: 'settings.brand' },
-  { key: 'legal', href: '/einstellungen?pane=legal', label: 'settings.legalEntity' },
-  { key: 'bank', href: '/einstellungen?pane=bank', label: 'settings.bank' },
-  { key: 'general', href: '/einstellungen?pane=general', label: 'settings.navGeneral' },
+  { key: 'general', href: '/einstellungen/allgemein', label: 'settings.navGeneral' },
+  // Der Absender gilt studioweit, für jede Mail — das Portal
+  // ist einer von vielen Auslösern, nicht ihr Zuhause.
+  { key: 'email', href: '/einstellungen/email', label: 'settings.navMail' },
+  { key: 'retention', href: '/einstellungen/aufbewahrung', label: 'settings.navRetention' },
 
   { group: 'settings.groupBilling' },
-  { key: 'documents', href: '/einstellungen?pane=documents', label: 'settings.navDocuments' },
+  { key: 'payment', href: '/einstellungen/zahlung', label: 'settings.navPayment' },
+  { key: 'receipts', href: '/einstellungen/belege', label: 'settings.navDocuments' },
   { key: 'numbering', href: '/einstellungen/nummernkreise', label: 'settings.navNumbering' },
-  { key: 'vat', href: '/einstellungen?pane=vat', label: 'settings.navVat' },
-  { key: 'payments', href: '/einstellungen/zahlungen', label: 'settings.navPayments' },
 
   { group: 'settings.groupWork' },
-  { key: 'availability', href: '/einstellungen/verfuegbarkeit', label: 'settings.navAvailability' },
-  { key: 'capture', href: '/einstellungen?pane=capture', label: 'settings.navCapture' },
+  // Verweise auf die Stellen, an denen sie bedient werden; nie der offene Eintrag.
+  { key: 'stages', href: `/auftraege/einstellungen/stufen?return=${encodeURIComponent(here)}`, label: 'settings.navStages', external: true },
+  { key: 'templates', href: '/vorlagen', label: 'settings.navTemplates', external: true },
   { key: 'automations', href: '/einstellungen/automationen', label: 'automations.title' },
 
   { group: 'settings.groupPortal' },
   { key: 'portal', href: '/einstellungen/portal', label: 'settings.navPortal' },
-  { key: 'home', href: '/einstellungen/portal?pane=home', label: 'portalSettings.homeSection' },
-  { key: 'privacy', href: '/einstellungen/portal?pane=privacy', label: 'portalSettings.dsgvoSection' },
-  { key: 'email', href: '/einstellungen?pane=email', label: 'settings.navMail' },
-  { key: 'notifications', href: '/einstellungen/benachrichtigungen', label: 'settings.navNotifications' },
+  // Eine Person, keine Freigabe: Name, Bild und die zwei Wege zu ihr.
+  { key: 'portal-contact', href: '/einstellungen/portal/kontakt', label: 'settings.navPortalContact' },
+  { key: 'imprint-terms', href: '/einstellungen/impressum-agb', label: 'settings.navImprintTerms' },
 
   { group: 'settings.groupInterfaces' },
+  // Schlüssel, Test- und Live-Umschaltung: eine Anbindung wie die beiden
+  // darunter, keine Rechnungsangabe.
+  { key: 'payments', href: '/einstellungen/zahlungen', label: 'paymentSettings.title' },
   { key: 'api-tokens', href: '/einstellungen/api-token', label: 'apiTokens.title' },
   { key: 'export', href: '/einstellungen/export', label: 'settings.navExport' },
 
+  // Ganz unten, abgesetzt von allen Gruppen und nur für den Inhaber.
+  { key: 'audit', href: '/einstellungen/protokoll', label: 'settings.navAudit', owner: true, apart: true },
+  { key: 'deletion', href: '/einstellungen/studio-loeschen', label: 'settings.navDeleteStudio', owner: true },
 ]
+
+// Die Ziele der Verweise verlangen andere Rechte als die Einstellungen.
+const shown = computed(() =>
+  items.filter((item) => (!item.external || page.props.settingsLinks?.[item.key as 'stages' | 'templates']) && (!item.owner || page.props.auth.user?.role === 'owner')),
+)
 
 /* tokens.css .nav — the sidebar row, reused for the settings rail. */
 /* tokens.css .nav. The two states are written out rather than layered:
@@ -65,7 +75,7 @@ const items = [
     ref="bar"
     class="flex w-[196px] flex-none flex-col gap-0.5 max-[640px]:w-full max-[640px]:flex-row max-[640px]:overflow-x-auto max-[640px]:pb-1"
   >
-    <template v-for="item in items" :key="item.key ?? item.group">
+    <template v-for="item in shown" :key="item.key ?? item.group">
       <div
         v-if="item.group"
         class="mt-4 px-2.5 pb-1 text-[10.5px] tracking-[0.06em] uppercase text-ink-2 first:mt-0 max-[640px]:hidden"
@@ -74,12 +84,13 @@ const items = [
       </div>
       <Link
         v-else
-        class="flex items-center gap-2.5 rounded-[7px] px-2.5 py-[9px] text-[14px] leading-none whitespace-nowrap no-underline transition-[background-color] duration-[.12s] ease-out hover:bg-muted [&_svg]:size-[17px]" :class="
-          item.key === active
+        class="flex items-center gap-2.5 rounded-[7px] px-2.5 py-[9px] text-[14px] leading-none whitespace-nowrap no-underline transition-[background-color] duration-[.12s] ease-out hover:bg-muted [&_svg]:size-[17px]" :class="[
+          item.key === active && !item.external
             ? 'font-semibold text-foreground [&_svg]:opacity-100'
-            : 'font-normal text-muted-foreground [&_svg]:opacity-75'
-        "
-        :data-open="item.key === active || undefined"
+            : 'font-normal text-muted-foreground [&_svg]:opacity-75',
+          item.apart && 'mt-4 max-[640px]:mt-0',
+        ]"
+        :data-open="(item.key === active && !item.external) || undefined"
         :href="item.href!"
       >{{ $t(item.label!) }}</Link>
     </template>

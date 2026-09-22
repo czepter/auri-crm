@@ -34,6 +34,7 @@ class SeedQuoteFromPackage
         $quote->update([
             ...$package->only('hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours'),
             'pricing_mode' => $package->hourly_rate === null ? PricingMode::Classic : PricingMode::Choice,
+            'showcase_paths' => $package->copyShowcasePaths($quote->showcaseDirectory()),
         ]);
 
         $quote->recalculateTotal();

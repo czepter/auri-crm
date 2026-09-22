@@ -76,6 +76,8 @@ class ReviseQuote
                 'recipient_city' => $predecessor->recipient_city,
             ]);
 
+            $revision->update(['showcase_paths' => $predecessor->copyShowcasePaths($revision->showcaseDirectory())]);
+
             $revision->items()->createMany(
                 $predecessor->items->map(fn (QuoteItem $item) => [
                     'title' => $item->title,

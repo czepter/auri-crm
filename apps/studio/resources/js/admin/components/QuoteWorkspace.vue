@@ -4,6 +4,7 @@ import { router, useForm } from '@inertiajs/vue3'
 import QuoteEditor from '@/admin/components/quote/QuoteEditor.vue'
 import QuotePreviewPane from '@/admin/components/quote/QuotePreviewPane.vue'
 import Card from '@/ui/page/Card.vue'
+import { PreviewOverlay } from '@/ui/preview-overlay'
 import { debounced } from '@/admin/lib/autosave'
 import { buildQuotePayload, type QuoteContact, type QuoteDraft, type VatSettings } from '@/admin/components/quote/quotePayload'
 import { basisPointsToPercent, centsToEuros, eurosToCents, formatDiscount, formatEuros } from '@/admin/lib/money'
@@ -271,9 +272,14 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
     <!-- Same 1180px column threshold QuoteEditor uses for its own preview
          column — QuotePreviewPane carries its own header (label, zoom
          toggle), so no Card wrapper here repeats "Vorschau" above it. -->
-    <div v-if="quote.status !== 'draft'" class="hidden min-w-[420px] flex-1 rounded-md border border-rule bg-background px-[18px] py-[15px] min-[1180px]:block">
+    <PreviewOverlay
+      v-if="quote.status !== 'draft'"
+      :min="1180"
+      :label="$t('common.preview')"
+      wrapper-class="min-w-[420px] flex-1 rounded-md border border-rule bg-background px-[18px] py-[15px]"
+    >
       <QuotePreviewPane :quote-id="quote.id" />
-    </div>
+    </PreviewOverlay>
   </div>
   </template>
 
