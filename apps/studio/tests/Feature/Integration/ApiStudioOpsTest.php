@@ -32,14 +32,14 @@ it('assigns crew, lists it and removes an assignment', function () {
     expect($staffId)->not->toBeNull();
 
     $assignmentId = $this->withHeader('Idempotency-Key', 'crew-1')
-        ->postJson("/api/shoots/{$shoot->public_id}/crew", ['user' => $user->public_id, 'role' => 'second_shooter'])
+        ->postJson("/api/shoots/{$shoot->public_id}/crew", ['user' => $user->public_id])
         ->assertCreated()
         ->assertJsonPath('data.userName', $user->name)
         ->json('data.id');
 
     $this->getJson("/api/shoots/{$shoot->public_id}/crew")
         ->assertOk()
-        ->assertJsonPath('data.0.role', 'second_shooter');
+        ->assertJsonPath('data.0.userName', $user->name);
 
     $this->withHeader('Idempotency-Key', 'crew-2')
         ->deleteJson("/api/crew/{$assignmentId}")

@@ -685,14 +685,10 @@
                                 "properties": {
                                     "user": {
                                         "type": "string"
-                                    },
-                                    "role": {
-                                        "$ref": "#/components/schemas/CrewRole"
                                     }
                                 },
                                 "required": [
-                                    "user",
-                                    "role"
+                                    "user"
                                 ]
                             }
                         }
@@ -8507,16 +8503,6 @@
                 "type": "object",
                 "additionalProperties": {},
                 "title": "CrewAssignmentReadData"
-            },
-            "CrewRole": {
-                "type": "string",
-                "description": "What someone does on the day, which is not what they are employed as. Deliberately not StaffRole. That enum carries Editor, and an editor never attends a shoot \u2014 reusing it would let an assignment row express something meaningless. Keeping them apart also keeps S-06 honest: \"a second shooter  * sees the shoots they are assigned to\" becomes a policy over CrewAssignment rather than a coincidence of two enums sharing a word.\n",
-                "enum": [
-                    "lead_photographer",
-                    "second_shooter",
-                    "assistant"
-                ],
-                "title": "CrewRole"
             },
             "CursorPaginatedDataCollection": {
                 "type": "object",
