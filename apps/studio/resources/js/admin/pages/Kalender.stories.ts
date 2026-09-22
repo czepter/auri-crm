@@ -51,8 +51,8 @@ const shootRahn: App.Crm.Data.ShootData = {
   isCancelled: false,
   cancelledReason: null,
   crew: [
-    { id: 'c-1', userId: 'u1', name: 'Christian Zepter', initials: 'CZ', role: 'lead_photographer', roleLabel: 'Hauptfotograf' },
-    { id: 'c-2', userId: 'u2', name: 'Lena Krohn', initials: 'LK', role: 'second_shooter', roleLabel: 'Zweitfotograf' },
+    { id: 'c-1', userId: 'u1', name: 'Christian Zepter', initials: 'CZ' },
+    { id: 'c-2', userId: 'u2', name: 'Lena Krohn', initials: 'LK' },
   ],
   forwardStatuses: [{ value: 'shot', label: 'Fotografiert' }],
   timeline: [],
@@ -77,7 +77,7 @@ const shootAhrens: App.Crm.Data.ShootData = {
   isCancelled: false,
   cancelledReason: null,
   crew: [
-    { id: 'c-3', userId: 'u1', name: 'Christian Zepter', initials: 'CZ', role: 'lead_photographer', roleLabel: 'Hauptfotograf' },
+    { id: 'c-3', userId: 'u1', name: 'Christian Zepter', initials: 'CZ' },
   ],
   forwardStatuses: [{ value: 'confirmed', label: 'Bestätigt' }],
   timeline: [],

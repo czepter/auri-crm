@@ -15,7 +15,6 @@ class CrewAssignmentReadData extends Data
         public string $shootId,
         public string $userId,
         public string $userName,
-        public string $role,
     ) {}
 
     public static function fromModel(CrewAssignment $assignment): self
@@ -25,7 +24,6 @@ class CrewAssignmentReadData extends Data
             shootId: $assignment->shoot->public_id,
             userId: $assignment->user->public_id,
             userName: $assignment->user->name,
-            role: $assignment->role->value,
         );
     }
 }

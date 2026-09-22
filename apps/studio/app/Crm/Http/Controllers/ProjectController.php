@@ -20,7 +20,6 @@ use App\Crm\Data\ProjectPersonData;
 use App\Crm\Data\ProjectRowData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
-use App\Crm\Enums\CrewRole;
 use App\Crm\Enums\FormFieldType;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\ProjectContactRole;
@@ -360,9 +359,6 @@ class ProjectController extends Controller
             // Wer an dem Tag kann, nicht nur wer existiert: frei, abwesend
             // oder auf einem anderen Shooting.
             'crewAvailability' => $crew->forProject($project),
-            'crewRoles' => collect(CrewRole::cases())
-                ->map(fn (CrewRole $role) => ['value' => $role->value, 'label' => $role->label()])
-                ->all(),
         ]);
     }
 

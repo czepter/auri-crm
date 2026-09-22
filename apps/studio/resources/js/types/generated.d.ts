@@ -196,8 +196,6 @@ id: string,
 userId: string,
 name: string,
 initials: string,
-role: string,
-roleLabel: string,
 };
 export type DateConflictData = {
 source: string,
@@ -522,7 +520,6 @@ isTransit: boolean,
 namespace Enums {
 export type BookedVia = 'manual' | 'contract';
 export type CaptureChannel = 'phone' | 'email' | 'in_person' | 'web_form' | 'portal' | 'other';
-export type CrewRole = 'lead_photographer' | 'second_shooter' | 'assistant';
 export type DueAnchor = 'stage' | 'shoot';
 export type FormFieldType = 'text' | 'short_text' | 'boolean' | 'select' | 'date' | 'time' | 'name_list' | 'group_photos' | 'file';
 export type LeadOutcome = 'lost' | 'declined' | 'closed';
@@ -668,7 +665,6 @@ id: string,
 shootId: string,
 userId: string,
 userName: string,
-role: string,
 };
 export type GalleryDetailData = {
 id: string,

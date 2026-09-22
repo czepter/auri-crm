@@ -120,7 +120,7 @@ export const shoots: App.Crm.Data.ShootData[] = [
         statusLabel: 'Gebucht',
         forwardStatuses: [{ value: 'shot', label: 'Fotografiert' }],
         crew: [
-            { id: 'cr-1', userId: 'u1', name: 'Christian Zepter', initials: 'CZ', role: 'lead', roleLabel: 'Hauptfotograf' },
+            { id: 'cr-1', userId: 'u1', name: 'Christian Zepter', initials: 'CZ' },
         ],
     }),
 ]

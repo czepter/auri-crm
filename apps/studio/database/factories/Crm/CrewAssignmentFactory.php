@@ -2,7 +2,6 @@
 
 namespace Database\Factories\Crm;
 
-use App\Crm\Enums\CrewRole;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Shoot;
 use App\Models\User;
@@ -20,7 +19,6 @@ class CrewAssignmentFactory extends Factory
         return [
             'shoot_id' => Shoot::factory(),
             'user_id' => User::factory(),
-            'role' => CrewRole::LeadPhotographer,
         ];
     }
 }

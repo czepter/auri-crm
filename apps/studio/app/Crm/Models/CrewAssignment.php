@@ -4,7 +4,6 @@ namespace App\Crm\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
-use App\Crm\Enums\CrewRole;
 use App\Models\User;
 use Database\Factories\Crm\CrewAssignmentFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -13,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Who works a shoot, and in what capacity on the day.
+ * Who works a shoot.
  */
 class CrewAssignment extends Model
 {
@@ -21,12 +20,7 @@ class CrewAssignment extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['shoot_id', 'user_id', 'role'];
-
-    protected function casts(): array
-    {
-        return ['role' => CrewRole::class];
-    }
+    protected $fillable = ['shoot_id', 'user_id'];
 
     public function shoot(): BelongsTo
     {
