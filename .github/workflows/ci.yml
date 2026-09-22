@@ -129,7 +129,12 @@ jobs:
           php-version: "8.5"
           extensions: pdo_pgsql, bcmath, gd, intl, pcntl, exif
           coverage: none
+      # dest is per-job: concurrent jobs on the same self-hosted runner share
+      # $HOME, and action-setup's default ~/setup-pnpm raced between them
+      # (ENOTEMPTY/ENOENT installing pnpm's own binary).
       - uses: pnpm/action-setup@v6
+        with:
+          dest: ~/.setup-pnpm-${{ github.job }}
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -221,7 +226,12 @@ jobs:
       # No version here on purpose. package.json's packageManager field pins
       # the exact pnpm build, and action-setup errors out when a second source
       # also names one rather than picking a winner.
+      # dest is per-job: concurrent jobs on the same self-hosted runner share
+      # $HOME, and action-setup's default ~/setup-pnpm raced between them
+      # (ENOTEMPTY/ENOENT installing pnpm's own binary).
       - uses: pnpm/action-setup@v6
+        with:
+          dest: ~/.setup-pnpm-${{ github.job }}
       - uses: actions/setup-node@v7
         with: { node-version: 24, cache: pnpm }
       - run: pnpm install --frozen-lockfile
@@ -272,7 +282,12 @@ jobs:
       # No version here on purpose. package.json's packageManager field pins
       # the exact pnpm build, and action-setup errors out when a second source
       # also names one rather than picking a winner.
+      # dest is per-job: concurrent jobs on the same self-hosted runner share
+      # $HOME, and action-setup's default ~/setup-pnpm raced between them
+      # (ENOTEMPTY/ENOENT installing pnpm's own binary).
       - uses: pnpm/action-setup@v6
+        with:
+          dest: ~/.setup-pnpm-${{ github.job }}
       - uses: actions/setup-node@v7
         with: { node-version: 24, cache: pnpm }
       - run: pnpm install --frozen-lockfile
