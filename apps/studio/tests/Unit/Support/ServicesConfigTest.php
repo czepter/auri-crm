@@ -37,3 +37,20 @@ it('leaves an already-scheme urls untouched', function () {
     expect($services['api']['url'])->toBe('http://api.studio.test');
     expect($services['admin']['url'])->toBe('https://admin.studio.test');
 });
+
+it('forces a scheme onto the APP_URL fallback too', function () {
+    putenv('API_URL');
+    putenv('ADMIN_URL');
+    putenv('MCP_URL');
+    putenv('APP_URL=studio.test');
+
+    try {
+        $services = require __DIR__.'/../../../config/services.php';
+    } finally {
+        putenv('APP_URL');
+    }
+
+    expect($services['api']['url'])->toBe('https://studio.test');
+    expect($services['admin']['url'])->toBe('https://studio.test');
+    expect($services['mcp']['url'])->toBe('https://studio.test/mcp');
+});

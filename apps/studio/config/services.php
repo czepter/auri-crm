@@ -69,7 +69,7 @@ return [
     // env()-Defaults, weil .env.example beide Schluessel leer mitbringt und
     // ein leerer String den Default nie ausloest.
     'api' => [
-        'url' => rtrim((string) ($withScheme(env('API_URL')) ?: env('APP_URL', 'http://localhost')), '/'),
+        'url' => rtrim((string) $withScheme(env('API_URL') ?: env('APP_URL', 'http://localhost')), '/'),
     ],
 
     // Der Admin-Container ist der OAuth-Aussteller für die MCP-Verbindung,
@@ -77,7 +77,7 @@ return [
     // (OAuthProtectedResourceController) — das braucht die Adresse des
     // anderen Containers.
     'admin' => [
-        'url' => rtrim((string) ($withScheme(env('ADMIN_URL')) ?: env('APP_URL', 'http://localhost')), '/'),
+        'url' => rtrim((string) $withScheme(env('ADMIN_URL') ?: env('APP_URL', 'http://localhost')), '/'),
     ],
 
     // Die MCP-Adresse ist eine Route des api-Surface, keine eigene
@@ -85,8 +85,8 @@ return [
     // anders veröffentlicht.
     'mcp' => [
         'url' => env('MCP_URL')
-            ? rtrim((string) env('MCP_URL'), '/')
-            : rtrim((string) ($withScheme(env('API_URL')) ?: env('APP_URL', 'http://localhost')), '/').'/mcp',
+            ? rtrim((string) $withScheme(env('MCP_URL')), '/')
+            : rtrim((string) $withScheme(env('API_URL') ?: env('APP_URL', 'http://localhost')), '/').'/mcp',
         // Der Bearer, mit dem der stdio-Transport das api-Surface ruft; über
         // HTTP kommt er stattdessen aus der Sitzung selbst (ApiCall).
         'token' => env('MCP_API_TOKEN'),
