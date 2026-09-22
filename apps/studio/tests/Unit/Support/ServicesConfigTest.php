@@ -11,7 +11,7 @@ it('forces a scheme onto api/admin/mcp urls even when the env value has none', f
     putenv('MCP_URL');
 
     try {
-        $services = require config_path('services.php');
+        $services = require __DIR__.'/../../../config/services.php';
     } finally {
         putenv('API_URL');
         putenv('ADMIN_URL');
@@ -28,7 +28,7 @@ it('leaves an already-scheme urls untouched', function () {
     putenv('MCP_URL');
 
     try {
-        $services = require config_path('services.php');
+        $services = require __DIR__.'/../../../config/services.php';
     } finally {
         putenv('API_URL');
         putenv('ADMIN_URL');
