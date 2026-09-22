@@ -4,7 +4,6 @@ namespace App\Integration\Http\Controllers;
 
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -12,7 +11,6 @@ use App\Crm\Models\Stage;
 use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
 use App\Integration\Data\ContactReadData;
-use App\Integration\Data\JobReadData;
 use App\Integration\Data\LeadReadData;
 use App\Integration\Data\ProjectDetailReadData;
 use App\Integration\Data\ProjectMoneyReadData;
@@ -58,7 +56,7 @@ class CrmReadController extends Controller
 
     public function projects(Request $request): JsonResponse
     {
-        return $this->page(Project::query(), $request, ProjectReadData::class);
+        return $this->page(Project::query()->whereHas('job'), $request, ProjectReadData::class);
     }
 
     /**
@@ -136,11 +134,6 @@ class CrmReadController extends Controller
             ->when($cancelled !== null, fn (Builder $q) => $cancelled ? $q->whereNotNull('cancelled_at') : $q->uncancelled());
 
         return $this->page($query, $request, ShootReadData::class);
-    }
-
-    public function jobs(Request $request): JsonResponse
-    {
-        return $this->page(Job::query()->with('project:id,public_id'), $request, JobReadData::class);
     }
 
     /**

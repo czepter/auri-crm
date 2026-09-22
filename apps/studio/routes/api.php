@@ -173,8 +173,6 @@ Route::middleware('audience:api')->group(function () {
         ->get('/leads', [CrmReadController::class, 'leads'])->name('api.leads.index');
     Route::middleware('scope:'.Capability::ViewAllProjects->value)
         ->get('/shoots', [CrmReadController::class, 'shoots'])->name('api.shoots.index');
-    Route::middleware('scope:'.Capability::ViewAllProjects->value)
-        ->get('/jobs', [CrmReadController::class, 'jobs'])->name('api.jobs.index');
 });
 
 // N-02: the two reads the MCP server's tool surface needs that I-02's index

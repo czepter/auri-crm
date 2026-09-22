@@ -35,7 +35,6 @@ it('lists each CRM resource behind its matching scope', function (string $path, 
     'projects' => ['/api/projects', Capability::ViewAllProjects],
     'leads' => ['/api/leads', Capability::ManageLeads],
     'shoots' => ['/api/shoots', Capability::ViewAllProjects],
-    'jobs' => ['/api/jobs', Capability::ViewAllProjects],
 ]);
 
 it('refuses each CRM resource to a token that does not hold the matching scope', function (string $path) {
@@ -48,7 +47,6 @@ it('refuses each CRM resource to a token that does not hold the matching scope',
     'projects' => ['/api/projects'],
     'leads' => ['/api/leads'],
     'shoots' => ['/api/shoots'],
-    'jobs' => ['/api/jobs'],
 ]);
 
 it('refuses an unauthenticated caller', function () {
@@ -63,10 +61,9 @@ it('never returns an internal integer id for any CRM resource', function (string
     expect(integerIdPaths($body))->toBe([]);
 })->with([
     'contacts' => ['/api/contacts', Capability::ManageContacts, fn () => Contact::factory()->count(3)->create()],
-    'projects' => ['/api/projects', Capability::ViewAllProjects, fn () => Project::factory()->count(3)->create()],
+    'projects' => ['/api/projects', Capability::ViewAllProjects, fn () => Job::factory()->count(3)->create()],
     'leads' => ['/api/leads', Capability::ManageLeads, fn () => Lead::factory()->count(3)->create()],
     'shoots' => ['/api/shoots', Capability::ViewAllProjects, fn () => Shoot::factory()->count(3)->create()],
-    'jobs' => ['/api/jobs', Capability::ViewAllProjects, fn () => Job::factory()->count(3)->create()],
 ]);
 
 it('cursors rather than repeats: the second page never holds the first page\'s rows', function () {
@@ -168,6 +165,16 @@ it('rejects a since value that is not a valid date', function () {
     $this->withHeader('Authorization', bearerFor(Capability::ManageContacts))
         ->getJson('/api/contacts?since=not-a-date')
         ->assertStatus(422);
+});
+
+it('lists only booked projects, never a lead\'s', function () {
+    $booked = Job::factory()->create()->project;
+    Lead::factory()->create();
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))
+        ->getJson('/api/projects')->assertOk()->json();
+
+    expect(collect($body['data'])->pluck('id')->all())->toBe([$booked->public_id]);
 });
 
 it('carries a lead\'s project as the project\'s own public_id', function () {
@@ -385,7 +392,7 @@ it('never carries internal notes', function () {
 // The lean index is the other half of #350's decision: growing the payload
 // there is the contact join on every row this split exists to avoid.
 it('keeps the project index lean', function () {
-    $project = Project::factory()->create();
+    $project = Job::factory()->create()->project;
     $project->attachContact(Contact::factory()->create(), ProjectContactRole::Primary);
 
     $body = $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))
