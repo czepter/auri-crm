@@ -1,5 +1,14 @@
 <?php
 
+// Coolifys SERVICE_FQDN_* liefert nicht zuverlässig ein Schema mit — sobald
+// eine Anwendung mehrere Domains trägt, kommt hier auch mal ein nacktes
+// "host.tld" an. RFC 9728 verlangt absolute URLs für 'api'/'admin'/'mcp'
+// unten, also erzwingt dieser Helfer eins, statt dem Wert blind zu
+// vertrauen.
+$withScheme = fn (?string $url): ?string => $url && ! str_contains($url, '://')
+    ? "https://{$url}"
+    : $url;
+
 return [
 
     /*
@@ -60,7 +69,7 @@ return [
     // env()-Defaults, weil .env.example beide Schluessel leer mitbringt und
     // ein leerer String den Default nie ausloest.
     'api' => [
-        'url' => rtrim((string) (env('API_URL') ?: env('APP_URL', 'http://localhost')), '/'),
+        'url' => rtrim((string) ($withScheme(env('API_URL')) ?: env('APP_URL', 'http://localhost')), '/'),
     ],
 
     // Der Admin-Container ist der OAuth-Aussteller für die MCP-Verbindung,
@@ -68,7 +77,7 @@ return [
     // (OAuthProtectedResourceController) — das braucht die Adresse des
     // anderen Containers.
     'admin' => [
-        'url' => rtrim((string) (env('ADMIN_URL') ?: env('APP_URL', 'http://localhost')), '/'),
+        'url' => rtrim((string) ($withScheme(env('ADMIN_URL')) ?: env('APP_URL', 'http://localhost')), '/'),
     ],
 
     // Die MCP-Adresse ist eine Route des api-Surface, keine eigene
@@ -77,7 +86,7 @@ return [
     'mcp' => [
         'url' => env('MCP_URL')
             ? rtrim((string) env('MCP_URL'), '/')
-            : rtrim((string) (env('API_URL') ?: env('APP_URL', 'http://localhost')), '/').'/mcp',
+            : rtrim((string) ($withScheme(env('API_URL')) ?: env('APP_URL', 'http://localhost')), '/').'/mcp',
         // Der Bearer, mit dem der stdio-Transport das api-Surface ruft; über
         // HTTP kommt er stattdessen aus der Sitzung selbst (ApiCall).
         'token' => env('MCP_API_TOKEN'),
