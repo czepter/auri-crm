@@ -2,7 +2,6 @@
 
 namespace App\Crm\Http\Controllers;
 
-use App\Catalog\Models\Package;
 use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\CheckDateAvailability;
 use App\Crm\Actions\DeriveProjectPosition;
@@ -24,10 +23,8 @@ use App\Crm\Support\CrmVocabulary;
 use App\Crm\Support\OtherSuggestions;
 use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
+use App\Quotes\Actions\ReadCaseQuote;
 use App\Quotes\Actions\ReadQuoteList;
-use App\Quotes\Data\QuoteData;
-use App\Quotes\Enums\QuoteStatus;
-use App\Quotes\Models\Quote;
 use App\Settings\Rules\ValidFormat;
 use App\Support\RecordVisit;
 use Carbon\CarbonImmutable;
@@ -66,11 +63,16 @@ class LeadCaseController extends Controller
         private readonly BuildThread $thread,
     ) {}
 
-    public function show(Lead $lead, string $tab = 'overview'): Response
+    public function show(Lead $lead, string $tab = 'overview'): Response|RedirectResponse
     {
         $project = $lead->project;
 
         $this->authorize('view', $project);
+
+        // A booked inquiry lives on as the project's overview.
+        if ($project->job()->exists()) {
+            return redirect("/auftraege/{$project->public_id}");
+        }
 
         RecordVisit::record(
             $project->job()->exists() ? 'projekt' : 'anfrage',
@@ -79,8 +81,6 @@ class LeadCaseController extends Controller
         );
 
         $project->load(['contacts', 'shoots.crew.user', 'primaryShoot', 'job', 'tasks.project', 'tasks.assignee', 'notes.author']);
-        // The studio works on drafts too; latestQuote() is the portal's, sent only.
-        $quote = $project->quotes()->where('status', '!=', QuoteStatus::Superseded)->with(['items', 'predecessor', 'paymentStages'])->latest('id')->first();
         $primary = $project->primaryShoot;
         $conversation = $project->latestThread()->with('messages.contact', 'messages.author')->first();
 
@@ -107,7 +107,6 @@ class LeadCaseController extends Controller
                     ? null
                     : $lead->capturedViaLabel(),
                 'capturedAt' => $lead->captured_at->toIso8601String(),
-                'booked' => $project->job()->exists(),
                 'lostReason' => $lead->lost_reason,
                 'outcomeLabel' => $lead->outcome?->label(),
             ],
@@ -119,32 +118,7 @@ class LeadCaseController extends Controller
             'shoots' => ShootData::collect(
                 $project->shoots->map(fn (Shoot $shoot) => ShootData::fromShoot($shoot))
             ),
-            'quote' => $quote === null ? null : QuoteData::fromModel($quote),
-            // Die ersetzten Fassungen tragen in der Übersicht nur ihren Preis:
-            // was in ihnen stand, steht im Angebot selbst.
-            'supersededQuotes' => $project->quotes()
-                ->where('status', QuoteStatus::Superseded)
-                ->latest()
-                ->get()
-                ->map(fn (Quote $quote) => [
-                    'id' => $quote->public_id,
-                    'number' => $quote->number,
-                    'net' => $quote->net,
-                ])->all(),
-            // Without a quote, the active packages with their item count and
-            // sum — the next move is choosing one, so the screen offers the
-            // choice rather than an empty section.
-            'packages' => $quote !== null ? [] : Package::query()
-                ->where('is_active', true)
-                ->with('items')
-                ->orderBy('name')
-                ->get()
-                ->map(fn (Package $package) => [
-                    'id' => $package->public_id,
-                    'name' => $package->name,
-                    'itemCount' => $package->items->count(),
-                    'total' => (int) $package->items->sum(fn ($item) => (int) $item->unit_price * $item->quantity),
-                ])->all(),
+            ...app(ReadCaseQuote::class)($project),
             'tasks' => TaskRowData::collect(
                 $project->tasks->sortBy('due_on')->values()->map(TaskRowData::fromTask(...))
             ),

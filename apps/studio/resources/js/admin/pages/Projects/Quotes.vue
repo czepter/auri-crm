@@ -12,7 +12,7 @@ defineProps<{
 
 <template>
   <AdminLayout active="anfragen">
-    <ProjectShell :header="header" active="quotes">
+    <ProjectShell :header="header" active="documents" child="quotes">
       <QuoteList
         :project-id="header.id"
         :can-manage-quotes="header.canManageQuotes"
