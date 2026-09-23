@@ -55,7 +55,7 @@ function mixedRateInstallment(array $lines, int $deposit, string $vatMode = 'sta
     $quote->forceFill(['status' => QuoteStatus::Accepted, 'accepted_at' => now()])->save();
 
     $total = $quote->fresh()->net + $quote->fresh()->vat_amount;
-    $plan = app(CreatePaymentPlan::class)($project->job()->sole(), $total, ['2026-09-01', '2026-10-01']);
+    $plan = app(CreatePaymentPlan::class)($project, $total, ['2026-09-01', '2026-10-01']);
     $plan->installments()->orderBy('sort_order')->first()->update(['amount' => $deposit]);
     $plan->installments()->orderBy('sort_order')->skip(1)->first()->update(['amount' => $total - $deposit]);
 
@@ -66,7 +66,7 @@ function mixedRateInstallment(array $lines, int $deposit, string $vatMode = 'sta
 
 it('sums net and VAT per rate and keeps vat_amount the sum', function () {
     $installment = mixedRateInstallment([[100_000, null], [10_000, 700]], 55_350);
-    $quote = $installment->plan->job->project->quotes()->sole();
+    $quote = $installment->plan->project->quotes()->sole();
 
     expect($quote->vatLines())->toBe([
         ['rate' => 1900, 'net' => 100_000, 'vat' => 19_000],

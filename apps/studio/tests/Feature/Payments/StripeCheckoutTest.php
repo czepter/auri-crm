@@ -2,7 +2,6 @@
 
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Payments\Actions\ConfirmInstallmentCheckoutSession;
 use App\Payments\Actions\CreateInstallmentCheckoutSession;
@@ -67,8 +66,8 @@ function m04PlanWithInstallment(int $amount = 45000): array
     $project = Project::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
     $project->attachContact($contact, ProjectContactRole::Primary);
-    $job = Job::factory()->for($project)->create();
-    $plan = PaymentPlan::factory()->for($job)->create(['total' => $amount, 'reference' => 'RE-2026-77']);
+    markBooked($project);
+    $plan = PaymentPlan::factory()->for($project)->create(['total' => $amount, 'reference' => 'RE-2026-77']);
     $installment = PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => $amount]);
 
     return [$project, $contact, $plan, $installment];

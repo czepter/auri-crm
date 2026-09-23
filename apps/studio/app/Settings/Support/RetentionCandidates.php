@@ -36,7 +36,7 @@ class RetentionCandidates
                 ->whereDoesntHave('lead', fn ($lead) => $lead
                     ->whereIn('outcome', [LeadOutcome::Lost, LeadOutcome::Declined])
                     ->when($cutoff, fn ($lead) => $lead->where('updated_at', '<', $cutoff)))
-                ->orWhereHas('job')));
+                ->orWhereNotNull('booked_at')));
     }
 
     /** @return Collection<int, int> */

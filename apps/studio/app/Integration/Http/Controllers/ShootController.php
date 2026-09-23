@@ -63,7 +63,7 @@ class ShootController extends Controller
         );
         $shoot->setRelation('project', $project);
 
-        if ($project->job()->exists()) {
+        if ($project->isBooked()) {
             $advance(
                 $shoot,
                 $stages->anchored(StagePipeline::Project, StageAnchor::Booked),

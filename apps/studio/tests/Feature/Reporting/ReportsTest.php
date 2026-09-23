@@ -4,7 +4,6 @@ use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -357,12 +356,12 @@ it('reads the time in a step as the gap to the move before it', function () {
 
 it('buckets the lead time on the primary shoot and counts the dateless apart', function () {
     $booked = Project::factory()->create(['type' => ProjectType::Wedding]);
-    Job::factory()->create(['project_id' => $booked->id, 'booked_at' => now()]);
+    markBooked($booked, ['booked_at' => now()]);
     Lead::factory()->create(['project_id' => $booked->id, 'captured_at' => now()->subMonths(2)]);
     Shoot::factory()->create(['project_id' => $booked->id, 'is_primary' => true, 'date' => now()->addMonths(5)]);
 
     $dateless = Project::factory()->create(['type' => ProjectType::Wedding]);
-    Job::factory()->create(['project_id' => $dateless->id, 'booked_at' => now()]);
+    markBooked($dateless, ['booked_at' => now()]);
     Lead::factory()->create(['project_id' => $dateless->id, 'captured_at' => now()->subMonth()]);
     Shoot::factory()->create(['project_id' => $dateless->id, 'is_primary' => true, 'date' => null]);
 
@@ -377,7 +376,7 @@ it('reads the lead-time steps in the unit most of the lead times fall into', fun
     // legte alle drei in die erste Stufe.
     foreach ([18, 25, 40] as $days) {
         $project = Project::factory()->create(['type' => ProjectType::Portrait]);
-        Job::factory()->create(['project_id' => $project->id, 'booked_at' => now()]);
+        markBooked($project, ['booked_at' => now()]);
         // Der Termin ist ein Datum ohne Uhrzeit: ohne startOfDay misst der
         // Abstand die Tageszeit mit und der Median kippt um einen Tag.
         $captured = now()->subMonths(2)->startOfDay();
@@ -419,9 +418,9 @@ it('averages each project type against its own bookings', function () {
     $wedding = Project::factory()->create(['type' => ProjectType::Wedding]);
     $portrait = Project::factory()->create(['type' => ProjectType::Portrait]);
 
-    PaymentPlan::factory()->for(Job::factory()->create(['project_id' => $wedding->id, 'booked_at' => now()]), 'job')
+    PaymentPlan::factory()->for(markBooked($wedding), 'project')
         ->create(['total' => 400_000]);
-    PaymentPlan::factory()->for(Job::factory()->create(['project_id' => $portrait->id, 'booked_at' => now()]), 'job')
+    PaymentPlan::factory()->for(markBooked($portrait), 'project')
         ->create(['total' => 60_000]);
 
     $rows = collect(RevenueReport::perProjectType(now()->subYear(), now()))->keyBy('type');

@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * One shooting occasion: a date, a place, a crew and its own pipeline.
  *
- * Hangs off Project rather than Job, so a requested date and a booked date are
+ * Hangs off Project whether booked or not, so a requested date and a booked date are
  * the same row in two states rather than two records kept in sync (vision
  * §3.1). The row checked for availability at intake is the row later booked.
  */

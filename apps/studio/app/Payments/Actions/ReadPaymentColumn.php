@@ -41,17 +41,17 @@ class ReadPaymentColumn
             ->whereNotNull('overdue_notified_at')
             ->where('overdue_notified_at', '<=', now()->subDays(self::DUNNING_EXHAUSTED_DAYS))
             ->when($viewer !== null, fn ($query) => $query->whereHas(
-                'plan.job',
+                'plan',
                 fn ($query) => $query->whereIn(
                     'project_id',
                     Project::query()->visibleTo($viewer)->select('projects.id'),
                 ),
             ))
-            ->with('plan.job.project')
+            ->with('plan.project')
             ->orderBy('overdue_notified_at')
             ->get()
             ->map(function (PaymentInstallment $installment) {
-                $project = $installment->plan->job->project;
+                $project = $installment->plan->project;
                 $days = (int) $installment->overdue_notified_at->diffInDays();
 
                 return new DomainRowData(

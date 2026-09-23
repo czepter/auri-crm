@@ -6,7 +6,6 @@ use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\InternalNote;
-use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\TimelineEntry;
@@ -77,8 +76,8 @@ it('never puts an integer identifier into a project page', function (string $suf
     CrewAssignment::factory()->for($shoot)->create();
     TimelineEntry::factory()->for($shoot)->create();
     InternalNote::factory()->for($project)->create();
-    $job = Job::factory()->for($project)->create();
-    $plan = PaymentPlan::factory()->for($job)->create(['total' => 200]);
+    markBooked($project);
+    $plan = PaymentPlan::factory()->for($project)->create(['total' => 200]);
     PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 200, 'sort_order' => 0]);
 
     $props = $this->actingAs($user, 'staff')

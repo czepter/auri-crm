@@ -14,7 +14,7 @@ beforeEach(fn () => useSurface(Surface::API));
 // #401: book/complete/reopen on the api surface, mirroring the admin
 // project screen's own buttons — see App\Crm\Http\Controllers\
 // ProjectController::book()/complete()/reopen().
-it('books a project, creating its job and advancing its shoots', function () {
+it('books a project, advancing its shoots and answering with its detail', function () {
     $token = ApiToken::factory()->withScopes(Capability::BookProject)->create();
     $project = Project::factory()->create();
     Shoot::factory()->for($project)->create();
@@ -25,8 +25,10 @@ it('books a project, creating its job and advancing its shoots', function () {
 
     $response->assertOk();
 
-    expect($response->json('data.projectId'))->toBe($project->public_id)
-        ->and($project->job()->exists())->toBeTrue()
+    expect($response->json('data.id'))->toBe($project->public_id)
+        ->and($response->json('data.bookedAt'))->not->toBeNull()
+        ->and($response->json('data.bookedVia'))->toBe('manual')
+        ->and($project->fresh()->isBooked())->toBeTrue()
         ->and(integerIdPaths($response->json()))->toBe([]);
 });
 

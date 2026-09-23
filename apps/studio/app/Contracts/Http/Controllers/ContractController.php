@@ -58,7 +58,7 @@ class ContractController extends Controller
     {
         $this->authorize('view', $project);
 
-        $project->load(['contacts', 'shoots', 'primaryShoot', 'job']);
+        $project->load(['contacts', 'shoots', 'primaryShoot']);
 
         $versions = $this->versions($project);
         $current = $versions->first();

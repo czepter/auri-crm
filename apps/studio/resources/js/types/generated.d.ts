@@ -696,13 +696,6 @@ draftAssetCount: number,
 status: string,
 updatedAt: string,
 };
-export type JobReadData = {
-id: string,
-projectId: string,
-bookedAt: string,
-bookedVia: string,
-updatedAt: string,
-};
 export type LeadReadData = {
 id: string,
 projectId: string,
@@ -738,7 +731,8 @@ portalVisible: boolean,
 fields: object,
 updatedAt: string,
 lead: App.Integration.Data.ProjectLeadReadData | null,
-job: App.Integration.Data.JobReadData | null,
+bookedAt: string | null,
+bookedVia: string | null,
 openTaskCount: number,
 contacts: App.Integration.Data.ProjectContactReadData[],
 shoots: App.Integration.Data.ShootReadData[],

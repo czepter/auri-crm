@@ -6,7 +6,6 @@ use App\Automation\Models\AutomationRun;
 use App\Catalog\Models\ServiceSuggestion;
 use App\Crm\Models\Contact;
 use App\Crm\Models\InternalNote;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -133,10 +132,9 @@ class EraseContactDsgvo
      * favorites/comments (and their storage objects), threads/messages,
      * form instances/fields/answers, tasks, notes, shoots and everything
      * under one (crew, timeline, shot list), the lead, and any automation run
-     * anchored to the project or a shoot of it, then the job and the project
-     * row itself.
+     * anchored to the project or a shoot of it, then the project row itself.
      *
-     * A job with a payment plan stays, and the project with it under a
+     * A project with a payment plan stays, booking included, under a
      * scrubbed name: the plan carries allocated invoice numbers and issued
      * invoices, which § 147 AO requires kept (Art. 17(3)(b) DSGVO) and which
      * UnbookProject refuses to drop for the same reason.
@@ -149,7 +147,7 @@ class EraseContactDsgvo
             return;
         }
 
-        $keepsInvoices = Job::where('project_id', $project->id)->whereHas('paymentPlan')->exists();
+        $keepsInvoices = $project->paymentPlan()->exists();
 
         $this->purgeStorageObjects($project);
 
@@ -174,7 +172,6 @@ class EraseContactDsgvo
             return;
         }
 
-        Job::where('project_id', $project->id)->delete();
         $project->delete();
     }
 

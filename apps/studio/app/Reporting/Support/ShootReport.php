@@ -59,7 +59,7 @@ class ShootReport
     public static function leadTimes(CarbonInterface $from, CarbonInterface $to, ?ProjectType $type = null): array
     {
         $query = Lead::query()
-            ->join('jobs', 'jobs.project_id', '=', 'leads.project_id')
+            ->whereHas('project', fn ($project) => $project->booked())
             ->join('shoots', function ($join) {
                 $join->on('shoots.project_id', '=', 'leads.project_id')->where('shoots.is_primary', true);
             })

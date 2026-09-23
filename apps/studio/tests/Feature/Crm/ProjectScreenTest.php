@@ -11,7 +11,6 @@ use App\Crm\Models\FormAnswer;
 use App\Crm\Models\FormInstance;
 use App\Crm\Models\FormInstanceField;
 use App\Crm\Models\InternalNote;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -39,7 +38,7 @@ beforeEach(function () {
 it('renders the project overview with a derived header', function () {
     // Booked, because the shoots only speak for a project in production —
     // before that the header reads the funnel.
-    Job::factory()->for($this->project)->create();
+    markBooked($this->project);
     Shoot::factory()->for($this->project)->primary()->atStatus(ShootStatus::Prep)->create();
 
     $header = props("/auftraege/{$this->project->public_id}")['header'];
@@ -295,7 +294,7 @@ it('books the project from the screen', function () {
 
     $this->post("/auftraege/{$this->project->public_id}/buchung")->assertRedirect();
 
-    expect($this->project->fresh()->job)->not->toBeNull()
+    expect($this->project->fresh()->isBooked())->toBeTrue()
         ->and($this->project->shoots()->sole()->status->key)->toBe(ShootStatus::Booked->value);
 });
 
@@ -308,7 +307,7 @@ it('deletes a project nothing agreed hangs off', function () {
 });
 
 it('keeps a booked project and offers no delete', function () {
-    Job::factory()->for($this->project)->create();
+    markBooked($this->project);
 
     expect(props("/auftraege/{$this->project->public_id}")['header']['canDelete'])->toBeFalse();
 
@@ -334,7 +333,7 @@ it('leaves an already booked project alone when the button is pressed twice', fu
     $this->post("/auftraege/{$this->project->public_id}/buchung")->assertRedirect();
     $this->post("/auftraege/{$this->project->public_id}/buchung")->assertRedirect();
 
-    expect(Job::count())->toBe(1)
+    expect(Project::booked()->count())->toBe(1)
         ->and(AuditLog::where('event', 'project.booked')->count())->toBe(1);
 });
 

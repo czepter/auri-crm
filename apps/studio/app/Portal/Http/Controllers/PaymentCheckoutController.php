@@ -38,7 +38,7 @@ class PaymentCheckoutController extends Controller
         $contact = auth('portal')->user();
         $visible = $contact->visibleProjects()->where('projects.public_id', $project)->exists();
         abort_unless($visible, 404);
-        abort_unless($installment->plan?->job?->project?->public_id === $project, 404);
+        abort_unless($installment->plan?->project?->public_id === $project, 404);
         abort_if($installment->status === PaymentInstallmentStatus::Paid, 404);
         abort_if($installment->status === PaymentInstallmentStatus::Cancelled, 404);
         // #418: a settled plan takes no more money.

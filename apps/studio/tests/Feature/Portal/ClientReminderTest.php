@@ -4,7 +4,6 @@ use App\Crm\Actions\RemindDueTasks;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Task;
 use App\Payments\Actions\DetectOverdueInstallments;
@@ -31,7 +30,7 @@ function projectWithClient(): array
 function planFor(Project $project): PaymentPlan
 {
     return PaymentPlan::factory()->create([
-        'job_id' => Job::factory()->create(['project_id' => $project->id]),
+        'project_id' => markBooked($project),
     ]);
 }
 

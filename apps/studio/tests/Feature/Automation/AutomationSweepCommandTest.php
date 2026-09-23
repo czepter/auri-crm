@@ -7,7 +7,6 @@ use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Models\AutomationRule;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Settings\Support\StudioSettingsResolver;
@@ -25,7 +24,7 @@ it('runs from the artisan command, reporting how many rules it fired', function 
     $project = Project::factory()->create();
     $contact = Contact::factory()->create();
     $project->attachContact($contact, ProjectContactRole::Primary);
-    Job::factory()->for($project)->create();
+    markBooked($project);
     Shoot::factory()->for($project)->create(['date' => now()->addDays(7)->toDateString()]);
 
     AutomationRule::factory()
@@ -44,7 +43,7 @@ it('counts today on the studio clock', function () {
     $this->travelTo(CarbonImmutable::parse('2026-06-01 22:30', 'UTC'));
 
     $project = Project::factory()->create();
-    Job::factory()->for($project)->create();
+    markBooked($project);
     Shoot::factory()->for($project)->create(['date' => '2026-06-09']);
 
     AutomationRule::factory()

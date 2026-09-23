@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Catalog\Models\Package;
 use App\Catalog\Models\PackageItem;
+use App\Crm\Enums\BookedVia;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectFieldType;
 use App\Crm\Enums\ProjectType;
@@ -13,7 +14,6 @@ use App\Crm\Models\FormField;
 use App\Crm\Models\FormInstance;
 use App\Crm\Models\FormInstanceField;
 use App\Crm\Models\FormTemplate;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\ProjectField;
@@ -337,13 +337,13 @@ class E2eSeeder extends Seeder
         ]);
         QuoteItem::factory()->for($quote)->create();
 
-        $job = Job::factory()->for($project)->create(['booked_by_id' => User::query()->firstOrFail()->id]);
+        $project->forceFill(['booked_at' => now(), 'booked_by_id' => User::query()->firstOrFail()->id, 'booked_via' => BookedVia::Manual])->save();
 
         // In one transaction: the sum-matches-total trigger is deferred to
         // commit, and a plan created outside one is checked while it still
         // has no installments under it.
-        DB::transaction(function () use ($job) {
-            $plan = PaymentPlan::factory()->for($job)->create(['total' => 200000]);
+        DB::transaction(function () use ($project) {
+            $plan = PaymentPlan::factory()->for($project)->create(['total' => 200000]);
 
             PaymentInstallment::factory()->for($plan, 'plan')->count(2)->sequence(
                 ['sort_order' => 0, 'due_on' => now()->subWeek()->toDateString()],

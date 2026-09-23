@@ -34,7 +34,7 @@ final class BookingTaskTools
             new ToolDefinition(
                 name: 'book_project',
                 title: 'Book a project',
-                description: 'Commit the studio to a project: create its Job and advance every uncancelled shoot to the booked stage, the same move the project screen\'s Buchen button makes. A project already booked is a no-op — the existing job comes back.',
+                description: 'Commit the studio to a project: record the booking on it and advance every uncancelled shoot to the booked stage, the same move the project screen\'s Buchen button makes. Answers with the project detail. A project already booked is a no-op and keeps its original booking.',
                 method: 'POST',
                 path: '/projects/{project}/book',
                 schema: fn (JsonSchema $schema) => [

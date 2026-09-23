@@ -75,7 +75,7 @@ class IssueInvoice
             throw ValidationException::withMessages(['installments' => __('payments.alreadyInvoiced')]);
         }
 
-        $project = $installments->first()->plan->job->project;
+        $project = $installments->first()->plan->project;
 
         return $this->positions(
             $project->primaryContact(),
@@ -105,7 +105,7 @@ class IssueInvoice
         foreach ($picked as $position) {
             $row = $position['installment'];
 
-            if ($row->plan?->job?->project_id !== $project?->id) {
+            if ($row->plan?->project_id !== $project?->id) {
                 throw ValidationException::withMessages(['items' => __('payments.invoiceOnePlan')]);
             }
 

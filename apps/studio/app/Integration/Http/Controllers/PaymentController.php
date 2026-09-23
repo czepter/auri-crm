@@ -29,7 +29,7 @@ class PaymentController extends Controller
 {
     public function store(Request $request, Project $project, CreatePaymentPlan $create): JsonResponse
     {
-        $job = $project->job ?? abort(404);
+        abort_unless($project->isBooked(), 404);
 
         $validated = $request->validate([
             'total' => ['required', 'integer', 'min:0'],
@@ -37,7 +37,7 @@ class PaymentController extends Controller
             'installments.*.due_on' => ['required', 'date'],
         ]);
 
-        $plan = $create($job, $validated['total'], collect($validated['installments'])->pluck('due_on')->all());
+        $plan = $create($project, $validated['total'], collect($validated['installments'])->pluck('due_on')->all());
 
         return response()->json(['data' => PaymentPlanData::fromModel($plan->fresh('installments'))], 201);
     }

@@ -22,10 +22,10 @@ class ProjectMoneyReadData extends Data
 
     public static function fromModel(Project $project): self
     {
-        $project->loadMissing('job.paymentPlan.installments');
+        $project->loadMissing('paymentPlan.installments');
 
         return new self(
-            paymentPlan: $project->job?->paymentPlan === null ? null : PaymentPlanData::fromModel($project->job->paymentPlan),
+            paymentPlan: $project->paymentPlan === null ? null : PaymentPlanData::fromModel($project->paymentPlan),
         );
     }
 }

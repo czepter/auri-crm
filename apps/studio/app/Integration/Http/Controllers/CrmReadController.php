@@ -56,7 +56,7 @@ class CrmReadController extends Controller
 
     public function projects(Request $request): JsonResponse
     {
-        return $this->page(Project::query()->whereHas('job'), $request, ProjectReadData::class);
+        return $this->page(Project::query()->booked(), $request, ProjectReadData::class);
     }
 
     /**

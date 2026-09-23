@@ -1,31 +1,33 @@
 <?php
 
 use App\Crm\Actions\BookProject;
+use App\Crm\Actions\UnbookProject;
 use App\Crm\Enums\BookedVia;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Events\ProjectBooked;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Payments\Models\PaymentPlan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 
 uses(RefreshDatabase::class);
 
-it('creates the job and names both the actor and the trigger', function () {
+it('books the project and names both the actor and the trigger', function () {
     $actor = User::factory()->create();
     $project = Project::factory()->create();
 
-    $job = app(BookProject::class)($project, $actor);
+    app(BookProject::class)($project, $actor);
 
-    expect($job->booked_by_id)->toBe($actor->id)
-        ->and($job->booked_via)->toBe(BookedVia::Manual)
-        ->and($job->booked_at)->not->toBeNull()
-        ->and($project->fresh()->job->is($job))->toBeTrue();
+    $project->refresh();
+    expect($project->booked_by_id)->toBe($actor->id)
+        ->and($project->booked_via)->toBe(BookedVia::Manual)
+        ->and($project->isBooked())->toBeTrue();
 });
 
 it('moves every uncancelled shoot to booked', function () {
@@ -102,20 +104,33 @@ it('fires ProjectBooked exactly once and writes the audit row', function () {
     expect(AuditLog::where('event', 'project.booked')->sole()->subject)->toBe($project->public_id);
 });
 
-it('is a no-op on a project that already has a job', function () {
+it('is a no-op on a project that is already booked', function () {
     Event::fake([ProjectBooked::class]);
-    $project = Project::factory()->create();
-    $existing = Job::factory()->for($project)->create();
+    $project = markBooked(Project::factory()->create(), ['booked_at' => '2026-05-02 10:00']);
     $shoot = Shoot::factory()->for($project)->create();
 
     $result = app(BookProject::class)($project, User::factory()->create());
 
     Event::assertNotDispatched(ProjectBooked::class);
     expect($result)->toBeNull()
-        ->and(Job::count())->toBe(1)
-        ->and(Job::sole()->is($existing))->toBeTrue()
+        ->and($project->fresh()->booked_at->toDateString())->toBe('2026-05-02')
         ->and($shoot->fresh()->status->key)->toBe(ShootStatus::Requested->value)
         ->and(AuditLog::where('event', 'project.booked')->count())->toBe(0);
+});
+
+it('keeps the first booking when a second trigger books the same project', function () {
+    Event::fake([ProjectBooked::class]);
+    $project = Project::factory()->create();
+    $first = User::factory()->create();
+
+    app(BookProject::class)(Project::find($project->id), $first);
+    $second = app(BookProject::class)(Project::find($project->id), null, BookedVia::Contract);
+
+    Event::assertDispatchedTimes(ProjectBooked::class, 1);
+    expect($second)->toBeNull()
+        ->and($project->fresh()->booked_by_id)->toBe($first->id)
+        ->and($project->fresh()->booked_via)->toBe(BookedVia::Manual)
+        ->and(AuditLog::where('event', 'project.booked')->count())->toBe(1);
 });
 
 it('never infers the actor from the ambient session — a null actor stays null even while a staff member is logged in', function () {
@@ -126,18 +141,43 @@ it('never infers the actor from the ambient session — a null actor stays null 
     $staff = User::factory()->create();
     $this->actingAs($staff, 'staff');
 
-    $job = app(BookProject::class)(Project::factory()->create(), null);
+    $project = app(BookProject::class)(Project::factory()->create(), null);
 
-    expect($job->booked_by_id)->toBeNull();
+    expect($project->fresh()->booked_by_id)->toBeNull();
 });
 
 it('records the trigger a caller names', function () {
     // P-05b adds no column; it writes the second value.
-    $job = app(BookProject::class)(
+    $project = app(BookProject::class)(
         Project::factory()->create(),
         User::factory()->create(),
         BookedVia::Contract,
     );
 
-    expect($job->booked_via)->toBe(BookedVia::Contract);
+    expect($project->fresh()->booked_via)->toBe(BookedVia::Contract);
+});
+
+it('unbooks a project back into an inquiry', function () {
+    $project = markBooked(Project::factory()->create());
+
+    app(UnbookProject::class)($project, User::factory()->create());
+
+    expect($project->fresh()->isBooked())->toBeFalse()
+        ->and($project->fresh()->booked_by_id)->toBeNull()
+        ->and(AuditLog::where('event', 'project.unbooked')->count())->toBe(1);
+});
+
+it('refuses to unbook a project with a payment plan', function () {
+    $project = markBooked(Project::factory()->create());
+    PaymentPlan::factory()->for($project)->create();
+
+    expect(fn () => app(UnbookProject::class)($project, User::factory()->create()))->toThrow(DomainException::class);
+    expect($project->fresh()->isBooked())->toBeTrue();
+});
+
+it('refuses to unbook for a role that may not book', function () {
+    $project = markBooked(Project::factory()->create());
+
+    expect(fn () => app(UnbookProject::class)($project, staffMember(StaffRole::Manager)))->toThrow(DomainException::class);
+    expect($project->fresh()->isBooked())->toBeTrue();
 });

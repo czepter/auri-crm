@@ -61,7 +61,7 @@ function planBehindQuote(array $dueDates, int $discountValue = 0, array $slider 
 
     $quote = $quote->fresh();
 
-    return app(CreatePaymentPlan::class)($project->job()->sole(), $quote->net + $quote->vat_amount, $dueDates);
+    return app(CreatePaymentPlan::class)($project, $quote->net + $quote->vat_amount, $dueDates);
 }
 
 // --- Which installment is the Endrechnung ---------------------------------

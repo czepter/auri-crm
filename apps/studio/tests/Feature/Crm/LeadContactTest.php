@@ -2,7 +2,6 @@
 
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -103,7 +102,7 @@ it('leaves the inquiry text alone when only the people were sent', function () {
 // ein 422, sobald gebucht war.
 it('moves a date after the booking', function () {
     $lead = leadWithPrimary();
-    Job::factory()->for($lead->project)->create();
+    markBooked($lead->project);
     $shoot = $lead->project->shoots()->first();
 
     $this->patch("/anfragen/{$lead->public_id}", [

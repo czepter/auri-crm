@@ -1,7 +1,6 @@
 <?php
 
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Models\RecentView;
 use App\Models\User;
@@ -31,14 +30,14 @@ it('opens with what this user last looked at, newest first', function () {
 });
 
 // An inquiry and a project are the same record in two phases, and the palette
-// names it by the phase it is in — a Job is the seam.
+// names it by the phase it is in — the booking is the seam.
 it('names an unbooked project an Anfrage and a booked one a Projekt', function () {
     $inquiry = Project::factory()->create();
     $this->get("/auftraege/{$inquiry->public_id}")->assertOk();
 
     expect(recent()[0]['kind'])->toBe('anfrage');
 
-    Job::factory()->for($inquiry)->create();
+    markBooked($inquiry);
     $this->get("/auftraege/{$inquiry->public_id}")->assertOk();
 
     expect(recent())->toHaveCount(1)

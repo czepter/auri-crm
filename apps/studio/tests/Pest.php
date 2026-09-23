@@ -7,7 +7,6 @@ use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Stage;
 use App\Crm\Support\CrmVocabulary;
@@ -34,6 +33,7 @@ use Aws\MockHandler;
 use Aws\Result;
 use Aws\S3\S3Client;
 use Illuminate\Routing\RouteCollection;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
@@ -240,16 +240,23 @@ function bearerToken(mixed $tokenable): string
 
 /**
  * A booked project with a primary contact — the fixture the merge fields
- * resolve against (project.name, contact.name, job.bookedAt). Lives here
+ * resolve against (project.name, contact.name, project.bookedAt). Lives here
  * because a global function declared inside one test file collides the
  * moment a second file declares the same name.
  */
 function bookedContactProject(): Project
 {
-    $project = Project::factory()->create(['name' => 'Hochzeit Meier & Kowalski']);
+    $project = Project::factory()->booked()->create(['name' => 'Hochzeit Meier & Kowalski', 'booked_at' => '2026-06-14 00:00:00']);
     $contact = Contact::factory()->create(['name' => 'Lena Meier', 'email' => 'lena@example.test']);
     $project->attachContact($contact, ProjectContactRole::Primary);
-    Job::factory()->for($project)->create(['booked_at' => '2026-06-14 00:00:00']);
+
+    return $project;
+}
+
+/** Project::factory()->booked() for a project a test already holds. */
+function markBooked(Project $project, array $attributes = []): Project
+{
+    $project->forceFill(Arr::only(Project::factory()->booked()->raw($attributes), ['booked_at', 'booked_by_id', 'booked_via']))->save();
 
     return $project;
 }
@@ -433,7 +440,7 @@ function invoiceablePlan(): PaymentInstallment
         ...Quote::computeVat(0, app(StudioSettingsResolver::class)),
     ]);
 
-    $plan = app(CreatePaymentPlan::class)($project->job()->sole(), 150_000, ['2026-09-01', '2026-10-01']);
+    $plan = app(CreatePaymentPlan::class)($project, 150_000, ['2026-09-01', '2026-10-01']);
 
     return $plan->installments()->orderBy('sort_order')->first();
 }

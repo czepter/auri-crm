@@ -99,7 +99,7 @@ class HandleInertiaRequests extends Middleware
                 // The same two filters /projekte itself applies: booked only,
                 // and only what this role may see. A badge that counts rows
                 // the list refuses to show is worse than no badge.
-                'projects' => fn () => Project::query()->visibleTo($user)->whereHas('job')->count(),
+                'projects' => fn () => Project::query()->visibleTo($user)->booked()->count(),
             ],
             // Die laufende Version und ob release-log eine höhere kennt. Chrome
             // wie die Zähler darüber: die Zeile steht auf jedem Admin-Screen

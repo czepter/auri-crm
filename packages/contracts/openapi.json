@@ -4772,7 +4772,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/components/schemas/JobReadData"
+                                            "$ref": "#/components/schemas/ProjectDetailReadData"
                                         }
                                     },
                                     "required": [
@@ -8461,11 +8461,6 @@
                 "type": "object",
                 "additionalProperties": {},
                 "title": "GalleryDetailData"
-            },
-            "JobReadData": {
-                "type": "object",
-                "additionalProperties": {},
-                "title": "JobReadData"
             },
             "LazyCollection": {
                 "type": "object",

@@ -104,7 +104,7 @@ class MarketingScreenshotSeeder extends Seeder
 
         // Shoots must exist before booking — BookProject only advances the
         // ones already on the project.
-        $job = app(BookProject::class)($project, $staff);
+        app(BookProject::class)($project, $staff);
 
         $quote = Quote::factory()->for($project)->create([
             'status' => QuoteStatus::Accepted,
@@ -123,8 +123,8 @@ class MarketingScreenshotSeeder extends Seeder
         // The deferred sum-matches-total constraint on payment_installments
         // only checks at COMMIT, so the plan and its installments have to
         // land in one transaction (same reasoning as CreatePaymentPlan).
-        DB::transaction(function () use ($job) {
-            $plan = PaymentPlan::factory()->for($job)->create(['total' => 440000]);
+        DB::transaction(function () use ($project) {
+            $plan = PaymentPlan::factory()->for($project)->create(['total' => 440000]);
 
             $plan->installments()->create([
                 'amount' => 132000,

@@ -84,7 +84,7 @@ class QuoteController extends Controller
         return Inertia::render('Quotes/Show', [
             'projectId' => $quote->project->public_id,
             'projectName' => $quote->project->name,
-            'projectIsBooked' => $quote->project->job !== null,
+            'projectIsBooked' => $quote->project->isBooked(),
             'canManageQuotes' => $viewer->can('manageQuotes', $quote->project),
             // The payment plan is the project's, not this one quote's — it
             // stays on the Angebote tab, not in this quote's own capsule.
@@ -399,7 +399,7 @@ class QuoteController extends Controller
         $accept($quote, $contact, null);
 
         // Every role manages quotes, but booking is Admin-only (StaffRole):
-        // the yes is recorded either way, the job only when this user may book.
+        // the yes is recorded either way, the booking only when this user may book.
         if (Gate::allows('book', $quote->project)) {
             $book($quote->project, auth('staff')->user());
         }

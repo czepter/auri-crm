@@ -23,7 +23,7 @@ class DocumentTemplateFactory extends Factory
             'shoot_kind' => null,
             'name' => 'Hochzeit',
             'body' => '<p>Vertrag mit {{ project.name }} ({{ project.type }}), '
-                .'vertreten durch {{ contact.name }}, gebucht am {{ job.bookedAt }}.</p>',
+                .'vertreten durch {{ contact.name }}, gebucht am {{ project.bookedAt }}.</p>',
             'is_current' => true,
         ];
     }

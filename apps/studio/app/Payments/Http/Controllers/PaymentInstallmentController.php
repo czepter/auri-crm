@@ -49,7 +49,7 @@ class PaymentInstallmentController extends Controller
      */
     public function issueInvoice(PaymentInstallment $installment, IssueInvoice $issue): RedirectResponse
     {
-        $this->authorize('managePaymentPlan', $installment->plan->job->project);
+        $this->authorize('managePaymentPlan', $installment->plan->project);
 
         $invoice = $issue($installment, auth('staff')->user());
 

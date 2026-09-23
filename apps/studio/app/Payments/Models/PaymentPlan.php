@@ -4,7 +4,7 @@ namespace App\Payments\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
-use App\Crm\Models\Job;
+use App\Crm\Models\Project;
 use Database\Factories\Payments\PaymentPlanFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,10 +13,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * One plan per Job — the unique index on job_id (see the migration) is what
- * makes that a database fact rather than a convention. Scoped to the Job, not
- * the Project: the plan is a property of the booking, never of the pursuit,
- * so a project with no Job has nowhere for one to hang (M-03).
+ * One plan per project — the unique index on project_id is what makes that a
+ * database fact rather than a convention. The plan is a property of the
+ * booking, never of the pursuit: an unbooked project gets none (M-03).
  *
  * `total` is the authoritative figure, not a sum of the installments —
  * installments are what must add up to it, in the other direction, and the
@@ -32,16 +31,16 @@ class PaymentPlan extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['job_id', 'total', 'reference', 'settled_at'];
+    protected $fillable = ['project_id', 'total', 'reference', 'settled_at'];
 
     protected function casts(): array
     {
         return ['settled_at' => 'immutable_datetime'];
     }
 
-    public function job(): BelongsTo
+    public function project(): BelongsTo
     {
-        return $this->belongsTo(Job::class);
+        return $this->belongsTo(Project::class);
     }
 
     public function installments(): HasMany

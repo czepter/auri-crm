@@ -5,7 +5,7 @@ namespace App\Reporting\Support;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
+use App\Crm\Models\Project;
 use App\Payments\Models\PaymentPlan;
 use Carbon\CarbonInterface;
 
@@ -28,10 +28,10 @@ class RevenueReport
     public static function forWindow(CarbonInterface $from, CarbonInterface $to, ?ProjectType $type = null): array
     {
         $query = PaymentPlan::query()
-            ->join('jobs', 'jobs.id', '=', 'payment_plans.job_id')
-            ->whereBetween('jobs.booked_at', [$from, $to]);
+            ->join('projects', 'projects.id', '=', 'payment_plans.project_id')
+            ->whereBetween('projects.booked_at', [$from, $to]);
 
-        ProjectFilter::apply($query, $type, 'jobs.project_id');
+        ProjectFilter::apply($query, $type, 'payment_plans.project_id');
 
         $plans = $query->get(['payment_plans.total']);
 
@@ -59,16 +59,16 @@ class RevenueReport
     {
         $query = Contact::query()
             ->join('project_contacts', 'project_contacts.contact_id', '=', 'contacts.id')
-            ->join('jobs', 'jobs.project_id', '=', 'project_contacts.project_id')
-            ->leftJoin('payment_plans', 'payment_plans.job_id', '=', 'jobs.id')
+            ->join('projects', 'projects.id', '=', 'project_contacts.project_id')
+            ->leftJoin('payment_plans', 'payment_plans.project_id', '=', 'projects.id')
             ->where('project_contacts.role', ProjectContactRole::Primary->value)
-            ->whereBetween('jobs.booked_at', [$from, $to])
+            ->whereBetween('projects.booked_at', [$from, $to])
             ->groupBy('contacts.id', 'contacts.name')
-            ->selectRaw('contacts.name, count(distinct jobs.id) as projects, coalesce(sum(payment_plans.total), 0) as revenue')
+            ->selectRaw('contacts.name, count(distinct projects.id) as projects, coalesce(sum(payment_plans.total), 0) as revenue')
             ->orderByDesc('revenue')
             ->limit($limit);
 
-        ProjectFilter::apply($query, $type, 'jobs.project_id');
+        ProjectFilter::apply($query, $type, 'project_contacts.project_id');
 
         return $query->get()
             ->map(fn ($row) => [
@@ -90,12 +90,13 @@ class RevenueReport
      */
     public static function perProjectType(CarbonInterface $from, CarbonInterface $to): array
     {
-        return Job::query()
-            ->join('projects', 'projects.id', '=', 'jobs.project_id')
-            ->leftJoin('payment_plans', 'payment_plans.job_id', '=', 'jobs.id')
-            ->whereBetween('jobs.booked_at', [$from, $to])
+        return Project::query()
+            ->leftJoin('payment_plans', 'payment_plans.project_id', '=', 'projects.id')
+            ->whereBetween('projects.booked_at', [$from, $to])
             ->groupBy('projects.type')
-            ->selectRaw('projects.type, count(distinct jobs.id) as projects, coalesce(sum(payment_plans.total), 0) as revenue')
+            ->selectRaw('projects.type, count(distinct projects.id) as projects, coalesce(sum(payment_plans.total), 0) as revenue')
+            // The raw key, not Project's type accessor.
+            ->toBase()
             ->get()
             ->map(function ($row) {
                 $type = ProjectType::tryFrom($row->type);

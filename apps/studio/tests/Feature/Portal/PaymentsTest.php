@@ -2,7 +2,6 @@
 
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
@@ -33,8 +32,8 @@ function t07PortalProjectWithPlan(): array
     $contact = Contact::factory()->create();
     $project->attachContact($contact, ProjectContactRole::Primary);
 
-    $job = Job::factory()->for($project)->create();
-    $plan = PaymentPlan::factory()->for($job)->create(['total' => 100000, 'reference' => 'RE-2026-42']);
+    markBooked($project);
+    $plan = PaymentPlan::factory()->for($project)->create(['total' => 100000, 'reference' => 'RE-2026-42']);
     PaymentInstallment::factory()->for($plan, 'plan')->create([
         'amount' => 100000,
         'due_on' => now()->addWeek()->toDateString(),
@@ -103,8 +102,8 @@ it('404s the payments screen for a project the studio has not made portal-visibl
     $project = Project::factory()->create(['portal_visible' => false]);
     $contact = Contact::factory()->create();
     $project->attachContact($contact, ProjectContactRole::Primary);
-    $job = Job::factory()->for($project)->create();
-    PaymentPlan::factory()->for($job)->create(['total' => 0]);
+    markBooked($project);
+    PaymentPlan::factory()->for($project)->create(['total' => 0]);
 
     $this->actingAs($contact, 'portal')->get("/projekte/{$project->public_id}/zahlungen")->assertNotFound();
 });

@@ -39,5 +39,5 @@ it('files a paid installment under the project three relations away', function (
     );
 
     expect(AuditLog::where('event', 'payment_installment.paid')->sole()->project_id)
-        ->toBe($installment->plan->job->project_id);
+        ->toBe($installment->plan->project_id);
 });

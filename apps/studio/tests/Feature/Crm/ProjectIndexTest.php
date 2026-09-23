@@ -2,7 +2,6 @@
 
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\StagePipeline;
-use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
@@ -20,7 +19,7 @@ beforeEach(function () {
 function bookedProject(?string $name = null): Project
 {
     $project = Project::factory()->wedding()->create(array_filter(['name' => $name]));
-    Job::factory()->for($project)->create();
+    markBooked($project);
 
     return $project;
 }
@@ -85,7 +84,7 @@ it('keeps a renamed stage in its phase', function () {
     expect(projectRows()[0])->toMatchArray(['position' => 'Sichtung', 'phase' => 'editing']);
 });
 
-// An inquiry is the same record before its Job exists — it belongs on the
+// An inquiry is the same record before its booking — it belongs on the
 // board at /anfragen, not in this list.
 it('leaves out projects that are not booked', function () {
     $inquiry = Project::factory()->wedding()->create(['name' => 'Sundermann']);

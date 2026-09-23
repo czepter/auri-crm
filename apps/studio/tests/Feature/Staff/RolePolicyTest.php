@@ -4,7 +4,6 @@ use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\InternalNote;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -51,7 +50,7 @@ it('refuses to book for a role without the capability', function () {
         ->post("/auftraege/{$project->public_id}/buchung")
         ->assertForbidden();
 
-    expect($project->fresh()->job)->toBeNull();
+    expect($project->fresh()->isBooked())->toBeFalse();
 });
 
 it('lets the owner book', function () {
@@ -62,7 +61,7 @@ it('lets the owner book', function () {
         ->post("/auftraege/{$project->public_id}/buchung")
         ->assertRedirect();
 
-    expect($project->fresh()->job)->not->toBeNull();
+    expect($project->fresh()->isBooked())->toBeTrue();
 });
 
 it('refuses to book a lost project', function () {
@@ -74,7 +73,7 @@ it('refuses to book a lost project', function () {
         ->post("/auftraege/{$project->public_id}/buchung")
         ->assertForbidden();
 
-    expect($project->fresh()->job)->toBeNull();
+    expect($project->fresh()->isBooked())->toBeFalse();
 });
 
 it('opens the funnel to every staff role', function (StaffRole $role) {
@@ -137,10 +136,10 @@ it('shows a second shooter only their own projects in the project list', functio
     // moved that list off the Übersicht and onto /projekte.
     $nina = staff(StaffRole::Contributor);
     $mine = crewedProject($nina);
-    Job::factory()->for($mine)->create();
+    markBooked($mine);
 
     $theirs = Project::factory()->create(['name' => 'Fremdes Projekt']);
-    Job::factory()->for($theirs)->create();
+    markBooked($theirs);
     Shoot::factory()->for($theirs)->create();
 
     $this->actingAs($nina, 'staff');

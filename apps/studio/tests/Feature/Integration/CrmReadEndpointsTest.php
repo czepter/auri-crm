@@ -7,7 +7,6 @@ use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\InternalNote;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -61,7 +60,7 @@ it('never returns an internal integer id for any CRM resource', function (string
     expect(integerIdPaths($body))->toBe([]);
 })->with([
     'contacts' => ['/api/contacts', Capability::ManageContacts, fn () => Contact::factory()->count(3)->create()],
-    'projects' => ['/api/projects', Capability::ViewAllProjects, fn () => Job::factory()->count(3)->create()],
+    'projects' => ['/api/projects', Capability::ViewAllProjects, fn () => Project::factory()->booked()->count(3)->create()],
     'leads' => ['/api/leads', Capability::ManageLeads, fn () => Lead::factory()->count(3)->create()],
     'shoots' => ['/api/shoots', Capability::ViewAllProjects, fn () => Shoot::factory()->count(3)->create()],
 ]);
@@ -168,7 +167,7 @@ it('rejects a since value that is not a valid date', function () {
 });
 
 it('lists only booked projects, never a lead\'s', function () {
-    $booked = Job::factory()->create()->project;
+    $booked = Project::factory()->booked()->create();
     Lead::factory()->create();
 
     $body = $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))
@@ -334,11 +333,11 @@ it('carries the lead, the contacts with their roles, and the shoots', function (
     expect(integerIdPaths($body))->toBe([]);
 });
 
-// #399: booked/job status, the primary-shoot flag, crew per shoot and open
+// #399: booking status, the primary-shoot flag, crew per shoot and open
 // tasks were all unreachable from get_project before this.
-it('carries the project\'s job, its shoots\' crew and primary flag, and its open task count', function () {
+it('carries the project\'s booking, its shoots\' crew and primary flag, and its open task count', function () {
     $project = Project::factory()->create();
-    Job::factory()->for($project)->create(['booked_via' => 'manual']);
+    markBooked($project, ['booked_via' => 'manual']);
     $shoot = Shoot::factory()->for($project)->create(['is_primary' => true]);
     CrewAssignment::factory()->for($shoot)->create();
     $project->tasks()->create(['title' => 'Vertrag verschicken', 'audience' => 'internal']);
@@ -347,22 +346,23 @@ it('carries the project\'s job, its shoots\' crew and primary flag, and its open
         ->getJson("/api/projects/{$project->public_id}")
         ->assertOk()->json('data');
 
-    expect($body['job'])->not->toBeNull();
-    expect($body['job']['bookedVia'])->toBe('manual');
+    expect($body['bookedAt'])->not->toBeNull();
+    expect($body['bookedVia'])->toBe('manual');
     expect($body['shoots'][0]['isPrimary'])->toBeTrue();
     expect($body['shoots'][0]['crew'])->toHaveCount(1);
     expect($body['openTaskCount'])->toBe(1);
     expect(integerIdPaths($body))->toBe([]);
 });
 
-it('leaves a project without a job with a null job', function () {
+it('leaves an inquiry with a null booking', function () {
     $project = Project::factory()->create();
 
     $body = $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))
         ->getJson("/api/projects/{$project->public_id}")
         ->assertOk()->json('data');
 
-    expect($body['job'])->toBeNull();
+    expect($body['bookedAt'])->toBeNull();
+    expect($body['bookedVia'])->toBeNull();
     expect($body['openTaskCount'])->toBe(0);
 });
 
@@ -392,7 +392,7 @@ it('never carries internal notes', function () {
 // The lean index is the other half of #350's decision: growing the payload
 // there is the contact join on every row this split exists to avoid.
 it('keeps the project index lean', function () {
-    $project = Job::factory()->create()->project;
+    $project = Project::factory()->booked()->create();
     $project->attachContact(Contact::factory()->create(), ProjectContactRole::Primary);
 
     $body = $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))

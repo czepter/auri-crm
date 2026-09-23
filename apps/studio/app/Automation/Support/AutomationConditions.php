@@ -29,7 +29,7 @@ class AutomationConditions
         }
 
         return match ($condition) {
-            AutomationCondition::PaymentOpen => $project->job?->paymentPlan
+            AutomationCondition::PaymentOpen => $project->paymentPlan
                 ?->installments()
                 ->where('status', '!=', PaymentInstallmentStatus::Paid)
                 ->exists() ?? false,

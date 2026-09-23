@@ -7,7 +7,7 @@ use App\Crm\Actions\CompleteProject;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
-use App\Integration\Data\JobReadData;
+use App\Integration\Data\ProjectDetailReadData;
 use App\Models\User;
 use App\Support\AuditLogger;
 use App\Support\LiveUpdate;
@@ -99,9 +99,9 @@ class ProjectController extends Controller
      */
     public function book(Request $request, Project $project, BookProject $book): JsonResponse
     {
-        $job = $book($project, $this->actor($request));
+        $book($project, $this->actor($request));
 
-        return response()->json(['data' => JobReadData::fromModel(($job ?? $project->job)->setRelation('project', $project))]);
+        return response()->json(['data' => ProjectDetailReadData::fromModel($project)]);
     }
 
     public function complete(Request $request, Project $project, CompleteProject $complete): JsonResponse

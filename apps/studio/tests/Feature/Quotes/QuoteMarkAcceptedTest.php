@@ -31,7 +31,7 @@ it('nimmt ein versendetes Angebot für den Hauptkontakt an und bucht einmal', fu
     expect($quote->status)->toBe(QuoteStatus::Accepted)
         ->and($quote->accepted_ip)->toBeNull()
         ->and($quote->accepted_by_contact_id)->toBe($this->contact->id)
-        ->and($this->project->job()->count())->toBe(1);
+        ->and($this->project->fresh()->isBooked())->toBeTrue();
 });
 
 it('nimmt an, bucht aber nicht ohne Buchungsrecht', function () {
@@ -42,7 +42,7 @@ it('nimmt an, bucht aber nicht ohne Buchungsrecht', function () {
         ->assertRedirect();
 
     expect($quote->fresh()->status)->toBe(QuoteStatus::Accepted)
-        ->and($this->project->job()->exists())->toBeFalse();
+        ->and($this->project->fresh()->isBooked())->toBeFalse();
 });
 
 it('lehnt einen Entwurf ab', function () {
@@ -53,7 +53,7 @@ it('lehnt einen Entwurf ab', function () {
         ->assertSessionHasErrors('quote');
 
     expect($quote->fresh()->status)->toBe(QuoteStatus::Draft)
-        ->and($this->project->job()->exists())->toBeFalse();
+        ->and($this->project->fresh()->isBooked())->toBeFalse();
 });
 
 it('verweigert ohne manageQuotes', function () {

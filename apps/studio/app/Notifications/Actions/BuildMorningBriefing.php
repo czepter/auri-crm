@@ -142,13 +142,13 @@ class BuildMorningBriefing
     {
         return PaymentInstallment::query()
             ->overdue()
-            ->with('plan.job.project')
+            ->with('plan.project')
             ->orderBy('due_on')
             ->get()
-            ->filter(fn (PaymentInstallment $installment) => $this->hears($user, $installment->plan->job->project))
+            ->filter(fn (PaymentInstallment $installment) => $this->hears($user, $installment->plan->project))
             ->map(fn (PaymentInstallment $installment) => sprintf(
                 '%s — %s, fällig am %s',
-                $installment->plan->job->project->name,
+                $installment->plan->project->name,
                 number_format($installment->amount / 100, 2, ',', '.').' €',
                 $installment->due_on->format('d.m.Y'),
             ))

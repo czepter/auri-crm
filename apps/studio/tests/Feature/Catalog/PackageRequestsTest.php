@@ -3,7 +3,6 @@
 use App\Catalog\Models\Package;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Models\User;
@@ -21,7 +20,7 @@ function requestedTwice(Package $package): Project
         'package_id' => $package->id,
         'captured_at' => now()->subMonth(),
     ]);
-    Job::factory()->create(['project_id' => $booked->id]);
+    markBooked($booked);
 
     $open = Project::factory()->create();
     Lead::factory()->create([

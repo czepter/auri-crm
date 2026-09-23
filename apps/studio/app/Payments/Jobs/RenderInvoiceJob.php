@@ -31,7 +31,7 @@ class RenderInvoiceJob implements ShouldQueue
 
     public function handle(GotenbergClient $gotenberg, RenderInvoicePdf $render): void
     {
-        $invoice = $this->invoice->fresh(['template', 'project', 'contact', 'installments.plan.job.project', 'items']);
+        $invoice = $this->invoice->fresh(['template', 'project', 'contact', 'installments.plan.project', 'items']);
 
         if ($invoice === null) {
             return;

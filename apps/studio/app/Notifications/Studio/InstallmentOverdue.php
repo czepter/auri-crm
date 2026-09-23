@@ -38,7 +38,7 @@ class InstallmentOverdue extends StudioEventNotification
         return $this->installments
             ->map(fn (PaymentInstallment $installment) => sprintf(
                 '%s — %s, fällig am %s (%s)',
-                $installment->plan->job->project->name,
+                $installment->plan->project->name,
                 number_format($installment->remaining() / 100, 2, ',', '.').' €',
                 $installment->due_on->format('d.m.Y'),
                 $installment->overdue_reason?->label() ?? 'Frist überschritten',
@@ -58,7 +58,7 @@ class InstallmentOverdue extends StudioEventNotification
     /** One project means its crew; several mean the studio picked the recipients already. */
     public function project(): ?Project
     {
-        $projects = $this->installments->map(fn (PaymentInstallment $i) => $i->plan->job->project)->unique('id');
+        $projects = $this->installments->map(fn (PaymentInstallment $i) => $i->plan->project)->unique('id');
 
         return $projects->count() === 1 ? $projects->first() : null;
     }

@@ -604,8 +604,8 @@ Route::middleware('audience:staff')->group(function () {
             ->name('leads.stage.update');
 
         // C-02 (#236): the list behind the sidebar's Projekte entry. Its own
-        // path, not /auftraege: a Job is what a booked project becomes, and
-        // the list covers every project whether or not one exists yet.
+        // path, not /auftraege: a booked project becomes an Auftrag, and
+        // the list covers every project whether booked yet or not.
         Route::get('/projekte', [ProjectController::class, 'index'])->name('projects.index');
         Route::get('/projekte/suche', ProjectSearchController::class)->name('projects.search');
         Route::get('/auftraege/einstellungen/stufen', [ProjectController::class, 'index'])

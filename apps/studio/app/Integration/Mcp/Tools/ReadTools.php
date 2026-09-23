@@ -324,13 +324,8 @@ final class ReadTools
                 'lostReason' => $schema->string()->nullable(),
                 'lostAt' => $schema->string()->nullable(),
             ])->nullable(),
-            'job' => $schema->object([
-                'id' => $schema->string(),
-                'projectId' => $schema->string(),
-                'bookedAt' => $schema->string(),
-                'bookedVia' => $schema->string(),
-                'updatedAt' => $schema->string(),
-            ])->nullable(),
+            'bookedAt' => $schema->string()->nullable(),
+            'bookedVia' => $schema->string()->nullable(),
             'openTaskCount' => $schema->integer(),
             'contacts' => $schema->array()->items($schema->object([
                 'id' => $schema->string(),

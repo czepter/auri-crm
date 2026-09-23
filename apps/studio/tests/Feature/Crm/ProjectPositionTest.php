@@ -5,7 +5,6 @@ use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Data\ProjectPositionData;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ShootStatus;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -36,7 +35,7 @@ it('hands over to the shoots once the project is booked', function () {
     $project = Project::factory()->create();
     Lead::factory()->for($project)->atStage(LeadStage::Booked)->create();
     Shoot::factory()->for($project)->atStatus(ShootStatus::Editing)->create();
-    Job::factory()->for($project)->create();
+    markBooked($project);
 
     expect(positionOf($project)->source)->toBe('shoot')
         ->and(positionOf($project)->value)->toBe('editing');
@@ -54,7 +53,7 @@ it('reads the least advanced shoot, not the furthest', function () {
     // A delivered engagement session beside a booked wedding reads "Gebucht":
     // the honest answer to what this project still owes the client.
     // Booked, because shoots only speak for a project in production.
-    $project = Project::factory()->has(Job::factory())->create();
+    $project = Project::factory()->booked()->create();
     Shoot::factory()->for($project)->atStatus(ShootStatus::Delivered)->create();
     Shoot::factory()->for($project)->atStatus(ShootStatus::Booked)->create();
 
@@ -64,7 +63,7 @@ it('reads the least advanced shoot, not the furthest', function () {
 });
 
 it('changes when the underlying shoot status changes, with no field to keep in sync', function () {
-    $project = Project::factory()->has(Job::factory())->create();
+    $project = Project::factory()->booked()->create();
     $shoot = Shoot::factory()->for($project)->atStatus(ShootStatus::Booked)->create();
 
     expect(positionOf($project)->value)->toBe('booked');
@@ -75,7 +74,7 @@ it('changes when the underlying shoot status changes, with no field to keep in s
 });
 
 it('does not let a cancelled shoot hold the project back', function () {
-    $project = Project::factory()->has(Job::factory())->create();
+    $project = Project::factory()->booked()->create();
     Shoot::factory()->for($project)->cancelled('Abgesagt')->create();
     Shoot::factory()->for($project)->atStatus(ShootStatus::Editing)->create();
 

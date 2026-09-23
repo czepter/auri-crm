@@ -36,7 +36,7 @@ class InstallmentDueSoon extends StudioEventNotification
         return $this->installments
             ->map(fn (PaymentInstallment $installment) => sprintf(
                 '%s — %s, fällig am %s',
-                $installment->plan->job->project->name,
+                $installment->plan->project->name,
                 number_format($installment->remaining() / 100, 2, ',', '.').' €',
                 $installment->due_on->format('d.m.Y'),
             ))
@@ -53,7 +53,7 @@ class InstallmentDueSoon extends StudioEventNotification
 
     public function project(): ?Project
     {
-        $projects = $this->installments->map(fn (PaymentInstallment $i) => $i->plan->job->project)->unique('id');
+        $projects = $this->installments->map(fn (PaymentInstallment $i) => $i->plan->project)->unique('id');
 
         return $projects->count() === 1 ? $projects->first() : null;
     }

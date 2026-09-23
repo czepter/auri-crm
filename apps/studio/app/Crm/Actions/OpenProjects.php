@@ -39,8 +39,8 @@ class OpenProjects
     {
         $rows = Project::query()
             ->visibleTo($user)
-            ->whereHas('job')
-            ->with(['contacts', 'shoots', 'primaryShoot', 'lead', 'job.paymentPlan.installments'])
+            ->booked()
+            ->with(['contacts', 'shoots', 'primaryShoot', 'lead', 'paymentPlan.installments'])
             ->get()
             ->reject(fn (Project $project) => $project->lead?->isLost() || $project->isCompleted())
             ->map(fn (Project $project) => $this->row($project, $open))
@@ -67,7 +67,7 @@ class OpenProjects
         }
 
         $stalled = $this->position->stalled($project->shoots);
-        $late = $project->job->paymentPlan?->installments
+        $late = $project->paymentPlan?->installments
             ->filter(fn (PaymentInstallment $rate) => in_array($rate->status, [PaymentInstallmentStatus::Scheduled, PaymentInstallmentStatus::Invoiced], true)
                 && $rate->due_on->lt(today()))
             ->sortBy('due_on')

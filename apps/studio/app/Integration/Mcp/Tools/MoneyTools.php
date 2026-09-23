@@ -18,7 +18,7 @@ final class MoneyTools
             new ToolDefinition(
                 name: 'create_payment_plan',
                 title: 'Create a payment plan',
-                description: 'Split a booked project\'s total into installments, due on the dates given. Amounts are in cents: 1.790 € is 179000. Refused unless the project has a Job (book_project). Even installments unless the accepted quote carries its own payment stages, in which case those decide the split.',
+                description: 'Split a booked project\'s total into installments, due on the dates given. Amounts are in cents: 1.790 € is 179000. Refused unless the project is booked (book_project). Even installments unless the accepted quote carries its own payment stages, in which case those decide the split.',
                 method: 'POST',
                 path: '/projects/{project}/payment-plan',
                 schema: fn (JsonSchema $schema) => [

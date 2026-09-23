@@ -3,15 +3,16 @@
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\InternalNote;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Enums\Capability;
 use App\Gallery\Models\Gallery;
 use App\Integration\Models\ApiToken;
+use App\Payments\Models\PaymentPlan;
 use App\Quotes\Models\Quote;
 use App\Support\Surface;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -58,19 +59,26 @@ it('refuses a project that something more than an import artifact hangs off', fu
 
     expect(Project::query()->count())->toBe(1);
 })->with([
-    'job' => [fn (Project $project) => Job::factory()->for($project)->create(), 'job'],
+    'booking' => [fn (Project $project) => markBooked($project), 'booking'],
     'quote' => [fn (Project $project) => Quote::factory()->for($project)->create(), 'quote'],
     'gallery' => [fn (Project $project) => Gallery::factory()->for($project)->create(), 'gallery'],
 ]);
 
 it('names every blocker, not just the first', function () {
     $project = Project::factory()->create();
-    Job::factory()->for($project)->create();
+    markBooked($project);
     Quote::factory()->for($project)->create();
 
     deleteProject($project)
         ->assertStatus(422)
-        ->assertJsonPath('errors.project.0', 'The project has a job and quote and cannot be deleted.');
+        ->assertJsonPath('errors.project.0', 'The project has a booking and quote and cannot be deleted.');
+});
+
+it('keeps a project with a payment plan even past the api guard', function () {
+    $project = markBooked(Project::factory()->create());
+    PaymentPlan::factory()->for($project)->create();
+
+    expect(fn () => $project->delete())->toThrow(QueryException::class);
 });
 
 it('refuses a token that does not hold the manage_leads scope', function () {

@@ -156,7 +156,7 @@ class ProjectController extends Controller
     {
         $found->load([
             'shoots' => fn ($query) => $query->uncancelled()->orderByRaw('date is null, date'),
-            'latestContract.signature', 'latestQuote', 'job.paymentPlan.installments',
+            'latestContract.signature', 'latestQuote', 'paymentPlan.installments',
             'galleries.currentVersion', 'primaryShoot',
         ]);
 
@@ -232,7 +232,7 @@ class ProjectController extends Controller
     private function documents(Project $found, PortalSettings $settings): array
     {
         $rows = [];
-        $plan = $found->job?->paymentPlan;
+        $plan = $found->paymentPlan;
 
         if ($plan !== null && $settings->paymentStatusEnabled(auth('portal')->user())) {
             $next = $plan->installments

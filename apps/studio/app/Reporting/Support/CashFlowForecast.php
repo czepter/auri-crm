@@ -58,20 +58,19 @@ class CashFlowForecast
     /**
      * Wie viele Projekte hinter den Balken stehen. Ein Projekt mit sechs
      * Raten ist ein Projekt, nicht sechs — gezählt wird über die Rate zum
-     * Auftrag und von dort zum Projekt.
+     * Plan und von dort zum Projekt.
      *
      * @param  callable(\Illuminate\Database\Eloquent\Builder): mixed  $scope
      */
     private static function projectsBehind(?ProjectType $type, callable $scope): int
     {
         $query = PaymentInstallment::query()
-            ->join('payment_plans', 'payment_plans.id', '=', 'payment_installments.payment_plan_id')
-            ->join('jobs', 'jobs.id', '=', 'payment_plans.job_id');
+            ->join('payment_plans', 'payment_plans.id', '=', 'payment_installments.payment_plan_id');
 
-        ProjectFilter::apply($query, $type, 'jobs.project_id');
+        ProjectFilter::apply($query, $type, 'payment_plans.project_id');
         $scope($query);
 
-        return (int) $query->distinct()->count('jobs.project_id');
+        return (int) $query->distinct()->count('payment_plans.project_id');
     }
 
     /**
@@ -89,7 +88,7 @@ class CashFlowForecast
 
     /**
      * Raten des Studios, auf Wunsch auf einen Projekttyp verengt. Der Weg zum
-     * Projekt geht über Plan und Auftrag — eine Rate kennt beides nicht.
+     * Projekt geht über den Plan — eine Rate kennt das Projekt nicht.
      */
     private static function installments(?ProjectType $type)
     {
@@ -100,8 +99,7 @@ class CashFlowForecast
                 'payment_plan_id',
                 PaymentPlan::query()
                     ->select('payment_plans.id')
-                    ->join('jobs', 'jobs.id', '=', 'payment_plans.job_id')
-                    ->whereIn('jobs.project_id', Project::query()->select('id')->where('type', $type->value)),
+                    ->whereIn('payment_plans.project_id', Project::query()->select('id')->where('type', $type->value)),
             );
         }
 
