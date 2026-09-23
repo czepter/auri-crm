@@ -1,8 +1,8 @@
 <?php
 
 use App\Crm\Enums\LeadStage;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Enums\Capability;
 use App\Integration\Models\ApiToken;
 use App\Support\Surface;
@@ -32,7 +32,7 @@ it('captures a lead, reusing CaptureInquiry exactly like the admin capture form'
 
     $response->assertCreated();
 
-    expect(Project::count())->toBe(1)
+    expect(ClientCase::count())->toBe(1)
         ->and(Lead::count())->toBe(1)
         ->and(Lead::first()->captured_by_id)->toBeNull()
         ->and($response->json('lead.stage'))->toBe('new');
@@ -58,7 +58,7 @@ it('adds everyone on the inquiry as a contact of the project', function () {
         ])
         ->assertCreated();
 
-    expect(Project::first()->contacts->pluck('email', 'name')->all())->toBe([
+    expect(ClientCase::first()->contacts->pluck('email', 'name')->all())->toBe([
         'Viktoria Böser' => 'viktoria@example.test',
         'Manuel' => 'manuel@example.test',
     ]);

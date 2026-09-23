@@ -181,7 +181,7 @@ it('hands the studio a mail and a task due one month after the request', functio
     $task = Task::sole();
 
     expect($task->title)->toBe('Datenschutz-Anfrage: Datenkopie')
-        ->and($task->project_id)->toBeNull()
+        ->and($task->case_id)->toBeNull()
         ->and($task->contact_id)->toBe($contact->id)
         ->and($task->due_on->toDateString())->toBe('2026-02-28')
         ->and(DsgvoRequest::sole()->task_id)->toBe($task->id);
@@ -193,7 +193,7 @@ it('completes the task when the studio answers the request', function () {
     useSurface(Surface::ADMIN);
 
     $contact = Contact::factory()->create();
-    $task = Task::factory()->create(['project_id' => null, 'contact_id' => $contact->id]);
+    $task = Task::factory()->create(['case_id' => null, 'contact_id' => $contact->id]);
     DsgvoRequest::create(['contact_id' => $contact->id, 'kind' => DsgvoRequest::EXPORT, 'task_id' => $task->id]);
 
     test()->actingAs(staffMember(App\Enums\StaffRole::Admin), 'staff')

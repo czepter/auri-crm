@@ -11,8 +11,8 @@ use App\Automation\Models\AutomationRun;
 use App\Automation\Notifications\AutomationReminder;
 use App\Automation\Support\AutomationConditions;
 use App\Crm\Enums\TaskAudience;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\CrewAssignment;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Documents\Support\DocumentMergeDataBuilder;
@@ -144,14 +144,14 @@ class FireAutomationRule
      * anchor's own date, so the offset lands the task on the day the rule
      * fires; an event rule has no offset and lands on its day.
      */
-    private function task(AutomationRun $run, AutomationRule $rule, ?Project $project, Model $anchor, string $triggerDate, string $title): AutomationRun
+    private function task(AutomationRun $run, AutomationRule $rule, ?ClientCase $project, Model $anchor, string $triggerDate, string $title): AutomationRun
     {
         $date = CarbonImmutable::parse($triggerDate);
         $offset = $rule->offset_days ?? 0;
 
         try {
             Task::create([
-                'project_id' => $project?->id,
+                'case_id' => $project?->id,
                 'shoot_id' => $anchor instanceof Shoot ? $anchor->id : null,
                 'title' => $title,
                 'audience' => TaskAudience::Internal,
@@ -173,32 +173,32 @@ class FireAutomationRule
      *
      * @return Collection<int, Model>
      */
-    private function recipientsFor(AutomationRule $rule, ?Project $project): Collection
+    private function recipientsFor(AutomationRule $rule, ?ClientCase $project): Collection
     {
         if ($project === null) {
             return collect();
         }
 
         return match ($rule->recipient_type) {
-            AutomationRecipient::Client => $this->clients->forProject($project),
+            AutomationRecipient::Client => $this->clients->forCase($project),
             // Alone in the studio nobody gets assigned; the one person is the crew.
-            AutomationRecipient::Crew => User::soloStudio() ? $this->audience->forProject($project) : User::query()
+            AutomationRecipient::Crew => User::soloStudio() ? $this->audience->forCase($project) : User::query()
                 ->whereIn('id', CrewAssignment::query()
                     ->whereIn('shoot_id', $project->shoots()->select('id'))
                     ->select('user_id'))
                 ->get(),
-            AutomationRecipient::Studio => $this->audience->forProject($project),
+            AutomationRecipient::Studio => $this->audience->forCase($project),
         };
     }
 
-    /** The project every anchor hangs off — a Project is one, the rest name theirs. */
-    public static function projectOf(Model $anchor): ?Project
+    /** The project every anchor hangs off — a ClientCase is one, the rest name theirs. */
+    public static function projectOf(Model $anchor): ?ClientCase
     {
         return match (true) {
-            $anchor instanceof Project => $anchor,
+            $anchor instanceof ClientCase => $anchor,
             $anchor instanceof Shoot, $anchor instanceof Gallery,
-            $anchor instanceof Task => $anchor->project,
-            $anchor instanceof PaymentInstallment => $anchor->project(),
+            $anchor instanceof Task => $anchor->case,
+            $anchor instanceof PaymentInstallment => $anchor->case(),
             default => null,
         };
     }

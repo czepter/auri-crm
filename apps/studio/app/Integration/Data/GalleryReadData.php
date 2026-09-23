@@ -32,7 +32,7 @@ class GalleryReadData extends Data
         return new self(
             id: $gallery->public_id,
             title: $gallery->title ?? '',
-            projectId: $gallery->project?->public_id,
+            projectId: $gallery->case?->public_id,
             currentVersion: $gallery->currentVersion?->version,
             draftAssetCount: (int) $gallery->asset_count,
             status: self::status($gallery),

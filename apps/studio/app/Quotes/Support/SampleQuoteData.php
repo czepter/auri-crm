@@ -3,8 +3,8 @@
 namespace App\Quotes\Support;
 
 use App\Crm\Enums\ProjectType;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Quotes\Enums\DiscountType;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
@@ -21,7 +21,7 @@ class SampleQuoteData
 {
     public static function build(StudioSettingsResolver $settings): Quote
     {
-        $project = new Project(['name' => 'Musterauftrag', 'type' => ProjectType::Other]);
+        $project = new ClientCase(['name' => 'Musterauftrag', 'type' => ProjectType::Other]);
         $contact = new Contact(['name' => 'Muster GmbH', 'street' => 'Musterstraße 1', 'postcode' => '12345', 'city' => 'Musterstadt']);
 
         $items = collect([
@@ -45,7 +45,7 @@ class SampleQuoteData
             'discount_type' => DiscountType::Percentage,
             'discount_value' => 1000,
         ]);
-        $quote->setRelation('project', $project);
+        $quote->setRelation('case', $project);
         $quote->setRelation('recipientContact', $contact);
         $quote->setRelation('items', $items);
         $quote->setRelation('paymentStages', collect());

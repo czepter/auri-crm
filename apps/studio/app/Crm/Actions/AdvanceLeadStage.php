@@ -10,9 +10,9 @@ use App\Crm\Events\LeadStageChanged;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
-use App\Models\User;
 use App\Crm\Support\CrmVocabulary;
 use App\Crm\Support\StageHistory;
+use App\Models\User;
 use App\Support\AuditLogger;
 use Carbon\CarbonInterface;
 use DomainException;
@@ -76,7 +76,7 @@ class AdvanceLeadStage
             // board and the project list each show what the other one denies.
             // Throws when the booking has a payment plan — see UnbookProject.
             if ($backwards && $from->anchor === StageAnchor::Won) {
-                ($this->unbook)($lead->project, $actor ?? auth('staff')->user(), $enteredAt);
+                ($this->unbook)($lead->case, $actor ?? auth('staff')->user(), $enteredAt);
             }
 
             // A correction restores the moment the lead first entered the stage it
@@ -107,7 +107,7 @@ class AdvanceLeadStage
                     ...$backwards ? ['reverted' => true] : [],
                 ],
                 subject: $lead->public_id,
-                projectId: $lead->project_id,
+                projectId: $lead->case_id,
                 occurredAt: $enteredAt,
             );
 
@@ -119,7 +119,7 @@ class AdvanceLeadStage
             // throws leaves the stage where it was instead of "Gebucht"
             // without a booking.
             if ($next->anchor === StageAnchor::Won) {
-                ($this->book)($lead->project, $actor ?? auth('staff')->user(), at: $entered);
+                ($this->book)($lead->case, $actor ?? auth('staff')->user(), at: $entered);
             }
         });
 
@@ -152,7 +152,7 @@ class AdvanceLeadStage
 
         // A lost project shoots nothing, and a date left standing on it still
         // reads as taken in the calendar and the range query.
-        $lead->project->shoots()->uncancelled()->get()
+        $lead->case->shoots()->uncancelled()->get()
             ->each(fn (Shoot $shoot) => $this->shoots->cancel($shoot, $reason, $actor, $lostAt));
 
         AuditLogger::record(
@@ -160,7 +160,7 @@ class AdvanceLeadStage
             actor: $actor ?? auth('staff')->user(),
             context: ['stage' => $lead->stage->key, 'reason' => $reason, 'outcome' => $outcome->value],
             subject: $lead->public_id,
-            projectId: $lead->project_id,
+            projectId: $lead->case_id,
             occurredAt: $lostAt,
         );
 
@@ -187,7 +187,7 @@ class AdvanceLeadStage
         // ponytail: the close's own absagen are told apart by moment and
         // reason, so a shoot cancelled separately stays cancelled. Store the
         // cause on the shoot if the two ever coincide.
-        $lead->project->shoots()
+        $lead->case->shoots()
             ->where('cancelled_at', $lead->lost_at)
             ->where('cancelled_reason', $reason)
             ->get()
@@ -204,7 +204,7 @@ class AdvanceLeadStage
             actor: $actor ?? auth('staff')->user(),
             context: ['stage' => $lead->stage->key, 'reason' => $reason],
             subject: $lead->public_id,
-            projectId: $lead->project_id,
+            projectId: $lead->case_id,
         );
 
         return $lead;

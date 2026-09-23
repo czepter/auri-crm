@@ -75,7 +75,7 @@ class RemindDueTasks
             ->where('audience', TaskAudience::Internal)
             ->whereNotNull('due_on')
             ->whereDate('due_on', '<=', now()->toDateString())
-            ->with(['project', 'contact', 'assignee', 'dependsOn'])
+            ->with(['case', 'contact', 'assignee', 'dependsOn'])
             // Overdue first, then today's — the order the mail is read in.
             ->orderBy('due_on')
             ->get()
@@ -103,7 +103,7 @@ class RemindDueTasks
             ->where('audience', TaskAudience::Client)
             ->whereNotNull('due_on')
             ->whereDate('due_on', '<=', now()->toDateString())
-            ->with('project')
+            ->with('case')
             ->orderBy('due_on')
             ->get()
             ->reject(fn (Task $task) => $task->isBlocked())
@@ -113,7 +113,7 @@ class RemindDueTasks
             ));
 
         foreach ($due as $task) {
-            $recipients = $this->clients->forProject($task->project);
+            $recipients = $this->clients->forCase($task->case);
 
             if ($recipients->isEmpty()) {
                 continue;

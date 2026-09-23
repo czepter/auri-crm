@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Engagement\Jobs\SendScheduledMessage;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
@@ -24,10 +24,10 @@ beforeEach(function () {
 
 function apiThreadWithClient(): array
 {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
-    $thread = Thread::factory()->for($project)->create();
+    $project->attachContact($contact, CaseContactRole::Primary);
+    $thread = Thread::factory()->for($project, 'case')->create();
     Message::factory()->for($thread)->for($contact)->create();
 
     return [$project, $thread];
@@ -61,7 +61,7 @@ it('refuses a send from a token no staff member stands behind', function () {
 });
 
 it('refuses to reply on a project with no thread yet', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $staff = staffMember();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($staff))

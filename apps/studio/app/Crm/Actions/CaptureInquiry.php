@@ -3,13 +3,13 @@
 namespace App\Crm\Actions;
 
 use App\Crm\Data\CaptureInquiryData;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Events\LeadCaptured;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\ProjectType;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Manual entry was P1's only capture path; I-03's "capture lead" endpoint is
- * the second, so every Project, Lead, Contact and Shoot in the system is born
+ * the second, so every ClientCase, Lead, Contact and Shoot in the system is born
  * here either way.
  *
  * One transaction: a half-created inquiry — a project with no lead, a lead with
@@ -40,12 +40,12 @@ class CaptureInquiry
         private readonly WriteProjectFieldValues $writeFields,
     ) {}
 
-    public function __invoke(CaptureInquiryData $data, ?User $actor): Project
+    public function __invoke(CaptureInquiryData $data, ?User $actor): ClientCase
     {
         return DB::transaction(function () use ($data, $actor) {
             $contact = $this->resolveContact($data);
 
-            $project = Project::create([
+            $project = ClientCase::create([
                 'name' => $data->project_name,
                 'type' => $data->type,
                 'type_other' => $data->type_other,
@@ -55,7 +55,7 @@ class CaptureInquiry
                 'portal_visible' => $this->portal->projectsVisibleByDefault($contact),
             ]);
 
-            $project->attachContact($contact, ProjectContactRole::Primary);
+            $project->attachContact($contact, CaseContactRole::Primary);
 
             // Everyone else on the inquiry, each their own ProjectContact —
             // so a partner gets their own portal login rather than sharing
@@ -67,7 +67,7 @@ class CaptureInquiry
 
                 $project->attachContact(
                     $this->contactFor($person['name'], $person['email'] ?? null, $person['phone'] ?? null),
-                    ProjectContactRole::Partner,
+                    CaseContactRole::Partner,
                 );
             }
 
@@ -81,7 +81,7 @@ class CaptureInquiry
             $capturedAt = $data->captured_at ?? now();
 
             $lead = Lead::create([
-                'project_id' => $project->id,
+                'case_id' => $project->id,
                 'source' => $data->source,
                 'source_other' => $data->source_other,
                 'stage' => $this->stages->anchored(StagePipeline::Lead, StageAnchor::Entry),
@@ -107,7 +107,7 @@ class CaptureInquiry
             // a single main date; further shoots are added on the project
             // screen, which is what makes is_primary unambiguous here.
             Shoot::create([
-                'project_id' => $project->id,
+                'case_id' => $project->id,
                 'kind' => $this->kindFor($data->type),
                 'date' => $data->date,
                 'call_time' => $data->call_time,
@@ -125,7 +125,7 @@ class CaptureInquiry
                 actor: $actor,
                 context: ['source' => $data->source?->value, 'via' => $data->captured_via?->value],
                 subject: $lead->public_id,
-                projectId: $lead->project_id,
+                projectId: $lead->case_id,
                 occurredAt: $data->captured_at === null ? null : CarbonImmutable::parse($data->captured_at),
             );
 

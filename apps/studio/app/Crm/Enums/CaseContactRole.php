@@ -11,7 +11,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * portrait and wedding work share a schema (vision §3.1).
  */
 #[TypeScript]
-enum ProjectContactRole: string implements HasLabel
+enum CaseContactRole: string implements HasLabel
 {
     case Primary = 'primary';
     case Partner = 'partner';

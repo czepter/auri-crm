@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Enums\Capability;
 use App\Integration\Models\ApiToken;
 use App\Support\Surface;
@@ -17,7 +17,7 @@ beforeEach(function () {
 // #355: the partner a migration run dropped has to be added after capture.
 it('adds a partner to an existing project once, reusing a known address', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $known = Contact::factory()->create(['email' => 'friedrich@example.test']);
 
     foreach (['a', 'b'] as $key) {
@@ -29,12 +29,12 @@ it('adds a partner to an existing project once, reusing a known address', functi
     }
 
     expect($project->contacts()->get()->map(fn ($c) => [$c->id, $c->pivot->role])->all())
-        ->toBe([[$known->id, ProjectContactRole::Partner->value]]);
+        ->toBe([[$known->id, CaseContactRole::Partner->value]]);
 });
 
 it('accepts a role outside the enum, like the admin screen does', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'officiant')
@@ -45,7 +45,7 @@ it('accepts a role outside the enum, like the admin screen does', function () {
 
 it('refuses a second primary contact', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'primary')

@@ -5,7 +5,7 @@ namespace Database\Factories\Contracts;
 use App\Contracts\Enums\ContractState;
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Models\Contract;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Documents\Models\DocumentTemplate;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -19,7 +19,7 @@ class ContractFactory extends Factory
     public function definition(): array
     {
         return [
-            'project_id' => Project::factory(),
+            'case_id' => ClientCase::factory(),
             'contract_template_id' => DocumentTemplate::factory(),
             'status' => ContractStatus::Pending,
             // Ein Vertrag im Test ist einer, der beim Kunden liegt. Der
@@ -27,8 +27,8 @@ class ContractFactory extends Factory
             // ausdrücklich erzeugt.
             'state' => ContractState::Valid,
             'sent_at' => now(),
-            'version' => fn (array $attributes) => is_numeric($attributes['project_id'] ?? null)
-                ? (Contract::query()->where('project_id', $attributes['project_id'])->max('version') ?? 0) + 1
+            'version' => fn (array $attributes) => is_numeric($attributes['case_id'] ?? null)
+                ? (Contract::query()->where('case_id', $attributes['case_id'])->max('version') ?? 0) + 1
                 : 1,
         ];
     }

@@ -1,12 +1,12 @@
 <?php
 
 use App\Crm\Enums\CaptureChannel;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\LeadStage;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\User;
 use App\Quotes\Models\Quote;
@@ -26,10 +26,10 @@ function leadOn(
     int $daysAgo = 0,
     string $name = 'Meier & Kowalski',
 ): Lead {
-    $project = Project::factory()->wedding()->create(['name' => $name]);
-    Shoot::factory()->for($project)->primary()->on($date)->create();
+    $project = ClientCase::factory()->wedding()->create(['name' => $name]);
+    Shoot::factory()->for($project, 'case')->primary()->on($date)->create();
 
-    return Lead::factory()->for($project)->atStage($stage, $daysAgo)->create();
+    return Lead::factory()->for($project, 'case')->atStage($stage, $daysAgo)->create();
 }
 
 function boardProps(): array
@@ -64,16 +64,16 @@ it('keeps lost leads off the board entirely', function () {
 
 it('renders the contact names, the primary date and the shoot count', function () {
     $lead = leadOn('2026-06-14', name: 'Steffens & Falk');
-    $project = $lead->project;
+    $project = $lead->case;
     $project->attachContact(
         Contact::factory()->create(['name' => 'Annika Steffens']),
-        ProjectContactRole::Primary,
+        CaseContactRole::Primary,
     );
     $project->attachContact(
         Contact::factory()->create(['name' => 'Ruben Falk']),
-        ProjectContactRole::Partner,
+        CaseContactRole::Partner,
     );
-    Shoot::factory()->for($project)->on('2026-03-01')->create();
+    Shoot::factory()->for($project, 'case')->on('2026-03-01')->create();
 
     $card = boardProps()['columns'][0]['cards'][0];
 
@@ -132,7 +132,7 @@ it('clears the flag when the colliding project moves, without writing to the lea
 
     $before = $first->fresh()->updated_at;
 
-    $second->project->primaryShoot->update(['date' => '2026-06-21']);
+    $second->case->primaryShoot->update(['date' => '2026-06-21']);
 
     $cards = boardProps()['columns'][0]['cards'];
 
@@ -266,10 +266,10 @@ it('puts no integer identifier on the board', function () {
 // staff otherwise go to Auswertungen for.
 it('sums each stage from the quotes actually sent', function () {
     $lead = leadOn('2026-06-14', LeadStage::QuoteSent);
-    Quote::factory()->for($lead->project)->create(['total' => 590000, 'sent_at' => now()->subDay()]);
+    Quote::factory()->for($lead->case, 'case')->create(['total' => 590000, 'sent_at' => now()->subDay()]);
 
     $other = leadOn('2026-07-11', LeadStage::QuoteSent, name: 'Petersen');
-    Quote::factory()->for($other->project)->create(['total' => 310000, 'sent_at' => now()->subDay()]);
+    Quote::factory()->for($other->case, 'case')->create(['total' => 310000, 'sent_at' => now()->subDay()]);
 
     // Nothing sent: not a zero in the sum, and a dash in the value column.
     leadOn('2026-08-02', LeadStage::New, name: 'Sundermann');
@@ -342,14 +342,14 @@ it('leaves a bare "Sonstige" channel off the case', function () {
 });
 
 it('names the primary contact first in the queue as well as on the card', function () {
-    $project = leadOn('2026-06-14', name: 'Steffens & Falk')->project;
+    $project = leadOn('2026-06-14', name: 'Steffens & Falk')->case;
     $project->attachContact(
         Contact::factory()->create(['name' => 'Ruben Falk']),
-        ProjectContactRole::Partner,
+        CaseContactRole::Partner,
     );
     $project->attachContact(
         Contact::factory()->create(['name' => 'Annika Steffens']),
-        ProjectContactRole::Primary,
+        CaseContactRole::Primary,
     );
 
     $props = boardProps();
@@ -383,7 +383,7 @@ it('falls back to the board when the user has chosen nothing', function () {
 // shows the same case twice, under two vocabularies.
 it('leaves booked cases off the board', function () {
     $lead = leadOn('2026-06-14', LeadStage::QuoteAccepted);
-    markBooked($lead->project);
+    markBooked($lead->case);
 
     leadOn('2026-07-11', LeadStage::New, name: 'Petersen');
 

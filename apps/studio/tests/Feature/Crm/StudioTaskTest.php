@@ -34,7 +34,7 @@ it('creates a studio task without a project and shows it on the board', function
 
     $task = Task::sole();
 
-    expect($task->project_id)->toBeNull()
+    expect($task->case_id)->toBeNull()
         ->and($task->contact_id)->toBe($contact->id)
         ->and($task->assignee_id)->toBe($staff->id);
 
@@ -57,7 +57,7 @@ it('refuses a client task without a project', function () {
 
 it('completes a studio task', function () {
     $staff = staffMember();
-    $task = Task::factory()->create(['project_id' => null]);
+    $task = Task::factory()->create(['case_id' => null]);
 
     $this->actingAs($staff, 'staff')->post("/aufgaben/{$task->public_id}/erledigt")->assertRedirect();
 
@@ -65,8 +65,8 @@ it('completes a studio task', function () {
 });
 
 it('lets two studio tasks depend on each other', function () {
-    $first = Task::factory()->create(['project_id' => null, 'title' => 'Belege sammeln']);
-    $second = Task::factory()->create(['project_id' => null]);
+    $first = Task::factory()->create(['case_id' => null, 'title' => 'Belege sammeln']);
+    $second = Task::factory()->create(['case_id' => null]);
 
     $this->actingAs(staffMember(), 'staff')
         ->post("/aufgaben/{$second->public_id}/abhaengigkeit", ['depends_on' => $first->public_id])
@@ -81,8 +81,8 @@ it('names a due studio task by its contact, or by its title alone', function () 
     app(NotificationPreferences::class)->setMode($staff, TasksDue::class, NotificationMode::Immediate);
     $contact = Contact::factory()->create(['name' => 'Tom Brandt']);
 
-    Task::factory()->due(now()->toDateString())->create(['project_id' => null, 'title' => 'Auskunft geben', 'contact_id' => $contact->id]);
-    Task::factory()->due(now()->toDateString())->create(['project_id' => null, 'title' => 'Steuer melden']);
+    Task::factory()->due(now()->toDateString())->create(['case_id' => null, 'title' => 'Auskunft geben', 'contact_id' => $contact->id]);
+    Task::factory()->due(now()->toDateString())->create(['case_id' => null, 'title' => 'Steuer melden']);
 
     app(RemindDueTasks::class)();
 
@@ -101,13 +101,13 @@ it('files an automation without a project as a studio task', function () {
     $run = app(FireAutomationRule::class)($rule, Contact::factory()->create(), '2026-06-01');
 
     expect($run->status)->toBe(AutomationRunStatus::Sent)
-        ->and(Task::sole())->title->toBe('Buchhaltung')->project_id->toBeNull();
+        ->and(Task::sole())->title->toBe('Buchhaltung')->case_id->toBeNull();
 });
 
 it('keeps a studio task when its contact is erased', function () {
     $staff = staffMember();
     $contact = Contact::factory()->create();
-    $task = Task::factory()->create(['project_id' => null, 'contact_id' => $contact->id]);
+    $task = Task::factory()->create(['case_id' => null, 'contact_id' => $contact->id]);
 
     app(EraseContactDsgvo::class)($contact, $staff);
 

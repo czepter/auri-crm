@@ -3,8 +3,8 @@
 use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -19,10 +19,10 @@ it('starts at the new stage and records when it got there', function () {
 });
 
 it('allows only one lead per project', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
-    Lead::factory()->for($project)->create();
-    Lead::factory()->for($project)->create();
+    Lead::factory()->for($project, 'case')->create();
+    Lead::factory()->for($project, 'case')->create();
 })->throws(QueryException::class);
 
 it('knows the funnel order', function () {

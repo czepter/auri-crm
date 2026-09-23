@@ -8,8 +8,8 @@ use App\Concerns\WritesComposedMail;
 use App\Payments\Models\Invoice;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Support\Number;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Number;
 
 /**
  * #415: subject and paragraphs come from the compose
@@ -50,7 +50,7 @@ class InvoiceSent extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $message = $this->composedMail($this->subject, $this->body);
-        $project = $this->invoice->project;
+        $project = $this->invoice->case;
         $dueOn = $this->invoice->dueOn();
 
         // What the attachment says, readable without opening it.

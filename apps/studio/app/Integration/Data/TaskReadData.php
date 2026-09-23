@@ -35,7 +35,7 @@ class TaskReadData extends Data
     {
         return new self(
             id: $task->public_id,
-            projectId: $task->project?->public_id,
+            projectId: $task->case?->public_id,
             contactId: $task->contact?->public_id,
             title: $task->title,
             audience: $task->audience->value,

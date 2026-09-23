@@ -1,8 +1,8 @@
 <?php
 
 use App\Crm\Actions\RemindDueTasks;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\CrewAssignment;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Notifications\Actions\BuildMorningBriefing;
@@ -54,11 +54,11 @@ it('leaves out what belongs to somebody else’s project', function () {
     $crewed = staffMember();
     $uninvolved = staffMember();
 
-    $project = Project::factory()->create();
-    $shoot = Shoot::factory()->create(['project_id' => $project->id]);
+    $project = ClientCase::factory()->create();
+    $shoot = Shoot::factory()->create(['case_id' => $project->id]);
     CrewAssignment::factory()->create(['shoot_id' => $shoot->id, 'user_id' => $crewed->id]);
 
-    Task::factory()->due(now()->toDateString())->create(['project_id' => $project->id]);
+    Task::factory()->due(now()->toDateString())->create(['case_id' => $project->id]);
 
     app(BuildMorningBriefing::class)();
 

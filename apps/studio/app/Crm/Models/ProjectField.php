@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * One thing a project of this type carries: Gästezahl, Location-Art, Stil.
  *
- * `key` is what projects.field_values stores and is fixed at creation, for the
+ * `key` is what cases.field_values stores and is fixed at creation, for the
  * reason Stage::$key is — the label is the studio's to change, the key is what
  * the stored values hang on.
  */
@@ -78,7 +78,7 @@ class ProjectField extends Model
     /** How many projects would lose a value if this field went away. */
     public function standingValues(): int
     {
-        return Project::query()->whereNotNull('field_values->'.$this->key)->count();
+        return ClientCase::query()->whereNotNull('field_values->'.$this->key)->count();
     }
 
     protected static function newFactory(): Factory

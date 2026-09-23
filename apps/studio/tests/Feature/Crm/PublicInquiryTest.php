@@ -66,7 +66,7 @@ it('attaches a returning address to the contact already on file, keeping the sto
 
     expect(Contact::where('email', 'lena@example.test')->count())->toBe(1)
         ->and($existing->fresh()->name)->toBe('Lena Meier')
-        ->and(Lead::sole()->project->contacts()->sole()->id)->toBe($existing->id);
+        ->and(Lead::sole()->case->contacts()->sole()->id)->toBe($existing->id);
 });
 
 it('returns no internal id and nothing to correlate', function () {
@@ -131,5 +131,5 @@ it('takes a date without answering whether it is free', function () {
     // Nothing in the body speaks about availability, conflicts or other
     // bookings — the studio's calendar stays the studio's.
     expect($response->json())->toBe(['status' => 'received'])
-        ->and(Lead::sole()->project->shoots()->sole()->date->format('Y-m-d'))->toBe('2027-06-12');
+        ->and(Lead::sole()->case->shoots()->sole()->date->format('Y-m-d'))->toBe('2027-06-12');
 });

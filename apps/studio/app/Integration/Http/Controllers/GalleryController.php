@@ -2,7 +2,7 @@
 
 namespace App\Integration\Http\Controllers;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Gallery\Actions\PublishGallery;
 use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
@@ -40,7 +40,7 @@ class GalleryController extends Controller
 
         /** @var CursorPaginator $paginator */
         $paginator = Gallery::query()
-            ->with(['project:id,public_id', 'currentVersion'])
+            ->with(['case:id,public_id', 'currentVersion'])
             ->withCount(['assets as asset_count' => fn ($query) => $query->inDraft()])
             ->when($since, fn ($query) => $query->where('updated_at', '>=', $since))
             ->orderBy('id')
@@ -58,7 +58,7 @@ class GalleryController extends Controller
 
     public function show(Gallery $gallery): JsonResponse
     {
-        $gallery->load(['project:id,public_id', 'currentVersion']);
+        $gallery->load(['case:id,public_id', 'currentVersion']);
 
         return response()->json(['data' => GalleryDetailData::fromModel($gallery)]);
     }
@@ -66,7 +66,7 @@ class GalleryController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'project_id' => ['nullable', 'string', Rule::exists('projects', 'public_id')],
+            'case_id' => ['nullable', 'string', Rule::exists('cases', 'public_id')],
             'shoot_id' => ['nullable', 'string'],
             'title' => ['required', 'string', 'max:200'],
             'is_external' => ['required', 'boolean'],
@@ -77,9 +77,9 @@ class GalleryController extends Controller
             'comments_enabled' => ['nullable', 'boolean'],
         ]);
 
-        $project = ($validated['project_id'] ?? null) === null
+        $project = ($validated['case_id'] ?? null) === null
             ? null
-            : Project::query()->where('public_id', $validated['project_id'])->firstOrFail();
+            : ClientCase::query()->where('public_id', $validated['case_id'])->firstOrFail();
 
         $gallery = Gallery::create([
             'title' => $validated['title'],
@@ -89,7 +89,7 @@ class GalleryController extends Controller
             'downloads_enabled' => $validated['downloads_enabled'] ?? true,
             'lists_enabled' => $validated['lists_enabled'] ?? true,
             'comments_enabled' => $validated['comments_enabled'] ?? true,
-            'project_id' => $project?->id,
+            'case_id' => $project?->id,
             'shoot_id' => isset($validated['shoot_id'])
                 ? $project?->shoots()->where('public_id', $validated['shoot_id'])->value('id')
                 : null,
@@ -138,7 +138,7 @@ class GalleryController extends Controller
             subject: $gallery->public_id,
         );
 
-        $contact = $gallery->project?->primaryContact();
+        $contact = $gallery->case?->primaryContact();
 
         if (filled($validated['subject'] ?? null) && filled($contact?->email)) {
             $notifications->send($contact, new GalleryPublished($gallery, $validated['subject'], $validated['message'] ?? null, $settings));
@@ -232,7 +232,7 @@ class GalleryController extends Controller
 
     private function answer(Gallery $gallery, int $status = 200): JsonResponse
     {
-        return response()->json(['data' => GalleryDetailData::fromModel($gallery->fresh(['project:id,public_id', 'currentVersion']))], $status);
+        return response()->json(['data' => GalleryDetailData::fromModel($gallery->fresh(['case:id,public_id', 'currentVersion']))], $status);
     }
 
     /** N-04: the consenting staff member behind an OAuth token, null for a machine one — see QuoteController::actor(). */

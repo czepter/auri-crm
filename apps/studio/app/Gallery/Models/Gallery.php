@@ -4,7 +4,7 @@ namespace App\Gallery\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Gallery\Support\GallerySlug;
 use App\Media\Models\Asset;
@@ -46,7 +46,7 @@ class Gallery extends Model
     use HasPublicId;
 
     protected $fillable = [
-        'project_id', 'shoot_id', 'title', 'slug', 'design',
+        'case_id', 'shoot_id', 'title', 'slug', 'design',
         'is_external', 'external_url', 'expires_at',
         'downloads_enabled', 'lists_enabled', 'comments_enabled',
         'event_date', 'cover_asset_id', 'cover_focal_x', 'cover_focal_y',
@@ -88,9 +88,9 @@ class Gallery extends Model
         ];
     }
 
-    public function project(): BelongsTo
+    public function case(): BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(ClientCase::class);
     }
 
     public function shoot(): BelongsTo

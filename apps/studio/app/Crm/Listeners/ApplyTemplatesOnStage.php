@@ -21,11 +21,11 @@ class ApplyTemplatesOnStage
 
     public function handleLeadStage(LeadStageChanged $event): void
     {
-        ($this->apply)->forStage($event->lead->project, StagePipeline::Lead, $event->to->key);
+        ($this->apply)->forStage($event->lead->case, StagePipeline::Lead, $event->to->key);
     }
 
     public function handleShootStatus(ShootStatusChanged $event): void
     {
-        ($this->apply)->forStage($event->shoot->project, StagePipeline::Project, $event->to->key);
+        ($this->apply)->forStage($event->shoot->case, StagePipeline::Project, $event->to->key);
     }
 }

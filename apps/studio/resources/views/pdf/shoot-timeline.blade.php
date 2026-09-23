@@ -17,7 +17,7 @@
 </head>
 <body>
     <h1>{{ $shoot->label ?? $shoot->kind }}</h1>
-    <div class="meta">{{ $shoot->project->name }} &middot; {{ $shoot->date->format('d.m.Y') }}</div>
+    <div class="meta">{{ $shoot->case->name }} &middot; {{ $shoot->date->format('d.m.Y') }}</div>
 
     <table>
         @foreach ($shoot->timeline as $entry)

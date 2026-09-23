@@ -3,7 +3,7 @@
 namespace App\Reporting\Support;
 
 use App\Crm\Enums\ProjectType;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
@@ -67,10 +67,10 @@ class CashFlowForecast
         $query = PaymentInstallment::query()
             ->join('payment_plans', 'payment_plans.id', '=', 'payment_installments.payment_plan_id');
 
-        ProjectFilter::apply($query, $type, 'payment_plans.project_id');
+        ProjectFilter::apply($query, $type, 'payment_plans.case_id');
         $scope($query);
 
-        return (int) $query->distinct()->count('payment_plans.project_id');
+        return (int) $query->distinct()->count('payment_plans.case_id');
     }
 
     /**
@@ -99,7 +99,7 @@ class CashFlowForecast
                 'payment_plan_id',
                 PaymentPlan::query()
                     ->select('payment_plans.id')
-                    ->whereIn('payment_plans.project_id', Project::query()->select('id')->where('type', $type->value)),
+                    ->whereIn('payment_plans.case_id', ClientCase::query()->select('id')->where('type', $type->value)),
             );
         }
 
@@ -192,7 +192,7 @@ class CashFlowForecast
     {
         $query = Quote::query();
 
-        ProjectFilter::apply($query, $type, 'quotes.project_id');
+        ProjectFilter::apply($query, $type, 'quotes.case_id');
 
         return $query;
     }

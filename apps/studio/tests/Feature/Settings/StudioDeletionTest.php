@@ -70,12 +70,12 @@ it('leaves no row in any table with a tenant_id', function () {
     app(StudioSettingsResolver::class)->set('tax_number', '22/123/45678', null);
     $owner = staffMember(StaffRole::Admin);
     $installment = creditableInstallment();
-    $project = $installment->invoice->project;
+    $project = $installment->invoice->case;
     app(IssueCreditNote::class)($installment->invoice, 25_000, 'Nachlass');
 
-    $first = Quote::factory()->for($project)->create();
-    Quote::factory()->for($project)->create(['predecessor_id' => $first->id]);
-    Message::factory()->for(Thread::factory()->for($project))->create();
+    $first = Quote::factory()->for($project, 'case')->create();
+    Quote::factory()->for($project, 'case')->create(['predecessor_id' => $first->id]);
+    Message::factory()->for(Thread::factory()->for($project, 'case'))->create();
     Task::factory()->create();
     renderedContract($project);
     Asset::factory()->for(Gallery::factory())->create();

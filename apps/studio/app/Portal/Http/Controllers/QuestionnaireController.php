@@ -42,14 +42,14 @@ class QuestionnaireController extends Controller
 {
     public function __construct(private readonly NotifyStudio $notifyStudio) {}
 
-    public function show(string $project, string $questionnaire): Response
+    public function show(string $case, string $questionnaire): Response
     {
         $contact = auth('portal')->user();
-        $instance = $this->find($project, $questionnaire);
+        $instance = $this->find($case, $questionnaire);
 
         return Inertia::render('Questionnaire', [
             'contact' => ['name' => $contact->name],
-            'project' => ['id' => $instance->project->public_id, 'name' => $instance->project->name],
+            'project' => ['id' => $instance->case->public_id, 'name' => $instance->case->name],
             'questionnaire' => [
                 'id' => $instance->public_id,
                 'name' => $instance->name,
@@ -64,10 +64,10 @@ class QuestionnaireController extends Controller
      * whose value actually moved are appended — re-submitting an unchanged
      * questionnaire must not put a second identical version on every row.
      */
-    public function update(Request $request, string $project, string $questionnaire): RedirectResponse
+    public function update(Request $request, string $case, string $questionnaire): RedirectResponse
     {
         $contact = auth('portal')->user();
-        $instance = $this->find($project, $questionnaire);
+        $instance = $this->find($case, $questionnaire);
 
         $answers = $request->validate([
             'answers' => ['array'],
@@ -101,7 +101,7 @@ class QuestionnaireController extends Controller
                 event: 'portal.questionnaire.answered',
                 context: ['contact' => $contact->public_id, 'fields' => $changed],
                 subject: $instance->public_id,
-                projectId: $instance->project_id,
+                projectId: $instance->case_id,
             );
 
             // T-11. On any change, not only on the last one: a questionnaire
@@ -118,9 +118,9 @@ class QuestionnaireController extends Controller
      * form's one submit — bytes are not something a client retypes when the
      * rest of the page fails validation.
      */
-    public function download(string $project, string $questionnaire, string $file): StreamedResponse
+    public function download(string $case, string $questionnaire, string $file): StreamedResponse
     {
-        $instance = $this->find($project, $questionnaire);
+        $instance = $this->find($case, $questionnaire);
 
         $found = FormInstanceFile::query()
             ->whereIn('form_instance_field_id', $instance->fields->pluck('id'))
@@ -130,10 +130,10 @@ class QuestionnaireController extends Controller
         return Storage::disk('local')->download($found->path, $found->name);
     }
 
-    public function upload(Request $request, string $project, string $questionnaire): RedirectResponse
+    public function upload(Request $request, string $case, string $questionnaire): RedirectResponse
     {
         $contact = auth('portal')->user();
-        $instance = $this->find($project, $questionnaire);
+        $instance = $this->find($case, $questionnaire);
 
         $field = $instance->fields
             ->firstWhere('public_id', $request->input('field'));
@@ -148,7 +148,7 @@ class QuestionnaireController extends Controller
             event: 'portal.questionnaire.file_uploaded',
             context: ['contact' => $contact->public_id, 'name' => $file->name],
             subject: $instance->public_id,
-            projectId: $instance->project_id,
+            projectId: $instance->case_id,
         );
 
         ($this->notifyStudio)(new QuestionnaireSubmitted($instance));
@@ -157,10 +157,10 @@ class QuestionnaireController extends Controller
     }
 
     /** Scoped through the questionnaire, so a file id from another booking is a 404 and not a delete. */
-    public function destroyFile(string $project, string $questionnaire, string $file): RedirectResponse
+    public function destroyFile(string $case, string $questionnaire, string $file): RedirectResponse
     {
         $contact = auth('portal')->user();
-        $instance = $this->find($project, $questionnaire);
+        $instance = $this->find($case, $questionnaire);
 
         $row = FormInstanceFile::query()
             ->where('public_id', $file)
@@ -174,7 +174,7 @@ class QuestionnaireController extends Controller
             event: 'portal.questionnaire.file_deleted',
             context: ['contact' => $contact->public_id, 'name' => $name],
             subject: $instance->public_id,
-            projectId: $instance->project_id,
+            projectId: $instance->case_id,
         );
 
         return back();
@@ -225,17 +225,17 @@ class QuestionnaireController extends Controller
         return $trimmed === '' ? null : $trimmed;
     }
 
-    private function find(string $project, string $questionnaire): FormInstance
+    private function find(string $case, string $questionnaire): FormInstance
     {
         $found = auth('portal')->user()->visibleProjects()
-            ->where('projects.public_id', $project)
+            ->where('cases.public_id', $case)
             ->firstOrFail();
 
         return FormInstance::query()
             ->shared()
-            ->where('project_id', $found->id)
+            ->where('case_id', $found->id)
             ->where('public_id', $questionnaire)
-            ->with(['project', 'fields.currentAnswer', 'fields.files'])
+            ->with(['case', 'fields.currentAnswer', 'fields.files'])
             ->firstOrFail();
     }
 }

@@ -12,7 +12,7 @@ it('names exactly the contacts a staff reply would reach', function () {
     $contact = $project->contacts()->sole();
     $contact->update(['email' => 'lena@example.test', 'name' => 'Lena Meier']);
 
-    $thread = Thread::factory()->for($project)->create();
+    $thread = Thread::factory()->for($project, 'case')->create();
     $thread->participants()->create(['contact_id' => $contact->id]);
     // The staff member PostMessage records on a reply is a participant too,
     // and never a recipient.
@@ -26,7 +26,7 @@ it('leaves out a contact without an address, which no mail could reach', functio
     $contact = $project->contacts()->sole();
     $contact->update(['email' => null]);
 
-    $thread = Thread::factory()->for($project)->create();
+    $thread = Thread::factory()->for($project, 'case')->create();
     $thread->participants()->create(['contact_id' => $contact->id]);
 
     expect(ThreadData::fromModel($thread->fresh())->recipients)->toBe([]);

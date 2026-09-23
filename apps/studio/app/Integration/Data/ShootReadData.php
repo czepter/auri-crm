@@ -39,7 +39,7 @@ class ShootReadData extends Data
     {
         return new self(
             id: $shoot->public_id,
-            projectId: $shoot->project->public_id,
+            projectId: $shoot->case->public_id,
             kind: $shoot->kind,
             label: $shoot->label,
             date: $shoot->date?->format('Y-m-d'),

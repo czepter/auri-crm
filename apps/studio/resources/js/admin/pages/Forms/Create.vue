@@ -16,7 +16,7 @@ import { Label } from '@/ui/label'
 import { Switch } from '@/ui/switch'
 
 const props = defineProps<{
-  project: App.Crm.Data.ProjectSuggestionData | null
+  project: App.Crm.Data.CaseSuggestionData | null
   formTemplates: { value: string; label: string }[]
   fieldTypes: { value: string; label: string }[]
   instance: App.Crm.Data.FormInstanceData | null

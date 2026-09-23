@@ -49,7 +49,7 @@ class ShootCalendar
     /** @return list<string> */
     private function event(Shoot $shoot): array
     {
-        $summary = trim(($shoot->label ?? $shoot->kind).' · '.$shoot->project->name);
+        $summary = trim(($shoot->label ?? $shoot->kind).' · '.$shoot->case->name);
 
         $lines = [
             'BEGIN:VEVENT',

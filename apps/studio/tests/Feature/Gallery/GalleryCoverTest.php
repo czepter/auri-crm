@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Gallery\Actions\EnsureGalleryCover;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GallerySet;
@@ -14,7 +14,7 @@ beforeEach(function () {
     $this->staff = User::factory()->withMfa()->create();
     $this->actingAs($this->staff, 'staff');
 
-    $this->gallery = Gallery::factory()->for(Project::factory())->create();
+    $this->gallery = Gallery::factory()->for(ClientCase::factory(), 'case')->create();
     $this->highlights = GallerySet::where('gallery_id', $this->gallery->id)->first();
 });
 

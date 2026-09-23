@@ -11,6 +11,8 @@ final class StudioExportTables
     /** Tabelle => Datei im Archiv, in der ihre Daten stehen. */
     public const INCLUDED = [
         'assets' => 'Galerie-Archiv',
+        'case_contacts' => 'projekte.csv',
+        'cases' => 'projekte.csv',
         'contacts' => 'kontakte.csv',
         'credit_notes' => 'gutschriften/',
         'galleries' => 'Galerie-Archiv',
@@ -20,8 +22,6 @@ final class StudioExportTables
         'leads' => 'projekte.csv',
         'messages' => 'nachrichten.json',
         'payment_installments' => 'rechnungen/',
-        'project_contacts' => 'projekte.csv',
-        'projects' => 'projekte.csv',
         'quote_items' => 'angebote/',
         'quote_payment_stages' => 'angebote/',
         'quotes' => 'angebote/',

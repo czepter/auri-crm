@@ -95,14 +95,14 @@ class SweepDateOffsetAutomationRules
             return PaymentInstallment::query()
                 ->whereIn('status', [PaymentInstallmentStatus::Scheduled, PaymentInstallmentStatus::Invoiced])
                 ->whereDate('due_on', $day)
-                ->with('plan.project')
+                ->with('plan.case')
                 ->get();
         }
 
         if ($rule->anchor === AutomationAnchor::GalleryExpiry) {
             return Gallery::query()
                 ->whereDate('expires_at', $day)
-                ->with('project')
+                ->with('case')
                 ->get();
         }
 
@@ -111,7 +111,7 @@ class SweepDateOffsetAutomationRules
                 ->open()
                 ->where('audience', TaskAudience::Client)
                 ->whereDate('due_on', $day)
-                ->with('project')
+                ->with('case')
                 ->get();
         }
 
@@ -121,18 +121,18 @@ class SweepDateOffsetAutomationRules
                 ->where('is_primary', true)
                 ->where('status', $this->stages->anchored(StagePipeline::Project, StageAnchor::Delivered)?->key)
                 ->whereDate('status_entered_at', $day)
-                ->with('project')
+                ->with('case')
                 ->get()
-                ->map(fn (Shoot $shoot) => $shoot->project);
+                ->map(fn (Shoot $shoot) => $shoot->case);
         }
 
         if ($rule->anchor === AutomationAnchor::QuoteSent) {
             return Quote::query()
                 ->where('status', QuoteStatus::Sent)
                 ->whereDate('sent_at', $day)
-                ->with('project')
+                ->with('case')
                 ->get()
-                ->map(fn (Quote $quote) => $quote->project);
+                ->map(fn (Quote $quote) => $quote->case);
         }
 
         if ($rule->anchor === AutomationAnchor::InquiryCaptured) {
@@ -141,18 +141,18 @@ class SweepDateOffsetAutomationRules
                 ->unbooked()
                 ->where('stage', $this->stages->anchored(StagePipeline::Lead, StageAnchor::Entry)?->key)
                 ->whereDate('captured_at', $day)
-                ->with('project')
+                ->with('case')
                 ->get()
-                ->map(fn (Lead $lead) => $lead->project);
+                ->map(fn (Lead $lead) => $lead->case);
         }
 
         if ($rule->anchor === AutomationAnchor::QuoteValidity) {
             return Quote::query()
                 ->where('status', QuoteStatus::Sent)
                 ->whereDate('valid_until', $targetDate->toDateString())
-                ->with('project')
+                ->with('case')
                 ->get()
-                ->map(fn (Quote $quote) => $quote->project);
+                ->map(fn (Quote $quote) => $quote->case);
         }
 
         $isPrimary = $rule->anchor === AutomationAnchor::PrimaryShoot;
@@ -160,11 +160,11 @@ class SweepDateOffsetAutomationRules
         return Shoot::query()
             ->uncancelled()
             // An inquiry's requested date is a shoot row too; only a booking has a shooting to remind of.
-            ->whereHas('project', fn ($project) => $project->booked())
+            ->whereHas('case', fn ($project) => $project->booked())
             ->whereDate('date', $targetDate->toDateString())
             ->when($isPrimary, fn ($query) => $query->where('is_primary', true))
-            ->with('project')
+            ->with('case')
             ->get()
-            ->map(fn (Shoot $shoot) => $isPrimary ? $shoot->project : $shoot);
+            ->map(fn (Shoot $shoot) => $isPrimary ? $shoot->case : $shoot);
     }
 }

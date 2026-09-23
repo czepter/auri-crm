@@ -2,7 +2,7 @@
 
 namespace App\Crm\Events;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
@@ -14,5 +14,5 @@ class ProjectBooked
 {
     use Dispatchable;
 
-    public function __construct(public readonly Project $project) {}
+    public function __construct(public readonly ClientCase $project) {}
 }

@@ -1,9 +1,9 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,11 +17,11 @@ beforeEach(function () {
 
 function leadWithPrimary(): Lead
 {
-    $project = Project::factory()->wedding()->create(['name' => 'Rahn']);
-    Shoot::factory()->for($project)->primary()->on('2027-06-12')->create();
-    $project->attachContact(Contact::factory()->create(['name' => 'Jana Rahn']), ProjectContactRole::Primary);
+    $project = ClientCase::factory()->wedding()->create(['name' => 'Rahn']);
+    Shoot::factory()->for($project, 'case')->primary()->on('2027-06-12')->create();
+    $project->attachContact(Contact::factory()->create(['name' => 'Jana Rahn']), CaseContactRole::Primary);
 
-    return Lead::factory()->for($project)->create(['inquiry_text' => 'Wir heiraten auf Gut Basthorst.']);
+    return Lead::factory()->for($project, 'case')->create(['inquiry_text' => 'Wir heiraten auf Gut Basthorst.']);
 }
 
 it('keeps a freely written role as it was typed', function () {
@@ -33,7 +33,7 @@ it('keeps a freely written role as it was typed', function () {
         'role' => 'Trauredner',
     ])->assertRedirect();
 
-    $roles = $lead->project->contacts()->pluck('project_contacts.role');
+    $roles = $lead->case->contacts()->pluck('case_contacts.role');
 
     expect($roles)->toContain('Trauredner');
 });
@@ -43,27 +43,27 @@ it('refuses to add a second primary contact', function () {
 
     $this->post("/anfragen/{$lead->public_id}/kontakte", [
         'name' => 'Michael Rahn',
-        'role' => ProjectContactRole::Primary->value,
+        'role' => CaseContactRole::Primary->value,
     ])->assertStatus(422);
 });
 
 it('refuses to remove the primary contact', function () {
     $lead = leadWithPrimary();
-    $primary = $lead->project->contacts()->first();
+    $primary = $lead->case->contacts()->first();
 
     $this->delete("/anfragen/{$lead->public_id}/kontakte/{$primary->public_id}")->assertStatus(422);
 
-    expect($lead->project->contacts()->count())->toBe(1);
+    expect($lead->case->contacts()->count())->toBe(1);
 });
 
 it('removes anybody else', function () {
     $lead = leadWithPrimary();
     $planner = Contact::factory()->create(['name' => 'Kerstin Voß']);
-    $lead->project->attachContact($planner, 'Planung');
+    $lead->case->attachContact($planner, 'Planung');
 
     $this->delete("/anfragen/{$lead->public_id}/kontakte/{$planner->public_id}")->assertRedirect();
 
-    expect($lead->project->contacts()->count())->toBe(1);
+    expect($lead->case->contacts()->count())->toBe(1);
 });
 
 // Eine bekannte Adresse ist dieselbe Person — dieselbe Regel, nach der die
@@ -78,7 +78,7 @@ it('links the contact behind a known address instead of writing a second one', f
         'role' => 'Floristik',
     ])->assertRedirect();
 
-    expect($lead->project->contacts()->pluck('contacts.id'))->toContain($known->id)
+    expect($lead->case->contacts()->pluck('contacts.id'))->toContain($known->id)
         ->and(Contact::where('email', 'katrin@brandes-floral.de')->count())->toBe(1);
 });
 
@@ -86,7 +86,7 @@ it('links the contact behind a known address instead of writing a second one', f
 // über den ganzen Bildschirm mehr gibt.
 it('leaves the inquiry text alone when only the people were sent', function () {
     $lead = leadWithPrimary();
-    $primary = $lead->project->contacts()->first();
+    $primary = $lead->case->contacts()->first();
 
     $this->patch("/anfragen/{$lead->public_id}", [
         'people' => [
@@ -102,8 +102,8 @@ it('leaves the inquiry text alone when only the people were sent', function () {
 // ein 422, sobald gebucht war.
 it('moves a date after the booking', function () {
     $lead = leadWithPrimary();
-    markBooked($lead->project);
-    $shoot = $lead->project->shoots()->first();
+    markBooked($lead->case);
+    $shoot = $lead->case->shoots()->first();
 
     $this->patch("/anfragen/{$lead->public_id}", [
         'shoots' => [

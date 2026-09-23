@@ -2,8 +2,8 @@
 
 namespace Database\Factories\Crm;
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\FormInstance;
-use App\Crm\Models\Project;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,7 +16,7 @@ class FormInstanceFactory extends Factory
     public function definition(): array
     {
         return [
-            'project_id' => Project::factory(),
+            'case_id' => ClientCase::factory(),
             'name' => 'Familienkonstellation',
         ];
     }

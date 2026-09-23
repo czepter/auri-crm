@@ -7,7 +7,7 @@ use App\Gallery\Models\Gallery;
 use App\Models\User;
 
 /**
- * Everything with a project routes through ProjectPolicy, the same shape
+ * Everything with a project routes through ClientCasePolicy, the same shape
  * ShootPolicy already uses for Shoot: a gallery can never be reachable when
  * the project holding it is not.
  *
@@ -17,7 +17,7 @@ use App\Models\User;
  */
 class GalleryPolicy
 {
-    public function __construct(private readonly ProjectPolicy $projects) {}
+    public function __construct(private readonly ClientCasePolicy $projects) {}
 
     public function viewAny(User $user): bool
     {
@@ -37,23 +37,23 @@ class GalleryPolicy
      */
     public function manageMedia(User $user, Gallery $gallery): bool
     {
-        return $gallery->project === null
+        return $gallery->case === null
             ? $user->can(Capability::ManageShoots->value)
-            : $this->projects->manageShoots($user, $gallery->project);
+            : $this->projects->manageShoots($user, $gallery->case);
     }
 
     /**
      * ManagePortalAccess statt ManageShoots: die Faehigkeit entscheidet
      * laut ihrer eigenen Beschreibung bereits, ob eines der Projekte eines
      * Kontakts zeigbereit ist — eine Galerie freizugeben ist dieselbe Frage.
-     * Wie manageMedia routet das ueber ProjectPolicy, sobald ein Projekt
+     * Wie manageMedia routet das ueber ClientCasePolicy, sobald ein Projekt
      * dahintersteht: eine Galerie darf nicht freigebbar sein, wenn ihr
      * Projekt fuer diese Person unsichtbar ist.
      */
     public function publish(User $user, Gallery $gallery): bool
     {
-        return $gallery->project === null
+        return $gallery->case === null
             ? $user->can(Capability::ManagePortalAccess->value)
-            : $this->projects->manageVisibility($user, $gallery->project);
+            : $this->projects->manageVisibility($user, $gallery->case);
     }
 }

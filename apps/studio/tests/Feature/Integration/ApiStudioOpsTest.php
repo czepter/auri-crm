@@ -1,7 +1,7 @@
 <?php
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\FormTemplate;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Enums\Capability;
 use App\Enums\StaffRole;
@@ -59,7 +59,7 @@ it('reads studio settings, closures and number ranges', function () {
 
 it('creates a form from a template, updates it, shares it and records an answer', function () {
     $this->withHeader('Authorization', 'Bearer '.opsToken(Capability::ManageFormTemplates));
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $template = FormTemplate::factory()->create();
     $template->fields()->create(['label' => 'Wer kommt?', 'type' => 'text', 'sort_order' => 0]);
 
@@ -131,7 +131,7 @@ it('checks a shot list item idempotently rather than toggling it', function () {
 
 it('sets a project explicit portal visibility rather than toggling it', function () {
     $this->withHeader('Authorization', 'Bearer '.opsToken(Capability::ManagePortalAccess));
-    $project = Project::factory()->create(['portal_visible' => false]);
+    $project = ClientCase::factory()->create(['portal_visible' => false]);
 
     $this->withHeader('Idempotency-Key', 'visibility-1')
         ->postJson("/api/projects/{$project->public_id}/portal-visibility", ['visible' => true])

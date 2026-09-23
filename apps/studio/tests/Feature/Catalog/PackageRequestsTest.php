@@ -1,10 +1,10 @@
 <?php
 
 use App\Catalog\Models\Package;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -12,19 +12,19 @@ uses(RefreshDatabase::class);
 
 // Zwei Anfragen auf dasselbe Paket, die ältere gebucht — und eine dritte auf
 // ein anderes Paket, die in keiner der beiden Zahlen auftauchen darf.
-function requestedTwice(Package $package): Project
+function requestedTwice(Package $package): ClientCase
 {
-    $booked = Project::factory()->create();
+    $booked = ClientCase::factory()->create();
     Lead::factory()->create([
-        'project_id' => $booked->id,
+        'case_id' => $booked->id,
         'package_id' => $package->id,
         'captured_at' => now()->subMonth(),
     ]);
     markBooked($booked);
 
-    $open = Project::factory()->create();
+    $open = ClientCase::factory()->create();
     Lead::factory()->create([
-        'project_id' => $open->id,
+        'case_id' => $open->id,
         'package_id' => $package->id,
         'captured_at' => now(),
     ]);
@@ -49,7 +49,7 @@ it('counts requests and bookings per package', function () {
 it('lists the requests that started from one package, newest first', function () {
     $package = Package::factory()->create(['portal_offered' => true]);
     $open = requestedTwice($package);
-    $open->attachContact(Contact::factory()->create(['name' => 'Viola Neumann']), ProjectContactRole::Primary);
+    $open->attachContact(Contact::factory()->create(['name' => 'Viola Neumann']), CaseContactRole::Primary);
 
     $this->actingAs(User::factory()->withMfa()->create(), 'staff')
         ->get("/pakete/{$package->public_id}")

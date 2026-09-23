@@ -1,7 +1,7 @@
 <?php
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\FormTemplate;
-use App\Crm\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -16,7 +16,7 @@ it('opens each wizard without a project', function (string $path) {
 })->with(['/shootings/neu', '/angebote/neu', '/frageboegen/neu']);
 
 it('carries the chosen project, never an integer identifier', function (string $path) {
-    $project = Project::factory()->create(['name' => 'Rahn, Marie & Jonas']);
+    $project = ClientCase::factory()->create(['name' => 'Rahn, Marie & Jonas']);
 
     $chosen = props($path.'?projekt='.$project->public_id)['project'];
 
@@ -26,7 +26,7 @@ it('carries the chosen project, never an integer identifier', function (string $
 })->with(['/shootings/neu', '/angebote/neu', '/frageboegen/neu']);
 
 it('leads a shoot created from the wizard to its project', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $this->post('/auftraege/'.$project->public_id.'/shootings', ['wizard' => true, 'kind' => 'wedding'])
         ->assertRedirect('/auftraege/'.$project->public_id.'/shootings');
@@ -35,7 +35,7 @@ it('leads a shoot created from the wizard to its project', function () {
 });
 
 it('returns a questionnaire seeded in the wizard to the wizard, ready to personalise', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $template = FormTemplate::factory()->create(['is_active' => true, 'name' => 'Ablaufplan']);
 
     $response = $this->post('/auftraege/'.$project->public_id.'/frageboegen', ['template' => $template->public_id, 'wizard' => true]);
@@ -47,7 +47,7 @@ it('returns a questionnaire seeded in the wizard to the wizard, ready to persona
 });
 
 it('shows only the project\'s drafts in the quote wizard workspace props', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $this->post('/auftraege/'.$project->public_id.'/angebote');
 

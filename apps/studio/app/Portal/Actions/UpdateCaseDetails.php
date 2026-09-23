@@ -2,8 +2,8 @@
 
 namespace App\Portal\Actions;
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Engagement\Actions\StartThread;
 use App\Support\AuditLogger;
@@ -29,11 +29,11 @@ use LogicException;
  * same thing to decide what to render — the check lives here too so a second
  * caller can never arrive ungated.
  */
-class UpdateProjectDetails
+class UpdateCaseDetails
 {
     public function __construct(private readonly StartThread $start) {}
 
-    public function __invoke(Project $project, Contact $contact, array $details): void
+    public function __invoke(ClientCase $project, Contact $contact, array $details): void
     {
         if (! $project->clientMayEditDetails()) {
             throw new LogicException('This booking is settled — its date and place are contract content now.');
@@ -77,7 +77,7 @@ class UpdateProjectDetails
         ($this->start)($project, $contact, __('portal.details_changed_subject'), $this->summary($shoot, $project));
     }
 
-    private function summary(?Shoot $shoot, Project $project): string
+    private function summary(?Shoot $shoot, ClientCase $project): string
     {
         return __('portal.details_changed_body', [
             'date' => $shoot?->date?->format('d.m.Y') ?? __('portal.date_open'),

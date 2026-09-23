@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\MergeFieldVocabulary;
@@ -13,10 +13,10 @@ uses(RefreshDatabase::class);
 
 // bookedContactProject() and staffMember() live in tests/Pest.php.
 
-function threadedProject(): Project
+function threadedProject(): ClientCase
 {
     $project = bookedContactProject();
-    Thread::factory()->for($project)->create();
+    Thread::factory()->for($project, 'case')->create();
 
     return $project;
 }

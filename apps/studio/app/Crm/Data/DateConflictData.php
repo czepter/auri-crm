@@ -52,8 +52,8 @@ class DateConflictData extends Data
     {
         return new self(
             source: 'shoot',
-            projectId: $shoot->project->public_id,
-            projectName: $shoot->project->name,
+            projectId: $shoot->case->public_id,
+            projectName: $shoot->case->name,
             venue: $shoot->venue(),
             kind: $shoot->kind,
             label: null,

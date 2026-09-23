@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Models\User;
@@ -87,8 +87,8 @@ it('escapes what the letter carries rather than rendering it', function () {
 // --- Nachtrag ---------------------------------------------------------
 
 it('creates an addendum as its own quote, leaving the accepted one accepted', function () {
-    $project = Project::factory()->create();
-    $accepted = Quote::factory()->for($project)->create(['status' => QuoteStatus::Accepted]);
+    $project = ClientCase::factory()->create();
+    $accepted = Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Accepted]);
 
     $this->actingAs(letterOwner(), 'staff')
         ->post("/auftraege/{$project->public_id}/angebote", ['addendum_to' => $accepted->public_id])
@@ -102,8 +102,8 @@ it('creates an addendum as its own quote, leaving the accepted one accepted', fu
 });
 
 it('refuses an addendum to a quote that was never accepted', function () {
-    $project = Project::factory()->create();
-    $sent = Quote::factory()->for($project)->create(['status' => QuoteStatus::Sent]);
+    $project = ClientCase::factory()->create();
+    $sent = Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Sent]);
 
     $this->actingAs(letterOwner(), 'staff')
         ->post("/auftraege/{$project->public_id}/angebote", ['addendum_to' => $sent->public_id])

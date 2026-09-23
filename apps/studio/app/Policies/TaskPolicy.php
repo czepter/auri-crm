@@ -8,18 +8,18 @@ use App\Models\User;
 
 class TaskPolicy
 {
-    public function __construct(private readonly ProjectPolicy $projects) {}
+    public function __construct(private readonly ClientCasePolicy $projects) {}
 
     public function view(User $user, Task $task): bool
     {
-        return $task->project === null || $this->projects->view($user, $task->project);
+        return $task->case === null || $this->projects->view($user, $task->case);
     }
 
     public function update(User $user, Task $task): bool
     {
-        return $task->project === null
+        return $task->case === null
             ? $user->can(Capability::ManageTasks->value)
-            : $this->projects->manageTasks($user, $task->project);
+            : $this->projects->manageTasks($user, $task->case);
     }
 
     public function create(User $user): bool

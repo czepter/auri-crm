@@ -6,7 +6,7 @@ use App\Contracts\Enums\ContractStatus;
 use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\OpenProjects;
 use App\Crm\Actions\ReadStageTrack;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Payments\Data\PaymentPlanData;
 use App\Quotes\Enums\QuoteStatus;
 use Spatie\LaravelData\Data;
@@ -22,12 +22,12 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * two of them.
  */
 #[TypeScript]
-class ProjectHeaderData extends Data
+class CaseHeaderData extends Data
 {
     /** @param  list<array{key: string, label: string, href: string, count: int|null, countTo: int|null, children: list<array{key: string, label: string, translate: bool, href: string, count: int|null, reorderable: bool}>}>  $tabs
      * @param  list<array{key: string, label: string, pipeline: string, state: string}>  $track
      * @param  list<array{key: string, rows: list<ProjectQueueRowData>}>  $queue
-     * @param  list<ProjectPersonData>  $people
+     * @param  list<CasePersonData>  $people
      * @param  list<array{id: string, title: string|null, expiresAt: string|null}>  $galleries
      * @param  list<ThreadEntryData>  $history
      */
@@ -36,7 +36,7 @@ class ProjectHeaderData extends Data
         public string $name,
         public string $names,
         public string $type,
-        public ProjectPositionData $position,
+        public CasePositionData $position,
         public ?string $primaryDate,
         public int $shootCount,
         public bool $isBooked,
@@ -74,7 +74,7 @@ class ProjectHeaderData extends Data
     ) {}
 
     /** @param  bool  $queue  false where the page brings its own left pane */
-    public static function fromProject(Project $project, ProjectPositionData $position, bool $queue = true): self
+    public static function fromProject(ClientCase $project, CasePositionData $position, bool $queue = true): self
     {
         $user = auth('staff')->user();
 
@@ -120,7 +120,7 @@ class ProjectHeaderData extends Data
             ],
             track: app(ReadStageTrack::class)($position),
             queue: $user === null || ! $queue ? [] : app(OpenProjects::class)->queue($user, $project),
-            people: $project->contacts->map(ProjectPersonData::fromContact(...))->all(),
+            people: $project->contacts->map(CasePersonData::fromContact(...))->all(),
             paymentPlan: $project->paymentPlan
                 ? PaymentPlanData::fromModel($project->paymentPlan->load('installments.invoice.creditNotes'))
                 : null,
@@ -137,7 +137,7 @@ class ProjectHeaderData extends Data
      * Angebot, Vertrag and Fragebögen under one tab. The tab opens on the
      * quotes and carries what each of the three still owes as one number.
      */
-    private static function documentsTab(Project $project): array
+    private static function documentsTab(ClientCase $project): array
     {
         $base = "/auftraege/{$project->public_id}";
         $children = [
@@ -161,7 +161,7 @@ class ProjectHeaderData extends Data
      * the contract have nothing to hold yet, and its screens live under
      * /anfragen.
      */
-    private static function leadTabs(Project $project): array
+    private static function leadTabs(ClientCase $project): array
     {
         $case = "/anfragen/{$project->lead->public_id}";
 
@@ -177,7 +177,7 @@ class ProjectHeaderData extends Data
      * one. A thread the studio answered last is settled, and one with no
      * message at all has nobody owing anything.
      */
-    private static function waitingThreads(Project $project): int
+    private static function waitingThreads(ClientCase $project): int
     {
         return $project->threads()
             ->whereHas('latestMessage', fn ($message) => $message->whereNotNull('contact_id'))
@@ -189,7 +189,7 @@ class ProjectHeaderData extends Data
      * nobody's homework, and one answer anywhere on it means it has been
      * started.
      */
-    private static function unansweredForms(Project $project): int
+    private static function unansweredForms(ClientCase $project): int
     {
         return $project->formInstances()
             ->shared()
@@ -201,7 +201,7 @@ class ProjectHeaderData extends Data
      * In front of the client and unsigned. A contract that never rendered is
      * the studio's own problem and says nothing about what the client owes.
      */
-    private static function unsignedContracts(Project $project): int
+    private static function unsignedContracts(ClientCase $project): int
     {
         return $project->contracts()
             ->where('status', ContractStatus::Rendered)

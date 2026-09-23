@@ -1,8 +1,8 @@
 <?php
 
 use App\Crm\Actions\BookProject;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Models\User;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
@@ -15,8 +15,8 @@ beforeEach(function () {
 });
 
 it('writes the quote on the lead and stays there', function () {
-    $project = Project::factory()->create();
-    $lead = Lead::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $lead = Lead::factory()->for($project, 'case')->create();
 
     $this->from("/anfragen/{$lead->public_id}/angebot")
         ->post("/auftraege/{$project->public_id}/angebote")
@@ -30,12 +30,12 @@ it('writes the quote on the lead and stays there', function () {
 });
 
 it('takes the payments from the accepted quote’s stages', function () {
-    $project = Project::factory()->create();
-    $lead = Lead::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $lead = Lead::factory()->for($project, 'case')->create();
 
-    Quote::factory()->create(['project_id' => $project->id, 'net' => 90_000]);
+    Quote::factory()->create(['case_id' => $project->id, 'net' => 90_000]);
     $accepted = Quote::factory()->create([
-        'project_id' => $project->id,
+        'case_id' => $project->id,
         'status' => QuoteStatus::Accepted,
         'accepted_at' => now(),
         'net' => 215_000,
@@ -58,8 +58,8 @@ it('takes the payments from the accepted quote’s stages', function () {
 });
 
 it('shows the inquiry tabs until the booking and sends the booked inquiry to its project', function () {
-    $project = Project::factory()->create();
-    $lead = Lead::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $lead = Lead::factory()->for($project, 'case')->create();
 
     $header = props("/anfragen/{$lead->public_id}")['header'];
 
@@ -72,9 +72,9 @@ it('shows the inquiry tabs until the booking and sends the booked inquiry to its
 });
 
 it('shows the draft quote on the overview', function () {
-    $project = Project::factory()->create();
-    $lead = Lead::factory()->for($project)->create();
-    $draft = Quote::factory()->create(['project_id' => $project->id, 'status' => QuoteStatus::Draft, 'sent_at' => null]);
+    $project = ClientCase::factory()->create();
+    $lead = Lead::factory()->for($project, 'case')->create();
+    $draft = Quote::factory()->create(['case_id' => $project->id, 'status' => QuoteStatus::Draft, 'sent_at' => null]);
 
     expect(props("/anfragen/{$lead->public_id}")['quote']['id'])->toBe($draft->public_id);
 });

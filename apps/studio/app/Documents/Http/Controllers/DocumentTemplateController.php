@@ -2,7 +2,7 @@
 
 namespace App\Documents\Http\Controllers;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Documents\Data\DocumentTemplateData;
 use App\Documents\Enums\DocumentTemplateType;
@@ -55,8 +55,8 @@ class DocumentTemplateController extends Controller
             // not exist yet.
             // C-16 (#252): the projects the preview can reckon with. Newest
             // first — a template is written for the work in front of you.
-            'projects' => Project::query()->latest()->limit(50)->get()
-                ->map(fn (Project $project) => ['id' => $project->public_id, 'name' => $project->name])->all(),
+            'projects' => ClientCase::query()->latest()->limit(50)->get()
+                ->map(fn (ClientCase $project) => ['id' => $project->public_id, 'name' => $project->name])->all(),
             'starters' => StarterTemplateCatalog::byType(app(StudioSettingsResolver::class)->clientRegister()),
         ]);
     }
@@ -114,8 +114,8 @@ class DocumentTemplateController extends Controller
             // One palette, not three: a family's type never changes.
             // C-16 (#252): the projects the preview can reckon with. Newest
             // first — a template is written for the work in front of you.
-            'projects' => Project::query()->latest()->limit(50)->get()
-                ->map(fn (Project $project) => ['id' => $project->public_id, 'name' => $project->name])->all(),
+            'projects' => ClientCase::query()->latest()->limit(50)->get()
+                ->map(fn (ClientCase $project) => ['id' => $project->public_id, 'name' => $project->name])->all(),
             'palette' => DocumentBlockCatalog::paletteFor($documentTemplate->type),
             'mergeFields' => $this->mergeFieldOptions(),
         ]);
@@ -186,7 +186,7 @@ class DocumentTemplateController extends Controller
         $type = DocumentTemplateType::from($validated['type']);
         $project = ($validated['project'] ?? null) === null
             ? null
-            : Project::query()->where('public_id', $validated['project'])->first();
+            : ClientCase::query()->where('public_id', $validated['project'])->first();
 
         $resolved = MergeFieldResolver::resolve(
             $validated['body'],

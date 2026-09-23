@@ -8,8 +8,8 @@ use App\Catalog\Models\Package;
 use App\Catalog\Models\ServiceSuggestion;
 use App\Crm\Data\ContactRowData;
 use App\Crm\Data\ContactSuggestionData;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Engagement\Data\MessageData;
 use App\Engagement\Models\Message;
 use App\Enums\Capability;
@@ -107,7 +107,7 @@ class ContactController extends Controller
     private function rows(): Collection
     {
         return Contact::query()
-            ->with('projects.primaryShoot')
+            ->with('cases.primaryShoot')
             ->orderBy('name')
             ->get()
             ->map(ContactRowData::fromContact(...));
@@ -134,7 +134,7 @@ class ContactController extends Controller
             // The pane beside the sheet, as on an inquiry: the whole list,
             // narrowed in the browser.
             'contacts' => $this->rows(),
-            'contact' => ContactSuggestionData::fromModel($contact->loadCount('projects')),
+            'contact' => ContactSuggestionData::fromModel($contact->loadCount('cases')),
             // M-06's billing address rides beside ContactSuggestionData
             // rather than inside it: that class is also the typeahead's
             // response shape (ContactSearchController), and a client's home
@@ -150,7 +150,7 @@ class ContactController extends Controller
             // its own project.
             'correspondence' => Message::query()
                 ->whereHas('thread.participants', fn ($query) => $query->where('contact_id', $contact->id))
-                ->with(['thread.project', 'contact', 'author'])
+                ->with(['thread.case', 'contact', 'author'])
                 ->latest()
                 ->limit(50)
                 ->get()
@@ -159,8 +159,8 @@ class ContactController extends Controller
             // C-18 (#254): a project is an order with money and dates, a
             // gallery a delivery with an expiry. Mixed into one list they
             // read as the same thing, so they are two sections.
-            'projects' => $contact->projects()->with(['primaryShoot', 'latestQuote'])->get()
-                ->map(fn (Project $project) => [
+            'projects' => $contact->cases()->with(['primaryShoot', 'latestQuote'])->get()
+                ->map(fn (ClientCase $project) => [
                     'id' => $project->public_id,
                     'name' => $project->name,
                     'role' => $project->pivot->role,
@@ -169,7 +169,7 @@ class ContactController extends Controller
                     'booked' => $project->isBooked(),
                 ])->all(),
             'galleries' => Gallery::query()
-                ->whereIn('project_id', $contact->projects()->select('projects.id'))
+                ->whereIn('case_id', $contact->cases()->select('cases.id'))
                 ->with('currentVersion')
                 ->get()
                 ->map(fn (Gallery $gallery) => [
@@ -191,13 +191,13 @@ class ContactController extends Controller
             // readable.
             'connected' => Contact::query()
                 ->whereKeyNot($contact->id)
-                ->whereHas('projects', fn ($query) => $query->whereIn('projects.id', $contact->projects()->select('projects.id')))
-                ->with(['projects' => fn ($query) => $query->whereIn('projects.id', $contact->projects()->select('projects.id'))])
+                ->whereHas('cases', fn ($query) => $query->whereIn('cases.id', $contact->cases()->select('cases.id')))
+                ->with(['cases' => fn ($query) => $query->whereIn('cases.id', $contact->cases()->select('cases.id'))])
                 ->get()
                 ->map(fn (Contact $other) => [
                     'id' => $other->public_id,
                     'name' => $other->name,
-                    'role' => $other->projects->first()?->pivot->role,
+                    'role' => $other->cases->first()?->pivot->role,
                 ])->all(),
             // Was dieses Studio diesem Kunden einzeln vorgeschlagen hat, und
             // woraus es waehlen kann. Beides nur aus dem, was im Portal
@@ -339,7 +339,7 @@ class ContactController extends Controller
     /**
      * Cut this one contact's portal access off entirely — every unconsumed
      * magic link and any session already open elsewhere. Never deletes the
-     * project_contacts row and never touches any other contact (A-04).
+     * case_contacts row and never touches any other contact (A-04).
      * Hiding a project from the portal is a separate action on
      * ProjectController, on purpose.
      */

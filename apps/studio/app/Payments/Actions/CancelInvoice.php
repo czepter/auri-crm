@@ -60,7 +60,7 @@ class CancelInvoice
                 actor: $actor,
                 context: ['number' => $invoice->number, 'kind' => $kind->value, 'reason' => $reason],
                 subject: $invoice->public_id,
-                projectId: $invoice->project_id,
+                projectId: $invoice->case_id,
             );
 
             return $invoice;

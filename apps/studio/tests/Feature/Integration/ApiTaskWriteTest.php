@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Task;
 use App\Enums\Capability;
 use App\Integration\Models\ApiToken;
@@ -16,7 +16,7 @@ beforeEach(fn () => useSurface(Surface::API));
 // TaskController.
 it('creates a task on a project with a fixed due date', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageTasks)->create();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'task-1')
@@ -35,8 +35,8 @@ it('creates a task on a project with a fixed due date', function () {
 });
 
 it('refuses a task write to a token that does not hold ManageTasks', function () {
-    $token = ApiToken::factory()->withScopes(Capability::ViewAllProjects)->create();
-    $project = Project::factory()->create();
+    $token = ApiToken::factory()->withScopes(Capability::ViewAllCases)->create();
+    $project = ClientCase::factory()->create();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'task-forbidden')
@@ -46,9 +46,9 @@ it('refuses a task write to a token that does not hold ManageTasks', function ()
 
 it('lists a project’s open tasks', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageTasks)->create();
-    $project = Project::factory()->create();
-    Task::factory()->for($project)->create(['title' => 'Offen']);
-    Task::factory()->for($project)->done()->create(['title' => 'Erledigt']);
+    $project = ClientCase::factory()->create();
+    Task::factory()->for($project, 'case')->create(['title' => 'Offen']);
+    Task::factory()->for($project, 'case')->done()->create(['title' => 'Erledigt']);
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->getJson("/api/projects/{$project->public_id}/tasks?done=false");
@@ -60,9 +60,9 @@ it('lists a project’s open tasks', function () {
 
 it('completes a task, reopens it, and refuses completion while blocked', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageTasks)->create();
-    $project = Project::factory()->create();
-    $predecessor = Task::factory()->for($project)->create();
-    $task = Task::factory()->for($project)->create(['depends_on_task_id' => $predecessor->id]);
+    $project = ClientCase::factory()->create();
+    $predecessor = Task::factory()->for($project, 'case')->create();
+    $task = Task::factory()->for($project, 'case')->create(['depends_on_task_id' => $predecessor->id]);
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'complete-blocked')
@@ -91,10 +91,10 @@ it('completes a task, reopens it, and refuses completion while blocked', functio
 
 it('assigns a task and sets its dependency', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageTasks)->create();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $user = User::factory()->create();
-    $predecessor = Task::factory()->for($project)->create();
-    $task = Task::factory()->for($project)->create();
+    $predecessor = Task::factory()->for($project, 'case')->create();
+    $task = Task::factory()->for($project, 'case')->create();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'assign-1')
@@ -113,9 +113,9 @@ it('assigns a task and sets its dependency', function () {
 
 it('refuses a dependency that would cycle', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageTasks)->create();
-    $project = Project::factory()->create();
-    $a = Task::factory()->for($project)->create();
-    $b = Task::factory()->for($project)->create(['depends_on_task_id' => $a->id]);
+    $project = ClientCase::factory()->create();
+    $a = Task::factory()->for($project, 'case')->create();
+    $b = Task::factory()->for($project, 'case')->create(['depends_on_task_id' => $a->id]);
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'depend-cycle')

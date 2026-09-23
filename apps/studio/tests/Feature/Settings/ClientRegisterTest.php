@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Portal\Notifications\ClientAccessLink;
 use App\Quotes\Models\Quote;
 use App\Quotes\Notifications\QuoteSent;
@@ -42,11 +42,11 @@ it('writes the magic link with du under the informal register', function () {
 
 it('addresses a couple as ihr under the informal register', function () {
     useRegister('informal');
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
-    $project->attachContact(Contact::factory()->create(), ProjectContactRole::Partner);
-    $quote = Quote::factory()->for($project)->create();
+    $project->attachContact($contact, CaseContactRole::Primary);
+    $project->attachContact(Contact::factory()->create(), CaseContactRole::Partner);
+    $quote = Quote::factory()->for($project, 'case')->create();
 
     expect((new QuoteSent($quote))->toMail($contact)->subject)->toBe("Euer Angebot {$quote->number}");
 });

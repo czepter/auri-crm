@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * One shooting occasion: a date, a place, a crew and its own pipeline.
  *
- * Hangs off Project whether booked or not, so a requested date and a booked date are
+ * Hangs off ClientCase whether booked or not, so a requested date and a booked date are
  * the same row in two states rather than two records kept in sync (vision
  * §3.1). The row checked for availability at intake is the row later booked.
  */
@@ -30,7 +30,7 @@ class Shoot extends Model
     use HasPublicId;
 
     protected $fillable = [
-        'project_id',
+        'case_id',
         'kind',
         'label',
         'date',
@@ -81,7 +81,7 @@ class Shoot extends Model
     /** How long a shoot without an end_time runs: what its project's type says. */
     public function defaultDurationMinutes(): int
     {
-        return $this->project->type?->duration_minutes ?? 120;
+        return $this->case->type?->duration_minutes ?? 120;
     }
 
     /** @return list<string> */
@@ -127,9 +127,9 @@ class Shoot extends Model
         $query->whereNull('cancelled_at');
     }
 
-    public function project(): BelongsTo
+    public function case(): BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(ClientCase::class);
     }
 
     public function crew(): HasMany

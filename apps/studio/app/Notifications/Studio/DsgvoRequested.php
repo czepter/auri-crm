@@ -2,7 +2,7 @@
 
 namespace App\Notifications\Studio;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Portal\Models\DsgvoRequest;
 
 class DsgvoRequested extends StudioEventNotification
@@ -35,7 +35,7 @@ class DsgvoRequested extends StudioEventNotification
         return "/kontakte/{$this->request->contact->public_id}";
     }
 
-    public function project(): ?Project
+    public function case(): ?ClientCase
     {
         return null;
     }

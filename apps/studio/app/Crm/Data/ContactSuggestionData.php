@@ -24,10 +24,10 @@ class ContactSuggestionData extends Data
             name: $contact->name,
             email: $contact->email,
             phone: $contact->phone,
-            // projects_count comes from withCount() on the query. Never
+            // cases_count comes from withCount() on the query. Never
             // lazy-loaded here, or the typeahead becomes an N+1 on every
             // keystroke.
-            projectCount: (int) ($contact->projects_count ?? 0),
+            projectCount: (int) ($contact->cases_count ?? 0),
         );
     }
 }

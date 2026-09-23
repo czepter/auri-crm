@@ -11,10 +11,10 @@ uses(RefreshDatabase::class);
 // project's own tab.
 it('lists quotes from every project, newest first', function () {
     [$user, $projectA] = studioWithProject();
-    $projectB = App\Crm\Models\Project::factory()->create();
+    $projectB = App\Crm\Models\ClientCase::factory()->create();
 
-    $older = Quote::factory()->for($projectA)->create(['status' => QuoteStatus::Draft, 'created_at' => now()->subDay()]);
-    $newer = Quote::factory()->for($projectB)->create(['status' => QuoteStatus::Sent]);
+    $older = Quote::factory()->for($projectA, 'case')->create(['status' => QuoteStatus::Draft, 'created_at' => now()->subDay()]);
+    $newer = Quote::factory()->for($projectB, 'case')->create(['status' => QuoteStatus::Sent]);
 
     $rows = test()->actingAs($user, 'staff')->get('/angebote')->assertOk()->viewData('page')['props']['quotes'];
 
@@ -32,7 +32,7 @@ it('lists quotes from every project, newest first', function () {
 it('shows a single quote on its own screen through the same workspace', function () {
     [$user, $project] = studioWithProject();
     $recipient = Contact::factory()->create(['name' => 'Nina Kaltenbach']);
-    $quote = Quote::factory()->for($project)->create([
+    $quote = Quote::factory()->for($project, 'case')->create([
         'status' => QuoteStatus::Draft,
         'recipient_contact_id' => $recipient->id,
     ]);
@@ -53,7 +53,7 @@ it('shows a single quote on its own screen through the same workspace', function
 // this one, so it fetches the stored sheet over GET instead.
 it('renders the stored print sheet for a sent quote', function () {
     [$user, $project] = studioWithProject();
-    $quote = Quote::factory()->for($project)->create(['status' => QuoteStatus::Sent]);
+    $quote = Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Sent]);
 
     test()->actingAs($user, 'staff')->get("/angebote/{$quote->public_id}/vorschau")
         ->assertOk()

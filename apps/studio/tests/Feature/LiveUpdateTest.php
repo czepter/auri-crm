@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Enums\Capability;
 use App\Integration\Models\ApiToken;
 use App\Models\User;
@@ -55,7 +55,7 @@ it('stays silent on a deploy whose hub has no key', function () {
 it('publishes when mcp adds a note', function () {
     useSurface(Surface::API);
     $token = ApiToken::factory()->withScopes(Capability::ManageNotes)->create();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'note-1')

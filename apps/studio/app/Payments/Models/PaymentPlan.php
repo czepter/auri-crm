@@ -4,7 +4,7 @@ namespace App\Payments\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use Database\Factories\Payments\PaymentPlanFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * One plan per project — the unique index on project_id is what makes that a
+ * One plan per project — the unique index on case_id is what makes that a
  * database fact rather than a convention. The plan is a property of the
  * booking, never of the pursuit: an unbooked project gets none (M-03).
  *
@@ -31,16 +31,16 @@ class PaymentPlan extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['project_id', 'total', 'reference', 'settled_at'];
+    protected $fillable = ['case_id', 'total', 'reference', 'settled_at'];
 
     protected function casts(): array
     {
         return ['settled_at' => 'immutable_datetime'];
     }
 
-    public function project(): BelongsTo
+    public function case(): BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(ClientCase::class);
     }
 
     public function installments(): HasMany

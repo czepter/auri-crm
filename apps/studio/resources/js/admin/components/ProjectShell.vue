@@ -30,7 +30,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, Ale
  * lit, so the heading never has to say it twice.
  */
 const props = withDefaults(
-  defineProps<{ header: App.Crm.Data.ProjectHeaderData; active: string; child?: string; people?: boolean }>(),
+  defineProps<{ header: App.Crm.Data.CaseHeaderData; active: string; child?: string; people?: boolean }>(),
   { people: true },
 )
 

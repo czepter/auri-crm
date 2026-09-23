@@ -4,7 +4,7 @@ namespace App\Engagement\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use Database\Factories\Engagement\ThreadFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,10 +18,10 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * the first message, not just replies to a studio one — is what makes this a
  * channel rather than a notification log.
  *
- * project_id is nullable (P-04, #223). A thread's booking is a reference it
+ * case_id is nullable (P-04, #223). A thread's booking is a reference it
  * carries, not a precondition for existing: the question that comes before
  * the booking is exactly the one a client most needs to ask. Null reads as
- * "Allgemein" on both surfaces, and AttachThreadToProject fills it in when a
+ * "Allgemein" on both surfaces, and AttachThreadToCase fills it in when a
  * general conversation turns out to be about a specific order after all.
  *
  * Holds no visibility flag and never will: InternalNote (C-07) is a client's
@@ -34,7 +34,7 @@ class Thread extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['project_id', 'subject'];
+    protected $fillable = ['case_id', 'subject'];
 
     /**
      * C-14 (#250): where this conversation stands. Two of the three are the
@@ -58,9 +58,9 @@ class Thread extends Model
         return $latest->contact_id === null ? 'wartet' : 'unbeantwortet';
     }
 
-    public function project(): BelongsTo
+    public function case(): BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(ClientCase::class);
     }
 
     /**

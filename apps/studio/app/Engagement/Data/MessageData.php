@@ -49,7 +49,7 @@ class MessageData extends Data
     /** The same row, told from the contact screen, where the project is not implied. */
     public static function withProject(Message $message): self
     {
-        $project = $message->thread->project;
+        $project = $message->thread->case;
 
         return new self(
             id: $message->public_id,

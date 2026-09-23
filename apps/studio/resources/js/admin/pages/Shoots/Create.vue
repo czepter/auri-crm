@@ -13,7 +13,7 @@ import { Input } from '@/ui/input'
 import { TimePicker } from '@/ui/time-picker'
 
 const props = defineProps<{
-  project: App.Crm.Data.ProjectSuggestionData | null
+  project: App.Crm.Data.CaseSuggestionData | null
   kinds: string[]
 }>()
 

@@ -27,9 +27,9 @@ class CreditNoteController extends Controller
 
         $notes = CreditNote::query()
             ->whereHas('invoice', fn ($invoice) => $invoice
-                ->where(fn ($query) => $query->whereNull('project_id')
-                    ->orWhereHas('project', fn ($project) => $project->visibleTo($viewer))))
-            ->with(['invoice.project', 'invoice.contact'])
+                ->where(fn ($query) => $query->whereNull('case_id')
+                    ->orWhereHas('case', fn ($project) => $project->visibleTo($viewer))))
+            ->with(['invoice.case', 'invoice.contact'])
             ->orderByDesc('issued_at')
             ->orderByDesc('id')
             ->get();

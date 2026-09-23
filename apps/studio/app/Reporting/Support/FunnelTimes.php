@@ -184,7 +184,7 @@ class FunnelTimes
     {
         $query = Lead::query()->whereBetween('leads.captured_at', [$from, $to]);
 
-        ProjectFilter::apply($query, $type, 'leads.project_id');
+        ProjectFilter::apply($query, $type, 'leads.case_id');
 
         return $query;
     }
@@ -205,7 +205,7 @@ class FunnelTimes
             ->where('audit_logs.event', 'lead.stage_changed')
             ->whereBetween('leads.captured_at', [$from, $to]);
 
-        ProjectFilter::apply($query, $type, 'leads.project_id');
+        ProjectFilter::apply($query, $type, 'leads.case_id');
 
         return $query;
     }

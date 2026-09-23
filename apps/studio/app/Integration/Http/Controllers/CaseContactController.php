@@ -2,9 +2,9 @@
 
 namespace App\Integration\Http\Controllers;
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,9 +16,9 @@ use Illuminate\Http\Response;
  * would throw, and who booked is decided at capture. Role is free text, the
  * same rule LeadContactController gives the admin screen.
  */
-class ProjectContactController extends Controller
+class CaseContactController extends Controller
 {
-    public function store(Request $request, Project $project): JsonResponse
+    public function store(Request $request, ClientCase $case): JsonResponse
     {
         $validated = $request->validate([
             'contact_id' => ['nullable', 'string', 'size:24', 'required_without:name'],
@@ -28,15 +28,15 @@ class ProjectContactController extends Controller
             'role' => ['nullable', 'string', 'max:60'],
         ]);
 
-        $role = $validated['role'] ?? ProjectContactRole::Partner->value;
+        $role = $validated['role'] ?? CaseContactRole::Partner->value;
 
         abort_if($this->isPrimary($role), 422);
 
         $contact = $this->resolveContact($validated);
 
-        // unique(project_id, contact_id, role) would throw on a second attach.
-        if (! $project->contacts()->whereKey($contact->id)->wherePivot('role', $role)->exists()) {
-            $project->attachContact($contact, $role);
+        // unique(case_id, contact_id, role) would throw on a second attach.
+        if (! $case->contacts()->whereKey($contact->id)->wherePivot('role', $role)->exists()) {
+            $case->attachContact($contact, $role);
         }
 
         return response()->json([
@@ -51,8 +51,8 @@ class ProjectContactController extends Controller
     /** Same both-spellings guard as LeadContactController::isPrimary. */
     private function isPrimary(string $role): bool
     {
-        return $role === ProjectContactRole::Primary->value
-            || $role === ProjectContactRole::Primary->label();
+        return $role === CaseContactRole::Primary->value
+            || $role === CaseContactRole::Primary->label();
     }
 
     /**
@@ -60,13 +60,13 @@ class ProjectContactController extends Controller
      * — the primary is decided at capture, the pivot's partial unique index
      * depends on it staying that way.
      */
-    public function destroy(Project $project, Contact $contact): Response
+    public function destroy(ClientCase $case, Contact $contact): Response
     {
-        $role = $project->contacts()->whereKey($contact->id)->first()?->pivot->role;
+        $role = $case->contacts()->whereKey($contact->id)->first()?->pivot->role;
 
         abort_if($role === null || $this->isPrimary($role), 422);
 
-        $project->contacts()->detach($contact->id);
+        $case->contacts()->detach($contact->id);
 
         return response()->noContent();
     }

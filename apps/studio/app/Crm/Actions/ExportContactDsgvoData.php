@@ -3,9 +3,9 @@
 namespace App\Crm\Actions;
 
 use App\Catalog\Models\ServiceSuggestion;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\FormAnswer;
-use App\Crm\Models\Project;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Gallery\Models\AssetComment;
@@ -54,14 +54,14 @@ class ExportContactDsgvoData
                 'dsgvo_erased_at' => $contact->dsgvo_erased_at?->toIso8601String(),
                 'created_at' => $contact->created_at?->toIso8601String(),
             ],
-            'projects' => $contact->projects()
+            'projects' => $contact->cases()
                 ->withPivot('role')
                 ->get()
-                ->map(fn (Project $project) => $this->project($project, $contact))
+                ->map(fn (ClientCase $project) => $this->case($project, $contact))
                 ->values()
                 ->all(),
             'threads' => $contact->threads()
-                ->whereNull('project_id')
+                ->whereNull('case_id')
                 ->get()
                 ->map(fn (Thread $thread) => $this->thread($thread, $contact))
                 ->all(),
@@ -175,7 +175,7 @@ class ExportContactDsgvoData
         ];
     }
 
-    private function project(Project $project, Contact $contact): array
+    private function case(ClientCase $project, Contact $contact): array
     {
         return [
             'id' => $project->public_id,

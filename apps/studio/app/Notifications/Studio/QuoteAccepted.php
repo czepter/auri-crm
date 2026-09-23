@@ -2,7 +2,7 @@
 
 namespace App\Notifications\Studio;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Quotes\Models\Quote;
 
 class QuoteAccepted extends StudioEventNotification
@@ -16,16 +16,16 @@ class QuoteAccepted extends StudioEventNotification
 
     public function body(): string
     {
-        return "{$this->quote->project->name} — {$this->quote->number}";
+        return "{$this->quote->case->name} — {$this->quote->number}";
     }
 
     public function url(): string
     {
-        return "/auftraege/{$this->quote->project->public_id}/angebote";
+        return "/auftraege/{$this->quote->case->public_id}/angebote";
     }
 
-    public function project(): ?Project
+    public function case(): ?ClientCase
     {
-        return $this->quote->project;
+        return $this->quote->case;
     }
 }

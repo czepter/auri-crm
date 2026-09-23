@@ -2,7 +2,7 @@
 
 namespace App\Gallery\Actions;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Gallery\Models\Gallery;
 use App\Media\Enums\AssetStatus;
@@ -54,7 +54,7 @@ class ImportLegacyGallery
             : $this->backfill($record, $project, $shoot, $title, $dryRun);
     }
 
-    private function link(array $record, Project $project, ?Shoot $shoot, ?string $title, bool $dryRun): array
+    private function link(array $record, ClientCase $project, ?Shoot $shoot, ?string $title, bool $dryRun): array
     {
         $externalUrl = $record['external_url'] ?? null;
         if (! $externalUrl) {
@@ -62,7 +62,7 @@ class ImportLegacyGallery
         }
 
         $existing = Gallery::query()
-            ->where('project_id', $project->id)
+            ->where('case_id', $project->id)
             ->where('shoot_id', $shoot?->id)
             ->where('is_external', true)
             ->where('external_url', $externalUrl)
@@ -77,7 +77,7 @@ class ImportLegacyGallery
         }
 
         $gallery = Gallery::create([
-            'project_id' => $project->id,
+            'case_id' => $project->id,
             'shoot_id' => $shoot?->id,
             'title' => $title,
             'is_external' => true,
@@ -87,7 +87,7 @@ class ImportLegacyGallery
         return $this->result('linked', "linked to {$externalUrl}.", $gallery);
     }
 
-    private function backfill(array $record, Project $project, ?Shoot $shoot, ?string $title, bool $dryRun): array
+    private function backfill(array $record, ClientCase $project, ?Shoot $shoot, ?string $title, bool $dryRun): array
     {
         $assets = $record['assets'] ?? [];
         if (! is_array($assets) || $assets === []) {
@@ -95,7 +95,7 @@ class ImportLegacyGallery
         }
 
         $existing = Gallery::query()
-            ->where('project_id', $project->id)
+            ->where('case_id', $project->id)
             ->where('shoot_id', $shoot?->id)
             ->where('is_external', false)
             ->where('title', $title)
@@ -110,7 +110,7 @@ class ImportLegacyGallery
         }
 
         $gallery = Gallery::create([
-            'project_id' => $project->id,
+            'case_id' => $project->id,
             'shoot_id' => $shoot?->id,
             'title' => $title,
         ]);
@@ -134,15 +134,15 @@ class ImportLegacyGallery
         return $this->result('backfilled', 'created and published version 1 with '.count($assets).' asset(s).', $gallery);
     }
 
-    private function resolveProject(array $record): ?Project
+    private function resolveProject(array $record): ?ClientCase
     {
         $publicId = $record['project_public_id'] ?? null;
 
-        return $publicId ? Project::findByPublicId($publicId) : null;
+        return $publicId ? ClientCase::findByPublicId($publicId) : null;
     }
 
     /** Returns null (no shoot given), a Shoot, or false (given but invalid/mismatched). */
-    private function resolveShoot(array $record, Project $project): Shoot|false|null
+    private function resolveShoot(array $record, ClientCase $project): Shoot|false|null
     {
         $publicId = $record['shoot_public_id'] ?? null;
         if (! $publicId) {
@@ -151,7 +151,7 @@ class ImportLegacyGallery
 
         $shoot = Shoot::findByPublicId($publicId);
 
-        return $shoot && $shoot->project_id === $project->id ? $shoot : false;
+        return $shoot && $shoot->case_id === $project->id ? $shoot : false;
     }
 
     private function result(string $status, string $message, ?Gallery $gallery = null): array

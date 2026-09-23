@@ -1,7 +1,7 @@
 <?php
 
 use App\Crm\Enums\ProjectFieldType;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\ProjectField;
 use App\Crm\Models\ProjectType;
 use App\Enums\Capability;
@@ -27,7 +27,7 @@ function bearer(ApiToken $token): array
 }
 
 it('lists the project types with their field definitions', function () {
-    $token = ApiToken::factory()->withScopes(Capability::ViewAllProjects)->create();
+    $token = ApiToken::factory()->withScopes(Capability::ViewAllCases)->create();
 
     $response = $this->withHeaders(bearer($token))->getJson('/api/project-types');
 
@@ -48,7 +48,7 @@ it('lists the project types with their field definitions', function () {
 
 it('leaves a deactivated field out of what a caller may write', function () {
     $this->guests->update(['is_active' => false]);
-    $token = ApiToken::factory()->withScopes(Capability::ViewAllProjects)->create();
+    $token = ApiToken::factory()->withScopes(Capability::ViewAllCases)->create();
 
     $response = $this->withHeaders(bearer($token))->getJson('/api/project-types');
 
@@ -56,8 +56,8 @@ it('leaves a deactivated field out of what a caller may write', function () {
 });
 
 it('carries the values in the project it reads back', function () {
-    $token = ApiToken::factory()->withScopes(Capability::ViewAllProjects)->create();
-    $project = Project::factory()->create(['type' => 'wedding']);
+    $token = ApiToken::factory()->withScopes(Capability::ViewAllCases)->create();
+    $project = ClientCase::factory()->create(['type' => 'wedding']);
     $project->forceFill(['field_values' => ['gaeste' => 120]])->save();
 
     $this->withHeaders(bearer($token))
@@ -68,7 +68,7 @@ it('carries the values in the project it reads back', function () {
 
 it('sets values through the same action the admin screen uses', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
-    $project = Project::factory()->create(['type' => 'wedding']);
+    $project = ClientCase::factory()->create(['type' => 'wedding']);
 
     $this->withHeaders(bearer($token) + ['Idempotency-Key' => 'fields-1'])
         ->patchJson("/api/projects/{$project->public_id}/fields", ['fields' => ['gaeste' => 120]])
@@ -80,7 +80,7 @@ it('sets values through the same action the admin screen uses', function () {
 
 it('replays an idempotent write rather than writing twice', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
-    $project = Project::factory()->create(['type' => 'wedding']);
+    $project = ClientCase::factory()->create(['type' => 'wedding']);
 
     foreach (range(1, 2) as $attempt) {
         $this->withHeaders(bearer($token) + ['Idempotency-Key' => 'fields-same'])
@@ -94,7 +94,7 @@ it('replays an idempotent write rather than writing twice', function () {
 
 it('names the field in a 422 rather than the request', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
-    $project = Project::factory()->create(['type' => 'wedding']);
+    $project = ClientCase::factory()->create(['type' => 'wedding']);
 
     $this->withHeaders(bearer($token) + ['Idempotency-Key' => 'fields-bad'])
         ->patchJson("/api/projects/{$project->public_id}/fields", ['fields' => ['gaeste' => 'viele']])
@@ -110,7 +110,7 @@ it('writes one field without tripping a required field it left alone', function 
         'required' => true,
     ]);
     $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
-    $project = Project::factory()->create(['type' => 'wedding']);
+    $project = ClientCase::factory()->create(['type' => 'wedding']);
 
     $this->withHeaders(bearer($token) + ['Idempotency-Key' => 'fields-partial'])
         ->patchJson("/api/projects/{$project->public_id}/fields", ['fields' => ['gaeste' => 120]])
@@ -121,8 +121,8 @@ it('writes one field without tripping a required field it left alone', function 
 });
 
 it('refuses to write values without the manage_leads scope', function () {
-    $token = ApiToken::factory()->withScopes(Capability::ViewAllProjects)->create();
-    $project = Project::factory()->create(['type' => 'wedding']);
+    $token = ApiToken::factory()->withScopes(Capability::ViewAllCases)->create();
+    $project = ClientCase::factory()->create(['type' => 'wedding']);
 
     $this->withHeaders(bearer($token) + ['Idempotency-Key' => 'fields-scope'])
         ->patchJson("/api/projects/{$project->public_id}/fields", ['fields' => ['gaeste' => 120]])

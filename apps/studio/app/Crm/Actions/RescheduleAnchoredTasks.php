@@ -2,7 +2,7 @@
 
 namespace App\Crm\Actions;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Support\TaskAnchors;
 
 /**
@@ -19,7 +19,7 @@ class RescheduleAnchoredTasks
 {
     public function __construct(private readonly TaskAnchors $anchors) {}
 
-    public function __invoke(Project $project): void
+    public function __invoke(ClientCase $project): void
     {
         $tasks = $project->tasks()->open()->whereNotNull('due_anchor')->get();
 

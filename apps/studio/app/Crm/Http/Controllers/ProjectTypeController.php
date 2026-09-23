@@ -2,7 +2,7 @@
 
 namespace App\Crm\Http\Controllers;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\ProjectType;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
@@ -66,7 +66,7 @@ class ProjectTypeController extends Controller
     {
         $this->authorize('delete', $projectType);
 
-        $standing = Project::query()->where('type', $projectType->key)->count();
+        $standing = ClientCase::query()->where('type', $projectType->key)->count();
 
         if ($standing > 0) {
             // Unlike a stage, a type has no ordering to move records along,

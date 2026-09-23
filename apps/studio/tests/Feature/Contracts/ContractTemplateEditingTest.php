@@ -4,7 +4,7 @@ use App\Contracts\Actions\EnsureContractArtifact;
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Jobs\RenderContractJob;
 use App\Contracts\Models\Contract;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Documents\Models\DocumentTemplate;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -18,7 +18,7 @@ it('leaves an already-rendered contract byte-for-byte untouched after its templa
 
     $template = DocumentTemplate::factory()->create(['body' => '<p>{{ project.name }}</p>']);
     $contract = Contract::factory()
-        ->for(Project::factory())
+        ->for(ClientCase::factory(), 'case')
         ->for($template, 'template')
         ->create();
 

@@ -2,12 +2,12 @@
 
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Models\Contract;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadStage;
-use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\StagePipeline;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Crm\Models\Stage;
 use App\Crm\Support\CrmVocabulary;
 use App\Documents\Models\DocumentTemplate;
@@ -219,11 +219,11 @@ function staffMember(?StaffRole $role = null): User
  * inzwischen, und eine in einer Testdatei erklaerte Funktion sieht die
  * naechste nur, wenn Pest sie in der richtigen Reihenfolge laedt.
  *
- * @return array{0: User, 1: Project}
+ * @return array{0: User, 1: ClientCase}
  */
 function studioWithProject(): array
 {
-    return [User::factory()->withMfa()->create(), Project::factory()->create()];
+    return [User::factory()->withMfa()->create(), ClientCase::factory()->create()];
 }
 
 /**
@@ -244,19 +244,19 @@ function bearerToken(mixed $tokenable): string
  * because a global function declared inside one test file collides the
  * moment a second file declares the same name.
  */
-function bookedContactProject(): Project
+function bookedContactProject(): ClientCase
 {
-    $project = Project::factory()->booked()->create(['name' => 'Hochzeit Meier & Kowalski', 'booked_at' => '2026-06-14 00:00:00']);
+    $project = ClientCase::factory()->booked()->create(['name' => 'Hochzeit Meier & Kowalski', 'booked_at' => '2026-06-14 00:00:00']);
     $contact = Contact::factory()->create(['name' => 'Lena Meier', 'email' => 'lena@example.test']);
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     return $project;
 }
 
-/** Project::factory()->booked() for a project a test already holds. */
-function markBooked(Project $project, array $attributes = []): Project
+/** ClientCase::factory()->booked() for a project a test already holds. */
+function markBooked(ClientCase $project, array $attributes = []): ClientCase
 {
-    $project->forceFill(Arr::only(Project::factory()->booked()->raw($attributes), ['booked_at', 'booked_by_id', 'booked_via']))->save();
+    $project->forceFill(Arr::only(ClientCase::factory()->booked()->raw($attributes), ['booked_at', 'booked_by_id', 'booked_via']))->save();
 
     return $project;
 }
@@ -266,10 +266,10 @@ function markBooked(Project $project, array $attributes = []): Project
  * faked `local` disk at its artifact_path — call Storage::fake('local')
  * before this.
  */
-function renderedContract(?Project $project = null, string $bytes = '%PDF-stored-bytes'): Contract
+function renderedContract(?ClientCase $project = null, string $bytes = '%PDF-stored-bytes'): Contract
 {
     $contract = Contract::factory()
-        ->for($project ?? Project::factory())
+        ->for($project ?? ClientCase::factory(), 'case')
         ->for(DocumentTemplate::factory(), 'template')
         ->create(['status' => ContractStatus::Pending]);
 
@@ -388,7 +388,7 @@ function inboundThread(string $email = 'lena@example.test'): Thread
     $contact = $project->contacts()->sole();
     $contact->update(['email' => $email]);
 
-    $thread = Thread::factory()->for($project)->create();
+    $thread = Thread::factory()->for($project, 'case')->create();
     $thread->participants()->create(['contact_id' => $contact->id]);
 
     return $thread;
@@ -434,7 +434,7 @@ function invoiceablePlan(): PaymentInstallment
     $project = bookedContactProject();
     // Accepted quotes carry the VAT snapshot MarkQuoteSent froze; InvoiceFigures
     // reads the invoice's mode and note from there, not from the settings.
-    Quote::factory()->for($project)->create([
+    Quote::factory()->for($project, 'case')->create([
         'status' => QuoteStatus::Accepted,
         'accepted_at' => now(),
         ...Quote::computeVat(0, app(StudioSettingsResolver::class)),

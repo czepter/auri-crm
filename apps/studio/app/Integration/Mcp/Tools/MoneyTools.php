@@ -7,7 +7,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 
 /**
  * #402: the payments half of N-03's write surface, `scope:manage_contracts`
- * on the api surface (see ProjectPolicy::managePaymentPlan()).
+ * on the api surface (see ClientCasePolicy::managePaymentPlan()).
  */
 final class MoneyTools
 {

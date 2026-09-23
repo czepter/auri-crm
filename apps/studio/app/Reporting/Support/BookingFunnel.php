@@ -50,7 +50,7 @@ class BookingFunnel
             ->groupBy('month')
             ->orderBy('month');
 
-        ProjectFilter::apply($query, $type, 'leads.project_id');
+        ProjectFilter::apply($query, $type, 'leads.case_id');
 
         $counted = $query->get()->keyBy('month');
 
@@ -92,12 +92,12 @@ class BookingFunnel
             ->selectRaw('count(*) as captured')
             ->selectRaw('count(*) filter (where leads.stage = ?) as booked', [self::wonKey()])
             ->selectRaw('coalesce(sum(payment_plans.total), 0) as revenue')
-            ->leftJoin('payment_plans', 'payment_plans.project_id', '=', 'leads.project_id')
+            ->leftJoin('payment_plans', 'payment_plans.case_id', '=', 'leads.case_id')
             ->whereBetween('leads.captured_at', [$from, $to])
             ->groupBy('leads.source', 'leads.source_other')
             ->orderByDesc('captured');
 
-        ProjectFilter::apply($query, $type, 'leads.project_id');
+        ProjectFilter::apply($query, $type, 'leads.case_id');
 
         return $query->get()
             // `source` arrives as a LeadSource, not a string: Lead casts the
@@ -134,7 +134,7 @@ class BookingFunnel
             ->groupBy('contacts.name')
             ->orderByDesc('count');
 
-        ProjectFilter::apply($query, $type, 'leads.project_id');
+        ProjectFilter::apply($query, $type, 'leads.case_id');
 
         return $query->get()
             ->map(fn ($row) => ['name' => $row->name, 'count' => (int) $row->count])
@@ -165,7 +165,7 @@ class BookingFunnel
             ->groupBy('outcome', 'lost_reason')
             ->orderByDesc('count');
 
-        ProjectFilter::apply($query, $type, 'leads.project_id');
+        ProjectFilter::apply($query, $type, 'leads.case_id');
 
         return $query->get()
             ->map(fn ($row) => [

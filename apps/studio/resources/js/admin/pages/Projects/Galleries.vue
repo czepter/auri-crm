@@ -8,7 +8,7 @@ import { Button } from '@/ui/button'
 import { dayAndMonth, weekday } from '@/admin/lib/shoots'
 
 const props = defineProps<{
-  header: App.Crm.Data.ProjectHeaderData
+  header: App.Crm.Data.CaseHeaderData
   galleries: App.Crm.Data.ProjectGalleryData[]
   shoots: App.Crm.Data.ShootData[]
 }>()

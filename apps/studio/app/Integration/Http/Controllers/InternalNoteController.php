@@ -2,8 +2,8 @@
 
 namespace App\Integration\Http\Controllers;
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\InternalNote;
-use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Support\LiveUpdate;
@@ -27,9 +27,9 @@ use Illuminate\Http\Response;
 class InternalNoteController extends Controller
 {
     /** Oldest first, on when it happened — the order the admin thread reads in. */
-    public function index(Project $project): JsonResponse
+    public function index(ClientCase $case): JsonResponse
     {
-        $notes = $project->notes()
+        $notes = $case->notes()
             ->with('author')
             ->orderByRaw('coalesce(occurred_at, created_at)')
             ->get();
@@ -37,13 +37,13 @@ class InternalNoteController extends Controller
         return response()->json(['data' => $notes->map($this->present(...))]);
     }
 
-    public function store(Request $request, Project $project): JsonResponse
+    public function store(Request $request, ClientCase $case): JsonResponse
     {
         $validated = $this->validated($request);
 
         $principal = $request->user('api');
 
-        $note = $project->notes()->create([
+        $note = $case->notes()->create([
             'author_id' => $principal instanceof User ? $principal->id : null,
             'body' => $validated['body'],
             'occurred_at' => $validated['occurred_at'] ?? null,

@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Gallery\Models\AssetComment;
 use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
@@ -13,7 +13,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->actingAs(User::factory()->withMfa()->create(), 'staff');
-    $this->gallery = Gallery::factory()->for(Project::factory())->create();
+    $this->gallery = Gallery::factory()->for(ClientCase::factory(), 'case')->create();
     $this->highlights = GallerySet::where('gallery_id', $this->gallery->id)->first();
 });
 

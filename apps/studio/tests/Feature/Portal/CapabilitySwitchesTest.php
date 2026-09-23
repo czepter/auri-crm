@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Quotes\Enums\QuoteStatus;
@@ -34,11 +34,11 @@ it('defaults every client capability switch to off', function () {
 });
 
 it('404s the payment-status route the same way a route that does not exist would, while the switch is off', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
     markBooked($project);
-    PaymentPlan::factory()->for($project)->create(['total' => 100000]);
+    PaymentPlan::factory()->for($project, 'case')->create(['total' => 100000]);
 
     $missing = $this->actingAs($contact, 'portal')->get('/this-route-does-not-exist-xyz');
 
@@ -49,11 +49,11 @@ it('404s the payment-status route the same way a route that does not exist would
 });
 
 it('hides the payments link on the project overview while the switch is off, even though a payment plan exists', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
     markBooked($project);
-    PaymentPlan::factory()->for($project)->create(['total' => 100000]);
+    PaymentPlan::factory()->for($project, 'case')->create(['total' => 100000]);
 
     $props = $this->actingAs($contact, 'portal')
         ->get("/projekte/{$project->public_id}")
@@ -66,21 +66,21 @@ it('hides the payments link on the project overview while the switch is off, eve
 it('shows the payments route and link once the studio switches payment-status on', function () {
     StudioSettings::query()->update(['portal_payment_status_enabled' => true]);
 
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
     markBooked($project);
-    PaymentPlan::factory()->for($project)->create(['total' => 100000]);
+    PaymentPlan::factory()->for($project, 'case')->create(['total' => 100000]);
 
     $this->actingAs($contact, 'portal')->get("/projekte/{$project->public_id}/zahlungen")->assertOk();
 });
 
 it('404s the payments checkout route the same way a route that does not exist would, while the switch is off', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
     markBooked($project);
-    $plan = PaymentPlan::factory()->for($project)->create(['total' => 100000]);
+    $plan = PaymentPlan::factory()->for($project, 'case')->create(['total' => 100000]);
     $installment = PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 100000]);
 
     $missing = $this->actingAs($contact, 'portal')->get('/this-route-does-not-exist-xyz');
@@ -93,14 +93,14 @@ it('404s the payments checkout route the same way a route that does not exist wo
 });
 
 it('404s the accept-quote route the same way a route that does not exist would, while the switch is off', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
-    $quote = Quote::factory()->for($project)->create([
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
+    $quote = Quote::factory()->for($project, 'case')->create([
         'status' => QuoteStatus::Sent,
         'sent_at' => now(),
         'valid_until' => now()->addDays(14),
     ]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $missing = $this->actingAs($contact, 'portal')->get('/this-route-does-not-exist-xyz');
 
@@ -112,14 +112,14 @@ it('404s the accept-quote route the same way a route that does not exist would, 
 });
 
 it('hides the accept-quote affordance on the quote screen while the switch is off, even though the quote is otherwise acceptable', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
-    Quote::factory()->for($project)->create([
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
+    Quote::factory()->for($project, 'case')->create([
         'status' => QuoteStatus::Sent,
         'sent_at' => now(),
         'valid_until' => now()->addDays(14),
     ]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $props = $this->actingAs($contact, 'portal')
         ->get("/projekte/{$project->public_id}/angebot")
@@ -130,9 +130,9 @@ it('hides the accept-quote affordance on the quote screen while the switch is of
 });
 
 it('404s the messages route the same way a route that does not exist would, while the switch is off', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $missing = $this->actingAs($contact, 'portal')->get('/this-route-does-not-exist-xyz');
 
@@ -146,9 +146,9 @@ it('404s the messages route the same way a route that does not exist would, whil
 });
 
 it('hides the messages link on the project overview while the switch is off', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $props = $this->actingAs($contact, 'portal')
         ->get("/projekte/{$project->public_id}")
@@ -161,28 +161,28 @@ it('hides the messages link on the project overview while the switch is off', fu
 it('lets a client start a thread once the studio switches messaging on', function () {
     StudioSettings::query()->update(['portal_messaging_mode' => 'any']);
 
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal')
         ->post('/nachrichten', ['subject' => 'Thema', 'body' => 'Hallo!', 'project' => $project->public_id])
         ->assertRedirect();
 
-    expect(App\Engagement\Models\Thread::where('project_id', $project->id)->count())->toBe(1);
+    expect(App\Engagement\Models\Thread::where('case_id', $project->id)->count())->toBe(1);
 });
 
 it('accepts once the studio switches accept-quotes on', function () {
     StudioSettings::query()->update(['portal_accept_quotes_enabled' => true]);
 
-    $project = Project::factory()->create(['portal_visible' => true]);
-    $quote = Quote::factory()->for($project)->create([
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
+    $quote = Quote::factory()->for($project, 'case')->create([
         'status' => QuoteStatus::Sent,
         'sent_at' => now(),
         'valid_until' => now()->addDays(14),
     ]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal')
         ->post("/projekte/{$project->public_id}/angebot/annehmen")

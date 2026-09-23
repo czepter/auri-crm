@@ -3,9 +3,9 @@
 use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
 use App\Catalog\Models\PackageItem;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Enums\Capability;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
@@ -179,7 +179,7 @@ it('seeds nothing from a package with no items, and totals zero', function () {
 
 it('creates a blank draft quote for a project, and logs it', function () {
     $user = quoteOwner();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $this->actingAs($user, 'staff')
         ->post("/auftraege/{$project->public_id}/angebote", ['valid_until' => '2026-12-31'])
@@ -198,7 +198,7 @@ it('creates a blank draft quote for a project, and logs it', function () {
 });
 
 it('creates a quote seeded from a package via the store action', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $package = Package::factory()->create();
     PackageItem::factory()->for($package)->create(['unit_price' => 200000]);
     PackageItem::factory()->for($package)->included()->create();
@@ -214,7 +214,7 @@ it('creates a quote seeded from a package via the store action', function () {
 });
 
 it('refuses to seed from a deactivated package', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $package = Package::factory()->inactive()->create();
 
     $this->actingAs(quoteOwner(), 'staff')
@@ -236,7 +236,7 @@ describe('T-05: quote validity default', function () {
 
     it('takes its validity from the tenant setting when created without a package and no explicit valid_until', function () {
         app(StudioSettingsResolver::class)->set('quote_validity_days', 21);
-        $project = Project::factory()->create();
+        $project = ClientCase::factory()->create();
 
         $this->actingAs(quoteOwner(), 'staff')
             ->post("/auftraege/{$project->public_id}/angebote", [])
@@ -249,7 +249,7 @@ describe('T-05: quote validity default', function () {
 
     it('leaves an explicit valid_until alone rather than overriding it with the default', function () {
         app(StudioSettingsResolver::class)->set('quote_validity_days', 21);
-        $project = Project::factory()->create();
+        $project = ClientCase::factory()->create();
 
         $this->actingAs(quoteOwner(), 'staff')
             ->post("/auftraege/{$project->public_id}/angebote", ['valid_until' => '2026-12-31'])
@@ -260,7 +260,7 @@ describe('T-05: quote validity default', function () {
 
     it('moves no existing quote\'s valid_until when the default changes afterwards', function () {
         app(StudioSettingsResolver::class)->set('quote_validity_days', 14);
-        $project = Project::factory()->create();
+        $project = ClientCase::factory()->create();
 
         $this->actingAs(quoteOwner(), 'staff')
             ->post("/auftraege/{$project->public_id}/angebote", []);
@@ -303,8 +303,8 @@ it('replaces a draft quote\'s items wholesale on update, recalculates the total,
 // --- The screen: included lines render without a price, and stay out of the total ---
 
 it('renders a project\'s quotes with included lines carrying no price, and excludes them from the total', function () {
-    $project = Project::factory()->create();
-    $quote = Quote::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $quote = Quote::factory()->for($project, 'case')->create();
     QuoteItem::factory()->for($quote)->create(['title' => 'Hochzeitsreportage', 'quantity' => 1, 'unit_price' => 440000]);
     QuoteItem::factory()->for($quote)->included()->create(['title' => 'USB-Box in Holz']);
     $quote->recalculateTotal();
@@ -325,8 +325,8 @@ it('renders a project\'s quotes with included lines carrying no price, and exclu
 });
 
 it('distinguishes a zero-priced line from an included line in the data sent to the screen', function () {
-    $project = Project::factory()->create();
-    $quote = Quote::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $quote = Quote::factory()->for($project, 'case')->create();
     QuoteItem::factory()->for($quote)->create(['title' => 'Kostenlose Zugabe', 'unit_price' => 0]);
     QuoteItem::factory()->for($quote)->included()->create(['title' => 'Enthalten']);
 
@@ -651,10 +651,10 @@ describe('Q-04: VAT snapshot', function () {
     });
 
     it('sends a quote\'s own VAT snapshot columns to the screen once populated, and a live preview for a draft', function () {
-        $project = Project::factory()->create();
-        $draft = Quote::factory()->for($project)->create(['net' => 50000]);
+        $project = ClientCase::factory()->create();
+        $draft = Quote::factory()->for($project, 'case')->create(['net' => 50000]);
 
-        $sent = Quote::factory()->for($project)->create(['net' => 100000]);
+        $sent = Quote::factory()->for($project, 'case')->create(['net' => 100000]);
         app(StudioSettingsResolver::class)->set('vat_mode', 'standard');
         app(StudioSettingsResolver::class)->set('vat_rate', 1900);
         $sent->snapshotVat(app(StudioSettingsResolver::class));
@@ -736,10 +736,10 @@ describe('Q-06: sending a quote', function () {
 
     it('mails the project\'s primary contact synchronously', function () {
         Notification::fake();
-        $project = Project::factory()->create();
+        $project = ClientCase::factory()->create();
         $contact = Contact::factory()->create(['email' => 'lena@example.test']);
-        $project->attachContact($contact, ProjectContactRole::Primary);
-        $quote = Quote::factory()->for($project)->create();
+        $project->attachContact($contact, CaseContactRole::Primary);
+        $quote = Quote::factory()->for($project, 'case')->create();
 
         app(SendQuote::class)($quote);
 
@@ -752,13 +752,13 @@ describe('Q-06: sending a quote', function () {
     it('links the mail to the portal quote screen only while the project is portal_visible', function () {
         $contact = Contact::factory()->create(['email' => 'lena@example.test']);
 
-        $visible = Project::factory()->create(['portal_visible' => true]);
-        $visible->attachContact($contact, ProjectContactRole::Primary);
-        $hidden = Project::factory()->create(['portal_visible' => false]);
-        $hidden->attachContact($contact, ProjectContactRole::Primary);
+        $visible = ClientCase::factory()->create(['portal_visible' => true]);
+        $visible->attachContact($contact, CaseContactRole::Primary);
+        $hidden = ClientCase::factory()->create(['portal_visible' => false]);
+        $hidden->attachContact($contact, CaseContactRole::Primary);
 
-        $withButton = (new QuoteSent(Quote::factory()->for($visible)->create()))->toMail($contact);
-        $withoutButton = (new QuoteSent(Quote::factory()->for($hidden)->create()))->toMail($contact);
+        $withButton = (new QuoteSent(Quote::factory()->for($visible, 'case')->create()))->toMail($contact);
+        $withoutButton = (new QuoteSent(Quote::factory()->for($hidden, 'case')->create()))->toMail($contact);
 
         // A button into the portal's own 404 would be worse than no button:
         // the route is bound on visibility, not just on the contact.
@@ -774,10 +774,10 @@ describe('Q-06: sending a quote', function () {
         URL::forceRootUrl('https://studio.example.test');
 
         $contact = Contact::factory()->create(['email' => 'lena@example.test']);
-        $project = Project::factory()->create(['portal_visible' => true]);
-        $project->attachContact($contact, ProjectContactRole::Primary);
+        $project = ClientCase::factory()->create(['portal_visible' => true]);
+        $project->attachContact($contact, CaseContactRole::Primary);
 
-        $mail = (new QuoteSent(Quote::factory()->for($project)->create()))->toMail($contact);
+        $mail = (new QuoteSent(Quote::factory()->for($project, 'case')->create()))->toMail($contact);
         $body = (string) $mail->render();
 
         expect($mail->actionUrl)->toBe("https://kunden.example.test/projekte/{$project->public_id}/angebot")
@@ -798,9 +798,9 @@ describe('Q-06: sending a quote', function () {
         Cache::store('redis')->flush();
 
         $contact = Contact::factory()->create(['email' => 'lena@example.test']);
-        $project = Project::factory()->create();
-        $project->attachContact($contact, ProjectContactRole::Primary);
-        $quote = Quote::factory()->for($project)->create();
+        $project = ClientCase::factory()->create();
+        $project->attachContact($contact, CaseContactRole::Primary);
+        $quote = Quote::factory()->for($project, 'case')->create();
 
         $body = (string) (new QuoteSent($quote))->toMail($contact)->render();
 
@@ -817,10 +817,10 @@ describe('Q-06: sending a quote', function () {
         Cache::store('redis')->flush();
 
         $contact = Contact::factory()->create(['email' => 'lena@example.test']);
-        $project = Project::factory()->create();
-        $project->attachContact($contact, ProjectContactRole::Primary);
+        $project = ClientCase::factory()->create();
+        $project->attachContact($contact, CaseContactRole::Primary);
 
-        $body = (string) (new QuoteSent(Quote::factory()->for($project)->create()))->toMail($contact)->render();
+        $body = (string) (new QuoteSent(Quote::factory()->for($project, 'case')->create()))->toMail($contact)->render();
 
         expect($body)->not->toContain('studio.example.test/agb')
             ->and($body)->not->toContain('/rechtstexte/');
@@ -837,8 +837,8 @@ describe('Q-06: sending a quote', function () {
 
     it('is reachable through the controller, authorized the same as every other quote mutation', function () {
         $user = quoteOwner();
-        $project = Project::factory()->create();
-        $quote = Quote::factory()->for($project)->create();
+        $project = ClientCase::factory()->create();
+        $quote = Quote::factory()->for($project, 'case')->create();
         QuoteItem::factory()->for($quote)->create();
 
         $this->actingAs($user, 'staff')
@@ -850,9 +850,9 @@ describe('Q-06: sending a quote', function () {
 
     it('opens the compose screen for a draft quote, carrying the recipient it would mail', function () {
         $contact = Contact::factory()->create(['name' => 'Lena Brandt', 'email' => 'lena@example.test']);
-        $project = Project::factory()->create();
-        $project->attachContact($contact, ProjectContactRole::Primary);
-        $quote = Quote::factory()->for($project)->create();
+        $project = ClientCase::factory()->create();
+        $project->attachContact($contact, CaseContactRole::Primary);
+        $quote = Quote::factory()->for($project, 'case')->create();
         QuoteItem::factory()->for($quote)->create();
 
         $this->actingAs(quoteOwner(), 'staff')
@@ -876,9 +876,9 @@ describe('Q-06: sending a quote', function () {
         Notification::fake();
 
         $contact = Contact::factory()->create(['email' => 'lena@example.test']);
-        $project = Project::factory()->create();
-        $project->attachContact($contact, ProjectContactRole::Primary);
-        $quote = Quote::factory()->for($project)->create();
+        $project = ClientCase::factory()->create();
+        $project->attachContact($contact, CaseContactRole::Primary);
+        $quote = Quote::factory()->for($project, 'case')->create();
         QuoteItem::factory()->for($quote)->create();
 
         $this->actingAs(quoteOwner(), 'staff')->post("/angebote/{$quote->public_id}/versenden", [
@@ -954,8 +954,8 @@ describe('Q-06: a sent quote is immutable at the model level', function () {
 
 describe('Q-06: revising a sent quote', function () {
     it('creates a new row carrying the predecessor\'s id, copying its items, discount and validity', function () {
-        $project = Project::factory()->create();
-        $predecessor = Quote::factory()->for($project)->create([
+        $project = ClientCase::factory()->create();
+        $predecessor = Quote::factory()->for($project, 'case')->create([
             'status' => QuoteStatus::Sent,
             'valid_until' => '2026-12-31',
             'discount_type' => DiscountType::Percentage,
@@ -1058,8 +1058,8 @@ describe('Q-06: revising a sent quote', function () {
     })->with([QuoteStatus::Draft, QuoteStatus::Superseded]);
 
     it('leaves the predecessor reachable and reading as superseded on the project\'s quotes screen', function () {
-        $project = Project::factory()->create();
-        $predecessor = Quote::factory()->for($project)->create(['status' => QuoteStatus::Sent, 'number' => 'AN-2026-37']);
+        $project = ClientCase::factory()->create();
+        $predecessor = Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Sent, 'number' => 'AN-2026-37']);
         QuoteItem::factory()->for($predecessor)->create();
         $revision = app(ReviseQuote::class)($predecessor);
 
@@ -1110,9 +1110,9 @@ describe('Q-07: a sent quote allows the accept transition, then refuses everythi
     });
 });
 
-// --- Q-07: Project::latestQuote() — the one the portal shows ---------------
+// --- Q-07: ClientCase::latestQuote() — the one the portal shows ---------------
 
-describe('Q-07: Project::latestQuote()', function () {
+describe('Q-07: ClientCase::latestQuote()', function () {
     beforeEach(function () {
         // Same reasoning as the Q-04/Q-06 describe blocks above: Redis is
         // shared across the whole test run, and SendQuote calls snapshotVat().
@@ -1120,15 +1120,15 @@ describe('Q-07: Project::latestQuote()', function () {
     });
 
     it('is null for a project that has never sent a quote', function () {
-        $project = Project::factory()->create();
-        Quote::factory()->for($project)->create(); // draft, never sent
+        $project = ClientCase::factory()->create();
+        Quote::factory()->for($project, 'case')->create(); // draft, never sent
 
         expect($project->latestQuote)->toBeNull();
     });
 
     it('still points at the superseded predecessor until its own revision is sent', function () {
-        $project = Project::factory()->create();
-        $predecessor = Quote::factory()->for($project)->create([
+        $project = ClientCase::factory()->create();
+        $predecessor = Quote::factory()->for($project, 'case')->create([
             'status' => QuoteStatus::Sent,
             'number' => 'AN-2026-1',
             'sent_at' => now(),
@@ -1178,7 +1178,7 @@ it('does not let one quote\'s autosave suppress another quote\'s entry', functio
 // The lead pill creates the quote and fills it, rather than only opening the
 // tab — the store() branch that seeds from a package keeps its caller here.
 it('creates a quote seeded from a package when the lead pill posts one', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $package = Package::factory()->has(PackageItem::factory()->count(2), 'items')->create();
 
     $this->actingAs(quoteOwner(), 'staff')
@@ -1191,7 +1191,7 @@ it('creates a quote seeded from a package when the lead pill posts one', functio
 // --- Creating: no dialog, so no questions before the first visible line ---
 
 it('creates a blank draft straight from the button, taking validity from the studio default', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $this->actingAs(quoteOwner(), 'staff')
         ->post("/auftraege/{$project->public_id}/angebote")
@@ -1315,7 +1315,7 @@ describe('remembering the last quote action a user took', function () {
     });
 
     it('sends it back down as the quote screen loads, per user rather than per quote', function () {
-        $project = Project::factory()->create();
+        $project = ClientCase::factory()->create();
         $user = quoteOwner();
         $user->update(['last_quote_action' => 'send_by_mail']);
 
@@ -1332,8 +1332,8 @@ describe('remembering the last quote action a user took', function () {
 
 describe('duplicating a quote', function () {
     it('opens a new draft on the same project, carrying positions, terms and payment stages, none of the source\'s history', function () {
-        $project = Project::factory()->create();
-        $source = Quote::factory()->for($project)->create([
+        $project = ClientCase::factory()->create();
+        $source = Quote::factory()->for($project, 'case')->create([
             'status' => QuoteStatus::Sent,
             'number' => 'AN-2026-1',
             'sent_at' => now(),
@@ -1354,7 +1354,7 @@ describe('duplicating a quote', function () {
 
         $copy = Quote::where('id', '!=', $source->id)->firstOrFail();
 
-        expect($copy->project_id)->toBe($project->id)
+        expect($copy->case_id)->toBe($project->id)
             ->and($copy->status)->toBe(QuoteStatus::Draft)
             ->and($copy->number)->not->toBeNull()
             ->and($copy->sent_at)->toBeNull()
@@ -1367,8 +1367,8 @@ describe('duplicating a quote', function () {
     });
 
     it('leaves the source quote untouched', function () {
-        $project = Project::factory()->create();
-        $source = Quote::factory()->for($project)->create(['status' => QuoteStatus::Accepted]);
+        $project = ClientCase::factory()->create();
+        $source = Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Accepted]);
         QuoteItem::factory()->for($source)->create();
 
         $this->actingAs(quoteOwner(), 'staff')->post("/angebote/{$source->public_id}/duplizieren");

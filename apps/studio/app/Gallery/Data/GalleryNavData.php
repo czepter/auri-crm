@@ -13,7 +13,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * Die Spalte des Datensatzes: dasselbe `tabs` wie am Projekt
- * (ProjectHeaderData), dazu zwei Dinge, die ein Projekt nicht hat.
+ * (CaseHeaderData), dazu zwei Dinge, die ein Projekt nicht hat.
  *
  * Das Titelbild steht darüber, weil es kein Bereich ist, sondern das Gesicht
  * des Datensatzes — dieselbe Stelle, an der ein Kontakt seinen Avatar trägt.

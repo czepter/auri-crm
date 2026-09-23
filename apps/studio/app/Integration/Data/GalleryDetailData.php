@@ -48,7 +48,7 @@ class GalleryDetailData extends Data
         return new self(
             id: $gallery->public_id,
             title: $gallery->title ?? '',
-            projectId: $gallery->project?->public_id,
+            projectId: $gallery->case?->public_id,
             currentVersion: $version?->version,
             draftAssetCount: $gallery->draftAssets()->count(),
             status: GalleryReadData::status($gallery),

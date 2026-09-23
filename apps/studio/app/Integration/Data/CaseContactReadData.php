@@ -11,7 +11,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * the role this contact holds on that project.
  */
 #[TypeScript]
-class ProjectContactReadData extends Data
+class CaseContactReadData extends Data
 {
     public function __construct(
         public string $id,

@@ -2,7 +2,7 @@
 
 namespace App\Crm\Http\Controllers;
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
 use App\Http\Controllers\Controller;
@@ -17,7 +17,7 @@ use Illuminate\Http\Request;
  * 238 Pixel schmale Spalte, in der sich nichts anlegen ließ.
  *
  * Die Rolle ist Freitext. Die Aufzählung bleibt die Liste der Vorschläge und
- * die Heimat der einen Rolle, an der ein Index hängt: auf project_contacts
+ * die Heimat der einen Rolle, an der ein Index hängt: auf case_contacts
  * liegt ein partieller Unique-Index über 'primary', und wer bucht, entscheidet
  * die Erfassung.
  */
@@ -25,7 +25,7 @@ class LeadContactController extends Controller
 {
     public function store(Request $request, Lead $lead): RedirectResponse
     {
-        $project = $lead->project;
+        $project = $lead->case;
 
         $this->authorize('manageShoots', $project);
 
@@ -37,13 +37,13 @@ class LeadContactController extends Controller
             'role' => ['nullable', 'string', 'max:60'],
         ]);
 
-        $role = $validated['role'] ?? ProjectContactRole::Partner->label();
+        $role = $validated['role'] ?? CaseContactRole::Partner->label();
 
         abort_if($this->isPrimary($role), 422);
 
         $contact = $this->resolveContact($validated);
 
-        // unique(project_id, contact_id, role) würde beim zweiten Anhängen
+        // unique(case_id, contact_id, role) würde beim zweiten Anhängen
         // werfen.
         if (! $project->contacts()->whereKey($contact->id)->wherePivot('role', $role)->exists()) {
             $project->attachContact($contact, $role);
@@ -54,7 +54,7 @@ class LeadContactController extends Controller
 
     public function destroy(Lead $lead, Contact $contact): RedirectResponse
     {
-        $project = $lead->project;
+        $project = $lead->case;
 
         $this->authorize('manageShoots', $project);
 
@@ -74,8 +74,8 @@ class LeadContactController extends Controller
      */
     private function isPrimary(string $role): bool
     {
-        return $role === ProjectContactRole::Primary->value
-            || $role === ProjectContactRole::Primary->label();
+        return $role === CaseContactRole::Primary->value
+            || $role === CaseContactRole::Primary->label();
     }
 
     /**

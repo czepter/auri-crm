@@ -28,8 +28,8 @@ class LeadQueueRowData extends Data
             // The lead's own id: the pane links to /anfragen/{lead}, and the
             // project's id 404s there.
             id: $lead->public_id,
-            name: $lead->project->contactNames(),
-            date: $lead->project->primaryShoot?->date?->format('Y-m-d'),
+            name: $lead->case->contactNames(),
+            date: $lead->case->primaryShoot?->date?->format('Y-m-d'),
             // Whole text, not the two lines the pane draws: the search in
             // the pane reads this and would otherwise stop at 90 characters.
             // The row clamps its own height.

@@ -3,7 +3,7 @@
 namespace App\Quotes\Support;
 
 use App\Crm\Enums\ProjectType;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use Carbon\CarbonInterface;
@@ -61,7 +61,7 @@ class QuoteAcceptanceRate
         // Der Projekttyp-Filter der Auswertungen. Ohne Typ bleibt die Abfrage
         // die der Übersicht — dieselbe Zahl an beiden Stellen.
         if ($type !== null) {
-            $sent->whereIn('quotes.project_id', Project::query()->select('id')->where('type', $type->value));
+            $sent->whereIn('quotes.case_id', ClientCase::query()->select('id')->where('type', $type->value));
         }
 
         return [

@@ -31,8 +31,8 @@ class RetentionCandidates
         return Contact::query()
             ->whereNull('dsgvo_erased_at')
             ->whereNull('retention_applied_at')
-            ->whereHas('projects')
-            ->whereDoesntHave('projects', fn ($project) => $project->where(fn ($p) => $p
+            ->whereHas('cases')
+            ->whereDoesntHave('cases', fn ($project) => $project->where(fn ($p) => $p
                 ->whereDoesntHave('lead', fn ($lead) => $lead
                     ->whereIn('outcome', [LeadOutcome::Lost, LeadOutcome::Declined])
                     ->when($cutoff, fn ($lead) => $lead->where('updated_at', '<', $cutoff)))
@@ -43,8 +43,8 @@ class RetentionCandidates
     public static function invoicedContactIds(): Collection
     {
         return Invoice::query()->whereNotNull('contact_id')->pluck('contact_id')
-            ->merge(DB::table('project_contacts')
-                ->whereIn('project_id', Invoice::query()->whereNotNull('project_id')->select('project_id'))
+            ->merge(DB::table('case_contacts')
+                ->whereIn('case_id', Invoice::query()->whereNotNull('case_id')->select('case_id'))
                 ->pluck('contact_id'))
             ->unique()
             ->values();
@@ -59,25 +59,25 @@ class RetentionCandidates
     public static function preview(): array
     {
         $invoiced = self::invoicedContactIds()->flip();
-        $contacts = self::query()->with('projects.lead')->get();
+        $contacts = self::query()->with('cases.lead')->get();
 
-        $projectIds = $contacts->flatMap->projects->pluck('id');
-        $messages = Thread::query()->whereIn('project_id', $projectIds)->withCount('messages')->get()
-            ->groupBy('project_id')->map->sum('messages_count');
-        $notes = InternalNote::query()->whereIn('project_id', $projectIds)->selectRaw('project_id, count(*) as n')->groupBy('project_id')->pluck('n', 'project_id');
-        $quotes = Quote::query()->whereIn('project_id', $projectIds)->selectRaw('project_id, count(*) as n')->groupBy('project_id')->pluck('n', 'project_id');
-        $galleries = Gallery::query()->whereIn('project_id', $projectIds)->selectRaw('project_id, count(*) as n')->groupBy('project_id')->pluck('n', 'project_id');
+        $projectIds = $contacts->flatMap->cases->pluck('id');
+        $messages = Thread::query()->whereIn('case_id', $projectIds)->withCount('messages')->get()
+            ->groupBy('case_id')->map->sum('messages_count');
+        $notes = InternalNote::query()->whereIn('case_id', $projectIds)->selectRaw('case_id, count(*) as n')->groupBy('case_id')->pluck('n', 'case_id');
+        $quotes = Quote::query()->whereIn('case_id', $projectIds)->selectRaw('case_id, count(*) as n')->groupBy('case_id')->pluck('n', 'case_id');
+        $galleries = Gallery::query()->whereIn('case_id', $projectIds)->selectRaw('case_id, count(*) as n')->groupBy('case_id')->pluck('n', 'case_id');
 
         return $contacts->map(function (Contact $contact) use ($invoiced, $messages, $notes, $quotes, $galleries) {
-            $ids = $contact->projects->pluck('id');
-            $leads = $contact->projects->pluck('lead')->filter();
+            $ids = $contact->cases->pluck('id');
+            $leads = $contact->cases->pluck('lead')->filter();
             $latest = $leads->sortByDesc('updated_at')->first();
             $sum = fn (Collection $by) => (int) $ids->sum(fn ($id) => $by[$id] ?? 0);
 
             return new RetentionCandidateData(
                 id: $contact->public_id,
                 name: $contact->name,
-                type: $contact->projects->first()->typeLabel(),
+                type: $contact->cases->first()->typeLabel(),
                 text: $latest->inquiry_text === null ? null : str($latest->inquiry_text)->limit(120)->toString(),
                 outcome: $latest->outcome->value,
                 outcomeLabel: $latest->outcome->label(),

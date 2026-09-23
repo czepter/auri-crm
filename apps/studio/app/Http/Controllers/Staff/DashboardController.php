@@ -6,7 +6,7 @@ use App\Crm\Actions\ReadStudioActivity;
 use App\Crm\Data\DomainRowData;
 use App\Crm\Data\RowActionData;
 use App\Crm\Data\TaskRowData;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Gallery\Actions\ReadAfterDeliveryColumn;
@@ -97,7 +97,7 @@ class DashboardController extends Controller
 
     private function visible(User $viewer)
     {
-        return Project::query()->visibleTo($viewer)->select('projects.id');
+        return ClientCase::query()->visibleTo($viewer)->select('cases.id');
     }
 
     /**
@@ -110,8 +110,8 @@ class DashboardController extends Controller
     private function upcoming(User $viewer): array
     {
         $shoots = Shoot::query()
-            ->with('project')
-            ->whereIn('shoots.project_id', $this->visible($viewer)->booked())
+            ->with('case')
+            ->whereIn('shoots.case_id', $this->visible($viewer)->booked())
             ->uncancelled()
             ->whereNotNull('date')
             ->whereDate('date', '>=', now()->toDateString())
@@ -126,10 +126,10 @@ class DashboardController extends Controller
             'date' => $shoot->date->format('Y-m-d'),
             // call_time is a plain time column, not a cast — same trimming NextShootData does.
             'time' => $shoot->call_time === null ? null : substr((string) $shoot->call_time, 0, 5),
-            'what' => $shoot->project->name,
+            'what' => $shoot->case->name,
             'where' => $shoot->venue_name,
             'away' => false,
-            'href' => '/auftraege/'.$shoot->project->public_id.'/shootings',
+            'href' => '/auftraege/'.$shoot->case->public_id.'/shootings',
         ]);
 
         $absences = Absence::query()
@@ -162,7 +162,7 @@ class DashboardController extends Controller
                 ->open()
                 ->visibleTo($viewer)
                 ->byDueDate()
-                ->with(['project', 'contact', 'assignee'])
+                ->with(['case', 'contact', 'assignee'])
                 ->limit(self::TASKS)
                 ->get()
                 ->map(TaskRowData::fromTask(...))
@@ -175,7 +175,7 @@ class DashboardController extends Controller
     {
         return (int) Quote::query()
             ->whereIn('status', [QuoteStatus::Draft, QuoteStatus::Sent])
-            ->whereIn('project_id', $this->visible($viewer))
+            ->whereIn('case_id', $this->visible($viewer))
             ->sum('total');
     }
 
@@ -189,7 +189,7 @@ class DashboardController extends Controller
     {
         $mine = fn ($query) => $query->whereHas(
             'plan',
-            fn ($query) => $query->whereIn('project_id', $this->visible($viewer)),
+            fn ($query) => $query->whereIn('case_id', $this->visible($viewer)),
         );
 
         $scheduled = PaymentInstallment::query()
@@ -214,7 +214,7 @@ class DashboardController extends Controller
     private function shootCount(User $viewer, CarbonInterface $from, CarbonInterface $to): int
     {
         return Shoot::query()
-            ->whereIn('shoots.project_id', $this->visible($viewer)->booked())
+            ->whereIn('shoots.case_id', $this->visible($viewer)->booked())
             ->uncancelled()
             ->whereBetween('shoots.date', [$from->toDateString(), $to->toDateString()])
             ->count();
@@ -230,8 +230,8 @@ class DashboardController extends Controller
     {
         return Quote::query()
             ->where('status', QuoteStatus::Sent)
-            ->whereIn('project_id', $this->visible($viewer))
-            ->with('project')
+            ->whereIn('case_id', $this->visible($viewer))
+            ->with('case')
             ->orderBy('sent_at')
             ->limit(self::QUOTES_OUT)
             ->get()
@@ -241,12 +241,12 @@ class DashboardController extends Controller
                 $late = $days >= self::FOLLOW_UP_DAYS;
 
                 return new DomainRowData(
-                    projectId: $quote->project->public_id,
-                    who: $quote->project->name,
+                    projectId: $quote->case->public_id,
+                    who: $quote->case->name,
                     what: $late ? 'Verschickt vor' : "Verschickt vor {$age}",
                     emphasis: $late ? $age : null,
                     whatTail: ' · '.Number::currency($quote->total / 100, 'EUR', 'de', 0),
-                    action: $late ? RowActionData::link('Nachfassen', '/auftraege/'.$quote->project->public_id.'/angebote') : null,
+                    action: $late ? RowActionData::link('Nachfassen', '/auftraege/'.$quote->case->public_id.'/angebote') : null,
                     hot: $late,
                 );
             })

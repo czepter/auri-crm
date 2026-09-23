@@ -8,7 +8,7 @@ uses(RefreshDatabase::class);
 
 it('weist eine Vorauswahl ausserhalb der Spanne zurueck', function () {
     [$user, $project] = studioWithProject();
-    $quote = Quote::factory()->for($project)->create();
+    $quote = Quote::factory()->for($project, 'case')->create();
 
     $this->actingAs($user, 'staff')
         ->patch("/angebote/{$quote->public_id}", [
@@ -25,7 +25,7 @@ it('weist eine Vorauswahl ausserhalb der Spanne zurueck', function () {
 
 it('weist max_hours unter min_hours zurueck', function () {
     [$user, $project] = studioWithProject();
-    $quote = Quote::factory()->for($project)->create();
+    $quote = Quote::factory()->for($project, 'case')->create();
 
     $this->actingAs($user, 'staff')
         ->patch("/angebote/{$quote->public_id}", [
@@ -42,7 +42,7 @@ it('weist max_hours unter min_hours zurueck', function () {
 it('schreibt Titel und Stunden ins PDF', function () {
     [, $project] = studioWithProject();
 
-    $quote = Quote::factory()->for($project)->create([
+    $quote = Quote::factory()->for($project, 'case')->create([
         'pricing_mode' => 'choice',
         'hourly_rate' => 25000,
         'min_hours' => 3,
@@ -62,7 +62,7 @@ it('schreibt Titel und Stunden ins PDF', function () {
 
 it('speichert Titel und Beschreibung der Zeitzeile', function () {
     [$user, $project] = studioWithProject();
-    $quote = Quote::factory()->for($project)->create();
+    $quote = Quote::factory()->for($project, 'case')->create();
 
     $this->actingAs($user, 'staff')->patch("/angebote/{$quote->public_id}", [
         'pricing_mode' => 'choice',
@@ -83,7 +83,7 @@ it('speichert Titel und Beschreibung der Zeitzeile', function () {
 it('druckt die Zeitzeile an ihrer Stelle zwischen den Positionen', function () {
     [, $project] = studioWithProject();
 
-    $quote = Quote::factory()->for($project)->create([
+    $quote = Quote::factory()->for($project, 'case')->create([
         'pricing_mode' => 'choice',
         'hourly_rate' => 25000,
         'min_hours' => 3,

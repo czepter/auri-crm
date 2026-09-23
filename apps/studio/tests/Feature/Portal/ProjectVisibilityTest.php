@@ -1,9 +1,9 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\Absence;
 use App\Models\User;
@@ -22,7 +22,7 @@ beforeEach(function () {
 
 /**
  * The one visibility scope, exercised the same way HomeController and
- * ProjectController call it: projects joined through project_contacts for
+ * ProjectController call it: projects joined through case_contacts for
  * the authenticated contact, where portal_visible. A second, differently
  * worded rule anywhere in this file would be the bug A-03 exists to prevent.
  */
@@ -40,8 +40,8 @@ it('gives a contact with zero visible projects an empty state, not an error', fu
 // als eine Karte zwischen dem Paar und seinem eigenen Schirm.
 it('sends a single-booking contact straight to that booking', function () {
     $contact = Contact::factory()->create();
-    $project = Project::factory()->create(['portal_visible' => true]);
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal');
 
@@ -50,10 +50,10 @@ it('sends a single-booking contact straight to that booking', function () {
 
 it('lists every visible project in the switcher for a multi-project contact', function () {
     $contact = Contact::factory()->create();
-    $wedding = Project::factory()->wedding()->create(['portal_visible' => true, 'name' => 'Meier & Kowalski']);
-    $portrait = Project::factory()->create(['portal_visible' => true, 'name' => 'Familie Voss']);
-    $wedding->attachContact($contact, ProjectContactRole::Primary);
-    $portrait->attachContact($contact, ProjectContactRole::Primary);
+    $wedding = ClientCase::factory()->wedding()->create(['portal_visible' => true, 'name' => 'Meier & Kowalski']);
+    $portrait = ClientCase::factory()->create(['portal_visible' => true, 'name' => 'Familie Voss']);
+    $wedding->attachContact($contact, CaseContactRole::Primary);
+    $portrait->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal');
 
@@ -68,12 +68,12 @@ it('lists every visible project in the switcher for a multi-project contact', fu
 
 it('excludes a project the studio has not made portal_visible from the switcher', function () {
     $contact = Contact::factory()->create();
-    $visibleA = Project::factory()->create(['portal_visible' => true]);
-    $visibleB = Project::factory()->create(['portal_visible' => true]);
-    $hidden = Project::factory()->create(['portal_visible' => false]);
-    $visibleA->attachContact($contact, ProjectContactRole::Primary);
-    $visibleB->attachContact($contact, ProjectContactRole::Primary);
-    $hidden->attachContact($contact, ProjectContactRole::Primary);
+    $visibleA = ClientCase::factory()->create(['portal_visible' => true]);
+    $visibleB = ClientCase::factory()->create(['portal_visible' => true]);
+    $hidden = ClientCase::factory()->create(['portal_visible' => false]);
+    $visibleA->attachContact($contact, CaseContactRole::Primary);
+    $visibleB->attachContact($contact, CaseContactRole::Primary);
+    $hidden->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal');
 
@@ -85,8 +85,8 @@ it('excludes a project the studio has not made portal_visible from the switcher'
 
 it('opens a visible project the contact is on', function () {
     $contact = Contact::factory()->create();
-    $project = Project::factory()->create(['portal_visible' => true, 'name' => 'Meier & Kowalski']);
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project = ClientCase::factory()->create(['portal_visible' => true, 'name' => 'Meier & Kowalski']);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal');
 
@@ -98,7 +98,7 @@ it('opens a visible project the contact is on', function () {
 
 it('404s on a project the contact is not on, rather than 403', function () {
     $contact = Contact::factory()->create();
-    $someoneElses = Project::factory()->create(['portal_visible' => true]);
+    $someoneElses = ClientCase::factory()->create(['portal_visible' => true]);
 
     $this->actingAs($contact, 'portal');
 
@@ -107,8 +107,8 @@ it('404s on a project the contact is not on, rather than 403', function () {
 
 it('404s on a project the contact is on but the studio has not made visible', function () {
     $contact = Contact::factory()->create();
-    $project = Project::factory()->create(['portal_visible' => false]);
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project = ClientCase::factory()->create(['portal_visible' => false]);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal');
 
@@ -124,8 +124,8 @@ it('404s on an unknown project id', function () {
 
 it('reflects a portal_visible flip on the very next request, without a re-login', function () {
     $contact = Contact::factory()->create();
-    $projects = Project::factory()->count(3)->create(['portal_visible' => true]);
-    $projects->each(fn (Project $project) => $project->attachContact($contact, ProjectContactRole::Primary));
+    $projects = ClientCase::factory()->count(3)->create(['portal_visible' => true]);
+    $projects->each(fn (ClientCase $project) => $project->attachContact($contact, CaseContactRole::Primary));
 
     $this->actingAs($contact, 'portal');
 
@@ -140,8 +140,8 @@ it('reflects a portal_visible flip on the very next request, without a re-login'
 
 it('reflects a detached contact on the very next request, without a re-login', function () {
     $contact = Contact::factory()->create();
-    $projects = Project::factory()->count(3)->create(['portal_visible' => true]);
-    $projects->each(fn (Project $project) => $project->attachContact($contact, ProjectContactRole::Primary));
+    $projects = ClientCase::factory()->count(3)->create(['portal_visible' => true]);
+    $projects->each(fn (ClientCase $project) => $project->attachContact($contact, CaseContactRole::Primary));
 
     $this->actingAs($contact, 'portal');
 
@@ -156,15 +156,15 @@ it('reflects a detached contact on the very next request, without a re-login', f
 
 it('offers the switcher link on a project screen only when there is more than one visible project', function () {
     $contact = Contact::factory()->create();
-    $project = Project::factory()->create(['portal_visible' => true]);
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal');
 
     expect(props("/projekte/{$project->public_id}")['showSwitcher'])->toBeFalse();
 
-    $second = Project::factory()->create(['portal_visible' => true]);
-    $second->attachContact($contact, ProjectContactRole::Primary);
+    $second = ClientCase::factory()->create(['portal_visible' => true]);
+    $second->attachContact($contact, CaseContactRole::Primary);
 
     expect(props("/projekte/{$project->public_id}")['showSwitcher'])->toBeTrue();
 });
@@ -178,9 +178,9 @@ it('offers the switcher link on a project screen only when there is more than on
  */
 it('never lets an absence category or date reach the portal, even for a shoot crewed by someone away on it', function () {
     $contact = Contact::factory()->create();
-    $project = Project::factory()->create(['portal_visible' => true]);
-    $project->attachContact($contact, ProjectContactRole::Primary);
-    $shoot = Shoot::factory()->for($project)->on('2026-09-03')->create();
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
+    $project->attachContact($contact, CaseContactRole::Primary);
+    $shoot = Shoot::factory()->for($project, 'case')->on('2026-09-03')->create();
     // Booked, so the screen under test is P-07's rather than P-03's letter —
     // an inquiry carries no shoot list at all, which would pass this for the
     // wrong reason.
@@ -209,7 +209,7 @@ it('never lets an absence category or date reach the portal, even for a shoot cr
 
 /**
  * T-09's other half of the activity feed's boundary: Task 8's admin
- * ProjectActivity prop is admin-only by omission, since Portal's own
+ * CaseActivity prop is admin-only by omission, since Portal's own
  * ProjectController never references it. Proven here against the real
  * response, not by absence of a reference in the controller — an internal
  * audit trail on a client-facing page would disclose staff names, IP
@@ -218,8 +218,8 @@ it('never lets an absence category or date reach the portal, even for a shoot cr
  */
 it('does not hand the client an internal audit trail', function () {
     $contact = Contact::factory()->create();
-    $project = Project::factory()->create(['portal_visible' => true, 'name' => 'Meier & Kowalski']);
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project = ClientCase::factory()->create(['portal_visible' => true, 'name' => 'Meier & Kowalski']);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     AuditLogger::record('quote.sent', staffMember(), [], null, $project->id);
 

@@ -2,19 +2,19 @@
 
 namespace App\Quotes\Actions;
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 
 /** Wer zahlt, bekommt den Brief; sonst der Hauptkontakt. */
 class ResolveQuoteRecipient
 {
-    public function __invoke(Project $project): ?Contact
+    public function __invoke(ClientCase $project): ?Contact
     {
         $contacts = $project->contacts()->get();
 
-        return $contacts->firstWhere('pivot.role', ProjectContactRole::Payer->value)
-            ?? $contacts->firstWhere('pivot.role', ProjectContactRole::Primary->value)
+        return $contacts->firstWhere('pivot.role', CaseContactRole::Payer->value)
+            ?? $contacts->firstWhere('pivot.role', CaseContactRole::Primary->value)
             ?? $contacts->first();
     }
 }

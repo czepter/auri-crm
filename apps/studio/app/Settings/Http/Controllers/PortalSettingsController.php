@@ -5,21 +5,21 @@ namespace App\Settings\Http\Controllers;
 use App\Catalog\Data\PortalServiceData;
 use App\Catalog\Models\Package;
 use App\Concerns\AuthorizesStaffSettings;
-use Carbon\CarbonImmutable;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Http\Controllers\Controller;
-use App\Settings\Data\PortalSettingsData;
-use App\Settings\Enums\FontPair;
-use App\Settings\Data\StudioSettingsData;
 use App\Portal\Http\Controllers\LegalTextController;
+use App\Settings\Data\PortalSettingsData;
+use App\Settings\Data\StudioSettingsData;
+use App\Settings\Enums\FontPair;
 use App\Settings\Rules\LegalTemplateFamily;
 use App\Settings\Rules\ValidFormat;
 use App\Settings\Support\StudioSettingsResolver;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -31,7 +31,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * needs a fieldset-level save boundary.
  *
  * The maintenance switch is not a third A-04 revocation path — it never
- * touches `project_contacts` or `contacts.portal_access_revoked_at`, only
+ * touches `case_contacts` or `contacts.portal_access_revoked_at`, only
  * this table's own `portal_maintenance_enabled`/`_message` columns, read by
  * EnsurePortalMaintenanceClosure alone.
  */

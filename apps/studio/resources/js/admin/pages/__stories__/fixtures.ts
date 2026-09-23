@@ -71,12 +71,12 @@ const projectTrack = [
     { key: 'delivered', label: 'Übergeben', pipeline: 'project', state: 'todo' },
 ]
 
-export const people: App.Crm.Data.ProjectPersonData[] = [
+export const people: App.Crm.Data.CasePersonData[] = [
     { id: 'c-jana', name: 'Jana Rahn', role: 'primary', email: 'jana.rahn@posteo.de', phone: '0176 2841 9930' },
     { id: 'c-michael', name: 'Michael Rahn', role: 'partner', email: 'michael.rahn@posteo.de', phone: null },
 ]
 
-export const leadPeople: App.Crm.Data.ProjectPersonData[] = [
+export const leadPeople: App.Crm.Data.CasePersonData[] = [
     { id: 'c-lena', name: 'Lena Brandt', role: 'primary', email: 'lena.brandt@web.de', phone: '0151 7742 1108' },
     { id: 'c-tom', name: 'Tom Brandt', role: 'partner', email: null, phone: null },
     { id: 'c-kerstin', name: 'Kerstin Voß', role: 'vendor', email: 'kontakt@freie-trauung-voss.de', phone: null },
@@ -415,7 +415,7 @@ const permissions = {
 }
 
 /** Der gebuchte Auftrag: sieben Reiter, Stufenbalken in der Projektpipeline. */
-export const header: App.Crm.Data.ProjectHeaderData = {
+export const header: App.Crm.Data.CaseHeaderData = {
     id: RAHN,
     name: 'Hochzeit Rahn',
     names: 'Jana und Michael Rahn',
@@ -460,7 +460,7 @@ export const header: App.Crm.Data.ProjectHeaderData = {
 }
 
 /** Dieselbe Kopfzeile vor der Buchung: drei Reiter, Stufenbalken in der Anfragepipeline. */
-export const leadHeader: App.Crm.Data.ProjectHeaderData = {
+export const leadHeader: App.Crm.Data.CaseHeaderData = {
     id: BRANDT,
     name: 'Familie Brandt — Hochzeit',
     names: 'Lena und Tom Brandt',

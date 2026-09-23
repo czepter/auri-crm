@@ -35,8 +35,8 @@ class LeadReadData extends Data
     {
         return new self(
             id: $lead->public_id,
-            projectId: $lead->project->public_id,
-            projectName: $lead->project->name,
+            projectId: $lead->case->public_id,
+            projectName: $lead->case->name,
             source: $lead->source?->value,
             sourceOther: $lead->source_other,
             stage: $lead->stage->key,

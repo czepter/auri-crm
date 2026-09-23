@@ -11,12 +11,11 @@ use App\Crm\Events\ProjectBooked;
 use App\Crm\Events\ShootStatusChanged;
 use App\Crm\Listeners\ApplyTemplatesOnBooking;
 use App\Crm\Listeners\ApplyTemplatesOnStage;
-use App\Portal\Listeners\RevealProjectOnBooking;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\ProjectType;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
@@ -34,6 +33,7 @@ use App\Notifications\Transports\InAppTransport;
 use App\Notifications\Transports\MailTransport;
 use App\Payments\Events\InstallmentOverdue;
 use App\Payments\Events\InstallmentPaid;
+use App\Policies\ClientCasePolicy;
 use App\Policies\ContactPolicy;
 use App\Policies\DocumentTemplatePolicy;
 use App\Policies\FormTemplatePolicy;
@@ -41,12 +41,12 @@ use App\Policies\GalleryPolicy;
 use App\Policies\InternalNotePolicy;
 use App\Policies\LeadPolicy;
 use App\Policies\PackagePolicy;
-use App\Policies\ProjectPolicy;
 use App\Policies\ProjectTypePolicy;
 use App\Policies\ShootPolicy;
 use App\Policies\StagePolicy;
 use App\Policies\TaskPolicy;
 use App\Policies\TaskTemplatePolicy;
+use App\Portal\Listeners\RevealProjectOnBooking;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\PersonalAccessToken;
 use App\Support\Surface;
@@ -208,11 +208,11 @@ class AppServiceProvider extends ServiceProvider
         // T-15: an anchored due date is written onto tasks.due_on, so every
         // list keeps reading one column. These three are where an anchor can
         // move — a stage entered, a status entered, a shoot date corrected.
-        Event::listen(LeadStageChanged::class, fn (LeadStageChanged $event) => app(RescheduleAnchoredTasks::class)($event->lead->project));
-        Event::listen(ShootStatusChanged::class, fn (ShootStatusChanged $event) => app(RescheduleAnchoredTasks::class)($event->shoot->project));
+        Event::listen(LeadStageChanged::class, fn (LeadStageChanged $event) => app(RescheduleAnchoredTasks::class)($event->lead->case));
+        Event::listen(ShootStatusChanged::class, fn (ShootStatusChanged $event) => app(RescheduleAnchoredTasks::class)($event->shoot->case));
         Shoot::saved(function (Shoot $shoot) {
             if ($shoot->wasChanged('date')) {
-                app(RescheduleAnchoredTasks::class)($shoot->project);
+                app(RescheduleAnchoredTasks::class)($shoot->case);
             }
         });
 
@@ -277,7 +277,7 @@ class AppServiceProvider extends ServiceProvider
         // Policies live in app/Policies for App\Models, but the CRM keeps its
         // models in its own namespace, so the pairs are stated rather than
         // guessed at by convention.
-        Gate::policy(Project::class, ProjectPolicy::class);
+        Gate::policy(ClientCase::class, ClientCasePolicy::class);
         Gate::policy(Shoot::class, ShootPolicy::class);
         Gate::policy(Task::class, TaskPolicy::class);
         Gate::policy(InternalNote::class, InternalNotePolicy::class);

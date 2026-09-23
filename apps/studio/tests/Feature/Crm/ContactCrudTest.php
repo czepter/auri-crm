@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Enums\StaffRole;
 use App\Gallery\Models\Gallery;
@@ -173,14 +173,14 @@ it('groups contacts by whether the studio is working with them', function () {
     test()->actingAs(test()->staff, 'staff');
 
     $running = Contact::factory()->create(['name' => 'Läuft']);
-    $project = Project::factory()->create();
-    $project->attachContact($running, ProjectContactRole::Primary);
-    Shoot::factory()->for($project)->primary()->on(now()->addMonth()->format('Y-m-d'))->create();
+    $project = ClientCase::factory()->create();
+    $project->attachContact($running, CaseContactRole::Primary);
+    Shoot::factory()->for($project, 'case')->primary()->on(now()->addMonth()->format('Y-m-d'))->create();
 
     $past = Contact::factory()->create(['name' => 'Bestand']);
-    $old = Project::factory()->create();
-    $old->attachContact($past, ProjectContactRole::Primary);
-    Shoot::factory()->for($old)->primary()->on(now()->subYear()->format('Y-m-d'))->create();
+    $old = ClientCase::factory()->create();
+    $old->attachContact($past, CaseContactRole::Primary);
+    Shoot::factory()->for($old, 'case')->primary()->on(now()->subYear()->format('Y-m-d'))->create();
 
     Contact::factory()->create(['name' => 'Ohne']);
 
@@ -197,9 +197,9 @@ it('groups contacts by whether the studio is working with them', function () {
 it('lists both halves of a couple as their own rows', function () {
     test()->actingAs(test()->staff, 'staff');
 
-    $project = Project::factory()->create();
-    $project->attachContact(Contact::factory()->create(['name' => 'Lena Meier']), ProjectContactRole::Primary);
-    $project->attachContact(Contact::factory()->create(['name' => 'Jan Kowalski']), ProjectContactRole::Partner);
+    $project = ClientCase::factory()->create();
+    $project->attachContact(Contact::factory()->create(['name' => 'Lena Meier']), CaseContactRole::Primary);
+    $project->attachContact(Contact::factory()->create(['name' => 'Jan Kowalski']), CaseContactRole::Partner);
 
     expect(collect(props('/kontakte')['contacts'])->pluck('name')->all())
         ->toBe(['Jan Kowalski', 'Lena Meier']);
@@ -213,12 +213,12 @@ it('carries projects, galleries and connected people as their own sections', fun
     $contact = Contact::factory()->create();
     $partner = Contact::factory()->create(['name' => 'Jan Kowalski']);
 
-    $project = Project::factory()->create(['name' => 'Meier & Kowalski']);
-    $project->attachContact($contact, ProjectContactRole::Primary);
-    $project->attachContact($partner, ProjectContactRole::Partner);
-    Shoot::factory()->for($project)->primary()->on('2026-06-14')->create();
+    $project = ClientCase::factory()->create(['name' => 'Meier & Kowalski']);
+    $project->attachContact($contact, CaseContactRole::Primary);
+    $project->attachContact($partner, CaseContactRole::Partner);
+    Shoot::factory()->for($project, 'case')->primary()->on('2026-06-14')->create();
 
-    $gallery = Gallery::factory()->for($project)->create([
+    $gallery = Gallery::factory()->for($project, 'case')->create([
         'title' => 'Hochzeitstag',
         'expires_at' => now()->addMonth(),
     ]);

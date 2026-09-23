@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GallerySet;
 use App\Gallery\Models\GalleryView;
@@ -36,11 +36,11 @@ it('records one view per visitor and day, however often the page is opened', fun
 });
 
 it('names the client where one is signed in, and leaves a guest nameless', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
-    $theirs = openableGallery(['project_id' => $project->id]);
+    $theirs = openableGallery(['case_id' => $project->id]);
 
     test()->actingAs($contact, 'portal')->get("/galerien/{$theirs->public_id}")->assertOk();
 

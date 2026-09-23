@@ -3,10 +3,10 @@
 namespace App\Crm\Actions;
 
 use App\Crm\Data\ThreadEntryData;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\InternalNote;
-use App\Crm\Models\Project;
 use App\Crm\Models\Task;
-use App\Crm\Support\ProjectActivity;
+use App\Crm\Support\CaseActivity;
 
 /**
  * C-11 (#247): notes and the audit trail are one trace, so they are also one
@@ -18,7 +18,7 @@ use App\Crm\Support\ProjectActivity;
 class BuildThread
 {
     /** @return list<ThreadEntryData> */
-    public function __invoke(Project $project): array
+    public function __invoke(ClientCase $project): array
     {
         $project->loadMissing(['notes.author', 'tasks']);
 
@@ -32,7 +32,7 @@ class BuildThread
             note: $note->public_id,
         ));
 
-        $events = collect(ProjectActivity::for($project))
+        $events = collect(CaseActivity::for($project))
             ->map(fn (array $event, int $index) => new ThreadEntryData(
                 key: "event-{$index}",
                 at: $event['at'],

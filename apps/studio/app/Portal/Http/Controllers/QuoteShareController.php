@@ -30,12 +30,12 @@ class QuoteShareController extends Controller
 {
     public function show(Quote $quote, StudioSettingsResolver $settings): Response
     {
-        $quote->loadMissing(['items', 'predecessor', 'paymentStages', 'project', 'recipientContact']);
+        $quote->loadMissing(['items', 'predecessor', 'paymentStages', 'case', 'recipientContact']);
 
         return Inertia::render('Quotes/Show', [
             'contact' => ['name' => ''],
             'showSwitcher' => false,
-            'project' => ['id' => $quote->project->public_id, 'name' => $quote->project->name],
+            'project' => ['id' => $quote->case->public_id, 'name' => $quote->case->name],
             'canAccept' => $settings->acceptQuotesEnabled(),
             'acceptUrl' => "/angebot/{$quote->share_token}/teilen/annehmen",
             'imageUrlBase' => "/angebot/{$quote->share_token}/teilen",
@@ -44,7 +44,7 @@ class QuoteShareController extends Controller
                 // #480: the letter as the client reads it — fields filled, escaped.
                 ...collect(['intro' => $quote->intro, 'outro' => $quote->outro])->map(fn (?string $html) => MergeFieldResolver::resolve(
                     InlineHtmlSanitizer::letter($html) ?? '',
-                    app(DocumentMergeDataBuilder::class)->fromProject($quote->project, $settings),
+                    app(DocumentMergeDataBuilder::class)->fromProject($quote->case, $settings),
                     escape: true,
                 ))->all(),
                 'expired' => $quote->valid_until !== null && $quote->valid_until->copy()->endOfDay()->isPast(),

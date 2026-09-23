@@ -87,7 +87,7 @@ class GalleryRecordController extends Controller
     {
         $this->authorize('manageMedia', $gallery);
 
-        RecordVisit::record('galerie', $gallery->public_id, $gallery->title ?? $gallery->project?->name ?? '');
+        RecordVisit::record('galerie', $gallery->public_id, $gallery->title ?? $gallery->case?->name ?? '');
 
         $version = $gallery->currentVersion;
         // Nur die Zähler: die Spalte braucht sie in jedem Bereich, die Zeilen
@@ -168,7 +168,7 @@ class GalleryRecordController extends Controller
                 'isExternal' => $gallery->is_external,
                 'canPublish' => auth('staff')->user()->can('publish', $gallery),
                 // Veröffentlichen opens the compose screen only when there is someone to mail.
-                'canMail' => filled($gallery->project?->primaryContact()?->email),
+                'canMail' => filled($gallery->case?->primaryContact()?->email),
                 'offers' => [
                     'downloads' => $gallery->downloads_enabled,
                     'lists' => $gallery->lists_enabled,
@@ -177,8 +177,8 @@ class GalleryRecordController extends Controller
             ],
             // The other galleries of the same booking, as a tab row: they are
             // the ones one flips between.
-            'siblings' => $this->inArea(['einstellungen'], $bereich, fn () => $gallery->project_id === null ? [] : Gallery::query()
-                ->where('project_id', $gallery->project_id)
+            'siblings' => $this->inArea(['einstellungen'], $bereich, fn () => $gallery->case_id === null ? [] : Gallery::query()
+                ->where('case_id', $gallery->case_id)
                 ->withCount(['assets as asset_count' => fn ($query) => $query->inDraft()])
                 ->get()
                 ->map(fn (Gallery $other) => [

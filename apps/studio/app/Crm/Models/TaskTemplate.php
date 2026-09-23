@@ -46,7 +46,7 @@ class TaskTemplate extends Model
 
     /**
      * The set one stage of one project type owes, in the order it is shown.
-     * The type is its key, as projects.type holds it — a null one belongs to
+     * The type is its key, as cases.type holds it — a null one belongs to
      * every type.
      */
     public function scopeForStage(Builder $query, string $type, StagePipeline $pipeline, string $stage): void

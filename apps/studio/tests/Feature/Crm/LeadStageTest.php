@@ -2,13 +2,13 @@
 
 use App\Crm\Actions\AdvanceLeadStage;
 use App\Crm\Actions\BookProject;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadStage;
-use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Events\LeadLost;
 use App\Crm\Events\LeadStageChanged;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\AuditLog;
 use App\Models\User;
@@ -131,12 +131,12 @@ it('books the project when the lead reaches gebucht', function () {
 
     app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), User::factory()->create());
 
-    expect($lead->project->fresh()->isBooked())->toBeTrue();
+    expect($lead->case->fresh()->isBooked())->toBeTrue();
 });
 
 it('backdates the booking and its shoots with the stage move', function () {
     $lead = Lead::factory()->atStage(LeadStage::QuoteAccepted)->create();
-    $shoot = Shoot::factory()->for($lead->project)->create();
+    $shoot = Shoot::factory()->for($lead->case, 'case')->create();
 
     app(AdvanceLeadStage::class)(
         $lead,
@@ -145,17 +145,17 @@ it('backdates the booking and its shoots with the stage move', function () {
         CarbonImmutable::parse('2026-05-02 10:00'),
     );
 
-    expect($lead->project->fresh()->booked_at->toDateString())->toBe('2026-05-02')
+    expect($lead->case->fresh()->booked_at->toDateString())->toBe('2026-05-02')
         ->and($shoot->fresh()->status_entered_at->toDateString())->toBe('2026-05-02');
 });
 
 it('leaves an existing booking alone when the stage catches up', function () {
     $lead = Lead::factory()->atStage(LeadStage::QuoteAccepted)->create();
-    markBooked($lead->project, ['booked_at' => '2026-05-02 10:00']);
+    markBooked($lead->case, ['booked_at' => '2026-05-02 10:00']);
 
     app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), User::factory()->create());
 
-    expect($lead->project->fresh()->booked_at->toDateString())->toBe('2026-05-02');
+    expect($lead->case->fresh()->booked_at->toDateString())->toBe('2026-05-02');
 });
 
 it('restores the original entry time when a mistaken move is taken back', function () {
@@ -185,18 +185,18 @@ it('takes the booking back when the won stage is taken back', function () {
     $actor = User::factory()->create();
 
     app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), $actor);
-    expect(Project::booked()->count())->toBe(1);
+    expect(ClientCase::booked()->count())->toBe(1);
 
     app(AdvanceLeadStage::class)($lead, stage(LeadStage::QuoteAccepted), $actor);
 
-    expect(Project::booked()->count())->toBe(0)
+    expect(ClientCase::booked()->count())->toBe(0)
         ->and($lead->fresh()->stage->key)->toBe(LeadStage::QuoteAccepted->value)
         ->and(AuditLog::where('event', 'project.unbooked')->count())->toBe(1);
 });
 
 it('dates a backdated unbooking when it happened', function () {
     $lead = Lead::factory()->atStage(LeadStage::QuoteAccepted)->create();
-    Shoot::factory()->for($lead->project)->create();
+    Shoot::factory()->for($lead->case, 'case')->create();
     $actor = User::factory()->create();
 
     app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), $actor);
@@ -218,12 +218,12 @@ it('refuses to take the booking back once a payment plan hangs off it', function
     $actor = User::factory()->create();
 
     app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), $actor);
-    PaymentPlan::factory()->for(Project::booked()->sole())->create();
+    PaymentPlan::factory()->for(ClientCase::booked()->sole(), 'case')->create();
 
     expect(fn () => app(AdvanceLeadStage::class)($lead, stage(LeadStage::QuoteAccepted), $actor))
         ->toThrow(DomainException::class);
 
-    expect(Project::booked()->count())->toBe(1)
+    expect(ClientCase::booked()->count())->toBe(1)
         ->and($lead->fresh()->stage->key)->toBe(LeadStage::Booked->value);
 });
 
@@ -241,15 +241,15 @@ it('leaves the stage alone when the booking fails', function () {
 it('follows the quote forward and leaves a lead further along alone', function () {
     Notification::fake();
     $lead = Lead::factory()->create();
-    $lead->project->attachContact(Contact::factory()->create(), ProjectContactRole::Primary);
-    $quote = Quote::factory()->create(['project_id' => $lead->project_id]);
+    $lead->case->attachContact(Contact::factory()->create(), CaseContactRole::Primary);
+    $quote = Quote::factory()->create(['case_id' => $lead->case_id]);
     $ahead = Lead::factory()->atStage(LeadStage::Booked)->create();
-    $later = Quote::factory()->create(['project_id' => $ahead->project_id]);
+    $later = Quote::factory()->create(['case_id' => $ahead->case_id]);
 
     app(MarkQuoteSent::class)($quote, 'self');
     expect($lead->fresh()->stage->key)->toBe(LeadStage::QuoteSent->value);
 
-    app(AcceptQuote::class)($quote->fresh(), $lead->project->primaryContact(), null);
+    app(AcceptQuote::class)($quote->fresh(), $lead->case->primaryContact(), null);
     app(MarkQuoteSent::class)($later, 'self');
 
     expect($lead->fresh()->stage->key)->toBe(LeadStage::QuoteAccepted->value)
@@ -258,8 +258,8 @@ it('follows the quote forward and leaves a lead further along alone', function (
 
 it('cancels the open shoots of a lost project and leaves an earlier absage alone', function () {
     $lead = Lead::factory()->create();
-    $open = Shoot::factory()->for($lead->project)->create();
-    $earlier = Shoot::factory()->for($lead->project)->create(['cancelled_at' => now()->subWeek(), 'cancelled_reason' => 'Regen']);
+    $open = Shoot::factory()->for($lead->case, 'case')->create();
+    $earlier = Shoot::factory()->for($lead->case, 'case')->create(['cancelled_at' => now()->subWeek(), 'cancelled_reason' => 'Regen']);
 
     app(AdvanceLeadStage::class)->markLost($lead, 'Budget', lostAt: CarbonImmutable::parse('2026-05-02 10:00'));
 

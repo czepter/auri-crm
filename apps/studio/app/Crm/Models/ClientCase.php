@@ -6,7 +6,7 @@ use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Contracts\Models\Contract;
 use App\Crm\Enums\BookedVia;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Support\CrmVocabulary;
@@ -17,7 +17,7 @@ use App\Models\User;
 use App\Payments\Models\PaymentPlan;
 use App\Quotes\Models\Quote;
 use BackedEnum;
-use Database\Factories\Crm\ProjectFactory;
+use Database\Factories\Crm\ClientCaseFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -40,17 +40,19 @@ use Visus\Cuid2\Cuid2;
  * one produces a status that is wrong for most of a wedding's eighteen-month
  * life (vision §3.1). Board position is derived.
  */
-class Project extends Model
+class ClientCase extends Model
 {
     use BelongsToTenant;
     use HasFactory;
     use HasPublicId;
 
+    protected $table = 'cases';
+
     protected $fillable = ['name', 'type', 'type_other', 'portal_visible'];
 
     /**
      * Mirrors the column default in memory. Without it a freshly created
-     * Project reports portal_visible as null until it is reloaded, and a
+     * ClientCase reports portal_visible as null until it is reloaded, and a
      * visibility flag that reads null where it means false is the kind of
      * thing a guard clause gets wrong exactly once.
      */
@@ -84,7 +86,7 @@ class Project extends Model
 
     public function scopeBooked(Builder $query): void
     {
-        $query->whereNotNull('projects.booked_at');
+        $query->whereNotNull('cases.booked_at');
     }
 
     public function bookedBy(): BelongsTo
@@ -141,7 +143,7 @@ class Project extends Model
 
     public function contacts(): BelongsToMany
     {
-        return $this->belongsToMany(Contact::class, 'project_contacts')
+        return $this->belongsToMany(Contact::class, 'case_contacts')
             ->withPivot('role')
             ->withTimestamps();
     }
@@ -154,13 +156,13 @@ class Project extends Model
     /**
      * Die Rolle ist eine Zeichenkette in der Datenbank und darf auch eine
      * sein: „Trauredner" ist eine Rolle, die niemand in eine Aufzählung
-     * schreiben wird. ProjectContactRole bleibt die Liste der Vorschläge und
+     * schreiben wird. CaseContactRole bleibt die Liste der Vorschläge und
      * der einen Rolle, an der ein Index hängt.
      */
-    public function attachContact(Contact $contact, ProjectContactRole|string $role): void
+    public function attachContact(Contact $contact, CaseContactRole|string $role): void
     {
         $this->contacts()->attach($contact, [
-            'role' => $role instanceof ProjectContactRole ? $role->value : $role,
+            'role' => $role instanceof CaseContactRole ? $role->value : $role,
             'tenant_id' => config('tenancy.tenant_id'),
             'public_id' => (string) new Cuid2,
         ]);
@@ -307,14 +309,14 @@ class Project extends Model
     /** Projects this person may see, for the reads that list many at once. */
     public function scopeVisibleTo(Builder $query, User $user): void
     {
-        if ($user->can(Capability::ViewAllProjects->value)) {
+        if ($user->can(Capability::ViewAllCases->value)) {
             return;
         }
 
         $query->whereExists(
             CrewAssignment::query()
                 ->join('shoots', 'shoots.id', '=', 'crew_assignments.shoot_id')
-                ->whereColumn('shoots.project_id', 'projects.id')
+                ->whereColumn('shoots.case_id', 'cases.id')
                 ->where('crew_assignments.user_id', $user->id)
                 ->select(DB::raw(1))
         );
@@ -328,7 +330,7 @@ class Project extends Model
     public function contactNames(): string
     {
         return $this->contacts
-            ->sortBy(fn (Contact $contact) => $contact->pivot->role === ProjectContactRole::Primary->value ? 0 : 1)
+            ->sortBy(fn (Contact $contact) => $contact->pivot->role === CaseContactRole::Primary->value ? 0 : 1)
             ->pluck('name')
             ->join(' & ') ?: $this->name;
     }
@@ -336,12 +338,18 @@ class Project extends Model
     public function primaryContact(): ?Contact
     {
         return $this->contacts()
-            ->wherePivot('role', ProjectContactRole::Primary->value)
+            ->wherePivot('role', CaseContactRole::Primary->value)
             ->first();
+    }
+
+    // `case` alone: the default would derive client_case_id from the class name.
+    public function getForeignKey(): string
+    {
+        return 'case_id';
     }
 
     protected static function newFactory(): Factory
     {
-        return ProjectFactory::new();
+        return ClientCaseFactory::new();
     }
 }

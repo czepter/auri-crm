@@ -3,11 +3,11 @@
 use App\Crm\Actions\BookProject;
 use App\Crm\Actions\UnbookProject;
 use App\Crm\Enums\BookedVia;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Events\ProjectBooked;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
@@ -20,7 +20,7 @@ uses(RefreshDatabase::class);
 
 it('books the project and names both the actor and the trigger', function () {
     $actor = User::factory()->create();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     app(BookProject::class)($project, $actor);
 
@@ -31,9 +31,9 @@ it('books the project and names both the actor and the trigger', function () {
 });
 
 it('moves every uncancelled shoot to booked', function () {
-    $project = Project::factory()->create();
-    $requested = Shoot::factory()->for($project)->primary()->create();
-    $alsoRequested = Shoot::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $requested = Shoot::factory()->for($project, 'case')->primary()->create();
+    $alsoRequested = Shoot::factory()->for($project, 'case')->create();
 
     app(BookProject::class)($project, User::factory()->create());
 
@@ -43,8 +43,8 @@ it('moves every uncancelled shoot to booked', function () {
 
 it('leaves a shoot already past booked untouched', function () {
     // Booking must not undo delivered work.
-    $project = Project::factory()->create();
-    $delivered = Shoot::factory()->for($project)->atStatus(ShootStatus::Delivered)->create();
+    $project = ClientCase::factory()->create();
+    $delivered = Shoot::factory()->for($project, 'case')->atStatus(ShootStatus::Delivered)->create();
 
     app(BookProject::class)($project, User::factory()->create());
 
@@ -52,8 +52,8 @@ it('leaves a shoot already past booked untouched', function () {
 });
 
 it('leaves a cancelled shoot untouched', function () {
-    $project = Project::factory()->create();
-    $cancelled = Shoot::factory()->for($project)->cancelled('Abgesagt')->create();
+    $project = ClientCase::factory()->create();
+    $cancelled = Shoot::factory()->for($project, 'case')->cancelled('Abgesagt')->create();
 
     app(BookProject::class)($project, User::factory()->create());
 
@@ -62,8 +62,8 @@ it('leaves a cancelled shoot untouched', function () {
 
 it('routes the shoots through the pipeline rather than mass updating them', function () {
     // The audit row per shoot is the evidence that P-03's guard ran.
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->count(2)->create();
+    $project = ClientCase::factory()->create();
+    Shoot::factory()->for($project, 'case')->count(2)->create();
 
     app(BookProject::class)($project, User::factory()->create());
 
@@ -71,7 +71,7 @@ it('routes the shoots through the pipeline rather than mass updating them', func
 });
 
 it('books a shoot added to an already booked project', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     app(BookProject::class)($project, User::factory()->create());
 
     $this->actingAs(User::factory()->withMfa()->create(), 'staff')
@@ -82,10 +82,10 @@ it('books a shoot added to an already booked project', function () {
 });
 
 it('shows a booked project in the portal unless its contact is held back', function () {
-    $open = Project::factory()->create();
-    $open->attachContact(Contact::factory()->create(), ProjectContactRole::Primary);
-    $held = Project::factory()->create();
-    $held->attachContact(Contact::factory()->create(['portal_overrides' => ['portal_visible' => false]]), ProjectContactRole::Primary);
+    $open = ClientCase::factory()->create();
+    $open->attachContact(Contact::factory()->create(), CaseContactRole::Primary);
+    $held = ClientCase::factory()->create();
+    $held->attachContact(Contact::factory()->create(['portal_overrides' => ['portal_visible' => false]]), CaseContactRole::Primary);
 
     app(BookProject::class)($open);
     app(BookProject::class)($held);
@@ -96,7 +96,7 @@ it('shows a booked project in the portal unless its contact is held back', funct
 
 it('fires ProjectBooked exactly once and writes the audit row', function () {
     Event::fake([ProjectBooked::class]);
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     app(BookProject::class)($project, User::factory()->create());
 
@@ -106,8 +106,8 @@ it('fires ProjectBooked exactly once and writes the audit row', function () {
 
 it('is a no-op on a project that is already booked', function () {
     Event::fake([ProjectBooked::class]);
-    $project = markBooked(Project::factory()->create(), ['booked_at' => '2026-05-02 10:00']);
-    $shoot = Shoot::factory()->for($project)->create();
+    $project = markBooked(ClientCase::factory()->create(), ['booked_at' => '2026-05-02 10:00']);
+    $shoot = Shoot::factory()->for($project, 'case')->create();
 
     $result = app(BookProject::class)($project, User::factory()->create());
 
@@ -120,11 +120,11 @@ it('is a no-op on a project that is already booked', function () {
 
 it('keeps the first booking when a second trigger books the same project', function () {
     Event::fake([ProjectBooked::class]);
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $first = User::factory()->create();
 
-    app(BookProject::class)(Project::find($project->id), $first);
-    $second = app(BookProject::class)(Project::find($project->id), null, BookedVia::Contract);
+    app(BookProject::class)(ClientCase::find($project->id), $first);
+    $second = app(BookProject::class)(ClientCase::find($project->id), null, BookedVia::Contract);
 
     Event::assertDispatchedTimes(ProjectBooked::class, 1);
     expect($second)->toBeNull()
@@ -141,7 +141,7 @@ it('never infers the actor from the ambient session — a null actor stays null 
     $staff = User::factory()->create();
     $this->actingAs($staff, 'staff');
 
-    $project = app(BookProject::class)(Project::factory()->create(), null);
+    $project = app(BookProject::class)(ClientCase::factory()->create(), null);
 
     expect($project->fresh()->booked_by_id)->toBeNull();
 });
@@ -149,7 +149,7 @@ it('never infers the actor from the ambient session — a null actor stays null 
 it('records the trigger a caller names', function () {
     // P-05b adds no column; it writes the second value.
     $project = app(BookProject::class)(
-        Project::factory()->create(),
+        ClientCase::factory()->create(),
         User::factory()->create(),
         BookedVia::Contract,
     );
@@ -158,7 +158,7 @@ it('records the trigger a caller names', function () {
 });
 
 it('unbooks a project back into an inquiry', function () {
-    $project = markBooked(Project::factory()->create());
+    $project = markBooked(ClientCase::factory()->create());
 
     app(UnbookProject::class)($project, User::factory()->create());
 
@@ -168,15 +168,15 @@ it('unbooks a project back into an inquiry', function () {
 });
 
 it('refuses to unbook a project with a payment plan', function () {
-    $project = markBooked(Project::factory()->create());
-    PaymentPlan::factory()->for($project)->create();
+    $project = markBooked(ClientCase::factory()->create());
+    PaymentPlan::factory()->for($project, 'case')->create();
 
     expect(fn () => app(UnbookProject::class)($project, User::factory()->create()))->toThrow(DomainException::class);
     expect($project->fresh()->isBooked())->toBeTrue();
 });
 
 it('refuses to unbook for a role that may not book', function () {
-    $project = markBooked(Project::factory()->create());
+    $project = markBooked(ClientCase::factory()->create());
 
     expect(fn () => app(UnbookProject::class)($project, staffMember(StaffRole::Manager)))->toThrow(DomainException::class);
     expect($project->fresh()->isBooked())->toBeTrue();

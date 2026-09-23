@@ -26,7 +26,7 @@ class ContactSearchController extends Controller
         }
 
         $contacts = Contact::query()
-            ->withCount('projects')
+            ->withCount('cases')
             // ilike, not like: on Postgres like is case-sensitive, and a search
             // that misses "Steffens" when someone types "steff" produces
             // exactly the duplicate contact this screen exists to prevent.

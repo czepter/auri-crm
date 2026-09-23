@@ -10,7 +10,7 @@ use Illuminate\Foundation\Events\Dispatchable;
  * gates galleries on a settled balance and E-07 fans out from it. Fires for a bank transfer marked paid by staff
  * exactly the same as it will for a real Stripe payment once M-04/M-05
  * land — carrying the PaymentInstallment is what lets every listener reach
- * ->settled_via, ->plan and ->plan->project without re-querying, the same shape
+ * ->settled_via, ->plan and ->plan->case without re-querying, the same shape
  * App\Crm\Events\ProjectBooked already carries its own subject in.
  *
  * Fires at most once per installment: App\Payments\Actions\

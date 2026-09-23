@@ -6,10 +6,10 @@ use App\Automation\Enums\AutomationRunStatus;
 use App\Automation\Models\AutomationRule;
 use App\Automation\Models\AutomationRun;
 use App\Automation\Notifications\AutomationReminder;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Events\ProjectBooked;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Enums\StaffRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -21,8 +21,8 @@ beforeEach(function () {
 
     $this->owner = staffMember(StaffRole::Admin);
     $this->contact = Contact::factory()->create();
-    $project = Project::factory()->create(['name' => 'Hochzeit Meier', 'portal_visible' => true]);
-    $project->attachContact($this->contact, ProjectContactRole::Primary);
+    $project = ClientCase::factory()->create(['name' => 'Hochzeit Meier', 'portal_visible' => true]);
+    $project->attachContact($this->contact, CaseContactRole::Primary);
 
     $rule = AutomationRule::factory()->event(ProjectBooked::class)->create([
         'recipient_type' => AutomationRecipient::Client,

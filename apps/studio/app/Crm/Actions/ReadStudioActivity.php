@@ -2,8 +2,8 @@
 
 namespace App\Crm\Actions;
 
-use App\Crm\Models\Project;
-use App\Crm\Support\ProjectActivity;
+use App\Crm\Models\ClientCase;
+use App\Crm\Support\CaseActivity;
 use App\Gallery\Models\GalleryView;
 use App\Models\AuditLog;
 use App\Models\User;
@@ -23,7 +23,7 @@ class ReadStudioActivity
 {
     private const LIMIT = 8;
 
-    /** Project tab per event prefix; lead and project events open the overview. The payment plan lives on the quotes tab. */
+    /** ClientCase tab per event prefix; lead and project events open the overview. The payment plan lives on the quotes tab. */
     private const TABS = [
         'quote' => 'angebote',
         'payment_plan' => 'angebote',
@@ -35,42 +35,42 @@ class ReadStudioActivity
     /** @return list<array{text: string, href: string, when: string, fresh: bool}> */
     public function __invoke(User $viewer, CarbonInterface $since): array
     {
-        $visible = Project::query()->visibleTo($viewer)->select('projects.id');
+        $visible = ClientCase::query()->visibleTo($viewer)->select('cases.id');
 
         $events = AuditLog::query()
-            ->whereIn('project_id', $visible)
+            ->whereIn('case_id', $visible)
             ->where('created_at', '>=', $since)
             ->latest('created_at')
             // ponytail: over-reads so the allow-list still leaves LIMIT rows; a window of mostly hidden events shows fewer.
             ->limit(self::LIMIT * 4)
             ->get()
-            ->filter(fn (AuditLog $log) => ProjectActivity::isShown($log))
+            ->filter(fn (AuditLog $log) => CaseActivity::isShown($log))
             ->map(fn (AuditLog $log) => [
-                'project' => $log->project_id,
-                'label' => ProjectActivity::label($log),
+                'project' => $log->case_id,
+                'label' => CaseActivity::label($log),
                 'tab' => self::TABS[Str::before($log->event, '.')] ?? null,
                 'at' => $log->created_at,
                 'timed' => true,
             ]);
 
         $views = GalleryView::query()
-            ->whereHas('gallery', fn ($query) => $query->whereIn('project_id', $visible))
+            ->whereHas('gallery', fn ($query) => $query->whereIn('case_id', $visible))
             ->whereDate('viewed_on', '>=', $since->toDateString())
-            ->with('gallery:id,project_id')
+            ->with('gallery:id,case_id')
             ->orderByDesc('viewed_on')
             ->limit(self::LIMIT * 4)
             ->get()
             // One line per gallery per day, whoever and however often opened it.
             ->unique(fn (GalleryView $view) => $view->gallery_id.'|'.$view->viewed_on->toDateString())
             ->map(fn (GalleryView $view) => [
-                'project' => $view->gallery->project_id,
+                'project' => $view->gallery->case_id,
                 'label' => __('activity.gallery.viewed'),
                 'tab' => 'galerien',
                 'at' => $view->viewed_on,
                 'timed' => false,
             ]);
 
-        $projects = Project::query()
+        $projects = ClientCase::query()
             ->whereIn('id', $events->pluck('project')->concat($views->pluck('project'))->unique())
             ->get(['id', 'name', 'public_id'])
             ->keyBy('id');

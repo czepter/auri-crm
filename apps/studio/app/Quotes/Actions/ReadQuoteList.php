@@ -2,7 +2,7 @@
 
 namespace App\Quotes\Actions;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Payments\Data\PaymentPlanData;
 use App\Quotes\Data\QuoteData;
 use App\Quotes\Enums\QuoteStatus;
@@ -14,7 +14,7 @@ use App\Quotes\Models\Quote;
  */
 class ReadQuoteList
 {
-    public function __invoke(Project $project): array
+    public function __invoke(ClientCase $project): array
     {
         $quotes = $project->quotes()->with(['items', 'predecessor', 'paymentStages'])->get();
 

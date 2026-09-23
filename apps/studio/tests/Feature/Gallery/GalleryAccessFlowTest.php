@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Gallery\Actions\ConsumeGalleryEmailVerification;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryEmailVerification;
@@ -327,11 +327,11 @@ it('rotating the view password does not touch a granted download or email claim'
 // ---------- G-03 (#231): the download screen ----------
 
 it('offers everything plus the client\'s own selections, each with both sizes', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
-    $gallery = Gallery::factory()->for($project)->create();
+    $gallery = Gallery::factory()->for($project, 'case')->create();
     $a = Asset::factory()->for($gallery)->create([
         'key' => 'galleries/g/a.jpg', 'status' => AssetStatus::Ready, 'byte_size' => 4_000_000,
     ]);
@@ -359,11 +359,11 @@ it('offers everything plus the client\'s own selections, each with both sizes', 
 
 // A named list belongs to the client — G-02 draws the same line in the grid.
 it('offers a guest only everything, never somebody\'s named list', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
-    $gallery = Gallery::factory()->for($project)->create();
+    $gallery = Gallery::factory()->for($project, 'case')->create();
     Asset::factory()->for($gallery)->create(['key' => 'galleries/g/a.jpg']);
     $gallery->publish();
     GalleryList::create([
@@ -455,11 +455,11 @@ it('hands back every part of a ready build with its own signed link', function (
 // couple's curation is not: "Für die Eltern" is their words, and a
 // list-scoped archive is their selection, not a stranger's to download.
 it('never shows a guest the client\'s own archives or what they called them', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
-    $gallery = Gallery::factory()->for($project)->create();
+    $gallery = Gallery::factory()->for($project, 'case')->create();
     Asset::factory()->for($gallery)->create(['key' => 'galleries/g/a.jpg']);
     $version = $gallery->publish();
 

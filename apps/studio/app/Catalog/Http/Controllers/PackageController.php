@@ -83,17 +83,17 @@ class PackageController extends Controller
             // Die letzten Anfragen, die von diesem Paket ausgingen. Steht hier
             // und nicht in der Übersicht: die Frage gilt diesem Paket.
             'requests' => $package->leads()
-                ->with(['project.contacts', 'project.primaryShoot'])
+                ->with(['case.contacts', 'case.primaryShoot'])
                 ->orderByDesc('captured_at')
                 ->limit(10)
                 ->get()
                 ->map(fn (Lead $lead) => [
                     'id' => $lead->public_id,
-                    'project' => $lead->project->public_id,
-                    'contact' => $lead->project->contactNames(),
+                    'project' => $lead->case->public_id,
+                    'contact' => $lead->case->contactNames(),
                     'requestedOn' => $lead->captured_at?->format('Y-m-d'),
-                    'date' => $lead->project->primaryShoot?->date?->format('Y-m-d'),
-                    'booked' => $lead->project->isBooked(),
+                    'date' => $lead->case->primaryShoot?->date?->format('Y-m-d'),
+                    'booked' => $lead->case->isBooked(),
                 ])->all(),
         ]);
     }
@@ -276,7 +276,7 @@ class PackageController extends Controller
     {
         return [
             'leads as requested_count',
-            'leads as booked_count' => fn (Builder $query) => $query->whereHas('project', fn ($project) => $project->booked()),
+            'leads as booked_count' => fn (Builder $query) => $query->whereHas('case', fn ($project) => $project->booked()),
         ];
     }
 }

@@ -3,7 +3,7 @@
 namespace App\Crm\Actions;
 
 use App\Crm\Data\DateConflictData;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Models\Absence;
 use App\Settings\Models\StudioClosure;
@@ -32,7 +32,7 @@ use App\Settings\Models\StudioClosure;
 class CheckDateAvailability
 {
     /** @return list<DateConflictData> */
-    public function forDate(?string $date, ?Project $except = null): array
+    public function forDate(?string $date, ?ClientCase $except = null): array
     {
         if ($date === null) {
             return [];
@@ -45,7 +45,7 @@ class CheckDateAvailability
      * @param  list<string>  $dates  Y-m-d
      * @return array<string, list<DateConflictData>> only dates that collide
      */
-    public function forDates(array $dates, ?Project $except = null): array
+    public function forDates(array $dates, ?ClientCase $except = null): array
     {
         $dates = array_values(array_unique(array_filter($dates)));
 
@@ -56,11 +56,11 @@ class CheckDateAvailability
         // One query for the whole board. Calling forDate() per card is the
         // obvious implementation and is an N+1 nobody notices at eleven cards.
         $shoots = Shoot::query()
-            ->with('project')
+            ->with('case')
             ->whereIn('date', $dates)
             ->uncancelled()
-            ->whereHas('project.lead', fn ($lead) => $lead->open())
-            ->when($except, fn ($query) => $query->where('project_id', '!=', $except->id))
+            ->whereHas('case.lead', fn ($lead) => $lead->open())
+            ->when($except, fn ($query) => $query->where('case_id', '!=', $except->id))
             ->get();
 
         $conflicts = $shoots

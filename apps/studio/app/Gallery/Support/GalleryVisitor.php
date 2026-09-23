@@ -46,11 +46,11 @@ class GalleryVisitor
     {
         $contact = auth('portal')->user();
 
-        if ($contact === null || $gallery->project_id === null) {
+        if ($contact === null || $gallery->case_id === null) {
             return null;
         }
 
-        return $contact->visibleProjects()->whereKey($gallery->project_id)->exists()
+        return $contact->visibleProjects()->whereKey($gallery->case_id)->exists()
             ? $contact
             : null;
     }

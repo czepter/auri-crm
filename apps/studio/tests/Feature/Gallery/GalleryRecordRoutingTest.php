@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GallerySet;
 use App\Media\Models\Asset;
@@ -13,10 +13,10 @@ beforeEach(function () {
     $this->staff = User::factory()->withMfa()->create();
     $this->actingAs($this->staff, 'staff');
 
-    $this->gallery = Gallery::factory()->for(Project::factory())->create();
+    $this->gallery = Gallery::factory()->for(ClientCase::factory(), 'case')->create();
     $this->set = GallerySet::factory()->for($this->gallery)->create(['name' => 'Trauung', 'position' => 1]);
 
-    $this->other = Gallery::factory()->for(Project::factory())->create();
+    $this->other = Gallery::factory()->for(ClientCase::factory(), 'case')->create();
     $this->otherSet = GallerySet::where('gallery_id', $this->other->id)->first();
     $this->otherAsset = Asset::factory()->create([
         'gallery_id' => $this->other->id,

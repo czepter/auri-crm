@@ -2,20 +2,20 @@
 
 use App\Crm\Actions\OpenProjects;
 use App\Crm\Actions\ReadStageTrack;
-use App\Crm\Data\ProjectPositionData;
+use App\Crm\Data\CasePositionData;
 use App\Crm\Enums\ShootStatus;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-function bookedAt(ShootStatus $status, string $date): Project
+function bookedAt(ShootStatus $status, string $date): ClientCase
 {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     markBooked($project);
-    Shoot::factory()->for($project)->primary()->atStatus($status)->on($date)->create();
+    Shoot::factory()->for($project, 'case')->primary()->atStatus($status)->on($date)->create();
 
     return $project;
 }
@@ -39,7 +39,7 @@ it('groups booked projects by what the day asks of them', function () {
 });
 
 it('shows the inquiry done and the project at its booked step', function () {
-    $steps = collect(app(ReadStageTrack::class)(new ProjectPositionData(source: 'lead', value: 'booked', label: 'Gebucht')));
+    $steps = collect(app(ReadStageTrack::class)(new CasePositionData(source: 'lead', value: 'booked', label: 'Gebucht')));
 
     expect($steps->where('state', 'done')->pluck('key')->all())
         ->toBe(['new', 'contacted', 'quote_sent', 'quote_accepted'])

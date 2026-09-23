@@ -3,7 +3,7 @@
 namespace App\Notifications\Studio;
 
 use App\Contracts\Models\Contract;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 
 class ContractSigned extends StudioEventNotification
 {
@@ -16,16 +16,16 @@ class ContractSigned extends StudioEventNotification
 
     public function body(): string
     {
-        return $this->contract->project->name;
+        return $this->contract->case->name;
     }
 
     public function url(): string
     {
-        return "/auftraege/{$this->contract->project->public_id}/vertrag";
+        return "/auftraege/{$this->contract->case->public_id}/vertrag";
     }
 
-    public function project(): ?Project
+    public function case(): ?ClientCase
     {
-        return $this->contract->project;
+        return $this->contract->case;
     }
 }

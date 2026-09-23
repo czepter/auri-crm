@@ -39,7 +39,7 @@ class InvoiceExportController extends Controller
 
         $invoices = Invoice::query()
             ->whereYear('issued_at', $year)
-            ->with(['installments', 'creditNotes', 'contact', 'project', 'items'])
+            ->with(['installments', 'creditNotes', 'contact', 'case', 'items'])
             ->orderBy('number')
             ->get();
 
@@ -67,7 +67,7 @@ class InvoiceExportController extends Controller
             $invoice->number,
             $invoice->issued_at->format('d.m.Y'),
             $invoice->contact?->name ?? '',
-            $invoice->project?->name ?? '',
+            $invoice->case?->name ?? '',
             StudioRecords::euro($figures->net),
             $figures->ratePercentage(),
             StudioRecords::euro($figures->vat),

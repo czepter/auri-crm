@@ -5,17 +5,17 @@ namespace Database\Seeders;
 use App\Catalog\Models\Package;
 use App\Catalog\Models\PackageItem;
 use App\Crm\Enums\BookedVia;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\ProjectFieldType;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\ShootStatus;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\FormField;
 use App\Crm\Models\FormInstance;
 use App\Crm\Models\FormInstanceField;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\ProjectField;
 use App\Crm\Models\ProjectType as ProjectTypeModel;
 use App\Crm\Models\Shoot;
@@ -178,7 +178,7 @@ class E2eSeeder extends Seeder
      */
     private function seedOccupiedDate(): void
     {
-        $project = Project::updateOrCreate(
+        $project = ClientCase::updateOrCreate(
             ['name' => 'Meier & Kowalski — Hochzeit'],
             // Visible in the portal, and with nothing reserved on it: that is
             // the state ProjectController renders Projects/Inquiry for, and
@@ -189,15 +189,15 @@ class E2eSeeder extends Seeder
         if ($project->wasRecentlyCreated) {
             $project->attachContact(
                 Contact::create(['name' => 'Meier & Kowalski']),
-                ProjectContactRole::Primary,
+                CaseContactRole::Primary,
             );
 
-            Lead::factory()->for($project)->create([
+            Lead::factory()->for($project, 'case')->create([
                 'captured_by_id' => User::query()->firstOrFail()->id,
             ]);
 
             Shoot::create([
-                'project_id' => $project->id,
+                'case_id' => $project->id,
                 'kind' => 'Hochzeitstag',
                 'date' => '2026-06-14',
                 'venue_name' => 'Gut Basthorst',
@@ -236,14 +236,14 @@ class E2eSeeder extends Seeder
             FormField::factory()->for($template)->create();
         }
 
-        $project = Project::query()->where('name', 'Meier & Kowalski — Hochzeit')->first();
+        $project = ClientCase::query()->where('name', 'Meier & Kowalski — Hochzeit')->first();
 
         if ($project === null) {
             return;
         }
 
         $instance = FormInstance::firstOrCreate([
-            'project_id' => $project->id,
+            'case_id' => $project->id,
             'name' => 'E2E Fragebogen',
         ]);
 
@@ -259,7 +259,7 @@ class E2eSeeder extends Seeder
         }
 
         $quote = Quote::firstOrCreate(
-            ['project_id' => $project->id, 'status' => QuoteStatus::Draft],
+            ['case_id' => $project->id, 'status' => QuoteStatus::Draft],
         );
 
         if ($quote->wasRecentlyCreated) {
@@ -277,7 +277,7 @@ class E2eSeeder extends Seeder
      */
     private function seedBooking(): void
     {
-        $project = Project::firstOrCreate(
+        $project = ClientCase::firstOrCreate(
             ['name' => 'E2E Buchung'],
             ['type' => ProjectType::Wedding, 'portal_visible' => true],
         );
@@ -296,7 +296,7 @@ class E2eSeeder extends Seeder
         // The quote editor's fixture. It sits on this project rather than on
         // the inquiry above because /projekte lists booked projects only, and
         // that list is how the visual suite reaches the editor.
-        $draft = Quote::firstOrCreate(['project_id' => $project->id, 'status' => QuoteStatus::Draft]);
+        $draft = Quote::firstOrCreate(['case_id' => $project->id, 'status' => QuoteStatus::Draft]);
 
         if ($draft->wasRecentlyCreated) {
             QuoteItem::factory()->for($draft)->create();
@@ -313,14 +313,14 @@ class E2eSeeder extends Seeder
         }
 
         $contact = Contact::create(['name' => 'E2E Kundin', 'email' => 'e2e-kundin@example.test']);
-        $project->attachContact($contact, ProjectContactRole::Primary);
+        $project->attachContact($contact, CaseContactRole::Primary);
 
         // A second project, or the portal's start page redirects to the only one.
-        Project::create(['name' => 'E2E Portrait', 'type' => ProjectType::Portrait, 'portal_visible' => true])
-            ->attachContact($contact, ProjectContactRole::Primary);
+        ClientCase::create(['name' => 'E2E Portrait', 'type' => ProjectType::Portrait, 'portal_visible' => true])
+            ->attachContact($contact, CaseContactRole::Primary);
 
         Shoot::create([
-            'project_id' => $project->id,
+            'case_id' => $project->id,
             'kind' => 'Hochzeitstag',
             'date' => '2026-09-05',
             'venue_name' => 'Hof Eggers',
@@ -329,7 +329,7 @@ class E2eSeeder extends Seeder
             'status' => ShootStatus::Booked,
         ]);
 
-        $quote = Quote::factory()->for($project)->create([
+        $quote = Quote::factory()->for($project, 'case')->create([
             'status' => QuoteStatus::Sent,
             'sent_at' => now(),
             'net' => 440000,
@@ -343,7 +343,7 @@ class E2eSeeder extends Seeder
         // commit, and a plan created outside one is checked while it still
         // has no installments under it.
         DB::transaction(function () use ($project) {
-            $plan = PaymentPlan::factory()->for($project)->create(['total' => 200000]);
+            $plan = PaymentPlan::factory()->for($project, 'case')->create(['total' => 200000]);
 
             PaymentInstallment::factory()->for($plan, 'plan')->count(2)->sequence(
                 ['sort_order' => 0, 'due_on' => now()->subWeek()->toDateString()],
@@ -361,10 +361,10 @@ class E2eSeeder extends Seeder
      * s3 disk and answers 404 without one, so a seeded gallery with no
      * objects is six broken tiles.
      */
-    private function seedGallery(Project $project): void
+    private function seedGallery(ClientCase $project): void
     {
         $gallery = Gallery::firstOrCreate([
-            'project_id' => $project->id,
+            'case_id' => $project->id,
             'title' => 'E2E Galerie',
         ]);
 
@@ -428,7 +428,7 @@ class E2eSeeder extends Seeder
      * state without one, and an empty state is not the screen — the thread
      * list, the conversation and both sides of a message only exist here.
      */
-    private function seedThread(Project $project): void
+    private function seedThread(ClientCase $project): void
     {
         $contact = $project->contacts()->first();
 

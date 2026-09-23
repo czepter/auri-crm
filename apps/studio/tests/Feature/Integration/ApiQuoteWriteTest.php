@@ -1,9 +1,9 @@
 <?php
 
 use App\Catalog\Models\Package;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Enums\Capability;
 use App\Integration\Models\ApiToken;
 use App\Quotes\Enums\QuoteStatus;
@@ -21,7 +21,7 @@ beforeEach(function () {
 });
 
 it('creates a draft quote and edits one field without losing the rest', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $id = $this->withHeader('Idempotency-Key', 'quote-1')
         ->postJson("/api/projects/{$project->public_id}/quotes", [
@@ -45,9 +45,9 @@ it('creates a draft quote and edits one field without losing the rest', function
 // #396: the API store created a quote with no number and no recipient,
 // unlike the admin store's (Quotes\Http\Controllers\QuoteController::store).
 it('gives a new quote a number and the project\'s payer as recipient, like the admin store does', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $payer = Contact::factory()->create();
-    $project->attachContact($payer, ProjectContactRole::Payer);
+    $project->attachContact($payer, CaseContactRole::Payer);
 
     $this->withHeader('Idempotency-Key', 'quote-numbered')
         ->postJson("/api/projects/{$project->public_id}/quotes", [])
@@ -57,7 +57,7 @@ it('gives a new quote a number and the project\'s payer as recipient, like the a
 });
 
 it('switches the slider on when a rate arrives without a mode', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $id = $this->withHeader('Idempotency-Key', 'rate-no-mode')
         ->postJson("/api/projects/{$project->public_id}/quotes", ['hourly_rate' => 25_000, 'min_hours' => 4, 'max_hours' => 10, 'hours' => 6])
@@ -74,7 +74,7 @@ it('switches the slider on when a rate arrives without a mode', function () {
 it('starts a quote from a listed package, keeping its lines under a new intro', function () {
     $package = Package::factory()->create(['name' => 'Reportage 2']);
     $package->items()->create(['title' => 'Reportage 10 Stunden', 'quantity' => 1, 'unit_price' => 179_000]);
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $id = $this->getJson('/api/packages')->assertOk()->json('data.0.id');
 
@@ -90,9 +90,9 @@ it('starts a quote from a listed package, keeping its lines under a new intro', 
 // after the fact, without mailing the client a quote they signed long ago.
 it('records a past quote as sent and accepted, silently', function () {
     Notification::fake();
-    $project = Project::factory()->create();
-    $project->attachContact(Contact::factory()->create(), ProjectContactRole::Primary);
-    $quote = Quote::factory()->for($project)->create(['valid_until' => '2018-12-31']);
+    $project = ClientCase::factory()->create();
+    $project->attachContact(Contact::factory()->create(), CaseContactRole::Primary);
+    $quote = Quote::factory()->for($project, 'case')->create(['valid_until' => '2018-12-31']);
 
     $this->withHeaders(['Idempotency-Key' => 'send-1', 'X-Silent-Write' => '1'])
         ->postJson("/api/quotes/{$quote->public_id}/send", ['sent_at' => '2018-11-20'])
@@ -114,9 +114,9 @@ it('records a past quote as sent and accepted, silently', function () {
 // #396: AcceptQuote::configuration() deselects every switchable line the
 // caller does not name, and the API passed it none at all.
 it('keeps the add-ons the client switched on when accepting an hourly quote', function () {
-    $project = Project::factory()->create();
-    $project->attachContact($contact = Contact::factory()->create(), ProjectContactRole::Primary);
-    $quote = Quote::factory()->for($project)->create([
+    $project = ClientCase::factory()->create();
+    $project->attachContact($contact = Contact::factory()->create(), CaseContactRole::Primary);
+    $quote = Quote::factory()->for($project, 'case')->create([
         'status' => QuoteStatus::Sent,
         'pricing_mode' => 'choice',
         'hourly_rate' => 10000,
@@ -133,9 +133,9 @@ it('keeps the add-ons the client switched on when accepting an hourly quote', fu
 });
 
 it('refuses a re-accept that carries different hours than the one already recorded', function () {
-    $project = Project::factory()->create();
-    $project->attachContact(Contact::factory()->create(), ProjectContactRole::Primary);
-    $quote = Quote::factory()->for($project)->create([
+    $project = ClientCase::factory()->create();
+    $project->attachContact(Contact::factory()->create(), CaseContactRole::Primary);
+    $quote = Quote::factory()->for($project, 'case')->create([
         'status' => QuoteStatus::Accepted,
         'accepted_at' => now(),
         'accepted_by_contact_id' => $project->primaryContact()->id,
@@ -160,7 +160,7 @@ it('refuses to edit a sent quote', function () {
 });
 
 it('refuses a quote write to a token without ManageQuotes', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken(ApiToken::factory()->withScopes(Capability::ManageLeads)->create()))
         ->withHeader('Idempotency-Key', 'quote-forbidden')

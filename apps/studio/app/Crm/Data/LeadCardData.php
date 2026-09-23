@@ -56,7 +56,7 @@ class LeadCardData extends Data
     /** @param  list<DateConflictData>  $conflicts */
     public static function fromLead(Lead $lead, array $conflicts): self
     {
-        $project = $lead->project;
+        $project = $lead->case;
         $primary = $project->primaryShoot;
         $daysInStage = (int) $lead->stage_entered_at->startOfDay()->diffInDays(now()->startOfDay());
 

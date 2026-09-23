@@ -55,7 +55,7 @@ class QuoteSent extends Notification
             'sie' => 'Ihr',
             'du' => 'Dein',
             'ihr' => 'Euer',
-        ][app(StudioSettingsResolver::class)->clientAddress($this->quote->project->contacts()->count())];
+        ][app(StudioSettingsResolver::class)->clientAddress($this->quote->case->contacts()->count())];
 
         $message = (new MailMessage)->subject($this->customSubject ?: "{$possessive} Angebot {$this->quote->number}");
 
@@ -105,10 +105,10 @@ class QuoteSent extends Notification
         // surface, and the mail queue re-renders this on the worker, which is
         // admin too. url() would put the studio's host in front of a route
         // only the portal serves.
-        if ($this->quote->project->portal_visible) {
+        if ($this->quote->case->portal_visible) {
             $message->action(
                 'Angebot ansehen',
-                config('portal.url')."/projekte/{$this->quote->project->public_id}/angebot"
+                config('portal.url')."/projekte/{$this->quote->case->public_id}/angebot"
             );
         }
 

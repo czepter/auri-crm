@@ -3,8 +3,8 @@
 namespace App\Crm\Http\Controllers;
 
 use App\Crm\Enums\TaskAudience;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Crm\Models\Task;
 use App\Crm\Support\TaskAnchors;
 use App\Crm\Support\TaskDependencyGraph;
@@ -21,9 +21,9 @@ class TaskController extends Controller
 {
     public function __construct(private readonly TaskAnchors $anchors) {}
 
-    public function store(Request $request, Project $project): RedirectResponse
+    public function store(Request $request, ClientCase $case): RedirectResponse
     {
-        $this->authorize('manageTasks', $project);
+        $this->authorize('manageTasks', $case);
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
@@ -43,7 +43,7 @@ class TaskController extends Controller
         ]);
 
         $predecessor = isset($validated['depends_on'])
-            ? $project->tasks()->where('public_id', $validated['depends_on'])->first()
+            ? $case->tasks()->where('public_id', $validated['depends_on'])->first()
             : null;
 
         abort_if(isset($validated['depends_on']) && $predecessor === null, 422);
@@ -56,20 +56,20 @@ class TaskController extends Controller
         // a day, and would sit on the list as a deadline that never arrives.
         abort_if(
             $anchor !== null
-                && ! in_array($anchor, array_column($this->anchors->forProject($project), 'value'), true),
+                && ! in_array($anchor, array_column($this->anchors->forCase($case), 'value'), true),
             422,
         );
 
-        $project->tasks()->create([
+        $case->tasks()->create([
             'title' => $validated['title'],
             'audience' => $validated['audience'],
             'due_on' => $anchor === null
                 ? $validated['due_on'] ?? null
-                : $this->anchors->dueOn($project, $anchor, $offset)?->format('Y-m-d'),
+                : $this->anchors->dueOn($case, $anchor, $offset)?->format('Y-m-d'),
             'due_anchor' => $anchor,
             'due_offset_days' => $offset,
             'shoot_id' => isset($validated['shoot'])
-                ? $project->shoots()->where('public_id', $validated['shoot'])->value('id')
+                ? $case->shoots()->where('public_id', $validated['shoot'])->value('id')
                 : null,
             'depends_on_task_id' => $predecessor?->id,
             'assignee_id' => $this->assigneeId($validated['assignee'] ?? null),
@@ -122,7 +122,7 @@ class TaskController extends Controller
         }
 
         $predecessor = Task::query()
-            ->where('project_id', $task->project_id)
+            ->where('case_id', $task->case_id)
             ->where('public_id', $validated['depends_on'])
             ->first();
 
@@ -211,7 +211,7 @@ class TaskController extends Controller
             actor: auth('staff')->user(),
             context: ['title' => $task->title],
             subject: $task->public_id,
-            projectId: $task->project_id,
+            projectId: $task->case_id,
         );
 
         return back();

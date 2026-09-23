@@ -69,7 +69,7 @@ export function navItems(can: Capability[], counts: NavCounts = {}): NavEntry[] 
             key: 'auswertungen',
             label: 'Auswertungen',
             href: '/auswertungen',
-            needs: 'view_all_projects',
+            needs: 'view_all_cases',
             icon: '<path d="M3.5 20h17"/><path d="M7 20v-6M12 20V6M17 20v-9"/>',
         },
         { group: 'Arbeit' },

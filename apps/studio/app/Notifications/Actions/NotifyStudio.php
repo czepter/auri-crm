@@ -26,7 +26,7 @@ class NotifyStudio
     public function __invoke(StudioEventNotification $notification): void
     {
         $this->audience
-            ->forProject($notification->project())
+            ->forCase($notification->case())
             ->each(fn (User $user) => $this->notifications->send($user, $notification));
     }
 }

@@ -32,9 +32,9 @@ class CreateQuoteAddendum
 
         return DB::transaction(function () use ($predecessor) {
             $allocation = ($this->allocate)(documentType: DocumentType::Quote);
-            $recipient = ($this->resolveRecipient)($predecessor->project);
+            $recipient = ($this->resolveRecipient)($predecessor->case);
 
-            return $predecessor->project->quotes()->create([
+            return $predecessor->case->quotes()->create([
                 'valid_until' => now()->addDays($this->settings->quoteValidityDays())->toDateString(),
                 'is_addendum' => true,
                 'predecessor_id' => $predecessor->id,

@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Payments\Actions\CreatePaymentPlan;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
@@ -11,12 +11,12 @@ uses(RefreshDatabase::class);
 
 beforeEach(fn () => Storage::fake('local'));
 
-function bookedProjectWithStages(int $total): Project
+function bookedProjectWithStages(int $total): ClientCase
 {
     $project = bookedContactProject();
 
     $quote = Quote::factory()->create([
-        'project_id' => $project->id,
+        'case_id' => $project->id,
         'status' => QuoteStatus::Accepted,
         'accepted_at' => now(),
         'total' => $total,

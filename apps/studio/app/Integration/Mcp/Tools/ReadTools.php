@@ -299,7 +299,7 @@ final class ReadTools
         ]);
     }
 
-    /** What GET /projects/{project} alone returns — see ProjectDetailReadData. */
+    /** What GET /projects/{project} alone returns — see CaseDetailReadData. */
     private static function projectDetail(JsonSchema $schema): object
     {
         return $schema->object([

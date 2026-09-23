@@ -8,7 +8,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 /**
  * E-14: who a rule writes to.
  *
- * `crew` and `studio` are not one value, because StudioAudience::forProject()
+ * `crew` and `studio` are not one value, because StudioAudience::forCase()
  * widens to the whole studio where no crew is assigned. That fallback is
  * right for "Anfrage prüfen" and wrong for "Ausrüstung packen" — `crew` means
  * the assigned crew and stays silent without one.

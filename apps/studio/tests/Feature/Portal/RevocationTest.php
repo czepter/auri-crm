@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Enums\StaffRole;
 use App\Models\User;
 use App\Portal\Models\ClientAccess;
@@ -39,8 +39,8 @@ function revokeFromAdmin(Contact $contact): void
 
 it('ends a live portal session on the very next request, without a re-login', function () {
     $contact = Contact::factory()->create();
-    $project = Project::factory()->create(['portal_visible' => true]);
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     // Stands in for a session already open in another tab: the guard is
     // already resolved to this contact — with the old, not-yet-revoked
@@ -57,10 +57,10 @@ it('ends a live portal session on the very next request, without a re-login', fu
 
 it("removes every one of a contact's projects from the switcher once revoked", function () {
     $contact = Contact::factory()->create();
-    $projectA = Project::factory()->create(['portal_visible' => true]);
-    $projectB = Project::factory()->create(['portal_visible' => true]);
-    $projectA->attachContact($contact, ProjectContactRole::Primary);
-    $projectB->attachContact($contact, ProjectContactRole::Primary);
+    $projectA = ClientCase::factory()->create(['portal_visible' => true]);
+    $projectB = ClientCase::factory()->create(['portal_visible' => true]);
+    $projectA->attachContact($contact, CaseContactRole::Primary);
+    $projectB->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal');
 
@@ -96,8 +96,8 @@ it('does not disturb an unrevoked contact sharing the same internal id space', f
     // shared across them.
     $revoked = Contact::factory()->create();
     $untouched = Contact::factory()->create();
-    $project = Project::factory()->create(['portal_visible' => true]);
-    $project->attachContact($untouched, ProjectContactRole::Primary);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
+    $project->attachContact($untouched, CaseContactRole::Primary);
 
     revokeFromAdmin($revoked);
 

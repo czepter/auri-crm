@@ -6,8 +6,8 @@ use App\Catalog\Data\CatalogItemData;
 use App\Catalog\Data\PackageData;
 use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Models\User;
 use App\Payments\Data\PaymentPlanData;
 use App\Quotes\Data\QuoteData;
@@ -21,7 +21,7 @@ class ReadQuoteWorkspace
 {
     public function __construct(private StudioSettingsResolver $settings) {}
 
-    public function __invoke(Project $project, ?User $user): array
+    public function __invoke(ClientCase $project, ?User $user): array
     {
         return [
             'quotes' => QuoteData::collect(

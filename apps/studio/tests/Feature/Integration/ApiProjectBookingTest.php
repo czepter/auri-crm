@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Enums\Capability;
 use App\Integration\Models\ApiToken;
@@ -16,8 +16,8 @@ beforeEach(fn () => useSurface(Surface::API));
 // ProjectController::book()/complete()/reopen().
 it('books a project, advancing its shoots and answering with its detail', function () {
     $token = ApiToken::factory()->withScopes(Capability::BookProject)->create();
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    Shoot::factory()->for($project, 'case')->create();
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'book-1')
@@ -34,7 +34,7 @@ it('books a project, advancing its shoots and answering with its detail', functi
 
 it('refuses booking to a token that does not hold BookProject', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'book-forbidden')
@@ -44,7 +44,7 @@ it('refuses booking to a token that does not hold BookProject', function () {
 
 it('completes a project and reopens it', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'complete-1')
@@ -63,7 +63,7 @@ it('completes a project and reopens it', function () {
 
 it('refuses completing an already completed project', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $project->forceFill(['completed_at' => now()])->save();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))

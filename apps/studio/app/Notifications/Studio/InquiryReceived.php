@@ -2,8 +2,8 @@
 
 namespace App\Notifications\Studio;
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 
 class InquiryReceived extends StudioEventNotification
 {
@@ -16,7 +16,7 @@ class InquiryReceived extends StudioEventNotification
 
     public function body(): string
     {
-        return $this->lead->project->primaryContact()?->name ?? $this->lead->project->name;
+        return $this->lead->case->primaryContact()?->name ?? $this->lead->case->name;
     }
 
     public function url(): string
@@ -24,8 +24,8 @@ class InquiryReceived extends StudioEventNotification
         return "/anfragen/{$this->lead->public_id}";
     }
 
-    public function project(): ?Project
+    public function case(): ?ClientCase
     {
-        return $this->lead->project;
+        return $this->lead->case;
     }
 }

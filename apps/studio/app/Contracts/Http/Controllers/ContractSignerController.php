@@ -24,11 +24,11 @@ class ContractSignerController extends Controller
 {
     public function store(Request $request, Contract $contract): RedirectResponse
     {
-        $this->authorize('manageContracts', $contract->project);
+        $this->authorize('manageContracts', $contract->case);
 
         $validated = $request->validate(['contact' => ['required', 'string']]);
 
-        $contact = $contract->project->contacts()
+        $contact = $contract->case->contacts()
             ->where('contacts.public_id', $validated['contact'])->firstOrFail();
 
         $signer = $contract->signers()->firstOrCreate(['contact_id' => $contact->id]);
@@ -38,7 +38,7 @@ class ContractSignerController extends Controller
             actor: auth('staff')->user(),
             context: ['contact' => $contact->public_id, 'version' => $contract->version],
             subject: $signer->public_id,
-            projectId: $contract->project_id,
+            projectId: $contract->case_id,
         );
 
         return back();
@@ -47,7 +47,7 @@ class ContractSignerController extends Controller
     /** A signature is evidence — the row that carries one is not removable. */
     public function destroy(ContractSigner $signer): RedirectResponse
     {
-        $this->authorize('manageContracts', $signer->contract->project);
+        $this->authorize('manageContracts', $signer->contract->case);
 
         abort_unless($signer->signed_at === null, 422);
 
@@ -58,7 +58,7 @@ class ContractSignerController extends Controller
 
     public function remind(ContractSigner $signer): RedirectResponse
     {
-        $this->authorize('manageContracts', $signer->contract->project);
+        $this->authorize('manageContracts', $signer->contract->case);
 
         $signer->update(['reminded_at' => now()]);
 
@@ -67,7 +67,7 @@ class ContractSignerController extends Controller
             actor: auth('staff')->user(),
             context: ['contact' => $signer->contact->public_id],
             subject: $signer->public_id,
-            projectId: $signer->contract->project_id,
+            projectId: $signer->contract->case_id,
         );
 
         return back();

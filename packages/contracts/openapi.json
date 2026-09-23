@@ -280,6 +280,576 @@
                 }
             }
         },
+        "/projects/{case}": {
+            "patch": {
+                "operationId": "projects.update",
+                "summary": "#400: name, type/type_other and lead source, merged rather than\nreplaced \u2014 App\\Crm\\Http\\Controllers\\LeadCaseController::update()\nnulls type_other whenever `type` arrives without it, and the issue is\nexplicit that the api surface must not repeat that: only a key\nactually present in the request is written, so ClientCase::booted()\nremains the only thing that clears type_other, and only when the type\nitself changed to something other than \"Sonstige\"",
+                "tags": [
+                    "Case"
+                ],
+                "parameters": [
+                    {
+                        "name": "case",
+                        "in": "path",
+                        "required": true,
+                        "description": "The case public id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "type": {
+                                        "type": "string"
+                                    },
+                                    "type_other": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 120
+                                    },
+                                    "source": {
+                                        "$ref": "#/components/schemas/LeadSource"
+                                    },
+                                    "source_other": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 120
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "typeOther": {
+                                            "type": "string"
+                                        },
+                                        "source": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "sourceOther": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name",
+                                        "type",
+                                        "typeOther",
+                                        "source",
+                                        "sourceOther"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "projects.destroy",
+                "tags": [
+                    "Case"
+                ],
+                "parameters": [
+                    {
+                        "name": "case",
+                        "in": "path",
+                        "required": true,
+                        "description": "The case public id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
+            "get": {
+                "operationId": "projects.show",
+                "summary": "N-02: the single-resource read the index alone can't answer \u2014 \"get a\n     * project\" needs the project, not a page that might contain it. Route\nmodel binding does the tenant + public_id lookup (and the 404 for a\nproject outside the token's tenant) the same as every other\n`{project:public_id}` route on this surface already does",
+                "tags": [
+                    "CrmRead"
+                ],
+                "parameters": [
+                    {
+                        "name": "case",
+                        "in": "path",
+                        "required": true,
+                        "description": "The case public id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CaseDetailReadData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/projects/{case}/book": {
+            "post": {
+                "operationId": "projects.book",
+                "summary": "#401: book/complete/reopen on the api surface, mirroring\nApp\\Crm\\Http\\Controllers\\ProjectController \u2014 the same BookProject and\nCompleteProject actions the admin buttons call, and the same\nalready-booked no-op BookProject itself guards",
+                "tags": [
+                    "Case"
+                ],
+                "parameters": [
+                    {
+                        "name": "case",
+                        "in": "path",
+                        "required": true,
+                        "description": "The case public id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CaseDetailReadData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/projects/{case}/complete": {
+            "post": {
+                "operationId": "projects.complete",
+                "tags": [
+                    "Case"
+                ],
+                "parameters": [
+                    {
+                        "name": "case",
+                        "in": "path",
+                        "required": true,
+                        "description": "The case public id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "completedAt": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "completedAt"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "projects.reopen",
+                "tags": [
+                    "Case"
+                ],
+                "parameters": [
+                    {
+                        "name": "case",
+                        "in": "path",
+                        "required": true,
+                        "description": "The case public id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "completedAt": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "completedAt"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/projects/{case}/portal-visibility": {
+            "post": {
+                "operationId": "projects.portal-visibility.update",
+                "summary": "Mirrors App\\Crm\\Http\\Controllers\\ProjectController::togglePortalVisibility,\nbut takes the value rather than flipping it: a retried toggle after a\ndropped response would land on the wrong state, which `idempotent`\n(routes/api.php) must never allow",
+                "tags": [
+                    "Case"
+                ],
+                "parameters": [
+                    {
+                        "name": "case",
+                        "in": "path",
+                        "required": true,
+                        "description": "The case public id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "visible": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "visible"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "portalVisible": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "portalVisible"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/projects/{case}/contacts/{contact}": {
+            "delete": {
+                "operationId": "projects.contacts.destroy",
+                "summary": "#400: a secondary contact only, same as the primary refusal on store()\n\u2014 the primary is decided at capture, the pivot's partial unique index\ndepends on it staying that way",
+                "tags": [
+                    "CaseContact"
+                ],
+                "parameters": [
+                    {
+                        "name": "case",
+                        "in": "path",
+                        "required": true,
+                        "description": "The case public id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "contact",
+                        "in": "path",
+                        "required": true,
+                        "description": "The contact public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "422": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/projects/{case}/contacts": {
+            "post": {
+                "operationId": "projects.contacts.store",
+                "tags": [
+                    "CaseContact"
+                ],
+                "parameters": [
+                    {
+                        "name": "case",
+                        "in": "path",
+                        "required": true,
+                        "description": "The case public id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "contact_id": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "minLength": 24,
+                                        "maxLength": 24
+                                    },
+                                    "name": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    },
+                                    "email": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "email",
+                                        "maxLength": 255
+                                    },
+                                    "phone": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 64
+                                    },
+                                    "role": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 60
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "email": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "phone": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "role": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name",
+                                        "email",
+                                        "phone",
+                                        "role"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
         "/contacts": {
             "post": {
                 "operationId": "contacts.store",
@@ -1128,182 +1698,6 @@
                 }
             }
         },
-        "/projects/{project}": {
-            "get": {
-                "operationId": "projects.show",
-                "summary": "N-02: the single-resource read the index alone can't answer \u2014 \"get a\n     * project\" needs the project, not a page that might contain it. Route\nmodel binding does the tenant + public_id lookup (and the 404 for a\nproject outside the token's tenant) the same as every other\n`{project:public_id}` route on this surface already does",
-                "tags": [
-                    "CrmRead"
-                ],
-                "parameters": [
-                    {
-                        "name": "project",
-                        "in": "path",
-                        "required": true,
-                        "description": "The project public id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/ProjectDetailReadData"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    }
-                }
-            },
-            "patch": {
-                "operationId": "projects.update",
-                "summary": "#400: name, type/type_other and lead source, merged rather than\nreplaced \u2014 App\\Crm\\Http\\Controllers\\LeadCaseController::update()\nnulls type_other whenever `type` arrives without it, and the issue is\nexplicit that the api surface must not repeat that: only a key\nactually present in the request is written, so Project::booted()\nremains the only thing that clears type_other, and only when the type\nitself changed to something other than \"Sonstige\"",
-                "tags": [
-                    "Project"
-                ],
-                "parameters": [
-                    {
-                        "name": "project",
-                        "in": "path",
-                        "required": true,
-                        "description": "The project public id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "maxLength": 255
-                                    },
-                                    "type": {
-                                        "type": "string"
-                                    },
-                                    "type_other": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 120
-                                    },
-                                    "source": {
-                                        "$ref": "#/components/schemas/LeadSource"
-                                    },
-                                    "source_other": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 120
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "id": {
-                                            "type": "string"
-                                        },
-                                        "name": {
-                                            "type": "string"
-                                        },
-                                        "type": {
-                                            "type": "string"
-                                        },
-                                        "typeOther": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
-                                        },
-                                        "source": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
-                                        },
-                                        "sourceOther": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "id",
-                                        "name",
-                                        "type",
-                                        "typeOther",
-                                        "source",
-                                        "sourceOther"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    }
-                }
-            },
-            "delete": {
-                "operationId": "projects.destroy",
-                "tags": [
-                    "Project"
-                ],
-                "parameters": [
-                    {
-                        "name": "project",
-                        "in": "path",
-                        "required": true,
-                        "description": "The project public id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No content"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    }
-                }
-            }
-        },
         "/pipeline-snapshot": {
             "get": {
                 "operationId": "pipeline-snapshot",
@@ -1333,21 +1727,21 @@
                 }
             }
         },
-        "/projects/{project}/money": {
+        "/projects/{case}/money": {
             "get": {
                 "operationId": "projects.money",
-                "summary": "#402: the payment plan ProjectDetailReadData leaves out",
+                "summary": "#402: the payment plan CaseDetailReadData leaves out",
                 "tags": [
                     "CrmRead"
                 ],
                 "parameters": [
                     {
-                        "name": "project",
+                        "name": "case",
                         "in": "path",
                         "required": true,
-                        "description": "The project public id",
+                        "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -1360,7 +1754,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/components/schemas/ProjectMoneyReadData"
+                                            "$ref": "#/components/schemas/CaseMoneyReadData"
                                         }
                                     },
                                     "required": [
@@ -1376,7 +1770,7 @@
                 }
             }
         },
-        "/projects/{project}/forms": {
+        "/projects/{case}/forms": {
             "get": {
                 "operationId": "projects.forms.index",
                 "tags": [
@@ -1384,12 +1778,12 @@
                 ],
                 "parameters": [
                     {
-                        "name": "project",
+                        "name": "case",
                         "in": "path",
                         "required": true,
-                        "description": "The project public id",
+                        "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -1427,12 +1821,12 @@
                 ],
                 "parameters": [
                     {
-                        "name": "project",
+                        "name": "case",
                         "in": "path",
                         "required": true,
-                        "description": "The project public id",
+                        "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -1764,7 +2158,7 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "project_id": {
+                                    "case_id": {
                                         "type": [
                                             "string",
                                             "null"
@@ -3436,7 +3830,7 @@
                 }
             }
         },
-        "/projects/{project}/notes": {
+        "/projects/{case}/notes": {
             "get": {
                 "operationId": "projects.notes.index",
                 "summary": "Oldest first, on when it happened \u2014 the order the admin thread reads in",
@@ -3445,12 +3839,12 @@
                 ],
                 "parameters": [
                     {
-                        "name": "project",
+                        "name": "case",
                         "in": "path",
                         "required": true,
-                        "description": "The project public id",
+                        "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -3488,12 +3882,12 @@
                 ],
                 "parameters": [
                     {
-                        "name": "project",
+                        "name": "case",
                         "in": "path",
                         "required": true,
-                        "description": "The project public id",
+                        "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -4022,7 +4416,7 @@
                 }
             }
         },
-        "/projects/{project}/messages": {
+        "/projects/{case}/messages": {
             "post": {
                 "operationId": "projects.messages.store",
                 "tags": [
@@ -4030,12 +4424,12 @@
                 ],
                 "parameters": [
                     {
-                        "name": "project",
+                        "name": "case",
                         "in": "path",
                         "required": true,
-                        "description": "The project public id",
+                        "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -4453,7 +4847,7 @@
                 }
             }
         },
-        "/projects/{project}/payment-plan": {
+        "/projects/{case}/payment-plan": {
             "post": {
                 "operationId": "projects.payment-plan.store",
                 "tags": [
@@ -4461,12 +4855,12 @@
                 ],
                 "parameters": [
                     {
-                        "name": "project",
+                        "name": "case",
                         "in": "path",
                         "required": true,
-                        "description": "The project public id",
+                        "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -4745,403 +5139,6 @@
                 }
             }
         },
-        "/projects/{project}/book": {
-            "post": {
-                "operationId": "projects.book",
-                "summary": "#401: book/complete/reopen on the api surface, mirroring\nApp\\Crm\\Http\\Controllers\\ProjectController \u2014 the same BookProject and\nCompleteProject actions the admin buttons call, and the same\nalready-booked no-op BookProject itself guards",
-                "tags": [
-                    "Project"
-                ],
-                "parameters": [
-                    {
-                        "name": "project",
-                        "in": "path",
-                        "required": true,
-                        "description": "The project public id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/ProjectDetailReadData"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    }
-                }
-            }
-        },
-        "/projects/{project}/complete": {
-            "post": {
-                "operationId": "projects.complete",
-                "tags": [
-                    "Project"
-                ],
-                "parameters": [
-                    {
-                        "name": "project",
-                        "in": "path",
-                        "required": true,
-                        "description": "The project public id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "object",
-                                            "properties": {
-                                                "id": {
-                                                    "type": "string"
-                                                },
-                                                "completedAt": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ]
-                                                }
-                                            },
-                                            "required": [
-                                                "id",
-                                                "completedAt"
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    }
-                }
-            },
-            "delete": {
-                "operationId": "projects.reopen",
-                "tags": [
-                    "Project"
-                ],
-                "parameters": [
-                    {
-                        "name": "project",
-                        "in": "path",
-                        "required": true,
-                        "description": "The project public id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "object",
-                                            "properties": {
-                                                "id": {
-                                                    "type": "string"
-                                                },
-                                                "completedAt": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ]
-                                                }
-                                            },
-                                            "required": [
-                                                "id",
-                                                "completedAt"
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    }
-                }
-            }
-        },
-        "/projects/{project}/portal-visibility": {
-            "post": {
-                "operationId": "projects.portal-visibility.update",
-                "summary": "Mirrors App\\Crm\\Http\\Controllers\\ProjectController::togglePortalVisibility,\nbut takes the value rather than flipping it: a retried toggle after a\ndropped response would land on the wrong state, which `idempotent`\n(routes/api.php) must never allow",
-                "tags": [
-                    "Project"
-                ],
-                "parameters": [
-                    {
-                        "name": "project",
-                        "in": "path",
-                        "required": true,
-                        "description": "The project public id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "visible": {
-                                        "type": "boolean"
-                                    }
-                                },
-                                "required": [
-                                    "visible"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "id": {
-                                            "type": "string"
-                                        },
-                                        "portalVisible": {
-                                            "type": "boolean"
-                                        }
-                                    },
-                                    "required": [
-                                        "id",
-                                        "portalVisible"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    }
-                }
-            }
-        },
-        "/projects/{project}/contacts/{contact}": {
-            "delete": {
-                "operationId": "projects.contacts.destroy",
-                "summary": "#400: a secondary contact only, same as the primary refusal on store()\n\u2014 the primary is decided at capture, the pivot's partial unique index\ndepends on it staying that way",
-                "tags": [
-                    "ProjectContact"
-                ],
-                "parameters": [
-                    {
-                        "name": "project",
-                        "in": "path",
-                        "required": true,
-                        "description": "The project public id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "contact",
-                        "in": "path",
-                        "required": true,
-                        "description": "The contact public id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No content"
-                    },
-                    "422": {
-                        "description": "An error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview.",
-                                            "examples": [
-                                                ""
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    }
-                }
-            }
-        },
-        "/projects/{project}/contacts": {
-            "post": {
-                "operationId": "projects.contacts.store",
-                "tags": [
-                    "ProjectContact"
-                ],
-                "parameters": [
-                    {
-                        "name": "project",
-                        "in": "path",
-                        "required": true,
-                        "description": "The project public id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "contact_id": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "minLength": 24,
-                                        "maxLength": 24
-                                    },
-                                    "name": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 255
-                                    },
-                                    "email": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "format": "email",
-                                        "maxLength": 255
-                                    },
-                                    "phone": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 64
-                                    },
-                                    "role": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 60
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "id": {
-                                            "type": "string"
-                                        },
-                                        "name": {
-                                            "type": "string"
-                                        },
-                                        "email": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
-                                        },
-                                        "phone": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
-                                        },
-                                        "role": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "required": [
-                                        "id",
-                                        "name",
-                                        "email",
-                                        "phone",
-                                        "role"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    }
-                }
-            }
-        },
         "/project-types": {
             "get": {
                 "operationId": "project-types.index",
@@ -5190,7 +5187,7 @@
                 }
             }
         },
-        "/projects/{project}/fields": {
+        "/projects/{case}/fields": {
             "patch": {
                 "operationId": "projects.fields.update",
                 "tags": [
@@ -5198,12 +5195,12 @@
                 ],
                 "parameters": [
                     {
-                        "name": "project",
+                        "name": "case",
                         "in": "path",
                         "required": true,
-                        "description": "The project public id",
+                        "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -5477,7 +5474,7 @@
                 }
             }
         },
-        "/projects/{project}/quotes": {
+        "/projects/{case}/quotes": {
             "post": {
                 "operationId": "projects.quotes.store",
                 "tags": [
@@ -5485,12 +5482,12 @@
                 ],
                 "parameters": [
                     {
-                        "name": "project",
+                        "name": "case",
                         "in": "path",
                         "required": true,
-                        "description": "The project public id",
+                        "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -6702,7 +6699,7 @@
                 }
             }
         },
-        "/projects/{project}/shoots": {
+        "/projects/{case}/shoots": {
             "post": {
                 "operationId": "projects.shoots.store",
                 "description": "Mirrors App\\Crm\\Http\\Controllers\\ShootController::store: the same\nrules, the same nullable date, the booked status on a booked project,\nand the model's own defaults for is_primary and sort_order \u2014 the\nprimary one is already taken.",
@@ -6712,12 +6709,12 @@
                 ],
                 "parameters": [
                     {
-                        "name": "project",
+                        "name": "case",
                         "in": "path",
                         "required": true,
-                        "description": "The project public id",
+                        "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -7532,7 +7529,7 @@
                 }
             }
         },
-        "/projects/{project}/tasks": {
+        "/projects/{case}/tasks": {
             "get": {
                 "operationId": "projects.tasks.index",
                 "summary": "`done` narrows to completed or open; omitted returns both, oldest due date first",
@@ -7541,12 +7538,12 @@
                 ],
                 "parameters": [
                     {
-                        "name": "project",
+                        "name": "case",
                         "in": "path",
                         "required": true,
-                        "description": "The project public id",
+                        "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     },
                     {
@@ -7595,12 +7592,12 @@
                 ],
                 "parameters": [
                     {
-                        "name": "project",
+                        "name": "case",
                         "in": "path",
                         "required": true,
-                        "description": "The project public id",
+                        "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -7950,7 +7947,7 @@
                 }
             }
         },
-        "/projects/{project}/messages/send": {
+        "/projects/{case}/messages/send": {
             "post": {
                 "operationId": "projects.messages.send",
                 "tags": [
@@ -7958,12 +7955,12 @@
                 ],
                 "parameters": [
                     {
-                        "name": "project",
+                        "name": "case",
                         "in": "path",
                         "required": true,
-                        "description": "The project public id",
+                        "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -8421,6 +8418,16 @@
                 ],
                 "title": "CaptureInquiryData"
             },
+            "CaseDetailReadData": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "CaseDetailReadData"
+            },
+            "CaseMoneyReadData": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "CaseMoneyReadData"
+            },
             "CrewAssignmentReadData": {
                 "type": "object",
                 "additionalProperties": {},
@@ -8537,11 +8544,6 @@
                 ],
                 "title": "PricingMode"
             },
-            "ProjectDetailReadData": {
-                "type": "object",
-                "additionalProperties": {},
-                "title": "ProjectDetailReadData"
-            },
             "ProjectFieldType": {
                 "type": "string",
                 "description": "C-25: what a studio may ask of a project of one type. Deliberately not FormFieldType \u2014 the questionnaire knows files, name lists and group photos, a project field does not, and the two vocabularies are meant to grow apart.\n",
@@ -8555,11 +8557,6 @@
                     "boolean"
                 ],
                 "title": "ProjectFieldType"
-            },
-            "ProjectMoneyReadData": {
-                "type": "object",
-                "additionalProperties": {},
-                "title": "ProjectMoneyReadData"
             },
             "ProjectReadData": {
                 "type": "object",

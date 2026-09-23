@@ -9,6 +9,7 @@ use App\Contracts\Http\Controllers\ContractIndexController;
 use App\Contracts\Http\Controllers\ContractSignerController;
 use App\Crm\Http\Controllers\AvailabilityController;
 use App\Crm\Http\Controllers\CalendarController;
+use App\Crm\Http\Controllers\CaseSearchController;
 use App\Crm\Http\Controllers\ContactController;
 use App\Crm\Http\Controllers\ContactDsgvoController;
 use App\Crm\Http\Controllers\ContactSearchController;
@@ -24,7 +25,6 @@ use App\Crm\Http\Controllers\LeadStageController;
 use App\Crm\Http\Controllers\PaletteSearchController;
 use App\Crm\Http\Controllers\ProjectController;
 use App\Crm\Http\Controllers\ProjectFieldController;
-use App\Crm\Http\Controllers\ProjectSearchController;
 use App\Crm\Http\Controllers\ProjectTypeController;
 use App\Crm\Http\Controllers\ShootController;
 use App\Crm\Http\Controllers\ShotListItemController;
@@ -59,8 +59,8 @@ use App\Http\Controllers\Staff\OAuthAuthorizationController;
 use App\Http\Controllers\Staff\OAuthClientRegistrationController;
 use App\Http\Controllers\Staff\OAuthMetadataController;
 use App\Http\Controllers\Staff\OAuthTokenController;
-use App\Http\Controllers\Staff\PasswordResetController;
 use App\Http\Controllers\Staff\OwnershipController;
+use App\Http\Controllers\Staff\PasswordResetController;
 use App\Http\Controllers\Staff\ProfileController;
 use App\Http\Controllers\Staff\SessionController;
 use App\Http\Controllers\Staff\SetupController;
@@ -80,9 +80,9 @@ use App\Settings\Http\Controllers\AuditLogController;
 use App\Settings\Http\Controllers\DataExportController;
 use App\Settings\Http\Controllers\GallerySettingsController;
 use App\Settings\Http\Controllers\NumberRangeController;
-use App\Settings\Http\Controllers\RetentionController;
 use App\Settings\Http\Controllers\PaymentSettingsController;
 use App\Settings\Http\Controllers\PortalSettingsController;
+use App\Settings\Http\Controllers\RetentionController;
 use App\Settings\Http\Controllers\StudioClosureController;
 use App\Settings\Http\Controllers\StudioDeletionController;
 use App\Settings\Http\Controllers\StudioExportController;
@@ -360,7 +360,7 @@ Route::middleware('audience:staff')->group(function () {
             ->name('automation-drafts.discard');
 
         // S-13 + M-07. One screen: how the studio is doing, and what is
-        // coming in. Gated on ViewAllProjects inside the controller — these
+        // coming in. Gated on ViewAllCases inside the controller — these
         // are whole-book figures, and a per-role filtered aggregate would
         // mean something different depending who asked.
         Route::get('/auswertungen', ReportController::class)->name('reports.index');
@@ -607,7 +607,7 @@ Route::middleware('audience:staff')->group(function () {
         // path, not /auftraege: a booked project becomes an Auftrag, and
         // the list covers every project whether booked yet or not.
         Route::get('/projekte', [ProjectController::class, 'index'])->name('projects.index');
-        Route::get('/projekte/suche', ProjectSearchController::class)->name('projects.search');
+        Route::get('/projekte/suche', CaseSearchController::class)->name('projects.search');
         Route::get('/auftraege/einstellungen/stufen', [ProjectController::class, 'index'])
             ->defaults('pipeline', 'project')
             ->name('projects.settings.stages');
@@ -617,54 +617,54 @@ Route::middleware('audience:staff')->group(function () {
         // The project screen. Shoot and crew mutations hang off /shootings
         // rather than under the project, because the shoot's public id already
         // identifies it and nesting would let the two disagree.
-        Route::get('/auftraege/{project}', [ProjectController::class, 'show'])->name('projects.show');
+        Route::get('/auftraege/{case}', [ProjectController::class, 'show'])->name('projects.show');
         // C-12 (#248): editing is a state of the screen, so it posts back to
         // the same record.
-        Route::patch('/auftraege/{project}', [ProjectController::class, 'update'])
+        Route::patch('/auftraege/{case}', [ProjectController::class, 'update'])
             ->name('projects.update');
-        Route::post('/auftraege/{project}/stufe', [ProjectController::class, 'stage'])
+        Route::post('/auftraege/{case}/stufe', [ProjectController::class, 'stage'])
             ->name('projects.stage');
-        Route::get('/auftraege/{project}/shootings', [ProjectController::class, 'shoots'])
+        Route::get('/auftraege/{case}/shootings', [ProjectController::class, 'shoots'])
             ->name('projects.shoots');
-        Route::get('/auftraege/{project}/aufgaben', [ProjectController::class, 'tasks'])
+        Route::get('/auftraege/{case}/aufgaben', [ProjectController::class, 'tasks'])
             ->name('projects.tasks');
-        Route::get('/auftraege/{project}/galerien', [ProjectController::class, 'galleries'])
+        Route::get('/auftraege/{case}/galerien', [ProjectController::class, 'galleries'])
             ->name('projects.galleries');
-        Route::delete('/auftraege/{project}', [ProjectController::class, 'destroy'])
+        Route::delete('/auftraege/{case}', [ProjectController::class, 'destroy'])
             ->name('projects.destroy');
-        Route::post('/auftraege/{project}/buchung', [ProjectController::class, 'book'])
+        Route::post('/auftraege/{case}/buchung', [ProjectController::class, 'book'])
             ->name('projects.book');
-        Route::post('/auftraege/{project}/abschluss', [ProjectController::class, 'complete'])
+        Route::post('/auftraege/{case}/abschluss', [ProjectController::class, 'complete'])
             ->name('projects.complete');
-        Route::delete('/auftraege/{project}/abschluss', [ProjectController::class, 'reopen'])
+        Route::delete('/auftraege/{case}/abschluss', [ProjectController::class, 'reopen'])
             ->name('projects.reopen');
-        Route::post('/auftraege/{project}/portal-sichtbarkeit', [ProjectController::class, 'togglePortalVisibility'])
+        Route::post('/auftraege/{case}/portal-sichtbarkeit', [ProjectController::class, 'togglePortalVisibility'])
             ->name('projects.portal-visibility.toggle');
 
         // E-06. The client is the only one who can start a thread (see
         // StartThread, reached from routes/portal.php) — this GET reads
         // whatever the client has already opened, and the POST beside it is
         // staff's reply on it, never an origination of its own.
-        Route::get('/auftraege/{project}/nachrichten', [ProjectController::class, 'messages'])
+        Route::get('/auftraege/{case}/nachrichten', [ProjectController::class, 'messages'])
             ->name('projects.messages');
-        Route::post('/auftraege/{project}/nachrichten', [ThreadController::class, 'reply'])
+        Route::post('/auftraege/{case}/nachrichten', [ThreadController::class, 'reply'])
             ->name('threads.reply');
         // What the client said elsewhere, written in afterwards. Nothing is
         // sent, so it originates nothing either — see RecordMessage.
-        Route::post('/auftraege/{project}/nachrichten/nachtrag', [ThreadController::class, 'record'])
+        Route::post('/auftraege/{case}/nachrichten/nachtrag', [ThreadController::class, 'record'])
             ->name('threads.record');
         // E-13: cancel one that has not gone out yet.
-        Route::delete('/auftraege/{project}/nachrichten/{message}', [ThreadController::class, 'cancel'])
+        Route::delete('/auftraege/{case}/nachrichten/{message}', [ThreadController::class, 'cancel'])
             ->name('threads.cancel');
 
-        Route::get('/auftraege/{project}/angebote', [ProjectController::class, 'quotes'])
+        Route::get('/auftraege/{case}/angebote', [ProjectController::class, 'quotes'])
             ->name('projects.quotes');
 
         // The sidebar's own Angebote entry, between Anfragen and Projekte:
         // every quote across every project, not one project's tab.
         Route::get('/angebote', [QuoteController::class, 'index'])->name('quotes.index');
 
-        Route::post('/auftraege/{project}/angebote', [QuoteController::class, 'store'])
+        Route::post('/auftraege/{case}/angebote', [QuoteController::class, 'store'])
             ->name('quotes.store');
         Route::get('/angebote/{quote}/positionen/{quoteItem}/bild', [QuoteController::class, 'itemImage'])
             ->name('quotes.items.image');
@@ -693,9 +693,9 @@ Route::middleware('audience:staff')->group(function () {
         // E-02: a project's own questionnaires, seeded from a FormTemplate
         // or started blank, then personalised freely — see FormInstance's
         // own doc comment.
-        Route::get('/auftraege/{project}/frageboegen', [ProjectController::class, 'forms'])
+        Route::get('/auftraege/{case}/frageboegen', [ProjectController::class, 'forms'])
             ->name('projects.forms');
-        Route::post('/auftraege/{project}/frageboegen', [FormInstanceController::class, 'store'])
+        Route::post('/auftraege/{case}/frageboegen', [FormInstanceController::class, 'store'])
             ->name('form-instances.store');
         Route::patch('/frageboegen/{formInstance}', [FormInstanceController::class, 'update'])
             ->name('form-instances.update');
@@ -717,9 +717,9 @@ Route::middleware('audience:staff')->group(function () {
         Route::delete('/fragebogen-dateien/{file}', [FormInstanceController::class, 'destroyFile'])
             ->name('form-instance-files.destroy');
 
-        Route::get('/auftraege/{project}/vertrag', [ContractController::class, 'show'])
+        Route::get('/auftraege/{case}/vertrag', [ContractController::class, 'show'])
             ->name('projects.contract');
-        Route::post('/auftraege/{project}/vertraege', [ContractController::class, 'store'])
+        Route::post('/auftraege/{case}/vertraege', [ContractController::class, 'store'])
             ->name('contracts.store');
         Route::get('/vertraege/{contract}/pdf', [ContractController::class, 'download'])
             ->name('contracts.download');
@@ -765,7 +765,7 @@ Route::middleware('audience:staff')->group(function () {
         // Bereich, Set und Einstellungsabschnitt stehen im Pfad, nicht in
         // einem ref(): sonst wirft jedes Neuladen den Menschen zurueck auf
         // Bilder/Alle und die Zurueck-Taste verlaesst die Galerie. Das
-        // Projekt macht es seit jeher so (/auftraege/{project}/shootings).
+        // Projekt macht es seit jeher so (/auftraege/{case}/shootings).
         //
         // Reihenfolge zaehlt: die beiden spezielleren Pfade stehen ueber
         // /{bereich?}, sonst schluckt dessen Platzhalter "bilder" und der
@@ -873,8 +873,8 @@ Route::middleware('audience:staff')->group(function () {
 
         // No GET here: the Zahlungen card lives on the project overview
         // itself (ProjectController::show), not a tab of its own — see the
-        // note in ProjectHeaderData::fromProject.
-        Route::post('/auftraege/{project}/zahlungsplan', [PaymentPlanController::class, 'store'])
+        // note in CaseHeaderData::fromProject.
+        Route::post('/auftraege/{case}/zahlungsplan', [PaymentPlanController::class, 'store'])
             ->name('payment-plans.store');
         Route::patch('/zahlungsplaene/{paymentPlan}', [PaymentPlanController::class, 'update'])
             ->name('payment-plans.update');
@@ -918,7 +918,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/rechnungen/{invoice}/gutschrift/{creditNote}', [InvoiceController::class, 'downloadCreditNote'])
             ->name('invoices.credit-note.download');
 
-        Route::post('/auftraege/{project}/shootings', [ShootController::class, 'store'])
+        Route::post('/auftraege/{case}/shootings', [ShootController::class, 'store'])
             ->name('shoots.store');
         Route::delete('/shootings/{shoot}', [ShootController::class, 'destroy'])
             ->name('shoots.destroy');
@@ -956,13 +956,13 @@ Route::middleware('audience:staff')->group(function () {
         Route::delete('/checkliste/{item}', [ShotListItemController::class, 'destroy'])
             ->name('shot-list-items.destroy');
 
-        // T-24: die Aufgabenflaeche des Studios. /auftraege/{project}/aufgaben
+        // T-24: die Aufgabenflaeche des Studios. /auftraege/{case}/aufgaben
         // beantwortet "was ist an diesem Auftrag offen", diese hier "was ist
         // an mir offen" — die Frage, die eine Zuweisung ueberhaupt erst stellt.
         Route::get('/aufgaben', TaskBoardController::class)->name('tasks.index');
 
         Route::post('/aufgaben', [TaskController::class, 'storeStudio'])->name('tasks.store-studio');
-        Route::post('/auftraege/{project}/aufgaben', [TaskController::class, 'store'])
+        Route::post('/auftraege/{case}/aufgaben', [TaskController::class, 'store'])
             ->name('tasks.store');
         Route::post('/aufgaben/{task}/erledigt', [TaskController::class, 'complete'])
             ->name('tasks.complete');
@@ -979,7 +979,7 @@ Route::middleware('audience:staff')->group(function () {
             ->name('tasks.assign');
         Route::delete('/aufgaben/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
 
-        Route::post('/auftraege/{project}/notizen', [InternalNoteController::class, 'store'])
+        Route::post('/auftraege/{case}/notizen', [InternalNoteController::class, 'store'])
             ->name('notes.store');
         Route::patch('/notizen/{note}', [InternalNoteController::class, 'update'])->name('notes.update');
         Route::delete('/notizen/{note}', [InternalNoteController::class, 'destroy'])

@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Engagement\Enums\InboundMessageState;
 use App\Engagement\Models\InboundMessage;
 use App\Engagement\Models\Message;
@@ -30,8 +30,8 @@ function apiToken(): ApiToken
 }
 
 it('lists inbox threads', function () {
-    $project = Project::factory()->create();
-    $thread = Thread::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $thread = Thread::factory()->for($project, 'case')->create();
     Message::factory()->for($thread)->create();
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken(apiToken()))
@@ -42,10 +42,10 @@ it('lists inbox threads', function () {
 });
 
 it('replies on an inbox thread, requiring a staff actor', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
-    $thread = Thread::factory()->for($project)->create();
+    $project->attachContact($contact, CaseContactRole::Primary);
+    $thread = Thread::factory()->for($project, 'case')->create();
     Message::factory()->for($thread)->for($contact)->create();
     $staff = staffMember();
 
@@ -65,8 +65,8 @@ it('replies on an inbox thread, requiring a staff actor', function () {
 });
 
 it('closes and reopens a thread by its work state', function () {
-    $project = Project::factory()->create();
-    $thread = Thread::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $thread = Thread::factory()->for($project, 'case')->create();
     Message::factory()->for($thread)->create();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken(apiToken()))
@@ -79,10 +79,10 @@ it('closes and reopens a thread by its work state', function () {
 });
 
 it('attaches an inbound mail to the thread it belongs on', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $contact = Contact::factory()->create(['email' => 'client@example.com']);
-    $project->attachContact($contact, ProjectContactRole::Primary);
-    $thread = Thread::factory()->for($project)->create();
+    $project->attachContact($contact, CaseContactRole::Primary);
+    $thread = Thread::factory()->for($project, 'case')->create();
     Message::factory()->for($thread)->for($contact)->create();
     ThreadParticipant::factory()->for($thread)->for($contact)->create();
 
@@ -103,8 +103,8 @@ it('attaches an inbound mail to the thread it belongs on', function () {
 });
 
 it('files an unfiled thread to a project, but not a thread that already names one', function () {
-    $thread = Thread::factory()->create(['project_id' => null]);
-    $project = Project::factory()->create();
+    $thread = Thread::factory()->create(['case_id' => null]);
+    $project = ClientCase::factory()->create();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken(apiToken()))
         ->withHeader('Idempotency-Key', 'inbox-file-1')
@@ -112,7 +112,7 @@ it('files an unfiled thread to a project, but not a thread that already names on
         ->assertOk()
         ->assertJson(['projectId' => $project->public_id]);
 
-    $other = Project::factory()->create();
+    $other = ClientCase::factory()->create();
     $this->withHeader('Authorization', 'Bearer '.bearerToken(apiToken()))
         ->withHeader('Idempotency-Key', 'inbox-file-2')
         ->postJson("/api/inbox/threads/{$thread->public_id}/file", ['project' => $other->public_id])

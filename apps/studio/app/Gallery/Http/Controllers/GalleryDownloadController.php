@@ -395,8 +395,8 @@ class GalleryDownloadController extends Controller
         $contact = auth('portal')->user();
 
         return $contact !== null
-            && $gallery->project_id !== null
-            && $contact->visibleProjects()->whereKey($gallery->project_id)->exists()
+            && $gallery->case_id !== null
+            && $contact->visibleProjects()->whereKey($gallery->case_id)->exists()
                 ? $contact->email
                 : null;
     }

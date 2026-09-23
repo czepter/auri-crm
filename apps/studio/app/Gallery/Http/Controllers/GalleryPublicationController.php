@@ -21,7 +21,7 @@ class GalleryPublicationController extends Controller
     {
         $this->authorize('publish', $gallery);
 
-        $contact = $gallery->project?->primaryContact();
+        $contact = $gallery->case?->primaryContact();
 
         abort_if(blank($contact?->email), 404);
 
@@ -54,7 +54,7 @@ class GalleryPublicationController extends Controller
             subject: $gallery->public_id,
         );
 
-        $contact = $gallery->project?->primaryContact();
+        $contact = $gallery->case?->primaryContact();
 
         if (blank($validated['subject'] ?? null) || blank($contact?->email)) {
             return back();

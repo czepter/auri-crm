@@ -1,9 +1,9 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -17,9 +17,9 @@ beforeEach(function () {
 it('writes in what the client said elsewhere and shows it on the case\'s Nachrichten tab', function () {
     Notification::fake();
 
-    $project = Project::factory()->create();
-    $project->attachContact(Contact::factory()->create(['name' => 'Jan Martin Keil']), ProjectContactRole::Primary);
-    $lead = Lead::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $project->attachContact(Contact::factory()->create(['name' => 'Jan Martin Keil']), CaseContactRole::Primary);
+    $lead = Lead::factory()->for($project, 'case')->create();
 
     $this->from("/anfragen/{$lead->public_id}/nachrichten")
         ->post("/auftraege/{$project->public_id}/nachrichten/nachtrag", [

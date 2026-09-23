@@ -77,7 +77,7 @@ class UpdateQuote
 
         if (array_key_exists('recipient_contact', $validated)) {
             $recipient = ! empty($validated['recipient_contact'])
-                ? $quote->project->contacts()->where('contacts.public_id', $validated['recipient_contact'])->first()
+                ? $quote->case->contacts()->where('contacts.public_id', $validated['recipient_contact'])->first()
                 : null;
 
             if ($recipient !== null && blank($recipient->street) && blank($recipient->postcode) && blank($recipient->city)) {

@@ -36,7 +36,7 @@ function mixedRateInstallment(array $lines, int $deposit, string $vatMode = 'sta
     $project = bookedContactProject();
 
     $quote = Quote::factory()->create([
-        'project_id' => $project->id,
+        'case_id' => $project->id,
         'status' => QuoteStatus::Draft,
     ]);
 
@@ -66,7 +66,7 @@ function mixedRateInstallment(array $lines, int $deposit, string $vatMode = 'sta
 
 it('sums net and VAT per rate and keeps vat_amount the sum', function () {
     $installment = mixedRateInstallment([[100_000, null], [10_000, 700]], 55_350);
-    $quote = $installment->plan->project->quotes()->sole();
+    $quote = $installment->plan->case->quotes()->sole();
 
     expect($quote->vatLines())->toBe([
         ['rate' => 1900, 'net' => 100_000, 'vat' => 19_000],

@@ -4,18 +4,18 @@ namespace App\Crm\Http\Controllers;
 
 use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\CheckDateAvailability;
-use App\Crm\Actions\DeriveProjectPosition;
+use App\Crm\Actions\DeriveCasePosition;
 use App\Crm\Actions\OpenLeads;
-use App\Crm\Data\ProjectHeaderData;
-use App\Crm\Data\ProjectPersonData;
+use App\Crm\Data\CaseHeaderData;
+use App\Crm\Data\CasePersonData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
 use App\Crm\Enums\CaptureChannel;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadSource;
-use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\StagePipeline;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\ProjectType;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
@@ -65,7 +65,7 @@ class LeadCaseController extends Controller
 
     public function show(Lead $lead, string $tab = 'overview'): Response|RedirectResponse
     {
-        $project = $lead->project;
+        $project = $lead->case;
 
         $this->authorize('view', $project);
 
@@ -80,13 +80,13 @@ class LeadCaseController extends Controller
             $project->name,
         );
 
-        $project->load(['contacts', 'shoots.crew.user', 'primaryShoot', 'tasks.project', 'tasks.assignee', 'notes.author']);
+        $project->load(['contacts', 'shoots.crew.user', 'primaryShoot', 'tasks.case', 'tasks.assignee', 'notes.author']);
         $primary = $project->primaryShoot;
         $conversation = $project->latestThread()->with('messages.contact', 'messages.author')->first();
 
         return Inertia::render('Leads/Show', [
             'tab' => $tab,
-            'header' => ProjectHeaderData::fromProject($project, app(DeriveProjectPosition::class)($project), queue: false),
+            'header' => CaseHeaderData::fromProject($project, app(DeriveCasePosition::class)($project), queue: false),
             'conversation' => $conversation === null ? null : ThreadData::fromModel($conversation),
             ...($tab === 'quotes' ? app(ReadQuoteList::class)($project) : ['quotes' => [], 'payments' => null]),
             'queue' => $this->leads->queue($lead),
@@ -112,8 +112,8 @@ class LeadCaseController extends Controller
             ],
             // The contact column stands beside the quote, not small underneath
             // it: the phone number is the reason the screen is open.
-            'people' => ProjectPersonData::collect(
-                $project->contacts->map(ProjectPersonData::fromContact(...))
+            'people' => CasePersonData::collect(
+                $project->contacts->map(CasePersonData::fromContact(...))
             ),
             'shoots' => ShootData::collect(
                 $project->shoots->map(fn (Shoot $shoot) => ShootData::fromShoot($shoot))
@@ -159,7 +159,7 @@ class LeadCaseController extends Controller
      */
     public function update(Request $request, Lead $lead): RedirectResponse
     {
-        $project = $lead->project;
+        $project = $lead->case;
 
         // The same authority that moves a shoot: the case's own fields are
         // the inquiry's substance, and ManageShoots is the capability that
@@ -182,7 +182,7 @@ class LeadCaseController extends Controller
             'people.*.email' => ['nullable', 'email', 'max:255'],
             'people.*.phone' => ['nullable', 'string', 'max:64', new ValidFormat('phone')],
             // Freitext: „Trauredner" ist eine Rolle, die in keiner Aufzählung
-            // steht. ProjectContactRole bleibt die Liste der Vorschläge.
+            // steht. CaseContactRole bleibt die Liste der Vorschläge.
             'people.*.role' => ['nullable', 'string', 'max:60'],
             'shoots' => ['array'],
             'shoots.*.id' => ['required', 'string', 'size:24'],
@@ -225,7 +225,7 @@ class LeadCaseController extends Controller
                 // Der Hauptkontakt behält seine Rolle: an ihr hängt der
                 // partielle Unique-Index, und wer bucht, entscheidet die
                 // Erfassung.
-                if (filled($person['role'] ?? null) && $contact->pivot->role !== ProjectContactRole::Primary->value) {
+                if (filled($person['role'] ?? null) && $contact->pivot->role !== CaseContactRole::Primary->value) {
                     $project->contacts()->updateExistingPivot($contact->id, ['role' => $person['role']]);
                 }
             }
@@ -257,7 +257,7 @@ class LeadCaseController extends Controller
      *
      * @return list<array{date: string, what: string, projectId: string}>
      */
-    private function week(Project $project, ?string $date): array
+    private function week(ClientCase $project, ?string $date): array
     {
         if ($date === null) {
             return [];
@@ -266,7 +266,7 @@ class LeadCaseController extends Controller
         $from = CarbonImmutable::parse($date)->subDays(3);
 
         return Shoot::query()
-            ->with('project')
+            ->with('case')
             ->whereKeyNot($project->shoots->pluck('id')->all() ?: [0])
             ->uncancelled()
             ->whereDate('date', '>=', $from->toDateString())
@@ -275,8 +275,8 @@ class LeadCaseController extends Controller
             ->get()
             ->map(fn (Shoot $shoot) => [
                 'date' => $shoot->date->format('Y-m-d'),
-                'what' => $shoot->project->name,
-                'projectId' => $shoot->project->public_id,
+                'what' => $shoot->case->name,
+                'projectId' => $shoot->case->public_id,
             ])
             ->all();
     }

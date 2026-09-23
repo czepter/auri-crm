@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Models\User;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -24,7 +24,7 @@ it('names a page component that exists on disk', function (string $path, string 
     // controller passes fails in the browser and nowhere else. This is the
     // cheapest place to catch the whole class of it.
     $user = User::factory()->withMfa()->create();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $this->actingAs($user, 'staff')
         ->get(str_replace('{project}', $project->public_id, $path))

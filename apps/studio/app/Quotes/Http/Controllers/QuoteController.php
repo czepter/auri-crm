@@ -7,8 +7,8 @@ use App\Catalog\Actions\SavePackage;
 use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
 use App\Crm\Actions\BookProject;
-use App\Crm\Data\ProjectSuggestionData;
-use App\Crm\Models\Project;
+use App\Crm\Data\CaseSuggestionData;
+use App\Crm\Models\ClientCase;
 use App\Documents\Support\InlineHtmlSanitizer;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
@@ -59,8 +59,8 @@ class QuoteController extends Controller
         abort_unless($viewer->can(Capability::ManageQuotes->value), 403);
 
         $quotes = Quote::query()
-            ->whereHas('project', fn ($query) => $query->visibleTo($viewer))
-            ->with(['project.contacts'])
+            ->whereHas('case', fn ($query) => $query->visibleTo($viewer))
+            ->with(['case.contacts'])
             ->latest()
             ->get();
 
@@ -77,20 +77,20 @@ class QuoteController extends Controller
     public function show(Request $request, Quote $quote, ReadQuoteWorkspace $workspace): InertiaResponse
     {
         $viewer = $request->user('staff');
-        $this->authorize('view', $quote->project);
+        $this->authorize('view', $quote->case);
 
-        $quote->loadMissing(['items', 'predecessor', 'paymentStages', 'project', 'recipientContact']);
+        $quote->loadMissing(['items', 'predecessor', 'paymentStages', 'case', 'recipientContact']);
 
         return Inertia::render('Quotes/Show', [
-            'projectId' => $quote->project->public_id,
-            'projectName' => $quote->project->name,
-            'projectIsBooked' => $quote->project->isBooked(),
-            'canManageQuotes' => $viewer->can('manageQuotes', $quote->project),
+            'projectId' => $quote->case->public_id,
+            'projectName' => $quote->case->name,
+            'projectIsBooked' => $quote->case->isBooked(),
+            'canManageQuotes' => $viewer->can('manageQuotes', $quote->case),
             // The payment plan is the project's, not this one quote's — it
             // stays on the Angebote tab, not in this quote's own capsule.
             'canManagePaymentPlan' => false,
             'paymentPlan' => null,
-            ...Arr::only($workspace($quote->project, $viewer), ['packages', 'catalogItems', 'contacts', 'canManageCatalog', 'vatSettings']),
+            ...Arr::only($workspace($quote->case, $viewer), ['packages', 'catalogItems', 'contacts', 'canManageCatalog', 'vatSettings']),
             'quotes' => [QuoteData::fromModel($quote)],
             // QuoteData carries the recipient only as a contact id (the
             // editor's own preselect value) — this screen has no editor
@@ -108,18 +108,18 @@ class QuoteController extends Controller
      */
     public function compose(Request $request, Quote $quote): InertiaResponse
     {
-        $this->authorize('manageQuotes', $quote->project);
+        $this->authorize('manageQuotes', $quote->case);
         abort_unless($quote->status === QuoteStatus::Draft, 404);
 
-        $quote->loadMissing(['items', 'project']);
-        $contact = $quote->project->primaryContact();
+        $quote->loadMissing(['items', 'case']);
+        $contact = $quote->case->primaryContact();
 
         return Inertia::render('Quotes/Send', [
-            'projectId' => $quote->project->public_id,
+            'projectId' => $quote->case->public_id,
             'quote' => QuoteData::fromModel($quote),
             'recipientName' => $contact?->name ?? '',
             'recipientEmail' => $contact?->email ?? '',
-            'address' => app(StudioSettingsResolver::class)->clientAddress($quote->project->contacts()->count()),
+            'address' => app(StudioSettingsResolver::class)->clientAddress($quote->case->contacts()->count()),
             'mailHtml' => MailPreview::html(new QuoteSent($quote, null, MailPreview::MESSAGE), $contact ?? (object) []),
         ]);
     }
@@ -130,18 +130,18 @@ class QuoteController extends Controller
         $viewer = $request->user('staff');
         abort_unless($viewer->can(Capability::ManageQuotes->value), 403);
 
-        $project = $request->filled('projekt')
-            ? Project::query()->visibleTo($viewer)->where('public_id', $request->query('projekt'))->first()
+        $case = $request->filled('projekt')
+            ? ClientCase::query()->visibleTo($viewer)->where('public_id', $request->query('projekt'))->first()
             : null;
 
         return Inertia::render('Quotes/Create', [
-            'project' => $project ? ProjectSuggestionData::fromModel($project) : null,
+            'project' => $case ? CaseSuggestionData::fromModel($case) : null,
             'studioSettings' => StudioSettingsData::fromResolver($settings),
             // Mit dem ersten Angebot geht ein Portal-Link hinaus; was das
             // Impressum trägt, muss vorher stehen.
             'missingBusinessData' => app(StudioReadiness::class)->missingForQuote(),
-            ...($project
-                ? Arr::except($workspace($project, $viewer), 'paymentPlan')
+            ...($case
+                ? Arr::except($workspace($case, $viewer), 'paymentPlan')
                 : [
                     'quotes' => [], 'packages' => [], 'catalogItems' => [], 'contacts' => [], 'canManageCatalog' => false,
                     'vatSettings' => ['mode' => $settings->vatMode(), 'rate' => $settings->effectiveVatRate(), 'note' => $settings->vatNote()],
@@ -149,9 +149,9 @@ class QuoteController extends Controller
         ]);
     }
 
-    public function store(Request $request, Project $project, SeedQuoteFromPackage $seed, StudioSettingsResolver $settings, AllocateDocumentNumber $allocate, ResolveQuoteRecipient $resolveRecipient): RedirectResponse
+    public function store(Request $request, ClientCase $case, SeedQuoteFromPackage $seed, StudioSettingsResolver $settings, AllocateDocumentNumber $allocate, ResolveQuoteRecipient $resolveRecipient): RedirectResponse
     {
-        $this->authorize('manageQuotes', $project);
+        $this->authorize('manageQuotes', $case);
 
         $validated = $request->validate([
             'valid_until' => ['nullable', 'date'],
@@ -174,15 +174,15 @@ class QuoteController extends Controller
         // Der Nachtrag lässt seinen Vorgänger angenommen, anders als die
         // Revision, die ihn auf superseded setzt (ReviseQuote).
         $predecessor = ! empty($validated['addendum_to'])
-            ? $project->quotes()->where('public_id', $validated['addendum_to'])
+            ? $case->quotes()->where('public_id', $validated['addendum_to'])
                 ->where('status', QuoteStatus::Accepted)->firstOrFail()
             : null;
 
-        $quote = DB::transaction(function () use ($project, $validUntil, $predecessor, $allocate, $resolveRecipient) {
+        $quote = DB::transaction(function () use ($case, $validUntil, $predecessor, $allocate, $resolveRecipient) {
             $allocation = ($allocate)(documentType: DocumentType::Quote);
-            $recipient = ($resolveRecipient)($project);
+            $recipient = ($resolveRecipient)($case);
 
-            return $project->quotes()->create([
+            return $case->quotes()->create([
                 'valid_until' => $validUntil,
                 'is_addendum' => $predecessor !== null,
                 'predecessor_id' => $predecessor?->id,
@@ -202,9 +202,9 @@ class QuoteController extends Controller
         AuditLogger::record(
             event: 'quote.created',
             actor: auth('staff')->user(),
-            context: ['project' => $project->public_id],
+            context: ['project' => $case->public_id],
             subject: $quote->public_id,
-            projectId: $project->id,
+            projectId: $case->id,
         );
 
         return back();
@@ -212,7 +212,7 @@ class QuoteController extends Controller
 
     public function update(Request $request, Quote $quote, UpdateQuote $save): RedirectResponse
     {
-        $this->authorize('manageQuotes', $quote->project);
+        $this->authorize('manageQuotes', $quote->case);
 
         $validated = $request->validate([...UpdateQuote::rules(), 'items.*.remember' => ['boolean']]);
 
@@ -233,7 +233,7 @@ class QuoteController extends Controller
             within: CarbonInterval::minutes(15),
             actor: auth('staff')->user(),
             subject: $quote->public_id,
-            projectId: $quote->project_id,
+            projectId: $quote->case_id,
         );
 
         return back();
@@ -246,7 +246,7 @@ class QuoteController extends Controller
      */
     public function storeShowcase(Request $request, Quote $quote): RedirectResponse
     {
-        $this->authorize('update', $quote->project);
+        $this->authorize('update', $quote->case);
 
         $request->validate(['image' => ['required', 'file', 'mimes:png,jpg,jpeg', 'max:4096']]);
 
@@ -257,7 +257,7 @@ class QuoteController extends Controller
 
     public function destroyShowcase(Quote $quote, int $index): RedirectResponse
     {
-        $this->authorize('update', $quote->project);
+        $this->authorize('update', $quote->case);
 
         $quote->removeShowcaseImage($index);
 
@@ -267,7 +267,7 @@ class QuoteController extends Controller
     /** Indiziert statt benannt, dieselbe Regel wie itemImage() darunter. */
     public function showcase(Quote $quote, int $index): StreamedResponse
     {
-        $this->authorize('view', $quote->project);
+        $this->authorize('view', $quote->case);
 
         $path = $quote->showcasePaths()[$index] ?? null;
 
@@ -283,7 +283,7 @@ class QuoteController extends Controller
      */
     public function itemImage(Quote $quote, QuoteItem $quoteItem): StreamedResponse
     {
-        $this->authorize('view', $quote->project);
+        $this->authorize('view', $quote->case);
 
         abort_unless($quoteItem->quote_id === $quote->id && $quoteItem->image_path !== null, 404);
 
@@ -300,7 +300,7 @@ class QuoteController extends Controller
      */
     public function saveAsPackage(Request $request, Quote $quote, CreatePackageFromQuote $create): RedirectResponse
     {
-        $this->authorize('manageQuotes', $quote->project);
+        $this->authorize('manageQuotes', $quote->case);
         $this->authorize('create', Package::class);
 
         $validated = $request->validate(['name' => ['required', 'string', 'max:255']]);
@@ -329,7 +329,7 @@ class QuoteController extends Controller
      */
     public function saveItemAsPackage(Request $request, Quote $quote, SavePackage $save): RedirectResponse
     {
-        $this->authorize('manageQuotes', $quote->project);
+        $this->authorize('manageQuotes', $quote->case);
         $this->authorize('create', Package::class);
 
         $validated = $request->validate([
@@ -360,7 +360,7 @@ class QuoteController extends Controller
      */
     public function send(Request $request, Quote $quote, SendQuote $send): RedirectResponse
     {
-        $this->authorize('manageQuotes', $quote->project);
+        $this->authorize('manageQuotes', $quote->case);
 
         // Both optional: a caller posting straight here without going
         // through compose() (tests included) sends neither, and SendQuote
@@ -372,7 +372,7 @@ class QuoteController extends Controller
 
         $send($quote, auth('staff')->user(), null, $validated['subject'] ?? null, $validated['message'] ?? null);
 
-        return redirect("/auftraege/{$quote->project->public_id}");
+        return redirect("/auftraege/{$quote->case->public_id}");
     }
 
     /**
@@ -382,7 +382,7 @@ class QuoteController extends Controller
      */
     public function markSent(Quote $quote, MarkQuoteSent $mark): RedirectResponse
     {
-        $this->authorize('manageQuotes', $quote->project);
+        $this->authorize('manageQuotes', $quote->case);
 
         $mark($quote, 'self', auth('staff')->user());
 
@@ -391,17 +391,17 @@ class QuoteController extends Controller
 
     public function markAccepted(Quote $quote, AcceptQuote $accept, BookProject $book): RedirectResponse
     {
-        $this->authorize('manageQuotes', $quote->project);
+        $this->authorize('manageQuotes', $quote->case);
 
-        $contact = $quote->project->primaryContact()
+        $contact = $quote->case->primaryContact()
             ?? throw ValidationException::withMessages(['quote' => __('quotes.noPrimaryContact')]);
 
         $accept($quote, $contact, null);
 
         // Every role manages quotes, but booking is Admin-only (StaffRole):
         // the yes is recorded either way, the booking only when this user may book.
-        if (Gate::allows('book', $quote->project)) {
-            $book($quote->project, auth('staff')->user());
+        if (Gate::allows('book', $quote->case)) {
+            $book($quote->case, auth('staff')->user());
         }
 
         return back();
@@ -430,7 +430,7 @@ class QuoteController extends Controller
      */
     public function duplicate(Quote $quote, DuplicateQuote $duplicate): RedirectResponse
     {
-        $this->authorize('manageQuotes', $quote->project);
+        $this->authorize('manageQuotes', $quote->case);
 
         $copy = $duplicate($quote);
 
@@ -439,7 +439,7 @@ class QuoteController extends Controller
             actor: auth('staff')->user(),
             context: ['from' => $quote->public_id],
             subject: $copy->public_id,
-            projectId: $quote->project_id,
+            projectId: $quote->case_id,
         );
 
         return redirect("/angebote/{$copy->public_id}");
@@ -452,17 +452,17 @@ class QuoteController extends Controller
      */
     public function destroy(Quote $quote): RedirectResponse
     {
-        $this->authorize('manageQuotes', $quote->project);
+        $this->authorize('manageQuotes', $quote->case);
         abort_unless($quote->status === QuoteStatus::Draft, 422, 'Nur ein Entwurf lässt sich löschen.');
 
-        $projectId = $quote->project->public_id;
+        $projectId = $quote->case->public_id;
 
         AuditLogger::record(
             event: 'quote.deleted',
             actor: auth('staff')->user(),
             context: ['number' => $quote->number],
             subject: $quote->public_id,
-            projectId: $quote->project_id,
+            projectId: $quote->case_id,
         );
 
         $quote->delete();
@@ -477,7 +477,7 @@ class QuoteController extends Controller
      */
     public function adoptRecipient(Quote $quote): RedirectResponse
     {
-        $this->authorize('manageQuotes', $quote->project);
+        $this->authorize('manageQuotes', $quote->case);
 
         abort_if($quote->recipient_contact_id === null, 404);
 
@@ -519,7 +519,7 @@ class QuoteController extends Controller
 
     public function download(Quote $quote, RenderQuotePdf $render): Response
     {
-        $this->authorize('manageQuotes', $quote->project);
+        $this->authorize('manageQuotes', $quote->case);
 
         return response($render($quote), 200, [
             'Content-Type' => 'application/pdf',
@@ -535,9 +535,9 @@ class QuoteController extends Controller
      */
     public function previewSheet(Quote $quote, RenderQuotePdf $render): Response
     {
-        $this->authorize('view', $quote->project);
+        $this->authorize('view', $quote->case);
 
-        $quote->loadMissing(['items', 'paymentStages', 'recipientContact', 'project']);
+        $quote->loadMissing(['items', 'paymentStages', 'recipientContact', 'case']);
 
         return response($render->html($quote), 200, ['Content-Type' => 'text/html']);
     }
@@ -551,7 +551,7 @@ class QuoteController extends Controller
      */
     public function preview(Request $request, Quote $quote, RenderQuotePdf $render, StudioSettingsResolver $settings): Response
     {
-        $this->authorize('manageQuotes', $quote->project);
+        $this->authorize('manageQuotes', $quote->case);
 
         $validated = $request->validate([
             'pricing_mode' => ['nullable', Rule::enum(PricingMode::class)],
@@ -588,8 +588,8 @@ class QuoteController extends Controller
             'stages.*.minimum' => ['nullable', 'integer', 'min:0'],
         ]);
 
-        $preview = new Quote(['project_id' => $quote->project_id]);
-        $preview->setRelation('project', $quote->project);
+        $preview = new Quote(['case_id' => $quote->case_id]);
+        $preview->setRelation('case', $quote->case);
         // Der Name steht am Kontakt, nicht am Formular; die Anschrift kommt
         // aus dem Entwurf, damit das Blatt dem Feld folgt.
         $preview->setRelation('recipientContact', $quote->recipientContact);

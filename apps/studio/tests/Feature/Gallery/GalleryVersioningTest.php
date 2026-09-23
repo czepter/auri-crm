@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GallerySet;
@@ -12,10 +12,10 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 it('creates a gallery with a nullable shoot_id', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
-    $projectWide = Gallery::factory()->for($project)->create();
-    $perShoot = Gallery::factory()->for($project)->for(Shoot::factory()->for($project), 'shoot')->create();
+    $projectWide = Gallery::factory()->for($project, 'case')->create();
+    $perShoot = Gallery::factory()->for($project, 'case')->for(Shoot::factory()->for($project, 'case'), 'shoot')->create();
 
     expect($projectWide->shoot_id)->toBeNull()
         ->and($perShoot->shoot_id)->not->toBeNull();

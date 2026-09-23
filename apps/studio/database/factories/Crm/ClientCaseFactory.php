@@ -4,16 +4,16 @@ namespace Database\Factories\Crm;
 
 use App\Crm\Enums\BookedVia;
 use App\Crm\Enums\ProjectType;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Project>
+ * @extends Factory<ClientCase>
  */
-class ProjectFactory extends Factory
+class ClientCaseFactory extends Factory
 {
-    protected $model = Project::class;
+    protected $model = ClientCase::class;
 
     public function definition(): array
     {

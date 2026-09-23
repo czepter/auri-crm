@@ -3,14 +3,14 @@
 namespace App\Crm\Http\Controllers;
 
 use App\Crm\Actions\SeedFormInstanceFromTemplate;
+use App\Crm\Data\CaseSuggestionData;
 use App\Crm\Data\FormInstanceData;
-use App\Crm\Data\ProjectSuggestionData;
 use App\Crm\Enums\FormFieldType;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\FormInstance;
 use App\Crm\Models\FormInstanceField;
 use App\Crm\Models\FormInstanceFile;
 use App\Crm\Models\FormTemplate;
-use App\Crm\Models\Project;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
@@ -40,16 +40,16 @@ class FormInstanceController extends Controller
         $viewer = $request->user('staff');
         abort_unless($viewer->can(Capability::ManageFormTemplates->value), 403);
 
-        $project = $request->filled('projekt')
-            ? Project::query()->visibleTo($viewer)->where('public_id', $request->query('projekt'))->first()
+        $case = $request->filled('projekt')
+            ? ClientCase::query()->visibleTo($viewer)->where('public_id', $request->query('projekt'))->first()
             : null;
 
-        $instance = $project && $request->filled('fragebogen')
-            ? $project->formInstances()->where('public_id', $request->query('fragebogen'))->with('fields.currentAnswer')->first()
+        $instance = $case && $request->filled('fragebogen')
+            ? $case->formInstances()->where('public_id', $request->query('fragebogen'))->with('fields.currentAnswer')->first()
             : null;
 
         return Inertia::render('Forms/Create', [
-            'project' => $project ? ProjectSuggestionData::fromModel($project) : null,
+            'project' => $case ? CaseSuggestionData::fromModel($case) : null,
             'formTemplates' => FormTemplate::active()->orderBy('name')->get()
                 ->map(fn (FormTemplate $template) => ['value' => $template->public_id, 'label' => $template->name])
                 ->all(),
@@ -60,9 +60,9 @@ class FormInstanceController extends Controller
         ]);
     }
 
-    public function store(Request $request, Project $project, SeedFormInstanceFromTemplate $seed): RedirectResponse
+    public function store(Request $request, ClientCase $case, SeedFormInstanceFromTemplate $seed): RedirectResponse
     {
-        $this->authorize('manageForms', $project);
+        $this->authorize('manageForms', $case);
 
         $validated = $request->validate([
             // Scoped to active templates for the same reason QuoteController
@@ -76,7 +76,7 @@ class FormInstanceController extends Controller
             ? FormTemplate::active()->where('public_id', $validated['template'])->firstOrFail()
             : null;
 
-        $instance = $project->formInstances()->create([
+        $instance = $case->formInstances()->create([
             'name' => $template?->name ?? 'Neuer Fragebogen',
             'source_template_name' => $template?->name,
         ]);
@@ -88,13 +88,13 @@ class FormInstanceController extends Controller
         AuditLogger::record(
             event: 'form_instance.created',
             actor: auth('staff')->user(),
-            context: ['project' => $project->public_id, 'template' => $template?->public_id],
+            context: ['project' => $case->public_id, 'template' => $template?->public_id],
             subject: $instance->public_id,
-            projectId: $project->id,
+            projectId: $case->id,
         );
 
         return $request->boolean('wizard')
-            ? redirect('/frageboegen/neu?'.http_build_query(['projekt' => $project->public_id, 'fragebogen' => $instance->public_id]))
+            ? redirect('/frageboegen/neu?'.http_build_query(['projekt' => $case->public_id, 'fragebogen' => $instance->public_id]))
             : back();
     }
 
@@ -106,7 +106,7 @@ class FormInstanceController extends Controller
      */
     public function update(Request $request, FormInstance $formInstance): RedirectResponse
     {
-        $this->authorize('manageForms', $formInstance->project);
+        $this->authorize('manageForms', $formInstance->case);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -127,7 +127,7 @@ class FormInstanceController extends Controller
             actor: auth('staff')->user(),
             context: ['name' => $formInstance->name],
             subject: $formInstance->public_id,
-            projectId: $formInstance->project_id,
+            projectId: $formInstance->case_id,
         );
 
         return back();
@@ -143,7 +143,7 @@ class FormInstanceController extends Controller
      */
     public function share(Request $request, FormInstance $formInstance): RedirectResponse
     {
-        $this->authorize('manageForms', $formInstance->project);
+        $this->authorize('manageForms', $formInstance->case);
 
         $shared = $request->validate(['shared' => ['required', 'boolean']])['shared'];
 
@@ -153,7 +153,7 @@ class FormInstanceController extends Controller
             event: $shared ? 'form_instance.shared' : 'form_instance.unshared',
             actor: auth('staff')->user(),
             subject: $formInstance->public_id,
-            projectId: $formInstance->project_id,
+            projectId: $formInstance->case_id,
         );
 
         return back();
@@ -167,7 +167,7 @@ class FormInstanceController extends Controller
      */
     public function answer(Request $request, FormInstanceField $formInstanceField): RedirectResponse
     {
-        $this->authorize('manageForms', $formInstanceField->formInstance->project);
+        $this->authorize('manageForms', $formInstanceField->formInstance->case);
 
         $validated = $request->validate([
             'value' => ['nullable', 'string', 'max:20000'],
@@ -184,7 +184,7 @@ class FormInstanceController extends Controller
             actor: auth('staff')->user(),
             context: ['formInstance' => $formInstanceField->formInstance->public_id],
             subject: $formInstanceField->public_id,
-            projectId: $formInstanceField->formInstance->project_id,
+            projectId: $formInstanceField->formInstance->case_id,
         );
 
         return back();
@@ -217,7 +217,7 @@ class FormInstanceController extends Controller
      */
     public function upload(Request $request, FormInstanceField $formInstanceField): RedirectResponse
     {
-        $this->authorize('manageForms', $formInstanceField->formInstance->project);
+        $this->authorize('manageForms', $formInstanceField->formInstance->case);
 
         abort_unless($formInstanceField->type === FormFieldType::File, 404);
 
@@ -230,7 +230,7 @@ class FormInstanceController extends Controller
             actor: auth('staff')->user(),
             context: ['formInstance' => $formInstanceField->formInstance->public_id, 'name' => $file->name],
             subject: $formInstanceField->public_id,
-            projectId: $formInstanceField->formInstance->project_id,
+            projectId: $formInstanceField->formInstance->case_id,
         );
 
         return back();
@@ -239,7 +239,7 @@ class FormInstanceController extends Controller
     /** A real delete, bytes included: form_answers is the append-only ledger, a client's file is not. */
     public function download(FormInstanceFile $file): StreamedResponse
     {
-        $this->authorize('manageForms', $file->formInstanceField->formInstance->project);
+        $this->authorize('manageForms', $file->formInstanceField->formInstance->case);
 
         return Storage::disk('local')->download($file->path, $file->name);
     }
@@ -248,7 +248,7 @@ class FormInstanceController extends Controller
     {
         $instance = $file->formInstanceField->formInstance;
 
-        $this->authorize('manageForms', $instance->project);
+        $this->authorize('manageForms', $instance->case);
 
         $name = $file->name;
         $file->purge();
@@ -258,7 +258,7 @@ class FormInstanceController extends Controller
             actor: auth('staff')->user(),
             context: ['formInstance' => $instance->public_id, 'name' => $name],
             subject: $file->formInstanceField->public_id,
-            projectId: $instance->project_id,
+            projectId: $instance->case_id,
         );
 
         return back();

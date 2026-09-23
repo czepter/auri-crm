@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GallerySet;
 use App\Media\Enums\AssetStatus;
@@ -19,7 +19,7 @@ beforeEach(function () {
 
 function managedGallery(): Gallery
 {
-    $gallery = Gallery::factory()->for(Project::factory())->create(['title' => 'Hochzeitstag']);
+    $gallery = Gallery::factory()->for(ClientCase::factory(), 'case')->create(['title' => 'Hochzeitstag']);
     $highlights = GallerySet::where('gallery_id', $gallery->id)->first();
     $trauung = GallerySet::factory()->for($gallery)->create(['name' => 'Trauung', 'position' => 1]);
 
@@ -42,7 +42,7 @@ function managedGallery(): Gallery
 // before — an unpublished draft's pictures rendered as null src and an empty
 // grid despite the assets existing (see GalleryAssetController::preview).
 it('gives a draft asset a real src before the gallery has ever been published', function () {
-    $gallery = Gallery::factory()->for(Project::factory())->create(['title' => 'Hochzeitstag']);
+    $gallery = Gallery::factory()->for(ClientCase::factory(), 'case')->create(['title' => 'Hochzeitstag']);
     $set = GallerySet::where('gallery_id', $gallery->id)->first();
     $asset = Asset::factory()->create([
         'gallery_id' => $gallery->id, 'gallery_set_id' => $set->id,
@@ -60,7 +60,7 @@ it('gives a draft asset a real src before the gallery has ever been published', 
 // and an empty grid — technically true about Asset rows, useless to
 // whoever is looking at it.
 it('reports a still-transferring upload as pending, distinct from one waiting on ingest', function () {
-    $gallery = Gallery::factory()->for(Project::factory())->create();
+    $gallery = Gallery::factory()->for(ClientCase::factory(), 'case')->create();
     $set = GallerySet::where('gallery_id', $gallery->id)->first();
 
     MultipartUpload::factory()->create([
@@ -79,7 +79,7 @@ it('reports a still-transferring upload as pending, distinct from one waiting on
 });
 
 it('leaves a concluded or aborted upload out of pendingUploads', function () {
-    $gallery = Gallery::factory()->for(Project::factory())->create();
+    $gallery = Gallery::factory()->for(ClientCase::factory(), 'case')->create();
     $set = GallerySet::where('gallery_id', $gallery->id)->first();
     $asset = Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id]);
 
@@ -99,7 +99,7 @@ it('leaves a concluded or aborted upload out of pendingUploads', function () {
 // exist — a pending upload must never inflate either before ingest
 // actually concludes it.
 it('keeps a pending upload out of figures.assets and the set counts', function () {
-    $gallery = Gallery::factory()->for(Project::factory())->create();
+    $gallery = Gallery::factory()->for(ClientCase::factory(), 'case')->create();
     $set = GallerySet::where('gallery_id', $gallery->id)->first();
 
     MultipartUpload::factory()->create([
@@ -175,9 +175,9 @@ it('keeps figures.assets equal to what publishing actually snapshots', function 
 // Fix round 1, Important: the exact assetCount bug fixed on GalleryRowData,
 // four lines above the siblings block in the same controller.
 it('shows a sibling gallery its real picture count', function () {
-    $project = Project::factory()->create();
-    $gallery = Gallery::factory()->for($project)->create(['title' => 'Erste Galerie']);
-    $sibling = Gallery::factory()->for($project)->create(['title' => 'Zweite Galerie']);
+    $project = ClientCase::factory()->create();
+    $gallery = Gallery::factory()->for($project, 'case')->create(['title' => 'Erste Galerie']);
+    $sibling = Gallery::factory()->for($project, 'case')->create(['title' => 'Zweite Galerie']);
     $siblingSet = GallerySet::where('gallery_id', $sibling->id)->first();
 
     Asset::factory()->create(['gallery_id' => $sibling->id, 'gallery_set_id' => $siblingSet->id]);

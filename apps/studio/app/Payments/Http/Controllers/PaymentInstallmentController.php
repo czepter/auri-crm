@@ -14,7 +14,7 @@ use Illuminate\Validation\Rule;
 /**
  * T-07's staff action: mark one installment paid, with the date, method and
  * reference staff actually have in hand — never a status flipped on its own.
- * Reuses managePaymentPlan (App\Policies\ProjectPolicy) rather than a new
+ * Reuses managePaymentPlan (App\Policies\ClientCasePolicy) rather than a new
  * capability: marking a payment settled is exactly as sensitive as creating
  * or editing the plan it belongs to.
  */
@@ -22,7 +22,7 @@ class PaymentInstallmentController extends Controller
 {
     public function markPaid(Request $request, PaymentInstallment $installment, MarkInstallmentPaid $markPaid): RedirectResponse
     {
-        InvoiceController::authorizeProject($installment->project());
+        InvoiceController::authorizeProject($installment->case());
 
         $validated = $request->validate([
             'paid_on' => ['required', 'date'],
@@ -49,7 +49,7 @@ class PaymentInstallmentController extends Controller
      */
     public function issueInvoice(PaymentInstallment $installment, IssueInvoice $issue): RedirectResponse
     {
-        $this->authorize('managePaymentPlan', $installment->plan->project);
+        $this->authorize('managePaymentPlan', $installment->plan->case);
 
         $invoice = $issue($installment, auth('staff')->user());
 

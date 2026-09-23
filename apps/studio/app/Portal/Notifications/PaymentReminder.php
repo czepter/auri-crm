@@ -37,7 +37,7 @@ class PaymentReminder extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $project = $this->installment->plan->project;
+        $project = $this->installment->plan->case;
 
         $message = (new MailMessage)
             ->subject("Offene Rate zu {$project->name}")

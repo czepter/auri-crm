@@ -22,7 +22,7 @@ use App\Settings\Support\StudioSettingsResolver;
  * legal links and the footer's contact line stay
  * studio-wide: they are the studio speaking about itself. Access revocation
  * stays per contact (contacts.portal_access_revoked_at) and the visibility
- * flag itself per booking (projects.portal_visible) — both A-04's, only
+ * flag itself per booking (cases.portal_visible) — both A-04's, only
  * displayed here. 'portal_visible' in OVERRIDABLE is not that flag: it is
  * the value a booking captured for this contact is born with.
  */

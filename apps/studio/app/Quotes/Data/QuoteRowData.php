@@ -26,8 +26,8 @@ class QuoteRowData extends Data
     {
         return new self(
             id: $quote->public_id,
-            projectName: $quote->project->name,
-            contact: $quote->project->primaryContact()?->name,
+            projectName: $quote->case->name,
+            contact: $quote->case->primaryContact()?->name,
             number: $quote->number,
             status: $quote->status->value,
             statusLabel: $quote->status->label(),
