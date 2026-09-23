@@ -97,7 +97,7 @@ it('closes an inquiry from the board with its outcome', function () {
         ])
         ->assertRedirect('/anfragen');
 
-    expect($lead->fresh()->outcome)->toBe(LeadOutcome::Declined)
+    expect($lead->case->fresh()->close_outcome)->toBe(LeadOutcome::Declined)
         ->and($lead->fresh()->isLost())->toBeTrue();
 });
 
@@ -116,6 +116,6 @@ it('reopens an inquiry closed by mistake, from its own screen', function () {
         ->assertRedirect();
 
     expect($lead->fresh()->isLost())->toBeFalse()
-        ->and($lead->fresh()->outcome)->toBeNull()
+        ->and($lead->case->fresh()->close_outcome)->toBeNull()
         ->and($lead->fresh()->stage->key)->toBe(LeadStage::Contacted->value);
 });

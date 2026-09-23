@@ -29,7 +29,7 @@ function inquiry(?LeadOutcome $outcome = LeadOutcome::Lost, int $idleMonths = 13
     $project->attachContact($contact, CaseContactRole::Primary);
     $lead = Lead::factory()->for($project, 'case')->create(['inquiry_text' => 'Hochzeit im Mai']);
 
-    $outcome === null || $lead->update(['outcome' => $outcome, 'lost_at' => now()]);
+    $outcome === null || $project->forceFill(['close_outcome' => $outcome, 'closed_at' => now()->subMonths($idleMonths)])->save();
     DB::table('leads')->where('id', $lead->id)->update(['updated_at' => now()->subMonths($idleMonths)]);
 
     return $contact;

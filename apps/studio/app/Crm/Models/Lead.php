@@ -4,7 +4,6 @@ namespace App\Crm\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Crm\Enums\CaptureChannel;
-use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Support\CrmVocabulary;
@@ -40,9 +39,6 @@ class Lead extends Model
         'source_other',
         'stage',
         'stage_entered_at',
-        'lost_at',
-        'lost_reason',
-        'outcome',
         'stalled_reminders_sent',
         'stalled_reminded_at',
         'inquiry_text',
@@ -60,8 +56,6 @@ class Lead extends Model
             'captured_via' => CaptureChannel::class,
             'stage_entered_at' => 'immutable_datetime',
             'captured_at' => 'immutable_datetime',
-            'lost_at' => 'immutable_datetime',
-            'outcome' => LeadOutcome::class,
             'stalled_reminded_at' => 'immutable_datetime',
         ];
     }
@@ -123,7 +117,7 @@ class Lead extends Model
     /** The name stays: LeadReadData carries it into the OpenAPI contract. */
     public function isLost(): bool
     {
-        return $this->outcome !== null;
+        return $this->case->isClosed();
     }
 
     public function case(): BelongsTo
@@ -152,7 +146,7 @@ class Lead extends Model
      */
     public function scopeOpen(Builder $query): void
     {
-        $query->whereNull('outcome');
+        $query->whereHas('case', fn ($case) => $case->whereNull('cases.closed_at'));
     }
 
     /**

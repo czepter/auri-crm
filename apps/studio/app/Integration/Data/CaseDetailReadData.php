@@ -31,6 +31,9 @@ class CaseDetailReadData extends Data
         public ?CaseLeadReadData $lead,
         public ?string $bookedAt,
         public ?string $bookedVia,
+        public ?string $closedAt,
+        public ?string $closeOutcome,
+        public ?string $closeReason,
         public int $openTaskCount,
         /** @var list<CaseContactReadData> */
         public array $contacts,
@@ -56,6 +59,9 @@ class CaseDetailReadData extends Data
             lead: $project->lead === null ? null : CaseLeadReadData::fromModel($project->lead),
             bookedAt: $project->booked_at?->toIso8601String(),
             bookedVia: $project->booked_via?->value,
+            closedAt: $project->closed_at?->toIso8601String(),
+            closeOutcome: $project->close_outcome?->value,
+            closeReason: $project->close_reason,
             openTaskCount: (int) $project->open_task_count,
             contacts: $project->contacts->map(CaseContactReadData::fromModel(...))->all(),
             shoots: $project->shoots

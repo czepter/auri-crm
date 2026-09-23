@@ -5,6 +5,7 @@ namespace App\Reporting\Support;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
 use App\Crm\Support\CrmVocabulary;
 use Carbon\CarbonInterface;
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * S-13: what the CRM has been collecting since P-01 and never showed anyone.
  *
- * `Lead.source`, `Lead.lost_reason` and `leads.referred_by_contact_id` are
+ * `Lead.source`, `ClientCase.close_reason` and `leads.referred_by_contact_id` are
  * written on capture and read by nothing. Every figure here is a query over
  * columns that already exist — this story adds no schema at all.
  *
@@ -157,21 +158,21 @@ class BookingFunnel
      */
     public static function lostReasons(CarbonInterface $from, CarbonInterface $to, ?ProjectType $type = null): array
     {
-        $query = Lead::query()
-            ->select('outcome', 'lost_reason', DB::raw('count(*) as count'))
-            ->whereNotNull('outcome')
-            ->whereNotNull('lost_reason')
-            ->whereBetween('captured_at', [$from, $to])
-            ->groupBy('outcome', 'lost_reason')
+        $query = ClientCase::query()
+            ->join('leads', 'leads.case_id', '=', 'cases.id')
+            ->select('cases.close_outcome', 'cases.close_reason', DB::raw('count(*) as count'))
+            ->whereNotNull('cases.close_reason')
+            ->whereBetween('leads.captured_at', [$from, $to])
+            ->groupBy('cases.close_outcome', 'cases.close_reason')
             ->orderByDesc('count');
 
-        ProjectFilter::apply($query, $type, 'leads.case_id');
+        ProjectFilter::apply($query, $type, 'cases.id');
 
         return $query->get()
             ->map(fn ($row) => [
-                'outcome' => $row->outcome->value,
-                'outcomeLabel' => $row->outcome->label(),
-                'reason' => $row->lost_reason,
+                'outcome' => $row->close_outcome->value,
+                'outcomeLabel' => $row->close_outcome->label(),
+                'reason' => $row->close_reason,
                 'count' => (int) $row->count,
             ])
             ->all();

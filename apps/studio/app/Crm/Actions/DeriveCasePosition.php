@@ -40,10 +40,10 @@ class DeriveCasePosition
     {
         $lead = $project->lead;
 
-        // A lost lead outranks everything. The shoots of a dead pursuit are not
+        // A closed case outranks everything. The shoots of a dead pursuit are not
         // a position the studio is working through.
-        if ($lead?->isLost()) {
-            return new CasePositionData(source: 'lost', value: 'lost', label: 'Verloren');
+        if ($project->isClosed()) {
+            return new CasePositionData(source: 'lost', value: 'lost', label: $project->isBooked() ? 'Storniert' : 'Verloren');
         }
 
         // The studio's word, over whatever the shoots still say.

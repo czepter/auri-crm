@@ -160,7 +160,7 @@ it('closes a lead and takes that back', function () {
     $response->assertOk();
 
     expect($lead->fresh()->isLost())->toBeFalse()
-        ->and($response->json('lostAt'))->toBeNull()
+        ->and($response->json('closedAt'))->toBeNull()
         ->and(integerIdPaths($response->json()))->toBe([]);
 });
 

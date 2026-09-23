@@ -42,12 +42,12 @@ class LeadFactory extends Factory
         ]);
     }
 
-    public function lost(string $reason = 'Budget', LeadOutcome $outcome = LeadOutcome::Lost): static
+    public function lost(?string $reason = 'Budget', LeadOutcome $outcome = LeadOutcome::Lost): static
     {
-        return $this->state(fn () => [
-            'lost_at' => now(),
-            'lost_reason' => $reason,
-            'outcome' => $outcome,
-        ]);
+        return $this->afterCreating(fn (Lead $lead) => $lead->case->forceFill([
+            'closed_at' => now(),
+            'close_outcome' => $outcome,
+            'close_reason' => $reason,
+        ])->save());
     }
 }

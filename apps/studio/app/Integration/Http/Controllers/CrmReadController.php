@@ -94,10 +94,10 @@ class CrmReadController extends Controller
         ]);
 
         $query = Lead::query()
-            ->with('case:id,public_id,name')
+            ->with('case:id,public_id,name,closed_at')
             ->when($filters['stage'] ?? null, fn (Builder $q, string $stage) => $q->where('stage', $stage))
             ->when($request->has('closed'), fn (Builder $q) => $request->boolean('closed')
-                ? $q->whereNotNull('outcome')
+                ? $q->whereHas('case', fn (Builder $case) => $case->whereNotNull('cases.closed_at'))
                 : $q->open())
             ->when($filters['captured_from'] ?? null, fn (Builder $q, string $from) => $q->whereDate('captured_at', '>=', $from))
             ->when($filters['captured_to'] ?? null, fn (Builder $q, string $to) => $q->whereDate('captured_at', '<=', $to));

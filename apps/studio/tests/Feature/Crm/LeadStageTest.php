@@ -104,7 +104,7 @@ it('marks a lead lost from any stage without changing the stage', function () {
 
     expect($lost->isLost())->toBeTrue()
         ->and($lost->stage->key)->toBe(LeadStage::QuoteAccepted->value)
-        ->and($lost->lost_reason)->toBe('Anderer Fotograf');
+        ->and($lost->case->close_reason)->toBe('Anderer Fotograf');
 
     Event::assertDispatched(LeadLost::class);
 });
@@ -282,8 +282,8 @@ it('reopens a lead that was closed by mistake', function () {
     app(AdvanceLeadStage::class)->reopen($lead);
 
     expect($lead->fresh()->isLost())->toBeFalse()
-        ->and($lead->fresh()->lost_reason)->toBeNull()
-        ->and($lead->fresh()->outcome)->toBeNull();
+        ->and($lead->case->fresh()->close_reason)->toBeNull()
+        ->and($lead->case->fresh()->close_outcome)->toBeNull();
 
     // And it can move again, which is the whole point.
     app(AdvanceLeadStage::class)($lead, stage(LeadStage::Contacted));

@@ -1,7 +1,6 @@
 <?php
 
 use App\Crm\Enums\CaseContactRole;
-use App\Crm\Enums\LeadOutcome;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
@@ -27,7 +26,7 @@ it('suggests open leads and projects newest first below two characters', functio
     $older = Lead::factory()->create();
     $older->case->forceFill(['updated_at' => now()->subDay()])->save();
     $newer = Lead::factory()->create();
-    Lead::factory()->create(['outcome' => LeadOutcome::Lost]);
+    Lead::factory()->lost()->create();
     $completed = Lead::factory()->create();
     $completed->case->forceFill(['completed_at' => now()])->save();
 

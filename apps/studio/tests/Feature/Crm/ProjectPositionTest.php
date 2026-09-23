@@ -44,6 +44,7 @@ it('hands over to the shoots once the project is booked', function () {
 it('reads lost before anything else, booked or not', function () {
     $project = ClientCase::factory()->create();
     Lead::factory()->for($project, 'case')->lost('Budget')->create();
+    $project->refresh();
     Shoot::factory()->for($project, 'case')->primary()->create();
 
     expect(positionOf($project)->source)->toBe('lost');
@@ -105,6 +106,7 @@ it('changes when the underlying lead stage changes', function () {
 it('reads lost when the lead is lost and nothing is shooting', function () {
     $project = ClientCase::factory()->create();
     Lead::factory()->for($project, 'case')->lost('Budget')->create();
+    $project->refresh();
 
     expect(positionOf($project)->source)->toBe('lost')
         ->and(positionOf($project)->label)->toBe('Verloren');

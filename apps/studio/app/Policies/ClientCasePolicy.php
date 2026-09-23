@@ -39,7 +39,7 @@ class ClientCasePolicy
     public function book(User $user, ClientCase $project): bool
     {
         return $user->can(Capability::BookProject->value)
-            && ! ($project->lead?->isLost() ?? false);
+            && ! $project->isClosed();
     }
 
     /** The capability that captures an inquiry may take it back, as on the API. */
