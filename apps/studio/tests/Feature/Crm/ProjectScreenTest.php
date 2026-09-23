@@ -320,10 +320,10 @@ it('links the inquiry and closes it from the project', function () {
     $lead = Lead::factory()->for($this->case, 'case')->create();
     $screen = "/auftraege/{$this->case->public_id}/shootings";
 
-    expect(array_column(props($screen)['header']['tabs'], 'href', 'key')['overview'])->toBe("/anfragen/{$lead->public_id}");
+    expect(array_column(props($screen)['header']['tabs'], 'href', 'key')['overview'])->toBe("/anfragen/{$lead->case->public_id}");
 
     $this->from($screen)
-        ->post("/anfragen/{$lead->public_id}/schliessen", ['outcome' => 'lost', 'reason' => 'Anderen Fotografen gebucht'])
+        ->post("/anfragen/{$lead->case->public_id}/schliessen", ['outcome' => 'lost', 'reason' => 'Anderen Fotografen gebucht'])
         ->assertRedirect($screen);
 
     expect(props($screen)['header']['outcomeLabel'])->toBe('Verloren');

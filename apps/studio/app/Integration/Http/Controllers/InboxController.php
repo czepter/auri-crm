@@ -95,9 +95,9 @@ class InboxController extends Controller
 
     public function file(Request $request, Thread $thread, AttachThreadToCase $attach): JsonResponse
     {
-        $validated = $request->validate(['project' => ['required', 'string']]);
+        $validated = $request->validate(['case' => ['required', 'string']]);
 
-        $project = ClientCase::query()->where('public_id', $validated['project'])->firstOrFail();
+        $project = ClientCase::query()->where('public_id', $validated['case'])->firstOrFail();
 
         try {
             $attach($thread, $project);

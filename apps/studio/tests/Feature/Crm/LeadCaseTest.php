@@ -35,7 +35,7 @@ it('groups the queue by working state, not by funnel stage', function () {
     caseFor(LeadStage::QuoteSent, '2026-07-11');
     caseFor(LeadStage::QuoteAccepted, '2026-08-02');
 
-    $groups = collect(props("/anfragen/{$open->public_id}")['queue'])->keyBy('key');
+    $groups = collect(props("/anfragen/{$open->case->public_id}")['queue'])->keyBy('key');
 
     expect($groups['unbeantwortet']['rows'])->toHaveCount(1)
         ->and($groups['angebot']['rows'])->toHaveCount(1)
@@ -46,12 +46,12 @@ it('groups the queue by working state, not by funnel stage', function () {
 it('offers the stages to move to and lands back on the case', function () {
     $lead = caseFor();
 
-    expect(collect(props("/anfragen/{$lead->public_id}")['stages'])->pluck('value'))
+    expect(collect(props("/anfragen/{$lead->case->public_id}")['stages'])->pluck('value'))
         ->toContain('quote_sent');
 
-    $this->from("/anfragen/{$lead->public_id}")
-        ->post("/anfragen/{$lead->public_id}/stufe", ['stage' => 'quote_sent'])
-        ->assertRedirect("/anfragen/{$lead->public_id}");
+    $this->from("/anfragen/{$lead->case->public_id}")
+        ->post("/anfragen/{$lead->case->public_id}/stufe", ['stage' => 'quote_sent'])
+        ->assertRedirect("/anfragen/{$lead->case->public_id}");
 });
 
 it('carries what they wrote, who they are and when they want it', function () {
@@ -61,7 +61,7 @@ it('carries what they wrote, who they are and when they want it', function () {
         CaseContactRole::Primary,
     );
 
-    $props = props("/anfragen/{$lead->public_id}");
+    $props = props("/anfragen/{$lead->case->public_id}");
 
     expect($props['lead']['inquiryText'])->toContain('Hof Eggers')
         ->and($props['people'][0]['name'])->toBe('Sarah Brandt')
@@ -75,11 +75,11 @@ it('carries what they wrote, who they are and when they want it', function () {
 it('offers the active packages until a quote exists, then the quote', function () {
     $lead = caseFor();
 
-    expect(props("/anfragen/{$lead->public_id}")['quote'])->toBeNull();
+    expect(props("/anfragen/{$lead->case->public_id}")['quote'])->toBeNull();
 
     Quote::factory()->for($lead->case, 'case')->create(['total' => 590000, 'sent_at' => now()->subDay()]);
 
-    $props = props("/anfragen/{$lead->public_id}");
+    $props = props("/anfragen/{$lead->case->public_id}");
 
     expect($props['quote']['total'])->toBe(590000)
         ->and($props['packages'])->toBe([]);
@@ -89,12 +89,12 @@ it('offers the active packages until a quote exists, then the quote', function (
 it('shows the week around the requested day, and says so when it is free', function () {
     $lead = caseFor(date: '2026-09-05');
 
-    expect(props("/anfragen/{$lead->public_id}")['week'])->toBe([]);
+    expect(props("/anfragen/{$lead->case->public_id}")['week'])->toBe([]);
 
     $other = ClientCase::factory()->create(['name' => 'Petersen']);
     Shoot::factory()->for($other, 'case')->on('2026-09-06')->create();
 
-    $week = props("/anfragen/{$lead->public_id}")['week'];
+    $week = props("/anfragen/{$lead->case->public_id}")['week'];
 
     expect($week)->toHaveCount(1)
         ->and($week[0]['what'])->toBe('Petersen')
@@ -105,7 +105,20 @@ it('sends an unbooked project to its inquiry', function () {
     $lead = caseFor();
 
     $this->get("/auftraege/{$lead->case->public_id}")
-        ->assertRedirect("/anfragen/{$lead->public_id}");
+        ->assertRedirect("/anfragen/{$lead->case->public_id}");
+});
+
+// #520: /anfragen took the lead's own id before the case's, and notifications
+// already sent still carry it.
+it('redirects an old lead link to its case', function () {
+    $lead = caseFor();
+    $lead->forceFill(['legacy_public_id' => 'lead0000000000000000old1'])->save();
+
+    $this->get('/anfragen/lead0000000000000000old1/nachrichten')
+        ->assertStatus(301)
+        ->assertRedirect("/anfragen/{$lead->case->public_id}/nachrichten");
+
+    $this->get('/anfragen/lead0000000000000000none')->assertNotFound();
 });
 
 // C-10 (#245): editing is a state of the view, so it posts back to the same
@@ -117,7 +130,7 @@ it('saves occasion, source, text and the people from the case itself', function 
         CaseContactRole::Primary,
     );
 
-    test()->patch("/anfragen/{$lead->public_id}", [
+    test()->patch("/anfragen/{$lead->case->public_id}", [
         'type' => 'portrait',
         'source' => 'website',
         'inquiry_text' => 'Neu diktiert.',
@@ -139,7 +152,7 @@ it('saves occasion, source, text and the people from the case itself', function 
 it('saves the Sonstige detail from the case and drops it with the case', function () {
     $lead = caseFor();
 
-    test()->patch("/anfragen/{$lead->public_id}", [
+    test()->patch("/anfragen/{$lead->case->public_id}", [
         'type' => 'other',
         'type_other' => 'Tierfotografie',
         'source' => 'other',
@@ -149,7 +162,7 @@ it('saves the Sonstige detail from the case and drops it with the case', functio
     expect($lead->case->fresh()->type_other)->toBe('Tierfotografie')
         ->and($lead->fresh()->source_other)->toBe('Zeitungsartikel');
 
-    test()->patch("/anfragen/{$lead->public_id}", [
+    test()->patch("/anfragen/{$lead->case->public_id}", [
         'type' => 'wedding',
         'source' => 'website',
     ])->assertRedirect();
@@ -163,7 +176,7 @@ it('saves the source alone and leaves the occasion', function () {
     $lead = caseFor();
     $type = $lead->case->type->key;
 
-    test()->patch("/anfragen/{$lead->public_id}", [
+    test()->patch("/anfragen/{$lead->case->public_id}", [
         'source' => 'other',
         'source_other' => 'Messe',
     ])->assertRedirect()->assertSessionHasNoErrors();
@@ -176,7 +189,7 @@ it('moves the shoot while it is an inquiry', function () {
     $lead = caseFor();
     $shoot = $lead->case->primaryShoot;
 
-    test()->patch("/anfragen/{$lead->public_id}", [
+    test()->patch("/anfragen/{$lead->case->public_id}", [
         'type' => 'wedding',
         'source' => $lead->source->value,
         'shoots' => [[
@@ -200,7 +213,7 @@ it('moves a shoot after the project is booked', function () {
     $lead = caseFor();
     markBooked($lead->case);
 
-    test()->patch("/anfragen/{$lead->public_id}", [
+    test()->patch("/anfragen/{$lead->case->public_id}", [
         'shoots' => [[
             'id' => $lead->case->primaryShoot->public_id,
             'date' => '2026-09-12',
@@ -225,7 +238,7 @@ it('sends the superseded quote versions alongside the current one', function () 
     ]);
     Quote::factory()->for($lead->case, 'case')->create(['status' => QuoteStatus::Sent, 'net' => 257200]);
 
-    $props = props("/anfragen/{$lead->public_id}");
+    $props = props("/anfragen/{$lead->case->public_id}");
 
     expect($props['supersededQuotes'])->toHaveCount(1)
         ->and($props['supersededQuotes'][0]['id'])->toBe($old->public_id)
@@ -237,5 +250,5 @@ it('sends an empty superseded list when a project has only one quote', function 
     $lead = caseFor();
     Quote::factory()->for($lead->case, 'case')->create();
 
-    expect(props("/anfragen/{$lead->public_id}")['supersededQuotes'])->toBe([]);
+    expect(props("/anfragen/{$lead->case->public_id}")['supersededQuotes'])->toBe([]);
 });

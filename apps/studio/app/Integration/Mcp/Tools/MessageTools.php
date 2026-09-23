@@ -24,9 +24,9 @@ final class MessageTools
                 title: 'Send a message',
                 description: 'Reply on a project\'s conversation — the client receives it by mail, unlike add_message, which only backfills history and sends nothing. Needs a thread the client already started; there is none to reply to on a project with no conversation yet. With scheduled_for it goes out later instead, cancellable until then with cancel_scheduled_message.',
                 method: 'POST',
-                path: '/projects/{project}/messages/send',
+                path: '/cases/{case}/messages/send',
                 schema: fn (JsonSchema $schema) => [
-                    'project' => $schema->string()->description('The project public id')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                     'body' => $schema->string()->max(5000)->required(),
                     'scheduled_for' => $schema->string()->nullable()->description('When to send it. ISO 8601, in the future. Immediate if omitted.'),
                 ],
@@ -49,7 +49,7 @@ final class MessageTools
             new ToolDefinition(
                 name: 'list_inbox_threads',
                 title: 'List inbox threads',
-                description: 'The Posteingang tray: every conversation, newest first, with its work state (unbeantwortet/wartet/erledigt), snippet and how long the newest line has waited. projectId is null for a conversation the client started without naming a booking — file_thread_to_project is what gives it one.',
+                description: 'The Posteingang tray: every conversation, newest first, with its work state (unbeantwortet/wartet/erledigt), snippet and how long the newest line has waited. projectId is null for a conversation the client started without naming a booking — file_thread_to_case is what gives it one.',
                 method: 'GET',
                 path: '/inbox/threads',
                 schema: fn (JsonSchema $schema) => [],
@@ -93,14 +93,14 @@ final class MessageTools
             ),
 
             new ToolDefinition(
-                name: 'file_thread_to_project',
-                title: 'File a thread to a project',
-                description: 'Points a conversation that started without naming a booking (projectId null on list_inbox_threads) at the project it turned out to be about. One direction only — a thread that already names a project cannot be re-filed or detached.',
+                name: 'file_thread_to_case',
+                title: 'File a thread to a case',
+                description: 'Points a conversation that started without naming a booking (projectId null on list_inbox_threads) at the case it turned out to be about. One direction only — a thread that already names a case cannot be re-filed or detached.',
                 method: 'POST',
                 path: '/inbox/threads/{thread}/file',
                 schema: fn (JsonSchema $schema) => [
                     'thread' => $schema->string()->description('The thread public id, from list_inbox_threads')->required(),
-                    'project' => $schema->string()->description('The project public id to file it under')->required(),
+                    'case' => $schema->string()->description('The case public id to file it under')->required(),
                 ],
                 annotations: ['readOnlyHint' => false, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false],
             ),

@@ -26,7 +26,7 @@ function deleteProject(ClientCase $project, Capability $scope = Capability::Mana
     return test()
         ->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'delete-'.$project->public_id)
-        ->deleteJson("/api/projects/{$project->public_id}");
+        ->deleteJson("/api/cases/{$project->public_id}");
 }
 
 it('deletes a project with everything that only exists as part of it', function () {
@@ -94,7 +94,7 @@ it('refuses a delete without an idempotency key', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
-        ->deleteJson("/api/projects/{$project->public_id}")
+        ->deleteJson("/api/cases/{$project->public_id}")
         ->assertStatus(400);
 
     expect(ClientCase::query()->count())->toBe(1);
@@ -105,6 +105,6 @@ it('404s a project that does not exist', function () {
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'delete-nothing')
-        ->deleteJson('/api/projects/not-a-real-id')
+        ->deleteJson('/api/cases/not-a-real-id')
         ->assertNotFound();
 });

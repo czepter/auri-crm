@@ -64,12 +64,12 @@ it('creates a form from a template, updates it, shares it and records an answer'
     $template->fields()->create(['label' => 'Wer kommt?', 'type' => 'text', 'sort_order' => 0]);
 
     $formId = $this->withHeader('Idempotency-Key', 'form-1')
-        ->postJson("/api/projects/{$project->public_id}/forms", ['template' => $template->public_id])
+        ->postJson("/api/cases/{$project->public_id}/forms", ['template' => $template->public_id])
         ->assertCreated()
         ->assertJsonPath('data.fields.0.label', 'Wer kommt?')
         ->json('data.id');
 
-    $this->getJson("/api/projects/{$project->public_id}/forms")->assertOk()->assertJsonCount(1, 'data');
+    $this->getJson("/api/cases/{$project->public_id}/forms")->assertOk()->assertJsonCount(1, 'data');
 
     $fieldId = $this->withHeader('Idempotency-Key', 'form-2')
         ->patchJson("/api/forms/{$formId}", [
@@ -134,13 +134,13 @@ it('sets a project explicit portal visibility rather than toggling it', function
     $project = ClientCase::factory()->create(['portal_visible' => false]);
 
     $this->withHeader('Idempotency-Key', 'visibility-1')
-        ->postJson("/api/projects/{$project->public_id}/portal-visibility", ['visible' => true])
+        ->postJson("/api/cases/{$project->public_id}/portal-visibility", ['visible' => true])
         ->assertOk()
         ->assertJsonPath('portalVisible', true);
 
     // Retrying the same write must not flip it back off.
     $this->withHeader('Idempotency-Key', 'visibility-1')
-        ->postJson("/api/projects/{$project->public_id}/portal-visibility", ['visible' => true])
+        ->postJson("/api/cases/{$project->public_id}/portal-visibility", ['visible' => true])
         ->assertOk()
         ->assertJsonPath('portalVisible', true);
 

@@ -21,7 +21,7 @@ it('books a project, advancing its shoots and answering with its detail', functi
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'book-1')
-        ->postJson("/api/projects/{$project->public_id}/book");
+        ->postJson("/api/cases/{$project->public_id}/book");
 
     $response->assertOk();
 
@@ -38,7 +38,7 @@ it('refuses booking to a token that does not hold BookProject', function () {
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'book-forbidden')
-        ->postJson("/api/projects/{$project->public_id}/book")
+        ->postJson("/api/cases/{$project->public_id}/book")
         ->assertForbidden();
 });
 
@@ -48,14 +48,14 @@ it('completes a project and reopens it', function () {
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'complete-1')
-        ->postJson("/api/projects/{$project->public_id}/complete")
+        ->postJson("/api/cases/{$project->public_id}/complete")
         ->assertOk();
 
     expect($project->fresh()->isCompleted())->toBeTrue();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'reopen-1')
-        ->deleteJson("/api/projects/{$project->public_id}/complete")
+        ->deleteJson("/api/cases/{$project->public_id}/complete")
         ->assertOk();
 
     expect($project->fresh()->isCompleted())->toBeFalse();
@@ -68,6 +68,6 @@ it('refuses completing an already completed project', function () {
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'complete-twice')
-        ->postJson("/api/projects/{$project->public_id}/complete")
+        ->postJson("/api/cases/{$project->public_id}/complete")
         ->assertUnprocessable();
 });

@@ -128,7 +128,7 @@ const anfrage = useForm({ inquiry_text: props.inquiry?.text ?? "" });
 function saveAnfrage() {
     anfrage
         .transform((data) => ({ ...data, inquiry_text: blank(data.inquiry_text) }))
-        .patch(`/anfragen/${props.header.leadId}`, {
+        .patch(`/anfragen/${props.header.id}`, {
             preserveScroll: true,
             onSuccess: () => (anfrageEditing.value = false),
         });

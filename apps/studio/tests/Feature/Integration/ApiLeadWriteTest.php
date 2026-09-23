@@ -101,9 +101,9 @@ it('advances a lead stage, reusing AdvanceLeadStage exactly like the board', fun
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'stage-1')
-        ->postJson("/api/leads/{$lead->public_id}/stage", ['stage' => LeadStage::Contacted->value]);
+        ->postJson("/api/cases/{$lead->case->public_id}/lead/stage", ['stage' => LeadStage::Contacted->value]);
 
-    $response->assertOk()->assertJson(['id' => $lead->public_id, 'stage' => 'contacted']);
+    $response->assertOk()->assertJson(['id' => $lead->case->public_id, 'stage' => 'contacted']);
     expect($lead->fresh()->stage->key)->toBe(LeadStage::Contacted->value);
 });
 
@@ -114,7 +114,7 @@ it('rejects an illegal stage transition the same way the board does', function (
     // Backwards is legal now — the no-op is the transition left to reject.
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'stage-illegal')
-        ->postJson("/api/leads/{$lead->public_id}/stage", ['stage' => LeadStage::Booked->value])
+        ->postJson("/api/cases/{$lead->case->public_id}/lead/stage", ['stage' => LeadStage::Booked->value])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('stage');
 
@@ -127,7 +127,7 @@ it('refuses to advance a stage without the manage_leads scope', function () {
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'stage-scope')
-        ->postJson("/api/leads/{$lead->public_id}/stage", ['stage' => LeadStage::Contacted->value])
+        ->postJson("/api/cases/{$lead->case->public_id}/lead/stage", ['stage' => LeadStage::Contacted->value])
         ->assertForbidden();
 
     expect($lead->fresh()->stage->key)->toBe(LeadStage::New->value);
@@ -138,7 +138,7 @@ it('404s advancing a stage for a lead public_id from another tenant or that does
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'stage-missing')
-        ->postJson('/api/leads/does-not-exist-1234567890/stage', ['stage' => LeadStage::Contacted->value])
+        ->postJson('/api/cases/does-not-exist-1234567890/lead/stage', ['stage' => LeadStage::Contacted->value])
         ->assertNotFound();
 });
 
@@ -148,14 +148,14 @@ it('closes a lead and takes that back', function () {
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'lost-1')
-        ->postJson("/api/leads/{$lead->public_id}/lost", ['outcome' => 'lost', 'reason' => 'Budget'])
+        ->postJson("/api/cases/{$lead->case->public_id}/lead/lost", ['outcome' => 'lost', 'reason' => 'Budget'])
         ->assertOk();
 
     expect($lead->fresh()->isLost())->toBeTrue();
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'reopen-1')
-        ->postJson("/api/leads/{$lead->public_id}/reopen");
+        ->postJson("/api/cases/{$lead->case->public_id}/lead/reopen");
 
     $response->assertOk();
 
@@ -170,7 +170,7 @@ it('refuses to close a lead without the manage_leads scope', function () {
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'lost-scope')
-        ->postJson("/api/leads/{$lead->public_id}/lost", ['outcome' => 'lost', 'reason' => 'Budget'])
+        ->postJson("/api/cases/{$lead->case->public_id}/lead/lost", ['outcome' => 'lost', 'reason' => 'Budget'])
         ->assertForbidden();
 
     expect($lead->fresh()->isLost())->toBeFalse();
@@ -182,7 +182,7 @@ it('rewrites a lead\'s inquiry text after capture', function () {
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'inquiry-1')
-        ->patchJson("/api/leads/{$lead->public_id}", ['inquiry_text' => 'Tippfehler'])
+        ->patchJson("/api/cases/{$lead->case->public_id}/lead", ['inquiry_text' => 'Tippfehler'])
         ->assertOk();
 
     expect($lead->fresh()->inquiry_text)->toBe('Tippfehler')
@@ -199,7 +199,7 @@ it('corrects a lead\'s capture channel after the fact', function () {
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'captured-via-1')
-        ->patchJson("/api/leads/{$lead->public_id}", [
+        ->patchJson("/api/cases/{$lead->case->public_id}/lead", [
             'inquiry_text' => 'x',
             'captured_via' => 'other',
             'captured_via_other' => 'Hochzeitsmesse-Stand',
@@ -213,7 +213,7 @@ it('corrects a lead\'s capture channel after the fact', function () {
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'captured-via-2')
-        ->patchJson("/api/leads/{$lead->public_id}", ['inquiry_text' => 'x', 'captured_via' => 'email'])
+        ->patchJson("/api/cases/{$lead->case->public_id}/lead", ['inquiry_text' => 'x', 'captured_via' => 'email'])
         ->assertOk();
 
     expect($lead->fresh()->captured_via_other)->toBeNull();

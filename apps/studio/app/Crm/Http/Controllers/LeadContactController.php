@@ -3,8 +3,8 @@
 namespace App\Crm\Http\Controllers;
 
 use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Lead;
 use App\Http\Controllers\Controller;
 use App\Settings\Rules\ValidFormat;
 use Illuminate\Http\RedirectResponse;
@@ -23,11 +23,9 @@ use Illuminate\Http\Request;
  */
 class LeadContactController extends Controller
 {
-    public function store(Request $request, Lead $lead): RedirectResponse
+    public function store(Request $request, ClientCase $case): RedirectResponse
     {
-        $project = $lead->case;
-
-        $this->authorize('manageShoots', $project);
+        $this->authorize('manageShoots', $case);
 
         $validated = $request->validate([
             'contact_id' => ['nullable', 'string', 'size:24', 'required_without:name'],
@@ -45,24 +43,22 @@ class LeadContactController extends Controller
 
         // unique(case_id, contact_id, role) würde beim zweiten Anhängen
         // werfen.
-        if (! $project->contacts()->whereKey($contact->id)->wherePivot('role', $role)->exists()) {
-            $project->attachContact($contact, $role);
+        if (! $case->contacts()->whereKey($contact->id)->wherePivot('role', $role)->exists()) {
+            $case->attachContact($contact, $role);
         }
 
         return back();
     }
 
-    public function destroy(Lead $lead, Contact $contact): RedirectResponse
+    public function destroy(ClientCase $case, Contact $contact): RedirectResponse
     {
-        $project = $lead->case;
+        $this->authorize('manageShoots', $case);
 
-        $this->authorize('manageShoots', $project);
-
-        $role = $project->contacts()->whereKey($contact->id)->first()?->pivot->role;
+        $role = $case->contacts()->whereKey($contact->id)->first()?->pivot->role;
 
         abort_if($role === null || $this->isPrimary($role), 422);
 
-        $project->contacts()->detach($contact->id);
+        $case->contacts()->detach($contact->id);
 
         return back();
     }

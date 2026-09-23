@@ -20,7 +20,7 @@ it('creates a task on a project with a fixed due date', function () {
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'task-1')
-        ->postJson("/api/projects/{$project->public_id}/tasks", [
+        ->postJson("/api/cases/{$project->public_id}/tasks", [
             'title' => 'Crew-Briefing verschicken',
             'audience' => 'internal',
             'due_on' => '2019-07-01',
@@ -40,7 +40,7 @@ it('refuses a task write to a token that does not hold ManageTasks', function ()
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'task-forbidden')
-        ->postJson("/api/projects/{$project->public_id}/tasks", ['title' => 'X', 'audience' => 'internal'])
+        ->postJson("/api/cases/{$project->public_id}/tasks", ['title' => 'X', 'audience' => 'internal'])
         ->assertForbidden();
 });
 
@@ -51,7 +51,7 @@ it('lists a project’s open tasks', function () {
     Task::factory()->for($project, 'case')->done()->create(['title' => 'Erledigt']);
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
-        ->getJson("/api/projects/{$project->public_id}/tasks?done=false");
+        ->getJson("/api/cases/{$project->public_id}/tasks?done=false");
 
     $response->assertOk();
 

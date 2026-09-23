@@ -31,7 +31,7 @@ function stageMove(Lead $lead, LeadStage $from, LeadStage $to, $at): void
 {
     AuditLog::create([
         'event' => 'lead.stage_changed',
-        'subject' => $lead->public_id,
+        'subject' => $lead->case->public_id,
         'case_id' => $lead->case_id,
         'context' => ['from' => $from->value, 'to' => $to->value],
         'created_at' => $at,

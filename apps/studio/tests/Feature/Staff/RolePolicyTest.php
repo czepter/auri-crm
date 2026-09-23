@@ -88,7 +88,7 @@ it('records who moved a lead, which is what makes the funnel open', function () 
     $lead = Lead::factory()->atStage(LeadStage::New)->create();
 
     $this->actingAs($nina, 'staff')
-        ->post("/anfragen/{$lead->public_id}/stufe", ['stage' => LeadStage::Contacted->value])
+        ->post("/anfragen/{$lead->case->public_id}/stufe", ['stage' => LeadStage::Contacted->value])
         ->assertRedirect();
 
     $row = AuditLog::where('event', 'lead.stage_changed')->sole();

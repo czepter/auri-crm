@@ -23,7 +23,7 @@ it('adds a partner to an existing project once, reusing a known address', functi
     foreach (['a', 'b'] as $key) {
         $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
             ->withHeader('Idempotency-Key', "partner-{$key}")
-            ->postJson("/api/projects/{$project->public_id}/contacts", ['name' => 'Friedrich Rüffer', 'email' => 'friedrich@example.test'])
+            ->postJson("/api/cases/{$project->public_id}/contacts", ['name' => 'Friedrich Rüffer', 'email' => 'friedrich@example.test'])
             ->assertCreated()
             ->assertJson(['id' => $known->public_id, 'role' => 'partner']);
     }
@@ -38,7 +38,7 @@ it('accepts a role outside the enum, like the admin screen does', function () {
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'officiant')
-        ->postJson("/api/projects/{$project->public_id}/contacts", ['name' => 'Pastor Klein', 'role' => 'Trauredner'])
+        ->postJson("/api/cases/{$project->public_id}/contacts", ['name' => 'Pastor Klein', 'role' => 'Trauredner'])
         ->assertCreated()
         ->assertJson(['role' => 'Trauredner']);
 });
@@ -49,6 +49,6 @@ it('refuses a second primary contact', function () {
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'primary')
-        ->postJson("/api/projects/{$project->public_id}/contacts", ['name' => 'X', 'role' => 'primary'])
+        ->postJson("/api/cases/{$project->public_id}/contacts", ['name' => 'X', 'role' => 'primary'])
         ->assertUnprocessable();
 });

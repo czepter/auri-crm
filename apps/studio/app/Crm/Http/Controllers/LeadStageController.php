@@ -5,7 +5,7 @@ namespace App\Crm\Http\Controllers;
 use App\Crm\Actions\AdvanceLeadStage;
 use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\StagePipeline;
-use App\Crm\Models\Lead;
+use App\Crm\Models\ClientCase;
 use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
 use Carbon\CarbonImmutable;
@@ -17,8 +17,9 @@ use Illuminate\Validation\ValidationException;
 
 class LeadStageController extends Controller
 {
-    public function update(Request $request, Lead $lead, AdvanceLeadStage $advance, CrmVocabulary $stages): RedirectResponse
+    public function update(Request $request, ClientCase $case, AdvanceLeadStage $advance, CrmVocabulary $stages): RedirectResponse
     {
+        $lead = $case->lead()->firstOrFail();
         $this->authorize('update', $lead);
 
         $validated = $request->validate([
@@ -52,8 +53,9 @@ class LeadStageController extends Controller
      * neben dem Freitext, weil `declined` — das Studio hat abgelehnt — nicht
      * in dieselbe Verlustquote gehoert wie `lost`.
      */
-    public function close(Request $request, Lead $lead, AdvanceLeadStage $advance): RedirectResponse
+    public function close(Request $request, ClientCase $case, AdvanceLeadStage $advance): RedirectResponse
     {
+        $lead = $case->lead()->firstOrFail();
         $this->authorize('update', $lead);
 
         $validated = $request->validate([
@@ -76,8 +78,9 @@ class LeadStageController extends Controller
     }
 
     /** Das Gegenstück zu close(): eine irrtümlich geschlossene Anfrage steht wieder in ihrer Stufe. */
-    public function reopen(Lead $lead, AdvanceLeadStage $advance): RedirectResponse
+    public function reopen(ClientCase $case, AdvanceLeadStage $advance): RedirectResponse
     {
+        $lead = $case->lead()->firstOrFail();
         $this->authorize('update', $lead);
 
         try {

@@ -3,7 +3,6 @@
 namespace App\Crm\Models;
 
 use App\Concerns\BelongsToTenant;
-use App\Concerns\HasPublicId;
 use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\LeadSource;
@@ -26,12 +25,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * ClientCase → Lead to read the funnel stage — and takes it, because collapsing
  * Lead into ClientCase would leave the project table holding lead columns for
  * every booked record.
+ *
+ * No public id of its own (#520): an inquiry is addressed by its case.
  */
 class Lead extends Model
 {
     use BelongsToTenant;
     use HasFactory;
-    use HasPublicId;
 
     protected $fillable = [
         'case_id',

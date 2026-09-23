@@ -21,14 +21,14 @@ it('writes in what the client said elsewhere and shows it on the case\'s Nachric
     $project->attachContact(Contact::factory()->create(['name' => 'Jan Martin Keil']), CaseContactRole::Primary);
     $lead = Lead::factory()->for($project, 'case')->create();
 
-    $this->from("/anfragen/{$lead->public_id}/nachrichten")
+    $this->from("/anfragen/{$lead->case->public_id}/nachrichten")
         ->post("/auftraege/{$project->public_id}/nachrichten/nachtrag", [
             'body' => 'Wie wäre es diesen Samstag?',
             'sent_at' => '2026-06-25T18:32',
         ])
-        ->assertRedirect("/anfragen/{$lead->public_id}/nachrichten");
+        ->assertRedirect("/anfragen/{$lead->case->public_id}/nachrichten");
 
-    $props = props("/anfragen/{$lead->public_id}/nachrichten");
+    $props = props("/anfragen/{$lead->case->public_id}/nachrichten");
 
     expect($props['tab'])->toBe('messages')
         ->and($props['conversation']['messages'][0]['author'])->toBe('Jan Martin Keil')

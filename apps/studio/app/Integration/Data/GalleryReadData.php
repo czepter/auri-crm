@@ -11,7 +11,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * current version and draft count, the three things #405 asked the list
  * for. GalleryDetailData is the single-gallery answer.
  *
- * Requires `project:id,public_id`, `currentVersion` and the `asset_count`
+ * Requires `case:id,public_id`, `currentVersion` and the `asset_count`
  * (assets in draft) eager loaded — see GalleryController::index().
  */
 #[TypeScript]

@@ -61,7 +61,7 @@ it('carries the values in the project it reads back', function () {
     $project->forceFill(['field_values' => ['gaeste' => 120]])->save();
 
     $this->withHeaders(bearer($token))
-        ->getJson("/api/projects/{$project->public_id}")
+        ->getJson("/api/cases/{$project->public_id}")
         ->assertOk()
         ->assertJsonPath('data.fields.gaeste', 120);
 });
@@ -71,7 +71,7 @@ it('sets values through the same action the admin screen uses', function () {
     $project = ClientCase::factory()->create(['type' => 'wedding']);
 
     $this->withHeaders(bearer($token) + ['Idempotency-Key' => 'fields-1'])
-        ->patchJson("/api/projects/{$project->public_id}/fields", ['fields' => ['gaeste' => 120]])
+        ->patchJson("/api/cases/{$project->public_id}/fields", ['fields' => ['gaeste' => 120]])
         ->assertOk()
         ->assertJsonPath('data.fields.gaeste', 120);
 
@@ -84,7 +84,7 @@ it('replays an idempotent write rather than writing twice', function () {
 
     foreach (range(1, 2) as $attempt) {
         $this->withHeaders(bearer($token) + ['Idempotency-Key' => 'fields-same'])
-            ->patchJson("/api/projects/{$project->public_id}/fields", ['fields' => ['gaeste' => 120]])
+            ->patchJson("/api/cases/{$project->public_id}/fields", ['fields' => ['gaeste' => 120]])
             ->assertOk()
             ->assertJsonPath('data.fields.gaeste', 120);
     }
@@ -97,7 +97,7 @@ it('names the field in a 422 rather than the request', function () {
     $project = ClientCase::factory()->create(['type' => 'wedding']);
 
     $this->withHeaders(bearer($token) + ['Idempotency-Key' => 'fields-bad'])
-        ->patchJson("/api/projects/{$project->public_id}/fields", ['fields' => ['gaeste' => 'viele']])
+        ->patchJson("/api/cases/{$project->public_id}/fields", ['fields' => ['gaeste' => 'viele']])
         ->assertStatus(422)
         ->assertJsonValidationErrors('fields.gaeste');
 });
@@ -113,7 +113,7 @@ it('writes one field without tripping a required field it left alone', function 
     $project = ClientCase::factory()->create(['type' => 'wedding']);
 
     $this->withHeaders(bearer($token) + ['Idempotency-Key' => 'fields-partial'])
-        ->patchJson("/api/projects/{$project->public_id}/fields", ['fields' => ['gaeste' => 120]])
+        ->patchJson("/api/cases/{$project->public_id}/fields", ['fields' => ['gaeste' => 120]])
         ->assertOk()
         ->assertJsonPath('data.fields.gaeste', 120);
 
@@ -125,7 +125,7 @@ it('refuses to write values without the manage_leads scope', function () {
     $project = ClientCase::factory()->create(['type' => 'wedding']);
 
     $this->withHeaders(bearer($token) + ['Idempotency-Key' => 'fields-scope'])
-        ->patchJson("/api/projects/{$project->public_id}/fields", ['fields' => ['gaeste' => 120]])
+        ->patchJson("/api/cases/{$project->public_id}/fields", ['fields' => ['gaeste' => 120]])
         ->assertForbidden();
 });
 

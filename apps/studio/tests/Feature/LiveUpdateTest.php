@@ -59,7 +59,7 @@ it('publishes when mcp adds a note', function () {
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'note-1')
-        ->postJson("/api/projects/{$project->public_id}/notes", ['body' => 'Gegenlicht ab 20 Uhr.'])
+        ->postJson("/api/cases/{$project->public_id}/notes", ['body' => 'Gegenlicht ab 20 Uhr.'])
         ->assertCreated();
 
     Http::assertSentCount(1);

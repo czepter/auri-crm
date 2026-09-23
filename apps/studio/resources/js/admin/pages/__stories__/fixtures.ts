@@ -13,7 +13,6 @@ type Option = { value: string; label: string }
 
 const RAHN = 'p-rahn'
 const BRANDT = 'p-brandt'
-const LEAD = 'l-brandt'
 
 export const types: Option[] = [
     { value: 'wedding', label: 'Hochzeit' },
@@ -190,20 +189,20 @@ export const queue: { key: string; rows: App.Crm.Data.LeadQueueRowData[] }[] = [
     {
         key: 'unbeantwortet',
         rows: [
-            { id: 'l-osterhoff', name: 'Familie Osterhoff', date: '2027-04-24', text: 'Standesamt und Feier im Garten', open: false, waitingDays: 6 },
+            { id: 'p-osterhoff', name: 'Familie Osterhoff', date: '2027-04-24', text: 'Standesamt und Feier im Garten', open: false, waitingDays: 6 },
         ],
     },
     {
         key: 'angebot',
         rows: [
-            { id: LEAD, name: 'Familie Brandt', date: '2027-06-12', text: 'Gut Basthorst, freie Trauung', open: true, waitingDays: 4 },
-            { id: 'l-kroll', name: 'Marie Ahrens & David Kroll', date: '2026-07-25', text: 'Kaispeicher Hamburg', open: false, waitingDays: 11 },
+            { id: BRANDT, name: 'Familie Brandt', date: '2027-06-12', text: 'Gut Basthorst, freie Trauung', open: true, waitingDays: 4 },
+            { id: 'p-ahrens', name: 'Marie Ahrens & David Kroll', date: '2026-07-25', text: 'Kaispeicher Hamburg', open: false, waitingDays: 11 },
         ],
     },
     {
         key: 'angenommen',
         rows: [
-            { id: 'l-rahn', name: 'Hochzeit Rahn', date: '2026-09-13', text: 'Gut Basthorst', open: false, waitingDays: 2 },
+            { id: 'p-rahn', name: 'Hochzeit Rahn', date: '2026-09-13', text: 'Gut Basthorst', open: false, waitingDays: 2 },
         ],
     },
 ]
@@ -426,7 +425,6 @@ export const header: App.Crm.Data.CaseHeaderData = {
     isBooked: true,
     ...permissions,
     portalVisible: true,
-    leadId: 'l-rahn',
     outcomeLabel: null,
     lostReason: null,
     canClose: true,
@@ -471,7 +469,6 @@ export const leadHeader: App.Crm.Data.CaseHeaderData = {
     isBooked: false,
     ...permissions,
     portalVisible: false,
-    leadId: LEAD,
     outcomeLabel: null,
     lostReason: null,
     canClose: true,
@@ -479,9 +476,9 @@ export const leadHeader: App.Crm.Data.CaseHeaderData = {
     canComplete: false,
     canDelete: true,
     tabs: [
-        { key: 'overview', label: 'project.overview', href: `/anfragen/${LEAD}`, count: null, countTo: null, children: [] },
-        { key: 'quotes', label: 'project.quotes', href: `/anfragen/${LEAD}/angebot`, count: 1, countTo: null, children: [] },
-        { key: 'messages', label: 'project.messages', href: `/anfragen/${LEAD}/nachrichten`, count: 1, countTo: null, children: [] },
+        { key: 'overview', label: 'project.overview', href: `/anfragen/${BRANDT}`, count: null, countTo: null, children: [] },
+        { key: 'quotes', label: 'project.quotes', href: `/anfragen/${BRANDT}/angebot`, count: 1, countTo: null, children: [] },
+        { key: 'messages', label: 'project.messages', href: `/anfragen/${BRANDT}/nachrichten`, count: 1, countTo: null, children: [] },
     ],
     track: leadTrack,
     queue: [],
@@ -493,7 +490,7 @@ export const leadHeader: App.Crm.Data.CaseHeaderData = {
 
 /** Die `lead`-Prop des Anfragebildschirms — kein eigener Data-Typ, deshalb hier ausgeschrieben. */
 export const lead = {
-    id: LEAD,
+    id: BRANDT,
     projectId: BRANDT,
     name: 'Familie Brandt — Hochzeit',
     type: 'wedding',

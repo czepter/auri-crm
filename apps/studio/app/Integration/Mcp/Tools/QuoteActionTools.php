@@ -82,7 +82,7 @@ final class QuoteActionTools
             new ToolDefinition(
                 name: 'save_quote_as_package',
                 title: 'Save a quote as a package',
-                description: 'Turn a quote, or one of its lines, into a catalogue package — the only way to write a package’s hourly rate and payment plan from here. Give `item` (a line’s id from get_project) to save just that line; omit it to save the whole quote.',
+                description: 'Turn a quote, or one of its lines, into a catalogue package — the only way to write a package’s hourly rate and payment plan from here. Give `item` (a line’s id from get_case) to save just that line; omit it to save the whole quote.',
                 method: 'POST',
                 path: '/quotes/{quote}/save-as-package',
                 schema: fn (JsonSchema $schema) => [

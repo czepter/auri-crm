@@ -21,7 +21,7 @@ class InquiryReceived extends StudioEventNotification
 
     public function url(): string
     {
-        return "/anfragen/{$this->lead->public_id}";
+        return "/anfragen/{$this->lead->case->public_id}";
     }
 
     public function case(): ?ClientCase

@@ -8,6 +8,7 @@ use App\Crm\Data\CaptureInquiryData;
 use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\StagePipeline;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
 use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
@@ -40,7 +41,7 @@ class LeadController extends Controller
 
         return response()->json([
             'project' => ['id' => $project->public_id, 'name' => $project->name],
-            'lead' => ['id' => $lead->public_id, 'stage' => $lead->stage->key, 'source' => $lead->source?->value],
+            'lead' => ['id' => $project->public_id, 'stage' => $lead->stage->key, 'source' => $lead->source?->value],
         ], 201);
     }
 
@@ -88,15 +89,17 @@ class LeadController extends Controller
 
             return [
                 'project' => ['id' => $project->public_id, 'name' => $project->name],
-                'lead' => ['id' => $project->lead->public_id, 'stage' => $project->lead->stage->key],
+                'lead' => ['id' => $project->public_id, 'stage' => $project->lead->stage->key],
             ];
         }, $rows));
 
         return response()->json(['captured' => count($captured), 'leads' => $captured], 201);
     }
 
-    public function advanceStage(Request $request, Lead $lead, AdvanceLeadStage $advance, CrmVocabulary $stages): JsonResponse
+    public function advanceStage(Request $request, ClientCase $case, AdvanceLeadStage $advance, CrmVocabulary $stages): JsonResponse
     {
+        $lead = $case->lead()->firstOrFail();
+
         $validated = $request->validate([
             'stage' => [
                 'required',
@@ -130,8 +133,10 @@ class LeadController extends Controller
      * capture. captured_via_other is cleared by Lead::booted() whenever the
      * channel itself is not Other, the same as CaptureInquiry leaves it.
      */
-    public function update(Request $request, Lead $lead): JsonResponse
+    public function update(Request $request, ClientCase $case): JsonResponse
     {
+        $lead = $case->lead()->firstOrFail();
+
         $validated = $request->validate([
             'inquiry_text' => ['present', 'nullable', 'string', 'max:10000'],
             'captured_via' => ['sometimes', Rule::enum(CaptureChannel::class)],
@@ -141,7 +146,7 @@ class LeadController extends Controller
         $lead->update($validated);
 
         return response()->json([
-            'id' => $lead->public_id,
+            'id' => $lead->case->public_id,
             'inquiryText' => $lead->inquiry_text,
             'capturedVia' => $lead->captured_via?->value,
             'capturedViaOther' => $lead->captured_via_other,
@@ -149,8 +154,10 @@ class LeadController extends Controller
     }
 
     /** T-20's close, on the api surface. */
-    public function markLost(Request $request, Lead $lead, AdvanceLeadStage $advance): JsonResponse
+    public function markLost(Request $request, ClientCase $case, AdvanceLeadStage $advance): JsonResponse
     {
+        $lead = $case->lead()->firstOrFail();
+
         $validated = $request->validate([
             'outcome' => ['required', Rule::enum(LeadOutcome::class)],
             'reason' => ['required', 'string', 'max:255'],
@@ -173,8 +180,10 @@ class LeadController extends Controller
     }
 
     /** The correction: a lead closed by mistake stands in its stage again. */
-    public function reopen(Request $request, Lead $lead, AdvanceLeadStage $advance): JsonResponse
+    public function reopen(Request $request, ClientCase $case, AdvanceLeadStage $advance): JsonResponse
     {
+        $lead = $case->lead()->firstOrFail();
+
         try {
             $advance->reopen($lead, $this->actor($request));
         } catch (DomainException $e) {
@@ -187,7 +196,7 @@ class LeadController extends Controller
     private function state(Lead $lead): JsonResponse
     {
         return response()->json([
-            'id' => $lead->public_id,
+            'id' => $lead->case->public_id,
             'stage' => $lead->stage->key,
             'enteredAt' => $lead->stage_entered_at?->toIso8601String(),
             'lostAt' => $lead->lost_at?->toIso8601String(),

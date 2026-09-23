@@ -18,11 +18,11 @@ it('writes the quote on the lead and stays there', function () {
     $project = ClientCase::factory()->create();
     $lead = Lead::factory()->for($project, 'case')->create();
 
-    $this->from("/anfragen/{$lead->public_id}/angebot")
+    $this->from("/anfragen/{$lead->case->public_id}/angebot")
         ->post("/auftraege/{$project->public_id}/angebote")
-        ->assertRedirect("/anfragen/{$lead->public_id}/angebot");
+        ->assertRedirect("/anfragen/{$lead->case->public_id}/angebot");
 
-    $props = props("/anfragen/{$lead->public_id}/angebot");
+    $props = props("/anfragen/{$lead->case->public_id}/angebot");
 
     expect($props['tab'])->toBe('quotes')
         ->and($props['quotes'])->toHaveCount(1)
@@ -48,7 +48,7 @@ it('takes the payments from the accepted quote’s stages', function () {
         ['percent' => 75, 'label' => 'Nach der Lieferung', 'sort_order' => 1],
     ]);
 
-    expect(props("/anfragen/{$lead->public_id}/angebot")['payments'])->toBe([
+    expect(props("/anfragen/{$lead->case->public_id}/angebot")['payments'])->toBe([
         'number' => $accepted->number,
         'rows' => [
             ['label' => 'Bei der Zusage', 'amount' => 80_000],
@@ -61,14 +61,14 @@ it('shows the inquiry tabs until the booking and sends the booked inquiry to its
     $project = ClientCase::factory()->create();
     $lead = Lead::factory()->for($project, 'case')->create();
 
-    $header = props("/anfragen/{$lead->public_id}")['header'];
+    $header = props("/anfragen/{$lead->case->public_id}")['header'];
 
     expect(collect($header['tabs'])->pluck('key')->all())->toBe(['overview', 'quotes', 'messages'])
         ->and($header['queue'])->toBe([]);
 
     app(BookProject::class)($project, auth('staff')->user());
 
-    test()->get("/anfragen/{$lead->public_id}")->assertRedirect("/auftraege/{$project->public_id}");
+    test()->get("/anfragen/{$lead->case->public_id}")->assertRedirect("/auftraege/{$project->public_id}");
 });
 
 it('shows the draft quote on the overview', function () {
@@ -76,5 +76,5 @@ it('shows the draft quote on the overview', function () {
     $lead = Lead::factory()->for($project, 'case')->create();
     $draft = Quote::factory()->create(['case_id' => $project->id, 'status' => QuoteStatus::Draft, 'sent_at' => null]);
 
-    expect(props("/anfragen/{$lead->public_id}")['quote']['id'])->toBe($draft->public_id);
+    expect(props("/anfragen/{$lead->case->public_id}")['quote']['id'])->toBe($draft->public_id);
 });

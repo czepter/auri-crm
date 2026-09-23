@@ -21,7 +21,7 @@ it('adds an internal note to a project, authorless', function () {
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'note-1')
-        ->postJson("/api/projects/{$project->public_id}/notes", ['body' => 'Gegenlicht ab 20 Uhr.']);
+        ->postJson("/api/cases/{$project->public_id}/notes", ['body' => 'Gegenlicht ab 20 Uhr.']);
 
     $response->assertCreated()->assertJson(['body' => 'Gegenlicht ab 20 Uhr.']);
 
@@ -47,7 +47,7 @@ it('lists a project\'s notes in the order they happened', function () {
     InternalNote::factory()->create();
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
-        ->getJson("/api/projects/{$project->public_id}/notes")
+        ->getJson("/api/cases/{$project->public_id}/notes")
         ->assertOk();
 
     expect($response->json('data.*.id'))->toBe([$early->public_id, $late->public_id])
@@ -61,7 +61,7 @@ it('stores an occurred_at with an offset as the same instant', function () {
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'note-offset')
-        ->postJson("/api/projects/{$project->public_id}/notes", ['body' => 'Anruf', 'occurred_at' => $input])
+        ->postJson("/api/cases/{$project->public_id}/notes", ['body' => 'Anruf', 'occurred_at' => $input])
         ->assertCreated();
 
     expect(InternalNote::sole()->occurred_at->equalTo(Carbon::parse($input)))->toBeTrue();
@@ -101,7 +101,7 @@ it('refuses to add a note without the manage_notes scope', function () {
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'note-scope')
-        ->postJson("/api/projects/{$project->public_id}/notes", ['body' => 'x'])
+        ->postJson("/api/cases/{$project->public_id}/notes", ['body' => 'x'])
         ->assertForbidden();
 
     expect(InternalNote::count())->toBe(0);

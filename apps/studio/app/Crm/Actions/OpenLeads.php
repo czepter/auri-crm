@@ -60,9 +60,9 @@ class OpenLeads
     /** @return list<array{key: string, rows: list<LeadCardData>}> */
     public function groups(): array
     {
-        $byLead = $this->cards()->keyBy(fn (LeadCardData $card) => $card->leadId);
+        $byLead = $this->cards()->keyBy(fn (LeadCardData $card) => $card->id);
 
-        return $this->grouped(fn (Lead $lead) => $byLead[$lead->public_id]);
+        return $this->grouped(fn (Lead $lead) => $byLead[$lead->case->public_id]);
     }
 
     /** @return list<array{key: string, rows: list<LeadQueueRowData>}> */

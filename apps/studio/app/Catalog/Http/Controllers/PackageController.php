@@ -88,7 +88,7 @@ class PackageController extends Controller
                 ->limit(10)
                 ->get()
                 ->map(fn (Lead $lead) => [
-                    'id' => $lead->public_id,
+                    'id' => $lead->case->public_id,
                     'project' => $lead->case->public_id,
                     'contact' => $lead->case->contactNames(),
                     'requestedOn' => $lead->captured_at?->format('Y-m-d'),

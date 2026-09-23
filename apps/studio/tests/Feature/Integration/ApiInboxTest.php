@@ -108,13 +108,13 @@ it('files an unfiled thread to a project, but not a thread that already names on
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken(apiToken()))
         ->withHeader('Idempotency-Key', 'inbox-file-1')
-        ->postJson("/api/inbox/threads/{$thread->public_id}/file", ['project' => $project->public_id])
+        ->postJson("/api/inbox/threads/{$thread->public_id}/file", ['case' => $project->public_id])
         ->assertOk()
         ->assertJson(['projectId' => $project->public_id]);
 
     $other = ClientCase::factory()->create();
     $this->withHeader('Authorization', 'Bearer '.bearerToken(apiToken()))
         ->withHeader('Idempotency-Key', 'inbox-file-2')
-        ->postJson("/api/inbox/threads/{$thread->public_id}/file", ['project' => $other->public_id])
+        ->postJson("/api/inbox/threads/{$thread->public_id}/file", ['case' => $other->public_id])
         ->assertUnprocessable();
 });

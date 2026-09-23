@@ -30,7 +30,7 @@ it('records what the client wrote elsewhere, backdated, opening the thread and s
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'message-1')
-        ->postJson("/api/projects/{$project->public_id}/messages", [
+        ->postJson("/api/cases/{$project->public_id}/messages", [
             'from' => 'client',
             'body' => 'Wie wäre es diesen Samstag?',
             'sent_at' => '2026-06-25T18:32:00+02:00',
@@ -58,7 +58,7 @@ it('keeps a thread\'s state on its newest line when an older one is written in',
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'message-2')
-        ->postJson("/api/projects/{$project->public_id}/messages", [
+        ->postJson("/api/cases/{$project->public_id}/messages", [
             'from' => 'client',
             'body' => 'Frühere Frage',
             'sent_at' => now()->subWeek()->toIso8601String(),
@@ -74,7 +74,7 @@ it('refuses a studio line from a token no staff member stands behind', function 
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'message-3')
-        ->postJson("/api/projects/{$project->public_id}/messages", ['from' => 'studio', 'body' => 'x'])
+        ->postJson("/api/cases/{$project->public_id}/messages", ['from' => 'studio', 'body' => 'x'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('from');
 

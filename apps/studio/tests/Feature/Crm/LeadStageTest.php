@@ -52,7 +52,7 @@ it('writes an audit row naming the transition', function () {
     $row = AuditLog::where('event', 'lead.stage_changed')->sole();
 
     expect($row->actor_id)->toBe($actor->id)
-        ->and($row->subject)->toBe($lead->public_id)
+        ->and($row->subject)->toBe($lead->case->public_id)
         ->and($row->context['from'])->toBe('new')
         ->and($row->context['to'])->toBe('contacted');
 });

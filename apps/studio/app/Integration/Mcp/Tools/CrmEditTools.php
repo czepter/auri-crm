@@ -50,13 +50,13 @@ final class CrmEditTools
             ),
 
             new ToolDefinition(
-                name: 'update_project',
-                title: 'Update a project',
-                description: 'Change a project\'s name, type or lead source. Only the fields given change; type_other and source_other are kept unless given even when type or source changes to something else. get_project shows the current values.',
+                name: 'update_case',
+                title: 'Update a case',
+                description: 'Change a case\'s name, type or lead source. Only the fields given change; type_other and source_other are kept unless given even when type or source changes to something else. get_case shows the current values.',
                 method: 'PATCH',
-                path: '/projects/{project}',
+                path: '/cases/{case}',
                 schema: fn (JsonSchema $schema) => [
-                    'project' => $schema->string()->description('The project public id')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                     'name' => $schema->string()->max(255),
                     'type' => $schema->string()->description('The project type key — see list_project_types'),
                     'type_other' => $schema->string()->max(120)->nullable()->description('What \'other\' actually was. Only kept beside type: other.'),
@@ -68,24 +68,24 @@ final class CrmEditTools
             ),
 
             new ToolDefinition(
-                name: 'remove_project_contact',
-                title: 'Remove a project contact',
-                description: 'Detach a secondary contact — added by add_project_contact — from a project. The primary contact cannot be removed this way.',
+                name: 'remove_case_contact',
+                title: 'Remove a case contact',
+                description: 'Detach a secondary contact — added by add_case_contact — from a case. The primary contact cannot be removed this way.',
                 method: 'DELETE',
-                path: '/projects/{project}/contacts/{contact}',
+                path: '/cases/{case}/contacts/{contact}',
                 schema: fn (JsonSchema $schema) => [
-                    'project' => $schema->string()->description('The project public id')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                     'contact' => $schema->string()->description('The contact public id')->required(),
                 ],
                 annotations: ToolDefinition::OVERWRITES,
                 silent: false,
-                confirmation: fn (array $arguments) => 'Removed contact '.$arguments['contact'].' from project '.$arguments['project'].'.',
+                confirmation: fn (array $arguments) => 'Removed contact '.$arguments['contact'].' from case '.$arguments['case'].'.',
             ),
 
             new ToolDefinition(
                 name: 'update_shoot',
                 title: 'Update a shoot',
-                description: 'Change a shoot\'s date, call time, end time, venue, label or kind. Only the fields given change. get_project shows the current values.',
+                description: 'Change a shoot\'s date, call time, end time, venue, label or kind. Only the fields given change. get_case shows the current values.',
                 method: 'PATCH',
                 path: '/shoots/{shoot}',
                 schema: fn (JsonSchema $schema) => [
@@ -105,7 +105,7 @@ final class CrmEditTools
             new ToolDefinition(
                 name: 'delete_shoot',
                 title: 'Delete a shoot',
-                description: 'Remove a shooting day that was added by mistake. The primary shoot cannot be deleted this way — set_primary_shoot another one first, or use delete_project.',
+                description: 'Remove a shooting day that was added by mistake. The primary shoot cannot be deleted this way — set_primary_shoot another one first, or use delete_case.',
                 method: 'DELETE',
                 path: '/shoots/{shoot}',
                 schema: fn (JsonSchema $schema) => [

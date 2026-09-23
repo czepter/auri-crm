@@ -167,7 +167,7 @@ it('writes an audit row for the capture', function () {
 
     $row = AuditLog::where('event', 'lead.captured')->sole();
 
-    expect($row->subject)->toBe(Lead::sole()->public_id)
+    expect($row->subject)->toBe(Lead::sole()->case->public_id)
         ->and($row->context['source'])->toBe('referral');
 });
 

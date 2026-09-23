@@ -115,7 +115,7 @@ it('records the consent against the lead, naming what was agreed to', function (
 
     $row = AuditLog::where('event', 'lead.consent_recorded')->sole();
 
-    expect($row->subject)->toBe(Lead::sole()->public_id)
+    expect($row->subject)->toBe(Lead::sole()->case->public_id)
         ->and($row->context)->toHaveKey('datenschutz_url')
         ->and($row->context['channel'])->toBe('web_form');
 });

@@ -7,9 +7,9 @@ use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
- * A lead as I-02's read endpoints hand it to an api-surface token.
- * public_id only, for both the lead and the project it hangs off — never
- * either row's internal id.
+ * A lead as I-02's read endpoints hand it to an api-surface token. Both
+ * id and projectId are the case's public_id (#520): a lead has none of its
+ * own, and the row's internal id never leaves the server.
  */
 #[TypeScript]
 class LeadReadData extends Data
@@ -30,11 +30,11 @@ class LeadReadData extends Data
         public string $updatedAt,
     ) {}
 
-    /** Requires `project:id,public_id,name` already eager loaded — see CrmReadController. */
+    /** Requires `case:id,public_id,name` already eager loaded — see CrmReadController. */
     public static function fromModel(Lead $lead): self
     {
         return new self(
-            id: $lead->public_id,
+            id: $lead->case->public_id,
             projectId: $lead->case->public_id,
             projectName: $lead->case->name,
             source: $lead->source?->value,

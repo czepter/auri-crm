@@ -30,7 +30,7 @@ class TaskReadData extends Data
         public string $updatedAt,
     ) {}
 
-    /** Requires `project:id,public_id`, `shoot`, `dependsOn` and `assignee` already eager loaded. */
+    /** Requires `case:id,public_id`, `shoot`, `dependsOn` and `assignee` already eager loaded. */
     public static function fromModel(Task $task): self
     {
         return new self(

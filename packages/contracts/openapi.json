@@ -280,9 +280,9 @@
                 }
             }
         },
-        "/projects/{case}": {
+        "/cases/{case}": {
             "patch": {
-                "operationId": "projects.update",
+                "operationId": "cases.update",
                 "summary": "#400: name, type/type_other and lead source, merged rather than\nreplaced \u2014 App\\Crm\\Http\\Controllers\\LeadCaseController::update()\nnulls type_other whenever `type` arrives without it, and the issue is\nexplicit that the api surface must not repeat that: only a key\nactually present in the request is written, so ClientCase::booted()\nremains the only thing that clears type_other, and only when the type\nitself changed to something other than \"Sonstige\"",
                 "tags": [
                     "Case"
@@ -387,7 +387,7 @@
                 }
             },
             "delete": {
-                "operationId": "projects.destroy",
+                "operationId": "cases.destroy",
                 "tags": [
                     "Case"
                 ],
@@ -412,7 +412,7 @@
                 }
             },
             "get": {
-                "operationId": "projects.show",
+                "operationId": "cases.show",
                 "summary": "N-02: the single-resource read the index alone can't answer \u2014 \"get a\n     * project\" needs the project, not a page that might contain it. Route\nmodel binding does the tenant + public_id lookup (and the 404 for a\nproject outside the token's tenant) the same as every other\n`{project:public_id}` route on this surface already does",
                 "tags": [
                     "CrmRead"
@@ -453,9 +453,9 @@
                 }
             }
         },
-        "/projects/{case}/book": {
+        "/cases/{case}/book": {
             "post": {
-                "operationId": "projects.book",
+                "operationId": "cases.book",
                 "summary": "#401: book/complete/reopen on the api surface, mirroring\nApp\\Crm\\Http\\Controllers\\ProjectController \u2014 the same BookProject and\nCompleteProject actions the admin buttons call, and the same\nalready-booked no-op BookProject itself guards",
                 "tags": [
                     "Case"
@@ -496,9 +496,9 @@
                 }
             }
         },
-        "/projects/{case}/complete": {
+        "/cases/{case}/complete": {
             "post": {
-                "operationId": "projects.complete",
+                "operationId": "cases.complete",
                 "tags": [
                     "Case"
                 ],
@@ -553,7 +553,7 @@
                 }
             },
             "delete": {
-                "operationId": "projects.reopen",
+                "operationId": "cases.reopen",
                 "tags": [
                     "Case"
                 ],
@@ -608,9 +608,9 @@
                 }
             }
         },
-        "/projects/{case}/portal-visibility": {
+        "/cases/{case}/portal-visibility": {
             "post": {
-                "operationId": "projects.portal-visibility.update",
+                "operationId": "cases.portal-visibility.update",
                 "summary": "Mirrors App\\Crm\\Http\\Controllers\\ProjectController::togglePortalVisibility,\nbut takes the value rather than flipping it: a retried toggle after a\ndropped response would land on the wrong state, which `idempotent`\n(routes/api.php) must never allow",
                 "tags": [
                     "Case"
@@ -676,9 +676,9 @@
                 }
             }
         },
-        "/projects/{case}/contacts/{contact}": {
+        "/cases/{case}/contacts/{contact}": {
             "delete": {
-                "operationId": "projects.contacts.destroy",
+                "operationId": "cases.contacts.destroy",
                 "summary": "#400: a secondary contact only, same as the primary refusal on store()\n\u2014 the primary is decided at capture, the pivot's partial unique index\ndepends on it staying that way",
                 "tags": [
                     "CaseContact"
@@ -735,9 +735,9 @@
                 }
             }
         },
-        "/projects/{case}/contacts": {
+        "/cases/{case}/contacts": {
             "post": {
-                "operationId": "projects.contacts.store",
+                "operationId": "cases.contacts.store",
                 "tags": [
                     "CaseContact"
                 ],
@@ -1727,9 +1727,9 @@
                 }
             }
         },
-        "/projects/{case}/money": {
+        "/cases/{case}/money": {
             "get": {
-                "operationId": "projects.money",
+                "operationId": "cases.money",
                 "summary": "#402: the payment plan CaseDetailReadData leaves out",
                 "tags": [
                     "CrmRead"
@@ -1770,9 +1770,9 @@
                 }
             }
         },
-        "/projects/{case}/forms": {
+        "/cases/{case}/forms": {
             "get": {
-                "operationId": "projects.forms.index",
+                "operationId": "cases.forms.index",
                 "tags": [
                     "FormInstance"
                 ],
@@ -1815,7 +1815,7 @@
                 }
             },
             "post": {
-                "operationId": "projects.forms.store",
+                "operationId": "cases.forms.store",
                 "tags": [
                     "FormInstance"
                 ],
@@ -3732,12 +3732,12 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "project": {
+                                    "case": {
                                         "type": "string"
                                     }
                                 },
                                 "required": [
-                                    "project"
+                                    "case"
                                 ]
                             }
                         }
@@ -3830,9 +3830,9 @@
                 }
             }
         },
-        "/projects/{case}/notes": {
+        "/cases/{case}/notes": {
             "get": {
-                "operationId": "projects.notes.index",
+                "operationId": "cases.notes.index",
                 "summary": "Oldest first, on when it happened \u2014 the order the admin thread reads in",
                 "tags": [
                     "InternalNote"
@@ -3876,7 +3876,7 @@
                 }
             },
             "post": {
-                "operationId": "projects.notes.store",
+                "operationId": "cases.notes.store",
                 "tags": [
                     "InternalNote"
                 ],
@@ -4082,20 +4082,20 @@
                 }
             }
         },
-        "/leads/{lead}/stage": {
+        "/cases/{case}/lead/stage": {
             "post": {
-                "operationId": "leads.stage.update",
+                "operationId": "cases.lead.stage.update",
                 "tags": [
                     "Lead"
                 ],
                 "parameters": [
                     {
-                        "name": "lead",
+                        "name": "case",
                         "in": "path",
                         "required": true,
-                        "description": "The lead public id",
+                        "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -4168,21 +4168,21 @@
                 }
             }
         },
-        "/leads/{lead}": {
+        "/cases/{case}/lead": {
             "patch": {
-                "operationId": "leads.update",
+                "operationId": "cases.lead.update",
                 "summary": "#361: a capture's inquiry text was write-once on this surface.\n#363: captured_via was too \u2014 neither field had a way back after\ncapture. captured_via_other is cleared by Lead::booted() whenever the\nchannel itself is not Other, the same as CaptureInquiry leaves it",
                 "tags": [
                     "Lead"
                 ],
                 "parameters": [
                     {
-                        "name": "lead",
+                        "name": "case",
                         "in": "path",
                         "required": true,
-                        "description": "The lead public id",
+                        "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -4267,21 +4267,21 @@
                 }
             }
         },
-        "/leads/{lead}/lost": {
+        "/cases/{case}/lead/lost": {
             "post": {
-                "operationId": "leads.lost",
+                "operationId": "cases.lead.lost",
                 "summary": "T-20's close, on the api surface",
                 "tags": [
                     "Lead"
                 ],
                 "parameters": [
                     {
-                        "name": "lead",
+                        "name": "case",
                         "in": "path",
                         "required": true,
-                        "description": "The lead public id",
+                        "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -4358,21 +4358,21 @@
                 }
             }
         },
-        "/leads/{lead}/reopen": {
+        "/cases/{case}/lead/reopen": {
             "post": {
-                "operationId": "leads.reopen",
+                "operationId": "cases.lead.reopen",
                 "summary": "The correction: a lead closed by mistake stands in its stage again",
                 "tags": [
                     "Lead"
                 ],
                 "parameters": [
                     {
-                        "name": "lead",
+                        "name": "case",
                         "in": "path",
                         "required": true,
-                        "description": "The lead public id",
+                        "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -4416,9 +4416,9 @@
                 }
             }
         },
-        "/projects/{case}/messages": {
+        "/cases/{case}/messages": {
             "post": {
-                "operationId": "projects.messages.store",
+                "operationId": "cases.messages.store",
                 "tags": [
                     "Message"
                 ],
@@ -4847,9 +4847,9 @@
                 }
             }
         },
-        "/projects/{case}/payment-plan": {
+        "/cases/{case}/payment-plan": {
             "post": {
-                "operationId": "projects.payment-plan.store",
+                "operationId": "cases.payment-plan.store",
                 "tags": [
                     "Payment"
                 ],
@@ -5187,9 +5187,9 @@
                 }
             }
         },
-        "/projects/{case}/fields": {
+        "/cases/{case}/fields": {
             "patch": {
-                "operationId": "projects.fields.update",
+                "operationId": "cases.fields.update",
                 "tags": [
                     "ProjectField"
                 ],
@@ -5474,9 +5474,9 @@
                 }
             }
         },
-        "/projects/{case}/quotes": {
+        "/cases/{case}/quotes": {
             "post": {
-                "operationId": "projects.quotes.store",
+                "operationId": "cases.quotes.store",
                 "tags": [
                     "Quote"
                 ],
@@ -6699,9 +6699,9 @@
                 }
             }
         },
-        "/projects/{case}/shoots": {
+        "/cases/{case}/shoots": {
             "post": {
-                "operationId": "projects.shoots.store",
+                "operationId": "cases.shoots.store",
                 "description": "Mirrors App\\Crm\\Http\\Controllers\\ShootController::store: the same\nrules, the same nullable date, the booked status on a booked project,\nand the model's own defaults for is_primary and sort_order \u2014 the\nprimary one is already taken.",
                 "summary": "A second shooting day on a project that already has one. CaptureInquiry\nmakes exactly one shoot and marks it primary; a wedding split over two\ndays \u2014 Trauung on one, Feier on another \u2014 has no way to reach the\nsecond from here otherwise",
                 "tags": [
@@ -7529,9 +7529,9 @@
                 }
             }
         },
-        "/projects/{case}/tasks": {
+        "/cases/{case}/tasks": {
             "get": {
-                "operationId": "projects.tasks.index",
+                "operationId": "cases.tasks.index",
                 "summary": "`done` narrows to completed or open; omitted returns both, oldest due date first",
                 "tags": [
                     "Task"
@@ -7586,7 +7586,7 @@
                 }
             },
             "post": {
-                "operationId": "projects.tasks.store",
+                "operationId": "cases.tasks.store",
                 "tags": [
                     "Task"
                 ],
@@ -7947,9 +7947,9 @@
                 }
             }
         },
-        "/projects/{case}/messages/send": {
+        "/cases/{case}/messages/send": {
             "post": {
-                "operationId": "projects.messages.send",
+                "operationId": "cases.messages.send",
                 "tags": [
                     "Thread"
                 ],

@@ -133,7 +133,7 @@ class ProjectController extends Controller
         // screen is the case. Every /auftraege link lands right without
         // knowing the phase.
         if ($case->lead !== null && ! $case->isBooked()) {
-            return redirect("/anfragen/{$case->lead->public_id}");
+            return redirect("/anfragen/{$case->public_id}");
         }
 
         // C-03 (#237): an inquiry and a project are the same record in two

@@ -25,7 +25,7 @@ it('updates a project, merging rather than replacing untouched fields', function
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'project-update-1')
-        ->patchJson("/api/projects/{$project->public_id}", ['name' => 'Voss — Bewerbung']);
+        ->patchJson("/api/cases/{$project->public_id}", ['name' => 'Voss — Bewerbung']);
 
     $response->assertOk()->assertJson(['name' => 'Voss — Bewerbung', 'type' => 'other', 'typeOther' => 'Bewerbungsfotos']);
 
@@ -40,7 +40,7 @@ it('updates the lead source alongside the project', function () {
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'project-update-source')
-        ->patchJson("/api/projects/{$project->public_id}", ['source' => 'other', 'source_other' => 'Hochzeitsportal']);
+        ->patchJson("/api/cases/{$project->public_id}", ['source' => 'other', 'source_other' => 'Hochzeitsportal']);
 
     $response->assertOk()->assertJson(['source' => 'other', 'sourceOther' => 'Hochzeitsportal']);
     expect($lead->fresh()->source_other)->toBe('Hochzeitsportal');
@@ -52,7 +52,7 @@ it('refuses a project update without the manage_shoots scope', function () {
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'project-update-scope')
-        ->patchJson("/api/projects/{$project->public_id}", ['name' => 'Someone Else'])
+        ->patchJson("/api/cases/{$project->public_id}", ['name' => 'Someone Else'])
         ->assertForbidden();
 
     expect($project->fresh()->name)->toBe('Voss — Portrait');
@@ -69,12 +69,12 @@ it('removes a secondary project contact but refuses to remove the primary one', 
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'remove-primary')
-        ->deleteJson("/api/projects/{$project->public_id}/contacts/{$primary->public_id}")
+        ->deleteJson("/api/cases/{$project->public_id}/contacts/{$primary->public_id}")
         ->assertUnprocessable();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'remove-partner')
-        ->deleteJson("/api/projects/{$project->public_id}/contacts/{$partner->public_id}")
+        ->deleteJson("/api/cases/{$project->public_id}/contacts/{$partner->public_id}")
         ->assertNoContent();
 
     expect($project->contacts()->pluck('contacts.id')->all())->toBe([$primary->id]);

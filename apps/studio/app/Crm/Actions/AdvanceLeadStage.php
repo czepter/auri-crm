@@ -59,7 +59,7 @@ class AdvanceLeadStage
     public function __invoke(Lead $lead, Stage $next, ?User $actor = null, ?CarbonInterface $enteredAt = null): Lead
     {
         if ($lead->isLost()) {
-            throw new DomainException("Lead {$lead->public_id} is lost and cannot advance.");
+            throw new DomainException("Lead {$lead->case->public_id} is lost and cannot advance.");
         }
 
         $from = $lead->stage;
@@ -88,7 +88,7 @@ class AdvanceLeadStage
             // correction that hands back an old timestamp keeps the rungs already
             // climbed, or undoing the mis-drop would re-send every reminder.
             $entered = $enteredAt
-                ?? ($backwards ? StageHistory::enteredAt('lead.stage_changed', $lead->public_id, $next->key) : null)
+                ?? ($backwards ? StageHistory::enteredAt('lead.stage_changed', $lead->case->public_id, $next->key) : null)
                 ?? now();
 
             $lead->forceFill([
@@ -106,7 +106,7 @@ class AdvanceLeadStage
                     'entered_at' => $entered->toIso8601String(),
                     ...$backwards ? ['reverted' => true] : [],
                 ],
-                subject: $lead->public_id,
+                subject: $lead->case->public_id,
                 projectId: $lead->case_id,
                 occurredAt: $enteredAt,
             );
@@ -136,7 +136,7 @@ class AdvanceLeadStage
         ?CarbonInterface $lostAt = null,
     ): Lead {
         if ($lead->isLost()) {
-            throw new DomainException("Lead {$lead->public_id} is already lost.");
+            throw new DomainException("Lead {$lead->case->public_id} is already lost.");
         }
 
         // The stage is deliberately left alone. Which stage a lead died in is
@@ -159,7 +159,7 @@ class AdvanceLeadStage
             event: 'lead.lost',
             actor: $actor ?? auth('staff')->user(),
             context: ['stage' => $lead->stage->key, 'reason' => $reason, 'outcome' => $outcome->value],
-            subject: $lead->public_id,
+            subject: $lead->case->public_id,
             projectId: $lead->case_id,
             occurredAt: $lostAt,
         );
@@ -179,7 +179,7 @@ class AdvanceLeadStage
     public function reopen(Lead $lead, ?User $actor = null): Lead
     {
         if (! $lead->isLost()) {
-            throw new DomainException("Lead {$lead->public_id} is not closed.");
+            throw new DomainException("Lead {$lead->case->public_id} is not closed.");
         }
 
         $reason = $lead->lost_reason;
@@ -203,7 +203,7 @@ class AdvanceLeadStage
             event: 'lead.reopened',
             actor: $actor ?? auth('staff')->user(),
             context: ['stage' => $lead->stage->key, 'reason' => $reason],
-            subject: $lead->public_id,
+            subject: $lead->case->public_id,
             projectId: $lead->case_id,
         );
 

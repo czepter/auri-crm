@@ -124,7 +124,7 @@ class CaptureInquiry
                 event: 'lead.captured',
                 actor: $actor,
                 context: ['source' => $data->source?->value, 'via' => $data->captured_via?->value],
-                subject: $lead->public_id,
+                subject: $project->public_id,
                 projectId: $lead->case_id,
                 occurredAt: $data->captured_at === null ? null : CarbonImmutable::parse($data->captured_at),
             );

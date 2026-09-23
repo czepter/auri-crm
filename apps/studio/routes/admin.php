@@ -242,7 +242,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/verfuegbarkeit', AvailabilityController::class)->name('availability.show');
 
         // /pakete/neu stays above /pakete/{package} for the same reason
-        // /anfragen/neu stays above /anfragen/{lead}/stufe.
+        // /anfragen/neu stays above /anfragen/{case}/stufe.
         Route::get('/pakete', [PackageController::class, 'index'])->name('packages.index');
         Route::get('/pakete/neu', [PackageController::class, 'create'])->name('packages.create');
         Route::post('/pakete', [PackageController::class, 'store'])->name('packages.store');
@@ -562,7 +562,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::delete('/einstellungen/api-token/{apiToken}', [ApiTokenController::class, 'destroy'])
             ->name('api-tokens.destroy');
 
-        // /anfragen/neu stays above /anfragen/{lead}/stufe for the same reason
+        // /anfragen/neu stays above /anfragen/{case}/stufe for the same reason
         // /kontakte/suche stays above /kontakte/{contact}.
         Route::get('/anfragen/neu', [InquiryCaptureController::class, 'create'])->name('leads.create');
         Route::get('/anfragen', [LeadBoardController::class, '__invoke'])->name('leads.index');
@@ -578,29 +578,32 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/anfragen', [InquiryCaptureController::class, 'store'])->name('leads.store');
         // C-08 (#243): one inquiry beside the queue it came from. Below
         // /anfragen/neu and /anfragen/ansicht, which would otherwise bind as
-        // a lead id.
-        Route::get('/anfragen/{lead}', [LeadCaseController::class, 'show'])->name('leads.show');
+        // a case id.
+        Route::get('/anfragen/{case}', [LeadCaseController::class, 'show'])->name('leads.show')
+            ->missing(fn (Request $request) => LeadCaseController::legacyRedirect($request));
         // C-10 (#245): editing is a state of the view, so it posts back to
         // the same case rather than to a screen of its own.
-        Route::patch('/anfragen/{lead}', [LeadCaseController::class, 'update'])->name('leads.update');
-        Route::get('/anfragen/{lead}/nachrichten', [LeadCaseController::class, 'show'])
+        Route::patch('/anfragen/{case}', [LeadCaseController::class, 'update'])->name('leads.update');
+        Route::get('/anfragen/{case}/nachrichten', [LeadCaseController::class, 'show'])
             ->defaults('tab', 'messages')
+            ->missing(fn (Request $request) => LeadCaseController::legacyRedirect($request))
             ->name('leads.messages');
-        Route::get('/anfragen/{lead}/angebot', [LeadCaseController::class, 'show'])
+        Route::get('/anfragen/{case}/angebot', [LeadCaseController::class, 'show'])
             ->defaults('tab', 'quotes')
+            ->missing(fn (Request $request) => LeadCaseController::legacyRedirect($request))
             ->name('leads.quote');
         // Wer sonst noch am Fall hängt. Bis hierher gab es das nur auf der
         // API-Oberfläche, und die schmale Spalte auf dem Bildschirm konnte
         // keinen Zeileneditor tragen.
-        Route::post('/anfragen/{lead}/kontakte', [LeadContactController::class, 'store'])
+        Route::post('/anfragen/{case}/kontakte', [LeadContactController::class, 'store'])
             ->name('leads.contacts.store');
-        Route::delete('/anfragen/{lead}/kontakte/{contact}', [LeadContactController::class, 'destroy'])
+        Route::delete('/anfragen/{case}/kontakte/{contact}', [LeadContactController::class, 'destroy'])
             ->name('leads.contacts.destroy');
-        Route::post('/anfragen/{lead}/schliessen', [LeadStageController::class, 'close'])
+        Route::post('/anfragen/{case}/schliessen', [LeadStageController::class, 'close'])
             ->name('leads.close');
-        Route::post('/anfragen/{lead}/wieder-oeffnen', [LeadStageController::class, 'reopen'])
+        Route::post('/anfragen/{case}/wieder-oeffnen', [LeadStageController::class, 'reopen'])
             ->name('leads.reopen');
-        Route::post('/anfragen/{lead}/stufe', [LeadStageController::class, 'update'])
+        Route::post('/anfragen/{case}/stufe', [LeadStageController::class, 'update'])
             ->name('leads.stage.update');
 
         // C-02 (#236): the list behind the sidebar's Projekte entry. Its own

@@ -49,7 +49,7 @@ const deleting = ref(false)
 const closeForm = useForm({ outcome: 'lost', reason: '' })
 
 function close() {
-  closeForm.post(`/anfragen/${props.header.leadId}/schliessen`, {
+  closeForm.post(`/anfragen/${props.header.id}/schliessen`, {
     preserveScroll: true,
     onSuccess: () => {
       closing.value = false
@@ -59,7 +59,7 @@ function close() {
 }
 
 function reopen() {
-  router.post(`/anfragen/${props.header.leadId}/wieder-oeffnen`, {}, { preserveScroll: true })
+  router.post(`/anfragen/${props.header.id}/wieder-oeffnen`, {}, { preserveScroll: true })
 }
 
 function complete() {

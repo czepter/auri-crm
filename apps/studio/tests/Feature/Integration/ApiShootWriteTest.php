@@ -22,7 +22,7 @@ it('adds a second shooting day to a project', function () {
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'shoot-1')
-        ->postJson("/api/projects/{$project->public_id}/shoots", [
+        ->postJson("/api/cases/{$project->public_id}/shoots", [
             'kind' => 'Feier',
             'label' => 'Feier',
             'date' => '2019-07-06',
@@ -46,7 +46,7 @@ it('falls back to the project type for a shoot given no kind', function () {
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'shoot-no-kind')
-        ->postJson("/api/projects/{$project->public_id}/shoots", [
+        ->postJson("/api/cases/{$project->public_id}/shoots", [
             'date' => '2019-07-06',
         ]);
 
@@ -61,7 +61,7 @@ it('backdates a shooting day entered after the fact', function () {
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'shoot-backdated')
-        ->postJson("/api/projects/{$project->public_id}/shoots", [
+        ->postJson("/api/cases/{$project->public_id}/shoots", [
             'kind' => 'Feier',
             'date' => '2019-07-06',
             'entered_at' => '2018-12-03',
@@ -77,7 +77,7 @@ it('refuses a shoot to a token that does not hold ManageShoots', function () {
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'shoot-forbidden')
-        ->postJson("/api/projects/{$project->public_id}/shoots", ['kind' => 'Feier'])
+        ->postJson("/api/cases/{$project->public_id}/shoots", ['kind' => 'Feier'])
         ->assertForbidden();
 });
 

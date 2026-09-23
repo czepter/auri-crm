@@ -25,16 +25,14 @@ class LeadQueueRowData extends Data
     public static function fromLead(Lead $lead, ?Lead $open = null): self
     {
         return new self(
-            // The lead's own id: the pane links to /anfragen/{lead}, and the
-            // project's id 404s there.
-            id: $lead->public_id,
+            id: $lead->case->public_id,
             name: $lead->case->contactNames(),
             date: $lead->case->primaryShoot?->date?->format('Y-m-d'),
             // Whole text, not the two lines the pane draws: the search in
             // the pane reads this and would otherwise stop at 90 characters.
             // The row clamps its own height.
             text: $lead->inquiry_text ?: null,
-            open: $open !== null && $lead->public_id === $open->public_id,
+            open: $open !== null && $lead->is($open),
             waitingDays: (int) $lead->stage_entered_at->startOfDay()->diffInDays(now()->startOfDay()),
         );
     }

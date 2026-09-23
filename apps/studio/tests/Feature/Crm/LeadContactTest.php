@@ -27,7 +27,7 @@ function leadWithPrimary(): Lead
 it('keeps a freely written role as it was typed', function () {
     $lead = leadWithPrimary();
 
-    $this->post("/anfragen/{$lead->public_id}/kontakte", [
+    $this->post("/anfragen/{$lead->case->public_id}/kontakte", [
         'name' => 'Kerstin Voß',
         'email' => 'kv@feierwerk.de',
         'role' => 'Trauredner',
@@ -41,7 +41,7 @@ it('keeps a freely written role as it was typed', function () {
 it('refuses to add a second primary contact', function () {
     $lead = leadWithPrimary();
 
-    $this->post("/anfragen/{$lead->public_id}/kontakte", [
+    $this->post("/anfragen/{$lead->case->public_id}/kontakte", [
         'name' => 'Michael Rahn',
         'role' => CaseContactRole::Primary->value,
     ])->assertStatus(422);
@@ -51,7 +51,7 @@ it('refuses to remove the primary contact', function () {
     $lead = leadWithPrimary();
     $primary = $lead->case->contacts()->first();
 
-    $this->delete("/anfragen/{$lead->public_id}/kontakte/{$primary->public_id}")->assertStatus(422);
+    $this->delete("/anfragen/{$lead->case->public_id}/kontakte/{$primary->public_id}")->assertStatus(422);
 
     expect($lead->case->contacts()->count())->toBe(1);
 });
@@ -61,7 +61,7 @@ it('removes anybody else', function () {
     $planner = Contact::factory()->create(['name' => 'Kerstin Voß']);
     $lead->case->attachContact($planner, 'Planung');
 
-    $this->delete("/anfragen/{$lead->public_id}/kontakte/{$planner->public_id}")->assertRedirect();
+    $this->delete("/anfragen/{$lead->case->public_id}/kontakte/{$planner->public_id}")->assertRedirect();
 
     expect($lead->case->contacts()->count())->toBe(1);
 });
@@ -72,7 +72,7 @@ it('links the contact behind a known address instead of writing a second one', f
     $lead = leadWithPrimary();
     $known = Contact::factory()->create(['name' => 'Katrin Brandes', 'email' => 'katrin@brandes-floral.de']);
 
-    $this->post("/anfragen/{$lead->public_id}/kontakte", [
+    $this->post("/anfragen/{$lead->case->public_id}/kontakte", [
         'name' => 'K. Brandes',
         'email' => 'katrin@brandes-floral.de',
         'role' => 'Floristik',
@@ -88,7 +88,7 @@ it('leaves the inquiry text alone when only the people were sent', function () {
     $lead = leadWithPrimary();
     $primary = $lead->case->contacts()->first();
 
-    $this->patch("/anfragen/{$lead->public_id}", [
+    $this->patch("/anfragen/{$lead->case->public_id}", [
         'people' => [
             ['id' => $primary->public_id, 'name' => 'Jana Rahn-Kleist', 'role' => 'Hauptkontakt'],
         ],
@@ -105,7 +105,7 @@ it('moves a date after the booking', function () {
     markBooked($lead->case);
     $shoot = $lead->case->shoots()->first();
 
-    $this->patch("/anfragen/{$lead->public_id}", [
+    $this->patch("/anfragen/{$lead->case->public_id}", [
         'shoots' => [
             ['id' => $shoot->public_id, 'date' => '2027-06-19', 'venue_name' => 'Gut Basthorst'],
         ],

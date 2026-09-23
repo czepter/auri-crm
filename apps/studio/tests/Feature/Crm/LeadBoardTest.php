@@ -200,17 +200,14 @@ it('issues no more queries for eleven cards spanning several closures than it di
     expect($withClosures)->toBe($withoutClosures);
 });
 
-// The card carries both public ids, and the stage route only accepts the
-// lead's. Posting the id the card links with is what the board did for a
-// release, and it 404s — so the test posts what the card actually sends.
+// The stage route takes the id the card links with (#520). While lead and
+// project had ids of their own, posting the wrong one 404ed for a release.
 it('advances a lead using the identifier the card carries', function () {
     $lead = leadOn('2026-06-14');
     $card = boardProps()['columns'][0]['cards'][0];
 
-    expect($card['leadId'])->not->toBe($card['id']);
-
     $this->actingAs($this->staff, 'staff')
-        ->post("/anfragen/{$card['leadId']}/stufe", ['stage' => 'contacted'])
+        ->post("/anfragen/{$card['id']}/stufe", ['stage' => 'contacted'])
         ->assertRedirect('/anfragen');
 
     expect($lead->fresh()->stage->key)->toBe(LeadStage::Contacted->value);
@@ -220,7 +217,7 @@ it('advances a lead from the board', function () {
     $lead = leadOn('2026-06-14');
 
     $this->actingAs($this->staff, 'staff')
-        ->post("/anfragen/{$lead->public_id}/stufe", ['stage' => 'contacted'])
+        ->post("/anfragen/{$lead->case->public_id}/stufe", ['stage' => 'contacted'])
         ->assertRedirect('/anfragen');
 
     expect($lead->fresh()->stage->key)->toBe(LeadStage::Contacted->value);
@@ -232,7 +229,7 @@ it('moves a lead backward from the board', function () {
     $lead = leadOn('2026-06-14', LeadStage::QuoteSent);
 
     $this->actingAs($this->staff, 'staff')
-        ->post("/anfragen/{$lead->public_id}/stufe", ['stage' => 'new'])
+        ->post("/anfragen/{$lead->case->public_id}/stufe", ['stage' => 'new'])
         ->assertRedirect('/anfragen');
 
     expect($lead->fresh()->stage->key)->toBe(LeadStage::New->value);
@@ -242,7 +239,7 @@ it('refuses a move to the stage the card already sits in', function () {
     $lead = leadOn('2026-06-14', LeadStage::QuoteSent);
 
     $this->actingAs($this->staff, 'staff')
-        ->post("/anfragen/{$lead->public_id}/stufe", ['stage' => 'quote_sent'])
+        ->post("/anfragen/{$lead->case->public_id}/stufe", ['stage' => 'quote_sent'])
         ->assertSessionHasErrors('stage');
 
     expect($lead->fresh()->stage->key)->toBe(LeadStage::QuoteSent->value);
@@ -317,14 +314,12 @@ it('sorts an undated inquiry last in the table and in the queue', function () {
         ->and(collect($pane['rows'])->pluck('name')->all())->toBe(['Mit Termin', 'Ohne Termin']);
 });
 
-// The pane links to /anfragen/{lead}, which binds the lead's public id — not
-// the project's, which the card next to it carries.
 it('links a queue row to the case it stands for', function () {
     $lead = leadOn('2026-06-14', name: 'Neu');
 
     $row = collect(collect(boardProps()['queue'])->firstWhere('key', 'unbeantwortet')['rows'])->first();
 
-    expect($row['id'])->toBe($lead->public_id);
+    expect($row['id'])->toBe($lead->case->public_id);
 
     test()->actingAs(test()->staff, 'staff')->get("/anfragen/{$row['id']}")->assertOk();
 });
@@ -332,7 +327,7 @@ it('links a queue row to the case it stands for', function () {
 it('leaves a bare "Sonstige" channel off the case', function () {
     $lead = leadOn('2026-06-14');
     $channel = fn () => test()->actingAs(test()->staff, 'staff')
-        ->get("/anfragen/{$lead->public_id}")->viewData('page')['props']['lead']['capturedVia'];
+        ->get("/anfragen/{$lead->case->public_id}")->viewData('page')['props']['lead']['capturedVia'];
 
     $lead->forceFill(['captured_via' => CaptureChannel::Other, 'captured_via_other' => null])->save();
     expect($channel())->toBeNull();

@@ -139,7 +139,7 @@ class DemoCrmSeeder extends Seeder
                 event: 'lead.captured',
                 actor: $staff,
                 context: ['source' => $source, 'via' => $lead->captured_via->value],
-                subject: $lead->public_id,
+                subject: $project->public_id,
                 projectId: $project->id,
             );
 

@@ -94,7 +94,7 @@ class RequestService
                 event: 'lead.captured',
                 actor: null,
                 context: ['via' => CaptureChannel::Portal->value, 'package' => $package->public_id],
-                subject: $lead->public_id,
+                subject: $project->public_id,
                 projectId: $project->id,
             );
 

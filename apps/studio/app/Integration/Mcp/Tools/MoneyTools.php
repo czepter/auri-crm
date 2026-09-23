@@ -20,9 +20,9 @@ final class MoneyTools
                 title: 'Create a payment plan',
                 description: 'Split a booked project\'s total into installments, due on the dates given. Amounts are in cents: 1.790 € is 179000. Refused unless the project is booked (book_project). Even installments unless the accepted quote carries its own payment stages, in which case those decide the split.',
                 method: 'POST',
-                path: '/projects/{project}/payment-plan',
+                path: '/cases/{case}/payment-plan',
                 schema: fn (JsonSchema $schema) => [
-                    'project' => $schema->string()->description('The project public id')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                     'total' => $schema->integer()->min(0)->required(),
                     'installments' => $schema->array()->items($schema->object([
                         'due_on' => $schema->string()->description('YYYY-MM-DD')->required(),

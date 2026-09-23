@@ -24,7 +24,7 @@ it('creates a draft quote and edits one field without losing the rest', function
     $project = ClientCase::factory()->create();
 
     $id = $this->withHeader('Idempotency-Key', 'quote-1')
-        ->postJson("/api/projects/{$project->public_id}/quotes", [
+        ->postJson("/api/cases/{$project->public_id}/quotes", [
             'intro' => 'Hallo ihr zwei',
             'items' => [['title' => 'Reportage 2', 'quantity' => 1, 'unit_price' => 179_000]],
             'stages' => [['percent' => 30, 'label' => 'Anzahlung']],
@@ -50,7 +50,7 @@ it('gives a new quote a number and the project\'s payer as recipient, like the a
     $project->attachContact($payer, CaseContactRole::Payer);
 
     $this->withHeader('Idempotency-Key', 'quote-numbered')
-        ->postJson("/api/projects/{$project->public_id}/quotes", [])
+        ->postJson("/api/cases/{$project->public_id}/quotes", [])
         ->assertCreated()
         ->assertJsonPath('data.recipientContact', $payer->public_id)
         ->tap(fn ($response) => expect($response->json('data.number'))->not->toBeNull());
@@ -60,7 +60,7 @@ it('switches the slider on when a rate arrives without a mode', function () {
     $project = ClientCase::factory()->create();
 
     $id = $this->withHeader('Idempotency-Key', 'rate-no-mode')
-        ->postJson("/api/projects/{$project->public_id}/quotes", ['hourly_rate' => 25_000, 'min_hours' => 4, 'max_hours' => 10, 'hours' => 6])
+        ->postJson("/api/cases/{$project->public_id}/quotes", ['hourly_rate' => 25_000, 'min_hours' => 4, 'max_hours' => 10, 'hours' => 6])
         ->assertCreated()
         ->assertJsonPath('data.pricingMode', 'choice')
         ->json('data.id');
@@ -79,7 +79,7 @@ it('starts a quote from a listed package, keeping its lines under a new intro', 
     $id = $this->getJson('/api/packages')->assertOk()->json('data.0.id');
 
     $this->withHeader('Idempotency-Key', 'from-package')
-        ->postJson("/api/projects/{$project->public_id}/quotes", ['package' => $id, 'intro' => 'Hallo'])
+        ->postJson("/api/cases/{$project->public_id}/quotes", ['package' => $id, 'intro' => 'Hallo'])
         ->assertCreated()
         ->assertJsonPath('data.items.0.title', 'Reportage 10 Stunden')
         ->assertJsonPath('data.total', 179_000)
@@ -164,6 +164,6 @@ it('refuses a quote write to a token without ManageQuotes', function () {
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken(ApiToken::factory()->withScopes(Capability::ManageLeads)->create()))
         ->withHeader('Idempotency-Key', 'quote-forbidden')
-        ->postJson("/api/projects/{$project->public_id}/quotes", [])
+        ->postJson("/api/cases/{$project->public_id}/quotes", [])
         ->assertForbidden();
 });

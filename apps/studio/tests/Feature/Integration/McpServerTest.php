@@ -72,7 +72,7 @@ it('refuses a tool the token holds no scope for', function () {
 it('reports what the api surface refused', function () {
     mcpBearer(Capability::ViewAllCases);
 
-    CrmServer::tool(mcpTool('get_project'), ['publicId' => 'nobody'])
+    CrmServer::tool(mcpTool('get_case'), ['case' => 'nobody'])
         ->assertHasErrors()
         ->assertSee('404');
 });
