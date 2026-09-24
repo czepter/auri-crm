@@ -383,19 +383,16 @@ services:
       retries: 20
 
   rustfs-init:
-    image: quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z
+    image: amazon/aws-cli:2.37.1
     restart: "no"
     environment:
-      RUSTFS_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSKEY}
-      RUSTFS_SECRET_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
+      AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
+      AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ENDPOINT_URL: http://rustfs:9000
       AWS_BUCKET: ${AWS_BUCKET:-studio}
     entrypoint: >
-      sh -c '
-        until mc alias set rustfs http://rustfs:9000 "$$RUSTFS_ACCESS_KEY" "$$RUSTFS_SECRET_KEY"; do
-          echo "waiting for rustfs"; sleep 2;
-        done;
-        mc mb --ignore-existing rustfs/"$$AWS_BUCKET"
-      '
+      sh -c 'aws s3api head-bucket --bucket "$$AWS_BUCKET" || aws s3api create-bucket --bucket "$$AWS_BUCKET"'
     depends_on:
       rustfs:
         condition: service_healthy

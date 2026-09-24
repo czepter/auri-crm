@@ -409,15 +409,17 @@ services:
 
   # Runs once, on every `docker compose up`, and exits: creates the `media`
   # bucket the `s3` disk expects (AWS_BUCKET) if it doesn't exist yet. RustFS
-  # has no "create this bucket on boot" env var of its own — mc is the way to
-  # script one against a running server.
+  # has no "create this bucket on boot" env var of its own. aws-cli rather than
+  # mc: MinIO pulled its images from Docker Hub and quay.io.
   rustfs-init:
-    image: quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z
+    image: amazon/aws-cli:2.37.1
+    environment:
+      AWS_ACCESS_KEY_ID: studio
+      AWS_SECRET_ACCESS_KEY: studio-media-secret
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ENDPOINT_URL: http://rustfs:9000
     entrypoint: >
-      /bin/sh -c "
-      mc alias set local http://rustfs:9000 studio studio-media-secret &&
-      mc mb --ignore-existing local/media
-      "
+      sh -c "aws s3api head-bucket --bucket media || aws s3api create-bucket --bucket media"
     depends_on:
       rustfs:
         condition: service_healthy
