@@ -1,9 +1,8 @@
 name: CI
 
-# Actions minutes are budgeted: tests run only on the way into main.
 on:
   pull_request:
-    branches: [main]
+    branches: [main, dev]
 
 # The default GITHUB_TOKEN grants contents:read only, and dorny/paths-filter
 # asks the API which files a pull request touches — without pull-requests:read
@@ -19,23 +18,37 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Enforces docs/branching.md rule 4. Deliberately has no `needs`, so it
-  # reports a verdict even while the test jobs are still running.
+  # Enforces docs/branching.md rules 2 and 4. Deliberately has no `needs`, so
+  # it reports a verdict even while the test jobs are still running.
   branch-rules:
     runs-on: [self-hosted, Linux, X64]
     steps:
-      - name: Check the pull request head branch
+      - name: Check the pull request base and head branches
         env:
+          BASE: ${{ github.base_ref }}
           HEAD: ${{ github.head_ref }}
         run: |
-          case "$HEAD" in
-            dev | hotfix/* | release/*) ;;
-            *)
-              echo "::error::main only accepts dev, hotfix/* or release/*, but this pull request comes from '$HEAD'. Retarget it at dev."
-              exit 1
+          case "$BASE" in
+            main)
+              case "$HEAD" in
+                dev | hotfix/* | release/*) ;;
+                *)
+                  echo "::error::main only accepts dev, hotfix/* or release/*, but this pull request comes from '$HEAD'. Retarget it at dev."
+                  exit 1
+                  ;;
+              esac
+              ;;
+            dev)
+              case "$HEAD" in
+                feat/* | feature/* | fix/* | bugfix/* | hotfix/* | chore/* | docs/* | refactor/* | ci/* | test/*) ;;
+                *)
+                  echo "::error::Branches merged into dev must be named <type>/<slug>, one of feat feature fix bugfix hotfix chore docs refactor ci test. Got '$HEAD'."
+                  exit 1
+                  ;;
+              esac
               ;;
           esac
-          echo "OK: $HEAD -> main"
+          echo "OK: $HEAD -> $BASE"
 
   changes:
     runs-on: [self-hosted, Linux, X64]

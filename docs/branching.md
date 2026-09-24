@@ -18,17 +18,17 @@ feat/* fix/* chore/* ...  ->  dev  ->  main
 5. A `hotfix/*` merged into `main` gets merged back into `dev` immediately, so
    `dev` never falls behind `main`.
 
-CI runs only on pull requests into `main`, where the `branch-rules` job in
-`.github/workflows/ci.yml` enforces rule 4. The rest is convention.
+CI runs on pull requests into `dev` and into `main`, where the `branch-rules`
+job in `.github/workflows/ci.yml` enforces rules 2 and 4. The rest is
+convention.
 
 ## Branch protection
 
 The CI job reports a failure, but only GitHub branch protection can stop a
-merge. `dev` has no CI, so its protection requires no checks. Protect `main`
-with:
+merge. Protect both branches with:
 
 ```sh
-for BRANCH in main; do
+for BRANCH in main dev; do
   gh api -X PUT "repos/{owner}/{repo}/branches/$BRANCH/protection" \
     -F required_status_checks[strict]=true \
     -f 'required_status_checks[contexts][]=branch-rules' \
