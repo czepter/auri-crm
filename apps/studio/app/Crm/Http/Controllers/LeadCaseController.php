@@ -107,8 +107,8 @@ class LeadCaseController extends Controller
                     ? null
                     : $lead->capturedViaLabel(),
                 'capturedAt' => $lead->captured_at->toIso8601String(),
-                'lostReason' => $lead->lost_reason,
-                'outcomeLabel' => $lead->outcome?->label(),
+                'lostReason' => $case->close_reason,
+                'outcomeLabel' => $case->closeLabel(),
             ],
             // The contact column stands beside the quote, not small underneath
             // it: the phone number is the reason the screen is open.

@@ -33,8 +33,10 @@ class RetentionCandidates
             ->whereNull('retention_applied_at')
             ->whereHas('cases')
             ->whereDoesntHave('cases', fn ($project) => $project->where(fn ($p) => $p
-                ->whereDoesntHave('lead', fn ($lead) => $lead
-                    ->whereIn('outcome', [LeadOutcome::Lost, LeadOutcome::Declined])
+                ->whereNotIn('close_outcome', [LeadOutcome::Lost, LeadOutcome::Declined])
+                ->orWhereNull('close_outcome')
+                ->when($cutoff, fn ($p) => $p->orWhere('closed_at', '>=', $cutoff))
+                ->orWhereDoesntHave('lead', fn ($lead) => $lead
                     ->when($cutoff, fn ($lead) => $lead->where('updated_at', '<', $cutoff)))
                 ->orWhereNotNull('booked_at')));
     }
@@ -72,6 +74,7 @@ class RetentionCandidates
             $ids = $contact->cases->pluck('id');
             $leads = $contact->cases->pluck('lead')->filter();
             $latest = $leads->sortByDesc('updated_at')->first();
+            $case = $contact->cases->firstWhere('id', $latest->case_id);
             $sum = fn (Collection $by) => (int) $ids->sum(fn ($id) => $by[$id] ?? 0);
 
             return new RetentionCandidateData(
@@ -79,9 +82,10 @@ class RetentionCandidates
                 name: $contact->name,
                 type: $contact->cases->first()->typeLabel(),
                 text: $latest->inquiry_text === null ? null : str($latest->inquiry_text)->limit(120)->toString(),
-                outcome: $latest->outcome->value,
-                outcomeLabel: $latest->outcome->label(),
-                idleMonths: (int) $latest->updated_at->diffInMonths(now()),
+                outcome: $case->close_outcome->value,
+                outcomeLabel: $case->close_outcome->label(),
+                // Closing wrote the lead before #521 and so reset its updated_at; the close itself stands in for that now.
+                idleMonths: (int) max($latest->updated_at, $case->closed_at)->diffInMonths(now()),
                 invoiced: $invoiced->has($contact->id),
                 leads: $leads->count(),
                 messages: $sum($messages) + $sum($notes),

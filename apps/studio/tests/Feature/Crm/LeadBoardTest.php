@@ -55,7 +55,7 @@ it('groups projects into the five funnel columns in order', function () {
 });
 
 it('keeps lost leads off the board entirely', function () {
-    leadOn('2026-06-14')->forceFill(['lost_at' => now(), 'lost_reason' => 'Budget', 'outcome' => LeadOutcome::Lost])->save();
+    leadOn('2026-06-14')->case->forceFill(['closed_at' => now(), 'close_reason' => 'Budget', 'close_outcome' => LeadOutcome::Lost])->save();
 
     $counts = array_map(fn ($c) => count($c['cards']), boardProps()['columns']);
 

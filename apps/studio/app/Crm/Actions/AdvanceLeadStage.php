@@ -19,7 +19,7 @@ use DomainException;
 use Illuminate\Support\Facades\DB;
 
 /**
- * The only writer of Lead::$stage, Lead::$lost_at and Lead::$outcome.
+ * The only writer of Lead::$stage and of the case's close columns.
  *
  * No transitions table: the ledger is audit_logs, which P1a already made
  * append-only, and stage_entered_at holds the one derived fact the board needs.
@@ -144,10 +144,10 @@ class AdvanceLeadStage
         // make every lost lead look identical in hindsight.
         $lostAt ??= now();
 
-        $lead->forceFill([
-            'lost_at' => $lostAt,
-            'lost_reason' => $reason,
-            'outcome' => $outcome,
+        $lead->case->forceFill([
+            'closed_at' => $lostAt,
+            'close_outcome' => $outcome,
+            'close_reason' => $reason,
         ])->save();
 
         // A lost project shoots nothing, and a date left standing on it still
@@ -173,8 +173,8 @@ class AdvanceLeadStage
      * Closing a lead that was still alive is the one mistake markLost() cannot
      * be talked out of afterwards: isLost() bars every further move, so the
      * card is stuck for good. The stage was never overwritten, so there is
-     * nothing to restore — clearing the three columns puts the lead back where
-     * it stood.
+     * nothing to restore — clearing the case's three close columns puts the
+     * lead back where it stood.
      */
     public function reopen(Lead $lead, ?User $actor = null): Lead
     {
@@ -182,21 +182,21 @@ class AdvanceLeadStage
             throw new DomainException("Lead {$lead->case->public_id} is not closed.");
         }
 
-        $reason = $lead->lost_reason;
+        $reason = $lead->case->close_reason;
 
         // ponytail: the close's own absagen are told apart by moment and
         // reason, so a shoot cancelled separately stays cancelled. Store the
         // cause on the shoot if the two ever coincide.
         $lead->case->shoots()
-            ->where('cancelled_at', $lead->lost_at)
+            ->where('cancelled_at', $lead->case->closed_at)
             ->where('cancelled_reason', $reason)
             ->get()
             ->each(fn (Shoot $shoot) => $this->shoots->uncancel($shoot, $actor));
 
-        $lead->forceFill([
-            'lost_at' => null,
-            'lost_reason' => null,
-            'outcome' => null,
+        $lead->case->forceFill([
+            'closed_at' => null,
+            'close_outcome' => null,
+            'close_reason' => null,
         ])->save();
 
         AuditLogger::record(

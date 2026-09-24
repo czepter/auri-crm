@@ -4145,7 +4145,7 @@
                                         "enteredAt": {
                                             "type": "string"
                                         },
-                                        "lostAt": {
+                                        "closedAt": {
                                             "type": [
                                                 "string",
                                                 "null"
@@ -4156,7 +4156,7 @@
                                         "id",
                                         "stage",
                                         "enteredAt",
-                                        "lostAt"
+                                        "closedAt"
                                     ]
                                 }
                             }
@@ -4335,7 +4335,7 @@
                                         "enteredAt": {
                                             "type": "string"
                                         },
-                                        "lostAt": {
+                                        "closedAt": {
                                             "type": [
                                                 "string",
                                                 "null"
@@ -4346,7 +4346,7 @@
                                         "id",
                                         "stage",
                                         "enteredAt",
-                                        "lostAt"
+                                        "closedAt"
                                     ]
                                 }
                             }
@@ -4396,7 +4396,7 @@
                                         "enteredAt": {
                                             "type": "string"
                                         },
-                                        "lostAt": {
+                                        "closedAt": {
                                             "type": [
                                                 "string",
                                                 "null"
@@ -4407,7 +4407,7 @@
                                         "id",
                                         "stage",
                                         "enteredAt",
-                                        "lostAt"
+                                        "closedAt"
                                     ]
                                 }
                             }

@@ -7,6 +7,7 @@ use App\Concerns\HasPublicId;
 use App\Contracts\Models\Contract;
 use App\Crm\Enums\BookedVia;
 use App\Crm\Enums\CaseContactRole;
+use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Support\CrmVocabulary;
@@ -70,7 +71,23 @@ class ClientCase extends Model
             // Written only through BookProject and UnbookProject.
             'booked_at' => 'immutable_datetime',
             'booked_via' => BookedVia::class,
+            // Written only through AdvanceLeadStage::markLost() and reopen().
+            'closed_at' => 'immutable_datetime',
+            'close_outcome' => LeadOutcome::class,
         ];
+    }
+
+    public function isClosed(): bool
+    {
+        return $this->closed_at !== null;
+    }
+
+    /** A booked case the client lost is a cancelled booking, not a lost inquiry. */
+    public function closeLabel(): ?string
+    {
+        return $this->isBooked() && $this->close_outcome === LeadOutcome::Lost
+            ? 'Storniert'
+            : $this->close_outcome?->label();
     }
 
     public function isCompleted(): bool

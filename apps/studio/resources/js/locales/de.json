@@ -107,6 +107,7 @@
     "closeReason": "Grund",
     "outcome": "Ausgang",
     "outcomeLost": "Verloren",
+    "outcomeCancelled": "Storniert",
     "outcomeDeclined": "Abgelehnt",
     "outcomeClosed": "Geschlossen",
     "bookTitle": "Projekt buchen?",

@@ -202,7 +202,7 @@ final class ReadTools
                 path: '/leads',
                 schema: fn (JsonSchema $schema) => [
                     'stage' => $schema->string()->description('A lead stage key, e.g. "quote_sent" — see pipeline_snapshot for the studio\'s own stages.'),
-                    'closed' => $schema->boolean()->description('true for lost and declined leads only, false for the ones still in play.'),
+                    'closed' => $schema->boolean()->description('true for closed leads only, false for the ones still in play.'),
                     'captured_from' => $schema->string()->description('Inclusive start date the inquiry arrived on, YYYY-MM-DD.'),
                     'captured_to' => $schema->string()->description('Inclusive end date the inquiry arrived on, YYYY-MM-DD.'),
                     'cursor' => $schema->string()->description('Opaque cursor from a previous call\'s nextCursor.'),
@@ -291,10 +291,7 @@ final class ReadTools
             'stage' => $schema->string(),
             'stageEnteredAt' => $schema->string()->nullable(),
             'isLost' => $schema->boolean(),
-            'outcome' => $schema->string()->nullable(),
-            'lostReason' => $schema->string()->nullable(),
             'capturedAt' => $schema->string(),
-            'lostAt' => $schema->string()->nullable(),
             'updatedAt' => $schema->string(),
         ]);
     }
@@ -320,12 +317,12 @@ final class ReadTools
                 'capturedViaOther' => $schema->string()->nullable(),
                 'capturedAt' => $schema->string(),
                 'stageEnteredAt' => $schema->string()->nullable(),
-                'outcome' => $schema->string()->nullable(),
-                'lostReason' => $schema->string()->nullable(),
-                'lostAt' => $schema->string()->nullable(),
             ])->nullable(),
             'bookedAt' => $schema->string()->nullable(),
             'bookedVia' => $schema->string()->nullable(),
+            'closedAt' => $schema->string()->nullable(),
+            'closeOutcome' => $schema->string()->nullable(),
+            'closeReason' => $schema->string()->nullable(),
             'openTaskCount' => $schema->integer(),
             'contacts' => $schema->array()->items($schema->object([
                 'id' => $schema->string(),

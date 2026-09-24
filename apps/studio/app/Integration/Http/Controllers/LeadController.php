@@ -199,7 +199,7 @@ class LeadController extends Controller
             'id' => $lead->case->public_id,
             'stage' => $lead->stage->key,
             'enteredAt' => $lead->stage_entered_at?->toIso8601String(),
-            'lostAt' => $lead->lost_at?->toIso8601String(),
+            'closedAt' => $lead->case->closed_at?->toIso8601String(),
         ]);
     }
 

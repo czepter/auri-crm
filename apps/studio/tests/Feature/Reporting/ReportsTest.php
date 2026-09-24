@@ -104,7 +104,7 @@ it('puts every month of the window on the funnel, including the ones without a l
 
 it('counts a lead lost without a reason in the funnel and leaves it out of the breakdown', function () {
     Lead::factory()->lost()->create(['stage' => LeadStage::New]);
-    Lead::factory()->lost(reason: '')->create(['lost_reason' => null, 'stage' => LeadStage::New]);
+    Lead::factory()->lost(reason: null)->create(['stage' => LeadStage::New]);
 
     $reasons = BookingFunnel::lostReasons(now()->subYear(), now());
     $captured = collect(BookingFunnel::byMonth(now()->subYear(), now()))->sum('captured');

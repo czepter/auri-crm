@@ -329,6 +329,25 @@ it('links the inquiry and closes it from the project', function () {
     expect(props($screen)['header']['outcomeLabel'])->toBe('Verloren');
 });
 
+it('cancels a booked project and shows it as storniert', function () {
+    Lead::factory()->for($this->case, 'case')->atStage(LeadStage::Booked)->create();
+    $shoot = Shoot::factory()->for($this->case, 'case')->create();
+    markBooked($this->case);
+    $screen = "/auftraege/{$this->case->public_id}";
+
+    $this->from($screen)
+        ->post("/anfragen/{$this->case->public_id}/schliessen", ['outcome' => 'lost', 'reason' => 'Hochzeit abgesagt'])
+        ->assertRedirect($screen);
+
+    $header = props($screen)['header'];
+
+    expect($header['outcomeLabel'])->toBe('Storniert')
+        ->and($header['lostReason'])->toBe('Hochzeit abgesagt')
+        ->and($header['position']['label'])->toBe('Storniert')
+        ->and($this->case->fresh()->isBooked())->toBeTrue()
+        ->and($shoot->fresh()->isCancelled())->toBeTrue();
+});
+
 it('leaves an already booked project alone when the button is pressed twice', function () {
     $this->post("/auftraege/{$this->case->public_id}/buchung")->assertRedirect();
     $this->post("/auftraege/{$this->case->public_id}/buchung")->assertRedirect();

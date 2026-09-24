@@ -42,7 +42,7 @@ class OpenProjects
             ->booked()
             ->with(['contacts', 'shoots', 'primaryShoot', 'lead', 'paymentPlan.installments'])
             ->get()
-            ->reject(fn (ClientCase $project) => $project->lead?->isLost() || $project->isCompleted())
+            ->reject(fn (ClientCase $project) => $project->isClosed() || $project->isCompleted())
             ->map(fn (ClientCase $project) => $this->row($project, $open))
             ->filter();
 

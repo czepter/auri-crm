@@ -237,7 +237,7 @@ it('rejects a lead stage filter that is not a stage', function () {
         ->assertStatus(422);
 });
 
-it('carries a lead\'s source detail, capture moment and close moment', function () {
+it('carries a lead\'s source detail, capture moment and closed state', function () {
     $lead = Lead::factory()->lost()->create([
         'source' => LeadSource::Other,
         'source_other' => 'Hochzeitsportal',
@@ -249,25 +249,25 @@ it('carries a lead\'s source detail, capture moment and close moment', function 
 
     expect($body['data'][0]['sourceOther'])->toBe('Hochzeitsportal');
     expect($body['data'][0]['capturedAt'])->toBe($lead->captured_at->toIso8601String());
-    expect($body['data'][0]['lostAt'])->toBe($lead->lost_at->toIso8601String());
+    expect($body['data'][0]['isLost'])->toBeTrue();
 });
 
 // #399: isLost alone cannot tell a lost lead from a declined one, and the
-// project a lead hangs off had no name attached at all.
-it('carries a lead\'s outcome, lost reason, stage entry and project name', function () {
+// project a lead hangs off had no name attached at all. #521: the close sits on the case.
+it('carries a case\'s close outcome, reason and moment, and a lead\'s stage entry and project name', function () {
     $project = ClientCase::factory()->create(['name' => 'Meier Hochzeit']);
-    $lead = Lead::factory()->for($project, 'case')->atStage(LeadStage::QuoteSent)->create([
-        'outcome' => LeadOutcome::Declined,
-        'lost_reason' => 'Zu teuer',
-    ]);
+    $lead = Lead::factory()->for($project, 'case')->atStage(LeadStage::QuoteSent)
+        ->lost('Zu teuer', LeadOutcome::Declined)->create();
 
-    $body = $this->withHeader('Authorization', bearerFor(Capability::ManageLeads))
-        ->getJson('/api/leads')->assertOk()->json();
+    $header = bearerFor(Capability::ManageLeads, Capability::ViewAllCases);
+    $leads = $this->withHeader('Authorization', $header)->getJson('/api/leads')->assertOk()->json();
+    $case = $this->withHeader('Authorization', $header)->getJson("/api/cases/{$project->public_id}")->assertOk()->json('data');
 
-    expect($body['data'][0]['projectName'])->toBe('Meier Hochzeit');
-    expect($body['data'][0]['outcome'])->toBe('declined');
-    expect($body['data'][0]['lostReason'])->toBe('Zu teuer');
-    expect($body['data'][0]['stageEnteredAt'])->toBe($lead->stage_entered_at?->toIso8601String());
+    expect($leads['data'][0]['projectName'])->toBe('Meier Hochzeit');
+    expect($leads['data'][0]['stageEnteredAt'])->toBe($lead->stage_entered_at?->toIso8601String());
+    expect($case['closeOutcome'])->toBe('declined');
+    expect($case['closeReason'])->toBe('Zu teuer');
+    expect($case['closedAt'])->toBe($project->fresh()->closed_at->toIso8601String());
 });
 
 // N-02: GET /api/cases/{project:public_id} — the single-resource read
@@ -315,10 +315,8 @@ it('carries the lead, the contacts with their roles, and the shoots', function (
         'capturedViaOther' => null,
         'capturedAt' => $lead->captured_at->toIso8601String(),
         'stageEnteredAt' => $lead->stage_entered_at?->toIso8601String(),
-        'outcome' => null,
-        'lostReason' => null,
-        'lostAt' => null,
     ]);
+    expect($body['closedAt'])->toBeNull();
     expect($body['shoots'][0])->toMatchArray([
         'callTime' => '14:30',
         'endTime' => '23:00',

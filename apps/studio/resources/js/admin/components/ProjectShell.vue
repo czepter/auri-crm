@@ -253,7 +253,7 @@ function destroy() {
               <Select v-model="closeForm.outcome">
                 <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="lost">{{ $t('board.outcomeLost') }}</SelectItem>
+                  <SelectItem value="lost">{{ $t(header.isBooked ? 'board.outcomeCancelled' : 'board.outcomeLost') }}</SelectItem>
                   <SelectItem value="declined">{{ $t('board.outcomeDeclined') }}</SelectItem>
                   <SelectItem value="closed">{{ $t('board.outcomeClosed') }}</SelectItem>
                 </SelectContent>

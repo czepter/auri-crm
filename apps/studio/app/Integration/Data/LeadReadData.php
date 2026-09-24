@@ -23,14 +23,11 @@ class LeadReadData extends Data
         public string $stage,
         public ?string $stageEnteredAt,
         public bool $isLost,
-        public ?string $outcome,
-        public ?string $lostReason,
         public string $capturedAt,
-        public ?string $lostAt,
         public string $updatedAt,
     ) {}
 
-    /** Requires `case:id,public_id,name` already eager loaded — see CrmReadController. */
+    /** Requires `case:id,public_id,name,closed_at` already eager loaded — see CrmReadController. */
     public static function fromModel(Lead $lead): self
     {
         return new self(
@@ -42,10 +39,7 @@ class LeadReadData extends Data
             stage: $lead->stage->key,
             stageEnteredAt: $lead->stage_entered_at?->toIso8601String(),
             isLost: $lead->isLost(),
-            outcome: $lead->outcome?->value,
-            lostReason: $lead->lost_reason,
             capturedAt: $lead->captured_at->toIso8601String(),
-            lostAt: $lead->lost_at?->toIso8601String(),
             updatedAt: $lead->updated_at->toIso8601String(),
         );
     }

@@ -51,7 +51,7 @@ it('keeps the stage a lead was lost in', function () {
     $lead = Lead::factory()->atStage(LeadStage::QuoteSent)->lost('Budget')->create();
 
     expect($lead->isLost())->toBeTrue()
-        ->and($lead->lost_reason)->toBe('Budget')
+        ->and($lead->case->close_reason)->toBe('Budget')
         ->and($lead->stage->key)->toBe(LeadStage::QuoteSent->value);
 });
 
