@@ -4,14 +4,14 @@ namespace App\Portal\Actions;
 
 use App\Catalog\Models\Package;
 use App\Crm\Enums\CaptureChannel;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadSource;
-use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Events\LeadCaptured;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
 use App\Support\AuditLogger;
@@ -50,11 +50,11 @@ class RequestService
         ?string $date,
         ?string $venue,
         ?string $text,
-    ): Project {
+    ): ClientCase {
         return DB::transaction(function () use ($contact, $package, $date, $venue, $text) {
             $now = now();
 
-            $project = Project::create([
+            $project = ClientCase::create([
                 'name' => $package->name,
                 'type' => $package->project_type_key,
                 // Sichtbar, ohne die Vorgabe des Kontakts zu fragen: der Kunde
@@ -64,10 +64,10 @@ class RequestService
                 'portal_visible' => true,
             ]);
 
-            $project->attachContact($contact, ProjectContactRole::Primary);
+            $project->attachContact($contact, CaseContactRole::Primary);
 
             $lead = Lead::create([
-                'project_id' => $project->id,
+                'case_id' => $project->id,
                 'package_id' => $package->id,
                 'source' => $this->sourceFor($contact),
                 'stage' => $this->stages->anchored(StagePipeline::Lead, StageAnchor::Entry),
@@ -79,7 +79,7 @@ class RequestService
 
             if ($package->portal_requires_date) {
                 Shoot::create([
-                    'project_id' => $project->id,
+                    'case_id' => $project->id,
                     'kind' => Shoot::kindFor($package->project_type_key === null ? null : $this->stages->type($package->project_type_key)),
                     'date' => $date,
                     'venue_name' => $venue,
@@ -94,7 +94,7 @@ class RequestService
                 event: 'lead.captured',
                 actor: null,
                 context: ['via' => CaptureChannel::Portal->value, 'package' => $package->public_id],
-                subject: $lead->public_id,
+                subject: $project->public_id,
                 projectId: $project->id,
             );
 
@@ -113,7 +113,7 @@ class RequestService
     private function sourceFor(Contact $contact): LeadSource
     {
         $first = Lead::query()
-            ->whereIn('project_id', $contact->projects()->select('projects.id'))
+            ->whereIn('case_id', $contact->cases()->select('cases.id'))
             ->orderBy('captured_at')
             ->value('source');
 

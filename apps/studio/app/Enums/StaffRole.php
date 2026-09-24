@@ -45,13 +45,13 @@ enum StaffRole: string
      * committed the studio is no substitute for their having been allowed
      * to. Moving that line is a business decision, not a technical one.
      *
-     * ViewAllProjects is what turns a policy's `view` check (which otherwise
+     * ViewAllCases is what turns a policy's `view` check (which otherwise
      * falls back to "crewed on this shoot") into "sees every project". Admin
      * and Manager hold it; Contributor does not, so a contributor reaches
      * only the projects they are crewed on — the same project-list scoping
      * a second shooter always had — even though ManageShoots, ManageTasks
      * and the rest let them act once they are there. Reader holds
-     * ViewAllProjects and nothing else: sees everything, changes nothing.
+     * ViewAllCases and nothing else: sees everything, changes nothing.
      *
      * @return list<Capability>
      */
@@ -63,7 +63,7 @@ enum StaffRole: string
             self::Manager => [
                 Capability::ManageLeads,
                 Capability::ManageContacts,
-                Capability::ViewAllProjects,
+                Capability::ViewAllCases,
                 Capability::ManageShoots,
                 Capability::ManageCrew,
                 Capability::ManageTasks,
@@ -90,7 +90,7 @@ enum StaffRole: string
             ],
 
             self::Reader => [
-                Capability::ViewAllProjects,
+                Capability::ViewAllCases,
             ],
         };
     }

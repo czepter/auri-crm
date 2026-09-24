@@ -2,8 +2,8 @@
 
 namespace App\Crm\Http\Controllers;
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\InternalNote;
-use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
 use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
@@ -18,11 +18,11 @@ use Illuminate\Http\Request;
  */
 class InternalNoteController extends Controller
 {
-    public function store(Request $request, Project $project): RedirectResponse
+    public function store(Request $request, ClientCase $case): RedirectResponse
     {
-        $this->authorize('manageNotes', $project);
+        $this->authorize('manageNotes', $case);
 
-        $project->notes()->create([
+        $case->notes()->create([
             'author_id' => auth('staff')->id(),
             ...$this->validated($request),
         ]);

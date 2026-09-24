@@ -16,7 +16,7 @@ const feld = (
   ...row,
 })
 
-const rahn: App.Crm.Data.ProjectSuggestionData = {
+const rahn: App.Crm.Data.CaseSuggestionData = {
   id: 'p-rahn',
   name: 'Rahn, Marie & Jonas',
   contactName: 'Marie Rahn',

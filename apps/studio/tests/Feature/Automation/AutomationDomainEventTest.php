@@ -4,11 +4,10 @@ use App\Automation\Enums\AutomationRunStatus;
 use App\Automation\Models\AutomationRule;
 use App\Automation\Models\AutomationRun;
 use App\Automation\Notifications\AutomationReminder;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Events\ProjectBooked;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
-use App\Crm\Models\Project;
 use App\Payments\Events\InstallmentPaid;
 use App\Payments\Models\PaymentInstallment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,18 +18,18 @@ uses(RefreshDatabase::class);
 it('fires an event-triggered rule when its named domain event dispatches, anchored to the project the event carries', function () {
     Notification::fake();
 
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
-    $job = Job::factory()->for($project)->create();
+    $project->attachContact($contact, CaseContactRole::Primary);
+    markBooked($project);
 
     $rule = AutomationRule::factory()->event(ProjectBooked::class)->create();
 
-    event(new ProjectBooked($project, $job));
+    event(new ProjectBooked($project));
 
     $run = AutomationRun::where('automation_rule_id', $rule->id)->sole();
 
-    expect($run->anchorable_type)->toBe(Project::class)
+    expect($run->anchorable_type)->toBe(ClientCase::class)
         ->and($run->anchorable_id)->toBe($project->id)
         ->and($run->status)->toBe(AutomationRunStatus::AwaitingApproval)
         ->and($run->contact_ids)->toBe([$contact->id]);
@@ -41,7 +40,7 @@ it('fires an event-triggered rule when its named domain event dispatches, anchor
 it('never fires a rule for an event class it does not name', function () {
     Notification::fake();
 
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $installment = PaymentInstallment::factory()->create();
 
     // Watches ProjectBooked, not InstallmentPaid.
@@ -58,15 +57,15 @@ it('never fires a rule for an event class it does not name', function () {
 it('never re-fires an event-triggered rule for the same anchor if the event somehow dispatches twice in one day', function () {
     Notification::fake();
 
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
-    $job = Job::factory()->for($project)->create();
+    $project->attachContact($contact, CaseContactRole::Primary);
+    markBooked($project);
 
     AutomationRule::factory()->event(ProjectBooked::class)->create();
 
-    event(new ProjectBooked($project, $job));
-    event(new ProjectBooked($project, $job));
+    event(new ProjectBooked($project));
+    event(new ProjectBooked($project));
 
     expect(AutomationRun::count())->toBe(1);
 });
@@ -74,12 +73,12 @@ it('never re-fires an event-triggered rule for the same anchor if the event some
 it('never fires an inactive event-triggered rule', function () {
     Notification::fake();
 
-    $project = Project::factory()->create();
-    $job = Job::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    markBooked($project);
 
     AutomationRule::factory()->event(ProjectBooked::class)->inactive()->create();
 
-    event(new ProjectBooked($project, $job));
+    event(new ProjectBooked($project));
 
     expect(AutomationRun::count())->toBe(0);
 });

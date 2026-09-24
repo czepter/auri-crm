@@ -6,9 +6,9 @@ use App\Catalog\Data\CatalogItemData;
 use App\Catalog\Data\PackageData;
 use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
-use App\Crm\Data\ProjectSuggestionData;
+use App\Crm\Data\CaseSuggestionData;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Documents\Actions\SeedStarterTemplates;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Support\DocumentMergeDataBuilder;
@@ -62,8 +62,8 @@ class InvoiceController extends Controller
         $viewer = $request->user('staff');
 
         $invoices = Invoice::query()
-            ->where(fn ($query) => $query->whereNull('project_id')->orWhereHas('project', fn ($project) => $project->visibleTo($viewer)))
-            ->with(['installments', 'creditNotes', 'contact', 'project'])
+            ->where(fn ($query) => $query->whereNull('case_id')->orWhereHas('case', fn ($project) => $project->visibleTo($viewer)))
+            ->with(['installments', 'creditNotes', 'contact', 'case'])
             ->orderByDesc('issued_at')
             ->orderByDesc('id')
             ->get();
@@ -102,11 +102,11 @@ class InvoiceController extends Controller
         $rates = PaymentPlan::query()
             ->whereNull('settled_at')
             ->whereHas('installments', fn ($query) => $query->whereNull('invoice_id')->whereNull('cancelled_at'))
-            ->whereHas('job.project', fn ($query) => $query->visibleTo($viewer))
-            ->with(['installments', 'job.project'])
+            ->whereHas('case', fn ($query) => $query->visibleTo($viewer))
+            ->with(['installments', 'case'])
             ->get()
             ->mapWithKeys(fn (PaymentPlan $plan) => [
-                $plan->job->project->public_id => collect(PaymentPlanData::fromModel($plan)->installments)
+                $plan->case->public_id => collect(PaymentPlanData::fromModel($plan)->installments)
                     ->filter(fn ($row) => $row->invoiceNumber === null && $row->status !== 'cancelled')
                     ->map(fn ($row) => ['id' => $row->id, 'label' => $row->label, 'amount' => $row->amount, 'dueOn' => $row->dueOn])
                     ->values(),
@@ -114,11 +114,11 @@ class InvoiceController extends Controller
 
         $project = $request->query('projekt') === null
             ? null
-            : Project::query()->visibleTo($viewer)->where('public_id', $request->query('projekt'))->first();
+            : ClientCase::query()->visibleTo($viewer)->where('public_id', $request->query('projekt'))->first();
 
         return Inertia::render('Invoices/Create', [
             'rates' => $rates,
-            'project' => $project === null ? null : ProjectSuggestionData::fromModel($project),
+            'project' => $project === null ? null : CaseSuggestionData::fromModel($project),
             'packages' => PackageData::collect(Package::active()->with('items')->orderBy('name')->get()),
             'catalogItems' => CatalogItemData::collect(CatalogItem::query()->orderBy('title')->get()),
             'vatSettings' => [
@@ -142,12 +142,12 @@ class InvoiceController extends Controller
 
         $validated = $request->validate([
             ...$this->rules(),
-            'contact.name' => ['required_without_all:contact_id,project_id', 'nullable', 'string', 'max:255'],
+            'contact.name' => ['required_without_all:contact_id,case_id', 'nullable', 'string', 'max:255'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.title' => ['required', 'string', 'max:255'],
         ]);
 
-        $project = $this->project($validated);
+        $project = $this->case($validated);
         $contact = match (true) {
             isset($validated['contact_id']) => Contact::query()->where('public_id', $validated['contact_id'])->firstOrFail(),
             isset($validated['contact']['name']) => Contact::create(array_filter($validated['contact'], fn ($value) => $value !== null)),
@@ -210,7 +210,7 @@ class InvoiceController extends Controller
             'contact.street' => ['nullable', 'string', 'max:255'],
             'contact.postcode' => ['nullable', 'string', 'max:20'],
             'contact.city' => ['nullable', 'string', 'max:255'],
-            'project_id' => ['nullable', 'string'],
+            'case_id' => ['nullable', 'string'],
             'due_on' => ['nullable', 'date'],
             'intro' => ['nullable', 'string', 'max:20000'],
             'outro' => ['nullable', 'string', 'max:20000'],
@@ -229,13 +229,13 @@ class InvoiceController extends Controller
     }
 
     /** @param  array<string, mixed>  $validated */
-    private function project(array $validated): ?Project
+    private function case(array $validated): ?ClientCase
     {
-        if (! isset($validated['project_id'])) {
+        if (! isset($validated['case_id'])) {
             return null;
         }
 
-        $project = Project::query()->where('public_id', $validated['project_id'])->firstOrFail();
+        $project = ClientCase::query()->where('public_id', $validated['case_id'])->firstOrFail();
         self::authorizeProject($project);
 
         return $project;
@@ -251,7 +251,7 @@ class InvoiceController extends Controller
     private function positions(array $validated, bool $strict): array
     {
         $ids = collect($validated['items'] ?? [])->pluck('installment_id')->filter();
-        $rows = PaymentInstallment::query()->whereIn('public_id', $ids)->with('plan.job.project')->get()->keyBy('public_id');
+        $rows = PaymentInstallment::query()->whereIn('public_id', $ids)->with('plan.case')->get()->keyBy('public_id');
 
         abort_if($strict && $rows->count() !== $ids->unique()->count(), 404);
 
@@ -279,7 +279,7 @@ class InvoiceController extends Controller
      */
     private function draft(array $validated, StudioSettingsResolver $settings): Invoice
     {
-        $project = $this->project($validated);
+        $project = $this->case($validated);
 
         $invoice = new Invoice([
             'number' => __('payments.previewNumber'),
@@ -289,7 +289,7 @@ class InvoiceController extends Controller
             'discount_type' => $validated['discount_type'] ?? null,
             'discount_value' => $validated['discount_value'] ?? null,
         ]);
-        $invoice->project_id = $project?->id;
+        $invoice->case_id = $project?->id;
 
         $items = collect($this->positions($validated, strict: false))->map(function (array $position) {
             $item = new InvoiceItem(collect($position)->except('installment')->all());
@@ -318,7 +318,7 @@ class InvoiceController extends Controller
         return $invoice
             ->setRelation('creditNotes', collect())
             ->setRelation('template', null)
-            ->setRelation('project', $project)
+            ->setRelation('case', $project)
             ->setRelation('contact', $contact)
             ->setRelation('items', $items)
             ->setRelation('installments', $installments);
@@ -331,7 +331,7 @@ class InvoiceController extends Controller
      */
     public function download(Invoice $invoice): StreamedResponse
     {
-        self::authorizeProject($invoice->project);
+        self::authorizeProject($invoice->case);
 
         abort_if($invoice->pdf_path === null, 404);
 
@@ -345,7 +345,7 @@ class InvoiceController extends Controller
      */
     public function sendView(Invoice $invoice, StudioSettingsResolver $settings): Response
     {
-        self::authorizeProject($invoice->project);
+        self::authorizeProject($invoice->case);
 
         $recipients = $this->recipients($invoice);
 
@@ -373,7 +373,7 @@ class InvoiceController extends Controller
      */
     public function send(Request $request, Invoice $invoice, NotificationService $notifications, StudioSettingsResolver $settings): RedirectResponse
     {
-        self::authorizeProject($invoice->project);
+        self::authorizeProject($invoice->case);
 
         $validated = $request->validate([
             'subject' => ['required', 'string', 'max:255'],
@@ -393,7 +393,7 @@ class InvoiceController extends Controller
 
     public function cancel(Request $request, Invoice $invoice, CancelInvoice $cancel): RedirectResponse
     {
-        self::authorizeProject($invoice->project);
+        self::authorizeProject($invoice->case);
 
         $validated = $request->validate([
             'kind' => ['required', Rule::enum(CancellationKind::class)],
@@ -407,7 +407,7 @@ class InvoiceController extends Controller
 
     public function creditNote(Request $request, Invoice $invoice, IssueCreditNote $issue): RedirectResponse
     {
-        self::authorizeProject($invoice->project);
+        self::authorizeProject($invoice->case);
 
         $validated = $request->validate([
             'amount' => ['required', 'integer', 'min:1'],
@@ -421,7 +421,7 @@ class InvoiceController extends Controller
 
     public function downloadCreditNote(Invoice $invoice, CreditNote $creditNote): StreamedResponse
     {
-        self::authorizeProject($invoice->project);
+        self::authorizeProject($invoice->case);
 
         abort_if($creditNote->invoice_id !== $invoice->id || $creditNote->pdf_path === null, 404);
 
@@ -429,10 +429,10 @@ class InvoiceController extends Controller
     }
 
     /**
-     * ProjectPolicy::managePaymentPlan where there is a project; the same
+     * ClientCasePolicy::managePaymentPlan where there is a project; the same
      * capability without one, since nothing narrows who may see it.
      */
-    public static function authorizeProject(?Project $project): void
+    public static function authorizeProject(?ClientCase $project): void
     {
         $user = auth('staff')->user();
 

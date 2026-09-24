@@ -2,9 +2,9 @@
 
 namespace App\Portal\Support;
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use Illuminate\Support\Collection;
 
 /**
@@ -19,7 +19,7 @@ use Illuminate\Support\Collection;
 class ClientAudience
 {
     /** @return Collection<int, Contact> */
-    public function forProject(?Project $project): Collection
+    public function forCase(?ClientCase $project): Collection
     {
         if ($project === null || ! $project->portal_visible) {
             return collect();
@@ -31,7 +31,7 @@ class ClientAudience
             ->get();
 
         $primary = $reachable->first(
-            fn (Contact $contact) => $contact->pivot->role === ProjectContactRole::Primary->value
+            fn (Contact $contact) => $contact->pivot->role === CaseContactRole::Primary->value
         );
 
         return $primary !== null ? collect([$primary]) : $reachable;

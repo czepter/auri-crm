@@ -72,7 +72,7 @@ it('attaches the PDF to the mail and stamps sent_at once', function () {
         ->assertRedirect('/rechnungen');
 
     Notification::assertSentTo(
-        $invoice->project->primaryContact(),
+        $invoice->case->primaryContact(),
         InvoiceSent::class,
         function (InvoiceSent $notification, array $channels, $notifiable) use ($invoice) {
             $mail = $notification->toMail($notifiable);

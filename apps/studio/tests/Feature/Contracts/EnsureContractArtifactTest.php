@@ -3,9 +3,9 @@
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Models\Contract;
 use App\Contracts\Models\ContractSignature;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Documents\Models\DocumentTemplate;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -32,7 +32,7 @@ it('renders the missing artifact from the database when the client opens the con
     $template = DocumentTemplate::factory()->create(['body' => '<p>{{ contact.name }} — {{ project.name }}</p>']);
     $project = bookedContactProject();
     $project->update(['portal_visible' => true]);
-    $contract = Contract::factory()->for($project)->for($template, 'template')->create([
+    $contract = Contract::factory()->for($project, 'case')->for($template, 'template')->create([
         // The shape the symptom arrived in: rendered, pointing at nothing.
         'status' => ContractStatus::Rendered,
         'artifact_path' => 'contracts/gone/missing.pdf',
@@ -64,10 +64,10 @@ it('leaves a signed contract alone even when its bytes are gone', function () {
     Storage::fake('local');
     Http::fake();
 
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contract = renderedContract($project);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
     ContractSignature::factory()->for($contract)->create(['contact_id' => $contact->id]);
 
     // The signature holds a sha256 of exactly these bytes. Losing them must

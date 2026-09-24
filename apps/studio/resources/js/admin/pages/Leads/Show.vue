@@ -49,7 +49,7 @@ const props = defineProps<{
         lostReason: string | null;
         outcomeLabel: string | null;
     };
-    people: App.Crm.Data.ProjectPersonData[];
+    people: App.Crm.Data.CasePersonData[];
     shoots: App.Crm.Data.ShootData[];
     quote: App.Quotes.Data.QuoteData | null;
     supersededQuotes: { id: string; number: string | null; net: number }[];
@@ -63,7 +63,7 @@ const props = defineProps<{
     conflicts: App.Crm.Data.DateConflictData[];
     stages: { value: string; label: string; anchor: string | null }[];
     tab: "overview" | "quotes" | "messages";
-    header: App.Crm.Data.ProjectHeaderData;
+    header: App.Crm.Data.CaseHeaderData;
     conversation: App.Engagement.Data.ThreadData | null;
     quotes: App.Quotes.Data.QuoteData[];
     payments: { number: string | null; rows: { label: string; amount: number }[] } | null;
@@ -289,7 +289,7 @@ const taskSummary = computed(() => {
 
 const notes = computed(() => props.thread.filter((entry) => !entry.system));
 
-// Same rule as the board: "booked" writes the job, so it asks first.
+// Same rule as the board: "booked" writes the booking, so it asks first.
 const booking = ref(false);
 
 function move(stage: string) {

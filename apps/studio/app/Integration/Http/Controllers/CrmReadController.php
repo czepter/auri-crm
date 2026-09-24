@@ -3,19 +3,17 @@
 namespace App\Integration\Http\Controllers;
 
 use App\Crm\Enums\StagePipeline;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
 use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
+use App\Integration\Data\CaseDetailReadData;
+use App\Integration\Data\CaseMoneyReadData;
 use App\Integration\Data\ContactReadData;
-use App\Integration\Data\JobReadData;
 use App\Integration\Data\LeadReadData;
-use App\Integration\Data\ProjectDetailReadData;
-use App\Integration\Data\ProjectMoneyReadData;
 use App\Integration\Data\ProjectReadData;
 use App\Integration\Data\ShootReadData;
 use Illuminate\Database\Eloquent\Builder;
@@ -58,7 +56,7 @@ class CrmReadController extends Controller
 
     public function projects(Request $request): JsonResponse
     {
-        return $this->page(Project::query(), $request, ProjectReadData::class);
+        return $this->page(ClientCase::query()->booked(), $request, ProjectReadData::class);
     }
 
     /**
@@ -68,15 +66,15 @@ class CrmReadController extends Controller
      * project outside the token's tenant) the same as every other
      * `{project:public_id}` route on this surface already does.
      */
-    public function project(Project $project): JsonResponse
+    public function case(ClientCase $case): JsonResponse
     {
-        return response()->json(['data' => ProjectDetailReadData::fromModel($project)]);
+        return response()->json(['data' => CaseDetailReadData::fromModel($case)]);
     }
 
-    /** #402: the payment plan ProjectDetailReadData leaves out. */
-    public function money(Project $project): JsonResponse
+    /** #402: the payment plan CaseDetailReadData leaves out. */
+    public function money(ClientCase $case): JsonResponse
     {
-        return response()->json(['data' => ProjectMoneyReadData::fromModel($project)]);
+        return response()->json(['data' => CaseMoneyReadData::fromModel($case)]);
     }
 
     /**
@@ -96,10 +94,10 @@ class CrmReadController extends Controller
         ]);
 
         $query = Lead::query()
-            ->with('project:id,public_id,name')
+            ->with('case:id,public_id,name,closed_at')
             ->when($filters['stage'] ?? null, fn (Builder $q, string $stage) => $q->where('stage', $stage))
             ->when($request->has('closed'), fn (Builder $q) => $request->boolean('closed')
-                ? $q->whereNotNull('outcome')
+                ? $q->whereHas('case', fn (Builder $case) => $case->whereNotNull('cases.closed_at'))
                 : $q->open())
             ->when($filters['captured_from'] ?? null, fn (Builder $q, string $from) => $q->whereDate('captured_at', '>=', $from))
             ->when($filters['captured_to'] ?? null, fn (Builder $q, string $to) => $q->whereDate('captured_at', '<=', $to));
@@ -130,17 +128,12 @@ class CrmReadController extends Controller
         $cancelled = array_key_exists('cancelled', $range) ? $request->boolean('cancelled') : null;
 
         $query = Shoot::query()
-            ->with(['project:id,public_id', 'crew.user'])
+            ->with(['case:id,public_id', 'crew.user'])
             ->when($range['from'] ?? null, fn (Builder $q, string $from) => $q->whereDate('date', '>=', $from))
             ->when($range['to'] ?? null, fn (Builder $q, string $to) => $q->whereDate('date', '<=', $to))
             ->when($cancelled !== null, fn (Builder $q) => $cancelled ? $q->whereNotNull('cancelled_at') : $q->uncancelled());
 
         return $this->page($query, $request, ShootReadData::class);
-    }
-
-    public function jobs(Request $request): JsonResponse
-    {
-        return $this->page(Job::query()->with('project:id,public_id'), $request, JobReadData::class);
     }
 
     /**

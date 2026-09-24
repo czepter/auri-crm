@@ -3,7 +3,7 @@
 namespace App\Notifications\Studio;
 
 use App\Concerns\AppliesStudioMailIdentity;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -59,7 +59,7 @@ abstract class StudioEventNotification extends Notification
      * where there is one — null means the whole studio, which is also what a
      * project with nobody crewed on it comes to.
      */
-    abstract public function project(): ?Project;
+    abstract public function case(): ?ClientCase;
 
     public function toMail(object $notifiable): MailMessage
     {

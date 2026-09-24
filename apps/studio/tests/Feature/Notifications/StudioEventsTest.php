@@ -1,9 +1,9 @@
 <?php
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Engagement\Actions\StartThread;
 use App\Models\User;
@@ -41,8 +41,8 @@ it('tells only the crew of the project where there is one', function () {
     $crewed = staffMember();
     $uninvolved = staffMember();
 
-    $project = Project::factory()->create();
-    $shoot = Shoot::factory()->create(['project_id' => $project->id]);
+    $project = ClientCase::factory()->create();
+    $shoot = Shoot::factory()->create(['case_id' => $project->id]);
     CrewAssignment::factory()->create(['shoot_id' => $shoot->id, 'user_id' => $crewed->id]);
 
     app(StartThread::class)($project, Contact::factory()->create(), 'Frage', 'Wann?');
@@ -154,11 +154,11 @@ it('stores one three-way choice as the two preference rows behind it', function 
 
 it('drops the in-app row when its project goes, so the link cannot 404', function () {
     $user = staffMember();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     app(InAppTransport::class)
         ->send($user, new InquiryReceived(
-            Lead::factory()->create(['project_id' => $project->id])
+            Lead::factory()->create(['case_id' => $project->id])
         ));
 
     expect(InAppNotification::count())->toBe(1);

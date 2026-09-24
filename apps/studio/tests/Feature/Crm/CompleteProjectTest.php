@@ -2,8 +2,7 @@
 
 use App\Crm\Actions\OpenProjects;
 use App\Crm\Enums\ShootStatus;
-use App\Crm\Models\Job;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,33 +12,33 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->staff = User::factory()->withMfa()->create();
     $this->actingAs($this->staff, 'staff');
-    $this->project = Project::factory()->create();
-    Job::factory()->for($this->project)->create();
+    $this->case = ClientCase::factory()->create();
+    markBooked($this->case);
 });
 
 it('completes a project whatever its shoots say, and reopens it', function () {
-    Shoot::factory()->for($this->project)->primary()->atStatus(ShootStatus::Booked)->on(now()->subYear()->toDateString())->create();
+    Shoot::factory()->for($this->case, 'case')->primary()->atStatus(ShootStatus::Booked)->on(now()->subYear()->toDateString())->create();
 
-    $this->post("/auftraege/{$this->project->public_id}/abschluss")->assertRedirect();
+    $this->post("/auftraege/{$this->case->public_id}/abschluss")->assertRedirect();
 
     $queued = collect(app(OpenProjects::class)->queue($this->staff))->pluck('rows')->flatten()->pluck('id');
-    $header = $this->get("/auftraege/{$this->project->public_id}")->viewData('page')['props']['header'];
+    $header = $this->get("/auftraege/{$this->case->public_id}")->viewData('page')['props']['header'];
 
-    expect($this->project->fresh()->isCompleted())->toBeTrue()
-        ->and($queued)->not->toContain($this->project->public_id)
+    expect($this->case->fresh()->isCompleted())->toBeTrue()
+        ->and($queued)->not->toContain($this->case->public_id)
         ->and($header['position']['source'])->toBe('completed')
         ->and(collect($header['track'])->firstWhere('state', 'current')['key'])->toBe('completed');
 
-    $this->delete("/auftraege/{$this->project->public_id}/abschluss")->assertRedirect();
+    $this->delete("/auftraege/{$this->case->public_id}/abschluss")->assertRedirect();
 
-    expect($this->project->fresh()->isCompleted())->toBeFalse();
+    expect($this->case->fresh()->isCompleted())->toBeFalse();
 });
 
 it('moves every open shoot when the stand of a booked project is set', function () {
-    $wedding = Shoot::factory()->for($this->project)->primary()->atStatus(ShootStatus::Booked)->create();
-    $engagement = Shoot::factory()->for($this->project)->atStatus(ShootStatus::Shot)->create();
+    $wedding = Shoot::factory()->for($this->case, 'case')->primary()->atStatus(ShootStatus::Booked)->create();
+    $engagement = Shoot::factory()->for($this->case, 'case')->atStatus(ShootStatus::Shot)->create();
 
-    $this->patch("/auftraege/{$this->project->public_id}", ['stage' => ShootStatus::Delivered->value])
+    $this->patch("/auftraege/{$this->case->public_id}", ['stage' => ShootStatus::Delivered->value])
         ->assertSessionHasNoErrors();
 
     expect($wedding->fresh()->status->key)->toBe(ShootStatus::Delivered->value)

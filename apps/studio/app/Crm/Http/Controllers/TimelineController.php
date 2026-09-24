@@ -81,7 +81,7 @@ class TimelineController extends Controller
 
         abort_if($shoot->date === null, 404);
 
-        $shoot->loadMissing(['project', 'timeline']);
+        $shoot->loadMissing(['case', 'timeline']);
 
         $pdf = $gotenberg->htmlToPdf(view('pdf.shoot-timeline', ['shoot' => $shoot])->render());
 
@@ -98,7 +98,7 @@ class TimelineController extends Controller
 
         abort_if($shoot->date === null, 404);
 
-        $shoot->loadMissing(['project', 'timeline']);
+        $shoot->loadMissing(['case', 'timeline']);
 
         return response($calendar->render($shoot), 200, [
             'Content-Type' => 'text/calendar; charset=utf-8',

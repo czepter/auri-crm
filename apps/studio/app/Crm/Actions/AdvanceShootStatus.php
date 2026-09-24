@@ -6,8 +6,8 @@ use App\Crm\Events\ShootCancelled;
 use App\Crm\Events\ShootStatusChanged;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
-use App\Models\User;
 use App\Crm\Support\StageHistory;
+use App\Models\User;
 use App\Support\AuditLogger;
 use Carbon\CarbonInterface;
 use DomainException;
@@ -64,7 +64,7 @@ class AdvanceShootStatus
                 ...$backwards ? ['reverted' => true] : [],
             ],
             subject: $shoot->public_id,
-            projectId: $shoot->project_id,
+            projectId: $shoot->case_id,
             occurredAt: $enteredAt,
         );
 
@@ -92,7 +92,7 @@ class AdvanceShootStatus
             actor: $actor ?? auth('staff')->user(),
             context: ['status' => $shoot->status->key, 'reason' => $reason],
             subject: $shoot->public_id,
-            projectId: $shoot->project_id,
+            projectId: $shoot->case_id,
             occurredAt: $cancelledAt,
         );
 
@@ -125,7 +125,7 @@ class AdvanceShootStatus
             actor: $actor ?? auth('staff')->user(),
             context: ['status' => $shoot->status->key, 'reason' => $reason],
             subject: $shoot->public_id,
-            projectId: $shoot->project_id,
+            projectId: $shoot->case_id,
         );
 
         return $shoot;

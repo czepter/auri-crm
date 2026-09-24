@@ -1,9 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GallerySet;
@@ -31,18 +30,18 @@ beforeEach(function () {
     ]);
 });
 
-function bookingFor(Contact $contact, array $attributes = []): Project
+function bookingFor(Contact $contact, array $attributes = []): ClientCase
 {
-    $project = Project::factory()->create([...$attributes, 'portal_visible' => true]);
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project = ClientCase::factory()->create([...$attributes, 'portal_visible' => true]);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     return $project;
 }
 
-function dueInstallment(Project $project, int $amount, string $dueOn): PaymentInstallment
+function dueInstallment(ClientCase $project, int $amount, string $dueOn): PaymentInstallment
 {
-    $job = Job::factory()->for($project)->create();
-    $plan = PaymentPlan::factory()->for($job)->create();
+    markBooked($project);
+    $plan = PaymentPlan::factory()->for($project, 'case')->create();
 
     return PaymentInstallment::factory()->for($plan, 'plan')->create([
         'amount' => $amount,
@@ -57,7 +56,7 @@ it('gathers what is open across every booking, each naming where it came from', 
     $portrait = bookingFor($contact, ['name' => 'Babybauchshooting']);
 
     dueInstallment($wedding, 150000, '2026-07-27');
-    Quote::factory()->for($portrait)->create([
+    Quote::factory()->for($portrait, 'case')->create([
         'status' => QuoteStatus::Sent,
         'sent_at' => now()->subDay(),
         'total' => 89000,
@@ -125,11 +124,11 @@ it('derives a phase per booking and counts them for the filter', function () {
     $contact = Contact::factory()->create();
 
     $upcoming = bookingFor($contact);
-    Shoot::factory()->for($upcoming)->on(now()->addMonth()->format('Y-m-d'))->create(['is_primary' => true]);
+    Shoot::factory()->for($upcoming, 'case')->on(now()->addMonth()->format('Y-m-d'))->create(['is_primary' => true]);
 
     $delivered = bookingFor($contact);
-    Shoot::factory()->for($delivered)->on(now()->subYear()->format('Y-m-d'))->create(['is_primary' => true]);
-    Gallery::factory()->for($delivered)->create()->publish();
+    Shoot::factory()->for($delivered, 'case')->on(now()->subYear()->format('Y-m-d'))->create(['is_primary' => true]);
+    Gallery::factory()->for($delivered, 'case')->create()->publish();
 
     bookingFor($contact);
 
@@ -144,7 +143,7 @@ it('offers every live gallery directly, with its cover and count', function () {
     $project = bookingFor($contact);
     bookingFor($contact);
 
-    $gallery = Gallery::factory()->for($project)->create(['title' => 'Verlobungsshooting']);
+    $gallery = Gallery::factory()->for($project, 'case')->create(['title' => 'Verlobungsshooting']);
     $set = GallerySet::where('gallery_id', $gallery->id)->first();
     Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/a.jpg', 'filename' => 'a.jpg']);
     Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/b.jpg', 'filename' => 'b.jpg']);
@@ -163,9 +162,9 @@ it('leaves out a gallery whose link has expired, and one nobody published', func
     $project = bookingFor($contact);
     bookingFor($contact);
 
-    Gallery::factory()->for($project)->create();
+    Gallery::factory()->for($project, 'case')->create();
 
-    $expired = Gallery::factory()->for($project)->create();
+    $expired = Gallery::factory()->for($project, 'case')->create();
     $expired->publish();
     $expired->update(['expires_at' => now()->subDay()]);
 

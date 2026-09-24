@@ -64,7 +64,7 @@ it('packs contacts, projects, documents and messages into the Daten archive', fu
     $owner = staffMember(StaffRole::Admin);
     $installment = creditableInstallment();
     $invoice = $installment->invoice;
-    $project = $invoice->project;
+    $project = $invoice->case;
 
     Storage::disk('local')->put('invoices/rechnung.pdf', '%PDF-invoice');
     $invoice->update(['pdf_path' => 'invoices/rechnung.pdf']);
@@ -73,11 +73,11 @@ it('packs contacts, projects, documents and messages into the Daten archive', fu
     Storage::disk('local')->put('credit-notes/gutschrift.pdf', '%PDF-credit');
     $note->update(['pdf_path' => 'credit-notes/gutschrift.pdf']);
 
-    Quote::factory()->for($project)->create(['status' => QuoteStatus::Sent, 'number' => 'AN-2026-7', 'sent_at' => now(), 'net' => 100_000, 'vat_amount' => 19_000]);
-    Quote::factory()->for($project)->create(['status' => QuoteStatus::Draft]);
+    Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Sent, 'number' => 'AN-2026-7', 'sent_at' => now(), 'net' => 100_000, 'vat_amount' => 19_000]);
+    Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Draft]);
     $this->mock(GotenbergClient::class)->shouldReceive('htmlToPdf')->once()->andReturn('%PDF-quote');
 
-    $thread = Thread::factory()->for($project)->create(['subject' => 'Frage zum Ablauf']);
+    $thread = Thread::factory()->for($project, 'case')->create(['subject' => 'Frage zum Ablauf']);
     $message = Message::factory()->for($thread)->create(['body' => 'Wann ist der Termin?']);
 
     $export = app(RequestStudioExport::class)(StudioExportKind::Daten, null, $owner);

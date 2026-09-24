@@ -8,7 +8,7 @@ uses(RefreshDatabase::class);
 
 it('legt aus einer Position ein Paket an', function () {
     [$user, $project] = studioWithProject();
-    $quote = Quote::factory()->for($project)->create();
+    $quote = Quote::factory()->for($project, 'case')->create();
 
     $this->actingAs($user, 'staff')->post("/angebote/{$quote->public_id}/positionen/als-paket", [
         'name' => 'Fotobox',

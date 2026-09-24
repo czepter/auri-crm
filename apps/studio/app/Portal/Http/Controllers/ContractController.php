@@ -7,9 +7,9 @@ use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Jobs\RenderContractJob;
 use App\Http\Controllers\Controller;
 use App\Settings\Support\StudioSettingsResolver;
-use Illuminate\Support\Facades\Bus;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -31,11 +31,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class ContractController extends Controller
 {
-    public function show(string $project, StudioSettingsResolver $settings): Response
+    public function show(string $case, StudioSettingsResolver $settings): Response
     {
         $contact = auth('portal')->user();
 
-        $found = $contact->visibleProjects()->where('projects.public_id', $project)->firstOrFail();
+        $found = $contact->visibleProjects()->where('cases.public_id', $case)->firstOrFail();
         $contract = $found->latestContract()->with('signature')->first();
 
         // rescue(), not a bare call: on a sync queue the render runs here,
@@ -77,11 +77,11 @@ class ContractController extends Controller
      * explicit true, so a request built by hand without it fails exactly
      * like an unchecked box would.
      */
-    public function sign(Request $request, string $project, SignContract $sign): RedirectResponse
+    public function sign(Request $request, string $case, SignContract $sign): RedirectResponse
     {
         $contact = auth('portal')->user();
 
-        $found = $contact->visibleProjects()->where('projects.public_id', $project)->firstOrFail();
+        $found = $contact->visibleProjects()->where('cases.public_id', $case)->firstOrFail();
         $contract = $found->latestContract()->with('template')->first();
 
         abort_if($contract === null, 404);
@@ -101,11 +101,11 @@ class ContractController extends Controller
      * ContractController::download() for why `response()` rather than
      * `download()`. Never renders — see the class note.
      */
-    public function download(string $project): StreamedResponse
+    public function download(string $case): StreamedResponse
     {
         $contact = auth('portal')->user();
 
-        $found = $contact->visibleProjects()->where('projects.public_id', $project)->firstOrFail();
+        $found = $contact->visibleProjects()->where('cases.public_id', $case)->firstOrFail();
         $contract = $found->latestContract()->first();
 
         abort_if($contract === null || ! $contract->hasArtifact(), 404);

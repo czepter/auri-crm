@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * Q-11: one share of whatever the quote turns out to be worth. Not an
  * amount — a slider quote has no sum until it is accepted — and not a date:
  * a stage carries a text, and CreatePaymentPlan sets due_on at booking,
- * where a Job and its shoots exist to hang a date off.
+ * where a booked project and its shoots exist to hang a date off.
  */
 class QuotePaymentStage extends Model
 {

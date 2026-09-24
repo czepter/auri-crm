@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -17,10 +17,10 @@ beforeEach(fn () => useSurface(Surface::PORTAL));
 it('shows the contact their own project\'s rendered contract', function () {
     Storage::fake('local');
 
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contract = renderedContract($project);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $props = $this->actingAs($contact, 'portal')
         ->get("/projekte/{$project->public_id}/vertrag")
@@ -32,9 +32,9 @@ it('shows the contact their own project\'s rendered contract', function () {
 });
 
 it('shows an empty state when the project has no contract yet', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $props = $this->actingAs($contact, 'portal')
         ->get("/projekte/{$project->public_id}/vertrag")
@@ -47,7 +47,7 @@ it('shows an empty state when the project has no contract yet', function () {
 it('404s a contract page for a project the contact is not on', function () {
     Storage::fake('local');
 
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     renderedContract($project);
     $contact = Contact::factory()->create();
 
@@ -57,10 +57,10 @@ it('404s a contract page for a project the contact is not on', function () {
 it('404s a contract page for a project the studio has not made portal-visible', function () {
     Storage::fake('local');
 
-    $project = Project::factory()->create(['portal_visible' => false]);
+    $project = ClientCase::factory()->create(['portal_visible' => false]);
     renderedContract($project);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal')->get("/projekte/{$project->public_id}/vertrag")->assertNotFound();
 });
@@ -68,10 +68,10 @@ it('404s a contract page for a project the studio has not made portal-visible', 
 it('downloads the stored artifact', function () {
     Storage::fake('local');
 
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     renderedContract($project, '%PDF-portal-bytes');
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $response = $this->actingAs($contact, 'portal')->get("/projekte/{$project->public_id}/vertrag/pdf");
 
@@ -82,10 +82,10 @@ it('downloads the stored artifact', function () {
 it('never puts an integer identifier into the portal contract screen', function () {
     Storage::fake('local');
 
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     renderedContract($project);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $props = $this->actingAs($contact, 'portal')
         ->get("/projekte/{$project->public_id}/vertrag")
@@ -104,10 +104,10 @@ it('404s the download and hides the link when the artifact is gone and Gotenberg
     Storage::fake('local');
     Http::fake(['*/forms/chromium/convert/html' => Http::response('boom', 500)]);
 
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contract = renderedContract($project);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     Storage::disk('local')->delete($contract->artifact_path);
 

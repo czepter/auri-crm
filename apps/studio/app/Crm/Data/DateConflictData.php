@@ -52,12 +52,12 @@ class DateConflictData extends Data
     {
         return new self(
             source: 'shoot',
-            projectId: $shoot->project->public_id,
-            projectName: $shoot->project->name,
+            projectId: $shoot->case->public_id,
+            projectName: $shoot->case->name,
             venue: $shoot->venue(),
             kind: $shoot->kind,
             label: null,
-            // Read off the shoot the query already loaded, not off the job:
+            // Read off the shoot the query already loaded, not off the booking:
             // `requested` is precisely "somebody asked for this day", and
             // anything past it is a day the studio has committed. A second
             // relation for the same fact would cost a query per read.

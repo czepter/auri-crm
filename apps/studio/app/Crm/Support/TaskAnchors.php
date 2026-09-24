@@ -4,7 +4,7 @@ namespace App\Crm\Support;
 
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Stage;
 use App\Models\AuditLog;
 use App\Settings\Support\StudioSettingsResolver;
@@ -35,7 +35,7 @@ final class TaskAnchors
      *
      * @return list<array{value: string, label: string, group: string, on: ?string}>
      */
-    public function forProject(Project $project): array
+    public function forCase(ClientCase $project): array
     {
         $reached = $this->reached($project);
         $options = [];
@@ -93,7 +93,7 @@ final class TaskAnchors
     }
 
     /** The day the anchor falls on, or null while it is still ahead. */
-    public function resolve(Project $project, string $anchor): ?CarbonImmutable
+    public function resolve(ClientCase $project, string $anchor): ?CarbonImmutable
     {
         $parts = explode(':', $anchor);
 
@@ -105,7 +105,7 @@ final class TaskAnchors
     }
 
     /** The anchor plus its offset, rolled forward onto a day the studio works. */
-    public function dueOn(Project $project, string $anchor, int $offsetDays): ?CarbonImmutable
+    public function dueOn(ClientCase $project, string $anchor, int $offsetDays): ?CarbonImmutable
     {
         $date = $this->resolve($project, $anchor);
 
@@ -115,7 +115,7 @@ final class TaskAnchors
     }
 
     /** How the anchor reads on a screen. Null once the shoot behind it is gone. */
-    public static function label(Project $project, string $anchor): ?string
+    public static function label(ClientCase $project, string $anchor): ?string
     {
         $parts = explode(':', $anchor);
 
@@ -159,12 +159,12 @@ final class TaskAnchors
      *
      * @return array<string, CarbonImmutable>
      */
-    private function reached(Project $project): array
+    private function reached(ClientCase $project): array
     {
         $dates = [];
 
         $logs = AuditLog::query()
-            ->where('project_id', $project->id)
+            ->where('case_id', $project->id)
             ->whereIn('event', ['lead.stage_changed', 'shoot.status_changed'])
             ->orderBy('created_at')
             ->get();

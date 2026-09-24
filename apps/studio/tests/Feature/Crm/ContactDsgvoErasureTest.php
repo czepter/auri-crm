@@ -1,11 +1,10 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\InternalNote;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\Task;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
@@ -35,23 +34,23 @@ beforeEach(function () {
 });
 
 /** A sole-contact project with a gallery asset, a quote, a thread and a note — the ordinary case. */
-function dsgvoErasableProject(Contact $contact): Project
+function dsgvoErasableProject(Contact $contact): ClientCase
 {
-    $project = Project::factory()->create(['name' => 'Meier — Hochzeit']);
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project = ClientCase::factory()->create(['name' => 'Meier — Hochzeit']);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
-    $gallery = Gallery::factory()->for($project)->create();
+    $gallery = Gallery::factory()->for($project, 'case')->create();
     $asset = Asset::factory()->for($gallery)->create(['key' => 'galleries/x/original.jpg']);
     Storage::disk('s3')->put($asset->key, 'bytes');
 
-    Quote::factory()->for($project)->create();
+    Quote::factory()->for($project, 'case')->create();
 
-    $thread = Thread::factory()->for($project)->create();
+    $thread = Thread::factory()->for($project, 'case')->create();
     Message::factory()->for($thread)->create(['contact_id' => $contact->id, 'author_id' => null]);
 
-    Task::factory()->for($project)->create();
-    InternalNote::factory()->for($project)->create(['author_id' => null]);
-    Lead::factory()->for($project)->create();
+    Task::factory()->for($project, 'case')->create();
+    InternalNote::factory()->for($project, 'case')->create(['author_id' => null]);
+    Lead::factory()->for($project, 'case')->create();
 
     return $project;
 }
@@ -65,7 +64,7 @@ it('erases a sole-contact project outright, including its storage objects', func
         ->post("/kontakte/{$contact->public_id}/dsgvo/loeschen")
         ->assertRedirect('/kontakte');
 
-    expect(Project::query()->whereKey($project->id)->exists())->toBeFalse()
+    expect(ClientCase::query()->whereKey($project->id)->exists())->toBeFalse()
         ->and(Gallery::query()->exists())->toBeFalse()
         ->and(Quote::query()->exists())->toBeFalse()
         ->and(Thread::query()->exists())->toBeFalse()
@@ -89,12 +88,12 @@ it('erases a sole-contact project outright, including its storage objects', func
 it('keeps the payment plan, its issued invoices and their PDFs when erasing a booked project', function () {
     $contact = Contact::factory()->create(['name' => 'Lena Meier']);
     $project = dsgvoErasableProject($contact);
-    $plan = PaymentPlan::factory()->for(Job::factory()->for($project))->create(['total' => 100000]);
+    $plan = PaymentPlan::factory()->for(markBooked($project), 'case')->create(['total' => 100000]);
     $invoice = Invoice::create([
         'number' => 'RE-2026-0001',
         'issued_at' => now(),
         'contact_id' => $contact->id,
-        'project_id' => $project->id,
+        'case_id' => $project->id,
         'pdf_path' => 'invoices/re-2026-0001.pdf',
     ]);
     $installment = PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 100000, 'invoice_id' => $invoice->id]);
@@ -111,10 +110,10 @@ it('keeps the payment plan, its issued invoices and their PDFs when erasing a bo
 
 it('exports and erases the address, comments and favorites of a contact on a shared project', function () {
     $contact = Contact::factory()->create(['street' => 'Lindenweg 4', 'postcode' => '07743', 'city' => 'Jena']);
-    $project = Project::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
-    $project->attachContact(Contact::factory()->create(), ProjectContactRole::Partner);
-    $version = GalleryVersion::factory()->for(Gallery::factory()->for($project))->create();
+    $project = ClientCase::factory()->create();
+    $project->attachContact($contact, CaseContactRole::Primary);
+    $project->attachContact(Contact::factory()->create(), CaseContactRole::Partner);
+    $version = GalleryVersion::factory()->for(Gallery::factory()->for($project, 'case'))->create();
     AssetComment::factory()->for($version)->create(['contact_id' => $contact->id, 'body' => 'Bitte in Farbe']);
     AssetFavorite::factory()->for($version)->create(['contact_id' => $contact->id]);
 
@@ -154,18 +153,18 @@ it('records one audit event naming only the opaque public_id, never PII', functi
 it("leaves a project shared with another contact alone, beyond this contact's own fingerprints", function () {
     $subject = Contact::factory()->create();
     $partner = Contact::factory()->create(['name' => 'Tom Kowalski']);
-    $project = Project::factory()->create();
-    $project->attachContact($subject, ProjectContactRole::Primary);
-    $project->attachContact($partner, ProjectContactRole::Partner);
+    $project = ClientCase::factory()->create();
+    $project->attachContact($subject, CaseContactRole::Primary);
+    $project->attachContact($partner, CaseContactRole::Partner);
 
-    $gallery = Gallery::factory()->for($project)->create();
-    $thread = Thread::factory()->for($project)->create();
+    $gallery = Gallery::factory()->for($project, 'case')->create();
+    $thread = Thread::factory()->for($project, 'case')->create();
     $ownMessage = Message::factory()->for($thread)->create(['contact_id' => $subject->id, 'author_id' => null]);
     $partnerMessage = Message::factory()->for($thread)->create(['contact_id' => $partner->id, 'author_id' => null]);
 
     $this->actingAs($this->owner, 'staff')->post("/kontakte/{$subject->public_id}/dsgvo/loeschen");
 
-    expect(Project::query()->whereKey($project->id)->exists())->toBeTrue()
+    expect(ClientCase::query()->whereKey($project->id)->exists())->toBeTrue()
         ->and(Gallery::query()->whereKey($gallery->id)->exists())->toBeTrue()
         ->and(Message::query()->whereKey($ownMessage->id)->exists())->toBeFalse()
         ->and(Message::query()->whereKey($partnerMessage->id)->exists())->toBeTrue()
@@ -200,11 +199,11 @@ it('deletes client accesses and api tokens, and cannot be run twice', function (
 it('deletes a pre-release signup by address, even on a gallery shared with another contact', function () {
     $contact = Contact::factory()->create(['email' => 'lena@example.test']);
     $partner = Contact::factory()->create();
-    $project = Project::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
-    $project->attachContact($partner, ProjectContactRole::Partner);
+    $project = ClientCase::factory()->create();
+    $project->attachContact($contact, CaseContactRole::Primary);
+    $project->attachContact($partner, CaseContactRole::Partner);
 
-    $gallery = Gallery::factory()->for($project)->create();
+    $gallery = Gallery::factory()->for($project, 'case')->create();
     GalleryPrereleaseSignup::create(['gallery_id' => $gallery->id, 'email' => 'Lena@Example.test']);
 
     $this->actingAs($this->owner, 'staff')->post("/kontakte/{$contact->public_id}/dsgvo/loeschen");

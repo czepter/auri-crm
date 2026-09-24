@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Gallery\Models\Gallery;
 use Illuminate\Database\QueryException;
@@ -15,10 +15,10 @@ it('carries its own date only while no shoot answers the question', function () 
 });
 
 it('refuses a date beside a shoot', function () {
-    $project = Project::factory()->create();
-    $shoot = Shoot::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $shoot = Shoot::factory()->for($project, 'case')->create();
 
-    expect(fn () => Gallery::factory()->for($project)->create([
+    expect(fn () => Gallery::factory()->for($project, 'case')->create([
         'shoot_id' => $shoot->id,
         'event_date' => '2026-08-22',
     ]))->toThrow(QueryException::class);

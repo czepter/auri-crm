@@ -8,11 +8,10 @@ use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Enums\AutomationRunStatus;
 use App\Automation\Models\AutomationRule;
 use App\Automation\Models\AutomationRun;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\TaskAudience;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use Carbon\CarbonImmutable;
@@ -23,18 +22,18 @@ uses(RefreshDatabase::class);
 
 beforeEach(fn () => Notification::fake());
 
-function bookedShootIn(int $days, Project $project): Shoot
+function bookedShootIn(int $days, ClientCase $project): Shoot
 {
-    Job::factory()->for($project)->create();
+    markBooked($project);
 
-    return Shoot::factory()->for($project)->create([
+    return Shoot::factory()->for($project, 'case')->create([
         'date' => CarbonImmutable::parse('2026-06-01')->addDays($days)->toDateString(),
     ]);
 }
 
 it('hands the studio a task due on the anchor date less the offset', function () {
     staffMember();
-    $project = Project::factory()->create(['name' => 'Hochzeit Meier']);
+    $project = ClientCase::factory()->create(['name' => 'Hochzeit Meier']);
     $shoot = bookedShootIn(3, $project);
 
     AutomationRule::factory()
@@ -51,7 +50,7 @@ it('hands the studio a task due on the anchor date less the offset', function ()
 
     expect($task->title)->toBe('Packliste: Hochzeit Meier')
         ->and($task->audience)->toBe(TaskAudience::Internal)
-        ->and($task->project_id)->toBe($project->id)
+        ->and($task->case_id)->toBe($project->id)
         ->and($task->shoot_id)->toBe($shoot->id)
         ->and($task->due_on->toDateString())->toBe('2026-06-01')
         ->and(AutomationRun::sole()->status)->toBe(AutomationRunStatus::Sent);
@@ -60,9 +59,9 @@ it('hands the studio a task due on the anchor date less the offset', function ()
 });
 
 it('drafts a client mail with its rendered text instead of sending it', function () {
-    $project = Project::factory()->create(['name' => 'Hochzeit Meier', 'portal_visible' => true]);
+    $project = ClientCase::factory()->create(['name' => 'Hochzeit Meier', 'portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
     bookedShootIn(7, $project);
 
     AutomationRule::factory()

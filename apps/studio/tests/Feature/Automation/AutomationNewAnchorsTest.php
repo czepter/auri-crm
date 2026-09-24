@@ -8,9 +8,8 @@ use App\Automation\Models\AutomationRule;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\TaskAudience;
-use App\Crm\Models\Job;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Gallery\Models\Gallery;
@@ -45,8 +44,8 @@ function sweep(CarbonImmutable $today): int
 it('announces an installment before it falls due', function () use ($today) {
     staffMember();
 
-    $project = Project::factory()->create();
-    $plan = PaymentPlan::factory()->create(['job_id' => Job::factory()->create(['project_id' => $project->id])]);
+    $project = ClientCase::factory()->create();
+    $plan = PaymentPlan::factory()->for(markBooked($project), 'case')->create();
 
     PaymentInstallment::factory()->create([
         'payment_plan_id' => $plan->id,

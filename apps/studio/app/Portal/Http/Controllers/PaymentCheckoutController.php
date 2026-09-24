@@ -28,7 +28,7 @@ use Symfony\Component\HttpFoundation\Response;
 class PaymentCheckoutController extends Controller
 {
     public function __invoke(
-        string $project,
+        string $case,
         PaymentInstallment $installment,
         StudioSettingsResolver $settings,
         CreateInstallmentCheckoutSession $createSession,
@@ -36,9 +36,9 @@ class PaymentCheckoutController extends Controller
         abort_unless($settings->stripeEnabled() && $settings->activeStripeSecretKey() !== null, 404);
 
         $contact = auth('portal')->user();
-        $visible = $contact->visibleProjects()->where('projects.public_id', $project)->exists();
+        $visible = $contact->visibleProjects()->where('cases.public_id', $case)->exists();
         abort_unless($visible, 404);
-        abort_unless($installment->plan?->job?->project?->public_id === $project, 404);
+        abort_unless($installment->plan?->case?->public_id === $case, 404);
         abort_if($installment->status === PaymentInstallmentStatus::Paid, 404);
         abort_if($installment->status === PaymentInstallmentStatus::Cancelled, 404);
         // #418: a settled plan takes no more money.
@@ -49,7 +49,7 @@ class PaymentCheckoutController extends Controller
         // named-route lookup depends on whichever RouteCollection last
         // booted, which the admin/portal surface switch (App\Support\Surface)
         // does not always leave pointed at this surface's own table.
-        $showUrl = url("/projekte/{$project}/zahlungen");
+        $showUrl = url("/projekte/{$case}/zahlungen");
 
         $url = $createSession(
             $installment,

@@ -5,8 +5,8 @@ use App\Contracts\Enums\ContractState;
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Models\Contract;
 use App\Contracts\Models\ContractSigner;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Documents\Models\DocumentTemplate;
 use App\Enums\StaffRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,10 +16,10 @@ use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
-function draftContract(?Project $project = null): Contract
+function draftContract(?ClientCase $project = null): Contract
 {
     return Contract::factory()
-        ->for($project ?? bookedContactProject())
+        ->for($project ?? bookedContactProject(), 'case')
         ->for(DocumentTemplate::factory()->create(['body' => '<p>Vorlage</p>']), 'template')
         ->create(['state' => ContractState::Draft, 'version' => 1]);
 }
@@ -68,7 +68,7 @@ it('keeps the signed Fassung valid until the new one is sent', function () {
     $signed = draftContract($project);
     $signed->markSent();
 
-    $draft = Contract::factory()->for($project)->for($signed->template, 'template')
+    $draft = Contract::factory()->for($project, 'case')->for($signed->template, 'template')
         ->create(['state' => ContractState::Draft, 'version' => 2]);
 
     expect($signed->fresh()->state)->toBe(ContractState::Valid);
@@ -96,7 +96,7 @@ it('renders the Fassung’s own wording rather than the template it started from
     $contract->update(['body' => '<p>Eigener Text</p>']);
 
     expect($contract->fresh()->resolvedBody())->toBe('<p>Eigener Text</p>')
-        ->and(draftContract(Project::factory()->create())->resolvedBody())->toBe('<p>Vorlage</p>');
+        ->and(draftContract(ClientCase::factory()->create())->resolvedBody())->toBe('<p>Vorlage</p>');
 });
 
 it('refuses editing for a role without ManageContracts', function () {

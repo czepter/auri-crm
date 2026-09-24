@@ -149,7 +149,7 @@ final class InvoiceFigures
      */
     private static function acceptedQuote(Invoice $invoice): ?Quote
     {
-        return $invoice->project?->quotes()
+        return $invoice->case?->quotes()
             ->where('status', 'accepted')
             ->latest('accepted_at')
             ->first();

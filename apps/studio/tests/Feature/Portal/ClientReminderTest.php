@@ -1,11 +1,10 @@
 <?php
 
 use App\Crm\Actions\RemindDueTasks;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\TaskAudience;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
-use App\Crm\Models\Project;
 use App\Crm\Models\Task;
 use App\Payments\Actions\DetectOverdueInstallments;
 use App\Payments\Enums\PaymentInstallmentStatus;
@@ -21,17 +20,17 @@ uses(RefreshDatabase::class);
 
 function projectWithClient(): array
 {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     return [$project, $contact];
 }
 
-function planFor(Project $project): PaymentPlan
+function planFor(ClientCase $project): PaymentPlan
 {
     return PaymentPlan::factory()->create([
-        'job_id' => Job::factory()->create(['project_id' => $project->id]),
+        'case_id' => markBooked($project),
     ]);
 }
 
@@ -85,7 +84,7 @@ it('reminds the client of their own open task on the second rung', function () {
     [$project, $contact] = projectWithClient();
 
     Task::factory()->due(now()->toDateString())->create([
-        'project_id' => $project->id,
+        'case_id' => $project->id,
         'audience' => TaskAudience::Client,
     ]);
 
@@ -102,12 +101,12 @@ it('says nothing where no contact can reach the portal', function () {
     Notification::fake();
     staffMember();
 
-    $project = Project::factory()->create(['portal_visible' => false]);
+    $project = ClientCase::factory()->create(['portal_visible' => false]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     Task::factory()->due(now()->subDays(4)->toDateString())->create([
-        'project_id' => $project->id,
+        'case_id' => $project->id,
         'audience' => TaskAudience::Client,
     ]);
 

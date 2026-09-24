@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import Create from './Create.vue'
 import { catalogItems, catalogPackages, contacts, quoteItem, quoteOf, studioSettings } from '../__stories__/fixtures'
 
-const brandt: App.Crm.Data.ProjectSuggestionData = {
+const brandt: App.Crm.Data.CaseSuggestionData = {
   id: 'p-brandt',
   name: 'Brandt, Familie',
   contactName: 'Katrin Brandt',

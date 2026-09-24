@@ -1,7 +1,7 @@
 <?php
 
 use App\Crm\Actions\BookProject;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
@@ -78,8 +78,8 @@ it("edits a template's offset and it reaches the next booking, never one already
     $owner = staffMember(StaffRole::Admin);
     $template = TaskTemplate::factory()->offset(-1)->create(['title' => 'Crew-Briefing verschicken']);
 
-    $alreadyBooked = Project::factory()->create();
-    Shoot::factory()->for($alreadyBooked)->on('2026-06-14')->create();
+    $alreadyBooked = ClientCase::factory()->create();
+    Shoot::factory()->for($alreadyBooked, 'case')->on('2026-06-14')->create();
     app(BookProject::class)($alreadyBooked, $owner);
 
     $this->actingAs($owner, 'staff')
@@ -94,20 +94,20 @@ it("edits a template's offset and it reaches the next booking, never one already
         ])
         ->assertRedirect('/einstellungen/aufgabenvorlagen');
 
-    $newlyBooked = Project::factory()->create();
-    Shoot::factory()->for($newlyBooked)->on('2026-06-14')->create();
+    $newlyBooked = ClientCase::factory()->create();
+    Shoot::factory()->for($newlyBooked, 'case')->on('2026-06-14')->create();
     app(BookProject::class)($newlyBooked, $owner);
 
-    expect(Task::where('project_id', $alreadyBooked->id)->sole()->due_on->format('Y-m-d'))->toBe('2026-06-13')
-        ->and(Task::where('project_id', $newlyBooked->id)->sole()->due_on->format('Y-m-d'))->toBe('2026-06-11');
+    expect(Task::where('case_id', $alreadyBooked->id)->sole()->due_on->format('Y-m-d'))->toBe('2026-06-13')
+        ->and(Task::where('case_id', $newlyBooked->id)->sole()->due_on->format('Y-m-d'))->toBe('2026-06-11');
 });
 
 it('deactivating a template leaves the tasks it already created alone', function () {
     $owner = staffMember(StaffRole::Admin);
     $template = TaskTemplate::factory()->create(['title' => 'Familienliste einholen']);
 
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->on('2026-06-14')->create();
+    $project = ClientCase::factory()->create();
+    Shoot::factory()->for($project, 'case')->on('2026-06-14')->create();
     app(BookProject::class)($project, $owner);
 
     $task = Task::sole();
@@ -134,8 +134,8 @@ it('deletes a template without touching the tasks it already created', function 
     $owner = staffMember(StaffRole::Admin);
     $template = TaskTemplate::factory()->create();
 
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->on('2026-06-14')->create();
+    $project = ClientCase::factory()->create();
+    Shoot::factory()->for($project, 'case')->on('2026-06-14')->create();
     app(BookProject::class)($project, $owner);
 
     $this->actingAs($owner, 'staff')

@@ -25,8 +25,8 @@ class ContractIndexController extends Controller
 
         $contracts = Contract::query()
             ->whereNotNull('sent_at')
-            ->whereHas('project', fn ($project) => $project->visibleTo($viewer))
-            ->with(['project.contacts', 'signature'])
+            ->whereHas('case', fn ($project) => $project->visibleTo($viewer))
+            ->with(['case.contacts', 'signature'])
             ->orderByDesc('sent_at')
             ->get();
 

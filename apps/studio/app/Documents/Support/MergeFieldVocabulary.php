@@ -25,6 +25,7 @@ class MergeFieldVocabulary
     private const SAMPLE = [
         'project.name' => 'Hochzeit Meier & Kowalski',
         'project.type' => 'Hochzeit',
+        'project.bookedAt' => '14.06.2026',
         'contact.name' => 'Lena Meier',
         'contact.email' => 'lena@example.test',
         // §14 UStG wants the recipient's full name *and* address, so the
@@ -34,7 +35,6 @@ class MergeFieldVocabulary
         'contact.street' => 'Gartenweg 4',
         'contact.postcode' => '22765',
         'contact.city' => 'Hamburg',
-        'job.bookedAt' => '14.06.2026',
         // T-17's starters need the occasion's own date and the two figures a
         // quote states about itself. Resolved from the project's primary
         // shoot and its latest sent quote — see DocumentMergeDataBuilder.

@@ -12,7 +12,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * open, so it travels with the name rather than a click away.
  */
 #[TypeScript]
-class ProjectPersonData extends Data
+class CasePersonData extends Data
 {
     public function __construct(
         public string $id,

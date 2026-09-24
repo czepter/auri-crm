@@ -5,11 +5,11 @@ use App\Catalog\Models\PackageItem;
 use App\Catalog\Models\ServiceSuggestion;
 use App\Catalog\Support\PortalOffers;
 use App\Crm\Enums\CaptureChannel;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadSource;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
 use App\Settings\Models\StudioSettings;
@@ -112,8 +112,8 @@ it('opens a booking with one primary shoot when the package asks for a date', fu
         ])
         ->assertRedirect();
 
-    $project = Project::query()->where('name', 'Paarshooting zum Jahrestag')->sole();
-    $shoot = Shoot::query()->where('project_id', $project->id)->sole();
+    $project = ClientCase::query()->where('name', 'Paarshooting zum Jahrestag')->sole();
+    $shoot = Shoot::query()->where('case_id', $project->id)->sole();
 
     expect($project->contacts->pluck('id'))->toContain($contact->id)
         ->and($project->portal_visible)->toBeTrue()
@@ -131,9 +131,9 @@ it('opens a booking without a shoot when the package needs no date', function ()
         ->post("/leistungen/{$package->public_id}/anfragen", ['text' => 'Leinen, bitte.'])
         ->assertRedirect();
 
-    $project = Project::query()->where('name', 'Fotoalbum')->sole();
+    $project = ClientCase::query()->where('name', 'Fotoalbum')->sole();
 
-    expect(Shoot::query()->where('project_id', $project->id)->count())->toBe(0);
+    expect(Shoot::query()->where('case_id', $project->id)->count())->toBe(0);
 });
 
 // Paketpreise sind netto. Was oben draufkommt, muss dastehen, bevor jemand
@@ -182,10 +182,10 @@ it('refuses a request without the date the package asks for', function () {
 it('keeps the source of the contact first inquiry and records the portal as the channel', function () {
     $contact = Contact::factory()->create();
 
-    $first = Project::factory()->create();
-    $first->attachContact($contact, ProjectContactRole::Primary);
+    $first = ClientCase::factory()->create();
+    $first->attachContact($contact, CaseContactRole::Primary);
     Lead::factory()->create([
-        'project_id' => $first->id,
+        'case_id' => $first->id,
         'source' => LeadSource::WeddingFair,
         'captured_at' => now()->subYear(),
     ]);
@@ -196,7 +196,7 @@ it('keeps the source of the contact first inquiry and records the portal as the 
         ])
         ->assertRedirect();
 
-    $lead = Lead::query()->whereNot('project_id', $first->id)->sole();
+    $lead = Lead::query()->whereNot('case_id', $first->id)->sole();
 
     expect($lead->source)->toBe(LeadSource::WeddingFair)
         ->and($lead->captured_via)->toBe(CaptureChannel::Portal);

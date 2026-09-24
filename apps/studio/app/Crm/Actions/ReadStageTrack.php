@@ -2,7 +2,7 @@
 
 namespace App\Crm\Actions;
 
-use App\Crm\Data\ProjectPositionData;
+use App\Crm\Data\CasePositionData;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Stage;
@@ -23,7 +23,7 @@ class ReadStageTrack
     public function __construct(private readonly CrmVocabulary $stages) {}
 
     /** @return list<array{key: string, label: string, pipeline: string, state: string}> */
-    public function __invoke(ProjectPositionData $position): array
+    public function __invoke(CasePositionData $position): array
     {
         $won = $this->sortOf(StagePipeline::Lead, StageAnchor::Won);
         $booked = $this->stages->anchored(StagePipeline::Project, StageAnchor::Booked);

@@ -30,7 +30,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, Ale
  * lit, so the heading never has to say it twice.
  */
 const props = withDefaults(
-  defineProps<{ header: App.Crm.Data.ProjectHeaderData; active: string; child?: string; people?: boolean }>(),
+  defineProps<{ header: App.Crm.Data.CaseHeaderData; active: string; child?: string; people?: boolean }>(),
   { people: true },
 )
 
@@ -49,7 +49,7 @@ const deleting = ref(false)
 const closeForm = useForm({ outcome: 'lost', reason: '' })
 
 function close() {
-  closeForm.post(`/anfragen/${props.header.leadId}/schliessen`, {
+  closeForm.post(`/anfragen/${props.header.id}/schliessen`, {
     preserveScroll: true,
     onSuccess: () => {
       closing.value = false
@@ -59,7 +59,7 @@ function close() {
 }
 
 function reopen() {
-  router.post(`/anfragen/${props.header.leadId}/wieder-oeffnen`, {}, { preserveScroll: true })
+  router.post(`/anfragen/${props.header.id}/wieder-oeffnen`, {}, { preserveScroll: true })
 }
 
 function complete() {
@@ -253,7 +253,7 @@ function destroy() {
               <Select v-model="closeForm.outcome">
                 <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="lost">{{ $t('board.outcomeLost') }}</SelectItem>
+                  <SelectItem value="lost">{{ $t(header.isBooked ? 'board.outcomeCancelled' : 'board.outcomeLost') }}</SelectItem>
                   <SelectItem value="declined">{{ $t('board.outcomeDeclined') }}</SelectItem>
                   <SelectItem value="closed">{{ $t('board.outcomeClosed') }}</SelectItem>
                 </SelectContent>

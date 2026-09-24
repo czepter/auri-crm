@@ -3,8 +3,8 @@
 namespace App\Portal\Http\Controllers;
 
 use App\Catalog\Support\PortalOffers;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Engagement\Models\Thread;
 use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
@@ -44,7 +44,7 @@ class HomeController extends Controller
             ->with([
                 'primaryShoot',
                 'latestQuote',
-                'job.paymentPlan.installments',
+                'paymentPlan.installments',
                 'galleries.currentVersion',
             ])
             ->get();
@@ -55,7 +55,7 @@ class HomeController extends Controller
             return redirect()->route('portal.projects.show', $projects->first()->public_id);
         }
 
-        $bookings = $projects->map(fn (Project $project) => $this->booking($project))
+        $bookings = $projects->map(fn (ClientCase $project) => $this->booking($project))
             ->sortByDesc(fn (array $booking) => [$booking['year'] ?? 0, $booking['date'] ?? ''])
             ->values();
 
@@ -100,7 +100,7 @@ class HomeController extends Controller
      * date still ahead, and everything else is still being settled. Three
      * words a client already understands, off facts that already exist.
      */
-    private function booking(Project $project): array
+    private function booking(ClientCase $project): array
     {
         $date = $project->primaryShoot?->date;
         $delivered = $project->galleries->contains(fn (Gallery $gallery) => $gallery->currentVersion !== null);
@@ -126,7 +126,7 @@ class HomeController extends Controller
     }
 
     /** The first asset of this booking's first published gallery, or nothing. */
-    private function cover(Project $project): ?string
+    private function cover(ClientCase $project): ?string
     {
         foreach ($project->galleries as $gallery) {
             $version = $gallery->currentVersion;
@@ -140,9 +140,9 @@ class HomeController extends Controller
         return null;
     }
 
-    private function openAmount(Project $project): ?int
+    private function openAmount(ClientCase $project): ?int
     {
-        $installments = $project->job?->paymentPlan?->installments;
+        $installments = $project->paymentPlan?->installments;
 
         if ($installments === null) {
             return null;
@@ -169,7 +169,7 @@ class HomeController extends Controller
 
         foreach ($projects as $project) {
             if ($settings->paymentStatusEnabled($contact)) {
-                foreach ($project->job?->paymentPlan?->installments ?? [] as $installment) {
+                foreach ($project->paymentPlan?->installments ?? [] as $installment) {
                     if ($installment->status === PaymentInstallmentStatus::Paid || $installment->due_on === null) {
                         continue;
                     }
@@ -206,7 +206,7 @@ class HomeController extends Controller
                     'amount' => null,
                     'dueOn' => null,
                     'overdue' => false,
-                    'booking' => $thread->project?->name,
+                    'booking' => $thread->case?->name,
                     'subject' => $thread->subject,
                     'href' => "/nachrichten?unterhaltung={$thread->public_id}",
                 ];
@@ -224,7 +224,7 @@ class HomeController extends Controller
     private function unanswered(Contact $contact)
     {
         return $contact->threads()
-            ->with(['project', 'latestMessage'])
+            ->with(['case', 'latestMessage'])
             ->get()
             ->filter(fn (Thread $thread) => $thread->latestMessage?->contact_id === null
                 && $thread->latestMessage !== null);
@@ -242,7 +242,7 @@ class HomeController extends Controller
     private function galleries($projects): array
     {
         return $projects
-            ->flatMap(fn (Project $project) => $project->galleries)
+            ->flatMap(fn (ClientCase $project) => $project->galleries)
             ->filter(fn (Gallery $gallery) => $gallery->currentVersion !== null
                 && ($gallery->expires_at === null || $gallery->expires_at->isFuture()))
             ->map(function (Gallery $gallery) {

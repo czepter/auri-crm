@@ -1,7 +1,7 @@
 <?php
 
 use App\Crm\Enums\ProjectFieldType;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\ProjectField;
 use App\Crm\Models\ProjectType;
 use App\Enums\StaffRole;
@@ -56,7 +56,7 @@ it('drops a unit and options the chosen type has no use for', function () {
 
 it('renames a field without moving the values standing on it', function () {
     $field = field();
-    $project = Project::factory()->create(['type' => 'wedding']);
+    $project = ClientCase::factory()->create(['type' => 'wedding']);
     $project->forceFill(['field_values' => ['gaeste' => 120]])->save();
 
     $this->patch("/projekttypen/{$this->type->public_id}/felder/{$field->public_id}", [
@@ -73,7 +73,7 @@ it('renames a field without moving the values standing on it', function () {
 
 it('refuses to retype a field that already carries values', function () {
     $field = field();
-    Project::factory()->create(['type' => 'wedding'])
+    ClientCase::factory()->create(['type' => 'wedding'])
         ->forceFill(['field_values' => ['gaeste' => 120]])->save();
 
     $this->patch("/projekttypen/{$this->type->public_id}/felder/{$field->public_id}", [
@@ -106,7 +106,7 @@ it('deletes a field nobody answered', function () {
 
 it('refuses to delete a field with values and points at deactivating', function () {
     $field = field();
-    Project::factory()->create(['type' => 'wedding'])
+    ClientCase::factory()->create(['type' => 'wedding'])
         ->forceFill(['field_values' => ['gaeste' => 120]])->save();
 
     $this->delete("/projekttypen/{$this->type->public_id}/felder/{$field->public_id}")
@@ -147,7 +147,7 @@ it('withholds the fields from a role that may not configure them', function () {
 
 it('shows the definitions and the values on the project screen', function () {
     field();
-    $project = Project::factory()->create(['type' => 'wedding']);
+    $project = ClientCase::factory()->create(['type' => 'wedding']);
     $project->forceFill(['field_values' => ['gaeste' => 120]])->save();
 
     $this->get("/auftraege/{$project->public_id}")
@@ -161,7 +161,7 @@ it('shows the definitions and the values on the project screen', function () {
 it('saves values with the rest of the project and writes one history line', function () {
     field();
     field(['key' => 'stil', 'label' => 'Stil', 'type' => ProjectFieldType::Tags, 'unit' => null, 'options' => ['Boho']]);
-    $project = Project::factory()->create(['type' => 'wedding', 'name' => 'Lena & Jonas']);
+    $project = ClientCase::factory()->create(['type' => 'wedding', 'name' => 'Lena & Jonas']);
 
     $this->patch("/auftraege/{$project->public_id}", [
         'name' => 'Lena & Jonas',
@@ -176,7 +176,7 @@ it('saves values with the rest of the project and writes one history line', func
 
 it('refuses a value outside a closed list', function () {
     field(['key' => 'trauung', 'label' => 'Trauung', 'type' => ProjectFieldType::Select, 'unit' => null, 'options' => ['Frei', 'Kirchlich']]);
-    $project = Project::factory()->create(['type' => 'wedding']);
+    $project = ClientCase::factory()->create(['type' => 'wedding']);
 
     $this->patch("/auftraege/{$project->public_id}", [
         'name' => $project->name,
@@ -191,7 +191,7 @@ it('adds the option to the definition when the field allows it', function () {
         'key' => 'stil', 'label' => 'Stil', 'type' => ProjectFieldType::Tags,
         'unit' => null, 'options' => ['Boho'], 'allow_new_options' => true,
     ]);
-    $project = Project::factory()->create(['type' => 'wedding']);
+    $project = ClientCase::factory()->create(['type' => 'wedding']);
 
     $this->patch("/auftraege/{$project->public_id}", [
         'name' => $project->name,
@@ -207,7 +207,7 @@ it('grows no option when a later field in the same save is refused', function ()
         'unit' => null, 'options' => ['Boho'], 'allow_new_options' => true,
     ]);
     field(['key' => 'trauung', 'label' => 'Trauung', 'type' => ProjectFieldType::Select, 'unit' => null, 'options' => ['Frei']]);
-    $project = Project::factory()->create(['type' => 'wedding']);
+    $project = ClientCase::factory()->create(['type' => 'wedding']);
 
     $this->patch("/auftraege/{$project->public_id}", [
         'name' => $project->name,
@@ -220,7 +220,7 @@ it('grows no option when a later field in the same save is refused', function ()
 
 it('refuses to save a project whose required field is blank', function () {
     field(['required' => true]);
-    $project = Project::factory()->create(['type' => 'wedding']);
+    $project = ClientCase::factory()->create(['type' => 'wedding']);
 
     $this->patch("/auftraege/{$project->public_id}", [
         'name' => $project->name,
@@ -230,7 +230,7 @@ it('refuses to save a project whose required field is blank', function () {
 
 it('keeps the values of the type a project left', function () {
     field();
-    $project = Project::factory()->create(['type' => 'wedding']);
+    $project = ClientCase::factory()->create(['type' => 'wedding']);
     $project->forceFill(['field_values' => ['gaeste' => 120]])->save();
 
     $project->update(['type' => 'portrait']);

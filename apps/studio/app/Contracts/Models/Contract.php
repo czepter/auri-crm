@@ -6,7 +6,7 @@ use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Contracts\Enums\ContractState;
 use App\Contracts\Enums\ContractStatus;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Documents\Models\DocumentTemplate;
 use App\Models\User;
 use Database\Factories\Contracts\ContractFactory;
@@ -38,7 +38,7 @@ class Contract extends Model
     use HasPublicId;
 
     protected $fillable = [
-        'project_id', 'contract_template_id', 'requested_by_id',
+        'case_id', 'contract_template_id', 'requested_by_id',
         'status', 'artifact_path', 'rendered_at', 'error',
         'version', 'state', 'body', 'blocks', 'sent_at', 'sign_deadline_on',
     ];
@@ -61,9 +61,9 @@ class Contract extends Model
         ];
     }
 
-    public function project(): BelongsTo
+    public function case(): BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(ClientCase::class);
     }
 
     public function template(): BelongsTo
@@ -97,7 +97,7 @@ class Contract extends Model
     {
         DB::transaction(function () {
             static::query()
-                ->where('project_id', $this->project_id)
+                ->where('case_id', $this->case_id)
                 ->where('id', '!=', $this->id)
                 ->where('state', ContractState::Valid)
                 ->update(['state' => ContractState::Superseded]);

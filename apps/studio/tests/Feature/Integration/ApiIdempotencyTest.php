@@ -153,12 +153,12 @@ it('closes a lead again after the same-key claim from an earlier close has expir
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'close-1')
-        ->postJson("/api/leads/{$lead->public_id}/lost", ['outcome' => 'lost', 'reason' => 'Budget'])
+        ->postJson("/api/cases/{$lead->case->public_id}/lead/lost", ['outcome' => 'lost', 'reason' => 'Budget'])
         ->assertOk();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'reopen-1')
-        ->postJson("/api/leads/{$lead->public_id}/reopen")
+        ->postJson("/api/cases/{$lead->case->public_id}/lead/reopen")
         ->assertOk();
 
     expect($lead->fresh()->isLost())->toBeFalse();
@@ -167,7 +167,7 @@ it('closes a lead again after the same-key claim from an earlier close has expir
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'close-1')
-        ->postJson("/api/leads/{$lead->public_id}/lost", ['outcome' => 'lost', 'reason' => 'Budget'])
+        ->postJson("/api/cases/{$lead->case->public_id}/lead/lost", ['outcome' => 'lost', 'reason' => 'Budget'])
         ->assertOk();
 
     expect($lead->fresh()->isLost())->toBeTrue();

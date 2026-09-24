@@ -4,7 +4,7 @@ namespace App\Payments\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Payments\Enums\OverdueReason;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Enums\SettledVia;
@@ -89,7 +89,7 @@ class PaymentInstallment extends Model
                     'to' => $installment->due_on->format('Y-m-d'),
                 ],
                 subject: $installment->public_id,
-                projectId: $installment->project()?->id,
+                projectId: $installment->case()?->id,
             );
         });
     }
@@ -106,9 +106,9 @@ class PaymentInstallment extends Model
     }
 
     /** The plan's project, or the invoice's for a rate outside any plan. */
-    public function project(): ?Project
+    public function case(): ?ClientCase
     {
-        return $this->plan?->job?->project ?? $this->invoice?->project;
+        return $this->plan?->case ?? $this->invoice?->case;
     }
 
     /**
@@ -170,7 +170,7 @@ class PaymentInstallment extends Model
      */
     public function acceptedQuote(): ?Quote
     {
-        return $this->plan?->job?->project?->quotes()
+        return $this->plan?->case?->quotes()
             ->where('status', 'accepted')
             ->latest('accepted_at')
             ->first();

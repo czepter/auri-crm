@@ -93,7 +93,7 @@ class IssueCreditNote
                     'reason' => $reason,
                 ],
                 subject: $creditNote->public_id,
-                projectId: $invoice->project_id,
+                projectId: $invoice->case_id,
             );
 
             return $creditNote;

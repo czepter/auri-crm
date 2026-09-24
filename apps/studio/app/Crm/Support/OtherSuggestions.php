@@ -2,8 +2,8 @@
 
 namespace App\Crm\Support;
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 
 /**
  * What the studio has already typed under "Sonstige", most used first — the
@@ -18,7 +18,7 @@ class OtherSuggestions
     public static function for(string $kind): array
     {
         [$model, $column] = match ($kind) {
-            'type' => [Project::class, 'type_other'],
+            'type' => [ClientCase::class, 'type_other'],
             'source' => [Lead::class, 'source_other'],
             'channel' => [Lead::class, 'captured_via_other'],
         };

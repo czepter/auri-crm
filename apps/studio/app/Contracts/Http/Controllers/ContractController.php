@@ -9,10 +9,10 @@ use App\Contracts\Jobs\RenderContractJob;
 use App\Contracts\Models\Contract;
 use App\Contracts\Notifications\ContractSent;
 use App\Contracts\Support\ClauseCatalog;
-use App\Crm\Actions\DeriveProjectPosition;
-use App\Crm\Data\ProjectHeaderData;
-use App\Crm\Enums\ProjectContactRole;
-use App\Crm\Models\Project;
+use App\Crm\Actions\DeriveCasePosition;
+use App\Crm\Data\CaseHeaderData;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentBlockCatalog;
@@ -54,13 +54,13 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class ContractController extends Controller
 {
-    public function show(Project $project): Response
+    public function show(ClientCase $case): Response
     {
-        $this->authorize('view', $project);
+        $this->authorize('view', $case);
 
-        $project->load(['contacts', 'shoots', 'primaryShoot', 'job']);
+        $case->load(['contacts', 'shoots', 'primaryShoot']);
 
-        $versions = $this->versions($project);
+        $versions = $this->versions($case);
         $current = $versions->first();
 
         if ($current !== null) {
@@ -68,27 +68,27 @@ class ContractController extends Controller
         }
 
         return Inertia::render('Projects/Contract', [
-            'header' => ProjectHeaderData::fromProject(
-                $project,
-                (new DeriveProjectPosition)($project),
+            'header' => CaseHeaderData::fromProject(
+                $case,
+                (new DeriveCasePosition)($case),
             ),
             'templates' => DocumentTemplate::current()->ofType(DocumentTemplateType::Contract)
-                ->forShootKind($project->primaryShoot?->kind)
+                ->forShootKind($case->primaryShoot?->kind)
                 ->orderBy('name')->get()
                 ->map(fn (DocumentTemplate $t) => ['value' => $t->public_id, 'label' => "{$t->name} · v{$t->version}"])
                 ->values(),
-            'contract' => $current === null ? null : $this->contractData($current, $project),
-            'versions' => $versions->map(fn (Contract $c) => $this->contractData($c, $project))->values(),
+            'contract' => $current === null ? null : $this->contractData($current, $case),
+            'versions' => $versions->map(fn (Contract $c) => $this->contractData($c, $case))->values(),
             // Only contacts who are not already on the current Fassung — the
             // add-signer select offers what can still be added, nothing else.
-            'contacts' => $project->contacts
+            'contacts' => $case->contacts
                 ->reject(fn ($contact) => $current?->signers->contains('contact_id', $contact->id) ?? false)
                 ->map(fn ($contact) => ['value' => $contact->public_id, 'label' => $contact->name])
                 ->values(),
             'palette' => DocumentBlockCatalog::paletteFor(DocumentTemplateType::Contract),
             'clauses' => ClauseCatalog::forTemplate(
                 DocumentTemplate::current()->ofType(DocumentTemplateType::Contract)
-                    ->forShootKind($project->primaryShoot?->kind)
+                    ->forShootKind($case->primaryShoot?->kind)
                     ->orderBy('name')->first(),
             ),
             'mergeFields' => collect(MergeFieldVocabulary::samples())
@@ -97,9 +97,9 @@ class ContractController extends Controller
         ]);
     }
 
-    public function store(Request $request, Project $project): RedirectResponse
+    public function store(Request $request, ClientCase $case): RedirectResponse
     {
-        $this->authorize('manageContracts', $project);
+        $this->authorize('manageContracts', $case);
 
         $validated = $request->validate([
             'template' => ['required', 'string'],
@@ -119,12 +119,12 @@ class ContractController extends Controller
             : null;
 
         $contract = Contract::create([
-            'project_id' => $project->id,
+            'case_id' => $case->id,
             'contract_template_id' => $template->id,
             'requested_by_id' => auth('staff')->id(),
             'status' => ContractStatus::Pending,
             'state' => ContractState::Draft,
-            'version' => $this->nextVersion($project),
+            'version' => $this->nextVersion($case),
             // Der Schnellbau schreibt eine eigene Fassung; ohne ihn bleibt die
             // Vorlage der Wortlaut (Contract::resolvedBody()).
             'body' => $blocks === null ? null : StarterBlockSerializer::toHtml($blocks),
@@ -138,7 +138,7 @@ class ContractController extends Controller
             actor: auth('staff')->user(),
             context: ['template' => $template->name, 'version' => $template->version],
             subject: $contract->public_id,
-            projectId: $project->id,
+            projectId: $case->id,
         );
 
         return back();
@@ -152,7 +152,7 @@ class ContractController extends Controller
      */
     public function update(Request $request, Contract $contract): RedirectResponse
     {
-        $this->authorize('manageContracts', $contract->project);
+        $this->authorize('manageContracts', $contract->case);
 
         $validated = $request->validate([
             'body' => ['required', 'string', 'max:100000', function (string $attribute, mixed $value, Closure $fail) {
@@ -189,7 +189,7 @@ class ContractController extends Controller
             actor: auth('staff')->user(),
             context: ['version' => $saved->version],
             subject: $saved->public_id,
-            projectId: $saved->project_id,
+            projectId: $saved->case_id,
         );
 
         return back();
@@ -197,14 +197,14 @@ class ContractController extends Controller
 
     public function compose(Contract $contract, StudioSettingsResolver $settings): Response
     {
-        $this->authorize('manageContracts', $contract->project);
+        $this->authorize('manageContracts', $contract->case);
 
         abort_unless($contract->state === ContractState::Draft, 404);
 
         $recipients = $this->recipients($contract);
 
         return Inertia::render('Contracts/Send', [
-            'projectId' => $contract->project->public_id,
+            'projectId' => $contract->case->public_id,
             'contractId' => $contract->public_id,
             'recipients' => $recipients
                 ->map(fn ($contact) => ['name' => $contact->name, 'email' => $contact->email])
@@ -220,7 +220,7 @@ class ContractController extends Controller
      */
     public function send(Request $request, Contract $contract, NotificationService $notifications, StudioSettingsResolver $settings): RedirectResponse
     {
-        $this->authorize('manageContracts', $contract->project);
+        $this->authorize('manageContracts', $contract->case);
 
         abort_unless($contract->state === ContractState::Draft, 422);
 
@@ -240,7 +240,7 @@ class ContractController extends Controller
             actor: auth('staff')->user(),
             context: ['version' => $contract->version],
             subject: $contract->public_id,
-            projectId: $contract->project_id,
+            projectId: $contract->case_id,
         );
 
         if (blank($validated['subject'] ?? null)) {
@@ -251,7 +251,7 @@ class ContractController extends Controller
             $notifications->send($contact, new ContractSent($contract, $validated['subject'], $validated['message'] ?? null, $settings));
         }
 
-        return redirect("/auftraege/{$contract->project->public_id}/vertrag");
+        return redirect("/auftraege/{$contract->case->public_id}/vertrag");
     }
 
     private function recipients(Contract $contract): Collection
@@ -273,7 +273,7 @@ class ContractController extends Controller
      */
     public function download(Contract $contract): StreamedResponse
     {
-        $this->authorize('view', $contract->project);
+        $this->authorize('view', $contract->case);
 
         abort_if(! $contract->hasArtifact(), 404);
 
@@ -281,18 +281,18 @@ class ContractController extends Controller
     }
 
     /** @return Collection<int, Contract> newest Fassung first */
-    private function versions(Project $project)
+    private function versions(ClientCase $case)
     {
         return Contract::query()
-            ->where('project_id', $project->id)
+            ->where('case_id', $case->id)
             ->with(['template', 'signers.contact'])
             ->orderByDesc('version')
             ->get();
     }
 
-    private function nextVersion(Project $project): int
+    private function nextVersion(ClientCase $case): int
     {
-        return 1 + (int) Contract::query()->where('project_id', $project->id)->max('version');
+        return 1 + (int) Contract::query()->where('case_id', $case->id)->max('version');
     }
 
     /**
@@ -302,12 +302,12 @@ class ContractController extends Controller
     {
         return DB::transaction(function () use ($contract, $body, $blocks) {
             $next = Contract::create([
-                'project_id' => $contract->project_id,
+                'case_id' => $contract->case_id,
                 'contract_template_id' => $contract->contract_template_id,
                 'requested_by_id' => auth('staff')->id(),
                 'status' => ContractStatus::Pending,
                 'state' => ContractState::Draft,
-                'version' => $this->nextVersion($contract->project),
+                'version' => $this->nextVersion($contract->case),
                 'body' => $body,
                 'blocks' => $blocks,
             ]);
@@ -338,7 +338,7 @@ class ContractController extends Controller
     /** E-16: die Frist, an der die Automationsregel hängt. */
     public function deadline(Request $request, Contract $contract): RedirectResponse
     {
-        $this->authorize('manageContracts', $contract->project);
+        $this->authorize('manageContracts', $contract->case);
 
         $contract->update($request->validate([
             'sign_deadline_on' => ['nullable', 'date'],
@@ -347,13 +347,13 @@ class ContractController extends Controller
         return back();
     }
 
-    private function contractData(Contract $contract, Project $project): ContractData
+    private function contractData(Contract $contract, ClientCase $case): ContractData
     {
         return ContractData::fromModel(
             $contract,
             "/vertraege/{$contract->public_id}/pdf",
-            $project->contacts->mapWithKeys(
-                fn ($contact) => [$contact->id => ProjectContactRole::from($contact->pivot->role)]
+            $case->contacts->mapWithKeys(
+                fn ($contact) => [$contact->id => CaseContactRole::from($contact->pivot->role)]
             )->all(),
         );
     }

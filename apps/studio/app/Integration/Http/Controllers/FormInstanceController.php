@@ -5,10 +5,10 @@ namespace App\Integration\Http\Controllers;
 use App\Crm\Actions\SeedFormInstanceFromTemplate;
 use App\Crm\Data\FormInstanceData;
 use App\Crm\Enums\FormFieldType;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\FormInstance;
 use App\Crm\Models\FormInstanceField;
 use App\Crm\Models\FormTemplate;
-use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,14 +23,14 @@ use Illuminate\Validation\Rule;
  */
 class FormInstanceController extends Controller
 {
-    public function index(Project $project): JsonResponse
+    public function index(ClientCase $case): JsonResponse
     {
-        $instances = $project->formInstances()->with('fields.currentAnswer')->get();
+        $instances = $case->formInstances()->with('fields.currentAnswer')->get();
 
         return response()->json(['data' => $instances->map(FormInstanceData::fromModel(...))->all()]);
     }
 
-    public function store(Request $request, Project $project, SeedFormInstanceFromTemplate $seed): JsonResponse
+    public function store(Request $request, ClientCase $case, SeedFormInstanceFromTemplate $seed): JsonResponse
     {
         $validated = $request->validate([
             'template' => ['nullable', 'string', Rule::exists('form_templates', 'public_id')->where('is_active', true)],
@@ -40,7 +40,7 @@ class FormInstanceController extends Controller
             ? FormTemplate::active()->where('public_id', $validated['template'])->firstOrFail()
             : null;
 
-        $instance = $project->formInstances()->create([
+        $instance = $case->formInstances()->create([
             'name' => $template?->name ?? 'Neuer Fragebogen',
             'source_template_name' => $template?->name,
         ]);

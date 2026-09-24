@@ -2,7 +2,7 @@
 
 namespace App\Documents\Data;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Documents\Support\MergeFieldResolver;
@@ -41,7 +41,7 @@ class MailTemplateData extends Data
 
     public static function fromModel(
         DocumentTemplate $template,
-        Project $project,
+        ClientCase $project,
         StudioSettingsResolver $settings,
         DocumentMergeDataBuilder $mergeData,
     ): self {

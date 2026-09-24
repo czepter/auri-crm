@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Settings\Models\StudioSettings;
@@ -26,9 +26,9 @@ beforeEach(function () {
 
 function bookedContact(): array
 {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create(['name' => 'Lena Meier']);
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     return [$project, $contact];
 }
@@ -57,7 +57,7 @@ it('lets a client start a thread about one of their bookings', function () {
         ])
         ->assertRedirect();
 
-    $thread = Thread::where('project_id', $project->id)->sole();
+    $thread = Thread::where('case_id', $project->id)->sole();
 
     expect($thread->subject)->toBe('Frage zum Ablauf')
         ->and($thread->messages)->toHaveCount(1)
@@ -77,12 +77,12 @@ it('lets a client start a thread with no booking at all', function () {
 
     $thread = Thread::sole();
 
-    expect($thread->project_id)->toBeNull()
+    expect($thread->case_id)->toBeNull()
         ->and($thread->subject)->toBe('Im Herbst noch etwas frei?');
 });
 
 it('refuses a booking the contact is not on, as a 404 rather than a 403', function () {
-    $other = Project::factory()->create(['portal_visible' => true]);
+    $other = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
 
     test()->actingAs($contact, 'portal')
@@ -93,9 +93,9 @@ it('refuses a booking the contact is not on, as a 404 rather than a 403', functi
 });
 
 it('refuses a booking the studio has not made portal-visible', function () {
-    $project = Project::factory()->create(['portal_visible' => false]);
+    $project = ClientCase::factory()->create(['portal_visible' => false]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     test()->actingAs($contact, 'portal')
         ->post('/nachrichten', ['subject' => 'Thema', 'body' => 'Text.', 'project' => $project->public_id])

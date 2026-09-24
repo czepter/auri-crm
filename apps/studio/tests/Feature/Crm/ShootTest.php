@@ -1,7 +1,7 @@
 <?php
 
 use App\Crm\Enums\ShootStatus;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -36,17 +36,17 @@ it('allows a shoot with no date yet', function () {
 });
 
 it('refuses a second primary shoot on one project', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
-    Shoot::factory()->for($project)->primary()->create();
-    Shoot::factory()->for($project)->primary()->create();
+    Shoot::factory()->for($project, 'case')->primary()->create();
+    Shoot::factory()->for($project, 'case')->primary()->create();
 })->throws(QueryException::class);
 
 it('allows any number of non-primary shoots on one project', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
-    Shoot::factory()->for($project)->primary()->create();
-    Shoot::factory()->for($project)->count(3)->create();
+    Shoot::factory()->for($project, 'case')->primary()->create();
+    Shoot::factory()->for($project, 'case')->count(3)->create();
 
     expect($project->shoots()->count())->toBe(4)
         ->and($project->primaryShoot->is_primary)->toBeTrue();

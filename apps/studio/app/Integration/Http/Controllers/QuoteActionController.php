@@ -38,9 +38,9 @@ class QuoteActionController extends Controller
         AuditLogger::record(
             event: 'quote.created',
             actor: $this->actor($request),
-            context: ['project' => $quote->project->public_id, 'addendum_to' => $quote->public_id],
+            context: ['project' => $quote->case->public_id, 'addendum_to' => $quote->public_id],
             subject: $addendum->public_id,
-            projectId: $quote->project_id,
+            projectId: $quote->case_id,
         );
 
         return $this->answer($addendum, 201);
@@ -56,7 +56,7 @@ class QuoteActionController extends Controller
             actor: $this->actor($request),
             context: ['from' => $quote->public_id],
             subject: $copy->public_id,
-            projectId: $quote->project_id,
+            projectId: $quote->case_id,
         );
 
         return $this->answer($copy, 201);
@@ -76,7 +76,7 @@ class QuoteActionController extends Controller
             actor: $this->actor($request),
             context: ['number' => $quote->number],
             subject: $quote->public_id,
-            projectId: $quote->project_id,
+            projectId: $quote->case_id,
         );
 
         $quote->delete();

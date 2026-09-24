@@ -2,7 +2,7 @@
 
 namespace App\Crm\Actions;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 
@@ -16,7 +16,7 @@ class ReadProjectScreen
     /** @var array<int, ?Quote> */
     private array $accepted = [];
 
-    public function __construct(private readonly DeriveProjectPosition $position) {}
+    public function __construct(private readonly DeriveCasePosition $position) {}
 
     /**
      * What was ordered against what stands now.
@@ -27,7 +27,7 @@ class ReadProjectScreen
      *
      * @return array{items: list<array<string, mixed>>, delta: int, hasDraft: bool}
      */
-    public function scope(Project $project): array
+    public function scope(ClientCase $project): array
     {
         $accepted = $this->accepted($project);
         $draft = $project->quotes()->where('status', QuoteStatus::Draft)->latest('id')->first();
@@ -61,7 +61,7 @@ class ReadProjectScreen
         ];
     }
 
-    private function accepted(Project $project): ?Quote
+    private function accepted(ClientCase $project): ?Quote
     {
         return $this->accepted[$project->id] ??= $project->quotes()
             ->where('status', QuoteStatus::Accepted)

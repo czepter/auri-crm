@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Enums\Capability;
 use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
@@ -33,7 +33,7 @@ it('lists and gets a gallery with its project, version and draft count', functio
     $this->getJson('/api/galleries')
         ->assertOk()
         ->assertJsonPath('data.0.title', 'Hochzeit Weber')
-        ->assertJsonPath('data.0.projectId', $gallery->project->public_id)
+        ->assertJsonPath('data.0.projectId', $gallery->case->public_id)
         ->assertJsonPath('data.0.currentVersion', null)
         ->assertJsonPath('data.0.draftAssetCount', 1)
         ->assertJsonPath('data.0.status', 'draft');
@@ -46,11 +46,11 @@ it('lists and gets a gallery with its project, version and draft count', functio
 });
 
 it('creates a gallery on a project with expiry and features', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $response = $this->withHeader('Idempotency-Key', 'gallery-1')
         ->postJson('/api/galleries', [
-            'project_id' => $project->public_id,
+            'case_id' => $project->public_id,
             'title' => 'Verlobung',
             'is_external' => false,
             'expires_at' => '2030-01-01',

@@ -4,8 +4,8 @@ use App\Crm\Actions\AdvanceShootStatus;
 use App\Crm\Actions\CheckDateAvailability;
 use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\ShootStatus;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\Absence;
 use App\Models\User;
@@ -15,11 +15,11 @@ use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
-function bookedOn(string $date, string $name = 'Meier & Kowalski'): Project
+function bookedOn(string $date, string $name = 'Meier & Kowalski'): ClientCase
 {
-    $project = Project::factory()->wedding()->create(['name' => $name]);
-    Lead::factory()->for($project)->create();
-    Shoot::factory()->for($project)->primary()->on($date)->create([
+    $project = ClientCase::factory()->wedding()->create(['name' => $name]);
+    Lead::factory()->for($project, 'case')->create();
+    Shoot::factory()->for($project, 'case')->primary()->on($date)->create([
         'venue_name' => 'Gut Basthorst',
         'venue_city' => 'Basthorst',
     ]);
@@ -124,7 +124,7 @@ it('respects closures across every date passed to forDates', function () {
 it('ignores lost leads', function () {
     // Vision §7: the scan covers projects whose lead is not lost.
     $project = bookedOn('2026-06-14');
-    $project->lead->forceFill(['lost_at' => now(), 'lost_reason' => 'Budget', 'outcome' => LeadOutcome::Lost])->save();
+    $project->forceFill(['closed_at' => now(), 'close_reason' => 'Budget', 'close_outcome' => LeadOutcome::Lost])->save();
 
     expect(app(CheckDateAvailability::class)->forDate('2026-06-14'))->toBe([]);
 });

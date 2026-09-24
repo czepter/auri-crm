@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -39,7 +39,7 @@ it('matches on an email fragment', function () {
 
 it('reports how many projects a contact already has', function () {
     $contact = Contact::factory()->create(['name' => 'Annika Steffens']);
-    Project::factory()->create()->attachContact($contact, ProjectContactRole::Primary);
+    ClientCase::factory()->create()->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($this->staff, 'staff')
         ->getJson('/kontakte/suche?q=annika')

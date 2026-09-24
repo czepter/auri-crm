@@ -3,9 +3,7 @@
 namespace App\Crm\Models;
 
 use App\Concerns\BelongsToTenant;
-use App\Concerns\HasPublicId;
 use App\Crm\Enums\CaptureChannel;
-use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Support\CrmVocabulary;
@@ -23,26 +21,24 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * The pursuit. One per project, created at inquiry.
  *
  * Thin on purpose. Vision §3.1 names the cost — "show me this client" hops
- * Project → Lead to read the funnel stage — and takes it, because collapsing
- * Lead into Job would leave a table named Job holding mostly unbooked
- * inquiries.
+ * ClientCase → Lead to read the funnel stage — and takes it, because collapsing
+ * Lead into ClientCase would leave the project table holding lead columns for
+ * every booked record.
+ *
+ * No public id of its own (#520): an inquiry is addressed by its case.
  */
 class Lead extends Model
 {
     use BelongsToTenant;
     use HasFactory;
-    use HasPublicId;
 
     protected $fillable = [
-        'project_id',
+        'case_id',
         'package_id',
         'source',
         'source_other',
         'stage',
         'stage_entered_at',
-        'lost_at',
-        'lost_reason',
-        'outcome',
         'stalled_reminders_sent',
         'stalled_reminded_at',
         'inquiry_text',
@@ -60,8 +56,6 @@ class Lead extends Model
             'captured_via' => CaptureChannel::class,
             'stage_entered_at' => 'immutable_datetime',
             'captured_at' => 'immutable_datetime',
-            'lost_at' => 'immutable_datetime',
-            'outcome' => LeadOutcome::class,
             'stalled_reminded_at' => 'immutable_datetime',
         ];
     }
@@ -106,7 +100,7 @@ class Lead extends Model
             : $this->captured_via->label().' — '.$this->captured_via_other;
     }
 
-    /** Same rule as Project::booted() — a detail exists only under "Sonstige". */
+    /** Same rule as ClientCase::booted() — a detail exists only under "Sonstige". */
     protected static function booted(): void
     {
         static::saving(function (self $lead) {
@@ -123,12 +117,12 @@ class Lead extends Model
     /** The name stays: LeadReadData carries it into the OpenAPI contract. */
     public function isLost(): bool
     {
-        return $this->outcome !== null;
+        return $this->case->isClosed();
     }
 
-    public function project(): BelongsTo
+    public function case(): BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(ClientCase::class);
     }
 
     public function capturedBy(): BelongsTo
@@ -152,18 +146,18 @@ class Lead extends Model
      */
     public function scopeOpen(Builder $query): void
     {
-        $query->whereNull('outcome');
+        $query->whereHas('case', fn ($case) => $case->whereNull('cases.closed_at'));
     }
 
     /**
-     * Not booked yet, so still an inquiry. The Job is the seam — a booked
+     * Not booked yet, so still an inquiry. cases.booked_at is the seam — a booked
      * record is a project and lives at /projekte, which reads the same fact.
      * The funnel's own reads (the API snapshot, Auswertungen) keep counting
      * booked leads: a funnel without its end is not a funnel.
      */
     public function scopeUnbooked(Builder $query): void
     {
-        $query->whereDoesntHave('project.job');
+        $query->whereDoesntHave('case', fn ($project) => $project->booked());
     }
 
     protected static function newFactory(): Factory

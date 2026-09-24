@@ -1,10 +1,9 @@
 <?php
 
 use App\Crm\Enums\LeadSource;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Enums\StaffRole;
 use App\Gallery\Actions\ReadAfterDeliveryColumn;
 use App\Gallery\Models\Gallery;
@@ -20,9 +19,9 @@ beforeEach(function () {
 
 it('rows a booked project whose lead names a referrer', function () {
     $referrer = Contact::factory()->create(['name' => 'Familie Osterhoff', 'phone' => '+49 40 999']);
-    $project = Project::factory()->create(['name' => 'Steffens & Falk']);
-    Job::factory()->for($project)->create();
-    Lead::factory()->for($project)->create([
+    $project = ClientCase::factory()->create(['name' => 'Steffens & Falk']);
+    markBooked($project);
+    Lead::factory()->for($project, 'case')->create([
         'source' => LeadSource::Referral,
         'referred_by_contact_id' => $referrer->id,
     ]);
@@ -39,8 +38,8 @@ it('rows a booked project whose lead names a referrer', function () {
 it('does not row a referral whose project was never booked', function () {
     // Nothing to thank anyone for yet.
     $referrer = Contact::factory()->create();
-    $project = Project::factory()->create();
-    Lead::factory()->for($project)->create([
+    $project = ClientCase::factory()->create();
+    Lead::factory()->for($project, 'case')->create([
         'source' => LeadSource::Referral,
         'referred_by_contact_id' => $referrer->id,
     ]);
@@ -49,9 +48,9 @@ it('does not row a referral whose project was never booked', function () {
 });
 
 it('does not row a referral nobody wrote a referrer down for', function () {
-    $project = Project::factory()->create();
-    Job::factory()->for($project)->create();
-    Lead::factory()->for($project)->create([
+    $project = ClientCase::factory()->create();
+    markBooked($project);
+    Lead::factory()->for($project, 'case')->create([
         'source' => LeadSource::Referral,
         'referred_by_contact_id' => null,
     ]);
@@ -60,8 +59,8 @@ it('does not row a referral nobody wrote a referrer down for', function () {
 });
 
 it('rows a gallery running out, pointing at the gallery', function () {
-    $project = Project::factory()->create(['name' => "Hensel Hochzeit '25"]);
-    $gallery = Gallery::factory()->for($project)->create([
+    $project = ClientCase::factory()->create(['name' => "Hensel Hochzeit '25"]);
+    $gallery = Gallery::factory()->for($project, 'case')->create([
         'expires_at' => now()->addDays(12),
     ]);
 
@@ -87,8 +86,8 @@ it('does not row a gallery whose expiry is far off', function () {
 });
 
 it('shows a crew member only their own projects', function () {
-    $project = Project::factory()->create();
-    Gallery::factory()->for($project)->create(['expires_at' => now()->addDays(12)]);
+    $project = ClientCase::factory()->create();
+    Gallery::factory()->for($project, 'case')->create(['expires_at' => now()->addDays(12)]);
 
     $crew = User::factory()->withMfa()->create(['role' => StaffRole::Contributor]);
 

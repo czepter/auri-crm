@@ -25,10 +25,10 @@ enum Capability: string
     case ManageContacts = 'manage_contacts';
 
     /** See every project, rather than only the ones you are crewed on. */
-    case ViewAllProjects = 'view_all_projects';
+    case ViewAllCases = 'view_all_cases';
 
     /**
-     * Commit the studio: turn a pursuit into a Job. The narrowest capability
+     * Commit the studio: book a pursuit. The narrowest capability
      * in the list, and the reason S-06 exists — P-05a shipped this action open
      * to every role in sprint 3.
      */
@@ -116,7 +116,7 @@ enum Capability: string
         return match ($this) {
             self::ManageLeads => 'Anfragen verwalten',
             self::ManageContacts => 'Kontakte verwalten',
-            self::ViewAllProjects => 'Alle Aufträge einsehen',
+            self::ViewAllCases => 'Alle Aufträge einsehen',
             self::BookProject => 'Aufträge buchen',
             self::ManageShoots => 'Shootings verwalten',
             self::ManageCrew => 'Crew verwalten',

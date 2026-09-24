@@ -1,8 +1,8 @@
 <?php
 
 use App\Crm\Enums\LeadStage;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Enums\Capability;
 use App\Integration\Mcp\ApiTool;
 use App\Integration\Mcp\CrmServer;
@@ -54,7 +54,7 @@ it('describes every tool it registers', function () {
 it('answers a read tool from the api surface', function () {
     mcpBearer(Capability::ManageLeads);
 
-    Lead::factory()->for(Project::factory())->create(['stage' => LeadStage::New]);
+    Lead::factory()->for(ClientCase::factory(), 'case')->create(['stage' => LeadStage::New]);
 
     CrmServer::tool(mcpTool('pipeline_snapshot'))
         ->assertOk()
@@ -70,9 +70,9 @@ it('refuses a tool the token holds no scope for', function () {
 });
 
 it('reports what the api surface refused', function () {
-    mcpBearer(Capability::ViewAllProjects);
+    mcpBearer(Capability::ViewAllCases);
 
-    CrmServer::tool(mcpTool('get_project'), ['publicId' => 'nobody'])
+    CrmServer::tool(mcpTool('get_case'), ['case' => 'nobody'])
         ->assertHasErrors()
         ->assertSee('404');
 });
@@ -132,7 +132,7 @@ it('falls back to the token the process was started with', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
     config(['services.mcp.token' => bearerToken($token)]);
 
-    Lead::factory()->for(Project::factory())->create(['stage' => LeadStage::New]);
+    Lead::factory()->for(ClientCase::factory(), 'case')->create(['stage' => LeadStage::New]);
 
     CrmServer::tool(mcpTool('pipeline_snapshot'))
         ->assertOk()

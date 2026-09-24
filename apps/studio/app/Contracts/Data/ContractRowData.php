@@ -28,9 +28,9 @@ class ContractRowData extends Data
     {
         return new self(
             id: $contract->public_id,
-            projectId: $contract->project->public_id,
-            projectName: $contract->project->name,
-            contact: $contract->project->contactNames(),
+            projectId: $contract->case->public_id,
+            projectName: $contract->case->name,
+            contact: $contract->case->contactNames(),
             version: $contract->version,
             state: $contract->state->value,
             status: $contract->status->value,

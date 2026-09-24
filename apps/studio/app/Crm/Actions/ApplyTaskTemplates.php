@@ -5,7 +5,7 @@ namespace App\Crm\Actions;
 use App\Crm\Enums\DueAnchor;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
@@ -25,7 +25,7 @@ use Carbon\CarbonImmutable;
  * anchor so a shoot that moves takes its tasks along.
  *
  * Idempotent by two unique indexes on tasks — (task_template_id, shoot_id), and
- * (task_template_id, project_id) where the shoot is null — rather than by a
+ * (task_template_id, case_id) where the shoot is null — rather than by a
  * check here. Re-entering a stage is ordinary (a mis-drop on the board, and
  * corrections are allowed to go backwards), so the guarantee belongs where
  * every path meets it.
@@ -39,7 +39,7 @@ class ApplyTaskTemplates
     ) {}
 
     /** Booking is the stage the project pipeline is anchored on. */
-    public function __invoke(Project $project): void
+    public function __invoke(ClientCase $project): void
     {
         $booked = $this->vocabulary->anchored(StagePipeline::Project, StageAnchor::Booked);
 
@@ -48,7 +48,7 @@ class ApplyTaskTemplates
         }
     }
 
-    public function forStage(Project $project, StagePipeline $pipeline, string $stage): void
+    public function forStage(ClientCase $project, StagePipeline $pipeline, string $stage): void
     {
         // The one suppression that outlives its own request: these tasks
         // carry due dates, a backfilled project's are already years past,
@@ -137,7 +137,7 @@ class ApplyTaskTemplates
             ->all();
     }
 
-    private function applyOne(Project $project, ?Shoot $shoot, TaskTemplate $template, string $anchor): Task
+    private function applyOne(ClientCase $project, ?Shoot $shoot, TaskTemplate $template, string $anchor): Task
     {
         $task = $project->tasks()->firstOrNew(
             ['task_template_id' => $template->id, 'shoot_id' => $shoot?->id],

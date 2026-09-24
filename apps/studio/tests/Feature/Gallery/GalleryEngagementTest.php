@@ -84,11 +84,11 @@ it('takes a comment and hands it back to everyone', function () {
 // G-01 (#229): two roles, one screen. Without this the couple appear to the
 // studio as anonymous strangers on their own gallery.
 it('signs a client\'s comment with their name and a guest\'s with Gast', function () {
-    $project = App\Crm\Models\Project::factory()->create(['portal_visible' => true]);
+    $project = App\Crm\Models\ClientCase::factory()->create(['portal_visible' => true]);
     $contact = App\Crm\Models\Contact::factory()->create(['name' => 'Viola Neumann']);
-    $project->attachContact($contact, App\Crm\Enums\ProjectContactRole::Primary);
+    $project->attachContact($contact, App\Crm\Enums\CaseContactRole::Primary);
 
-    $gallery = Gallery::factory()->for($project)->create();
+    $gallery = Gallery::factory()->for($project, 'case')->create();
     $set = GallerySet::where('gallery_id', $gallery->id)->first();
     Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/a.jpg', 'filename' => 'a.jpg']);
     $gallery->fresh()->publish();

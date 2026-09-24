@@ -2,7 +2,7 @@
 
 namespace Database\Factories\Engagement;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Engagement\Models\Thread;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -16,7 +16,7 @@ class ThreadFactory extends Factory
     public function definition(): array
     {
         return [
-            'project_id' => Project::factory(),
+            'case_id' => ClientCase::factory(),
             'subject' => fake()->sentence(4),
         ];
     }

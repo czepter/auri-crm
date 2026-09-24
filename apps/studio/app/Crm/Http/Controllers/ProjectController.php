@@ -9,24 +9,24 @@ use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\CheckDateAvailability;
 use App\Crm\Actions\CompleteProject;
 use App\Crm\Actions\CrewAvailability;
-use App\Crm\Actions\DeriveProjectPosition;
+use App\Crm\Actions\DeriveCasePosition;
 use App\Crm\Actions\ReadProjectScreen;
 use App\Crm\Actions\WorkflowColumns;
 use App\Crm\Actions\WriteProjectFieldValues;
+use App\Crm\Data\CaseHeaderData;
+use App\Crm\Data\CasePersonData;
 use App\Crm\Data\FormInstanceData;
 use App\Crm\Data\ProjectGalleryData;
-use App\Crm\Data\ProjectHeaderData;
-use App\Crm\Data\ProjectPersonData;
 use App\Crm\Data\ProjectRowData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\FormFieldType;
 use App\Crm\Enums\LeadSource;
-use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\FormTemplate;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
 use App\Crm\Models\TaskTemplate;
@@ -59,7 +59,7 @@ use Inertia\Response;
 class ProjectController extends Controller
 {
     public function __construct(
-        private readonly DeriveProjectPosition $position,
+        private readonly DeriveCasePosition $position,
         private readonly CheckDateAvailability $availability,
         private readonly BuildThread $thread,
         private readonly ReadProjectScreen $screen,
@@ -76,20 +76,20 @@ class ProjectController extends Controller
      */
     public function index(): Response
     {
-        $this->authorize('viewAny', Project::class);
+        $this->authorize('viewAny', ClientCase::class);
 
-        $projects = Project::query()
+        $projects = ClientCase::query()
             ->visibleTo(auth('staff')->user())
             // Booked only. An unbooked project is an inquiry and belongs on
             // the board at /anfragen; listing it here shows the same record
             // twice under two vocabularies.
-            ->whereHas('job')
-            ->with(['primaryShoot', 'lead', 'job', 'shoots', 'contacts', 'latestQuote'])
+            ->booked()
+            ->with(['primaryShoot', 'lead', 'shoots', 'contacts', 'latestQuote'])
             // What the workflow produced, as the list's own column: a workflow
             // nobody can see the effect of is a settings screen again.
             ->withCount(['tasks', 'tasks as open_tasks_count' => fn ($query) => $query->whereNull('completed_at')])
             ->get()
-            ->sortBy(fn (Project $project) => $project->primaryShoot?->date?->toDateString() ?? '9999-99-99')
+            ->sortBy(fn (ClientCase $case) => $case->primaryShoot?->date?->toDateString() ?? '9999-99-99')
             ->values();
 
         $vocabulary = app(CrmVocabulary::class);
@@ -99,7 +99,7 @@ class ProjectController extends Controller
         return Inertia::render('Projects/Index', [
             'view' => request()->query('ansicht') === 'board' ? 'board' : 'liste',
             'projects' => ProjectRowData::collect(
-                $projects->map(fn (Project $project) => ProjectRowData::fromProject($project, $this->position))
+                $projects->map(fn (ClientCase $case) => ProjectRowData::fromProject($case, $this->position))
             ),
             // #364: the filter pills and the board's columns, in the studio's
             // own order and names — from the booking to the delivery, since
@@ -125,89 +125,89 @@ class ProjectController extends Controller
         ]);
     }
 
-    public function show(Project $project, TaskAnchors $anchors): Response|RedirectResponse
+    public function show(ClientCase $case, TaskAnchors $anchors): Response|RedirectResponse
     {
-        $this->authorize('view', $project);
+        $this->authorize('view', $case);
 
         // Same rule as index(): an unbooked project is an inquiry, and its
         // screen is the case. Every /auftraege link lands right without
         // knowing the phase.
-        if ($project->lead !== null && ! $project->job()->exists()) {
-            return redirect("/anfragen/{$project->lead->public_id}");
+        if ($case->lead !== null && ! $case->isBooked()) {
+            return redirect("/anfragen/{$case->public_id}");
         }
 
         // C-03 (#237): an inquiry and a project are the same record in two
         // phases, so the palette names it by the phase it is in.
         RecordVisit::record(
-            $project->job()->exists() ? 'projekt' : 'anfrage',
-            $project->public_id,
-            $project->name,
+            $case->isBooked() ? 'projekt' : 'anfrage',
+            $case->public_id,
+            $case->name,
         );
 
         return Inertia::render('Projects/Show', [
-            'header' => $this->header($project),
-            'shoots' => ShootData::collect($this->shootsOf($project)),
+            'header' => $this->header($case),
+            'shoots' => ShootData::collect($this->shootsOf($case)),
             'shootKinds' => Shoot::kindSuggestions(),
             // Open first and by due date, then the done ones: a card whose top
             // row is something already finished buries the work.
             'tasks' => TaskRowData::collect(
-                $project->tasks()
-                    ->with(['project', 'shoot', 'assignee'])
+                $case->tasks()
+                    ->with(['case', 'shoot', 'assignee'])
                     ->orderByRaw('completed_at is not null')
                     ->byDueDate()
                     ->get()
                     ->map(TaskRowData::fromTask(...))
             ),
-            'shootOptions' => $this->shootOptions($project),
+            'shootOptions' => $this->shootOptions($case),
             'staffOptions' => $this->staffOptions(),
-            'anchors' => $anchors->forProject($project),
+            'anchors' => $anchors->forCase($case),
             // Notes, the whitelisted audit trail and what got done, in one
             // order. Admin-only by omission: the portal's own ProjectController
             // does not render this key. An internal trace on a client page
             // would disclose staff names and internal event vocabulary.
-            'thread' => ($this->thread)($project),
+            'thread' => ($this->thread)($case),
             // The scope as it actually stands, not a copy of the quote. The
             // divergence is the difference between the draft at this project
             // and the accepted quote; nothing is locked, because the order
             // changes in conversation and the document lags behind — forbid
             // it and you get a scope that is wrong while the work happens
             // anyway.
-            'scope' => $this->screen->scope($project),
-            ...app(ReadCaseQuote::class)($project),
-            'people' => ProjectPersonData::collect(
-                $project->contacts->map(ProjectPersonData::fromContact(...))
+            'scope' => $this->screen->scope($case),
+            ...app(ReadCaseQuote::class)($case),
+            'people' => CasePersonData::collect(
+                $case->contacts->map(CasePersonData::fromContact(...))
             ),
             // C-25: what this type asks of a project, and what this project
             // answers. Definitions and values apart, because a value under a
             // key the type no longer defines is kept but not shown.
-            'fields' => $project->type?->fields()->active()->get()
+            'fields' => $case->type?->fields()->active()->get()
                 ->map(StageSettingsPayload::field(...))->values()->all() ?? [],
-            'fieldValues' => (object) ($project->field_values ?? []),
+            'fieldValues' => (object) ($case->field_values ?? []),
             // C-12 (#248): what the edit state offers as fixed choices. A
             // booked project stands where its shoots stand, so its Stand
             // offers their statuses.
-            'stages' => app(CrmVocabulary::class)->ordered($project->job()->exists() ? StagePipeline::Project : StagePipeline::Lead)
+            'stages' => app(CrmVocabulary::class)->ordered($case->isBooked() ? StagePipeline::Project : StagePipeline::Lead)
                 ->filter(fn (Stage $stage) => $stage->is_active)
                 ->map(fn (Stage $stage) => ['value' => $stage->key, 'label' => $stage->name])->values()->all(),
             'sources' => collect(LeadSource::cases())
                 ->map(fn (LeadSource $source) => ['value' => $source->value, 'label' => $source->label()])->all(),
-            'roles' => collect(ProjectContactRole::cases())
-                ->map(fn (ProjectContactRole $role) => ['value' => $role->value, 'label' => $role->value])->all(),
+            'roles' => collect(CaseContactRole::cases())
+                ->map(fn (CaseContactRole $role) => ['value' => $role->value, 'label' => $role->value])->all(),
             'presets' => ['source' => OtherSuggestions::for('source')],
-            'stage' => $project->job()->exists()
-                ? $this->position->leastAdvanced($project->shoots)?->status->key
-                : $project->lead?->stage->key,
-            'source' => $project->lead?->source?->value,
-            'sourceOther' => $project->lead?->source_other,
-            'sourceLabel' => $project->lead?->sourceLabel(),
-            'inquiry' => $project->lead === null ? null : [
-                'text' => $project->lead->inquiry_text,
-                'typeLabel' => $project->typeLabel(),
-                'sourceLabel' => $project->lead->sourceLabel(),
-                'capturedVia' => $project->lead->capturedViaLabel(),
-                'capturedAt' => $project->lead->captured_at->toIso8601String(),
+            'stage' => $case->isBooked()
+                ? $this->position->leastAdvanced($case->shoots)?->status->key
+                : $case->lead?->stage->key,
+            'source' => $case->lead?->source?->value,
+            'sourceOther' => $case->lead?->source_other,
+            'sourceLabel' => $case->lead?->sourceLabel(),
+            'inquiry' => $case->lead === null ? null : [
+                'text' => $case->lead->inquiry_text,
+                'typeLabel' => $case->typeLabel(),
+                'sourceLabel' => $case->lead->sourceLabel(),
+                'capturedVia' => $case->lead->capturedViaLabel(),
+                'capturedAt' => $case->lead->captured_at->toIso8601String(),
             ],
-            'stalled' => $this->stalled($project),
+            'stalled' => $this->stalled($case),
         ]);
     }
 
@@ -229,18 +229,18 @@ class ProjectController extends Controller
      */
     public function update(
         Request $request,
-        Project $project,
+        ClientCase $case,
         AdvanceLeadStage $advance,
         WriteProjectFieldValues $writeFields,
     ): RedirectResponse {
-        $this->authorize('manageShoots', $project);
+        $this->authorize('manageShoots', $case);
 
         // Jede Karte des Bildschirms schickt ihre eigene Teilmenge, seit es
         // keinen Bearbeiten-Modus über den ganzen Bildschirm mehr gibt: wer die
         // Termine speichert, hat den Projektnamen nicht in der Hand.
         $validated = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'stage' => ['nullable', Rule::exists('stages', 'key')->where('pipeline', ($project->job()->exists() ? StagePipeline::Project : StagePipeline::Lead)->value)],
+            'stage' => ['nullable', Rule::exists('stages', 'key')->where('pipeline', ($case->isBooked() ? StagePipeline::Project : StagePipeline::Lead)->value)],
             'source' => ['nullable', Rule::enum(LeadSource::class)],
             'source_other' => ['nullable', 'string', 'max:120'],
             'people' => ['array'],
@@ -257,44 +257,45 @@ class ProjectController extends Controller
             'fields' => ['array'],
         ]);
 
-        DB::transaction(function () use ($project, $validated, $advance, $writeFields) {
+        DB::transaction(function () use ($case, $validated, $advance, $writeFields) {
             if (array_key_exists('name', $validated)) {
-                $project->update(['name' => $validated['name']]);
+                $case->update(['name' => $validated['name']]);
             }
 
-            if ($project->lead !== null) {
-                $project->lead->update(array_filter([
+            if ($case->lead !== null) {
+                $case->lead->update(array_filter([
                     'source' => $validated['source'] ?? null,
                 ]) + ['source_other' => $validated['source_other'] ?? null]);
 
                 // Through the action, not as a column: it is the only writer
                 // of the stage, and "Gebucht" set here has to book the project
                 // exactly as the board's own move does.
-                $stage = isset($validated['stage']) && ! $project->job()->exists()
+                $stage = isset($validated['stage']) && ! $case->isBooked()
                     ? app(CrmVocabulary::class)->byKey(StagePipeline::Lead, $validated['stage'])
                     : null;
 
-                if ($stage !== null && ! $stage->is($project->lead->stage)) {
-                    $advance($project->lead, $stage, auth('staff')->user());
+                if ($stage !== null && ! $stage->is($case->lead->stage)) {
+                    $advance($case->lead, $stage, auth('staff')->user());
                 }
             }
 
-            if (isset($validated['stage']) && $project->job()->exists()) {
-                $this->moveShoots($project, $validated['stage']);
+            // Fresh: the lead move above may just have booked it on another instance.
+            if (isset($validated['stage']) && $case->fresh()->isBooked()) {
+                $this->moveShoots($case, $validated['stage']);
             }
 
             foreach ($validated['people'] ?? [] as $person) {
-                $contact = $project->contacts()->where('contacts.public_id', $person['id'])->first();
+                $contact = $case->contacts()->where('contacts.public_id', $person['id'])->first();
 
                 // Der Hauptkontakt behält seine Rolle: an ihr hängt der
-                // partielle Unique-Index auf project_contacts.
-                if ($contact !== null && $contact->pivot->role !== ProjectContactRole::Primary->value) {
-                    $project->contacts()->updateExistingPivot($contact->id, ['role' => $person['role']]);
+                // partielle Unique-Index auf case_contacts.
+                if ($contact !== null && $contact->pivot->role !== CaseContactRole::Primary->value) {
+                    $case->contacts()->updateExistingPivot($contact->id, ['role' => $person['role']]);
                 }
             }
 
             foreach ($validated['shoots'] ?? [] as $row) {
-                $project->shoots()->where('public_id', $row['id'])->first()?->update([
+                $case->shoots()->where('public_id', $row['id'])->first()?->update([
                     'date' => $row['date'] ?? null,
                     'call_time' => $row['call_time'] ?? null,
                     'end_time' => $row['end_time'] ?? null,
@@ -305,23 +306,23 @@ class ProjectController extends Controller
 
             // Through the action, not the column: the api surface and the MCP
             // server write the same values against the same definitions.
-            $writeFields($project, $validated['fields'] ?? [], auth('staff')->user());
+            $writeFields($case, $validated['fields'] ?? [], auth('staff')->user());
         });
 
         return back();
     }
 
-    public function stage(Request $request, Project $project): RedirectResponse
+    public function stage(Request $request, ClientCase $case): RedirectResponse
     {
-        $this->authorize('manageShoots', $project);
-        abort_unless($project->job()->exists(), 404);
+        $this->authorize('manageShoots', $case);
+        abort_unless($case->isBooked(), 404);
 
         $validated = $request->validate([
             'stage' => ['required', Rule::exists('stages', 'key')->where('pipeline', StagePipeline::Project->value)->where('is_active', true)],
         ]);
 
         try {
-            $this->moveShoots($project, $validated['stage']);
+            $this->moveShoots($case, $validated['stage']);
         } catch (DomainException $e) {
             throw ValidationException::withMessages(['stage' => $e->getMessage()]);
         }
@@ -335,9 +336,9 @@ class ProjectController extends Controller
      * Stand along with every save, and resending the same value would drag an
      * ahead shoot back to it.
      */
-    private function moveShoots(Project $project, string $key): void
+    private function moveShoots(ClientCase $case, string $key): void
     {
-        $shoots = $project->shoots()->uncancelled()->get();
+        $shoots = $case->shoots()->uncancelled()->get();
 
         if ($key === $this->position->leastAdvanced($shoots)?->status->key) {
             return;
@@ -349,16 +350,16 @@ class ProjectController extends Controller
             ->each(fn (Shoot $shoot) => app(AdvanceShootStatus::class)($shoot, $status, auth('staff')->user()));
     }
 
-    public function shoots(Project $project, CrewAvailability $crew): Response
+    public function shoots(ClientCase $case, CrewAvailability $crew): Response
     {
-        $this->authorize('view', $project);
+        $this->authorize('view', $case);
 
         return Inertia::render('Projects/Shoots', [
-            'header' => $this->header($project),
-            'shoots' => ShootData::collect($this->shootsOf($project)),
+            'header' => $this->header($case),
+            'shoots' => ShootData::collect($this->shootsOf($case)),
             // Wer an dem Tag kann, nicht nur wer existiert: frei, abwesend
             // oder auf einem anderen Shooting.
-            'crewAvailability' => $crew->forProject($project),
+            'crewAvailability' => $crew->forCase($case),
         ]);
     }
 
@@ -366,23 +367,23 @@ class ProjectController extends Controller
      * Die Aufgaben eines Projekts als eigener Bereich: auf der Übersicht steht
      * nur, was offen ist, hier auch das Erledigte und wonach gefiltert wird.
      */
-    public function tasks(Project $project, TaskAnchors $anchors): Response
+    public function tasks(ClientCase $case, TaskAnchors $anchors): Response
     {
-        $this->authorize('view', $project);
+        $this->authorize('view', $case);
 
         return Inertia::render('Projects/Tasks', [
-            'header' => $this->header($project),
+            'header' => $this->header($case),
             'tasks' => TaskRowData::collect(
-                $project->tasks()
-                    ->with(['project', 'shoot', 'assignee'])
+                $case->tasks()
+                    ->with(['case', 'shoot', 'assignee'])
                     ->orderByRaw('completed_at is not null')
                     ->byDueDate()
                     ->get()
                     ->map(TaskRowData::fromTask(...))
             ),
-            'shootOptions' => $this->shootOptions($project),
+            'shootOptions' => $this->shootOptions($case),
             'staffOptions' => $this->staffOptions(),
-            'anchors' => $anchors->forProject($project),
+            'anchors' => $anchors->forCase($case),
         ]);
     }
 
@@ -390,16 +391,16 @@ class ProjectController extends Controller
      * Die Galerien am Projekt. /galerien führt die des Studios; hier stehen
      * die dieses Auftrags neben den Shootings, die noch keine haben.
      */
-    public function galleries(Project $project): Response
+    public function galleries(ClientCase $case): Response
     {
-        $this->authorize('view', $project);
+        $this->authorize('view', $case);
 
         return Inertia::render('Projects/Galleries', [
-            'header' => $this->header($project),
+            'header' => $this->header($case),
             'galleries' => ProjectGalleryData::collect(
-                $project->galleries()->with(['shoot', 'currentVersion'])->get()
+                $case->galleries()->with(['shoot', 'currentVersion'])->get()
             ),
-            'shoots' => ShootData::collect($this->shootsOf($project)),
+            'shoots' => ShootData::collect($this->shootsOf($case)),
         ]);
     }
 
@@ -412,9 +413,9 @@ class ProjectController extends Controller
             ->all();
     }
 
-    private function shootOptions(Project $project): array
+    private function shootOptions(ClientCase $case): array
     {
-        return $project->shoots()->uncancelled()->get()
+        return $case->shoots()->uncancelled()->get()
             ->map(fn (Shoot $shoot) => [
                 'value' => $shoot->public_id,
                 'label' => $shoot->label ?? $shoot->kind,
@@ -422,24 +423,24 @@ class ProjectController extends Controller
             ->all();
     }
 
-    public function quotes(Request $request, Project $project): Response
+    public function quotes(Request $request, ClientCase $case): Response
     {
-        $this->authorize('view', $project);
+        $this->authorize('view', $case);
 
         return Inertia::render('Projects/Quotes', [
-            'header' => $this->header($project),
-            ...app(ReadQuoteList::class)($project),
+            'header' => $this->header($case),
+            ...app(ReadQuoteList::class)($case),
         ]);
     }
 
-    public function forms(Project $project): Response
+    public function forms(ClientCase $case): Response
     {
-        $this->authorize('view', $project);
+        $this->authorize('view', $case);
 
         return Inertia::render('Projects/Forms', [
-            'header' => $this->header($project),
+            'header' => $this->header($case),
             'formInstances' => FormInstanceData::collect(
-                $project->formInstances()->with('fields.currentAnswer')->get()
+                $case->formInstances()->with('fields.currentAnswer')->get()
             ),
             'formTemplates' => FormTemplate::active()->orderBy('name')->get()
                 ->map(fn (FormTemplate $template) => ['value' => $template->public_id, 'label' => $template->name])
@@ -456,16 +457,16 @@ class ProjectController extends Controller
      * new one; only the client does, from the portal (StartThread).
      */
     public function messages(
-        Project $project,
+        ClientCase $case,
         StudioSettingsResolver $settings,
         DocumentMergeDataBuilder $mergeData,
     ): Response {
-        $this->authorize('view', $project);
+        $this->authorize('view', $case);
 
-        $thread = $project->latestThread()->with('messages.contact', 'messages.author')->first();
+        $thread = $case->latestThread()->with('messages.contact', 'messages.author')->first();
 
         return Inertia::render('Projects/Messages', [
-            'header' => $this->header($project),
+            'header' => $this->header($case),
             'thread' => $thread === null ? null : ThreadData::fromModel($thread),
             // E-10: T-12's mail templates, resolved against this project.
             // Sent with the screen rather than fetched on selection — there
@@ -474,32 +475,32 @@ class ProjectController extends Controller
             'mailTemplates' => DocumentTemplate::query()
                 ->current()
                 ->ofType(DocumentTemplateType::Mail)
-                ->forShootKind($project->primaryShoot?->kind)
+                ->forShootKind($case->primaryShoot?->kind)
                 ->orderBy('name')
                 ->get()
-                ->map(fn (DocumentTemplate $template) => MailTemplateData::fromModel($template, $project, $settings, $mergeData))
+                ->map(fn (DocumentTemplate $template) => MailTemplateData::fromModel($template, $case, $settings, $mergeData))
                 ->all(),
         ]);
     }
 
-    public function book(Project $project, BookProject $book): RedirectResponse
+    public function book(ClientCase $case, BookProject $book): RedirectResponse
     {
-        $this->authorize('book', $project);
+        $this->authorize('book', $case);
 
         // Already booked is a no-op inside the action rather than a failure
         // here: two staff members pressing the button is not an error, it is a
         // race, and the second press should leave the screen consistent.
-        $book($project, auth('staff')->user());
+        $book($case, auth('staff')->user());
 
         return back();
     }
 
-    public function complete(Project $project, CompleteProject $complete): RedirectResponse
+    public function complete(ClientCase $case, CompleteProject $complete): RedirectResponse
     {
-        $this->authorize('manageShoots', $project);
+        $this->authorize('manageShoots', $case);
 
         try {
-            $complete($project, auth('staff')->user());
+            $complete($case, auth('staff')->user());
         } catch (DomainException $e) {
             throw ValidationException::withMessages(['project' => $e->getMessage()]);
         }
@@ -507,12 +508,12 @@ class ProjectController extends Controller
         return back();
     }
 
-    public function reopen(Project $project, CompleteProject $complete): RedirectResponse
+    public function reopen(ClientCase $case, CompleteProject $complete): RedirectResponse
     {
-        $this->authorize('manageShoots', $project);
+        $this->authorize('manageShoots', $case);
 
         try {
-            $complete->reopen($project, auth('staff')->user());
+            $complete->reopen($case, auth('staff')->user());
         } catch (DomainException $e) {
             throw ValidationException::withMessages(['project' => $e->getMessage()]);
         }
@@ -520,15 +521,15 @@ class ProjectController extends Controller
         return back();
     }
 
-    public function destroy(Project $project): RedirectResponse
+    public function destroy(ClientCase $case): RedirectResponse
     {
-        $this->authorize('delete', $project);
+        $this->authorize('delete', $case);
 
-        if ($project->deletionBlockers()->isNotEmpty()) {
+        if ($case->deletionBlockers()->isNotEmpty()) {
             throw ValidationException::withMessages(['project' => 'Projekt trägt Auftrag, Angebot, Vertrag oder Galerie. Schließen statt löschen.']);
         }
 
-        $project->delete();
+        $case->delete();
 
         LiveUpdate::publish();
 
@@ -541,17 +542,17 @@ class ProjectController extends Controller
      * untouched (A-04). Revoking a contact's access entirely is a separate
      * action on ContactController, on purpose.
      */
-    public function togglePortalVisibility(Project $project): RedirectResponse
+    public function togglePortalVisibility(ClientCase $case): RedirectResponse
     {
-        $this->authorize('manageVisibility', $project);
+        $this->authorize('manageVisibility', $case);
 
-        $project->update(['portal_visible' => ! $project->portal_visible]);
+        $case->update(['portal_visible' => ! $case->portal_visible]);
 
         AuditLogger::record(
-            event: $project->portal_visible ? 'project.portal_shown' : 'project.portal_hidden',
+            event: $case->portal_visible ? 'project.portal_shown' : 'project.portal_hidden',
             actor: auth('staff')->user(),
-            subject: $project->public_id,
-            projectId: $project->id,
+            subject: $case->public_id,
+            projectId: $case->id,
         );
 
         return back();
@@ -561,14 +562,14 @@ class ProjectController extends Controller
      * The shooting day that passed without its status moving, and the step
      * that closes it. The queue lists the case; the overview offers the step.
      */
-    private function stalled(Project $project): ?array
+    private function stalled(ClientCase $case): ?array
     {
-        $shoot = $project->job()->exists() ? $this->position->stalled($project->shoots()->get()) : null;
+        $shoot = $case->isBooked() ? $this->position->stalled($case->shoots()->get()) : null;
         $shot = app(CrmVocabulary::class)->anchored(StagePipeline::Project, StageAnchor::Shot);
 
         return $shoot === null || $shot === null ? null : [
             'shootId' => $shoot->public_id,
-            'label' => $shoot->label ?? $project->name,
+            'label' => $shoot->label ?? $case->name,
             'date' => $shoot->date->format('Y-m-d'),
             'days' => (int) $shoot->date->copy()->startOfDay()->diffInDays(today()),
             'status' => $shoot->status->name,
@@ -577,11 +578,11 @@ class ProjectController extends Controller
         ];
     }
 
-    private function header(Project $project): ProjectHeaderData
+    private function header(ClientCase $case): CaseHeaderData
     {
-        return ProjectHeaderData::fromProject(
-            $project->load(['contacts', 'shoots', 'primaryShoot', 'job']),
-            ($this->position)($project),
+        return CaseHeaderData::fromProject(
+            $case->load(['contacts', 'shoots', 'primaryShoot']),
+            ($this->position)($case),
         );
     }
 
@@ -595,9 +596,9 @@ class ProjectController extends Controller
      * someone actually crewed on it, which is what makes this S-02's warning
      * rather than a studio-wide notice repeated on every shoot.
      */
-    private function shootsOf(Project $project): array
+    private function shootsOf(ClientCase $case): array
     {
-        $shoots = $project->shoots()
+        $shoots = $case->shoots()
             ->with(['crew.user', 'timeline'])
             ->reorder()
             ->orderByRaw('date is null, date')

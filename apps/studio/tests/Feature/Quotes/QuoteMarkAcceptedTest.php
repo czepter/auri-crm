@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Enums\StaffRole;
 use App\Models\User;
 use App\Quotes\Enums\QuoteStatus;
@@ -15,12 +15,12 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     Notification::fake();
 
-    $this->project = Project::factory()->create();
-    $this->project->attachContact($this->contact = Contact::factory()->create(), ProjectContactRole::Primary);
+    $this->case = ClientCase::factory()->create();
+    $this->case->attachContact($this->contact = Contact::factory()->create(), CaseContactRole::Primary);
 });
 
 it('nimmt ein versendetes Angebot für den Hauptkontakt an und bucht einmal', function () {
-    $quote = Quote::factory()->for($this->project)->create(['status' => QuoteStatus::Sent]);
+    $quote = Quote::factory()->for($this->case, 'case')->create(['status' => QuoteStatus::Sent]);
     $owner = User::factory()->withMfa()->create();
 
     $this->actingAs($owner, 'staff')->post("/angebote/{$quote->public_id}/angenommen")->assertRedirect();
@@ -31,33 +31,33 @@ it('nimmt ein versendetes Angebot für den Hauptkontakt an und bucht einmal', fu
     expect($quote->status)->toBe(QuoteStatus::Accepted)
         ->and($quote->accepted_ip)->toBeNull()
         ->and($quote->accepted_by_contact_id)->toBe($this->contact->id)
-        ->and($this->project->job()->count())->toBe(1);
+        ->and($this->case->fresh()->isBooked())->toBeTrue();
 });
 
 it('nimmt an, bucht aber nicht ohne Buchungsrecht', function () {
-    $quote = Quote::factory()->for($this->project)->create(['status' => QuoteStatus::Sent]);
+    $quote = Quote::factory()->for($this->case, 'case')->create(['status' => QuoteStatus::Sent]);
 
     $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Manager]), 'staff')
         ->post("/angebote/{$quote->public_id}/angenommen")
         ->assertRedirect();
 
     expect($quote->fresh()->status)->toBe(QuoteStatus::Accepted)
-        ->and($this->project->job()->exists())->toBeFalse();
+        ->and($this->case->fresh()->isBooked())->toBeFalse();
 });
 
 it('lehnt einen Entwurf ab', function () {
-    $quote = Quote::factory()->for($this->project)->create(['status' => QuoteStatus::Draft]);
+    $quote = Quote::factory()->for($this->case, 'case')->create(['status' => QuoteStatus::Draft]);
 
     $this->actingAs(User::factory()->withMfa()->create(), 'staff')
         ->post("/angebote/{$quote->public_id}/angenommen")
         ->assertSessionHasErrors('quote');
 
     expect($quote->fresh()->status)->toBe(QuoteStatus::Draft)
-        ->and($this->project->job()->exists())->toBeFalse();
+        ->and($this->case->fresh()->isBooked())->toBeFalse();
 });
 
 it('verweigert ohne manageQuotes', function () {
-    $quote = Quote::factory()->for($this->project)->create(['status' => QuoteStatus::Sent]);
+    $quote = Quote::factory()->for($this->case, 'case')->create(['status' => QuoteStatus::Sent]);
 
     $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Contributor]), 'staff')
         ->post("/angebote/{$quote->public_id}/angenommen")

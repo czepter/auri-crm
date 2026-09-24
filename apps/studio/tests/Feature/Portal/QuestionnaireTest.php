@@ -1,12 +1,12 @@
 <?php
 
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\FormFieldType;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\FormAnswer;
 use App\Crm\Models\FormInstance;
 use App\Crm\Models\FormInstanceField;
-use App\Crm\Models\Project;
 use App\Models\User;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,14 +17,14 @@ uses(RefreshDatabase::class);
 
 beforeEach(fn () => useSurface(Surface::PORTAL));
 
-/** @return array{0: FormInstance, 1: Contact, 2: Project} */
+/** @return array{0: FormInstance, 1: Contact, 2: ClientCase} */
 function sharedQuestionnaire(bool $shared = true): array
 {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
-    $instance = FormInstance::factory()->for($project)->create(['name' => 'Vor der Hochzeit']);
+    $instance = FormInstance::factory()->for($project, 'case')->create(['name' => 'Vor der Hochzeit']);
     FormInstanceField::factory()->for($instance)->create([
         'label' => 'Erster Tanz', 'type' => FormFieldType::ShortText, 'required' => true, 'sort_order' => 0,
     ]);
@@ -191,7 +191,7 @@ it('takes a file the client uploads for a file field', function () {
     [$instance, $contact, $field] = questionnaireWithFileField();
 
     $this->actingAs($contact, 'portal')
-        ->post("/projekte/{$instance->project->public_id}/fragebogen/{$instance->public_id}/datei", [
+        ->post("/projekte/{$instance->case->public_id}/fragebogen/{$instance->public_id}/datei", [
             'field' => $field->public_id,
             'file' => UploadedFile::fake()->create('ablauf.pdf', 20, 'application/pdf'),
         ])
@@ -208,7 +208,7 @@ it('rejects a file whose format the field never allowed', function () {
     [$instance, $contact, $field] = questionnaireWithFileField();
 
     $this->actingAs($contact, 'portal')
-        ->post("/projekte/{$instance->project->public_id}/fragebogen/{$instance->public_id}/datei", [
+        ->post("/projekte/{$instance->case->public_id}/fragebogen/{$instance->public_id}/datei", [
             'field' => $field->public_id,
             'file' => UploadedFile::fake()->create('urlaub.png', 20, 'image/png'),
         ])
@@ -224,7 +224,7 @@ it('404s on a file field belonging to somebody else\'s questionnaire', function 
     [, , $foreignField] = questionnaireWithFileField();
 
     $this->actingAs($contact, 'portal')
-        ->post("/projekte/{$instance->project->public_id}/fragebogen/{$instance->public_id}/datei", [
+        ->post("/projekte/{$instance->case->public_id}/fragebogen/{$instance->public_id}/datei", [
             'field' => $foreignField->public_id,
             'file' => UploadedFile::fake()->create('ablauf.pdf', 20, 'application/pdf'),
         ])
@@ -239,7 +239,7 @@ it('lets the client remove their own file, bytes included', function () {
     $file = $field->attachFile(UploadedFile::fake()->create('ablauf.pdf', 20, 'application/pdf'), $contact);
 
     $this->actingAs($contact, 'portal')
-        ->delete("/projekte/{$instance->project->public_id}/fragebogen/{$instance->public_id}/datei/{$file->public_id}")
+        ->delete("/projekte/{$instance->case->public_id}/fragebogen/{$instance->public_id}/datei/{$file->public_id}")
         ->assertRedirect();
 
     expect($field->files()->count())->toBe(0)
@@ -253,7 +253,7 @@ it('404s on deleting a file that hangs off another questionnaire', function () {
     $foreign = $foreignField->attachFile(UploadedFile::fake()->create('fremd.pdf', 20, 'application/pdf'));
 
     $this->actingAs($contact, 'portal')
-        ->delete("/projekte/{$instance->project->public_id}/fragebogen/{$instance->public_id}/datei/{$foreign->public_id}")
+        ->delete("/projekte/{$instance->case->public_id}/fragebogen/{$instance->public_id}/datei/{$foreign->public_id}")
         ->assertNotFound();
 
     expect($foreignField->files()->count())->toBe(1);
@@ -269,13 +269,13 @@ it('holds the submit until a required file field actually has a file', function 
         ->all()];
 
     $this->actingAs($contact, 'portal')
-        ->patch("/projekte/{$instance->project->public_id}/fragebogen/{$instance->public_id}", $answers)
+        ->patch("/projekte/{$instance->case->public_id}/fragebogen/{$instance->public_id}", $answers)
         ->assertSessionHasErrors("answers.{$field->public_id}");
 
     $field->attachFile(UploadedFile::fake()->create('ablauf.pdf', 20, 'application/pdf'), $contact);
 
     $this->actingAs($contact, 'portal')
-        ->patch("/projekte/{$instance->project->public_id}/fragebogen/{$instance->public_id}", $answers)
+        ->patch("/projekte/{$instance->case->public_id}/fragebogen/{$instance->public_id}", $answers)
         ->assertSessionHasNoErrors();
 
     // The file never became a FormAnswer version — that ledger stays text.

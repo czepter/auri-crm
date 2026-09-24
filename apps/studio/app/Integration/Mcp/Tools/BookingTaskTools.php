@@ -17,7 +17,7 @@ final class BookingTaskTools
             new ToolDefinition(
                 name: 'list_projects',
                 title: 'List projects',
-                description: 'Lists booked projects — the same set that answers /projekte. An unbooked pursuit is a lead, not a project; see list_leads for those. Every id is a public_id, never a row\'s internal integer id.',
+                description: 'Lists projects — the same set that answers /projekte. Every project is booked; an unbooked pursuit is a lead, see list_leads for those. Every id is a public_id, never a row\'s internal integer id.',
                 method: 'GET',
                 path: '/projects',
                 schema: fn (JsonSchema $schema) => [
@@ -32,30 +32,13 @@ final class BookingTaskTools
             ),
 
             new ToolDefinition(
-                name: 'list_jobs',
-                title: 'List jobs',
-                description: 'Lists bookings — one per booked project, with when and how it was booked. "Which projects are booked?" is this call.',
-                method: 'GET',
-                path: '/jobs',
-                schema: fn (JsonSchema $schema) => [
-                    'cursor' => $schema->string()->description('Opaque cursor from a previous call\'s nextCursor.'),
-                    'since' => $schema->string()->description('ISO 8601 datetime — only jobs updated at or after this instant.'),
-                ],
-                annotations: ['readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false],
-                structure: fn (array $body) => [
-                    'jobs' => $body['data'],
-                    'nextCursor' => $body['meta']['next_cursor'],
-                ],
-            ),
-
-            new ToolDefinition(
                 name: 'book_project',
                 title: 'Book a project',
-                description: 'Commit the studio to a project: create its Job and advance every uncancelled shoot to the booked stage, the same move the project screen\'s Buchen button makes. A project already booked is a no-op — the existing job comes back.',
+                description: 'Commit the studio to a project: record the booking on it and advance every uncancelled shoot to the booked stage, the same move the project screen\'s Buchen button makes. Answers with the project detail. A project already booked is a no-op and keeps its original booking.',
                 method: 'POST',
-                path: '/projects/{project}/book',
+                path: '/cases/{case}/book',
                 schema: fn (JsonSchema $schema) => [
-                    'project' => $schema->string()->description('The project public id')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                 ],
                 annotations: ['readOnlyHint' => false, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false],
                 silent: false,
@@ -66,9 +49,9 @@ final class BookingTaskTools
                 title: 'Complete a project',
                 description: 'Mark a project done, independent of what its shoots\' statuses stand at. Refused if it is already completed. Reversible with reopen_project.',
                 method: 'POST',
-                path: '/projects/{project}/complete',
+                path: '/cases/{case}/complete',
                 schema: fn (JsonSchema $schema) => [
-                    'project' => $schema->string()->description('The project public id')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                 ],
                 annotations: ['readOnlyHint' => false, 'destructiveHint' => true, 'idempotentHint' => false, 'openWorldHint' => false],
                 silent: false,
@@ -79,9 +62,9 @@ final class BookingTaskTools
                 title: 'Reopen a project',
                 description: 'Take back a completion entered by mistake. Refused if the project is not completed.',
                 method: 'DELETE',
-                path: '/projects/{project}/complete',
+                path: '/cases/{case}/complete',
                 schema: fn (JsonSchema $schema) => [
-                    'project' => $schema->string()->description('The project public id')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                 ],
                 silent: false,
             ),
@@ -91,9 +74,9 @@ final class BookingTaskTools
                 title: 'List a project’s tasks',
                 description: 'A project\'s tasks, open first and by due date, undated last. `done` narrows to completed or open ones; left out, both come back.',
                 method: 'GET',
-                path: '/projects/{project}/tasks',
+                path: '/cases/{case}/tasks',
                 schema: fn (JsonSchema $schema) => [
-                    'project' => $schema->string()->description('The project public id')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                     'done' => $schema->boolean()->description('true for completed tasks only, false for open ones'),
                 ],
                 annotations: ['readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false],
@@ -105,9 +88,9 @@ final class BookingTaskTools
                 title: 'Create a task',
                 description: 'Add a task to a project, due on a fixed date or hanging off an anchor (a shoot’s date, a shoot reaching a status, a lead reaching a stage) with an offset in days. Never both `due_on` and `anchor`.',
                 method: 'POST',
-                path: '/projects/{project}/tasks',
+                path: '/cases/{case}/tasks',
                 schema: fn (JsonSchema $schema) => [
-                    'project' => $schema->string()->description('The project public id')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                     'title' => $schema->string()->max(255)->required(),
                     'audience' => $schema->string()->enum(['internal', 'client'])->required(),
                     'due_on' => $schema->string()->nullable()->description('YYYY-MM-DD. Mutually exclusive with anchor.'),

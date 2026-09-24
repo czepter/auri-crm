@@ -6,10 +6,9 @@ use App\Automation\Enums\AutomationAnchor;
 use App\Automation\Enums\AutomationOffsetDirection;
 use App\Automation\Models\AutomationRule;
 use App\Automation\Models\AutomationRun;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -25,10 +24,10 @@ uses(RefreshDatabase::class);
 it('fires exactly one AutomationRun when the same rule/anchor/date is processed twice through FireAutomationRule', function () {
     Notification::fake();
 
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
-    $shoot = Shoot::factory()->for($project)->create();
+    $project->attachContact($contact, CaseContactRole::Primary);
+    $shoot = Shoot::factory()->for($project, 'case')->create();
 
     $rule = AutomationRule::factory()
         ->dateOffset(AutomationAnchor::PerShoot, 7, AutomationOffsetDirection::Before)
@@ -48,11 +47,11 @@ it('never re-fires when the daily sweep is re-run for the same day, as a redeplo
     Notification::fake();
 
     $today = CarbonImmutable::parse('2026-06-01', 'UTC');
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
-    Job::factory()->for($project)->create();
-    Shoot::factory()->for($project)->create(['date' => $today->addDays(7)->toDateString()]);
+    $project->attachContact($contact, CaseContactRole::Primary);
+    markBooked($project);
+    Shoot::factory()->for($project, 'case')->create(['date' => $today->addDays(7)->toDateString()]);
 
     AutomationRule::factory()
         ->dateOffset(AutomationAnchor::PerShoot, 7, AutomationOffsetDirection::Before)
@@ -70,10 +69,10 @@ it('never re-fires when the daily sweep is re-run for the same day, as a redeplo
 it('fires a fresh AutomationRun on a different trigger date for the same rule and anchor', function () {
     Notification::fake();
 
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
-    $shoot = Shoot::factory()->for($project)->create();
+    $project->attachContact($contact, CaseContactRole::Primary);
+    $shoot = Shoot::factory()->for($project, 'case')->create();
 
     $rule = AutomationRule::factory()
         ->dateOffset(AutomationAnchor::PerShoot, 7, AutomationOffsetDirection::Before)

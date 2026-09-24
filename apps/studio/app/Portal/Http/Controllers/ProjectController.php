@@ -6,8 +6,8 @@ use App\Catalog\Support\PortalOffers;
 use App\Contracts\Models\Contract;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\FormInstance;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
 use App\Gallery\Models\Gallery;
@@ -15,7 +15,7 @@ use App\Http\Controllers\Controller;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
-use App\Portal\Actions\UpdateProjectDetails;
+use App\Portal\Actions\UpdateCaseDetails;
 use App\Portal\Support\PortalSettings;
 use App\Quotes\Enums\QuoteStatus;
 use Illuminate\Http\RedirectResponse;
@@ -46,11 +46,11 @@ use Inertia\Response;
  */
 class ProjectController extends Controller
 {
-    public function __invoke(string $project, PortalSettings $settings, PortalOffers $offers): Response
+    public function __invoke(string $case, PortalSettings $settings, PortalOffers $offers): Response
     {
         $contact = auth('portal')->user();
 
-        $found = $this->find($project);
+        $found = $this->find($case);
         $editable = $found->clientMayEditDetails();
 
         $shared = [
@@ -80,12 +80,12 @@ class ProjectController extends Controller
     /**
      * P-03's write path — the one the portal had none of. Gated twice on
      * purpose: here, so a booked project answers 404 rather than 422, and
-     * again inside UpdateProjectDetails, so no second caller can arrive
+     * again inside UpdateCaseDetails, so no second caller can arrive
      * without the check.
      */
-    public function update(Request $request, string $project, UpdateProjectDetails $update): RedirectResponse
+    public function update(Request $request, string $case, UpdateCaseDetails $update): RedirectResponse
     {
-        $found = $this->find($project);
+        $found = $this->find($case);
 
         abort_unless($found->clientMayEditDetails(), 404);
 
@@ -105,11 +105,11 @@ class ProjectController extends Controller
      * are nobody else's business. openCount is what the row says instead of
      * a progress bar: how many questions still have no answer.
      */
-    private function questionnaires(Project $found): array
+    private function questionnaires(ClientCase $found): array
     {
         return FormInstance::query()
             ->shared()
-            ->where('project_id', $found->id)
+            ->where('case_id', $found->id)
             ->with('fields.currentAnswer')
             ->get()
             ->map(fn (FormInstance $instance) => [
@@ -123,15 +123,15 @@ class ProjectController extends Controller
             ->all();
     }
 
-    private function find(string $project): Project
+    private function find(string $case): ClientCase
     {
         return auth('portal')->user()->visibleProjects()
-            ->where('projects.public_id', $project)
+            ->where('cases.public_id', $case)
             ->firstOrFail();
     }
 
     /** What the client told us, as they can still change it. */
-    private function inquiry(Project $found): array
+    private function inquiry(ClientCase $found): array
     {
         $shoot = $found->primaryShoot ?? $found->shoots()->orderBy('sort_order')->first();
 
@@ -152,11 +152,11 @@ class ProjectController extends Controller
     }
 
     /** The booked booking: cover, one sentence, pictures, dates, paperwork. */
-    private function booking(Project $found, PortalSettings $settings): array
+    private function booking(ClientCase $found, PortalSettings $settings): array
     {
         $found->load([
             'shoots' => fn ($query) => $query->uncancelled()->orderByRaw('date is null, date'),
-            'latestContract.signature', 'latestQuote', 'job.paymentPlan.installments',
+            'latestContract.signature', 'latestQuote', 'paymentPlan.installments',
             'galleries.currentVersion', 'primaryShoot',
         ]);
 
@@ -229,10 +229,10 @@ class ProjectController extends Controller
      * three grey text links before this. Each entry respects T-08's own
      * switch, so nothing here leads to a route that answers 404.
      */
-    private function documents(Project $found, PortalSettings $settings): array
+    private function documents(ClientCase $found, PortalSettings $settings): array
     {
         $rows = [];
-        $plan = $found->job?->paymentPlan;
+        $plan = $found->paymentPlan;
 
         if ($plan !== null && $settings->paymentStatusEnabled(auth('portal')->user())) {
             $next = $plan->installments
@@ -289,14 +289,14 @@ class ProjectController extends Controller
      * client's own copy of the sequence. Behind the same switch the Zahlungen
      * row is, because both lead into the payment screens.
      */
-    private function invoices(Project $found, PortalSettings $settings): array
+    private function invoices(ClientCase $found, PortalSettings $settings): array
     {
         if (! $settings->paymentStatusEnabled(auth('portal')->user())) {
             return [];
         }
 
         return Invoice::query()
-            ->where('project_id', $found->id)
+            ->where('case_id', $found->id)
             ->with('installments')
             ->orderBy('number')
             ->get()

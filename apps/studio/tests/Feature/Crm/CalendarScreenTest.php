@@ -1,8 +1,8 @@
 <?php
 
 use App\Crm\Enums\ShootStatus;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\CrewAssignment;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\Absence;
 use App\Models\User;
@@ -22,8 +22,8 @@ it('renders the calendar screen', function () {
     // ($item, $key) — the key bound to fromShoot's optional array $conflicts and
     // fataled on every request. Nothing covered this screen, so it stayed broken
     // until the Übersicht grew a footer that linked to it.
-    $project = Project::factory()->create(['name' => 'Meier & Kowalski']);
-    $shoot = Shoot::factory()->for($project)
+    $project = ClientCase::factory()->create(['name' => 'Meier & Kowalski']);
+    $shoot = Shoot::factory()->for($project, 'case')
         ->on(now()->addDays(3)->format('Y-m-d'))
         ->atStatus(ShootStatus::Prep)
         ->create(['label' => 'Hochzeitstag']);
@@ -42,8 +42,8 @@ it('renders the calendar screen when the studio has no shoots', function () {
 });
 
 it('never puts an integer identifier into the calendar', function () {
-    $project = Project::factory()->create();
-    $shoot = Shoot::factory()->for($project)->on(now()->addDay()->format('Y-m-d'))->create();
+    $project = ClientCase::factory()->create();
+    $shoot = Shoot::factory()->for($project, 'case')->on(now()->addDay()->format('Y-m-d'))->create();
     CrewAssignment::factory()->for($shoot)->create();
 
     expect(integerIdPaths(props('/kalender')))->toBe([]);
@@ -63,9 +63,9 @@ it('lays the month out as six weeks from a monday', function () {
 });
 
 it('puts a requested shoot on the grid as a hold, and a booked one as a shoot', function () {
-    $project = Project::factory()->create(['name' => 'Meier & Kowalski']);
-    Shoot::factory()->for($project)->on('2026-02-14')->atStatus(ShootStatus::Requested)->create();
-    Shoot::factory()->for($project)->on('2026-02-15')->atStatus(ShootStatus::Booked)->create(['call_time' => '09:00']);
+    $project = ClientCase::factory()->create(['name' => 'Meier & Kowalski']);
+    Shoot::factory()->for($project, 'case')->on('2026-02-14')->atStatus(ShootStatus::Requested)->create();
+    Shoot::factory()->for($project, 'case')->on('2026-02-15')->atStatus(ShootStatus::Booked)->create(['call_time' => '09:00']);
 
     $days = collect(test()->actingAs(test()->staff, 'staff')
         ->get('/kalender?monat=2026-02')->assertOk()->viewData('page')['props']['days'])
@@ -109,9 +109,9 @@ it('carries an absence and a studio closure as all-day lines', function () {
 // #365: the season is every year a studio has, so it travels only when the
 // season view asks for it — and a hold is an inquiry, not a booked day.
 it('sends the season on request, without holds', function () {
-    $project = Project::factory()->create(['name' => 'Meier & Kowalski']);
-    Shoot::factory()->for($project)->on('2019-06-15')->atStatus(ShootStatus::Delivered)->create();
-    Shoot::factory()->for($project)->on('2027-05-15')->atStatus(ShootStatus::Requested)->create();
+    $project = ClientCase::factory()->create(['name' => 'Meier & Kowalski']);
+    Shoot::factory()->for($project, 'case')->on('2019-06-15')->atStatus(ShootStatus::Delivered)->create();
+    Shoot::factory()->for($project, 'case')->on('2027-05-15')->atStatus(ShootStatus::Requested)->create();
     Absence::factory()->create(['starts_on' => '2026-07-27', 'ends_on' => '2026-08-07']);
 
     expect(props('/kalender'))->toMatchArray(['view' => 'monat', 'season' => null])

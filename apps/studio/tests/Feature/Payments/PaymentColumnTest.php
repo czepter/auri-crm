@@ -1,9 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
-use App\Crm\Models\Project;
 use App\Enums\StaffRole;
 use App\Models\User;
 use App\Payments\Actions\ReadPaymentColumn;
@@ -21,13 +20,13 @@ beforeEach(function () {
 
 function overdueInstallment(string $name, ?int $notifiedDaysAgo, int $amount = 110000): PaymentInstallment
 {
-    $project = Project::factory()->create(['name' => $name]);
+    $project = ClientCase::factory()->create(['name' => $name]);
     $project->attachContact(
         Contact::factory()->create(['phone' => '+49 40 1234567']),
-        ProjectContactRole::Primary,
+        CaseContactRole::Primary,
     );
-    $job = Job::factory()->for($project)->create();
-    $plan = PaymentPlan::factory()->for($job)->create(['total' => $amount]);
+    markBooked($project);
+    $plan = PaymentPlan::factory()->for($project, 'case')->create(['total' => $amount]);
 
     return PaymentInstallment::factory()->for($plan, 'plan')->create([
         'amount' => $amount,

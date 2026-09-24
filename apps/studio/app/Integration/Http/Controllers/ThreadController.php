@@ -2,7 +2,7 @@
 
 namespace App\Integration\Http\Controllers;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Engagement\Actions\PostMessage;
 use App\Engagement\Data\MessageData;
 use App\Engagement\Models\Message;
@@ -24,7 +24,7 @@ use Illuminate\Validation\ValidationException;
  */
 class ThreadController extends Controller
 {
-    public function reply(Request $request, Project $project, PostMessage $post): JsonResponse
+    public function reply(Request $request, ClientCase $case, PostMessage $post): JsonResponse
     {
         $validated = $request->validate([
             'body' => ['required', 'string', 'max:5000', 'not_regex:/\{\{.*\}\}/s'],
@@ -39,7 +39,7 @@ class ThreadController extends Controller
             throw ValidationException::withMessages(['actor' => 'Nachrichten senden braucht einen Zugang mit Mitarbeiter.']);
         }
 
-        $thread = $project->latestThread()->first();
+        $thread = $case->latestThread()->first();
 
         abort_if($thread === null, 404);
 

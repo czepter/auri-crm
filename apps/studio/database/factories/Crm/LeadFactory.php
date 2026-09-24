@@ -6,8 +6,8 @@ use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\Stage;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -22,7 +22,7 @@ class LeadFactory extends Factory
     public function definition(): array
     {
         return [
-            'project_id' => Project::factory(),
+            'case_id' => ClientCase::factory(),
             'source' => fake()->randomElement(LeadSource::cases()),
             'stage' => LeadStage::New,
             'stage_entered_at' => now(),
@@ -42,12 +42,12 @@ class LeadFactory extends Factory
         ]);
     }
 
-    public function lost(string $reason = 'Budget', LeadOutcome $outcome = LeadOutcome::Lost): static
+    public function lost(?string $reason = 'Budget', LeadOutcome $outcome = LeadOutcome::Lost): static
     {
-        return $this->state(fn () => [
-            'lost_at' => now(),
-            'lost_reason' => $reason,
-            'outcome' => $outcome,
-        ]);
+        return $this->afterCreating(fn (Lead $lead) => $lead->case->forceFill([
+            'closed_at' => now(),
+            'close_outcome' => $outcome,
+            'close_reason' => $reason,
+        ])->save());
     }
 }

@@ -1,8 +1,7 @@
 <?php
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
-use App\Crm\Models\Project;
 use App\Gallery\Models\Gallery;
 
 /*
@@ -30,8 +29,8 @@ it('runs the cutover sequence end to end: snapshot, commit import, verify, roll 
 
     $baseline = [
         'contacts' => Contact::count(),
-        'projects' => Project::count(),
-        'jobs' => Job::count(),
+        'projects' => ClientCase::count(),
+        'booked' => ClientCase::booked()->count(),
         'galleries' => Gallery::count(),
     ];
 
@@ -46,7 +45,7 @@ it('runs the cutover sequence end to end: snapshot, commit import, verify, roll 
 
     // 2. A project written after the snapshot, the row the gallery import
     // hangs its gallery on.
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     // 3. X-02: legacy galleries, commit mode (no --dry-run).
     $galleryFile = tempnam(sys_get_temp_dir(), 'cutover-galleries-').'.json';
@@ -63,7 +62,7 @@ it('runs the cutover sequence end to end: snapshot, commit import, verify, roll 
 
     // 4. Data landed — this is the state a failed cutover would otherwise
     // leave behind, and exactly what the rollback below has to undo.
-    expect(Project::count())->toBe($baseline['projects'] + 1);
+    expect(ClientCase::count())->toBe($baseline['projects'] + 1);
 
     // 5. Rollback — the runbook's go/no-go failure path.
     $this->artisan('db:cutover-restore', ['path' => $snapshotPath, '--force' => true])
@@ -71,8 +70,8 @@ it('runs the cutover sequence end to end: snapshot, commit import, verify, roll 
 
     // 6. The database is back exactly where it started.
     expect(Contact::count())->toBe($baseline['contacts'])
-        ->and(Project::count())->toBe($baseline['projects'])
-        ->and(Job::count())->toBe($baseline['jobs'])
+        ->and(ClientCase::count())->toBe($baseline['projects'])
+        ->and(ClientCase::booked()->count())->toBe($baseline['booked'])
         ->and(Gallery::count())->toBe($baseline['galleries']);
 
     unlink($snapshotPath);

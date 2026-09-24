@@ -1,9 +1,9 @@
 <?php
 
 use App\Contracts\Models\ContractSignature;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Settings\Models\StudioSettings;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -30,10 +30,10 @@ beforeEach(function () {
 it('signs the rendered contract when the consent box is explicitly checked', function () {
     Storage::fake('local');
 
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contract = renderedContract($project, '%PDF-stored-bytes');
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal')
         ->post("/projekte/{$project->public_id}/vertrag/unterschreiben", ['typedName' => 'Lena Meier', 'consent' => true])
@@ -49,10 +49,10 @@ it('signs the rendered contract when the consent box is explicitly checked', fun
 it('rejects the submission server-side when consent is not checked, even though the button is disabled client-side', function () {
     Storage::fake('local');
 
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     renderedContract($project);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal')
         ->post("/projekte/{$project->public_id}/vertrag/unterschreiben", ['typedName' => 'Lena Meier', 'consent' => false])
@@ -64,10 +64,10 @@ it('rejects the submission server-side when consent is not checked, even though 
 it('rejects the submission when consent is entirely absent from the request', function () {
     Storage::fake('local');
 
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     renderedContract($project);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal')
         ->post("/projekte/{$project->public_id}/vertrag/unterschreiben", ['typedName' => 'Lena Meier'])
@@ -79,10 +79,10 @@ it('rejects the submission when consent is entirely absent from the request', fu
 it('rejects the submission when the typed name is blank', function () {
     Storage::fake('local');
 
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     renderedContract($project);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal')
         ->post("/projekte/{$project->public_id}/vertrag/unterschreiben", ['typedName' => '', 'consent' => true])
@@ -94,10 +94,10 @@ it('rejects the submission when the typed name is blank', function () {
 it('shows the signature once the contract is signed and never a second submit', function () {
     Storage::fake('local');
 
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     renderedContract($project);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal')
         ->post("/projekte/{$project->public_id}/vertrag/unterschreiben", ['typedName' => 'Lena Meier', 'consent' => true]);
@@ -121,7 +121,7 @@ it('shows the signature once the contract is signed and never a second submit', 
 it('404s a sign attempt for a project the contact is not on', function () {
     Storage::fake('local');
 
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     renderedContract($project);
     $contact = Contact::factory()->create();
 
@@ -133,9 +133,9 @@ it('404s a sign attempt for a project the contact is not on', function () {
 });
 
 it('404s a sign attempt when the project has no contract yet', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal')
         ->post("/projekte/{$project->public_id}/vertrag/unterschreiben", ['typedName' => 'Lena Meier', 'consent' => true])

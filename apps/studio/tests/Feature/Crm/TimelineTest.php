@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\ProjectType;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\TimelineEntry;
@@ -78,8 +78,8 @@ it('exports the timeline as a PDF through Gotenberg', function () {
     Http::fake(['*/forms/chromium/convert/html' => Http::response('%PDF-fake-bytes', 200)]);
 
     $user = staffMember(StaffRole::Admin);
-    $project = Project::factory()->create(['name' => 'Meier & Kowalski']);
-    $shoot = Shoot::factory()->for($project)->on('2026-06-14')->create(['label' => 'Hochzeitstag']);
+    $project = ClientCase::factory()->create(['name' => 'Meier & Kowalski']);
+    $shoot = Shoot::factory()->for($project, 'case')->on('2026-06-14')->create(['label' => 'Hochzeitstag']);
     TimelineEntry::factory()->for($shoot)->at('09:00')->create(['title' => 'Getting Ready']);
 
     $response = $this->actingAs($user, 'staff')->get("/shootings/{$shoot->public_id}/ablauf.pdf");
@@ -106,8 +106,8 @@ it('refuses to export a PDF for a shoot with no date', function () {
 
 it('exports the timeline as an ICS feed with one VEVENT per entry', function () {
     $user = staffMember(StaffRole::Admin);
-    $project = Project::factory()->create(['name' => 'Meier & Kowalski']);
-    $shoot = Shoot::factory()->for($project)->on('2026-06-14')->create(['label' => 'Hochzeitstag']);
+    $project = ClientCase::factory()->create(['name' => 'Meier & Kowalski']);
+    $shoot = Shoot::factory()->for($project, 'case')->on('2026-06-14')->create(['label' => 'Hochzeitstag']);
     TimelineEntry::factory()->for($shoot)->at('09:00')->create([
         'title' => 'Getting Ready — Braut',
         'location' => 'Hotel Louis C. Jacob',
@@ -135,7 +135,7 @@ it('gives the last entry the default duration of the project type', function () 
     ProjectType::query()->where('key', 'wedding')->update(['duration_minutes' => 90]);
 
     $user = staffMember(StaffRole::Admin);
-    $shoot = Shoot::factory()->for(Project::factory()->wedding())->on('2026-06-14')->create();
+    $shoot = Shoot::factory()->for(ClientCase::factory()->wedding(), 'case')->on('2026-06-14')->create();
     TimelineEntry::factory()->for($shoot)->at('20:00')->create(['title' => 'Eröffnungstanz']);
 
     $body = $this->actingAs($user, 'staff')->get("/shootings/{$shoot->public_id}/ablauf.ics")->getContent();

@@ -6,8 +6,8 @@ use App\Catalog\Data\CatalogItemData;
 use App\Catalog\Data\PackageData;
 use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Models\User;
 use App\Payments\Data\PaymentPlanData;
 use App\Quotes\Data\QuoteData;
@@ -21,14 +21,14 @@ class ReadQuoteWorkspace
 {
     public function __construct(private StudioSettingsResolver $settings) {}
 
-    public function __invoke(Project $project, ?User $user): array
+    public function __invoke(ClientCase $project, ?User $user): array
     {
         return [
             'quotes' => QuoteData::collect(
                 $project->quotes()->with(['items', 'predecessor', 'paymentStages'])->get()
             ),
-            'paymentPlan' => $project->job?->paymentPlan
-                ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments.invoice.creditNotes'))
+            'paymentPlan' => $project->paymentPlan
+                ? PaymentPlanData::fromModel($project->paymentPlan->load('installments.invoice.creditNotes'))
                 : null,
             // Beide Listen als Prop statt als Suchendpunkt: ein Studio führt
             // zweistellige Mengen, gefiltert wird in der Suchzeile selbst.

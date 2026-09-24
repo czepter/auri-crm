@@ -67,9 +67,9 @@ final class WriteTools
                 title: 'Advance lead stage',
                 description: 'Move a lead to a new stage in the sales funnel (Lead.stage), the same transition the board\'s drag makes.',
                 method: 'POST',
-                path: '/leads/{lead}/stage',
+                path: '/cases/{case}/lead/stage',
                 schema: fn (JsonSchema $schema) => [
-                    'lead' => $schema->string()->description('The lead public id')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                     'stage' => $schema->string()->description('The stage key in the sales funnel — see list_leads or pipeline_snapshot')->required(),
                     'entered_at' => $schema->string()->nullable()->description('Since when it stands there, for a move entered after the fact. ISO 8601 or YYYY-MM-DD, never in the future.'),
                 ],
@@ -80,11 +80,11 @@ final class WriteTools
             new ToolDefinition(
                 name: 'update_lead',
                 title: 'Update lead',
-                description: 'Replace a lead\'s inquiry text, the one written at capture, and optionally correct how it arrived. get_project shows the current values.',
+                description: 'Replace a lead\'s inquiry text, the one written at capture, and optionally correct how it arrived. get_case shows the current values.',
                 method: 'PATCH',
-                path: '/leads/{lead}',
+                path: '/cases/{case}/lead',
                 schema: fn (JsonSchema $schema) => [
-                    'lead' => $schema->string()->description('The lead public id')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                     'inquiry_text' => $schema->string()->max(10000)->nullable()->required(),
                     'captured_via' => $schema->string()->enum(self::CAPTURE_CHANNELS),
                     'captured_via_other' => $schema->string()->max(120)->nullable()->description('What \'other\' actually was. Only kept beside captured_via: other.'),
@@ -97,9 +97,9 @@ final class WriteTools
                 title: 'Close lead',
                 description: 'End the pursuit. `lost` is the client\'s decision, `declined` the studio\'s, `closed` neither — the three are counted apart, so pick the one that happened. The stage is left alone: which stage a lead died in is what the funnel is measured on. Its open shoots are cancelled with it. Reversible with reopen_lead, which takes those absagen back too.',
                 method: 'POST',
-                path: '/leads/{lead}/lost',
+                path: '/cases/{case}/lead/lost',
                 schema: fn (JsonSchema $schema) => [
-                    'lead' => $schema->string()->description('The lead public id')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                     'outcome' => $schema->string()->enum(self::LEAD_OUTCOMES)->required(),
                     'reason' => $schema->string()->max(255)->required(),
                     'lost_at' => $schema->string()->nullable()->description('When it ended, for one entered after the fact. Never in the future.'),
@@ -113,9 +113,9 @@ final class WriteTools
                 title: 'Reopen lead',
                 description: 'Take back a close. A closed lead can make no further move at all, so this is the only way out of one entered by mistake. It returns to the stage it was closed in.',
                 method: 'POST',
-                path: '/leads/{lead}/reopen',
+                path: '/cases/{case}/lead/reopen',
                 schema: fn (JsonSchema $schema) => [
-                    'lead' => $schema->string()->description('The lead public id')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                 ],
                 annotations: ['readOnlyHint' => false, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false],
                 silent: false,
@@ -126,9 +126,9 @@ final class WriteTools
                 title: 'Create a shoot',
                 description: 'Add a shooting day to a project. The first one already exists — capture_lead makes it out of the inquiry date — so this is the second and every one after it: the Feier of a wedding split across two days, an Engagement-Shooting ahead of it, a second portrait session. Leave `date` empty for a day that is agreed but not dated. Leave `kind` empty to take the project type\'s name.',
                 method: 'POST',
-                path: '/projects/{project}/shoots',
+                path: '/cases/{case}/shoots',
                 schema: fn (JsonSchema $schema) => [
-                    'project' => $schema->string()->description('The project public id')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                     'kind' => $schema->string()->max(255)->nullable(),
                     'label' => $schema->string()->max(255)->nullable()->description('What this day is called on the project screen, where the kind alone is ambiguous'),
                     'date' => $schema->string()->nullable()->description('YYYY-MM-DD'),
@@ -189,9 +189,9 @@ final class WriteTools
                 title: 'Add internal note',
                 description: 'Add a staff-only internal note to a project.',
                 method: 'POST',
-                path: '/projects/{project}/notes',
+                path: '/cases/{case}/notes',
                 schema: fn (JsonSchema $schema) => [
-                    'project' => $schema->string()->description('The project public id')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                     'body' => $schema->string()->max(5000)->required(),
                     'occurred_at' => $schema->string()->nullable()->description('When what the note is about happened, for one written up later. ISO 8601 or YYYY-MM-DD, never in the future.'),
                 ],
@@ -232,9 +232,9 @@ final class WriteTools
                 title: 'Add message',
                 description: 'Write a line of the conversation between client and studio into a project after the fact: a mail, call or chat that happened outside the app. It shows on the project\'s and the inquiry\'s Nachrichten tab. Nothing is sent to anyone. Use this, not add_internal_note, for what client and studio said to each other.',
                 method: 'POST',
-                path: '/projects/{project}/messages',
+                path: '/cases/{case}/messages',
                 schema: fn (JsonSchema $schema) => [
-                    'project' => $schema->string()->description('The project public id')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                     'from' => $schema->string()->enum(['client', 'studio'])->description('client: the project\'s main contact, or `contact`. studio: the signed-in staff member.')->required(),
                     'body' => $schema->string()->max(5000)->required(),
                     'sent_at' => $schema->string()->nullable()->description('When it was said. ISO 8601, never in the future. Defaults to now.'),
@@ -244,13 +244,13 @@ final class WriteTools
             ),
 
             new ToolDefinition(
-                name: 'add_project_contact',
-                title: 'Add project contact',
-                description: 'Attach a person to an existing project: the partner of a couple, a payer, a planner. Pass contact_id for someone on file (see search_contacts), or name with email and phone; an email already on file reuses that contact. The primary contact is set at capture and cannot be added here.',
+                name: 'add_case_contact',
+                title: 'Add case contact',
+                description: 'Attach a person to an existing case: the partner of a couple, a payer, a planner. Pass contact_id for someone on file (see search_contacts), or name with email and phone; an email already on file reuses that contact. The primary contact is set at capture and cannot be added here.',
                 method: 'POST',
-                path: '/projects/{project}/contacts',
+                path: '/cases/{case}/contacts',
                 schema: fn (JsonSchema $schema) => [
-                    'project' => $schema->string()->description('The project public id')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                     'contact_id' => $schema->string()->min(24)->max(24)->nullable()->description('CUID2 of an existing contact'),
                     'name' => $schema->string()->max(255)->nullable(),
                     'email' => $schema->string()->format('email')->max(255)->nullable(),
@@ -264,13 +264,13 @@ final class WriteTools
             ),
 
             new ToolDefinition(
-                name: 'set_project_fields',
-                title: 'Set project fields',
-                description: 'C-25: write the values of a project\'s own fields — "120 Gäste, Scheune" out of a mail. Call `list_project_types` first: the keys of `fields` are that type\'s field keys, and each value takes the shape its definition names (a number, a string, a YYYY-MM-DD date, a boolean, or a list of strings for a tags field). Keys are merged, never replaced, so writing one field leaves the rest alone. A value outside a closed option list is refused; on a field that allows new options it is added to the list.',
+                name: 'set_case_fields',
+                title: 'Set case fields',
+                description: 'C-25: write the values of a case\'s own fields — "120 Gäste, Scheune" out of a mail. Call `list_project_types` first: the keys of `fields` are that type\'s field keys, and each value takes the shape its definition names (a number, a string, a YYYY-MM-DD date, a boolean, or a list of strings for a tags field). Keys are merged, never replaced, so writing one field leaves the rest alone. A value outside a closed option list is refused; on a field that allows new options it is added to the list.',
                 method: 'PATCH',
-                path: '/projects/{project}/fields',
+                path: '/cases/{case}/fields',
                 schema: fn (JsonSchema $schema) => [
-                    'project' => $schema->string()->description('The project public id')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                     'fields' => $schema->object()->description('Keyed by field key — see list_project_types.')->required(),
                 ],
                 // Overwrites whatever stood under those keys, so destructive
@@ -302,17 +302,17 @@ final class WriteTools
              * means nothing without it, so the project is the unit that goes.
              */
             new ToolDefinition(
-                name: 'delete_project',
-                title: 'Delete a project',
-                description: 'Deletes a project together with its lead, its shoots, its internal notes and its links to contacts. The contacts themselves stay. Refused while a job, a quote or a gallery hangs off the project — past that point the project is a record of an agreement, and removing it is a decision for a screen rather than a tool. There is no undo.',
+                name: 'delete_case',
+                title: 'Delete a case',
+                description: 'Deletes a case together with its lead, its shoots, its internal notes and its links to contacts. The contacts themselves stay. Refused while the case is booked or a quote or a gallery hangs off the case — past that point the case is a record of an agreement, and removing it is a decision for a screen rather than a tool. There is no undo.',
                 method: 'DELETE',
-                path: '/projects/{project}',
+                path: '/cases/{case}',
                 schema: fn (JsonSchema $schema) => [
-                    'project' => $schema->string()->description('The project public id')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                 ],
                 annotations: ToolDefinition::OVERWRITES,
                 silent: false,
-                confirmation: fn (array $arguments) => 'Deleted project '.$arguments['project'].'.',
+                confirmation: fn (array $arguments) => 'Deleted case '.$arguments['case'].'.',
             ),
 
             new ToolDefinition(
@@ -320,9 +320,9 @@ final class WriteTools
                 title: 'Create a quote',
                 description: 'Start a draft quote (Angebot) on a project. Amounts are in cents: 1.790 € is 179000. Nothing goes to the client; send_quote does that. For a booking already agreed outside the app: create_quote, send_quote with sent_at and silent, then accept_quote.',
                 method: 'POST',
-                path: '/projects/{project}/quotes',
+                path: '/cases/{case}/quotes',
                 schema: fn (JsonSchema $schema) => [
-                    'project' => $schema->string()->description('The project public id')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                     'package' => $schema->string()->nullable()->description('Package public id from list_packages. Its lines, payment plan and hourly rate are copied in; fields given here override them.'),
                     ...self::quoteFields($schema),
                 ],
@@ -332,7 +332,7 @@ final class WriteTools
             new ToolDefinition(
                 name: 'update_quote',
                 title: 'Update a quote',
-                description: 'Change a draft quote. Only the fields given change; `items`, when given, replaces every line. A sent quote cannot change: revise_quote makes an editable copy. get_project shows the current quotes.',
+                description: 'Change a draft quote. Only the fields given change; `items`, when given, replaces every line. A sent quote cannot change: revise_quote makes an editable copy. get_case shows the current quotes.',
                 method: 'PATCH',
                 path: '/quotes/{quote}',
                 schema: fn (JsonSchema $schema) => [

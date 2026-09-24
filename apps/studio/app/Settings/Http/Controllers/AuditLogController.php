@@ -2,8 +2,8 @@
 
 namespace App\Settings\Http\Controllers;
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Enums\StaffRole;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
@@ -50,7 +50,7 @@ class AuditLogController extends Controller
             ->orderByDesc('id')
             ->cursorPaginate(self::PER_PAGE);
 
-        $projects = Project::query()->whereIn('id', $logs->pluck('project_id')->filter())->get()->keyBy('id');
+        $projects = ClientCase::query()->whereIn('id', $logs->pluck('case_id')->filter())->get()->keyBy('id');
         $contacts = Contact::query()->whereIn('public_id', $logs->pluck('subject')->filter())->get()->keyBy('public_id');
 
         return Inertia::render('Settings/AuditLog', [
@@ -61,9 +61,9 @@ class AuditLogController extends Controller
                 'label' => self::label($log->event),
                 'detail' => $log->event === 'studio_settings.updated' ? self::settingsDetail($log->context ?? []) : [],
                 'target' => match (true) {
-                    $projects->has($log->project_id) => [
-                        'name' => $projects[$log->project_id]->name,
-                        'href' => "/auftraege/{$projects[$log->project_id]->public_id}",
+                    $projects->has($log->case_id) => [
+                        'name' => $projects[$log->case_id]->name,
+                        'href' => "/auftraege/{$projects[$log->case_id]->public_id}",
                     ],
                     $contacts->has($log->subject) => [
                         'name' => $contacts[$log->subject]->name,

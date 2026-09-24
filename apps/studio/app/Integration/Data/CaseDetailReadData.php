@@ -2,7 +2,7 @@
 
 namespace App\Integration\Data;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Quotes\Data\QuoteData;
 use Spatie\LaravelData\Data;
@@ -15,10 +15,10 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * row is the wrong price for reading one.
  *
  * Internal notes stay out: they hang off ManageNotes, and a token holding
- * ViewAllProjects must not reach them through a project.
+ * ViewAllCases must not reach them through a project.
  */
 #[TypeScript]
-class ProjectDetailReadData extends Data
+class CaseDetailReadData extends Data
 {
     public function __construct(
         public string $id,
@@ -28,10 +28,14 @@ class ProjectDetailReadData extends Data
         public bool $portalVisible,
         public object $fields,
         public string $updatedAt,
-        public ?ProjectLeadReadData $lead,
-        public ?JobReadData $job,
+        public ?CaseLeadReadData $lead,
+        public ?string $bookedAt,
+        public ?string $bookedVia,
+        public ?string $closedAt,
+        public ?string $closeOutcome,
+        public ?string $closeReason,
         public int $openTaskCount,
-        /** @var list<ProjectContactReadData> */
+        /** @var list<CaseContactReadData> */
         public array $contacts,
         /** @var list<ShootReadData> */
         public array $shoots,
@@ -39,9 +43,9 @@ class ProjectDetailReadData extends Data
         public array $quotes,
     ) {}
 
-    public static function fromModel(Project $project): self
+    public static function fromModel(ClientCase $project): self
     {
-        $project->loadMissing(['lead', 'job', 'contacts', 'shoots.crew.user', 'quotes.items', 'quotes.paymentStages', 'quotes.predecessor']);
+        $project->loadMissing(['lead', 'contacts', 'shoots.crew.user', 'quotes.items', 'quotes.paymentStages', 'quotes.predecessor']);
         $project->loadCount(['tasks as open_task_count' => fn ($query) => $query->whereNull('completed_at')]);
 
         return new self(
@@ -52,12 +56,16 @@ class ProjectDetailReadData extends Data
             portalVisible: $project->portal_visible,
             fields: (object) ($project->field_values ?? []),
             updatedAt: $project->updated_at->toIso8601String(),
-            lead: $project->lead === null ? null : ProjectLeadReadData::fromModel($project->lead),
-            job: $project->job === null ? null : JobReadData::fromModel($project->job->setRelation('project', $project)),
+            lead: $project->lead === null ? null : CaseLeadReadData::fromModel($project->lead),
+            bookedAt: $project->booked_at?->toIso8601String(),
+            bookedVia: $project->booked_via?->value,
+            closedAt: $project->closed_at?->toIso8601String(),
+            closeOutcome: $project->close_outcome?->value,
+            closeReason: $project->close_reason,
             openTaskCount: (int) $project->open_task_count,
-            contacts: $project->contacts->map(ProjectContactReadData::fromModel(...))->all(),
+            contacts: $project->contacts->map(CaseContactReadData::fromModel(...))->all(),
             shoots: $project->shoots
-                ->map(fn (Shoot $shoot) => ShootReadData::fromModel($shoot->setRelation('project', $project)))
+                ->map(fn (Shoot $shoot) => ShootReadData::fromModel($shoot->setRelation('case', $project)))
                 ->all(),
             quotes: $project->quotes->map(QuoteData::fromModel(...))->all(),
         );

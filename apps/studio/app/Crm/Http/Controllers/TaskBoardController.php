@@ -28,7 +28,7 @@ class TaskBoardController extends Controller
                     ->visibleTo($viewer)
                     ->orderByRaw('completed_at is not null')
                     ->byDueDate()
-                    ->with(['project', 'contact', 'shoot', 'assignee', 'dependsOn'])
+                    ->with(['case', 'contact', 'shoot', 'assignee', 'dependsOn'])
                     ->get()
                     ->map(TaskRowData::fromTask(...))
                     ->values()

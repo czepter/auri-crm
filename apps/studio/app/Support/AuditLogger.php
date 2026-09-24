@@ -35,7 +35,7 @@ class AuditLogger
         $log = AuditLog::create([
             'event' => $event,
             'actor_id' => $actor?->id,
-            'project_id' => $projectId,
+            'case_id' => $projectId,
             'subject' => $subject,
             'context' => self::sanitize([
                 ...$context,

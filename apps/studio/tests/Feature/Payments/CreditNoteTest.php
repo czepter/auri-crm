@@ -226,6 +226,6 @@ it('renders the project quote tab once a Gutschrift exists', function () {
     app(IssueCreditNote::class)($installment->invoice, 25_000, 'Nachlass');
 
     $this->actingAs(staffMember(StaffRole::Admin), 'staff')
-        ->get("/auftraege/{$installment->plan->job->project->public_id}/angebote")
+        ->get("/auftraege/{$installment->plan->case->public_id}/angebote")
         ->assertOk();
 });

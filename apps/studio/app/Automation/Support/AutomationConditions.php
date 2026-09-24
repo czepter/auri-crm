@@ -4,7 +4,7 @@ namespace App\Automation\Support;
 
 use App\Automation\Enums\AutomationCondition;
 use App\Crm\Enums\TaskAudience;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Gallery\Models\GalleryView;
 use App\Payments\Enums\PaymentInstallmentStatus;
 
@@ -18,7 +18,7 @@ use App\Payments\Enums\PaymentInstallmentStatus;
  */
 class AutomationConditions
 {
-    public function holds(?AutomationCondition $condition, ?Project $project): bool
+    public function holds(?AutomationCondition $condition, ?ClientCase $project): bool
     {
         if ($condition === null) {
             return true;
@@ -29,7 +29,7 @@ class AutomationConditions
         }
 
         return match ($condition) {
-            AutomationCondition::PaymentOpen => $project->job?->paymentPlan
+            AutomationCondition::PaymentOpen => $project->paymentPlan
                 ?->installments()
                 ->where('status', '!=', PaymentInstallmentStatus::Paid)
                 ->exists() ?? false,

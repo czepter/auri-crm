@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 const props = defineProps<{
   mode: 'internal' | 'external'
-  project: App.Crm.Data.ProjectSuggestionData | null
+  project: App.Crm.Data.CaseSuggestionData | null
   shootId: string | null
   presets: App.Gallery.Data.GalleryPresetData[]
   studioDefaults: {
@@ -37,7 +37,7 @@ function switchMode(next: string) {
   router.get(page.url, { art: next === 'external' ? 'extern' : 'intern' }, { preserveScroll: true, preserveState: true })
 }
 
-const project = ref<App.Crm.Data.ProjectSuggestionData | null>(props.project)
+const project = ref<App.Crm.Data.CaseSuggestionData | null>(props.project)
 // G-16: womit eine neue Galerie anfängt. Die Standard-Vorlage steht schon
 // gewählt da, statt dass jeder sie aus der Liste sucht.
 const presetId = ref(props.presets.find((row) => row.isDefault)?.id ?? '')
@@ -45,7 +45,7 @@ const presetId = ref(props.presets.find((row) => row.isDefault)?.id ?? '')
 const preset = computed(() => props.presets.find((row) => row.id === presetId.value) ?? null)
 
 const form = useForm({
-  project_id: null as string | null,
+  case_id: null as string | null,
   title: '',
   is_external: false,
   external_url: '',
@@ -72,7 +72,7 @@ function submit() {
   form
     .transform((data) => ({
       ...data,
-      project_id: project.value?.id ?? null,
+      case_id: project.value?.id ?? null,
       shoot_id: project.value?.id === props.project?.id ? props.shootId : null,
       is_external: props.mode === 'external',
       ...(props.mode === 'external'

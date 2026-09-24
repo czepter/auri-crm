@@ -137,11 +137,11 @@ class PackStudioExport
 
     private function messages(): string
     {
-        $threads = Thread::query()->with(['project', 'messages.contact', 'messages.author'])->orderBy('id')->get()
+        $threads = Thread::query()->with(['case', 'messages.contact', 'messages.author'])->orderBy('id')->get()
             ->map(fn (Thread $thread) => [
                 'id' => $thread->public_id,
                 'subject' => $thread->subject,
-                'project' => $thread->project?->public_id,
+                'project' => $thread->case?->public_id,
                 'messages' => $thread->messages->map(fn (Message $message) => [
                     'id' => $message->public_id,
                     'from' => $message->contact_id !== null ? 'contact' : 'staff',

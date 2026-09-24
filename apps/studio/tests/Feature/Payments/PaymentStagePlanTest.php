@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Job;
+use App\Crm\Models\ClientCase;
 use App\Payments\Actions\CreatePaymentPlan;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
@@ -11,12 +11,12 @@ uses(RefreshDatabase::class);
 
 beforeEach(fn () => Storage::fake('local'));
 
-function bookedJobWithStages(int $total): Job
+function bookedProjectWithStages(int $total): ClientCase
 {
     $project = bookedContactProject();
 
     $quote = Quote::factory()->create([
-        'project_id' => $project->id,
+        'case_id' => $project->id,
         'status' => QuoteStatus::Accepted,
         'accepted_at' => now(),
         'total' => $total,
@@ -28,13 +28,13 @@ function bookedJobWithStages(int $total): Job
         ['percent' => 25, 'label' => 'Nach der Lieferung', 'minimum' => 0, 'sort_order' => 2],
     ]);
 
-    return $project->job()->sole();
+    return $project;
 }
 
 it('materialises the installments from the accepted quote’s stages', function () {
-    $job = bookedJobWithStages(215_000);
+    $project = bookedProjectWithStages(215_000);
 
-    $plan = app(CreatePaymentPlan::class)($job, 215_000, [
+    $plan = app(CreatePaymentPlan::class)($project, 215_000, [
         now()->toDateString(),
         now()->addMonth()->toDateString(),
         now()->addMonths(2)->toDateString(),
@@ -50,10 +50,10 @@ it('materialises the installments from the accepted quote’s stages', function 
 
 // Der bestehende Weg: ohne Stufen bleibt es die gleichmaessige Teilung.
 it('splits evenly where the project has no stages', function () {
-    $job = bookedJobWithStages(120_000);
+    $project = bookedProjectWithStages(120_000);
     Quote::query()->sole()->paymentStages()->delete();
 
-    $plan = app(CreatePaymentPlan::class)($job, 120_000, [
+    $plan = app(CreatePaymentPlan::class)($project, 120_000, [
         now()->toDateString(),
         now()->addMonth()->toDateString(),
     ]);

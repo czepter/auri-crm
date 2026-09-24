@@ -1,7 +1,7 @@
 <?php
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\CrewAssignment;
-use App\Crm\Models\Project;
 use App\Crm\Models\ProjectType;
 use App\Crm\Models\Shoot;
 use App\Models\Absence;
@@ -31,8 +31,8 @@ it('serves a subscribable calendar without a session', function () {
 it('carries the crew member assigned shoots with their call times', function () {
     // The story's acceptance, minus the phone.
     $user = User::factory()->create(['name' => 'Nina Sturm']);
-    $project = Project::factory()->create(['name' => 'Meier & Kowalski']);
-    $shoot = Shoot::factory()->for($project)->on('2026-06-14')->create([
+    $project = ClientCase::factory()->create(['name' => 'Meier & Kowalski']);
+    $shoot = Shoot::factory()->for($project, 'case')->on('2026-06-14')->create([
         'label' => 'Hochzeitstag',
         'call_time' => '09:00',
         'end_time' => '23:00',
@@ -107,8 +107,8 @@ it('never lets the token ride along in a serialised user', function () {
 
 it('escapes a value that would otherwise break the format', function () {
     $user = User::factory()->create();
-    $project = Project::factory()->create(['name' => 'Meier; Kowalski, und mehr']);
-    $shoot = Shoot::factory()->for($project)->on('2026-06-14')->create(['label' => 'Tag']);
+    $project = ClientCase::factory()->create(['name' => 'Meier; Kowalski, und mehr']);
+    $shoot = Shoot::factory()->for($project, 'case')->on('2026-06-14')->create(['label' => 'Tag']);
     CrewAssignment::factory()->for($shoot)->for($user)->create();
 
     $body = $this->get("/kalender/{$user->calendarToken()}/shootings.ics")->getContent();
@@ -118,8 +118,8 @@ it('escapes a value that would otherwise break the format', function () {
 
 it('folds a long line without splitting a character in half', function () {
     $user = User::factory()->create();
-    $project = Project::factory()->create(['name' => str_repeat('Grüße für Späthochzeiten ', 6)]);
-    $shoot = Shoot::factory()->for($project)->on('2026-06-14')->create();
+    $project = ClientCase::factory()->create(['name' => str_repeat('Grüße für Späthochzeiten ', 6)]);
+    $shoot = Shoot::factory()->for($project, 'case')->on('2026-06-14')->create();
     CrewAssignment::factory()->for($shoot)->for($user)->create();
 
     $body = $this->get("/kalender/{$user->calendarToken()}/shootings.ics")->getContent();
@@ -147,9 +147,9 @@ it('takes the duration from the type of the shoot project, and lets an end_time 
     ProjectType::query()->where('key', 'wedding')->update(['duration_minutes' => 480]);
 
     $user = User::factory()->create();
-    $project = Project::factory()->wedding()->create();
-    $open = Shoot::factory()->for($project)->on('2026-06-14')->create(['call_time' => '09:00', 'end_time' => null]);
-    $closed = Shoot::factory()->for($project)->on('2026-06-15')->create(['call_time' => '09:00', 'end_time' => '10:00']);
+    $project = ClientCase::factory()->wedding()->create();
+    $open = Shoot::factory()->for($project, 'case')->on('2026-06-14')->create(['call_time' => '09:00', 'end_time' => null]);
+    $closed = Shoot::factory()->for($project, 'case')->on('2026-06-15')->create(['call_time' => '09:00', 'end_time' => '10:00']);
     CrewAssignment::factory()->for($open)->for($user)->create();
     CrewAssignment::factory()->for($closed)->for($user)->create();
 

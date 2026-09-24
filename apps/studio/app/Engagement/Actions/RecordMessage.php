@@ -2,9 +2,9 @@
 
 namespace App\Engagement\Actions;
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Models\User;
@@ -23,11 +23,11 @@ use Illuminate\Support\Facades\DB;
  */
 class RecordMessage
 {
-    public function __invoke(Project $project, Contact|User $author, string $body, CarbonInterface $sentAt): Message
+    public function __invoke(ClientCase $project, Contact|User $author, string $body, CarbonInterface $sentAt): Message
     {
         return DB::transaction(function () use ($project, $author, $body, $sentAt) {
             $thread = $project->latestThread()->first()
-                ?? Thread::create(['project_id' => $project->id, 'subject' => $project->name]);
+                ?? Thread::create(['case_id' => $project->id, 'subject' => $project->name]);
 
             $thread->participants()->firstOrCreate(
                 $author instanceof Contact ? ['contact_id' => $author->id] : ['user_id' => $author->id]
@@ -46,13 +46,13 @@ class RecordMessage
     }
 
     /** The named contact, or the one the project calls its main contact. */
-    public function contact(Project $project, ?string $publicId): ?Contact
+    public function contact(ClientCase $project, ?string $publicId): ?Contact
     {
         if ($publicId !== null) {
             return $project->contacts()->where('contacts.public_id', $publicId)->first();
         }
 
-        return $project->contacts()->wherePivot('role', ProjectContactRole::Primary->value)->first()
+        return $project->contacts()->wherePivot('role', CaseContactRole::Primary->value)->first()
             ?? $project->contacts()->first();
     }
 }

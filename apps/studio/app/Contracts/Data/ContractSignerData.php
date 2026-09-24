@@ -3,7 +3,7 @@
 namespace App\Contracts\Data;
 
 use App\Contracts\Models\ContractSigner;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -18,7 +18,7 @@ class ContractSignerData extends Data
         public ?string $remindedAt,
     ) {}
 
-    public static function fromModel(ContractSigner $signer, ?ProjectContactRole $role): self
+    public static function fromModel(ContractSigner $signer, ?CaseContactRole $role): self
     {
         return new self(
             id: $signer->public_id,

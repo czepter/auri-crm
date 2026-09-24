@@ -5,8 +5,8 @@ namespace App\Notifications\Actions;
 use App\Crm\Actions\RemindStalledLeads;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Enums\TaskAudience;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
 use App\Crm\Models\Task;
@@ -84,13 +84,13 @@ class BuildMorningBriefing
         return Shoot::query()
             ->uncancelled()
             ->whereDate('date', now()->toDateString())
-            ->with(['project', 'crew.user'])
+            ->with(['case', 'crew.user'])
             ->orderBy('call_time')
             ->get()
-            ->filter(fn (Shoot $shoot) => $this->hears($user, $shoot->project))
+            ->filter(fn (Shoot $shoot) => $this->hears($user, $shoot->case))
             ->map(fn (Shoot $shoot) => trim(implode(' · ', array_filter([
                 $shoot->call_time === null ? null : substr((string) $shoot->call_time, 0, 5),
-                $shoot->project->name,
+                $shoot->case->name,
                 $shoot->venue_name ?? $shoot->venue_city,
                 $shoot->crew->map(fn ($assignment) => $assignment->user->name)->implode(', ') ?: null,
             ]))))
@@ -106,7 +106,7 @@ class BuildMorningBriefing
             ->where('audience', TaskAudience::Internal)
             ->whereNotNull('due_on')
             ->whereDate('due_on', '<=', now()->toDateString())
-            ->with(['project', 'contact', 'assignee', 'dependsOn'])
+            ->with(['case', 'contact', 'assignee', 'dependsOn'])
             ->orderBy('due_on')
             ->get()
             ->reject(fn (Task $task) => $task->isBlocked())
@@ -123,13 +123,13 @@ class BuildMorningBriefing
             ->open()
             ->unbooked()
             ->whereIn('stage', Stage::query()->pipeline(StagePipeline::Lead)->active()->pluck('key'))
-            ->with('project')
+            ->with('case')
             ->get()
             ->filter(fn (Lead $lead) => FibonacciReminderSchedule::reachedRungs($lead->stage_entered_at, ceilingDays: RemindStalledLeads::CEILING_DAYS) > 0)
-            ->filter(fn (Lead $lead) => $this->hears($user, $lead->project))
+            ->filter(fn (Lead $lead) => $this->hears($user, $lead->case))
             ->map(fn (Lead $lead) => sprintf(
                 '%s — %s, seit %d Tagen',
-                $lead->project->name,
+                $lead->case->name,
                 $lead->stage->name,
                 (int) $lead->stage_entered_at->startOfDay()->diffInDays(now()->startOfDay()),
             ))
@@ -142,13 +142,13 @@ class BuildMorningBriefing
     {
         return PaymentInstallment::query()
             ->overdue()
-            ->with('plan.job.project')
+            ->with('plan.case')
             ->orderBy('due_on')
             ->get()
-            ->filter(fn (PaymentInstallment $installment) => $this->hears($user, $installment->plan->job->project))
+            ->filter(fn (PaymentInstallment $installment) => $this->hears($user, $installment->plan->case))
             ->map(fn (PaymentInstallment $installment) => sprintf(
                 '%s — %s, fällig am %s',
-                $installment->plan->job->project->name,
+                $installment->plan->case->name,
                 number_format($installment->amount / 100, 2, ',', '.').' €',
                 $installment->due_on->format('d.m.Y'),
             ))
@@ -156,8 +156,8 @@ class BuildMorningBriefing
             ->all();
     }
 
-    private function hears(User $user, ?Project $project): bool
+    private function hears(User $user, ?ClientCase $project): bool
     {
-        return $this->audience->forProject($project)->contains('id', $user->id);
+        return $this->audience->forCase($project)->contains('id', $user->id);
     }
 }

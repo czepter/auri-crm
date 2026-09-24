@@ -3,7 +3,7 @@
 namespace Database\Factories\Crm;
 
 use App\Crm\Enums\ShootStatus;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -18,7 +18,7 @@ class ShootFactory extends Factory
     public function definition(): array
     {
         return [
-            'project_id' => Project::factory(),
+            'case_id' => ClientCase::factory(),
             'kind' => 'Portrait',
             'date' => fake()->dateTimeBetween('+1 month', '+18 months')->format('Y-m-d'),
             'status' => ShootStatus::Requested,

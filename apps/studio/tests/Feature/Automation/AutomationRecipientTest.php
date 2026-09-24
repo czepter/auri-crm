@@ -9,11 +9,10 @@ use App\Automation\Enums\AutomationRunStatus;
 use App\Automation\Models\AutomationRule;
 use App\Automation\Models\AutomationRun;
 use App\Automation\Notifications\AutomationReminder;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
-use App\Crm\Models\Job;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -22,13 +21,13 @@ use Illuminate\Support\Facades\Notification;
 
 uses(RefreshDatabase::class);
 
-function shootIn(int $days, ?Project $project = null): Shoot
+function shootIn(int $days, ?ClientCase $project = null): Shoot
 {
-    $project ??= Project::factory()->create();
+    $project ??= ClientCase::factory()->create();
     // The factory's own booker would be a second person in a "solo" studio.
-    Job::factory()->for($project)->create(['booked_by_id' => User::query()->value('id')]);
+    markBooked($project, ['booked_by_id' => User::query()->value('id')]);
 
-    return Shoot::factory()->for($project)->create([
+    return Shoot::factory()->for($project, 'case')->create([
         'date' => CarbonImmutable::parse('2026-06-01', 'UTC')->addDays($days)->toDateString(),
     ]);
 }
@@ -78,7 +77,7 @@ it('keeps a crew rule silent without a crew and widens a studio rule to everyone
         ->dateOffset(AutomationAnchor::PrimaryShoot, 7, AutomationOffsetDirection::Before)
         ->create(['recipient_type' => AutomationRecipient::Studio]);
 
-    Shoot::factory()->for(Job::factory()->create(['booked_by_id' => $staff->id])->project)->create([
+    Shoot::factory()->for(ClientCase::factory()->booked()->create(['booked_by_id' => $staff->id]), 'case')->create([
         'date' => CarbonImmutable::parse('2026-06-08', 'UTC')->toDateString(),
         'is_primary' => true,
     ]);
@@ -92,7 +91,7 @@ it('resolves placeholders against the anchor’s own project', function () {
     Notification::fake();
     staffMember();
 
-    $project = Project::factory()->create(['name' => 'Hochzeit Meier']);
+    $project = ClientCase::factory()->create(['name' => 'Hochzeit Meier']);
     $shoot = shootIn(7, $project);
     CrewAssignment::factory()->create(['shoot_id' => $shoot->id, 'user_id' => User::query()->first()->id]);
 
@@ -118,9 +117,9 @@ it('records a run as skipped when the condition does not hold', function () {
     Notification::fake();
     staffMember();
 
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
     shootIn(7, $project);
 
     AutomationRule::factory()
@@ -138,11 +137,11 @@ it('addresses the client side the portal reaches, not the bare primary contact',
     Notification::fake();
     staffMember();
 
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $revoked = Contact::factory()->create(['portal_access_revoked_at' => now()]);
     $partner = Contact::factory()->create();
-    $project->attachContact($revoked, ProjectContactRole::Primary);
-    $project->attachContact($partner, ProjectContactRole::Partner);
+    $project->attachContact($revoked, CaseContactRole::Primary);
+    $project->attachContact($partner, CaseContactRole::Partner);
     shootIn(7, $project);
 
     AutomationRule::factory()
@@ -159,8 +158,8 @@ it('skips a project of another type than the rule names', function () {
     Notification::fake();
     $owner = staffMember();
 
-    shootIn(7, Project::factory()->wedding()->create());
-    shootIn(7, Project::factory()->create());
+    shootIn(7, ClientCase::factory()->wedding()->create());
+    shootIn(7, ClientCase::factory()->create());
 
     $rule = AutomationRule::factory()
         ->dateOffset(AutomationAnchor::PerShoot, 7, AutomationOffsetDirection::Before)

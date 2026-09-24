@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Gallery\Models\Gallery;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,8 +15,8 @@ beforeEach(function () {
 
 it('finds an inquiry and its contact by email fragment', function () {
     $contact = Contact::factory()->create(['name' => 'Annika Steffens', 'email' => 'a.steffens@posteo.de']);
-    $project = Project::factory()->create(['name' => 'Hochzeit Juni']);
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project = ClientCase::factory()->create(['name' => 'Hochzeit Juni']);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $results = $this->getJson('/suche?q=POSTEO')->assertOk()->json('results');
 
@@ -27,8 +27,8 @@ it('finds an inquiry and its contact by email fragment', function () {
 });
 
 it('finds a gallery by its project name', function () {
-    $project = Project::factory()->create(['name' => 'Basthorst 2026']);
-    $gallery = Gallery::factory()->for($project)->create(['title' => 'Highlights']);
+    $project = ClientCase::factory()->create(['name' => 'Basthorst 2026']);
+    $gallery = Gallery::factory()->for($project, 'case')->create(['title' => 'Highlights']);
 
     expect($this->getJson('/suche?q=basth')->json('results'))->toContain([
         'kind' => 'galerie',

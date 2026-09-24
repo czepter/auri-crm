@@ -1,7 +1,7 @@
 <?php
 
 use App\Crm\Enums\ShootStatus;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Enums\Capability;
 use App\Integration\Models\ApiToken;
@@ -18,11 +18,11 @@ beforeEach(function () {
 // CaptureInquiry only ever makes the first one.
 it('adds a second shooting day to a project', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'shoot-1')
-        ->postJson("/api/projects/{$project->public_id}/shoots", [
+        ->postJson("/api/cases/{$project->public_id}/shoots", [
             'kind' => 'Feier',
             'label' => 'Feier',
             'date' => '2019-07-06',
@@ -42,11 +42,11 @@ it('adds a second shooting day to a project', function () {
 
 it('falls back to the project type for a shoot given no kind', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
-    $project = Project::factory()->create(['type' => 'wedding']);
+    $project = ClientCase::factory()->create(['type' => 'wedding']);
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'shoot-no-kind')
-        ->postJson("/api/projects/{$project->public_id}/shoots", [
+        ->postJson("/api/cases/{$project->public_id}/shoots", [
             'date' => '2019-07-06',
         ]);
 
@@ -57,11 +57,11 @@ it('falls back to the project type for a shoot given no kind', function () {
 
 it('backdates a shooting day entered after the fact', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'shoot-backdated')
-        ->postJson("/api/projects/{$project->public_id}/shoots", [
+        ->postJson("/api/cases/{$project->public_id}/shoots", [
             'kind' => 'Feier',
             'date' => '2019-07-06',
             'entered_at' => '2018-12-03',
@@ -73,11 +73,11 @@ it('backdates a shooting day entered after the fact', function () {
 
 it('refuses a shoot to a token that does not hold ManageShoots', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'shoot-forbidden')
-        ->postJson("/api/projects/{$project->public_id}/shoots", ['kind' => 'Feier'])
+        ->postJson("/api/cases/{$project->public_id}/shoots", ['kind' => 'Feier'])
         ->assertForbidden();
 });
 
@@ -142,7 +142,7 @@ it('updates a shoot, leaving fields the request omits untouched', function () {
 
 it('deletes a non-primary shoot but refuses to delete the primary one', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $primary = $project->shoots()->create(['kind' => 'Trauung', 'is_primary' => true]);
     $extra = $project->shoots()->create(['kind' => 'Feier']);
 
@@ -162,7 +162,7 @@ it('deletes a non-primary shoot but refuses to delete the primary one', function
 
 it('designates a different shoot as primary', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $primary = $project->shoots()->create(['kind' => 'Trauung', 'is_primary' => true]);
     $extra = $project->shoots()->create(['kind' => 'Feier']);
 
@@ -176,7 +176,7 @@ it('designates a different shoot as primary', function () {
 });
 
 it('refuses a shoot write to a token that may only read projects', function () {
-    $token = ApiToken::factory()->withScopes(Capability::ViewAllProjects)->create();
+    $token = ApiToken::factory()->withScopes(Capability::ViewAllCases)->create();
     $shoot = Shoot::factory()->atStatus(ShootStatus::Booked)->create();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))

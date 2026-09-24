@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Enums\Capability;
 use App\Enums\StaffRole;
 use App\Support\Surface;
@@ -317,7 +317,7 @@ it('attributes a lead captured through a staff member\'s own OAuth token to that
             'inquiry_text' => 'Interested in a portrait session.',
         ])->assertCreated();
 
-    expect(Project::sole()->lead->captured_by_id)->toBe($user->id);
+    expect(ClientCase::sole()->lead->captured_by_id)->toBe($user->id);
 });
 
 it('an ApiToken caller still carries no captured_by_id, unchanged from I-03', function () {
@@ -337,7 +337,7 @@ it('an ApiToken caller still carries no captured_by_id, unchanged from I-03', fu
             'inquiry_text' => 'x',
         ])->assertCreated();
 
-    expect(Project::sole()->lead->captured_by_id)->toBeNull();
+    expect(ClientCase::sole()->lead->captured_by_id)->toBeNull();
 });
 
 /**

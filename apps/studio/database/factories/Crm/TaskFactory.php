@@ -3,7 +3,7 @@
 namespace Database\Factories\Crm;
 
 use App\Crm\Enums\TaskAudience;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Task;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -17,7 +17,7 @@ class TaskFactory extends Factory
     public function definition(): array
     {
         return [
-            'project_id' => Project::factory(),
+            'case_id' => ClientCase::factory(),
             'title' => 'Crew-Briefing verschicken',
             'audience' => TaskAudience::Internal,
             'due_on' => now()->addDays(3)->format('Y-m-d'),

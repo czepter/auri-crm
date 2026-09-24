@@ -10,7 +10,7 @@ uses(RefreshDatabase::class);
 it('prints the quote number and Gueltig-bis date under the classic layout', function () {
     [$user, $project] = studioWithProject();
 
-    $quote = Quote::factory()->for($project)->create([
+    $quote = Quote::factory()->for($project, 'case')->create([
         'number' => '2026-014',
         'valid_until' => '2026-09-26',
         'vat_mode' => 'standard',
@@ -30,7 +30,7 @@ it('prints the quote number and Gueltig-bis date under the classic layout', func
 it('prints the payment stages split against the gross total, in the same shares PaymentStageSplitter gives the booked plan', function () {
     [$user, $project] = studioWithProject();
 
-    $quote = Quote::factory()->for($project)->create([
+    $quote = Quote::factory()->for($project, 'case')->create([
         'number' => '2026-014',
         'net' => 50000,
         'vat_mode' => 'standard',
@@ -51,7 +51,7 @@ it('prints the payment stages split against the gross total, in the same shares 
 
 it('leaves the payment stages block out entirely when a quote carries none', function () {
     [$user, $project] = studioWithProject();
-    $quote = Quote::factory()->for($project)->create(['number' => '2026-014']);
+    $quote = Quote::factory()->for($project, 'case')->create(['number' => '2026-014']);
     app(StudioSettingsResolver::class)->set('document_layout', 'classic');
 
     $html = app(RenderQuotePdf::class)->html($quote);
@@ -61,7 +61,7 @@ it('leaves the payment stages block out entirely when a quote carries none', fun
 
 it('renders the minimal layout without a doc-table', function (): void {
     [$user, $project] = studioWithProject();
-    $quote = Quote::factory()->for($project)->create(['number' => '2026-014', 'valid_until' => '2026-09-26']);
+    $quote = Quote::factory()->for($project, 'case')->create(['number' => '2026-014', 'valid_until' => '2026-09-26']);
     app(StudioSettingsResolver::class)->set('document_layout', 'minimal');
 
     $html = app(RenderQuotePdf::class)->html($quote);
@@ -73,7 +73,7 @@ it('renders the minimal layout without a doc-table', function (): void {
 
 it('renders the letter layout with a closing paragraph', function (): void {
     [$user, $project] = studioWithProject();
-    $quote = Quote::factory()->for($project)->create(['number' => '2026-014', 'valid_until' => '2026-09-26']);
+    $quote = Quote::factory()->for($project, 'case')->create(['number' => '2026-014', 'valid_until' => '2026-09-26']);
     app(StudioSettingsResolver::class)->set('document_layout', 'letter');
 
     $html = app(RenderQuotePdf::class)->html($quote);
@@ -84,7 +84,7 @@ it('renders the letter layout with a closing paragraph', function (): void {
 
 it('renders the header-band layout with the band wrapper', function (): void {
     [$user, $project] = studioWithProject();
-    $quote = Quote::factory()->for($project)->create(['number' => '2026-014']);
+    $quote = Quote::factory()->for($project, 'case')->create(['number' => '2026-014']);
     app(StudioSettingsResolver::class)->set('document_layout', 'header_band');
 
     $html = app(RenderQuotePdf::class)->html($quote);
@@ -95,7 +95,7 @@ it('renders the header-band layout with the band wrapper', function (): void {
 
 it('renders the structured layout with card wrappers', function (): void {
     [$user, $project] = studioWithProject();
-    $quote = Quote::factory()->for($project)->create(['number' => '2026-014']);
+    $quote = Quote::factory()->for($project, 'case')->create(['number' => '2026-014']);
     app(StudioSettingsResolver::class)->set('document_layout', 'structured');
 
     $html = app(RenderQuotePdf::class)->html($quote);
@@ -107,7 +107,7 @@ it('renders the structured layout with card wrappers', function (): void {
 it('folds a hidden discount into the line prices and prints no Rabatt line', function () {
     [$user, $project] = studioWithProject();
 
-    $quote = Quote::factory()->for($project)->create([
+    $quote = Quote::factory()->for($project, 'case')->create([
         'discount_type' => 'amount',
         'discount_value' => 8000,
         'discount_hidden' => true,

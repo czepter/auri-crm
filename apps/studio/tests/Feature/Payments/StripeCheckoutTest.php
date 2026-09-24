@@ -1,9 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
-use App\Crm\Models\Project;
 use App\Payments\Actions\ConfirmInstallmentCheckoutSession;
 use App\Payments\Actions\CreateInstallmentCheckoutSession;
 use App\Payments\Enums\PaymentInstallmentStatus;
@@ -61,14 +60,14 @@ function m04CheckoutSessionResponse(string $id = 'cs_test_123', string $status =
     ];
 }
 
-/** @return array{0: Project, 1: Contact, 2: PaymentPlan, 3: PaymentInstallment} */
+/** @return array{0: ClientCase, 1: Contact, 2: PaymentPlan, 3: PaymentInstallment} */
 function m04PlanWithInstallment(int $amount = 45000): array
 {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
-    $job = Job::factory()->for($project)->create();
-    $plan = PaymentPlan::factory()->for($job)->create(['total' => $amount, 'reference' => 'RE-2026-77']);
+    $project->attachContact($contact, CaseContactRole::Primary);
+    markBooked($project);
+    $plan = PaymentPlan::factory()->for($project, 'case')->create(['total' => $amount, 'reference' => 'RE-2026-77']);
     $installment = PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => $amount]);
 
     return [$project, $contact, $plan, $installment];

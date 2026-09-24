@@ -2,7 +2,7 @@
 
 namespace App\Portal\Http\Controllers;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Engagement\Actions\PostMessage;
 use App\Engagement\Actions\StartThread;
 use App\Engagement\Data\ThreadData;
@@ -39,7 +39,7 @@ class MailboxController extends Controller
         $contact = auth('portal')->user();
 
         $threads = $contact->threads()
-            ->with(['project', 'latestMessage'])
+            ->with(['case', 'latestMessage'])
             ->get()
             ->sortByDesc(fn (Thread $thread) => $thread->latestMessage?->created_at ?? $thread->created_at)
             ->values();
@@ -60,7 +60,7 @@ class MailboxController extends Controller
             'threads' => $threads->map(fn (Thread $thread) => [
                 'id' => $thread->public_id,
                 'subject' => $thread->subject,
-                'reference' => $thread->project?->name,
+                'reference' => $thread->case?->name,
                 'snippet' => $thread->latestMessage?->body,
                 'lastAt' => ($thread->latestMessage?->created_at ?? $thread->created_at)->toIso8601String(),
                 // The same question HandleInertiaRequests::portalNav() counts
@@ -70,7 +70,7 @@ class MailboxController extends Controller
                     && $thread->latestMessage->contact_id === null,
             ])->all(),
             'openThread' => $open === null ? null : ThreadData::fromModel($open),
-            'openReference' => $open?->project?->name,
+            'openReference' => $open?->case?->name,
             'bookings' => $this->bookings($contact),
             'preselected' => $request->query('betrifft'),
             // P-09 (#228): messaging is three states. `booking` means every
@@ -98,7 +98,7 @@ class MailboxController extends Controller
 
         $project = ($data['project'] ?? '') === ''
             ? null
-            : $contact->visibleProjects()->where('projects.public_id', $data['project'])->firstOrFail();
+            : $contact->visibleProjects()->where('cases.public_id', $data['project'])->firstOrFail();
 
         $thread = $start($project, $contact, $data['subject'], $data['body']);
 
@@ -124,7 +124,7 @@ class MailboxController extends Controller
         return $contact->visibleProjects()
             ->with('primaryShoot')
             ->get()
-            ->map(fn (Project $project) => [
+            ->map(fn (ClientCase $project) => [
                 'id' => $project->public_id,
                 'label' => $project->primaryShoot?->date === null
                     ? $project->name

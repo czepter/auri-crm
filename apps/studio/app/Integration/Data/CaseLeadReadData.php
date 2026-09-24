@@ -12,7 +12,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * lead index returns — carries both because a page of leads has no such frame.
  */
 #[TypeScript]
-class ProjectLeadReadData extends Data
+class CaseLeadReadData extends Data
 {
     public function __construct(
         public string $stage,
@@ -23,9 +23,6 @@ class ProjectLeadReadData extends Data
         public ?string $capturedViaOther,
         public string $capturedAt,
         public ?string $stageEnteredAt,
-        public ?string $outcome,
-        public ?string $lostReason,
-        public ?string $lostAt,
     ) {}
 
     public static function fromModel(Lead $lead): self
@@ -39,9 +36,6 @@ class ProjectLeadReadData extends Data
             capturedViaOther: $lead->captured_via_other,
             capturedAt: $lead->captured_at->toIso8601String(),
             stageEnteredAt: $lead->stage_entered_at?->toIso8601String(),
-            outcome: $lead->outcome?->value,
-            lostReason: $lead->lost_reason,
-            lostAt: $lead->lost_at?->toIso8601String(),
         );
     }
 }

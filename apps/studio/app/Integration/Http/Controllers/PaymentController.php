@@ -2,7 +2,7 @@
 
 namespace App\Integration\Http\Controllers;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Payments\Actions\CreatePaymentPlan;
@@ -27,9 +27,9 @@ use Illuminate\Validation\Rule;
  */
 class PaymentController extends Controller
 {
-    public function store(Request $request, Project $project, CreatePaymentPlan $create): JsonResponse
+    public function store(Request $request, ClientCase $case, CreatePaymentPlan $create): JsonResponse
     {
-        $job = $project->job ?? abort(404);
+        abort_unless($case->isBooked(), 404);
 
         $validated = $request->validate([
             'total' => ['required', 'integer', 'min:0'],
@@ -37,7 +37,7 @@ class PaymentController extends Controller
             'installments.*.due_on' => ['required', 'date'],
         ]);
 
-        $plan = $create($job, $validated['total'], collect($validated['installments'])->pluck('due_on')->all());
+        $plan = $create($case, $validated['total'], collect($validated['installments'])->pluck('due_on')->all());
 
         return response()->json(['data' => PaymentPlanData::fromModel($plan->fresh('installments'))], 201);
     }

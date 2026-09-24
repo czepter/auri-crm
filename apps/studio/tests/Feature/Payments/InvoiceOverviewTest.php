@@ -70,8 +70,8 @@ it('offers the open rates of each plan on the new-invoice screen', function () {
     $rates = $this->actingAs(staffMember(), 'staff')->get('/rechnungen/neu')
         ->assertOk()->viewData('page')['props']['rates'];
 
-    expect($rates[$installment->plan->job->project->public_id])->toHaveCount(1)
-        ->and($rates[$installment->plan->job->project->public_id][0]['label'])->toBe('Restbetrag');
+    expect($rates[$installment->plan->case->public_id])->toHaveCount(1)
+        ->and($rates[$installment->plan->case->public_id][0]['label'])->toBe('Restbetrag');
 });
 
 it('previews an invoice without a project as it will print, drawing no number', function () {
@@ -97,7 +97,7 @@ it('previews the chosen rates of a plan', function () {
 
     $html = $this->actingAs(staffMember(), 'staff')
         ->post('/rechnungen/vorschau', [
-            'project_id' => $rates->first()->plan->job->project->public_id,
+            'case_id' => $rates->first()->plan->case->public_id,
             'items' => $rates->map(fn ($row) => ['title' => 'Rate', 'installment_id' => $row->public_id])->all(),
         ])
         ->assertOk()

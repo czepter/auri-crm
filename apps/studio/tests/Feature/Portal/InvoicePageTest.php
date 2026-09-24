@@ -1,9 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
-use App\Crm\Models\Project;
 use App\Payments\Actions\CancelInvoice;
 use App\Payments\Actions\IssueInvoice;
 use App\Payments\Enums\CancellationKind;
@@ -30,18 +29,18 @@ beforeEach(function () {
     ]);
 });
 
-/** @return array{0: Project, 1: Contact, 2: Invoice} */
+/** @return array{0: ClientCase, 1: Contact, 2: Invoice} */
 function portalIssuedInvoice(): array
 {
     Storage::fake('local');
     Bus::fake();
 
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create(['street' => 'Gartenweg 4', 'postcode' => '22765', 'city' => 'Hamburg']);
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
-    $job = Job::factory()->for($project)->create();
-    $plan = PaymentPlan::factory()->for($job)->create(['total' => 100_000]);
+    markBooked($project);
+    $plan = PaymentPlan::factory()->for($project, 'case')->create(['total' => 100_000]);
     $installment = PaymentInstallment::factory()->for($plan, 'plan')->create([
         'amount' => 100_000,
         'due_on' => now()->addWeek()->toDateString(),
@@ -92,7 +91,7 @@ it('404s the page for a rate that was never issued', function () {
     [$project, $contact] = portalIssuedInvoice();
 
     $sibling = PaymentInstallment::factory()
-        ->for($project->job->paymentPlan, 'plan')
+        ->for($project->paymentPlan, 'plan')
         ->create(['amount' => 0, 'due_on' => now()->addMonth()->toDateString()]);
 
     $this->actingAs($contact, 'portal')

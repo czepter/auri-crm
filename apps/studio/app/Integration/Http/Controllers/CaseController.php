@@ -5,9 +5,9 @@ namespace App\Integration\Http\Controllers;
 use App\Crm\Actions\BookProject;
 use App\Crm\Actions\CompleteProject;
 use App\Crm\Enums\LeadSource;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Http\Controllers\Controller;
-use App\Integration\Data\JobReadData;
+use App\Integration\Data\CaseDetailReadData;
 use App\Models\User;
 use App\Support\AuditLogger;
 use App\Support\LiveUpdate;
@@ -28,21 +28,21 @@ use Illuminate\Validation\ValidationException;
  *
  * What the project owns alone — the lead, the shoots, the notes, the contact
  * links, the tasks and the conversation — the database removes with it (every
- * project_id foreign key is cascadeOnDelete). The contacts stay: they are
+ * case_id foreign key is cascadeOnDelete). The contacts stay: they are
  * people, reachable from other projects.
  */
-class ProjectController extends Controller
+class CaseController extends Controller
 {
     /**
      * #400: name, type/type_other and lead source, merged rather than
      * replaced — App\Crm\Http\Controllers\LeadCaseController::update()
      * nulls type_other whenever `type` arrives without it, and the issue is
      * explicit that the api surface must not repeat that: only a key
-     * actually present in the request is written, so Project::booted()
+     * actually present in the request is written, so ClientCase::booted()
      * remains the only thing that clears type_other, and only when the type
      * itself changed to something other than "Sonstige".
      */
-    public function update(Request $request, Project $project): JsonResponse
+    public function update(Request $request, ClientCase $case): JsonResponse
     {
         $validated = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:255'],
@@ -55,28 +55,28 @@ class ProjectController extends Controller
         $projectFields = Arr::only($validated, ['name', 'type', 'type_other']);
 
         if ($projectFields !== []) {
-            $project->update($projectFields);
+            $case->update($projectFields);
         }
 
         $leadFields = Arr::only($validated, ['source', 'source_other']);
 
-        if ($leadFields !== [] && $project->lead !== null) {
-            $project->lead->update($leadFields);
+        if ($leadFields !== [] && $case->lead !== null) {
+            $case->lead->update($leadFields);
         }
 
         return response()->json([
-            'id' => $project->public_id,
-            'name' => $project->name,
-            'type' => $project->type->key,
-            'typeOther' => $project->type_other,
-            'source' => $project->lead?->source?->value,
-            'sourceOther' => $project->lead?->source_other,
+            'id' => $case->public_id,
+            'name' => $case->name,
+            'type' => $case->type->key,
+            'typeOther' => $case->type_other,
+            'source' => $case->lead?->source?->value,
+            'sourceOther' => $case->lead?->source_other,
         ]);
     }
 
-    public function destroy(Project $project): Response
+    public function destroy(ClientCase $case): Response
     {
-        $blocking = $project->deletionBlockers();
+        $blocking = $case->deletionBlockers();
 
         if ($blocking->isNotEmpty()) {
             throw ValidationException::withMessages([
@@ -84,7 +84,7 @@ class ProjectController extends Controller
             ]);
         }
 
-        $project->delete();
+        $case->delete();
 
         LiveUpdate::publish();
 
@@ -97,33 +97,33 @@ class ProjectController extends Controller
      * CompleteProject actions the admin buttons call, and the same
      * already-booked no-op BookProject itself guards.
      */
-    public function book(Request $request, Project $project, BookProject $book): JsonResponse
+    public function book(Request $request, ClientCase $case, BookProject $book): JsonResponse
     {
-        $job = $book($project, $this->actor($request));
+        $book($case, $this->actor($request));
 
-        return response()->json(['data' => JobReadData::fromModel(($job ?? $project->job)->setRelation('project', $project))]);
+        return response()->json(['data' => CaseDetailReadData::fromModel($case)]);
     }
 
-    public function complete(Request $request, Project $project, CompleteProject $complete): JsonResponse
+    public function complete(Request $request, ClientCase $case, CompleteProject $complete): JsonResponse
     {
         try {
-            $complete($project, $this->actor($request));
+            $complete($case, $this->actor($request));
         } catch (DomainException $e) {
             throw ValidationException::withMessages(['project' => $e->getMessage()]);
         }
 
-        return response()->json(['data' => ['id' => $project->public_id, 'completedAt' => $project->completed_at?->toIso8601String()]]);
+        return response()->json(['data' => ['id' => $case->public_id, 'completedAt' => $case->completed_at?->toIso8601String()]]);
     }
 
-    public function reopen(Request $request, Project $project, CompleteProject $complete): JsonResponse
+    public function reopen(Request $request, ClientCase $case, CompleteProject $complete): JsonResponse
     {
         try {
-            $complete->reopen($project, $this->actor($request));
+            $complete->reopen($case, $this->actor($request));
         } catch (DomainException $e) {
             throw ValidationException::withMessages(['project' => $e->getMessage()]);
         }
 
-        return response()->json(['data' => ['id' => $project->public_id, 'completedAt' => $project->completed_at?->toIso8601String()]]);
+        return response()->json(['data' => ['id' => $case->public_id, 'completedAt' => $case->completed_at?->toIso8601String()]]);
     }
 
     /** N-04: null for an ApiToken caller, the consenting staff member otherwise — see LeadController::actor(). */
@@ -140,21 +140,21 @@ class ProjectController extends Controller
      * dropped response would land on the wrong state, which `idempotent`
      * (routes/api.php) must never allow.
      */
-    public function setPortalVisibility(Request $request, Project $project): JsonResponse
+    public function setPortalVisibility(Request $request, ClientCase $case): JsonResponse
     {
         $visible = $request->validate(['visible' => ['required', 'boolean']])['visible'];
 
-        $project->update(['portal_visible' => $visible]);
+        $case->update(['portal_visible' => $visible]);
 
         $principal = $request->user('api');
 
         AuditLogger::record(
             event: $visible ? 'project.portal_shown' : 'project.portal_hidden',
             actor: $principal instanceof User ? $principal : null,
-            subject: $project->public_id,
-            projectId: $project->id,
+            subject: $case->public_id,
+            projectId: $case->id,
         );
 
-        return response()->json(['id' => $project->public_id, 'portalVisible' => $project->portal_visible]);
+        return response()->json(['id' => $case->public_id, 'portalVisible' => $case->portal_visible]);
     }
 }

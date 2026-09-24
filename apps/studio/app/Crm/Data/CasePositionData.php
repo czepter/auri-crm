@@ -14,7 +14,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * the end without one.
  */
 #[TypeScript]
-class ProjectPositionData extends Data
+class CasePositionData extends Data
 {
     public function __construct(
         /** shoot · lead · lost · completed · none */

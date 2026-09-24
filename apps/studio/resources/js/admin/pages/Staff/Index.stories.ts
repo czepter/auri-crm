@@ -3,16 +3,16 @@ import Index from './Index.vue'
 
 const capabilities = [
   { value: 'manage_leads', label: 'Anfragen verwalten' },
-  { value: 'view_all_projects', label: 'Alle Aufträge einsehen' },
+  { value: 'view_all_cases', label: 'Alle Aufträge einsehen' },
   { value: 'book_project', label: 'Aufträge buchen' },
   { value: 'manage_staff', label: 'Team verwalten' },
 ]
 
 const roles = [
   { value: 'admin', label: 'Admin', capabilities: capabilities.map((c) => c.value) },
-  { value: 'manager', label: 'Manager', capabilities: ['manage_leads', 'view_all_projects'] },
+  { value: 'manager', label: 'Manager', capabilities: ['manage_leads', 'view_all_cases'] },
   { value: 'contributor', label: 'Mitwirkende', capabilities: ['manage_leads'] },
-  { value: 'reader', label: 'Leser', capabilities: ['view_all_projects'] },
+  { value: 'reader', label: 'Leser', capabilities: ['view_all_cases'] },
 ]
 
 const christian = {

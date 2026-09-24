@@ -1,10 +1,9 @@
 <?php
 
-use App\Crm\Enums\LeadOutcome;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -15,7 +14,7 @@ beforeEach(function () {
 });
 
 it('finds a project case-insensitively', function () {
-    Project::factory()->create(['name' => 'Basthorst 2026']);
+    ClientCase::factory()->create(['name' => 'Basthorst 2026']);
 
     $response = $this->getJson('/projekte/suche?q=basth');
 
@@ -25,15 +24,15 @@ it('finds a project case-insensitively', function () {
 
 it('suggests open leads and projects newest first below two characters', function () {
     $older = Lead::factory()->create();
-    $older->project->forceFill(['updated_at' => now()->subDay()])->save();
+    $older->case->forceFill(['updated_at' => now()->subDay()])->save();
     $newer = Lead::factory()->create();
-    Lead::factory()->create(['outcome' => LeadOutcome::Lost]);
+    Lead::factory()->lost()->create();
     $completed = Lead::factory()->create();
-    $completed->project->forceFill(['completed_at' => now()])->save();
+    $completed->case->forceFill(['completed_at' => now()])->save();
 
     $ids = collect($this->getJson('/projekte/suche?q=b')->json('projects'))->pluck('id')->all();
 
-    expect($ids)->toBe([$newer->project->public_id, $older->project->public_id]);
+    expect($ids)->toBe([$newer->case->public_id, $older->case->public_id]);
 });
 
 // Die drei Werte reisen mit dem Vorschlag, damit die Geburtskette im Formular
@@ -43,8 +42,8 @@ it('carries the primary contact gallery overrides', function () {
     $contact = Contact::factory()->create([
         'portal_overrides' => ['gallery_downloads' => false],
     ]);
-    $project = Project::factory()->create(['name' => 'Basthorst 2026']);
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project = ClientCase::factory()->create(['name' => 'Basthorst 2026']);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $suggestion = $this->getJson('/projekte/suche?q=basth')->json('projects.0');
 

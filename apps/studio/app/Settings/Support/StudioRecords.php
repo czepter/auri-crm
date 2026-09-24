@@ -2,10 +2,10 @@
 
 namespace App\Settings\Support;
 
-use App\Crm\Actions\DeriveProjectPosition;
+use App\Crm\Actions\DeriveCasePosition;
 use App\Crm\Data\ProjectRowData;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -22,7 +22,7 @@ class StudioRecords
 
     public const PROJECT_COLUMNS = ['Projekt', 'Haupttermin', 'Ort', 'Stand', 'Kontakt'];
 
-    public function __construct(private readonly DeriveProjectPosition $position) {}
+    public function __construct(private readonly DeriveCasePosition $position) {}
 
     /** Erased contacts are placeholders now; a spreadsheet of them is noise. */
     public function contactQuery(): Builder
@@ -33,7 +33,7 @@ class StudioRecords
     /** Booked only, as on /projekte: before the booking a project is an inquiry. */
     public function projectQuery(): Builder
     {
-        return Project::query()->whereHas('job')->orderBy('name');
+        return ClientCase::query()->booked()->orderBy('name');
     }
 
     /** @return Collection<int, array<int, string|null>> */
@@ -47,9 +47,9 @@ class StudioRecords
     public function projectRows(): Collection
     {
         return $this->projectQuery()
-            ->with(['primaryShoot', 'lead', 'job', 'shoots', 'contacts', 'latestQuote'])
+            ->with(['primaryShoot', 'lead', 'shoots', 'contacts', 'latestQuote'])
             ->get()
-            ->map(fn (Project $project) => ProjectRowData::fromProject($project, $this->position))
+            ->map(fn (ClientCase $project) => ProjectRowData::fromProject($project, $this->position))
             ->map(fn (ProjectRowData $row) => [$row->name, $row->date, $row->venue, $row->position, $row->contact]);
     }
 

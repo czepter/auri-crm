@@ -33,7 +33,7 @@ function layoutInvoice(): Invoice
 
     // The Leistungszeitraum is the primary shoot's date — § 14's supply date,
     // and empty without one.
-    Shoot::factory()->for($installment->plan->job->project)->primary()->create(['date' => '2026-06-14']);
+    Shoot::factory()->for($installment->plan->case, 'case')->primary()->create(['date' => '2026-06-14']);
 
     return app(IssueInvoice::class)($installment)->fresh();
 }

@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Models\User;
@@ -35,8 +35,8 @@ it('opens the client\'s own portal, marked as a preview', function () {
 
     // Two, so the preview lands on the home instead of being sent into the
     // one booking.
-    foreach ([Project::factory()->create(['portal_visible' => true]), Project::factory()->create(['portal_visible' => true])] as $project) {
-        $project->attachContact($contact, ProjectContactRole::Primary);
+    foreach ([ClientCase::factory()->create(['portal_visible' => true]), ClientCase::factory()->create(['portal_visible' => true])] as $project) {
+        $project->attachContact($contact, CaseContactRole::Primary);
     }
 
     test()->get(previewLink($contact))->assertRedirect('/');

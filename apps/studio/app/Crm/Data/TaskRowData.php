@@ -49,8 +49,8 @@ class TaskRowData extends Data
     {
         return new self(
             id: $task->public_id,
-            projectId: $task->project?->public_id,
-            projectName: $task->project?->name,
+            projectId: $task->case?->public_id,
+            projectName: $task->case?->name,
             title: $task->title,
             dueOn: $task->due_on?->format('Y-m-d'),
             // Today is not late. A task due today is the day's work, and

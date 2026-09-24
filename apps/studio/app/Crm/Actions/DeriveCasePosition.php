@@ -2,10 +2,10 @@
 
 namespace App\Crm\Actions;
 
-use App\Crm\Data\ProjectPositionData;
+use App\Crm\Data\CasePositionData;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
 use Illuminate\Support\Collection;
@@ -24,8 +24,8 @@ use Illuminate\Support\Collection;
  * so a delivered engagement session beside a booked wedding reads "Gebucht" —
  * the honest answer to what this project still owes the client.
  *
- * Before that, the funnel speaks. The Job is the seam, because the Job is the
- * commitment: production has not started until one exists.
+ * Before that, the funnel speaks. The booking is the seam, because it is the
+ * commitment: production has not started before it.
  *
  * C-06 originally wrote the fallback as "when no uncancelled shoot exists",
  * and that was unreachable. Intake creates the primary shoot at `requested`
@@ -34,28 +34,28 @@ use Illuminate\Support\Collection;
  * contradicted the board, which reads the stage directly. `requested` is not a
  * pipeline position; it means the pipeline has not begun.
  */
-class DeriveProjectPosition
+class DeriveCasePosition
 {
-    public function __invoke(Project $project): ProjectPositionData
+    public function __invoke(ClientCase $project): CasePositionData
     {
         $lead = $project->lead;
 
-        // A lost lead outranks everything. The shoots of a dead pursuit are not
+        // A closed case outranks everything. The shoots of a dead pursuit are not
         // a position the studio is working through.
-        if ($lead?->isLost()) {
-            return new ProjectPositionData(source: 'lost', value: 'lost', label: 'Verloren');
+        if ($project->isClosed()) {
+            return new CasePositionData(source: 'lost', value: 'lost', label: $project->isBooked() ? 'Storniert' : 'Verloren');
         }
 
         // The studio's word, over whatever the shoots still say.
         if ($project->isCompleted()) {
-            return new ProjectPositionData(source: 'completed', value: 'completed', label: 'Abgeschlossen');
+            return new CasePositionData(source: 'completed', value: 'completed', label: 'Abgeschlossen');
         }
 
-        if ($project->job()->exists()) {
+        if ($project->isBooked()) {
             $shoot = $this->leastAdvanced($project->shoots()->uncancelled()->get());
 
             if ($shoot !== null) {
-                return new ProjectPositionData(
+                return new CasePositionData(
                     source: 'shoot',
                     value: $shoot->status->key,
                     label: $shoot->status->name,
@@ -67,10 +67,10 @@ class DeriveProjectPosition
         }
 
         if ($lead === null) {
-            return new ProjectPositionData(source: 'none', value: null, label: '—');
+            return new CasePositionData(source: 'none', value: null, label: '—');
         }
 
-        return new ProjectPositionData(
+        return new CasePositionData(
             source: 'lead',
             value: $lead->stage->key,
             label: $lead->stage->name,

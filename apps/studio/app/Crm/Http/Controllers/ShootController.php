@@ -4,10 +4,10 @@ namespace App\Crm\Http\Controllers;
 
 use App\Crm\Actions\AdvanceShootStatus;
 use App\Crm\Actions\DesignatePrimaryShoot;
-use App\Crm\Data\ProjectSuggestionData;
+use App\Crm\Data\CaseSuggestionData;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
 use App\Enums\Capability;
@@ -30,19 +30,19 @@ class ShootController extends Controller
         $viewer = $request->user('staff');
         abort_unless($viewer->can(Capability::ManageShoots->value), 403);
 
-        $project = $request->filled('projekt')
-            ? Project::query()->visibleTo($viewer)->where('public_id', $request->query('projekt'))->first()
+        $case = $request->filled('projekt')
+            ? ClientCase::query()->visibleTo($viewer)->where('public_id', $request->query('projekt'))->first()
             : null;
 
         return Inertia::render('Shoots/Create', [
-            'project' => $project ? ProjectSuggestionData::fromModel($project) : null,
+            'project' => $case ? CaseSuggestionData::fromModel($case) : null,
             'kinds' => Shoot::kindSuggestions(),
         ]);
     }
 
-    public function store(Request $request, Project $project, AdvanceShootStatus $advance, CrmVocabulary $stages): RedirectResponse
+    public function store(Request $request, ClientCase $case, AdvanceShootStatus $advance, CrmVocabulary $stages): RedirectResponse
     {
-        $this->authorize('manageShoots', $project);
+        $this->authorize('manageShoots', $case);
 
         $validated = $request->validate([
             // Optional, weil die Anfrage-Seite einen Termin ohne Art anlegt:
@@ -60,14 +60,14 @@ class ShootController extends Controller
             'entered_at' => ['nullable', 'date', 'before_or_equal:now'],
         ]);
 
-        $shoot = $project->shoots()->create(
+        $shoot = $case->shoots()->create(
             Arr::except($validated, 'entered_at')
-            + ['kind' => $validated['kind'] ?? Shoot::kindFor($project->type)]
+            + ['kind' => $validated['kind'] ?? Shoot::kindFor($case->type)]
             + array_filter(['status_entered_at' => $validated['entered_at'] ?? null])
         );
 
         // BookProject only moves the shoots that exist at booking time.
-        if ($project->job()->exists()) {
+        if ($case->isBooked()) {
             $advance(
                 $shoot,
                 $stages->anchored(StagePipeline::Project, StageAnchor::Booked),
@@ -78,7 +78,7 @@ class ShootController extends Controller
 
         // Aus dem Wizard zum neuen Shooting am Projekt, nicht zurück ins leere Formular.
         return $request->boolean('wizard')
-            ? redirect('/auftraege/'.$project->public_id.'/shootings')
+            ? redirect('/auftraege/'.$case->public_id.'/shootings')
             : back();
     }
 
@@ -89,7 +89,7 @@ class ShootController extends Controller
      */
     public function destroy(Shoot $shoot): RedirectResponse
     {
-        $this->authorize('manageShoots', $shoot->project);
+        $this->authorize('manageShoots', $shoot->case);
 
         abort_if($shoot->is_primary, 422);
 

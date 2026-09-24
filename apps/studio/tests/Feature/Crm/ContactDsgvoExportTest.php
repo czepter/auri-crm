@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Enums\StaffRole;
@@ -17,10 +17,10 @@ beforeEach(function () {
 
 it('exports everything the studio holds about a contact as downloadable json', function () {
     $contact = Contact::factory()->create(['name' => 'Lena Meier', 'email' => 'lena@example.test']);
-    $project = Project::factory()->create(['name' => 'Meier — Hochzeit']);
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project = ClientCase::factory()->create(['name' => 'Meier — Hochzeit']);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
-    $thread = Thread::factory()->for($project)->create(['subject' => 'Frage zum Termin']);
+    $thread = Thread::factory()->for($project, 'case')->create(['subject' => 'Frage zum Termin']);
     Message::factory()->for($thread)->create(['contact_id' => $contact->id, 'author_id' => null, 'body' => 'Können wir früher starten?']);
     Message::factory()->for($thread)->fromStaff($this->owner)->create(['body' => 'Klar, 9 Uhr passt.']);
 
@@ -54,11 +54,11 @@ it('exports everything the studio holds about a contact as downloadable json', f
 it("never leaks another contact's own words from a shared project", function () {
     $subject = Contact::factory()->create(['name' => 'Lena Meier']);
     $partner = Contact::factory()->create(['name' => 'Tom Kowalski']);
-    $project = Project::factory()->create();
-    $project->attachContact($subject, ProjectContactRole::Primary);
-    $project->attachContact($partner, ProjectContactRole::Partner);
+    $project = ClientCase::factory()->create();
+    $project->attachContact($subject, CaseContactRole::Primary);
+    $project->attachContact($partner, CaseContactRole::Partner);
 
-    $thread = Thread::factory()->for($project)->create();
+    $thread = Thread::factory()->for($project, 'case')->create();
     Message::factory()->for($thread)->create(['contact_id' => $subject->id, 'author_id' => null, 'body' => 'Meine Nachricht']);
     Message::factory()->for($thread)->create(['contact_id' => $partner->id, 'author_id' => null, 'body' => 'Toms Geheimnis']);
 

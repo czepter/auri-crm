@@ -41,7 +41,7 @@ class ShotListItemController extends Controller
             actor: auth('staff')->user(),
             context: ['label' => $item->label],
             subject: $item->public_id,
-            projectId: $item->shoot->project_id,
+            projectId: $item->shoot->case_id,
         );
 
         return back();

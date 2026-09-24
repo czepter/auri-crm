@@ -2,7 +2,7 @@
 
 namespace App\Portal\Http\Controllers;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Http\Controllers\Controller;
 use App\Payments\Actions\ConfirmInstallmentCheckoutSession;
@@ -44,18 +44,18 @@ class PaymentController extends Controller
 {
     public function __invoke(
         Request $request,
-        string $project,
+        string $case,
         StudioSettingsResolver $settings,
         ConfirmInstallmentCheckoutSession $confirm,
     ): Response {
         $contact = auth('portal')->user();
 
         $found = $contact->visibleProjects()
-            ->where('projects.public_id', $project)
-            ->with('job.paymentPlan.installments.invoice.creditNotes')
+            ->where('cases.public_id', $case)
+            ->with('paymentPlan.installments.invoice.creditNotes')
             ->firstOrFail();
 
-        $plan = $found->job?->paymentPlan;
+        $plan = $found->paymentPlan;
 
         $sessionId = $request->query('session_id');
         if ($plan !== null && is_string($sessionId) && $settings->stripeEnabled()) {
@@ -92,13 +92,13 @@ class PaymentController extends Controller
      * the file cannot disagree about a figure.
      */
     public function show(
-        string $project,
+        string $case,
         string $invoice,
         StudioSettingsResolver $settings,
         DocumentMergeDataBuilder $mergeData,
     ): Response {
         $contact = auth('portal')->user();
-        [$found, $row] = $this->find($project, $invoice);
+        [$found, $row] = $this->find($case, $invoice);
 
         // #415: the first look, and only the first — the column answers
         // whether the client has seen the invoice, not how often.
@@ -138,9 +138,9 @@ class PaymentController extends Controller
      * project must 404 here exactly as the screen itself does, rather than
      * 403 and confirm the row exists.
      */
-    public function invoice(string $project, string $invoice): StreamedResponse
+    public function invoice(string $case, string $invoice): StreamedResponse
     {
-        [, $row] = $this->find($project, $invoice);
+        [, $row] = $this->find($case, $invoice);
 
         abort_if($row->pdf_path === null, 404);
 
@@ -148,9 +148,9 @@ class PaymentController extends Controller
     }
 
     /** #409, scoped exactly as invoice() is — through the project, never by id alone. */
-    public function creditNote(string $project, string $invoice, string $creditNote): StreamedResponse
+    public function creditNote(string $case, string $invoice, string $creditNote): StreamedResponse
     {
-        [, $row] = $this->find($project, $invoice);
+        [, $row] = $this->find($case, $invoice);
         $note = $row->creditNotes->firstWhere('public_id', $creditNote);
 
         abort_if($note === null || $note->pdf_path === null, 404);
@@ -158,17 +158,17 @@ class PaymentController extends Controller
         return Storage::disk('local')->response($note->pdf_path, "gutschrift-{$note->number}.pdf");
     }
 
-    /** @return array{0: Project, 1: Invoice} */
-    private function find(string $project, string $invoice): array
+    /** @return array{0: ClientCase, 1: Invoice} */
+    private function find(string $case, string $invoice): array
     {
         $found = auth('portal')->user()->visibleProjects()
-            ->where('projects.public_id', $project)
+            ->where('cases.public_id', $case)
             ->firstOrFail();
 
         $row = Invoice::query()
-            ->where('project_id', $found->id)
+            ->where('case_id', $found->id)
             ->where('public_id', $invoice)
-            ->with(['installments', 'creditNotes', 'contact', 'project', 'items'])
+            ->with(['installments', 'creditNotes', 'contact', 'case', 'items'])
             ->firstOrFail();
 
         return [$found, $row];

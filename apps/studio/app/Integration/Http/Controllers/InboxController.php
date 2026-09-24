@@ -2,8 +2,8 @@
 
 namespace App\Integration\Http\Controllers;
 
-use App\Crm\Models\Project;
-use App\Engagement\Actions\AttachThreadToProject;
+use App\Crm\Models\ClientCase;
+use App\Engagement\Actions\AttachThreadToCase;
 use App\Engagement\Actions\PostMessage;
 use App\Engagement\Data\MessageData;
 use App\Engagement\Enums\InboundMessageState;
@@ -18,7 +18,7 @@ use Illuminate\Validation\ValidationException;
 use LogicException;
 
 /**
- * The api surface's half of E-12/P-04 — the same PostMessage, AttachThreadToProject
+ * The api surface's half of E-12/P-04 — the same PostMessage, AttachThreadToCase
  * and workState() the admin Posteingang (App\Engagement\Http\Controllers\InboxController)
  * uses, reused rather than duplicated.
  */
@@ -27,7 +27,7 @@ class InboxController extends Controller
     public function index(): JsonResponse
     {
         $threads = Thread::query()
-            ->with(['project', 'latestMessage', 'participants.contact'])
+            ->with(['case', 'latestMessage', 'participants.contact'])
             ->withExists(['messages as from_mail' => fn ($query) => $query->whereNotNull('contact_id')])
             ->latest()
             ->limit(100)
@@ -93,11 +93,11 @@ class InboxController extends Controller
         return response()->json(MessageData::fromModel($message->load('contact')), 201);
     }
 
-    public function file(Request $request, Thread $thread, AttachThreadToProject $attach): JsonResponse
+    public function file(Request $request, Thread $thread, AttachThreadToCase $attach): JsonResponse
     {
-        $validated = $request->validate(['project' => ['required', 'string']]);
+        $validated = $request->validate(['case' => ['required', 'string']]);
 
-        $project = Project::query()->where('public_id', $validated['project'])->firstOrFail();
+        $project = ClientCase::query()->where('public_id', $validated['case'])->firstOrFail();
 
         try {
             $attach($thread, $project);
@@ -115,13 +115,13 @@ class InboxController extends Controller
 
         return [
             'id' => $thread->public_id,
-            'projectId' => $thread->project?->public_id,
-            'projectName' => $thread->project?->name,
+            'projectId' => $thread->case?->public_id,
+            'projectName' => $thread->case?->name,
             'subject' => $thread->subject,
             'who' => $thread->participants
                 ->map(fn ($participant) => $participant->contact?->name)
                 ->filter()
-                ->join(', ') ?: ($thread->project?->name ?? ''),
+                ->join(', ') ?: ($thread->case?->name ?? ''),
             'snippet' => $latest?->body,
             'state' => $thread->workState(),
             'waitingDays' => $latest === null ? null : (int) $latest->created_at->diffInDays(now()),

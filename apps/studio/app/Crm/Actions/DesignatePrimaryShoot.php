@@ -29,7 +29,7 @@ class DesignatePrimaryShoot
         }
 
         return DB::transaction(function () use ($shoot, $actor) {
-            $incumbent = $shoot->project->shoots()->where('is_primary', true)->first();
+            $incumbent = $shoot->case->shoots()->where('is_primary', true)->first();
 
             // Clear first, always. The reverse order is the bug this action
             // exists to make unrepresentable.
@@ -42,7 +42,7 @@ class DesignatePrimaryShoot
                 actor: $actor ?? auth('staff')->user(),
                 context: ['from' => $incumbent?->public_id],
                 subject: $shoot->public_id,
-                projectId: $shoot->project_id,
+                projectId: $shoot->case_id,
             );
 
             return $shoot;

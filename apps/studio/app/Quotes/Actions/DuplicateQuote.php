@@ -28,7 +28,7 @@ class DuplicateQuote
         return DB::transaction(function () use ($source) {
             $allocation = ($this->allocate)(documentType: DocumentType::Quote);
 
-            $quote = $source->project->quotes()->create([
+            $quote = $source->case->quotes()->create([
                 'pricing_mode' => $source->pricing_mode,
                 'number' => $allocation['number'],
                 'valid_until' => now()->addDays($this->settings->quoteValidityDays())->toDateString(),

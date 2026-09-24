@@ -30,7 +30,7 @@ class FormInstance extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['project_id', 'name', 'source_template_name'];
+    protected $fillable = ['case_id', 'name', 'source_template_name'];
 
     protected function casts(): array
     {
@@ -52,9 +52,9 @@ class FormInstance extends Model
         $query->whereNotNull('shared_at');
     }
 
-    public function project(): BelongsTo
+    public function case(): BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(ClientCase::class);
     }
 
     public function fields(): HasMany

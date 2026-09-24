@@ -37,7 +37,7 @@ class RemindStalledLeads
             ->open()
             ->unbooked()
             ->whereIn('stage', Stage::query()->pipeline(StagePipeline::Lead)->active()->pluck('key'))
-            ->with('project')
+            ->with('case')
             ->get()
             ->filter(fn (Lead $lead) => FibonacciReminderSchedule::isDue(
                 $lead->stage_entered_at,
@@ -76,7 +76,7 @@ class RemindStalledLeads
         $recipients = [];
 
         foreach ($due as $lead) {
-            foreach ($this->audience->forProject($lead->project) as $user) {
+            foreach ($this->audience->forCase($lead->case) as $user) {
                 $recipients[$user->id] ??= [$user, collect()];
                 $recipients[$user->id][1]->push($lead);
             }

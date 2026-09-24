@@ -4,8 +4,8 @@ use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\ProjectType;
 use App\Crm\Models\Stage;
 use App\Enums\StaffRole;
@@ -149,7 +149,7 @@ it('sets the shoot duration of a type and refuses a value outside a day', functi
 
 it('refuses to delete a type that projects still carry', function () {
     $type = ProjectType::query()->where('key', 'wedding')->sole();
-    Project::factory()->create(['type' => $type->key]);
+    ClientCase::factory()->create(['type' => $type->key]);
 
     $this->delete('/projekttypen/'.$type->public_id)->assertSessionHasErrors('type');
 

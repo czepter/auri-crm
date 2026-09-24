@@ -2,8 +2,8 @@
 
 namespace App\Crm\Http\Controllers;
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
@@ -39,9 +39,8 @@ class PaletteSearchController extends Controller
                 'href' => "/kontakte/{$contact->public_id}",
             ]);
 
-        $projects = Project::query()
+        $projects = ClientCase::query()
             ->visibleTo(auth('staff')->user())
-            ->withExists('job')
             ->where(fn ($query) => $query
                 ->where('name', 'ilike', $like)
                 ->orWhereHas('contacts', fn ($contact) => $contact->where(fn ($inner) => $inner
@@ -50,24 +49,24 @@ class PaletteSearchController extends Controller
             ->orderBy('name')
             ->limit(5)
             ->get()
-            ->map(fn (Project $project) => [
-                'kind' => $project->job_exists ? 'projekt' : 'anfrage',
+            ->map(fn (ClientCase $project) => [
+                'kind' => $project->isBooked() ? 'projekt' : 'anfrage',
                 'title' => $project->name,
                 'href' => "/auftraege/{$project->public_id}",
             ]);
 
         $galleries = Gallery::query()
-            ->with('project')
-            ->whereHas('project', fn ($project) => $project->visibleTo(auth('staff')->user()))
+            ->with('case')
+            ->whereHas('case', fn ($project) => $project->visibleTo(auth('staff')->user()))
             ->where(fn ($query) => $query
                 ->where('title', 'ilike', $like)
-                ->orWhereHas('project', fn ($project) => $project->where('name', 'ilike', $like)))
+                ->orWhereHas('case', fn ($project) => $project->where('name', 'ilike', $like)))
             ->orderBy('title')
             ->limit(5)
             ->get()
             ->map(fn (Gallery $gallery) => [
                 'kind' => 'galerie',
-                'title' => $gallery->title ?? $gallery->project?->name ?? '',
+                'title' => $gallery->title ?? $gallery->case?->name ?? '',
                 'href' => "/galerien/{$gallery->public_id}",
             ]);
 

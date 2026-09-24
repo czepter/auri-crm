@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\Contact;
 use App\Quotes\Models\Quote;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -9,7 +9,7 @@ uses(RefreshDatabase::class);
 
 it('rendert die Vorschau als HTML', function () {
     [$user, $project] = studioWithProject();
-    $quote = Quote::factory()->for($project)->create(['time_title' => 'Hochzeitsreportage']);
+    $quote = Quote::factory()->for($project, 'case')->create(['time_title' => 'Hochzeitsreportage']);
 
     $this->actingAs($user, 'staff')
         ->post("/angebote/{$quote->public_id}/vorschau", ['intro' => 'Liebe Lena,'])
@@ -20,14 +20,14 @@ it('rendert die Vorschau als HTML', function () {
 
 it('haelt Fremde von der Vorschau fern', function () {
     [, $project] = studioWithProject();
-    $quote = Quote::factory()->for($project)->create();
+    $quote = Quote::factory()->for($project, 'case')->create();
 
     $this->post("/angebote/{$quote->public_id}/vorschau")->assertRedirect('/login');
 });
 
 it('speichert beim Vorschau-Rendern nichts', function () {
     [$user, $project] = studioWithProject();
-    $quote = Quote::factory()->for($project)->create(['intro' => 'Original']);
+    $quote = Quote::factory()->for($project, 'case')->create(['intro' => 'Original']);
     $updatedAt = $quote->updated_at;
 
     $this->actingAs($user, 'staff')
@@ -48,9 +48,9 @@ it('speichert beim Vorschau-Rendern nichts', function () {
 it('zeigt Empfaenger und Anschrift im Blatt', function () {
     [$user, $project] = studioWithProject();
     $contact = Contact::factory()->create(['name' => 'Lena Meier']);
-    $project->attachContact($contact, ProjectContactRole::Payer);
+    $project->attachContact($contact, CaseContactRole::Payer);
 
-    $quote = Quote::factory()->for($project)->create(['recipient_contact_id' => $contact->id]);
+    $quote = Quote::factory()->for($project, 'case')->create(['recipient_contact_id' => $contact->id]);
 
     $this->actingAs($user, 'staff')
         ->post("/angebote/{$quote->public_id}/vorschau", [

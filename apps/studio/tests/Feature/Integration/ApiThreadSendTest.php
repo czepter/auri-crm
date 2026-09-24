@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Engagement\Jobs\SendScheduledMessage;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
@@ -24,10 +24,10 @@ beforeEach(function () {
 
 function apiThreadWithClient(): array
 {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
-    $thread = Thread::factory()->for($project)->create();
+    $project->attachContact($contact, CaseContactRole::Primary);
+    $thread = Thread::factory()->for($project, 'case')->create();
     Message::factory()->for($thread)->for($contact)->create();
 
     return [$project, $thread];
@@ -39,7 +39,7 @@ it('sends a staff reply through the api surface, requiring a staff actor', funct
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($staff))
         ->withHeader('Idempotency-Key', 'send-1')
-        ->postJson("/api/projects/{$project->public_id}/messages/send", ['body' => 'Wir sehen uns Samstag.']);
+        ->postJson("/api/cases/{$project->public_id}/messages/send", ['body' => 'Wir sehen uns Samstag.']);
 
     $response->assertCreated()->assertJson(['fromStaff' => true]);
 
@@ -53,7 +53,7 @@ it('refuses a send from a token no staff member stands behind', function () {
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'send-2')
-        ->postJson("/api/projects/{$project->public_id}/messages/send", ['body' => 'x'])
+        ->postJson("/api/cases/{$project->public_id}/messages/send", ['body' => 'x'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('actor');
 
@@ -61,12 +61,12 @@ it('refuses a send from a token no staff member stands behind', function () {
 });
 
 it('refuses to reply on a project with no thread yet', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $staff = staffMember();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($staff))
         ->withHeader('Idempotency-Key', 'send-3')
-        ->postJson("/api/projects/{$project->public_id}/messages/send", ['body' => 'x'])
+        ->postJson("/api/cases/{$project->public_id}/messages/send", ['body' => 'x'])
         ->assertNotFound();
 });
 
@@ -77,7 +77,7 @@ it('schedules a future send instead of dispatching it immediately', function () 
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($staff))
         ->withHeader('Idempotency-Key', 'send-4')
-        ->postJson("/api/projects/{$project->public_id}/messages/send", [
+        ->postJson("/api/cases/{$project->public_id}/messages/send", [
             'body' => 'Erinnerung',
             'scheduled_for' => now()->addDay()->toIso8601String(),
         ])

@@ -119,7 +119,7 @@ class PublicInquiryController extends Controller
                 'datenschutz_url' => $settings->attributes()['portal_legal_datenschutz_url'] ?? null,
                 'channel' => CaptureChannel::WebForm->value,
             ],
-            subject: $project->lead->public_id,
+            subject: $project->public_id,
             projectId: $project->id,
         );
 

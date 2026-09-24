@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\Contact;
 use App\Enums\StaffRole;
 use App\Gallery\Models\Gallery;
@@ -17,7 +17,7 @@ beforeEach(function () {
     $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Admin]), 'staff');
     $this->contact = Contact::factory()->create(['name' => 'Lena Brandt', 'email' => 'lena@example.test']);
     $this->gallery = Gallery::factory()->create();
-    $this->gallery->project->attachContact($this->contact, ProjectContactRole::Primary);
+    $this->gallery->case->attachContact($this->contact, CaseContactRole::Primary);
     Asset::factory()->create([
         'gallery_id' => $this->gallery->id,
         'gallery_set_id' => GallerySet::where('gallery_id', $this->gallery->id)->first()->id,

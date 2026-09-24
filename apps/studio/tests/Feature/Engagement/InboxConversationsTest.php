@@ -1,7 +1,7 @@
 <?php
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Models\User;
@@ -16,7 +16,7 @@ beforeEach(function () {
 
 function threadWhereLastSpoke(string $who, string $subject = 'Frage'): Thread
 {
-    $thread = Thread::factory()->for(Project::factory())->create(['subject' => $subject]);
+    $thread = Thread::factory()->for(ClientCase::factory(), 'case')->create(['subject' => $subject]);
 
     Message::factory()->for($thread)->create($who === 'client'
         ? ['contact_id' => Contact::factory()->create()->id, 'author_id' => null]
@@ -76,7 +76,7 @@ it('opens the first unanswered conversation, or the one asked for', function () 
 // A conversation that names no booking still has to be answerable — the
 // question that comes before the booking is the one clients most need to ask.
 it('answers a thread from the inbox, booking or no booking', function () {
-    $thread = Thread::factory()->create(['project_id' => null, 'subject' => 'Allgemein']);
+    $thread = Thread::factory()->create(['case_id' => null, 'subject' => 'Allgemein']);
     Message::factory()->for($thread)->create([
         'contact_id' => Contact::factory()->create()->id,
         'author_id' => null,

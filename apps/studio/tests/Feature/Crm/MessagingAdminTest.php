@@ -1,11 +1,11 @@
 <?php
 
+use App\Crm\Models\ClientCase;
+use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Engagement\Actions\StartThread;
 use App\Engagement\Models\Message;
-use App\Crm\Models\Contact;
 use App\Enums\StaffRole;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,7 +13,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 it('shows staff the thread a client started, with no compose action to originate one', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $contact = Contact::factory()->create(['name' => 'Lena Meier']);
     app(StartThread::class)($project, $contact, 'Frage zum Ablauf', 'Dürfen wir nah an den Altar?');
 
@@ -30,7 +30,7 @@ it('shows staff the thread a client started, with no compose action to originate
 });
 
 it('shows an empty state when no client has started a thread yet', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $props = $this->actingAs(staffMember(), 'staff')
         ->get("/auftraege/{$project->public_id}/nachrichten")
@@ -41,7 +41,7 @@ it('shows an empty state when no client has started a thread yet', function () {
 });
 
 it('lets staff reply on an existing thread', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $contact = Contact::factory()->create();
     app(StartThread::class)($project, $contact, 'Thema', 'Erste Nachricht.');
     $user = staffMember();
@@ -56,7 +56,7 @@ it('lets staff reply on an existing thread', function () {
 });
 
 it('refuses staff a reply when no thread exists yet, rather than starting one on the client\'s behalf', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $this->actingAs(staffMember(), 'staff')
         ->post("/auftraege/{$project->public_id}/nachrichten", ['body' => 'Hallo?'])
@@ -67,8 +67,8 @@ it('refuses staff a reply when no thread exists yet, rather than starting one on
 
 it('lets a second shooter reply on the thread of a project they are crewed on', function () {
     $nina = User::factory()->withMfa()->create(['role' => StaffRole::Contributor]);
-    $project = Project::factory()->create();
-    $shoot = Shoot::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $shoot = Shoot::factory()->for($project, 'case')->create();
     CrewAssignment::factory()->for($shoot)->for($nina)->create();
     $contact = Contact::factory()->create();
     app(StartThread::class)($project, $contact, 'Thema', 'Erste Nachricht.');
@@ -82,8 +82,8 @@ it('lets a second shooter reply on the thread of a project they are crewed on', 
 
 it('refuses a second shooter the thread of a project they are not crewed on', function () {
     $nina = User::factory()->withMfa()->create(['role' => StaffRole::Contributor]);
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    Shoot::factory()->for($project, 'case')->create();
     $contact = Contact::factory()->create();
     app(StartThread::class)($project, $contact, 'Thema', 'Erste Nachricht.');
 

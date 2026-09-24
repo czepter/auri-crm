@@ -76,7 +76,7 @@ it('applies the stage template to a lead advanced over the api', function () {
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'stage-loud')
-        ->postJson("/api/leads/{$lead->public_id}/stage", ['stage' => 'contacted'])
+        ->postJson("/api/cases/{$lead->case->public_id}/lead/stage", ['stage' => 'contacted'])
         ->assertOk();
 
     expect(Task::count())->toBe(1);
@@ -90,7 +90,7 @@ it('creates no follow-up tasks for a silently advanced lead', function () {
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'stage-silent')
         ->withHeader('X-Silent-Write', '1')
-        ->postJson("/api/leads/{$lead->public_id}/stage", ['stage' => 'contacted'])
+        ->postJson("/api/cases/{$lead->case->public_id}/lead/stage", ['stage' => 'contacted'])
         ->assertOk();
 
     expect($lead->fresh()->stage->key)->toBe('contacted')

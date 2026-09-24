@@ -18,7 +18,7 @@ class InAppNotification extends Model
 
     protected $table = 'in_app_notifications';
 
-    protected $fillable = ['notifiable_type', 'notifiable_id', 'type', 'project_id', 'data', 'read_at'];
+    protected $fillable = ['notifiable_type', 'notifiable_id', 'type', 'case_id', 'data', 'read_at'];
 
     protected function casts(): array
     {

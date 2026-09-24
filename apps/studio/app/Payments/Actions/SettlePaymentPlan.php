@@ -80,7 +80,7 @@ class SettlePaymentPlan
                 actor: $actor,
                 context: ['total' => $live, 'decisions' => $recorded],
                 subject: $plan->public_id,
-                projectId: $plan->job?->project_id,
+                projectId: $plan->case_id,
             );
 
             return $plan->fresh();

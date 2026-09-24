@@ -97,7 +97,7 @@ class DetectOverdueInstallments
             ->whereNull('before_due_reminder_sent_at')
             ->whereDate('due_on', '>=', $today)
             ->whereDate('due_on', '<=', now('UTC')->addDays(self::DUE_SOON_DAYS)->toDateString())
-            ->with('plan.job.project')
+            ->with('plan.case')
             ->get();
 
         if ($soon->isEmpty()) {
@@ -122,7 +122,7 @@ class DetectOverdueInstallments
     {
         $due = PaymentInstallment::query()
             ->overdue()
-            ->with('plan.job.project')
+            ->with('plan.case')
             ->get()
             ->filter(fn (PaymentInstallment $installment) => FibonacciReminderSchedule::isDue(
                 $installment->due_on->toImmutable(),
@@ -160,7 +160,7 @@ class DetectOverdueInstallments
 
         $due = PaymentInstallment::query()
             ->overdue()
-            ->with('plan.job.project')
+            ->with('plan.case')
             ->get()
             ->filter(fn (PaymentInstallment $installment) => FibonacciReminderSchedule::isDue(
                 $installment->due_on->toImmutable(),
@@ -168,7 +168,7 @@ class DetectOverdueInstallments
             ));
 
         foreach ($due as $installment) {
-            $recipients = $this->clients->forProject($installment->plan->job->project);
+            $recipients = $this->clients->forCase($installment->plan->case);
 
             if ($recipients->isEmpty()) {
                 continue;
@@ -193,7 +193,7 @@ class DetectOverdueInstallments
         $recipients = [];
 
         foreach ($due as $installment) {
-            foreach ($this->audience->forProject($installment->plan->job->project) as $user) {
+            foreach ($this->audience->forCase($installment->plan->case) as $user) {
                 $recipients[$user->id] ??= [$user, collect()];
                 $recipients[$user->id][1]->push($installment);
             }

@@ -25,7 +25,7 @@ class Task extends Model
     use HasPublicId;
 
     protected $fillable = [
-        'project_id',
+        'case_id',
         'contact_id',
         'shoot_id',
         'title',
@@ -59,7 +59,7 @@ class Task extends Model
     {
         return $this->due_anchor === null
             ? null
-            : TaskAnchors::label($this->project, $this->due_anchor);
+            : TaskAnchors::label($this->case, $this->due_anchor);
     }
 
     public function isDone(): bool
@@ -89,9 +89,9 @@ class Task extends Model
         return $this->hasMany(self::class, 'depends_on_task_id');
     }
 
-    public function project(): BelongsTo
+    public function case(): BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(ClientCase::class);
     }
 
     public function contact(): BelongsTo
@@ -129,14 +129,14 @@ class Task extends Model
     public function scopeVisibleTo(Builder $query, User $viewer): void
     {
         $query->where(fn (Builder $query) => $query
-            ->whereNull('project_id')
-            ->orWhereIn('project_id', Project::query()->visibleTo($viewer)->select('projects.id')));
+            ->whereNull('case_id')
+            ->orWhereIn('case_id', ClientCase::query()->visibleTo($viewer)->select('cases.id')));
     }
 
     /** What a notification names the task by: its project, its contact, or nothing. */
     public function summary(): string
     {
-        $subject = $this->project?->name ?? $this->contact?->name;
+        $subject = $this->case?->name ?? $this->contact?->name;
 
         return $subject === null ? $this->title : "{$subject} — {$this->title}";
     }

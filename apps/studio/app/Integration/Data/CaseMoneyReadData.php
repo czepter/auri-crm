@@ -2,7 +2,7 @@
 
 namespace App\Integration\Data;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Payments\Data\PaymentPlanData;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -14,18 +14,18 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * record_payment or create_payment_plan.
  */
 #[TypeScript]
-class ProjectMoneyReadData extends Data
+class CaseMoneyReadData extends Data
 {
     public function __construct(
         public ?PaymentPlanData $paymentPlan,
     ) {}
 
-    public static function fromModel(Project $project): self
+    public static function fromModel(ClientCase $project): self
     {
-        $project->loadMissing('job.paymentPlan.installments');
+        $project->loadMissing('paymentPlan.installments');
 
         return new self(
-            paymentPlan: $project->job?->paymentPlan === null ? null : PaymentPlanData::fromModel($project->job->paymentPlan),
+            paymentPlan: $project->paymentPlan === null ? null : PaymentPlanData::fromModel($project->paymentPlan),
         );
     }
 }

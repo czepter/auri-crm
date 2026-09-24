@@ -10,16 +10,16 @@ use App\Crm\Events\LeadStageChanged;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
-use App\Models\User;
 use App\Crm\Support\CrmVocabulary;
 use App\Crm\Support\StageHistory;
+use App\Models\User;
 use App\Support\AuditLogger;
 use Carbon\CarbonInterface;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 
 /**
- * The only writer of Lead::$stage, Lead::$lost_at and Lead::$outcome.
+ * The only writer of Lead::$stage and of the case's close columns.
  *
  * No transitions table: the ledger is audit_logs, which P1a already made
  * append-only, and stage_entered_at holds the one derived fact the board needs.
@@ -59,7 +59,7 @@ class AdvanceLeadStage
     public function __invoke(Lead $lead, Stage $next, ?User $actor = null, ?CarbonInterface $enteredAt = null): Lead
     {
         if ($lead->isLost()) {
-            throw new DomainException("Lead {$lead->public_id} is lost and cannot advance.");
+            throw new DomainException("Lead {$lead->case->public_id} is lost and cannot advance.");
         }
 
         $from = $lead->stage;
@@ -76,7 +76,7 @@ class AdvanceLeadStage
             // board and the project list each show what the other one denies.
             // Throws when the booking has a payment plan — see UnbookProject.
             if ($backwards && $from->anchor === StageAnchor::Won) {
-                ($this->unbook)($lead->project, $actor ?? auth('staff')->user(), $enteredAt);
+                ($this->unbook)($lead->case, $actor ?? auth('staff')->user(), $enteredAt);
             }
 
             // A correction restores the moment the lead first entered the stage it
@@ -88,7 +88,7 @@ class AdvanceLeadStage
             // correction that hands back an old timestamp keeps the rungs already
             // climbed, or undoing the mis-drop would re-send every reminder.
             $entered = $enteredAt
-                ?? ($backwards ? StageHistory::enteredAt('lead.stage_changed', $lead->public_id, $next->key) : null)
+                ?? ($backwards ? StageHistory::enteredAt('lead.stage_changed', $lead->case->public_id, $next->key) : null)
                 ?? now();
 
             $lead->forceFill([
@@ -106,20 +106,20 @@ class AdvanceLeadStage
                     'entered_at' => $entered->toIso8601String(),
                     ...$backwards ? ['reverted' => true] : [],
                 ],
-                subject: $lead->public_id,
-                projectId: $lead->project_id,
+                subject: $lead->case->public_id,
+                projectId: $lead->case_id,
                 occurredAt: $enteredAt,
             );
 
             // "Gebucht" is the booking, not a label for one. Without this the
-            // stage and the Job disagree, and the two lists that read them —
-            // /anfragen by stage, /projekte by Job — each show the record the
-            // other one is missing. Idempotent: BookProject writes nothing when
-            // a Job already exists. Inside the transaction: a booking that
+            // stage and the booking disagree, and the two lists that read them —
+            // /anfragen by stage, /projekte by booking — each show the record
+            // the other one is missing. Idempotent: BookProject writes nothing
+            // on a booked project. Inside the transaction: a booking that
             // throws leaves the stage where it was instead of "Gebucht"
-            // without a Job.
+            // without a booking.
             if ($next->anchor === StageAnchor::Won) {
-                ($this->book)($lead->project, $actor ?? auth('staff')->user(), at: $entered);
+                ($this->book)($lead->case, $actor ?? auth('staff')->user(), at: $entered);
             }
         });
 
@@ -136,7 +136,7 @@ class AdvanceLeadStage
         ?CarbonInterface $lostAt = null,
     ): Lead {
         if ($lead->isLost()) {
-            throw new DomainException("Lead {$lead->public_id} is already lost.");
+            throw new DomainException("Lead {$lead->case->public_id} is already lost.");
         }
 
         // The stage is deliberately left alone. Which stage a lead died in is
@@ -144,23 +144,23 @@ class AdvanceLeadStage
         // make every lost lead look identical in hindsight.
         $lostAt ??= now();
 
-        $lead->forceFill([
-            'lost_at' => $lostAt,
-            'lost_reason' => $reason,
-            'outcome' => $outcome,
+        $lead->case->forceFill([
+            'closed_at' => $lostAt,
+            'close_outcome' => $outcome,
+            'close_reason' => $reason,
         ])->save();
 
         // A lost project shoots nothing, and a date left standing on it still
         // reads as taken in the calendar and the range query.
-        $lead->project->shoots()->uncancelled()->get()
+        $lead->case->shoots()->uncancelled()->get()
             ->each(fn (Shoot $shoot) => $this->shoots->cancel($shoot, $reason, $actor, $lostAt));
 
         AuditLogger::record(
             event: 'lead.lost',
             actor: $actor ?? auth('staff')->user(),
             context: ['stage' => $lead->stage->key, 'reason' => $reason, 'outcome' => $outcome->value],
-            subject: $lead->public_id,
-            projectId: $lead->project_id,
+            subject: $lead->case->public_id,
+            projectId: $lead->case_id,
             occurredAt: $lostAt,
         );
 
@@ -173,38 +173,38 @@ class AdvanceLeadStage
      * Closing a lead that was still alive is the one mistake markLost() cannot
      * be talked out of afterwards: isLost() bars every further move, so the
      * card is stuck for good. The stage was never overwritten, so there is
-     * nothing to restore — clearing the three columns puts the lead back where
-     * it stood.
+     * nothing to restore — clearing the case's three close columns puts the
+     * lead back where it stood.
      */
     public function reopen(Lead $lead, ?User $actor = null): Lead
     {
         if (! $lead->isLost()) {
-            throw new DomainException("Lead {$lead->public_id} is not closed.");
+            throw new DomainException("Lead {$lead->case->public_id} is not closed.");
         }
 
-        $reason = $lead->lost_reason;
+        $reason = $lead->case->close_reason;
 
         // ponytail: the close's own absagen are told apart by moment and
         // reason, so a shoot cancelled separately stays cancelled. Store the
         // cause on the shoot if the two ever coincide.
-        $lead->project->shoots()
-            ->where('cancelled_at', $lead->lost_at)
+        $lead->case->shoots()
+            ->where('cancelled_at', $lead->case->closed_at)
             ->where('cancelled_reason', $reason)
             ->get()
             ->each(fn (Shoot $shoot) => $this->shoots->uncancel($shoot, $actor));
 
-        $lead->forceFill([
-            'lost_at' => null,
-            'lost_reason' => null,
-            'outcome' => null,
+        $lead->case->forceFill([
+            'closed_at' => null,
+            'close_outcome' => null,
+            'close_reason' => null,
         ])->save();
 
         AuditLogger::record(
             event: 'lead.reopened',
             actor: $actor ?? auth('staff')->user(),
             context: ['stage' => $lead->stage->key, 'reason' => $reason],
-            subject: $lead->public_id,
-            projectId: $lead->project_id,
+            subject: $lead->case->public_id,
+            projectId: $lead->case_id,
         );
 
         return $lead;

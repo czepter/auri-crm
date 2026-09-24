@@ -1,11 +1,10 @@
 <?php
 
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadOutcome;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Payments\Models\Invoice;
@@ -26,11 +25,11 @@ function retentionMonths(?int $months, ?RetentionPolicyData $policy = null): voi
 function inquiry(?LeadOutcome $outcome = LeadOutcome::Lost, int $idleMonths = 13): Contact
 {
     $contact = Contact::factory()->create();
-    $project = Project::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
-    $lead = Lead::factory()->for($project)->create(['inquiry_text' => 'Hochzeit im Mai']);
+    $project = ClientCase::factory()->create();
+    $project->attachContact($contact, CaseContactRole::Primary);
+    $lead = Lead::factory()->for($project, 'case')->create(['inquiry_text' => 'Hochzeit im Mai']);
 
-    $outcome === null || $lead->update(['outcome' => $outcome, 'lost_at' => now()]);
+    $outcome === null || $project->forceFill(['close_outcome' => $outcome, 'closed_at' => now()->subMonths($idleMonths)])->save();
     DB::table('leads')->where('id', $lead->id)->update(['updated_at' => now()->subMonths($idleMonths)]);
 
     return $contact;
@@ -61,7 +60,7 @@ it('anonymizes lost and declined inquiries past the deadline, once, keeping the 
         ->and(erased($declined))->toBeTrue()
         ->and(Lead::query()->count())->toBe(2)
         ->and(Lead::query()->whereNotNull('inquiry_text')->count())->toBe(0)
-        ->and(Project::query()->where('name', '[gelöscht]')->count())->toBe(2)
+        ->and(ClientCase::query()->where('name', '[gelöscht]')->count())->toBe(2)
         ->and(AuditLog::query()->where('event', 'retention.erased')->sole()->context)->toBe(['count' => 2, 'months' => 12]);
 });
 
@@ -77,9 +76,9 @@ it('keeps open and closed inquiries and those within the deadline', function () 
 it('keeps a contact with a booked project', function () {
     retentionMonths(12);
     $contact = inquiry();
-    $booked = Project::factory()->create();
-    $booked->attachContact($contact, ProjectContactRole::Primary);
-    Job::factory()->for($booked)->create();
+    $booked = ClientCase::factory()->create();
+    $booked->attachContact($contact, CaseContactRole::Primary);
+    markBooked($booked);
 
     $this->artisan('retention:erase')->assertSuccessful();
 
@@ -91,7 +90,7 @@ it('keeps a contact who has an invoice, directly or through a project', function
     $direct = inquiry();
     Invoice::create(['number' => 'RE-1', 'issued_at' => now(), 'contact_id' => $direct->id]);
     $viaProject = inquiry();
-    Invoice::create(['number' => 'RE-2', 'issued_at' => now(), 'project_id' => $viaProject->projects()->sole()->id]);
+    Invoice::create(['number' => 'RE-2', 'issued_at' => now(), 'case_id' => $viaProject->cases()->sole()->id]);
 
     $this->artisan('retention:erase')->assertSuccessful();
 
@@ -118,7 +117,7 @@ it('removes lead and project when the policy takes the order', function () {
 
     $this->artisan('retention:erase')->assertSuccessful();
 
-    expect(erased($contact))->toBeTrue()->and(Lead::query()->count())->toBe(0)->and(Project::query()->count())->toBe(0);
+    expect(erased($contact))->toBeTrue()->and(Lead::query()->count())->toBe(0)->and(ClientCase::query()->count())->toBe(0);
 });
 
 it('drops only the texts and leaves the name when that is the policy, and does not come back for the contact', function () {

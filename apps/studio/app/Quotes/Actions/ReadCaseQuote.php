@@ -3,7 +3,7 @@
 namespace App\Quotes\Actions;
 
 use App\Catalog\Models\Package;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Quotes\Data\QuoteData;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
@@ -18,7 +18,7 @@ class ReadCaseQuote
     /**
      * @return array{quote: ?QuoteData, supersededQuotes: list<array<string, mixed>>, packages: list<array<string, mixed>>}
      */
-    public function __invoke(Project $project): array
+    public function __invoke(ClientCase $project): array
     {
         // The studio works on drafts too; latestQuote() is the portal's, sent only.
         $quote = $project->quotes()->where('status', '!=', QuoteStatus::Superseded)->with(['items', 'predecessor', 'paymentStages'])->latest('id')->first();

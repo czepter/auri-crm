@@ -4,18 +4,18 @@ namespace App\Crm\Http\Controllers;
 
 use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\CheckDateAvailability;
-use App\Crm\Actions\DeriveProjectPosition;
+use App\Crm\Actions\DeriveCasePosition;
 use App\Crm\Actions\OpenLeads;
-use App\Crm\Data\ProjectHeaderData;
-use App\Crm\Data\ProjectPersonData;
+use App\Crm\Data\CaseHeaderData;
+use App\Crm\Data\CasePersonData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
 use App\Crm\Enums\CaptureChannel;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadSource;
-use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\StagePipeline;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\ProjectType;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
@@ -63,40 +63,40 @@ class LeadCaseController extends Controller
         private readonly BuildThread $thread,
     ) {}
 
-    public function show(Lead $lead, string $tab = 'overview'): Response|RedirectResponse
+    public function show(ClientCase $case, string $tab = 'overview'): Response|RedirectResponse
     {
-        $project = $lead->project;
-
-        $this->authorize('view', $project);
+        $this->authorize('view', $case);
 
         // A booked inquiry lives on as the project's overview.
-        if ($project->job()->exists()) {
-            return redirect("/auftraege/{$project->public_id}");
+        if ($case->isBooked()) {
+            return redirect("/auftraege/{$case->public_id}");
         }
 
+        $lead = $case->lead()->firstOrFail();
+
         RecordVisit::record(
-            $project->job()->exists() ? 'projekt' : 'anfrage',
-            $project->public_id,
-            $project->name,
+            $case->isBooked() ? 'projekt' : 'anfrage',
+            $case->public_id,
+            $case->name,
         );
 
-        $project->load(['contacts', 'shoots.crew.user', 'primaryShoot', 'job', 'tasks.project', 'tasks.assignee', 'notes.author']);
-        $primary = $project->primaryShoot;
-        $conversation = $project->latestThread()->with('messages.contact', 'messages.author')->first();
+        $case->load(['contacts', 'shoots.crew.user', 'primaryShoot', 'tasks.case', 'tasks.assignee', 'notes.author']);
+        $primary = $case->primaryShoot;
+        $conversation = $case->latestThread()->with('messages.contact', 'messages.author')->first();
 
         return Inertia::render('Leads/Show', [
             'tab' => $tab,
-            'header' => ProjectHeaderData::fromProject($project, app(DeriveProjectPosition::class)($project), queue: false),
+            'header' => CaseHeaderData::fromProject($case, app(DeriveCasePosition::class)($case), queue: false),
             'conversation' => $conversation === null ? null : ThreadData::fromModel($conversation),
-            ...($tab === 'quotes' ? app(ReadQuoteList::class)($project) : ['quotes' => [], 'payments' => null]),
+            ...($tab === 'quotes' ? app(ReadQuoteList::class)($case) : ['quotes' => [], 'payments' => null]),
             'queue' => $this->leads->queue($lead),
             'lead' => [
-                'id' => $lead->public_id,
-                'projectId' => $project->public_id,
-                'name' => $project->name,
-                'type' => $project->type->key,
-                'typeOther' => $project->type_other,
-                'typeLabel' => $project->typeLabel(),
+                'id' => $case->public_id,
+                'projectId' => $case->public_id,
+                'name' => $case->name,
+                'type' => $case->type->key,
+                'typeOther' => $case->type_other,
+                'typeLabel' => $case->typeLabel(),
                 'source' => $lead->source?->value,
                 'sourceOther' => $lead->source_other,
                 'sourceLabel' => $lead->sourceLabel(),
@@ -107,22 +107,22 @@ class LeadCaseController extends Controller
                     ? null
                     : $lead->capturedViaLabel(),
                 'capturedAt' => $lead->captured_at->toIso8601String(),
-                'lostReason' => $lead->lost_reason,
-                'outcomeLabel' => $lead->outcome?->label(),
+                'lostReason' => $case->close_reason,
+                'outcomeLabel' => $case->closeLabel(),
             ],
             // The contact column stands beside the quote, not small underneath
             // it: the phone number is the reason the screen is open.
-            'people' => ProjectPersonData::collect(
-                $project->contacts->map(ProjectPersonData::fromContact(...))
+            'people' => CasePersonData::collect(
+                $case->contacts->map(CasePersonData::fromContact(...))
             ),
             'shoots' => ShootData::collect(
-                $project->shoots->map(fn (Shoot $shoot) => ShootData::fromShoot($shoot))
+                $case->shoots->map(fn (Shoot $shoot) => ShootData::fromShoot($shoot))
             ),
-            ...app(ReadCaseQuote::class)($project),
+            ...app(ReadCaseQuote::class)($case),
             'tasks' => TaskRowData::collect(
-                $project->tasks->sortBy('due_on')->values()->map(TaskRowData::fromTask(...))
+                $case->tasks->sortBy('due_on')->values()->map(TaskRowData::fromTask(...))
             ),
-            'thread' => ($this->thread)($project),
+            'thread' => ($this->thread)($case),
             // C-10 (#245): the fixed value lists the edit state offers. Same
             // button rows the capture screen uses.
             'types' => app(CrmVocabulary::class)->types()
@@ -134,8 +134,8 @@ class LeadCaseController extends Controller
                 'type' => OtherSuggestions::for('type'),
                 'source' => OtherSuggestions::for('source'),
             ],
-            'week' => $this->week($project, $primary?->date?->format('Y-m-d')),
-            'conflicts' => $this->availability->forDate($primary?->date?->format('Y-m-d'), $project),
+            'week' => $this->week($case, $primary?->date?->format('Y-m-d')),
+            'conflicts' => $this->availability->forDate($primary?->date?->format('Y-m-d'), $case),
             'stages' => app(CrmVocabulary::class)->ordered(StagePipeline::Lead)
                 ->filter(fn (Stage $stage) => $stage->is_active)
                 ->map(fn (Stage $stage) => ['value' => $stage->key, 'label' => $stage->name, 'anchor' => $stage->anchor?->value])->values()->all(),
@@ -157,14 +157,13 @@ class LeadCaseController extends Controller
      * edit. Refused rather than silently dropped: a save that reports success
      * and changes nothing is worse than one that says no.
      */
-    public function update(Request $request, Lead $lead): RedirectResponse
+    public function update(Request $request, ClientCase $case): RedirectResponse
     {
-        $project = $lead->project;
-
+        $lead = $case->lead()->firstOrFail();
         // The same authority that moves a shoot: the case's own fields are
         // the inquiry's substance, and ManageShoots is the capability that
         // already governs it. No new ability for the same decision.
-        $this->authorize('manageShoots', $project);
+        $this->authorize('manageShoots', $case);
 
         // Jede Karte des Falls schickt ihre eigene Teilmenge, seit es keinen
         // Bearbeiten-Modus über den ganzen Bildschirm mehr gibt: wer die
@@ -182,7 +181,7 @@ class LeadCaseController extends Controller
             'people.*.email' => ['nullable', 'email', 'max:255'],
             'people.*.phone' => ['nullable', 'string', 'max:64', new ValidFormat('phone')],
             // Freitext: „Trauredner" ist eine Rolle, die in keiner Aufzählung
-            // steht. ProjectContactRole bleibt die Liste der Vorschläge.
+            // steht. CaseContactRole bleibt die Liste der Vorschläge.
             'people.*.role' => ['nullable', 'string', 'max:60'],
             'shoots' => ['array'],
             'shoots.*.id' => ['required', 'string', 'size:24'],
@@ -193,11 +192,11 @@ class LeadCaseController extends Controller
             'shoots.*.end_time' => ['nullable', 'date_format:H:i'],
         ]);
 
-        DB::transaction(function () use ($project, $lead, $validated) {
+        DB::transaction(function () use ($case, $lead, $validated) {
             // Ein Termin verschiebt sich, auch nachdem gebucht wurde — das ist
             // der häufigste Vorgang überhaupt und war bis hierher ein 422.
             if (array_key_exists('type', $validated)) {
-                $project->update([
+                $case->update([
                     'type' => $validated['type'],
                     'type_other' => $validated['type_other'] ?? null,
                 ]);
@@ -210,7 +209,7 @@ class LeadCaseController extends Controller
             }
 
             foreach ($validated['people'] ?? [] as $person) {
-                $contact = $project->contacts()->where('contacts.public_id', $person['id'])->first();
+                $contact = $case->contacts()->where('contacts.public_id', $person['id'])->first();
 
                 if ($contact === null) {
                     continue;
@@ -225,13 +224,13 @@ class LeadCaseController extends Controller
                 // Der Hauptkontakt behält seine Rolle: an ihr hängt der
                 // partielle Unique-Index, und wer bucht, entscheidet die
                 // Erfassung.
-                if (filled($person['role'] ?? null) && $contact->pivot->role !== ProjectContactRole::Primary->value) {
-                    $project->contacts()->updateExistingPivot($contact->id, ['role' => $person['role']]);
+                if (filled($person['role'] ?? null) && $contact->pivot->role !== CaseContactRole::Primary->value) {
+                    $case->contacts()->updateExistingPivot($contact->id, ['role' => $person['role']]);
                 }
             }
 
             foreach ($validated['shoots'] ?? [] as $row) {
-                $project->shoots()
+                $case->shoots()
                     ->where('public_id', $row['id'])
                     ->first()
                     ?->update([
@@ -247,6 +246,16 @@ class LeadCaseController extends Controller
         return back();
     }
 
+    // ponytail: resolves the lead ids /anfragen carried before #520; drop once
+    // notifications and bookmarks holding them have aged out.
+    public static function legacyRedirect(Request $request): RedirectResponse
+    {
+        $legacy = $request->route()->originalParameter('case');
+        $case = Lead::query()->where('legacy_public_id', $legacy)->firstOrFail()->case;
+
+        return redirect(str_replace($legacy, $case->public_id, $request->getRequestUri()), 301);
+    }
+
     /**
      * The queue itself. Every open inquiry, so ↑↓ can walk it without the
      * screen having to fetch the next one.
@@ -257,7 +266,7 @@ class LeadCaseController extends Controller
      *
      * @return list<array{date: string, what: string, projectId: string}>
      */
-    private function week(Project $project, ?string $date): array
+    private function week(ClientCase $case, ?string $date): array
     {
         if ($date === null) {
             return [];
@@ -266,8 +275,8 @@ class LeadCaseController extends Controller
         $from = CarbonImmutable::parse($date)->subDays(3);
 
         return Shoot::query()
-            ->with('project')
-            ->whereKeyNot($project->shoots->pluck('id')->all() ?: [0])
+            ->with('case')
+            ->whereKeyNot($case->shoots->pluck('id')->all() ?: [0])
             ->uncancelled()
             ->whereDate('date', '>=', $from->toDateString())
             ->whereDate('date', '<=', $from->addDays(6)->toDateString())
@@ -275,8 +284,8 @@ class LeadCaseController extends Controller
             ->get()
             ->map(fn (Shoot $shoot) => [
                 'date' => $shoot->date->format('Y-m-d'),
-                'what' => $shoot->project->name,
-                'projectId' => $shoot->project->public_id,
+                'what' => $shoot->case->name,
+                'projectId' => $shoot->case->public_id,
             ])
             ->all();
     }

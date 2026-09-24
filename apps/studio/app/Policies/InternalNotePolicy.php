@@ -12,15 +12,15 @@ use App\Models\User;
  */
 class InternalNotePolicy
 {
-    public function __construct(private readonly ProjectPolicy $projects) {}
+    public function __construct(private readonly ClientCasePolicy $projects) {}
 
     public function view(User $user, InternalNote $note): bool
     {
-        return $this->projects->view($user, $note->project);
+        return $this->projects->view($user, $note->case);
     }
 
     public function update(User $user, InternalNote $note): bool
     {
-        return $this->projects->manageNotes($user, $note->project);
+        return $this->projects->manageNotes($user, $note->case);
     }
 }

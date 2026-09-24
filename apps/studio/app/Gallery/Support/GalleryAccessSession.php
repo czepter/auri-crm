@@ -61,8 +61,8 @@ class GalleryAccessSession
         $contact = auth('portal')->user();
 
         return $contact !== null
-            && $gallery->project_id !== null
-            && $contact->visibleProjects()->whereKey($gallery->project_id)->exists();
+            && $gallery->case_id !== null
+            && $contact->visibleProjects()->whereKey($gallery->case_id)->exists();
     }
 
     /** The address an already-granted email claim verified, or null. */

@@ -23,7 +23,7 @@ it('builds the same merge data shape any document type resolves against', functi
         ->and($data['project']['type'])->toBe($project->type->name)
         ->and($data['contact']['name'])->toBe('Lena Meier')
         ->and($data['contact']['email'])->toBe('lena@example.test')
-        ->and($data['job']['bookedAt'])->toBe('14.06.2026')
+        ->and($data['project']['bookedAt'])->toBe('14.06.2026')
         ->and($data)->toHaveKey('studio');
 });
 
@@ -50,7 +50,7 @@ it('is the one place the array is built — nothing about it varies by document 
 it('points the gallery merge field at the viewer host, not this app', function () {
     config(['services.gallery.url' => 'http://gallery.test']);
     $project = bookedContactProject();
-    Gallery::factory()->for($project)->create(['title' => 'Hochzeit Meier', 'slug' => 'hochzeit-meier']);
+    Gallery::factory()->for($project, 'case')->create(['title' => 'Hochzeit Meier', 'slug' => 'hochzeit-meier']);
 
     $data = (new DocumentMergeDataBuilder)->fromProject($project, new StudioSettingsResolver);
 
@@ -62,9 +62,9 @@ it('points the gallery merge field at the viewer host, not this app', function (
 // the money arrived — the shoot is still weeks away.
 it('prints the Vereinnahmungsdatum on an Anzahlung paid before it was issued', function () {
     $project = bookedContactProject();
-    Shoot::factory()->for($project)->primary()->on('2026-06-20')->create();
-    $plan = PaymentPlan::factory()->for($project->job()->sole())->create(['total' => 50_000]);
-    $invoice = Invoice::create(['number' => 'RE-2026-1', 'issued_at' => '2026-03-05 09:00:00', 'project_id' => $project->id]);
+    Shoot::factory()->for($project, 'case')->primary()->on('2026-06-20')->create();
+    $plan = PaymentPlan::factory()->for($project, 'case')->create(['total' => 50_000]);
+    $invoice = Invoice::create(['number' => 'RE-2026-1', 'issued_at' => '2026-03-05 09:00:00', 'case_id' => $project->id]);
     $installment = PaymentInstallment::factory()->for($plan, 'plan')->create([
         'amount' => 50_000,
         'status' => PaymentInstallmentStatus::Paid,

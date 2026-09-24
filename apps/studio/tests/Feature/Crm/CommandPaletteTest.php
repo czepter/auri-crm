@@ -1,8 +1,7 @@
 <?php
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
-use App\Crm\Models\Project;
 use App\Models\RecentView;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,7 +20,7 @@ function recent(): array
 
 it('opens with what this user last looked at, newest first', function () {
     $contact = Contact::factory()->create(['name' => 'Familie Osterhoff']);
-    $project = Project::factory()->create(['name' => 'Meier & Kowalski']);
+    $project = ClientCase::factory()->create(['name' => 'Meier & Kowalski']);
 
     $this->get("/kontakte/{$contact->public_id}")->assertOk();
     $this->get("/auftraege/{$project->public_id}")->assertOk();
@@ -31,14 +30,14 @@ it('opens with what this user last looked at, newest first', function () {
 });
 
 // An inquiry and a project are the same record in two phases, and the palette
-// names it by the phase it is in — a Job is the seam.
+// names it by the phase it is in — the booking is the seam.
 it('names an unbooked project an Anfrage and a booked one a Projekt', function () {
-    $inquiry = Project::factory()->create();
+    $inquiry = ClientCase::factory()->create();
     $this->get("/auftraege/{$inquiry->public_id}")->assertOk();
 
     expect(recent()[0]['kind'])->toBe('anfrage');
 
-    Job::factory()->for($inquiry)->create();
+    markBooked($inquiry);
     $this->get("/auftraege/{$inquiry->public_id}")->assertOk();
 
     expect(recent())->toHaveCount(1)
@@ -49,7 +48,7 @@ it('keeps twenty, and drops the oldest rather than growing', function () {
     // Named by hand: two factory-random names can collide, and the assertion
     // below is about which row fell out, not about how many share a name.
     $projects = collect(range(1, 22))->map(
-        fn (int $number) => Project::factory()->create(['name' => "Projekt {$number}"])
+        fn (int $number) => ClientCase::factory()->create(['name' => "Projekt {$number}"])
     );
 
     foreach ($projects as $project) {
@@ -64,7 +63,7 @@ it('keeps twenty, and drops the oldest rather than growing', function () {
 // Per user, not per studio: on a shared account "per studio" fills the
 // palette with someone else's afternoon.
 it('never shows one user what another opened', function () {
-    $project = Project::factory()->create(['name' => 'Vehse & Rieck']);
+    $project = ClientCase::factory()->create(['name' => 'Vehse & Rieck']);
     $this->get("/auftraege/{$project->public_id}")->assertOk();
 
     $this->actingAs(User::factory()->withMfa()->create(), 'staff');

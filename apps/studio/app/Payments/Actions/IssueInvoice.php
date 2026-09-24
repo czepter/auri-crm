@@ -2,8 +2,8 @@
 
 namespace App\Payments\Actions;
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Models\User;
@@ -75,7 +75,7 @@ class IssueInvoice
             throw ValidationException::withMessages(['installments' => __('payments.alreadyInvoiced')]);
         }
 
-        $project = $installments->first()->plan->job->project;
+        $project = $installments->first()->plan->case;
 
         return $this->positions(
             $project->primaryContact(),
@@ -97,7 +97,7 @@ class IssueInvoice
      * @param  list<array{title: string, description?: ?string, quantity?: int, unit_price?: ?int, discount_type?: ?string, discount_value?: ?int, vat_rate?: ?int, installment?: ?PaymentInstallment}>  $positions
      * @param  array{intro?: ?string, outro?: ?string, discount_type?: ?string, discount_value?: ?int}  $attributes
      */
-    public function positions(?Contact $contact, ?Project $project, array $positions, ?string $dueOn, array $attributes = [], ?User $actor = null): Invoice
+    public function positions(?Contact $contact, ?ClientCase $project, array $positions, ?string $dueOn, array $attributes = [], ?User $actor = null): Invoice
     {
         $positions = collect($positions)->values();
         [$picked, $free] = $positions->partition(fn (array $position) => ($position['installment'] ?? null) !== null);
@@ -105,7 +105,7 @@ class IssueInvoice
         foreach ($picked as $position) {
             $row = $position['installment'];
 
-            if ($row->plan?->job?->project_id !== $project?->id) {
+            if ($row->plan?->case_id !== $project?->id) {
                 throw ValidationException::withMessages(['items' => __('payments.invoiceOnePlan')]);
             }
 
@@ -127,7 +127,7 @@ class IssueInvoice
         }
 
         return $this->issue(
-            ['contact_id' => $contact?->id, 'project_id' => $project?->id, ...$attributes],
+            ['contact_id' => $contact?->id, 'case_id' => $project?->id, ...$attributes],
             function (Invoice $invoice) use ($positions, $dueOn) {
                 $defaultRate = $this->settings->vatMode() === 'small_business' ? 0 : $this->settings->effectiveVatRate();
 
@@ -205,7 +205,7 @@ class IssueInvoice
                 actor: $actor,
                 context: ['number' => $invoice->number, 'amount' => $invoice->load('installments')->amount()],
                 subject: $invoice->public_id,
-                projectId: $invoice->project_id,
+                projectId: $invoice->case_id,
             );
 
             return $invoice;

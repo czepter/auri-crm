@@ -1,7 +1,7 @@
 <?php
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\CrewAssignment;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Enums\StaffRole;
 use App\Models\Absence;
@@ -21,8 +21,8 @@ it('still allows assigning someone during their own recorded absence, but warns 
     $nina = User::factory()->withMfa()->create(['role' => StaffRole::Contributor, 'name' => 'Nina Sturm']);
     Absence::factory()->for($nina)->spanning('2026-09-01', '2026-09-07')->create(['category' => 'holiday']);
 
-    $project = Project::factory()->create();
-    $shoot = Shoot::factory()->for($project)->on('2026-09-03')->create();
+    $project = ClientCase::factory()->create();
+    $shoot = Shoot::factory()->for($project, 'case')->on('2026-09-03')->create();
 
     $this->actingAs($owner, 'staff')
         ->post("/shootings/{$shoot->public_id}/crew", [
@@ -47,8 +47,8 @@ it('shows no crew conflict for a shoot whose crew has no absence covering its da
     $owner = staffMember(StaffRole::Admin);
     $nina = staffMember(StaffRole::Contributor);
 
-    $project = Project::factory()->create();
-    $shoot = Shoot::factory()->for($project)->on('2026-09-03')->create();
+    $project = ClientCase::factory()->create();
+    $shoot = Shoot::factory()->for($project, 'case')->on('2026-09-03')->create();
     CrewAssignment::factory()->for($shoot)->for($nina)->create();
 
     $this->actingAs($owner, 'staff');
@@ -63,8 +63,8 @@ it('does not warn about an absence belonging to somebody not crewed on the shoot
     $mia = staffMember(StaffRole::Manager);
     Absence::factory()->for($mia)->spanning('2026-09-01', '2026-09-07')->create();
 
-    $project = Project::factory()->create();
-    $shoot = Shoot::factory()->for($project)->on('2026-09-03')->create();
+    $project = ClientCase::factory()->create();
+    $shoot = Shoot::factory()->for($project, 'case')->on('2026-09-03')->create();
     // Nobody is crewed on this shoot at all.
 
     $this->actingAs($owner, 'staff');
@@ -76,7 +76,7 @@ it('does not warn about an absence belonging to somebody not crewed on the shoot
 
 it('flags a studio with a single user so the shoot hides its crew', function () {
     $owner = staffMember(StaffRole::Admin);
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $this->actingAs($owner, 'staff');
 
     expect(props("/auftraege/{$project->public_id}/shootings")['soloStudio'])->toBeTrue();

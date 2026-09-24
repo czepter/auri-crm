@@ -3,9 +3,9 @@
 namespace App\Crm\Actions;
 
 use App\Catalog\Models\ServiceSuggestion;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\FormAnswer;
-use App\Crm\Models\Project;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Gallery\Models\AssetComment;
@@ -54,14 +54,14 @@ class ExportContactDsgvoData
                 'dsgvo_erased_at' => $contact->dsgvo_erased_at?->toIso8601String(),
                 'created_at' => $contact->created_at?->toIso8601String(),
             ],
-            'projects' => $contact->projects()
+            'projects' => $contact->cases()
                 ->withPivot('role')
                 ->get()
-                ->map(fn (Project $project) => $this->project($project, $contact))
+                ->map(fn (ClientCase $project) => $this->case($project, $contact))
                 ->values()
                 ->all(),
             'threads' => $contact->threads()
-                ->whereNull('project_id')
+                ->whereNull('case_id')
                 ->get()
                 ->map(fn (Thread $thread) => $this->thread($thread, $contact))
                 ->all(),
@@ -175,7 +175,7 @@ class ExportContactDsgvoData
         ];
     }
 
-    private function project(Project $project, Contact $contact): array
+    private function case(ClientCase $project, Contact $contact): array
     {
         return [
             'id' => $project->public_id,
@@ -188,19 +188,17 @@ class ExportContactDsgvoData
                 'inquiry_text' => $project->lead->inquiry_text,
                 'stage_entered_at' => $project->lead->stage_entered_at?->toIso8601String(),
             ] : null,
-            'job' => $project->job ? [
-                'booked_at' => $project->job->booked_at?->toIso8601String(),
-                'booked_via' => $project->job->booked_via?->value,
-                'payment_plan' => $project->job->paymentPlan ? [
-                    'total' => $project->job->paymentPlan->total,
-                    'reference' => $project->job->paymentPlan->reference,
-                    'installments' => $project->job->paymentPlan->installments->map(fn ($i) => [
-                        'amount' => $i->amount,
-                        'due_on' => $i->due_on?->toIso8601String(),
-                        'status' => $i->status?->value,
-                        'paid_on' => $i->paid_on?->toIso8601String(),
-                    ])->all(),
-                ] : null,
+            'booked_at' => $project->booked_at?->toIso8601String(),
+            'booked_via' => $project->booked_via?->value,
+            'payment_plan' => $project->paymentPlan ? [
+                'total' => $project->paymentPlan->total,
+                'reference' => $project->paymentPlan->reference,
+                'installments' => $project->paymentPlan->installments->map(fn ($i) => [
+                    'amount' => $i->amount,
+                    'due_on' => $i->due_on?->toIso8601String(),
+                    'status' => $i->status?->value,
+                    'paid_on' => $i->paid_on?->toIso8601String(),
+                ])->all(),
             ] : null,
             'shoots' => $project->shoots->map(fn ($shoot) => [
                 'id' => $shoot->public_id,

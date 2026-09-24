@@ -5,7 +5,9 @@ namespace App\Crm\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Contracts\Models\Contract;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\BookedVia;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Support\CrmVocabulary;
@@ -13,18 +15,19 @@ use App\Engagement\Models\Thread;
 use App\Enums\Capability;
 use App\Gallery\Models\Gallery;
 use App\Models\User;
+use App\Payments\Models\PaymentPlan;
 use App\Quotes\Models\Quote;
 use BackedEnum;
-use Database\Factories\Crm\ProjectFactory;
+use Database\Factories\Crm\ClientCaseFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Visus\Cuid2\Cuid2;
@@ -38,17 +41,19 @@ use Visus\Cuid2\Cuid2;
  * one produces a status that is wrong for most of a wedding's eighteen-month
  * life (vision §3.1). Board position is derived.
  */
-class Project extends Model
+class ClientCase extends Model
 {
     use BelongsToTenant;
     use HasFactory;
     use HasPublicId;
 
+    protected $table = 'cases';
+
     protected $fillable = ['name', 'type', 'type_other', 'portal_visible'];
 
     /**
      * Mirrors the column default in memory. Without it a freshly created
-     * Project reports portal_visible as null until it is reloaded, and a
+     * ClientCase reports portal_visible as null until it is reloaded, and a
      * visibility flag that reads null where it means false is the kind of
      * thing a guard clause gets wrong exactly once.
      */
@@ -63,12 +68,53 @@ class Project extends Model
             'field_values' => 'array',
             // Written only through CompleteProject.
             'completed_at' => 'datetime',
+            // Written only through BookProject and UnbookProject.
+            'booked_at' => 'immutable_datetime',
+            'booked_via' => BookedVia::class,
+            // Written only through AdvanceLeadStage::markLost() and reopen().
+            'closed_at' => 'immutable_datetime',
+            'close_outcome' => LeadOutcome::class,
         ];
+    }
+
+    public function isClosed(): bool
+    {
+        return $this->closed_at !== null;
+    }
+
+    /** A booked case the client lost is a cancelled booking, not a lost inquiry. */
+    public function closeLabel(): ?string
+    {
+        return $this->isBooked() && $this->close_outcome === LeadOutcome::Lost
+            ? 'Storniert'
+            : $this->close_outcome?->label();
     }
 
     public function isCompleted(): bool
     {
         return $this->completed_at !== null;
+    }
+
+    /** A booked project is an Auftrag; everything else is still an Anfrage. */
+    public function isBooked(): bool
+    {
+        return $this->booked_at !== null;
+    }
+
+    public function scopeBooked(Builder $query): void
+    {
+        $query->whereNotNull('cases.booked_at');
+    }
+
+    public function bookedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'booked_by_id');
+    }
+
+    /** Absent until CreatePaymentPlan writes it (M-03) — one plan per project, at most. */
+    public function paymentPlan(): HasOne
+    {
+        return $this->hasOne(PaymentPlan::class);
     }
 
     /**
@@ -114,7 +160,7 @@ class Project extends Model
 
     public function contacts(): BelongsToMany
     {
-        return $this->belongsToMany(Contact::class, 'project_contacts')
+        return $this->belongsToMany(Contact::class, 'case_contacts')
             ->withPivot('role')
             ->withTimestamps();
     }
@@ -127,13 +173,13 @@ class Project extends Model
     /**
      * Die Rolle ist eine Zeichenkette in der Datenbank und darf auch eine
      * sein: „Trauredner" ist eine Rolle, die niemand in eine Aufzählung
-     * schreiben wird. ProjectContactRole bleibt die Liste der Vorschläge und
+     * schreiben wird. CaseContactRole bleibt die Liste der Vorschläge und
      * der einen Rolle, an der ein Index hängt.
      */
-    public function attachContact(Contact $contact, ProjectContactRole|string $role): void
+    public function attachContact(Contact $contact, CaseContactRole|string $role): void
     {
         $this->contacts()->attach($contact, [
-            'role' => $role instanceof ProjectContactRole ? $role->value : $role,
+            'role' => $role instanceof CaseContactRole ? $role->value : $role,
             'tenant_id' => config('tenancy.tenant_id'),
             'public_id' => (string) new Cuid2,
         ]);
@@ -142,12 +188,6 @@ class Project extends Model
     public function lead(): HasOne
     {
         return $this->hasOne(Lead::class);
-    }
-
-    /** Absent until the project is booked — its existence is the commitment. */
-    public function job(): HasOne
-    {
-        return $this->hasOne(Job::class);
     }
 
     public function notes(): HasMany
@@ -194,7 +234,7 @@ class Project extends Model
 
     /**
      * Each of these is a record of something agreed with a client, and a
-     * payment plan hangs off the job. Past that line the project is no longer
+     * payment plan hangs off the booking. Past that line the project is no longer
      * something to take back; it gets closed instead.
      *
      * @return Collection<int, string>
@@ -202,11 +242,11 @@ class Project extends Model
     public function deletionBlockers(): Collection
     {
         return collect([
-            'job' => $this->job(),
-            'quote' => $this->quotes(),
-            'contract' => $this->contracts(),
-            'gallery' => $this->galleries(),
-        ])->filter(fn (Relation $relation) => $relation->exists())->keys();
+            'booking' => $this->isBooked(),
+            'quote' => $this->quotes()->exists(),
+            'contract' => $this->contracts()->exists(),
+            'gallery' => $this->galleries()->exists(),
+        ])->filter()->keys();
     }
 
     /** Every questionnaire personalised for this project (E-02), newest first. */
@@ -250,14 +290,14 @@ class Project extends Model
      *
      * Until something is reserved, the answer is theirs — they wrote those
      * lines into an inquiry form and a typo in them is their typo to fix.
-     * The moment a Job exists, or any shoot has moved past `requested`, the
+     * The moment it is booked, or any shoot has moved past `requested`, the
      * same two fields are contract content and the way to change them is to
      * ask (P-07). Contact details are not covered by this and never are:
      * see ContactController on the portal surface.
      */
     public function clientMayEditDetails(): bool
     {
-        return $this->job === null
+        return ! $this->isBooked()
             && ! $this->shoots()->where('status', '!=', app(CrmVocabulary::class)->anchored(StagePipeline::Project, StageAnchor::Entry)?->key)->exists();
     }
 
@@ -286,14 +326,14 @@ class Project extends Model
     /** Projects this person may see, for the reads that list many at once. */
     public function scopeVisibleTo(Builder $query, User $user): void
     {
-        if ($user->can(Capability::ViewAllProjects->value)) {
+        if ($user->can(Capability::ViewAllCases->value)) {
             return;
         }
 
         $query->whereExists(
             CrewAssignment::query()
                 ->join('shoots', 'shoots.id', '=', 'crew_assignments.shoot_id')
-                ->whereColumn('shoots.project_id', 'projects.id')
+                ->whereColumn('shoots.case_id', 'cases.id')
                 ->where('crew_assignments.user_id', $user->id)
                 ->select(DB::raw(1))
         );
@@ -307,7 +347,7 @@ class Project extends Model
     public function contactNames(): string
     {
         return $this->contacts
-            ->sortBy(fn (Contact $contact) => $contact->pivot->role === ProjectContactRole::Primary->value ? 0 : 1)
+            ->sortBy(fn (Contact $contact) => $contact->pivot->role === CaseContactRole::Primary->value ? 0 : 1)
             ->pluck('name')
             ->join(' & ') ?: $this->name;
     }
@@ -315,12 +355,18 @@ class Project extends Model
     public function primaryContact(): ?Contact
     {
         return $this->contacts()
-            ->wherePivot('role', ProjectContactRole::Primary->value)
+            ->wherePivot('role', CaseContactRole::Primary->value)
             ->first();
+    }
+
+    // `case` alone: the default would derive client_case_id from the class name.
+    public function getForeignKey(): string
+    {
+        return 'case_id';
     }
 
     protected static function newFactory(): Factory
     {
-        return ProjectFactory::new();
+        return ClientCaseFactory::new();
     }
 }

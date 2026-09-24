@@ -3,8 +3,8 @@
 use App\Crm\Actions\AdvanceLeadStage;
 use App\Crm\Data\TaskRowData;
 use App\Crm\Enums\LeadStage;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\TaskAnchors;
 use App\Enums\StaffRole;
@@ -13,8 +13,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 it('resolves a stage anchor to the day the lead entered it, plus the offset', function () {
-    $project = Project::factory()->create();
-    Lead::factory()->for($project)->create([
+    $project = ClientCase::factory()->create();
+    Lead::factory()->for($project, 'case')->create([
         'stage' => LeadStage::QuoteAccepted,
         'stage_entered_at' => '2026-08-03 09:00:00',
     ]);
@@ -24,8 +24,8 @@ it('resolves a stage anchor to the day the lead entered it, plus the offset', fu
 });
 
 it('reads the day a stage was entered from the ledger, not from where the lead stands now', function () {
-    $project = Project::factory()->create();
-    $lead = Lead::factory()->for($project)->create(['stage' => LeadStage::QuoteSent]);
+    $project = ClientCase::factory()->create();
+    $lead = Lead::factory()->for($project, 'case')->create(['stage' => LeadStage::QuoteSent]);
 
     $this->travelTo('2026-08-03 09:00:00');
     app(AdvanceLeadStage::class)($lead, stage(LeadStage::QuoteAccepted), staffMember(StaffRole::Admin));
@@ -38,8 +38,8 @@ it('reads the day a stage was entered from the ledger, not from where the lead s
 });
 
 it('leaves a task on an anchor the project has not reached without a due date', function () {
-    $project = Project::factory()->create();
-    Lead::factory()->for($project)->create(['stage' => LeadStage::QuoteSent]);
+    $project = ClientCase::factory()->create();
+    Lead::factory()->for($project, 'case')->create(['stage' => LeadStage::QuoteSent]);
 
     $task = $project->tasks()->create([
         'title' => 'Vorschau freigeben',
@@ -48,7 +48,7 @@ it('leaves a task on an anchor the project has not reached without a due date', 
         'due_offset_days' => 2,
     ]);
 
-    $row = TaskRowData::fromTask($task->fresh()->load('project'));
+    $row = TaskRowData::fromTask($task->fresh()->load('case'));
 
     expect(app(TaskAnchors::class)->dueOn($project, 'stage:booked', 2))->toBeNull()
         ->and($row->dueOn)->toBeNull()
@@ -58,18 +58,18 @@ it('leaves a task on an anchor the project has not reached without a due date', 
 });
 
 it('offers the stages ahead of the lead and drops the ones it skipped', function () {
-    $project = Project::factory()->create();
-    Lead::factory()->for($project)->create(['stage' => LeadStage::QuoteSent]);
+    $project = ClientCase::factory()->create();
+    Lead::factory()->for($project, 'case')->create(['stage' => LeadStage::QuoteSent]);
 
-    $values = array_column(app(TaskAnchors::class)->forProject($project), 'value');
+    $values = array_column(app(TaskAnchors::class)->forCase($project), 'value');
 
     expect($values)->toContain('stage:quote_sent', 'stage:booked')
         ->not->toContain('stage:contacted');
 });
 
 it('moves an anchored task when the shoot it hangs off moves', function () {
-    $project = Project::factory()->create();
-    $shoot = Shoot::factory()->for($project)->on('2026-08-28')->create();
+    $project = ClientCase::factory()->create();
+    $shoot = Shoot::factory()->for($project, 'case')->on('2026-08-28')->create();
 
     $task = $project->tasks()->create([
         'title' => 'Crew-Briefing verschicken',
@@ -85,8 +85,8 @@ it('moves an anchored task when the shoot it hangs off moves', function () {
 });
 
 it('stores a task on an anchor and writes the day it falls on', function () {
-    $project = Project::factory()->create();
-    $shoot = Shoot::factory()->for($project)->on('2026-08-28')->create();
+    $project = ClientCase::factory()->create();
+    $shoot = Shoot::factory()->for($project, 'case')->on('2026-08-28')->create();
 
     $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/auftraege/{$project->public_id}/aufgaben", [
@@ -103,8 +103,8 @@ it('stores a task on an anchor and writes the day it falls on', function () {
 });
 
 it('refuses an anchor the project can no longer reach', function () {
-    $project = Project::factory()->create();
-    $shoot = Shoot::factory()->for($project)->cancelled('Abgesagt')->create();
+    $project = ClientCase::factory()->create();
+    $shoot = Shoot::factory()->for($project, 'case')->cancelled('Abgesagt')->create();
 
     $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/auftraege/{$project->public_id}/aufgaben", [
@@ -116,7 +116,7 @@ it('refuses an anchor the project can no longer reach', function () {
 });
 
 it('reopens a completed task', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $task = $project->tasks()->create([
         'title' => 'Anzahlung verbucht',
         'audience' => 'internal',

@@ -50,27 +50,27 @@ final class ReadTools
             ),
 
             new ToolDefinition(
-                name: 'get_project',
-                title: 'Get a project',
-                description: 'Gets a single project by its public_id, with its lead (including its inquiry text), its contacts and their roles, its shoots and its quotes — enough to verify a capture or an import without a second call. Internal notes are not part of it; they need their own scope. The project index returns the lean shape instead.',
+                name: 'get_case',
+                title: 'Get a case',
+                description: 'Gets a single case — an inquiry or a booked project — by its public_id, with its lead (including its inquiry text), its contacts and their roles, its shoots and its quotes — enough to verify a capture or an import without a second call. Internal notes are not part of it; they need their own scope. list_projects and list_leads return the lean shapes instead.',
                 method: 'GET',
-                path: '/projects/{publicId}',
+                path: '/cases/{case}',
                 schema: fn (JsonSchema $schema) => [
-                    'publicId' => $schema->string()->description('The project\'s public_id, never its internal integer id.')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                 ],
                 annotations: ToolDefinition::READ,
-                structure: fn (array $body) => ['project' => $body['data']],
-                outputSchema: fn (JsonSchema $schema) => ['project' => self::projectDetail($schema)],
+                structure: fn (array $body) => ['case' => $body['data']],
+                outputSchema: fn (JsonSchema $schema) => ['case' => self::caseDetail($schema)],
             ),
 
             new ToolDefinition(
-                name: 'get_project_money',
-                title: 'Get a project\'s payments',
-                description: '#402: what get_project leaves out — the payment plan (null if none exists yet). Check this before offering create_payment_plan or record_payment: a plan already exists once this returns one.',
+                name: 'get_case_money',
+                title: 'Get a case\'s payments',
+                description: '#402: what get_case leaves out — the payment plan (null if none exists yet). Check this before offering create_payment_plan or record_payment: a plan already exists once this returns one.',
                 method: 'GET',
-                path: '/projects/{publicId}/money',
+                path: '/cases/{case}/money',
                 schema: fn (JsonSchema $schema) => [
-                    'publicId' => $schema->string()->description('The project\'s public_id, never its internal integer id.')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                 ],
                 annotations: ['readOnlyHint' => true, 'idempotentHint' => true, 'openWorldHint' => false],
                 structure: fn (array $body) => $body['data'],
@@ -82,11 +82,11 @@ final class ReadTools
             new ToolDefinition(
                 name: 'list_internal_notes',
                 title: 'List internal notes',
-                description: 'Lists a project\'s staff-only internal notes, oldest first by when they happened. The ids are what update_internal_note and delete_internal_note take.',
+                description: 'Lists a case\'s staff-only internal notes, oldest first by when they happened. The ids are what update_internal_note and delete_internal_note take.',
                 method: 'GET',
-                path: '/projects/{publicId}/notes',
+                path: '/cases/{case}/notes',
                 schema: fn (JsonSchema $schema) => [
-                    'publicId' => $schema->string()->description('The project\'s public_id, never its internal integer id.')->required(),
+                    'case' => $schema->string()->description('The case public id')->required(),
                 ],
                 annotations: ToolDefinition::READ,
                 structure: fn (array $body) => ['notes' => $body['data']],
@@ -104,7 +104,7 @@ final class ReadTools
             new ToolDefinition(
                 name: 'list_project_types',
                 title: 'List project types',
-                description: 'C-25: every project type the studio offers with the fields a project of that type carries — the vocabulary `set_project_fields` writes against. `key` is what a value is stored under, `type` says what shape it takes (text, textarea, number, select, tags, date, boolean), `options` is the list a select or tags field offers, and `allowNewOptions` says whether writing an option that is not on that list adds it. Inactive fields are left out: a caller may only write what the studio still asks for.',
+                description: 'C-25: every project type the studio offers with the fields a project of that type carries — the vocabulary `set_case_fields` writes against. `key` is what a value is stored under, `type` says what shape it takes (text, textarea, number, select, tags, date, boolean), `options` is the list a select or tags field offers, and `allowNewOptions` says whether writing an option that is not on that list adds it. Inactive fields are left out: a caller may only write what the studio still asks for.',
                 method: 'GET',
                 path: '/project-types',
                 schema: fn (JsonSchema $schema) => [],
@@ -202,7 +202,7 @@ final class ReadTools
                 path: '/leads',
                 schema: fn (JsonSchema $schema) => [
                     'stage' => $schema->string()->description('A lead stage key, e.g. "quote_sent" — see pipeline_snapshot for the studio\'s own stages.'),
-                    'closed' => $schema->boolean()->description('true for lost and declined leads only, false for the ones still in play.'),
+                    'closed' => $schema->boolean()->description('true for closed leads only, false for the ones still in play.'),
                     'captured_from' => $schema->string()->description('Inclusive start date the inquiry arrived on, YYYY-MM-DD.'),
                     'captured_to' => $schema->string()->description('Inclusive end date the inquiry arrived on, YYYY-MM-DD.'),
                     'cursor' => $schema->string()->description('Opaque cursor from a previous call\'s nextCursor.'),
@@ -291,16 +291,13 @@ final class ReadTools
             'stage' => $schema->string(),
             'stageEnteredAt' => $schema->string()->nullable(),
             'isLost' => $schema->boolean(),
-            'outcome' => $schema->string()->nullable(),
-            'lostReason' => $schema->string()->nullable(),
             'capturedAt' => $schema->string(),
-            'lostAt' => $schema->string()->nullable(),
             'updatedAt' => $schema->string(),
         ]);
     }
 
-    /** What GET /projects/{project} alone returns — see ProjectDetailReadData. */
-    private static function projectDetail(JsonSchema $schema): object
+    /** What GET /cases/{case} alone returns — see CaseDetailReadData. */
+    private static function caseDetail(JsonSchema $schema): object
     {
         return $schema->object([
             'id' => $schema->string(),
@@ -320,17 +317,12 @@ final class ReadTools
                 'capturedViaOther' => $schema->string()->nullable(),
                 'capturedAt' => $schema->string(),
                 'stageEnteredAt' => $schema->string()->nullable(),
-                'outcome' => $schema->string()->nullable(),
-                'lostReason' => $schema->string()->nullable(),
-                'lostAt' => $schema->string()->nullable(),
             ])->nullable(),
-            'job' => $schema->object([
-                'id' => $schema->string(),
-                'projectId' => $schema->string(),
-                'bookedAt' => $schema->string(),
-                'bookedVia' => $schema->string(),
-                'updatedAt' => $schema->string(),
-            ])->nullable(),
+            'bookedAt' => $schema->string()->nullable(),
+            'bookedVia' => $schema->string()->nullable(),
+            'closedAt' => $schema->string()->nullable(),
+            'closeOutcome' => $schema->string()->nullable(),
+            'closeReason' => $schema->string()->nullable(),
             'openTaskCount' => $schema->integer(),
             'contacts' => $schema->array()->items($schema->object([
                 'id' => $schema->string(),

@@ -1,11 +1,10 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\ShootStatus;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Engagement\Models\Thread;
 use App\Models\AuditLog;
@@ -17,17 +16,17 @@ uses(RefreshDatabase::class);
 beforeEach(fn () => useSurface(Surface::PORTAL));
 
 /** An inquiry: one requested shoot, no job, nothing signed. */
-function inquiryProject(Contact $contact): Project
+function inquiryProject(Contact $contact): ClientCase
 {
-    $project = Project::factory()->create(['portal_visible' => true, 'name' => 'Viola & Chris']);
-    $project->attachContact($contact, ProjectContactRole::Primary);
-    Shoot::factory()->for($project)->on('2026-06-14')->create([
+    $project = ClientCase::factory()->create(['portal_visible' => true, 'name' => 'Viola & Chris']);
+    $project->attachContact($contact, CaseContactRole::Primary);
+    Shoot::factory()->for($project, 'case')->on('2026-06-14')->create([
         'is_primary' => true,
         'status' => ShootStatus::Requested,
         'venue_name' => 'Gut Basthorst',
         'venue_city' => 'Basthorst',
     ]);
-    Lead::factory()->for($project)->create(['inquiry_text' => 'Freie Trauung im Park.']);
+    Lead::factory()->for($project, 'case')->create(['inquiry_text' => 'Freie Trauung im Park.']);
 
     return $project;
 }
@@ -66,7 +65,7 @@ it('writes the change into the conversation and into the audit log', function ()
             'inquiry_text' => 'Freie Trauung im Park.',
         ]);
 
-    $thread = Thread::where('project_id', $project->id)->sole();
+    $thread = Thread::where('case_id', $project->id)->sole();
 
     expect($thread->messages)->toHaveCount(1)
         ->and($thread->messages->first()->body)->toContain('21.06.2026')
@@ -93,7 +92,7 @@ it('says nothing at all when nothing actually changed', function () {
 it('refuses the write once the booking exists, as a 404', function () {
     $contact = Contact::factory()->create();
     $project = inquiryProject($contact);
-    Job::factory()->for($project)->create();
+    markBooked($project);
 
     test()->actingAs($contact, 'portal')
         ->patch("/projekte/{$project->public_id}/angaben", ['date' => '2026-06-21'])
@@ -119,7 +118,7 @@ it('renders the letter while it is an inquiry and the booked screen once it is n
 
     expect($page['component'])->toBe('Projects/Inquiry');
 
-    Job::factory()->for($project)->create();
+    markBooked($project);
 
     $page = test()->actingAs($contact, 'portal')->get("/projekte/{$project->public_id}")
         ->assertOk()->viewData('page');
@@ -147,7 +146,7 @@ it('names the studio on both shapes of the booking screen', function () {
 
     expect($props['studio']['name'])->toBe('Nordlicht Fotografie');
 
-    Job::factory()->for($project)->create();
+    markBooked($project);
 
     $props = test()->actingAs($contact, 'portal')->get("/projekte/{$project->public_id}")
         ->assertOk()->viewData('page')['props'];

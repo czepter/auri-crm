@@ -28,7 +28,7 @@ uses(RefreshDatabase::class);
 it('dispatches onto the render queue and nothing runs inline', function () {
     Queue::fake();
 
-    $contract = Contract::factory()->for(bookedContactProject())->create();
+    $contract = Contract::factory()->for(bookedContactProject(), 'case')->create();
 
     RenderContractJob::dispatch($contract)->onQueue('render');
 
@@ -40,10 +40,10 @@ it('resolves merge fields from the project at render time and stores the artifac
     Http::fake(['*/forms/chromium/convert/html' => Http::response('%PDF-fake-bytes', 200)]);
 
     $template = DocumentTemplate::factory()->create([
-        'body' => '<p>{{ contact.name }} — {{ project.name }} — gebucht am {{ job.bookedAt }}</p>',
+        'body' => '<p>{{ contact.name }} — {{ project.name }} — gebucht am {{ project.bookedAt }}</p>',
     ]);
     $project = bookedContactProject();
-    $contract = Contract::factory()->for($project)->for($template, 'template')->create();
+    $contract = Contract::factory()->for($project, 'case')->for($template, 'template')->create();
 
     (new RenderContractJob($contract))->handle(app(EnsureContractArtifact::class));
 
@@ -78,7 +78,7 @@ it('resolves studio.* merge fields from T-02\'s settings row, including the one 
     $template = DocumentTemplate::factory()->create([
         'body' => '<p>{{ studio.name }}, {{ studio.city }} — Logo: {{ studio.logoPath }}</p>',
     ]);
-    $contract = Contract::factory()->for(bookedContactProject())->for($template, 'template')->create();
+    $contract = Contract::factory()->for(bookedContactProject(), 'case')->for($template, 'template')->create();
 
     (new RenderContractJob($contract))->handle(app(EnsureContractArtifact::class));
 
@@ -99,7 +99,7 @@ it('marks the contract failed and keeps the exception when Gotenberg errors', fu
     Storage::fake('local');
     Http::fake(['*/forms/chromium/convert/html' => Http::response('boom', 500)]);
 
-    $contract = Contract::factory()->for(bookedContactProject())->create();
+    $contract = Contract::factory()->for(bookedContactProject(), 'case')->create();
 
     expect(fn () => (new RenderContractJob($contract))->handle(app(EnsureContractArtifact::class)))
         ->toThrow(RequestException::class);
@@ -114,7 +114,7 @@ it('never re-renders an already-rendered contract', function () {
     Storage::fake('local');
     Http::fake(['*/forms/chromium/convert/html' => Http::response('%PDF-first', 200)]);
 
-    $contract = Contract::factory()->for(bookedContactProject())->create();
+    $contract = Contract::factory()->for(bookedContactProject(), 'case')->create();
     (new RenderContractJob($contract))->handle(app(EnsureContractArtifact::class));
 
     Http::assertSentCount(1);

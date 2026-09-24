@@ -5,8 +5,8 @@ namespace App\Engagement\Http\Controllers;
 use App\Automation\Actions\FireAutomationRule;
 use App\Automation\Enums\AutomationRunStatus;
 use App\Automation\Models\AutomationRun;
-use App\Crm\Models\Project;
-use App\Engagement\Actions\AttachThreadToProject;
+use App\Crm\Models\ClientCase;
+use App\Engagement\Actions\AttachThreadToCase;
 use App\Engagement\Actions\PostMessage;
 use App\Engagement\Enums\InboundMessageState;
 use App\Engagement\Models\InboundMessage;
@@ -48,7 +48,7 @@ class InboxController extends Controller
         $user = auth('staff')->user();
 
         $threads = Thread::query()
-            ->with(['project.primaryShoot', 'latestMessage', 'participants.contact', 'participants.user'])
+            ->with(['case.primaryShoot', 'latestMessage', 'participants.contact', 'participants.user'])
             ->withExists(['messages as from_mail' => fn ($query) => $query->whereNotNull('contact_id')])
             ->latest()
             ->limit(200)
@@ -78,7 +78,7 @@ class InboxController extends Controller
             'canRotate' => $user?->can(Capability::ManageSettings->value) ?? false,
             'pending' => InboundMessage::query()
                 ->whereIn('state', [InboundMessageState::Triage, InboundMessageState::Quarantined])
-                ->with('thread.project')
+                ->with('thread.case')
                 ->latest()
                 ->limit(100)
                 ->get()
@@ -92,7 +92,7 @@ class InboxController extends Controller
                     'stateLabel' => $row->state->label(),
                     'reason' => $row->reason,
                     'receivedAt' => $row->created_at->toIso8601String(),
-                    'projectName' => $row->thread?->project?->name,
+                    'projectName' => $row->thread?->case?->name,
                 ])
                 ->all(),
             // P-04 (#223): conversations a client started without naming a
@@ -101,7 +101,7 @@ class InboxController extends Controller
             // reason: the alternative is a conversation nobody at the studio
             // ever finds because no project screen lists it.
             'unfiled' => Thread::query()
-                ->whereNull('project_id')
+                ->whereNull('case_id')
                 ->with('latestMessage')
                 ->latest()
                 ->limit(100)
@@ -128,24 +128,24 @@ class InboxController extends Controller
                     'to' => $run->contacts()->pluck('name')->join(', '),
                 ])
                 ->all(),
-            'projects' => Project::query()
+            'projects' => ClientCase::query()
                 ->latest()
                 ->limit(200)
                 ->get()
-                ->map(fn (Project $project) => ['id' => $project->public_id, 'label' => $project->name])
+                ->map(fn (ClientCase $project) => ['id' => $project->public_id, 'label' => $project->name])
                 ->all(),
             // Only threads a staff member could plausibly attach to: the ones
             // with a client on them. A thread with no contact participant has
             // nobody the mail could have come from.
             'threads' => Thread::query()
                 ->whereHas('participants', fn ($query) => $query->whereNotNull('contact_id'))
-                ->with('project')
+                ->with('case')
                 ->latest()
                 ->limit(100)
                 ->get()
                 ->map(fn (Thread $thread) => [
                     'id' => $thread->public_id,
-                    'label' => ($thread->project?->name ?? '—').' · '.$thread->subject,
+                    'label' => ($thread->case?->name ?? '—').' · '.$thread->subject,
                 ])
                 ->all(),
         ]);
@@ -175,8 +175,8 @@ class InboxController extends Controller
             'who' => $thread->participants
                 ->map(fn ($participant) => $participant->contact?->name)
                 ->filter()
-                ->join(', ') ?: ($thread->project?->name ?? ''),
-            'project' => $thread->project?->name,
+                ->join(', ') ?: ($thread->case?->name ?? ''),
+            'project' => $thread->case?->name,
             'subject' => $thread->subject,
             'snippet' => $latest?->body,
             // Waiting time, in days. The screen decides when it is long
@@ -195,9 +195,9 @@ class InboxController extends Controller
             'id' => $thread->public_id,
             'subject' => $thread->subject,
             'state' => $thread->workState(),
-            'projectId' => $thread->project?->public_id,
-            'projectName' => $thread->project?->name,
-            'shootDate' => $thread->project?->primaryShoot?->date?->format('Y-m-d'),
+            'projectId' => $thread->case?->public_id,
+            'projectName' => $thread->case?->name,
+            'shootDate' => $thread->case?->primaryShoot?->date?->format('Y-m-d'),
             'origin' => $thread->from_mail ? 'mail' : 'portal',
             'people' => $thread->participants
                 ->map(fn ($participant) => $participant->contact?->name ?? $participant->user?->name)
@@ -280,16 +280,16 @@ class InboxController extends Controller
 
     /**
      * P-04 (#223): the same movement one row up, for a thread rather than a
-     * mail. AttachThreadToProject refuses to re-point one that already names
+     * mail. AttachThreadToCase refuses to re-point one that already names
      * a booking — see its own doc comment.
      */
-    public function file(Request $request, Thread $thread, AttachThreadToProject $attach): RedirectResponse
+    public function file(Request $request, Thread $thread, AttachThreadToCase $attach): RedirectResponse
     {
         $this->authorizeInbox();
 
         $validated = $request->validate(['project' => ['required', 'string']]);
 
-        $attach($thread, Project::query()->where('public_id', $validated['project'])->firstOrFail());
+        $attach($thread, ClientCase::query()->where('public_id', $validated['project'])->firstOrFail());
 
         return back();
     }

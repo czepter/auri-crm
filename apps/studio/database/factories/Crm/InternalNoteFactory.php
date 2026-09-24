@@ -2,8 +2,8 @@
 
 namespace Database\Factories\Crm;
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\InternalNote;
-use App\Crm\Models\Project;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -17,7 +17,7 @@ class InternalNoteFactory extends Factory
     public function definition(): array
     {
         return [
-            'project_id' => Project::factory(),
+            'case_id' => ClientCase::factory(),
             'author_id' => User::factory(),
             'body' => fake()->paragraph(),
         ];

@@ -13,29 +13,29 @@ beforeEach(function () {
 });
 
 it('stands without a project', function () {
-    $gallery = Gallery::factory()->create(['project_id' => null]);
+    $gallery = Gallery::factory()->create(['case_id' => null]);
 
-    expect($gallery->fresh()->project_id)->toBeNull();
+    expect($gallery->fresh()->case_id)->toBeNull();
 });
 
 // Ohne Projekt gibt es nichts, woran ein Zugriff hängen könnte — die
 // Capability allein entscheidet, und das heißt: jede Rolle mit ManageShoots
 // sieht jede projektlose Galerie des Studios.
 it('lets anyone with ManageShoots manage a gallery that has no project', function () {
-    $gallery = Gallery::factory()->create(['project_id' => null]);
+    $gallery = Gallery::factory()->create(['case_id' => null]);
 
     expect($this->staff->can('manageMedia', $gallery))->toBeTrue();
 });
 
 it('refuses a role without ManageShoots', function () {
-    $gallery = Gallery::factory()->create(['project_id' => null]);
+    $gallery = Gallery::factory()->create(['case_id' => null]);
     $viewer = User::factory()->withMfa()->create(['role' => StaffRole::Reader]);
 
     expect($viewer->can('manageMedia', $gallery))->toBeFalse();
 });
 
 it('serves the record for a gallery with no project', function () {
-    $gallery = Gallery::factory()->create(['project_id' => null]);
+    $gallery = Gallery::factory()->create(['case_id' => null]);
 
     $props = props("/galerien/{$gallery->public_id}/einstellungen");
 

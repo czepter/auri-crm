@@ -12,7 +12,7 @@ const meta = {
     capabilities: [
       { value: 'manage_leads', label: 'Anfragen verwalten' },
       { value: 'manage_contacts', label: 'Kontakte verwalten' },
-      { value: 'view_all_projects', label: 'Alle Aufträge einsehen' },
+      { value: 'view_all_cases', label: 'Alle Aufträge einsehen' },
     ],
     mcpUrl: 'https://api.atelier-nordlicht.de/mcp',
   },
