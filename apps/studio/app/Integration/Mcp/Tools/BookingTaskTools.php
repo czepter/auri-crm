@@ -17,7 +17,7 @@ final class BookingTaskTools
             new ToolDefinition(
                 name: 'list_projects',
                 title: 'List projects',
-                description: 'Lists booked projects — the same set that answers /projekte. An unbooked pursuit is a lead, not a project; see list_leads for those. Every id is a public_id, never a row\'s internal integer id.',
+                description: 'Lists projects — the same set that answers /projekte. Every project is booked; an unbooked pursuit is a lead, see list_leads for those. Every id is a public_id, never a row\'s internal integer id.',
                 method: 'GET',
                 path: '/projects',
                 schema: fn (JsonSchema $schema) => [
@@ -32,26 +32,9 @@ final class BookingTaskTools
             ),
 
             new ToolDefinition(
-                name: 'list_jobs',
-                title: 'List jobs',
-                description: 'Lists bookings — one per booked project, with when and how it was booked. "Which projects are booked?" is this call.',
-                method: 'GET',
-                path: '/jobs',
-                schema: fn (JsonSchema $schema) => [
-                    'cursor' => $schema->string()->description('Opaque cursor from a previous call\'s nextCursor.'),
-                    'since' => $schema->string()->description('ISO 8601 datetime — only jobs updated at or after this instant.'),
-                ],
-                annotations: ['readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false],
-                structure: fn (array $body) => [
-                    'jobs' => $body['data'],
-                    'nextCursor' => $body['meta']['next_cursor'],
-                ],
-            ),
-
-            new ToolDefinition(
                 name: 'book_project',
                 title: 'Book a project',
-                description: 'Commit the studio to a project: create its Job and advance every uncancelled shoot to the booked stage, the same move the project screen\'s Buchen button makes. A project already booked is a no-op — the existing job comes back.',
+                description: 'Commit the studio to a project: record the booking on it and advance every uncancelled shoot to the booked stage, the same move the project screen\'s Buchen button makes. Answers with the project detail. A project already booked is a no-op and keeps its original booking.',
                 method: 'POST',
                 path: '/projects/{project}/book',
                 schema: fn (JsonSchema $schema) => [

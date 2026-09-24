@@ -108,7 +108,7 @@ class PaymentInstallment extends Model
     /** The plan's project, or the invoice's for a rate outside any plan. */
     public function project(): ?Project
     {
-        return $this->plan?->job?->project ?? $this->invoice?->project;
+        return $this->plan?->project ?? $this->invoice?->project;
     }
 
     /**
@@ -170,7 +170,7 @@ class PaymentInstallment extends Model
      */
     public function acceptedQuote(): ?Quote
     {
-        return $this->plan?->job?->project?->quotes()
+        return $this->plan?->project?->quotes()
             ->where('status', 'accepted')
             ->latest('accepted_at')
             ->first();

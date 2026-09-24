@@ -22,12 +22,11 @@ class ProjectSearchController extends Controller
 
         $query = Project::query()
             ->visibleTo(auth('staff')->user())
-            ->with('job')
             ->limit(8);
 
         if (mb_strlen($term) < 2) {
             $query->whereNull('completed_at')
-                ->where(fn ($open) => $open->whereHas('job')->orWhereHas('lead', fn ($lead) => $lead->open()))
+                ->where(fn ($open) => $open->booked()->orWhereHas('lead', fn ($lead) => $lead->open()))
                 ->latest('updated_at');
         } else {
             $query->where('name', 'ilike', "%{$term}%")->orderBy('name');

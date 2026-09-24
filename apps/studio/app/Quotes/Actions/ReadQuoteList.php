@@ -23,7 +23,7 @@ class ReadQuoteList
         $payable = $quotes->firstWhere('status', QuoteStatus::Accepted)
             ?? $quotes->first(fn (Quote $quote) => $quote->status !== QuoteStatus::Superseded);
 
-        $plan = $project->job?->paymentPlan;
+        $plan = $project->paymentPlan;
 
         return [
             'quotes' => QuoteData::collect($quotes),

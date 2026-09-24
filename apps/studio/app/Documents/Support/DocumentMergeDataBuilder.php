@@ -54,6 +54,7 @@ class DocumentMergeDataBuilder
             'project' => [
                 'name' => $project->name,
                 'type' => $project->type->name,
+                'bookedAt' => $project->booked_at?->format('d.m.Y') ?? '',
             ],
             'contact' => [
                 'name' => $contact?->name ?? '',
@@ -64,9 +65,6 @@ class DocumentMergeDataBuilder
             ],
             'invoice' => $this->invoice($invoice, $project, $settings),
             'creditNote' => $this->creditNote($creditNote, $project, $settings),
-            'job' => [
-                'bookedAt' => $project->job?->booked_at?->format('d.m.Y') ?? '',
-            ],
             // The occasion this document is about. Same primary shoot the
             // invoice's Leistungszeitraum reads, named plainly here because a
             // quote and a contract both talk about the day rather than about
@@ -105,7 +103,7 @@ class DocumentMergeDataBuilder
         $contact = $invoice->contact;
 
         return [
-            'project' => ['name' => '', 'type' => ''],
+            'project' => ['name' => '', 'type' => '', 'bookedAt' => ''],
             'contact' => [
                 'name' => $contact?->name ?? '',
                 'email' => $contact?->email ?? '',
@@ -115,7 +113,6 @@ class DocumentMergeDataBuilder
             ],
             'invoice' => $this->invoice($invoice, null, $settings),
             'creditNote' => $this->creditNote($creditNote, null, $settings),
-            'job' => ['bookedAt' => ''],
             'shoot' => ['date' => ''],
             'quote' => ['validUntil' => '', 'vatNote' => ''],
             'gallery' => array_fill_keys(['title', 'link', 'password', 'downloadPin', 'expiresOn'], ''),

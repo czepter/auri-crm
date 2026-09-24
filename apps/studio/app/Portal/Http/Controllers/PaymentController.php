@@ -52,10 +52,10 @@ class PaymentController extends Controller
 
         $found = $contact->visibleProjects()
             ->where('projects.public_id', $project)
-            ->with('job.paymentPlan.installments.invoice.creditNotes')
+            ->with('paymentPlan.installments.invoice.creditNotes')
             ->firstOrFail();
 
-        $plan = $found->job?->paymentPlan;
+        $plan = $found->paymentPlan;
 
         $sessionId = $request->query('session_id');
         if ($plan !== null && is_string($sessionId) && $settings->stripeEnabled()) {

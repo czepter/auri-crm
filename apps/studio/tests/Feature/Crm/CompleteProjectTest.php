@@ -2,7 +2,6 @@
 
 use App\Crm\Actions\OpenProjects;
 use App\Crm\Enums\ShootStatus;
-use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\User;
@@ -14,7 +13,7 @@ beforeEach(function () {
     $this->staff = User::factory()->withMfa()->create();
     $this->actingAs($this->staff, 'staff');
     $this->project = Project::factory()->create();
-    Job::factory()->for($this->project)->create();
+    markBooked($this->project);
 });
 
 it('completes a project whatever its shoots say, and reopens it', function () {

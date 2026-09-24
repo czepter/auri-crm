@@ -40,7 +40,7 @@ it('resolves merge fields from the project at render time and stores the artifac
     Http::fake(['*/forms/chromium/convert/html' => Http::response('%PDF-fake-bytes', 200)]);
 
     $template = DocumentTemplate::factory()->create([
-        'body' => '<p>{{ contact.name }} — {{ project.name }} — gebucht am {{ job.bookedAt }}</p>',
+        'body' => '<p>{{ contact.name }} — {{ project.name }} — gebucht am {{ project.bookedAt }}</p>',
     ]);
     $project = bookedContactProject();
     $contract = Contract::factory()->for($project)->for($template, 'template')->create();

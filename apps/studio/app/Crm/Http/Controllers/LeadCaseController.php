@@ -70,17 +70,17 @@ class LeadCaseController extends Controller
         $this->authorize('view', $project);
 
         // A booked inquiry lives on as the project's overview.
-        if ($project->job()->exists()) {
+        if ($project->isBooked()) {
             return redirect("/auftraege/{$project->public_id}");
         }
 
         RecordVisit::record(
-            $project->job()->exists() ? 'projekt' : 'anfrage',
+            $project->isBooked() ? 'projekt' : 'anfrage',
             $project->public_id,
             $project->name,
         );
 
-        $project->load(['contacts', 'shoots.crew.user', 'primaryShoot', 'job', 'tasks.project', 'tasks.assignee', 'notes.author']);
+        $project->load(['contacts', 'shoots.crew.user', 'primaryShoot', 'tasks.project', 'tasks.assignee', 'notes.author']);
         $primary = $project->primaryShoot;
         $conversation = $project->latestThread()->with('messages.contact', 'messages.author')->first();
 

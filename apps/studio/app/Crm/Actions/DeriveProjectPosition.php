@@ -24,8 +24,8 @@ use Illuminate\Support\Collection;
  * so a delivered engagement session beside a booked wedding reads "Gebucht" —
  * the honest answer to what this project still owes the client.
  *
- * Before that, the funnel speaks. The Job is the seam, because the Job is the
- * commitment: production has not started until one exists.
+ * Before that, the funnel speaks. The booking is the seam, because it is the
+ * commitment: production has not started before it.
  *
  * C-06 originally wrote the fallback as "when no uncancelled shoot exists",
  * and that was unreachable. Intake creates the primary shoot at `requested`
@@ -51,7 +51,7 @@ class DeriveProjectPosition
             return new ProjectPositionData(source: 'completed', value: 'completed', label: 'Abgeschlossen');
         }
 
-        if ($project->job()->exists()) {
+        if ($project->isBooked()) {
             $shoot = $this->leastAdvanced($project->shoots()->uncancelled()->get());
 
             if ($shoot !== null) {

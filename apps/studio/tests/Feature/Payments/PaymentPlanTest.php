@@ -1,6 +1,5 @@
 <?php
 
-use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
@@ -28,15 +27,15 @@ uses(RefreshDatabase::class);
 // bookedContactProject() and staffMember() live in tests/Pest.php.
 
 /**
- * A booked project (bookedContactProject() already gives it a Job) with a quote
+ * A booked project (bookedContactProject() already books it) with a quote
  * the client has accepted — the agreement a plan is created against.
  */
-function acceptedQuoteJob(): Job
+function acceptedQuoteProject(): Project
 {
     $project = bookedContactProject();
     Quote::factory()->for($project)->create(['status' => QuoteStatus::Accepted, 'accepted_at' => now()]);
 
-    return $project->job()->sole();
+    return $project;
 }
 
 /** An installment with a number, a rendered PDF and a transfer already against it. */
@@ -98,9 +97,9 @@ it('always produces exactly $count amounts summing to exactly $total, across man
 
 it('creates a plan whose installments sum exactly to the total, split evenly with the remainder on the last', function () {
     Storage::fake('local');
-    $job = acceptedQuoteJob();
+    $project = acceptedQuoteProject();
 
-    $plan = app(CreatePaymentPlan::class)($job, 1000, ['2026-09-01', '2026-10-01', '2026-11-01']);
+    $plan = app(CreatePaymentPlan::class)($project, 1000, ['2026-09-01', '2026-10-01', '2026-11-01']);
 
     expect($plan->fresh()->total)->toBe(1000)
         ->and($plan->installments()->sum('amount'))->toBe(1000)
@@ -113,45 +112,44 @@ it('burns no invoice number on creation — M-06 moved the Verwendungszweck onto
     // carried — a hole in the sequence a Betriebsprüfung asks about. The
     // client now transfers under the issued invoice's own number.
     Storage::fake('local');
-    $job = acceptedQuoteJob();
+    $project = acceptedQuoteProject();
 
-    $plan = app(CreatePaymentPlan::class)($job, 500, ['2026-09-01']);
+    $plan = app(CreatePaymentPlan::class)($project, 500, ['2026-09-01']);
 
     expect($plan->fresh()->reference)->toBeNull()
         ->and(NumberCounter::where('document_type', DocumentType::Invoice->value)->count())->toBe(0);
 });
 
-it('logs the creation, naming the job and the total', function () {
+it('logs the creation, naming the total', function () {
     Storage::fake('local');
-    $job = acceptedQuoteJob();
+    $project = acceptedQuoteProject();
 
-    $plan = app(CreatePaymentPlan::class)($job, 500, ['2026-09-01']);
+    $plan = app(CreatePaymentPlan::class)($project, 500, ['2026-09-01']);
 
     $row = AuditLog::where('event', 'payment_plan.created')->sole();
     expect($row->subject)->toBe($plan->public_id)
-        ->and($row->context['job'])->toBe($job->public_id)
         ->and($row->context['total'])->toBe(500);
 });
 
 it('refuses to create a plan against a project with no quote', function () {
-    $job = bookedContactProject()->job()->sole(); // booked, but nothing offered
+    $project = bookedContactProject(); // booked, but nothing offered
 
-    app(CreatePaymentPlan::class)($job, 1000, ['2026-09-01']);
+    app(CreatePaymentPlan::class)($project, 1000, ['2026-09-01']);
 })->throws(HttpException::class);
 
 it('refuses to create a plan against a quote that was sent but never accepted', function () {
     $project = bookedContactProject();
     Quote::factory()->for($project)->create(['status' => QuoteStatus::Sent, 'sent_at' => now()]);
 
-    app(CreatePaymentPlan::class)($project->job()->sole(), 1000, ['2026-09-01']);
+    app(CreatePaymentPlan::class)($project, 1000, ['2026-09-01']);
 })->throws(HttpException::class);
 
-it('refuses a second plan for a job that already has one', function () {
+it('refuses a second plan for a project that already has one', function () {
     Storage::fake('local');
-    $job = acceptedQuoteJob();
-    app(CreatePaymentPlan::class)($job, 1000, ['2026-09-01']);
+    $project = acceptedQuoteProject();
+    app(CreatePaymentPlan::class)($project, 1000, ['2026-09-01']);
 
-    app(CreatePaymentPlan::class)($job, 500, ['2026-10-01']);
+    app(CreatePaymentPlan::class)($project, 500, ['2026-10-01']);
 })->throws(HttpException::class);
 
 // --- UpdatePaymentPlan: wholesale replace, atomically ----------------------
@@ -293,7 +291,7 @@ it('lets the database reject a plan created with a nonzero total and no installm
         DB::transaction(function () {
             DB::table('payment_plans')->insert([
                 'public_id' => (string) new Cuid2,
-                'job_id' => Job::factory()->create()->id,
+                'project_id' => Project::factory()->booked()->create()->id,
                 'total' => 100,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -311,7 +309,7 @@ it('lets a plan whose installments genuinely sum to its total commit cleanly', f
         DB::transaction(function () {
             $planId = DB::table('payment_plans')->insertGetId([
                 'public_id' => (string) new Cuid2,
-                'job_id' => Job::factory()->create()->id,
+                'project_id' => Project::factory()->booked()->create()->id,
                 'total' => 100,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -337,11 +335,11 @@ it('lets a plan whose installments genuinely sum to its total commit cleanly', f
 
 it('creates a payment plan through the admin screen, split evenly across the due dates given', function () {
     Storage::fake('local');
-    $job = acceptedQuoteJob();
+    $project = acceptedQuoteProject();
     $user = staffMember(StaffRole::Admin);
 
     $this->actingAs($user, 'staff')
-        ->post("/auftraege/{$job->project->public_id}/zahlungsplan", [
+        ->post("/auftraege/{$project->public_id}/zahlungsplan", [
             'total' => 100000,
             'installments' => [
                 ['due_on' => '2026-09-01'],
@@ -350,7 +348,7 @@ it('creates a payment plan through the admin screen, split evenly across the due
         ])
         ->assertRedirect();
 
-    $plan = $job->fresh()->paymentPlan;
+    $plan = $project->fresh()->paymentPlan;
     expect($plan)->not->toBeNull()
         ->and($plan->total)->toBe(100000)
         ->and($plan->installments()->sum('amount'))->toBe(100000);
@@ -370,8 +368,8 @@ it('refuses to create a plan for a project with no job at all', function () {
 
 it('updates a plan through the admin screen, rejecting a submission whose installments do not sum to the total', function () {
     $project = Project::factory()->create();
-    $job = Job::factory()->for($project)->create();
-    $plan = PaymentPlan::factory()->for($job)->create(['total' => 200]);
+    markBooked($project);
+    $plan = PaymentPlan::factory()->for($project)->create(['total' => 200]);
     PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 200, 'sort_order' => 0]);
     $user = staffMember(StaffRole::Admin);
 
@@ -404,8 +402,8 @@ it('sums an issued row at its stored amount, and takes no status for it', functi
     // The form sends neither an editable amount nor a status for an issued
     // row, so the plan total is checked against what the invoice says.
     $project = Project::factory()->create();
-    $job = Job::factory()->for($project)->create();
-    $plan = PaymentPlan::factory()->for($job)->create(['total' => 300]);
+    markBooked($project);
+    $plan = PaymentPlan::factory()->for($project)->create(['total' => 300]);
     $issued = issuedInstallment($plan, 100);
     PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 200, 'sort_order' => 1]);
 
@@ -427,10 +425,10 @@ it('sums an issued row at its stored amount, and takes no status for it', functi
 
 it('refuses a role without ManageContracts, and lets one with it through', function (StaffRole $role, int $status) {
     Storage::fake('local');
-    $job = acceptedQuoteJob();
+    $project = acceptedQuoteProject();
 
     $this->actingAs(staffMember($role), 'staff')
-        ->post("/auftraege/{$job->project->public_id}/zahlungsplan", [
+        ->post("/auftraege/{$project->public_id}/zahlungsplan", [
             'total' => 1000,
             'installments' => [['due_on' => '2026-09-01']],
         ])
@@ -446,11 +444,11 @@ it('refuses a role without ManageContracts, and lets one with it through', funct
 
 it('sends the payment plan to the overview screen as integer minor units, never a float', function () {
     Storage::fake('local');
-    $job = acceptedQuoteJob();
-    app(CreatePaymentPlan::class)($job, 100001, ['2026-09-01', '2026-10-01', '2026-11-01']);
+    $project = acceptedQuoteProject();
+    app(CreatePaymentPlan::class)($project, 100001, ['2026-09-01', '2026-10-01', '2026-11-01']);
 
     $props = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
-        ->get("/auftraege/{$job->project->public_id}")
+        ->get("/auftraege/{$project->public_id}")
         ->assertOk()
         ->viewData('page')['props']['header'];
 
@@ -468,8 +466,8 @@ it('sends the payment plan to the overview screen as integer minor units, never 
 
 it('labels installments Anzahlung, N. Rate and Restbetrag by position, mockup 04-auftrag\'s own vocabulary', function () {
     Storage::fake('local');
-    $job = acceptedQuoteJob();
-    $plan = app(CreatePaymentPlan::class)($job, 900, ['2026-09-01', '2026-10-01', '2026-11-01']);
+    $project = acceptedQuoteProject();
+    $plan = app(CreatePaymentPlan::class)($project, 900, ['2026-09-01', '2026-10-01', '2026-11-01']);
 
     $data = PaymentPlanData::fromModel($plan->load('installments'));
 

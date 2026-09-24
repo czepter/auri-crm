@@ -159,11 +159,11 @@ Route::middleware('audience:api')->get('/whoami', GuestIdentityController::class
 // `since=` shape every one of these shares. Each scope reuses the exact
 // Capability that already gates the matching admin screen (ContactPolicy,
 // LeadPolicy, ProjectPolicy) rather than inventing an API-only vocabulary —
-// a token can never read something no staff role could. Shoots and jobs
-// have no policy of their own; both hang off a project (ShootPolicy already
-// delegates to ProjectPolicy, and a Job is a project's booking), so both
-// reuse ViewAllProjects, the capability that already means "see every
-// project" rather than only the ones you are crewed on.
+// a token can never read something no staff role could. Shoots have no
+// policy of their own; they hang off a project (ShootPolicy already
+// delegates to ProjectPolicy), so they reuse ViewAllProjects, the capability
+// that already means "see every project" rather than only the ones you are
+// crewed on.
 Route::middleware('audience:api')->group(function () {
     Route::middleware('scope:'.Capability::ManageContacts->value)
         ->get('/contacts', [CrmReadController::class, 'contacts'])->name('api.contacts.index');
@@ -173,8 +173,6 @@ Route::middleware('audience:api')->group(function () {
         ->get('/leads', [CrmReadController::class, 'leads'])->name('api.leads.index');
     Route::middleware('scope:'.Capability::ViewAllProjects->value)
         ->get('/shoots', [CrmReadController::class, 'shoots'])->name('api.shoots.index');
-    Route::middleware('scope:'.Capability::ViewAllProjects->value)
-        ->get('/jobs', [CrmReadController::class, 'jobs'])->name('api.jobs.index');
 });
 
 // N-02: the two reads the MCP server's tool surface needs that I-02's index

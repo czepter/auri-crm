@@ -1,7 +1,6 @@
 <?php
 
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Gallery\Models\Gallery;
 
@@ -31,7 +30,7 @@ it('runs the cutover sequence end to end: snapshot, commit import, verify, roll 
     $baseline = [
         'contacts' => Contact::count(),
         'projects' => Project::count(),
-        'jobs' => Job::count(),
+        'booked' => Project::booked()->count(),
         'galleries' => Gallery::count(),
     ];
 
@@ -72,7 +71,7 @@ it('runs the cutover sequence end to end: snapshot, commit import, verify, roll 
     // 6. The database is back exactly where it started.
     expect(Contact::count())->toBe($baseline['contacts'])
         ->and(Project::count())->toBe($baseline['projects'])
-        ->and(Job::count())->toBe($baseline['jobs'])
+        ->and(Project::booked()->count())->toBe($baseline['booked'])
         ->and(Gallery::count())->toBe($baseline['galleries']);
 
     unlink($snapshotPath);

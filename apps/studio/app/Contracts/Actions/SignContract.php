@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Storage;
  * Storage holds for this Contract — never a re-render — because that read is
  * what pins the signature to the document a client actually saw. Writing the
  * row and dispatching ContractSigned happen together the same way BookProject
- * pairs Job creation with ProjectBooked: one DB::transaction for the write,
+ * pairs the booking with ProjectBooked: one DB::transaction for the write,
  * the event dispatched immediately after it returns.
  */
 class SignContract

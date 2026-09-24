@@ -159,14 +159,14 @@ class ContactController extends Controller
             // C-18 (#254): a project is an order with money and dates, a
             // gallery a delivery with an expiry. Mixed into one list they
             // read as the same thing, so they are two sections.
-            'projects' => $contact->projects()->with(['primaryShoot', 'latestQuote', 'job'])->get()
+            'projects' => $contact->projects()->with(['primaryShoot', 'latestQuote'])->get()
                 ->map(fn (Project $project) => [
                     'id' => $project->public_id,
                     'name' => $project->name,
                     'role' => $project->pivot->role,
                     'date' => $project->primaryShoot?->date?->format('Y-m-d'),
                     'value' => $project->latestQuote?->total,
-                    'booked' => $project->job !== null,
+                    'booked' => $project->isBooked(),
                 ])->all(),
             'galleries' => Gallery::query()
                 ->whereIn('project_id', $contact->projects()->select('projects.id'))

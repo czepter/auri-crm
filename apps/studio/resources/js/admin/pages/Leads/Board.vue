@@ -121,7 +121,7 @@ function reset() {
     insertAt.value = null;
 }
 
-// The move to "Gebucht" is the booking (AdvanceLeadStage): the job is
+// The move to "Gebucht" is the booking (AdvanceLeadStage): the booking is
 // written, the shoots go to booked and the card leaves this board for
 // /projekte. Every other move is a stage correction and asks nothing.
 // Kept apart from the open state: AlertDialogAction closes the dialog before

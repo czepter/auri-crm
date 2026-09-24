@@ -156,7 +156,7 @@ class DemoCrmSeeder extends Seeder
         }
 
         // After the cast, and after the booked wedding: the occasions below
-        // lean on the Job that buildOutTheWedding() only just produced, and
+        // lean on the booking buildOutTheWedding() only just made, and
         // on the automation rule set the sweep would otherwise seed on its
         // own schedule.
         $this->seedDashboardOccasions($projects);
@@ -402,7 +402,7 @@ class DemoCrmSeeder extends Seeder
         $project->primaryContact()?->update(['phone' => '+49 40 5550103']);
 
         $installment = DB::transaction(function () use ($project) {
-            $plan = PaymentPlan::factory()->for($project->job)->create(['total' => 150000]);
+            $plan = PaymentPlan::factory()->for($project)->create(['total' => 150000]);
 
             return PaymentInstallment::factory()->for($plan, 'plan')->create([
                 'amount' => 150000,
@@ -415,8 +415,8 @@ class DemoCrmSeeder extends Seeder
     }
 
     /**
-     * Both of Nach der Lieferung's rows, on the one project already booked
-     * with a Job: a referral naming the contact InternalNote already credits
+     * Both of Nach der Lieferung's rows, on the one project already
+     * booked: a referral naming the contact InternalNote already credits
      * above, and a gallery whose expiry sits inside
      * ReadAfterDeliveryColumn::EXPIRY_WINDOW_DAYS.
      *

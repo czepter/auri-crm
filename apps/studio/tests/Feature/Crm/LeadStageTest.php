@@ -7,8 +7,8 @@ use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Events\LeadLost;
 use App\Crm\Events\LeadStageChanged;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
+use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\AuditLog;
 use App\Models\User;
@@ -123,15 +123,15 @@ it('refuses to lose a lead twice', function () {
     app(AdvanceLeadStage::class)->markLost($lead, 'Nochmal');
 })->throws(DomainException::class);
 
-// "Gebucht" is the booking, not a label for one: without the job the record
+// "Gebucht" is the booking, not a label for one: without it the record
 // stands in neither list — /anfragen leaves booked ones out, /projekte reads
-// the job.
+// the booking.
 it('books the project when the lead reaches gebucht', function () {
     $lead = Lead::factory()->atStage(LeadStage::QuoteAccepted)->create();
 
     app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), User::factory()->create());
 
-    expect($lead->project->job()->exists())->toBeTrue();
+    expect($lead->project->fresh()->isBooked())->toBeTrue();
 });
 
 it('backdates the booking and its shoots with the stage move', function () {
@@ -145,18 +145,17 @@ it('backdates the booking and its shoots with the stage move', function () {
         CarbonImmutable::parse('2026-05-02 10:00'),
     );
 
-    expect($lead->project->job->booked_at->toDateString())->toBe('2026-05-02')
+    expect($lead->project->fresh()->booked_at->toDateString())->toBe('2026-05-02')
         ->and($shoot->fresh()->status_entered_at->toDateString())->toBe('2026-05-02');
 });
 
-it('leaves an existing job alone when the stage catches up', function () {
+it('leaves an existing booking alone when the stage catches up', function () {
     $lead = Lead::factory()->atStage(LeadStage::QuoteAccepted)->create();
-    $job = Job::factory()->for($lead->project)->create();
+    markBooked($lead->project, ['booked_at' => '2026-05-02 10:00']);
 
     app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), User::factory()->create());
 
-    expect($lead->project->job()->count())->toBe(1)
-        ->and($lead->project->job->is($job))->toBeTrue();
+    expect($lead->project->fresh()->booked_at->toDateString())->toBe('2026-05-02');
 });
 
 it('restores the original entry time when a mistaken move is taken back', function () {
@@ -186,11 +185,11 @@ it('takes the booking back when the won stage is taken back', function () {
     $actor = User::factory()->create();
 
     app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), $actor);
-    expect(Job::count())->toBe(1);
+    expect(Project::booked()->count())->toBe(1);
 
     app(AdvanceLeadStage::class)($lead, stage(LeadStage::QuoteAccepted), $actor);
 
-    expect(Job::count())->toBe(0)
+    expect(Project::booked()->count())->toBe(0)
         ->and($lead->fresh()->stage->key)->toBe(LeadStage::QuoteAccepted->value)
         ->and(AuditLog::where('event', 'project.unbooked')->count())->toBe(1);
 });
@@ -219,12 +218,12 @@ it('refuses to take the booking back once a payment plan hangs off it', function
     $actor = User::factory()->create();
 
     app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), $actor);
-    PaymentPlan::factory()->for(Job::sole())->create();
+    PaymentPlan::factory()->for(Project::booked()->sole())->create();
 
     expect(fn () => app(AdvanceLeadStage::class)($lead, stage(LeadStage::QuoteAccepted), $actor))
         ->toThrow(DomainException::class);
 
-    expect(Job::count())->toBe(1)
+    expect(Project::booked()->count())->toBe(1)
         ->and($lead->fresh()->stage->key)->toBe(LeadStage::Booked->value);
 });
 

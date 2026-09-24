@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 /**
  * Der Projekttyp-Filter der Auswertungen, als Unterabfrage statt als Join.
  *
- * Jede Kennzahl hängt an einer anderen Tabelle — leads, jobs, shoots,
+ * Jede Kennzahl hängt an einer anderen Tabelle — leads, payment_plans, shoots,
  * audit_logs, quotes — und alle tragen project_id. Ein Join müsste in jeder
  * Abfrage anders heißen und würde die Gruppierungen verschieben; ein
  * `where in (select id …)` lässt die Abfrage, wie sie ist.

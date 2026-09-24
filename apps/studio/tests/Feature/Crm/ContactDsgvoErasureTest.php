@@ -3,7 +3,6 @@
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\InternalNote;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Task;
@@ -89,7 +88,7 @@ it('erases a sole-contact project outright, including its storage objects', func
 it('keeps the payment plan, its issued invoices and their PDFs when erasing a booked project', function () {
     $contact = Contact::factory()->create(['name' => 'Lena Meier']);
     $project = dsgvoErasableProject($contact);
-    $plan = PaymentPlan::factory()->for(Job::factory()->for($project))->create(['total' => 100000]);
+    $plan = PaymentPlan::factory()->for(markBooked($project))->create(['total' => 100000]);
     $invoice = Invoice::create([
         'number' => 'RE-2026-0001',
         'issued_at' => now(),

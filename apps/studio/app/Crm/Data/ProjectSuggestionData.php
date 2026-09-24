@@ -27,7 +27,7 @@ class ProjectSuggestionData extends Data
             id: $project->public_id,
             name: $project->name,
             contactName: $contact?->name,
-            isBooked: $project->job !== null,
+            isBooked: $project->isBooked(),
             // Reisen mit dem Vorschlag, weil das Anlegen-Formular die
             // Geburtskette clientseitig zu Ende rechnet — ohne sie bräuchte
             // die Projektwahl einen zweiten Weg zum Server.

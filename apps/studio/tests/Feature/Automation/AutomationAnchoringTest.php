@@ -8,7 +8,6 @@ use App\Automation\Models\AutomationRule;
 use App\Automation\Models\AutomationRun;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Quotes\Enums\QuoteStatus;
@@ -27,7 +26,7 @@ it('fires a per-shoot rule once per matching shoot, anchored to that shoot', fun
     $project = Project::factory()->wedding()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
     $project->attachContact($contact, ProjectContactRole::Primary);
-    Job::factory()->for($project)->create();
+    markBooked($project);
 
     // Due in 7 days — matches the rule below.
     $engagement = Shoot::factory()->for($project)->create([
@@ -66,7 +65,7 @@ it('fires a primary-shoot rule anchored to the project, not the shoot, on a mult
     $project = Project::factory()->wedding()->create();
     $contact = Contact::factory()->create();
     $project->attachContact($contact, ProjectContactRole::Primary);
-    Job::factory()->for($project)->create();
+    markBooked($project);
 
     // The engagement shoot sits 7 days out — a per_shoot rule would catch
     // it, but this rule only watches the primary shoot, 20 days out.
@@ -105,7 +104,7 @@ it('fires an "after" rule when today is offset_days past the anchor date', funct
     $project = Project::factory()->create();
     $contact = Contact::factory()->create();
     $project->attachContact($contact, ProjectContactRole::Primary);
-    Job::factory()->for($project)->create();
+    markBooked($project);
 
     $shoot = Shoot::factory()->for($project)->create([
         'date' => $today->subDays(3)->toDateString(),
@@ -169,7 +168,7 @@ it('still writes exactly one AutomationRun, marked failed, when the anchor has n
 
     $today = CarbonImmutable::parse('2026-06-01', 'UTC');
     $project = Project::factory()->create(); // no contact attached
-    Job::factory()->for($project)->create();
+    markBooked($project);
     Shoot::factory()->for($project)->create(['date' => $today->addDays(7)->toDateString()]);
 
     AutomationRule::factory()

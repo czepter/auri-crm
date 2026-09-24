@@ -3,7 +3,6 @@
 use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Enums\StaffRole;
@@ -79,7 +78,7 @@ it('keeps a contact with a booked project', function () {
     $contact = inquiry();
     $booked = Project::factory()->create();
     $booked->attachContact($contact, ProjectContactRole::Primary);
-    Job::factory()->for($booked)->create();
+    markBooked($booked);
 
     $this->artisan('retention:erase')->assertSuccessful();
 

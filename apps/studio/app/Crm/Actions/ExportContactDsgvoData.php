@@ -188,19 +188,17 @@ class ExportContactDsgvoData
                 'inquiry_text' => $project->lead->inquiry_text,
                 'stage_entered_at' => $project->lead->stage_entered_at?->toIso8601String(),
             ] : null,
-            'job' => $project->job ? [
-                'booked_at' => $project->job->booked_at?->toIso8601String(),
-                'booked_via' => $project->job->booked_via?->value,
-                'payment_plan' => $project->job->paymentPlan ? [
-                    'total' => $project->job->paymentPlan->total,
-                    'reference' => $project->job->paymentPlan->reference,
-                    'installments' => $project->job->paymentPlan->installments->map(fn ($i) => [
-                        'amount' => $i->amount,
-                        'due_on' => $i->due_on?->toIso8601String(),
-                        'status' => $i->status?->value,
-                        'paid_on' => $i->paid_on?->toIso8601String(),
-                    ])->all(),
-                ] : null,
+            'booked_at' => $project->booked_at?->toIso8601String(),
+            'booked_via' => $project->booked_via?->value,
+            'payment_plan' => $project->paymentPlan ? [
+                'total' => $project->paymentPlan->total,
+                'reference' => $project->paymentPlan->reference,
+                'installments' => $project->paymentPlan->installments->map(fn ($i) => [
+                    'amount' => $i->amount,
+                    'due_on' => $i->due_on?->toIso8601String(),
+                    'status' => $i->status?->value,
+                    'paid_on' => $i->paid_on?->toIso8601String(),
+                ])->all(),
             ] : null,
             'shoots' => $project->shoots->map(fn ($shoot) => [
                 'id' => $shoot->public_id,

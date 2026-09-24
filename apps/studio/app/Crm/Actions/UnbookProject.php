@@ -4,7 +4,6 @@ namespace App\Crm\Actions;
 
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
-use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
@@ -16,14 +15,13 @@ use DomainException;
 use Illuminate\Support\Facades\DB;
 
 /**
- * The only deleter of jobs, and the counterpart to BookProject: a lead moved
- * onto the won stage by mistake left a Job behind when it was moved back, so
- * /anfragen and /projekte each showed a record the other one denied.
+ * The counterpart to BookProject: a lead moved onto the won stage by mistake
+ * stayed booked when it was moved back, so /anfragen and /projekte each
+ * showed a record the other one denied.
  *
- * Refused once money hangs off the booking. payment_plans.job_id cascades on
- * delete, so removing the job here would take the plan, its instalments and
- * their invoice numbers with it — silently, and a number issued once may not
- * be reused. Cancelling a booking that far along is a decision with paperwork,
+ * Refused once money hangs off the booking: a payment plan carries
+ * instalments and invoice numbers, and a number issued once may not be
+ * reused. Cancelling a booking that far along is a decision with paperwork,
  * not a correction of a mis-drop.
  *
  * What it does not undo: the tasks ApplyTemplatesOnBooking wrote, any
@@ -36,21 +34,19 @@ class UnbookProject
     public function __construct(private readonly CrmVocabulary $stages) {}
 
     /** Null when there was no booking to take back — the no-op writes nothing. */
-    public function __invoke(Project $project, ?User $actor = null, ?CarbonInterface $at = null): ?Job
+    public function __invoke(Project $project, ?User $actor = null, ?CarbonInterface $at = null): ?Project
     {
-        $job = $project->job;
-
-        if ($job === null) {
+        if (! $project->isBooked()) {
             return null;
         }
 
-        if ($job->paymentPlan()->exists()) {
+        if ($project->paymentPlan()->exists()) {
             throw new DomainException(
                 "Auftrag {$project->public_id} hat einen Zahlungsplan und kann nicht entbucht werden."
             );
         }
 
-        // Deleting a job is the booking capability, not the funnel's — a role
+        // Unbooking is the booking capability, not the funnel's — a role
         // that may move cards but not book projects may not unbook one either
         // by dragging the card back. Null actor is the api surface's token
         // caller, already gated by its own scope on the route.
@@ -61,7 +57,7 @@ class UnbookProject
         $booked = $this->stages->anchored(StagePipeline::Project, StageAnchor::Booked);
         $entry = $this->stages->anchored(StagePipeline::Project, StageAnchor::Entry);
 
-        DB::transaction(function () use ($project, $actor, $job, $booked, $entry, $at) {
+        DB::transaction(function () use ($project, $actor, $booked, $entry, $at) {
             // Only the shoots the booking itself moved. One that has since been
             // delivered stands on its own history and is left where it is.
             $project->shoots()->uncancelled()->get()
@@ -97,15 +93,15 @@ class UnbookProject
             AuditLogger::record(
                 event: 'project.unbooked',
                 actor: $actor,
-                context: ['job' => $job->public_id, 'booked_at' => $job->booked_at->toIso8601String()],
+                context: ['booked_at' => $project->booked_at->toIso8601String()],
                 subject: $project->public_id,
                 projectId: $project->id,
                 occurredAt: $at,
             );
 
-            $job->delete();
+            $project->forceFill(['booked_at' => null, 'booked_by_id' => null, 'booked_via' => null])->save();
         });
 
-        return $job;
+        return $project;
     }
 }

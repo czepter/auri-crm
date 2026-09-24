@@ -4,7 +4,6 @@ use App\Crm\Actions\OpenProjects;
 use App\Crm\Actions\ReadStageTrack;
 use App\Crm\Data\ProjectPositionData;
 use App\Crm\Enums\ShootStatus;
-use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\User;
@@ -15,7 +14,7 @@ uses(RefreshDatabase::class);
 function bookedAt(ShootStatus $status, string $date): Project
 {
     $project = Project::factory()->create();
-    Job::factory()->for($project)->create();
+    markBooked($project);
     Shoot::factory()->for($project)->primary()->atStatus($status)->on($date)->create();
 
     return $project;

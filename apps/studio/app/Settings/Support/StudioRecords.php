@@ -33,7 +33,7 @@ class StudioRecords
     /** Booked only, as on /projekte: before the booking a project is an inquiry. */
     public function projectQuery(): Builder
     {
-        return Project::query()->whereHas('job')->orderBy('name');
+        return Project::query()->booked()->orderBy('name');
     }
 
     /** @return Collection<int, array<int, string|null>> */
@@ -47,7 +47,7 @@ class StudioRecords
     public function projectRows(): Collection
     {
         return $this->projectQuery()
-            ->with(['primaryShoot', 'lead', 'job', 'shoots', 'contacts', 'latestQuote'])
+            ->with(['primaryShoot', 'lead', 'shoots', 'contacts', 'latestQuote'])
             ->get()
             ->map(fn (Project $project) => ProjectRowData::fromProject($project, $this->position))
             ->map(fn (ProjectRowData $row) => [$row->name, $row->date, $row->venue, $row->position, $row->contact]);

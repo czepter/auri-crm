@@ -3,7 +3,6 @@
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -199,7 +198,7 @@ it('moves the shoot while it is an inquiry', function () {
 // und ließ sich nur auf einem anderen Bildschirm ändern.
 it('moves a shoot after the project is booked', function () {
     $lead = caseFor();
-    Job::factory()->for($lead->project)->create();
+    markBooked($lead->project);
 
     test()->patch("/anfragen/{$lead->public_id}", [
         'shoots' => [[

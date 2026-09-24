@@ -28,7 +28,7 @@ enum Capability: string
     case ViewAllProjects = 'view_all_projects';
 
     /**
-     * Commit the studio: turn a pursuit into a Job. The narrowest capability
+     * Commit the studio: book a pursuit. The narrowest capability
      * in the list, and the reason S-06 exists — P-05a shipped this action open
      * to every role in sprint 3.
      */

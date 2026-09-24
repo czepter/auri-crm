@@ -2,7 +2,6 @@
 
 use App\Crm\Enums\LeadSource;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Enums\StaffRole;
@@ -21,7 +20,7 @@ beforeEach(function () {
 it('rows a booked project whose lead names a referrer', function () {
     $referrer = Contact::factory()->create(['name' => 'Familie Osterhoff', 'phone' => '+49 40 999']);
     $project = Project::factory()->create(['name' => 'Steffens & Falk']);
-    Job::factory()->for($project)->create();
+    markBooked($project);
     Lead::factory()->for($project)->create([
         'source' => LeadSource::Referral,
         'referred_by_contact_id' => $referrer->id,
@@ -50,7 +49,7 @@ it('does not row a referral whose project was never booked', function () {
 
 it('does not row a referral nobody wrote a referrer down for', function () {
     $project = Project::factory()->create();
-    Job::factory()->for($project)->create();
+    markBooked($project);
     Lead::factory()->for($project)->create([
         'source' => LeadSource::Referral,
         'referred_by_contact_id' => null,

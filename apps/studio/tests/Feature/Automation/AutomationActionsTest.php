@@ -11,7 +11,6 @@ use App\Automation\Models\AutomationRun;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
@@ -25,7 +24,7 @@ beforeEach(fn () => Notification::fake());
 
 function bookedShootIn(int $days, Project $project): Shoot
 {
-    Job::factory()->for($project)->create();
+    markBooked($project);
 
     return Shoot::factory()->for($project)->create([
         'date' => CarbonImmutable::parse('2026-06-01')->addDays($days)->toDateString(),

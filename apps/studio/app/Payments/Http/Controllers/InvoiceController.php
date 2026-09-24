@@ -102,11 +102,11 @@ class InvoiceController extends Controller
         $rates = PaymentPlan::query()
             ->whereNull('settled_at')
             ->whereHas('installments', fn ($query) => $query->whereNull('invoice_id')->whereNull('cancelled_at'))
-            ->whereHas('job.project', fn ($query) => $query->visibleTo($viewer))
-            ->with(['installments', 'job.project'])
+            ->whereHas('project', fn ($query) => $query->visibleTo($viewer))
+            ->with(['installments', 'project'])
             ->get()
             ->mapWithKeys(fn (PaymentPlan $plan) => [
-                $plan->job->project->public_id => collect(PaymentPlanData::fromModel($plan)->installments)
+                $plan->project->public_id => collect(PaymentPlanData::fromModel($plan)->installments)
                     ->filter(fn ($row) => $row->invoiceNumber === null && $row->status !== 'cancelled')
                     ->map(fn ($row) => ['id' => $row->id, 'label' => $row->label, 'amount' => $row->amount, 'dueOn' => $row->dueOn])
                     ->values(),
@@ -251,7 +251,7 @@ class InvoiceController extends Controller
     private function positions(array $validated, bool $strict): array
     {
         $ids = collect($validated['items'] ?? [])->pluck('installment_id')->filter();
-        $rows = PaymentInstallment::query()->whereIn('public_id', $ids)->with('plan.job.project')->get()->keyBy('public_id');
+        $rows = PaymentInstallment::query()->whereIn('public_id', $ids)->with('plan.project')->get()->keyBy('public_id');
 
         abort_if($strict && $rows->count() !== $ids->unique()->count(), 404);
 

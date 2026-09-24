@@ -4,7 +4,6 @@ use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
-use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
@@ -30,7 +29,7 @@ beforeEach(function () {
 function bookedForDashboard(string $name = 'Meier & Kowalski'): Project
 {
     $project = Project::factory()->create(['name' => $name]);
-    Job::factory()->for($project)->create();
+    markBooked($project);
 
     return $project;
 }
@@ -147,8 +146,8 @@ it('never puts an integer identifier into the übersicht', function () {
 it('carries the rows owed on payments under what is to do', function () {
     $project = Project::factory()->create(['name' => 'Duhnkrack & W.']);
     $project->attachContact(Contact::factory()->create(['phone' => '+4940123']), ProjectContactRole::Primary);
-    $job = Job::factory()->for($project)->create();
-    $plan = PaymentPlan::factory()->for($job)->create(['total' => 110000]);
+    markBooked($project);
+    $plan = PaymentPlan::factory()->for($project)->create(['total' => 110000]);
     PaymentInstallment::factory()->for($plan, 'plan')->create([
         'amount' => 110000,
         'due_on' => now()->subDays(20)->toDateString(),
@@ -199,7 +198,7 @@ it('sums the pipeline from quotes still in play', function () {
 });
 
 it('shows the running balance and the next instalment when nothing is late', function () {
-    $plan = PaymentPlan::factory()->for(Job::factory()->create())->create(['total' => 380000]);
+    $plan = PaymentPlan::factory()->create(['total' => 380000]);
     PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 90000, 'due_on' => now()->addDays(9)->toDateString()]);
     PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 290000, 'due_on' => now()->addDays(40)->toDateString()]);
     PaymentInstallment::factory()->for($plan, 'plan')->paid()->create(['amount' => 50000, 'due_on' => now()->subDays(3)->toDateString()]);
@@ -214,7 +213,7 @@ it('shows the running balance and the next instalment when nothing is late', fun
 });
 
 it('sums what is overdue and counts the instalments behind it', function () {
-    $plan = PaymentPlan::factory()->for(Job::factory()->create())->create(['total' => 380000]);
+    $plan = PaymentPlan::factory()->create(['total' => 380000]);
     PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 290000, 'due_on' => now()->subDays(5)->toDateString()]);
     PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 90000, 'due_on' => now()->addDays(9)->toDateString()]);
 

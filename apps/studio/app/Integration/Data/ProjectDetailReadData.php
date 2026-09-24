@@ -29,7 +29,8 @@ class ProjectDetailReadData extends Data
         public object $fields,
         public string $updatedAt,
         public ?ProjectLeadReadData $lead,
-        public ?JobReadData $job,
+        public ?string $bookedAt,
+        public ?string $bookedVia,
         public int $openTaskCount,
         /** @var list<ProjectContactReadData> */
         public array $contacts,
@@ -41,7 +42,7 @@ class ProjectDetailReadData extends Data
 
     public static function fromModel(Project $project): self
     {
-        $project->loadMissing(['lead', 'job', 'contacts', 'shoots.crew.user', 'quotes.items', 'quotes.paymentStages', 'quotes.predecessor']);
+        $project->loadMissing(['lead', 'contacts', 'shoots.crew.user', 'quotes.items', 'quotes.paymentStages', 'quotes.predecessor']);
         $project->loadCount(['tasks as open_task_count' => fn ($query) => $query->whereNull('completed_at')]);
 
         return new self(
@@ -53,7 +54,8 @@ class ProjectDetailReadData extends Data
             fields: (object) ($project->field_values ?? []),
             updatedAt: $project->updated_at->toIso8601String(),
             lead: $project->lead === null ? null : ProjectLeadReadData::fromModel($project->lead),
-            job: $project->job === null ? null : JobReadData::fromModel($project->job->setRelation('project', $project)),
+            bookedAt: $project->booked_at?->toIso8601String(),
+            bookedVia: $project->booked_via?->value,
             openTaskCount: (int) $project->open_task_count,
             contacts: $project->contacts->map(ProjectContactReadData::fromModel(...))->all(),
             shoots: $project->shoots

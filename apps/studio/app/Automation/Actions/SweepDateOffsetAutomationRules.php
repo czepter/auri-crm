@@ -95,7 +95,7 @@ class SweepDateOffsetAutomationRules
             return PaymentInstallment::query()
                 ->whereIn('status', [PaymentInstallmentStatus::Scheduled, PaymentInstallmentStatus::Invoiced])
                 ->whereDate('due_on', $day)
-                ->with('plan.job.project')
+                ->with('plan.project')
                 ->get();
         }
 
@@ -160,7 +160,7 @@ class SweepDateOffsetAutomationRules
         return Shoot::query()
             ->uncancelled()
             // An inquiry's requested date is a shoot row too; only a booking has a shooting to remind of.
-            ->whereHas('project.job')
+            ->whereHas('project', fn ($project) => $project->booked())
             ->whereDate('date', $targetDate->toDateString())
             ->when($isPrimary, fn ($query) => $query->where('is_primary', true))
             ->with('project')

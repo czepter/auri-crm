@@ -83,8 +83,8 @@ class ProjectController extends Controller
             // Booked only. An unbooked project is an inquiry and belongs on
             // the board at /anfragen; listing it here shows the same record
             // twice under two vocabularies.
-            ->whereHas('job')
-            ->with(['primaryShoot', 'lead', 'job', 'shoots', 'contacts', 'latestQuote'])
+            ->booked()
+            ->with(['primaryShoot', 'lead', 'shoots', 'contacts', 'latestQuote'])
             // What the workflow produced, as the list's own column: a workflow
             // nobody can see the effect of is a settings screen again.
             ->withCount(['tasks', 'tasks as open_tasks_count' => fn ($query) => $query->whereNull('completed_at')])
@@ -132,14 +132,14 @@ class ProjectController extends Controller
         // Same rule as index(): an unbooked project is an inquiry, and its
         // screen is the case. Every /auftraege link lands right without
         // knowing the phase.
-        if ($project->lead !== null && ! $project->job()->exists()) {
+        if ($project->lead !== null && ! $project->isBooked()) {
             return redirect("/anfragen/{$project->lead->public_id}");
         }
 
         // C-03 (#237): an inquiry and a project are the same record in two
         // phases, so the palette names it by the phase it is in.
         RecordVisit::record(
-            $project->job()->exists() ? 'projekt' : 'anfrage',
+            $project->isBooked() ? 'projekt' : 'anfrage',
             $project->public_id,
             $project->name,
         );
@@ -186,7 +186,7 @@ class ProjectController extends Controller
             // C-12 (#248): what the edit state offers as fixed choices. A
             // booked project stands where its shoots stand, so its Stand
             // offers their statuses.
-            'stages' => app(CrmVocabulary::class)->ordered($project->job()->exists() ? StagePipeline::Project : StagePipeline::Lead)
+            'stages' => app(CrmVocabulary::class)->ordered($project->isBooked() ? StagePipeline::Project : StagePipeline::Lead)
                 ->filter(fn (Stage $stage) => $stage->is_active)
                 ->map(fn (Stage $stage) => ['value' => $stage->key, 'label' => $stage->name])->values()->all(),
             'sources' => collect(LeadSource::cases())
@@ -194,7 +194,7 @@ class ProjectController extends Controller
             'roles' => collect(ProjectContactRole::cases())
                 ->map(fn (ProjectContactRole $role) => ['value' => $role->value, 'label' => $role->value])->all(),
             'presets' => ['source' => OtherSuggestions::for('source')],
-            'stage' => $project->job()->exists()
+            'stage' => $project->isBooked()
                 ? $this->position->leastAdvanced($project->shoots)?->status->key
                 : $project->lead?->stage->key,
             'source' => $project->lead?->source?->value,
@@ -240,7 +240,7 @@ class ProjectController extends Controller
         // Termine speichert, hat den Projektnamen nicht in der Hand.
         $validated = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'stage' => ['nullable', Rule::exists('stages', 'key')->where('pipeline', ($project->job()->exists() ? StagePipeline::Project : StagePipeline::Lead)->value)],
+            'stage' => ['nullable', Rule::exists('stages', 'key')->where('pipeline', ($project->isBooked() ? StagePipeline::Project : StagePipeline::Lead)->value)],
             'source' => ['nullable', Rule::enum(LeadSource::class)],
             'source_other' => ['nullable', 'string', 'max:120'],
             'people' => ['array'],
@@ -270,7 +270,7 @@ class ProjectController extends Controller
                 // Through the action, not as a column: it is the only writer
                 // of the stage, and "Gebucht" set here has to book the project
                 // exactly as the board's own move does.
-                $stage = isset($validated['stage']) && ! $project->job()->exists()
+                $stage = isset($validated['stage']) && ! $project->isBooked()
                     ? app(CrmVocabulary::class)->byKey(StagePipeline::Lead, $validated['stage'])
                     : null;
 
@@ -279,7 +279,8 @@ class ProjectController extends Controller
                 }
             }
 
-            if (isset($validated['stage']) && $project->job()->exists()) {
+            // Fresh: the lead move above may just have booked it on another instance.
+            if (isset($validated['stage']) && $project->fresh()->isBooked()) {
                 $this->moveShoots($project, $validated['stage']);
             }
 
@@ -314,7 +315,7 @@ class ProjectController extends Controller
     public function stage(Request $request, Project $project): RedirectResponse
     {
         $this->authorize('manageShoots', $project);
-        abort_unless($project->job()->exists(), 404);
+        abort_unless($project->isBooked(), 404);
 
         $validated = $request->validate([
             'stage' => ['required', Rule::exists('stages', 'key')->where('pipeline', StagePipeline::Project->value)->where('is_active', true)],
@@ -563,7 +564,7 @@ class ProjectController extends Controller
      */
     private function stalled(Project $project): ?array
     {
-        $shoot = $project->job()->exists() ? $this->position->stalled($project->shoots()->get()) : null;
+        $shoot = $project->isBooked() ? $this->position->stalled($project->shoots()->get()) : null;
         $shot = app(CrmVocabulary::class)->anchored(StagePipeline::Project, StageAnchor::Shot);
 
         return $shoot === null || $shot === null ? null : [
@@ -580,7 +581,7 @@ class ProjectController extends Controller
     private function header(Project $project): ProjectHeaderData
     {
         return ProjectHeaderData::fromProject(
-            $project->load(['contacts', 'shoots', 'primaryShoot', 'job']),
+            $project->load(['contacts', 'shoots', 'primaryShoot']),
             ($this->position)($project),
         );
     }

@@ -289,7 +289,7 @@ const taskSummary = computed(() => {
 
 const notes = computed(() => props.thread.filter((entry) => !entry.system));
 
-// Same rule as the board: "booked" writes the job, so it asks first.
+// Same rule as the board: "booked" writes the booking, so it asks first.
 const booking = ref(false);
 
 function move(stage: string) {

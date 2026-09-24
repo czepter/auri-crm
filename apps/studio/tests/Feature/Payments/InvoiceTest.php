@@ -294,7 +294,7 @@ it('bills a picked rate at its own gross and charges free positions on top', fun
     Bus::fake();
 
     $installment = invoiceablePlan();
-    $project = $installment->plan->job->project;
+    $project = $installment->plan->project;
 
     $invoice = app(IssueInvoice::class)->positions($project->primaryContact(), $project, [
         ['title' => 'Anzahlung', 'installment' => $installment],

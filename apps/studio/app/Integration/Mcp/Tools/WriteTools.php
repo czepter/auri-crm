@@ -304,7 +304,7 @@ final class WriteTools
             new ToolDefinition(
                 name: 'delete_project',
                 title: 'Delete a project',
-                description: 'Deletes a project together with its lead, its shoots, its internal notes and its links to contacts. The contacts themselves stay. Refused while a job, a quote or a gallery hangs off the project — past that point the project is a record of an agreement, and removing it is a decision for a screen rather than a tool. There is no undo.',
+                description: 'Deletes a project together with its lead, its shoots, its internal notes and its links to contacts. The contacts themselves stay. Refused while the project is booked or a quote or a gallery hangs off the project — past that point the project is a record of an agreement, and removing it is a decision for a screen rather than a tool. There is no undo.',
                 method: 'DELETE',
                 path: '/projects/{project}',
                 schema: fn (JsonSchema $schema) => [

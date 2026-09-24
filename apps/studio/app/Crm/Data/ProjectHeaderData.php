@@ -86,7 +86,7 @@ class ProjectHeaderData extends Data
             position: $position,
             primaryDate: $project->primaryShoot?->date?->format('Y-m-d'),
             shootCount: $project->shoots->reject->isCancelled()->count(),
-            isBooked: $project->job !== null,
+            isBooked: $project->isBooked(),
             canBook: $user?->can('book', $project) ?? false,
             canManageShoots: $user?->can('manageShoots', $project) ?? false,
             canManageCrew: $user?->can('manageCrew', $project) ?? false,
@@ -105,13 +105,13 @@ class ProjectHeaderData extends Data
             lostReason: $project->lead?->lost_reason,
             canClose: $project->lead !== null && ($user?->can('update', $project->lead) ?? false),
             isCompleted: $project->isCompleted(),
-            canComplete: $project->job !== null && ($user?->can('manageShoots', $project) ?? false),
+            canComplete: $project->isBooked() && ($user?->can('manageShoots', $project) ?? false),
             canDelete: ($user?->can('delete', $project) ?? false) && $project->deletionBlockers()->isEmpty(),
             // Anfrage and Aufgaben are no tabs of a project: the overview is the
             // inquiry's own page carried on, and holds the task list. Angebot,
             // Vertrag and Fragebögen are one tab, Dokumente, with the three as
             // its children.
-            tabs: $project->job === null && $project->lead !== null ? self::leadTabs($project) : [
+            tabs: ! $project->isBooked() && $project->lead !== null ? self::leadTabs($project) : [
                 ['key' => 'overview', 'label' => 'project.overview', 'href' => "/auftraege/{$project->public_id}", 'count' => null, 'countTo' => null, 'children' => []],
                 ['key' => 'shoots', 'label' => 'project.shoots', 'href' => "/auftraege/{$project->public_id}/shootings", 'count' => null, 'countTo' => null, 'children' => []],
                 ['key' => 'messages', 'label' => 'project.messages', 'href' => "/auftraege/{$project->public_id}/nachrichten", 'count' => self::waitingThreads($project), 'countTo' => null, 'children' => []],
@@ -121,8 +121,8 @@ class ProjectHeaderData extends Data
             track: app(ReadStageTrack::class)($position),
             queue: $user === null || ! $queue ? [] : app(OpenProjects::class)->queue($user, $project),
             people: $project->contacts->map(ProjectPersonData::fromContact(...))->all(),
-            paymentPlan: $project->job?->paymentPlan
-                ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments.invoice.creditNotes'))
+            paymentPlan: $project->paymentPlan
+                ? PaymentPlanData::fromModel($project->paymentPlan->load('installments.invoice.creditNotes'))
                 : null,
             galleries: $project->galleries()->get()->map(fn ($gallery) => [
                 'id' => $gallery->public_id,

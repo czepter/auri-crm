@@ -23,7 +23,7 @@ it('builds the same merge data shape any document type resolves against', functi
         ->and($data['project']['type'])->toBe($project->type->name)
         ->and($data['contact']['name'])->toBe('Lena Meier')
         ->and($data['contact']['email'])->toBe('lena@example.test')
-        ->and($data['job']['bookedAt'])->toBe('14.06.2026')
+        ->and($data['project']['bookedAt'])->toBe('14.06.2026')
         ->and($data)->toHaveKey('studio');
 });
 
@@ -63,7 +63,7 @@ it('points the gallery merge field at the viewer host, not this app', function (
 it('prints the Vereinnahmungsdatum on an Anzahlung paid before it was issued', function () {
     $project = bookedContactProject();
     Shoot::factory()->for($project)->primary()->on('2026-06-20')->create();
-    $plan = PaymentPlan::factory()->for($project->job()->sole())->create(['total' => 50_000]);
+    $plan = PaymentPlan::factory()->for($project)->create(['total' => 50_000]);
     $invoice = Invoice::create(['number' => 'RE-2026-1', 'issued_at' => '2026-03-05 09:00:00', 'project_id' => $project->id]);
     $installment = PaymentInstallment::factory()->for($plan, 'plan')->create([
         'amount' => 50_000,

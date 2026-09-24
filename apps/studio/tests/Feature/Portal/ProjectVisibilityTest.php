@@ -184,7 +184,7 @@ it('never lets an absence category or date reach the portal, even for a shoot cr
     // Booked, so the screen under test is P-07's rather than P-03's letter —
     // an inquiry carries no shoot list at all, which would pass this for the
     // wrong reason.
-    App\Crm\Models\Job::factory()->for($project)->create();
+    markBooked($project);
 
     $away = User::factory()->create(['name' => 'Nina Sturm']);
     CrewAssignment::factory()->for($shoot)->for($away)->create();

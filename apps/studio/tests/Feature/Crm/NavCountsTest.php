@@ -1,7 +1,6 @@
 <?php
 
 use App\Crm\Enums\LeadStage;
-use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Models\User;
@@ -14,7 +13,7 @@ uses(RefreshDatabase::class);
 it('counts the inquiries and the projects the way their lists do', function () {
     $booked = Project::factory()->wedding()->create();
     Lead::factory()->for($booked)->atStage(LeadStage::QuoteAccepted)->create();
-    Job::factory()->for($booked)->create();
+    markBooked($booked);
 
     $open = Project::factory()->wedding()->create();
     Lead::factory()->for($open)->create();

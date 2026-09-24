@@ -2,7 +2,6 @@
 
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
@@ -38,8 +37,8 @@ it('404s the payment-status route the same way a route that does not exist would
     $project = Project::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
     $project->attachContact($contact, ProjectContactRole::Primary);
-    $job = Job::factory()->for($project)->create();
-    PaymentPlan::factory()->for($job)->create(['total' => 100000]);
+    markBooked($project);
+    PaymentPlan::factory()->for($project)->create(['total' => 100000]);
 
     $missing = $this->actingAs($contact, 'portal')->get('/this-route-does-not-exist-xyz');
 
@@ -53,8 +52,8 @@ it('hides the payments link on the project overview while the switch is off, eve
     $project = Project::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
     $project->attachContact($contact, ProjectContactRole::Primary);
-    $job = Job::factory()->for($project)->create();
-    PaymentPlan::factory()->for($job)->create(['total' => 100000]);
+    markBooked($project);
+    PaymentPlan::factory()->for($project)->create(['total' => 100000]);
 
     $props = $this->actingAs($contact, 'portal')
         ->get("/projekte/{$project->public_id}")
@@ -70,8 +69,8 @@ it('shows the payments route and link once the studio switches payment-status on
     $project = Project::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
     $project->attachContact($contact, ProjectContactRole::Primary);
-    $job = Job::factory()->for($project)->create();
-    PaymentPlan::factory()->for($job)->create(['total' => 100000]);
+    markBooked($project);
+    PaymentPlan::factory()->for($project)->create(['total' => 100000]);
 
     $this->actingAs($contact, 'portal')->get("/projekte/{$project->public_id}/zahlungen")->assertOk();
 });
@@ -80,8 +79,8 @@ it('404s the payments checkout route the same way a route that does not exist wo
     $project = Project::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
     $project->attachContact($contact, ProjectContactRole::Primary);
-    $job = Job::factory()->for($project)->create();
-    $plan = PaymentPlan::factory()->for($job)->create(['total' => 100000]);
+    markBooked($project);
+    $plan = PaymentPlan::factory()->for($project)->create(['total' => 100000]);
     $installment = PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 100000]);
 
     $missing = $this->actingAs($contact, 'portal')->get('/this-route-does-not-exist-xyz');

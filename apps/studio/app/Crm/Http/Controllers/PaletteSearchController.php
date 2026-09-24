@@ -41,7 +41,6 @@ class PaletteSearchController extends Controller
 
         $projects = Project::query()
             ->visibleTo(auth('staff')->user())
-            ->withExists('job')
             ->where(fn ($query) => $query
                 ->where('name', 'ilike', $like)
                 ->orWhereHas('contacts', fn ($contact) => $contact->where(fn ($inner) => $inner
@@ -51,7 +50,7 @@ class PaletteSearchController extends Controller
             ->limit(5)
             ->get()
             ->map(fn (Project $project) => [
-                'kind' => $project->job_exists ? 'projekt' : 'anfrage',
+                'kind' => $project->isBooked() ? 'projekt' : 'anfrage',
                 'title' => $project->name,
                 'href' => "/auftraege/{$project->public_id}",
             ]);

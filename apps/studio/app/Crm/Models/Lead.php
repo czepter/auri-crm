@@ -24,8 +24,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * Thin on purpose. Vision §3.1 names the cost — "show me this client" hops
  * Project → Lead to read the funnel stage — and takes it, because collapsing
- * Lead into Job would leave a table named Job holding mostly unbooked
- * inquiries.
+ * Lead into Project would leave the project table holding lead columns for
+ * every booked record.
  */
 class Lead extends Model
 {
@@ -156,14 +156,14 @@ class Lead extends Model
     }
 
     /**
-     * Not booked yet, so still an inquiry. The Job is the seam — a booked
+     * Not booked yet, so still an inquiry. projects.booked_at is the seam — a booked
      * record is a project and lives at /projekte, which reads the same fact.
      * The funnel's own reads (the API snapshot, Auswertungen) keep counting
      * booked leads: a funnel without its end is not a funnel.
      */
     public function scopeUnbooked(Builder $query): void
     {
-        $query->whereDoesntHave('project.job');
+        $query->whereDoesntHave('project', fn ($project) => $project->booked());
     }
 
     protected static function newFactory(): Factory

@@ -5,8 +5,8 @@ namespace App\Crm\Enums;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
- * Lives on Project, not Job. Mockup 03 collects it at capture, months before a
- * Job exists and for the many leads that never convert at all, and a project's
+ * Lives on Project from capture on. Mockup 03 collects it months before a
+ * booking and for the many leads that never convert at all, and a project's
  * nature does not change when it does. Deviation from vision §3.1, recorded in
  * the P1b spec §2.2.
  *

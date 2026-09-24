@@ -110,10 +110,8 @@ class DashboardController extends Controller
     private function upcoming(User $viewer): array
     {
         $shoots = Shoot::query()
-            ->join('jobs', 'jobs.project_id', '=', 'shoots.project_id')
-            ->select('shoots.*')
             ->with('project')
-            ->whereIn('shoots.project_id', $this->visible($viewer))
+            ->whereIn('shoots.project_id', $this->visible($viewer)->booked())
             ->uncancelled()
             ->whereNotNull('date')
             ->whereDate('date', '>=', now()->toDateString())
@@ -190,7 +188,7 @@ class DashboardController extends Controller
     private function payments(User $viewer): array
     {
         $mine = fn ($query) => $query->whereHas(
-            'plan.job',
+            'plan',
             fn ($query) => $query->whereIn('project_id', $this->visible($viewer)),
         );
 
@@ -216,8 +214,7 @@ class DashboardController extends Controller
     private function shootCount(User $viewer, CarbonInterface $from, CarbonInterface $to): int
     {
         return Shoot::query()
-            ->join('jobs', 'jobs.project_id', '=', 'shoots.project_id')
-            ->whereIn('shoots.project_id', $this->visible($viewer))
+            ->whereIn('shoots.project_id', $this->visible($viewer)->booked())
             ->uncancelled()
             ->whereBetween('shoots.date', [$from->toDateString(), $to->toDateString()])
             ->count();

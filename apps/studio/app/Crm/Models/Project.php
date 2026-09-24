@@ -5,6 +5,7 @@ namespace App\Crm\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Contracts\Models\Contract;
+use App\Crm\Enums\BookedVia;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
@@ -13,6 +14,7 @@ use App\Engagement\Models\Thread;
 use App\Enums\Capability;
 use App\Gallery\Models\Gallery;
 use App\Models\User;
+use App\Payments\Models\PaymentPlan;
 use App\Quotes\Models\Quote;
 use BackedEnum;
 use Database\Factories\Crm\ProjectFactory;
@@ -21,10 +23,10 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Visus\Cuid2\Cuid2;
@@ -63,12 +65,37 @@ class Project extends Model
             'field_values' => 'array',
             // Written only through CompleteProject.
             'completed_at' => 'datetime',
+            // Written only through BookProject and UnbookProject.
+            'booked_at' => 'immutable_datetime',
+            'booked_via' => BookedVia::class,
         ];
     }
 
     public function isCompleted(): bool
     {
         return $this->completed_at !== null;
+    }
+
+    /** A booked project is an Auftrag; everything else is still an Anfrage. */
+    public function isBooked(): bool
+    {
+        return $this->booked_at !== null;
+    }
+
+    public function scopeBooked(Builder $query): void
+    {
+        $query->whereNotNull('projects.booked_at');
+    }
+
+    public function bookedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'booked_by_id');
+    }
+
+    /** Absent until CreatePaymentPlan writes it (M-03) — one plan per project, at most. */
+    public function paymentPlan(): HasOne
+    {
+        return $this->hasOne(PaymentPlan::class);
     }
 
     /**
@@ -144,12 +171,6 @@ class Project extends Model
         return $this->hasOne(Lead::class);
     }
 
-    /** Absent until the project is booked — its existence is the commitment. */
-    public function job(): HasOne
-    {
-        return $this->hasOne(Job::class);
-    }
-
     public function notes(): HasMany
     {
         return $this->hasMany(InternalNote::class)->latest();
@@ -194,7 +215,7 @@ class Project extends Model
 
     /**
      * Each of these is a record of something agreed with a client, and a
-     * payment plan hangs off the job. Past that line the project is no longer
+     * payment plan hangs off the booking. Past that line the project is no longer
      * something to take back; it gets closed instead.
      *
      * @return Collection<int, string>
@@ -202,11 +223,11 @@ class Project extends Model
     public function deletionBlockers(): Collection
     {
         return collect([
-            'job' => $this->job(),
-            'quote' => $this->quotes(),
-            'contract' => $this->contracts(),
-            'gallery' => $this->galleries(),
-        ])->filter(fn (Relation $relation) => $relation->exists())->keys();
+            'booking' => $this->isBooked(),
+            'quote' => $this->quotes()->exists(),
+            'contract' => $this->contracts()->exists(),
+            'gallery' => $this->galleries()->exists(),
+        ])->filter()->keys();
     }
 
     /** Every questionnaire personalised for this project (E-02), newest first. */
@@ -250,14 +271,14 @@ class Project extends Model
      *
      * Until something is reserved, the answer is theirs — they wrote those
      * lines into an inquiry form and a typo in them is their typo to fix.
-     * The moment a Job exists, or any shoot has moved past `requested`, the
+     * The moment it is booked, or any shoot has moved past `requested`, the
      * same two fields are contract content and the way to change them is to
      * ask (P-07). Contact details are not covered by this and never are:
      * see ContactController on the portal surface.
      */
     public function clientMayEditDetails(): bool
     {
-        return $this->job === null
+        return ! $this->isBooked()
             && ! $this->shoots()->where('status', '!=', app(CrmVocabulary::class)->anchored(StagePipeline::Project, StageAnchor::Entry)?->key)->exists();
     }
 

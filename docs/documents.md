@@ -18,19 +18,19 @@ caller resolves the same body against the same shape of array.
 
 That array is built in exactly one place, `App\Documents\Support\
 DocumentMergeDataBuilder::fromProject()` — never assembled ad hoc by a
-controller or a job — from whatever the project/job/contact/studio settings
+controller or a job — from whatever the project/contact/studio settings
 look like at the moment a render runs:
 
 | Path                | Value                                          |
 |----------------------|-------------------------------------------------|
 | `project.name`       | The project's name.                             |
 | `project.type`       | The project type, labelled (e.g. "Hochzeit").   |
+| `project.bookedAt`   | The booking date, `dd.mm.yyyy`, or empty if unbooked. |
 | `contact.name`       | The project's primary contact's name.           |
 | `contact.email`      | The project's primary contact's email.          |
 | `contact.street`     | Billing address, street and number (M-06). Empty until someone fills it in on the contact screen. |
 | `contact.postcode`   | |
 | `contact.city`       | |
-| `job.bookedAt`       | The booking date, `dd.mm.yyyy`, or empty if unbooked. |
 | `studio.name`        | The studio's registered name (`legal_name`), falling back to its display name. |
 | `studio.legalForm`   | e.g. "GmbH", "Einzelunternehmen".               |
 | `studio.street`      | Registered street and number.                   |
@@ -263,7 +263,7 @@ body untouched.
 A document that read project data live would silently change after the
 client saw it — the couple's guest count on 3 June could differ from the
 guest count on 14 June, and nothing would mark the difference. A render job
-pulls the project/job/contact data it needs at the moment it runs and bakes
+pulls the project/contact data it needs at the moment it runs and bakes
 the result into the HTML sent to Gotenberg. Once rendered, the PDF is the
 record; nothing ever re-renders it to serve a later read.
 

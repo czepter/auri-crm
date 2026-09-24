@@ -44,7 +44,7 @@ class HomeController extends Controller
             ->with([
                 'primaryShoot',
                 'latestQuote',
-                'job.paymentPlan.installments',
+                'paymentPlan.installments',
                 'galleries.currentVersion',
             ])
             ->get();
@@ -142,7 +142,7 @@ class HomeController extends Controller
 
     private function openAmount(Project $project): ?int
     {
-        $installments = $project->job?->paymentPlan?->installments;
+        $installments = $project->paymentPlan?->installments;
 
         if ($installments === null) {
             return null;
@@ -169,7 +169,7 @@ class HomeController extends Controller
 
         foreach ($projects as $project) {
             if ($settings->paymentStatusEnabled($contact)) {
-                foreach ($project->job?->paymentPlan?->installments ?? [] as $installment) {
+                foreach ($project->paymentPlan?->installments ?? [] as $installment) {
                     if ($installment->status === PaymentInstallmentStatus::Paid || $installment->due_on === null) {
                         continue;
                     }

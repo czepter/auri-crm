@@ -17,7 +17,6 @@ final class StudioExportTables
         'gallery_sets' => 'Galerie-Archiv',
         'invoice_items' => 'rechnungen/',
         'invoices' => 'rechnungen/',
-        'jobs' => 'projekte.csv',
         'leads' => 'projekte.csv',
         'messages' => 'nachrichten.json',
         'payment_installments' => 'rechnungen/',

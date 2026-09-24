@@ -67,7 +67,7 @@ class ShootController extends Controller
         );
 
         // BookProject only moves the shoots that exist at booking time.
-        if ($project->job()->exists()) {
+        if ($project->isBooked()) {
             $advance(
                 $shoot,
                 $stages->anchored(StagePipeline::Project, StageAnchor::Booked),

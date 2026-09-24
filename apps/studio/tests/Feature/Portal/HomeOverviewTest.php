@@ -2,7 +2,6 @@
 
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Gallery\Models\Gallery;
@@ -41,8 +40,8 @@ function bookingFor(Contact $contact, array $attributes = []): Project
 
 function dueInstallment(Project $project, int $amount, string $dueOn): PaymentInstallment
 {
-    $job = Job::factory()->for($project)->create();
-    $plan = PaymentPlan::factory()->for($job)->create();
+    markBooked($project);
+    $plan = PaymentPlan::factory()->for($project)->create();
 
     return PaymentInstallment::factory()->for($plan, 'plan')->create([
         'amount' => $amount,

@@ -44,9 +44,9 @@ class ReadAfterDeliveryColumn
     }
 
     /**
-     * A referral whose project actually became work. Gated on `project.job`
-     * existing via whereHas — an EXISTS subquery, not a join: before the Job
-     * exists the project is a pursuit, and thanking someone for a pursuit is
+     * A referral whose project actually became work. Gated on the project
+     * being booked via whereHas — an EXISTS subquery, not a join: before the
+     * booking the project is a pursuit, and thanking someone for a pursuit is
      * premature.
      *
      * @return Collection<int, DomainRowData>
@@ -57,7 +57,7 @@ class ReadAfterDeliveryColumn
             ->where('source', LeadSource::Referral)
             ->whereNotNull('referred_by_contact_id')
             ->when($visible !== null, fn ($query) => $query->whereIn('project_id', $visible))
-            ->whereHas('project.job')
+            ->whereHas('project', fn ($project) => $project->booked())
             ->with(['project', 'referredBy'])
             ->get()
             ->map(fn (Lead $lead) => new DomainRowData(
