@@ -3,13 +3,13 @@
 namespace Database\Seeders;
 
 use App\Crm\Actions\BookProject;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
-use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Gallery\Actions\EnsureGalleryCover;
 use App\Gallery\Models\AssetComment;
@@ -57,11 +57,11 @@ class MarketingScreenshotSeeder extends Seeder
             ['Familie Reuter', ProjectType::Portrait, LeadStage::Contacted, null, 'Hamburg'],
             ['Jonas Klee', ProjectType::Portrait, LeadStage::QuoteSent, 'Studio', 'Hamburg'],
         ] as [$name, $type, $stage, $venue, $city]) {
-            $project = Project::create(['name' => $name, 'type' => $type]);
-            $project->attachContact(Contact::factory()->create(['name' => $name]), ProjectContactRole::Primary);
+            $project = ClientCase::create(['name' => $name, 'type' => $type]);
+            $project->attachContact(Contact::factory()->create(['name' => $name]), CaseContactRole::Primary);
 
             Shoot::create([
-                'project_id' => $project->id,
+                'case_id' => $project->id,
                 'kind' => $type === ProjectType::Wedding ? 'Hochzeitstag' : 'Portrait',
                 'venue_name' => $venue,
                 'venue_city' => $city,
@@ -69,7 +69,7 @@ class MarketingScreenshotSeeder extends Seeder
                 'sort_order' => 0,
             ]);
 
-            Lead::factory()->for($project)->atStage($stage)->create([
+            Lead::factory()->for($project, 'case')->atStage($stage)->create([
                 'source' => LeadSource::Referral,
                 'captured_by_id' => $staff->id,
             ]);
@@ -81,13 +81,13 @@ class MarketingScreenshotSeeder extends Seeder
     /** Melissa & Jan Ahrens: a booked wedding carried through to an accepted quote and a payment plan. */
     private function seedBookedWedding(User $staff): void
     {
-        $project = Project::create(['name' => 'Melissa & Jan Ahrens', 'type' => ProjectType::Wedding]);
+        $project = ClientCase::create(['name' => 'Melissa & Jan Ahrens', 'type' => ProjectType::Wedding]);
         $melissa = Contact::factory()->create(['name' => 'Melissa Ahrens']);
-        $project->attachContact($melissa, ProjectContactRole::Primary);
-        $project->attachContact(Contact::factory()->create(['name' => 'Jan Ahrens']), ProjectContactRole::Partner);
+        $project->attachContact($melissa, CaseContactRole::Primary);
+        $project->attachContact(Contact::factory()->create(['name' => 'Jan Ahrens']), CaseContactRole::Partner);
 
         Shoot::create([
-            'project_id' => $project->id,
+            'case_id' => $project->id,
             'kind' => 'Hochzeitstag',
             'date' => '2026-10-17',
             'call_time' => '14:00',
@@ -97,7 +97,7 @@ class MarketingScreenshotSeeder extends Seeder
             'sort_order' => 0,
         ]);
 
-        Lead::factory()->for($project)->atStage(LeadStage::Booked)->create([
+        Lead::factory()->for($project, 'case')->atStage(LeadStage::Booked)->create([
             'source' => LeadSource::Referral,
             'captured_by_id' => $staff->id,
         ]);
@@ -106,7 +106,7 @@ class MarketingScreenshotSeeder extends Seeder
         // ones already on the project.
         app(BookProject::class)($project, $staff);
 
-        $quote = Quote::factory()->for($project)->create([
+        $quote = Quote::factory()->for($project, 'case')->create([
             'status' => QuoteStatus::Accepted,
             'sent_at' => now()->subDays(35),
             'accepted_at' => now()->subDays(30),
@@ -124,7 +124,7 @@ class MarketingScreenshotSeeder extends Seeder
         // only checks at COMMIT, so the plan and its installments have to
         // land in one transaction (same reasoning as CreatePaymentPlan).
         DB::transaction(function () use ($project) {
-            $plan = PaymentPlan::factory()->for($project)->create(['total' => 440000]);
+            $plan = PaymentPlan::factory()->for($project, 'case')->create(['total' => 440000]);
 
             $plan->installments()->create([
                 'amount' => 132000,
@@ -141,7 +141,7 @@ class MarketingScreenshotSeeder extends Seeder
             ]);
         });
 
-        $gallery = Gallery::factory()->for($project)->create(['title' => 'Melissa & Jan']);
+        $gallery = Gallery::factory()->for($project, 'case')->create(['title' => 'Melissa & Jan']);
         $photoKeys = $this->seedGalleryPhotos($gallery);
         $version = $gallery->publish();
 

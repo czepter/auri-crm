@@ -63,7 +63,7 @@ class SignContract
                 event: 'contract.signed',
                 context: ['contact' => $contact->public_id, 'template_version' => $templateVersion],
                 subject: $contract->public_id,
-                projectId: $contract->project_id,
+                projectId: $contract->case_id,
             );
 
             return $signature;

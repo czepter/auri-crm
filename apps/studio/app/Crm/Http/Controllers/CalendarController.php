@@ -6,7 +6,7 @@ use App\Crm\Data\CalendarDayData;
 use App\Crm\Data\CalendarEntryData;
 use App\Crm\Data\ShootData;
 use App\Crm\Enums\StageAnchor;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
 use App\Crm\Support\ShootCalendar;
@@ -54,10 +54,10 @@ class CalendarController extends Controller
         $to = $from->addWeeks(6)->subDay();
 
         $shoots = Shoot::query()
-            ->with(['project', 'crew.user'])
+            ->with(['case', 'crew.user'])
             // A crew role's calendar is the days they are on, not the studio's
             // whole diary.
-            ->whereIn('shoots.project_id', Project::query()->visibleTo($user)->select('projects.id'))
+            ->whereIn('shoots.case_id', ClientCase::query()->visibleTo($user)->select('cases.id'))
             ->uncancelled()
             ->whereNotNull('date')
             ->whereDate('date', '>=', $from->toDateString())
@@ -93,9 +93,9 @@ class CalendarController extends Controller
                         ->map(fn (Shoot $shoot) => new CalendarEntryData(
                             kind: $shoot->status?->anchor === StageAnchor::Entry ? 'hold' : 'shoot',
                             time: $shoot->call_time === null ? null : substr((string) $shoot->call_time, 0, 5),
-                            what: $shoot->project->name,
+                            what: $shoot->case->name,
                             who: $solo ? null : ($shoot->crew->map(fn ($assignment) => $assignment->user->name)->join(', ') ?: null),
-                            projectId: $shoot->project->public_id,
+                            projectId: $shoot->case->public_id,
                         ))->values()->all(),
                     ...$absences->filter(fn (Absence $absence) => $absence->coversDate($date))
                         ->map(fn (Absence $absence) => new CalendarEntryData(
@@ -129,7 +129,7 @@ class CalendarController extends Controller
             // "how does the month look".
             'shoots' => ShootData::collect($shoots->map(fn (Shoot $shoot) => ShootData::fromShoot($shoot))),
             'projects' => $shoots->mapWithKeys(fn (Shoot $shoot) => [
-                $shoot->public_id => ['id' => $shoot->project->public_id, 'name' => $shoot->project->name],
+                $shoot->public_id => ['id' => $shoot->case->public_id, 'name' => $shoot->case->name],
             ]),
             'mine' => $shoots
                 ->filter(fn (Shoot $shoot) => $shoot->crew->contains('user_id', $user->id))
@@ -152,8 +152,8 @@ class CalendarController extends Controller
     private function season(User $user, CrmVocabulary $vocabulary): array
     {
         $shoots = Shoot::query()
-            ->with('project')
-            ->whereIn('shoots.project_id', Project::query()->visibleTo($user)->select('projects.id'))
+            ->with('case')
+            ->whereIn('shoots.case_id', ClientCase::query()->visibleTo($user)->select('cases.id'))
             ->uncancelled()
             ->whereNotNull('date')
             ->orderBy('date')
@@ -163,8 +163,8 @@ class CalendarController extends Controller
         return [
             'shoots' => $shoots->map(fn (Shoot $shoot) => [
                 'date' => $shoot->date->toDateString(),
-                'name' => $shoot->project->name,
-                'projectId' => $shoot->project->public_id,
+                'name' => $shoot->case->name,
+                'projectId' => $shoot->case->public_id,
                 'status' => $shoot->status->name,
                 'phase' => $vocabulary->phase($shoot->status),
             ])->values()->all(),
@@ -217,7 +217,7 @@ class CalendarController extends Controller
 
         // Alone in the studio nobody gets assigned, so every shoot is theirs.
         $shoots = Shoot::query()
-            ->with(['project', 'crew.user'])
+            ->with(['case', 'crew.user'])
             ->unless(User::soloStudio(), fn ($query) => $query->whereHas('crew', fn ($crew) => $crew->where('user_id', $user->id)))
             ->whereNotNull('date')
             ->orderBy('date')

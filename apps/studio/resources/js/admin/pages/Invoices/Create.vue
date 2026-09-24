@@ -22,7 +22,7 @@ type Rate = { id: string; label: string; amount: number; dueOn: string }
 
 const props = defineProps<{
   rates: Record<string, Rate[]>
-  project: App.Crm.Data.ProjectSuggestionData | null
+  project: App.Crm.Data.CaseSuggestionData | null
   packages: App.Catalog.Data.PackageData[]
   catalogItems: App.Catalog.Data.CatalogItemData[]
   vatSettings: VatSettings
@@ -93,7 +93,7 @@ const payload = computed(() => {
   return {
     contact_id: contact.value?.id,
     contact: newContact.value ?? undefined,
-    project_id: project.value?.id,
+    case_id: project.value?.id,
     due_on: dueOn.value || null,
     discount_type: quote.discount_type,
     discount_value: quote.discount_value,

@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Quotes\Actions\AcceptQuote;
 use App\Quotes\Actions\MarkQuoteSent;
 use App\Quotes\Actions\RenderQuotePdf;
@@ -19,11 +19,11 @@ uses(RefreshDatabase::class);
 
 function sliderQuote(): Quote
 {
-    $project = Project::factory()->create(['portal_visible' => true]);
-    $project->attachContact(Contact::factory()->create(), ProjectContactRole::Primary);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
+    $project->attachContact(Contact::factory()->create(), CaseContactRole::Primary);
 
     $quote = Quote::factory()->slider()->create([
-        'project_id' => $project->id,
+        'case_id' => $project->id,
         'status' => QuoteStatus::Sent,
     ]);
 
@@ -34,7 +34,7 @@ function sliderQuote(): Quote
         ['title' => 'Analog', 'quantity' => 1, 'unit_price' => 25_000, 'sort_order' => 3, 'selectable' => true],
     ]);
 
-    return $quote->fresh(['items', 'project']);
+    return $quote->fresh(['items', 'case']);
 }
 
 it('spans from the fewest hours without blocks to the most with all of them', function () {
@@ -55,7 +55,7 @@ it('writes hours, the chosen blocks and the total on acceptance', function () {
 
     $accepted = app(AcceptQuote::class)(
         $quote,
-        $quote->project->primaryContact(),
+        $quote->case->primaryContact(),
         '127.0.0.1',
         hours: 6,
         selectedItemIds: [$album->public_id],
@@ -73,7 +73,7 @@ it('refuses hours outside the range', function () {
     Notification::fake();
     $quote = sliderQuote();
 
-    app(AcceptQuote::class)($quote, $quote->project->primaryContact(), '127.0.0.1', hours: 12);
+    app(AcceptQuote::class)($quote, $quote->case->primaryContact(), '127.0.0.1', hours: 12);
 })->throws(ValidationException::class);
 
 it('refuses a line the studio never made switchable', function () {
@@ -83,7 +83,7 @@ it('refuses a line the studio never made switchable', function () {
 
     app(AcceptQuote::class)(
         $quote,
-        $quote->project->primaryContact(),
+        $quote->case->primaryContact(),
         '127.0.0.1',
         hours: 5,
         selectedItemIds: [$fixed->public_id],
@@ -96,9 +96,9 @@ it('taxes the preselection at send and the chosen amount at acceptance', functio
     app(StudioSettingsResolver::class)->set('vat_mode', 'standard');
     app(StudioSettingsResolver::class)->set('vat_rate', 1900);
 
-    $project = Project::factory()->create(['portal_visible' => true]);
-    $project->attachContact(Contact::factory()->create(), ProjectContactRole::Primary);
-    $quote = Quote::factory()->slider()->create(['project_id' => $project->id]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
+    $project->attachContact(Contact::factory()->create(), CaseContactRole::Primary);
+    $quote = Quote::factory()->slider()->create(['case_id' => $project->id]);
 
     app(UpdateQuote::class)($quote, [
         'pricing_mode' => 'choice',
@@ -113,7 +113,7 @@ it('taxes the preselection at send and the chosen amount at acceptance', functio
     // 8 h * 250 € + 400 € Album.
     expect($quote->fresh()->vat_amount)->toBe(45_600);
 
-    $accepted = app(AcceptQuote::class)($quote->fresh(['items', 'project']), $project->primaryContact(), '127.0.0.1', hours: 6);
+    $accepted = app(AcceptQuote::class)($quote->fresh(['items', 'case']), $project->primaryContact(), '127.0.0.1', hours: 6);
 
     // 6 h * 250 €, Album abgewaehlt.
     expect($accepted->net)->toBe(150_000)
@@ -125,11 +125,11 @@ it('leaves a classic quote untouched', function () {
     Notification::fake();
     staffMember();
 
-    $project = Project::factory()->create(['portal_visible' => true]);
-    $project->attachContact(Contact::factory()->create(), ProjectContactRole::Primary);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
+    $project->attachContact(Contact::factory()->create(), CaseContactRole::Primary);
 
     $quote = Quote::factory()->create([
-        'project_id' => $project->id,
+        'case_id' => $project->id,
         'status' => QuoteStatus::Sent,
         'total' => 120_000,
     ]);
@@ -145,9 +145,9 @@ it('takes the quote discount off the range and the accepted amount, and hides it
     Notification::fake();
     staffMember();
 
-    $project = Project::factory()->create(['portal_visible' => true]);
-    $project->attachContact(Contact::factory()->create(), ProjectContactRole::Primary);
-    $quote = Quote::factory()->slider()->create(['project_id' => $project->id]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
+    $project->attachContact(Contact::factory()->create(), CaseContactRole::Primary);
+    $quote = Quote::factory()->slider()->create(['case_id' => $project->id]);
 
     app(UpdateQuote::class)($quote, [
         'pricing_mode' => 'choice',
@@ -165,13 +165,13 @@ it('takes the quote discount off the range and the accepted amount, and hides it
     expect(QuoteRange::min($quote->fresh('items')))->toBe(90_000);
 
     app(MarkQuoteSent::class)($quote->fresh(), 'email');
-    $accepted = app(AcceptQuote::class)($quote->fresh(['items', 'project']), $project->primaryContact(), '127.0.0.1', hours: 6);
+    $accepted = app(AcceptQuote::class)($quote->fresh(['items', 'case']), $project->primaryContact(), '127.0.0.1', hours: 6);
 
     expect($accepted->total)->toBe(150_000)
         ->and($accepted->discount_amount)->toBe(15_000)
         ->and($accepted->net)->toBe(135_000);
 
-    $html = app(RenderQuotePdf::class)->html($accepted->fresh(['items', 'project', 'paymentStages']));
+    $html = app(RenderQuotePdf::class)->html($accepted->fresh(['items', 'case', 'paymentStages']));
 
     expect($html)->not->toContain('Rabatt')
         ->and($html)->toContain('1.350,00');

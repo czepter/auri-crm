@@ -23,7 +23,7 @@ class GalleryRowData extends Data
         return new self(
             id: $gallery->public_id,
             title: $gallery->title,
-            projectName: $gallery->project?->name,
+            projectName: $gallery->case?->name,
             assetCount: $gallery->asset_count,
             version: $gallery->currentVersion?->version,
             expiresAt: $gallery->expires_at?->format('Y-m-d'),

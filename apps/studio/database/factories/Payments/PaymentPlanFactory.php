@@ -2,7 +2,7 @@
 
 namespace Database\Factories\Payments;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Payments\Models\PaymentPlan;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -20,7 +20,7 @@ class PaymentPlanFactory extends Factory
         // the sum-matches-total trigger on its own. A test that needs
         // installments sets total to match what it creates.
         return [
-            'project_id' => Project::factory()->booked(),
+            'case_id' => ClientCase::factory()->booked(),
             'total' => 0,
         ];
     }

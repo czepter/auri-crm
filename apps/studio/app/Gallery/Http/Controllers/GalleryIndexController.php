@@ -2,8 +2,8 @@
 
 namespace App\Gallery\Http\Controllers;
 
-use App\Crm\Data\ProjectSuggestionData;
-use App\Crm\Models\Project;
+use App\Crm\Data\CaseSuggestionData;
+use App\Crm\Models\ClientCase;
 use App\Enums\Capability;
 use App\Gallery\Data\GalleryPresetData;
 use App\Gallery\Data\GalleryRowData;
@@ -40,13 +40,13 @@ class GalleryIndexController extends Controller
         $mayManage = auth('staff')->user()?->can(Capability::ManageSettings->value) ?? false;
 
         $galleries = Gallery::query()
-            ->with(['project', 'currentVersion'])
+            ->with(['case', 'currentVersion'])
             ->withCount(['assets as asset_count' => fn ($query) => $query->inDraft()])
             // Die eine Ausnahme von der Projektsichtbarkeit: eine Galerie ohne
             // Buchung hat nichts, woran ein Filter greifen könnte.
             ->where(fn ($query) => $query
-                ->whereNull('project_id')
-                ->orWhereIn('project_id', Project::query()->visibleTo(auth('staff')->user())->select('id')))
+                ->whereNull('case_id')
+                ->orWhereIn('case_id', ClientCase::query()->visibleTo(auth('staff')->user())->select('id')))
             ->latest()
             ->get();
 
@@ -67,7 +67,7 @@ class GalleryIndexController extends Controller
         $this->authorize('create', Gallery::class);
 
         $project = $request->filled('projekt')
-            ? Project::query()
+            ? ClientCase::query()
                 ->visibleTo(auth('staff')->user())
                 ->where('public_id', $request->query('projekt'))
                 ->first()
@@ -75,7 +75,7 @@ class GalleryIndexController extends Controller
 
         return Inertia::render('Galleries/Create', [
             'mode' => $request->query('art') === 'extern' ? 'external' : 'internal',
-            'project' => $project ? ProjectSuggestionData::fromModel($project) : null,
+            'project' => $project ? CaseSuggestionData::fromModel($project) : null,
             'shootId' => $project?->shoots()->where('public_id', $request->query('shooting'))->value('public_id'),
             'presets' => GalleryPresetData::collect(GalleryPreset::query()->orderBy('name')->get()),
             // Die unterste Stufe der Geburtskette; die beiden darüber reichen
@@ -98,7 +98,7 @@ class GalleryIndexController extends Controller
             // Ueber visibleTo aufgeloest, wie der Index: was diese Rolle nicht
             // sieht, ist kein Ziel. findByPublicId lieferte auf einen
             // Tippfehler null und damit still eine projektlose Galerie.
-            'project_id' => ['nullable', 'string', Rule::exists('projects', 'public_id')],
+            'case_id' => ['nullable', 'string', Rule::exists('cases', 'public_id')],
             'shoot_id' => ['nullable', 'string'],
             'title' => ['required', 'string', 'max:200'],
             'is_external' => ['required', 'boolean'],
@@ -110,16 +110,16 @@ class GalleryIndexController extends Controller
             'design' => ['nullable', 'array'],
         ]);
 
-        $project = ($validated['project_id'] ?? null) === null
+        $project = ($validated['case_id'] ?? null) === null
             ? null
-            : Project::query()
+            : ClientCase::query()
                 ->visibleTo(auth('staff')->user())
-                ->where('public_id', $validated['project_id'])
+                ->where('public_id', $validated['case_id'])
                 ->firstOrFail();
 
         $gallery = Gallery::create([
-            ...Arr::except($validated, ['project_id', 'shoot_id']),
-            'project_id' => $project?->id,
+            ...Arr::except($validated, ['case_id', 'shoot_id']),
+            'case_id' => $project?->id,
             'shoot_id' => isset($validated['shoot_id'])
                 ? $project?->shoots()->where('public_id', $validated['shoot_id'])->value('id')
                 : null,

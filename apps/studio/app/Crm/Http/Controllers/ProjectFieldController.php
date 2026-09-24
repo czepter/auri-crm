@@ -12,7 +12,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 /**
- * C-25: the definitions behind projects.field_values, gated like the type they
+ * C-25: the definitions behind cases.field_values, gated like the type they
  * hang off (ProjectTypePolicy). Beside ProjectTypeController rather than under
  * it: a field is its own record with its own order and its own delete rule.
  */

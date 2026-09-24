@@ -1,7 +1,7 @@
 <?php
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Engagement\Models\ThreadParticipant;
@@ -12,13 +12,13 @@ use Illuminate\Support\Facades\Schema;
 uses(RefreshDatabase::class);
 
 it('belongs to a project and carries its messages oldest first', function () {
-    $project = Project::factory()->create();
-    $thread = Thread::factory()->for($project)->create(['subject' => 'Ablauf & Gruppenfotos']);
+    $project = ClientCase::factory()->create();
+    $thread = Thread::factory()->for($project, 'case')->create(['subject' => 'Ablauf & Gruppenfotos']);
 
     $first = Message::factory()->for($thread)->create(['created_at' => now()->subDay()]);
     $second = Message::factory()->for($thread)->create(['created_at' => now()]);
 
-    expect($thread->project->is($project))->toBeTrue()
+    expect($thread->case->is($project))->toBeTrue()
         ->and($thread->subject)->toBe('Ablauf & Gruppenfotos')
         ->and($thread->messages->pluck('id')->all())->toBe([$first->id, $second->id]);
 });

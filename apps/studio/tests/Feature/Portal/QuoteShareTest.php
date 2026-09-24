@@ -1,7 +1,7 @@
 <?php
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Models\AuditLog;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
@@ -20,10 +20,10 @@ beforeEach(function () {
 
 function sharedSentQuote(array $attributes = []): Quote
 {
-    $project = Project::factory()->create(['portal_visible' => false]);
+    $project = ClientCase::factory()->create(['portal_visible' => false]);
     $contact = Contact::factory()->create();
 
-    return Quote::factory()->for($project)->create(array_merge([
+    return Quote::factory()->for($project, 'case')->create(array_merge([
         'status' => QuoteStatus::Sent,
         'sent_at' => now(),
         'valid_until' => now()->addDays(14),

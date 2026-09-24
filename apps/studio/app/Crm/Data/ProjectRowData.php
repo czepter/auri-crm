@@ -2,9 +2,9 @@
 
 namespace App\Crm\Data;
 
-use App\Crm\Actions\DeriveProjectPosition;
+use App\Crm\Actions\DeriveCasePosition;
 use App\Crm\Enums\StagePipeline;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Support\CrmVocabulary;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -16,7 +16,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  *
  * The date is the primary shoot's, not the earliest: `is_primary` is a
  * setting, and the earliest shoot of a wedding is getting ready
- * (DesignatePrimaryShoot). Position comes from DeriveProjectPosition rather
+ * (DesignatePrimaryShoot). Position comes from DeriveCasePosition rather
  * than a second rule read off the lead, for the reason that class exists.
  */
 #[TypeScript]
@@ -39,7 +39,7 @@ class ProjectRowData extends Data
         public ?string $lastAt,
     ) {}
 
-    public static function fromProject(Project $project, DeriveProjectPosition $position): self
+    public static function fromProject(ClientCase $project, DeriveCasePosition $position): self
     {
         $shoot = $project->primaryShoot;
         $at = $position($project);

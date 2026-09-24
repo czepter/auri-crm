@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Enums\StaffRole;
 use App\Support\AuditLogger;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,7 +18,7 @@ function auditEntries(array $query = []): array
 
 it('lists the entries newest first with a plain-text event, without the context', function () {
     $owner = staffMember(StaffRole::Admin);
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     AuditLogger::record('staff.logout', $owner);
     AuditLogger::record('project.booked', $owner, ['note' => 'context-marker'], $project->public_id, $project->id);

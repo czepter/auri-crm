@@ -2,7 +2,7 @@
 
 use App\Crm\Actions\ApplyTaskTemplates;
 use App\Crm\Data\TaskRowData;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
@@ -32,7 +32,7 @@ it('blocks a task whose predecessor is still open, and names what it waits on', 
     expect($second->isBlocked())->toBeTrue()
         ->and($first->isBlocked())->toBeFalse();
 
-    $row = TaskRowData::fromTask($second->fresh()->load('project', 'dependsOn'));
+    $row = TaskRowData::fromTask($second->fresh()->load('case', 'dependsOn'));
 
     expect($row->isBlocked)->toBeTrue()
         ->and($row->blockedBy)->toBe('Vorschau senden')
@@ -100,7 +100,7 @@ it('refuses a dependency on another project\'s task', function () {
     // A plain project rather than a second bookedContactProject(): that helper
     // mints a contact at a fixed address, and C-01's unique index refuses a
     // second one.
-    $stranger = Project::factory()->create()->tasks()->create(['title' => 'Fremd', 'audience' => 'internal']);
+    $stranger = ClientCase::factory()->create()->tasks()->create(['title' => 'Fremd', 'audience' => 'internal']);
 
     $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post("/aufgaben/{$second->public_id}/abhaengigkeit", ['depends_on' => $stranger->public_id])
@@ -128,7 +128,7 @@ it('turns a template chain into a task chain when a project is booked', function
     ]);
 
     $project = bookedContactProject();
-    Shoot::factory()->for($project)->create(['is_primary' => true, 'date' => now()->addMonth()]);
+    Shoot::factory()->for($project, 'case')->create(['is_primary' => true, 'date' => now()->addMonth()]);
 
     app(ApplyTaskTemplates::class)($project);
 
@@ -149,8 +149,8 @@ it('never crosses two shoots produced from the same template chain', function ()
     ]);
 
     $project = bookedContactProject();
-    Shoot::factory()->for($project)->create(['is_primary' => true, 'date' => now()->addMonth()]);
-    Shoot::factory()->for($project)->create(['is_primary' => false, 'date' => now()->addMonths(2)]);
+    Shoot::factory()->for($project, 'case')->create(['is_primary' => true, 'date' => now()->addMonth()]);
+    Shoot::factory()->for($project, 'case')->create(['is_primary' => false, 'date' => now()->addMonths(2)]);
 
     app(ApplyTaskTemplates::class)($project);
 

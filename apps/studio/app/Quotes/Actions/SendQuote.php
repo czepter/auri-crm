@@ -53,7 +53,7 @@ class SendQuote
      * dispatching a job — and outside the DB transaction above, so a mail
      * failure can never roll back a send that already committed.
      *
-     * Silent when there is nothing to send to: ProjectFactory attaches no
+     * Silent when there is nothing to send to: ClientCaseFactory attaches no
      * contact by default, and an inquiry-stage project may genuinely have
      * none yet — neither is an error a quote-send should fail on.
      *
@@ -65,7 +65,7 @@ class SendQuote
      */
     private function mail(Quote $quote, ?string $subject, ?string $message): void
     {
-        $contact = $quote->project->primaryContact();
+        $contact = $quote->case->primaryContact();
 
         if ($contact === null || blank($contact->email)) {
             return;

@@ -2,11 +2,11 @@
 
 use App\Catalog\Models\Package;
 use App\Catalog\Models\PackageItem;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\InternalNote;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\TimelineEntry;
 use App\Documents\Models\DocumentTemplate;
@@ -71,13 +71,13 @@ it('never puts an integer identifier into a project page', function (string $suf
     // that escape belong to the shoots, the crew, the timeline (E-04), the
     // notes, the job and — M-03 — the payment plan and its installments.
     $user = User::factory()->withMfa()->create();
-    $project = Project::factory()->create();
-    $shoot = Shoot::factory()->for($project)->primary()->create();
+    $project = ClientCase::factory()->create();
+    $shoot = Shoot::factory()->for($project, 'case')->primary()->create();
     CrewAssignment::factory()->for($shoot)->create();
     TimelineEntry::factory()->for($shoot)->create();
-    InternalNote::factory()->for($project)->create();
+    InternalNote::factory()->for($project, 'case')->create();
     markBooked($project);
-    $plan = PaymentPlan::factory()->for($project)->create(['total' => 200]);
+    $plan = PaymentPlan::factory()->for($project, 'case')->create(['total' => 200]);
     PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 200, 'sort_order' => 0]);
 
     $props = $this->actingAs($user, 'staff')
@@ -106,8 +106,8 @@ it('never puts an integer identifier into a project\'s quotes page', function ()
     // Populated on purpose, per the note above the project test: an empty
     // quote proves nothing, since the key that escapes belongs to an item.
     $user = User::factory()->withMfa()->create();
-    $project = Project::factory()->create();
-    $quote = Quote::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $quote = Quote::factory()->for($project, 'case')->create();
     QuoteItem::factory()->for($quote)->create();
 
     $props = $this->actingAs($user, 'staff')
@@ -125,8 +125,8 @@ it('never puts an integer identifier into a project\'s quotes page once a quote 
     // does. Populated on purpose: predecessor_id stays null on every quote
     // NoInternalIdsTest already exercises, so only a revised pair proves it.
     $user = User::factory()->withMfa()->create();
-    $project = Project::factory()->create();
-    $predecessor = Quote::factory()->for($project)->create(['status' => QuoteStatus::Sent, 'number' => 'AN-2026-1']);
+    $project = ClientCase::factory()->create();
+    $predecessor = Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Sent, 'number' => 'AN-2026-1']);
     QuoteItem::factory()->for($predecessor)->create();
     app(ReviseQuote::class)($predecessor);
 
@@ -166,10 +166,10 @@ it('never puts an integer identifier into the portal switcher', function () {
     useSurface(Surface::PORTAL);
 
     $contact = Contact::factory()->create();
-    $first = Project::factory()->create(['portal_visible' => true]);
-    $second = Project::factory()->create(['portal_visible' => true]);
-    $first->attachContact($contact, ProjectContactRole::Primary);
-    $second->attachContact($contact, ProjectContactRole::Primary);
+    $first = ClientCase::factory()->create(['portal_visible' => true]);
+    $second = ClientCase::factory()->create(['portal_visible' => true]);
+    $first->attachContact($contact, CaseContactRole::Primary);
+    $second->attachContact($contact, CaseContactRole::Primary);
 
     $props = $this->actingAs($contact, 'portal')->get('/')->assertOk()->viewData('page')['props'];
 
@@ -180,9 +180,9 @@ it('never puts an integer identifier into a portal project screen', function () 
     useSurface(Surface::PORTAL);
 
     $contact = Contact::factory()->create();
-    $project = Project::factory()->create(['portal_visible' => true]);
-    $project->attachContact($contact, ProjectContactRole::Primary);
-    Shoot::factory()->for($project)->primary()->create();
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
+    $project->attachContact($contact, CaseContactRole::Primary);
+    Shoot::factory()->for($project, 'case')->primary()->create();
 
     $props = $this->actingAs($contact, 'portal')
         ->get("/projekte/{$project->public_id}")
@@ -196,7 +196,7 @@ it('never puts an integer identifier into a project\'s messages tab', function (
     // Populated on purpose, per the note above the project test: an empty
     // thread proves nothing, since the key that escapes belongs to a message.
     $user = User::factory()->withMfa()->create();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $contact = Contact::factory()->create();
     app(StartThread::class)($project, $contact, 'Thema', 'Nachricht.');
 
@@ -217,8 +217,8 @@ it('never puts an integer identifier into the portal messages screen', function 
     StudioSettings::query()->update(['portal_messaging_mode' => 'any']);
 
     $contact = Contact::factory()->create();
-    $project = Project::factory()->create(['portal_visible' => true]);
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
+    $project->attachContact($contact, CaseContactRole::Primary);
     app(StartThread::class)($project, $contact, 'Thema', 'Nachricht.');
 
     $props = $this->actingAs($contact, 'portal')
@@ -236,15 +236,15 @@ it('never puts an integer identifier into the portal quote screen once accepted,
     Cache::store('redis')->flush();
     StudioSettings::query()->update(['portal_accept_quotes_enabled' => true]);
 
-    $project = Project::factory()->create(['portal_visible' => true]);
-    $quote = Quote::factory()->for($project)->create([
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
+    $quote = Quote::factory()->for($project, 'case')->create([
         'status' => QuoteStatus::Sent,
         'number' => 'AN-2026-1',
         'sent_at' => now(),
     ]);
     QuoteItem::factory()->for($quote)->create();
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     // The URL itself names the project by public id, never by its integer
     // primary key — this is the request that writes the acceptance.

@@ -53,7 +53,7 @@ class RenderQuotePdf
     public function html(Quote $quote, ?QuoteLayout $layoutOverride = null): string
     {
         $quote = $quote->asSeenByClient();
-        $project = $quote->project;
+        $project = $quote->case;
         $data = $this->mergeData->fromProject($project, $this->settings);
 
         $template = DocumentTemplate::query()

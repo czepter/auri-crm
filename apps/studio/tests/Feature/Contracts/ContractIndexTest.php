@@ -9,8 +9,8 @@ uses(RefreshDatabase::class);
 it('lists the contracts that went out and leaves the drafts at the project', function () {
     $project = bookedContactProject();
 
-    $sent = Contract::factory()->for($project)->create();
-    Contract::factory()->draft()->for($project)->create(['version' => 2]);
+    $sent = Contract::factory()->for($project, 'case')->create();
+    Contract::factory()->draft()->for($project, 'case')->create(['version' => 2]);
 
     $this->actingAs(staffMember(StaffRole::Admin), 'staff');
 

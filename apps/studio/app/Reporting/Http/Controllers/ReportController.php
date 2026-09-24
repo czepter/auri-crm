@@ -26,7 +26,7 @@ use Inertia\Response;
  * Der Vergleichszeitraum ist immer der gleich lange davor — siehe
  * ReportPeriod.
  *
- * Authority: ViewAllProjects. These figures aggregate the whole studio's
+ * Authority: ViewAllCases. These figures aggregate the whole studio's
  * book, so a second shooter who only reaches the projects they are crewed on
  * has no business reading them — and a per-role filtered aggregate would be
  * a number that means something different depending who asks, which is worse
@@ -37,7 +37,7 @@ class ReportController extends Controller
     public function __invoke(Request $request): Response
     {
         abort_unless(
-            auth('staff')->user()?->can(Capability::ViewAllProjects->value) ?? false,
+            auth('staff')->user()?->can(Capability::ViewAllCases->value) ?? false,
             403,
         );
 

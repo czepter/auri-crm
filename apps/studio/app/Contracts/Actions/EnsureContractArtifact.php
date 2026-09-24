@@ -54,14 +54,14 @@ class EnsureContractArtifact
             return $contract;
         }
 
-        return $this->render($contract->fresh(['project', 'template']) ?? $contract);
+        return $this->render($contract->fresh(['case', 'template']) ?? $contract);
     }
 
     private function render(Contract $contract): Contract
     {
         $resolved = MergeFieldResolver::resolve(
             $contract->resolvedBody(),
-            $this->mergeData->fromProject($contract->project, $this->settings),
+            $this->mergeData->fromProject($contract->case, $this->settings),
         );
 
         $html = $this->renderer->wrap(DocumentTemplateType::Contract, $resolved, $this->settings);

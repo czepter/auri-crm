@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GallerySet;
 use App\Media\Models\Asset;
@@ -48,11 +48,11 @@ it('hands out no asset list at all while the gate is closed', function () {
 });
 
 it('shows the grid to the client whose booking the gallery belongs to, without the password', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
-    $gallery = publishedGallery(['project_id' => $project->id]);
+    $gallery = publishedGallery(['case_id' => $project->id]);
     $gallery->rotateViewPassword('basthorst2026');
 
     $props = test()->actingAs($contact, 'portal')
@@ -64,7 +64,7 @@ it('shows the grid to the client whose booking the gallery belongs to, without t
 });
 
 it('still asks a signed-in client for the password on someone else\'s gallery', function () {
-    $gallery = publishedGallery(['project_id' => Project::factory()->create(['portal_visible' => true])->id]);
+    $gallery = publishedGallery(['case_id' => ClientCase::factory()->create(['portal_visible' => true])->id]);
     $gallery->rotateViewPassword('basthorst2026');
 
     $props = test()->actingAs(Contact::factory()->create(), 'portal')
@@ -108,10 +108,10 @@ it('sends a guest their own hearts for the filter bar, and a client none', funct
 
     expect(props("/galerien/{$gallery->public_id}")['favorited'])->toBe(['galleries/g1/b.jpg']);
 
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
-    $own = publishedGallery(['project_id' => $project->id]);
+    $project->attachContact($contact, CaseContactRole::Primary);
+    $own = publishedGallery(['case_id' => $project->id]);
 
     $props = test()->actingAs($contact, 'portal')
         ->get("/galerien/{$own->public_id}")

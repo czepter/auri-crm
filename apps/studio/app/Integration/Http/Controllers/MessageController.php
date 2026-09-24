@@ -2,7 +2,7 @@
 
 namespace App\Integration\Http\Controllers;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Engagement\Actions\RecordMessage;
 use App\Engagement\Data\MessageData;
 use App\Http\Controllers\Controller;
@@ -22,7 +22,7 @@ use Illuminate\Validation\ValidationException;
  */
 class MessageController extends Controller
 {
-    public function store(Request $request, Project $project, RecordMessage $record): JsonResponse
+    public function store(Request $request, ClientCase $case, RecordMessage $record): JsonResponse
     {
         $validated = $request->validate([
             'from' => ['required', Rule::in(['client', 'studio'])],
@@ -34,7 +34,7 @@ class MessageController extends Controller
         $principal = $request->user('api');
 
         $author = $validated['from'] === 'client'
-            ? $record->contact($project, $validated['contact'] ?? null)
+            ? $record->contact($case, $validated['contact'] ?? null)
             : ($principal instanceof User ? $principal : null);
 
         if ($author === null) {
@@ -44,7 +44,7 @@ class MessageController extends Controller
         }
 
         $message = $record(
-            $project,
+            $case,
             $author,
             $validated['body'],
             isset($validated['sent_at']) ? Carbon::parse($validated['sent_at']) : now(),

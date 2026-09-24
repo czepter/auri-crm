@@ -5,7 +5,7 @@ namespace App\Quotes\Actions;
 use App\Automation\Models\AutomationRun;
 use App\Crm\Data\DomainRowData;
 use App\Crm\Data\RowActionData;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Models\User;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
@@ -59,26 +59,26 @@ class ReadInquiryColumn
             ->whereDate('valid_until', '>=', now()->toDateString())
             ->whereDate('valid_until', '<=', now()->addDays(self::EXPIRY_WINDOW_DAYS)->toDateString())
             ->when($viewer !== null, fn ($query) => $query->whereIn(
-                'project_id',
-                Project::query()->visibleTo($viewer)->select('projects.id'),
+                'case_id',
+                ClientCase::query()->visibleTo($viewer)->select('cases.id'),
             ))
-            ->with(['project', 'items'])
+            ->with(['case', 'items'])
             ->orderBy('valid_until')
             ->get()
             ->map(function (Quote $quote) {
-                $nudges = $this->nudgeCount($quote->project_id);
+                $nudges = $this->nudgeCount($quote->case_id);
 
                 if ($nudges === 0) {
                     return null;
                 }
 
                 return new DomainRowData(
-                    projectId: $quote->project->public_id,
-                    who: $quote->project->name,
+                    projectId: $quote->case->public_id,
+                    who: $quote->case->name,
                     what: $this->worth($quote).' still,',
                     emphasis: 'läuft '.$quote->valid_until->format('d.m.Y').' ab',
                     whatTail: sprintf('· %d× erinnert, keine Reaktion', $nudges),
-                    action: RowActionData::tel('Anrufen', $quote->project->primaryContact()?->phone),
+                    action: RowActionData::tel('Anrufen', $quote->case->primaryContact()?->phone),
                     hot: true,
                 );
             })
@@ -121,7 +121,7 @@ class ReadInquiryColumn
     {
         return AutomationRun::query()
             ->whereHas('rule', fn ($query) => $query->where('key', self::FOLLOW_UP_RULE))
-            ->where('anchorable_type', (new Project)->getMorphClass())
+            ->where('anchorable_type', (new ClientCase)->getMorphClass())
             ->where('anchorable_id', $projectId)
             ->count();
     }

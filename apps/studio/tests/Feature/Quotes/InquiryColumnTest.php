@@ -5,9 +5,9 @@ use App\Automation\Enums\AutomationAnchor;
 use App\Automation\Enums\AutomationOffsetDirection;
 use App\Automation\Enums\AutomationTriggerType;
 use App\Automation\Models\AutomationRule;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Enums\StaffRole;
 use App\Models\User;
 use App\Quotes\Actions\ReadInquiryColumn;
@@ -30,12 +30,12 @@ beforeEach(function () {
     ]);
 });
 
-function projectWithPhone(string $name, string $phone = '+49 40 1234567'): Project
+function projectWithPhone(string $name, string $phone = '+49 40 1234567'): ClientCase
 {
-    $project = Project::factory()->create(['name' => $name]);
+    $project = ClientCase::factory()->create(['name' => $name]);
     $project->attachContact(
         Contact::factory()->create(['phone' => $phone]),
-        ProjectContactRole::Primary,
+        CaseContactRole::Primary,
     );
 
     return $project;
@@ -46,7 +46,7 @@ it('does not row a silent quote the machine has not chased yet', function () {
     // cannot do. A quote whose reminder has not gone out yet is the machine's
     // job, not a phone call.
     $project = projectWithPhone('Reuter & Sölter');
-    Quote::factory()->for($project)->create([
+    Quote::factory()->for($project, 'case')->create([
         'status' => QuoteStatus::Sent,
         'valid_until' => now()->addDays(5)->toDateString(),
     ]);
@@ -56,7 +56,7 @@ it('does not row a silent quote the machine has not chased yet', function () {
 
 it('rows a silent quote once the reminders are exhausted', function () {
     $project = projectWithPhone('Reuter & Sölter');
-    $quote = Quote::factory()->for($project)->create([
+    $quote = Quote::factory()->for($project, 'case')->create([
         'status' => QuoteStatus::Sent,
         'valid_until' => now()->addDays(5)->toDateString(),
     ]);
@@ -81,7 +81,7 @@ it('drops the action when the contact has no phone number', function () {
     // A button that dials nothing is worse than no button; the row still
     // states the fact.
     $project = projectWithPhone('Ohne Telefon', phone: '');
-    $quote = Quote::factory()->for($project)->create([
+    $quote = Quote::factory()->for($project, 'case')->create([
         'status' => QuoteStatus::Sent,
         'valid_until' => now()->addDays(5)->toDateString(),
     ]);
@@ -92,7 +92,7 @@ it('drops the action when the contact has no phone number', function () {
 
 it('shows a crew member only their own projects', function () {
     $project = projectWithPhone('Nicht meins');
-    Quote::factory()->for($project)->create([
+    Quote::factory()->for($project, 'case')->create([
         'status' => QuoteStatus::Accepted,
         'accepted_at' => now()->subDay(),
     ]);
@@ -104,11 +104,11 @@ it('shows a crew member only their own projects', function () {
 
 it('orders chased quotes by soonest expiry first', function () {
     $soon = projectWithPhone('Läuft bald ab');
-    Quote::factory()->for($soon)->create(['status' => QuoteStatus::Sent, 'valid_until' => now()->addDays(3)->toDateString()]);
+    Quote::factory()->for($soon, 'case')->create(['status' => QuoteStatus::Sent, 'valid_until' => now()->addDays(3)->toDateString()]);
     app(FireAutomationRule::class)($this->rule, $soon, now()->subDay()->toDateString());
 
     $later = projectWithPhone('Läuft später ab');
-    Quote::factory()->for($later)->create(['status' => QuoteStatus::Sent, 'valid_until' => now()->addDays(10)->toDateString()]);
+    Quote::factory()->for($later, 'case')->create(['status' => QuoteStatus::Sent, 'valid_until' => now()->addDays(10)->toDateString()]);
     app(FireAutomationRule::class)($this->rule, $later, now()->subDay()->toDateString());
 
     $rows = app(ReadInquiryColumn::class)();
@@ -117,7 +117,7 @@ it('orders chased quotes by soonest expiry first', function () {
 });
 
 it('does not throw when no viewer is authenticated', function () {
-    // Project::visibleTo() takes a non-nullable User; the guard on each
+    // ClientCase::visibleTo() takes a non-nullable User; the guard on each
     // sub-query keeps a null viewer from ever reaching it (mirrors
     // ReadPaymentColumn's shape).
     auth('staff')->logout();

@@ -34,12 +34,12 @@ class ShootReadData extends Data
         public string $updatedAt,
     ) {}
 
-    /** Requires `project:id,public_id` and `crew.user` already eager loaded — see CrmReadController. */
+    /** Requires `case:id,public_id` and `crew.user` already eager loaded — see CrmReadController. */
     public static function fromModel(Shoot $shoot): self
     {
         return new self(
             id: $shoot->public_id,
-            projectId: $shoot->project->public_id,
+            projectId: $shoot->case->public_id,
             kind: $shoot->kind,
             label: $shoot->label,
             date: $shoot->date?->format('Y-m-d'),

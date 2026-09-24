@@ -1,12 +1,12 @@
 <?php
 
 use App\Crm\Enums\CaptureChannel;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\LeadStage;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\User;
 use App\Quotes\Models\Quote;
@@ -26,10 +26,10 @@ function leadOn(
     int $daysAgo = 0,
     string $name = 'Meier & Kowalski',
 ): Lead {
-    $project = Project::factory()->wedding()->create(['name' => $name]);
-    Shoot::factory()->for($project)->primary()->on($date)->create();
+    $project = ClientCase::factory()->wedding()->create(['name' => $name]);
+    Shoot::factory()->for($project, 'case')->primary()->on($date)->create();
 
-    return Lead::factory()->for($project)->atStage($stage, $daysAgo)->create();
+    return Lead::factory()->for($project, 'case')->atStage($stage, $daysAgo)->create();
 }
 
 function boardProps(): array
@@ -64,16 +64,16 @@ it('keeps lost leads off the board entirely', function () {
 
 it('renders the contact names, the primary date and the shoot count', function () {
     $lead = leadOn('2026-06-14', name: 'Steffens & Falk');
-    $project = $lead->project;
+    $project = $lead->case;
     $project->attachContact(
         Contact::factory()->create(['name' => 'Annika Steffens']),
-        ProjectContactRole::Primary,
+        CaseContactRole::Primary,
     );
     $project->attachContact(
         Contact::factory()->create(['name' => 'Ruben Falk']),
-        ProjectContactRole::Partner,
+        CaseContactRole::Partner,
     );
-    Shoot::factory()->for($project)->on('2026-03-01')->create();
+    Shoot::factory()->for($project, 'case')->on('2026-03-01')->create();
 
     $card = boardProps()['columns'][0]['cards'][0];
 
@@ -132,7 +132,7 @@ it('clears the flag when the colliding project moves, without writing to the lea
 
     $before = $first->fresh()->updated_at;
 
-    $second->project->primaryShoot->update(['date' => '2026-06-21']);
+    $second->case->primaryShoot->update(['date' => '2026-06-21']);
 
     $cards = boardProps()['columns'][0]['cards'];
 
@@ -200,17 +200,14 @@ it('issues no more queries for eleven cards spanning several closures than it di
     expect($withClosures)->toBe($withoutClosures);
 });
 
-// The card carries both public ids, and the stage route only accepts the
-// lead's. Posting the id the card links with is what the board did for a
-// release, and it 404s — so the test posts what the card actually sends.
+// The stage route takes the id the card links with (#520). While lead and
+// project had ids of their own, posting the wrong one 404ed for a release.
 it('advances a lead using the identifier the card carries', function () {
     $lead = leadOn('2026-06-14');
     $card = boardProps()['columns'][0]['cards'][0];
 
-    expect($card['leadId'])->not->toBe($card['id']);
-
     $this->actingAs($this->staff, 'staff')
-        ->post("/anfragen/{$card['leadId']}/stufe", ['stage' => 'contacted'])
+        ->post("/anfragen/{$card['id']}/stufe", ['stage' => 'contacted'])
         ->assertRedirect('/anfragen');
 
     expect($lead->fresh()->stage->key)->toBe(LeadStage::Contacted->value);
@@ -220,7 +217,7 @@ it('advances a lead from the board', function () {
     $lead = leadOn('2026-06-14');
 
     $this->actingAs($this->staff, 'staff')
-        ->post("/anfragen/{$lead->public_id}/stufe", ['stage' => 'contacted'])
+        ->post("/anfragen/{$lead->case->public_id}/stufe", ['stage' => 'contacted'])
         ->assertRedirect('/anfragen');
 
     expect($lead->fresh()->stage->key)->toBe(LeadStage::Contacted->value);
@@ -232,7 +229,7 @@ it('moves a lead backward from the board', function () {
     $lead = leadOn('2026-06-14', LeadStage::QuoteSent);
 
     $this->actingAs($this->staff, 'staff')
-        ->post("/anfragen/{$lead->public_id}/stufe", ['stage' => 'new'])
+        ->post("/anfragen/{$lead->case->public_id}/stufe", ['stage' => 'new'])
         ->assertRedirect('/anfragen');
 
     expect($lead->fresh()->stage->key)->toBe(LeadStage::New->value);
@@ -242,7 +239,7 @@ it('refuses a move to the stage the card already sits in', function () {
     $lead = leadOn('2026-06-14', LeadStage::QuoteSent);
 
     $this->actingAs($this->staff, 'staff')
-        ->post("/anfragen/{$lead->public_id}/stufe", ['stage' => 'quote_sent'])
+        ->post("/anfragen/{$lead->case->public_id}/stufe", ['stage' => 'quote_sent'])
         ->assertSessionHasErrors('stage');
 
     expect($lead->fresh()->stage->key)->toBe(LeadStage::QuoteSent->value);
@@ -266,10 +263,10 @@ it('puts no integer identifier on the board', function () {
 // staff otherwise go to Auswertungen for.
 it('sums each stage from the quotes actually sent', function () {
     $lead = leadOn('2026-06-14', LeadStage::QuoteSent);
-    Quote::factory()->for($lead->project)->create(['total' => 590000, 'sent_at' => now()->subDay()]);
+    Quote::factory()->for($lead->case, 'case')->create(['total' => 590000, 'sent_at' => now()->subDay()]);
 
     $other = leadOn('2026-07-11', LeadStage::QuoteSent, name: 'Petersen');
-    Quote::factory()->for($other->project)->create(['total' => 310000, 'sent_at' => now()->subDay()]);
+    Quote::factory()->for($other->case, 'case')->create(['total' => 310000, 'sent_at' => now()->subDay()]);
 
     // Nothing sent: not a zero in the sum, and a dash in the value column.
     leadOn('2026-08-02', LeadStage::New, name: 'Sundermann');
@@ -317,14 +314,12 @@ it('sorts an undated inquiry last in the table and in the queue', function () {
         ->and(collect($pane['rows'])->pluck('name')->all())->toBe(['Mit Termin', 'Ohne Termin']);
 });
 
-// The pane links to /anfragen/{lead}, which binds the lead's public id — not
-// the project's, which the card next to it carries.
 it('links a queue row to the case it stands for', function () {
     $lead = leadOn('2026-06-14', name: 'Neu');
 
     $row = collect(collect(boardProps()['queue'])->firstWhere('key', 'unbeantwortet')['rows'])->first();
 
-    expect($row['id'])->toBe($lead->public_id);
+    expect($row['id'])->toBe($lead->case->public_id);
 
     test()->actingAs(test()->staff, 'staff')->get("/anfragen/{$row['id']}")->assertOk();
 });
@@ -332,7 +327,7 @@ it('links a queue row to the case it stands for', function () {
 it('leaves a bare "Sonstige" channel off the case', function () {
     $lead = leadOn('2026-06-14');
     $channel = fn () => test()->actingAs(test()->staff, 'staff')
-        ->get("/anfragen/{$lead->public_id}")->viewData('page')['props']['lead']['capturedVia'];
+        ->get("/anfragen/{$lead->case->public_id}")->viewData('page')['props']['lead']['capturedVia'];
 
     $lead->forceFill(['captured_via' => CaptureChannel::Other, 'captured_via_other' => null])->save();
     expect($channel())->toBeNull();
@@ -342,14 +337,14 @@ it('leaves a bare "Sonstige" channel off the case', function () {
 });
 
 it('names the primary contact first in the queue as well as on the card', function () {
-    $project = leadOn('2026-06-14', name: 'Steffens & Falk')->project;
+    $project = leadOn('2026-06-14', name: 'Steffens & Falk')->case;
     $project->attachContact(
         Contact::factory()->create(['name' => 'Ruben Falk']),
-        ProjectContactRole::Partner,
+        CaseContactRole::Partner,
     );
     $project->attachContact(
         Contact::factory()->create(['name' => 'Annika Steffens']),
-        ProjectContactRole::Primary,
+        CaseContactRole::Primary,
     );
 
     $props = boardProps();
@@ -383,7 +378,7 @@ it('falls back to the board when the user has chosen nothing', function () {
 // shows the same case twice, under two vocabularies.
 it('leaves booked cases off the board', function () {
     $lead = leadOn('2026-06-14', LeadStage::QuoteAccepted);
-    markBooked($lead->project);
+    markBooked($lead->case);
 
     leadOn('2026-07-11', LeadStage::New, name: 'Petersen');
 

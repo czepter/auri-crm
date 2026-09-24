@@ -4,8 +4,8 @@ namespace App\Payments\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Documents\Models\DocumentTemplate;
 use App\Payments\Enums\CancellationKind;
 use App\Payments\Enums\PaymentInstallmentStatus;
@@ -30,7 +30,7 @@ class Invoice extends Model
     use HasPublicId;
 
     protected $fillable = [
-        'number', 'issued_at', 'intro', 'outro', 'contact_id', 'project_id', 'template_id', 'pdf_path',
+        'number', 'issued_at', 'intro', 'outro', 'contact_id', 'case_id', 'template_id', 'pdf_path',
         'sent_at', 'viewed_at', 'cancelled_at', 'cancellation_kind', 'cancellation_reason',
         'discount_type', 'discount_value',
     ];
@@ -67,9 +67,9 @@ class Invoice extends Model
         return $this->belongsTo(Contact::class);
     }
 
-    public function project(): BelongsTo
+    public function case(): BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(ClientCase::class);
     }
 
     /** Pinned at issue, so editing the wording later cannot change a document a client holds. */

@@ -1,14 +1,23 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Models\AuditLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
+// The backfill predates the case rename and writes the old table and column.
+function backfillBeforeCaseRename(): void
+{
+    $rename = require database_path('migrations/2026_09_23_110000_rename_projects_to_cases.php');
+    $rename->down();
+    (require database_path('migrations/2026_08_13_000200_backfill_audit_log_project_ids.php'))->up();
+    $rename->up();
+}
+
 it('places a historical row that names its project in context', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $id = DB::table('audit_logs')->insertGetId([
         'tenant_id' => config('tenancy.tenant_id'),
@@ -18,9 +27,9 @@ it('places a historical row that names its project in context', function () {
         'created_at' => now(),
     ]);
 
-    (require database_path('migrations/2026_08_13_000200_backfill_audit_log_project_ids.php'))->up();
+    backfillBeforeCaseRename();
 
-    expect(AuditLog::find($id)->project_id)->toBe($project->id);
+    expect(AuditLog::find($id)->case_id)->toBe($project->id);
 });
 
 it('leaves a historical row with no project in context alone', function () {
@@ -32,7 +41,7 @@ it('leaves a historical row with no project in context alone', function () {
         'created_at' => now(),
     ]);
 
-    (require database_path('migrations/2026_08_13_000200_backfill_audit_log_project_ids.php'))->up();
+    backfillBeforeCaseRename();
 
-    expect(AuditLog::find($id)->project_id)->toBeNull();
+    expect(AuditLog::find($id)->case_id)->toBeNull();
 });

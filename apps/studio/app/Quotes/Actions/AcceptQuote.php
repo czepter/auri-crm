@@ -95,13 +95,13 @@ class AcceptQuote
             // key to staff users, and a Contact is never one.
             AuditLogger::record(
                 event: 'quote.accepted',
-                context: ['project' => $quote->project->public_id, 'contact' => $contact->public_id],
+                context: ['project' => $quote->case->public_id, 'contact' => $contact->public_id],
                 subject: $quote->public_id,
-                projectId: $quote->project_id,
+                projectId: $quote->case_id,
                 occurredAt: $at,
             );
 
-            $this->leads->reach($quote->project->lead, StageAnchor::QuoteAccepted, at: $at);
+            $this->leads->reach($quote->case->lead, StageAnchor::QuoteAccepted, at: $at);
         });
 
         $accepted = $quote->fresh();

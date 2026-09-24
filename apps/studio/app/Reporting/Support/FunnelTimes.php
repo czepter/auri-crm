@@ -184,7 +184,7 @@ class FunnelTimes
     {
         $query = Lead::query()->whereBetween('leads.captured_at', [$from, $to]);
 
-        ProjectFilter::apply($query, $type, 'leads.project_id');
+        ProjectFilter::apply($query, $type, 'leads.case_id');
 
         return $query;
     }
@@ -192,20 +192,22 @@ class FunnelTimes
     /**
      * Jeder Schritt-Wechsel einer im Fenster erfassten Anfrage.
      *
-     * Der Join geht über public_id UND tenant_id: public_ids sind je Mandant
-     * vergeben, und ein Join allein darüber könnte zwei Mandanten verschränken.
+     * Der Join geht über die public_id des Cases UND tenant_id: public_ids sind
+     * je Mandant vergeben, und ein Join allein darüber könnte zwei Mandanten
+     * verschränken.
      */
     private static function moves(CarbonInterface $from, CarbonInterface $to, ?ProjectType $type)
     {
         $query = AuditLog::query()
-            ->join('leads', function ($join) {
-                $join->on('leads.public_id', '=', 'audit_logs.subject')
-                    ->on('leads.tenant_id', '=', 'audit_logs.tenant_id');
+            ->join('cases', function ($join) {
+                $join->on('cases.public_id', '=', 'audit_logs.subject')
+                    ->on('cases.tenant_id', '=', 'audit_logs.tenant_id');
             })
+            ->join('leads', 'leads.case_id', '=', 'cases.id')
             ->where('audit_logs.event', 'lead.stage_changed')
             ->whereBetween('leads.captured_at', [$from, $to]);
 
-        ProjectFilter::apply($query, $type, 'leads.project_id');
+        ProjectFilter::apply($query, $type, 'leads.case_id');
 
         return $query;
     }

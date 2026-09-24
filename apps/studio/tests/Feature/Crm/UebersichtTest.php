@@ -1,10 +1,10 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\TaskAudience;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Enums\StaffRole;
@@ -26,9 +26,9 @@ beforeEach(function () {
     $this->actingAs($this->staff, 'staff');
 });
 
-function bookedForDashboard(string $name = 'Meier & Kowalski'): Project
+function bookedForDashboard(string $name = 'Meier & Kowalski'): ClientCase
 {
-    $project = Project::factory()->create(['name' => $name]);
+    $project = ClientCase::factory()->create(['name' => $name]);
     markBooked($project);
 
     return $project;
@@ -36,8 +36,8 @@ function bookedForDashboard(string $name = 'Meier & Kowalski'): Project
 
 it('lists upcoming shooting days in time order, with no week window', function () {
     $project = bookedForDashboard();
-    Shoot::factory()->for($project)->on(now()->addDays(20)->format('Y-m-d'))->create(['call_time' => '14:00', 'venue_name' => 'Gut Basthorst']);
-    Shoot::factory()->for($project)->on(now()->addDays(2)->format('Y-m-d'))->create(['call_time' => '09:00']);
+    Shoot::factory()->for($project, 'case')->on(now()->addDays(20)->format('Y-m-d'))->create(['call_time' => '14:00', 'venue_name' => 'Gut Basthorst']);
+    Shoot::factory()->for($project, 'case')->on(now()->addDays(2)->format('Y-m-d'))->create(['call_time' => '09:00']);
 
     $entries = props('/')['entries'];
 
@@ -51,11 +51,11 @@ it('lists upcoming shooting days in time order, with no week window', function (
 
 it('leaves out what is past, cancelled, or unbooked', function () {
     $booked = bookedForDashboard();
-    Shoot::factory()->for($booked)->on(now()->subDay()->format('Y-m-d'))->create();
-    Shoot::factory()->for($booked)->on(now()->addDays(4)->format('Y-m-d'))->cancelled('Abgesagt')->create();
-    Shoot::factory()->for($booked)->on(now()->addDays(3)->format('Y-m-d'))->create();
+    Shoot::factory()->for($booked, 'case')->on(now()->subDay()->format('Y-m-d'))->create();
+    Shoot::factory()->for($booked, 'case')->on(now()->addDays(4)->format('Y-m-d'))->cancelled('Abgesagt')->create();
+    Shoot::factory()->for($booked, 'case')->on(now()->addDays(3)->format('Y-m-d'))->create();
 
-    Shoot::factory()->for(Project::factory()->create())->on(now()->addDays(5)->format('Y-m-d'))->create();
+    Shoot::factory()->for(ClientCase::factory()->create(), 'case')->on(now()->addDays(5)->format('Y-m-d'))->create();
 
     expect(props('/')['entries'])->toHaveCount(1);
 });
@@ -89,11 +89,11 @@ it('lists what is owed, overdue first by date', function () {
 });
 
 it('caps the tasks at four, not at one row per project', function () {
-    $loud = Project::factory()->create(['name' => 'Laut']);
-    Task::factory()->for($loud)->count(9)->due(now()->subDays(3)->format('Y-m-d'))->create();
+    $loud = ClientCase::factory()->create(['name' => 'Laut']);
+    Task::factory()->for($loud, 'case')->count(9)->due(now()->subDays(3)->format('Y-m-d'))->create();
 
-    $quiet = Project::factory()->create(['name' => 'Leise']);
-    Task::factory()->for($quiet)->due(now()->subDay()->format('Y-m-d'))->create();
+    $quiet = ClientCase::factory()->create(['name' => 'Leise']);
+    Task::factory()->for($quiet, 'case')->due(now()->subDay()->format('Y-m-d'))->create();
 
     $props = props('/');
 
@@ -134,20 +134,20 @@ it('marks a task done on the day it was done, and corrects that day without reop
 
 it('never puts an integer identifier into the übersicht', function () {
     $project = bookedForDashboard();
-    $shoot = Shoot::factory()->for($project)->on(now()->addDay()->format('Y-m-d'))->create();
+    $shoot = Shoot::factory()->for($project, 'case')->on(now()->addDay()->format('Y-m-d'))->create();
     CrewAssignment::factory()->for($shoot)->create();
-    Task::factory()->for($project)->create(['shoot_id' => $shoot->id, 'audience' => TaskAudience::Client]);
-    Quote::factory()->for($project)->create(['status' => QuoteStatus::Sent, 'sent_at' => now()->subDays(20), 'total' => 340_000]);
+    Task::factory()->for($project, 'case')->create(['shoot_id' => $shoot->id, 'audience' => TaskAudience::Client]);
+    Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Sent, 'sent_at' => now()->subDays(20), 'total' => 340_000]);
     AuditLogger::record(event: 'quote.sent', subject: 'q', projectId: $project->id);
 
     expect(integerIdPaths(props('/')))->toBe([]);
 });
 
 it('carries the rows owed on payments under what is to do', function () {
-    $project = Project::factory()->create(['name' => 'Duhnkrack & W.']);
-    $project->attachContact(Contact::factory()->create(['phone' => '+4940123']), ProjectContactRole::Primary);
+    $project = ClientCase::factory()->create(['name' => 'Duhnkrack & W.']);
+    $project->attachContact(Contact::factory()->create(['phone' => '+4940123']), CaseContactRole::Primary);
     markBooked($project);
-    $plan = PaymentPlan::factory()->for($project)->create(['total' => 110000]);
+    $plan = PaymentPlan::factory()->for($project, 'case')->create(['total' => 110000]);
     PaymentInstallment::factory()->for($plan, 'plan')->create([
         'amount' => 110000,
         'due_on' => now()->subDays(20)->toDateString(),
@@ -168,10 +168,10 @@ it('shows nothing to do when nothing is owed', function () {
 });
 
 it('lists sent quotes still waiting, and offers a follow-up once they are old', function () {
-    $project = Project::factory()->create(['name' => 'Petersen']);
-    Quote::factory()->for($project)->create(['status' => QuoteStatus::Sent, 'sent_at' => now()->subDays(20), 'total' => 340_000]);
-    Quote::factory()->for($project)->create(['status' => QuoteStatus::Sent, 'sent_at' => now()->subDays(4), 'total' => 500_000]);
-    Quote::factory()->for($project)->create(['status' => QuoteStatus::Accepted, 'sent_at' => now()->subDays(30)]);
+    $project = ClientCase::factory()->create(['name' => 'Petersen']);
+    Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Sent, 'sent_at' => now()->subDays(20), 'total' => 340_000]);
+    Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Sent, 'sent_at' => now()->subDays(4), 'total' => 500_000]);
+    Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Accepted, 'sent_at' => now()->subDays(30)]);
 
     $rows = props('/')['quotesOut'];
 
@@ -184,15 +184,15 @@ it('lists sent quotes still waiting, and offers a follow-up once they are old', 
 });
 
 it('carries the Galerien field', function () {
-    Gallery::factory()->for(Project::factory()->create())->create(['expires_at' => now()->addDays(12)]);
+    Gallery::factory()->for(ClientCase::factory()->create(), 'case')->create(['expires_at' => now()->addDays(12)]);
 
     expect(props('/')['galleries'])->toHaveCount(1);
 });
 
 it('sums the pipeline from quotes still in play', function () {
-    $project = Project::factory()->create();
-    Quote::factory()->for($project)->create(['status' => QuoteStatus::Sent, 'total' => 4875000]);
-    Quote::factory()->for($project)->create(['status' => QuoteStatus::Accepted, 'total' => 900000]);
+    $project = ClientCase::factory()->create();
+    Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Sent, 'total' => 4875000]);
+    Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Accepted, 'total' => 900000]);
 
     expect(props('/')['pipeline'])->toBe(['total' => 4875000, 'priorYear' => null]);
 });
@@ -238,10 +238,10 @@ it('reports nothing owed when there is no plan', function () {
 });
 
 it('counts quotes over the chosen range, with the same range a year earlier beside them', function () {
-    $project = Project::factory()->create();
-    Quote::factory()->for($project)->count(5)->create(['status' => QuoteStatus::Sent, 'sent_at' => now()->subMonths(3)]);
-    Quote::factory()->for($project)->count(3)->create(['status' => QuoteStatus::Accepted, 'sent_at' => now()->subMonths(3), 'accepted_at' => now()->subMonths(2)]);
-    Quote::factory()->for($project)->create(['status' => QuoteStatus::Accepted, 'sent_at' => now()->subMonths(18), 'accepted_at' => now()->subMonths(17)]);
+    $project = ClientCase::factory()->create();
+    Quote::factory()->for($project, 'case')->count(5)->create(['status' => QuoteStatus::Sent, 'sent_at' => now()->subMonths(3)]);
+    Quote::factory()->for($project, 'case')->count(3)->create(['status' => QuoteStatus::Accepted, 'sent_at' => now()->subMonths(3), 'accepted_at' => now()->subMonths(2)]);
+    Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Accepted, 'sent_at' => now()->subMonths(18), 'accepted_at' => now()->subMonths(17)]);
 
     expect(props('/?zeitraum=year')['quotes'])->toBe(['sent' => 8, 'accepted' => 3, 'priorSent' => 1, 'priorAccepted' => 1])
         ->and(props('/?zeitraum=30')['quotes'])->toBe(['sent' => 0, 'accepted' => 0, 'priorSent' => null, 'priorAccepted' => null]);
@@ -253,20 +253,20 @@ it('falls back to thirty days for a range it does not know', function () {
 
 it('counts booked shooting days in the range and a year earlier', function () {
     $project = bookedForDashboard();
-    Shoot::factory()->for($project)->on(now()->subDays(10)->format('Y-m-d'))->create();
-    Shoot::factory()->for($project)->on(now()->subDays(12)->format('Y-m-d'))->cancelled('Abgesagt')->create();
-    Shoot::factory()->for($project)->on(now()->subYear()->subDays(10)->format('Y-m-d'))->create();
-    Shoot::factory()->for(Project::factory()->create())->on(now()->subDays(5)->format('Y-m-d'))->create();
+    Shoot::factory()->for($project, 'case')->on(now()->subDays(10)->format('Y-m-d'))->create();
+    Shoot::factory()->for($project, 'case')->on(now()->subDays(12)->format('Y-m-d'))->cancelled('Abgesagt')->create();
+    Shoot::factory()->for($project, 'case')->on(now()->subYear()->subDays(10)->format('Y-m-d'))->create();
+    Shoot::factory()->for(ClientCase::factory()->create(), 'case')->on(now()->subDays(5)->format('Y-m-d'))->create();
 
     expect(props('/?zeitraum=30')['shoots'])->toBe(['count' => 1, 'priorYear' => 1]);
 });
 
 it('tells what moved across projects, from the history allow-list and gallery openings', function () {
-    $project = Project::factory()->create(['name' => 'Ahrens']);
+    $project = ClientCase::factory()->create(['name' => 'Ahrens']);
     AuditLogger::record(event: 'payment_installment.paid', projectId: $project->id);
     AuditLogger::record(event: 'quote.updated', projectId: $project->id);
 
-    $gallery = Gallery::factory()->for($project)->create();
+    $gallery = Gallery::factory()->for($project, 'case')->create();
     foreach (['a', 'b'] as $visitor) {
         GalleryView::create(['gallery_id' => $gallery->id, 'visitor_identifier' => $visitor, 'viewed_on' => now()->subDay()->toDateString()]);
     }
@@ -283,8 +283,8 @@ it('tells what moved across projects, from the history allow-list and gallery op
 });
 
 it('counts only what the viewer may open', function () {
-    $hidden = Project::factory()->create();
-    Quote::factory()->for($hidden)->create(['status' => QuoteStatus::Sent, 'total' => 250_00]);
+    $hidden = ClientCase::factory()->create();
+    Quote::factory()->for($hidden, 'case')->create(['status' => QuoteStatus::Sent, 'total' => 250_00]);
     AuditLogger::record(event: 'payment_installment.paid', projectId: $hidden->id);
 
     $this->actingAs(staffMember(StaffRole::Contributor), 'staff');

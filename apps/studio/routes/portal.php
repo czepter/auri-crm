@@ -81,14 +81,14 @@ Route::middleware('portal.maintenance')->group(function () {
         // portal_visible, is a 404 here exactly as it is absent from the
         // switcher. Never a 403: the difference between "not yours" and
         // "does not exist" is not this surface's to give away.
-        Route::get('/projekte/{project}', ProjectController::class)->name('portal.projects.show');
+        Route::get('/projekte/{case}', ProjectController::class)->name('portal.projects.show');
 
         // P-03 (#222). The portal's first write path onto a project. Open
         // only while nothing is reserved — a booked project answers 404 here
         // rather than 422, the same shape every other closed door on this
-        // surface takes. See UpdateProjectDetails for the audit row and the
+        // surface takes. See UpdateCaseDetails for the audit row and the
         // line it writes into the conversation.
-        Route::patch('/projekte/{project}/angaben', [ProjectController::class, 'update'])
+        Route::patch('/projekte/{case}/angaben', [ProjectController::class, 'update'])
             ->name('portal.projects.details.update');
 
         // P-03 (#222): the questionnaire the inquiry screen has always linked
@@ -97,22 +97,22 @@ Route::middleware('portal.maintenance')->group(function () {
         // (form_instances.shared_at), on a booking this contact is on; a 404
         // otherwise, because a studio's internal checklist lives on the same
         // table.
-        Route::get('/projekte/{project}/fragebogen/{questionnaire}', [QuestionnaireController::class, 'show'])
+        Route::get('/projekte/{case}/fragebogen/{questionnaire}', [QuestionnaireController::class, 'show'])
             ->name('portal.questionnaires.show');
-        Route::post('/projekte/{project}/fragebogen/{questionnaire}/datei', [QuestionnaireController::class, 'upload'])
+        Route::post('/projekte/{case}/fragebogen/{questionnaire}/datei', [QuestionnaireController::class, 'upload'])
             ->name('portal.questionnaire.upload');
-        Route::get('/projekte/{project}/fragebogen/{questionnaire}/datei/{file}', [QuestionnaireController::class, 'download'])
+        Route::get('/projekte/{case}/fragebogen/{questionnaire}/datei/{file}', [QuestionnaireController::class, 'download'])
             ->name('portal.questionnaire.file.download');
-        Route::delete('/projekte/{project}/fragebogen/{questionnaire}/datei/{file}', [QuestionnaireController::class, 'destroyFile'])
+        Route::delete('/projekte/{case}/fragebogen/{questionnaire}/datei/{file}', [QuestionnaireController::class, 'destroyFile'])
             ->name('portal.questionnaire.file.destroy');
-        Route::patch('/projekte/{project}/fragebogen/{questionnaire}', [QuestionnaireController::class, 'update'])
+        Route::patch('/projekte/{case}/fragebogen/{questionnaire}', [QuestionnaireController::class, 'update'])
             ->name('portal.questionnaires.update');
 
         // Mockup 07. Reads only the artifact M-01's queued job already
         // stored — see App\Portal\Http\Controllers\ContractController.
-        Route::get('/projekte/{project}/vertrag', [ContractController::class, 'show'])
+        Route::get('/projekte/{case}/vertrag', [ContractController::class, 'show'])
             ->name('portal.contracts.show');
-        Route::get('/projekte/{project}/vertrag/pdf', [ContractController::class, 'download'])
+        Route::get('/projekte/{case}/vertrag/pdf', [ContractController::class, 'download'])
             ->name('portal.contracts.download');
 
         // M-02's signing rail. Writes at most one contract_signatures row per
@@ -120,7 +120,7 @@ Route::middleware('portal.maintenance')->group(function () {
         // own "sign contracts" switch (default off) — a 404 identical to a
         // route that does not exist when it is off, regardless of whether
         // SignContract itself would otherwise allow it.
-        Route::post('/projekte/{project}/vertrag/unterschreiben', [ContractController::class, 'sign'])
+        Route::post('/projekte/{case}/vertrag/unterschreiben', [ContractController::class, 'sign'])
             ->middleware('portal.capability:sign_contracts')
             ->name('portal.contracts.sign');
 
@@ -128,12 +128,12 @@ Route::middleware('portal.maintenance')->group(function () {
         // never re-derived — see App\Portal\Http\Controllers\QuoteController.
         // The view stays open the same way a contract's view does; only the
         // accept action below is gated.
-        Route::get('/projekte/{project}/angebot/bild/{item}', [QuoteController::class, 'image'])
+        Route::get('/projekte/{case}/angebot/bild/{item}', [QuoteController::class, 'image'])
             ->name('portal.quotes.image');
         // Q-10: eine Kachel des Reglerrasters, am Angebot gepflegt.
-        Route::get('/projekte/{project}/angebot/schaufenster/{index}', [QuoteController::class, 'showcase'])
+        Route::get('/projekte/{case}/angebot/schaufenster/{index}', [QuoteController::class, 'showcase'])
             ->whereNumber('index')->name('portal.quotes.showcase');
-        Route::get('/projekte/{project}/angebot', [QuoteController::class, 'show'])
+        Route::get('/projekte/{case}/angebot', [QuoteController::class, 'show'])
             ->name('portal.quotes.show');
 
         // The accept action. Re-checks validity against the row this request
@@ -142,7 +142,7 @@ Route::middleware('portal.maintenance')->group(function () {
         // (default off), same 404 rule as the signing route above — Q-07
         // being fully functional is not itself the studio's consent to
         // offer it in the portal.
-        Route::post('/projekte/{project}/angebot/annehmen', [QuoteController::class, 'accept'])
+        Route::post('/projekte/{case}/angebot/annehmen', [QuoteController::class, 'accept'])
             ->middleware('portal.capability:accept_quotes')
             ->name('portal.quotes.accept');
 
@@ -215,7 +215,7 @@ Route::middleware('portal.maintenance')->group(function () {
         // Stripe — nothing here ever CREATES a Stripe object, see
         // App\Portal\Http\Controllers\PaymentController. Gated by T-08's own
         // "see payment status" switch (default off), same 404 rule as above.
-        Route::get('/projekte/{project}/zahlungen', PaymentController::class)
+        Route::get('/projekte/{case}/zahlungen', PaymentController::class)
             ->middleware('portal.capability:payment_status')
             ->name('portal.payments.show');
 
@@ -224,26 +224,26 @@ Route::middleware('portal.maintenance')->group(function () {
         // CreateInstallmentCheckoutSession. Same "see payment status" gate as
         // the screen it is reached from: nothing about paying an installment
         // should be reachable once that screen itself is not.
-        Route::post('/projekte/{project}/zahlungen/{installment}/jetzt-zahlen', PaymentCheckoutController::class)
+        Route::post('/projekte/{case}/zahlungen/{installment}/jetzt-zahlen', PaymentCheckoutController::class)
             ->middleware('portal.capability:payment_status')
             ->name('portal.payments.checkout');
 
         // #419. The invoice as a page, in the studio's own layout — the PDF
         // below is the same document to keep rather than to read.
-        Route::get('/projekte/{project}/zahlungen/{invoice}', [PaymentController::class, 'show'])
+        Route::get('/projekte/{case}/zahlungen/{invoice}', [PaymentController::class, 'show'])
             ->middleware('portal.capability:payment_status')
             ->name('portal.payments.invoice-page');
 
         // M-06. The invoice itself, behind the same gate as the screen that
         // links to it — a client who may not see payment status may not
         // download the paperwork behind it either.
-        Route::get('/projekte/{project}/zahlungen/{invoice}/rechnung', [PaymentController::class, 'invoice'])
+        Route::get('/projekte/{case}/zahlungen/{invoice}/rechnung', [PaymentController::class, 'invoice'])
             ->middleware('portal.capability:payment_status')
             ->name('portal.payments.invoice');
 
         // #409: the Gutschrift, behind the same gate as the invoice it
         // corrects.
-        Route::get('/projekte/{project}/zahlungen/{invoice}/gutschrift/{creditNote}', [PaymentController::class, 'creditNote'])
+        Route::get('/projekte/{case}/zahlungen/{invoice}/gutschrift/{creditNote}', [PaymentController::class, 'creditNote'])
             ->middleware('portal.capability:payment_status')
             ->name('portal.payments.credit-note');
     });

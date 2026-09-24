@@ -32,7 +32,7 @@ class ShootReport
             ->groupBy('month')
             ->orderBy('month');
 
-        ProjectFilter::apply($query, $type, 'shoots.project_id');
+        ProjectFilter::apply($query, $type, 'shoots.case_id');
 
         $counted = $query->get()->keyBy('month');
 
@@ -59,14 +59,14 @@ class ShootReport
     public static function leadTimes(CarbonInterface $from, CarbonInterface $to, ?ProjectType $type = null): array
     {
         $query = Lead::query()
-            ->whereHas('project', fn ($project) => $project->booked())
+            ->whereHas('case', fn ($project) => $project->booked())
             ->join('shoots', function ($join) {
-                $join->on('shoots.project_id', '=', 'leads.project_id')->where('shoots.is_primary', true);
+                $join->on('shoots.case_id', '=', 'leads.case_id')->where('shoots.is_primary', true);
             })
             ->whereBetween('leads.captured_at', [$from, $to])
             ->selectRaw('shoots.date, leads.captured_at');
 
-        ProjectFilter::apply($query, $type, 'leads.project_id');
+        ProjectFilter::apply($query, $type, 'leads.case_id');
 
         $rows = $query->get();
 

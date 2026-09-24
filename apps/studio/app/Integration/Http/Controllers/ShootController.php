@@ -6,7 +6,7 @@ use App\Crm\Actions\AdvanceShootStatus;
 use App\Crm\Actions\DesignatePrimaryShoot;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
@@ -41,7 +41,7 @@ class ShootController extends Controller
      * and the model's own defaults for is_primary and sort_order — the
      * primary one is already taken.
      */
-    public function store(Request $request, Project $project, AdvanceShootStatus $advance, CrmVocabulary $stages): JsonResponse
+    public function store(Request $request, ClientCase $case, AdvanceShootStatus $advance, CrmVocabulary $stages): JsonResponse
     {
         $validated = $request->validate([
             // Nullable, like the admin screen's own store — the project's
@@ -56,14 +56,14 @@ class ShootController extends Controller
             'entered_at' => ['nullable', 'date', 'before_or_equal:now'],
         ]);
 
-        $shoot = $project->shoots()->create(
+        $shoot = $case->shoots()->create(
             Arr::except($validated, 'entered_at')
-            + ['kind' => $validated['kind'] ?? Shoot::kindFor($project->type)]
+            + ['kind' => $validated['kind'] ?? Shoot::kindFor($case->type)]
             + array_filter(['status_entered_at' => $validated['entered_at'] ?? null])
         );
-        $shoot->setRelation('project', $project);
+        $shoot->setRelation('case', $case);
 
-        if ($project->isBooked()) {
+        if ($case->isBooked()) {
             $advance(
                 $shoot,
                 $stages->anchored(StagePipeline::Project, StageAnchor::Booked),
@@ -97,7 +97,7 @@ class ShootController extends Controller
             $shoot->update($validated);
         }
 
-        return response()->json(['data' => ShootReadData::fromModel($shoot->fresh(['project:id,public_id']))]);
+        return response()->json(['data' => ShootReadData::fromModel($shoot->fresh(['case:id,public_id']))]);
     }
 
     /** #400: an accidental second day. Mirrors App\Crm\Http\Controllers\ShootController::destroy(). */

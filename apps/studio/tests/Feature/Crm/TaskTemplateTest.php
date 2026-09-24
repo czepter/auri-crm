@@ -3,7 +3,7 @@
 use App\Crm\Actions\ApplyTaskTemplates;
 use App\Crm\Actions\BookProject;
 use App\Crm\Enums\TaskAudience;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
@@ -20,9 +20,9 @@ beforeEach(fn () => Cache::store('redis')->flush());
 it('anchors each task to its own shoot date, not the project', function () {
     // The story's whole point: a project with an engagement session and a
     // wedding needs its briefing against the shoot it belongs to.
-    $project = Project::factory()->create();
-    $engagement = Shoot::factory()->for($project)->on('2026-03-22')->create(['kind' => 'Verlobungsshooting']);
-    $wedding = Shoot::factory()->for($project)->on('2026-06-14')->primary()->create(['kind' => 'Hochzeitstag']);
+    $project = ClientCase::factory()->create();
+    $engagement = Shoot::factory()->for($project, 'case')->on('2026-03-22')->create(['kind' => 'Verlobungsshooting']);
+    $wedding = Shoot::factory()->for($project, 'case')->on('2026-06-14')->primary()->create(['kind' => 'Hochzeitstag']);
 
     TaskTemplate::factory()->offset(-1)->create(['title' => 'Crew-Briefing verschicken']);
 
@@ -33,8 +33,8 @@ it('anchors each task to its own shoot date, not the project', function () {
 });
 
 it('applies a positive offset after the shoot', function () {
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->on('2026-06-14')->create();
+    $project = ClientCase::factory()->create();
+    Shoot::factory()->for($project, 'case')->on('2026-06-14')->create();
     TaskTemplate::factory()->offset(14)->create(['title' => 'Review erbitten']);
 
     app(ApplyTaskTemplates::class)($project);
@@ -43,9 +43,9 @@ it('applies a positive offset after the shoot', function () {
 });
 
 it('applies a template only to the kind of shoot it names', function () {
-    $project = Project::factory()->create();
-    $wedding = Shoot::factory()->for($project)->on('2026-06-14')->create(['kind' => 'Hochzeitstag']);
-    Shoot::factory()->for($project)->on('2026-03-22')->create(['kind' => 'Verlobungsshooting']);
+    $project = ClientCase::factory()->create();
+    $wedding = Shoot::factory()->for($project, 'case')->on('2026-06-14')->create(['kind' => 'Hochzeitstag']);
+    Shoot::factory()->for($project, 'case')->on('2026-03-22')->create(['kind' => 'Verlobungsshooting']);
 
     TaskTemplate::factory()->forKind('Hochzeitstag')->create(['title' => 'Familienliste einholen']);
 
@@ -56,8 +56,8 @@ it('applies a template only to the kind of shoot it names', function () {
 
 it('creates the task even when the shoot has no date yet', function () {
     // The work is owed either way; there is simply no honest day to put on it.
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->on(null)->create();
+    $project = ClientCase::factory()->create();
+    Shoot::factory()->for($project, 'case')->on(null)->create();
     TaskTemplate::factory()->offset(-1)->create();
 
     app(ApplyTaskTemplates::class)($project);
@@ -66,22 +66,22 @@ it('creates the task even when the shoot has no date yet', function () {
 });
 
 it('skips cancelled shoots and inactive templates', function () {
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->cancelled('Abgesagt')->create();
+    $project = ClientCase::factory()->create();
+    Shoot::factory()->for($project, 'case')->cancelled('Abgesagt')->create();
     TaskTemplate::factory()->create();
 
-    $live = Project::factory()->create();
-    Shoot::factory()->for($live)->create();
+    $live = ClientCase::factory()->create();
+    Shoot::factory()->for($live, 'case')->create();
     TaskTemplate::factory()->inactive()->create(['title' => 'Nicht mehr in Gebrauch']);
 
     app(ApplyTaskTemplates::class)($project);
 
-    expect(Task::where('project_id', $project->id)->count())->toBe(0);
+    expect(Task::where('case_id', $project->id)->count())->toBe(0);
 });
 
 it('carries the template audience onto the task', function () {
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    Shoot::factory()->for($project, 'case')->create();
     TaskTemplate::factory()->create(['audience' => TaskAudience::Client]);
 
     app(ApplyTaskTemplates::class)($project);
@@ -91,8 +91,8 @@ it('carries the template audience onto the task', function () {
 
 it('applies twice without duplicating a task', function () {
     // P-05b adds a second booking trigger and E-08 will re-apply templates.
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    Shoot::factory()->for($project, 'case')->create();
     TaskTemplate::factory()->create();
 
     app(ApplyTaskTemplates::class)($project);
@@ -102,8 +102,8 @@ it('applies twice without duplicating a task', function () {
 });
 
 it('keeps a day and a title moved by hand when the stage runs again', function () {
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->on('2026-06-14')->create();
+    $project = ClientCase::factory()->create();
+    Shoot::factory()->for($project, 'case')->on('2026-06-14')->create();
     TaskTemplate::factory()->offset(-1)->create(['title' => 'Crew-Briefing verschicken']);
 
     app(ApplyTaskTemplates::class)($project);
@@ -119,9 +119,9 @@ it('keeps a day and a title moved by hand when the stage runs again', function (
 
 it('produces each template against the correct shoot when a project is booked', function () {
     // The story's acceptance, through the real trigger.
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->on('2026-03-22')->create(['kind' => 'Verlobungsshooting']);
-    Shoot::factory()->for($project)->on('2026-06-14')->create(['kind' => 'Hochzeitstag']);
+    $project = ClientCase::factory()->create();
+    Shoot::factory()->for($project, 'case')->on('2026-03-22')->create(['kind' => 'Verlobungsshooting']);
+    Shoot::factory()->for($project, 'case')->on('2026-06-14')->create(['kind' => 'Hochzeitstag']);
 
     TaskTemplate::factory()->offset(-1)->create(['title' => 'Crew-Briefing verschicken']);
     TaskTemplate::factory()->offset(-7)->forKind('Hochzeitstag')->create(['title' => 'Familienliste einholen']);
@@ -140,8 +140,8 @@ it('rolls a due date landing on a non-working day forward to the next working da
     $owner = User::factory()->create();
     app(StudioSettingsResolver::class)->set('working_days', [1, 2, 3, 4, 5], $owner);
 
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->on('2026-06-15')->create();
+    $project = ClientCase::factory()->create();
+    Shoot::factory()->for($project, 'case')->on('2026-06-15')->create();
     TaskTemplate::factory()->offset(-2)->create(['title' => 'Technik-Check']);
 
     app(ApplyTaskTemplates::class)($project);
@@ -158,8 +158,8 @@ it('rolls forward only as far as the next configured working day, even when a si
     $owner = User::factory()->create();
     app(StudioSettingsResolver::class)->set('working_days', [1, 2, 3, 4, 5, 7], $owner);
 
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->on('2026-06-15')->create();
+    $project = ClientCase::factory()->create();
+    Shoot::factory()->for($project, 'case')->on('2026-06-15')->create();
     TaskTemplate::factory()->offset(-2)->create(['title' => 'Technik-Check']);
 
     app(ApplyTaskTemplates::class)($project);
@@ -177,8 +177,8 @@ it('previews the same due dates the real booking action produces for the same sh
 
     $preview = app(ApplyTaskTemplates::class)->preview(CarbonImmutable::parse('2026-06-14'), 'Hochzeitstag');
 
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->on('2026-06-14')->create(['kind' => 'Hochzeitstag']);
+    $project = ClientCase::factory()->create();
+    Shoot::factory()->for($project, 'case')->on('2026-06-14')->create(['kind' => 'Hochzeitstag']);
     app(BookProject::class)($project, User::factory()->create());
 
     $actual = Task::query()->orderBy('title')->get()
@@ -192,8 +192,8 @@ it('leaves a due date that already lands on a working day untouched', function (
     $owner = User::factory()->create();
     app(StudioSettingsResolver::class)->set('working_days', [1, 2, 3, 4, 5], $owner);
 
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->on('2026-06-15')->create(); // Monday
+    $project = ClientCase::factory()->create();
+    Shoot::factory()->for($project, 'case')->on('2026-06-15')->create(); // Monday
     TaskTemplate::factory()->offset(0)->create();
 
     app(ApplyTaskTemplates::class)($project);

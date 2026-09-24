@@ -22,7 +22,7 @@ use Laravel\Sanctum\HasApiTokens;
  * contact with no address has no portal access at all.
  *
  * Contacts outlive projects. Portal access in P2 hangs off this model rather
- * than off Project, so a repeat client — a portrait sitting one year, a
+ * than off ClientCase, so a repeat client — a portrait sitting one year, a
  * wedding the next — signs in once and switches between them.
  *
  * T-11: Notifiable — routeNotificationForMail()'s default reads $this->email,
@@ -102,7 +102,7 @@ class Contact extends Model implements Authenticatable
     /**
      * Ends this contact's portal access outright — every live magic link and
      * any session already open elsewhere is denied on the very next request.
-     * Leaves project_contacts untouched: revocation is not the same as never
+     * Leaves case_contacts untouched: revocation is not the same as never
      * having been involved (A-04).
      */
     public function revokePortalAccess(): void
@@ -135,12 +135,12 @@ class Contact extends Model implements Authenticatable
     /** Only projects the studio has chosen to show (vision §3.1). */
     public function visibleProjects(): BelongsToMany
     {
-        return $this->projects()->where('portal_visible', true);
+        return $this->cases()->where('portal_visible', true);
     }
 
-    public function projects(): BelongsToMany
+    public function cases(): BelongsToMany
     {
-        return $this->belongsToMany(Project::class, 'project_contacts')
+        return $this->belongsToMany(ClientCase::class, 'case_contacts')
             ->withPivot('role')
             ->withTimestamps();
     }

@@ -2,7 +2,7 @@
 
 namespace Database\Factories\Quotes;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Quotes\Enums\PricingMode;
 use App\Quotes\Models\Quote;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -17,7 +17,7 @@ class QuoteFactory extends Factory
     public function definition(): array
     {
         return [
-            'project_id' => Project::factory(),
+            'case_id' => ClientCase::factory(),
         ];
     }
 

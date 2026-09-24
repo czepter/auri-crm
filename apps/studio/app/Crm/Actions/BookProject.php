@@ -6,7 +6,7 @@ use App\Crm\Enums\BookedVia;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Events\ProjectBooked;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
 use App\Models\User;
@@ -15,7 +15,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
 /**
- * The only writer of projects.booked_at.
+ * The only writer of cases.booked_at.
  *
  * One transaction: book the project, advance every uncancelled shoot to booked,
  * write the audit row, dispatch. The shoots move through AdvanceShootStatus
@@ -45,18 +45,18 @@ class BookProject
      * to be logged in would misattribute the booking.
      */
     public function __invoke(
-        Project $project,
+        ClientCase $project,
         ?User $actor = null,
         BookedVia $via = BookedVia::Manual,
         ?CarbonInterface $at = null,
-    ): ?Project {
+    ): ?ClientCase {
         $booked = $this->stages->anchored(StagePipeline::Project, StageAnchor::Booked);
 
         $done = DB::transaction(function () use ($project, $actor, $via, $booked, $at) {
             // Conditional rather than checked first: P-05b adds a second entry
             // point, and of two triggers racing on one project only the first
             // update finds booked_at still null.
-            $claimed = Project::query()
+            $claimed = ClientCase::query()
                 ->whereKey($project->id)
                 ->whereNull('booked_at')
                 ->update([

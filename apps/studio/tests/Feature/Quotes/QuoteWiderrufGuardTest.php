@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Enums\StaffRole;
 use App\Quotes\Actions\MarkQuoteSent;
 use App\Quotes\Enums\QuoteStatus;
@@ -24,7 +24,7 @@ beforeEach(function () {
 
 function draftQuote(): Quote
 {
-    return Quote::factory()->for(Project::factory())->create(['status' => QuoteStatus::Draft]);
+    return Quote::factory()->for(ClientCase::factory(), 'case')->create(['status' => QuoteStatus::Draft]);
 }
 
 it('refuses to send while no Widerrufsbelehrung is set', function () {

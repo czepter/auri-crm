@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Engagement\Actions\PostMessage;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
@@ -22,7 +22,7 @@ function threadWithClient(): Thread
     $contact = $project->contacts()->sole();
     $contact->update(['email' => 'lena@example.test']);
 
-    $thread = Thread::factory()->for($project)->create();
+    $thread = Thread::factory()->for($project, 'case')->create();
     $thread->participants()->create(['contact_id' => $contact->id]);
 
     return $thread;
@@ -88,7 +88,7 @@ it('sends nothing, and claims nothing, when no participant has an address', func
 
     $project = bookedContactProject();
     $project->contacts()->sole()->update(['email' => null]);
-    $thread = Thread::factory()->for($project)->create();
+    $thread = Thread::factory()->for($project, 'case')->create();
     $thread->participants()->create(['contact_id' => $project->contacts()->sole()->id]);
 
     $message = app(PostMessage::class)($thread, staffMember(StaffRole::Admin), 'Hallo?');
@@ -108,10 +108,10 @@ it('shows a contact every thread they are on, across projects', function () {
     $contact = Contact::factory()->create(['name' => 'Lena Meier', 'email' => 'lena@example.test']);
 
     foreach (['Projekt A', 'Projekt B'] as $name) {
-        $project = Project::factory()->create(['name' => $name]);
-        $project->attachContact($contact, ProjectContactRole::Primary);
+        $project = ClientCase::factory()->create(['name' => $name]);
+        $project->attachContact($contact, CaseContactRole::Primary);
 
-        $thread = Thread::factory()->for($project)->create();
+        $thread = Thread::factory()->for($project, 'case')->create();
         $thread->participants()->create(['contact_id' => $contact->id]);
         app(PostMessage::class)($thread, staffMember(StaffRole::Admin), "Nachricht zu {$name}");
     }

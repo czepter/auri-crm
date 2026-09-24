@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Models\User;
@@ -30,10 +30,10 @@ it("revokes a contact's portal access", function () {
     expect($contact->fresh()->portal_access_revoked_at)->not->toBeNull();
 });
 
-it('does not delete the project_contacts row on revoke', function () {
+it('does not delete the case_contacts row on revoke', function () {
     $contact = Contact::factory()->create();
-    $project = Project::factory()->create(['portal_visible' => true]);
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($this->staff, 'staff')
         ->post("/kontakte/{$contact->public_id}/portal-zugang/widerruf");
@@ -82,7 +82,7 @@ it('records a distinct audit event', function () {
 });
 
 it('distinguishes hiding a project from revoking a contact in the audit log', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
 
     $this->actingAs($this->staff, 'staff')->post("/auftraege/{$project->public_id}/portal-sichtbarkeit");

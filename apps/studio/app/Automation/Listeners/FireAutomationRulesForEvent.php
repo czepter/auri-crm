@@ -4,7 +4,7 @@ namespace App\Automation\Listeners;
 
 use App\Automation\Actions\FireAutomationRule;
 use App\Automation\Models\AutomationRule;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Support\SilentWrite;
 use Carbon\CarbonImmutable;
@@ -18,9 +18,9 @@ use ReflectionProperty;
  * event_class column IS the subscription, so a new rule for an event class
  * this app already dispatches needs no code change here.
  *
- * The anchor is whichever public Project or Shoot property the firing event
+ * The anchor is whichever public ClientCase or Shoot property the firing event
  * carries — every domain event in this codebase already exposes its subject
- * that way (see ProjectBooked, InstallmentPaid), and Project
+ * that way (see ProjectBooked, InstallmentPaid), and ClientCase
  * and Shoot are the only two entities E-08 ever anchors a rule to. An event
  * naming neither is simply not something an AutomationRule can watch yet.
  */
@@ -71,12 +71,12 @@ class FireAutomationRulesForEvent
         }
     }
 
-    private function resolveAnchor(object $event): Project|Shoot|null
+    private function resolveAnchor(object $event): ClientCase|Shoot|null
     {
         foreach ((new ReflectionObject($event))->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
             $value = $property->getValue($event);
 
-            if ($value instanceof Project || $value instanceof Shoot) {
+            if ($value instanceof ClientCase || $value instanceof Shoot) {
                 return $value;
             }
         }

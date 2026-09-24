@@ -2,10 +2,10 @@
 
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ShootStatus;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Enums\Capability;
@@ -22,10 +22,10 @@ function staff(StaffRole $role): User
 }
 
 /** A project this person is crewed on, so the "assigned" half can be asserted. */
-function crewedProject(User $user): Project
+function crewedProject(User $user): ClientCase
 {
-    $project = Project::factory()->create();
-    $shoot = Shoot::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $shoot = Shoot::factory()->for($project, 'case')->create();
     CrewAssignment::factory()->for($shoot)->for($user)->create();
 
     return $project;
@@ -43,8 +43,8 @@ it('lets only the owner commit the studio', function (StaffRole $role, bool $all
 ]);
 
 it('refuses to book for a role without the capability', function () {
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    Shoot::factory()->for($project, 'case')->create();
 
     $this->actingAs(staff(StaffRole::Manager), 'staff')
         ->post("/auftraege/{$project->public_id}/buchung")
@@ -54,8 +54,8 @@ it('refuses to book for a role without the capability', function () {
 });
 
 it('lets the owner book', function () {
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    Shoot::factory()->for($project, 'case')->create();
 
     $this->actingAs(staff(StaffRole::Admin), 'staff')
         ->post("/auftraege/{$project->public_id}/buchung")
@@ -65,9 +65,9 @@ it('lets the owner book', function () {
 });
 
 it('refuses to book a lost project', function () {
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->create();
-    Lead::factory()->for($project)->lost()->create();
+    $project = ClientCase::factory()->create();
+    Shoot::factory()->for($project, 'case')->create();
+    Lead::factory()->for($project, 'case')->lost()->create();
 
     $this->actingAs(staff(StaffRole::Admin), 'staff')
         ->post("/auftraege/{$project->public_id}/buchung")
@@ -88,7 +88,7 @@ it('records who moved a lead, which is what makes the funnel open', function () 
     $lead = Lead::factory()->atStage(LeadStage::New)->create();
 
     $this->actingAs($nina, 'staff')
-        ->post("/anfragen/{$lead->public_id}/stufe", ['stage' => LeadStage::Contacted->value])
+        ->post("/anfragen/{$lead->case->public_id}/stufe", ['stage' => LeadStage::Contacted->value])
         ->assertRedirect();
 
     $row = AuditLog::where('event', 'lead.stage_changed')->sole();
@@ -122,8 +122,8 @@ it('lets a second shooter reach exactly the shoots they are assigned to', functi
 
 it('refuses a second shooter a project they are not crewed on', function () {
     $nina = staff(StaffRole::Contributor);
-    $theirs = Project::factory()->create();
-    Shoot::factory()->for($theirs)->create();
+    $theirs = ClientCase::factory()->create();
+    Shoot::factory()->for($theirs, 'case')->create();
 
     $this->actingAs($nina, 'staff')
         ->get("/auftraege/{$theirs->public_id}")
@@ -138,9 +138,9 @@ it('shows a second shooter only their own projects in the project list', functio
     $mine = crewedProject($nina);
     markBooked($mine);
 
-    $theirs = Project::factory()->create(['name' => 'Fremdes Projekt']);
+    $theirs = ClientCase::factory()->create(['name' => 'Fremdes Projekt']);
     markBooked($theirs);
-    Shoot::factory()->for($theirs)->create();
+    Shoot::factory()->for($theirs, 'case')->create();
 
     $this->actingAs($nina, 'staff');
 
@@ -170,7 +170,7 @@ it('lets a contributor move a shoot they are crewed on, but never reassign the c
 it('lets a second shooter work the tasks and notes of their own project', function () {
     $nina = staff(StaffRole::Contributor);
     $project = crewedProject($nina);
-    $task = Task::factory()->for($project)->create();
+    $task = Task::factory()->for($project, 'case')->create();
 
     $this->actingAs($nina, 'staff')
         ->post("/aufgaben/{$task->public_id}/erledigt")
@@ -198,8 +198,8 @@ it('refuses a second shooter the tasks of a project they are not on', function (
 it('leaves a denied control out of the markup rather than hiding it', function () {
     // The milestone's own criterion. A control rendered and hidden is a
     // control someone can find with the element inspector.
-    $project = Project::factory()->create();
-    Shoot::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    Shoot::factory()->for($project, 'case')->create();
 
     $this->actingAs(staff(StaffRole::Manager), 'staff');
     $header = props("/auftraege/{$project->public_id}")['header'];

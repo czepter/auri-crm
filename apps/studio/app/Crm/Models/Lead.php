@@ -3,7 +3,6 @@
 namespace App\Crm\Models;
 
 use App\Concerns\BelongsToTenant;
-use App\Concerns\HasPublicId;
 use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\LeadSource;
@@ -23,18 +22,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * The pursuit. One per project, created at inquiry.
  *
  * Thin on purpose. Vision §3.1 names the cost — "show me this client" hops
- * Project → Lead to read the funnel stage — and takes it, because collapsing
- * Lead into Project would leave the project table holding lead columns for
+ * ClientCase → Lead to read the funnel stage — and takes it, because collapsing
+ * Lead into ClientCase would leave the project table holding lead columns for
  * every booked record.
+ *
+ * No public id of its own (#520): an inquiry is addressed by its case.
  */
 class Lead extends Model
 {
     use BelongsToTenant;
     use HasFactory;
-    use HasPublicId;
 
     protected $fillable = [
-        'project_id',
+        'case_id',
         'package_id',
         'source',
         'source_other',
@@ -106,7 +106,7 @@ class Lead extends Model
             : $this->captured_via->label().' — '.$this->captured_via_other;
     }
 
-    /** Same rule as Project::booted() — a detail exists only under "Sonstige". */
+    /** Same rule as ClientCase::booted() — a detail exists only under "Sonstige". */
     protected static function booted(): void
     {
         static::saving(function (self $lead) {
@@ -126,9 +126,9 @@ class Lead extends Model
         return $this->outcome !== null;
     }
 
-    public function project(): BelongsTo
+    public function case(): BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(ClientCase::class);
     }
 
     public function capturedBy(): BelongsTo
@@ -156,14 +156,14 @@ class Lead extends Model
     }
 
     /**
-     * Not booked yet, so still an inquiry. projects.booked_at is the seam — a booked
+     * Not booked yet, so still an inquiry. cases.booked_at is the seam — a booked
      * record is a project and lives at /projekte, which reads the same fact.
      * The funnel's own reads (the API snapshot, Auswertungen) keep counting
      * booked leads: a funnel without its end is not a funnel.
      */
     public function scopeUnbooked(Builder $query): void
     {
-        $query->whereDoesntHave('project', fn ($project) => $project->booked());
+        $query->whereDoesntHave('case', fn ($project) => $project->booked());
     }
 
     protected static function newFactory(): Factory

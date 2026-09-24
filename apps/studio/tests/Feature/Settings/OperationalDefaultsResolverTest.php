@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Settings\Models\StudioSettings;
@@ -66,13 +66,13 @@ it('leaves an existing stored timestamp exactly as it was, unaffected by an oper
     // database rather than through Eloquent's timezone-aware accessor, is
     // the one place a silent rewrite would actually show up.
     $owner = staffMember(StaffRole::Admin);
-    $project = Project::factory()->create();
-    $before = DB::table('projects')->where('id', $project->id)->value('created_at');
+    $project = ClientCase::factory()->create();
+    $before = DB::table('cases')->where('id', $project->id)->value('created_at');
 
     (new StudioSettingsResolver)->set('timezone', 'Europe/Vienna', $owner);
     (new StudioSettingsResolver)->set('working_days', [1, 2, 3, 4, 5], $owner);
 
-    $after = DB::table('projects')->where('id', $project->id)->value('created_at');
+    $after = DB::table('cases')->where('id', $project->id)->value('created_at');
 
     expect($after)->toEqual($before);
 });

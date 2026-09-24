@@ -3,16 +3,16 @@
 namespace App\Http\Middleware;
 
 use App\Crm\Actions\OpenLeads;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Stage;
 use App\Data\StaffProfileData;
 use App\Documents\Support\DocumentBlockCatalog;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Help\Support\HelpIndex;
 use App\Models\User;
+use App\Portal\Http\Controllers\LegalTextController;
 use App\Portal\Support\PortalSettings;
 use App\Releases\Support\ReleaseLog;
-use App\Portal\Http\Controllers\LegalTextController;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\LiveUpdate;
 use App\Support\RecordVisit;
@@ -99,7 +99,7 @@ class HandleInertiaRequests extends Middleware
                 // The same two filters /projekte itself applies: booked only,
                 // and only what this role may see. A badge that counts rows
                 // the list refuses to show is worse than no badge.
-                'projects' => fn () => Project::query()->visibleTo($user)->booked()->count(),
+                'projects' => fn () => ClientCase::query()->visibleTo($user)->booked()->count(),
             ],
             // Die laufende Version und ob release-log eine höhere kennt. Chrome
             // wie die Zähler darüber: die Zeile steht auf jedem Admin-Screen

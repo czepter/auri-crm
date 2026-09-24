@@ -1,7 +1,7 @@
 <?php
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Enums\Capability;
 use App\Integration\Models\ApiToken;
 use App\Models\User;
@@ -45,7 +45,7 @@ it('captures every row in one call', function () {
     $response->assertCreated()->assertJson(['captured' => 2]);
 
     expect(Lead::count())->toBe(2)
-        ->and(Project::count())->toBe(2)
+        ->and(ClientCase::count())->toBe(2)
         ->and($response->json('leads.0.lead.stage'))->toBe('new');
 
     expect(integerIdPaths($response->json()))->toBe([]);
@@ -59,7 +59,7 @@ it('writes nothing at all when one row is unusable', function () {
     $response->assertInvalid(['leads.1.contact_name']);
 
     expect(Lead::count())->toBe(0)
-        ->and(Project::count())->toBe(0);
+        ->and(ClientCase::count())->toBe(0);
     Notification::assertNothingSent();
 });
 

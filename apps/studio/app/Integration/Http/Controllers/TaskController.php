@@ -3,7 +3,7 @@
 namespace App\Integration\Http\Controllers;
 
 use App\Crm\Enums\TaskAudience;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Task;
 use App\Crm\Support\TaskAnchors;
 use App\Crm\Support\TaskDependencyGraph;
@@ -28,12 +28,12 @@ class TaskController extends Controller
     public function __construct(private readonly TaskAnchors $anchors) {}
 
     /** `done` narrows to completed or open; omitted returns both, oldest due date first. */
-    public function index(Request $request, Project $project): JsonResponse
+    public function index(Request $request, ClientCase $case): JsonResponse
     {
         $filters = $request->validate(['done' => ['sometimes', 'in:true,false']]);
 
-        $tasks = $project->tasks()
-            ->with(['project:id,public_id', 'shoot', 'dependsOn', 'assignee'])
+        $tasks = $case->tasks()
+            ->with(['case:id,public_id', 'shoot', 'dependsOn', 'assignee'])
             ->when($request->has('done'), fn ($query) => $request->boolean('done')
                 ? $query->whereNotNull('completed_at')
                 : $query->open())
@@ -43,7 +43,7 @@ class TaskController extends Controller
         return response()->json(['data' => $tasks->map(TaskReadData::fromModel(...))]);
     }
 
-    public function store(Request $request, Project $project): JsonResponse
+    public function store(Request $request, ClientCase $case): JsonResponse
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
@@ -57,7 +57,7 @@ class TaskController extends Controller
         ]);
 
         $predecessor = isset($validated['depends_on'])
-            ? $project->tasks()->where('public_id', $validated['depends_on'])->first()
+            ? $case->tasks()->where('public_id', $validated['depends_on'])->first()
             : null;
 
         abort_if(isset($validated['depends_on']) && $predecessor === null, 422);
@@ -67,25 +67,25 @@ class TaskController extends Controller
 
         abort_if(
             $anchor !== null
-                && ! in_array($anchor, array_column($this->anchors->forProject($project), 'value'), true),
+                && ! in_array($anchor, array_column($this->anchors->forCase($case), 'value'), true),
             422,
         );
 
-        $task = $project->tasks()->create([
+        $task = $case->tasks()->create([
             'title' => $validated['title'],
             'audience' => $validated['audience'],
             'due_on' => $anchor === null
                 ? $validated['due_on'] ?? null
-                : $this->anchors->dueOn($project, $anchor, $offset)?->format('Y-m-d'),
+                : $this->anchors->dueOn($case, $anchor, $offset)?->format('Y-m-d'),
             'due_anchor' => $anchor,
             'due_offset_days' => $offset,
             'shoot_id' => isset($validated['shoot'])
-                ? $project->shoots()->where('public_id', $validated['shoot'])->value('id')
+                ? $case->shoots()->where('public_id', $validated['shoot'])->value('id')
                 : null,
             'depends_on_task_id' => $predecessor?->id,
             'assignee_id' => $this->assigneeId($validated['assignee'] ?? null),
         ]);
-        $task->setRelation('project', $project);
+        $task->setRelation('case', $case);
 
         return response()->json(['data' => TaskReadData::fromModel($task)], 201);
     }
@@ -97,11 +97,11 @@ class TaskController extends Controller
         if (blank($validated['depends_on'] ?? null)) {
             $task->update(['depends_on_task_id' => null]);
 
-            return response()->json(['data' => TaskReadData::fromModel($task->fresh(['project', 'shoot', 'dependsOn', 'assignee']))]);
+            return response()->json(['data' => TaskReadData::fromModel($task->fresh(['case', 'shoot', 'dependsOn', 'assignee']))]);
         }
 
         $predecessor = Task::query()
-            ->where('project_id', $task->project_id)
+            ->where('case_id', $task->case_id)
             ->where('public_id', $validated['depends_on'])
             ->first();
 
@@ -115,7 +115,7 @@ class TaskController extends Controller
 
         $task->update(['depends_on_task_id' => $predecessor->id]);
 
-        return response()->json(['data' => TaskReadData::fromModel($task->fresh(['project', 'shoot', 'dependsOn', 'assignee']))]);
+        return response()->json(['data' => TaskReadData::fromModel($task->fresh(['case', 'shoot', 'dependsOn', 'assignee']))]);
     }
 
     public function assign(Request $request, Task $task): JsonResponse
@@ -126,7 +126,7 @@ class TaskController extends Controller
 
         $task->update(['assignee_id' => $this->assigneeId($validated['assignee'] ?? null)]);
 
-        return response()->json(['data' => TaskReadData::fromModel($task->fresh(['project', 'shoot', 'dependsOn', 'assignee']))]);
+        return response()->json(['data' => TaskReadData::fromModel($task->fresh(['case', 'shoot', 'dependsOn', 'assignee']))]);
     }
 
     public function complete(Request $request, Task $task): JsonResponse
@@ -172,10 +172,10 @@ class TaskController extends Controller
             actor: $actor,
             context: ['title' => $task->title],
             subject: $task->public_id,
-            projectId: $task->project_id,
+            projectId: $task->case_id,
         );
 
-        return response()->json(['data' => TaskReadData::fromModel($task->fresh(['project', 'shoot', 'dependsOn', 'assignee']))]);
+        return response()->json(['data' => TaskReadData::fromModel($task->fresh(['case', 'shoot', 'dependsOn', 'assignee']))]);
     }
 
     private function assigneeId(?string $publicId): ?int

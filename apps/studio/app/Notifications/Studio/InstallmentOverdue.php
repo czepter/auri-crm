@@ -2,7 +2,7 @@
 
 namespace App\Notifications\Studio;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Payments\Models\PaymentInstallment;
 use Illuminate\Support\Collection;
 
@@ -38,7 +38,7 @@ class InstallmentOverdue extends StudioEventNotification
         return $this->installments
             ->map(fn (PaymentInstallment $installment) => sprintf(
                 '%s — %s, fällig am %s (%s)',
-                $installment->plan->project->name,
+                $installment->plan->case->name,
                 number_format($installment->remaining() / 100, 2, ',', '.').' €',
                 $installment->due_on->format('d.m.Y'),
                 $installment->overdue_reason?->label() ?? 'Frist überschritten',
@@ -50,15 +50,15 @@ class InstallmentOverdue extends StudioEventNotification
     /* Payments have no screen of their own; the project detail carries them. */
     public function url(): string
     {
-        return $this->project() === null
+        return $this->case() === null
             ? '/auftraege'
-            : "/auftraege/{$this->project()->public_id}";
+            : "/auftraege/{$this->case()->public_id}";
     }
 
     /** One project means its crew; several mean the studio picked the recipients already. */
-    public function project(): ?Project
+    public function case(): ?ClientCase
     {
-        $projects = $this->installments->map(fn (PaymentInstallment $i) => $i->plan->project)->unique('id');
+        $projects = $this->installments->map(fn (PaymentInstallment $i) => $i->plan->case)->unique('id');
 
         return $projects->count() === 1 ? $projects->first() : null;
     }

@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Engagement\Models\Thread;
 use App\Enums\StaffRole;
 use App\Gallery\Models\Gallery;
@@ -80,9 +80,9 @@ it('closes the mailbox entirely for a contact overridden to off', function () {
 it('refuses a thread without a booking while messaging is booking-only', function () {
     StudioSettings::query()->update(['portal_messaging_mode' => 'booking']);
 
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     test()->actingAs($contact, 'portal')
         ->post('/nachrichten', ['subject' => 'Thema', 'body' => 'Text.'])
@@ -112,8 +112,8 @@ it('greets each opening state with its own text', function () {
 
     // A single booking is opened directly, so the home's other rooms need
     // two. Ein Termin steht noch aus: das ist „Laufend".
-    foreach ([Project::factory()->create(['portal_visible' => true]), Project::factory()->create(['portal_visible' => true])] as $project) {
-        $project->attachContact($contact, ProjectContactRole::Primary);
+    foreach ([ClientCase::factory()->create(['portal_visible' => true]), ClientCase::factory()->create(['portal_visible' => true])] as $project) {
+        $project->attachContact($contact, CaseContactRole::Primary);
     }
 
     expect(test()->actingAs($contact, 'portal')->get('/')->viewData('page')['props']['welcomeText'])->toBe('Alle eure Termine auf einen Blick.');
@@ -131,9 +131,9 @@ it('greets a client whose bookings are all delivered with the closing text', fun
 
     $contact = Contact::factory()->create(['portal_overrides' => null]);
 
-    foreach ([Project::factory()->create(['portal_visible' => true]), Project::factory()->create(['portal_visible' => true])] as $project) {
-        $project->attachContact($contact, ProjectContactRole::Primary);
-        Gallery::factory()->for($project)->create()->publish();
+    foreach ([ClientCase::factory()->create(['portal_visible' => true]), ClientCase::factory()->create(['portal_visible' => true])] as $project) {
+        $project->attachContact($contact, CaseContactRole::Primary);
+        Gallery::factory()->for($project, 'case')->create()->publish();
     }
 
     expect(test()->actingAs($contact, 'portal')->get('/')->viewData('page')['props']['welcomeText'])->toBe('Eure Bilder liegen weiter hier.');
@@ -169,8 +169,8 @@ it('lets a contact carry their own greeting per state', function () {
 
     expect(test()->actingAs($contact, 'portal')->get('/')->viewData('page')['props']['welcomeText'])->toBe('Hallo ihr zwei.');
 
-    foreach ([Project::factory()->create(['portal_visible' => true]), Project::factory()->create(['portal_visible' => true])] as $project) {
-        $project->attachContact($contact, ProjectContactRole::Primary);
+    foreach ([ClientCase::factory()->create(['portal_visible' => true]), ClientCase::factory()->create(['portal_visible' => true])] as $project) {
+        $project->attachContact($contact, CaseContactRole::Primary);
     }
 
     expect(test()->actingAs($contact, 'portal')->get('/')->viewData('page')['props']['welcomeText'])->toBe('Alle eure Termine auf einen Blick.');

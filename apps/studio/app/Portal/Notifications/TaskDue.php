@@ -40,7 +40,7 @@ class TaskDue extends Notification
         $message = (new MailMessage)
             ->subject($this->task->title)
             ->greeting('Hallo,')
-            ->line("Offen zu {$this->task->project->name}: {$this->task->title}.")
+            ->line("Offen zu {$this->task->case->name}: {$this->task->title}.")
             ->action('Im Kundenbereich öffnen', $this->target());
 
         if ($notifiable instanceof Contact) {
@@ -55,11 +55,11 @@ class TaskDue extends Notification
 
     private function target(): string
     {
-        $project = $this->task->project;
+        $project = $this->task->case;
         $base = config('portal.url')."/projekte/{$project->public_id}";
 
         $questionnaires = FormInstance::query()
-            ->where('project_id', $project->id)
+            ->where('case_id', $project->id)
             ->shared()
             ->get();
 

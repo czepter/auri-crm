@@ -5,8 +5,8 @@ namespace App\Gallery\Actions;
 use App\Crm\Data\DomainRowData;
 use App\Crm\Data\RowActionData;
 use App\Crm\Enums\LeadSource;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Gallery\Models\Gallery;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -38,7 +38,7 @@ class ReadAfterDeliveryColumn
     {
         $viewer ??= auth('staff')->user();
 
-        $visible = $viewer === null ? null : Project::query()->visibleTo($viewer)->select('projects.id');
+        $visible = $viewer === null ? null : ClientCase::query()->visibleTo($viewer)->select('cases.id');
 
         return $this->referrals($visible)->concat($this->expiringGalleries($visible))->values();
     }
@@ -56,14 +56,14 @@ class ReadAfterDeliveryColumn
         return Lead::query()
             ->where('source', LeadSource::Referral)
             ->whereNotNull('referred_by_contact_id')
-            ->when($visible !== null, fn ($query) => $query->whereIn('project_id', $visible))
-            ->whereHas('project', fn ($project) => $project->booked())
-            ->with(['project', 'referredBy'])
+            ->when($visible !== null, fn ($query) => $query->whereIn('case_id', $visible))
+            ->whereHas('case', fn ($project) => $project->booked())
+            ->with(['case', 'referredBy'])
             ->get()
             ->map(fn (Lead $lead) => new DomainRowData(
-                projectId: $lead->project->public_id,
+                projectId: $lead->case->public_id,
                 who: $lead->referredBy->name,
-                what: 'hat '.$lead->project->name.' empfohlen',
+                what: 'hat '.$lead->case->name.' empfohlen',
                 emphasis: null,
                 whatTail: null,
                 action: RowActionData::tel('Bedanken', $lead->referredBy->phone),
@@ -78,16 +78,16 @@ class ReadAfterDeliveryColumn
         return Gallery::query()
             // Eine Galerie ohne Buchung hat in einer Spalte ueber Buchungen
             // nichts verloren.
-            ->whereNotNull('project_id')
+            ->whereNotNull('case_id')
             ->whereNotNull('expires_at')
             ->where('expires_at', '<=', now()->addDays(self::EXPIRY_WINDOW_DAYS))
-            ->when($visible !== null, fn ($query) => $query->whereIn('project_id', $visible))
-            ->with('project')
+            ->when($visible !== null, fn ($query) => $query->whereIn('case_id', $visible))
+            ->with('case')
             ->orderBy('expires_at')
             ->get()
             ->map(fn (Gallery $gallery) => new DomainRowData(
-                projectId: $gallery->project->public_id,
-                who: $gallery->project->name,
+                projectId: $gallery->case->public_id,
+                who: $gallery->case->name,
                 what: 'Galerie läuft',
                 emphasis: 'am '.$gallery->expires_at->format('d.m.Y').' ab',
                 whatTail: null,

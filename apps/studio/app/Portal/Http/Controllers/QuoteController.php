@@ -30,11 +30,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class QuoteController extends Controller
 {
-    public function show(string $project, StudioSettingsResolver $settings): Response
+    public function show(string $case, StudioSettingsResolver $settings): Response
     {
         $contact = auth('portal')->user();
 
-        $found = $contact->visibleProjects()->where('projects.public_id', $project)
+        $found = $contact->visibleProjects()->where('cases.public_id', $case)
             ->with(['latestQuote.items', 'latestQuote.predecessor', 'latestQuote.paymentStages'])
             ->firstOrFail();
         $quote = $found->latestQuote;
@@ -53,7 +53,7 @@ class QuoteController extends Controller
                 // #480: the letter as the client reads it — fields filled, escaped.
                 ...collect(['intro' => $quote->intro, 'outro' => $quote->outro])->map(fn (?string $html) => MergeFieldResolver::resolve(
                     InlineHtmlSanitizer::letter($html) ?? '',
-                    app(DocumentMergeDataBuilder::class)->fromProject($quote->project, $settings),
+                    app(DocumentMergeDataBuilder::class)->fromProject($quote->case, $settings),
                     escape: true,
                 ))->all(),
                 // Display only — see AcceptQuote for the re-check this
@@ -72,11 +72,11 @@ class QuoteController extends Controller
      * guessable filename in a URL would be the whole access rule.
      */
     /** Q-10: eine Kachel des Reglerrasters, ueber denselben Weg wie image() darunter. */
-    public function showcase(string $project, int $index): StreamedResponse
+    public function showcase(string $case, int $index): StreamedResponse
     {
         $contact = auth('portal')->user();
 
-        $found = $contact->visibleProjects()->where('projects.public_id', $project)->firstOrFail();
+        $found = $contact->visibleProjects()->where('cases.public_id', $case)->firstOrFail();
 
         $path = $found->latestQuote?->showcasePaths()[$index] ?? null;
 
@@ -85,11 +85,11 @@ class QuoteController extends Controller
         return Storage::disk('local')->response($path);
     }
 
-    public function image(string $project, string $item): StreamedResponse
+    public function image(string $case, string $item): StreamedResponse
     {
         $contact = auth('portal')->user();
 
-        $found = $contact->visibleProjects()->where('projects.public_id', $project)
+        $found = $contact->visibleProjects()->where('cases.public_id', $case)
             ->with('latestQuote.items')
             ->firstOrFail();
 
@@ -106,11 +106,11 @@ class QuoteController extends Controller
      * handed the screen — so a quote invalidated in the gap between the two
      * requests is refused here regardless of what was on screen.
      */
-    public function accept(Request $request, string $project, AcceptQuote $accept, StudioSettingsResolver $studio): RedirectResponse
+    public function accept(Request $request, string $case, AcceptQuote $accept, StudioSettingsResolver $studio): RedirectResponse
     {
         $contact = auth('portal')->user();
 
-        $found = $contact->visibleProjects()->where('projects.public_id', $project)
+        $found = $contact->visibleProjects()->where('cases.public_id', $case)
             ->with('latestQuote')
             ->firstOrFail();
 

@@ -168,6 +168,91 @@ what: string,
 who: string | null,
 projectId: string | null,
 };
+export type CaseHeaderData = {
+id: string,
+name: string,
+names: string,
+type: string,
+position: App.Crm.Data.CasePositionData,
+primaryDate: string | null,
+shootCount: number,
+isBooked: boolean,
+canBook: boolean,
+canManageShoots: boolean,
+canManageCrew: boolean,
+canManageTasks: boolean,
+canManageNotes: boolean,
+canManageMessages: boolean,
+portalVisible: boolean,
+canManagePortalVisibility: boolean,
+canManageQuotes: boolean,
+canManageContracts: boolean,
+canManagePaymentPlan: boolean,
+primaryShootCancelled: boolean,
+canManageForms: boolean,
+outcomeLabel: string | null,
+lostReason: string | null,
+canClose: boolean,
+isCompleted: boolean,
+canComplete: boolean,
+canDelete: boolean,
+tabs: {
+key: string,
+label: string,
+href: string,
+count: number | null,
+countTo: number | null,
+children: {
+key: string,
+label: string,
+translate: boolean,
+href: string,
+count: number | null,
+reorderable: boolean,
+}[],
+}[],
+track: {
+key: string,
+label: string,
+pipeline: string,
+state: string,
+}[],
+queue: {
+key: string,
+rows: App.Crm.Data.ProjectQueueRowData[],
+}[],
+people: App.Crm.Data.CasePersonData[],
+paymentPlan: App.Payments.Data.PaymentPlanData | null,
+galleries: {
+id: string,
+title: string | null,
+expiresAt: string | null,
+}[],
+history: App.Crm.Data.ThreadEntryData[],
+};
+export type CasePersonData = {
+id: string,
+name: string,
+role: string,
+email: string | null,
+phone: string | null,
+};
+export type CasePositionData = {
+source: string,
+value: string | null,
+label: string,
+};
+export type CaseSuggestionData = {
+id: string,
+name: string,
+contactName: string | null,
+isBooked: boolean,
+galleryDefaults: {
+downloads: boolean | null,
+lists: boolean | null,
+comments: boolean | null,
+},
+};
 export type ContactRowData = {
 id: string,
 name: string,
@@ -275,7 +360,6 @@ writtenAt: string,
 };
 export type LeadCardData = {
 id: string,
-leadId: string,
 type: string,
 typeKey: string,
 names: string,
@@ -323,81 +407,6 @@ version: number | null,
 expiresAt: string | null,
 inPortal: boolean,
 };
-export type ProjectHeaderData = {
-id: string,
-name: string,
-names: string,
-type: string,
-position: App.Crm.Data.ProjectPositionData,
-primaryDate: string | null,
-shootCount: number,
-isBooked: boolean,
-canBook: boolean,
-canManageShoots: boolean,
-canManageCrew: boolean,
-canManageTasks: boolean,
-canManageNotes: boolean,
-canManageMessages: boolean,
-portalVisible: boolean,
-canManagePortalVisibility: boolean,
-canManageQuotes: boolean,
-canManageContracts: boolean,
-canManagePaymentPlan: boolean,
-primaryShootCancelled: boolean,
-canManageForms: boolean,
-leadId: string | null,
-outcomeLabel: string | null,
-lostReason: string | null,
-canClose: boolean,
-isCompleted: boolean,
-canComplete: boolean,
-canDelete: boolean,
-tabs: {
-key: string,
-label: string,
-href: string,
-count: number | null,
-countTo: number | null,
-children: {
-key: string,
-label: string,
-translate: boolean,
-href: string,
-count: number | null,
-reorderable: boolean,
-}[],
-}[],
-track: {
-key: string,
-label: string,
-pipeline: string,
-state: string,
-}[],
-queue: {
-key: string,
-rows: App.Crm.Data.ProjectQueueRowData[],
-}[],
-people: App.Crm.Data.ProjectPersonData[],
-paymentPlan: App.Payments.Data.PaymentPlanData | null,
-galleries: {
-id: string,
-title: string | null,
-expiresAt: string | null,
-}[],
-history: App.Crm.Data.ThreadEntryData[],
-};
-export type ProjectPersonData = {
-id: string,
-name: string,
-role: string,
-email: string | null,
-phone: string | null,
-};
-export type ProjectPositionData = {
-source: string,
-value: string | null,
-label: string,
-};
 export type ProjectQueueRowData = {
 id: string,
 name: string,
@@ -422,17 +431,6 @@ openTasks: number,
 taskCount: number,
 value: number | null,
 lastAt: string | null,
-};
-export type ProjectSuggestionData = {
-id: string,
-name: string,
-contactName: string | null,
-isBooked: boolean,
-galleryDefaults: {
-downloads: boolean | null,
-lists: boolean | null,
-comments: boolean | null,
-},
 };
 export type RowActionData = {
 label: string,
@@ -520,12 +518,12 @@ isTransit: boolean,
 namespace Enums {
 export type BookedVia = 'manual' | 'contract';
 export type CaptureChannel = 'phone' | 'email' | 'in_person' | 'web_form' | 'portal' | 'other';
+export type CaseContactRole = 'primary' | 'partner' | 'payer' | 'planner' | 'vendor';
 export type DueAnchor = 'stage' | 'shoot';
 export type FormFieldType = 'text' | 'short_text' | 'boolean' | 'select' | 'date' | 'time' | 'name_list' | 'group_photos' | 'file';
 export type LeadOutcome = 'lost' | 'declined' | 'closed';
 export type LeadSource = 'referral' | 'website' | 'instagram' | 'wedding_fair' | 'other';
 export type LeadStage = 'new' | 'contacted' | 'quote_sent' | 'quote_accepted' | 'booked';
-export type ProjectContactRole = 'primary' | 'partner' | 'payer' | 'planner' | 'vendor';
 export type ProjectFieldType = 'text' | 'textarea' | 'number' | 'select' | 'tags' | 'date' | 'boolean';
 export type ProjectType = 'wedding' | 'portrait' | 'other';
 export type ShootStatus = 'requested' | 'booked' | 'prep' | 'shot' | 'culling' | 'editing' | 'ready' | 'delivered' | 'archived';
@@ -604,7 +602,7 @@ export type InboundMessageState = 'threaded' | 'triage' | 'quarantined';
 }
 namespace Enums {
 export type AbsenceCategory = 'unavailable' | 'holiday' | 'other';
-export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_messages' | 'manage_staff' | 'manage_packages' | 'manage_portal_access' | 'manage_quotes' | 'manage_contracts' | 'manage_settings' | 'manage_form_templates' | 'manage_dsgvo';
+export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_cases' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_messages' | 'manage_staff' | 'manage_packages' | 'manage_portal_access' | 'manage_quotes' | 'manage_contracts' | 'manage_settings' | 'manage_form_templates' | 'manage_dsgvo';
 export type StaffRole = 'admin' | 'manager' | 'contributor' | 'reader';
 }
 namespace Gallery {
@@ -650,6 +648,49 @@ expiresAt: string | null,
 }
 namespace Integration {
 namespace Data {
+export type CaseContactReadData = {
+id: string,
+name: string,
+email: string | null,
+phone: string | null,
+street: string | null,
+postcode: string | null,
+city: string | null,
+role: string,
+updatedAt: string,
+};
+export type CaseDetailReadData = {
+id: string,
+name: string,
+type: string,
+typeOther: string | null,
+portalVisible: boolean,
+fields: object,
+updatedAt: string,
+lead: App.Integration.Data.CaseLeadReadData | null,
+bookedAt: string | null,
+bookedVia: string | null,
+openTaskCount: number,
+contacts: App.Integration.Data.CaseContactReadData[],
+shoots: App.Integration.Data.ShootReadData[],
+quotes: App.Quotes.Data.QuoteData[],
+};
+export type CaseLeadReadData = {
+stage: string,
+source: string | null,
+sourceOther: string | null,
+inquiryText: string | null,
+capturedVia: string | null,
+capturedViaOther: string | null,
+capturedAt: string,
+stageEnteredAt: string | null,
+outcome: string | null,
+lostReason: string | null,
+lostAt: string | null,
+};
+export type CaseMoneyReadData = {
+paymentPlan: App.Payments.Data.PaymentPlanData | null,
+};
 export type ContactReadData = {
 id: string,
 name: string,
@@ -711,33 +752,6 @@ capturedAt: string,
 lostAt: string | null,
 updatedAt: string,
 };
-export type ProjectContactReadData = {
-id: string,
-name: string,
-email: string | null,
-phone: string | null,
-street: string | null,
-postcode: string | null,
-city: string | null,
-role: string,
-updatedAt: string,
-};
-export type ProjectDetailReadData = {
-id: string,
-name: string,
-type: string,
-typeOther: string | null,
-portalVisible: boolean,
-fields: object,
-updatedAt: string,
-lead: App.Integration.Data.ProjectLeadReadData | null,
-bookedAt: string | null,
-bookedVia: string | null,
-openTaskCount: number,
-contacts: App.Integration.Data.ProjectContactReadData[],
-shoots: App.Integration.Data.ShootReadData[],
-quotes: App.Quotes.Data.QuoteData[],
-};
 export type ProjectFieldReadData = {
 id: string,
 key: string,
@@ -747,22 +761,6 @@ options: string[],
 unit: string | null,
 required: boolean,
 allowNewOptions: boolean,
-};
-export type ProjectLeadReadData = {
-stage: string,
-source: string | null,
-sourceOther: string | null,
-inquiryText: string | null,
-capturedVia: string | null,
-capturedViaOther: string | null,
-capturedAt: string,
-stageEnteredAt: string | null,
-outcome: string | null,
-lostReason: string | null,
-lostAt: string | null,
-};
-export type ProjectMoneyReadData = {
-paymentPlan: App.Payments.Data.PaymentPlanData | null,
 };
 export type ProjectReadData = {
 id: string,

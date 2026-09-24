@@ -3,7 +3,7 @@
 namespace App\Contracts\Data;
 
 use App\Contracts\Models\Contract;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -35,7 +35,7 @@ class ContractData extends Data
         public array $signers,
     ) {}
 
-    /** @param  array<int, ProjectContactRole>  $roles  contact id => role on the project */
+    /** @param  array<int, CaseContactRole>  $roles  contact id => role on the project */
     public static function fromModel(Contract $contract, string $downloadUrl, array $roles = []): self
     {
         return new self(

@@ -26,7 +26,7 @@ const presets: App.Gallery.Data.GalleryPresetData[] = [
   },
 ]
 
-const project: App.Crm.Data.ProjectSuggestionData = {
+const project: App.Crm.Data.CaseSuggestionData = {
   id: 'p-rahn',
   name: 'Hochzeit Rahn',
   contactName: 'Jana Rahn',

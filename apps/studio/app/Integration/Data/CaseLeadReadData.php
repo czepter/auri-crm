@@ -12,7 +12,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * lead index returns — carries both because a page of leads has no such frame.
  */
 #[TypeScript]
-class ProjectLeadReadData extends Data
+class CaseLeadReadData extends Data
 {
     public function __construct(
         public string $stage,

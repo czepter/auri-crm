@@ -19,7 +19,7 @@ function scheduledThread(): Thread
     $project = bookedContactProject();
     $project->contacts()->sole()->update(['email' => 'lena@example.test']);
 
-    $thread = Thread::factory()->for($project)->create();
+    $thread = Thread::factory()->for($project, 'case')->create();
     $thread->participants()->create(['contact_id' => $project->contacts()->sole()->id]);
 
     return $thread;
@@ -130,7 +130,7 @@ it('refuses a send time already in the past', function () {
     $thread = scheduledThread();
 
     $this->actingAs(staffMember(StaffRole::Admin), 'staff')
-        ->post("/auftraege/{$thread->project->public_id}/nachrichten", [
+        ->post("/auftraege/{$thread->case->public_id}/nachrichten", [
             'body' => 'Rückwirkend.',
             'scheduled_for' => now()->subHour()->format('Y-m-d\TH:i'),
         ])
@@ -146,11 +146,11 @@ it('cancels a pending message from the thread screen, and only a pending one', f
     $sent = app(PostMessage::class)($thread, staffMember(StaffRole::Admin), 'Ist raus.');
 
     $this->actingAs(staffMember(StaffRole::Admin), 'staff')
-        ->delete("/auftraege/{$thread->project->public_id}/nachrichten/{$pending->public_id}")
+        ->delete("/auftraege/{$thread->case->public_id}/nachrichten/{$pending->public_id}")
         ->assertRedirect();
 
     $this->actingAs(staffMember(StaffRole::Admin), 'staff')
-        ->delete("/auftraege/{$thread->project->public_id}/nachrichten/{$sent->public_id}")
+        ->delete("/auftraege/{$thread->case->public_id}/nachrichten/{$sent->public_id}")
         ->assertStatus(422);
 
     expect(Message::find($pending->id))->toBeNull()

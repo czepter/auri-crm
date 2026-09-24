@@ -1,7 +1,7 @@
 <?php
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\InternalNote;
-use App\Crm\Models\Project;
 use App\Models\User;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,13 +13,13 @@ uses(RefreshDatabase::class);
 // routesForSurface() lives in tests/Pest.php — see the note there.
 
 it('belongs to a project and names its author', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $author = User::factory()->create();
 
-    $note = InternalNote::factory()->for($project)
+    $note = InternalNote::factory()->for($project, 'case')
         ->create(['author_id' => $author->id, 'body' => 'Gegenlicht ab 20 Uhr.']);
 
-    expect($note->project->is($project))->toBeTrue()
+    expect($note->case->is($project))->toBeTrue()
         ->and($note->author->is($author))->toBeTrue()
         ->and($note->body)->toBe('Gegenlicht ab 20 Uhr.');
 });

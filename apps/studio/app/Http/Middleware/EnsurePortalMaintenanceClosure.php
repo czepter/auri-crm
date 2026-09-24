@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
  * T-08's maintenance switch: a temporary closure of the whole portal, with a
  * message — never a third revocation path beside A-04's hide-project and
  * revoke-contact forms. This middleware never reads or writes
- * `project_contacts` or `contacts.portal_access_revoked_at`; it is the one
+ * `case_contacts` or `contacts.portal_access_revoked_at`; it is the one
  * place StudioSettingsResolver::maintenanceEnabled() is read on this
  * surface, and it renders the same closure screen to everyone rather than
  * changing what any one contact is allowed to see.

@@ -2,7 +2,7 @@
 
 namespace App\Integration\Data;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -26,7 +26,7 @@ class ProjectReadData extends Data
         public string $updatedAt,
     ) {}
 
-    public static function fromModel(Project $project): self
+    public static function fromModel(ClientCase $project): self
     {
         return new self(
             id: $project->public_id,

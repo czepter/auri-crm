@@ -2,11 +2,11 @@
 
 use App\Crm\Actions\SeedFormInstanceFromTemplate;
 use App\Crm\Enums\FormFieldType;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\FormField;
 use App\Crm\Models\FormInstance;
 use App\Crm\Models\FormInstanceField;
 use App\Crm\Models\FormTemplate;
-use App\Crm\Models\Project;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Models\User;
@@ -90,7 +90,7 @@ it('seeds nothing from a template with no fields', function () {
 
 it('creates a blank form instance for a project', function () {
     $user = staffMember();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $this->actingAs($user, 'staff')
         ->post("/auftraege/{$project->public_id}/frageboegen", [])
@@ -108,7 +108,7 @@ it('creates a blank form instance for a project', function () {
 });
 
 it('creates a form instance seeded from a template via the store action', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $template = FormTemplate::factory()->create(['name' => 'Ablaufplan']);
     FormField::factory()->for($template, 'formTemplate')->create(['label' => 'Frage 1']);
     FormField::factory()->for($template, 'formTemplate')->create(['label' => 'Frage 2']);
@@ -125,7 +125,7 @@ it('creates a form instance seeded from a template via the store action', functi
 });
 
 it('rejects an inactive template as a seed source', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $template = FormTemplate::factory()->inactive()->create();
 
     $this->actingAs(staffMember(), 'staff')
@@ -137,11 +137,11 @@ it('rejects an inactive template as a seed source', function () {
 
 it('personalises an instance\'s fields and name, wholesale replacing what was there, without touching its source template', function () {
     $user = staffMember();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $template = FormTemplate::factory()->create(['name' => 'Ablaufplan']);
     $templateField = FormField::factory()->for($template, 'formTemplate')->create(['label' => 'Unveränderte Vorlagenfrage']);
 
-    $instance = FormInstance::factory()->for($project)->create(['name' => 'Ablaufplan', 'source_template_name' => 'Ablaufplan']);
+    $instance = FormInstance::factory()->for($project, 'case')->create(['name' => 'Ablaufplan', 'source_template_name' => 'Ablaufplan']);
     app(SeedFormInstanceFromTemplate::class)($instance, $template);
     $seededFieldId = $instance->fields->sole()->id;
 
@@ -170,13 +170,13 @@ it('personalises an instance\'s fields and name, wholesale replacing what was th
 });
 
 it('opens the project forms screen to whoever can view the project, regardless of ManageFormTemplates', function (StaffRole $role, int $status) {
-    // The screen itself only gates on Project::view — the same rule every
+    // The screen itself only gates on ClientCase::view — the same rule every
     // other project tab uses (ProjectController::quotes(), ::shoots()) — so
-    // Contributor, who holds no ViewAllProjects capability and is not
+    // Contributor, who holds no ViewAllCases capability and is not
     // crewed on this uncrewed project, gets 403 here just as it would on
     // /shootings or /angebote. canManageForms is what the screen itself
     // uses to decide whether to render the editing controls.
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $this->actingAs(staffMember($role), 'staff')
         ->get("/auftraege/{$project->public_id}/frageboegen")
@@ -189,9 +189,9 @@ it('opens the project forms screen to whoever can view the project, regardless o
 ]);
 
 it('lists a project\'s form instances with their fields on the project screen', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $template = FormTemplate::factory()->create(['name' => 'Wunschliste Gruppenfotos']);
-    $instance = FormInstance::factory()->for($project)->create(['name' => 'Wunschliste Gruppenfotos', 'source_template_name' => 'Wunschliste Gruppenfotos']);
+    $instance = FormInstance::factory()->for($project, 'case')->create(['name' => 'Wunschliste Gruppenfotos', 'source_template_name' => 'Wunschliste Gruppenfotos']);
     app(SeedFormInstanceFromTemplate::class)($instance, $template);
     FormField::factory()->for($template, 'formTemplate')->create();
 
@@ -205,8 +205,8 @@ it('lists a project\'s form instances with their fields on the project screen', 
 });
 
 it('carries no integer identifier in the props', function () {
-    $project = Project::factory()->create();
-    $instance = FormInstance::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $instance = FormInstance::factory()->for($project, 'case')->create();
     $field = FormInstanceField::factory()->for($instance, 'formInstance')->create();
 
     $props = $this->actingAs(staffMember(), 'staff')
@@ -225,8 +225,8 @@ it('carries no integer identifier in the props', function () {
 
 it('records an answer via the controller and audit-logs it', function () {
     $user = staffMember();
-    $project = Project::factory()->create();
-    $instance = FormInstance::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $instance = FormInstance::factory()->for($project, 'case')->create();
     $field = FormInstanceField::factory()->for($instance, 'formInstance')->create();
 
     $this->actingAs($user, 'staff')
@@ -241,8 +241,8 @@ it('records an answer via the controller and audit-logs it', function () {
 });
 
 it('editing an already-answered field over HTTP keeps the previous answer retrievable, not overwritten', function () {
-    $project = Project::factory()->create();
-    $instance = FormInstance::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $instance = FormInstance::factory()->for($project, 'case')->create();
     $field = FormInstanceField::factory()->for($instance, 'formInstance')->create();
     $this->actingAs(staffMember(), 'staff')
         ->patch("/frageboegen-felder/{$field->public_id}/antwort", ['value' => 'Strand']);
@@ -258,8 +258,8 @@ it('editing an already-answered field over HTTP keeps the previous answer retrie
 });
 
 it('exposes the current answer to the props once the field has been answered', function () {
-    $project = Project::factory()->create();
-    $instance = FormInstance::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $instance = FormInstance::factory()->for($project, 'case')->create();
     $field = FormInstanceField::factory()->for($instance, 'formInstance')->create();
     $field->answer('Strand');
 
@@ -274,8 +274,8 @@ it('exposes the current answer to the props once the field has been answered', f
 });
 
 it('rejects answering a field to a staff member without ManageFormTemplates', function () {
-    $project = Project::factory()->create();
-    $instance = FormInstance::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $instance = FormInstance::factory()->for($project, 'case')->create();
     $field = FormInstanceField::factory()->for($instance, 'formInstance')->create();
 
     $this->actingAs(staffMember(StaffRole::Contributor), 'staff')
@@ -289,7 +289,7 @@ it('rejects answering a field to a staff member without ManageFormTemplates', fu
 
 function fileField(array $options = ['formats' => ['pdf'], 'maxSize' => 5, 'multiple' => false]): FormInstanceField
 {
-    $instance = FormInstance::factory()->for(Project::factory()->create())->create();
+    $instance = FormInstance::factory()->for(ClientCase::factory()->create(), 'case')->create();
 
     return FormInstanceField::factory()->for($instance, 'formInstance')->create([
         'label' => 'Ablaufplan eurer Planerin',
@@ -387,8 +387,8 @@ it('rejects uploading to a file field for a staff member without ManageFormTempl
 });
 
 it('keeps a file field\'s upload config in the same options column select uses', function () {
-    $project = Project::factory()->create();
-    $instance = FormInstance::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $instance = FormInstance::factory()->for($project, 'case')->create();
 
     $this->actingAs(staffMember(), 'staff')
         ->patch("/frageboegen/{$instance->public_id}", [
@@ -405,7 +405,7 @@ it('keeps a file field\'s upload config in the same options column select uses',
 });
 
 it('rejects a file field configured with a format the app does not accept at all', function () {
-    $instance = FormInstance::factory()->for(Project::factory()->create())->create();
+    $instance = FormInstance::factory()->for(ClientCase::factory()->create(), 'case')->create();
 
     $this->actingAs(staffMember(), 'staff')
         ->patch("/frageboegen/{$instance->public_id}", [
@@ -418,8 +418,8 @@ it('rejects a file field configured with a format the app does not accept at all
 });
 
 it('hands the studio back a file it stored', function () {
-    $project = Project::factory()->create();
-    $instance = FormInstance::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $instance = FormInstance::factory()->for($project, 'case')->create();
     $field = FormInstanceField::factory()->for($instance)->create(['type' => FormFieldType::File]);
 
     Storage::fake('local');
@@ -434,8 +434,8 @@ it('hands the studio back a file it stored', function () {
 // Der Schirm zeigt den Fehler jetzt an; vorher sah das Speichern aus, als
 // täte es nichts, wenn eine frisch angelegte Frage noch keinen Titel trug.
 it('refuses a question without a title and names the field', function () {
-    $project = Project::factory()->create();
-    $instance = FormInstance::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $instance = FormInstance::factory()->for($project, 'case')->create();
 
     $this->actingAs(User::factory()->create(), 'staff')
         ->from("/auftraege/{$project->public_id}/frageboegen")

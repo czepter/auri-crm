@@ -2,8 +2,8 @@
 
 namespace App\Crm\Data;
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -38,8 +38,8 @@ class ContactRowData extends Data
     {
         // Ordered by the project's own primary shoot, so "next" is the day
         // this contact is next expected and not the newest row.
-        $dated = $contact->projects
-            ->map(fn (Project $project) => $project->primaryShoot?->date)
+        $dated = $contact->cases
+            ->map(fn (ClientCase $project) => $project->primaryShoot?->date)
             ->filter()
             ->sort()
             ->values();
@@ -51,14 +51,14 @@ class ContactRowData extends Data
             name: $contact->name,
             email: $contact->email,
             phone: $contact->phone,
-            projectCount: $contact->projects->count(),
+            projectCount: $contact->cases->count(),
             standing: match (true) {
                 $next !== null => 'running',
-                $contact->projects->isNotEmpty() => 'past',
+                $contact->cases->isNotEmpty() => 'past',
                 default => 'none',
             },
             nextDate: $next?->format('Y-m-d'),
-            latestProject: $contact->projects->last()?->name,
+            latestProject: $contact->cases->last()?->name,
         );
     }
 }

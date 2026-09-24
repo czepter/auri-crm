@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Models\AuditLog;
 use App\Quotes\Actions\ReviseQuote;
 use App\Quotes\Enums\QuoteStatus;
@@ -28,9 +28,9 @@ beforeEach(function () {
 });
 
 /** A project, a contact attached to it, and a quote already sent to the client. */
-function sentQuote(Project $project, array $attributes = []): Quote
+function sentQuote(ClientCase $project, array $attributes = []): Quote
 {
-    return Quote::factory()->for($project)->create(array_merge([
+    return Quote::factory()->for($project, 'case')->create(array_merge([
         'status' => QuoteStatus::Sent,
         'number' => 'AN-2026-1',
         'sent_at' => now(),
@@ -41,11 +41,11 @@ function sentQuote(Project $project, array $attributes = []): Quote
 // --- The screen: reading the current quote --------------------------------
 
 it('shows the project\'s currently sent quote on the portal screen', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $quote = sentQuote($project);
     QuoteItem::factory()->for($quote)->create(['title' => 'Hochzeitsreportage', 'quantity' => 1, 'unit_price' => 440000]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $props = $this->actingAs($contact, 'portal')
         ->get("/projekte/{$project->public_id}/angebot")
@@ -60,10 +60,10 @@ it('shows the project\'s currently sent quote on the portal screen', function ()
 });
 
 it('shows nothing sent yet as an empty state rather than an error', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
-    Quote::factory()->for($project)->create(); // draft — never sent
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
+    Quote::factory()->for($project, 'case')->create(); // draft — never sent
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $props = $this->actingAs($contact, 'portal')
         ->get("/projekte/{$project->public_id}/angebot")
@@ -74,10 +74,10 @@ it('shows nothing sent yet as an empty state rather than an error', function () 
 });
 
 it('flags a quote past its own valid_until as expired for display, without hiding it', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $quote = sentQuote($project, ['valid_until' => now()->subDay()]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $props = $this->actingAs($contact, 'portal')
         ->get("/projekte/{$project->public_id}/angebot")
@@ -91,10 +91,10 @@ it('flags a quote past its own valid_until as expired for display, without hidin
 // --- Acceptance: the happy path -------------------------------------------
 
 it('accepts a sent, still-valid quote, recording accepted_at, accepted_ip and the acting contact', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $quote = sentQuote($project);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal')
         ->from("/projekte/{$project->public_id}/angebot")
@@ -115,10 +115,10 @@ it('accepts a sent, still-valid quote, recording accepted_at, accepted_ip and th
 
 it('requires the AGB ticked once the studio attaches them', function () {
     StudioSettings::query()->update(['portal_legal_agb_url' => 'https://studio.test/agb', 'portal_legal_agb_attach' => true]);
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $quote = sentQuote($project);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal')
         ->post("/projekte/{$project->public_id}/angebot/annehmen")
@@ -133,10 +133,10 @@ it('requires the AGB ticked once the studio attaches them', function () {
 
 it('leaves the AGB tick out while they are not attached', function () {
     StudioSettings::query()->update(['portal_legal_agb_url' => 'https://studio.test/agb']);
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $quote = sentQuote($project);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal')
         ->post("/projekte/{$project->public_id}/angebot/annehmen")
@@ -145,10 +145,10 @@ it('leaves the AGB tick out while they are not attached', function () {
 });
 
 it('is idempotent: a double submit accepts once', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $quote = sentQuote($project);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal')->post("/projekte/{$project->public_id}/angebot/annehmen")->assertRedirect();
     $firstAcceptedAt = $quote->fresh()->accepted_at;
@@ -166,10 +166,10 @@ it('is idempotent: a double submit accepts once', function () {
 // submit's own re-check stands between an invalid quote and an acceptance.
 
 it('rejects acceptance of a quote superseded after it was rendered, even though the render itself succeeded', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $quote = sentQuote($project);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     // The render: still sent, still valid — nothing here has any reason to object.
     $this->actingAs($contact, 'portal')
@@ -190,10 +190,10 @@ it('rejects acceptance of a quote superseded after it was rendered, even though 
 });
 
 it('rejects acceptance of a quote that expired after it was rendered, even though the render itself succeeded', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $quote = sentQuote($project, ['valid_until' => now()->addDay()]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     // The render: still within validity — nothing here has any reason to object.
     $this->actingAs($contact, 'portal')
@@ -214,7 +214,7 @@ it('rejects acceptance of a quote that expired after it was rendered, even thoug
 // --- Visibility: the 404-not-403 rule --------------------------------------
 
 it('404s the quote screen for a contact not on the project', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     sentQuote($project);
     $contact = Contact::factory()->create();
 
@@ -224,10 +224,10 @@ it('404s the quote screen for a contact not on the project', function () {
 });
 
 it('404s the quote screen for a project the studio has not made portal_visible', function () {
-    $project = Project::factory()->create(['portal_visible' => false]);
+    $project = ClientCase::factory()->create(['portal_visible' => false]);
     sentQuote($project);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal')
         ->get("/projekte/{$project->public_id}/angebot")
@@ -235,7 +235,7 @@ it('404s the quote screen for a project the studio has not made portal_visible',
 });
 
 it('404s an accept attempt for a contact not on the project', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $quote = sentQuote($project);
     $contact = Contact::factory()->create();
 
@@ -247,10 +247,10 @@ it('404s an accept attempt for a contact not on the project', function () {
 });
 
 it('404s an accept attempt for a project the studio has not made portal_visible', function () {
-    $project = Project::factory()->create(['portal_visible' => false]);
+    $project = ClientCase::factory()->create(['portal_visible' => false]);
     $quote = sentQuote($project);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal')
         ->post("/projekte/{$project->public_id}/angebot/annehmen")
@@ -260,9 +260,9 @@ it('404s an accept attempt for a project the studio has not made portal_visible'
 });
 
 it('404s an accept attempt when the project has no sent quote at all', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal')
         ->post("/projekte/{$project->public_id}/angebot/annehmen")

@@ -2,8 +2,8 @@
 
 use App\Catalog\Models\Package;
 use App\Quotes\Actions\SeedQuoteFromPackage;
-use App\Quotes\Enums\PricingMode;
 use App\Quotes\Data\QuoteItemData;
+use App\Quotes\Enums\PricingMode;
 use App\Quotes\Models\Quote;
 use App\Quotes\Support\QuoteRange;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,7 +19,7 @@ it('legt ein Angebot klassisch an', function () {
 it('nimmt den Modus vom Formular entgegen', function () {
     [$user, $project] = studioWithProject();
 
-    $quote = Quote::factory()->for($project)->create();
+    $quote = Quote::factory()->for($project, 'case')->create();
 
     $this->actingAs($user, 'staff')
         ->patch("/angebote/{$quote->public_id}", [
@@ -38,7 +38,7 @@ it('nimmt den Modus vom Formular entgegen', function () {
 
 it('speichert Menge und Rabatt auch im Auswahlmodus', function () {
     [$user, $project] = studioWithProject();
-    $quote = Quote::factory()->for($project)->create();
+    $quote = Quote::factory()->for($project, 'case')->create();
 
     $this->actingAs($user, 'staff')->patch("/angebote/{$quote->public_id}", [
         'pricing_mode' => 'choice',
@@ -78,7 +78,7 @@ it('speichert Menge und Rabatt auch im Auswahlmodus', function () {
 
 it('speichert ein Auswahlangebot, bevor ein Stundensatz steht', function () {
     [$user, $project] = studioWithProject();
-    $quote = Quote::factory()->for($project)->create();
+    $quote = Quote::factory()->for($project, 'case')->create();
 
     $this->actingAs($user, 'staff')->patch("/angebote/{$quote->public_id}", [
         'pricing_mode' => 'choice',
@@ -96,7 +96,7 @@ it('speichert ein Auswahlangebot, bevor ein Stundensatz steht', function () {
 
 it('raeumt die Reglerspalten beim Umschalten auf klassisch', function () {
     [$user, $project] = studioWithProject();
-    $quote = Quote::factory()->slider()->create(['project_id' => $project->id]);
+    $quote = Quote::factory()->slider()->create(['case_id' => $project->id]);
 
     $this->actingAs($user, 'staff')->patch("/angebote/{$quote->public_id}", [
         'pricing_mode' => 'classic',

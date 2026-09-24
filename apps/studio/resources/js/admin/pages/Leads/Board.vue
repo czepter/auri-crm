@@ -90,12 +90,12 @@ function shortDate(date: string | null) {
 // Nothing travels with the pointer, so the row itself has to say it is under
 // way — otherwise one drags something that visibly stays put. The insertion
 // mark is the only thing that moves.
-const moving = ref<{ id: string; leadId: string; column: number } | null>(null);
+const moving = ref<{ id: string; column: number } | null>(null);
 const target = ref<number | null>(null);
 const insertAt = ref<number | null>(null);
 
 function onDragStart(event: DragEvent, card: Card, column: number) {
-    moving.value = { id: card.id, leadId: card.leadId, column };
+    moving.value = { id: card.id, column };
     if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
 }
 
@@ -111,7 +111,7 @@ function onDragOver(event: DragEvent, column: number, row: number | null) {
 function onDrop(column: number) {
     if (moving.value === null || moving.value.column === column) return;
 
-    move(moving.value.leadId, props.columns[column].stage);
+    move(moving.value.id, props.columns[column].stage);
     reset();
 }
 
@@ -129,16 +129,16 @@ function reset() {
 const booking = ref<string | null>(null);
 const confirmingBook = ref(false);
 
-function move(leadId: string, stage: string) {
+function move(id: string, stage: string) {
     if (stage === "booked") {
-        booking.value = leadId;
+        booking.value = id;
         confirmingBook.value = true;
 
         return;
     }
 
     router.post(
-        `/anfragen/${leadId}/stufe`,
+        `/anfragen/${id}/stufe`,
         { stage },
         { preserveScroll: true },
     );
@@ -182,7 +182,7 @@ function onKey(event: KeyboardEvent, card: Card, column: number) {
 
     if (stage) {
         event.preventDefault();
-        move(card.leadId, stage);
+        move(card.id, stage);
     }
 }
 
@@ -344,7 +344,7 @@ const workflowAllowed = computed(() =>
                                 :class="
                                     moving?.id === card.id && 'cursor-grabbing'
                                 "
-                                :href="`/anfragen/${card.leadId}`"
+                                :href="`/anfragen/${card.id}`"
                                 draggable="true"
                                 @dragstart="onDragStart($event, card, index)"
                                 @dragend="reset"
@@ -511,7 +511,7 @@ const workflowAllowed = computed(() =>
                                 :key="card.id"
                             >
                                 <TableCell tone="name">
-                                    <Link :href="`/anfragen/${card.leadId}`">{{
+                                    <Link :href="`/anfragen/${card.id}`">{{
                                         card.names
                                     }}</Link>
                                 </TableCell>
@@ -594,7 +594,7 @@ const workflowAllowed = computed(() =>
                         "
                         @click="
                             column.stage !== menu.card.stage &&
-                            move(menu.card.leadId, column.stage)
+                            move(menu.card.id, column.stage)
                         "
                     >
                         {{ column.label }}
@@ -602,7 +602,7 @@ const workflowAllowed = computed(() =>
 
                     <div
                         class="mt-1 cursor-pointer rounded-lg border-t border-rule px-[9px] py-1.5 text-[12.5px] hover:bg-sunk"
-                        @click="closing = menu!.card.leadId; confirmingClose = true; menu = null"
+                        @click="closing = menu!.card.id; confirmingClose = true; menu = null"
                     >
                         {{ $t("board.close") }}
                     </div>

@@ -2,7 +2,7 @@
 
 namespace App\Engagement\Actions;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Engagement\Models\Thread;
 use LogicException;
 
@@ -16,15 +16,15 @@ use LogicException;
  * that order, and re-pointing them would rewrite what was said rather than
  * file it.
  */
-class AttachThreadToProject
+class AttachThreadToCase
 {
-    public function __invoke(Thread $thread, Project $project): Thread
+    public function __invoke(Thread $thread, ClientCase $project): Thread
     {
-        if ($thread->project_id !== null) {
+        if ($thread->case_id !== null) {
             throw new LogicException('This thread already belongs to a booking; a conversation is filed once, never moved.');
         }
 
-        $thread->update(['project_id' => $project->id]);
+        $thread->update(['case_id' => $project->id]);
 
         return $thread;
     }

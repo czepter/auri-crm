@@ -3,8 +3,8 @@
 namespace App\Crm\Actions;
 
 use App\Crm\Data\CrewCandidateData;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\CrewAssignment;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\Absence;
 use App\Models\User;
@@ -23,7 +23,7 @@ use Illuminate\Support\Collection;
 class CrewAvailability
 {
     /** @return array<string, list<CrewCandidateData>> keyed by shoot public_id */
-    public function forProject(Project $project): array
+    public function forCase(ClientCase $project): array
     {
         $shoots = $project->shoots()->uncancelled()->get();
         $staff = User::query()->orderBy('name')->get();
@@ -43,7 +43,7 @@ class CrewAvailability
             ->get();
 
         $assignments = CrewAssignment::query()
-            ->with('shoot.project')
+            ->with('shoot.case')
             ->whereHas('shoot', fn ($query) => $query->uncancelled()->whereIn('date', $dates))
             ->get();
 
@@ -82,9 +82,9 @@ class CrewAvailability
                         // The project names the clash unless it is this same
                         // project's own second shoot that day, where the name
                         // would say nothing.
-                        note: $other->project_id === $shoot->project_id
+                        note: $other->case_id === $shoot->case_id
                             ? ($other->label ?? $other->kind)
-                            : $other->project->name,
+                            : $other->case->name,
                     );
                 }
 

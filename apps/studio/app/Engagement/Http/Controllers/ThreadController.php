@@ -2,7 +2,7 @@
 
 namespace App\Engagement\Http\Controllers;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Engagement\Actions\PostMessage;
 use App\Engagement\Actions\RecordMessage;
 use App\Engagement\Models\Message;
@@ -18,11 +18,11 @@ use Illuminate\Support\Carbon;
  */
 class ThreadController extends Controller
 {
-    public function reply(Request $request, Project $project, PostMessage $post): RedirectResponse
+    public function reply(Request $request, ClientCase $case, PostMessage $post): RedirectResponse
     {
-        $this->authorize('manageMessages', $project);
+        $this->authorize('manageMessages', $case);
 
-        $thread = $project->latestThread()->first();
+        $thread = $case->latestThread()->first();
 
         // Nothing to reply to yet — the client has not started a
         // conversation, and staff cannot start one on their behalf.
@@ -41,21 +41,21 @@ class ThreadController extends Controller
     }
 
     /** What the client said somewhere else, written in afterwards — see RecordMessage. */
-    public function record(Request $request, Project $project, RecordMessage $record): RedirectResponse
+    public function record(Request $request, ClientCase $case, RecordMessage $record): RedirectResponse
     {
-        $this->authorize('manageMessages', $project);
+        $this->authorize('manageMessages', $case);
 
         $validated = $request->validate([
             'body' => ['required', 'string', 'max:5000'],
             'sent_at' => ['nullable', 'date', 'before_or_equal:now'],
         ]);
 
-        $contact = $record->contact($project, null);
+        $contact = $record->contact($case, null);
 
         abort_if($contact === null, 422);
 
         $record(
-            $project,
+            $case,
             $contact,
             $validated['body'],
             isset($validated['sent_at']) ? Carbon::parse($validated['sent_at']) : now(),
@@ -72,12 +72,12 @@ class ThreadController extends Controller
      * would have to read past forever. The queued job notices the row is gone
      * and does nothing — see SendScheduledMessage.
      */
-    public function cancel(Project $project, Message $message): RedirectResponse
+    public function cancel(ClientCase $case, Message $message): RedirectResponse
     {
-        $this->authorize('manageMessages', $project);
+        $this->authorize('manageMessages', $case);
 
         abort_if($message->scheduled_for === null || $message->delivery_state !== null, 422);
-        abort_if($message->thread->project_id !== $project->id, 404);
+        abort_if($message->thread->case_id !== $case->id, 404);
 
         $message->delete();
 

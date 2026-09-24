@@ -4,7 +4,7 @@ namespace App\Crm\Actions;
 
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
 use App\Crm\Support\StageHistory;
@@ -34,7 +34,7 @@ class UnbookProject
     public function __construct(private readonly CrmVocabulary $stages) {}
 
     /** Null when there was no booking to take back — the no-op writes nothing. */
-    public function __invoke(Project $project, ?User $actor = null, ?CarbonInterface $at = null): ?Project
+    public function __invoke(ClientCase $project, ?User $actor = null, ?CarbonInterface $at = null): ?ClientCase
     {
         if (! $project->isBooked()) {
             return null;
@@ -85,7 +85,7 @@ class UnbookProject
                             'reverted' => true,
                         ],
                         subject: $shoot->public_id,
-                        projectId: $shoot->project_id,
+                        projectId: $shoot->case_id,
                         occurredAt: $at,
                     );
                 });

@@ -38,8 +38,8 @@ class NextShootData extends Data
         $crew = $shoot->crew->map(fn ($assignment) => $assignment->user->name);
 
         return new self(
-            projectId: $shoot->project->public_id,
-            projectName: $shoot->project->name,
+            projectId: $shoot->case->public_id,
+            projectName: $shoot->case->name,
             shootId: $shoot->public_id,
             title: $shoot->label ?? $shoot->kind,
             date: $shoot->date->format('Y-m-d'),

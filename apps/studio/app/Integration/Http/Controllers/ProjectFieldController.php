@@ -4,7 +4,7 @@ namespace App\Integration\Http\Controllers;
 
 use App\Crm\Actions\WriteProjectFieldValues;
 use App\Crm\Enums\ProjectFieldType;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\ProjectField;
 use App\Crm\Models\ProjectType;
 use App\Http\Controllers\Controller;
@@ -35,15 +35,15 @@ class ProjectFieldController extends Controller
         return response()->json(['data' => ProjectTypeReadData::collect($types->map(ProjectTypeReadData::fromModel(...)))]);
     }
 
-    public function updateValues(Request $request, Project $project, WriteProjectFieldValues $write): JsonResponse
+    public function updateValues(Request $request, ClientCase $case, WriteProjectFieldValues $write): JsonResponse
     {
         $validated = $request->validate(['fields' => ['required', 'array']]);
 
         // Every message the action raises is keyed `fields.<key>`, so a 422
         // names the field that was wrong rather than the request that was.
-        $write($project, $validated['fields'], $this->actor($request));
+        $write($case, $validated['fields'], $this->actor($request));
 
-        return response()->json(['data' => ProjectReadData::fromModel($project->fresh())]);
+        return response()->json(['data' => ProjectReadData::fromModel($case->fresh())]);
     }
 
     public function store(Request $request, ProjectType $projectType): JsonResponse

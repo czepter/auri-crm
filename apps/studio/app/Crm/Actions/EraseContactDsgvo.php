@@ -4,10 +4,10 @@ namespace App\Crm\Actions;
 
 use App\Automation\Models\AutomationRun;
 use App\Catalog\Models\ServiceSuggestion;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Engagement\Models\Message;
@@ -55,7 +55,7 @@ class EraseContactDsgvo
         $policy ??= RetentionPolicyData::everything();
 
         DB::transaction(function () use ($contact, $actor, $policy) {
-            foreach ($contact->projects()->get() as $project) {
+            foreach ($contact->cases()->get() as $project) {
                 $sharedWithSomeoneElse = $project->contacts()->whereKeyNot($contact->id)->exists();
 
                 if ($sharedWithSomeoneElse) {
@@ -139,7 +139,7 @@ class EraseContactDsgvo
      * invoices, which § 147 AO requires kept (Art. 17(3)(b) DSGVO) and which
      * UnbookProject refuses to drop for the same reason.
      */
-    private function purgeSoleContactProject(Project $project, RetentionPolicyData $policy): void
+    private function purgeSoleContactProject(ClientCase $project, RetentionPolicyData $policy): void
     {
         if (! $policy->order) {
             $this->purgeParts($project, $policy);
@@ -151,18 +151,18 @@ class EraseContactDsgvo
 
         $this->purgeStorageObjects($project);
 
-        Quote::where('project_id', $project->id)->delete();
-        Thread::where('project_id', $project->id)->delete();
-        Gallery::where('project_id', $project->id)->delete();
+        Quote::where('case_id', $project->id)->delete();
+        Thread::where('case_id', $project->id)->delete();
+        Gallery::where('case_id', $project->id)->delete();
         $project->formInstances()->delete();
-        Task::where('project_id', $project->id)->delete();
-        InternalNote::where('project_id', $project->id)->delete();
+        Task::where('case_id', $project->id)->delete();
+        InternalNote::where('case_id', $project->id)->delete();
 
         $shootIds = $project->shoots()->pluck('id');
-        Shoot::where('project_id', $project->id)->delete();
-        Lead::where('project_id', $project->id)->delete();
+        Shoot::where('case_id', $project->id)->delete();
+        Lead::where('case_id', $project->id)->delete();
 
-        AutomationRun::where(fn ($q) => $q->where('anchorable_type', Project::class)->where('anchorable_id', $project->id))
+        AutomationRun::where(fn ($q) => $q->where('anchorable_type', ClientCase::class)->where('anchorable_id', $project->id))
             ->orWhere(fn ($q) => $q->where('anchorable_type', Shoot::class)->whereIn('anchorable_id', $shootIds))
             ->delete();
 
@@ -175,30 +175,30 @@ class EraseContactDsgvo
         $project->delete();
     }
 
-    private function purgeParts(Project $project, RetentionPolicyData $policy): void
+    private function purgeParts(ClientCase $project, RetentionPolicyData $policy): void
     {
-        $policy->text && Lead::where('project_id', $project->id)->update(['inquiry_text' => null]);
+        $policy->text && Lead::where('case_id', $project->id)->update(['inquiry_text' => null]);
 
         if ($policy->messages) {
-            Thread::where('project_id', $project->id)->delete();
-            Task::where('project_id', $project->id)->delete();
-            InternalNote::where('project_id', $project->id)->delete();
+            Thread::where('case_id', $project->id)->delete();
+            Task::where('case_id', $project->id)->delete();
+            InternalNote::where('case_id', $project->id)->delete();
         }
 
         if ($policy->offers) {
-            Quote::where('project_id', $project->id)->delete();
+            Quote::where('case_id', $project->id)->delete();
             $project->formInstances()->delete();
         }
 
         if ($policy->galleries) {
             $this->purgeStorageObjects($project);
-            Gallery::where('project_id', $project->id)->delete();
+            Gallery::where('case_id', $project->id)->delete();
         }
 
         $policy->name && $project->forceFill(['name' => '[gelöscht]', 'type_other' => null, 'field_values' => null])->save();
     }
 
-    private function purgeStorageObjects(Project $project): void
+    private function purgeStorageObjects(ClientCase $project): void
     {
         $s3 = Storage::disk('s3');
 

@@ -3,7 +3,7 @@
 namespace App\Crm\Support;
 
 use App\Crm\Enums\StagePipeline;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Models\AuditLog;
 
 /**
@@ -18,12 +18,12 @@ use App\Models\AuditLog;
  * An event with no entry in lang/de/activity.php is dropped, not rendered raw:
  * the label map doubles as the allow-list.
  */
-class ProjectActivity
+class CaseActivity
 {
-    public static function for(Project $project, int $limit = 25): array
+    public static function for(ClientCase $project, int $limit = 25): array
     {
         return AuditLog::query()
-            ->where('project_id', $project->id)
+            ->where('case_id', $project->id)
             ->with('actor:id,name')
             ->latest('created_at')
             ->limit($limit)

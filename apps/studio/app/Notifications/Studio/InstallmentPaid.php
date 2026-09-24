@@ -2,7 +2,7 @@
 
 namespace App\Notifications\Studio;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Payments\Models\PaymentInstallment;
 
 class InstallmentPaid extends StudioEventNotification
@@ -16,19 +16,19 @@ class InstallmentPaid extends StudioEventNotification
 
     public function body(): string
     {
-        return $this->project()?->name ?? "Rechnung {$this->installment->invoice?->number}";
+        return $this->case()?->name ?? "Rechnung {$this->installment->invoice?->number}";
     }
 
     /* Payments have no screen of their own; the project detail carries them. */
     public function url(): string
     {
-        $project = $this->project();
+        $project = $this->case();
 
         return $project === null ? '/rechnungen' : "/auftraege/{$project->public_id}";
     }
 
-    public function project(): ?Project
+    public function case(): ?ClientCase
     {
-        return $this->installment->project();
+        return $this->installment->case();
     }
 }

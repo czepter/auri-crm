@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Gallery\Models\Gallery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -16,7 +16,7 @@ function legacyGalleryFixture(array $records): string
 }
 
 it('links legacy galleries from a JSON fixture', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $file = legacyGalleryFixture([
         ['project_public_id' => $project->public_id, 'external_url' => 'https://old-host.example.test/g/1'],
     ]);
@@ -30,7 +30,7 @@ it('links legacy galleries from a JSON fixture', function () {
 });
 
 it('backfills legacy galleries from a JSON fixture', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $file = legacyGalleryFixture([
         ['project_public_id' => $project->public_id, 'title' => 'Verlobung', 'assets' => ['a1.jpg']],
     ]);
@@ -46,8 +46,8 @@ it('backfills legacy galleries from a JSON fixture', function () {
 });
 
 it('a backfilled or linked legacy gallery is reachable from its project either way', function () {
-    $linkedProject = Project::factory()->create();
-    $backfilledProject = Project::factory()->create();
+    $linkedProject = ClientCase::factory()->create();
+    $backfilledProject = ClientCase::factory()->create();
     $file = legacyGalleryFixture([
         ['project_public_id' => $linkedProject->public_id, 'external_url' => 'https://old-host.example.test/g/1'],
     ]);
@@ -66,7 +66,7 @@ it('a backfilled or linked legacy gallery is reachable from its project either w
 });
 
 it('dry run reports without writing any gallery', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $file = legacyGalleryFixture([
         ['project_public_id' => $project->public_id, 'external_url' => 'https://old-host.example.test/g/1'],
     ]);
@@ -104,7 +104,7 @@ it('fails cleanly when the fixture file is not a valid JSON array', function () 
 });
 
 it('summarizes mixed outcomes across a run', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $record = ['project_public_id' => $project->public_id, 'external_url' => 'https://old-host.example.test/g/1'];
     $file = legacyGalleryFixture([$record, $record, ['project_public_id' => 'missing', 'external_url' => 'https://x.test']]);
 

@@ -44,12 +44,12 @@ class OpenLeads
     public function cards(): Collection
     {
         return $this->cards ??= $this->leads()->map(function (Lead $lead) {
-            $date = $lead->project->primaryShoot?->date?->format('Y-m-d');
+            $date = $lead->case->primaryShoot?->date?->format('Y-m-d');
 
             // Every shoot on that date, minus this project's own — the query
             // cannot exclude it, because a different card needs that same row.
             $conflicts = collect($this->conflicts()[$date] ?? [])
-                ->reject(fn ($conflict) => $conflict->projectId === $lead->project->public_id)
+                ->reject(fn ($conflict) => $conflict->projectId === $lead->case->public_id)
                 ->values()
                 ->all();
 
@@ -60,9 +60,9 @@ class OpenLeads
     /** @return list<array{key: string, rows: list<LeadCardData>}> */
     public function groups(): array
     {
-        $byLead = $this->cards()->keyBy(fn (LeadCardData $card) => $card->leadId);
+        $byLead = $this->cards()->keyBy(fn (LeadCardData $card) => $card->id);
 
-        return $this->grouped(fn (Lead $lead) => $byLead[$lead->public_id]);
+        return $this->grouped(fn (Lead $lead) => $byLead[$lead->case->public_id]);
     }
 
     /** @return list<array{key: string, rows: list<LeadQueueRowData>}> */
@@ -86,7 +86,7 @@ class OpenLeads
                 ->filter(fn (Lead $lead) => $this->group($lead->stage) === $key)
                 // Undated last. An inquiry without a date is not the most
                 // urgent one, and both views sort through this one line.
-                ->sortBy(fn (Lead $lead) => $lead->project->primaryShoot?->date?->toDateString() ?? '9999-99-99')
+                ->sortBy(fn (Lead $lead) => $lead->case->primaryShoot?->date?->toDateString() ?? '9999-99-99')
                 ->map($row)
                 ->values()
                 ->all(),
@@ -122,7 +122,7 @@ class OpenLeads
         return $this->leads ??= Lead::query()
             ->open()
             ->unbooked()
-            ->with(['project.contacts', 'project.shoots', 'project.primaryShoot', 'project.latestQuote'])
+            ->with(['case.contacts', 'case.shoots', 'case.primaryShoot', 'case.latestQuote'])
             ->orderByDesc('stage_entered_at')
             ->get();
     }
@@ -137,7 +137,7 @@ class OpenLeads
     {
         return $this->conflicts ??= $this->availability->forDates(
             $this->leads()
-                ->map(fn (Lead $lead) => $lead->project->primaryShoot?->date?->format('Y-m-d'))
+                ->map(fn (Lead $lead) => $lead->case->primaryShoot?->date?->format('Y-m-d'))
                 ->filter()
                 ->unique()
                 ->values()

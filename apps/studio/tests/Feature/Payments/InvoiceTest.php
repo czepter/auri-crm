@@ -248,7 +248,7 @@ function freeInvoice(): Invoice
 it('issues an invoice without a project from its items, with one installment to book against', function () {
     $invoice = freeInvoice()->fresh(['installments', 'items']);
 
-    expect($invoice->project_id)->toBeNull()
+    expect($invoice->case_id)->toBeNull()
         ->and($invoice->number)->toStartWith('RE-')
         ->and($invoice->amount())->toBe(36_295)
         ->and($invoice->installments->sole()->payment_plan_id)->toBeNull()
@@ -294,7 +294,7 @@ it('bills a picked rate at its own gross and charges free positions on top', fun
     Bus::fake();
 
     $installment = invoiceablePlan();
-    $project = $installment->plan->project;
+    $project = $installment->plan->case;
 
     $invoice = app(IssueInvoice::class)->positions($project->primaryContact(), $project, [
         ['title' => 'Anzahlung', 'installment' => $installment],

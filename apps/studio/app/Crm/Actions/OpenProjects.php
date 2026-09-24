@@ -5,7 +5,7 @@ namespace App\Crm\Actions;
 use App\Crm\Data\ProjectQueueRowData;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
 use App\Models\User;
@@ -25,7 +25,7 @@ class OpenProjects
     private const GROUPS = ['haengt', 'woche', 'bearbeitung', 'spaeter'];
 
     public function __construct(
-        private readonly DeriveProjectPosition $position,
+        private readonly DeriveCasePosition $position,
         private readonly CrmVocabulary $stages,
     ) {}
 
@@ -35,15 +35,15 @@ class OpenProjects
      *
      * @return list<array{key: string, rows: list<ProjectQueueRowData>}>
      */
-    public function queue(User $user, ?Project $open = null): array
+    public function queue(User $user, ?ClientCase $open = null): array
     {
-        $rows = Project::query()
+        $rows = ClientCase::query()
             ->visibleTo($user)
             ->booked()
             ->with(['contacts', 'shoots', 'primaryShoot', 'lead', 'paymentPlan.installments'])
             ->get()
-            ->reject(fn (Project $project) => $project->lead?->isLost() || $project->isCompleted())
-            ->map(fn (Project $project) => $this->row($project, $open))
+            ->reject(fn (ClientCase $project) => $project->lead?->isLost() || $project->isCompleted())
+            ->map(fn (ClientCase $project) => $this->row($project, $open))
             ->filter();
 
         return collect(self::GROUPS)->map(fn (string $key) => [
@@ -58,7 +58,7 @@ class OpenProjects
     }
 
     /** @return array{group: string, row: ProjectQueueRowData}|null */
-    private function row(Project $project, ?Project $open): ?array
+    private function row(ClientCase $project, ?ClientCase $open): ?array
     {
         $shoot = $this->position->leastAdvanced($project->shoots);
 

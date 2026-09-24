@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Settings\Models\StudioSettings;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,9 +16,9 @@ beforeEach(function () {
 });
 
 it('lets an authenticated client reach their project when maintenance is off', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $this->actingAs($contact, 'portal')->get("/projekte/{$project->public_id}")->assertOk();
 });
@@ -29,9 +29,9 @@ it('shows the closure message and no project data to an authenticated client whi
         'portal_maintenance_message' => 'Wir sind kurz nicht erreichbar.',
     ]);
 
-    $project = Project::factory()->create(['portal_visible' => true, 'name' => 'Hochzeit Geheim GmbH']);
+    $project = ClientCase::factory()->create(['portal_visible' => true, 'name' => 'Hochzeit Geheim GmbH']);
     $contact = Contact::factory()->create(['name' => 'Lena Meier']);
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $response = $this->actingAs($contact, 'portal')->get("/projekte/{$project->public_id}")->assertOk();
 

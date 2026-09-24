@@ -2,7 +2,7 @@
 
 namespace App\Notifications\Studio;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Task;
 use Illuminate\Support\Collection;
 
@@ -45,7 +45,7 @@ class TasksDue extends StudioEventNotification
     }
 
     /* Several projects at once — the scan resolved the recipients per task. */
-    public function project(): ?Project
+    public function case(): ?ClientCase
     {
         return null;
     }

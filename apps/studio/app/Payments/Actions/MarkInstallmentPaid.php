@@ -68,7 +68,7 @@ class MarkInstallmentPaid
                     'remaining' => max(0, (int) $installment->amount - $paidAmount),
                 ],
                 subject: $installment->public_id,
-                projectId: $installment->project()?->id,
+                projectId: $installment->case()?->id,
             );
         });
 

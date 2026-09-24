@@ -12,7 +12,7 @@ import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 
 const props = defineProps<{
-  project: App.Crm.Data.ProjectSuggestionData | null
+  project: App.Crm.Data.CaseSuggestionData | null
   quotes: App.Quotes.Data.QuoteData[]
   packages: App.Catalog.Data.PackageData[]
   catalogItems: App.Catalog.Data.CatalogItemData[]

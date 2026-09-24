@@ -2,7 +2,7 @@
 
 namespace App\Payments\Http\Controllers;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Http\Controllers\Controller;
 use App\Payments\Actions\CreatePaymentPlan;
 use App\Payments\Actions\SettlePaymentPlan;
@@ -14,12 +14,12 @@ use Illuminate\Support\Facades\Validator;
 
 class PaymentPlanController extends Controller
 {
-    public function store(Request $request, Project $project, CreatePaymentPlan $create): RedirectResponse
+    public function store(Request $request, ClientCase $case, CreatePaymentPlan $create): RedirectResponse
     {
-        $this->authorize('managePaymentPlan', $project);
+        $this->authorize('managePaymentPlan', $case);
 
         // "An unbooked project has no plan" (M-03).
-        abort_unless($project->isBooked(), 404);
+        abort_unless($case->isBooked(), 404);
 
         $validated = $request->validate([
             'total' => ['required', 'integer', 'min:0'],
@@ -27,14 +27,14 @@ class PaymentPlanController extends Controller
             'installments.*.due_on' => ['required', 'date'],
         ]);
 
-        $create($project, $validated['total'], collect($validated['installments'])->pluck('due_on')->all());
+        $create($case, $validated['total'], collect($validated['installments'])->pluck('due_on')->all());
 
         return back();
     }
 
     public function update(Request $request, PaymentPlan $paymentPlan, UpdatePaymentPlan $update): RedirectResponse
     {
-        $this->authorize('managePaymentPlan', $paymentPlan->project);
+        $this->authorize('managePaymentPlan', $paymentPlan->case);
 
         $validator = Validator::make($request->all(), [
             'total' => ['required', 'integer', 'min:0'],
@@ -82,7 +82,7 @@ class PaymentPlanController extends Controller
      */
     public function settle(Request $request, PaymentPlan $paymentPlan, SettlePaymentPlan $settle): RedirectResponse
     {
-        $this->authorize('managePaymentPlan', $paymentPlan->project);
+        $this->authorize('managePaymentPlan', $paymentPlan->case);
 
         $validated = $request->validate([
             'decisions' => ['nullable', 'array'],
@@ -92,6 +92,6 @@ class PaymentPlanController extends Controller
 
         $settle($paymentPlan, $validated['decisions'] ?? [], auth('staff')->user());
 
-        return redirect("/auftraege/{$paymentPlan->project->public_id}");
+        return redirect("/auftraege/{$paymentPlan->case->public_id}");
     }
 }

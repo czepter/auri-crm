@@ -3,7 +3,7 @@
 namespace App\Integration\Http\Controllers;
 
 use App\Catalog\Models\Package;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Numbering\Actions\AllocateDocumentNumber;
@@ -44,7 +44,7 @@ class QuoteController extends Controller
 {
     public function store(
         Request $request,
-        Project $project,
+        ClientCase $case,
         UpdateQuote $save,
         SeedQuoteFromPackage $seed,
         StudioSettingsResolver $settings,
@@ -59,11 +59,11 @@ class QuoteController extends Controller
         // Same number and recipient as the admin store
         // (Quotes\Http\Controllers\QuoteController::store()) — a quote from
         // the API is the same document, not a lesser one.
-        $quote = DB::transaction(function () use ($project, $allocate, $resolveRecipient) {
+        $quote = DB::transaction(function () use ($case, $allocate, $resolveRecipient) {
             $allocation = ($allocate)(documentType: DocumentType::Quote);
-            $recipient = ($resolveRecipient)($project);
+            $recipient = ($resolveRecipient)($case);
 
-            return $project->quotes()->create([
+            return $case->quotes()->create([
                 'number' => $allocation['number'],
                 'recipient_contact_id' => $recipient?->id,
                 'recipient_street' => $recipient?->street,
@@ -85,9 +85,9 @@ class QuoteController extends Controller
         AuditLogger::record(
             event: 'quote.created',
             actor: $this->actor($request),
-            context: ['project' => $project->public_id],
+            context: ['project' => $case->public_id],
             subject: $quote->public_id,
-            projectId: $project->id,
+            projectId: $case->id,
         );
 
         return $this->answer($quote, 201);
@@ -139,8 +139,8 @@ class QuoteController extends Controller
         ]);
 
         $contact = isset($validated['contact'])
-            ? $quote->project->contacts()->where('contacts.public_id', $validated['contact'])->first()
-            : $quote->project->primaryContact();
+            ? $quote->case->contacts()->where('contacts.public_id', $validated['contact'])->first()
+            : $quote->case->primaryContact();
 
         if ($contact === null) {
             throw ValidationException::withMessages(['contact' => 'The project has no such contact to accept on behalf of.']);

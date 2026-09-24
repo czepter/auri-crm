@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Enums\StaffRole;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryPrereleaseSignup;
@@ -8,7 +8,7 @@ use App\Gallery\Models\GallerySet;
 use App\Gallery\Notifications\GalleryPrereleasePublished;
 use App\Media\Models\Asset;
 use App\Models\User;
-use App\Policies\ProjectPolicy;
+use App\Policies\ClientCasePolicy;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -98,16 +98,16 @@ it('keeps publishing away from a role that may not show things to clients', func
 });
 
 // Important 4: the policy's own docblock says everything with a project
-// routes through ProjectPolicy, the same shape manageMedia already uses —
+// routes through ClientCasePolicy, the same shape manageMedia already uses —
 // publish() alone checked the bare capability. Not exploitable today (every
-// role holding ManagePortalAccess also holds ViewAllProjects, so ordinary
+// role holding ManagePortalAccess also holds ViewAllCases, so ordinary
 // roles can't show the gap end to end), which is exactly why this pins the
 // call itself rather than a role combination that doesn't exist yet.
 it('routes a project-bound gallery\'s publish check through the project policy, like manageMedia', function () {
-    $project = Project::factory()->create();
-    $gallery = Gallery::factory()->create(['project_id' => $project->id]);
+    $project = ClientCase::factory()->create();
+    $gallery = Gallery::factory()->create(['case_id' => $project->id]);
 
-    $this->mock(ProjectPolicy::class, function ($mock) {
+    $this->mock(ClientCasePolicy::class, function ($mock) {
         $mock->shouldReceive('manageVisibility')->once()->andReturn(true);
     });
 

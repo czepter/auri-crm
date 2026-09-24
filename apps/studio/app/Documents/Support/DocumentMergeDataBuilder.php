@@ -2,7 +2,7 @@
 
 namespace App\Documents\Support;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Payments\Data\PaymentPlanData;
 use App\Payments\Models\CreditNote;
 use App\Payments\Models\Invoice;
@@ -41,7 +41,7 @@ class DocumentMergeDataBuilder
      * @return array<string, mixed>
      */
     public function fromProject(
-        Project $project,
+        ClientCase $project,
         StudioSettingsResolver $settings,
         ?Invoice $invoice = null,
         ?CreditNote $creditNote = null,
@@ -96,8 +96,8 @@ class DocumentMergeDataBuilder
      */
     public function fromInvoice(Invoice $invoice, StudioSettingsResolver $settings, ?CreditNote $creditNote = null): array
     {
-        if ($invoice->project !== null) {
-            return $this->fromProject($invoice->project, $settings, $invoice, $creditNote);
+        if ($invoice->case !== null) {
+            return $this->fromProject($invoice->case, $settings, $invoice, $creditNote);
         }
 
         $contact = $invoice->contact;
@@ -170,7 +170,7 @@ class DocumentMergeDataBuilder
      *
      * @return array<string, string>
      */
-    private function gallery(Project $project): array
+    private function gallery(ClientCase $project): array
     {
         $gallery = $project->galleries()->latest('id')->first();
 
@@ -200,7 +200,7 @@ class DocumentMergeDataBuilder
      *
      * @return array<string, string|list<array<string, string>>>
      */
-    private function invoice(?Invoice $invoice, ?Project $project, StudioSettingsResolver $settings): array
+    private function invoice(?Invoice $invoice, ?ClientCase $project, StudioSettingsResolver $settings): array
     {
         if ($invoice === null) {
             return array_fill_keys(
@@ -257,7 +257,7 @@ class DocumentMergeDataBuilder
             return $invoice->items->pluck('title')->implode(', ');
         }
 
-        return $invoice->project->name.' — '.$invoice->installments
+        return $invoice->case->name.' — '.$invoice->installments
             ->map(fn (PaymentInstallment $row) => PaymentPlanData::labelForInstallment($row))
             ->implode(', ');
     }
@@ -417,7 +417,7 @@ class DocumentMergeDataBuilder
             ->when($invoice->exists, fn ($query) => $query->where('id', '<', $invoice->id))
             ->whereNull('cancelled_at')
             ->whereHas('installments', fn ($query) => $query->where('payment_plan_id', $invoice->installments->first()?->payment_plan_id))
-            ->with(['installments', 'creditNotes', 'project'])
+            ->with(['installments', 'creditNotes', 'case'])
             ->orderBy('id')
             ->get()
             ->map(function (Invoice $earlier) use ($settings) {
@@ -447,7 +447,7 @@ class DocumentMergeDataBuilder
      *
      * @return array<string, string>
      */
-    private function creditNote(?CreditNote $creditNote, ?Project $project, StudioSettingsResolver $settings): array
+    private function creditNote(?CreditNote $creditNote, ?ClientCase $project, StudioSettingsResolver $settings): array
     {
         $keys = ['number', 'date', 'servicePeriod', 'description', 'reason', 'net', 'vatRate', 'vat', 'gross', 'vatNote', 'invoiceNumber', 'invoiceDate'];
 
@@ -483,7 +483,7 @@ class DocumentMergeDataBuilder
      *
      * @return array<string, string>
      */
-    private function quote(Project $project, StudioSettingsResolver $settings): array
+    private function quote(ClientCase $project, StudioSettingsResolver $settings): array
     {
         $quote = $project->latestQuote;
 

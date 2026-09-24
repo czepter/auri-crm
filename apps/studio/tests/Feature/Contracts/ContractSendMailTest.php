@@ -4,8 +4,8 @@ use App\Contracts\Enums\ContractState;
 use App\Contracts\Jobs\RenderContractJob;
 use App\Contracts\Models\Contract;
 use App\Contracts\Notifications\ContractSent;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Documents\Models\DocumentTemplate;
 use App\Enums\StaffRole;
 use App\Models\User;
@@ -20,9 +20,9 @@ beforeEach(function () {
     Queue::fake([RenderContractJob::class]);
 
     $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Admin]), 'staff');
-    $this->project = Project::factory()->create(['portal_visible' => true]);
+    $this->case = ClientCase::factory()->create(['portal_visible' => true]);
     $this->contract = Contract::factory()
-        ->for($this->project)
+        ->for($this->case, 'case')
         ->for(DocumentTemplate::factory()->create(['body' => '<p>Vorlage</p>']), 'template')
         ->create(['state' => ContractState::Draft, 'version' => 1]);
     $this->lena = Contact::factory()->create(['name' => 'Lena Brandt', 'email' => 'lena@example.test']);
@@ -46,7 +46,7 @@ it('sends the Fassung and mails every signer', function () {
     $this->post("/vertraege/{$this->contract->public_id}/versenden", [
         'subject' => 'Euer Vertrag',
         'message' => "Hallo Lena und Tom,\n\nhier euer Vertrag zur Unterschrift.",
-    ])->assertRedirect("/auftraege/{$this->project->public_id}/vertrag");
+    ])->assertRedirect("/auftraege/{$this->case->public_id}/vertrag");
 
     expect($this->contract->fresh()->state)->toBe(ContractState::Valid);
 
@@ -55,7 +55,7 @@ it('sends the Fassung and mails every signer', function () {
             $mail = $notification->toMail($contact);
 
             return $mail->subject === 'Euer Vertrag'
-                && $mail->actionUrl === config('portal.url')."/projekte/{$this->project->public_id}/vertrag"
+                && $mail->actionUrl === config('portal.url')."/projekte/{$this->case->public_id}/vertrag"
                 && str_contains((string) $mail->render(), 'hier euer Vertrag zur Unterschrift.');
         });
     }

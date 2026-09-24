@@ -11,7 +11,6 @@ const daysAgo = (days: number) =>
 const cards: App.Crm.Data.LeadCardData[] = [
     {
         id: 'p-osterhoff',
-        leadId: 'l-osterhoff',
         type: 'Hochzeit',
         typeKey: 'wedding',
         names: 'Familie Osterhoff',
@@ -28,7 +27,6 @@ const cards: App.Crm.Data.LeadCardData[] = [
     },
     {
         id: 'p-hinrichs',
-        leadId: 'l-hinrichs',
         type: 'Porträt',
         typeKey: 'portrait',
         names: 'Nele Hinrichs',
@@ -45,7 +43,6 @@ const cards: App.Crm.Data.LeadCardData[] = [
     },
     {
         id: 'p-brandt',
-        leadId: 'l-brandt',
         type: 'Hochzeit',
         typeKey: 'wedding',
         names: 'Lena und Tom Brandt',
@@ -62,7 +59,6 @@ const cards: App.Crm.Data.LeadCardData[] = [
     },
     {
         id: 'p-ahrens',
-        leadId: 'l-kroll',
         type: 'Hochzeit',
         typeKey: 'wedding',
         names: 'Marie Ahrens und David Kroll',
@@ -79,7 +75,6 @@ const cards: App.Crm.Data.LeadCardData[] = [
     },
     {
         id: 'p-rahn',
-        leadId: 'l-rahn',
         type: 'Hochzeit',
         typeKey: 'wedding',
         names: 'Jana und Michael Rahn',
@@ -106,7 +101,7 @@ const columns = stages.map((stage) => ({
 const groups = queue.map((group) => ({
     key: group.key,
     rows: group.rows
-        .map((row) => cards.find((card) => card.leadId === row.id))
+        .map((row) => cards.find((card) => card.id === row.id))
         .filter((card): card is App.Crm.Data.LeadCardData => card !== undefined),
 }))
 

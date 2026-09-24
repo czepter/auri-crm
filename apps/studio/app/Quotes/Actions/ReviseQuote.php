@@ -52,7 +52,7 @@ class ReviseQuote
                 ? now()->addDays($this->settings->quoteValidityDays())->toDateString()
                 : $predecessor->valid_until;
 
-            $revision = $predecessor->project->quotes()->create([
+            $revision = $predecessor->case->quotes()->create([
                 'predecessor_id' => $predecessor->id,
                 'number' => $allocation['number'],
                 'valid_until' => $validUntil,
@@ -107,9 +107,9 @@ class ReviseQuote
             AuditLogger::record(
                 event: 'quote.revised',
                 actor: $actor,
-                context: ['project' => $predecessor->project->public_id, 'predecessor' => $predecessor->public_id],
+                context: ['project' => $predecessor->case->public_id, 'predecessor' => $predecessor->public_id],
                 subject: $revision->public_id,
-                projectId: $predecessor->project_id,
+                projectId: $predecessor->case_id,
             );
 
             // Dispatched last, inside the transaction — see this event's own

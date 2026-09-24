@@ -6,18 +6,18 @@ use App\Automation\Actions\FireAutomationRule;
 use App\Automation\Models\AutomationRule;
 use App\Crm\Actions\AdvanceShootStatus;
 use App\Crm\Actions\BookProject;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
-use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Enums\TaskAudience;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\TaskTemplate;
 use App\Crm\Support\CrmVocabulary;
@@ -95,25 +95,25 @@ class DemoCrmSeeder extends Seeder
             // its 150px to "Meier & Kowalski — …" on every row of the
             // Übersicht — the type restated in a column that has no room for
             // it, next to a block already headed "Nächste Shootings".
-            $project = Project::create([
+            $project = ClientCase::create([
                 'name' => trim($name.($partner ? ' & '.$partner : '')),
                 'type' => $projectType,
             ]);
 
             $project->attachContact(
                 Contact::create(['name' => $name, 'email' => self::emailFor($name)]),
-                ProjectContactRole::Primary,
+                CaseContactRole::Primary,
             );
 
             if ($partner) {
                 $project->attachContact(
                     Contact::create(['name' => $partner]),
-                    ProjectContactRole::Partner,
+                    CaseContactRole::Partner,
                 );
             }
 
             Shoot::create([
-                'project_id' => $project->id,
+                'case_id' => $project->id,
                 'kind' => $projectType === ProjectType::Wedding ? 'Hochzeitstag' : 'Portrait',
                 'date' => $date,
                 'venue_name' => $venue,
@@ -122,7 +122,7 @@ class DemoCrmSeeder extends Seeder
                 'sort_order' => 0,
             ]);
 
-            $lead = Lead::factory()->for($project)->atStage(LeadStage::from($stage), $daysAgo)->create([
+            $lead = Lead::factory()->for($project, 'case')->atStage(LeadStage::from($stage), $daysAgo)->create([
                 'source' => LeadSource::from($source),
                 'captured_by_id' => $staff->id,
                 'captured_at' => now()->subDays($daysAgo),
@@ -139,7 +139,7 @@ class DemoCrmSeeder extends Seeder
                 event: 'lead.captured',
                 actor: $staff,
                 context: ['source' => $source, 'via' => $lead->captured_via->value],
-                subject: $lead->public_id,
+                subject: $project->public_id,
                 projectId: $project->id,
             );
 
@@ -242,7 +242,7 @@ class DemoCrmSeeder extends Seeder
      * The demo data is produced by the code paths the studio uses, so a broken
      * guard shows up here rather than only in a test.
      */
-    private function buildOutTheWedding(Project $project, User $staff): void
+    private function buildOutTheWedding(ClientCase $project, User $staff): void
     {
         $christian = User::updateOrCreate(
             ['email' => 'christian@nordlicht.test'],
@@ -267,7 +267,7 @@ class DemoCrmSeeder extends Seeder
         ]);
 
         $engagement = Shoot::create([
-            'project_id' => $project->id,
+            'case_id' => $project->id,
             'kind' => 'Verlobungsshooting',
             'label' => 'Verlobungsshooting',
             'date' => now()->subDays(140)->format('Y-m-d'),
@@ -279,7 +279,7 @@ class DemoCrmSeeder extends Seeder
         ]);
 
         $registry = Shoot::create([
-            'project_id' => $project->id,
+            'case_id' => $project->id,
             'kind' => 'Feier',
             'label' => 'Standesamt',
             'date' => now()->subDays(37)->format('Y-m-d'),
@@ -293,7 +293,7 @@ class DemoCrmSeeder extends Seeder
         // No venue and no times: "Ort und Uhrzeit noch nicht festgelegt" is a
         // real state the screen has to render.
         $afterWedding = Shoot::create([
-            'project_id' => $project->id,
+            'case_id' => $project->id,
             'kind' => 'Portrait',
             'label' => 'After-Wedding-Shooting',
             'date' => now()->addDays(26)->format('Y-m-d'),
@@ -327,7 +327,7 @@ class DemoCrmSeeder extends Seeder
             [$christian, 'Über Empfehlung von Familie Osterhoff gekommen — bei Lieferung eine Karte an die Osterhoffs denken. Paar wünscht ausdrücklich Reportage, wenig Gestelltes.'],
         ] as [$author, $body]) {
             InternalNote::create([
-                'project_id' => $project->id,
+                'case_id' => $project->id,
                 'author_id' => $author->id,
                 'body' => $body,
             ]);
@@ -363,14 +363,14 @@ class DemoCrmSeeder extends Seeder
      * trigger dates — the "2× erinnert" the row renders is a count of these,
      * not a string written to look like one.
      */
-    private function seedChasedQuote(Project $project): void
+    private function seedChasedQuote(ClientCase $project): void
     {
         $project->primaryContact()?->update(['phone' => '+49 40 5550101']);
 
         // Items first, on the still-mutable draft row: Quote::booted()'s guard
         // refuses total/discount_amount/net once status reads sent, and
         // recalculateTotal() writes all three.
-        $quote = Quote::factory()->for($project)->create();
+        $quote = Quote::factory()->for($project, 'case')->create();
         $quote->items()->create(['title' => 'Hochzeitsreportage Ganztag', 'description' => 'bis 10 Std. am Hochzeitstag, Bearbeitung, Online-Galerie', 'quantity' => 1, 'unit_price' => 350000]);
         $quote->recalculateTotal();
         $quote->update(['status' => QuoteStatus::Sent, 'sent_at' => now()->subDays(9), 'valid_until' => now()->addDays(5)]);
@@ -397,12 +397,12 @@ class DemoCrmSeeder extends Seeder
      * InstallmentOverdue dispatch, and the timestamp is then moved back by
      * hand to the nine days ReadPaymentColumn::DUNNING_EXHAUSTED_DAYS needs.
      */
-    private function seedOverdueInstallment(Project $project): void
+    private function seedOverdueInstallment(ClientCase $project): void
     {
         $project->primaryContact()?->update(['phone' => '+49 40 5550103']);
 
         $installment = DB::transaction(function () use ($project) {
-            $plan = PaymentPlan::factory()->for($project)->create(['total' => 150000]);
+            $plan = PaymentPlan::factory()->for($project, 'case')->create(['total' => 150000]);
 
             return PaymentInstallment::factory()->for($plan, 'plan')->create([
                 'amount' => 150000,
@@ -427,14 +427,14 @@ class DemoCrmSeeder extends Seeder
      * regardless of that setting, so it is written the same way publish()
      * itself would have, once retention is configured.
      */
-    private function seedReferralAndExpiringGallery(Project $project, Project $referrerProject): void
+    private function seedReferralAndExpiringGallery(ClientCase $project, ClientCase $referrerProject): void
     {
         $project->lead->update([
             'referred_by_contact_id' => $referrerProject->primaryContact()?->id,
         ]);
         $referrerProject->primaryContact()?->update(['phone' => '+49 40 5550104']);
 
-        Gallery::factory()->for($project)->create([
+        Gallery::factory()->for($project, 'case')->create([
             'title' => 'Meier & Kowalski — Hochzeit',
             'expires_at' => now()->addDays(12),
         ]);
@@ -446,7 +446,7 @@ class DemoCrmSeeder extends Seeder
      * thank-you would be the wrong shape here, and by the same reasoning
      * this screen owes a real reply, not an invented one.
      */
-    private function seedUnansweredThread(Project $project): void
+    private function seedUnansweredThread(ClientCase $project): void
     {
         app(StartThread::class)(
             $project,

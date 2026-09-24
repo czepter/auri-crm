@@ -1,6 +1,6 @@
 <?php
 
-// This map is the allow-list (see ProjectActivity), so an absence here is a
+// This map is the allow-list (see CaseActivity), so an absence here is a
 // decision, not an oversight. Left out on purpose, grouped by why: drafting
 // churn on a quote in progress (quote.created, quote.updated); per-field or
 // per-item writes whose milestone is already represented by a call site above

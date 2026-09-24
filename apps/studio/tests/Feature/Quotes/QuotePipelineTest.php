@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Models\User;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
@@ -12,9 +12,9 @@ uses(RefreshDatabase::class);
 
 it('reads what was in play a year ago from the audit trail', function () {
     $staff = User::factory()->withMfa()->create();
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
-    $quote = fn (int $total, QuoteStatus $status) => Quote::factory()->for($project)->create(['total' => $total, 'status' => $status]);
+    $quote = fn (int $total, QuoteStatus $status) => Quote::factory()->for($project, 'case')->create(['total' => $total, 'status' => $status]);
 
     $this->travelTo(now()->subMonths(14));
     $acceptedLater = $quote(300_000, QuoteStatus::Accepted);
@@ -36,5 +36,5 @@ it('reads what was in play a year ago from the audit trail', function () {
 
     $this->travelBack();
 
-    expect(QuotePipeline::asOf(now()->subYear(), Project::query()->select('id')))->toBe(300_000);
+    expect(QuotePipeline::asOf(now()->subYear(), ClientCase::query()->select('id')))->toBe(300_000);
 });

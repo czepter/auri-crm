@@ -3,7 +3,7 @@
 namespace App\Crm\Actions;
 
 use App\Crm\Enums\ProjectFieldType;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\ProjectField;
 use App\Models\User;
 use App\Support\AuditLogger;
@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 /**
- * C-25: the one writer of projects.field_values. The admin screen, the api
+ * C-25: the one writer of cases.field_values. The admin screen, the api
  * surface and through it the MCP server all call this, so a value written by
  * an agent obeys the same definition a staff member's save does.
  *
@@ -24,7 +24,7 @@ use Illuminate\Validation\ValidationException;
 class WriteProjectFieldValues
 {
     /** @param  array<string, mixed>  $values */
-    public function __invoke(Project $project, array $values, ?User $actor): void
+    public function __invoke(ClientCase $project, array $values, ?User $actor): void
     {
         /** @var Collection<string, ProjectField> $fields */
         $fields = $project->type?->fields()->active()->get()->keyBy('key') ?? collect();

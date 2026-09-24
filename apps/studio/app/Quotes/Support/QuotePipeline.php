@@ -28,7 +28,7 @@ class QuotePipeline
             ->where('created_at', '<=', $at);
 
         return (int) Quote::query()
-            ->whereIn('project_id', $projects)
+            ->whereIn('case_id', $projects)
             ->whereIn('public_id', $by('quote.created')->whereNotNull('subject')->select('subject'))
             ->whereNotIn('public_id', $by('quote.accepted')->whereNotNull('subject')->select('subject'))
             // NOT IN over a subquery yielding a NULL matches nothing, hence the guard.

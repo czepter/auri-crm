@@ -60,13 +60,13 @@ class MarkQuoteSent
             AuditLogger::record(
                 event: 'quote.sent',
                 actor: $actor,
-                context: ['project' => $quote->project->public_id, 'number' => $quote->number, 'channel' => $channel],
+                context: ['project' => $quote->case->public_id, 'number' => $quote->number, 'channel' => $channel],
                 subject: $quote->public_id,
-                projectId: $quote->project_id,
+                projectId: $quote->case_id,
                 occurredAt: $at,
             );
 
-            $this->leads->reach($quote->project->lead, StageAnchor::QuoteSent, $actor, $at);
+            $this->leads->reach($quote->case->lead, StageAnchor::QuoteSent, $actor, $at);
         });
 
         return $quote;

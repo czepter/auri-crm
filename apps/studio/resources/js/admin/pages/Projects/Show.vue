@@ -28,7 +28,7 @@ import { dayWithWeekday as day } from "@/admin/lib/dates";
 type ProjectFieldDefinition = InstanceType<typeof ProjectFields>["$props"]["fields"][number];
 
 const props = defineProps<{
-    header: App.Crm.Data.ProjectHeaderData;
+    header: App.Crm.Data.CaseHeaderData;
     shoots: App.Crm.Data.ShootData[];
     thread: App.Crm.Data.ThreadEntryData[];
     tasks: App.Crm.Data.TaskRowData[];
@@ -51,7 +51,7 @@ const props = defineProps<{
         delta: number;
         hasDraft: boolean;
     };
-    people: App.Crm.Data.ProjectPersonData[];
+    people: App.Crm.Data.CasePersonData[];
     fields: ProjectFieldDefinition[];
     fieldValues: ProjectFieldValues;
     stages: { value: string; label: string }[];
@@ -128,7 +128,7 @@ const anfrage = useForm({ inquiry_text: props.inquiry?.text ?? "" });
 function saveAnfrage() {
     anfrage
         .transform((data) => ({ ...data, inquiry_text: blank(data.inquiry_text) }))
-        .patch(`/anfragen/${props.header.leadId}`, {
+        .patch(`/anfragen/${props.header.id}`, {
             preserveScroll: true,
             onSuccess: () => (anfrageEditing.value = false),
         });

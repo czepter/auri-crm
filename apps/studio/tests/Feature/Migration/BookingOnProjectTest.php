@@ -1,7 +1,7 @@
 <?php
 
 use App\Crm\Enums\BookedVia;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Documents\Models\DocumentTemplate;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -10,15 +10,17 @@ use Illuminate\Support\Facades\DB;
 uses(RefreshDatabase::class);
 
 it('moves every booking and its payment plan onto the right project', function () {
+    $staff = User::factory()->create();
+    $booked = ClientCase::factory()->create();
+    $signed = ClientCase::factory()->create();
+    $inquiry = ClientCase::factory()->create();
+
+    $rename = require database_path('migrations/2026_09_23_110000_rename_projects_to_cases.php');
+    $rename->down();
     $migration = require database_path('migrations/2026_09_23_100000_move_booking_onto_projects.php');
     $migration->down();
 
-    $staff = User::factory()->create();
-    $booked = Project::factory()->create();
-    $signed = Project::factory()->create();
-    $inquiry = Project::factory()->create();
-
-    $jobFor = fn (Project $project, ?User $by, string $via, string $at) => DB::table('jobs')->insertGetId([
+    $jobFor = fn (ClientCase $project, ?User $by, string $via, string $at) => DB::table('jobs')->insertGetId([
         'public_id' => 'job_'.$project->id,
         'project_id' => $project->id,
         'booked_at' => $at,
@@ -42,6 +44,7 @@ it('moves every booking and its payment plan onto the right project', function (
     DB::statement('SET CONSTRAINTS ALL IMMEDIATE');
 
     $migration->up();
+    $rename->up();
 
     expect($booked->fresh()->booked_at->toDateString())->toBe('2026-05-02')
         ->and($booked->fresh()->booked_by_id)->toBe($staff->id)

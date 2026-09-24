@@ -43,7 +43,7 @@ function planBehindQuote(array $dueDates, int $discountValue = 0, array $slider 
     $project = bookedContactProject();
 
     $quote = Quote::factory()->create([
-        'project_id' => $project->id,
+        'case_id' => $project->id,
         'status' => QuoteStatus::Draft,
         'discount_type' => $discountValue > 0 ? 'percentage' : null,
         'discount_value' => $discountValue > 0 ? $discountValue : null,

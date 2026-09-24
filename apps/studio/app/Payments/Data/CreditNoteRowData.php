@@ -34,8 +34,8 @@ class CreditNoteRowData extends Data
             reason: $note->reason,
             invoiceId: $note->invoice->public_id,
             invoiceNumber: $note->invoice->number,
-            projectId: $note->invoice->project?->public_id,
-            projectName: $note->invoice->project?->name,
+            projectId: $note->invoice->case?->public_id,
+            projectName: $note->invoice->case?->name,
             contact: $note->invoice->contact?->name,
             hasDocument: $note->pdf_path !== null,
         );

@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\Contact;
 use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Models\Quote;
@@ -12,7 +12,7 @@ it('belegt den Empfaenger mit dem Zahler vor', function () {
     [$user, $project] = studioWithProject();
 
     $payer = Contact::factory()->create(['street' => 'Elbchaussee 88', 'postcode' => '22763', 'city' => 'Hamburg']);
-    $project->attachContact($payer, ProjectContactRole::Payer);
+    $project->attachContact($payer, CaseContactRole::Payer);
 
     $this->actingAs($user, 'staff')->post("/auftraege/{$project->public_id}/angebote", [])->assertRedirect();
 
@@ -27,9 +27,9 @@ it('traegt die Anschrift in einen Kontakt ohne Anschrift nach', function () {
     [$user, $project] = studioWithProject();
 
     $contact = Contact::factory()->create(['street' => null, 'postcode' => null, 'city' => null]);
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
-    $quote = Quote::factory()->for($project)->create(['recipient_contact_id' => $contact->id]);
+    $quote = Quote::factory()->for($project, 'case')->create(['recipient_contact_id' => $contact->id]);
 
     $this->actingAs($user, 'staff')->patch("/angebote/{$quote->public_id}", [
         'pricing_mode' => 'classic',
@@ -48,9 +48,9 @@ it('laesst eine abweichende Anschrift am Kontakt unberuehrt', function () {
     [$user, $project] = studioWithProject();
 
     $contact = Contact::factory()->create(['street' => 'Elbchaussee 88', 'postcode' => '22763', 'city' => 'Hamburg']);
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
-    $quote = Quote::factory()->for($project)->create(['recipient_contact_id' => $contact->id]);
+    $quote = Quote::factory()->for($project, 'case')->create(['recipient_contact_id' => $contact->id]);
 
     $this->actingAs($user, 'staff')->patch("/angebote/{$quote->public_id}", [
         'pricing_mode' => 'classic',
@@ -70,9 +70,9 @@ it('uebernimmt die Anschrift auf Knopfdruck in den Kontakt', function () {
     [$user, $project] = studioWithProject();
 
     $contact = Contact::factory()->create(['street' => 'Elbchaussee 88', 'postcode' => '22763', 'city' => 'Hamburg']);
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
-    $quote = Quote::factory()->for($project)->create([
+    $quote = Quote::factory()->for($project, 'case')->create([
         'recipient_contact_id' => $contact->id,
         'recipient_street' => 'Hafenstraße 12',
         'recipient_postcode' => '20459',
@@ -87,7 +87,7 @@ it('uebernimmt die Anschrift auf Knopfdruck in den Kontakt', function () {
 it('lehnt die Anschriftsuebernahme ohne Empfaengerkontakt ab', function () {
     [$user, $project] = studioWithProject();
 
-    $quote = Quote::factory()->for($project)->create(['recipient_contact_id' => null]);
+    $quote = Quote::factory()->for($project, 'case')->create(['recipient_contact_id' => null]);
 
     $this->actingAs($user, 'staff')->post("/angebote/{$quote->public_id}/empfaenger-uebernehmen")->assertNotFound();
 });
@@ -96,9 +96,9 @@ it('druckt die Anschrift des Angebots, nicht die des Kontakts', function () {
     [, $project] = studioWithProject();
 
     $contact = Contact::factory()->create(['name' => 'Ursula Meier', 'street' => 'Elbchaussee 88', 'postcode' => '22763', 'city' => 'Hamburg']);
-    $project->attachContact($contact, ProjectContactRole::Payer);
+    $project->attachContact($contact, CaseContactRole::Payer);
 
-    $quote = Quote::factory()->for($project)->create([
+    $quote = Quote::factory()->for($project, 'case')->create([
         'recipient_contact_id' => $contact->id,
         'recipient_street' => 'Hafenstraße 12',
         'recipient_postcode' => '20459',
@@ -117,9 +117,9 @@ it('behaelt den Empfaenger, wenn das Formular ihn nicht mitschickt', function ()
     [$user, $project] = studioWithProject();
 
     $contact = Contact::factory()->create(['street' => 'Elbchaussee 88', 'postcode' => '22763', 'city' => 'Hamburg']);
-    $project->attachContact($contact, ProjectContactRole::Payer);
+    $project->attachContact($contact, CaseContactRole::Payer);
 
-    $quote = Quote::factory()->for($project)->create([
+    $quote = Quote::factory()->for($project, 'case')->create([
         'recipient_contact_id' => $contact->id,
         'recipient_street' => 'Elbchaussee 88',
         'recipient_postcode' => '22763',

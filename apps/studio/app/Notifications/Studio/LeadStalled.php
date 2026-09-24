@@ -2,8 +2,8 @@
 
 namespace App\Notifications\Studio;
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use Illuminate\Support\Collection;
 
 /**
@@ -33,7 +33,7 @@ class LeadStalled extends StudioEventNotification
         return $this->leads
             ->map(fn (Lead $lead) => sprintf(
                 '%s — %s, seit %d Tagen',
-                $lead->project->name,
+                $lead->case->name,
                 $lead->stage->name,
                 (int) $lead->stage_entered_at->startOfDay()->diffInDays(now()->startOfDay()),
             ))
@@ -48,7 +48,7 @@ class LeadStalled extends StudioEventNotification
 
     /* Several projects at once, so no single one — the recipients were
        already resolved when the scan grouped them. */
-    public function project(): ?Project
+    public function case(): ?ClientCase
     {
         return null;
     }

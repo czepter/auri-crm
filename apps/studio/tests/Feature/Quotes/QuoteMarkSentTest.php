@@ -11,7 +11,7 @@ it('setzt versendet ohne Mail', function () {
     Notification::fake();
 
     [$user, $project] = studioWithProject();
-    $quote = Quote::factory()->for($project)->create(['status' => QuoteStatus::Draft]);
+    $quote = Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Draft]);
 
     $this->actingAs($user, 'staff')->post("/angebote/{$quote->public_id}/versendet")->assertRedirect();
 

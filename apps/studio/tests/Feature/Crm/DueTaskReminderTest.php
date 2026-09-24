@@ -60,7 +60,7 @@ it('leaves out tasks without a due date, client tasks and blocked ones', functio
 
     $blocker = Task::factory()->due(now()->toDateString())->create();
     Task::factory()->due(now()->toDateString())->create([
-        'project_id' => $blocker->project_id,
+        'case_id' => $blocker->case_id,
         'depends_on_task_id' => $blocker->id,
     ]);
 

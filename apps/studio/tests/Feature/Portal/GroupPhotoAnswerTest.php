@@ -1,11 +1,11 @@
 <?php
 
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\FormFieldType;
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\FormInstance;
 use App\Crm\Models\FormInstanceField;
-use App\Crm\Models\Project;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -16,11 +16,11 @@ beforeEach(fn () => useSurface(Surface::PORTAL));
 /** @return array{0: FormInstanceField, 1: Contact, 2: string} */
 function groupPhotoQuestion(bool $required = false): array
 {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
-    $instance = FormInstance::factory()->for($project)->create(['name' => 'Gruppenfotos']);
+    $instance = FormInstance::factory()->for($project, 'case')->create(['name' => 'Gruppenfotos']);
     $instance->forceFill(['shared_at' => now()])->save();
 
     $field = FormInstanceField::factory()->for($instance)->create([

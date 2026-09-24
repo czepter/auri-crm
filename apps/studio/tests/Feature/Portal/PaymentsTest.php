@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
@@ -28,12 +28,12 @@ beforeEach(function () {
 
 function t07PortalProjectWithPlan(): array
 {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     markBooked($project);
-    $plan = PaymentPlan::factory()->for($project)->create(['total' => 100000, 'reference' => 'RE-2026-42']);
+    $plan = PaymentPlan::factory()->for($project, 'case')->create(['total' => 100000, 'reference' => 'RE-2026-42']);
     PaymentInstallment::factory()->for($plan, 'plan')->create([
         'amount' => 100000,
         'due_on' => now()->addWeek()->toDateString(),
@@ -79,9 +79,9 @@ it('exposes stripeEnabled true only once the studio has switched it on', functio
 });
 
 it('shows an empty plan when the job has no payment plan yet', function () {
-    $project = Project::factory()->create(['portal_visible' => true]);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $props = $this->actingAs($contact, 'portal')
         ->get("/projekte/{$project->public_id}/zahlungen")
@@ -99,11 +99,11 @@ it('404s the payments screen for a project the contact is not on', function () {
 });
 
 it('404s the payments screen for a project the studio has not made portal-visible', function () {
-    $project = Project::factory()->create(['portal_visible' => false]);
+    $project = ClientCase::factory()->create(['portal_visible' => false]);
     $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($contact, CaseContactRole::Primary);
     markBooked($project);
-    PaymentPlan::factory()->for($project)->create(['total' => 0]);
+    PaymentPlan::factory()->for($project, 'case')->create(['total' => 0]);
 
     $this->actingAs($contact, 'portal')->get("/projekte/{$project->public_id}/zahlungen")->assertNotFound();
 });

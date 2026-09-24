@@ -36,8 +36,8 @@ class InAppTransport implements Transport
             'notifiable_id' => $notifiable->getKey(),
             'type' => $notification::class,
             'data' => $notification->toArray($notifiable),
-            'project_id' => $notification instanceof StudioEventNotification
-                ? $notification->project()?->getKey()
+            'case_id' => $notification instanceof StudioEventNotification
+                ? $notification->case()?->getKey()
                 : null,
         ]);
     }

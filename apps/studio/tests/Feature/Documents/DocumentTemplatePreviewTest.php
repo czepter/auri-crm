@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
 use App\Enums\StaffRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -51,8 +51,8 @@ it('rejects a preview with an unknown document type', function () {
 it('renders the preview against a chosen project', function () {
     // No ampersand in the name: the renderer escapes it, and this test is
     // about which values arrive, not about escaping.
-    $project = Project::factory()->create(['name' => 'Hochzeit Kowalski']);
-    $project->attachContact(Contact::factory()->create(['name' => 'Lena Meier']), ProjectContactRole::Primary);
+    $project = ClientCase::factory()->create(['name' => 'Hochzeit Kowalski']);
+    $project->attachContact(Contact::factory()->create(['name' => 'Lena Meier']), CaseContactRole::Primary);
 
     $html = test()->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/dokumentvorlagen/vorschau', [

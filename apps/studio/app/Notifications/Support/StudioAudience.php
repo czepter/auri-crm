@@ -2,8 +2,8 @@
 
 namespace App\Notifications\Support;
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\CrewAssignment;
-use App\Crm\Models\Project;
 use App\Crm\Models\Task;
 use App\Models\User;
 use Illuminate\Support\Collection;
@@ -20,7 +20,7 @@ use Illuminate\Support\Collection;
 class StudioAudience
 {
     /** @return Collection<int, User> */
-    public function forProject(?Project $project): Collection
+    public function forCase(?ClientCase $project): Collection
     {
         $crew = $project === null
             ? collect()
@@ -44,6 +44,6 @@ class StudioAudience
     {
         return $task->assignee !== null
             ? collect([$task->assignee])
-            : $this->forProject($task->project);
+            : $this->forCase($task->case);
     }
 }

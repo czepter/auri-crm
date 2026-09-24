@@ -3,7 +3,7 @@ titel: Auswertungen — Begriffe und Regeln
 beschreibung: Welches Fenster die Zahlen umfassen, an welchem Datum sie hängen und was in den Umsatz eingeht.
 art: referenz
 screens: [reports.index]
-faehigkeit: view_all_projects
+faehigkeit: view_all_cases
 ---
 
 ## Das Fenster

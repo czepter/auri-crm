@@ -36,8 +36,8 @@ class ContractSent extends Notification
     {
         $message = $this->composedMail($this->subject, $this->body);
 
-        if ($this->contract->project->portal_visible) {
-            $message->action('Vertrag ansehen', config('portal.url')."/projekte/{$this->contract->project->public_id}/vertrag");
+        if ($this->contract->case->portal_visible) {
+            $message->action('Vertrag ansehen', config('portal.url')."/projekte/{$this->contract->case->public_id}/vertrag");
         }
 
         return $this->appendStudioMailIdentity($this->appendUnsubscribe($message, $notifiable), $this->settings);

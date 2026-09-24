@@ -2,7 +2,7 @@
 
 namespace App\Payments\Actions;
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Payments\Models\PaymentPlan;
 use App\Payments\Support\PaymentInstallmentSplitter;
 use App\Payments\Support\PaymentStageSplitter;
@@ -38,7 +38,7 @@ use Illuminate\Support\Facades\DB;
  */
 class CreatePaymentPlan
 {
-    public function __invoke(Project $project, int $total, array $dueDates): PaymentPlan
+    public function __invoke(ClientCase $project, int $total, array $dueDates): PaymentPlan
     {
         abort_if($project->paymentPlan()->exists(), 422, 'This project already has a payment plan.');
 
@@ -60,7 +60,7 @@ class CreatePaymentPlan
                 ->all();
 
         return DB::transaction(function () use ($project, $total, $dueDates, $rows) {
-            $plan = PaymentPlan::create(['project_id' => $project->id, 'total' => $total]);
+            $plan = PaymentPlan::create(['case_id' => $project->id, 'total' => $total]);
 
             foreach (array_values($rows) as $index => $row) {
                 $plan->installments()->create([
@@ -93,10 +93,10 @@ class CreatePaymentPlan
      * document the client agreed to, and it is the only place that answers
      * what was agreed.
      */
-    private function acceptedQuoteFor(Project $project): ?Quote
+    private function acceptedQuoteFor(ClientCase $project): ?Quote
     {
         return Quote::query()
-            ->where('project_id', $project->id)
+            ->where('case_id', $project->id)
             ->where('status', QuoteStatus::Accepted)
             ->latest('accepted_at')
             ->first();

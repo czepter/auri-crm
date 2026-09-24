@@ -13,6 +13,8 @@ use App\Gallery\Http\Controllers\GalleryPrereleaseSignupController;
 use App\Gallery\Http\Controllers\GalleryReadController;
 use App\Http\Controllers\GuestIdentityController;
 use App\Http\Controllers\HealthController;
+use App\Integration\Http\Controllers\CaseContactController;
+use App\Integration\Http\Controllers\CaseController;
 use App\Integration\Http\Controllers\ContactController;
 use App\Integration\Http\Controllers\CrewController;
 use App\Integration\Http\Controllers\CrmReadController;
@@ -24,8 +26,6 @@ use App\Integration\Http\Controllers\LeadController;
 use App\Integration\Http\Controllers\MessageController;
 use App\Integration\Http\Controllers\PackageController;
 use App\Integration\Http\Controllers\PaymentController;
-use App\Integration\Http\Controllers\ProjectContactController;
-use App\Integration\Http\Controllers\ProjectController;
 use App\Integration\Http\Controllers\ProjectFieldController;
 use App\Integration\Http\Controllers\QuoteActionController;
 use App\Integration\Http\Controllers\QuoteController;
@@ -158,20 +158,20 @@ Route::middleware('audience:api')->get('/whoami', GuestIdentityController::class
 // see CrmReadController's own doc comment for the cursor-pagination and
 // `since=` shape every one of these shares. Each scope reuses the exact
 // Capability that already gates the matching admin screen (ContactPolicy,
-// LeadPolicy, ProjectPolicy) rather than inventing an API-only vocabulary —
+// LeadPolicy, ClientCasePolicy) rather than inventing an API-only vocabulary —
 // a token can never read something no staff role could. Shoots have no
 // policy of their own; they hang off a project (ShootPolicy already
-// delegates to ProjectPolicy), so they reuse ViewAllProjects, the capability
+// delegates to ClientCasePolicy), so they reuse ViewAllCases, the capability
 // that already means "see every project" rather than only the ones you are
 // crewed on.
 Route::middleware('audience:api')->group(function () {
     Route::middleware('scope:'.Capability::ManageContacts->value)
         ->get('/contacts', [CrmReadController::class, 'contacts'])->name('api.contacts.index');
-    Route::middleware('scope:'.Capability::ViewAllProjects->value)
+    Route::middleware('scope:'.Capability::ViewAllCases->value)
         ->get('/projects', [CrmReadController::class, 'projects'])->name('api.projects.index');
     Route::middleware('scope:'.Capability::ManageLeads->value)
         ->get('/leads', [CrmReadController::class, 'leads'])->name('api.leads.index');
-    Route::middleware('scope:'.Capability::ViewAllProjects->value)
+    Route::middleware('scope:'.Capability::ViewAllCases->value)
         ->get('/shoots', [CrmReadController::class, 'shoots'])->name('api.shoots.index');
 });
 
@@ -179,25 +179,25 @@ Route::middleware('audience:api')->group(function () {
 // routes above don't answer on their own — a single project by public_id,
 // and a lead-stage funnel summary. Same `audience:api` + `scope:` shape as
 // every route in the group above, reusing the exact Capability the matching
-// index route already requires (project.show is ViewAllProjects, same as
+// index route already requires (project.show is ViewAllCases, same as
 // projects.index; pipeline-snapshot is ManageLeads, same as leads.index,
 // since it's a count over the same rows).
 Route::middleware('audience:api')->group(function () {
-    Route::middleware('scope:'.Capability::ViewAllProjects->value)
-        ->get('/projects/{project:public_id}', [CrmReadController::class, 'project'])
-        ->name('api.projects.show');
-    // ManageNotes, not ViewAllProjects: notes stay out of the project read.
+    Route::middleware('scope:'.Capability::ViewAllCases->value)
+        ->get('/cases/{case:public_id}', [CrmReadController::class, 'case'])
+        ->name('api.cases.show');
+    // ManageNotes, not ViewAllCases: notes stay out of the project read.
     Route::middleware('scope:'.Capability::ManageNotes->value)
-        ->get('/projects/{project:public_id}/notes', [InternalNoteController::class, 'index'])
-        ->name('api.projects.notes.index');
+        ->get('/cases/{case:public_id}/notes', [InternalNoteController::class, 'index'])
+        ->name('api.cases.notes.index');
     Route::middleware('scope:'.Capability::ManageLeads->value)
         ->get('/pipeline-snapshot', [CrmReadController::class, 'pipelineSnapshot'])
         ->name('api.pipeline-snapshot');
     // #402: ManageContracts, the capability managePaymentPlan reuses — the
     // same scope covers the write routes below.
     Route::middleware('scope:'.Capability::ManageContracts->value)
-        ->get('/projects/{project:public_id}/money', [CrmReadController::class, 'money'])
-        ->name('api.projects.money');
+        ->get('/cases/{case:public_id}/money', [CrmReadController::class, 'money'])
+        ->name('api.cases.money');
 });
 
 // I-03: the api surface's first write endpoints — a workflow runner with a
@@ -217,44 +217,42 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'ide
     ->post('/leads', [LeadController::class, 'store'])
     ->name('api.leads.store');
 
-// Ahead of the {lead} routes below only for readability — `bulk` is a static
-// segment and could not be matched as a public id anyway.
 Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
     ->post('/leads/bulk', [LeadController::class, 'storeBulk'])
     ->name('api.leads.bulk.store');
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
-    ->post('/leads/{lead:public_id}/stage', [LeadController::class, 'advanceStage'])
-    ->name('api.leads.stage.update');
+    ->post('/cases/{case:public_id}/lead/stage', [LeadController::class, 'advanceStage'])
+    ->name('api.cases.lead.stage.update');
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
-    ->patch('/leads/{lead:public_id}', [LeadController::class, 'update'])
-    ->name('api.leads.update');
+    ->patch('/cases/{case:public_id}/lead', [LeadController::class, 'update'])
+    ->name('api.cases.lead.update');
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
-    ->patch('/projects/{project:public_id}', [ProjectController::class, 'update'])
-    ->name('api.projects.update');
+    ->patch('/cases/{case:public_id}', [CaseController::class, 'update'])
+    ->name('api.cases.update');
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
-    ->delete('/projects/{project:public_id}/contacts/{contact:public_id}', [ProjectContactController::class, 'destroy'])
-    ->name('api.projects.contacts.destroy');
+    ->delete('/cases/{case:public_id}/contacts/{contact:public_id}', [CaseContactController::class, 'destroy'])
+    ->name('api.cases.contacts.destroy');
 
 // Closing a lead and taking that back are the same authority as moving it:
 // all three write Lead columns nobody but AdvanceLeadStage writes.
 Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
-    ->post('/leads/{lead:public_id}/lost', [LeadController::class, 'markLost'])
-    ->name('api.leads.lost');
+    ->post('/cases/{case:public_id}/lead/lost', [LeadController::class, 'markLost'])
+    ->name('api.cases.lead.lost');
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
-    ->post('/leads/{lead:public_id}/reopen', [LeadController::class, 'reopen'])
-    ->name('api.leads.reopen');
+    ->post('/cases/{case:public_id}/lead/reopen', [LeadController::class, 'reopen'])
+    ->name('api.cases.lead.reopen');
 
 // The production pipeline. ManageShoots rather than the read side's
-// ViewAllProjects: ShootPolicy::update already routes there, and a token that
+// ViewAllCases: ShootPolicy::update already routes there, and a token that
 // may see every project must not thereby move one through delivery.
 Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
-    ->post('/projects/{project:public_id}/shoots', [ShootController::class, 'store'])
-    ->name('api.projects.shoots.store');
+    ->post('/cases/{case:public_id}/shoots', [ShootController::class, 'store'])
+    ->name('api.cases.shoots.store');
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
     ->patch('/shoots/{shoot:public_id}', [ShootController::class, 'update'])
@@ -294,7 +292,7 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManagePackages->value, '
 });
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageQuotes->value, 'idempotent'])->group(function () {
-    Route::post('/projects/{project:public_id}/quotes', [QuoteController::class, 'store'])->name('api.projects.quotes.store');
+    Route::post('/cases/{case:public_id}/quotes', [QuoteController::class, 'store'])->name('api.cases.quotes.store');
     Route::patch('/quotes/{quote:public_id}', [QuoteController::class, 'update'])->name('api.quotes.update');
     Route::post('/quotes/{quote:public_id}/send', [QuoteController::class, 'send'])->name('api.quotes.send');
     Route::post('/quotes/{quote:public_id}/revise', [QuoteController::class, 'revise'])->name('api.quotes.revise');
@@ -328,16 +326,16 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageContacts->value, '
         ->name('api.service-suggestions.destroy');
 });
 
-// Taking an import back — see ProjectController. ManageLeads, the scope that
+// Taking an import back — see CaseController. ManageLeads, the scope that
 // created the project through leads.store: whoever may capture a run may undo
 // it, and no narrower capability exists for "may delete" (I-01).
 Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
-    ->delete('/projects/{project:public_id}', [ProjectController::class, 'destroy'])
-    ->name('api.projects.destroy');
+    ->delete('/cases/{case:public_id}', [CaseController::class, 'destroy'])
+    ->name('api.cases.destroy');
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageNotes->value, 'idempotent'])
-    ->post('/projects/{project:public_id}/notes', [InternalNoteController::class, 'store'])
-    ->name('api.projects.notes.store');
+    ->post('/cases/{case:public_id}/notes', [InternalNoteController::class, 'store'])
+    ->name('api.cases.notes.store');
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageNotes->value, 'idempotent'])
     ->patch('/notes/{note:public_id}', [InternalNoteController::class, 'update'])
@@ -349,15 +347,15 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageNotes->value, 'ide
 
 // ManageMessages, the capability the admin reply already requires.
 Route::middleware(['audience:api', 'scope:'.Capability::ManageMessages->value, 'idempotent'])
-    ->post('/projects/{project:public_id}/messages', [MessageController::class, 'store'])
-    ->name('api.projects.messages.store');
+    ->post('/cases/{case:public_id}/messages', [MessageController::class, 'store'])
+    ->name('api.cases.messages.store');
 
 // #404: the send half of E-06/E-13, through the same PostMessage the admin
 // reply and cancel use — see ThreadController (Integration) for why this
 // needs a staff actor where messages.store above does not.
 Route::middleware(['audience:api', 'scope:'.Capability::ManageMessages->value, 'idempotent'])
-    ->post('/projects/{project:public_id}/messages/send', [ThreadController::class, 'reply'])
-    ->name('api.projects.messages.send');
+    ->post('/cases/{case:public_id}/messages/send', [ThreadController::class, 'reply'])
+    ->name('api.cases.messages.send');
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageMessages->value, 'idempotent'])
     ->delete('/messages/{message:public_id}', [ThreadController::class, 'cancel'])
@@ -382,23 +380,23 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageMessages->value, '
 
 // ManageLeads, the scope leads.store already attaches contacts under.
 Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
-    ->post('/projects/{project:public_id}/contacts', [ProjectContactController::class, 'store'])
-    ->name('api.projects.contacts.store');
+    ->post('/cases/{case:public_id}/contacts', [CaseContactController::class, 'store'])
+    ->name('api.cases.contacts.store');
 
 // C-25: what a project of a given type can carry, and the values it does.
-// Reading the definitions is ViewAllProjects, the same scope the project
+// Reading the definitions is ViewAllCases, the same scope the project
 // index already requires — a field definition says nothing a project does
 // not. Writing values is ManageLeads, the scope leads.store already carries
 // for writing project data; a per-field scope would be a vocabulary the
 // staff roles have no counterpart for (I-01). Adding a definition is
 // ManageSettings, the capability the admin panel is gated on.
-Route::middleware(['audience:api', 'scope:'.Capability::ViewAllProjects->value])
+Route::middleware(['audience:api', 'scope:'.Capability::ViewAllCases->value])
     ->get('/project-types', [ProjectFieldController::class, 'types'])
     ->name('api.project-types.index');
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
-    ->patch('/projects/{project:public_id}/fields', [ProjectFieldController::class, 'updateValues'])
-    ->name('api.projects.fields.update');
+    ->patch('/cases/{case:public_id}/fields', [ProjectFieldController::class, 'updateValues'])
+    ->name('api.cases.fields.update');
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageSettings->value, 'idempotent'])
     ->post('/project-types/{projectType:public_id}/fields', [ProjectFieldController::class, 'store'])
@@ -409,25 +407,25 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageSettings->value, '
 // BookProject and CompleteProject actions, so a token can commit or close a
 // project exactly as staff do from the project screen.
 Route::middleware(['audience:api', 'scope:'.Capability::BookProject->value, 'idempotent'])
-    ->post('/projects/{project:public_id}/book', [ProjectController::class, 'book'])
-    ->name('api.projects.book');
+    ->post('/cases/{case:public_id}/book', [CaseController::class, 'book'])
+    ->name('api.cases.book');
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])->group(function () {
-    Route::post('/projects/{project:public_id}/complete', [ProjectController::class, 'complete'])
-        ->name('api.projects.complete');
-    Route::delete('/projects/{project:public_id}/complete', [ProjectController::class, 'reopen'])
-        ->name('api.projects.reopen');
+    Route::post('/cases/{case:public_id}/complete', [CaseController::class, 'complete'])
+        ->name('api.cases.complete');
+    Route::delete('/cases/{case:public_id}/complete', [CaseController::class, 'reopen'])
+        ->name('api.cases.reopen');
 });
 
 // #401: tasks, mirroring App\Crm\Http\Controllers\TaskController. ManageTasks
 // throughout, the capability that route already authorizes against.
 Route::middleware(['audience:api', 'scope:'.Capability::ManageTasks->value])
-    ->get('/projects/{project:public_id}/tasks', [TaskController::class, 'index'])
-    ->name('api.projects.tasks.index');
+    ->get('/cases/{case:public_id}/tasks', [TaskController::class, 'index'])
+    ->name('api.cases.tasks.index');
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageTasks->value, 'idempotent'])->group(function () {
-    Route::post('/projects/{project:public_id}/tasks', [TaskController::class, 'store'])
-        ->name('api.projects.tasks.store');
+    Route::post('/cases/{case:public_id}/tasks', [TaskController::class, 'store'])
+        ->name('api.cases.tasks.store');
     Route::post('/tasks/{task:public_id}/complete', [TaskController::class, 'complete'])
         ->name('api.tasks.complete');
     Route::post('/tasks/{task:public_id}/reopen', [TaskController::class, 'reopen'])
@@ -440,10 +438,10 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageTasks->value, 'ide
         ->name('api.tasks.destroy');
 });
 
-// #402: payments, ManageContracts — see ProjectPolicy::managePaymentPlan().
+// #402: payments, ManageContracts — see ClientCasePolicy::managePaymentPlan().
 Route::middleware(['audience:api', 'scope:'.Capability::ManageContracts->value, 'idempotent'])->group(function () {
-    Route::post('/projects/{project:public_id}/payment-plan', [PaymentController::class, 'store'])
-        ->name('api.projects.payment-plan.store');
+    Route::post('/cases/{case:public_id}/payment-plan', [PaymentController::class, 'store'])
+        ->name('api.cases.payment-plan.store');
     Route::patch('/payment-plans/{paymentPlan:public_id}', [PaymentController::class, 'update'])
         ->name('api.payment-plans.update');
     Route::post('/payment-installments/{installment:public_id}/paid', [PaymentController::class, 'markPaid'])
@@ -519,16 +517,16 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'id
 });
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageFormTemplates->value])
-    ->get('/projects/{project:public_id}/forms', [FormInstanceController::class, 'index'])
-    ->name('api.projects.forms.index');
+    ->get('/cases/{case:public_id}/forms', [FormInstanceController::class, 'index'])
+    ->name('api.cases.forms.index');
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageFormTemplates->value, 'idempotent'])->group(function () {
-    Route::post('/projects/{project:public_id}/forms', [FormInstanceController::class, 'store'])->name('api.projects.forms.store');
+    Route::post('/cases/{case:public_id}/forms', [FormInstanceController::class, 'store'])->name('api.cases.forms.store');
     Route::patch('/forms/{formInstance:public_id}', [FormInstanceController::class, 'update'])->name('api.forms.update');
     Route::post('/forms/{formInstance:public_id}/share', [FormInstanceController::class, 'share'])->name('api.forms.share');
     Route::post('/form-fields/{formInstanceField:public_id}/answer', [FormInstanceController::class, 'answer'])->name('api.form-fields.answer');
 });
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManagePortalAccess->value, 'idempotent'])
-    ->post('/projects/{project:public_id}/portal-visibility', [ProjectController::class, 'setPortalVisibility'])
-    ->name('api.projects.portal-visibility.update');
+    ->post('/cases/{case:public_id}/portal-visibility', [CaseController::class, 'setPortalVisibility'])
+    ->name('api.cases.portal-visibility.update');

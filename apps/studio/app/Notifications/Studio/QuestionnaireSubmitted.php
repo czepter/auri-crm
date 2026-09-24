@@ -2,8 +2,8 @@
 
 namespace App\Notifications\Studio;
 
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\FormInstance;
-use App\Crm\Models\Project;
 
 class QuestionnaireSubmitted extends StudioEventNotification
 {
@@ -16,16 +16,16 @@ class QuestionnaireSubmitted extends StudioEventNotification
 
     public function body(): string
     {
-        return "{$this->form->project->name} — {$this->form->name}";
+        return "{$this->form->case->name} — {$this->form->name}";
     }
 
     public function url(): string
     {
-        return "/auftraege/{$this->form->project->public_id}/frageboegen";
+        return "/auftraege/{$this->form->case->public_id}/frageboegen";
     }
 
-    public function project(): ?Project
+    public function case(): ?ClientCase
     {
-        return $this->form->project;
+        return $this->form->case;
     }
 }

@@ -11,7 +11,7 @@ import AdminLayout from './AdminLayout.vue'
 const alle: App.Enums.Capability[] = [
   'manage_leads',
   'manage_contacts',
-  'view_all_projects',
+  'view_all_cases',
   'book_project',
   'manage_shoots',
   'manage_crew',

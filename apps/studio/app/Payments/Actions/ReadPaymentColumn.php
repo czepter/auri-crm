@@ -4,7 +4,7 @@ namespace App\Payments\Actions;
 
 use App\Crm\Data\DomainRowData;
 use App\Crm\Data\RowActionData;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Models\User;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
@@ -43,15 +43,15 @@ class ReadPaymentColumn
             ->when($viewer !== null, fn ($query) => $query->whereHas(
                 'plan',
                 fn ($query) => $query->whereIn(
-                    'project_id',
-                    Project::query()->visibleTo($viewer)->select('projects.id'),
+                    'case_id',
+                    ClientCase::query()->visibleTo($viewer)->select('cases.id'),
                 ),
             ))
-            ->with('plan.project')
+            ->with('plan.case')
             ->orderBy('overdue_notified_at')
             ->get()
             ->map(function (PaymentInstallment $installment) {
-                $project = $installment->plan->project;
+                $project = $installment->plan->case;
                 $days = (int) $installment->overdue_notified_at->diffInDays();
 
                 return new DomainRowData(

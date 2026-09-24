@@ -3,16 +3,16 @@
 use App\Crm\Actions\CaptureInquiry;
 use App\Crm\Data\CaptureInquiryData;
 use App\Crm\Enums\CaptureChannel;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
-use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectFieldType;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Events\LeadCaptured;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\ProjectField;
 use App\Crm\Models\ProjectType as ProjectTypeModel;
 use App\Crm\Models\Shoot;
@@ -50,7 +50,7 @@ it('creates the whole graph from one post', function () {
         ->post('/anfragen', payload())
         ->assertRedirect('/anfragen');
 
-    $project = Project::sole();
+    $project = ClientCase::sole();
     $lead = Lead::sole();
     $shoot = Shoot::sole();
 
@@ -59,7 +59,7 @@ it('creates the whole graph from one post', function () {
         ->and($project->portal_visible)->toBeFalse()
         ->and($lead->stage->key)->toBe(LeadStage::New->value)
         ->and($lead->captured_by_id)->toBe($this->staff->id)
-        ->and($lead->project_id)->toBe($project->id)
+        ->and($lead->case_id)->toBe($project->id)
         ->and($shoot->is_primary)->toBeTrue()
         ->and($shoot->status->key)->toBe(ShootStatus::Requested->value)
         ->and($shoot->date->format('Y-m-d'))->toBe('2026-06-14');
@@ -76,11 +76,11 @@ it('creates exactly one shoot, the primary one', function () {
 it('creates the partner as a second contact with the partner role', function () {
     $this->actingAs($this->staff, 'staff')->post('/anfragen', payload());
 
-    $project = Project::sole();
+    $project = ClientCase::sole();
 
     expect(Contact::count())->toBe(2)
         ->and($project->primaryContact()->name)->toBe('Annika Steffens')
-        ->and($project->contacts()->wherePivot('role', ProjectContactRole::Partner->value)->sole()->name)
+        ->and($project->contacts()->wherePivot('role', CaseContactRole::Partner->value)->sole()->name)
         ->toBe('Ruben Falk');
 });
 
@@ -94,7 +94,7 @@ it('reuses an existing contact rather than creating a second one', function () {
         ->post('/anfragen', payload(['contact_id' => $existing->public_id]));
 
     expect(Contact::where('name', 'Annika Steffens')->count())->toBe(1)
-        ->and(Project::sole()->primaryContact()->id)->toBe($existing->id);
+        ->and(ClientCase::sole()->primaryContact()->id)->toBe($existing->id);
 });
 
 it('shows a new project in the portal when the contact says so', function () {
@@ -106,7 +106,7 @@ it('shows a new project in the portal when the contact says so', function () {
     $this->actingAs($this->staff, 'staff')
         ->post('/anfragen', payload(['contact_id' => $existing->public_id]));
 
-    expect(Project::sole()->portal_visible)->toBeTrue();
+    expect(ClientCase::sole()->portal_visible)->toBeTrue();
 });
 
 it('saves without a partner', function () {
@@ -131,20 +131,20 @@ it('saves without an email, because a contact without one is honest', function (
         ->assertRedirect('/anfragen');
 
     // Contact::sole() would not do here — the partner is a second contact.
-    expect(Project::sole()->primaryContact()->email)->toBeNull();
+    expect(ClientCase::sole()->primaryContact()->email)->toBeNull();
 });
 
 it('warns about a conflicting date but saves anyway', function () {
-    $other = Project::factory()->wedding()->create(['name' => 'Meier & Kowalski']);
-    Lead::factory()->for($other)->create();
-    Shoot::factory()->for($other)->primary()->on('2026-06-14')->create();
+    $other = ClientCase::factory()->wedding()->create(['name' => 'Meier & Kowalski']);
+    Lead::factory()->for($other, 'case')->create();
+    Shoot::factory()->for($other, 'case')->primary()->on('2026-06-14')->create();
 
     $this->actingAs($this->staff, 'staff')
         ->post('/anfragen', payload())
         ->assertRedirect('/anfragen')
         ->assertSessionHasNoErrors();
 
-    expect(Project::count())->toBe(2)
+    expect(ClientCase::count())->toBe(2)
         ->and(Shoot::where('date', '2026-06-14')->count())->toBe(2);
 });
 
@@ -158,7 +158,7 @@ it('warns about a date inside a studio closure but saves anyway', function () {
         ->assertRedirect('/anfragen')
         ->assertSessionHasNoErrors();
 
-    expect(Project::count())->toBe(1)
+    expect(ClientCase::count())->toBe(1)
         ->and(Shoot::where('date', '2026-06-14')->count())->toBe(1);
 });
 
@@ -167,7 +167,7 @@ it('writes an audit row for the capture', function () {
 
     $row = AuditLog::where('event', 'lead.captured')->sole();
 
-    expect($row->subject)->toBe(Lead::sole()->public_id)
+    expect($row->subject)->toBe(Lead::sole()->case->public_id)
         ->and($row->context['source'])->toBe('referral');
 });
 
@@ -176,7 +176,7 @@ it('creates nothing when validation fails', function () {
         ->post('/anfragen', payload(['type' => 'not-a-type']))
         ->assertSessionHasErrors('type');
 
-    expect(Project::count())->toBe(0)
+    expect(ClientCase::count())->toBe(0)
         ->and(Contact::count())->toBe(0);
 });
 
@@ -191,7 +191,7 @@ it('rolls the whole graph back if any part fails mid-transaction', function () {
         $this->staff,
     ))->toThrow(RuntimeException::class);
 
-    expect(Project::count())->toBe(0)
+    expect(ClientCase::count())->toBe(0)
         ->and(Contact::count())->toBe(0)
         ->and(Lead::count())->toBe(0)
         ->and(Shoot::count())->toBe(0);
@@ -230,7 +230,7 @@ it('prefills the main date from the url, nothing for a malformed one', function 
 it('rejects an unauthenticated capture', function () {
     $this->post('/anfragen', payload())->assertRedirect('/login');
 
-    expect(Project::count())->toBe(0);
+    expect(ClientCase::count())->toBe(0);
 });
 
 it('records who referred a client when the source is a referral', function () {
@@ -288,8 +288,8 @@ it('captures every person on the inquiry with their own reach', function () {
         ]))
         ->assertRedirect();
 
-    $partners = Project::first()->contacts()
-        ->wherePivot('role', ProjectContactRole::Partner->value)
+    $partners = ClientCase::first()->contacts()
+        ->wherePivot('role', CaseContactRole::Partner->value)
         ->get();
 
     expect($partners->pluck('name')->all())->toBe(['Tim Erdmann', 'Mira Sundermann'])
@@ -307,7 +307,7 @@ it('reuses a partner already on file by email', function () {
         ->assertRedirect('/anfragen');
 
     expect(Contact::where('email', 'r.falk@example.test')->count())->toBe(1)
-        ->and(Project::sole()->contacts()->wherePivot('role', ProjectContactRole::Partner->value)->sole()->id)
+        ->and(ClientCase::sole()->contacts()->wherePivot('role', CaseContactRole::Partner->value)->sole()->id)
         ->toBe($partner->id);
 });
 
@@ -316,7 +316,7 @@ it('skips a person row left blank', function () {
         ->post('/anfragen', payload(['people' => []]))
         ->assertRedirect();
 
-    expect(Project::first()->contacts)->toHaveCount(1);
+    expect(ClientCase::first()->contacts)->toHaveCount(1);
 });
 
 // "Sonstige" alone is not a fact: the detail beside it is what the funnel
@@ -331,7 +331,7 @@ it('keeps the detail behind Sonstige and drops it when the case changes', functi
         'captured_via_other' => 'Brief',
     ]))->assertRedirect('/anfragen');
 
-    $project = Project::sole();
+    $project = ClientCase::sole();
     $lead = Lead::sole();
 
     expect($project->type_other)->toBe('Tierfotografie')
@@ -390,7 +390,7 @@ it('writes the type own fields captured with the inquiry', function () {
         ->post('/anfragen', payload(['fields' => ['gaeste' => 80]]))
         ->assertRedirect('/anfragen');
 
-    expect(Project::sole()->field_values)->toBe(['gaeste' => 80]);
+    expect(ClientCase::sole()->field_values)->toBe(['gaeste' => 80]);
 });
 
 it('puts times and venue on the primary shoot the capture creates', function () {

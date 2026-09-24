@@ -3,9 +3,9 @@
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectType;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
-use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
@@ -31,8 +31,8 @@ function stageMove(Lead $lead, LeadStage $from, LeadStage $to, $at): void
 {
     AuditLog::create([
         'event' => 'lead.stage_changed',
-        'subject' => $lead->public_id,
-        'project_id' => $lead->project_id,
+        'subject' => $lead->case->public_id,
+        'case_id' => $lead->case_id,
         'context' => ['from' => $from->value, 'to' => $to->value],
         'created_at' => $at,
     ]);
@@ -256,7 +256,7 @@ it('refuses a role that only reaches the projects it is crewed on', function () 
 });
 
 it('shows an empty studio empty figures rather than zeroes', function () {
-    Project::query()->delete();
+    ClientCase::query()->delete();
 
     $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/auswertungen')
@@ -285,13 +285,13 @@ it('compares against the window before it, not against a fixed prior year', func
 });
 
 it('narrows every figure to one project type when the filter asks for one', function () {
-    $wedding = Project::factory()->create(['type' => ProjectType::Wedding]);
-    $portrait = Project::factory()->create(['type' => ProjectType::Portrait]);
+    $wedding = ClientCase::factory()->create(['type' => ProjectType::Wedding]);
+    $portrait = ClientCase::factory()->create(['type' => ProjectType::Portrait]);
 
-    $second = Project::factory()->create(['type' => ProjectType::Wedding]);
+    $second = ClientCase::factory()->create(['type' => ProjectType::Wedding]);
 
     foreach ([$wedding, $second, $portrait] as $project) {
-        Lead::factory()->create(['project_id' => $project->id, 'captured_at' => now()->subMonth()]);
+        Lead::factory()->create(['case_id' => $project->id, 'captured_at' => now()->subMonth()]);
     }
 
     $all = collect(BookingFunnel::byMonth(now()->subYear(), now()))->sum('captured');
@@ -355,15 +355,15 @@ it('reads the time in a step as the gap to the move before it', function () {
 // --- ShootReport --------------------------------------------------------
 
 it('buckets the lead time on the primary shoot and counts the dateless apart', function () {
-    $booked = Project::factory()->create(['type' => ProjectType::Wedding]);
+    $booked = ClientCase::factory()->create(['type' => ProjectType::Wedding]);
     markBooked($booked, ['booked_at' => now()]);
-    Lead::factory()->create(['project_id' => $booked->id, 'captured_at' => now()->subMonths(2)]);
-    Shoot::factory()->create(['project_id' => $booked->id, 'is_primary' => true, 'date' => now()->addMonths(5)]);
+    Lead::factory()->create(['case_id' => $booked->id, 'captured_at' => now()->subMonths(2)]);
+    Shoot::factory()->create(['case_id' => $booked->id, 'is_primary' => true, 'date' => now()->addMonths(5)]);
 
-    $dateless = Project::factory()->create(['type' => ProjectType::Wedding]);
+    $dateless = ClientCase::factory()->create(['type' => ProjectType::Wedding]);
     markBooked($dateless, ['booked_at' => now()]);
-    Lead::factory()->create(['project_id' => $dateless->id, 'captured_at' => now()->subMonth()]);
-    Shoot::factory()->create(['project_id' => $dateless->id, 'is_primary' => true, 'date' => null]);
+    Lead::factory()->create(['case_id' => $dateless->id, 'captured_at' => now()->subMonth()]);
+    Shoot::factory()->create(['case_id' => $dateless->id, 'is_primary' => true, 'date' => null]);
 
     $times = ShootReport::leadTimes(now()->subYear(), now());
 
@@ -375,15 +375,15 @@ it('reads the lead-time steps in the unit most of the lead times fall into', fun
     // Drei Aufträge, alle wenige Wochen vorher gebucht: eine Monatsachse
     // legte alle drei in die erste Stufe.
     foreach ([18, 25, 40] as $days) {
-        $project = Project::factory()->create(['type' => ProjectType::Portrait]);
+        $project = ClientCase::factory()->create(['type' => ProjectType::Portrait]);
         markBooked($project, ['booked_at' => now()]);
         // Der Termin ist ein Datum ohne Uhrzeit: ohne startOfDay misst der
         // Abstand die Tageszeit mit und der Median kippt um einen Tag.
         $captured = now()->subMonths(2)->startOfDay();
 
-        Lead::factory()->create(['project_id' => $project->id, 'captured_at' => $captured]);
+        Lead::factory()->create(['case_id' => $project->id, 'captured_at' => $captured]);
         Shoot::factory()->create([
-            'project_id' => $project->id,
+            'case_id' => $project->id,
             'is_primary' => true,
             'date' => $captured->copy()->addDays($days),
         ]);
@@ -415,12 +415,12 @@ it('counts the shooting days by the date they fall on', function () {
 // --- RevenueReport ------------------------------------------------------
 
 it('averages each project type against its own bookings', function () {
-    $wedding = Project::factory()->create(['type' => ProjectType::Wedding]);
-    $portrait = Project::factory()->create(['type' => ProjectType::Portrait]);
+    $wedding = ClientCase::factory()->create(['type' => ProjectType::Wedding]);
+    $portrait = ClientCase::factory()->create(['type' => ProjectType::Portrait]);
 
-    PaymentPlan::factory()->for(markBooked($wedding), 'project')
+    PaymentPlan::factory()->for(markBooked($wedding), 'case')
         ->create(['total' => 400_000]);
-    PaymentPlan::factory()->for(markBooked($portrait), 'project')
+    PaymentPlan::factory()->for(markBooked($portrait), 'case')
         ->create(['total' => 60_000]);
 
     $rows = collect(RevenueReport::perProjectType(now()->subYear(), now()))->keyBy('type');

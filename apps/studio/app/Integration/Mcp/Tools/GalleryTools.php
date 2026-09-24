@@ -72,7 +72,7 @@ final class GalleryTools
                 method: 'POST',
                 path: '/galleries',
                 schema: fn (JsonSchema $schema) => [
-                    'project_id' => $schema->string()->nullable()->description('Project public_id'),
+                    'case_id' => $schema->string()->nullable()->description('Project public_id'),
                     'shoot_id' => $schema->string()->nullable()->description('Shoot public_id, on that project'),
                     'title' => $schema->string()->max(200)->required(),
                     'is_external' => $schema->boolean()->required(),

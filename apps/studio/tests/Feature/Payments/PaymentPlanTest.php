@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Numbering\Enums\DocumentType;
@@ -30,10 +30,10 @@ uses(RefreshDatabase::class);
  * A booked project (bookedContactProject() already books it) with a quote
  * the client has accepted — the agreement a plan is created against.
  */
-function acceptedQuoteProject(): Project
+function acceptedQuoteProject(): ClientCase
 {
     $project = bookedContactProject();
-    Quote::factory()->for($project)->create(['status' => QuoteStatus::Accepted, 'accepted_at' => now()]);
+    Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Accepted, 'accepted_at' => now()]);
 
     return $project;
 }
@@ -139,7 +139,7 @@ it('refuses to create a plan against a project with no quote', function () {
 
 it('refuses to create a plan against a quote that was sent but never accepted', function () {
     $project = bookedContactProject();
-    Quote::factory()->for($project)->create(['status' => QuoteStatus::Sent, 'sent_at' => now()]);
+    Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Sent, 'sent_at' => now()]);
 
     app(CreatePaymentPlan::class)($project, 1000, ['2026-09-01']);
 })->throws(HttpException::class);
@@ -291,7 +291,7 @@ it('lets the database reject a plan created with a nonzero total and no installm
         DB::transaction(function () {
             DB::table('payment_plans')->insert([
                 'public_id' => (string) new Cuid2,
-                'project_id' => Project::factory()->booked()->create()->id,
+                'case_id' => ClientCase::factory()->booked()->create()->id,
                 'total' => 100,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -309,7 +309,7 @@ it('lets a plan whose installments genuinely sum to its total commit cleanly', f
         DB::transaction(function () {
             $planId = DB::table('payment_plans')->insertGetId([
                 'public_id' => (string) new Cuid2,
-                'project_id' => Project::factory()->booked()->create()->id,
+                'case_id' => ClientCase::factory()->booked()->create()->id,
                 'total' => 100,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -355,7 +355,7 @@ it('creates a payment plan through the admin screen, split evenly across the due
 });
 
 it('refuses to create a plan for a project with no job at all', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $user = staffMember(StaffRole::Admin);
 
     $this->actingAs($user, 'staff')
@@ -367,9 +367,9 @@ it('refuses to create a plan for a project with no job at all', function () {
 });
 
 it('updates a plan through the admin screen, rejecting a submission whose installments do not sum to the total', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     markBooked($project);
-    $plan = PaymentPlan::factory()->for($project)->create(['total' => 200]);
+    $plan = PaymentPlan::factory()->for($project, 'case')->create(['total' => 200]);
     PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 200, 'sort_order' => 0]);
     $user = staffMember(StaffRole::Admin);
 
@@ -401,9 +401,9 @@ it('updates a plan through the admin screen, rejecting a submission whose instal
 it('sums an issued row at its stored amount, and takes no status for it', function () {
     // The form sends neither an editable amount nor a status for an issued
     // row, so the plan total is checked against what the invoice says.
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     markBooked($project);
-    $plan = PaymentPlan::factory()->for($project)->create(['total' => 300]);
+    $plan = PaymentPlan::factory()->for($project, 'case')->create(['total' => 300]);
     $issued = issuedInstallment($plan, 100);
     PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 200, 'sort_order' => 1]);
 

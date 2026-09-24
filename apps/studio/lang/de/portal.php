@@ -34,7 +34,7 @@ return [
     'quote_item_not_selectable' => 'Diese Auswahl gehört nicht zum Angebot.',
     'quote_terms_required' => 'Bitte die AGB akzeptieren.',
 
-    // P-03 (#222): the line UpdateProjectDetails writes into the thread. A
+    // P-03 (#222): the line UpdateCaseDetails writes into the thread. A
     // change to a wedding date that lives only in a diff is how a
     // photographer turns up on the wrong Saturday.
     'details_changed_subject' => 'Angaben geändert',

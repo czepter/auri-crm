@@ -28,7 +28,7 @@ class InternalNote extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['project_id', 'author_id', 'body', 'occurred_at'];
+    protected $fillable = ['case_id', 'author_id', 'body', 'occurred_at'];
 
     protected function casts(): array
     {
@@ -49,9 +49,9 @@ class InternalNote extends Model
         return $this->occurred_at ?? $this->created_at;
     }
 
-    public function project(): BelongsTo
+    public function case(): BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(ClientCase::class);
     }
 
     public function author(): BelongsTo

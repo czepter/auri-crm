@@ -3,11 +3,11 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 
-const model = defineModel<App.Crm.Data.ProjectSuggestionData | null>({ required: true })
+const model = defineModel<App.Crm.Data.CaseSuggestionData | null>({ required: true })
 
 const term = ref('')
-const results = ref<App.Crm.Data.ProjectSuggestionData[]>([])
-const suggestions = ref<App.Crm.Data.ProjectSuggestionData[]>([])
+const results = ref<App.Crm.Data.CaseSuggestionData[]>([])
+const suggestions = ref<App.Crm.Data.CaseSuggestionData[]>([])
 
 async function search(value: string) {
   const response = await fetch(`/projekte/suche?q=${encodeURIComponent(value)}`, {
@@ -39,7 +39,7 @@ watch(term, (value) => {
 
 const rows = computed(() => (term.value.trim().length < 2 ? suggestions.value : results.value))
 
-function choose(project: App.Crm.Data.ProjectSuggestionData) {
+function choose(project: App.Crm.Data.CaseSuggestionData) {
   model.value = project
   results.value = []
 }

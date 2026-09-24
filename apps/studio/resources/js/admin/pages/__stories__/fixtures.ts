@@ -13,7 +13,6 @@ type Option = { value: string; label: string }
 
 const RAHN = 'p-rahn'
 const BRANDT = 'p-brandt'
-const LEAD = 'l-brandt'
 
 export const types: Option[] = [
     { value: 'wedding', label: 'Hochzeit' },
@@ -71,12 +70,12 @@ const projectTrack = [
     { key: 'delivered', label: 'Übergeben', pipeline: 'project', state: 'todo' },
 ]
 
-export const people: App.Crm.Data.ProjectPersonData[] = [
+export const people: App.Crm.Data.CasePersonData[] = [
     { id: 'c-jana', name: 'Jana Rahn', role: 'primary', email: 'jana.rahn@posteo.de', phone: '0176 2841 9930' },
     { id: 'c-michael', name: 'Michael Rahn', role: 'partner', email: 'michael.rahn@posteo.de', phone: null },
 ]
 
-export const leadPeople: App.Crm.Data.ProjectPersonData[] = [
+export const leadPeople: App.Crm.Data.CasePersonData[] = [
     { id: 'c-lena', name: 'Lena Brandt', role: 'primary', email: 'lena.brandt@web.de', phone: '0151 7742 1108' },
     { id: 'c-tom', name: 'Tom Brandt', role: 'partner', email: null, phone: null },
     { id: 'c-kerstin', name: 'Kerstin Voß', role: 'vendor', email: 'kontakt@freie-trauung-voss.de', phone: null },
@@ -190,20 +189,20 @@ export const queue: { key: string; rows: App.Crm.Data.LeadQueueRowData[] }[] = [
     {
         key: 'unbeantwortet',
         rows: [
-            { id: 'l-osterhoff', name: 'Familie Osterhoff', date: '2027-04-24', text: 'Standesamt und Feier im Garten', open: false, waitingDays: 6 },
+            { id: 'p-osterhoff', name: 'Familie Osterhoff', date: '2027-04-24', text: 'Standesamt und Feier im Garten', open: false, waitingDays: 6 },
         ],
     },
     {
         key: 'angebot',
         rows: [
-            { id: LEAD, name: 'Familie Brandt', date: '2027-06-12', text: 'Gut Basthorst, freie Trauung', open: true, waitingDays: 4 },
-            { id: 'l-kroll', name: 'Marie Ahrens & David Kroll', date: '2026-07-25', text: 'Kaispeicher Hamburg', open: false, waitingDays: 11 },
+            { id: BRANDT, name: 'Familie Brandt', date: '2027-06-12', text: 'Gut Basthorst, freie Trauung', open: true, waitingDays: 4 },
+            { id: 'p-ahrens', name: 'Marie Ahrens & David Kroll', date: '2026-07-25', text: 'Kaispeicher Hamburg', open: false, waitingDays: 11 },
         ],
     },
     {
         key: 'angenommen',
         rows: [
-            { id: 'l-rahn', name: 'Hochzeit Rahn', date: '2026-09-13', text: 'Gut Basthorst', open: false, waitingDays: 2 },
+            { id: 'p-rahn', name: 'Hochzeit Rahn', date: '2026-09-13', text: 'Gut Basthorst', open: false, waitingDays: 2 },
         ],
     },
 ]
@@ -415,7 +414,7 @@ const permissions = {
 }
 
 /** Der gebuchte Auftrag: sieben Reiter, Stufenbalken in der Projektpipeline. */
-export const header: App.Crm.Data.ProjectHeaderData = {
+export const header: App.Crm.Data.CaseHeaderData = {
     id: RAHN,
     name: 'Hochzeit Rahn',
     names: 'Jana und Michael Rahn',
@@ -426,7 +425,6 @@ export const header: App.Crm.Data.ProjectHeaderData = {
     isBooked: true,
     ...permissions,
     portalVisible: true,
-    leadId: 'l-rahn',
     outcomeLabel: null,
     lostReason: null,
     canClose: true,
@@ -460,7 +458,7 @@ export const header: App.Crm.Data.ProjectHeaderData = {
 }
 
 /** Dieselbe Kopfzeile vor der Buchung: drei Reiter, Stufenbalken in der Anfragepipeline. */
-export const leadHeader: App.Crm.Data.ProjectHeaderData = {
+export const leadHeader: App.Crm.Data.CaseHeaderData = {
     id: BRANDT,
     name: 'Familie Brandt — Hochzeit',
     names: 'Lena und Tom Brandt',
@@ -471,7 +469,6 @@ export const leadHeader: App.Crm.Data.ProjectHeaderData = {
     isBooked: false,
     ...permissions,
     portalVisible: false,
-    leadId: LEAD,
     outcomeLabel: null,
     lostReason: null,
     canClose: true,
@@ -479,9 +476,9 @@ export const leadHeader: App.Crm.Data.ProjectHeaderData = {
     canComplete: false,
     canDelete: true,
     tabs: [
-        { key: 'overview', label: 'project.overview', href: `/anfragen/${LEAD}`, count: null, countTo: null, children: [] },
-        { key: 'quotes', label: 'project.quotes', href: `/anfragen/${LEAD}/angebot`, count: 1, countTo: null, children: [] },
-        { key: 'messages', label: 'project.messages', href: `/anfragen/${LEAD}/nachrichten`, count: 1, countTo: null, children: [] },
+        { key: 'overview', label: 'project.overview', href: `/anfragen/${BRANDT}`, count: null, countTo: null, children: [] },
+        { key: 'quotes', label: 'project.quotes', href: `/anfragen/${BRANDT}/angebot`, count: 1, countTo: null, children: [] },
+        { key: 'messages', label: 'project.messages', href: `/anfragen/${BRANDT}/nachrichten`, count: 1, countTo: null, children: [] },
     ],
     track: leadTrack,
     queue: [],
@@ -493,7 +490,7 @@ export const leadHeader: App.Crm.Data.ProjectHeaderData = {
 
 /** Die `lead`-Prop des Anfragebildschirms — kein eigener Data-Typ, deshalb hier ausgeschrieben. */
 export const lead = {
-    id: LEAD,
+    id: BRANDT,
     projectId: BRANDT,
     name: 'Familie Brandt — Hochzeit',
     type: 'wedding',

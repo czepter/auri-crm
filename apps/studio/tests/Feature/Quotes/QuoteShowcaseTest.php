@@ -1,7 +1,7 @@
 <?php
 
 use App\Catalog\Models\Package;
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Quotes\Actions\SeedQuoteFromPackage;
 use App\Quotes\Models\Quote;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,7 +16,7 @@ it('copies the bytes onto the quote, so removing the package picture leaves it s
     $package = Package::factory()->create();
     $package->addShowcaseImage(UploadedFile::fake()->image('schaufenster.jpg'));
 
-    $quote = Quote::factory()->create(['project_id' => Project::factory()->create()->id]);
+    $quote = Quote::factory()->create(['case_id' => ClientCase::factory()->create()->id]);
 
     app(SeedQuoteFromPackage::class)($quote, $package);
 

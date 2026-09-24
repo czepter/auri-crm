@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * The kind of work a project is, as a row rather than the three cases
- * App\Crm\Enums\ProjectType held. `key` is what projects.type stores and is
+ * App\Crm\Enums\ProjectType held. `key` is what cases.type stores and is
  * fixed at creation, for the reason Stage::$key is.
  */
 class ProjectType extends Model
@@ -43,8 +43,8 @@ class ProjectType extends Model
     }
 
     /**
-     * The seeded "Sonstige", the one type whose free-text detail Project keeps
-     * (Project::booted). A studio may rename it; deleting it means no type
+     * The seeded "Sonstige", the one type whose free-text detail ClientCase keeps
+     * (ClientCase::booted). A studio may rename it; deleting it means no type
      * carries a detail any more, which is the honest reading of deleting it.
      */
     public function isCatchAll(): bool

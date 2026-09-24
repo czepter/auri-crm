@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Models\Project;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Gallery\Actions\ImportLegacyGallery;
 use App\Gallery\Models\Gallery;
@@ -9,7 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 it('links a legacy gallery to its project without copying any assets', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $result = app(ImportLegacyGallery::class)([
         'project_public_id' => $project->public_id,
@@ -20,7 +20,7 @@ it('links a legacy gallery to its project without copying any assets', function 
     expect($result['status'])->toBe('linked');
 
     $gallery = Gallery::sole();
-    expect($gallery->project_id)->toBe($project->id)
+    expect($gallery->case_id)->toBe($project->id)
         ->and($gallery->is_external)->toBeTrue()
         ->and($gallery->external_url)->toBe('https://old-host.example.test/galleries/1234')
         ->and($gallery->versions()->count())->toBe(0);
@@ -29,8 +29,8 @@ it('links a legacy gallery to its project without copying any assets', function 
 });
 
 it('links to a specific shoot when shoot_public_id is given', function () {
-    $project = Project::factory()->create();
-    $shoot = Shoot::factory()->for($project)->create();
+    $project = ClientCase::factory()->create();
+    $shoot = Shoot::factory()->for($project, 'case')->create();
 
     app(ImportLegacyGallery::class)([
         'project_public_id' => $project->public_id,
@@ -42,7 +42,7 @@ it('links to a specific shoot when shoot_public_id is given', function () {
 });
 
 it('is idempotent: relinking the same external_url for the same project skips instead of duplicating', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $record = [
         'project_public_id' => $project->public_id,
         'external_url' => 'https://old-host.example.test/g/1',
@@ -57,7 +57,7 @@ it('is idempotent: relinking the same external_url for the same project skips in
 });
 
 it('link mode requires external_url', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $result = app(ImportLegacyGallery::class)(['project_public_id' => $project->public_id], 'link');
 
@@ -66,7 +66,7 @@ it('link mode requires external_url', function () {
 });
 
 it('backfills a legacy gallery with its assets and publishes version 1', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $result = app(ImportLegacyGallery::class)([
         'project_public_id' => $project->public_id,
@@ -84,7 +84,7 @@ it('backfills a legacy gallery with its assets and publishes version 1', functio
 });
 
 it('is idempotent: backfilling the same project/shoot/title twice skips the second time', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $record = [
         'project_public_id' => $project->public_id,
         'title' => 'Verlobung',
@@ -100,7 +100,7 @@ it('is idempotent: backfilling the same project/shoot/title twice skips the seco
 });
 
 it('backfill mode requires a non-empty assets array', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $result = app(ImportLegacyGallery::class)([
         'project_public_id' => $project->public_id,
@@ -118,7 +118,7 @@ it('errors when project_public_id matches no project', function () {
 });
 
 it('errors when shoot_public_id belongs to a different project', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
     $otherProjectsShoot = Shoot::factory()->create();
 
     $result = app(ImportLegacyGallery::class)([
@@ -132,7 +132,7 @@ it('errors when shoot_public_id belongs to a different project', function () {
 });
 
 it('dry run reports what it would do and writes nothing', function () {
-    $project = Project::factory()->create();
+    $project = ClientCase::factory()->create();
 
     $linkResult = app(ImportLegacyGallery::class)([
         'project_public_id' => $project->public_id,
