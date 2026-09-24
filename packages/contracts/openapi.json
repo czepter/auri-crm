@@ -294,7 +294,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -351,7 +351,10 @@
                                             "type": "string"
                                         },
                                         "typeOther": {
-                                            "type": "string"
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         },
                                         "source": {
                                             "type": [
@@ -398,7 +401,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -424,7 +427,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -467,7 +470,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -509,7 +512,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -564,7 +567,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -622,7 +625,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -656,7 +659,7 @@
                                             "type": "string"
                                         },
                                         "portalVisible": {
-                                            "type": "string"
+                                            "type": "boolean"
                                         }
                                     },
                                     "required": [
@@ -690,7 +693,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     },
                     {
@@ -748,7 +751,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -1741,7 +1744,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -1783,7 +1786,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -1826,7 +1829,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -3844,7 +3847,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -3887,7 +3890,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -4095,7 +4098,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -4182,7 +4185,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -4281,7 +4284,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -4372,7 +4375,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -4429,7 +4432,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -4860,7 +4863,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -5200,7 +5203,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -5487,7 +5490,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -6714,7 +6717,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -7543,7 +7546,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     },
                     {
@@ -7597,7 +7600,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -7960,7 +7963,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
