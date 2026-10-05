@@ -1,8 +1,10 @@
 <?php
 
 use App\Crm\Enums\LeadStage;
+use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
+use App\Crm\Models\Shoot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -14,6 +16,15 @@ it('counts the inquiries and the projects the way their lists do', function () {
     $booked = ClientCase::factory()->wedding()->create();
     Lead::factory()->for($booked, 'case')->atStage(LeadStage::QuoteAccepted)->create();
     markBooked($booked);
+    Shoot::factory()->for($booked, 'case')->primary()->atStatus(ShootStatus::Booked)->create();
+
+    $shootless = ClientCase::factory()->wedding()->create();
+    markBooked($shootless);
+
+    $closed = ClientCase::factory()->wedding()->create();
+    markBooked($closed);
+    Shoot::factory()->for($closed, 'case')->primary()->atStatus(ShootStatus::Booked)->create();
+    $closed->forceFill(['closed_at' => now()])->save();
 
     $open = ClientCase::factory()->wedding()->create();
     Lead::factory()->for($open, 'case')->create();
@@ -21,5 +32,5 @@ it('counts the inquiries and the projects the way their lists do', function () {
     $nav = test()->actingAs(User::factory()->withMfa()->create(), 'staff')
         ->get('/anfragen')->assertOk()->viewData('page')['props']['nav'];
 
-    expect($nav)->toBe(['leads' => 1, 'unread' => 0, 'projects' => 1]);
+    expect($nav)->toBe(['leads' => 1, 'unread' => 0, 'projects' => 2]);
 });

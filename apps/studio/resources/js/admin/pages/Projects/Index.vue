@@ -41,9 +41,9 @@ const today = isoDate(new Date())
 
 // #364: the list groups by where the work stands. Delivered reads newest
 // first — the one delivered last week is the one somebody asks about.
-const PHASES: [Phase, 1 | -1][] = [['upcoming', 1], ['editing', 1], ['delivered', -1]]
+const PHASES: [Phase, 1 | -1][] = [['upcoming', 1], ['editing', 1], ['delivered', -1], ['closed', -1]]
 
-const inScope = computed(() => props.projects.filter((project) => scope.value === 'all' || project.phase !== 'delivered'))
+const inScope = computed(() => props.projects.filter((project) => scope.value === 'all' || project.phase !== 'delivered' && project.phase !== 'closed'))
 
 const pills = computed(() => props.stages
   .map((option) => ({ ...option, count: inScope.value.filter((project) => project.positionKey === option.key).length }))
