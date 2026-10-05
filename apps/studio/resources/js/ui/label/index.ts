@@ -24,8 +24,8 @@ export const labelVariants = cva("", {
   variants: {
     variant: {
       field: [
-        "font-sans text-[10px] font-semibold uppercase leading-none tracking-[0.09em] text-faint",
-        "[&_em]:ml-1.5 [&_em]:text-[10px] [&_em]:font-normal [&_em]:normal-case [&_em]:not-italic [&_em]:tracking-[0.02em]",
+        "font-sans text-small font-semibold uppercase leading-none tracking-[0.06em] text-faint",
+        "[&_em]:ml-1.5 [&_em]:text-small [&_em]:font-normal [&_em]:normal-case [&_em]:not-italic [&_em]:tracking-[0.02em]",
       ],
       inline: "cursor-pointer select-none font-sans text-[13px] font-normal leading-[1.4] text-foreground",
       /*

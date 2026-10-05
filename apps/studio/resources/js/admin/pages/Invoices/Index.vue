@@ -104,7 +104,7 @@ const shown = computed(() => {
                     </span>
                   </TableCell>
                   <TableCell align="right">
-                    <div v-if="invoice.status !== 'cancelled'" class="flex justify-end gap-1.5">
+                    <div v-if="invoice.status !== 'cancelled'" class="flex flex-wrap justify-end gap-1.5">
                       <Button
                         v-if="OPEN.includes(invoice.status)"
                         :as="Link"

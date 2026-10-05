@@ -256,7 +256,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                                 class="mt-[3px] flex items-baseline gap-1 text-[21px] leading-none font-semibold tracking-[-0.03em] tabular-nums"
                                 :class="figure.warn && 'text-action'"
                             >
-                                {{ figure.value }}<span v-if="figure.unit" class="text-[0.56em] font-medium text-ink-2">{{ figure.unit }}</span>
+                                {{ figure.value }}<span v-if="figure.unit" class="text-[0.62em] font-medium text-ink-2">{{ figure.unit }}</span>
                             </div>
                             <div v-if="figure.note" class="mt-[3px] text-small tabular-nums text-faint">{{ figure.note }}</div>
                         </div>

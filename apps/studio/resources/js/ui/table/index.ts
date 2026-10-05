@@ -16,7 +16,7 @@ export { default as TableRow } from "./TableRow.vue"
  * aligned here is a number or a date, and a column of them has to line up.
  */
 export const tableCellVariants = cva(
-  "px-8 py-2.5 align-baseline text-ui leading-[1.47] shadow-[inset_0_1px_0_#F0F0F2]",
+  "px-6 first:pl-8 last:pr-8 py-2.5 align-baseline text-ui leading-[1.47] shadow-[inset_0_1px_0_#F0F0F2]",
   {
     variants: {
       tone: {

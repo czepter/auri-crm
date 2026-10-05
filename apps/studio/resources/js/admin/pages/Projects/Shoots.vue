@@ -339,7 +339,7 @@ const TONE: Record<string, string> = {
             :default-open="shoot.date === null || shoot.date >= today"
           >
             <template #action>
-              <span v-if="shoot.isPrimary" class="text-[9px] leading-[1.5] font-semibold tracking-[0.08em] uppercase text-foreground">
+              <span v-if="shoot.isPrimary" class="text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase text-foreground">
                 {{ $t('project.primary') }}
               </span>
               <span :class="['rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase', TONE[chipClass(shoot, header.position.value)]]">

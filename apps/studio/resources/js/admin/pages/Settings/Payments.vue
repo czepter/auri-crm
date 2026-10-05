@@ -90,7 +90,7 @@ function submit() {
                 </div>
 
                 <div class="mb-6">
-                  <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint" style="font-size: 12px">{{ $t('paymentSettings.stripeTestKeys') }}</div>
+                  <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('paymentSettings.stripeTestKeys') }}</div>
                   <div class="grid grid-cols-2 gap-4">
                     <div class="flex min-w-0 flex-col gap-1.5">
                       <Label for="ps-test-pk">{{ $t('paymentSettings.stripePublishableKey') }}</Label>
@@ -121,7 +121,7 @@ function submit() {
                 </div>
 
                 <div class="mb-6">
-                  <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint" style="font-size: 12px">{{ $t('paymentSettings.stripeLiveKeys') }}</div>
+                  <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('paymentSettings.stripeLiveKeys') }}</div>
                   <div class="grid grid-cols-2 gap-4">
                     <div class="flex min-w-0 flex-col gap-1.5">
                       <Label for="ps-live-pk">{{ $t('paymentSettings.stripePublishableKey') }}</Label>
