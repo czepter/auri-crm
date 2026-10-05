@@ -87,7 +87,7 @@ function optionsHint(type: string): string {
             <div v-if="field.type === 'select' || field.type === 'file' || field.type === 'group_photos'" class="col-span-full flex min-w-0 flex-col gap-1.5">
               <Label :for="`field-options-${index}`">{{ optionsLabel(field.type) }}</Label>
               <Textarea :id="`field-options-${index}`" v-model="field.optionsText" rows="3" />
-              <span class="text-[11.5px] leading-[1.45] text-faint">{{ optionsHint(field.type) }}</span>
+              <span class="text-small leading-[1.45] text-faint">{{ optionsHint(field.type) }}</span>
             </div>
 
             <Field v-if="field.type === 'group_photos'">
@@ -125,12 +125,12 @@ function optionsHint(type: string): string {
 
         <template v-else>
           <div class="min-w-0 flex-1">
-            <div class="text-[13px] leading-[1.4] font-medium">{{ field.label || $t('formTemplates.untitled') }}</div>
+            <div class="text-small leading-[1.4] font-medium">{{ field.label || $t('formTemplates.untitled') }}</div>
             <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
-              <span class="block rounded-[5px] bg-muted px-[7px] py-0.5 text-[10px] leading-[1.5] font-semibold tracking-[0.05em] uppercase text-muted-foreground">{{ typeLabel(field.type) }}</span>
-              <span v-if="field.required" class="block rounded-[5px] bg-muted px-[7px] py-0.5 text-[10px] leading-[1.5] font-semibold tracking-[0.05em] uppercase text-muted-foreground">{{ $t('formTemplates.requiredChip') }}</span>
-              <span v-if="(field.type === 'select' || field.type === 'file' || field.type === 'group_photos') && field.optionsText" class="text-[11.5px] leading-[1.5] text-faint">{{ field.optionsText.split('\n').filter(Boolean).join(', ') }}</span>
-              <span v-if="field.type === 'name_list'" class="text-[11.5px] leading-[1.5] text-faint">{{ $t('formTemplates.nameListHint') }}</span>
+              <span class="block rounded-[5px] bg-muted px-[7px] py-0.5 text-small leading-[1.5] font-semibold tracking-[0.05em] uppercase text-muted-foreground">{{ typeLabel(field.type) }}</span>
+              <span v-if="field.required" class="block rounded-[5px] bg-muted px-[7px] py-0.5 text-small leading-[1.5] font-semibold tracking-[0.05em] uppercase text-muted-foreground">{{ $t('formTemplates.requiredChip') }}</span>
+              <span v-if="(field.type === 'select' || field.type === 'file' || field.type === 'group_photos') && field.optionsText" class="text-small leading-[1.5] text-faint">{{ field.optionsText.split('\n').filter(Boolean).join(', ') }}</span>
+              <span v-if="field.type === 'name_list'" class="text-small leading-[1.5] text-faint">{{ $t('formTemplates.nameListHint') }}</span>
             </div>
           </div>
           <Button as="a" variant="outline" href="#" @click.prevent="editingIndex = index">{{ $t('formTemplates.edit') }}</Button>
@@ -144,7 +144,7 @@ function optionsHint(type: string): string {
         <Button
           v-for="type in fieldTypes"
           :key="type.value"
-          class="px-[11px] py-1.5 text-[11.5px] leading-[1.4]" as="a"
+          class="px-[11px] py-1.5 text-small leading-[1.4]" as="a"
           variant="outline"
           href="#"
           @click.prevent="addField(type.value)"

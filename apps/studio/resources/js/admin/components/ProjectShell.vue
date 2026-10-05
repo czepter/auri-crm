@@ -88,15 +88,15 @@ function destroy() {
         <Rail>
           <slot name="people">
             <RailSection v-if="people" :title="$t('lead.people')">
-              <div v-for="person in header.people" :key="person.id" class="flex items-center gap-2 py-[5px] text-[12.5px] leading-[1.47]">
+              <div v-for="person in header.people" :key="person.id" class="flex items-center gap-2 py-[5px] text-small leading-[1.47]">
                 <Link :href="`/kontakte/${person.id}`">{{ person.name }}</Link>
-                <span class="ml-auto text-[11.5px] leading-[1.47] text-[#3F6B4A]">{{ $t(`contacts.role.${person.role}`) }}</span>
+                <span class="ml-auto text-small leading-[1.47] text-[#3F6B4A]">{{ $t(`contacts.role.${person.role}`) }}</span>
               </div>
             </RailSection>
           </slot>
 
           <RailSection v-if="header.paymentPlan" :title="$t('dashboard.payments')">
-            <div v-for="instalment in header.paymentPlan.installments" :key="instalment.id" class="flex gap-2.5 py-[5px] text-[12.5px] leading-[1.47]">
+            <div v-for="instalment in header.paymentPlan.installments" :key="instalment.id" class="flex gap-2.5 py-[5px] text-small leading-[1.47]">
               <span class="w-[74px] flex-none text-ink-2">{{ day(instalment.dueOn) }}</span>
               <span>{{ formatEurosRounded(Number(instalment.amount)) }}</span>
             </div>
@@ -124,7 +124,7 @@ function destroy() {
     </template>
 
     <div class="min-w-0 flex-1 px-[26px] pt-5 pb-7 max-[640px]:px-5">
-      <div class="text-[11px] tracking-[0.05em] uppercase text-ink-2">
+      <div class="text-small tracking-[0.05em] uppercase text-ink-2">
         <Link v-if="header.isBooked" href="/projekte">{{ $t('projects.title') }}</Link>
         <Link v-else href="/anfragen">{{ $t('board.title') }}</Link>
       </div>
@@ -191,7 +191,7 @@ function destroy() {
 
         <StageTrack class="mt-4" :steps="header.track" />
 
-        <nav class="mt-[18px] flex gap-[18px] overflow-x-auto text-[13px] shadow-[inset_0_-1px_0_var(--rule)]">
+        <nav class="mt-[18px] flex gap-[18px] overflow-x-auto text-small shadow-[inset_0_-1px_0_var(--rule)]">
           <Link
             v-for="tab in header.tabs"
             :key="tab.key"
@@ -202,13 +202,13 @@ function destroy() {
               : 'text-ink-2 hover:text-foreground'"
             :aria-current="tab.key === active ? 'page' : undefined"
           >
-            {{ $t(tab.label) }}<span v-if="tab.count" class="ml-1 text-[11.5px]">{{ tab.count }}</span>
+            {{ $t(tab.label) }}<span v-if="tab.count" class="ml-1 text-small">{{ tab.count }}</span>
           </Link>
         </nav>
 
         <nav
           v-if="subTabs.length"
-          class="flex gap-[18px] py-2.5 text-[12.5px] shadow-[inset_0_-1px_0_var(--rule)]"
+          class="flex gap-[18px] py-2.5 text-small shadow-[inset_0_-1px_0_var(--rule)]"
         >
           <Link
             v-for="entry in subTabs"
@@ -218,14 +218,14 @@ function destroy() {
             :class="entry.key === child ? 'font-semibold text-foreground' : 'text-ink-2 hover:text-foreground'"
             :aria-current="entry.key === child ? 'page' : undefined"
           >
-            {{ $t(entry.label) }}<span v-if="entry.count" class="ml-1 text-[11.5px]">{{ entry.count }}</span>
+            {{ $t(entry.label) }}<span v-if="entry.count" class="ml-1 text-small">{{ entry.count }}</span>
           </Link>
         </nav>
       </div>
 
       <div
         v-if="header.outcomeLabel"
-        class="mt-2.5 flex items-center gap-3 rounded-[7px] bg-late-bg py-[7px] pr-[9px] pl-[11px] text-[12.5px] leading-[1.3] font-medium text-destructive"
+        class="mt-2.5 flex items-center gap-3 rounded-[7px] bg-late-bg py-[7px] pr-[9px] pl-[11px] text-small leading-[1.3] font-medium text-destructive"
       >
         {{ header.outcomeLabel }} — {{ header.lostReason }}
         <Button v-if="header.canClose" class="ml-auto" variant="outline" type="button" @click="reopen">
@@ -235,7 +235,7 @@ function destroy() {
 
       <div
         v-if="header.isCompleted"
-        class="mt-2.5 flex items-center gap-3 rounded-[7px] bg-sunk-2 py-[7px] pr-[9px] pl-[11px] text-[12.5px] leading-[1.3] font-medium"
+        class="mt-2.5 flex items-center gap-3 rounded-[7px] bg-sunk-2 py-[7px] pr-[9px] pl-[11px] text-small leading-[1.3] font-medium"
       >
         {{ $t('project.completed') }}
         <Button v-if="header.canComplete" class="ml-auto" variant="outline" type="button" @click="reopenProject">

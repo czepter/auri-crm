@@ -53,7 +53,7 @@ const inPortal = computed(() => props.packages.filter((pkg) => pkg.portalOffered
               <TableRow v-for="pkg in group.rows" :key="pkg.id">
                 <TableCell tone="name">
                   <Link :href="`/pakete/${pkg.id}`">{{ pkg.name }}</Link>
-                  <span v-if="!pkg.isActive" class="ml-2 text-[11.5px] font-normal text-ink-2">{{ $t('packages.paused') }}</span>
+                  <span v-if="!pkg.isActive" class="ml-2 text-small font-normal text-ink-2">{{ $t('packages.paused') }}</span>
                 </TableCell>
                 <TableCell tone="muted" align="right">{{ pkg.itemCount }}</TableCell>
                 <TableCell align="right">

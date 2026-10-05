@@ -35,7 +35,7 @@ function finish() {
   <div data-tokens class="flex min-h-screen items-center justify-center p-6">
     <div class="w-full max-w-[940px]">
       <div class="mb-3.5 flex items-center justify-between">
-        <span class="text-[17px] leading-none font-bold tracking-[-0.035em] text-foreground">{{ $page.props.brand }}</span>
+        <span class="text-title leading-none font-bold tracking-[-0.035em] text-foreground">{{ $page.props.brand }}</span>
         <Button variant="ghost" type="button" @click="finish">{{ $t('onboarding.skip') }}</Button>
       </div>
 
@@ -45,7 +45,7 @@ function finish() {
             <h1 class="text-[32px] leading-[var(--display-leading)] font-bold tracking-[var(--display-tracking)] text-foreground">
               {{ $t('onboarding.title') }}
             </h1>
-            <p class="mt-3 text-[13px] leading-[1.5] text-muted-foreground">{{ $t('onboarding.subtitle') }}</p>
+            <p class="mt-3 text-small leading-[1.5] text-muted-foreground">{{ $t('onboarding.subtitle') }}</p>
           </div>
 
           <!-- Was der Kunde zuerst sieht, während es eingetragen wird — dieselben
@@ -55,13 +55,13 @@ function finish() {
               <img v-if="settings.logoUrl" :src="settings.logoUrl" alt="" class="size-[24px] rounded-[6px] object-contain" />
               <span
                 v-else
-                class="flex size-[24px] items-center justify-center rounded-[6px] text-[11px] font-bold text-paper"
+                class="flex size-[24px] items-center justify-center rounded-[6px] text-small font-bold text-paper"
                 :style="{ background: preview.accent }"
               >{{ preview.name.slice(0, 1) }}</span>
-              <span class="text-[13.5px] leading-none font-semibold tracking-[-0.02em] text-foreground">{{ preview.name }}</span>
+              <span class="text-ui leading-none font-semibold tracking-[-0.02em] text-foreground">{{ preview.name }}</span>
             </div>
             <div class="px-3.5 py-3">
-              <span class="inline-block rounded-[var(--r-pill)] bg-foreground px-4 py-2 text-[12px] leading-none font-semibold text-paper">{{ $t('portal.quoteAccept') }}</span>
+              <span class="inline-block rounded-[var(--r-pill)] bg-foreground px-4 py-2 text-small leading-none font-semibold text-paper">{{ $t('portal.quoteAccept') }}</span>
             </div>
           </div>
         </div>

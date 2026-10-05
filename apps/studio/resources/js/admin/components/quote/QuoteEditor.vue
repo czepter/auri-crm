@@ -150,9 +150,9 @@ const textSummary = computed(() => new DOMParser().parseFromString(draft.value.i
         />
 
         <div class="mt-6">
-          <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('quotes.showcase') }}</div>
+          <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('quotes.showcase') }}</div>
           <ShowcaseImages :base="`/angebote/${quoteId}/schaufenster`" :count="quote.showcaseCount" />
-          <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('quotes.showcaseHint') }}</span>
+          <span class="text-small leading-[1.45] font-normal text-faint">{{ $t('quotes.showcaseHint') }}</span>
         </div>
       </QuoteCard>
 

@@ -138,7 +138,7 @@ function run(key: ActionKey) {
           <form :id="`as-package-${quote.id}`" class="flex flex-col gap-1.5" @submit.prevent="saveAsPackage">
             <Label :for="`package-name-${quote.id}`">{{ $t('quotes.packageName') }}</Label>
             <Input :id="`package-name-${quote.id}`" v-model="packageForm.name" type="text" required />
-            <p v-if="packageForm.errors.name" class="text-[12px] text-destructive">{{ packageForm.errors.name }}</p>
+            <p v-if="packageForm.errors.name" class="text-small text-destructive">{{ packageForm.errors.name }}</p>
           </form>
         </DialogBody>
 

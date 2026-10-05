@@ -217,13 +217,13 @@ const vat = computed(() => vatRows.value.reduce((sum, line) => sum + line.vat, 0
         />
         <div class="flex min-w-0 flex-1 items-center gap-3 py-4 pr-1 pl-5">
           <div class="min-w-0 flex-1">
-            <div class="truncate text-[14px] font-semibold tracking-[-0.02em]">{{ draft.timeTitle || $t('quotes.hoursCount', hours) }}</div>
-            <div class="mt-0.5 truncate text-[12px] text-ink-2">
+            <div class="truncate text-ui font-semibold tracking-[-0.02em]">{{ draft.timeTitle || $t('quotes.hoursCount', hours) }}</div>
+            <div class="mt-0.5 truncate text-small text-ink-2">
               {{ [draft.timeDescription, $t('quotes.hoursCount', hours), includedImages !== null ? $t('quotes.approxImages', { count: includedImages }) : null].filter(Boolean).join(' · ') }}
             </div>
           </div>
-          <span class="flex items-center gap-2 text-[12.5px] text-ink-2">
-            <span class="rounded-[10px] bg-sunk-2 px-2 py-0.5 text-[11px] leading-none font-semibold">{{ $t('quotes.automatic') }}</span>
+          <span class="flex items-center gap-2 text-small text-ink-2">
+            <span class="rounded-[10px] bg-sunk-2 px-2 py-0.5 text-small leading-none font-semibold">{{ $t('quotes.automatic') }}</span>
             <span class="tabular-nums">{{ formatEuros(timeTotal) }}</span>
           </span>
         </div>
@@ -255,52 +255,52 @@ const vat = computed(() => vatRows.value.reduce((sum, line) => sum + line.vat, 0
     </div>
 
     <div class="ml-auto flex w-[220px] flex-col gap-1.5 pt-2">
-      <div class="flex justify-between text-[12.5px] text-ink-2">
+      <div class="flex justify-between text-small text-ink-2">
         <span>{{ $t('quotes.subtotal') }}</span>
         <span class="tabular-nums">{{ formatEuros(quoteSubtotal) }}</span>
       </div>
-      <div class="flex items-center justify-between gap-2 text-[12.5px] text-ink-2">
+      <div class="flex items-center justify-between gap-2 text-small text-ink-2">
         <span>{{ $t('quotes.discount') }}</span>
         <DiscountInput v-model="draft.discount" class="w-32" @change="emit('change')" />
       </div>
       <div v-if="draft.discount || draft.rows.some((row) => row.discount)" class="flex items-center justify-between gap-2">
-        <Label for="discount-hidden" variant="inline" class="text-[12.5px] text-ink-2">{{ $t('quotes.discountHidden') }}</Label>
+        <Label for="discount-hidden" variant="inline" class="text-small text-ink-2">{{ $t('quotes.discountHidden') }}</Label>
         <Switch
           id="discount-hidden"
           :model-value="draft.discountHidden"
           @update:model-value="((draft.discountHidden = $event), emit('change'))"
         />
       </div>
-      <div class="flex justify-between border-t border-rule pt-1.5 text-[15px] font-semibold">
+      <div class="flex justify-between border-t border-rule pt-1.5 text-body font-semibold">
         <span>{{ $t('quotes.total') }}</span>
         <span class="tabular-nums">{{ formatEuros(total) }}</span>
       </div>
 
       <template v-if="vatSettings.mode === 'standard'">
-        <div v-for="line in vatRows" :key="line.rate" class="flex justify-between text-[12.5px] text-ink-2">
+        <div v-for="line in vatRows" :key="line.rate" class="flex justify-between text-small text-ink-2">
           <span>{{ $t('quotes.vat', { rate: basisPointsToPercent(line.rate) }) }}</span>
           <span class="tabular-nums">{{ formatEuros(line.vat) }}</span>
         </div>
-        <div class="flex justify-between border-t border-rule pt-1.5 text-[15px] font-semibold">
+        <div class="flex justify-between border-t border-rule pt-1.5 text-body font-semibold">
           <span>{{ $t('quotes.total') }}</span>
           <span class="tabular-nums">{{ formatEuros(total + vat) }}</span>
         </div>
       </template>
-      <p v-else-if="vatSettings.note" class="text-[11.5px] leading-[1.45] text-ink-2">{{ vatSettings.note }}</p>
+      <p v-else-if="vatSettings.note" class="text-small leading-[1.45] text-ink-2">{{ vatSettings.note }}</p>
     </div>
 
     <div v-if="mode === 'choice'" class="grid grid-cols-3 gap-3 pt-2">
       <div class="rounded-[16px] bg-sunk p-4">
-        <div class="text-[11px] leading-none font-medium text-ink-2">{{ $t('quotes.spanMin') }}</div>
-        <div class="mt-2 text-[18px] leading-none font-semibold tracking-[-0.02em] tabular-nums">{{ formatEuros(tiles.min) }}</div>
+        <div class="text-small leading-none font-medium text-ink-2">{{ $t('quotes.spanMin') }}</div>
+        <div class="mt-2 text-title leading-none font-semibold tracking-[-0.02em] tabular-nums">{{ formatEuros(tiles.min) }}</div>
       </div>
       <div class="rounded-[16px] bg-[var(--accent-bg)] p-4 text-[var(--accent)]">
-        <div class="text-[11px] leading-none font-medium">{{ $t('quotes.spanPreselected') }}</div>
-        <div class="mt-2 text-[18px] leading-none font-semibold tracking-[-0.02em] tabular-nums">{{ formatEuros(tiles.preselected) }}</div>
+        <div class="text-small leading-none font-medium">{{ $t('quotes.spanPreselected') }}</div>
+        <div class="mt-2 text-title leading-none font-semibold tracking-[-0.02em] tabular-nums">{{ formatEuros(tiles.preselected) }}</div>
       </div>
       <div class="rounded-[16px] bg-sunk p-4">
-        <div class="text-[11px] leading-none font-medium text-ink-2">{{ $t('quotes.spanMax') }}</div>
-        <div class="mt-2 text-[18px] leading-none font-semibold tracking-[-0.02em] tabular-nums">{{ formatEuros(tiles.max) }}</div>
+        <div class="text-small leading-none font-medium text-ink-2">{{ $t('quotes.spanMax') }}</div>
+        <div class="mt-2 text-title leading-none font-semibold tracking-[-0.02em] tabular-nums">{{ formatEuros(tiles.max) }}</div>
       </div>
     </div>
   </div>

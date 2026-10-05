@@ -62,28 +62,28 @@ const ROW = [
 <template>
   <div v-if="model" class="flex items-center gap-[11px] rounded-[6px] border border-line-hover px-3 py-[9px]">
     <span
-      class="flex size-[30px] flex-none items-center justify-center rounded-full bg-[#EDE7F6] text-[12px] leading-none font-semibold text-[#5B4B8A]"
+      class="flex size-[30px] flex-none items-center justify-center rounded-full bg-[#EDE7F6] text-small leading-none font-semibold text-[#5B4B8A]"
     >
       {{ initials }}
     </span>
     <div>
-      <div class="text-[13px] leading-[1.25] font-semibold">
+      <div class="text-small leading-[1.25] font-semibold">
         {{ model.name }}
         <span
           v-if="model.projectCount"
-          class="ml-2 inline rounded-[var(--r-sm)] bg-muted px-[7px] py-0.5 text-[10px] leading-[1.5] font-medium text-muted-foreground"
+          class="ml-2 inline rounded-[var(--r-sm)] bg-muted px-[7px] py-0.5 text-small leading-[1.5] font-medium text-muted-foreground"
         >
           {{ $t('leads.contactProjects', { count: model.projectCount + 1 }) }}
         </span>
       </div>
-      <div class="mt-px text-[11.5px] leading-[1.3] font-normal text-muted-foreground">{{ [model.email, model.phone].filter(Boolean).join(' · ') }}</div>
+      <div class="mt-px text-small leading-[1.3] font-normal text-muted-foreground">{{ [model.email, model.phone].filter(Boolean).join(' · ') }}</div>
     </div>
     <!-- leading-none again after the size: tailwind-merge treats a new
          text-[…] as clearing the variant's line-height, because Tailwind lets
          one class carry both. -->
     <Button
       variant="ghost"
-      class="ml-auto text-[11.5px] leading-none text-muted-foreground hover:text-foreground"
+      class="ml-auto text-small leading-none text-muted-foreground hover:text-foreground"
       type="button"
       @click="model = null"
     >
@@ -108,16 +108,16 @@ const ROW = [
           type="button"
           @click="choose(contact)"
         >
-          <span class="flex size-[26px] flex-none items-center justify-center rounded-full bg-[#E7F1F2] text-[11px] leading-none font-semibold text-[#1C6870]">{{ contact.name.slice(0, 1).toUpperCase() }}</span>
+          <span class="flex size-[26px] flex-none items-center justify-center rounded-full bg-[#E7F1F2] text-small leading-none font-semibold text-[#1C6870]">{{ contact.name.slice(0, 1).toUpperCase() }}</span>
           <span class="flex flex-col">
-            <span class="text-[12.5px] leading-[1.25] font-semibold">{{ contact.name }}</span>
-            <span class="mt-px text-[11.5px] leading-[1.3] font-normal text-muted-foreground">{{ contact.email }}</span>
+            <span class="text-small leading-[1.25] font-semibold">{{ contact.name }}</span>
+            <span class="mt-px text-small leading-[1.3] font-normal text-muted-foreground">{{ contact.email }}</span>
           </span>
         </Button>
 
         <Button v-if="creatable" variant="ghost" :class="[ROW, 'bg-muted']" type="button" @click="emit('createNew', term)">
-          <span class="flex size-[26px] flex-none items-center justify-center rounded-full bg-foreground text-[14px] leading-none font-semibold text-background">+</span>
-          <span class="text-[12.5px] leading-[1.25] font-semibold">{{ $t('leads.contactCreate', { term }) }}</span>
+          <span class="flex size-[26px] flex-none items-center justify-center rounded-full bg-foreground text-ui leading-none font-semibold text-background">+</span>
+          <span class="text-small leading-[1.25] font-semibold">{{ $t('leads.contactCreate', { term }) }}</span>
         </Button>
       </div>
     </div>

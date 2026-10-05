@@ -276,7 +276,7 @@ const TONE: Record<string, string> = {
                     <div class="flex min-w-0 flex-col gap-1.5">
                       <Label for="end_time">{{ $t('project.endTime') }}</Label>
                       <TimePicker id="end_time" v-model="form.end_time" />
-                      <p v-if="form.errors.end_time" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.end_time }}</p>
+                      <p v-if="form.errors.end_time" class="text-small leading-[1.45] text-destructive">{{ form.errors.end_time }}</p>
                     </div>
                   </div>
 
@@ -291,11 +291,11 @@ const TONE: Record<string, string> = {
                   </div>
 
                   <details class="col-span-2">
-                    <summary class="w-fit cursor-pointer text-[11.5px] text-ink-2 marker:text-ink-2">{{ $t('project.advanced') }}</summary>
+                    <summary class="w-fit cursor-pointer text-small text-ink-2 marker:text-ink-2">{{ $t('project.advanced') }}</summary>
                     <div class="mt-1.5 flex min-w-0 flex-col gap-1.5">
                       <Label for="entered_at">{{ $t('project.shootEnteredAt') }}</Label>
                       <DatePicker id="entered_at" v-model="form.entered_at" />
-                      <p v-if="form.errors.entered_at" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.entered_at }}</p>
+                      <p v-if="form.errors.entered_at" class="text-small leading-[1.45] text-destructive">{{ form.errors.entered_at }}</p>
                     </div>
                   </details>
 
@@ -319,7 +319,7 @@ const TONE: Record<string, string> = {
             v-for="tab in filters"
             :key="tab.key"
             type="button"
-            class="rounded-full px-2.5 py-1 text-[11.5px] leading-none text-ink-2"
+            class="rounded-full px-2.5 py-1 text-small leading-none text-ink-2"
             :class="filter === tab.key && 'bg-paper font-semibold text-foreground'"
             @click="filter = tab.key"
           >
@@ -342,7 +342,7 @@ const TONE: Record<string, string> = {
               <span v-if="shoot.isPrimary" class="text-[9px] leading-[1.5] font-semibold tracking-[0.08em] uppercase text-foreground">
                 {{ $t('project.primary') }}
               </span>
-              <span :class="['rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase', TONE[chipClass(shoot, header.position.value)]]">
+              <span :class="['rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase', TONE[chipClass(shoot, header.position.value)]]">
                 {{ shoot.statusLabel }}
               </span>
 
@@ -399,17 +399,17 @@ const TONE: Record<string, string> = {
             <template v-else>
               <div class="grid grid-cols-4 gap-[18px] max-[640px]:grid-cols-2">
                 <div v-for="metric in metrics(shoot)" :key="metric.label">
-                  <div class="text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t(metric.label) }}</div>
-                  <div class="mt-1.5 text-[13.5px] leading-[1.35]">{{ metric.value }}</div>
+                  <div class="text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t(metric.label) }}</div>
+                  <div class="mt-1.5 text-ui leading-[1.35]">{{ metric.value }}</div>
                 </div>
               </div>
 
               <div v-if="!soloStudio" class="mt-4 pt-3 shadow-[inset_0_1px_0_var(--rule)]">
-                <div class="text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('project.crew') }}</div>
+                <div class="text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('project.crew') }}</div>
 
                 <div v-for="member in shoot.crew" :key="member.id" class="mt-1.5 flex items-center gap-2.5">
                   <span class="flex size-[22px] flex-none items-center justify-center rounded-full bg-sunk-2 text-[9.5px] leading-none font-semibold text-ink-2">{{ member.initials }}</span>
-                  <span class="min-w-0 flex-1 text-[12.5px] leading-[1.35]">{{ member.name }}</span>
+                  <span class="min-w-0 flex-1 text-small leading-[1.35]">{{ member.name }}</span>
                   <Button v-if="header.canManageCrew" type="button" variant="ghost" @click="unassign(member)">
                     {{ $t('project.unassign') }}
                   </Button>
@@ -423,7 +423,7 @@ const TONE: Record<string, string> = {
                 <div
                   v-for="conflict in shoot.crewConflicts"
                   :key="conflict.personId ?? undefined"
-                  class="mt-2 text-[11.5px] leading-[1.35] font-medium text-due"
+                  class="mt-2 text-small leading-[1.35] font-medium text-due"
                 >
                   {{ $t('project.crewAbsence', { label: conflict.label }) }}
                 </div>
@@ -435,7 +435,7 @@ const TONE: Record<string, string> = {
               </div>
 
               <div v-if="shoot.date || shoot.timeline.length" class="mt-4 pt-3 shadow-[inset_0_1px_0_var(--rule)]">
-                <div class="text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('project.timeline') }}</div>
+                <div class="text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('project.timeline') }}</div>
 
                 <!-- Der Ablauf als Zeitstrahl: eine Linie verbindet die
                      Punkte, ein Fahrt/Übergang-Eintrag steht gedimmt und
@@ -469,7 +469,7 @@ const TONE: Record<string, string> = {
                       </div>
                     </form>
 
-                    <div v-else class="group flex items-center gap-3 text-[12.5px] leading-[1.35]" :class="entry.isTransit && 'text-ink-2 italic'">
+                    <div v-else class="group flex items-center gap-3 text-small leading-[1.35]" :class="entry.isTransit && 'text-ink-2 italic'">
                       <span class="w-[44px] flex-none tabular-nums">{{ entry.time }}</span>
                       <span class="min-w-0 flex-1">
                         {{ entry.title }}
@@ -477,8 +477,8 @@ const TONE: Record<string, string> = {
                         <span v-if="entry.note" class="ml-1.5 text-faint">{{ entry.note }}</span>
                       </span>
                       <span v-if="header.canManageShoots" class="hidden flex-none items-center gap-2.5 group-hover:flex">
-                        <button type="button" class="cursor-pointer text-[11.5px] text-action" @click="startEditTimelineEntry(entry)">{{ $t('common.edit') }}</button>
-                        <button type="button" class="cursor-pointer text-[11.5px] text-ink-2" @click="removeTimelineEntry(entry)">{{ $t('project.timelineRemove') }}</button>
+                        <button type="button" class="cursor-pointer text-small text-action" @click="startEditTimelineEntry(entry)">{{ $t('common.edit') }}</button>
+                        <button type="button" class="cursor-pointer text-small text-ink-2" @click="removeTimelineEntry(entry)">{{ $t('project.timelineRemove') }}</button>
                       </span>
                     </div>
                   </div>
@@ -511,7 +511,7 @@ const TONE: Record<string, string> = {
                     <Checkbox id="tl-transit" v-model="timelineForm.is_transit" />
                     <Label variant="inline" for="tl-transit">{{ $t('project.timelineTransit') }}</Label>
                   </div>
-                  <button v-else type="button" class="w-fit cursor-pointer text-left text-[11.5px] text-ink-2" @click="timelineDetails = true">
+                  <button v-else type="button" class="w-fit cursor-pointer text-left text-small text-ink-2" @click="timelineDetails = true">
                     {{ $t('project.timelineMore') }}
                   </button>
                 </form>
@@ -582,18 +582,18 @@ const TONE: Record<string, string> = {
                 <div
                   v-for="member in candidates"
                   :key="member.id"
-                  class="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-[12.5px] leading-[1.35]"
+                  class="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-small leading-[1.35]"
                   :class="(assignedIds.has(member.id) || member.status !== 'free') && 'opacity-55'"
                 >
                   <span class="min-w-0 flex-1">{{ member.name }}</span>
-                  <span v-if="assignedIds.has(member.id)" class="flex items-center gap-1.5 text-[11.5px] font-medium text-ok">
+                  <span v-if="assignedIds.has(member.id)" class="flex items-center gap-1.5 text-small font-medium text-ok">
                     <svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6" /></svg>
                     {{ $t('project.crewAssigned') }}
                   </span>
-                  <span v-else-if="member.status === 'absent'" class="text-[11.5px] text-due">
+                  <span v-else-if="member.status === 'absent'" class="text-small text-due">
                     {{ $t('project.crewAway') }} · {{ member.note }}
                   </span>
-                  <span v-else-if="member.status === 'busy'" class="text-[11.5px] text-ink-2">
+                  <span v-else-if="member.status === 'busy'" class="text-small text-ink-2">
                     {{ $t('project.crewBusy') }} · {{ member.note }}
                   </span>
                   <Button v-else type="button" variant="outline" @click="assignCandidate(member.id)">

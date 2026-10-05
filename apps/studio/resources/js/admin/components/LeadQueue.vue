@@ -55,7 +55,7 @@ function since(days: number) {
             <div class="flex items-center gap-2">
                 <span
                     id="queue-waiting"
-                    class="cursor-pointer text-[12.5px] leading-none font-semibold tracking-[-0.012em]"
+                    class="cursor-pointer text-small leading-none font-semibold tracking-[-0.012em]"
                     @click="waiting = !waiting"
                 >
                     {{ $t("lead.waiting") }}

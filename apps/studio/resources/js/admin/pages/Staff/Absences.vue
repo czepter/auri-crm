@@ -86,12 +86,12 @@ function add() {
                   <div class="flex min-w-0 flex-col gap-1.5">
                     <Label for="new-starts">{{ $t('absences.startsOn') }}</Label>
                     <DatePicker id="new-starts" v-model="newForm.starts_on" />
-                    <p v-if="newForm.errors.starts_on" class="text-[11.5px] leading-[1.45] text-destructive">{{ newForm.errors.starts_on }}</p>
+                    <p v-if="newForm.errors.starts_on" class="text-small leading-[1.45] text-destructive">{{ newForm.errors.starts_on }}</p>
                   </div>
                   <div class="flex min-w-0 flex-col gap-1.5">
                     <Label for="new-ends">{{ $t('absences.endsOn') }}</Label>
                     <DatePicker id="new-ends" v-model="newForm.ends_on" />
-                    <p v-if="newForm.errors.ends_on" class="text-[11.5px] leading-[1.45] text-destructive">{{ newForm.errors.ends_on }}</p>
+                    <p v-if="newForm.errors.ends_on" class="text-small leading-[1.45] text-destructive">{{ newForm.errors.ends_on }}</p>
                   </div>
                 </form>
               </DialogBody>
@@ -118,12 +118,12 @@ function add() {
             :key="absence.id"
             class="flex items-center gap-3 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
           >
-            <span v-if="!$page.props.soloStudio" class="w-44 flex-none text-[13.5px] leading-[1.35] font-semibold tracking-[-0.015em]">{{ absence.userName }}</span>
+            <span v-if="!$page.props.soloStudio" class="w-44 flex-none text-ui leading-[1.35] font-semibold tracking-[-0.015em]">{{ absence.userName }}</span>
 
             <!-- Whose absence it is decides whether the row is a reading or a
                  control: the dates are editable where the account may manage
                  them, and a sentence where it may not. -->
-            <span v-if="!absence.canManage" class="text-[12.5px] leading-[1.47] text-ink-2">
+            <span v-if="!absence.canManage" class="text-small leading-[1.47] text-ink-2">
               {{ absence.startsOn }} – {{ absence.endsOn }}
             </span>
 
@@ -156,7 +156,7 @@ function add() {
               <p
                 v-for="message in [rowForms[absence.id].errors.starts_on, rowForms[absence.id].errors.ends_on].filter(Boolean)"
                 :key="message"
-                class="text-[11.5px] leading-[1.45] text-destructive"
+                class="text-small leading-[1.45] text-destructive"
               >
                 {{ message }}
               </p>

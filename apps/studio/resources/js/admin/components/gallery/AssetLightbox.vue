@@ -16,7 +16,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 
 <template>
   <div class="fixed inset-0 z-50 flex flex-col bg-[rgba(15,15,15,0.92)]" @click.self="emit('close')">
-    <div class="flex items-center gap-4 px-6 py-4 text-[12.5px] text-paper">
+    <div class="flex items-center gap-4 px-6 py-4 text-small text-paper">
       {{ filename }}
       <button class="ml-auto cursor-pointer border-0 bg-transparent text-paper" type="button" @click="emit('close')">
         {{ $t('common.close') }}

@@ -19,7 +19,7 @@ const src = refDebounced(source, 400)
 
 <template>
   <PreviewFrame :label="$t('settings.previewMail')" wide>
-    <div class="overflow-hidden rounded-md bg-background text-[12px] leading-[1.5] text-foreground">
+    <div class="overflow-hidden rounded-md bg-background text-small leading-[1.5] text-foreground">
       <div class="space-y-1 border-b border-border px-4 py-3">
         <div class="flex gap-2">
           <span class="w-16 flex-none text-faint">{{ $t('settings.previewMailFrom') }}</span>

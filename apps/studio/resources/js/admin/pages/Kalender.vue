@@ -120,7 +120,7 @@ function shortDate(date: string | null) {
           <div
             v-for="weekday in WEEKDAYS"
             :key="weekday"
-            class="pb-2 pl-0.5 text-[10.5px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2"
+            class="pb-2 pl-0.5 text-small leading-none font-semibold tracking-[0.06em] uppercase text-ink-2"
           >
             {{ weekday }}
           </div>
@@ -131,7 +131,7 @@ function shortDate(date: string | null) {
             class="min-h-[104px] px-2 pt-2 pb-2.5 shadow-[inset_0_1px_0_var(--rule),inset_1px_0_0_var(--rule)] [&:nth-child(7n+1)]:shadow-[inset_0_1px_0_var(--rule)]"
           >
             <span
-              class="text-[12.5px] tabular-nums"
+              class="text-small tabular-nums"
               :class="day.today
                 ? 'inline-block min-w-5 rounded-full bg-foreground px-[5px] py-px text-center font-semibold text-paper'
                 : day.inMonth ? 'font-semibold' : 'font-normal text-ink-2'"
@@ -143,7 +143,7 @@ function shortDate(date: string | null) {
               :is="entry.projectId ? Link : 'span'"
               v-for="(entry, index) in entries(day)"
               :key="index"
-              class="mt-[5px] block text-[11.5px] no-underline"
+              class="mt-[5px] block text-small no-underline"
               :class="{ hold: 'text-action', away: 'text-ink-2' }[entry.kind ?? ''] ?? 'text-inherit'"
               :href="entry.projectId ? `/auftraege/${entry.projectId}` : undefined"
             >
@@ -157,11 +157,11 @@ function shortDate(date: string | null) {
                    suggest: a second .who rule reaches this span as well. -->
               <span
                 v-if="entry.who"
-                class="pr-[18px] text-[13.5px] leading-[1.35] font-semibold tracking-[-0.015em] text-ink-2"
+                class="pr-[18px] text-ui leading-[1.35] font-semibold tracking-[-0.015em] text-ink-2"
               > · {{ entry.who }}</span>
             </component>
 
-            <span v-if="overflow(day)" class="mt-[5px] block text-[11.5px] text-ink-2">
+            <span v-if="overflow(day)" class="mt-[5px] block text-small text-ink-2">
               {{ $t('calendar.more', { count: overflow(day) }) }}
             </span>
           </div>

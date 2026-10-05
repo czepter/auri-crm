@@ -23,14 +23,14 @@ function add(files: File[]) {
     <div v-for="index in count" :key="index" class="relative">
       <img class="size-14 rounded-[6px] object-cover" :src="`${base}/${index - 1}`" alt="" />
       <button
-        class="absolute -top-1.5 -right-1.5 flex size-5 cursor-pointer items-center justify-center rounded-full bg-sunk-2 text-[11px] leading-none"
+        class="absolute -top-1.5 -right-1.5 flex size-5 cursor-pointer items-center justify-center rounded-full bg-sunk-2 text-small leading-none"
         type="button"
         :aria-label="$t('common.remove')"
         @click="router.delete(`${base}/${index - 1}`, { preserveScroll: true })"
       >×</button>
     </div>
     <DropArea class="min-w-[220px] flex-1" accept="image/png,image/jpeg" multiple @files="add">
-      <span class="text-[13px] text-foreground">{{ $t('common.drop') }}</span>
+      <span class="text-small text-foreground">{{ $t('common.drop') }}</span>
     </DropArea>
   </div>
 </template>

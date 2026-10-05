@@ -13,12 +13,12 @@ defineProps<{ title: string; count?: number | string | null; bare?: boolean }>()
         :class="bare ? 'bg-transparent' : 'bg-sunk'"
     >
         <header class="mb-2 flex items-baseline gap-[9px]">
-            <h2 class="m-0 text-[15px] leading-[1.2] font-semibold tracking-[-0.02em]">
+            <h2 class="m-0 text-body leading-[1.2] font-semibold tracking-[-0.02em]">
                 {{ title }}
             </h2>
             <span
                 v-if="count !== undefined && count !== null"
-                class="text-[11.5px] tabular-nums text-ink-2"
+                class="text-small tabular-nums text-ink-2"
             >
                 {{ count }}
             </span>

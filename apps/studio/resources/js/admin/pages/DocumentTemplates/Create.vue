@@ -105,15 +105,15 @@ function submit() {
         </PageHead>
 
         <div class="px-8 pt-7 pb-8">
-          <p v-if="form.errors.blocks" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.blocks }}</p>
-          <p v-if="form.errors.body" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.body }}</p>
+          <p v-if="form.errors.blocks" class="text-small leading-[1.45] text-destructive">{{ form.errors.blocks }}</p>
+          <p v-if="form.errors.body" class="text-small leading-[1.45] text-destructive">{{ form.errors.body }}</p>
 
           <div class="mt-4 flex gap-6">
             <!-- Sechs feste Werte, einmal gewählt: nebeneinander sind sie
                  schneller getroffen als ein Menü geöffnet ist. -->
             <div class="flex min-w-0 flex-col gap-1.5">
               <ChoiceGroup v-model="form.type" :label="$t('documentTemplates.type')" :options="types" />
-              <p v-if="form.errors.type" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.type }}</p>
+              <p v-if="form.errors.type" class="text-small leading-[1.45] text-destructive">{{ form.errors.type }}</p>
             </div>
             <div v-if="chosen !== null" class="flex min-w-0 flex-col gap-1.5 max-w-[240px]">
               <Label for="shoot_kind">{{ $t('documentTemplates.shootKind') }}</Label>
@@ -125,7 +125,7 @@ function submit() {
             <div v-if="chosen !== null" class="flex min-w-0 flex-col gap-1.5 max-w-[240px]">
               <Label for="name">{{ $t('documentTemplates.name') }}</Label>
               <Input id="name" v-model="form.name" type="text" required />
-              <p v-if="form.errors.name" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.name }}</p>
+              <p v-if="form.errors.name" class="text-small leading-[1.45] text-destructive">{{ form.errors.name }}</p>
             </div>
           </div>
 
@@ -140,10 +140,10 @@ function submit() {
                 class="block rounded-[12px] bg-sunk px-4 py-3.5" href="#"
                 @click.prevent="choose(starter)"
               >
-                <span class="block text-[14px] leading-[1.3] font-semibold tracking-[-0.016em]">{{ starter.name }}</span>
-                <span class="mt-0.5 block text-[10.5px] leading-[1.47] tracking-[0.05em] uppercase text-ink-2">{{ types.find((t) => t.value === form.type)?.label }}</span>
-                <span class="mt-[7px] block text-[12px] leading-[1.45] text-ink-2">{{ starter.description }}</span>
-                <span class="mt-[9px] block pt-2 text-[11.5px] text-ink-2 shadow-[inset_0_1px_0_#ECECEE]">
+                <span class="block text-ui leading-[1.3] font-semibold tracking-[-0.016em]">{{ starter.name }}</span>
+                <span class="mt-0.5 block text-small leading-[1.47] tracking-[0.05em] uppercase text-ink-2">{{ types.find((t) => t.value === form.type)?.label }}</span>
+                <span class="mt-[7px] block text-small leading-[1.45] text-ink-2">{{ starter.description }}</span>
+                <span class="mt-[9px] block pt-2 text-small text-ink-2 shadow-[inset_0_1px_0_#ECECEE]">
                   {{ $t('documentTemplates.starterScope', {
                     blocks: scopeOf(starter).blocks,
                     fields: scopeOf(starter).fields,
@@ -152,8 +152,8 @@ function submit() {
               </a>
 
               <a class="block rounded-[12px] px-4 py-3.5 shadow-[inset_0_0_0_1px_var(--rule)]" href="#" @click.prevent="chooseBlank">
-                <span class="block text-[14px] leading-[1.3] font-semibold tracking-[-0.016em]">{{ $t('documentTemplates.starterBlank') }}</span>
-                <span class="mt-[7px] block text-[12px] leading-[1.45] text-ink-2">{{ $t('documentTemplates.starterBlankHint') }}</span>
+                <span class="block text-ui leading-[1.3] font-semibold tracking-[-0.016em]">{{ $t('documentTemplates.starterBlank') }}</span>
+                <span class="mt-[7px] block text-small leading-[1.45] text-ink-2">{{ $t('documentTemplates.starterBlankHint') }}</span>
               </a>
             </div>
           </section>
@@ -161,13 +161,13 @@ function submit() {
           <div v-else class="mt-6 grid min-h-0 grid-cols-[minmax(0,1fr)_7px_minmax(0,1fr)] gap-0 max-[1100px]:grid-cols-[minmax(0,1fr)]">
             <section class="flex min-w-0 flex-col">
               <div class="flex items-center gap-2.5 border-b border-border pb-2.5">
-                <span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('documentTemplates.body') }}</span>
-                <span class="ml-auto text-[11.5px] leading-[1.45] text-faint">{{ $t('documentTemplates.bodyHint') }}</span>
+                <span class="mb-[5px] text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('documentTemplates.body') }}</span>
+                <span class="ml-auto text-small leading-[1.45] text-faint">{{ $t('documentTemplates.bodyHint') }}</span>
               </div>
               <div class="mx-auto mt-6 w-full max-w-[520px] rounded-[2px] border border-border bg-white px-10 pb-10">
-                <div class="-mx-10 border-dashed border-line-hover bg-[#FCFBFA] px-3 py-[9px] text-[10px] leading-[1.4] font-medium tracking-[0.06em] uppercase text-faint mb-6 border-b">{{ $t('documentTemplates.letterhead') }}</div>
+                <div class="-mx-10 border-dashed border-line-hover bg-[#FCFBFA] px-3 py-[9px] text-small leading-[1.4] font-medium tracking-[0.06em] uppercase text-faint mb-6 border-b">{{ $t('documentTemplates.letterhead') }}</div>
                 <DocumentEditor v-model="doc" :palette="palette" :merge-fields="mergeFields" />
-                <div class="-mx-10 border-dashed border-line-hover bg-[#FCFBFA] px-3 py-[9px] text-[10px] leading-[1.4] font-medium tracking-[0.06em] uppercase text-faint -mb-10 mt-6 border-t">{{ $t('documentTemplates.footer') }}</div>
+                <div class="-mx-10 border-dashed border-line-hover bg-[#FCFBFA] px-3 py-[9px] text-small leading-[1.4] font-medium tracking-[0.06em] uppercase text-faint -mb-10 mt-6 border-t">{{ $t('documentTemplates.footer') }}</div>
               </div>
 
               <!-- C-16 (#252): what this document type may not have stands dimmed
@@ -175,7 +175,7 @@ function submit() {
                    menu, so the list sits under the sheet instead of inside it —
                    replacing that inserter is a rewrite of the editor shell, not
                    this issue's subject. -->
-              <div class="flex flex-wrap gap-x-3.5 gap-y-1.5 px-0.5 pt-2.5 text-[11.5px] text-[#6E6E73]">
+              <div class="flex flex-wrap gap-x-3.5 gap-y-1.5 px-0.5 pt-2.5 text-small text-[#6E6E73]">
                 <span
                   v-for="entry in palette.filter((block) => !block.inline)"
                   :key="entry.type"

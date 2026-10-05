@@ -187,8 +187,8 @@ const studioOffers = computed(() => ({
             <path d="M6 6l12 12M18 6L6 18" />
           </svg>
         </button>
-        <span class="text-[16px] leading-[1.3] font-semibold tracking-[-0.015em]">{{ $t('gallerySettings.roomTitle') }}</span>
-        <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due">
+        <span class="text-body leading-[1.3] font-semibold tracking-[-0.015em]">{{ $t('gallerySettings.roomTitle') }}</span>
+        <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due">
           {{ $t('settings.unsaved') }}
         </span>
         <Button class="ml-auto" type="button" :disabled="form.processing" @click="form.isDirty ? save() : emit('close')">
@@ -198,13 +198,13 @@ const studioOffers = computed(() => ({
 
       <div class="flex gap-10 pt-6 max-[720px]:flex-col max-[720px]:gap-6">
         <nav class="w-[168px] flex-none">
-          <h3 class="m-0 mb-[7px] text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+          <h3 class="m-0 mb-[7px] text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
             {{ $t('galleries.title') }}
           </h3>
           <button
             v-for="one in SECTIONS"
             :key="one"
-            class="block w-full cursor-pointer rounded-lg border-0 bg-transparent px-2.5 py-[7px] text-left text-[13px] leading-[1.3]"
+            class="block w-full cursor-pointer rounded-lg border-0 bg-transparent px-2.5 py-[7px] text-left text-small leading-[1.3]"
             :class="open === one ? 'bg-sunk-2 font-semibold' : 'text-ink-2'"
             type="button"
             @click="open = one"
@@ -215,7 +215,7 @@ const studioOffers = computed(() => ({
 
         <section v-if="open === 'standardwerte'" class="flex min-w-0 flex-1 gap-8 max-[1120px]:flex-col">
           <div class="w-[300px] flex-none max-[1120px]:w-full">
-            <h2 class="m-0 mb-6 text-[19px] leading-[1.2] font-semibold tracking-[-0.02em]">
+            <h2 class="m-0 mb-6 text-title leading-[1.2] font-semibold tracking-[-0.02em]">
               {{ $t('gallerySettings.nav_standardwerte') }}
             </h2>
 
@@ -236,7 +236,7 @@ const studioOffers = computed(() => ({
           </div>
 
           <PreviewOverlay :min="1121" :label="$t('common.preview')" wrapper-class="min-w-0 flex-1">
-            <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+            <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">
               {{ $t('galleryRecord.preview') }}
             </div>
             <GalleryPreview
@@ -250,7 +250,7 @@ const studioOffers = computed(() => ({
 
         <section v-else-if="open === 'gestaltung'" class="flex min-w-0 flex-1 gap-8 max-[1120px]:flex-col">
           <div class="w-[260px] flex-none max-[1120px]:w-full">
-            <h2 class="m-0 mb-6 text-[19px] leading-[1.2] font-semibold tracking-[-0.02em]">
+            <h2 class="m-0 mb-6 text-title leading-[1.2] font-semibold tracking-[-0.02em]">
               {{ $t('gallerySettings.nav_gestaltung') }}
             </h2>
 
@@ -265,7 +265,7 @@ const studioOffers = computed(() => ({
           </div>
 
           <PreviewOverlay :min="1121" :label="$t('common.preview')" wrapper-class="min-w-0 flex-1">
-            <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+            <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">
               {{ $t('galleryRecord.preview') }}
             </div>
             <GalleryPreview
@@ -278,7 +278,7 @@ const studioOffers = computed(() => ({
         </section>
 
         <section v-else class="min-w-0 flex-1">
-          <h2 class="m-0 mb-6 text-[19px] leading-[1.2] font-semibold tracking-[-0.02em]">
+          <h2 class="m-0 mb-6 text-title leading-[1.2] font-semibold tracking-[-0.02em]">
             {{ $t('gallerySettings.nav_vorlagen') }}
           </h2>
 
@@ -287,13 +287,13 @@ const studioOffers = computed(() => ({
               <button
                 v-for="row in presets"
                 :key="row.id"
-                class="flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent px-2.5 py-[7px] text-left text-[13px] leading-[1.3]"
+                class="flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent px-2.5 py-[7px] text-left text-small leading-[1.3]"
                 :class="chosen === row.id ? 'bg-sunk-2 font-semibold' : 'text-ink-2'"
                 type="button"
                 @click="chosen = row.id"
               >
                 <span class="min-w-0 flex-1 truncate">{{ row.name }}</span>
-                <span v-if="row.isDefault" class="flex-none rounded-[var(--r-sm)] bg-accent px-1.5 py-0.5 text-[10px] leading-[1.4] font-semibold tracking-[0.04em] uppercase text-action">
+                <span v-if="row.isDefault" class="flex-none rounded-[var(--r-sm)] bg-accent px-1.5 py-0.5 text-small leading-[1.4] font-semibold tracking-[0.04em] uppercase text-action">
                   {{ $t('gallerySettings.defaultMark') }}
                 </span>
               </button>
@@ -316,7 +316,7 @@ const studioOffers = computed(() => ({
               </div>
 
               <div class="flex items-center gap-4 border-b border-border py-2.5">
-                <span class="flex-1 text-[13px] leading-[1.35]">{{ $t('galleryPresets.expiryField') }}</span>
+                <span class="flex-1 text-small leading-[1.35]">{{ $t('galleryPresets.expiryField') }}</span>
                 <ChoiceGroup
                   v-model="presetForm.expiry_mode"
                   :options="MODES.map((option) => ({ value: option, label: $t(`galleryPresets.mode_${option}`) }))"
@@ -333,7 +333,7 @@ const studioOffers = computed(() => ({
               </div>
 
               <div v-for="gate in PRESET_GATES" :key="gate.field" class="flex items-center gap-4 border-b border-border py-2.5">
-                <span class="min-w-0 flex-1 text-[13px] leading-[1.35]">{{ $t(gate.label) }}</span>
+                <span class="min-w-0 flex-1 text-small leading-[1.35]">{{ $t(gate.label) }}</span>
                 <ChoiceGroup
                   v-model="presetForm[gate.field]"
                   :options="TRISTATE.map((option) => ({ value: option.value, label: $t(`galleryPresets.${option.key}`) }))"
@@ -364,10 +364,10 @@ const studioOffers = computed(() => ({
 
             <PreviewOverlay v-if="preset" :min="1121" :label="$t('common.preview')" wrapper-class="min-w-0 flex-1">
               <div class="mb-2.5 flex items-baseline gap-2">
-                <span class="text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+                <span class="text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">
                   {{ $t('galleryRecord.preview') }}
                 </span>
-                <span v-if="presetForm.design === null" class="text-[11.5px] leading-none text-faint">
+                <span v-if="presetForm.design === null" class="text-small leading-none text-faint">
                   {{ $t('gallerySettings.previewInherited') }}
                 </span>
               </div>

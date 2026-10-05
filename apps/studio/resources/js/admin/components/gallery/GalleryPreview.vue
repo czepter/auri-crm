@@ -104,7 +104,7 @@ const filters = computed(() => [
           <div class="text-[8px] font-bold tracking-[0.18em] uppercase" :style="{ color: scheme.muted }">
             {{ $page.props.brand }}
           </div>
-          <div class="mt-2.5 font-[family-name:var(--font-display)] text-[24px] leading-[1.1] font-semibold tracking-[var(--display-tracking)]">
+          <div class="mt-2.5 font-[family-name:var(--font-display)] text-heading leading-[1.1] font-semibold tracking-[var(--display-tracking)]">
             {{ title }}
           </div>
           <div class="mt-3 h-px w-[34px]" :style="{ background: scheme.line }" />

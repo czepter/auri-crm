@@ -115,7 +115,7 @@ function submit() {
           <div class="col-span-full flex min-w-0 flex-col gap-1.5">
             <Label for="create-title">{{ $t('taskTemplates.titleField') }}</Label>
             <Input id="create-title" v-model="task.title" type="text" maxlength="255" />
-            <p v-if="task.errors.title" class="text-[11.5px] leading-[1.45] text-destructive">{{ task.errors.title }}</p>
+            <p v-if="task.errors.title" class="text-small leading-[1.45] text-destructive">{{ task.errors.title }}</p>
           </div>
 
           <div class="flex min-w-0 flex-col gap-1.5">
@@ -142,7 +142,7 @@ function submit() {
               <InputGroupInput id="create-offset" v-model.number="task.day_offset" class="tabular-nums" type="number" />
               <InputGroupAddon align="inline-end">{{ $t('common.unitDays') }}</InputGroupAddon>
             </InputGroup>
-            <span class="text-[11.5px] leading-[1.45] text-faint">{{ $t('taskTemplates.dayOffsetHint') }}</span>
+            <span class="text-small leading-[1.45] text-faint">{{ $t('taskTemplates.dayOffsetHint') }}</span>
           </div>
         </form>
 
@@ -155,7 +155,7 @@ function submit() {
           <div class="col-span-full flex min-w-0 flex-col gap-1.5">
             <Label for="create-preset-name">{{ $t('galleryPresets.nameField') }}</Label>
             <Input id="create-preset-name" v-model="preset.name" type="text" />
-            <p v-if="preset.errors.name" class="text-[11.5px] leading-[1.45] text-destructive">{{ preset.errors.name }}</p>
+            <p v-if="preset.errors.name" class="text-small leading-[1.45] text-destructive">{{ preset.errors.name }}</p>
           </div>
 
           <div class="flex min-w-0 flex-col gap-1.5">

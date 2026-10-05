@@ -31,7 +31,7 @@ const at = computed(() => props.steps.findIndex((step) => step.state === "curren
             >
                 <span class="h-1.5 rounded-full" :class="index === at ? 'bg-action' : 'bg-rule'" />
                 <span
-                    class="truncate pr-1.5 text-[11.5px] leading-[1.3]"
+                    class="truncate pr-1.5 text-small leading-[1.3]"
                     :class="index === at ? 'font-semibold text-foreground' : 'text-faint'"
                 >{{ step.label }}</span>
             </li>

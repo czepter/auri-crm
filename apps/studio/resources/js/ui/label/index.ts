@@ -33,7 +33,7 @@ export const labelVariants = cva("", {
        * where it is lighter and wider: the field below it is denser, and a
        * semibold caption at 10px would outweigh the value it names.
        */
-      micro: "pl-0.5 font-sans text-[10.5px] font-normal uppercase leading-none tracking-[0.05em] text-ink-2",
+      micro: "pl-0.5 font-sans text-small font-normal uppercase leading-none tracking-[0.05em] text-ink-2",
     },
   },
   defaultVariants: {

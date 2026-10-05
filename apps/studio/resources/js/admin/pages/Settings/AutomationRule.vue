@@ -83,7 +83,7 @@ function chipClass(status: string): string {
         <PageHead :kicker="$t('automations.title')" kicker-href="/einstellungen/automationen" :title="rule.name">
           <span
             v-if="form.isDirty"
-            class="ml-auto flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due"
+            class="ml-auto flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due"
           >{{ $t('settings.unsaved') }}</span>
           <Button :class="form.isDirty ? '' : 'ml-auto'" type="button" :disabled="form.processing" @click="save">
             {{ $t('common.save') }}
@@ -92,7 +92,7 @@ function chipClass(status: string): string {
 
         <div class="flex items-start gap-10 px-8 pt-7 pb-8 max-[900px]:flex-col">
           <form class="max-w-[620px] min-w-0 flex-1" @submit.prevent="save">
-            <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+            <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">
               {{ $t('automations.triggerSection') }}
             </div>
 
@@ -164,7 +164,7 @@ function chipClass(status: string): string {
               </Field>
             </div>
 
-            <div class="mt-8 mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+            <div class="mt-8 mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">
               {{ $t('automations.condition') }}
             </div>
 
@@ -196,7 +196,7 @@ function chipClass(status: string): string {
               </Select>
             </div>
 
-            <div class="mt-8 mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+            <div class="mt-8 mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">
               {{ $t('automations.messageSection') }}
             </div>
 
@@ -211,7 +211,7 @@ function chipClass(status: string): string {
                   <button
                     v-for="field in mergeFields"
                     :key="field.path"
-                    class="cursor-pointer rounded-[var(--r-sm)] bg-sunk-2 px-2 py-1 text-[11px] leading-none"
+                    class="cursor-pointer rounded-[var(--r-sm)] bg-sunk-2 px-2 py-1 text-small leading-none"
                     type="button"
                     @click="insert(field.path)"
                   >
@@ -223,7 +223,7 @@ function chipClass(status: string): string {
 
             <div class="mt-6 flex items-center gap-3">
               <Switch id="sw-rule-active" v-model="form.is_active" />
-              <label class="text-[13px]" for="sw-rule-active">{{ $t('automations.active') }}</label>
+              <label class="text-small" for="sw-rule-active">{{ $t('automations.active') }}</label>
               <Button class="ml-auto" variant="outline" type="button" @click="remove">
                 {{ $t('common.remove') }}
               </Button>
@@ -231,7 +231,7 @@ function chipClass(status: string): string {
           </form>
 
           <aside class="w-[320px] flex-none max-[900px]:w-full">
-            <div class="text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+            <div class="text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">
               {{ $t('automations.preview') }}
             </div>
 
@@ -239,15 +239,15 @@ function chipClass(status: string): string {
                  Posteingang geschrieben und dort gelesen. -->
             <div class="mt-2 rounded-[10px] bg-sunk-2 p-3">
               <div class="rounded-[7px] bg-paper p-5">
-                <div class="text-[13px] font-semibold">{{ brand }}</div>
-                <div class="mt-3 text-[12.5px] font-medium">{{ render(form.notification_subject) }}</div>
-                <p class="mt-1.5 text-[12.5px] leading-[1.55] whitespace-pre-line">
+                <div class="text-small font-semibold">{{ brand }}</div>
+                <div class="mt-3 text-small font-medium">{{ render(form.notification_subject) }}</div>
+                <p class="mt-1.5 text-small leading-[1.55] whitespace-pre-line">
                   {{ render(form.notification_body) }}
                 </p>
               </div>
             </div>
 
-            <div class="mt-7 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+            <div class="mt-7 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">
               {{ $t('automations.runs') }}
             </div>
 
@@ -255,7 +255,7 @@ function chipClass(status: string): string {
               <div
                 v-for="run in runs"
                 :key="run.id"
-                class="flex items-center gap-3 border-b border-rule px-3 py-2.5 text-[11.5px] last:border-b-0"
+                class="flex items-center gap-3 border-b border-rule px-3 py-2.5 text-small last:border-b-0"
               >
                 <span class="w-24 flex-none text-ink-2 tabular-nums">{{ run.firedAt }}</span>
                 <span class="min-w-0 flex-1 truncate">{{ run.anchorLabel }}</span>

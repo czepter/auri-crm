@@ -39,7 +39,7 @@ useRule(el, () => props.rule, () => modelValue.value)
     v-model="modelValue"
     data-slot="input-group-input"
     :class="cn(
-      'w-full min-w-0 flex-1 appearance-none border-0 bg-transparent px-1.5 py-[9px] font-sans text-[13px] font-normal leading-[1.35] text-foreground',
+      'w-full min-w-0 flex-1 appearance-none border-0 bg-transparent px-1.5 py-[9px] font-sans text-ui font-normal leading-[1.35] text-foreground',
       'placeholder:text-faint focus:outline-none',
       'disabled:cursor-not-allowed',
       'first:pl-[11px] last:pr-[11px]',

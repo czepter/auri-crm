@@ -14,7 +14,7 @@ const delegatedProps = reactiveOmit(props, "class")
   <DialogDescription
     data-slot="dialog-description"
     v-bind="delegatedProps"
-    :class="cn('m-0 text-[12.5px] leading-[1.45] text-muted-foreground', props.class)"
+    :class="cn('m-0 text-small leading-[1.45] text-muted-foreground', props.class)"
   >
     <slot />
   </DialogDescription>

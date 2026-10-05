@@ -83,7 +83,7 @@ function choose(kind: string, id: string) {
           <span class="min-w-0 flex-1 truncate">
             {{ option.kind === 'new' ? $t('quotes.insertNew', { term: option.label }) : option.label }}
           </span>
-          <span v-if="option.meta" class="text-[12px] tabular-nums text-ink-2">{{ option.meta }}</span>
+          <span v-if="option.meta" class="text-small tabular-nums text-ink-2">{{ option.meta }}</span>
         </ComboboxItem>
       </ComboboxGroup>
     </ComboboxContent>

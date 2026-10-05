@@ -30,7 +30,7 @@ function run() {
 
 <template>
   <section>
-    <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('taskTemplates.previewLabel') }}</div>
+    <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('taskTemplates.previewLabel') }}</div>
 
     <form class="flex flex-wrap items-end gap-4" @submit.prevent="run">
       <div class="flex min-w-0 flex-col gap-1.5">
@@ -52,10 +52,10 @@ function run() {
     </form>
 
     <div v-if="preview" class="mt-4 rounded-md border border-border p-2.5">
-      <p v-if="preview.length === 0" class="m-0 text-[11.5px] leading-[1.45] text-faint">{{ $t('taskTemplates.previewEmpty') }}</p>
-      <div v-for="row in preview" :key="row.title" class="flex items-center gap-2.5 text-[12.5px] leading-[1.3]">
+      <p v-if="preview.length === 0" class="m-0 text-small leading-[1.45] text-faint">{{ $t('taskTemplates.previewEmpty') }}</p>
+      <div v-for="row in preview" :key="row.title" class="flex items-center gap-2.5 text-small leading-[1.3]">
         <span class="min-w-0 flex-1 text-foreground">{{ row.title }}</span>
-        <span class="flex-none text-[12px] tabular-nums text-faint">{{ row.dueOn ?? '—' }}</span>
+        <span class="flex-none text-small tabular-nums text-faint">{{ row.dueOn ?? '—' }}</span>
       </div>
     </div>
   </section>

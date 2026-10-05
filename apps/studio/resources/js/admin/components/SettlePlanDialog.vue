@@ -77,7 +77,7 @@ function submit() {
 
       <DialogBody>
         <form id="settle-plan-form" class="grid gap-3" @submit.prevent="submit">
-          <div v-for="row in rows" :key="row.id" class="flex items-center gap-3 text-[13px]">
+          <div v-for="row in rows" :key="row.id" class="flex items-center gap-3 text-small">
             <span class="flex-1">{{ row.label }}</span>
             <span class="w-[100px] flex-none text-right font-semibold tabular-nums">{{ formatEuros(row.amount) }}</span>
 
@@ -101,10 +101,10 @@ function submit() {
               </InputGroup>
             </template>
 
-            <span v-else class="w-[130px] flex-none text-[12px] text-ink-2">{{ $t(`payments.${outcome(row)}`) }}</span>
+            <span v-else class="w-[130px] flex-none text-small text-ink-2">{{ $t(`payments.${outcome(row)}`) }}</span>
           </div>
 
-          <p v-if="form.errors.decisions" class="text-[12px] text-destructive">{{ form.errors.decisions }}</p>
+          <p v-if="form.errors.decisions" class="text-small text-destructive">{{ form.errors.decisions }}</p>
         </form>
       </DialogBody>
 

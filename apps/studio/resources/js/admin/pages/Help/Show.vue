@@ -21,7 +21,7 @@ defineProps<{
           <Link
             v-for="eintrag in [...aufgaben, ...referenz]"
             :key="eintrag.slug"
-            class="rounded-[7px] px-2.5 py-[9px] text-[14px] leading-none no-underline hover:bg-muted"
+            class="rounded-[7px] px-2.5 py-[9px] text-ui leading-none no-underline hover:bg-muted"
             :class="eintrag.slug === artikel.slug ? 'font-semibold text-foreground' : 'text-muted-foreground'"
             :href="`/hilfe/${eintrag.slug}`"
           >{{ eintrag.titel }}</Link>

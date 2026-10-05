@@ -238,10 +238,10 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         class="mt-6 flex items-center gap-4 border-0 bg-[var(--due-bg)] px-4 py-3.5"
                     >
                         <div class="min-w-0">
-                            <AlertTitle class="text-[14px] font-semibold text-[var(--due)]">
+                            <AlertTitle class="text-ui font-semibold text-[var(--due)]">
                                 {{ stalled.label }} {{ $t("projectQueue.days", stalled.days) }}
                             </AlertTitle>
-                            <AlertDescription class="text-[12.5px] text-ink-2">
+                            <AlertDescription class="text-small text-ink-2">
                                 {{ day(stalled.date) }} ·
                                 {{ $t("project.stalledStatus", { stage: stalled.status, date: day(stalled.since) }) }}
                             </AlertDescription>
@@ -264,10 +264,10 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         @cancel="anfrage.reset()"
                         @save="saveAnfrage"
                     >
-                        <p class="m-0 max-w-[58ch] text-[14px] leading-[1.5] tracking-[-0.008em] whitespace-pre-line">
+                        <p class="m-0 max-w-[58ch] text-body leading-[1.55] whitespace-pre-line">
                             {{ inquiry.text ?? $t("lead.noText") }}
                         </p>
-                        <p class="mt-2 mb-0 text-[12.5px] text-ink-2">
+                        <p class="mt-2 mb-0 text-small text-ink-2">
                             {{ [inquiry.typeLabel, inquiry.sourceLabel].filter(Boolean).join(" · ") }}
                         </p>
 
@@ -292,16 +292,16 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
                         >
                             <Link
-                                class="w-[168px] flex-none text-[13px] leading-[1.35] font-semibold tracking-[-0.012em] text-foreground no-underline underline-offset-[3px] hover:underline"
+                                class="w-[168px] flex-none text-small leading-[1.35] font-semibold tracking-[-0.012em] text-foreground no-underline underline-offset-[3px] hover:underline"
                                 :href="`/kontakte/${person.id}`"
                             >
                                 {{ person.name }}
                             </Link>
-                            <span class="rounded-[var(--r-pill)] bg-sunk-2 px-[9px] py-0.5 text-[10.5px] leading-[1.4] tracking-[0.05em] uppercase text-ink-2">
+                            <span class="rounded-[var(--r-pill)] bg-sunk-2 px-[9px] py-0.5 text-small leading-[1.4] tracking-[0.05em] uppercase text-ink-2">
                                 {{ roleLabel(person.role) }}
                             </span>
-                            <a v-if="person.email" class="text-[12.5px] text-action no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
-                            <a v-if="person.phone" class="ml-auto text-[12.5px] tabular-nums text-action no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
+                            <a v-if="person.email" class="text-small text-action no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
+                            <a v-if="person.phone" class="ml-auto text-small tabular-nums text-action no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
                         </div>
 
                         <template #edit>
@@ -314,7 +314,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 :key="person.id"
                                 class="flex items-center gap-3 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
                             >
-                                <span class="w-[168px] flex-none text-[13px] leading-[1.35] font-semibold tracking-[-0.012em]">
+                                <span class="w-[168px] flex-none text-small leading-[1.35] font-semibold tracking-[-0.012em]">
                                     {{ people[index].name }}
                                 </span>
                                 <Field v-slot="{ id }" dense class="w-[168px] flex-none" :label="$t('leads.role')">
@@ -358,12 +358,12 @@ function complete(row: App.Crm.Data.TaskRowData) {
 
                     <Card :title="$t('lead.quote')" :summary="quoteSummary" :default-open="quote !== null">
                         <template v-if="quote" #meta>
-                            <span v-if="quote.number" class="text-[13.5px] leading-[1.2] tracking-[-0.015em] text-ink-2 tabular-nums">{{ quote.number }}</span>
+                            <span v-if="quote.number" class="text-ui leading-[1.2] tracking-[-0.015em] text-ink-2 tabular-nums">{{ quote.number }}</span>
                             <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
                         </template>
                         <template v-if="header.canManageQuotes" #action>
                             <Link
-                                class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
+                                class="text-small tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
                                 :href="quote ? `/angebote/${quote.id}` : `/angebote/neu?projekt=${header.id}`"
                             >{{ quote ? $t("common.edit") : $t("quotes.create") }}</Link>
                         </template>
@@ -377,7 +377,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             <Link
                                 v-for="pkg in packages"
                                 :key="pkg.id"
-                                class="cursor-pointer rounded-[var(--r-pill)] border-0 bg-sunk px-[11px] py-[5px] text-[12px] leading-[1.4] font-normal text-ink-2 hover:bg-sunk-2"
+                                class="cursor-pointer rounded-[var(--r-pill)] border-0 bg-sunk px-[11px] py-[5px] text-small leading-[1.4] font-normal text-ink-2 hover:bg-sunk-2"
                                 :href="`/auftraege/${header.id}/angebote`"
                                 method="post"
                                 as="button"
@@ -394,7 +394,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         <div class="mb-1.5 flex items-center gap-2.5">
                             <span class="inline-flex gap-0.5 rounded-[var(--r-pill)] bg-sunk-2 p-0.5">
                                 <button
-                                    class="cursor-pointer rounded-[var(--r-pill)] px-[11px] py-1 text-[11.5px] leading-none"
+                                    class="cursor-pointer rounded-[var(--r-pill)] px-[11px] py-1 text-small leading-none"
                                     :class="showDone ? 'text-ink-2' : 'bg-paper font-semibold'"
                                     type="button"
                                     @click="showDone = false"
@@ -402,7 +402,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                     {{ $t("project.tasksOpen", { count: open.length }) }}
                                 </button>
                                 <button
-                                    class="cursor-pointer rounded-[var(--r-pill)] px-[11px] py-1 text-[11.5px] leading-none"
+                                    class="cursor-pointer rounded-[var(--r-pill)] px-[11px] py-1 text-small leading-none"
                                     :class="showDone ? 'bg-paper font-semibold' : 'text-ink-2'"
                                     type="button"
                                     @click="showDone = true"
@@ -442,17 +442,17 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 type="button"
                                 @click="complete(row)"
                             />
-                            <span class="text-[13.5px] leading-[1.47]" :class="row.isDone && 'text-ink-2'">{{
+                            <span class="text-ui leading-[1.47]" :class="row.isDone && 'text-ink-2'">{{
                                 row.title
                             }}</span>
                             <span
-                                class="text-[10.5px] leading-[1.47] tracking-[0.05em] uppercase text-ink-2"
+                                class="text-small leading-[1.47] tracking-[0.05em] uppercase text-ink-2"
                             >{{ row.audienceLabel }}</span>
-                            <span v-if="row.shootLabel" class="text-[11.5px] leading-[1.47] text-faint">{{
+                            <span v-if="row.shootLabel" class="text-small leading-[1.47] text-faint">{{
                                 row.shootLabel
                             }}</span>
                             <span
-                                class="ml-auto text-[12px] leading-[1.47] tabular-nums"
+                                class="ml-auto text-small leading-[1.47] tabular-nums"
                                 :class="row.isOverdue && !row.isDone ? 'text-action' : 'text-ink-2'"
                             >{{ row.dueOn ? day(row.dueOn) : "" }}</span>
                         </div>
@@ -540,27 +540,27 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             :items="scope.items"
                         >
                             <template #note="{ item }">
-                                <span v-if="item.state" class="ml-[3px] text-[11.5px] text-action">{{
+                                <span v-if="item.state" class="ml-[3px] text-small text-action">{{
                                     $t(`project.scope_${item.state}`)
                                 }}</span>
                             </template>
                             <template #priceNote="{ item }">
                                 <span
                                     v-if="item.state === 'changed'"
-                                    class="mt-0.5 block text-[11.5px] font-normal text-action"
+                                    class="mt-0.5 block text-small font-normal text-action"
                                 >{{ euro(item.wasUnitPrice) }}</span>
                             </template>
                         </LineItems>
 
                         <p
                             v-if="scope.delta"
-                            class="mt-[7px] text-[12px] text-ink-2 [&_em]:not-italic [&_em]:text-action"
+                            class="mt-[7px] text-small text-ink-2 [&_em]:not-italic [&_em]:text-action"
                         >
                             <em>{{
                                 $t("project.scopeDelta", { amount: euro(Math.abs(scope.delta)) })
                             }}</em>
                             <Link
-                                class="ml-3 text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
+                                class="ml-3 text-small tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
                                 :href="`/auftraege/${header.id}/angebote`"
                             >
                                 {{ $t("project.sendAddendum") }}

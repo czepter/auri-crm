@@ -44,7 +44,7 @@ const shown = computed(() => {
             <div class="flex items-center gap-2">
                 <span
                     id="queue-due"
-                    class="cursor-pointer text-[12.5px] leading-none font-semibold tracking-[-0.012em]"
+                    class="cursor-pointer text-small leading-none font-semibold tracking-[-0.012em]"
                     @click="due = !due"
                 >
                     {{ $t("projectQueue.due") }}

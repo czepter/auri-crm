@@ -65,22 +65,22 @@ function add() {
                   <div class="col-span-full flex min-w-0 flex-col gap-1.5">
                     <Label for="new-label">{{ $t('settings.closureLabelField') }}</Label>
                     <Input id="new-label" v-model="newForm.label" type="text" maxlength="255" />
-                    <p v-if="newForm.errors.label" class="text-[11.5px] leading-[1.45] text-destructive">{{ newForm.errors.label }}</p>
+                    <p v-if="newForm.errors.label" class="text-small leading-[1.45] text-destructive">{{ newForm.errors.label }}</p>
                   </div>
                   <div class="flex min-w-0 flex-col gap-1.5">
                     <Label for="new-starts">{{ $t('settings.closureStartsOn') }}</Label>
                     <DatePicker id="new-starts" v-model="newForm.starts_on" />
-                    <p v-if="newForm.errors.starts_on" class="text-[11.5px] leading-[1.45] text-destructive">{{ newForm.errors.starts_on }}</p>
+                    <p v-if="newForm.errors.starts_on" class="text-small leading-[1.45] text-destructive">{{ newForm.errors.starts_on }}</p>
                   </div>
                   <div class="flex min-w-0 flex-col gap-1.5">
                     <Label for="new-ends">{{ $t('settings.closureEndsOn') }}</Label>
                     <DatePicker id="new-ends" v-model="newForm.ends_on" />
-                    <p v-if="newForm.errors.ends_on" class="text-[11.5px] leading-[1.45] text-destructive">{{ newForm.errors.ends_on }}</p>
+                    <p v-if="newForm.errors.ends_on" class="text-small leading-[1.45] text-destructive">{{ newForm.errors.ends_on }}</p>
                   </div>
                   <div class="col-span-full flex min-w-0 flex-col gap-1.5">
                     <Label for="new-message">{{ $t('settings.closureMessageField') }} <em>{{ $t('settings.optional') }}</em></Label>
                     <Textarea id="new-message" v-model="newForm.message" rows="2" maxlength="2000" />
-                    <p v-if="newForm.errors.message" class="text-[11.5px] leading-[1.45] text-destructive">{{ newForm.errors.message }}</p>
+                    <p v-if="newForm.errors.message" class="text-small leading-[1.45] text-destructive">{{ newForm.errors.message }}</p>
                   </div>
                 </form>
               </DialogBody>
@@ -138,7 +138,7 @@ function add() {
             <p
               v-for="message in Object.values(rowForms[closure.id].errors).filter(Boolean)"
               :key="message"
-              class="text-[11.5px] leading-[1.45] text-destructive"
+              class="text-small leading-[1.45] text-destructive"
             >
               {{ message }}
             </p>

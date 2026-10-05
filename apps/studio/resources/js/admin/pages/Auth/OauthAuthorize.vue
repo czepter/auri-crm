@@ -35,13 +35,13 @@ function submit(decision: 'approve' | 'deny') {
 
 <template>
   <AuthLayout :title="$t('auth.oauthTitle')">
-      <p class="mb-4 text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('auth.oauthHint', { client: clientName }) }}</p>
+      <p class="mb-4 text-small leading-[1.45] font-normal text-faint">{{ $t('auth.oauthHint', { client: clientName }) }}</p>
 
       <ul class="mt-0 mb-4 pl-4">
         <li v-for="item in scopes" :key="item.value">{{ item.label }}</li>
       </ul>
 
-      <p class="mb-6 text-[11.5px] leading-[1.45] font-normal text-faint">
+      <p class="mb-6 text-small leading-[1.45] font-normal text-faint">
         {{ $t('auth.oauthTarget', { host: redirectHost }) }}
       </p>
 

@@ -163,7 +163,7 @@ function receivedAt(iso: string) {
         <template v-if="open">
           <div class="mt-[5px] flex items-start gap-3.5">
             <div>
-              <div class="text-[11.5px] leading-[1.47] text-ink-2">{{ $t(`inbox.origin.${open.origin}`) }}</div>
+              <div class="text-small leading-[1.47] text-ink-2">{{ $t(`inbox.origin.${open.origin}`) }}</div>
               <h1 class="m-0 mt-0.5 text-[25px] leading-[1.08] font-semibold tracking-[-0.032em]">{{ open.subject }}</h1>
             </div>
             <Button class="ml-auto" variant="pill-muted" type="button" @click="close(open.id)">
@@ -176,10 +176,10 @@ function receivedAt(iso: string) {
                 'pl-3.5 shadow-[inset_0_1px_0_var(--rule),inset_2px_0_0_var(--sunk-2)]'
             ">
             <div class="flex items-baseline gap-[9px]">
-              <span class="text-[13px] leading-[1.47] font-semibold tracking-[-0.012em]">{{ message.who }}</span>
-              <span class="ml-auto text-[11.5px] leading-[1.47] tabular-nums text-ink-2">{{ receivedAt(message.at) }}</span>
+              <span class="text-small leading-[1.47] font-semibold tracking-[-0.012em]">{{ message.who }}</span>
+              <span class="ml-auto text-small leading-[1.47] tabular-nums text-ink-2">{{ receivedAt(message.at) }}</span>
             </div>
-            <div class="mt-[5px] max-w-[68ch] text-[13.5px] leading-[1.55]">{{ message.body }}</div>
+            <div class="mt-[5px] max-w-[68ch] text-body">{{ message.body }}</div>
           </div>
 
           <form class="mt-4 pt-1 pb-0.5" @submit.prevent="send">
@@ -195,12 +195,12 @@ function receivedAt(iso: string) {
         </template>
 
         <section :class="open && 'mt-8'">
-          <h2 class="m-0 mb-[9px] text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ $t('inbox.addressTitle') }}</h2>
+          <h2 class="m-0 mb-[9px] text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ $t('inbox.addressTitle') }}</h2>
 
-          <p v-if="!configured" class="m-0 text-[12.5px] leading-[1.47] text-ink-2">{{ $t('inbox.notConfigured') }}</p>
+          <p v-if="!configured" class="m-0 text-small leading-[1.47] text-ink-2">{{ $t('inbox.notConfigured') }}</p>
           <template v-else>
-            <p v-if="catchAll" class="m-0 text-[13.5px] leading-[1.47] tabular-nums"><code>{{ catchAll }}</code></p>
-            <p v-else class="m-0 text-[12.5px] leading-[1.47] text-ink-2">{{ $t('inbox.noSecret') }}</p>
+            <p v-if="catchAll" class="m-0 text-ui leading-[1.47] tabular-nums"><code>{{ catchAll }}</code></p>
+            <p v-else class="m-0 text-small leading-[1.47] text-ink-2">{{ $t('inbox.noSecret') }}</p>
 
             <!-- Rotation is the Inhaber's alone, and the dialog says what it
                  costs: every address already handed out stops working, including
@@ -224,14 +224,14 @@ function receivedAt(iso: string) {
         </section>
 
         <section v-if="drafts.length" class="mt-8">
-          <h2 class="m-0 mb-[9px] text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ $t('inbox.draftsTitle') }}</h2>
+          <h2 class="m-0 mb-[9px] text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ $t('inbox.draftsTitle') }}</h2>
 
           <div v-for="draft in drafts" :key="draft.id" class="py-3 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
             <div class="flex items-baseline gap-[9px]">
-              <span class="text-[13px] leading-[1.47] font-semibold tracking-[-0.012em]">{{ draft.subject }}</span>
-              <span class="ml-auto text-[11.5px] leading-[1.47] text-ink-2">{{ [draft.projectName, draft.to].filter(Boolean).join(' · ') }}</span>
+              <span class="text-small leading-[1.47] font-semibold tracking-[-0.012em]">{{ draft.subject }}</span>
+              <span class="ml-auto text-small leading-[1.47] text-ink-2">{{ [draft.projectName, draft.to].filter(Boolean).join(' · ') }}</span>
             </div>
-            <div class="mt-[5px] line-clamp-3 max-w-[68ch] text-[13.5px] leading-[1.55] whitespace-pre-line text-ink-2">{{ draft.body }}</div>
+            <div class="mt-[5px] line-clamp-3 max-w-[68ch] text-body whitespace-pre-line text-ink-2">{{ draft.body }}</div>
 
             <div class="mt-2.5 flex items-center gap-2">
               <Button :as="Link" variant="pill" :href="`/posteingang/entwuerfe/${draft.id}/senden`">{{ $t('inbox.send') }}</Button>
@@ -244,14 +244,14 @@ function receivedAt(iso: string) {
              booking. Nothing else in the admin lists it — every other thread is
              reachable through its project screen. -->
         <section v-if="unfiled.length" class="mt-8">
-          <h2 class="m-0 mb-[9px] text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ $t('inbox.unfiledTitle') }}</h2>
+          <h2 class="m-0 mb-[9px] text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ $t('inbox.unfiledTitle') }}</h2>
 
           <div v-for="row in unfiled" :key="row.id" class="py-3 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
             <div class="flex items-baseline gap-[9px]">
-              <span class="text-[13px] leading-[1.47] font-semibold tracking-[-0.012em]">{{ row.subject }}</span>
-              <span class="ml-auto text-[11.5px] leading-[1.47] tabular-nums text-ink-2">{{ receivedAt(row.startedAt) }}</span>
+              <span class="text-small leading-[1.47] font-semibold tracking-[-0.012em]">{{ row.subject }}</span>
+              <span class="ml-auto text-small leading-[1.47] tabular-nums text-ink-2">{{ receivedAt(row.startedAt) }}</span>
             </div>
-            <div v-if="row.snippet" class="mt-[5px] max-w-[68ch] text-[13.5px] leading-[1.55]">{{ row.snippet }}</div>
+            <div v-if="row.snippet" class="mt-[5px] max-w-[68ch] text-body">{{ row.snippet }}</div>
 
             <div class="mt-2.5 flex items-center gap-2">
               <template v-if="filing === row.id">
@@ -276,18 +276,18 @@ function receivedAt(iso: string) {
         </section>
 
         <section v-if="pending.length" class="mt-8">
-          <h2 class="m-0 mb-[9px] text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ $t('inbox.triageTitle') }}</h2>
+          <h2 class="m-0 mb-[9px] text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ $t('inbox.triageTitle') }}</h2>
 
           <div v-for="row in pending" :key="row.id" class="py-3 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
             <div class="flex items-baseline gap-[9px]">
-              <span class="text-[13px] leading-[1.47] font-semibold tracking-[-0.012em]">{{ row.from }}</span>
-              <span class="text-[11.5px] leading-[1.47] text-ink-2">
+              <span class="text-small leading-[1.47] font-semibold tracking-[-0.012em]">{{ row.from }}</span>
+              <span class="text-small leading-[1.47] text-ink-2">
                 {{ row.stateLabel }}<template v-if="row.reason"> · {{ $t(`inbox.reason.${row.reason}`) }}</template>
               </span>
-              <span class="ml-auto text-[11.5px] leading-[1.47] tabular-nums text-ink-2">{{ receivedAt(row.receivedAt) }}</span>
+              <span class="ml-auto text-small leading-[1.47] tabular-nums text-ink-2">{{ receivedAt(row.receivedAt) }}</span>
             </div>
-            <div v-if="row.subject" class="mt-[5px] text-[13px] leading-[1.47]">{{ row.subject }}</div>
-            <div class="mt-[5px] max-w-[68ch] text-[13.5px] leading-[1.55] text-ink-2">{{ row.body }}</div>
+            <div v-if="row.subject" class="mt-[5px] text-small leading-[1.47]">{{ row.subject }}</div>
+            <div class="mt-[5px] max-w-[68ch] text-body text-ink-2">{{ row.body }}</div>
 
             <!-- Quarantined mail is shown and never attachable: it failed
                  DMARC, so the sender is not established, and attaching it
@@ -322,7 +322,7 @@ function receivedAt(iso: string) {
             <div
               v-for="person in open.people"
               :key="person"
-              class="flex items-center gap-2 py-[5px] text-[12.5px] leading-[1.47]"
+              class="flex items-center gap-2 py-[5px] text-small leading-[1.47]"
             >{{ person }}</div>
           </RailSection>
 

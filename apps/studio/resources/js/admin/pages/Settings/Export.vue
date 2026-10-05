@@ -50,13 +50,13 @@ function create(gallery: string | null) {
 
             <div class="max-w-[620px] min-w-0 flex-1">
               <div class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]">
-                <span class="flex-1 text-[14px] font-semibold">{{ $t('contacts.title') }}</span>
-                <span class="text-[12.5px] tabular-nums text-ink-2">{{ contacts }}</span>
+                <span class="flex-1 text-ui font-semibold">{{ $t('contacts.title') }}</span>
+                <span class="text-small tabular-nums text-ink-2">{{ contacts }}</span>
                 <Button as="a" variant="outline" href="/einstellungen/export/kontakte">CSV</Button>
               </div>
               <div class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]">
-                <span class="flex-1 text-[14px] font-semibold">{{ $t('projects.title') }}</span>
-                <span class="text-[12.5px] tabular-nums text-ink-2">{{ projects }}</span>
+                <span class="flex-1 text-ui font-semibold">{{ $t('projects.title') }}</span>
+                <span class="text-small tabular-nums text-ink-2">{{ projects }}</span>
                 <Button as="a" variant="outline" href="/einstellungen/export/projekte">CSV</Button>
               </div>
 
@@ -66,15 +66,15 @@ function create(gallery: string | null) {
                   :key="row.gallery ?? 'daten'"
                   class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]"
                 >
-                  <span class="min-w-0 flex-1 truncate text-[14px] font-semibold">{{ row.title }}</span>
-                  <span v-if="row.size !== null" class="text-[12.5px] tabular-nums text-ink-2">{{ size(row.size) }}</span>
-                  <span v-if="row.archive?.status === 'building'" class="text-[12.5px] text-ink-2">{{ $t('settings.exportBuilding') }}</span>
+                  <span class="min-w-0 flex-1 truncate text-ui font-semibold">{{ row.title }}</span>
+                  <span v-if="row.size !== null" class="text-small tabular-nums text-ink-2">{{ size(row.size) }}</span>
+                  <span v-if="row.archive?.status === 'building'" class="text-small text-ink-2">{{ $t('settings.exportBuilding') }}</span>
                   <template v-else-if="row.archive?.url">
-                    <span class="text-[12.5px] text-ink-2">{{ $t('settings.exportUntil', { date: day(row.archive.expiresAt!) }) }}</span>
+                    <span class="text-small text-ink-2">{{ $t('settings.exportUntil', { date: day(row.archive.expiresAt!) }) }}</span>
                     <Button as="a" variant="outline" :href="row.archive.url">{{ $t('settings.exportDownload') }}</Button>
                   </template>
                   <template v-else>
-                    <span v-if="row.archive?.status === 'failed'" class="text-[12.5px] text-ink-2">{{ $t('settings.exportFailed') }}</span>
+                    <span v-if="row.archive?.status === 'failed'" class="text-small text-ink-2">{{ $t('settings.exportFailed') }}</span>
                     <Button variant="outline" @click="create(row.gallery)">{{ $t('settings.exportCreate') }}</Button>
                   </template>
                 </div>

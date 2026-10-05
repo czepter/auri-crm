@@ -13,11 +13,11 @@ defineProps<{ title: string; href?: string; meta?: string | null }>()
         <component
             :is="href ? Link : 'div'"
             :href="href"
-            class="text-[12.5px] leading-[1.47] font-semibold tracking-[-0.012em]"
+            class="text-small leading-[1.47] font-semibold tracking-[-0.012em]"
         >
             {{ title }}
         </component>
-        <div v-if="meta" class="mt-px text-[11.5px] leading-[1.47] text-ink-2">
+        <div v-if="meta" class="mt-px text-small leading-[1.47] text-ink-2">
             {{ meta }}
         </div>
     </div>

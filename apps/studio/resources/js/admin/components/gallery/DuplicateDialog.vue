@@ -17,7 +17,7 @@ function megabytes(bytes: number) {
         <DialogTitle>{{ $t('media.duplicatesFound', duplicates.length) }}</DialogTitle>
       </DialogHeader>
       <DialogBody>
-        <div v-for="row in duplicates" :key="row.filename" class="flex gap-3 py-1 text-[12.5px]">
+        <div v-for="row in duplicates" :key="row.filename" class="flex gap-3 py-1 text-small">
           <span class="min-w-0 flex-1 truncate">{{ row.filename }}</span>
           <span class="tabular-nums text-ink-2">{{ megabytes(row.size) }}</span>
         </div>

@@ -98,8 +98,8 @@ function submit() {
 
           <section v-for="section in grouped" :key="section.group" class="grid gap-3">
             <div class="flex items-baseline gap-2">
-              <h3 class="text-[12.5px] font-medium">{{ $t(`contractWizard.group.${section.group}`) }}</h3>
-              <span class="text-[11.5px] text-ink-2">{{ countOf(section.group) }}</span>
+              <h3 class="text-small font-medium">{{ $t(`contractWizard.group.${section.group}`) }}</h3>
+              <span class="text-small text-ink-2">{{ countOf(section.group) }}</span>
             </div>
 
             <div v-for="clause in section.clauses" :key="clause.key" class="grid gap-1.5">

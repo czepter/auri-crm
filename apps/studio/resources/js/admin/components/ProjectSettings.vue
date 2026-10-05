@@ -322,19 +322,19 @@ function release(row: Stage | Field) {
             <path d="M6 6l12 12M18 6L6 18" />
           </svg>
         </button>
-        <span class="text-[16px] leading-[1.3] font-semibold tracking-[-0.015em]">{{ $t('stages.title') }}</span>
+        <span class="text-body leading-[1.3] font-semibold tracking-[-0.015em]">{{ $t('stages.title') }}</span>
         <Button class="ml-auto" type="button" @click="emit('close')">{{ $t('stages.done') }}</Button>
       </div>
 
       <div class="flex gap-10 pt-6 max-[720px]:flex-col max-[720px]:gap-6">
         <nav class="w-[168px] flex-none">
-          <h3 class="m-0 mb-[7px] text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+          <h3 class="m-0 mb-[7px] text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
             {{ $t('stages.stagesNav') }}
           </h3>
           <button
             v-for="one in pipelines"
             :key="one.value"
-            class="block w-full cursor-pointer rounded-lg border-0 bg-transparent px-2.5 py-[7px] text-left text-[13px] leading-[1.3]"
+            class="block w-full cursor-pointer rounded-lg border-0 bg-transparent px-2.5 py-[7px] text-left text-small leading-[1.3]"
             :class="selected.kind === 'pipeline' && selected.key === one.value ? 'bg-sunk-2 font-semibold' : 'text-ink-2'"
             type="button"
             @click="choose({ kind: 'pipeline', key: one.value })"
@@ -342,13 +342,13 @@ function release(row: Stage | Field) {
             {{ one.label }}
           </button>
 
-          <h3 class="m-0 mt-6 mb-[7px] text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+          <h3 class="m-0 mt-6 mb-[7px] text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
             {{ $t('stages.typesSection') }}
           </h3>
           <button
             v-for="one in types"
             :key="one.id"
-            class="block w-full cursor-pointer rounded-lg border-0 bg-transparent px-2.5 py-[7px] text-left text-[13px] leading-[1.3]"
+            class="block w-full cursor-pointer rounded-lg border-0 bg-transparent px-2.5 py-[7px] text-left text-small leading-[1.3]"
             :class="[
               selected.kind === 'type' && selected.key === one.key ? 'bg-sunk-2 font-semibold' : 'text-ink-2',
               one.isActive ? '' : 'text-faint',
@@ -366,7 +366,7 @@ function release(row: Stage | Field) {
         </nav>
 
         <section v-if="pipeline" class="min-w-0 flex-1">
-          <h2 class="m-0 text-[19px] leading-[1.2] font-semibold tracking-[-0.02em]">
+          <h2 class="m-0 text-title leading-[1.2] font-semibold tracking-[-0.02em]">
             {{ $t('stages.stagesSection', { pipeline: pipeline.label }) }}
           </h2>
 
@@ -374,7 +374,7 @@ function release(row: Stage | Field) {
             <button
               v-for="stage in stageRows"
               :key="stage.id"
-              class="inline-flex touch-none cursor-grab items-center gap-[7px] rounded-full border border-border bg-background px-3 py-1.5 text-[10.5px] leading-[1.4] font-semibold tracking-[0.05em] uppercase transition-[border-color,opacity] select-none hover:border-line-hover active:cursor-grabbing"
+              class="inline-flex touch-none cursor-grab items-center gap-[7px] rounded-full border border-border bg-background px-3 py-1.5 text-small leading-[1.4] font-semibold tracking-[0.05em] uppercase transition-[border-color,opacity] select-none hover:border-line-hover active:cursor-grabbing"
               :class="[
                 stage.isActive ? 'text-ink-2' : 'text-faint',
                 held?.id === stage.id && held?.moved ? 'opacity-40' : '',
@@ -399,9 +399,9 @@ function release(row: Stage | Field) {
 
         <section v-else-if="type" class="min-w-0 flex-1">
           <div class="flex items-baseline gap-5">
-            <h2 class="m-0 text-[19px] leading-[1.2] font-semibold tracking-[-0.02em]">{{ type.name }}</h2>
+            <h2 class="m-0 text-title leading-[1.2] font-semibold tracking-[-0.02em]">{{ type.name }}</h2>
             <button
-              class="cursor-pointer border-0 bg-transparent p-0 text-[13px] leading-[1.3]"
+              class="cursor-pointer border-0 bg-transparent p-0 text-small leading-[1.3]"
               :class="tab === 'general' ? 'font-semibold text-foreground' : 'text-ink-2'"
               type="button"
               @click="tab = 'general'"
@@ -410,7 +410,7 @@ function release(row: Stage | Field) {
             </button>
             <button
               v-if="canManageTasks"
-              class="cursor-pointer border-0 bg-transparent p-0 text-[13px] leading-[1.3]"
+              class="cursor-pointer border-0 bg-transparent p-0 text-small leading-[1.3]"
               :class="tab === 'workflow' ? 'font-semibold text-foreground' : 'text-ink-2'"
               type="button"
               @click="openWorkflow"
@@ -465,7 +465,7 @@ function release(row: Stage | Field) {
               </div>
             </div>
 
-            <h3 class="mt-9 mb-3.5 text-[15px] leading-[1.3] font-semibold tracking-[-0.015em]">
+            <h3 class="mt-9 mb-3.5 text-body leading-[1.3] font-semibold tracking-[-0.015em]">
               {{ $t('stages.fieldsSection') }}
             </h3>
 
@@ -486,12 +486,12 @@ function release(row: Stage | Field) {
                 @pointerup="release(field)"
               >
                 <span class="flex items-baseline gap-2.5">
-                  <span class="min-w-0 flex-1 text-[13.5px] leading-[1.3] font-semibold tracking-[-0.014em]">{{ field.label }}</span>
-                  <span class="flex-none text-[12px] text-ink-2">{{ fieldMeta(field) }}</span>
+                  <span class="min-w-0 flex-1 text-ui leading-[1.3] font-semibold tracking-[-0.014em]">{{ field.label }}</span>
+                  <span class="flex-none text-small text-ink-2">{{ fieldMeta(field) }}</span>
                 </span>
                 <span v-if="field.required || field.allowNewOptions" class="mt-1.5 flex items-center gap-1.5">
                   <span class="size-1.5 flex-none rounded-full" :class="field.required ? 'bg-action' : 'bg-faint'" />
-                  <span class="text-[11.5px] leading-none text-muted-foreground">
+                  <span class="text-small leading-none text-muted-foreground">
                     {{ field.required ? $t('stages.fieldRequired') : $t(`stages.fieldOpenList_${field.type}`) }}
                   </span>
                 </span>
@@ -540,7 +540,7 @@ function release(row: Stage | Field) {
 
             <div v-if="editing?.anchorLabel" class="flex min-w-0 flex-col gap-1.5">
               <Label>{{ $t('stages.anchorField') }}</Label>
-              <span class="text-[13px] leading-[1.4] text-ink-2">{{ editing.anchorLabel }}</span>
+              <span class="text-small leading-[1.4] text-ink-2">{{ editing.anchorLabel }}</span>
             </div>
 
             <div class="flex min-w-0 flex-col gap-1.5">
@@ -575,7 +575,7 @@ function release(row: Stage | Field) {
             <div class="flex min-w-0 flex-col gap-1.5">
               <Label for="new-stage-name">{{ $t('stages.nameField') }}</Label>
               <Input id="new-stage-name" v-model="newStageForm.name" maxlength="120" type="text" />
-              <p v-if="newStageForm.errors.name" class="text-[11.5px] leading-[1.45] text-destructive">{{ newStageForm.errors.name }}</p>
+              <p v-if="newStageForm.errors.name" class="text-small leading-[1.45] text-destructive">{{ newStageForm.errors.name }}</p>
             </div>
 
             <div class="flex min-w-0 flex-col gap-1.5">
@@ -645,7 +645,7 @@ function release(row: Stage | Field) {
                 </SelectItem>
               </SelectContent>
             </Select>
-            <p v-if="deleteForm.errors.move_to" class="text-[11.5px] leading-[1.45] text-destructive">{{ deleteForm.errors.move_to }}</p>
+            <p v-if="deleteForm.errors.move_to" class="text-small leading-[1.45] text-destructive">{{ deleteForm.errors.move_to }}</p>
           </form>
         </DialogBody>
 
@@ -667,7 +667,7 @@ function release(row: Stage | Field) {
           <form id="new-type-form" class="flex min-w-0 flex-col gap-1.5" @submit.prevent="createType">
             <Label for="new-type-name">{{ $t('stages.nameField') }}</Label>
             <Input id="new-type-name" v-model="newTypeForm.name" maxlength="120" type="text" />
-            <p v-if="newTypeForm.errors.name" class="text-[11.5px] leading-[1.45] text-destructive">{{ newTypeForm.errors.name }}</p>
+            <p v-if="newTypeForm.errors.name" class="text-small leading-[1.45] text-destructive">{{ newTypeForm.errors.name }}</p>
           </form>
         </DialogBody>
 
@@ -688,7 +688,7 @@ function release(row: Stage | Field) {
             <div class="flex min-w-0 flex-col gap-1.5">
               <Label for="field-label">{{ $t('stages.fieldLabel') }}</Label>
               <Input id="field-label" v-model="fieldForm.label" maxlength="120" type="text" />
-              <p v-if="fieldForm.errors.label" class="text-[11.5px] leading-[1.45] text-destructive">{{ fieldForm.errors.label }}</p>
+              <p v-if="fieldForm.errors.label" class="text-small leading-[1.45] text-destructive">{{ fieldForm.errors.label }}</p>
             </div>
 
             <div class="flex min-w-0 flex-col gap-1.5">
@@ -699,13 +699,13 @@ function release(row: Stage | Field) {
                   <SelectItem v-for="one in fieldTypes" :key="one.value" :value="one.value">{{ one.label }}</SelectItem>
                 </SelectContent>
               </Select>
-              <p v-if="fieldForm.errors.type" class="text-[11.5px] leading-[1.45] text-destructive">{{ fieldForm.errors.type }}</p>
+              <p v-if="fieldForm.errors.type" class="text-small leading-[1.45] text-destructive">{{ fieldForm.errors.type }}</p>
             </div>
 
             <div v-if="fieldHasOptions" class="flex min-w-0 flex-col gap-1.5">
               <Label for="field-options">{{ $t('stages.fieldOptions') }}</Label>
               <Textarea id="field-options" v-model="fieldForm.options" />
-              <p class="text-[11.5px] leading-[1.45] text-ink-2">{{ $t('stages.fieldOptionsHint') }}</p>
+              <p class="text-small leading-[1.45] text-ink-2">{{ $t('stages.fieldOptionsHint') }}</p>
             </div>
 
             <div v-if="fieldForm.type === 'number'" class="flex min-w-0 flex-col gap-1.5">
@@ -728,7 +728,7 @@ function release(row: Stage | Field) {
               <Label for="field-active" variant="inline">{{ $t('stages.activeField') }}</Label>
             </div>
 
-            <p v-if="$page.props.errors.field" class="text-[11.5px] leading-[1.45] text-destructive">{{ $page.props.errors.field }}</p>
+            <p v-if="$page.props.errors.field" class="text-small leading-[1.45] text-destructive">{{ $page.props.errors.field }}</p>
           </form>
         </DialogBody>
 
