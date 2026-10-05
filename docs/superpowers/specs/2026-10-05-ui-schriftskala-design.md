@@ -27,8 +27,11 @@ erneuerte E2E-Baselines.
 **Draußen:**
 - `resources/js/portal/**` und `resources/css/gallery.css`. Kundenansicht mit
   eigener Serif-Typografie, eigene Skala wäre ein eigener Auftrag.
-- `display` (32px, 7 Stellen: Dashboard-Zahlen, Auth-Seiten) bleibt ein
-  Literal an Ort und Stelle.
+- `display` (32px und größer: Seitentitel, Dashboard-Zahlen, Auth-Seiten)
+  bleibt ein Literal an Ort und Stelle. Die Seitentitel auf 24px zu setzen
+  hätte sie verkleinert.
+- Werte unter 10px (Avatar-Initialen, Badges auf Bildern, Galerie-Vorschau):
+  bleiben Literale, 13px passt dort nicht in die Form.
 - Schriftfamilien, Farben, Abstände.
 
 ## 3. Skala
@@ -39,7 +42,7 @@ erneuerte E2E-Baselines.
 | `text-ui` | 14px | 1.4 | Navigation, Buttons, Inputs, Menüs, Tabellen, Labels, Kartenüberschriften |
 | `text-body` | 16px | 1.55 | Lesetext: Anfrage, Nachrichten, Notizen, Hilfe |
 | `text-title` | 20px | 1.3 | Dialogtitel |
-| `text-heading` | 24px | 1.2 | Seitentitel |
+| `text-heading` | 24px | 1.2 | Abschnittstitel, Überschriften in Formularen |
 
 Regeln:
 - Unter 13px steht im Admin kein Text mehr.
@@ -58,21 +61,27 @@ Regeln:
 
    | alt | neu |
    |---|---|
-   | 22, 24, 26 | `text-heading` |
+   | 22, 24 | `text-heading` |
    | 17, 18, 19, 20 | `text-title` |
    | 15, 15.5, 16 | `text-body` |
    | 13.5, 14, 14.5 | `text-ui` |
    | 10 bis 13 (inkl. 10.5, 11.5, 12.5) | `text-small` |
 
-   Ausgenommen: 32px und größer, `portal/**`, `gallery.css`, Stories
-   (`*.stories.ts`).
+   Ausgenommen: 25px und größer, 8 bis 9,5px, `portal/**`, `gallery.css`,
+   Stories (`*.stories.ts`), die Portal-Varianten in `ui/button/index.ts` und
+   das Feld-Label in `ui/label/index.ts`.
 3. Handarbeit nach dem Mapping, weil der Wert allein die Rolle nicht
    verrät: Lesetext (Anfrage, Nachrichten, Notizen, Hilfe) auf `text-body`;
-   Seitentitel auf `text-heading`; Dialogtitel auf `text-title`;
+   Abschnittstitel auf `text-heading`; Dialogtitel auf `text-title`;
    Kartenüberschriften auf `text-ui` mit 600. Die Stellen werden per Grep
    nach Komponente gesucht, nicht geraten.
-4. `css/*.css`: Deklarationen `font-size: Npx` auf `var(--text-…)`.
-5. Die drei `text-sm` / `text-xs` / `text-base`-Treffer prüfen und ersetzen.
+4. `css/*.css` (ohne `gallery.css`): `font-size: Npx` und der Größenanteil in
+   `font: 400 Npx/1.4 …` auf `var(--text-…)`. Die Tokens stehen in einem
+   `@theme static`-Block, damit die Variablen auch ohne Tailwind-Nutzung
+   emittiert werden.
+5. `lib/utils.ts`: `cn()` erweitert `tailwind-merge` um die fünf Stufen.
+   Sonst hält es `text-small` neben `text-foreground` für zwei Farben und
+   verwirft die Größe.
 6. Zeilenhöhe: Wo ein Literal `leading-[…]` neben `text-[…]` stand, bleibt die
    Zeilenhöhe der Stufe, sofern das Layout (Zeilenabstand in Listen, Buttons
    mit `leading-none`) nicht anderes verlangt.
@@ -90,6 +99,9 @@ Regeln:
 
 ## 6. Risiken
 
+- Geteilte `ui`-Komponenten tragen die Größen fest. Portal-Inputs,
+  -Selects und -Datepicker wachsen von 13 auf 14px mit; Buttons und
+  Feld-Label des Portals sind ausgenommen.
 - Größere Schrift ändert Zeilenumbrüche. Feste Breiten (`w-[…]`,
   Spaltenraster, Sidebar) können brechen. Das Browser-Review fängt das.
 - Halbpixel-Werte verschwinden: Dichte-Unterschiede, die heute zufällig
