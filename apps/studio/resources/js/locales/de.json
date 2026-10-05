@@ -516,7 +516,8 @@
     "phase": {
       "upcoming": "Anstehend",
       "editing": "In Bearbeitung",
-      "delivered": "Geliefert"
+      "delivered": "Geliefert",
+      "closed": "Storniert"
     }
   },
   "calendar": {
