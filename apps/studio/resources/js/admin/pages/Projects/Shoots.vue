@@ -152,6 +152,9 @@ function create() {
   })
 }
 
+const archive = (shoot: App.Crm.Data.ShootData) => shoot.forwardStatuses.find((s) => s.value === 'archived')
+const onward = (shoot: App.Crm.Data.ShootData) => shoot.forwardStatuses.filter((s) => s.value !== 'archived')
+
 function advance(shoot: App.Crm.Data.ShootData, status: string) {
   if (status) {
     router.post(`/shootings/${shoot.id}/status`, { status }, { preserveScroll: true })
@@ -347,13 +350,13 @@ const TONE: Record<string, string> = {
               </span>
 
               <div v-if="!shoot.isCancelled && header.canManageShoots" class="flex items-center gap-2">
-                <div v-if="shoot.forwardStatuses.length" class="flex">
+                <div v-if="onward(shoot).length" class="flex">
                   <Button
                     variant="pill"
                     type="button"
                     class="rounded-r-none"
-                    @click="advance(shoot, shoot.forwardStatuses[0].value)"
-                  >{{ shoot.forwardStatuses[0].label }}</Button>
+                    @click="advance(shoot, onward(shoot)[0].value)"
+                  >{{ onward(shoot)[0].label }}</Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger as-child>
                       <Button variant="pill" type="button" class="rounded-l-none border-l border-white/30 px-2" :aria-label="$t('project.advance')">
@@ -361,7 +364,7 @@ const TONE: Record<string, string> = {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" class="w-[208px]">
-                      <DropdownMenuItem v-for="status in shoot.forwardStatuses" :key="status.value" @select="advance(shoot, status.value)">
+                      <DropdownMenuItem v-for="status in onward(shoot)" :key="status.value" @select="advance(shoot, status.value)">
                         {{ status.label }}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -380,6 +383,9 @@ const TONE: Record<string, string> = {
                   <DropdownMenuContent align="end" class="w-[208px]">
                     <DropdownMenuItem v-if="!shoot.isPrimary" @select="designatePrimary(shoot)">
                       {{ $t('project.makePrimary') }}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem v-if="archive(shoot)" @select="advance(shoot, 'archived')">
+                      {{ archive(shoot)!.label }}
                     </DropdownMenuItem>
                     <DropdownMenuItem class="text-destructive" @select="openCancel(shoot)">
                       {{ $t('project.cancel') }}
