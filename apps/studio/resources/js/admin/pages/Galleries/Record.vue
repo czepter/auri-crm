@@ -39,6 +39,9 @@ const props = withDefaults(defineProps<{
     withdrawn: boolean
     prerelease: boolean
     isExternal: boolean
+    externalUrl: string | null
+    externalPassword: string | null
+    info: string | null
     canPublish: boolean
     canMail: boolean
   }

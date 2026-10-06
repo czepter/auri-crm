@@ -166,6 +166,9 @@ class GalleryRecordController extends Controller
                 // Record.vue had no way to know that and offered the control
                 // anyway. isExternal lets the menu item hide itself instead.
                 'isExternal' => $gallery->is_external,
+                'externalUrl' => $gallery->external_url,
+                'externalPassword' => $gallery->external_password,
+                'info' => $gallery->info,
                 'canPublish' => auth('staff')->user()->can('publish', $gallery),
                 // Veröffentlichen opens the compose screen only when there is someone to mail.
                 'canMail' => filled($gallery->case?->primaryContact()?->email),
@@ -367,6 +370,9 @@ class GalleryRecordController extends Controller
             'download_pin' => ['nullable', 'string', 'min:4', 'max:64'],
             'requires_verified_email' => ['sometimes', 'boolean'],
             'expires_at' => ['nullable', 'date'],
+            'external_url' => ['sometimes', 'url', 'max:2000'],
+            'external_password' => ['nullable', 'string', 'max:200'],
+            'info' => ['nullable', 'string', 'max:2000'],
             'design' => ['nullable', 'array'],
             'design.cover' => ['nullable', 'string', 'max:32'],
             'design.type' => ['nullable', 'string', 'max:32'],
@@ -401,7 +407,7 @@ class GalleryRecordController extends Controller
         }
 
         $fields = array_intersect_key($validated, array_flip([
-            'slug', 'expires_at', 'downloads_enabled', 'lists_enabled', 'comments_enabled',
+            'slug', 'expires_at', 'external_url', 'external_password', 'info', 'downloads_enabled', 'lists_enabled', 'comments_enabled',
         ]));
 
         if ($fields !== []) {
