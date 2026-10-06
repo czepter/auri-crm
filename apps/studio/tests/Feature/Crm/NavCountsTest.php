@@ -1,5 +1,6 @@
 <?php
 
+use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\ClientCase;
@@ -24,7 +25,7 @@ it('counts the inquiries and the projects the way their lists do', function () {
     $closed = ClientCase::factory()->wedding()->create();
     markBooked($closed);
     Shoot::factory()->for($closed, 'case')->primary()->atStatus(ShootStatus::Booked)->create();
-    $closed->forceFill(['closed_at' => now()])->save();
+    $closed->forceFill(['closed_at' => now(), 'close_outcome' => LeadOutcome::Lost])->save();
 
     $open = ClientCase::factory()->wedding()->create();
     Lead::factory()->for($open, 'case')->create();
