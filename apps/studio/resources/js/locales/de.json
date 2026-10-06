@@ -983,6 +983,9 @@
     },
     "overdue": "Überfällig",
     "today": "Heute",
+    "project": "Projekt",
+    "blocked": "Wartet auf",
+    "anchor": "Frist",
     "empty": "Nichts offen."
   },
   "payments": {

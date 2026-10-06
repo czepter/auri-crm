@@ -7,15 +7,20 @@
  * Ohne Zuweisung steht die Auswahl, die sie setzt: eine leere Spalte
  * übernimmt niemand.
  */
-import { computed, ref } from 'vue'
-import { Link, router, usePage } from '@inertiajs/vue3'
+import { computed, ref, watch } from 'vue'
+import { Link, router, useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import StudioTaskCreateDialog from '@/admin/components/StudioTaskCreateDialog.vue'
+import { Button } from '@/ui/button'
+import { DatePicker } from '@/ui/date-picker'
+import { Field } from '@/ui/field'
+import { Input } from '@/ui/input'
+import { Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 import Page from '@/ui/page/Page.vue'
 import Empty from '@/ui/page/Empty.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
-import { daysUntil } from '@/admin/lib/dates'
+import { daysUntil, dayWithWeekday } from '@/admin/lib/dates'
 
 const props = defineProps<{
   tasks: App.Crm.Data.TaskRowData[]
@@ -33,6 +38,23 @@ const shown = computed(() =>
     tab.value === 'done' ? task.isDone : !task.isDone && (tab.value === 'all' || task.assigneeId === me.value)
   )
 )
+
+const selectedId = ref<string | null>(null)
+const selected = computed(() => props.tasks.find((task) => task.id === selectedId.value) ?? null)
+
+const form = useForm({ title: '', due_on: '' })
+
+watch(selected, (task, previous) => {
+  if (task?.id !== previous?.id) form.defaults({ title: task?.title ?? '', due_on: task?.dueOn ?? '' }).reset()
+})
+
+function save(task: App.Crm.Data.TaskRowData) {
+  form.patch(`/aufgaben/${task.id}`, { preserveScroll: true, onSuccess: () => form.defaults() })
+}
+
+function remove(task: App.Crm.Data.TaskRowData) {
+  router.delete(`/aufgaben/${task.id}`, { preserveScroll: true, onSuccess: () => (selectedId.value = null) })
+}
 
 function due(task: App.Crm.Data.TaskRowData) {
   if (task.dueOn === null) return task.dueAnchorLabel ?? ''
@@ -104,10 +126,12 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
               />
 
               <span class="min-w-0 flex-1">
-                <span class="block truncate text-[13.5px]">{{ task.title }}</span>
+                <button class="block max-w-full cursor-pointer truncate text-left text-[13.5px]" type="button" @click="selectedId = task.id">
+                  {{ task.title }}
+                </button>
                 <span class="block truncate text-[12px] text-ink-2">
-                  <Link v-if="task.contactId" class="text-inherit" :href="`/kontakte/${task.contactId}`">{{ task.contactName }}</Link>
-                  <template v-else>{{ task.projectName }}</template>
+                  <Link v-if="task.projectId" class="text-inherit" :href="`/auftraege/${task.projectId}`">{{ task.projectName }}</Link>
+                  <Link v-else-if="task.contactId" class="text-inherit" :href="`/kontakte/${task.contactId}`">{{ task.contactName }}</Link>
                 </span>
               </span>
 
@@ -145,5 +169,75 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
         </div>
       </div>
     </Page>
+
+    <Dialog :open="selected !== null" @update:open="(open) => !open && (selectedId = null)">
+      <DialogContent v-if="selected">
+        <DialogHeader>
+          <DialogTitle>{{ selected.title }}</DialogTitle>
+        </DialogHeader>
+
+        <DialogBody>
+          <form id="task-edit-form" class="mb-5 grid grid-cols-2 gap-x-6 gap-y-4" @submit.prevent="save(selected)">
+            <Field v-slot="{ id }" wide :label="$t('project.taskTitle')" :error="form.errors.title">
+              <Input :id="id" v-model="form.title" type="text" />
+            </Field>
+            <Field wide :label="$t('project.taskDue')" :error="form.errors.due_on">
+              <DatePicker v-model="form.due_on" />
+            </Field>
+          </form>
+
+          <dl class="grid grid-cols-[110px_minmax(0,1fr)] gap-x-6 gap-y-3 text-[13.5px]">
+            <template v-if="selected.projectId">
+              <dt class="text-ink-2">{{ $t('tasks.project') }}</dt>
+              <dd><Link :href="`/auftraege/${selected.projectId}`">{{ selected.projectName }}</Link></dd>
+            </template>
+            <template v-if="selected.contactId">
+              <dt class="text-ink-2">{{ $t('leads.contact') }}</dt>
+              <dd><Link :href="`/kontakte/${selected.contactId}`">{{ selected.contactName }}</Link></dd>
+            </template>
+            <template v-if="selected.shootLabel">
+              <dt class="text-ink-2">{{ $t('project.taskShoot') }}</dt>
+              <dd>{{ selected.shootLabel }}</dd>
+            </template>
+            <template v-if="selected.dueOn === null && selected.dueAnchorLabel">
+              <dt class="text-ink-2">{{ $t('tasks.anchor') }}</dt>
+              <dd>{{ selected.dueAnchorLabel }}</dd>
+            </template>
+            <template v-if="selected.isDone && selected.completedOn">
+              <dt class="text-ink-2">{{ $t('project.taskCompletedOn') }}</dt>
+              <dd>{{ dayWithWeekday(selected.completedOn) }}</dd>
+            </template>
+            <template v-if="!solo">
+              <dt class="text-ink-2">{{ $t('project.taskAssignee') }}</dt>
+              <dd>
+                <Select :model-value="selected.assigneeId ?? 'none'" @update:model-value="(value) => assign(selected!, String(value))">
+                  <SelectTrigger class="h-8 w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">{{ $t('project.taskUnassigned') }}</SelectItem>
+                    <SelectItem v-for="option in staffOptions" :key="option.value" :value="option.value">
+                      {{ option.label }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </dd>
+            </template>
+            <template v-if="selected.isBlocked">
+              <dt class="text-ink-2">{{ $t('tasks.blocked') }}</dt>
+              <dd>{{ selected.blockedBy }}</dd>
+            </template>
+          </dl>
+        </DialogBody>
+
+        <DialogFooter>
+          <Button type="submit" form="task-edit-form" :disabled="!form.isDirty || !form.title || form.processing">
+            {{ $t('common.save') }}
+          </Button>
+          <Button variant="outline" type="button" :disabled="selected.isBlocked && !selected.isDone" @click="complete(selected)">
+            {{ selected.isDone ? $t('project.taskReopen') : $t('project.taskComplete') }}
+          </Button>
+          <Button class="mr-auto" variant="ghost" type="button" @click="remove(selected)">{{ $t('common.delete') }}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </AdminLayout>
 </template>
