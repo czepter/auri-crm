@@ -97,6 +97,7 @@ are not:
 
 | Variable | Set to |
 |---|---|
+| `VERSION` | The release tag every image line pulls, e.g. `v0.10.0` |
 | `APP_URL` | The surface whose links a queued mail should contain — the portal, wherever the mail goes to a client |
 | `MAIL_URL` | The outbound SMTP DSN |
 | `MAIL_FROM_ADDRESS` | The studio's sending address |
@@ -153,9 +154,8 @@ have to change to get it back.
 
 ## Rolling back
 
-Die `image:`-Zeilen in `docker-compose.coolify.yml` auf die vorige Version
-setzen (`v0.8.0`) oder auf einen `sha-<commit>` aus einem bekannt guten Build,
-dann neu deployen. Beide Tags bewegen sich nie.
+`VERSION` in Coolify auf die vorige Version setzen (`v0.9.0`) oder auf einen
+`sha-<commit>` aus einem bekannt guten Build, dann neu deployen. Beide Tags bewegen sich nie.
 
 A rollback does **not** undo migrations. If the bad deploy changed the
 schema, restore from the cutover snapshot instead — see
