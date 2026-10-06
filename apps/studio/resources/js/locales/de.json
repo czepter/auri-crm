@@ -1783,6 +1783,8 @@
     "create": "Galerie anlegen",
     "titleField": "Titel",
     "urlField": "Adresse",
+    "passwordField": "Passwort",
+    "infoField": "Info",
     "expiryField": "Gültig bis",
     "mode_internal": "Eigene Galerie",
     "mode_external": "Externer Link"

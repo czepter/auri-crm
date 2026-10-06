@@ -11,6 +11,7 @@ import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
+import { Textarea } from '@/ui/textarea'
 import { NONE, fromOption, toOption } from '@/lib/select'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
@@ -49,6 +50,8 @@ const form = useForm({
   title: '',
   is_external: false,
   external_url: '',
+  info: '',
+  external_password: '',
   expires_at: '' as string,
   downloads_enabled: props.studioDefaults.downloads,
   lists_enabled: props.studioDefaults.lists,
@@ -116,6 +119,16 @@ function submit() {
             <div v-if="mode === 'external'" class="flex flex-col gap-1.5">
               <Label for="gallery-url">{{ $t('galleries.urlField') }}</Label>
               <Input id="gallery-url" v-model="form.external_url" type="url" />
+            </div>
+
+            <div v-if="mode === 'external'" class="flex flex-col gap-1.5">
+              <Label for="gallery-password">{{ $t('galleries.passwordField') }}</Label>
+              <Input id="gallery-password" v-model="form.external_password" type="text" />
+            </div>
+
+            <div v-if="mode === 'external'" class="flex flex-col gap-1.5">
+              <Label for="gallery-info">{{ $t('galleries.infoField') }}</Label>
+              <Textarea id="gallery-info" v-model="form.info" rows="3" />
             </div>
 
             <template v-else>

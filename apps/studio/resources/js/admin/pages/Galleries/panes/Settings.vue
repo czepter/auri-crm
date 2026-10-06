@@ -7,6 +7,7 @@ import { Check, Copy } from 'lucide-vue-next'
 import { DatePicker } from '@/ui/date-picker'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
+import { Textarea } from '@/ui/textarea'
 import { Link } from '@inertiajs/vue3'
 import GalleryAccess from '@/admin/components/gallery/GalleryAccess.vue'
 import { addressPrefix } from '@/admin/lib/galleryAddress'
@@ -23,6 +24,10 @@ const props = defineProps<{
     downloadPin: string | null
     requiresVerifiedEmail: boolean
     expiresAt: string | null
+    isExternal: boolean
+    externalUrl: string | null
+    externalPassword: string | null
+    info: string | null
     offers: { downloads: boolean; lists: boolean; comments: boolean }
   }
   siblings: { id: string; title: string | null; assetCount: number; open: boolean }[]
@@ -46,6 +51,16 @@ const pill = computed<Record<string, boolean | null>>(() => ({
 // Allgemein: the address and the expiry, the two facts a studio actually
 // changes after a gallery already exists.
 const general = useForm({ slug: props.gallery.slug, expires_at: props.gallery.expiresAt ?? '' })
+
+const external = useForm({
+  external_url: props.gallery.externalUrl ?? '',
+  external_password: props.gallery.externalPassword ?? '',
+  info: props.gallery.info ?? '',
+})
+
+function saveExternal() {
+  external.patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
+}
 
 function saveGeneral() {
   general.transform((data) => ({ ...data, expires_at: data.expires_at === '' ? null : data.expires_at }))
@@ -144,6 +159,22 @@ function day(iso: string | null) {
     <div class="min-w-0 flex-1">
   <template v-if="settingsSection === 'allgemein'">
     <h2 class="mt-0">{{ $t('galleryRecord.settingsNav.allgemein') }}</h2>
+
+    <div v-if="gallery.isExternal" class="mb-5 flex max-w-[440px] flex-col gap-4 pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
+      <div class="flex flex-col gap-1.5">
+        <Label for="gallery-url">{{ $t('galleries.urlField') }}</Label>
+        <Input id="gallery-url" v-model="external.external_url" type="url" @blur="saveExternal" />
+        <p v-if="external.errors.external_url" class="text-[11.5px] leading-[1.45] text-destructive">{{ external.errors.external_url }}</p>
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <Label for="gallery-password">{{ $t('galleries.passwordField') }}</Label>
+        <Input id="gallery-password" v-model="external.external_password" type="text" @blur="saveExternal" />
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <Label for="gallery-info">{{ $t('galleries.infoField') }}</Label>
+        <Textarea id="gallery-info" v-model="external.info" rows="3" @blur="saveExternal" />
+      </div>
+    </div>
 
     <div class="mb-5 flex flex-col gap-2 pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
       <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.slugLabel') }}</div>

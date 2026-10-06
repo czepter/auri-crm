@@ -47,7 +47,7 @@ class Gallery extends Model
 
     protected $fillable = [
         'case_id', 'shoot_id', 'title', 'slug', 'design',
-        'is_external', 'external_url', 'expires_at',
+        'is_external', 'external_url', 'info', 'external_password', 'expires_at',
         'downloads_enabled', 'lists_enabled', 'comments_enabled',
         'event_date', 'cover_asset_id', 'cover_focal_x', 'cover_focal_y',
     ];
@@ -79,6 +79,7 @@ class Gallery extends Model
             // guests anyway and a studio that cannot look one up locks out
             // everybody holding the old one.
             'view_password' => 'encrypted',
+            'external_password' => 'encrypted',
             'download_pin' => 'encrypted',
             'requires_verified_email' => 'boolean',
             'expires_at' => 'immutable_datetime',
