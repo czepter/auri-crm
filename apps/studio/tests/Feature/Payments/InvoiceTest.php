@@ -274,6 +274,7 @@ it('prints the items and the guest as recipient on an invoice without a project'
 });
 
 it('marks an invoice without a project paid, and retires it', function () {
+    $this->travelTo('2026-09-28');
     $invoice = freeInvoice();
 
     app(MarkInstallmentPaid::class)($invoice->installments()->sole(), SettledVia::Transfer, '2026-10-02', null, null, 10_000);

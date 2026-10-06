@@ -116,6 +116,7 @@ it('refuses an invoice that is already cancelled', function () {
 });
 
 it('leaves a cancelled rate out of overdue detection', function () {
+    $this->travelTo('2026-09-15');
     $installment = stornoableInstallment();
     $installment->update(['due_on' => now()->subMonth()]);
 
