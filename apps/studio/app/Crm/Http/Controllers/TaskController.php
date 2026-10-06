@@ -104,6 +104,28 @@ class TaskController extends Controller
         return back();
     }
 
+    public function update(Request $request, Task $task): RedirectResponse
+    {
+        $this->authorize('update', $task);
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'due_on' => ['nullable', 'date'],
+        ]);
+
+        $task->title = $validated['title'];
+
+        // A resolved anchor date is sent back unchanged; only a different day
+        // replaces the anchor, or saving the title would pin every anchored task.
+        if (($validated['due_on'] ?? null) !== $task->due_on?->format('Y-m-d')) {
+            $task->fill(['due_on' => $validated['due_on'] ?? null, 'due_anchor' => null, 'due_offset_days' => null]);
+        }
+
+        $task->save();
+
+        return back();
+    }
+
     /**
      * S-12: change what a task waits on. A cycle is refused here, at write
      * time — see TaskDependencyGraph for why discovering one at read time is

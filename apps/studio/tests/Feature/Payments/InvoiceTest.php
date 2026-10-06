@@ -242,7 +242,7 @@ function freeInvoice(): Invoice
     return app(IssueInvoice::class)->positions($guest, null, [
         ['title' => 'Abzug 30×45', 'quantity' => 30, 'unit_price' => 1_000, 'vat_rate' => 1900],
         ['title' => 'Versand', 'quantity' => 1, 'unit_price' => 500],
-    ], '2026-10-01');
+    ], now()->addMonth()->toDateString());
 }
 
 it('issues an invoice without a project from its items, with one installment to book against', function () {
@@ -252,7 +252,7 @@ it('issues an invoice without a project from its items, with one installment to 
         ->and($invoice->number)->toStartWith('RE-')
         ->and($invoice->amount())->toBe(36_295)
         ->and($invoice->installments->sole()->payment_plan_id)->toBeNull()
-        ->and($invoice->installments->sole()->due_on->format('Y-m-d'))->toBe('2026-10-01');
+        ->and($invoice->installments->sole()->due_on->format('Y-m-d'))->toBe(now()->addMonth()->toDateString());
 
     $figures = InvoiceFigures::forInvoice($invoice, app(StudioSettingsResolver::class));
 
@@ -274,7 +274,6 @@ it('prints the items and the guest as recipient on an invoice without a project'
 });
 
 it('marks an invoice without a project paid, and retires it', function () {
-    $this->travelTo('2026-09-28');
     $invoice = freeInvoice();
 
     app(MarkInstallmentPaid::class)($invoice->installments()->sole(), SettledVia::Transfer, '2026-10-02', null, null, 10_000);
