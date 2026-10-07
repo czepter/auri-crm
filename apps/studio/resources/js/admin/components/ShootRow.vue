@@ -59,10 +59,11 @@ function advance(status: string) {
                     <DropdownMenuItem v-for="status in onward" :key="status.value" @select="advance(status.value)">
                         {{ status.label }}
                     </DropdownMenuItem>
+                    <DropdownMenuItem v-if="archive" @select="advance(archive.value)">{{ archive.label }}</DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>
-        <DropdownMenu v-if="manageable && archive">
+        <DropdownMenu v-else-if="manageable && archive">
             <DropdownMenuTrigger as-child>
                 <Button variant="ghost" type="button" class="px-2" :aria-label="$t('project.more')">
                     <Ellipsis class="size-4" />
