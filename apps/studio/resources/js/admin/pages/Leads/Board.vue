@@ -314,11 +314,11 @@ const workflowAllowed = computed(() =>
                     >
                         <header class="flex items-baseline gap-1.5 px-1 pt-0.5 pb-1">
                             <b
-                                class="text-[11px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2"
+                                class="text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2"
                                 >{{ column.label }}</b
                             >
                             <span
-                                class="ml-auto text-[11px] tabular-nums text-ink-2"
+                                class="ml-auto text-small tabular-nums text-ink-2"
                             >
                                 {{ column.cards.length
                                 }}<template v-if="column.total">
@@ -353,7 +353,7 @@ const workflowAllowed = computed(() =>
                                 @contextmenu="openMenu($event, card)"
                             >
                                 <span
-                                    class="block text-[13.5px] leading-[1.3] tracking-[-0.014em]"
+                                    class="block text-ui leading-[1.3] tracking-[-0.014em]"
                                     :class="
                                         DONE_STAGES.includes(column.stage) ||
                                         moving?.id === card.id
@@ -364,7 +364,7 @@ const workflowAllowed = computed(() =>
                                     {{ card.names }}
                                 </span>
                                 <span
-                                    class="mt-0.5 block text-[12px]"
+                                    class="mt-0.5 block text-small"
                                     :class="
                                         moving?.id === card.id
                                             ? 'text-mark'
@@ -393,12 +393,12 @@ const workflowAllowed = computed(() =>
                                         class="size-1.5 flex-none rounded-full"
                                         :class="TYPE_DOT[card.typeKey] ?? 'bg-faint'"
                                     />
-                                    <span class="text-[11.5px] leading-none text-muted-foreground">
+                                    <span class="text-small leading-none text-muted-foreground">
                                         {{ card.type }}
                                     </span>
                                     <span
                                         v-if="card.conflicts.length"
-                                        class="ml-auto text-[11.5px] leading-none text-destructive"
+                                        class="ml-auto text-small leading-none text-destructive"
                                     >
                                         {{ $t("board.dateDoubled") }}
                                     </span>
@@ -412,7 +412,7 @@ const workflowAllowed = computed(() =>
                                     class="mt-[9px] flex items-center gap-2.5 border-t border-sunk-2 pt-2"
                                 >
                                     <span
-                                        class="text-[13px] leading-none font-semibold tracking-[-0.02em] tabular-nums"
+                                        class="text-small leading-none font-semibold tracking-[-0.02em] tabular-nums"
                                     >
                                         {{
                                             card.value === null
@@ -422,7 +422,7 @@ const workflowAllowed = computed(() =>
                                     </span>
                                     <span
                                         v-if="!DONE_STAGES.includes(column.stage)"
-                                        class="ml-auto inline-flex items-center bg-no-repeat bg-[length:11px_11px] text-[11.5px] leading-none tabular-nums"
+                                        class="ml-auto inline-flex items-center bg-no-repeat bg-[length:11px_11px] text-small leading-none tabular-nums"
                                         :class="
                                             card.stale
                                                 ? 'h-[19px] rounded-md whitespace-nowrap bg-due-bg pr-[7px] pl-[22px] bg-[position:7px_center] bg-icon-clock-due font-medium text-due'
@@ -448,13 +448,13 @@ const workflowAllowed = computed(() =>
                         <button
                             v-for="option in pills"
                             :key="option.key"
-                            class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-pill)] px-3 py-1.5 text-[12.5px]"
+                            class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-pill)] px-3 py-1.5 text-small"
                             :class="stage === option.key ? 'bg-foreground text-paper' : 'bg-sunk text-foreground'"
                             type="button"
                             :aria-pressed="stage === option.key"
                             @click="pick(option.key)"
                         >
-                            {{ option.name }}<span class="text-[11.5px] tabular-nums opacity-60">{{ option.count }}</span>
+                            {{ option.name }}<span class="text-small tabular-nums opacity-60">{{ option.count }}</span>
                         </button>
 
                         <!-- Quer zu den Stufen, deshalb hinter dem Strich: der
@@ -464,7 +464,7 @@ const workflowAllowed = computed(() =>
                             <span class="mx-1 self-center h-[18px] w-px bg-rule" />
 
                             <button
-                                class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-pill)] bg-no-repeat bg-[length:12px_12px] bg-[position:12px_center] py-1.5 pr-3 pl-[28px] text-[12.5px]"
+                                class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-pill)] bg-no-repeat bg-[length:12px_12px] bg-[position:12px_center] py-1.5 pr-3 pl-[28px] text-small"
                                 :class="
                                     onlyStale
                                         ? 'bg-due-bg bg-icon-clock-due font-medium text-due'
@@ -475,7 +475,7 @@ const workflowAllowed = computed(() =>
                                 @click="onlyStale = !onlyStale"
                             >
                                 {{ $t("board.stale")
-                                }}<span class="text-[11.5px] tabular-nums opacity-60">{{ staleCount }}</span>
+                                }}<span class="text-small tabular-nums opacity-60">{{ staleCount }}</span>
                             </button>
                         </template>
                     </div>
@@ -532,7 +532,7 @@ const workflowAllowed = computed(() =>
                                 }}</TableCell>
                                 <TableCell>
                                     <span
-                                        class="inline-flex items-baseline gap-[7px] text-[12.5px]"
+                                        class="inline-flex items-baseline gap-[7px] text-small"
                                     >
                                         <s
                                             class="size-1.5 self-center rounded-full no-underline"
@@ -563,7 +563,7 @@ const workflowAllowed = computed(() =>
                                 <TableCell tone="muted" align="right">
                                     <span
                                         v-if="card.stale"
-                                        class="inline-flex items-center h-[19px] rounded-md whitespace-nowrap bg-due-bg bg-no-repeat bg-[length:11px_11px] bg-[position:7px_center] bg-icon-clock-due pr-[7px] pl-[22px] text-[11.5px] font-medium tabular-nums text-due"
+                                        class="inline-flex items-center h-[19px] rounded-md whitespace-nowrap bg-due-bg bg-no-repeat bg-[length:11px_11px] bg-[position:7px_center] bg-icon-clock-due pr-[7px] pl-[22px] text-small font-medium tabular-nums text-due"
                                     >
                                         {{ relative(card.lastAt) }}
                                     </span>
@@ -586,7 +586,7 @@ const workflowAllowed = computed(() =>
                     <div
                         v-for="column in columns"
                         :key="column.stage"
-                        class="rounded-lg px-[9px] py-1.5 text-[12.5px]"
+                        class="rounded-lg px-[9px] py-1.5 text-small"
                         :class="
                             column.stage === menu.card.stage
                                 ? 'cursor-default text-mark'
@@ -601,7 +601,7 @@ const workflowAllowed = computed(() =>
                     </div>
 
                     <div
-                        class="mt-1 cursor-pointer rounded-lg border-t border-rule px-[9px] py-1.5 text-[12.5px] hover:bg-sunk"
+                        class="mt-1 cursor-pointer rounded-lg border-t border-rule px-[9px] py-1.5 text-small hover:bg-sunk"
                         @click="closing = menu!.card.id; confirmingClose = true; menu = null"
                     >
                         {{ $t("board.close") }}

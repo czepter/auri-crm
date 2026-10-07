@@ -103,6 +103,8 @@ class GalleryIndexController extends Controller
             'title' => ['required', 'string', 'max:200'],
             'is_external' => ['required', 'boolean'],
             'external_url' => ['nullable', 'url', 'max:2000', 'required_if:is_external,true'],
+            'info' => ['nullable', 'string', 'max:2000'],
+            'external_password' => ['nullable', 'string', 'max:200'],
             'expires_at' => ['nullable', 'date'],
             'downloads_enabled' => ['nullable', 'boolean'],
             'lists_enabled' => ['nullable', 'boolean'],

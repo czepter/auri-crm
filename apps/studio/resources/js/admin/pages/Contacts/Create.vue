@@ -41,7 +41,7 @@ function submit() {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <div class="px-8 pt-[22px] max-[640px]:px-5 max-[640px]:pt-4">
-          <div class="text-[11px] tracking-[0.05em] uppercase text-ink-2">
+          <div class="text-small tracking-[0.05em] uppercase text-ink-2">
             <Link href="/kontakte">{{ $t('contacts.title') }}</Link>
           </div>
           <h1 class="m-0 mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px]">
@@ -86,7 +86,7 @@ function submit() {
 
           <div class="mt-2 flex items-center gap-3 pt-4 shadow-[inset_0_1px_0_var(--rule)] [&>button:last-child]:ml-auto">
             <Link
-              class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
+              class="text-small tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
               href="/kontakte"
             >{{ $t('common.cancel') }}</Link>
             <Button variant="pill" type="submit" :disabled="form.processing">{{ $t('contacts.submit') }}</Button>

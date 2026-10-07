@@ -23,10 +23,10 @@ const page = usePage()
        in tokens.css. Without it the global h1 wins over the caption below. -->
   <div data-tokens class="flex min-h-screen items-center justify-center p-6">
     <div class="w-full" :class="props.width ?? 'max-w-[368px]'">
-      <span class="block pb-6 text-[19px] leading-none font-bold tracking-[-0.035em] text-foreground">
+      <span class="block pb-6 text-title leading-none font-bold tracking-[-0.035em] text-foreground">
         {{ page.props.brand }}
       </span>
-      <h1 class="mb-1.5 text-[20px] leading-none font-bold tracking-[-0.04em]">{{ title }}</h1>
+      <h1 class="mb-1.5 text-title leading-none font-bold tracking-[-0.04em]">{{ title }}</h1>
       <slot />
     </div>
   </div>

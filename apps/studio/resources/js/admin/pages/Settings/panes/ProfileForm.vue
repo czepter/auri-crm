@@ -133,7 +133,7 @@ defineExpose({ form, submit, adaptExisting })
 <template>
   <form id="settings-form" @submit.prevent="submit">
     <div v-if="shows('brand')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.brand') }}</div>
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.brand') }}</div>
       <div class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.displayName')" id="p-anzeigename" :error="form.errors.display_name">
@@ -162,7 +162,7 @@ defineExpose({ form, submit, adaptExisting })
             <DropArea id="p-logo" accept="image/png,image/jpeg,image/webp,image/svg+xml" @files="(files) => (form.logo = files[0])">
               <img v-if="logoPreview" :src="logoPreview" :alt="$t('settings.logo')" class="size-20 flex-none rounded-[6px] bg-muted object-contain p-1.5" />
               <div v-else class="size-20 flex-none rounded-[6px] bg-muted" />
-              <span class="min-w-0 truncate text-[13px] text-foreground">{{ form.logo?.name ?? $t('common.drop') }}</span>
+              <span class="min-w-0 truncate text-small text-foreground">{{ form.logo?.name ?? $t('common.drop') }}</span>
             </DropArea>
           </Field>
 
@@ -187,8 +187,8 @@ defineExpose({ form, submit, adaptExisting })
               :data-font="pair.value"
             >
               <RadioGroupItem :value="pair.value" class="sr-only" />
-              <b class="block font-normal text-[26px] leading-[var(--display-leading)] font-[family-name:var(--font-display)] tracking-[var(--display-tracking)] text-foreground">{{ settings.displayName || pair.label }}</b>
-              <em class="mt-2 block font-sans text-[12.5px] leading-[1.5] font-normal not-italic text-muted-foreground">{{ pair.description }}</em>
+              <b class="block font-normal text-heading leading-[var(--display-leading)] font-[family-name:var(--font-display)] tracking-[var(--display-tracking)] text-foreground">{{ settings.displayName || pair.label }}</b>
+              <em class="mt-2 block font-sans text-small leading-[1.5] font-normal not-italic text-muted-foreground">{{ pair.description }}</em>
             </label>
           </RadioGroup>
         </Field>
@@ -196,7 +196,7 @@ defineExpose({ form, submit, adaptExisting })
     </div>
 
     <div v-if="shows('legal')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.legalEntity') }}</div>
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.legalEntity') }}</div>
       <div class="mb-6">
         <Field :label="$t('settings.legalName')" id="p-firma" wide :error="form.errors.legal_name">
           <Input id="p-firma" v-model="form.legal_name" type="text" />
@@ -257,7 +257,7 @@ defineExpose({ form, submit, adaptExisting })
     </div>
 
     <div v-if="shows('general')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.timezoneLabel') }}</div>
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.timezoneLabel') }}</div>
       <div class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :error="form.errors.timezone" v-slot="{ id }">
@@ -286,7 +286,7 @@ defineExpose({ form, submit, adaptExisting })
             <button
               v-if="browserZone"
               type="button"
-              class="self-start text-[11.5px] leading-[1.45] text-ink-2 underline"
+              class="self-start text-small leading-[1.45] text-ink-2 underline"
               @click="chooseZone(browserZone)"
             >
               {{ $t('settings.timezoneFromBrowser', { zone: browserZone }) }}
@@ -297,7 +297,7 @@ defineExpose({ form, submit, adaptExisting })
     </div>
 
     <div v-if="shows('tax')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.taxSection') }}</div>
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.taxSection') }}</div>
       <div class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.taxNumber')" id="p-steuernr" :error="form.errors.tax_number">
@@ -308,7 +308,7 @@ defineExpose({ form, submit, adaptExisting })
             <Input :id v-model="form.vat_id" class="tabular-nums" rule="vatId" type="text" />
           </Field>
         </div>
-        <span class="text-[11.5px] leading-[1.45] text-faint">{{ $t('settings.taxHint') }}</span>
+        <span class="text-small leading-[1.45] text-faint">{{ $t('settings.taxHint') }}</span>
       </div>
       <!-- Einzelunternehmen und GbR stehen in keinem Register; dasselbe
            Paar führt Impressum.vue. -->
@@ -325,7 +325,7 @@ defineExpose({ form, submit, adaptExisting })
     </div>
 
     <div v-if="shows('bank')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.bank') }}</div>
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.bank') }}</div>
       <div class="mb-6">
         <Field :label="$t('settings.bankAccountHolder')" id="p-kontoinhaber" wide :error="form.errors.bank_account_holder">
           <Input id="p-kontoinhaber" v-model="form.bank_account_holder" type="text" />

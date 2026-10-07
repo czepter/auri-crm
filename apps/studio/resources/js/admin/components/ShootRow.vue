@@ -25,19 +25,19 @@ function advance(status: string) {
         class="flex items-center gap-3.5 py-[11px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
     >
         <span
-            class="w-[150px] flex-none text-[13px] leading-[1.47] font-semibold tracking-[-0.012em] tabular-nums"
+            class="w-[150px] flex-none text-small leading-[1.47] font-semibold tracking-[-0.012em] tabular-nums"
         >
             {{ dayWithWeekday(shoot.date) }}
-            <span class="block text-[11.5px] leading-[1.47] font-normal text-ink-2">{{
+            <span class="block text-small leading-[1.47] font-normal text-ink-2">{{
                 shoot.statusLabel
             }}</span>
         </span>
-        <span class="min-w-0 flex-1 text-[13.5px] leading-[1.47]">
+        <span class="min-w-0 flex-1 text-ui leading-[1.47]">
             {{ shoot.label ?? shoot.kind }}
-            <span v-if="shoot.venue" class="text-[12px] leading-[1.47] text-ink-2">
+            <span v-if="shoot.venue" class="text-small leading-[1.47] text-ink-2">
                 · {{ shoot.venue }}</span>
         </span>
-        <span v-if="!$page.props.soloStudio" class="w-[118px] flex-none text-right text-[12px] leading-[1.47] text-ink-2">{{
+        <span v-if="!$page.props.soloStudio" class="w-[118px] flex-none text-right text-small leading-[1.47] text-ink-2">{{
             shoot.crew.map((member) => member.name).join(", ") || "—"
         }}</span>
         <div v-if="manageable && onward.length" class="flex flex-none">
@@ -59,10 +59,11 @@ function advance(status: string) {
                     <DropdownMenuItem v-for="status in onward" :key="status.value" @select="advance(status.value)">
                         {{ status.label }}
                     </DropdownMenuItem>
+                    <DropdownMenuItem v-if="archive" @select="advance(archive.value)">{{ archive.label }}</DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>
-        <DropdownMenu v-if="manageable && archive">
+        <DropdownMenu v-else-if="manageable && archive">
             <DropdownMenuTrigger as-child>
                 <Button variant="ghost" type="button" class="px-2" :aria-label="$t('project.more')">
                     <Ellipsis class="size-4" />

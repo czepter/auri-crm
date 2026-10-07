@@ -78,11 +78,11 @@ function cancelScheduled(messageId: string) {
   <div>
     <div v-if="inquiry" class="py-3">
       <div class="flex items-baseline gap-[9px]">
-        <span class="text-[13px] leading-[1.47] font-semibold tracking-[-0.012em]">{{ inquiry.author }}</span>
-        <span class="text-[11.5px] leading-[1.47] text-ink-2">{{ $t('project.lead') }}</span>
-        <span class="ml-auto text-[11.5px] leading-[1.47] tabular-nums text-ink-2">{{ longDateTime(inquiry.at) }}</span>
+        <span class="text-small leading-[1.47] font-semibold tracking-[-0.012em]">{{ inquiry.author }}</span>
+        <span class="text-small leading-[1.47] text-ink-2">{{ $t('project.lead') }}</span>
+        <span class="ml-auto text-small leading-[1.47] tabular-nums text-ink-2">{{ longDateTime(inquiry.at) }}</span>
       </div>
-      <div class="mt-[5px] max-w-[68ch] text-[13.5px] leading-[1.55] whitespace-pre-wrap">{{ inquiry.body }}</div>
+      <div class="mt-[5px] max-w-[68ch] text-body whitespace-pre-wrap">{{ inquiry.body }}</div>
     </div>
 
     <div
@@ -92,15 +92,15 @@ function cancelScheduled(messageId: string) {
       :class="message.fromStaff && 'pl-3.5 shadow-[inset_2px_0_0_var(--sunk-2)]'"
     >
       <div class="flex items-baseline gap-[9px]">
-        <span class="text-[13px] leading-[1.47] font-semibold tracking-[-0.012em]">{{ message.author }}</span>
-        <span class="ml-auto text-[11.5px] leading-[1.47] tabular-nums text-ink-2">{{ longDateTime(message.sentAt) }}</span>
+        <span class="text-small leading-[1.47] font-semibold tracking-[-0.012em]">{{ message.author }}</span>
+        <span class="ml-auto text-small leading-[1.47] tabular-nums text-ink-2">{{ longDateTime(message.sentAt) }}</span>
       </div>
-      <div class="mt-[5px] max-w-[68ch] text-[13.5px] leading-[1.55] whitespace-pre-wrap">{{ message.body }}</div>
+      <div class="mt-[5px] max-w-[68ch] text-body whitespace-pre-wrap">{{ message.body }}</div>
       <!-- Pending, not sent: shown where it will appear once it goes,
            with the one control that still applies to it. -->
-      <div v-if="message.scheduledFor" class="mt-1.5 flex items-baseline gap-2 text-[11.5px] leading-[1.47] text-ink-2">
+      <div v-if="message.scheduledFor" class="mt-1.5 flex items-baseline gap-2 text-small leading-[1.47] text-ink-2">
         {{ $t('project.messagesScheduledFor', { when: longDateTime(message.scheduledFor) }) }}
-        <Button type="button" variant="ghost" class="py-0 text-[11.5px] text-ink-2" @click="cancelScheduled(message.id)">
+        <Button type="button" variant="ghost" class="py-0 text-small text-ink-2" @click="cancelScheduled(message.id)">
           {{ $t('project.messagesCancelScheduled') }}
         </Button>
       </div>
@@ -119,10 +119,10 @@ function cancelScheduled(messageId: string) {
             {{ template.name }}
           </Button>
         </div>
-        <p v-for="template in brokenTemplates" :key="template.id" class="m-0 mb-1.5 text-[11.5px] leading-[1.47] text-destructive">
+        <p v-for="template in brokenTemplates" :key="template.id" class="m-0 mb-1.5 text-small leading-[1.47] text-destructive">
           {{ $t('project.messagesTemplateBroken', { name: template.name, fields: template.unknownFields.join(', ') }) }}
         </p>
-        <p v-if="thread?.recipients.length" class="m-0 mb-1.5 text-[11.5px] leading-[1.47] text-ink-2">
+        <p v-if="thread?.recipients.length" class="m-0 mb-1.5 text-small leading-[1.47] text-ink-2">
           {{ $t('project.messagesTo', { names: thread.recipients.join(', ') }) }}
         </p>
         <Field v-slot="{ id }" dense :error="reply.errors.body">
@@ -145,7 +145,7 @@ function cancelScheduled(messageId: string) {
             {{ reply.scheduled_for ? $t('project.messagesSchedule') : $t('project.messagesSend') }}
           </Button>
         </div>
-        <p v-if="reply.errors.scheduled_for" class="m-0 mt-1.5 text-[11.5px] leading-[1.47] text-destructive">{{ reply.errors.scheduled_for }}</p>
+        <p v-if="reply.errors.scheduled_for" class="m-0 mt-1.5 text-small leading-[1.47] text-destructive">{{ reply.errors.scheduled_for }}</p>
       </template>
 
       <template v-else>
@@ -163,7 +163,7 @@ function cancelScheduled(messageId: string) {
             {{ $t('project.messagesRecordSave') }}
           </Button>
         </div>
-        <p v-if="record.errors.sent_at" class="m-0 mt-1.5 text-[11.5px] leading-[1.47] text-destructive">{{ record.errors.sent_at }}</p>
+        <p v-if="record.errors.sent_at" class="m-0 mt-1.5 text-small leading-[1.47] text-destructive">{{ record.errors.sent_at }}</p>
       </template>
     </form>
   </div>

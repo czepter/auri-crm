@@ -29,7 +29,7 @@ function submit() {
   <!-- No sidebar: there is no navigation available to someone not signed in. -->
   <AuthLayout :title="$t('auth.signInTitle')">
     <form @submit.prevent="submit">
-      <p v-if="form.errors.email" class="mb-4 mt-1.5 flex items-center rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-[12.5px] leading-[1.3] font-medium text-destructive">
+      <p v-if="form.errors.email" class="mb-4 mt-1.5 flex items-center rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-small leading-[1.3] font-medium text-destructive">
         {{ form.errors.email }}
       </p>
 
@@ -87,7 +87,7 @@ function submit() {
       >
         {{ $t('auth.devLogin') }}
       </Button>
-      <p class="mt-1.5 text-center text-[11.5px] leading-[1.45] text-faint">
+      <p class="mt-1.5 text-center text-small leading-[1.45] text-faint">
         {{ $t('auth.devLoginHint') }}
       </p>
     </div>

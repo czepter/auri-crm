@@ -62,6 +62,9 @@ const gallery = {
   withdrawn: false,
   prerelease: false,
   isExternal: false,
+  externalUrl: null,
+  externalPassword: null,
+  info: null,
   canPublish: true,
 }
 

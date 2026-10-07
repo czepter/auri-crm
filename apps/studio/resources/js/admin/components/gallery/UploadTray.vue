@@ -30,11 +30,11 @@ const STATUS_KEY: Record<Exclude<TrayRow['status'], 'uploading'>, string> = {
 <template>
   <div v-if="rows.length > 0" class="fixed right-5 bottom-5 w-[260px] overflow-hidden rounded-lg border border-border bg-paper shadow-lg">
     <div class="border-b border-border px-3 py-2.5">
-      <b class="text-[12px] font-semibold">{{ $t('media.filesLabel') }}</b>
-      <span class="mt-0.5 block text-[11px] tabular-nums text-ink-2">{{ done }} / {{ rows.length }} · {{ percent }} %</span>
+      <b class="text-small font-semibold">{{ $t('media.filesLabel') }}</b>
+      <span class="mt-0.5 block text-small tabular-nums text-ink-2">{{ done }} / {{ rows.length }} · {{ percent }} %</span>
     </div>
     <span class="block h-[3px] bg-muted"><i class="block h-full bg-foreground" :style="{ width: `${percent}%` }" /></span>
-    <div v-for="row in rows.slice(0, 4)" :key="row.key" class="flex items-center gap-2 border-t border-border px-3 py-1.5 text-[11px]">
+    <div v-for="row in rows.slice(0, 4)" :key="row.key" class="flex items-center gap-2 border-t border-border px-3 py-1.5 text-small">
       <span class="min-w-0 flex-1 truncate">{{ row.name }}</span>
       <span v-if="row.redirectedTo" class="text-ink-2">{{ $t('media.landedIn', { set: row.redirectedTo }) }}</span>
       <span class="tabular-nums text-ink-2">{{ row.status === 'uploading' ? `${row.percent} %` : $t(STATUS_KEY[row.status]) }}</span>

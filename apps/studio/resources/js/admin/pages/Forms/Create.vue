@@ -80,7 +80,7 @@ const LONG = ['text', 'name_list', 'group_photos']
           <Card v-if="project && !instance" class="mt-5 max-w-[720px]" :title="$t('formTemplates.starterTitle')">
             <div class="flex flex-col gap-4">
               <div>
-                <span class="mb-1.5 block text-[13px]">{{ $t('formInstances.fromTemplate') }}</span>
+                <span class="mb-1.5 block text-small">{{ $t('formInstances.fromTemplate') }}</span>
                 <div class="flex flex-wrap gap-1.5">
                   <Button v-for="template in formTemplates" :key="template.value" variant="outline" type="button" @click="start(template.value)">
                     {{ template.label }}
@@ -88,7 +88,7 @@ const LONG = ['text', 'name_list', 'group_photos']
                 </div>
               </div>
               <div>
-                <span class="mb-1.5 block text-[13px]">{{ $t('formInstances.orBlank') }}</span>
+                <span class="mb-1.5 block text-small">{{ $t('formInstances.orBlank') }}</span>
                 <Button variant="outline" tone="accent" type="button" @click="start('')">{{ $t('formInstances.startBlank') }}</Button>
               </div>
             </div>
@@ -98,7 +98,7 @@ const LONG = ['text', 'name_list', 'group_photos']
             <form class="flex w-[720px] max-w-full flex-none flex-col gap-3" @submit.prevent="save">
               <Card :title="$t('formInstances.nameField')">
                 <Input v-model="form.name" type="text" maxlength="255" />
-                <p v-if="instance.sourceTemplateName" class="mt-1.5 text-[12px] text-ink-2">
+                <p v-if="instance.sourceTemplateName" class="mt-1.5 text-small text-ink-2">
                   {{ $t('formInstances.seededFrom', { name: instance.sourceTemplateName }) }}
                 </p>
               </Card>
@@ -119,7 +119,7 @@ const LONG = ['text', 'name_list', 'group_photos']
                  jede Änderung an einer Frage steht sofort hier. -->
             <section class="min-w-0 max-w-[420px] flex-1">
               <div class="flex items-center gap-2.5 border-b border-border pb-2.5">
-                <span class="text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('quotes.preview') }}</span>
+                <span class="text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('quotes.preview') }}</span>
               </div>
 
               <div class="mt-6 bg-sunk p-4">
@@ -128,12 +128,12 @@ const LONG = ['text', 'name_list', 'group_photos']
                   <h2 class="mt-2.5 mb-6 text-[28px] leading-[0.98] font-medium tracking-[-0.03em]">{{ form.name }}</h2>
 
                   <template v-for="(field, index) in form.fields" :key="index">
-                    <label v-if="field.type === 'boolean'" class="mb-4 flex items-start gap-2.5 text-[12px]">
+                    <label v-if="field.type === 'boolean'" class="mb-4 flex items-start gap-2.5 text-small">
                       <Checkbox disabled />
                       <span>{{ field.label }}</span>
                     </label>
                     <div v-else class="mb-4">
-                      <div class="mb-1.5 flex gap-1.5 text-[12px] font-medium">
+                      <div class="mb-1.5 flex gap-1.5 text-small font-medium">
                         {{ field.label }}
                         <em v-if="!field.required" class="font-normal text-ink-2 not-italic">{{ $t('settings.optional') }}</em>
                       </div>
@@ -141,7 +141,7 @@ const LONG = ['text', 'name_list', 'group_photos']
                     </div>
                   </template>
 
-                  <span class="inline-block rounded-[var(--r-pill)] bg-foreground px-5 py-2.5 text-[12px] font-semibold text-background">
+                  <span class="inline-block rounded-[var(--r-pill)] bg-foreground px-5 py-2.5 text-small font-semibold text-background">
                     {{ $t('common.save') }}
                   </span>
                 </div>

@@ -24,8 +24,8 @@ export const labelVariants = cva("", {
   variants: {
     variant: {
       field: [
-        "font-sans text-[10px] font-semibold uppercase leading-none tracking-[0.09em] text-faint",
-        "[&_em]:ml-1.5 [&_em]:text-[10px] [&_em]:font-normal [&_em]:normal-case [&_em]:not-italic [&_em]:tracking-[0.02em]",
+        "font-sans text-small font-semibold uppercase leading-none tracking-[0.06em] text-faint",
+        "[&_em]:ml-1.5 [&_em]:text-small [&_em]:font-normal [&_em]:normal-case [&_em]:not-italic [&_em]:tracking-[0.02em]",
       ],
       inline: "cursor-pointer select-none font-sans text-[13px] font-normal leading-[1.4] text-foreground",
       /*
@@ -33,7 +33,7 @@ export const labelVariants = cva("", {
        * where it is lighter and wider: the field below it is denser, and a
        * semibold caption at 10px would outweigh the value it names.
        */
-      micro: "pl-0.5 font-sans text-[10.5px] font-normal uppercase leading-none tracking-[0.05em] text-ink-2",
+      micro: "pl-0.5 font-sans text-small font-normal uppercase leading-none tracking-[0.05em] text-ink-2",
     },
   },
   defaultVariants: {

@@ -3,7 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Crm\Actions\OpenLeads;
-use App\Crm\Models\ClientCase;
+use App\Crm\Actions\OpenProjects;
 use App\Crm\Models\Stage;
 use App\Data\StaffProfileData;
 use App\Documents\Support\DocumentBlockCatalog;
@@ -96,10 +96,9 @@ class HandleInertiaRequests extends Middleware
                 // T-11's bell. Lazy like its neighbours, so a partial reload
                 // that does not ask for it pays nothing.
                 'unread' => fn () => $user->inAppNotifications()->whereNull('read_at')->count(),
-                // The same two filters /projekte itself applies: booked only,
-                // and only what this role may see. A badge that counts rows
-                // the list refuses to show is worse than no badge.
-                'projects' => fn () => ClientCase::query()->visibleTo($user)->booked()->count(),
+                // The projects the rail and the list's "Laufend" show: booked,
+                // visible to this role, not delivered, completed or closed.
+                'projects' => fn () => app(OpenProjects::class)->count($user),
             ],
             // Die laufende Version und ob release-log eine höhere kennt. Chrome
             // wie die Zähler darüber: die Zeile steht auf jedem Admin-Screen

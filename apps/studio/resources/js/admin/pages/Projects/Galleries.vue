@@ -53,10 +53,10 @@ function day(iso: string | null) {
             class="flex items-baseline gap-2.5 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
           >
             <div class="min-w-0 flex-1">
-              <Link :href="`/galerien/${gallery.id}`" class="text-[13px] leading-[1.3] font-semibold tracking-[-0.01em]">
+              <Link :href="`/galerien/${gallery.id}`" class="text-small leading-[1.3] font-semibold tracking-[-0.01em]">
                 {{ gallery.title ?? '—' }}
               </Link>
-              <span class="mt-0.5 block text-[11.5px] leading-[1.35] text-muted-foreground">
+              <span class="mt-0.5 block text-small leading-[1.35] text-muted-foreground">
                 {{
                   [
                     $t('project.galleryImages', { count: gallery.assetCount }),
@@ -67,7 +67,7 @@ function day(iso: string | null) {
                 }}
               </span>
             </div>
-            <span :class="['flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase', TONE[gallery.state]]">
+            <span :class="['flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase', TONE[gallery.state]]">
               {{ $t(`project.galleryState.${gallery.state}`) }}
             </span>
           </div>
@@ -81,13 +81,13 @@ function day(iso: string | null) {
             :key="shoot.id"
             class="flex items-center gap-2.5 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
           >
-            <div class="w-[54px] flex-none text-[12px] leading-[1.2] font-semibold tabular-nums">
+            <div class="w-[54px] flex-none text-small leading-[1.2] font-semibold tabular-nums">
               {{ dayAndMonth(shoot.date) ?? '—' }}
-              <em class="mt-0.5 block text-[10.5px] leading-[1.3] font-normal not-italic text-faint">
+              <em class="mt-0.5 block text-small leading-[1.3] font-normal not-italic text-faint">
                 {{ weekday(shoot.date) ?? $t('board.openDate') }}
               </em>
             </div>
-            <span class="min-w-0 flex-1 text-[13px] leading-[1.3] font-semibold tracking-[-0.01em]">{{ shoot.label ?? shoot.kind }}</span>
+            <span class="min-w-0 flex-1 text-small leading-[1.3] font-semibold tracking-[-0.01em]">{{ shoot.label ?? shoot.kind }}</span>
             <Button :as="Link" variant="outline" :href="`/galerien/neu?projekt=${header.id}&shooting=${shoot.id}`">{{ $t('galleries.create') }}</Button>
           </div>
         </Card>

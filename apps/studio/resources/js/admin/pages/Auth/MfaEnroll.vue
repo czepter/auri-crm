@@ -39,7 +39,7 @@ function submit() {
 
 <template>
   <AuthLayout :title="$t('auth.mfaEnrollTitle')" width="max-w-[400px]">
-    <p class="text-[11.5px] leading-[1.45] text-faint">{{ $t('auth.mfaEnrollRequired') }}</p>
+    <p class="text-small leading-[1.45] text-faint">{{ $t('auth.mfaEnrollRequired') }}</p>
 
     <img
       v-if="qrCodeDataUrl"
@@ -53,14 +53,14 @@ function submit() {
         {{ $t('auth.mfaSecretLabel') }}
       </Button>
       <code
-        class="mt-1.5 block overflow-hidden rounded-md border border-border px-[11px] py-[9px] font-mono text-[13px] tracking-[0.12em]"
+        class="mt-1.5 block overflow-hidden rounded-md border border-border px-[11px] py-[9px] font-mono text-small tracking-[0.12em]"
       >
         {{ secret }}
       </code>
     </details>
 
     <form @submit.prevent="submit">
-      <p v-if="form.errors.code" class="mb-4 mt-1.5 flex items-center rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-[12.5px] leading-[1.3] font-medium text-destructive">
+      <p v-if="form.errors.code" class="mb-4 mt-1.5 flex items-center rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-small leading-[1.3] font-medium text-destructive">
         {{ form.errors.code }}
       </p>
 

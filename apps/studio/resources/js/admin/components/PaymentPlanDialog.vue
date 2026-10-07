@@ -86,7 +86,7 @@ function submit() {
 
           <PaymentInstallmentsEditor v-model="form.installments" />
 
-          <p v-if="form.errors.installments" class="text-[12px] text-destructive">{{ form.errors.installments }}</p>
+          <p v-if="form.errors.installments" class="text-small text-destructive">{{ form.errors.installments }}</p>
         </form>
       </DialogBody>
 

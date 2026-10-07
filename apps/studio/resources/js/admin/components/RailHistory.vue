@@ -26,22 +26,22 @@ const byline = (author: string | null) =>
          Gruppen darüber eine Frage offen lassen. -->
     <div v-if="events.length" class="mt-7 border-t border-line-hover pt-3">
         <h3
-            class="m-0 mb-[7px] text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2"
+            class="m-0 mb-[7px] text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2"
         >
             {{ $t("project.history") }}
         </h3>
         <div
             v-for="entry in recent"
             :key="entry.key"
-            class="flex gap-2.5 py-1 text-[11.5px] leading-[1.47]"
+            class="flex gap-2.5 py-1 text-small leading-[1.47]"
         >
             <span class="w-[74px] flex-none text-ink-2">{{ entry.at ? day(entry.at) : "" }}</span>
             <span class="min-w-0 flex-1">{{ entry.body }}</span>
             <span v-if="byline(entry.author)" class="text-ink-2">{{ entry.author }}</span>
         </div>
         <template v-if="origin">
-            <div class="py-0.5 text-[11.5px] leading-[1.47] text-faint">⋯</div>
-            <div class="flex gap-2.5 py-1 text-[11.5px] leading-[1.47]">
+            <div class="py-0.5 text-small leading-[1.47] text-faint">⋯</div>
+            <div class="flex gap-2.5 py-1 text-small leading-[1.47]">
                 <span class="w-[74px] flex-none text-ink-2">{{ origin.at ? day(origin.at) : "" }}</span>
                 <span class="min-w-0 flex-1">{{ origin.body }}</span>
                 <span v-if="byline(origin.author)" class="text-ink-2">{{ origin.author }}</span>

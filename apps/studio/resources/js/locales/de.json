@@ -516,7 +516,8 @@
     "phase": {
       "upcoming": "Anstehend",
       "editing": "In Bearbeitung",
-      "delivered": "Geliefert"
+      "delivered": "Geliefert",
+      "closed": "Storniert"
     }
   },
   "calendar": {
@@ -983,6 +984,9 @@
     },
     "overdue": "Überfällig",
     "today": "Heute",
+    "project": "Projekt",
+    "blocked": "Wartet auf",
+    "anchor": "Frist",
     "empty": "Nichts offen."
   },
   "payments": {
@@ -1780,6 +1784,8 @@
     "create": "Galerie anlegen",
     "titleField": "Titel",
     "urlField": "Adresse",
+    "passwordField": "Passwort",
+    "infoField": "Info",
     "expiryField": "Gültig bis",
     "mode_internal": "Eigene Galerie",
     "mode_external": "Externer Link"

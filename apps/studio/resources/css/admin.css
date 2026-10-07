@@ -12,10 +12,10 @@
 
 /* Der einzige Ort in dieser Anwendung, an dem längerer Fließtext steht.
    Werte aus tokens.css; eigene Farben gibt es hier keine. */
-.help-prose { font-size: 13.5px; line-height: 1.6; }
-.help-prose h2 { margin: 1.5em 0 .4em; font-size: 14px; font-weight: 600; }
+.help-prose { font-size:var(--text-ui); line-height: 1.6; }
+.help-prose h2 { margin: 1.5em 0 .4em; font-size:var(--text-ui); font-weight: 600; }
 .help-prose h2:first-child { margin-top: 0; }
-.help-prose h3 { margin: 1.2em 0 .3em; font-size: 13.5px; font-weight: 600; }
+.help-prose h3 { margin: 1.2em 0 .3em; font-size:var(--text-ui); font-weight: 600; }
 .help-prose p { margin: 0 0 .8em; }
 .help-prose ul, .help-prose ol { margin: 0 0 .8em; padding-left: 1.2em; }
 .help-prose li { margin-bottom: .25em; }
@@ -24,7 +24,7 @@
   padding: .1em .3em;
   border-radius: var(--r-sm);
   background: var(--sunk);
-  font-size: 12.5px;
+  font-size:var(--text-small);
 }
 .help-prose pre {
   margin: 0 0 .8em;

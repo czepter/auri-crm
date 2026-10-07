@@ -47,7 +47,7 @@ const years = computed(() => [...new Set(props.bookings.map((row) => row.year))]
       <PortalHeader />
 
       <PortalWrap class="pb-[var(--band)]">
-        <p v-if="closed" class="pt-[var(--band)] text-[17px] leading-[1.55] text-muted-foreground">
+        <p v-if="closed" class="pt-[var(--band)] text-title leading-[1.55] text-muted-foreground">
           {{ maintenanceMessage }}
         </p>
 
@@ -56,7 +56,7 @@ const years = computed(() => [...new Set(props.bookings.map((row) => row.year))]
             <h1 class="font-serif text-[clamp(38px,14.3px+6.08vw,86px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
               {{ client }}
             </h1>
-            <p v-if="welcomeText" class="mt-6 max-w-[52ch] text-[17px] leading-[1.55] text-muted-foreground">
+            <p v-if="welcomeText" class="mt-6 max-w-[52ch] text-title leading-[1.55] text-muted-foreground">
               {{ welcomeText }}
             </p>
           </section>
@@ -81,7 +81,7 @@ const years = computed(() => [...new Set(props.bookings.map((row) => row.year))]
               <PortalLabel>{{ $t('portal.bookingsTitle') }}</PortalLabel>
 
               <template v-for="group in years" :key="group.year">
-                <div class="flex items-baseline gap-4 pt-8 pb-3 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">
+                <div class="flex items-baseline gap-4 pt-8 pb-3 text-small leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">
                   <span>{{ group.year }}</span>
                   <i class="h-px flex-1 bg-border" />
                 </div>

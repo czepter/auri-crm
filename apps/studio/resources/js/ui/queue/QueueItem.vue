@@ -38,13 +38,13 @@ function click(event: MouseEvent) {
     >
         <span class="flex items-baseline gap-2">
             <span
-                class="min-w-0 truncate text-[12.5px] leading-[1.47] font-semibold tracking-[-0.012em]"
+                class="min-w-0 truncate text-small leading-[1.47] font-semibold tracking-[-0.012em]"
             >
                 {{ name }}
             </span>
             <span
                 v-if="meta"
-                class="ml-auto flex-none text-[11px] leading-[1.47] whitespace-nowrap"
+                class="ml-auto flex-none text-small leading-[1.47] whitespace-nowrap"
                 :class="alert ? 'text-action' : 'text-ink-2'"
             >
                 {{ meta }}
@@ -53,14 +53,14 @@ function click(event: MouseEvent) {
 
         <span
             v-if="title"
-            class="mt-px block text-[11.5px] leading-[1.47] text-ink-2"
+            class="mt-px block text-small leading-[1.47] text-ink-2"
         >
             {{ title }}
         </span>
 
         <span
             v-if="snippet"
-            class="mt-0.5 line-clamp-2 text-[11.5px] leading-[1.47] text-ink-2"
+            class="mt-0.5 line-clamp-2 text-small leading-[1.47] text-ink-2"
         >
             {{ snippet }}
         </span>

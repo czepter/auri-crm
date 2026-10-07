@@ -980,6 +980,7 @@ Route::middleware('audience:staff')->group(function () {
         // wer etwas übernimmt, erledigt es nicht im selben Zug.
         Route::post('/aufgaben/{task}/zustaendig', [TaskController::class, 'assign'])
             ->name('tasks.assign');
+        Route::patch('/aufgaben/{task}', [TaskController::class, 'update'])->name('tasks.update');
         Route::delete('/aufgaben/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
 
         Route::post('/auftraege/{case}/notizen', [InternalNoteController::class, 'store'])

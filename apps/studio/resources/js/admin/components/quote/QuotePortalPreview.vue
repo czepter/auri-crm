@@ -23,20 +23,20 @@ const stages = computed(() => {
   return splitStages(gross, quote.value.paymentStages)
 })
 
-const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1.5] [&>td:last-child]:text-right [&>td:last-child]:tabular-nums [&>td:last-child]:whitespace-nowrap'
+const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-ui [&>td]:leading-[1.5] [&>td:last-child]:text-right [&>td:last-child]:tabular-nums [&>td:last-child]:whitespace-nowrap'
 </script>
 
 <template>
-  <div data-tokens data-theme="portal" class="bg-background text-[15px] leading-[1.6] text-foreground">
+  <div data-tokens data-theme="portal" class="bg-background text-body leading-[1.6] text-foreground">
     <PortalWrap class="py-10">
       <section>
-        <p class="mb-4 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">{{ projectName }}</p>
+        <p class="mb-4 text-small leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">{{ projectName }}</p>
         <h1 class="font-serif text-[clamp(32px,20px+1.6vw,44px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
           {{ $t('portal.quoteTitle') }}
         </h1>
       </section>
 
-      <div v-if="quote.intro" class="mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] [&_p+*]:mt-3 [&_*+p]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5" v-html="quote.intro" />
+      <div v-if="quote.intro" class="mt-8 max-w-[62ch] text-body leading-[1.6] [&_p+*]:mt-3 [&_*+p]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5" v-html="quote.intro" />
 
       <QuoteSlider
         v-if="quote.hourlyRate !== null"
@@ -54,7 +54,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
           <tr v-for="item in quote.items" :key="item.id" :class="[ROW, item.isIncluded && '[&>td]:text-muted-foreground']">
             <td>
               {{ item.title }}
-              <div v-if="item.description" class="text-[13px] leading-[1.45] text-muted-foreground">
+              <div v-if="item.description" class="text-small leading-[1.45] text-muted-foreground">
                 {{ item.description }}
               </div>
             </td>
@@ -70,13 +70,13 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
               <td>{{ $t('quotes.discount') }}</td>
               <td>−{{ formatEuros(quote.discountAmount) }}</td>
             </tr>
-            <tr :class="[ROW, '[&>td]:pt-2! [&>td]:font-serif [&>td]:text-[22px]!']">
+            <tr :class="[ROW, '[&>td]:pt-2! [&>td]:font-serif [&>td]:text-heading!']">
               <td>{{ $t('quotes.net') }}</td>
               <td>{{ formatEuros(quote.net) }}</td>
             </tr>
           </template>
 
-          <tr v-if="quote.vatMode === 'small_business'" :class="[ROW, '[&>td]:py-1! [&>td]:text-[13px]! [&>td]:text-muted-foreground']">
+          <tr v-if="quote.vatMode === 'small_business'" :class="[ROW, '[&>td]:py-1! [&>td]:text-small! [&>td]:text-muted-foreground']">
             <td colspan="2">{{ quote.vatNote }}</td>
           </tr>
           <template v-else-if="quote.vatMode === 'standard'">
@@ -84,7 +84,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
               <td>{{ $t('quotes.vat', { rate: basisPointsToPercent(quote.vatRate) }) }}</td>
               <td>{{ formatEuros(quote.vatAmount) }}</td>
             </tr>
-            <tr :class="[ROW, '[&>td]:pt-2! [&>td]:font-serif [&>td]:text-[22px]!']">
+            <tr :class="[ROW, '[&>td]:pt-2! [&>td]:font-serif [&>td]:text-heading!']">
               <td>{{ $t('quotes.total') }}</td>
               <td>{{ formatEuros(quote.net + quote.vatAmount) }}</td>
             </tr>
@@ -93,7 +93,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
 
         <table v-if="stages.length" class="mt-8 w-full max-w-[420px] border-collapse">
           <tr :class="[ROW, '[&>td]:border-b-0']">
-            <td colspan="2" class="text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">
+            <td colspan="2" class="text-small leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">
               {{ $t('quotes.payment') }}
             </td>
           </tr>
@@ -103,9 +103,9 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
           </tr>
         </table>
 
-        <div v-if="quote.outro" class="mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] [&_p+*]:mt-3 [&_*+p]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5" v-html="quote.outro" />
+        <div v-if="quote.outro" class="mt-8 max-w-[62ch] text-body leading-[1.6] [&_p+*]:mt-3 [&_*+p]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5" v-html="quote.outro" />
 
-        <p v-if="quote.validUntil" class="mt-8 text-[13px] text-muted-foreground">
+        <p v-if="quote.validUntil" class="mt-8 text-small text-muted-foreground">
           {{ $t('quotes.validUntil') }} {{ quote.validUntil }}
         </p>
       </div>

@@ -61,20 +61,20 @@ function aufLink(event: MouseEvent) {
       <button
         v-for="eintrag in eintraege"
         :key="eintrag.slug"
-        class="cursor-pointer rounded-[7px] border-0 bg-transparent px-2 py-1 text-[12px] leading-none"
+        class="cursor-pointer rounded-[7px] border-0 bg-transparent px-2 py-1 text-small leading-none"
         :class="eintrag.slug === slug ? 'bg-paper font-semibold text-foreground' : 'text-ink-2'"
         type="button"
         @click="gewaehlt = eintrag.slug; helpPanel.ueberschrieben.value = null"
       >{{ $t(`help.art.${eintrag.art}`) }}</button>
 
       <button
-        class="ml-auto cursor-pointer border-0 bg-transparent text-[12px] text-ink-2"
+        class="ml-auto cursor-pointer border-0 bg-transparent text-small text-ink-2"
         type="button"
         @click="helpPanel.schliessen()"
       >{{ $t('help.close') }}</button>
     </div>
 
-    <p v-if="fehler" class="text-[13px] text-foreground">
+    <p v-if="fehler" class="text-small text-foreground">
       {{ $t('help.loadFailed') }}
       <button class="cursor-pointer border-0 bg-transparent p-0 underline" type="button" @click="laden">
         {{ $t('help.retry') }}

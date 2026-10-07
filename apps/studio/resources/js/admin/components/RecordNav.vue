@@ -74,7 +74,7 @@ function drop(targetKey: string) {
 
     <template v-for="tab in tabs" :key="tab.key">
       <Link
-        class="flex items-center gap-2.5 rounded-[7px] px-2.5 py-[7px] text-[13px] leading-none whitespace-nowrap no-underline transition-[background-color] duration-[.12s] ease-out hover:bg-muted"
+        class="flex items-center gap-2.5 rounded-[7px] px-2.5 py-[7px] text-small leading-none whitespace-nowrap no-underline transition-[background-color] duration-[.12s] ease-out hover:bg-muted"
         :class="
           tab.key === active
             ? 'bg-muted font-semibold text-foreground'
@@ -83,7 +83,7 @@ function drop(targetKey: string) {
         :href="tab.href"
       >
         {{ $t(tab.label) }}
-        <span v-if="tab.count" class="ml-auto text-[11.5px] tabular-nums text-ink-2">
+        <span v-if="tab.count" class="ml-auto text-small tabular-nums text-ink-2">
           {{ tab.count }}<span v-if="tab.countTo !== null" class="px-1 text-faint">→</span>{{ tab.countTo }}
         </span>
       </Link>
@@ -105,12 +105,12 @@ function drop(targetKey: string) {
           @drop="drop(child.key)"
         >
           <Link
-            class="flex min-w-0 flex-1 items-center gap-2 px-2 py-[5px] text-[12.5px] leading-none whitespace-nowrap text-foreground no-underline"
+            class="flex min-w-0 flex-1 items-center gap-2 px-2 py-[5px] text-small leading-none whitespace-nowrap text-foreground no-underline"
             :class="child.reorderable && 'cursor-grab'"
             :href="child.href"
           >
             <span class="truncate">{{ child.translate ? $t(child.label) : child.label }}</span>
-            <span v-if="child.count" class="ml-auto text-[11px] tabular-nums text-ink-2">{{ child.count }}</span>
+            <span v-if="child.count" class="ml-auto text-small tabular-nums text-ink-2">{{ child.count }}</span>
           </Link>
 
           <slot name="child-actions" :child="child" />

@@ -58,7 +58,7 @@ function send() {
         <svg class="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
       </Button>
 
-      <h1 class="m-0 text-[17px] leading-[1.2] font-bold tracking-[-0.02em]">{{ $t('sendMail.title') }}</h1>
+      <h1 class="m-0 text-title leading-[1.2] font-bold tracking-[-0.02em]">{{ $t('sendMail.title') }}</h1>
     </header>
 
     <div class="flex min-h-0 flex-1">
@@ -68,12 +68,12 @@ function send() {
         <Field :label="$t('sendMail.recipient')" dense>
           <div class="flex flex-col gap-2">
             <div v-for="recipient in recipients" :key="recipient.email" class="flex items-center gap-2.5 rounded-md border border-border px-3 py-2.5">
-              <div class="flex size-[26px] flex-none items-center justify-center rounded-full bg-sunk text-[11px] font-semibold text-ink-2">
+              <div class="flex size-[26px] flex-none items-center justify-center rounded-full bg-sunk text-small font-semibold text-ink-2">
                 {{ recipient.name.slice(0, 1) }}
               </div>
               <div class="min-w-0 flex-1">
-                <div class="text-[13px] font-semibold">{{ recipient.name }}</div>
-                <div class="text-[12.5px] text-ink-2">{{ recipient.email }}</div>
+                <div class="text-small font-semibold">{{ recipient.name }}</div>
+                <div class="text-small text-ink-2">{{ recipient.email }}</div>
               </div>
             </div>
           </div>

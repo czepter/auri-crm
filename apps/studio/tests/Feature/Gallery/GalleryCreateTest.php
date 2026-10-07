@@ -80,6 +80,8 @@ it('sends an external gallery to its record instead', function () {
         'title' => 'Pixieset 2024',
         'is_external' => true,
         'external_url' => 'https://example.test/g/abc',
+        'info' => 'Passwort per Mail',
+        'external_password' => 'geheim',
     ]);
 
     $gallery = Gallery::sole();
@@ -87,7 +89,9 @@ it('sends an external gallery to its record instead', function () {
     $response->assertRedirect("/galerien/{$gallery->public_id}");
 
     expect($gallery->is_external)->toBeTrue()
-        ->and($gallery->external_url)->toBe('https://example.test/g/abc');
+        ->and($gallery->external_url)->toBe('https://example.test/g/abc')
+        ->and($gallery->info)->toBe('Passwort per Mail')
+        ->and($gallery->external_password)->toBe('geheim');
 });
 
 it('refuses an external gallery without a url', function () {

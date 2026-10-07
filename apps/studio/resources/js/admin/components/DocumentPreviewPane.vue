@@ -133,19 +133,19 @@ watch(
 <template>
   <section class="flex min-w-0 flex-col">
     <div class="flex items-center gap-2.5 border-b border-border pb-2.5">
-      <span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('documentTemplates.previewLabel') }}</span>
+      <span class="mb-[5px] text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('documentTemplates.previewLabel') }}</span>
       <slot />
       <div v-if="paper" class="ml-auto flex items-center gap-1.5">
         <button
           v-for="option in [{ key: 'fit', on: true }, { key: 'full', on: false }]"
           :key="option.key"
-          class="cursor-pointer rounded-lg border-0 px-2.5 py-[5px] text-[12px] leading-[1.3]"
+          class="cursor-pointer rounded-lg border-0 px-2.5 py-[5px] text-small leading-[1.3]"
           :class="fit === option.on ? 'bg-foreground text-background' : 'bg-sunk-2 text-foreground'"
           type="button"
           @click="fit = option.on"
         >{{ $t(`documentTemplates.zoom_${option.key}`) }}</button>
       </div>
-      <span class="text-[11px] leading-none" :class="[stale ? 'text-due' : 'text-faint', paper ? 'ml-2.5' : 'ml-auto']">{{
+      <span class="text-small leading-none" :class="[stale ? 'text-due' : 'text-faint', paper ? 'ml-2.5' : 'ml-auto']">{{
         stale ? $t('documentTemplates.previewStale') : $t('documentTemplates.previewFresh')
       }}</span>
     </div>

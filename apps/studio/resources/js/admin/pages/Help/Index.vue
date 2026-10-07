@@ -17,7 +17,7 @@ defineProps<{ aufgaben: Eintrag[]; referenz: Eintrag[] }>()
 
         <div class="px-8 pt-7 pb-8">
           <section v-for="gruppe in [{ key: 'aufgaben', rows: aufgaben }, { key: 'referenz', rows: referenz }]" :key="gruppe.key" class="mb-8">
-            <h2 class="mb-2 text-[10.5px] tracking-[0.06em] uppercase text-ink-2">
+            <h2 class="mb-2 text-small tracking-[0.06em] uppercase text-ink-2">
               {{ $t(`help.group.${gruppe.key}`) }}
             </h2>
 
@@ -27,8 +27,8 @@ defineProps<{ aufgaben: Eintrag[]; referenz: Eintrag[] }>()
               class="block border-b border-[var(--rule)] py-2.5 text-foreground no-underline last:border-0 hover:bg-sunk"
               :href="`/hilfe/${eintrag.slug}`"
             >
-              <span class="text-[14px] font-medium">{{ eintrag.titel }}</span>
-              <span class="ml-2 text-[13px] text-ink-2">{{ eintrag.beschreibung }}</span>
+              <span class="text-ui font-medium">{{ eintrag.titel }}</span>
+              <span class="ml-2 text-small text-ink-2">{{ eintrag.beschreibung }}</span>
             </Link>
           </section>
         </div>

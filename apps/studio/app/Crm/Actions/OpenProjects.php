@@ -42,7 +42,6 @@ class OpenProjects
             ->booked()
             ->with(['contacts', 'shoots', 'primaryShoot', 'lead', 'paymentPlan.installments'])
             ->get()
-            ->reject(fn (ClientCase $project) => $project->isClosed() || $project->isCompleted())
             ->map(fn (ClientCase $project) => $this->row($project, $open))
             ->filter();
 
@@ -57,14 +56,34 @@ class OpenProjects
         ])->all();
     }
 
-    /** @return array{group: string, row: ProjectQueueRowData}|null */
-    private function row(ClientCase $project, ?ClientCase $open): ?array
+    public function count(User $user): int
+    {
+        return ClientCase::query()
+            ->visibleTo($user)
+            ->booked()
+            ->with('shoots')
+            ->get()
+            ->filter(fn (ClientCase $project) => $this->isOpen($project))
+            ->count();
+    }
+
+    private function isOpen(ClientCase $project): bool
     {
         $shoot = $this->position->leastAdvanced($project->shoots);
 
-        if ($shoot === null || $shoot->status->sort_order >= $this->sortOf(StageAnchor::Delivered)) {
+        return ! $project->isClosed()
+            && ! $project->isCompleted()
+            && ($shoot === null || $shoot->status->sort_order < $this->sortOf(StageAnchor::Delivered));
+    }
+
+    /** @return array{group: string, row: ProjectQueueRowData}|null */
+    private function row(ClientCase $project, ?ClientCase $open): ?array
+    {
+        if (! $this->isOpen($project)) {
             return null;
         }
+
+        $shoot = $this->position->leastAdvanced($project->shoots);
 
         $stalled = $this->position->stalled($project->shoots);
         $late = $project->paymentPlan?->installments
@@ -81,7 +100,7 @@ class OpenProjects
             $stalled !== null => ['haengt', $stalled->date, 'status'],
             $late !== null => ['haengt', $late->due_on, 'payment'],
             $next !== null && $next->date->lte(today()->addDays(7)) => ['woche', null, null],
-            $shoot->status->sort_order >= $this->sortOf(StageAnchor::Shot) => ['bearbeitung', null, null],
+            $shoot !== null && $shoot->status->sort_order >= $this->sortOf(StageAnchor::Shot) => ['bearbeitung', null, null],
             default => ['spaeter', null, null],
         };
 
@@ -89,7 +108,7 @@ class OpenProjects
             id: $project->public_id,
             name: $project->contactNames(),
             date: ($stalled ?? $next ?? $project->primaryShoot)?->date?->format('Y-m-d'),
-            stage: $shoot->status->name,
+            stage: $shoot?->status->name ?? ($this->position)($project)->label,
             reason: $reason,
             days: $since === null ? null : (int) $since->copy()->startOfDay()->diffInDays(today()),
             open: $open !== null && $project->is($open),

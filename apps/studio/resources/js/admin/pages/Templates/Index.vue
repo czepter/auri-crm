@@ -146,7 +146,7 @@ function open(row: Row) {
 
         <div class="flex flex-wrap items-center gap-2 px-8 pt-5">
           <Link
-            class="rounded-lg px-2.5 py-[5px] text-[12.5px] leading-[1.3] no-underline"
+            class="rounded-lg px-2.5 py-[5px] text-small leading-[1.3] no-underline"
             :class="kind === null ? 'bg-foreground text-background' : 'bg-sunk-2 text-foreground'"
             href="/vorlagen"
           >
@@ -156,7 +156,7 @@ function open(row: Row) {
           <Link
             v-for="entry in kinds"
             :key="entry"
-            class="rounded-lg px-2.5 py-[5px] text-[12.5px] leading-[1.3] no-underline"
+            class="rounded-lg px-2.5 py-[5px] text-small leading-[1.3] no-underline"
             :class="kind === entry ? 'bg-foreground text-background' : 'bg-sunk-2 text-foreground'"
             :href="`/vorlagen?typ=${entry}`"
           >
@@ -169,7 +169,7 @@ function open(row: Row) {
           <!-- Übersicht: jede Art als eigene Karte, in der Reihenfolge der Chips. -->
           <div v-if="kind === null" class="max-w-[980px]">
             <section v-for="entry in kinds" :key="entry" class="mt-7 first:mt-0">
-              <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+              <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">
                 {{ $t(KIND_LABEL[entry]) }}
               </div>
 
@@ -182,24 +182,24 @@ function open(row: Row) {
                   v-bind="row.href ? { href: row.href } : { type: 'button', onClick: () => open(row) }"
                 >
                   <span class="min-w-0 flex-1">
-                    <span class="block text-[13px] leading-[1.3] font-semibold" :class="!row.active && 'text-muted-foreground'">{{ row.name }}</span>
-                    <span class="mt-px block text-[12px] leading-[1.3] text-muted-foreground">{{ row.meta }}</span>
+                    <span class="block text-small leading-[1.3] font-semibold" :class="!row.active && 'text-muted-foreground'">{{ row.name }}</span>
+                    <span class="mt-px block text-small leading-[1.3] text-muted-foreground">{{ row.meta }}</span>
                   </span>
-                  <span v-if="row.note" class="flex-none text-[12px] tabular-nums text-faint">{{ row.note }}</span>
+                  <span v-if="row.note" class="flex-none text-small tabular-nums text-faint">{{ row.note }}</span>
                   <span
                     v-if="!row.active"
-                    class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-faint"
+                    class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase text-faint"
                   >{{ $t('formTemplates.paused') }}</span>
                 </component>
 
                 <Link
                   v-if="matching(rows[entry]).length > 4"
-                  class="flex items-center gap-2.5 border-t border-border p-2.5 text-[12.5px] leading-[1.3] text-muted-foreground no-underline hover:bg-muted"
+                  class="flex items-center gap-2.5 border-t border-border p-2.5 text-small leading-[1.3] text-muted-foreground no-underline hover:bg-muted"
                   :href="`/vorlagen?typ=${entry}`"
                 >{{ $t('templates.more', { count: matching(rows[entry]).length - 4 }) }}</Link>
               </div>
 
-              <p v-else class="m-0 text-[12px] leading-[1.45] text-faint">{{ $t('templates.empty') }}</p>
+              <p v-else class="m-0 text-small leading-[1.45] text-faint">{{ $t('templates.empty') }}</p>
             </section>
           </div>
 
@@ -215,17 +215,17 @@ function open(row: Row) {
                 v-bind="row.href ? { href: row.href } : { type: 'button', onClick: () => open(row) }"
               >
                 <span class="min-w-0 flex-1">
-                  <span class="block text-[13px] leading-[1.3] font-semibold" :class="!row.active && 'text-muted-foreground'">{{ row.name }}</span>
-                  <span class="mt-px block text-[12px] leading-[1.3] text-muted-foreground">{{ row.meta }}</span>
+                  <span class="block text-small leading-[1.3] font-semibold" :class="!row.active && 'text-muted-foreground'">{{ row.name }}</span>
+                  <span class="mt-px block text-small leading-[1.3] text-muted-foreground">{{ row.meta }}</span>
                 </span>
-                <span v-if="row.note" class="flex-none text-[12px] tabular-nums text-faint">{{ row.note }}</span>
+                <span v-if="row.note" class="flex-none text-small tabular-nums text-faint">{{ row.note }}</span>
                 <span
                   v-if="!row.active"
-                  class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-faint"
+                  class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase text-faint"
                 >{{ $t('formTemplates.paused') }}</span>
               </component>
 
-              <p v-if="!matching(rows[kind]).length" class="m-0 text-[12px] leading-[1.45] text-faint">{{ $t('templates.empty') }}</p>
+              <p v-if="!matching(rows[kind]).length" class="m-0 text-small leading-[1.45] text-faint">{{ $t('templates.empty') }}</p>
             </div>
 
             <div v-if="editable && current" class="min-w-0 max-w-[600px] flex-1">

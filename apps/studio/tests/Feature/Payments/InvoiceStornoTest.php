@@ -117,6 +117,7 @@ it('refuses an invoice that is already cancelled', function () {
 
 it('leaves a cancelled rate out of overdue detection', function () {
     $installment = stornoableInstallment();
+    $installment->plan->installments()->where('id', '!=', $installment->id)->update(['due_on' => now()->addMonth()]);
     $installment->update(['due_on' => now()->subMonth()]);
 
     app(CancelInvoice::class)($installment->invoice, CancellationKind::Void, 'Termin abgesagt');
