@@ -64,6 +64,23 @@ it('completes a studio task', function () {
     expect($task->fresh()->isDone())->toBeTrue();
 });
 
+it('edits a task and keeps its anchor until the day changes', function () {
+    $staff = staffMember();
+    $task = Task::factory()->create(['case_id' => null, 'title' => 'Alt', 'due_on' => '2026-10-15', 'due_anchor' => 'x', 'due_offset_days' => 2]);
+
+    $this->actingAs($staff, 'staff')
+        ->patch("/aufgaben/{$task->public_id}", ['title' => 'Neu', 'due_on' => '2026-10-15'])
+        ->assertRedirect();
+
+    expect($task->fresh())->title->toBe('Neu')->due_anchor->toBe('x');
+
+    $this->actingAs($staff, 'staff')
+        ->patch("/aufgaben/{$task->public_id}", ['title' => 'Neu', 'due_on' => '2026-10-20']);
+
+    expect($task->fresh()->due_on->toDateString())->toBe('2026-10-20')
+        ->and($task->fresh()->due_anchor)->toBeNull();
+});
+
 it('lets two studio tasks depend on each other', function () {
     $first = Task::factory()->create(['case_id' => null, 'title' => 'Belege sammeln']);
     $second = Task::factory()->create(['case_id' => null]);

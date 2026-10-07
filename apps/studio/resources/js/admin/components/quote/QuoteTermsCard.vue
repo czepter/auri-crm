@@ -60,7 +60,7 @@ function removeStage(index: number) {
           <InputGroupAddon align="inline-end">%</InputGroupAddon>
         </InputGroup>
         <Input v-model="stage.label" class="w-[220px]" type="text" :placeholder="$t('quotes.stageLabel')" @blur="emit('change')" />
-        <span class="text-[13px] text-ink-2">{{ $t('quotes.stageAtLeast') }}</span>
+        <span class="text-small text-ink-2">{{ $t('quotes.stageAtLeast') }}</span>
         <InputGroup class="w-28">
           <InputGroupInput v-model="stage.minimum" class="text-right tabular-nums" type="text" inputmode="decimal" @blur="emit('change')" />
           <InputGroupAddon align="inline-end">€</InputGroupAddon>
@@ -70,7 +70,7 @@ function removeStage(index: number) {
 
       <div class="mt-1 flex items-center gap-3">
         <Button variant="outline" type="button" @click="addStage">{{ $t('quotes.addStage') }}</Button>
-        <span class="text-[13px] tabular-nums" :class="percentSum !== 100 ? 'font-semibold text-destructive' : 'text-ink-2'">
+        <span class="text-small tabular-nums" :class="percentSum !== 100 ? 'font-semibold text-destructive' : 'text-ink-2'">
           {{ percentSum === 100 ? '100 %' : $t('quotes.stagePercentOff', { percent: percentSum }) }}
         </span>
       </div>

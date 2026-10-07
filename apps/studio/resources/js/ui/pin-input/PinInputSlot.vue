@@ -18,7 +18,7 @@ const forwardedProps = useForwardProps(delegatedProps)
     v-bind="forwardedProps"
     inputmode="numeric"
     :class="cn(
-      'relative flex size-[38px] items-center justify-center border-y border-r border-input bg-background text-center font-sans text-[13px] tabular-nums text-foreground outline-none',
+      'relative flex size-[38px] items-center justify-center border-y border-r border-input bg-background text-center font-sans text-ui tabular-nums text-foreground outline-none',
       'transition-[border-color] duration-[120ms] ease-out first:rounded-l-[6px] first:border-l last:rounded-r-[6px]',
       'focus:z-10 focus:border-ring aria-invalid:border-destructive',
       'disabled:cursor-not-allowed disabled:opacity-50', props.class)"

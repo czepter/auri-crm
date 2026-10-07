@@ -148,7 +148,7 @@ function submit() {
               <button
                 v-for="option in (['fixed', 'anchor'] as const)"
                 :key="option"
-                class="cursor-pointer rounded-[var(--r-pill)] px-[11px] py-1 text-[11.5px] leading-none"
+                class="cursor-pointer rounded-[var(--r-pill)] px-[11px] py-1 text-small leading-none"
                 :class="mode === option ? 'bg-paper font-semibold' : 'text-ink-2'"
                 type="button"
                 @click="mode = option"
@@ -161,7 +161,7 @@ function submit() {
 
             <div v-else class="mt-2 flex flex-wrap items-center gap-2">
               <Input v-model="days" class="w-16" type="number" min="0" />
-              <span class="text-[12.5px] text-ink-2">{{ $t('common.unitDays') }}</span>
+              <span class="text-small text-ink-2">{{ $t('common.unitDays') }}</span>
 
               <Select v-model="direction">
                 <SelectTrigger class="w-24"><SelectValue /></SelectTrigger>

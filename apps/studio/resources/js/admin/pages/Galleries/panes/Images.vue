@@ -280,7 +280,7 @@ onUnmounted(() => {
          das Overlay faengt dragleave einmal ab statt bei jeder Kachel. -->
     <div
       v-if="dragging"
-      class="absolute inset-0 z-40 flex items-center justify-center rounded-lg border-2 border-dashed border-action bg-background/90 text-[14px] font-semibold"
+      class="absolute inset-0 z-40 flex items-center justify-center rounded-lg border-2 border-dashed border-action bg-background/90 text-ui font-semibold"
       @dragover.prevent
       @dragleave="dragging = false"
       @drop.prevent="dragging = false; picked(Array.from($event.dataTransfer?.files ?? []))"
@@ -289,17 +289,17 @@ onUnmounted(() => {
     </div>
 
     <div class="mb-3 flex items-center gap-3">
-      <h2 class="m-0 text-[17px] leading-[1.2] font-semibold tracking-[-0.022em]">
+      <h2 class="m-0 text-title leading-[1.2] font-semibold tracking-[-0.022em]">
         {{ activeSet === null ? $t('gallery.all') : activeSet.name }}
       </h2>
-      <span class="text-[12px] text-ink-2">{{ shown.length }}</span>
-      <span v-if="pendingShown.length > 0" class="text-[12px] text-ink-2">{{ $t('media.pendingCount', pendingShown.length) }}</span>
-      <div class="ml-auto flex items-center gap-3 text-[11.5px] text-ink-2">
+      <span class="text-small text-ink-2">{{ shown.length }}</span>
+      <span v-if="pendingShown.length > 0" class="text-small text-ink-2">{{ $t('media.pendingCount', pendingShown.length) }}</span>
+      <div class="ml-auto flex items-center gap-3 text-small text-ink-2">
         <template v-if="activeSet !== null">
           <button
             v-for="option in ['small', 'medium', 'large']"
             :key="option"
-            class="cursor-pointer border-0 bg-transparent text-[11.5px]"
+            class="cursor-pointer border-0 bg-transparent text-small"
             :class="density === option ? 'font-semibold text-foreground' : 'text-ink-2'"
             type="button"
             @click="setDensity(option)"
@@ -379,14 +379,14 @@ onUnmounted(() => {
       </div>
     </template>
 
-    <p v-if="precheckError" class="mt-2 text-[11.5px] text-destructive">{{ $t('media.precheckFailed') }}</p>
+    <p v-if="precheckError" class="mt-2 text-small text-destructive">{{ $t('media.precheckFailed') }}</p>
 
     <div v-if="failedAssets.length > 0" class="mt-6">
-      <div class="mb-2 text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">
+      <div class="mb-2 text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">
         {{ $t('media.needsAttention') }} · {{ $t('media.needsAttentionCount', failedAssets.length) }}
       </div>
       <div class="overflow-hidden rounded-md border border-border">
-        <div v-for="asset in failedAssets" :key="asset.publicId" class="flex items-center gap-2.5 border-t border-border p-2.5 text-[12.5px] first:border-t-0">
+        <div v-for="asset in failedAssets" :key="asset.publicId" class="flex items-center gap-2.5 border-t border-border p-2.5 text-small first:border-t-0">
           <span class="font-medium text-foreground">{{ asset.filename }}</span>
           <span class="text-ink-2">{{ asset.error }}</span>
           <Button class="ml-auto" variant="outline" type="button" @click="retryFailed(asset.publicId)">
@@ -402,7 +402,7 @@ onUnmounted(() => {
 
     <div
       v-if="selection.selected.size > 0"
-      class="fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-4 rounded-full bg-foreground px-5 py-2.5 text-[12.5px] text-paper"
+      class="fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-4 rounded-full bg-foreground px-5 py-2.5 text-small text-paper"
     >
       <b>{{ $t('galleryRecord.selected', selection.selected.size) }}</b>
       <!-- Die Auswahl ist eine Aktion, kein Zustand: der Wert bleibt leer,

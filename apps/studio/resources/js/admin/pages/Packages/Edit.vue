@@ -184,14 +184,14 @@ watch(() => form.data(), autosave, { deep: true })
           </Field>
 
           <div class="mt-8 first-of-type:mt-6">
-            <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.items') }}</div>
+            <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.items') }}</div>
             <PackageItemsEditor v-model="form.items" :package-id="package.id" :catalog-items="catalogItems" />
           </div>
 
           <div class="mt-8">
-            <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.showcase') }}</div>
+            <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.showcase') }}</div>
             <ShowcaseImages :base="`/pakete/${package.id}/schaufenster`" :count="package.showcaseCount" />
-            <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('packages.showcaseHint') }}</span>
+            <span class="text-small leading-[1.45] font-normal text-faint">{{ $t('packages.showcaseHint') }}</span>
           </div>
 
           <!-- Ein Paket ist eine Angebotsvorlage. Diese Felder machen daraus
@@ -203,7 +203,7 @@ watch(() => form.data(), autosave, { deep: true })
                ließe sich eine Leistung nicht einem einzelnen Kunden
                vorschlagen, ohne sie gleich allen hinzustellen. -->
           <div class="mt-8">
-            <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.portalSection') }}</div>
+            <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.portalSection') }}</div>
 
             <div class="flex items-center gap-2.5">
               <Switch id="portal-offered" v-model="form.portal_offered" />
@@ -253,7 +253,7 @@ watch(() => form.data(), autosave, { deep: true })
 
             <PreviewOverlay :min="1280" :label="$t('common.preview')" wrapper-class="mt-6">
               <div class="overflow-hidden rounded-[10px] border border-border">
-                <div class="border-b border-border px-[26px] py-4 text-[11px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">
+                <div class="border-b border-border px-[26px] py-4 text-small leading-none font-semibold tracking-[0.11em] uppercase text-faint">
                   {{ $t('packages.preview') }}
                 </div>
                 <PackagePortalPreview
@@ -274,20 +274,20 @@ watch(() => form.data(), autosave, { deep: true })
              über dieses Paket, keine über alle. -->
         <section v-if="requests.length" class="max-w-[640px] px-8 pb-8">
           <div class="mb-2.5 flex items-baseline gap-2.5">
-            <span class="text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.requestsSection') }}</span>
-            <span class="text-[11.5px] text-ink-2">{{ package.requestedCount }} · {{ $t('packages.bookedCount', { count: package.bookedCount }) }}</span>
+            <span class="text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.requestsSection') }}</span>
+            <span class="text-small text-ink-2">{{ package.requestedCount }} · {{ $t('packages.bookedCount', { count: package.bookedCount }) }}</span>
           </div>
           <div
             v-for="request in requests"
             :key="request.id"
             class="flex items-baseline gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
           >
-            <span class="w-[64px] flex-none text-[12px] tabular-nums text-ink-2">{{ request.requestedOn ? day(request.requestedOn) : '—' }}</span>
-            <span class="min-w-0 flex-1 text-[13px]">
+            <span class="w-[64px] flex-none text-small tabular-nums text-ink-2">{{ request.requestedOn ? day(request.requestedOn) : '—' }}</span>
+            <span class="min-w-0 flex-1 text-small">
               <a :href="`/projekte/${request.project}`">{{ request.contact }}</a>
-              <span v-if="request.date" class="block text-[12px] text-ink-2">{{ $t('packages.requestDate', { date: day(request.date) }) }}</span>
+              <span v-if="request.date" class="block text-small text-ink-2">{{ $t('packages.requestDate', { date: day(request.date) }) }}</span>
             </span>
-            <span class="text-[12.5px]" :class="request.booked ? 'text-action' : 'text-ink-2'">
+            <span class="text-small" :class="request.booked ? 'text-action' : 'text-ink-2'">
               {{ request.booked ? $t('packages.requestBooked') : $t('packages.requestOpen') }}
             </span>
           </div>

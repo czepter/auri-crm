@@ -106,10 +106,10 @@ function classes(entry: ReturnType<typeof cell>, height: string) {
 
     <section v-for="row in years" :key="row.year" class="mb-9">
       <div class="mb-2.5 flex items-baseline gap-2.5">
-        <b class="text-[17px] font-semibold tracking-[-0.02em] tabular-nums">{{ row.year }}</b>
-        <span class="text-[12.5px] text-ink-2">{{ $t('calendar.booked', { count: row.booked }) }}</span>
+        <b class="text-title font-semibold tracking-[-0.02em] tabular-nums">{{ row.year }}</b>
+        <span class="text-small text-ink-2">{{ $t('calendar.booked', { count: row.booked }) }}</span>
         <button
-          class="ml-auto flex cursor-pointer items-center gap-1 text-[12px] text-ink-2 hover:text-foreground"
+          class="ml-auto flex cursor-pointer items-center gap-1 text-small text-ink-2 hover:text-foreground"
           type="button"
           :aria-expanded="open.has(row.year)"
           @click="toggle(row.year)"
@@ -129,13 +129,13 @@ function classes(entry: ReturnType<typeof cell>, height: string) {
         <span
           v-for="month in row.months"
           :key="month.label"
-          class="text-[10.5px] leading-none font-semibold tracking-[0.06em] whitespace-nowrap uppercase text-ink-2"
+          class="text-small leading-none font-semibold tracking-[0.06em] whitespace-nowrap uppercase text-ink-2"
           :style="{ gridRow: 1, gridColumn: month.column }"
         >{{ month.label }}</span>
 
         <template v-if="open.has(row.year)">
           <template v-for="(weekday, offset) in WEEKDAYS" :key="weekday">
-            <span class="text-[10.5px] leading-[14px] text-ink-2" :style="{ gridRow: offset + 2, gridColumn: 1 }">{{ weekday }}</span>
+            <span class="text-small leading-[14px] text-ink-2" :style="{ gridRow: offset + 2, gridColumn: 1 }">{{ weekday }}</span>
             <component
               :is="week.days[offset].shoots.length === 1 ? Link : 'span'"
               v-for="(week, column) in row.weeks"
@@ -158,7 +158,7 @@ function classes(entry: ReturnType<typeof cell>, height: string) {
             :href="week.week.shoots.length === 1 ? `/auftraege/${week.week.shoots[0].projectId}` : undefined"
             :title="week.week.title || undefined"
           >
-            <b v-if="week.week.shoots.length > 1" class="text-[10px] leading-[18px] font-semibold text-paper">{{ week.week.shoots.length }}</b>
+            <b v-if="week.week.shoots.length > 1" class="text-small leading-[18px] font-semibold text-paper">{{ week.week.shoots.length }}</b>
           </component>
         </template>
       </div>
@@ -169,7 +169,7 @@ function classes(entry: ReturnType<typeof cell>, height: string) {
       {{ $t('calendar.later') }}
     </Button>
 
-    <div class="flex flex-wrap gap-4.5 text-[12px] text-ink-2">
+    <div class="flex flex-wrap gap-4.5 text-small text-ink-2">
       <span v-for="(tone, phase) in TONE" :key="phase" class="flex items-center gap-1.5"><i class="size-3 rounded-[3px]" :class="tone" />{{ $t(`projects.phase.${phase}`) }}</span>
       <span class="flex items-center gap-1.5"><i class="size-3 rounded-[3px] border border-rule" />{{ $t('calendar.free') }}</span>
       <span class="flex items-center gap-1.5"><i class="size-3 rounded-[3px]" :style="{ background: HATCH }" />{{ $t('calendar.away') }}</span>

@@ -141,7 +141,7 @@ function regenerateFeedUrl() {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('profile.kicker')" :title="$t(paneTitle)">
-          <span v-if="activeForm?.isDirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due">{{ $t('settings.unsaved') }}</span>
+          <span v-if="activeForm?.isDirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due">{{ $t('settings.unsaved') }}</span>
           <Button
             v-if="activeForm?.isDirty"
             class="ml-auto"
@@ -160,7 +160,7 @@ function regenerateFeedUrl() {
               <Link
                 v-for="item in NAV"
                 :key="item.key"
-                class="flex items-center gap-2.5 rounded-[7px] px-2.5 py-[9px] text-[14px] leading-none no-underline transition-[background-color] duration-[.12s] ease-out hover:bg-muted [&_svg]:size-[17px]"
+                class="flex items-center gap-2.5 rounded-[7px] px-2.5 py-[9px] text-ui leading-none no-underline transition-[background-color] duration-[.12s] ease-out hover:bg-muted [&_svg]:size-[17px]"
                 :class="item.key === pane ? 'font-semibold text-foreground [&_svg]:opacity-100' : 'font-normal text-muted-foreground [&_svg]:opacity-75'"
                 :href="item.href"
               >{{ $t(item.label) }}</Link>
@@ -208,7 +208,7 @@ function regenerateFeedUrl() {
 
               <form v-else-if="pane === 'sicherheit'" id="profile-sicherheit-form" @submit.prevent="submitPassword">
                 <div class="mt-8 first:mt-0">
-                  <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('profile.passwordSection') }}</div>
+                  <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('profile.passwordSection') }}</div>
                   <div class="mb-6">
                     <Field
                       :label="$t('profile.currentPassword')"
@@ -232,14 +232,14 @@ function regenerateFeedUrl() {
                 </div>
 
                 <div class="mt-8">
-                  <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('profile.mfaSection') }}</div>
-                  <div class="flex items-center gap-3 text-[13px] leading-none">
+                  <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('profile.mfaSection') }}</div>
+                  <div class="flex items-center gap-3 text-small leading-none">
                     <span>{{ mfaConfirmed ? $t('profile.mfaOn') : $t('profile.mfaOff') }}</span>
                     <Button v-if="!mfaConfirmed" as-child variant="ghost" type="button">
                       <Link href="/auth/mfa/enroll">{{ $t('profile.mfaEnroll') }}</Link>
                     </Button>
                   </div>
-                  <div v-if="mfaConfirmed" class="mt-4 flex items-center gap-3 text-[13px] leading-none">
+                  <div v-if="mfaConfirmed" class="mt-4 flex items-center gap-3 text-small leading-none">
                     <span>{{ $t('profile.recoveryCodesLeft', { count: recoveryCodesLeft }) }}</span>
                     <!-- Its own POST, not part of the password form: it hands back
                          eight codes on the screen that shows them once. -->
@@ -252,7 +252,7 @@ function regenerateFeedUrl() {
 
               <form v-else-if="pane === 'benachrichtigungen'" id="profile-benachrichtigungen-form" @submit.prevent="submitEvents">
                 <div class="mt-8 first:mt-0">
-                  <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('profile.backlogSection') }}</div>
+                  <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('profile.backlogSection') }}</div>
                   <div class="mb-6">
                     <div class="grid grid-cols-2 gap-4">
                       <Field
@@ -278,7 +278,7 @@ function regenerateFeedUrl() {
                 </div>
 
                 <div class="mt-8 first:mt-0">
-                  <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('profile.eventsSection') }}</div>
+                  <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('profile.eventsSection') }}</div>
                   <div class="mb-6">
                     <div class="grid grid-cols-2 gap-4">
                       <Field
@@ -304,7 +304,7 @@ function regenerateFeedUrl() {
                 </div>
 
                 <div class="mt-8">
-                  <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('profile.digestSection') }}</div>
+                  <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('profile.digestSection') }}</div>
                   <Field
                     :label="$t('profile.digestFrequency')"
                     id="digest-rhythmus"
@@ -332,8 +332,8 @@ function regenerateFeedUrl() {
               <!-- C-13 (#249): die Abo-Adresse ist ein Geheimnis pro Person,
                    also steht sie neben dem Weg, sie zurückzuziehen. -->
               <div v-else>
-                <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('calendar.feedUrl') }}</div>
-                <code class="block text-[13px] leading-[1.5] break-all">{{ calendarFeedUrl }}</code>
+                <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('calendar.feedUrl') }}</div>
+                <code class="block text-small leading-[1.5] break-all">{{ calendarFeedUrl }}</code>
                 <div class="mt-4 flex items-center gap-2">
                   <Button type="button" variant="pill-muted" @click="copyFeedUrl(calendarFeedUrl!)">
                     {{ copied ? $t('gallery.copied') : $t('gallery.copy') }}

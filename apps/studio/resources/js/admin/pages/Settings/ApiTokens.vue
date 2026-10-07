@@ -82,9 +82,9 @@ function revoke() {
 
             <div class="max-w-[620px] min-w-0 flex-1">
               <div v-if="secret" class="mb-8">
-                <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('apiTokens.secret') }}</div>
-                <code class="block break-all text-[14px] tabular-nums">{{ secret }}</code>
-                <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('apiTokens.secretHint') }}</span>
+                <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('apiTokens.secret') }}</div>
+                <code class="block break-all text-ui tabular-nums">{{ secret }}</code>
+                <span class="text-small leading-[1.45] font-normal text-faint">{{ $t('apiTokens.secretHint') }}</span>
                 <div class="mt-2">
                   <Button type="button" variant="pill-muted" @click="copy(secret)">
                     {{ copied === secret ? $t('gallery.copied') : $t('gallery.copy') }}
@@ -93,15 +93,15 @@ function revoke() {
               </div>
 
               <div v-if="tokens.length" class="mb-8">
-                <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('apiTokens.active') }}</div>
+                <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('apiTokens.active') }}</div>
                 <div
                   v-for="token in tokens"
                   :key="token.id"
                   class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]"
                 >
                   <div class="min-w-0 flex-1">
-                    <div class="text-[14px] font-semibold">{{ token.name }}</div>
-                    <div class="text-[11.5px] leading-[1.45] text-faint">
+                    <div class="text-ui font-semibold">{{ token.name }}</div>
+                    <div class="text-small leading-[1.45] text-faint">
                       {{ token.scopes.map((s) => labels[s] ?? s).join(', ') }} · {{ $d(new Date(token.createdAt)) }}
                     </div>
                   </div>
@@ -116,29 +116,29 @@ function revoke() {
               </div>
 
               <div class="mb-8">
-                <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">MCP</div>
+                <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">MCP</div>
                 <div
                   v-for="client in clients"
                   :key="client.name"
                   class="flex items-start gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]"
                 >
                   <div class="min-w-0 flex-1">
-                    <div class="text-[14px] font-semibold">{{ client.name }}</div>
-                    <pre class="m-0 mt-1 text-[12px] leading-[1.5] break-all whitespace-pre-wrap text-ink-2"><code>{{ client.setup }}</code></pre>
+                    <div class="text-ui font-semibold">{{ client.name }}</div>
+                    <pre class="m-0 mt-1 text-small leading-[1.5] break-all whitespace-pre-wrap text-ink-2"><code>{{ client.setup }}</code></pre>
                   </div>
                   <Button type="button" variant="pill-muted" @click="copy(client.setup)">
                     {{ copied === client.setup ? $t('gallery.copied') : $t('gallery.copy') }}
                   </Button>
                 </div>
-                <Link class="mt-2.5 inline-block text-[12.5px]" href="/hilfe/mcp-claude-verbinden">{{ $t('apiTokens.mcpHelp') }}</Link>
+                <Link class="mt-2.5 inline-block text-small" href="/hilfe/mcp-claude-verbinden">{{ $t('apiTokens.mcpHelp') }}</Link>
               </div>
 
               <form id="api-token-form" @submit.prevent="create">
-                <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('apiTokens.new') }}</div>
+                <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('apiTokens.new') }}</div>
                 <div class="mb-6 flex min-w-0 flex-col gap-1.5">
                   <Label for="api-token-name">{{ $t('apiTokens.name') }}</Label>
                   <Input id="api-token-name" v-model="form.name" type="text" maxlength="255" />
-                  <p v-if="form.errors.name" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.name }}</p>
+                  <p v-if="form.errors.name" class="text-small leading-[1.45] text-destructive">{{ form.errors.name }}</p>
                 </div>
                 <div class="mb-6">
                   <Label>{{ $t('apiTokens.scopes') }}</Label>
@@ -152,7 +152,7 @@ function revoke() {
                       <Label variant="inline" :for="`scope-${capability.value}`">{{ capability.label }}</Label>
                     </div>
                   </div>
-                  <p v-if="form.errors.scopes" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.scopes }}</p>
+                  <p v-if="form.errors.scopes" class="text-small leading-[1.45] text-destructive">{{ form.errors.scopes }}</p>
                 </div>
                 <Button type="submit" :disabled="form.processing">{{ $t('apiTokens.create') }}</Button>
               </form>

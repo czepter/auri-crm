@@ -19,7 +19,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
     v-bind="forwarded"
     :class="cn(
       'w-full rounded-[6px] border border-line-hover bg-background px-[11px] py-[7px]',
-      'font-sans text-[13px] leading-[1.35] text-foreground outline-none',
+      'font-sans text-ui leading-[1.35] text-foreground outline-none',
       'placeholder:text-faint hover:border-faint focus-visible:border-ring',
       props.class,
     )"

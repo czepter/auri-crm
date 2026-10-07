@@ -69,7 +69,7 @@ function submit() {
           kicker-href="/einstellungen/portal"
           :title="$t('portalSettings.contactTitle')"
         >
-          <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
+          <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
           <Button
             v-if="form.isDirty"
             class="ml-auto"
@@ -110,7 +110,7 @@ function submit() {
                     >
                       <img v-if="preview" :src="preview" alt="" class="size-20 flex-none rounded-full bg-muted object-cover" />
                       <div v-else class="size-20 flex-none rounded-full bg-muted" />
-                      <span class="min-w-0 truncate text-[13px] text-foreground">{{ form.portal_contact_avatar?.name ?? $t('common.drop') }}</span>
+                      <span class="min-w-0 truncate text-small text-foreground">{{ form.portal_contact_avatar?.name ?? $t('common.drop') }}</span>
                     </DropArea>
                     <Button v-if="settings.contactAvatarUrl" type="button" variant="outline" @click="removeAvatar">
                       {{ $t('common.remove') }}

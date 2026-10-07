@@ -82,7 +82,7 @@ function saveToContact() {
         @update:model-value="pick"
       />
       <template v-if="differsFromContact">
-        <span class="ml-auto text-[11.5px] text-ink-2">{{ $t('quotes.differsFromContact') }}</span>
+        <span class="ml-auto text-small text-ink-2">{{ $t('quotes.differsFromContact') }}</span>
         <Button type="button" variant="outline" :disabled="pending" @click="saveToContact">
           {{ $t('quotes.saveToContact') }}
         </Button>

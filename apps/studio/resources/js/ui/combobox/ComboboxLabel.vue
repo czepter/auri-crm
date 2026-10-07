@@ -15,7 +15,7 @@ const delegatedProps = reactiveOmit(props, "class")
   <ComboboxLabel
     data-slot="combobox-label"
     v-bind="delegatedProps"
-    :class="cn('px-[11px] py-[6px] text-[10px] font-semibold uppercase leading-none tracking-[0.09em] text-faint', props.class)"
+    :class="cn('px-[11px] py-[6px] text-small font-semibold uppercase leading-none tracking-[0.09em] text-faint', props.class)"
   >
     <slot />
   </ComboboxLabel>

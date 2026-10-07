@@ -30,7 +30,7 @@ defineExpose({ form, submit })
 <template>
   <form id="payment-form" @submit.prevent="submit">
     <div class="mt-0">
-      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.documentsPaymentLabel') }}</div>
+      <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.documentsPaymentLabel') }}</div>
       <div class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.paymentTermLabel')" id="d-zahlungsziel" :error="form.errors.payment_term_days" :hint="$t('settings.paymentTermHint')">
@@ -52,13 +52,13 @@ defineExpose({ form, submit })
     <!-- Die Mahnstufe stand bei Stripe, weil das Geld dort eingeht. Fällig
          wird eine Rate aber nach der Frist daneben. -->
     <div class="mt-8">
-      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('paymentSettings.remindersSection') }}</div>
+      <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('paymentSettings.remindersSection') }}</div>
       <div class="mb-6">
         <div class="flex items-center gap-2.5">
           <Checkbox id="cb-payments-reminders-enabled" v-model="form.payments_reminders_enabled" />
           <Label variant="inline" for="cb-payments-reminders-enabled">{{ $t('paymentSettings.remindersEnabled') }}</Label>
         </div>
-        <span class="text-[11.5px] leading-[1.45] text-faint">{{ $t('paymentSettings.remindersCadence') }}</span>
+        <span class="text-small leading-[1.45] text-faint">{{ $t('paymentSettings.remindersCadence') }}</span>
       </div>
     </div>
   </form>

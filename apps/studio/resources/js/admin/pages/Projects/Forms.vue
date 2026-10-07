@@ -168,16 +168,16 @@ function summary(instance: App.Crm.Data.FormInstanceData): string {
               :wide="field.type === 'group_photos'"
             >
               <template v-if="field.type === 'file'">
-                <div v-for="file in field.files" :key="file.id" class="flex items-center gap-2.5 text-[13.5px] leading-[1.35]">
+                <div v-for="file in field.files" :key="file.id" class="flex items-center gap-2.5 text-ui leading-[1.35]">
                   <span>{{ file.name }}</span>
-                  <Button v-if="header.canManageForms" variant="ghost" class="text-[12px]" type="button" @click="removeFile(file.id)">
+                  <Button v-if="header.canManageForms" variant="ghost" class="text-small" type="button" @click="removeFile(file.id)">
                     {{ $t('common.remove') }}
                   </Button>
                 </div>
                 <input
                   v-if="header.canManageForms"
                   :id="id"
-                  class="block text-[12.5px] leading-[1.45]"
+                  class="block text-small leading-[1.45]"
                   type="file"
                   :accept="accept(field)"
                   @change="uploadTo(field.id, $event)"
@@ -185,16 +185,16 @@ function summary(instance: App.Crm.Data.FormInstanceData): string {
               </template>
 
               <ol v-else-if="field.type === 'group_photos' && field.answeredAt" class="flex flex-col gap-0.5">
-                <li v-for="(shot, index) in shotPlan(field)" :key="index" class="flex items-baseline gap-2.5 text-[13.5px] leading-[1.47]">
+                <li v-for="(shot, index) in shotPlan(field)" :key="index" class="flex items-baseline gap-2.5 text-ui leading-[1.47]">
                   <span class="w-4 flex-none text-faint">{{ index + 1 }}</span>
                   <span class="grow">{{ shot.name }}</span>
-                  <span class="flex-none text-[11.5px] text-ink-2">{{ shot.members.join(', ') }}</span>
+                  <span class="flex-none text-small text-ink-2">{{ shot.members.join(', ') }}</span>
                 </li>
               </ol>
 
               <div
                 v-else-if="field.answeredAt && !header.canManageForms"
-                class="text-[13.5px] leading-[1.47] whitespace-pre-line"
+                class="text-ui leading-[1.47] whitespace-pre-line"
               >
                 {{ field.currentAnswer }}
               </div>
@@ -219,7 +219,7 @@ function summary(instance: App.Crm.Data.FormInstanceData): string {
                 <Textarea v-else :id="id" v-model="answerForms[field.id].value" rows="2" @change="answer(field.id)" />
               </template>
 
-              <span v-else class="text-[13.5px] leading-[1.47]">—</span>
+              <span v-else class="text-ui leading-[1.47]">—</span>
             </Field>
           </div>
 
@@ -248,13 +248,13 @@ function summary(instance: App.Crm.Data.FormInstanceData): string {
                  sah das Speichern aus, als täte es nichts. -->
             <p
               v-if="Object.keys(editForms[instance.id].errors).length"
-              class="mt-2 text-[11.5px] leading-[1.45] text-destructive"
+              class="mt-2 text-small leading-[1.45] text-destructive"
             >{{ Object.values(editForms[instance.id].errors)[0] }}</p>
           </template>
         </Card>
       </div>
 
-      <p v-if="!formInstances.length && !header.canManageForms" class="text-[11.5px] leading-[1.45] text-faint">{{ $t('formInstances.empty') }}</p>
+      <p v-if="!formInstances.length && !header.canManageForms" class="text-small leading-[1.45] text-faint">{{ $t('formInstances.empty') }}</p>
     </ProjectShell>
   </AdminLayout>
 </template>

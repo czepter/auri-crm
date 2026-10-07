@@ -7,6 +7,7 @@ import { Check, Copy } from 'lucide-vue-next'
 import { DatePicker } from '@/ui/date-picker'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
+import { Textarea } from '@/ui/textarea'
 import { Link } from '@inertiajs/vue3'
 import GalleryAccess from '@/admin/components/gallery/GalleryAccess.vue'
 import { addressPrefix } from '@/admin/lib/galleryAddress'
@@ -23,6 +24,10 @@ const props = defineProps<{
     downloadPin: string | null
     requiresVerifiedEmail: boolean
     expiresAt: string | null
+    isExternal: boolean
+    externalUrl: string | null
+    externalPassword: string | null
+    info: string | null
     offers: { downloads: boolean; lists: boolean; comments: boolean }
   }
   siblings: { id: string; title: string | null; assetCount: number; open: boolean }[]
@@ -46,6 +51,16 @@ const pill = computed<Record<string, boolean | null>>(() => ({
 // Allgemein: the address and the expiry, the two facts a studio actually
 // changes after a gallery already exists.
 const general = useForm({ slug: props.gallery.slug, expires_at: props.gallery.expiresAt ?? '' })
+
+const external = useForm({
+  external_url: props.gallery.externalUrl ?? '',
+  external_password: props.gallery.externalPassword ?? '',
+  info: props.gallery.info ?? '',
+})
+
+function saveExternal() {
+  external.patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
+}
 
 function saveGeneral() {
   general.transform((data) => ({ ...data, expires_at: data.expires_at === '' ? null : data.expires_at }))
@@ -128,7 +143,7 @@ function day(iso: string | null) {
       <Link
         v-for="name in SECTIONS"
         :key="name"
-        class="flex items-center gap-2 rounded-lg px-3 py-2 text-[12.5px] whitespace-nowrap no-underline"
+        class="flex items-center gap-2 rounded-lg px-3 py-2 text-small whitespace-nowrap no-underline"
         :class="settingsSection === name ? 'bg-sunk-2 font-semibold text-foreground' : 'text-foreground'"
         :href="`/galerien/${gallery.id}/einstellungen/${name}`"
       >
@@ -145,8 +160,24 @@ function day(iso: string | null) {
   <template v-if="settingsSection === 'allgemein'">
     <h2 class="mt-0">{{ $t('galleryRecord.settingsNav.allgemein') }}</h2>
 
+    <div v-if="gallery.isExternal" class="mb-5 flex max-w-[440px] flex-col gap-4 pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
+      <div class="flex flex-col gap-1.5">
+        <Label for="gallery-url">{{ $t('galleries.urlField') }}</Label>
+        <Input id="gallery-url" v-model="external.external_url" type="url" @blur="saveExternal" />
+        <p v-if="external.errors.external_url" class="text-[11.5px] leading-[1.45] text-destructive">{{ external.errors.external_url }}</p>
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <Label for="gallery-password">{{ $t('galleries.passwordField') }}</Label>
+        <Input id="gallery-password" v-model="external.external_password" type="text" @blur="saveExternal" />
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <Label for="gallery-info">{{ $t('galleries.infoField') }}</Label>
+        <Textarea id="gallery-info" v-model="external.info" rows="3" @blur="saveExternal" />
+      </div>
+    </div>
+
     <div class="mb-5 flex flex-col gap-2 pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
-      <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.slugLabel') }}</div>
+      <div class="text-small tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.slugLabel') }}</div>
       <!-- Ein Feld, nicht zwei Dinge nebeneinander: der feste Teil der
            Adresse ist nichts zum Tippen, und kopiert wird die ganze. -->
       <InputGroup class="max-w-[440px]">
@@ -163,20 +194,20 @@ function day(iso: string | null) {
           <Copy v-else />
         </button>
       </InputGroup>
-      <p v-if="general.errors.slug" class="text-[11.5px] leading-[1.45] text-destructive">{{ general.errors.slug }}</p>
+      <p v-if="general.errors.slug" class="text-small leading-[1.45] text-destructive">{{ general.errors.slug }}</p>
       <!-- The one fact nobody could derive from a text field: there is no
            slug history, so a link already in an inbox stops resolving. -->
-      <p class="text-[11.5px] leading-[1.45] text-faint">{{ $t('galleryRecord.slugHint') }}</p>
+      <p class="text-small leading-[1.45] text-faint">{{ $t('galleryRecord.slugHint') }}</p>
     </div>
 
     <div class="mb-5 flex items-start gap-[26px] pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
       <div v-if="gallery.eventDate" class="flex min-w-0 flex-col gap-2">
-        <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.eventDate') }}</div>
-        <div class="mt-[5px] text-[15px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ day(gallery.eventDate) }}</div>
+        <div class="text-small tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.eventDate') }}</div>
+        <div class="mt-[5px] text-body leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ day(gallery.eventDate) }}</div>
       </div>
 
       <div class="flex min-w-0 flex-col gap-2">
-        <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.expiry') }}</div>
+        <div class="text-small tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.expiry') }}</div>
         <!-- One-way, not v-model: general.expires_at must hold only a
              settled value — see saveGeneral()'s own doc, and the note on
              saveExpiryOnBlur() above. update:modelValue would otherwise write
@@ -190,9 +221,9 @@ function day(iso: string | null) {
     <h2 class="mt-9">{{ $t('galleryRecord.versions') }}</h2>
     <div class="mb-9">
       <div v-for="version in versions" :key="version.version" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none">
-        <span class="w-[62px] flex-none text-[12px] font-semibold tracking-[-0.01em] tabular-nums">{{ $t('galleryRecord.version', { version: version.version }) }}</span>
-        <span class="text-[13px] font-medium tracking-[-0.01em]">{{ $t('contacts.assetCount', version.assetCount) }}</span>
-        <span class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">{{ day(version.publishedAt) }}</span>
+        <span class="w-[62px] flex-none text-small font-semibold tracking-[-0.01em] tabular-nums">{{ $t('galleryRecord.version', { version: version.version }) }}</span>
+        <span class="text-small font-medium tracking-[-0.01em]">{{ $t('contacts.assetCount', version.assetCount) }}</span>
+        <span class="ml-auto text-small whitespace-nowrap text-ink-2">{{ day(version.publishedAt) }}</span>
       </div>
     </div>
   </template>
@@ -207,7 +238,7 @@ function day(iso: string | null) {
     </div>
 
     <div class="flex flex-col gap-2">
-      <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('gallery.gateDownload') }}</div>
+      <div class="text-small tracking-[0.06em] uppercase text-ink-2">{{ $t('gallery.gateDownload') }}</div>
       <Input v-model="downloadPin.download_pin" class="w-[110px]" type="text" @blur="saveDownloadPin" />
     </div>
   </template>
@@ -221,11 +252,11 @@ function day(iso: string | null) {
 
     <div>
       <div v-for="list in lists" :key="list.id" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none">
-        <span class="text-[13px] font-medium tracking-[-0.01em]">{{ list.name ?? $t('gallery.heart') }}</span>
-        <span class="w-14 flex-none text-[10.5px] tracking-[0.05em] uppercase text-ink-2">{{ list.owner ?? $t('galleryRecord.guest') }}</span>
-        <span class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">{{ $t('contacts.assetCount', list.count) }}</span>
+        <span class="text-small font-medium tracking-[-0.01em]">{{ list.name ?? $t('gallery.heart') }}</span>
+        <span class="w-14 flex-none text-small tracking-[0.05em] uppercase text-ink-2">{{ list.owner ?? $t('galleryRecord.guest') }}</span>
+        <span class="ml-auto text-small whitespace-nowrap text-ink-2">{{ $t('contacts.assetCount', list.count) }}</span>
       </div>
-      <p v-if="!lists.length" class="text-[11.5px] leading-[1.45] text-faint">{{ $t('gallery.listEmpty') }}</p>
+      <p v-if="!lists.length" class="text-small leading-[1.45] text-faint">{{ $t('gallery.listEmpty') }}</p>
     </div>
   </template>
 

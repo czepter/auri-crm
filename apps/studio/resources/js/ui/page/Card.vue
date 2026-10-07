@@ -46,7 +46,7 @@ function cancel() {
             class="flex h-[46px] cursor-pointer items-center gap-3 px-[18px]"
             @click="open = !open"
         >
-            <h2 class="m-0 text-[13.5px] leading-[1.2] font-semibold tracking-[-0.015em]">
+            <h2 class="m-0 text-ui leading-[1.2] font-semibold tracking-[-0.015em]">
                 {{ title }}
             </h2>
             <slot name="meta" />
@@ -60,13 +60,13 @@ function cancel() {
                 <template v-if="editable && open">
                     <a
                         v-if="!editing"
-                        class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
+                        class="text-small tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
                         href="#"
                         @click.stop.prevent="start"
                     >{{ $t('common.edit') }}</a>
                     <template v-else>
                         <a
-                            class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-ink-2 no-underline hover:underline"
+                            class="text-small tracking-[-0.01em] whitespace-nowrap text-ink-2 no-underline hover:underline"
                             href="#"
                             @click.stop.prevent="cancel"
                         >{{ $t('common.cancel') }}</a>

@@ -50,7 +50,7 @@ const optional = computed(() => props.items.filter((item) => item.selectable && 
 </script>
 
 <template>
-  <div data-tokens data-theme="portal" class="bg-background text-[15px] leading-[1.6] text-foreground">
+  <div data-tokens data-theme="portal" class="bg-background text-body leading-[1.6] text-foreground">
     <PortalWrap class="py-10">
       <section class="max-w-[20ch]">
         <h1 class="font-serif text-[clamp(32px,20px+1.6vw,44px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
@@ -64,12 +64,12 @@ const optional = computed(() => props.items.filter((item) => item.selectable && 
            — er hätte den Preisblock hier immer zu breit gemacht. -->
       <div class="grid items-start gap-10 pt-10">
         <div>
-          <p v-if="description" class="max-w-[54ch] text-[16px] leading-[1.55] text-muted-foreground">{{ description }}</p>
+          <p v-if="description" class="max-w-[54ch] text-body leading-[1.55] text-muted-foreground">{{ description }}</p>
 
           <section v-if="included.length" class="mt-10">
             <PortalLabel class="mb-5">{{ $t('portal.includedTitle') }}</PortalLabel>
             <div class="border-t border-border">
-              <p v-for="(item, index) in included" :key="index" class="border-b border-border py-3.5 text-[15px]">
+              <p v-for="(item, index) in included" :key="index" class="border-b border-border py-3.5 text-body">
                 {{ [item.title, item.description].filter(Boolean).join(' · ') }}
               </p>
             </div>
@@ -78,7 +78,7 @@ const optional = computed(() => props.items.filter((item) => item.selectable && 
           <section v-if="optional.length" class="mt-10">
             <PortalLabel class="mb-5">{{ $t('portal.optionalTitle') }}</PortalLabel>
             <div class="border-t border-border">
-              <p v-for="(item, index) in optional" :key="index" class="flex gap-4 border-b border-border py-3.5 text-[15px]">
+              <p v-for="(item, index) in optional" :key="index" class="flex gap-4 border-b border-border py-3.5 text-body">
                 <span class="flex-1">{{ [item.title, item.description].filter(Boolean).join(' · ') }}</span>
                 <span class="flex-none tabular-nums text-muted-foreground">{{ $t('portal.addOnPrice', { price: formatEuros(gross(item.addOnPrice ?? 0)) }) }}</span>
               </p>
@@ -88,8 +88,8 @@ const optional = computed(() => props.items.filter((item) => item.selectable && 
 
         <div>
           <PortalLabel class="mb-2">{{ $t('portal.totalTitle') }}</PortalLabel>
-          <span class="block text-[26px] leading-none font-semibold tracking-[-0.022em] tabular-nums">{{ price }}</span>
-          <span v-if="vatRate && props.price !== null" class="mt-[7px] block text-[13px] text-muted-foreground">
+          <span class="block text-heading leading-none font-semibold tracking-[-0.022em] tabular-nums">{{ price }}</span>
+          <span v-if="vatRate && props.price !== null" class="mt-[7px] block text-small text-muted-foreground">
             {{ $t('portal.vatNote', { rate: basisPointsToPercent(vatRate) }) }}
           </span>
 

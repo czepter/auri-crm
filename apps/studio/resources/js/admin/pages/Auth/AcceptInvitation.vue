@@ -24,7 +24,7 @@ function submit() {
 
 <template>
   <AuthLayout :title="$t('invite.title', { name })">
-      <p class="mb-6 text-[11.5px] leading-[1.45] font-normal text-faint">
+      <p class="mb-6 text-small leading-[1.45] font-normal text-faint">
         {{ $t('invite.hint', { email, role: roleLabel }) }}
       </p>
 
@@ -37,7 +37,7 @@ function submit() {
             type="password"
             autocomplete="new-password"
             required />
-          <p class="text-[11.5px] leading-[1.45] text-destructive" v-if="form.errors.password">{{ form.errors.password }}</p>
+          <p class="text-small leading-[1.45] text-destructive" v-if="form.errors.password">{{ form.errors.password }}</p>
         </Field>
 
         <Field class="mb-6">

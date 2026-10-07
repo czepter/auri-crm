@@ -16,8 +16,8 @@ const open = defineModel<boolean>('open', { required: true })
       :aria-expanded="open"
       @click="open = !open"
     >
-      <span class="flex-1 truncate text-[14px] font-semibold tracking-[-0.02em]">{{ title }}</span>
-      <span v-if="!open" class="flex min-w-0 items-center gap-2 text-[12.5px] text-ink-2">
+      <span class="flex-1 truncate text-ui font-semibold tracking-[-0.02em]">{{ title }}</span>
+      <span v-if="!open" class="flex min-w-0 items-center gap-2 text-small text-ink-2">
         <slot name="summary">{{ summary }}</slot>
       </span>
       <svg

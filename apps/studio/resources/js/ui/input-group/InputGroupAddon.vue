@@ -18,7 +18,7 @@ const props = withDefaults(defineProps<{
     data-slot="input-group-addon"
     :data-align="align"
     :class="cn(
-      'pointer-events-none flex select-none items-center py-[9px] font-sans text-[13px] leading-[1.35] text-faint',
+      'pointer-events-none flex select-none items-center py-[9px] font-sans text-ui leading-[1.35] text-faint',
       align === 'inline-start' ? 'pl-[11px]' : 'pr-[11px]',
       props.class,
     )"

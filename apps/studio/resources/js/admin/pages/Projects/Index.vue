@@ -41,9 +41,9 @@ const today = isoDate(new Date())
 
 // #364: the list groups by where the work stands. Delivered reads newest
 // first — the one delivered last week is the one somebody asks about.
-const PHASES: [Phase, 1 | -1][] = [['upcoming', 1], ['editing', 1], ['delivered', -1]]
+const PHASES: [Phase, 1 | -1][] = [['upcoming', 1], ['editing', 1], ['delivered', -1], ['closed', -1]]
 
-const inScope = computed(() => props.projects.filter((project) => scope.value === 'all' || project.phase !== 'delivered'))
+const inScope = computed(() => props.projects.filter((project) => scope.value === 'all' || project.phase !== 'delivered' && project.phase !== 'closed'))
 
 const pills = computed(() => props.stages
   .map((option) => ({ ...option, count: inScope.value.filter((project) => project.positionKey === option.key).length }))
@@ -197,13 +197,13 @@ function reset() {
               <button
                 v-for="option in pills"
                 :key="option.key"
-                class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-pill)] px-3 py-1.5 text-[12.5px]"
+                class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-pill)] px-3 py-1.5 text-small"
                 :class="stage === option.key ? 'bg-foreground text-paper' : 'bg-sunk text-foreground'"
                 type="button"
                 :aria-pressed="stage === option.key"
                 @click="pick(option.key)"
               >
-                {{ option.name }}<span class="text-[11.5px] tabular-nums opacity-60">{{ option.count }}</span>
+                {{ option.name }}<span class="text-small tabular-nums opacity-60">{{ option.count }}</span>
               </button>
             </div>
             <Input v-model="query" class="ml-auto h-8 w-60" type="search" :placeholder="$t('projects.searchPlaceholder')" />
@@ -264,8 +264,8 @@ function reset() {
             @drop.prevent="onDrop(index)"
           >
             <header class="flex items-baseline gap-1.5 px-1 pt-0.5 pb-1">
-              <b class="text-[11px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ column.name }}</b>
-              <span class="ml-auto text-[11px] tabular-nums text-ink-2">
+              <b class="text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ column.name }}</b>
+              <span class="ml-auto text-small tabular-nums text-ink-2">
                 {{ column.cards.length }}<template v-if="column.total"> · {{ formatEurosRounded(column.total) }}</template>
               </span>
             </header>
@@ -284,27 +284,27 @@ function reset() {
                 @keydown="onKey($event, project, index)"
                 @contextmenu="openMenu($event, project)"
               >
-                <span class="block text-[13.5px] leading-[1.3] font-semibold tracking-[-0.014em]" :class="moving?.id === project.id && 'font-medium text-ink-2'">
+                <span class="block text-ui leading-[1.3] font-semibold tracking-[-0.014em]" :class="moving?.id === project.id && 'font-medium text-ink-2'">
                   {{ project.name }}
                 </span>
-                <span class="mt-0.5 block text-[12px]" :class="moving?.id === project.id ? 'text-mark' : 'text-ink-2'">
+                <span class="mt-0.5 block text-small" :class="moving?.id === project.id ? 'text-mark' : 'text-ink-2'">
                   <span :class="late(project) && moving?.id !== project.id && 'font-medium text-destructive'">{{ project.date ? day(project.date) : $t('board.openDate') }}</span>
                   <template v-if="project.venue"> · {{ project.venue }}</template>
                 </span>
                 <span class="mt-1.5 flex items-center gap-1.5">
                   <span class="size-1.5 flex-none rounded-full" :class="TYPE_DOT[project.typeKey] ?? 'bg-faint'" />
-                  <span class="text-[11.5px] leading-none text-muted-foreground">{{ project.type }}</span>
-                  <span v-if="project.taskCount" class="ml-auto text-[11.5px] leading-none tabular-nums text-ink-2">
+                  <span class="text-small leading-none text-muted-foreground">{{ project.type }}</span>
+                  <span v-if="project.taskCount" class="ml-auto text-small leading-none tabular-nums text-ink-2">
                     {{ project.taskCount - project.openTasks }}/{{ project.taskCount }}
                   </span>
                 </span>
                 <span class="mt-[9px] flex items-center gap-2.5 border-t border-sunk-2 pt-2">
-                  <span v-if="project.value !== null" class="text-[13px] leading-none font-semibold tracking-[-0.02em] tabular-nums">
+                  <span v-if="project.value !== null" class="text-small leading-none font-semibold tracking-[-0.02em] tabular-nums">
                     {{ formatEurosRounded(project.value) }}
                   </span>
                   <span
                     v-if="project.lastAt"
-                    class="ml-auto inline-flex items-center bg-no-repeat bg-[length:11px_11px] pl-4 bg-[position:left_center] bg-icon-clock text-[11.5px] leading-none tabular-nums text-ink-2"
+                    class="ml-auto inline-flex items-center bg-no-repeat bg-[length:11px_11px] pl-4 bg-[position:left_center] bg-icon-clock text-small leading-none tabular-nums text-ink-2"
                   >
                     {{ relative(project.lastAt) }}
                   </span>
@@ -325,7 +325,7 @@ function reset() {
             <div
               v-for="column in columns"
               :key="column.key"
-              class="rounded-lg px-[9px] py-1.5 text-[12.5px]"
+              class="rounded-lg px-[9px] py-1.5 text-small"
               :class="column.key === menu.project.positionKey ? 'cursor-default text-mark' : 'cursor-pointer hover:bg-sunk'"
               @click="column.key !== menu.project.positionKey && move(menu.project.id, column.key)"
             >

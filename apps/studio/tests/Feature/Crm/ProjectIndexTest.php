@@ -1,5 +1,6 @@
 <?php
 
+use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\ClientCase;
@@ -115,4 +116,12 @@ it('moves every open shoot to the stage a card is dropped on', function () {
 
     expect($first->fresh()->status->key)->toBe(ShootStatus::Culling->value)
         ->and($second->fresh()->status->key)->toBe(ShootStatus::Culling->value);
+});
+
+it('files a closed project under closed, not upcoming', function () {
+    $project = bookedProject();
+    Shoot::factory()->for($project, 'case')->primary()->on('2022-06-25')->create();
+    $project->forceFill(['closed_at' => now(), 'close_outcome' => LeadOutcome::Closed])->save();
+
+    expect(projectRows()[0])->toMatchArray(['position' => 'Storniert', 'phase' => 'closed']);
 });

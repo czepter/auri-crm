@@ -53,7 +53,7 @@ function submit() {
             </Field>
 
             <div class="mt-8 first-of-type:mt-6">
-              <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.items') }}</div>
+              <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.items') }}</div>
               <PackageItemsEditor v-model="form.items" :catalog-items="catalogItems" />
             </div>
 

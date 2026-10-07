@@ -17,7 +17,7 @@ defineEmits<{ toggle: [] }>()
 <template>
   <tr data-slot="table-group-row">
     <td
-      class="bg-sunk px-8 pt-4 pb-1.5 align-baseline text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2"
+      class="bg-sunk px-6 first:pl-8 last:pr-8 pt-4 pb-1.5 align-baseline text-small leading-none font-semibold tracking-[0.06em] uppercase text-ink-2"
       :colspan="colspan"
     >
       <button

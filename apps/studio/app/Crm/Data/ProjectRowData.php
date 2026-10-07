@@ -56,6 +56,7 @@ class ProjectRowData extends Data
             position: $at->label,
             positionKey: $stage?->key,
             phase: match (true) {
+                $at->source === 'lost' => 'closed',
                 $at->source === 'completed' => 'delivered',
                 $stage !== null => $vocabulary->phase($stage),
                 default => 'upcoming',

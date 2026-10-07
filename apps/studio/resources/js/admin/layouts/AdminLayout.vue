@@ -88,7 +88,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
             >
                 <div class="mb-px flex items-start gap-1 pb-5.5 max-[1080px]:hidden">
                     <Link
-                        class="flex min-w-0 flex-1 items-center rounded-lg px-2.5 text-[17px] leading-none font-semibold tracking-[-0.024em] text-foreground no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk"
+                        class="flex min-w-0 flex-1 items-center rounded-lg px-2.5 text-body leading-none font-semibold tracking-[-0.024em] text-foreground no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk"
                         href="/"
                     >
                         {{ $page.props.brand }}
@@ -107,7 +107,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                 <!-- Above the navigation, not in it: it does not change page, it
              opens a tool. The shortcut stands where a count would. -->
                 <button
-                    class="mb-4 flex w-full cursor-pointer items-center gap-2.25 rounded-lg border-0 bg-sunk px-2.5 py-1.5 text-left text-[13px] leading-[1.47] tracking-[-0.01em] text-ink-2 transition-colors duration-[120ms] ease-out hover:bg-sunk-2 max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2 max-[640px]:hidden"
+                    class="mb-4 flex w-full cursor-pointer items-center gap-2.25 rounded-lg border-0 bg-sunk px-2.5 py-1.5 text-left text-ui leading-[1.47] tracking-[-0.01em] text-ink-2 transition-colors duration-[120ms] ease-out hover:bg-sunk-2 max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2 max-[640px]:hidden"
                     type="button"
                     @click="palette?.open()"
                 >
@@ -122,7 +122,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                     <!-- font-sans against the browser's monospace default for kbd; the
                shorthand in crm.css carried the family along. -->
                     <kbd
-                        class="ml-auto font-sans text-[11px] leading-none font-medium tabular-nums text-ink-2 max-[1080px]:hidden"
+                        class="ml-auto font-sans text-small leading-none font-medium tabular-nums text-ink-2 max-[1080px]:hidden"
                         >⌘K</kbd
                     >
                 </button>
@@ -135,7 +135,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                    the rows again. -->
                         <button
                             v-if="item.fold"
-                            class="flex w-full cursor-pointer items-center border-0 bg-transparent px-2.5 pb-1.5 text-left text-[10.5px] tracking-[0.06em] uppercase text-ink-2 transition-colors duration-[120ms] ease-out hover:text-foreground max-[1080px]:hidden"
+                            class="flex w-full cursor-pointer items-center border-0 bg-transparent px-2.5 pb-1.5 text-left text-small tracking-[0.06em] uppercase text-ink-2 transition-colors duration-[120ms] ease-out hover:text-foreground max-[1080px]:hidden"
                             type="button"
                             :aria-expanded="studioOpen"
                             @click="studioOpen = !studioOpen"
@@ -151,7 +151,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                         </button>
                         <div
                             v-else
-                            class="px-2.5 pb-1.5 text-[10.5px] tracking-[0.06em] uppercase text-ink-2 max-[1080px]:hidden"
+                            class="px-2.5 pb-1.5 text-small tracking-[0.06em] uppercase text-ink-2 max-[1080px]:hidden"
                         >
                             {{ item.group }}
                         </div>
@@ -162,7 +162,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                they would be unreachable there. -->
                     <template v-else-if="item.children">
                         <button
-                            class="mb-px flex w-full cursor-pointer items-center gap-2.25 rounded-lg border-0 bg-transparent px-2.5 py-1.5 text-left text-[13px] tracking-[-0.01em] text-foreground transition-colors duration-[120ms] ease-out hover:bg-sunk max-[1080px]:hidden"
+                            class="mb-px flex w-full cursor-pointer items-center gap-2.25 rounded-lg border-0 bg-transparent px-2.5 py-1.5 text-left text-ui tracking-[-0.01em] text-foreground transition-colors duration-[120ms] ease-out hover:bg-sunk max-[1080px]:hidden"
                             type="button"
                             :aria-expanded="collectorsOpen[item.key!]"
                             @click="collectorsOpen[item.key!] = !collectorsOpen[item.key!]"
@@ -193,7 +193,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                             <Link
                                 v-for="child in item.children"
                                 :key="child.key"
-                                class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 py-1 text-[12.5px] tracking-[-0.01em] text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2"
+                                class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 py-1 text-ui tracking-[-0.01em] text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2"
                                 :class="
                                     child.key === props.active &&
                                     'bg-sunk-2 font-semibold text-foreground'
@@ -218,7 +218,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                from one. -->
                     <Link
                         v-else
-                        class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 py-1.5 text-[13px] tracking-[-0.01em] text-foreground no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2"
+                        class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 py-1.5 text-ui tracking-[-0.01em] text-foreground no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2"
                         :class="[
                             item.key === props.active &&
                                 'bg-sunk-2 font-semibold',
@@ -244,7 +244,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                         }}</span>
                         <span
                             v-if="item.count !== undefined"
-                            class="ml-auto text-[11.5px] tabular-nums text-ink-2 max-[640px]:hidden"
+                            class="ml-auto text-small tabular-nums text-ink-2 max-[640px]:hidden"
                         >
                             {{ item.count }}
                         </span>
@@ -260,7 +260,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                 <div class="mt-auto mb-1.5 flex items-center gap-1 max-[1080px]:hidden">
                     <Link
                         v-if="release"
-                        class="flex items-center gap-[7px] rounded-lg px-2.5 py-1.5 text-[11.5px] leading-none tabular-nums text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground"
+                        class="flex items-center gap-[7px] rounded-lg px-2.5 py-1.5 text-ui leading-none tabular-nums text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground"
                         :class="props.active === 'neuigkeiten' && 'bg-sunk-2 font-semibold text-foreground'"
                         href="/neuigkeiten"
                     >
@@ -279,10 +279,10 @@ const collectorsOpen = ref<Record<string, boolean>>(
              centring inside the avatar. -->
                 <DropdownMenu>
                     <DropdownMenuTrigger
-                        class="flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent p-2.5 text-left text-[12.5px] leading-none font-medium text-foreground transition-colors duration-[120ms] ease-out hover:bg-sunk data-[state=open]:bg-sunk max-[1080px]:hidden"
+                        class="flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent p-2.5 text-left text-ui leading-none font-medium text-foreground transition-colors duration-[120ms] ease-out hover:bg-sunk data-[state=open]:bg-sunk max-[1080px]:hidden"
                     >
                         <span
-                            class="flex size-6 flex-none items-center justify-center rounded-full bg-[#F0F0F2] text-[10px] font-semibold text-ink-2"
+                            class="flex size-6 flex-none items-center justify-center rounded-full bg-[#F0F0F2] text-small font-semibold text-ink-2"
                         >
                             {{ initials }}
                         </span>

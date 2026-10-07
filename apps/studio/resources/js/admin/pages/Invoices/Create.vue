@@ -170,7 +170,7 @@ function submit() {
               <LetterField v-model="texts.outro" />
             </Field>
 
-            <p v-if="errors.invoice" class="text-[12px] text-destructive">{{ errors.invoice }}</p>
+            <p v-if="errors.invoice" class="text-small text-destructive">{{ errors.invoice }}</p>
 
             <div>
               <Button type="submit" :disabled="!draft.rows.length || (!contact && !newContact && !project) || form.processing">

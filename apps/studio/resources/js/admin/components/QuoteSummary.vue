@@ -19,7 +19,7 @@ const top = computed(() => topLines(props.quote.items))
       <span
         v-for="old in superseded"
         :key="old.id"
-        class="rounded-[var(--r-pill)] bg-sunk px-[11px] py-[5px] text-[12px] leading-[1.4] text-ink-2 line-through"
+        class="rounded-[var(--r-pill)] bg-sunk px-[11px] py-[5px] text-small leading-[1.4] text-ink-2 line-through"
       >
         {{ old.number ?? $t('quotes.draft') }} {{ formatEurosRounded(old.net) }}
       </span>
@@ -27,18 +27,18 @@ const top = computed(() => topLines(props.quote.items))
 
     <div>
       <LineItems :items="top.shown" />
-      <div v-if="top.rest" class="py-2 text-[12.5px] leading-[1.47] text-ink-2 shadow-[inset_0_1px_0_var(--rule)]">
+      <div v-if="top.rest" class="py-2 text-small leading-[1.47] text-ink-2 shadow-[inset_0_1px_0_var(--rule)]">
         {{ $t('quotes.more', { count: top.rest }) }}
       </div>
     </div>
 
     <div class="flex items-baseline gap-3.5 pt-2.5 shadow-[inset_0_1px_0_#D8D8DC]">
-      <span class="min-w-0 flex-1 text-[13px] leading-[1.47] font-semibold">{{ $t('quotes.total') }}</span>
-      <span class="w-28 flex-none text-right text-[15px] leading-[1.47] font-semibold tracking-[-0.018em] tabular-nums">
+      <span class="min-w-0 flex-1 text-small leading-[1.47] font-semibold">{{ $t('quotes.total') }}</span>
+      <span class="w-28 flex-none text-right text-body leading-[1.47] font-semibold tracking-[-0.018em] tabular-nums">
         {{ formatEurosRounded(quote.net) }}
       </span>
     </div>
 
-    <p v-if="validUntilLabel" class="mt-[7px] text-[12px] leading-[1.47] text-ink-2">{{ validUntilLabel }}</p>
+    <p v-if="validUntilLabel" class="mt-[7px] text-small leading-[1.47] text-ink-2">{{ validUntilLabel }}</p>
   </div>
 </template>

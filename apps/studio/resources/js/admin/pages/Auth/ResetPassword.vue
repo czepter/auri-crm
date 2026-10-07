@@ -25,7 +25,7 @@ function submit() {
 <template>
   <AuthLayout :title="$t('reset.newTitle')">
       <form @submit.prevent="submit">
-        <p v-if="form.errors.email" class="mb-4 mt-1.5 flex items-center rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-[12.5px] leading-[1.3] font-medium text-destructive">
+        <p v-if="form.errors.email" class="mb-4 mt-1.5 flex items-center rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-small leading-[1.3] font-medium text-destructive">
           {{ form.errors.email }}
         </p>
 
@@ -42,7 +42,7 @@ function submit() {
             type="password"
             autocomplete="new-password"
             required />
-          <p class="text-[11.5px] leading-[1.45] text-destructive" v-if="form.errors.password">{{ form.errors.password }}</p>
+          <p class="text-small leading-[1.45] text-destructive" v-if="form.errors.password">{{ form.errors.password }}</p>
         </Field>
 
         <Field class="mb-6">

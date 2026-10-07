@@ -37,7 +37,7 @@ const relative = computed(() => relativeDate(model.value, locale.value))
       >
         {{ $t(preset.key, { count: preset.count }) }}
       </Button>
-      <span v-if="relative" class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ relative }}</span>
+      <span v-if="relative" class="text-small leading-[1.45] font-normal text-faint">{{ relative }}</span>
     </div>
   </div>
 </template>

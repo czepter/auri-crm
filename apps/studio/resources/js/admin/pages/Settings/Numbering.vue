@@ -41,7 +41,7 @@ function save(rangeId: string) {
 
             <div class="max-w-[620px] min-w-0 flex-1">
               <div v-for="range in ranges" :key="range.id" class="mt-8 first-of-type:mt-6">
-                <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ range.documentTypeLabel }}</div>
+                <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ range.documentTypeLabel }}</div>
 
                 <form :id="`number-range-form-${range.id}`" @submit.prevent="save(range.id)">
                   <div class="mb-6 grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-6 gap-y-4">
@@ -52,7 +52,7 @@ function save(rangeId: string) {
                         v-model="forms[range.id].prefix"
                         type="text"
                         maxlength="8" />
-                      <p v-if="forms[range.id].errors.prefix" class="text-[11.5px] leading-[1.45] text-destructive">{{ forms[range.id].errors.prefix }}</p>
+                      <p v-if="forms[range.id].errors.prefix" class="text-small leading-[1.45] text-destructive">{{ forms[range.id].errors.prefix }}</p>
                     </div>
 
                     <div class="flex min-w-0 flex-col gap-1.5">
@@ -69,11 +69,11 @@ function save(rangeId: string) {
                           <SelectItem value="continuous">{{ $t('settings.numberingResetRuleContinuous') }}</SelectItem>
                         </SelectContent>
                       </Select>
-                      <p v-if="forms[range.id].errors.reset_rule" class="text-[11.5px] leading-[1.45] text-destructive">{{ forms[range.id].errors.reset_rule }}</p>
+                      <p v-if="forms[range.id].errors.reset_rule" class="text-small leading-[1.45] text-destructive">{{ forms[range.id].errors.reset_rule }}</p>
                     </div>
 
                     <div class="col-span-full flex min-w-0 flex-col gap-1.5">
-                      <p class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('settings.numberingChangeWarning') }}</p>
+                      <p class="text-small leading-[1.45] font-normal text-faint">{{ $t('settings.numberingChangeWarning') }}</p>
                     </div>
 
                     <div class="flex min-w-0 flex-col gap-1.5">
@@ -84,8 +84,8 @@ function save(rangeId: string) {
                         type="number"
                         min="1"
                         :disabled="!range.canSetStartingCounter" />
-                      <p v-if="!range.canSetStartingCounter" class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('settings.numberingLockedHint') }}</p>
-                      <p v-if="forms[range.id].errors.starting_counter" class="text-[11.5px] leading-[1.45] text-destructive">
+                      <p v-if="!range.canSetStartingCounter" class="text-small leading-[1.45] font-normal text-faint">{{ $t('settings.numberingLockedHint') }}</p>
+                      <p v-if="forms[range.id].errors.starting_counter" class="text-small leading-[1.45] text-destructive">
                         {{ forms[range.id].errors.starting_counter }}
                       </p>
                     </div>

@@ -76,8 +76,8 @@ function chooseSource(text: LegalText, source: Source) {
     <div class="mt-0 mb-6 flex flex-col gap-3">
       <div v-for="text in LEGAL_TEXTS" :key="text" class="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-[12px] border border-border p-4" :class="missingBeforeSend.includes(text) && 'bg-due-bg'">
         <div class="w-[200px] flex-none">
-          <span class="block text-[14px] leading-none font-semibold tracking-[-0.01em] text-foreground">{{ $t(`portalSettings.legal_${text}`) }}</span>
-          <span v-if="text === 'widerruf'" class="mt-1.5 block text-[12px] text-muted-foreground">{{ $t('portalSettings.legalNote_widerruf') }}</span>
+          <span class="block text-ui leading-none font-semibold tracking-[-0.01em] text-foreground">{{ $t(`portalSettings.legal_${text}`) }}</span>
+          <span v-if="text === 'widerruf'" class="mt-1.5 block text-small text-muted-foreground">{{ $t('portalSettings.legalNote_widerruf') }}</span>
         </div>
 
         <ChoiceGroup
@@ -111,7 +111,7 @@ function chooseSource(text: LegalText, source: Source) {
 
           <a
             v-else
-            class="text-[13px] font-medium text-action no-underline"
+            class="text-small font-medium text-action no-underline"
             href="/impressum"
             target="_blank"
             rel="noopener"
@@ -120,7 +120,7 @@ function chooseSource(text: LegalText, source: Source) {
 
         <!-- Die Zeile trägt ihren eigenen Stand; ein Balken unter der Liste
              wiederholte, was hier schon steht. -->
-        <span v-if="missingBeforeSend.includes(text)" class="flex-none text-[12.5px] font-semibold text-due">{{ $t('portalSettings.legalMissing') }}</span>
+        <span v-if="missingBeforeSend.includes(text)" class="flex-none text-small font-semibold text-due">{{ $t('portalSettings.legalMissing') }}</span>
 
         <div v-if="text === 'agb' || text === 'widerruf'" class="flex basis-full items-center gap-2.5">
           <Checkbox :id="`legal-attach-${text}`" v-model="form[`portal_legal_${text}_attach`]" />
@@ -128,7 +128,7 @@ function chooseSource(text: LegalText, source: Source) {
         </div>
       </div>
 
-      <a class="text-[13px] font-medium text-action no-underline" href="/dokumentvorlagen/neu">
+      <a class="text-small font-medium text-action no-underline" href="/dokumentvorlagen/neu">
         {{ $t('portalSettings.legalNewTemplate') }}
       </a>
     </div>

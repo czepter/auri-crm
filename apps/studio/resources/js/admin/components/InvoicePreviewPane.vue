@@ -64,7 +64,7 @@ watch(
 <template>
   <section class="flex min-w-0 flex-col">
     <div class="flex flex-wrap items-center gap-2.5 border-b border-border pb-2.5 whitespace-nowrap">
-      <span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('quotes.preview') }}</span>
+      <span class="mb-[5px] text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('quotes.preview') }}</span>
 
       <ChoiceGroup
         :model-value="mode"
@@ -82,13 +82,13 @@ watch(
         <button
           v-for="option in [{ key: 'fit', on: true, label: 'quotes.zoomFit' }, { key: 'full', on: false, label: 'quotes.zoomFull' }]"
           :key="option.key"
-          class="cursor-pointer rounded-lg border-0 px-2.5 py-[5px] text-[12px] leading-[1.3]"
+          class="cursor-pointer rounded-lg border-0 px-2.5 py-[5px] text-small leading-[1.3]"
           :class="fit === option.on ? 'bg-foreground text-background' : 'bg-sunk-2 text-foreground'"
           type="button"
           @click="fit = option.on"
         >{{ $t(option.label) }}</button>
       </div>
-      <span class="text-[11px] leading-none" :class="[stale ? 'text-due' : 'text-faint', mode === 'pdf' ? 'ml-2.5' : 'ml-auto']">{{
+      <span class="text-small leading-none" :class="[stale ? 'text-due' : 'text-faint', mode === 'pdf' ? 'ml-2.5' : 'ml-auto']">{{
         stale ? $t('quotes.previewStale') : $t('quotes.previewFresh')
       }}</span>
     </div>
@@ -96,7 +96,7 @@ watch(
     <PaperSheet v-if="mode === 'pdf'" :html="html" :fit="fit" />
 
     <div v-else-if="mode === 'portal'" class="mt-6 flex-1 overflow-auto rounded-md border border-border bg-sunk p-4">
-      <div v-if="page" data-tokens data-theme="portal" class="rounded-[10px] bg-background text-[15px] leading-[1.6] text-foreground">
+      <div v-if="page" data-tokens data-theme="portal" class="rounded-[10px] bg-background text-body leading-[1.6] text-foreground">
         <PortalWrap class="py-10">
           <InvoiceSheet :invoice="page" />
         </PortalWrap>

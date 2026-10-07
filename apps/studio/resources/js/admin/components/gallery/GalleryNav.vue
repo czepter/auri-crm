@@ -138,26 +138,26 @@ function confirmRemove() {
       <div v-if="editing === child.key" class="flex-1 px-2 py-1" @click.stop>
         <Input
           v-model="draft"
-          class="h-6 text-[12.5px]"
+          class="h-6 text-small"
           type="text"
           autofocus
           @blur="commitRename(child.key, child.label)"
           @keyup.enter="commitRename(child.key, child.label)"
           @keyup.esc="editing = null"
         />
-        <p v-if="error?.id === child.key" class="mt-1 text-[11px] text-destructive">{{ error.message }}</p>
+        <p v-if="error?.id === child.key" class="mt-1 text-small text-destructive">{{ error.message }}</p>
       </div>
 
       <template v-else-if="child.reorderable">
         <button
-          class="hidden cursor-pointer border-0 bg-transparent pr-1 text-[11px] text-faint group-hover:inline"
+          class="hidden cursor-pointer border-0 bg-transparent pr-1 text-small text-faint group-hover:inline"
           type="button"
           @click.stop="startRename(child.key, child.label)"
         >
           {{ $t('common.rename') }}
         </button>
         <button
-          class="hidden cursor-pointer border-0 bg-transparent pr-2 text-[11px] text-faint group-hover:inline"
+          class="hidden cursor-pointer border-0 bg-transparent pr-2 text-small text-faint group-hover:inline"
           type="button"
           @click.stop="removing = { id: child.key, name: child.label }; confirmingRemove = true"
         >
@@ -168,8 +168,8 @@ function confirmRemove() {
 
     <template #children-append>
       <div v-if="adding" class="px-2 py-1">
-        <Input v-model="draft" class="h-6 text-[12.5px]" type="text" autofocus @blur="commitCreate" @keyup.enter="commitCreate" @keyup.esc="adding = false" />
-        <p v-if="error?.id === 'new'" class="mt-1 text-[11px] text-destructive">{{ error.message }}</p>
+        <Input v-model="draft" class="h-6 text-small" type="text" autofocus @blur="commitCreate" @keyup.enter="commitCreate" @keyup.esc="adding = false" />
+        <p v-if="error?.id === 'new'" class="mt-1 text-small text-destructive">{{ error.message }}</p>
       </div>
       <Button v-else class="self-start" variant="outline" type="button" @click="startAdd">
         {{ $t('galleryRecord.addSet') }}

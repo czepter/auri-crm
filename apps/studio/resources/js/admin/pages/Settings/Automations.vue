@@ -57,13 +57,13 @@ function create() {
                   :href="`/einstellungen/automationen/${rule.id}`"
                 >
                   <span class="min-w-0 flex-1">
-                    <span class="block truncate text-[13.5px] font-medium">{{ rule.name }}</span>
-                    <span class="block truncate text-[12px] text-ink-2">{{ rule.triggerLabel }}</span>
+                    <span class="block truncate text-ui font-medium">{{ rule.name }}</span>
+                    <span class="block truncate text-small text-ink-2">{{ rule.triggerLabel }}</span>
                   </span>
 
-                  <span class="w-24 flex-none text-[12.5px] text-ink-2">{{ rule.recipientLabel }}</span>
-                  <span class="w-44 flex-none text-[12.5px] text-ink-2">{{ rule.conditionLabel ?? '—' }}</span>
-                  <span class="w-48 flex-none text-[12.5px] text-faint">{{ rule.lastRunLabel ?? '—' }}</span>
+                  <span class="w-24 flex-none text-small text-ink-2">{{ rule.recipientLabel }}</span>
+                  <span class="w-44 flex-none text-small text-ink-2">{{ rule.conditionLabel ?? '—' }}</span>
+                  <span class="w-48 flex-none text-small text-faint">{{ rule.lastRunLabel ?? '—' }}</span>
 
                   <span
                     class="chip w-[84px] flex-none text-center"
@@ -72,7 +72,7 @@ function create() {
                 </Link>
               </div>
 
-              <div v-if="rules.length" class="mt-3 flex gap-8 text-[12px] text-faint">
+              <div v-if="rules.length" class="mt-3 flex gap-8 text-small text-faint">
                 <span>{{ $t('automations.nextRun', { time: '06:30' }) }}</span>
                 <span>{{ $t('automations.timezone', { zone: timezone }) }}</span>
               </div>

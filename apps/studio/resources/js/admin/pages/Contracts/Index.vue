@@ -48,7 +48,7 @@ const shown = computed(() => {
               <TableRow v-for="contract in shown" :key="contract.id">
                 <TableCell tone="name">
                   <Link :href="`/auftraege/${contract.projectId}/vertrag`">{{ contract.contact }}</Link>
-                  <span class="block text-[11.5px] text-ink-2">{{ contract.projectName }}</span>
+                  <span class="block text-small text-ink-2">{{ contract.projectName }}</span>
                 </TableCell>
                 <TableCell class="whitespace-nowrap">
                   <a v-if="contract.hasDocument" :href="`/vertraege/${contract.id}/pdf`" target="_blank">

@@ -39,7 +39,7 @@ function submit() {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('settings.kicker')" :title="$t('paymentSettings.title')">
-          <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
+          <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
           <Button
             v-if="form.isDirty"
             class="ml-auto"
@@ -58,14 +58,14 @@ function submit() {
 
             <form id="payment-settings-form" style="flex: 1; min-width: 0; max-width: 620px" @submit.prevent="submit">
               <div>
-                <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('paymentSettings.stripeSection') }}</div>
+                <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('paymentSettings.stripeSection') }}</div>
 
                 <div class="mb-6">
                   <div class="flex items-center gap-2.5">
                     <Checkbox id="cb-payments-stripe-enabled" v-model="form.payments_stripe_enabled" />
                     <Label variant="inline" for="cb-payments-stripe-enabled">{{ $t('paymentSettings.stripeEnabled') }}</Label>
                   </div>
-                  <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('paymentSettings.stripeEnabledHint') }}</span>
+                  <span class="text-small leading-[1.45] font-normal text-faint">{{ $t('paymentSettings.stripeEnabledHint') }}</span>
                 </div>
 
                 <div class="mb-6">
@@ -84,13 +84,13 @@ function submit() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <span class="text-[11.5px] leading-[1.45] font-normal text-faint">
+                  <span class="text-small leading-[1.45] font-normal text-faint">
                     {{ hasActiveKeys ? $t('paymentSettings.stripeKeyConfigured') : $t('paymentSettings.stripeKeyMissing') }}
                   </span>
                 </div>
 
                 <div class="mb-6">
-                  <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint" style="font-size: 12px">{{ $t('paymentSettings.stripeTestKeys') }}</div>
+                  <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('paymentSettings.stripeTestKeys') }}</div>
                   <div class="grid grid-cols-2 gap-4">
                     <div class="flex min-w-0 flex-col gap-1.5">
                       <Label for="ps-test-pk">{{ $t('paymentSettings.stripePublishableKey') }}</Label>
@@ -100,7 +100,7 @@ function submit() {
                         type="text"
                         autocomplete="off"
                         :placeholder="settings.hasStripeTestKeys ? '••••••••••••' : ''" />
-                      <p v-if="form.errors.payments_stripe_test_publishable_key" class="text-[11.5px] leading-[1.45] text-destructive">
+                      <p v-if="form.errors.payments_stripe_test_publishable_key" class="text-small leading-[1.45] text-destructive">
                         {{ form.errors.payments_stripe_test_publishable_key }}
                       </p>
                     </div>
@@ -112,16 +112,16 @@ function submit() {
                         type="password"
                         autocomplete="off"
                         :placeholder="settings.hasStripeTestKeys ? '••••••••••••' : ''" />
-                      <p v-if="form.errors.payments_stripe_test_secret_key" class="text-[11.5px] leading-[1.45] text-destructive">
+                      <p v-if="form.errors.payments_stripe_test_secret_key" class="text-small leading-[1.45] text-destructive">
                         {{ form.errors.payments_stripe_test_secret_key }}
                       </p>
                     </div>
                   </div>
-                  <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('paymentSettings.stripeKeyHint') }}</span>
+                  <span class="text-small leading-[1.45] font-normal text-faint">{{ $t('paymentSettings.stripeKeyHint') }}</span>
                 </div>
 
                 <div class="mb-6">
-                  <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint" style="font-size: 12px">{{ $t('paymentSettings.stripeLiveKeys') }}</div>
+                  <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('paymentSettings.stripeLiveKeys') }}</div>
                   <div class="grid grid-cols-2 gap-4">
                     <div class="flex min-w-0 flex-col gap-1.5">
                       <Label for="ps-live-pk">{{ $t('paymentSettings.stripePublishableKey') }}</Label>
@@ -131,7 +131,7 @@ function submit() {
                         type="text"
                         autocomplete="off"
                         :placeholder="settings.hasStripeLiveKeys ? '••••••••••••' : ''" />
-                      <p v-if="form.errors.payments_stripe_live_publishable_key" class="text-[11.5px] leading-[1.45] text-destructive">
+                      <p v-if="form.errors.payments_stripe_live_publishable_key" class="text-small leading-[1.45] text-destructive">
                         {{ form.errors.payments_stripe_live_publishable_key }}
                       </p>
                     </div>
@@ -143,12 +143,12 @@ function submit() {
                         type="password"
                         autocomplete="off"
                         :placeholder="settings.hasStripeLiveKeys ? '••••••••••••' : ''" />
-                      <p v-if="form.errors.payments_stripe_live_secret_key" class="text-[11.5px] leading-[1.45] text-destructive">
+                      <p v-if="form.errors.payments_stripe_live_secret_key" class="text-small leading-[1.45] text-destructive">
                         {{ form.errors.payments_stripe_live_secret_key }}
                       </p>
                     </div>
                   </div>
-                  <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('paymentSettings.stripeKeyHint') }}</span>
+                  <span class="text-small leading-[1.45] font-normal text-faint">{{ $t('paymentSettings.stripeKeyHint') }}</span>
                 </div>
               </div>
 

@@ -102,11 +102,11 @@ function defaultLabel(key: string) {
     :key="key"
     class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
   >
-    <div class="min-w-0 flex-1 text-[13px]">
+    <div class="min-w-0 flex-1 text-small">
       {{ $t(`contacts.portalKey.${key}`) }}
       <a
         v-if="portal[key] !== ''"
-        class="text-[12px] tracking-[-0.01em] whitespace-nowrap text-ink-2 no-underline hover:underline"
+        class="text-small tracking-[-0.01em] whitespace-nowrap text-ink-2 no-underline hover:underline"
         href="#"
         @click.prevent="reset(key)"
       >

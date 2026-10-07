@@ -50,7 +50,7 @@ function send({ subject, message }: { subject: string; message: EditorDocument }
         :title="`${$t('payments.invoice')} ${invoice.number}`"
         :summary="formatEuros(invoice.amount)"
       >
-        <dl class="m-0 grid grid-cols-[120px_1fr] gap-x-5 gap-y-2 text-[12.5px]">
+        <dl class="m-0 grid grid-cols-[120px_1fr] gap-x-5 gap-y-2 text-small">
           <dt class="text-ink-2">{{ $t('payments.invoiceDate') }}</dt>
           <dd class="m-0">{{ invoice.date }}</dd>
           <dt class="text-ink-2">{{ $t('payments.invoiceAmount') }}</dt>

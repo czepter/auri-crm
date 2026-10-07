@@ -41,18 +41,18 @@ defineProps<{
                     >
                         <div class="w-28 flex-none">
                             <div
-                                class="text-[13px] leading-[1.2] font-semibold tracking-[-0.012em]"
+                                class="text-small leading-[1.2] font-semibold tracking-[-0.012em]"
                             >
                                 {{ release.version }}
                             </div>
                             <div
-                                class="mt-[3px] text-[12px] leading-[1.3] tabular-nums text-ink-2"
+                                class="mt-[3px] text-small leading-[1.3] tabular-nums text-ink-2"
                             >
                                 {{ monthDate(release.date) }}
                             </div>
                             <span
                                 v-if="releaseMark(release.version, installed)"
-                                class="mt-2 inline-flex rounded-[12px] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase"
+                                class="mt-2 inline-flex rounded-[12px] px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase"
                                 :class="releaseMark(release.version, installed)!.class"
                             >
                                 {{ $t(releaseMark(release.version, installed)!.key) }}
@@ -73,7 +73,7 @@ defineProps<{
 
                             <div
                                 v-if="release.headline"
-                                class="mb-0.5 text-[15px] leading-[1.3] font-semibold tracking-[-0.02em]"
+                                class="mb-0.5 text-body leading-[1.3] font-semibold tracking-[-0.02em]"
                             >
                                 {{ release.headline }}
                             </div>
@@ -81,13 +81,13 @@ defineProps<{
                             <p
                                 v-for="(paragraph, index) in release.body ?? []"
                                 :key="index"
-                                class="mt-1.5 max-w-[640px] text-[12.5px] leading-[1.6] text-ink-2"
+                                class="mt-1.5 max-w-[640px] text-small leading-[1.6] text-ink-2"
                             >
                                 {{ paragraph }}
                             </p>
 
                             <div
-                                class="mt-2.5 flex gap-4 text-[12.5px] leading-[1.4] text-ink-2"
+                                class="mt-2.5 flex gap-4 text-small leading-[1.4] text-ink-2"
                             >
                                 <span
                                     v-for="part in sectionCounts(release.sections)"

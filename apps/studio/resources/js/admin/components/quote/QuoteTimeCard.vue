@@ -68,7 +68,7 @@ const imagesPerHourInvalid = computed(() => slider.value.imagesPerHour !== null 
           <InputGroupInput v-model="slider.hourlyRate" class="tabular-nums" type="text" inputmode="decimal" @blur="emit('change')" />
           <InputGroupAddon align="inline-end">€</InputGroupAddon>
         </InputGroup>
-        <p v-if="rateInvalid" class="text-[11.5px] text-destructive">{{ $t('quotes.rateInvalid') }}</p>
+        <p v-if="rateInvalid" class="text-small text-destructive">{{ $t('quotes.rateInvalid') }}</p>
       </div>
       <div class="flex min-w-0 flex-col gap-1.5">
         <Label>{{ $t('quotes.minHours') }}</Label>
@@ -76,7 +76,7 @@ const imagesPerHourInvalid = computed(() => slider.value.imagesPerHour !== null 
           <InputGroupInput v-model="minHours" class="tabular-nums" type="number" min="0" @blur="emit('change')" />
           <InputGroupAddon align="inline-end">{{ $t('quotes.hours') }}</InputGroupAddon>
         </InputGroup>
-        <p v-if="minHoursInvalid" class="text-[11.5px] text-destructive">{{ $t('quotes.minHoursInvalid') }}</p>
+        <p v-if="minHoursInvalid" class="text-small text-destructive">{{ $t('quotes.minHoursInvalid') }}</p>
       </div>
       <div class="flex min-w-0 flex-col gap-1.5">
         <Label>{{ $t('quotes.maxHours') }}</Label>
@@ -84,7 +84,7 @@ const imagesPerHourInvalid = computed(() => slider.value.imagesPerHour !== null 
           <InputGroupInput v-model="maxHours" class="tabular-nums" type="number" min="0" @blur="emit('change')" />
           <InputGroupAddon align="inline-end">{{ $t('quotes.hours') }}</InputGroupAddon>
         </InputGroup>
-        <p v-if="maxBelowMin" class="text-[11.5px] text-destructive">{{ $t('quotes.maxBelowMin') }}</p>
+        <p v-if="maxBelowMin" class="text-small text-destructive">{{ $t('quotes.maxBelowMin') }}</p>
       </div>
       <div class="flex min-w-0 flex-col gap-1.5">
         <Label>{{ $t('quotes.spanPreselected') }}</Label>
@@ -92,7 +92,7 @@ const imagesPerHourInvalid = computed(() => slider.value.imagesPerHour !== null 
           <InputGroupInput v-model="hours" class="tabular-nums" type="number" min="0" @blur="emit('change')" />
           <InputGroupAddon align="inline-end">{{ $t('quotes.hours') }}</InputGroupAddon>
         </InputGroup>
-        <p v-if="hoursOutOfRange" class="text-[11.5px] text-destructive">{{ $t('quotes.hoursOutOfRange') }}</p>
+        <p v-if="hoursOutOfRange" class="text-small text-destructive">{{ $t('quotes.hoursOutOfRange') }}</p>
       </div>
       <div class="flex min-w-0 flex-col gap-1.5">
         <Label>{{ $t('quotes.imagesPerHour') }}</Label>
@@ -100,7 +100,7 @@ const imagesPerHourInvalid = computed(() => slider.value.imagesPerHour !== null 
           <InputGroupInput v-model="imagesPerHour" class="tabular-nums" type="number" min="0" @blur="emit('change')" />
           <InputGroupAddon align="inline-end">{{ $t('quotes.imagesUnit') }}</InputGroupAddon>
         </InputGroup>
-        <p v-if="imagesPerHourInvalid" class="text-[11.5px] text-destructive">{{ $t('quotes.imagesPerHourInvalid') }}</p>
+        <p v-if="imagesPerHourInvalid" class="text-small text-destructive">{{ $t('quotes.imagesPerHourInvalid') }}</p>
       </div>
     </div>
   </div>
