@@ -83,7 +83,7 @@ function saveAsPackage() {
     <template #summary>
       <span
         v-if="mode === 'choice'"
-        class="rounded-[10px] px-2 py-0.5 text-[11px] leading-none font-semibold"
+        class="rounded-[10px] px-2 py-0.5 text-small leading-none font-semibold"
         :class="portalStatus === 'included' ? 'bg-sunk-2 text-ink-2' : 'bg-[var(--accent-bg)] text-[var(--accent)]'"
       >{{ $t(portalLabels[portalStatus]) }}</span>
       <span class="tabular-nums">{{ formatEuros(amount) }}</span>
@@ -168,7 +168,7 @@ function saveAsPackage() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <span class="text-[15px] font-semibold tabular-nums">{{ formatEuros(amount) }}</span>
+        <span class="text-body font-semibold tabular-nums">{{ formatEuros(amount) }}</span>
       </div>
     </div>
   </QuoteCard>
@@ -183,7 +183,7 @@ function saveAsPackage() {
         <form :id="`item-package-${quoteId}`" class="flex flex-col gap-1.5" @submit.prevent="saveAsPackage">
           <Label :for="`item-package-name-${quoteId}`">{{ $t('quotes.packageName') }}</Label>
           <Input :id="`item-package-name-${quoteId}`" v-model="packageForm.name" type="text" required />
-          <p v-if="packageForm.errors.name" class="text-[12px] text-destructive">{{ packageForm.errors.name }}</p>
+          <p v-if="packageForm.errors.name" class="text-small text-destructive">{{ packageForm.errors.name }}</p>
         </form>
       </DialogBody>
 

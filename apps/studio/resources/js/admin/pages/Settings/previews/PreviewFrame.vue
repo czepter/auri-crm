@@ -27,8 +27,8 @@ const open = ref(false)
     class="sticky top-6"
     :class="wide ? 'min-w-[352px] max-w-[1100px] flex-1' : 'w-[352px] flex-none'"
   >
-    <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ label }}</div>
-    <p v-if="hint" class="mb-2.5 text-[11.5px] leading-[1.45] text-faint">{{ hint }}</p>
+    <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ label }}</div>
+    <p v-if="hint" class="mb-2.5 text-small leading-[1.45] text-faint">{{ hint }}</p>
     <div class="rounded-lg bg-muted p-4">
       <slot />
     </div>

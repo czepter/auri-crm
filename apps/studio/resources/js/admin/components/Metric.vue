@@ -54,21 +54,21 @@ const DOT: Record<string, string> = {
         <div
           class="flex size-[46px] flex-none flex-col items-center justify-center rounded-[12px] bg-[linear-gradient(158deg,#4D3A2C,#C0A184)] leading-none text-white"
         >
-          <b class="text-[18px] leading-none font-semibold tracking-[-0.03em]">{{ day.number }}</b>
+          <b class="text-title leading-none font-semibold tracking-[-0.03em]">{{ day.number }}</b>
           <i class="mt-[3px] text-[8px] not-italic tracking-[0.09em] uppercase opacity-85">{{ day.weekday }}</i>
         </div>
         <div>
           <!-- 11px, not the 10.5px of the metric's own label: .metric.date
                .what span outranks .metric .lab on this one. -->
-          <span class="text-[11px] tracking-[0.07em] uppercase text-ink-2">{{ label }}</span>
-          <b class="mt-0.5 block text-[13.5px] leading-[1.25] font-semibold tracking-[-0.018em]">{{ day.what }}</b>
-          <span class="text-[11px] text-ink-2">{{ day.who }}</span>
+          <span class="text-small tracking-[0.07em] uppercase text-ink-2">{{ label }}</span>
+          <b class="mt-0.5 block text-ui leading-[1.25] font-semibold tracking-[-0.018em]">{{ day.what }}</b>
+          <span class="text-small text-ink-2">{{ day.who }}</span>
         </div>
       </div>
     </template>
 
     <template v-else>
-      <div class="text-[10.5px] tracking-[0.07em] uppercase text-ink-2">{{ label }}</div>
+      <div class="text-small tracking-[0.07em] uppercase text-ink-2">{{ label }}</div>
       <div
         class="mt-2 flex items-baseline gap-[3px] text-[28px] leading-none tracking-[-0.034em] tabular-nums"
         :class="['font-semibold', warn && 'text-action']"
@@ -80,7 +80,7 @@ const DOT: Record<string, string> = {
     <!-- The slot's paragraphs were styled by .metric .proof p; without the
          class the rule stops matching, so the wrapper says it itself. -->
     <div
-      class="mt-auto [&_p]:mt-[7px] [&_p]:text-[11.5px] [&_p]:text-ink-2 [&_p_b]:font-semibold [&_p_b]:text-foreground"
+      class="mt-auto [&_p]:mt-[7px] [&_p]:text-small [&_p]:text-ink-2 [&_p_b]:font-semibold [&_p_b]:text-foreground"
       :class="day ? 'px-[17px] pt-0 pb-3.5' : 'pt-3'"
     >
       <div class="flex items-center gap-[5px]">
@@ -92,7 +92,7 @@ const DOT: Record<string, string> = {
         />
         <span
           v-if="proof.overflow"
-          class="ml-[3px] text-[11px] leading-none font-semibold tracking-[-0.01em] tabular-nums text-ink-2"
+          class="ml-[3px] text-small leading-none font-semibold tracking-[-0.01em] tabular-nums text-ink-2"
         >+{{ proof.overflow }}</span>
       </div>
       <slot />

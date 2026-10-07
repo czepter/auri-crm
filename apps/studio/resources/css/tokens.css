@@ -138,7 +138,7 @@ body {
   margin:0;
   background:var(--bg);
   color:var(--ink);
-  font:400 14px/1.45 var(--font);
+  font:400 var(--text-ui)/1.45 var(--font);
   -webkit-font-smoothing:antialiased;
 }
 
@@ -155,17 +155,17 @@ svg:not(:where([data-tokens] svg)) { flex:none; stroke:currentColor; stroke-widt
 
 /* ---------- shell ---------- */
 
-.brand { font:700 19px/1 var(--font); letter-spacing:-.035em; padding:0 var(--s3) var(--s5); color:var(--ink); text-decoration:none; }
+.brand { font:700 var(--text-title)/1 var(--font); letter-spacing:-.035em; padding:0 var(--s3) var(--s5); color:var(--ink); text-decoration:none; }
 .nav { display:flex; align-items:center; gap:var(--s3); padding:9px var(--s3); border-radius:7px;
-       font:400 14px/1 var(--font); color:var(--muted); text-decoration:none; transition:background .12s ease-out; }
+       font:400 var(--text-ui)/1 var(--font); color:var(--muted); text-decoration:none; transition:background .12s ease-out; }
 .nav:hover { background:var(--hover); }
 .nav.on { color:var(--ink); font-weight:600; }
 .nav svg { width:17px; height:17px; opacity:.75; }
 .nav.on svg { opacity:1; }
-.nav .ct { margin-left:auto; font-size:12.5px; color:var(--faint); }
+.nav .ct { margin-left:auto; font-size:var(--text-small); color:var(--faint); }
 
 .hrow { display:flex; align-items:center; gap:var(--s4); }
-h1:not(:where([data-tokens] h1)) { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
+h1:not(:where([data-tokens] h1)) { font:700 var(--text-heading)/1 var(--font); letter-spacing:-.04em; margin:0; }
 
 /* ---------- controls ---------- */
 
@@ -176,7 +176,7 @@ h1:not(:where([data-tokens] h1)) { font:700 24px/1 var(--font); letter-spacing:-
    .formfoot) select on [data-slot="button"] instead. */
 
 .tabs { display:flex; gap:var(--s5); margin:var(--s4) 0 var(--s5); }
-.tabs a { font:400 13px/1 var(--font); color:var(--muted); text-decoration:none; }
+.tabs a { font:400 var(--text-small)/1 var(--font); color:var(--muted); text-decoration:none; }
 .tabs a.on { color:var(--ink); font-weight:600; }
 
 /* ---------- board ---------- */
@@ -193,10 +193,10 @@ h1:not(:where([data-tokens] h1)) { font:700 24px/1 var(--font); letter-spacing:-
 
 /* column header: three pieces separated by alignment, not punctuation */
 .ch { display:flex; align-items:center; padding:0 var(--s3); margin-bottom:var(--s3); }
-.ch b { font:600 12.5px/1 var(--font); letter-spacing:.02em; text-transform:uppercase; }
+.ch b { font:600 var(--text-small)/1 var(--font); letter-spacing:.02em; text-transform:uppercase; }
 .ch .n { margin-left:var(--s2); min-width:17px; padding:3px 0; border-radius:var(--r-sm); background:var(--hover);
-         font:500 11px/1 var(--font); color:var(--muted); text-align:center; }
-.ch .sum { margin-left:auto; font:500 11.5px/1 var(--font); color:var(--faint); font-variant-numeric:tabular-nums; }
+         font:500 var(--text-small)/1 var(--font); color:var(--muted); text-align:center; }
+.ch .sum { margin-left:auto; font:500 var(--text-small)/1 var(--font); color:var(--faint); font-variant-numeric:tabular-nums; }
 
 /* ---------- lead card ---------- */
 
@@ -205,21 +205,21 @@ h1:not(:where([data-tokens] h1)) { font:700 24px/1 var(--font); letter-spacing:-
         transition:background .12s ease-out, border-color .12s ease-out; }
 .card:hover { background:var(--hover); border-color:var(--line-hover); }
 
-.kick { font:600 10px/1 var(--font); letter-spacing:.09em; text-transform:uppercase; color:var(--faint); margin-bottom:5px; }
+.kick { font:600 var(--text-small)/1 var(--font); letter-spacing:.09em; text-transform:uppercase; color:var(--faint); margin-bottom:5px; }
 /* margin:0 is the app's own addition: the mockup's .who is a div, but a card's
    name is the heading of that card, and an h3 arrives with UA margins. */
-.who { font:600 13.5px/1.35 var(--font); letter-spacing:-.015em; padding-right:18px; margin:0; }
+.who { font:600 var(--text-ui)/1.35 var(--font); letter-spacing:-.015em; padding-right:18px; margin:0; }
 
 .meta { display:flex; flex-direction:column; gap:3px; margin-top:var(--s2); }
-.meta span { display:inline-flex; align-items:center; font:400 12.5px/1.35 var(--font); color:var(--muted);
+.meta span { display:inline-flex; align-items:center; font:400 var(--text-small)/1.35 var(--font); color:var(--muted);
              background-repeat:no-repeat; background-position:0 center; background-size:13px 13px; padding-left:19px; }
 .meta .d { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A39B96' stroke-width='2' stroke-linecap='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M8 3v4M16 3v4M3 10h18'/%3E%3C/svg%3E"); }
 .meta .v { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A39B96' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z'/%3E%3Ccircle cx='12' cy='10' r='3'/%3E%3C/svg%3E"); }
 .meta .q { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A39B96' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 11V4h7l10 10-7 7L3 11z'/%3E%3Ccircle cx='7.5' cy='7.5' r='1.3'/%3E%3C/svg%3E"); }
 
 .foot { display:flex; align-items:center; gap:var(--s3); margin-top:var(--s3); }
-.val { font:600 13px/1 var(--font); letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
-.age { display:inline-flex; align-items:center; font:400 12.5px/1 var(--font); color:var(--faint);
+.val { font:600 var(--text-small)/1 var(--font); letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+.age { display:inline-flex; align-items:center; font:400 var(--text-small)/1 var(--font); color:var(--faint);
        background-repeat:no-repeat; background-position:0 center; background-size:12px 12px; padding-left:16px;
        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ABA49F' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E"); }
 .age.warn { color:var(--late); font-weight:500;
@@ -234,7 +234,7 @@ h1:not(:where([data-tokens] h1)) { font:700 24px/1 var(--font); letter-spacing:-
 .card:hover .stack img, .card:hover .stack .av { border-color:var(--hover); }
 
 .flag { display:flex; align-items:center; margin-top:var(--s2); padding:7px 9px 7px 28px; border-radius:7px;
-        background:var(--late-bg); font:500 12.5px/1.3 var(--font); color:var(--late);
+        background:var(--late-bg); font:500 var(--text-small)/1.3 var(--font); color:var(--late);
         background-repeat:no-repeat; background-position:9px center; background-size:13px 13px;
         background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B3261E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z'/%3E%3C/svg%3E"); }
 
@@ -247,19 +247,19 @@ h1:not(:where([data-tokens] h1)) { font:700 24px/1 var(--font); letter-spacing:-
 
 /* ---------- dashboard (screen 1) ---------- */
 
-.dsub { font:400 13px/1 var(--font); color:var(--muted); margin-top:var(--s1); }
-.dlab { font:600 12.5px/1 var(--font); letter-spacing:.02em; text-transform:uppercase; color:var(--faint); margin-bottom:var(--s3); }
+.dsub { font:400 var(--text-small)/1 var(--font); color:var(--muted); margin-top:var(--s1); }
+.dlab { font:600 var(--text-small)/1 var(--font); letter-spacing:.02em; text-transform:uppercase; color:var(--faint); margin-bottom:var(--s3); }
 .dsec { margin-top:var(--s6); }
 .dsec:first-of-type { margin-top:var(--s5); }
 
 /* the day's lead shoot gets more air and bigger type than a board card — it's the screen's hero */
 .card.hero { padding:var(--s4); max-width:560px; }
-.card.hero .kick { font-size:11px; }
-.card.hero .who { font-size:18px; }
-.card.hero .meta span { font-size:13.5px; }
+.card.hero .kick { font-size:var(--text-small); }
+.card.hero .who { font-size:var(--text-title); }
+.card.hero .meta span { font-size:var(--text-ui); }
 
 .qrow { display:flex; align-items:baseline; gap:var(--s3); margin-top:var(--s3); padding:0 var(--s3);
-        font:400 13px/1.4 var(--font); color:var(--muted); }
+        font:400 var(--text-small)/1.4 var(--font); color:var(--muted); }
 .qrow b { color:var(--ink); font-weight:600; }
 
 .dgrid { display:grid; grid-template-columns:3fr 2fr; gap:var(--s6); margin-top:var(--s6); }
@@ -271,10 +271,10 @@ h1:not(:where([data-tokens] h1)) { font:700 24px/1 var(--font); letter-spacing:-
         border-top:1px solid var(--line); transition:background .12s ease-out; }
 .trow:first-child { border-top:none; }
 .trow:hover { background:var(--hover); }
-.trow .tfile { font:500 13px/1.3 var(--font); color:var(--ink); }
-.trow .treason { font:400 12.5px/1.3 var(--font); color:var(--muted); }
-.trow .tretry { margin-left:auto; font:500 12.5px/1 var(--font); color:var(--faint); }
-.trow .tclient { font:600 13px/1.3 var(--font); flex:1; min-width:0; }
+.trow .tfile { font:500 var(--text-small)/1.3 var(--font); color:var(--ink); }
+.trow .treason { font:400 var(--text-small)/1.3 var(--font); color:var(--muted); }
+.trow .tretry { margin-left:auto; font:500 var(--text-small)/1 var(--font); color:var(--faint); }
+.trow .tclient { font:600 var(--text-small)/1.3 var(--font); flex:1; min-width:0; }
 
 /* ---------- project detail (screen 4) ---------- */
 
@@ -286,12 +286,12 @@ h1:not(:where([data-tokens] h1)) { font:700 24px/1 var(--font); letter-spacing:-
    the transitions that advance it — nothing else. */
 .stage { display:flex; align-items:center; gap:var(--s3); margin:var(--s4) 0 0; }
 .stage .now { display:inline-flex; align-items:center; gap:7px; padding:6px 11px; border-radius:var(--r-sm);
-              background:var(--ok-bg); color:var(--ok); font:600 12px/1 var(--font); }
+              background:var(--ok-bg); color:var(--ok); font:600 var(--text-small)/1 var(--font); }
 .stage .now .dot { width:7px; height:7px; border-radius:50%; background:var(--ok); flex:none; }
 .stage .now.late { background:var(--late-bg); color:var(--late); }
 .stage .now.late .dot { background:var(--late); }
-.stage .next { font:400 12px/1 var(--font); color:var(--faint); }
-.stage .adv { font:500 12px/1 var(--font); color:var(--muted); text-decoration:none; }
+.stage .next { font:400 var(--text-small)/1 var(--font); color:var(--faint); }
+.stage .adv { font:500 var(--text-small)/1 var(--font); color:var(--muted); text-decoration:none; }
 .stage .adv:hover { color:var(--ink); }
 
 /* overview is self-sufficient: narrative left, facts right. Tabs hold depth only. */
@@ -299,12 +299,12 @@ h1:not(:where([data-tokens] h1)) { font:700 24px/1 var(--font); letter-spacing:-
 .stackcol { display:flex; flex-direction:column; gap:var(--s5); }
 
 /* a block's footer link into its tab — the drill-down affordance */
-.blkfoot { margin-top:var(--s4); font:500 12px/1 var(--font); color:var(--muted); text-decoration:none; display:inline-block; }
+.blkfoot { margin-top:var(--s4); font:500 var(--text-small)/1 var(--font); color:var(--muted); text-decoration:none; display:inline-block; }
 .blkfoot:hover { color:var(--ink); }
 .card.static .blkfoot { display:block; }
 
 /* ---------- shoot list: one row per shooting occasion ---------- */
-.chip { font:600 10px/1.5 var(--font); letter-spacing:.04em; text-transform:uppercase;
+.chip { font:600 var(--text-small)/1.5 var(--font); letter-spacing:.04em; text-transform:uppercase;
         padding:3px 8px; border-radius:var(--r-sm); flex:none; }
 .chip.done { background:var(--ok-bg); color:var(--ok); }
 .chip.now  { background:var(--due-bg); color:var(--due); }
@@ -316,10 +316,10 @@ h1:not(:where([data-tokens] h1)) { font:700 24px/1 var(--font); letter-spacing:-
 .srow.open { border-color:#E0D6CF; background:#FDFAF8; }
 .srow.cancelled .sname, .srow.cancelled .sdate { color:var(--faint); }
 .stop { display:flex; align-items:center; gap:var(--s3); }
-.sdate { font:600 12px/1.2 var(--font); font-variant-numeric:tabular-nums; width:54px; flex:none; }
-.sdate em { display:block; font:400 10.5px/1.3 var(--font); color:var(--faint); font-style:normal; margin-top:2px; }
-.sname { flex:1; min-width:0; font:600 13px/1.3 var(--font); letter-spacing:-.01em; }
-.sname span { display:block; font:400 11.5px/1.35 var(--font); color:var(--muted); font-weight:400;
+.sdate { font:600 var(--text-small)/1.2 var(--font); font-variant-numeric:tabular-nums; width:54px; flex:none; }
+.sdate em { display:block; font:400 var(--text-small)/1.3 var(--font); color:var(--faint); font-style:normal; margin-top:2px; }
+.sname { flex:1; min-width:0; font:600 var(--text-small)/1.3 var(--font); letter-spacing:-.01em; }
+.sname span { display:block; font:400 var(--text-small)/1.35 var(--font); color:var(--muted); font-weight:400;
               letter-spacing:0; margin-top:2px; }
 .sname .prim { display:inline-block; margin-left:6px; font:600 9px/1.5 var(--font); letter-spacing:.08em;
                text-transform:uppercase; color:var(--ink); vertical-align:1px; }
@@ -338,9 +338,9 @@ h1:not(:where([data-tokens] h1)) { font:700 24px/1 var(--font); letter-spacing:-
 .tiles { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--s3); }
 .fact { background:var(--hover); border-radius:var(--r); padding:14px var(--s4) var(--s4); }
 .fact .l { font:600 9.5px/1 var(--font); letter-spacing:.11em; text-transform:uppercase; color:var(--faint); }
-.fact .v { font:500 16px/1.2 var(--font); letter-spacing:-.02em; margin-top:9px;
+.fact .v { font:500 var(--text-body)/1.2 var(--font); letter-spacing:-.02em; margin-top:9px;
            font-variant-numeric:tabular-nums; }
-.fact .s { font:400 12.5px/1.3 var(--font); color:var(--muted); margin-top:var(--s1);
+.fact .s { font:400 var(--text-small)/1.3 var(--font); color:var(--muted); margin-top:var(--s1);
            font-variant-numeric:tabular-nums; }
 /* a delta or a count inside a value is a good number, not an action — --ok, not the accent */
 .fact i { font-style:normal; color:var(--ok); font-weight:600; }
@@ -357,18 +357,18 @@ h1:not(:where([data-tokens] h1)) { font:700 24px/1 var(--font); letter-spacing:-
 
 /* the Aufgaben list. */
 .tlist { display:flex; flex-direction:column; gap:var(--s4); }
-.taskrow { display:flex; align-items:center; gap:var(--s3); font:400 12.5px/1.3 var(--font); }
+.taskrow { display:flex; align-items:center; gap:var(--s3); font:400 var(--text-small)/1.3 var(--font); }
 .ttext { flex:1; min-width:0; color:var(--ink); }
-.tdate { color:var(--faint); font-size:12px; flex:none; font-variant-numeric:tabular-nums; }
+.tdate { color:var(--faint); font-size:var(--text-small); flex:none; font-variant-numeric:tabular-nums; }
 
 /* the Zahlungen list — payment plan preview, ported from mockups/_shared/admin-extra.css
    now that M-03 gives it a data source. Both previews stay compressed into the
    Übersicht tab rather than built as full tab panels — see the mockup's own comment. */
 .paylist { display:flex; flex-direction:column; gap:var(--s4); }
-.payrow { display:flex; align-items:center; gap:var(--s3); font:400 12.5px/1.3 var(--font); }
+.payrow { display:flex; align-items:center; gap:var(--s3); font:400 var(--text-small)/1.3 var(--font); }
 .payname { flex:1; min-width:0; color:var(--ink); font-weight:500; }
 .payrow .val { flex:none; min-width:58px; text-align:right; }
-.paystatus { flex:none; padding:3px 8px; border-radius:var(--r-sm); font:600 10px/1.5 var(--font);
+.paystatus { flex:none; padding:3px 8px; border-radius:var(--r-sm); font:600 var(--text-small)/1.5 var(--font);
              letter-spacing:.04em; text-transform:uppercase; }
 .paystatus.paid { background:var(--ok-bg); color:var(--ok); }
 .paystatus.due  { background:var(--due-bg); color:var(--due); }
@@ -378,7 +378,7 @@ h1:not(:where([data-tokens] h1)) { font:700 24px/1 var(--font); letter-spacing:-
 /* Task.audience is a real field (vision §3.3) — this badge renders it. It never
    stands in for InternalNote, which stays a separate model with no
    portal-facing route at all. */
-.taudience { flex:none; padding:3px 8px; border-radius:var(--r-sm); font:600 10px/1.5 var(--font);
+.taudience { flex:none; padding:3px 8px; border-radius:var(--r-sm); font:600 var(--text-small)/1.5 var(--font);
              letter-spacing:.04em; text-transform:uppercase; }
 .taudience.client   { background:transparent; border:1px solid var(--line-hover); color:var(--muted); }
 .taudience.internal { background:var(--hover); color:var(--muted); }
@@ -387,15 +387,15 @@ h1:not(:where([data-tokens] h1)) { font:700 24px/1 var(--font); letter-spacing:-
 .plist { display:flex; flex-direction:column; gap:var(--s4); }
 .prow { display:flex; align-items:center; gap:var(--s3); }
 .pavatar { width:32px; height:32px; border-radius:50%; object-fit:cover; background:var(--hover); flex:none;
-           display:flex; align-items:center; justify-content:center; font:600 11px/1 var(--font); color:var(--muted); }
+           display:flex; align-items:center; justify-content:center; font:600 var(--text-small)/1 var(--font); color:var(--muted); }
 .pinfo { flex:1; min-width:0; }
 /* display:block is the app's own addition: the mockup writes these as divs,
    and the rows that use spans would otherwise run the name into the address. */
-.pname { display:block; font:600 13px/1.3 var(--font); }
-.psub { display:block; font:400 12px/1.3 var(--font); color:var(--muted); margin-top:1px; }
+.pname { display:block; font:600 var(--text-small)/1.3 var(--font); }
+.psub { display:block; font:400 var(--text-small)/1.3 var(--font); color:var(--muted); margin-top:1px; }
 .proles { display:flex; gap:4px; flex:none; }
 .role { display:inline-flex; align-items:center; padding:3px 8px; border-radius:var(--r-sm); background:var(--hover);
-        font:500 11px/1.4 var(--font); color:var(--muted); white-space:nowrap; }
+        font:500 var(--text-small)/1.4 var(--font); color:var(--muted); white-space:nowrap; }
 
 /* .galcover only — the gallery feature itself (.gal, .galrow, .galname, ...)
    has no built screen yet, so the rest of the mockup's gallery-rail block

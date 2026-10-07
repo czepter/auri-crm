@@ -100,7 +100,7 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
             <button
               v-for="key in TABS"
               :key="key"
-              class="cursor-pointer text-[13.5px] leading-none"
+              class="cursor-pointer text-ui leading-none"
               :class="tab === key ? 'font-semibold' : 'text-ink-2'"
               type="button"
               @click="tab = key"
@@ -126,10 +126,10 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
               />
 
               <span class="min-w-0 flex-1">
-                <button class="block max-w-full cursor-pointer truncate text-left text-[13.5px]" type="button" @click="selectedId = task.id">
+                <button class="block max-w-full cursor-pointer truncate text-left text-ui" type="button" @click="selectedId = task.id">
                   {{ task.title }}
                 </button>
-                <span class="block truncate text-[12px] text-ink-2">
+                <span class="block truncate text-small text-ink-2">
                   <Link v-if="task.projectId" class="text-inherit" :href="`/auftraege/${task.projectId}`">{{ task.projectName }}</Link>
                   <Link v-else-if="task.contactId" class="text-inherit" :href="`/kontakte/${task.contactId}`">{{ task.contactName }}</Link>
                 </span>
@@ -137,9 +137,9 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
 
               <span v-if="!solo && task.assigneeName" class="flex w-44 flex-none items-center gap-2">
                 <span
-                  class="flex size-[22px] items-center justify-center rounded-full bg-sunk-2 text-[10px] font-semibold"
+                  class="flex size-[22px] items-center justify-center rounded-full bg-sunk-2 text-small font-semibold"
                 >{{ initials(task.assigneeName) }}</span>
-                <span class="truncate text-[12.5px]">{{ firstName(task.assigneeName) }}</span>
+                <span class="truncate text-small">{{ firstName(task.assigneeName) }}</span>
               </span>
               <Select
                 v-else-if="!solo"
@@ -147,7 +147,7 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
                 class="w-44 flex-none"
                 @update:model-value="(value) => assign(task, String(value))"
               >
-                <SelectTrigger class="h-7 w-44 text-[12px]"><SelectValue /></SelectTrigger>
+                <SelectTrigger class="h-7 w-44 text-small"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">{{ $t('project.taskAssignee') }}</SelectItem>
                   <SelectItem v-for="option in staffOptions" :key="option.value" :value="option.value">
@@ -156,7 +156,7 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
                 </SelectContent>
               </Select>
 
-              <span class="w-28 flex-none text-[12.5px] text-ink-2">{{ due(task) }}</span>
+              <span class="w-28 flex-none text-small text-ink-2">{{ due(task) }}</span>
 
               <span v-if="task.isOverdue" class="chip fail w-[92px] text-center">{{ $t('tasks.overdue') }}</span>
               <span
@@ -186,7 +186,7 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
             </Field>
           </form>
 
-          <dl class="grid grid-cols-[110px_minmax(0,1fr)] gap-x-6 gap-y-3 text-[13.5px]">
+          <dl class="grid grid-cols-[110px_minmax(0,1fr)] gap-x-6 gap-y-3 text-ui">
             <template v-if="selected.projectId">
               <dt class="text-ink-2">{{ $t('tasks.project') }}</dt>
               <dd><Link :href="`/auftraege/${selected.projectId}`">{{ selected.projectName }}</Link></dd>

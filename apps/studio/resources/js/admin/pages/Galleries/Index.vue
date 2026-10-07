@@ -54,15 +54,15 @@ function day(iso: string | null) {
             <!-- Unter 640px bleiben vom Titel sonst 110px: drei feste Spalten
                  und der Rand nehmen den Rest. Der Name bekommt die Zeile, die
                  drei Angaben rücken darunter nach links. -->
-            <span class="min-w-0 flex-1 text-[13.5px] leading-[1.47] max-[640px]:w-full max-[640px]:flex-none">
+            <span class="min-w-0 flex-1 text-ui leading-[1.47] max-[640px]:w-full max-[640px]:flex-none">
               <Link :href="`/galerien/${gallery.id}`">{{ gallery.title ?? '—' }}</Link>
-              <span v-if="gallery.projectName" class="text-[12px] text-ink-2"> · {{ gallery.projectName }}</span>
+              <span v-if="gallery.projectName" class="text-small text-ink-2"> · {{ gallery.projectName }}</span>
             </span>
-            <span class="w-14 flex-none text-right max-[640px]:w-auto max-[640px]:text-left text-[12.5px] tabular-nums text-ink-2">{{ gallery.assetCount }}</span>
-            <span class="w-20 flex-none text-right text-[12.5px] tabular-nums text-ink-2 max-[640px]:w-auto max-[640px]:text-left">
+            <span class="w-14 flex-none text-right max-[640px]:w-auto max-[640px]:text-left text-small tabular-nums text-ink-2">{{ gallery.assetCount }}</span>
+            <span class="w-20 flex-none text-right text-small tabular-nums text-ink-2 max-[640px]:w-auto max-[640px]:text-left">
               {{ gallery.version ? $t('galleryRecord.version', { version: gallery.version }) : '—' }}
             </span>
-            <span class="w-20 flex-none text-right text-[12.5px] tabular-nums text-ink-2 max-[640px]:w-auto max-[640px]:text-left">{{ day(gallery.expiresAt) }}</span>
+            <span class="w-20 flex-none text-right text-small tabular-nums text-ink-2 max-[640px]:w-auto max-[640px]:text-left">{{ day(gallery.expiresAt) }}</span>
           </div>
         </div>
 

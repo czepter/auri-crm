@@ -88,14 +88,14 @@ function destroy() {
                 >
                     <span class="h-px flex-1 bg-[var(--rule)]" />
                     <span
-                        class="text-[10.5px] leading-none tracking-[0.06em] uppercase text-ink-2"
+                        class="text-small leading-none tracking-[0.06em] uppercase text-ink-2"
                     >{{ dayWithWeekday(entry.at, '') }}</span>
                     <span class="h-px flex-1 bg-[var(--rule)]" />
                 </div>
 
                 <p
                     v-if="entry.system"
-                    class="px-4 py-0.5 text-center text-[11.5px] leading-[1.45] text-ink-2"
+                    class="px-4 py-0.5 text-center text-small leading-[1.45] text-ink-2"
                 >
                     {{ entry.body
                     }}<span v-if="entry.author && !($page.props.soloStudio && entry.author === me)"> — {{ entry.author }}</span>
@@ -109,7 +109,7 @@ function destroy() {
                             v-model="edit.body"
                             rows="1"
                             autofocus
-                            class="field-sizing-content max-h-40 min-h-0 resize-none rounded-none border-0 bg-transparent p-0 py-[5px] text-[13.5px] leading-[1.45] tracking-[-0.01em] hover:border-transparent focus:border-transparent"
+                            class="field-sizing-content max-h-40 min-h-0 resize-none rounded-none border-0 bg-transparent p-0 py-[5px] text-ui leading-[1.45] tracking-[-0.01em] hover:border-transparent focus:border-transparent"
                             @keydown.enter.exact.prevent="save"
                             @keydown.esc="editing = null"
                         />
@@ -152,7 +152,7 @@ function destroy() {
                     </div>
                     <p
                         v-if="edit.errors.body"
-                        class="mt-1.5 text-[11.5px] leading-[1.45] text-destructive"
+                        class="mt-1.5 text-small leading-[1.45] text-destructive"
                     >
                         {{ edit.errors.body }}
                     </p>
@@ -173,13 +173,13 @@ function destroy() {
                     >
                         <span
                             v-if="entry.author !== me"
-                            class="mb-[3px] block text-[11px] leading-none font-semibold text-ink-2"
+                            class="mb-[3px] block text-small leading-none font-semibold text-ink-2"
                         >{{ entry.author }}</span>
                         <span
-                            class="block text-[13.5px] leading-[1.5] tracking-[-0.01em] whitespace-pre-wrap"
+                            class="block text-body leading-[1.55] whitespace-pre-wrap"
                         >{{ entry.body }}</span>
                         <span
-                            class="mt-1 block text-[10.5px] leading-none tabular-nums"
+                            class="mt-1 block text-small leading-none tabular-nums"
                             :class="entry.author === me ? 'text-white/65' : 'text-ink-2'"
                         >{{ timeOf(entry.at) }}</span>
                     </div>
@@ -189,12 +189,12 @@ function destroy() {
                     >
                         <button
                             type="button"
-                            class="cursor-pointer border-0 bg-transparent p-0 text-[11.5px] leading-none font-medium text-ink-2 hover:text-foreground"
+                            class="cursor-pointer border-0 bg-transparent p-0 text-small leading-none font-medium text-ink-2 hover:text-foreground"
                             @click="startEdit(entry)"
                         >{{ $t('project.noteEdit') }}</button>
                         <button
                             type="button"
-                            class="cursor-pointer border-0 bg-transparent p-0 text-[11.5px] leading-none font-medium text-ink-2 hover:text-foreground"
+                            class="cursor-pointer border-0 bg-transparent p-0 text-small leading-none font-medium text-ink-2 hover:text-foreground"
                             @click="deleting = entry.note; confirmingDelete = true"
                         >{{ $t('project.noteDelete') }}</button>
                     </div>
@@ -223,7 +223,7 @@ function destroy() {
                 <Textarea
                     v-model="note.body"
                     rows="1"
-                    class="field-sizing-content max-h-40 min-h-0 resize-none rounded-none border-0 bg-transparent p-0 py-[5px] text-[13.5px] leading-[1.45] tracking-[-0.01em] placeholder:text-[#B0B0B5] hover:border-transparent focus:border-transparent"
+                    class="field-sizing-content max-h-40 min-h-0 resize-none rounded-none border-0 bg-transparent p-0 py-[5px] text-ui leading-[1.45] tracking-[-0.01em] placeholder:text-[#B0B0B5] hover:border-transparent focus:border-transparent"
                     :placeholder="$t('project.notePlaceholder')"
                     @keydown.enter.exact.prevent="send"
                 />
@@ -248,9 +248,9 @@ function destroy() {
             </div>
             <details class="mt-1.5">
                 <summary
-                    class="w-fit cursor-pointer text-[11.5px] text-ink-2 marker:text-ink-2"
+                    class="w-fit cursor-pointer text-small text-ink-2 marker:text-ink-2"
                 >{{ $t('project.advanced') }}</summary>
-                <label class="mt-1.5 flex items-center gap-2 text-[11.5px] text-ink-2">
+                <label class="mt-1.5 flex items-center gap-2 text-small text-ink-2">
                     {{ $t('project.noteOccurredAt') }}
                     <DatePicker v-model="note.occurred_at" size="sm" />
                 </label>
@@ -258,7 +258,7 @@ function destroy() {
 
             <p
                 v-if="note.errors.body"
-                class="mt-1.5 text-[11.5px] leading-[1.45] text-destructive"
+                class="mt-1.5 text-small leading-[1.45] text-destructive"
             >
                 {{ note.errors.body }}
             </p>

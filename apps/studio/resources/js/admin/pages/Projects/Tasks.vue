@@ -146,7 +146,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
           >
             <input
               v-model="form.title"
-              class="border-0 bg-transparent px-3.5 pt-3 pb-1.5 text-[13px] outline-none"
+              class="border-0 bg-transparent px-3.5 pt-3 pb-1.5 text-small outline-none"
               type="text"
               :placeholder="$t('lead.taskTitle')"
             >
@@ -175,7 +175,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
           </form>
 
           <template v-for="group in groups" :key="group.key">
-            <div v-if="group.rows.length" class="mt-[18px] mb-1 text-[10.5px] font-semibold tracking-[0.07em] uppercase text-ink-2">
+            <div v-if="group.rows.length" class="mt-[18px] mb-1 text-small font-semibold tracking-[0.07em] uppercase text-ink-2">
               {{ $t(group.key) }}
             </div>
 
@@ -186,17 +186,17 @@ function reopen(row: App.Crm.Data.TaskRowData) {
                 :aria-label="$t('project.taskComplete')"
                 @click="complete(row)"
               />
-              <span class="text-[13.5px] leading-[1.47]">{{ row.title }}</span>
-              <span class="text-[10.5px] tracking-[0.05em] uppercase text-ink-2">{{ row.audienceLabel }}</span>
-              <span v-if="row.shootLabel" class="text-[11.5px] text-faint">{{ row.shootLabel }}</span>
-              <span v-if="row.isBlocked" class="text-[11.5px] text-faint">{{
+              <span class="text-ui leading-[1.47]">{{ row.title }}</span>
+              <span class="text-small tracking-[0.05em] uppercase text-ink-2">{{ row.audienceLabel }}</span>
+              <span v-if="row.shootLabel" class="text-small text-faint">{{ row.shootLabel }}</span>
+              <span v-if="row.isBlocked" class="text-small text-faint">{{
                 $t('project.taskBlockedBy', { title: row.blockedBy })
               }}</span>
               <!-- Zugewiesen steht als Name; ohne Zuweisung steht die Auswahl,
                    die sie setzt — eine leere Spalte übernimmt niemand. -->
-              <span v-if="!$page.props.soloStudio && row.assigneeName" class="text-[11.5px] text-ink-2">{{ row.assigneeName }}</span>
+              <span v-if="!$page.props.soloStudio && row.assigneeName" class="text-small text-ink-2">{{ row.assigneeName }}</span>
               <Select v-else-if="!$page.props.soloStudio" :model-value="'none'" @update:model-value="(value) => assign(row, String(value))">
-                <SelectTrigger class="h-6 w-36 text-[11.5px]"><SelectValue /></SelectTrigger>
+                <SelectTrigger class="h-6 w-36 text-small"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">{{ $t('project.taskUnassigned') }}</SelectItem>
                   <SelectItem v-for="option in staffOptions" :key="option.value" :value="option.value">
@@ -205,7 +205,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
                 </SelectContent>
               </Select>
               <span
-                class="ml-auto text-[12.5px] whitespace-nowrap tabular-nums"
+                class="ml-auto text-small whitespace-nowrap tabular-nums"
                 :class="row.isOverdue ? 'text-destructive' : 'text-ink-2'"
               >{{ row.dueOn ? dayWithWeekday(row.dueOn) : row.dueAnchorLabel }}</span>
             </div>
@@ -229,8 +229,8 @@ function reopen(row: App.Crm.Data.TaskRowData) {
                 <path d="M4 12l5 5L20 6" />
               </svg>
             </span>
-            <span class="text-[13.5px] leading-[1.47] text-ink-2">{{ row.title }}</span>
-            <span v-if="row.shootLabel" class="text-[11.5px] text-faint">{{ row.shootLabel }}</span>
+            <span class="text-ui leading-[1.47] text-ink-2">{{ row.title }}</span>
+            <span v-if="row.shootLabel" class="text-small text-faint">{{ row.shootLabel }}</span>
             <Label class="sr-only" :for="`done-${row.id}`">{{ $t('project.taskCompletedOn') }}</Label>
             <DatePicker
               :id="`done-${row.id}`"

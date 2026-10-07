@@ -47,7 +47,7 @@ function toggle(key: string, index: number) {
             <div class="min-w-0 flex-1">
                 <div class="px-8 pt-[22px] max-[640px]:px-5 max-[640px]:pt-4">
                     <Link
-                        class="inline-flex items-center gap-1.5 text-[12.5px] leading-none font-medium text-ink-2 no-underline hover:text-foreground"
+                        class="inline-flex items-center gap-1.5 text-small leading-none font-medium text-ink-2 no-underline hover:text-foreground"
                         href="/neuigkeiten"
                     >
                         <svg
@@ -65,12 +65,12 @@ function toggle(key: string, index: number) {
                         >
                             {{ release.version }}
                         </h1>
-                        <span class="text-[13px] leading-none tabular-nums text-ink-2">
+                        <span class="text-small leading-none tabular-nums text-ink-2">
                             {{ monthDate(release.date) }}
                         </span>
                         <span
                             v-if="mark"
-                            class="inline-flex rounded-[12px] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase"
+                            class="inline-flex rounded-[12px] px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase"
                             :class="mark.class"
                         >
                             {{ $t(mark.key) }}
@@ -79,7 +79,7 @@ function toggle(key: string, index: number) {
 
                     <div
                         v-if="release.headline"
-                        class="mt-3.5 text-[18px] leading-[1.3] font-semibold tracking-[-0.022em]"
+                        class="mt-3.5 text-title leading-[1.3] font-semibold tracking-[-0.022em]"
                     >
                         {{ release.headline }}
                     </div>
@@ -87,7 +87,7 @@ function toggle(key: string, index: number) {
                     <p
                         v-for="(paragraph, index) in release.body"
                         :key="index"
-                        class="mt-3 max-w-[620px] text-[13px] leading-[1.6] text-ink-2"
+                        class="mt-3 max-w-[620px] text-small leading-[1.6] text-ink-2"
                     >
                         {{ paragraph }}
                     </p>
@@ -129,10 +129,10 @@ function toggle(key: string, index: number) {
                         class="mt-[30px]"
                     >
                         <h2
-                            class="m-0 mb-1 flex items-center gap-2.5 text-[15px] leading-[1.2] font-semibold tracking-[-0.02em]"
+                            class="m-0 mb-1 flex items-center gap-2.5 text-body leading-[1.2] font-semibold tracking-[-0.02em]"
                         >
                             {{ $t(section.name ?? "", 2) }}
-                            <span class="text-[12px] font-medium tabular-nums text-ink-2">
+                            <span class="text-small font-medium tabular-nums text-ink-2">
                                 {{ section.items?.length ?? 0 }}
                             </span>
                         </h2>
@@ -146,7 +146,7 @@ function toggle(key: string, index: number) {
                                 type="button"
                                 @click="toggle(section.key, index)"
                             >
-                                <span class="min-w-0 flex-1 text-[13px] leading-[1.47]">
+                                <span class="min-w-0 flex-1 text-small leading-[1.47]">
                                     {{ change.title }}
                                 </span>
                                 <svg
@@ -166,7 +166,7 @@ function toggle(key: string, index: number) {
 
                             <div
                                 v-if="open[`${section.key}${index}`] && change.description"
-                                class="-mx-2.5 px-2.5 pt-0.5 pb-3 pl-[34px] text-[12.5px] leading-[1.6] whitespace-pre-line text-ink-2"
+                                class="-mx-2.5 px-2.5 pt-0.5 pb-3 pl-[34px] text-small leading-[1.6] whitespace-pre-line text-ink-2"
                             >
                                 {{ change.description }}
                             </div>

@@ -262,7 +262,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               :title="$t('reports.funnelTitle')"
               :sub="$t('reports.funnelSub', { captured: capturedTotal, booked: bookedTotal })"
             >
-              <div class="flex items-center gap-4 text-[12.5px] text-muted-foreground">
+              <div class="flex items-center gap-4 text-small text-muted-foreground">
                 <span class="inline-flex items-center gap-1.5">
                   <span class="size-2.5 rounded-[3px] bg-[var(--accent-bg)]" />{{ $t('reports.captured') }}
                 </span>
@@ -303,11 +303,11 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                 <div class="absolute inset-0 flex items-end">
                   <div v-for="row in funnelByMonth" :key="row.month" class="flex flex-1 items-end justify-center gap-1.5">
                     <div class="flex flex-col items-center gap-1">
-                      <span class="text-[10.5px] leading-none font-semibold tabular-nums text-faint">{{ row.captured || '' }}</span>
+                      <span class="text-small leading-none font-semibold tabular-nums text-faint">{{ row.captured || '' }}</span>
                       <div class="w-4 rounded-t-[4px] bg-[var(--accent-bg)]" :style="{ height: barHeight(row.captured, funnelPeak, 188) }" />
                     </div>
                     <div class="flex flex-col items-center gap-1">
-                      <span class="text-[10.5px] leading-none font-semibold tabular-nums text-action">{{ row.booked || '' }}</span>
+                      <span class="text-small leading-none font-semibold tabular-nums text-action">{{ row.booked || '' }}</span>
                       <div class="w-4 rounded-t-[4px] bg-action" :style="{ height: barHeight(row.booked, funnelPeak, 188) }" />
                     </div>
                   </div>
@@ -315,7 +315,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               </div>
 
               <div class="flex">
-                <div v-for="(row, index) in funnelByMonth" :key="row.month" class="flex flex-1 flex-col items-center text-[11.5px] leading-tight text-faint">
+                <div v-for="(row, index) in funnelByMonth" :key="row.month" class="flex flex-1 flex-col items-center text-small leading-tight text-faint">
                   <span>{{ monthShort(row.month) }}</span>
                   <span class="h-[13px]">{{ yearTick(row.month, index) }}</span>
                 </div>
@@ -343,7 +343,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                 />
               </template>
 
-              <div class="flex items-center gap-4 text-[12.5px] text-muted-foreground">
+              <div class="flex items-center gap-4 text-small text-muted-foreground">
                 <span class="inline-flex items-center gap-1.5">
                   <span class="size-2.5 rounded-[3px] bg-action" />
                   {{ cashAhead ? $t('reports.seriesDue') : $t('reports.seriesReceived') }}
@@ -353,7 +353,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                 </span>
                 <span
                   v-if="cashAhead && cashFlow.overdue"
-                  class="ml-auto inline-flex items-center gap-1.5 rounded-full bg-late-bg px-2.5 py-1 text-[12px] leading-none font-semibold text-destructive"
+                  class="ml-auto inline-flex items-center gap-1.5 rounded-full bg-late-bg px-2.5 py-1 text-small leading-none font-semibold text-destructive"
                 >
                   {{ $t('reports.overdue', { amount: formatEurosRounded(cashFlow.overdue) }) }}
                 </span>
@@ -374,13 +374,13 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                 <div class="absolute inset-0 flex items-end justify-center gap-2.5">
                   <div v-for="row in cashMonths" :key="row.month" class="flex h-full max-w-[64px] flex-1 items-end gap-[3px]">
                     <div class="flex h-full min-w-0 flex-[3] flex-col justify-end gap-1">
-                      <span class="text-center text-[10.5px] leading-none font-semibold tabular-nums whitespace-nowrap text-action">
+                      <span class="text-center text-small leading-none font-semibold tabular-nums whitespace-nowrap text-action">
                         {{ row.value ? formatEurosRounded(row.value) : '' }}
                       </span>
                       <div class="w-full rounded-t-[4px] bg-action" :style="{ height: barHeight(row.value, cashPeak, 194) }" />
                     </div>
                     <div v-if="cashAhead" class="flex h-full min-w-0 flex-[2] flex-col justify-end gap-1">
-                      <span class="text-center text-[10.5px] leading-none font-semibold tabular-nums whitespace-nowrap text-faint">
+                      <span class="text-center text-small leading-none font-semibold tabular-nums whitespace-nowrap text-faint">
                         {{ row.forecast ? formatEurosRounded(row.forecast) : '' }}
                       </span>
                       <div v-if="row.forecast" class="w-full rounded-t-[4px]" :style="{ background: forecastFill, height: barHeight(row.forecast, cashPeak, 194) }" />
@@ -390,7 +390,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               </div>
 
               <div class="flex justify-center gap-2.5">
-                <div v-for="(row, index) in cashMonths" :key="row.month" class="flex max-w-[64px] flex-1 flex-col items-center text-[11.5px] leading-tight text-faint">
+                <div v-for="(row, index) in cashMonths" :key="row.month" class="flex max-w-[64px] flex-1 flex-col items-center text-small leading-tight text-faint">
                   <span>{{ monthShort(row.month) }}</span>
                   <span class="h-[13px]">{{ yearTick(row.month, index) }}</span>
                 </div>
@@ -403,22 +403,22 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               <div v-if="sources.length" class="flex flex-col gap-3.5">
                 <div v-for="row in sources" :key="row.source" class="flex flex-col gap-1.5">
                   <div class="flex items-baseline justify-between gap-3">
-                    <span class="text-[13.5px] font-medium">{{ row.label }}</span>
-                    <span class="text-[13.5px] font-semibold tabular-nums">{{ formatEurosRounded(row.revenue) }}</span>
+                    <span class="text-ui font-medium">{{ row.label }}</span>
+                    <span class="text-ui font-semibold tabular-nums">{{ formatEurosRounded(row.revenue) }}</span>
                   </div>
                   <div class="h-1.5 overflow-hidden rounded-[3px] bg-muted">
                     <div class="h-1.5 rounded-[3px] bg-action" :style="{ width: `${Math.round((row.revenue / sourcePeak) * 100)}%` }" />
                   </div>
-                  <span class="text-[12px] tabular-nums text-muted-foreground">
+                  <span class="text-small tabular-nums text-muted-foreground">
                     {{ $t('reports.funnelSub', { captured: row.captured, booked: row.booked }) }}
                   </span>
                 </div>
               </div>
 
               <div v-if="referrers.length" class="mt-auto flex flex-col gap-2 border-t border-border pt-3.5">
-                <span class="text-[11px] leading-none font-semibold tracking-[0.08em] uppercase text-faint">{{ $t('reports.referrersTitle') }}</span>
+                <span class="text-small leading-none font-semibold tracking-[0.08em] uppercase text-faint">{{ $t('reports.referrersTitle') }}</span>
                 <ul class="m-0 flex list-none flex-col gap-1.5 p-0">
-                  <li v-for="row in referrers" :key="row.name" class="flex items-baseline justify-between gap-3 text-[13px]">
+                  <li v-for="row in referrers" :key="row.name" class="flex items-baseline justify-between gap-3 text-small">
                     <span>{{ row.name }}</span>
                     <span class="tabular-nums text-muted-foreground">{{ row.count }}</span>
                   </li>
@@ -434,33 +434,33 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
             <ReportCard class="mb-6 break-inside-avoid" v-if="lostReasons.length" :title="$t('reports.lostTitle')">
               <div class="flex flex-col gap-3.5">
                 <div v-for="row in lostReasons" :key="`${row.outcome}:${row.reason}`" class="flex items-center gap-3">
-                  <span class="w-[132px] shrink-0 text-right text-[13px]">{{ row.reason }}</span>
+                  <span class="w-[132px] shrink-0 text-right text-small">{{ row.reason }}</span>
                   <div class="flex flex-1 items-center gap-2">
                     <div class="h-4 rounded-[2px] bg-action" :style="{ width: `${Math.round((row.count / lostPeak) * 76)}%` }" />
-                    <span class="text-[13px] font-semibold tabular-nums">{{ row.count }}</span>
+                    <span class="text-small font-semibold tabular-nums">{{ row.count }}</span>
                   </div>
                 </div>
                 <div class="flex items-center gap-3 border-t border-border pt-2.5">
-                  <span class="w-[132px] shrink-0 text-right text-[13px] font-semibold">{{ $t('reports.total') }}</span>
-                  <span class="text-[13px] font-semibold tabular-nums">{{ lostTotal }}</span>
+                  <span class="w-[132px] shrink-0 text-right text-small font-semibold">{{ $t('reports.total') }}</span>
+                  <span class="text-small font-semibold tabular-nums">{{ lostTotal }}</span>
                 </div>
               </div>
             </ReportCard>
 
             <ReportCard class="mb-6 break-inside-avoid" v-if="perContact.length" :title="$t('reports.perContactTitle')">
-              <table class="w-full border-collapse text-[13.5px]">
+              <table class="w-full border-collapse text-ui">
                 <thead>
                   <tr>
-                    <th class="pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-faint">{{ $t('reports.contact') }}</th>
-                    <th class="pb-2 text-right text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-faint">{{ $t('reports.projects') }}</th>
-                    <th class="pb-2 text-right text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-faint">{{ $t('reports.revenue') }}</th>
+                    <th class="pb-2 text-left text-small leading-none font-semibold tracking-[0.06em] uppercase text-faint">{{ $t('reports.contact') }}</th>
+                    <th class="pb-2 text-right text-small leading-none font-semibold tracking-[0.06em] uppercase text-faint">{{ $t('reports.projects') }}</th>
+                    <th class="pb-2 text-right text-small leading-none font-semibold tracking-[0.06em] uppercase text-faint">{{ $t('reports.revenue') }}</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="row in perContact" :key="row.name">
                     <td class="border-t border-border py-2">
                       <span class="inline-flex items-center gap-2.5">
-                        <span class="inline-flex size-[26px] items-center justify-center rounded-full bg-[var(--accent-bg)] text-[11px] font-semibold text-action">
+                        <span class="inline-flex size-[26px] items-center justify-center rounded-full bg-[var(--accent-bg)] text-small font-semibold text-action">
                           {{ initials(row.name) }}
                         </span>
                         {{ row.name }}
@@ -480,19 +480,19 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               <div class="flex flex-col gap-3">
                 <div v-for="step in steps" :key="step.key" class="flex flex-col gap-1.5">
                   <div class="flex items-baseline justify-between gap-3">
-                    <span class="text-[13px] font-medium">{{ step.label }}</span>
-                    <span class="text-[13px] font-semibold tabular-nums">{{ step.leads }}</span>
+                    <span class="text-small font-medium">{{ step.label }}</span>
+                    <span class="text-small font-semibold tabular-nums">{{ step.leads }}</span>
                   </div>
                   <div class="h-2 overflow-hidden rounded-[4px] bg-muted">
                     <div class="h-2 rounded-[4px] bg-action" :style="{ width: barWidth(step.leads, stepPeak) }" />
                   </div>
-                  <span class="text-[11.5px] tabular-nums" :class="step.lost ? 'text-destructive' : 'text-faint'">
+                  <span class="text-small tabular-nums" :class="step.lost ? 'text-destructive' : 'text-faint'">
                     {{ step.drop === null ? $t('reports.stepEntry') : $t('reports.stepDrop', { lost: step.lost, percent: step.drop }) }}
                   </span>
                 </div>
               </div>
 
-              <div v-if="biggestDrop" class="mt-auto border-t border-border pt-3 text-[12.5px] text-muted-foreground">
+              <div v-if="biggestDrop" class="mt-auto border-t border-border pt-3 text-small text-muted-foreground">
                 {{ $t('reports.biggestDrop', { step: biggestDrop.label, count: biggestDrop.lost }) }}
               </div>
             </ReportCard>
@@ -501,13 +501,13 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               <div class="flex flex-col gap-3.5">
                 <div v-for="row in revenueByType" :key="row.type" class="flex flex-col gap-1.5">
                   <div class="flex items-baseline justify-between gap-3">
-                    <span class="text-[13px] font-medium">{{ row.label }}</span>
-                    <span class="text-[14px] font-semibold tabular-nums">{{ formatEurosRounded(row.average) }}</span>
+                    <span class="text-small font-medium">{{ row.label }}</span>
+                    <span class="text-ui font-semibold tabular-nums">{{ formatEurosRounded(row.average) }}</span>
                   </div>
                   <div class="h-1.5 overflow-hidden rounded-[3px] bg-muted">
                     <div class="h-1.5 rounded-[3px] bg-action" :style="{ width: barWidth(row.average, typePeak) }" />
                   </div>
-                  <span class="text-[11.5px] tabular-nums text-muted-foreground">
+                  <span class="text-small tabular-nums text-muted-foreground">
                     {{ $t('reports.bookedProjects', { count: row.projects }) }} · {{ formatEurosRounded(row.revenue) }}
                   </span>
                 </div>
@@ -517,7 +517,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
             <ReportCard class="mb-6 break-inside-avoid" v-if="dwell.length" :title="$t('reports.dwellTitle')" :sub="$t('reports.dwellSub')">
               <div class="flex flex-col gap-3">
                 <div v-for="row in dwell" :key="row.key" class="flex items-center gap-3">
-                  <span class="w-[104px] shrink-0 text-[12.5px]">{{ row.label }}</span>
+                  <span class="w-[104px] shrink-0 text-small">{{ row.label }}</span>
                   <div class="h-2 flex-1 overflow-hidden rounded-[4px] bg-muted">
                     <div
                       class="h-2 rounded-[4px]"
@@ -525,7 +525,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                       :style="{ width: barWidth(row.days, dwellPeak) }"
                     />
                   </div>
-                  <span class="w-12 shrink-0 text-right text-[12.5px] font-semibold tabular-nums">
+                  <span class="w-12 shrink-0 text-right text-small font-semibold tabular-nums">
                     {{ $t('reports.days', { days: row.days }) }}
                   </span>
                 </div>
@@ -534,36 +534,36 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
 
             <ReportCard class="mb-6 break-inside-avoid" v-if="steps.length" :title="$t('reports.leadTimeTitle')" :sub="$t('reports.leadTimeSub')">
               <template #head>
-                <span v-if="leadTimes.median !== null" class="rounded-full bg-[var(--accent-bg)] px-2.5 py-1 text-[12px] leading-none font-semibold text-action">
+                <span v-if="leadTimes.median !== null" class="rounded-full bg-[var(--accent-bg)] px-2.5 py-1 text-small leading-none font-semibold text-action">
                   {{ $t('reports.median', { value: leadTimes.median }) }}
                 </span>
               </template>
 
               <div class="flex flex-col gap-3">
                 <div v-for="bucket in leadTimes.buckets" :key="bucket.key" class="flex items-center gap-3">
-                  <span class="w-[104px] shrink-0 text-[12.5px]">{{ bucket.label }}</span>
+                  <span class="w-[104px] shrink-0 text-small">{{ bucket.label }}</span>
                   <div class="h-2 flex-1 overflow-hidden rounded-[4px] bg-muted">
                     <div class="h-2 rounded-[4px] bg-action" :style="{ width: barWidth(bucket.projects, leadTimePeak) }" />
                   </div>
-                  <span class="w-7 shrink-0 text-right text-[12.5px] font-semibold tabular-nums">{{ bucket.projects }}</span>
+                  <span class="w-7 shrink-0 text-right text-small font-semibold tabular-nums">{{ bucket.projects }}</span>
                 </div>
               </div>
 
-              <div v-if="leadTimes.withoutDate" class="mt-auto border-t border-border pt-3 text-[12.5px] text-muted-foreground">
+              <div v-if="leadTimes.withoutDate" class="mt-auto border-t border-border pt-3 text-small text-muted-foreground">
                 {{ $t('reports.withoutDate', { count: leadTimes.withoutDate }) }}
               </div>
             </ReportCard>
 
             <ReportCard class="mb-6 break-inside-avoid" v-if="steps.length" :title="$t('reports.responseTitle')" :sub="$t('reports.responseSub')">
               <template #head>
-                <span v-if="responseTimes.medianHours !== null" class="rounded-full bg-[var(--accent-bg)] px-2.5 py-1 text-[12px] leading-none font-semibold text-action">
+                <span v-if="responseTimes.medianHours !== null" class="rounded-full bg-[var(--accent-bg)] px-2.5 py-1 text-small leading-none font-semibold text-action">
                   {{ $t('reports.medianHours', { hours: responseTimes.medianHours }) }}
                 </span>
               </template>
 
               <div class="flex flex-col gap-3">
                 <div v-for="bucket in responseTimes.buckets" :key="bucket.key" class="flex items-center gap-3">
-                  <span class="w-[104px] shrink-0 text-[12.5px]">{{ bucket.label }}</span>
+                  <span class="w-[104px] shrink-0 text-small">{{ bucket.label }}</span>
                   <div class="h-2 flex-1 overflow-hidden rounded-[4px] bg-muted">
                     <div
                       class="h-2 rounded-[4px]"
@@ -571,11 +571,11 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                       :style="{ width: barWidth(bucket.leads, replyPeak) }"
                     />
                   </div>
-                  <span class="w-7 shrink-0 text-right text-[12.5px] font-semibold tabular-nums">{{ bucket.leads }}</span>
+                  <span class="w-7 shrink-0 text-right text-small font-semibold tabular-nums">{{ bucket.leads }}</span>
                 </div>
               </div>
 
-              <div v-if="responseTimes.unanswered" class="mt-auto border-t border-border pt-3 text-[12.5px] text-muted-foreground">
+              <div v-if="responseTimes.unanswered" class="mt-auto border-t border-border pt-3 text-small text-muted-foreground">
                 {{ $t('reports.unanswered', { count: responseTimes.unanswered }) }}
               </div>
             </ReportCard>
@@ -583,12 +583,12 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
             <ReportCard class="mb-6 break-inside-avoid" v-if="shootsTotal" :title="$t('reports.shootsTitle')" :sub="$t('reports.shootsSub', { count: shootsTotal })">
               <div class="flex h-[120px] items-end justify-center gap-1.5">
                 <div v-for="row in shootsByMonth" :key="row.month" class="flex h-full max-w-[40px] flex-1 flex-col justify-end gap-1">
-                  <span class="text-center text-[10.5px] leading-none font-semibold tabular-nums text-faint">{{ row.shoots || '' }}</span>
+                  <span class="text-center text-small leading-none font-semibold tabular-nums text-faint">{{ row.shoots || '' }}</span>
                   <div class="w-full rounded-t-[4px] bg-action" :style="{ height: barHeight(row.shoots, shootPeak, 92) }" />
                 </div>
               </div>
               <div class="flex justify-center gap-1.5">
-                <div v-for="(row, index) in shootsByMonth" :key="row.month" class="flex max-w-[40px] flex-1 flex-col items-center text-[11px] leading-tight text-faint">
+                <div v-for="(row, index) in shootsByMonth" :key="row.month" class="flex max-w-[40px] flex-1 flex-col items-center text-small leading-tight text-faint">
                   <span>{{ monthShort(row.month) }}</span>
                   <span class="h-[13px]">{{ yearTick(row.month, index) }}</span>
                 </div>

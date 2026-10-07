@@ -200,7 +200,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                         v-for="option in RANGES"
                         :key="option.key"
                         :href="`/?zeitraum=${option.key}`"
-                        class="rounded-[var(--r-pill)] px-3.5 py-[5px] text-[12.5px] font-medium tracking-[-0.01em] no-underline"
+                        class="rounded-[var(--r-pill)] px-3.5 py-[5px] text-small font-medium tracking-[-0.01em] no-underline"
                         :class="range === option.key ? 'bg-foreground font-semibold text-background' : 'text-ink-2 shadow-[inset_0_0_0_1px_var(--line-hover)]'"
                     >
                         {{ $t(option.label) }}
@@ -210,28 +210,28 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                 <div class="max-w-[1180px] columns-3 gap-5 px-8 pt-5 pb-8">
                     <Panel class="mb-5 break-inside-avoid" :title="$t('dashboard.upcoming')" :count="entries.length || null">
                         <template #action>
-                            <Link class="ml-auto text-[12px] tracking-[-0.01em] text-action no-underline hover:underline" href="/kalender">
+                            <Link class="ml-auto text-small tracking-[-0.01em] text-action no-underline hover:underline" href="/kalender">
                                 {{ $t("dashboard.calendar") }}
                             </Link>
                         </template>
 
                         <template v-if="entries.length">
                             <div v-for="day in days" :key="day.date" class="pt-3 first:pt-0">
-                                <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ day.label }}</div>
+                                <div class="text-small tracking-[0.06em] uppercase text-ink-2">{{ day.label }}</div>
                                 <div v-for="entry in day.entries" :key="`${entry.time}${entry.what}`" class="flex items-baseline gap-2.5 py-[7px]" :class="ROW">
-                                    <span class="w-[46px] flex-none text-[12px] font-semibold tabular-nums">{{ entry.time ?? "—" }}</span>
+                                    <span class="w-[46px] flex-none text-small font-semibold tabular-nums">{{ entry.time ?? "—" }}</span>
                                     <component
                                         :is="entry.href ? Link : 'span'"
                                         :href="entry.href"
-                                        class="text-[13px] tracking-[-0.01em] no-underline"
+                                        class="text-small tracking-[-0.01em] no-underline"
                                         :class="entry.away ? 'font-normal text-ink-2' : 'font-medium text-foreground'"
                                     >
                                         {{ entry.away ? $t("dashboard.away", { name: entry.what }) : entry.what }}
                                     </component>
-                                    <span v-if="entry.where" class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">{{ entry.where }}</span>
+                                    <span v-if="entry.where" class="ml-auto text-small whitespace-nowrap text-ink-2">{{ entry.where }}</span>
                                 </div>
                             </div>
-                            <Link class="block pt-3 text-[12px] font-medium text-action no-underline" href="/kalender">{{ $t("dashboard.allUpcoming") }}</Link>
+                            <Link class="block pt-3 text-small font-medium text-action no-underline" href="/kalender">{{ $t("dashboard.allUpcoming") }}</Link>
                         </template>
 
                         <div v-else class="flex flex-col items-center justify-center gap-3.5 py-8">
@@ -245,20 +245,20 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
 
                     <Panel class="mb-5 break-inside-avoid" :title="$t('dashboard.figures')">
                         <template #action>
-                            <Link class="ml-auto text-[12px] tracking-[-0.01em] text-action no-underline hover:underline" href="/auswertungen">
+                            <Link class="ml-auto text-small tracking-[-0.01em] text-action no-underline hover:underline" href="/auswertungen">
                                 {{ $t("dashboard.reports") }}
                             </Link>
                         </template>
 
                         <div v-for="figure in figures" :key="figure.key" class="py-[11px] first:pt-0" :class="ROW">
-                            <div class="text-[10.5px] tracking-[0.07em] uppercase text-ink-2">{{ figure.label }}</div>
+                            <div class="text-small tracking-[0.07em] uppercase text-ink-2">{{ figure.label }}</div>
                             <div
                                 class="mt-[3px] flex items-baseline gap-1 text-[21px] leading-none font-semibold tracking-[-0.03em] tabular-nums"
                                 :class="figure.warn && 'text-action'"
                             >
-                                {{ figure.value }}<span v-if="figure.unit" class="text-[0.56em] font-medium text-ink-2">{{ figure.unit }}</span>
+                                {{ figure.value }}<span v-if="figure.unit" class="text-[0.62em] font-medium text-ink-2">{{ figure.unit }}</span>
                             </div>
-                            <div v-if="figure.note" class="mt-[3px] text-[11.5px] tabular-nums text-faint">{{ figure.note }}</div>
+                            <div v-if="figure.note" class="mt-[3px] text-small tabular-nums text-faint">{{ figure.note }}</div>
                         </div>
                     </Panel>
 
@@ -268,7 +268,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                                 v-for="action in PRIMARY"
                                 :key="action.href"
                                 :href="action.href"
-                                class="flex items-center gap-2.5 rounded-xl bg-paper px-3.5 py-3 text-[14px] font-medium tracking-[-0.01em] text-foreground no-underline hover:bg-sunk-2"
+                                class="flex items-center gap-2.5 rounded-xl bg-paper px-3.5 py-3 text-ui font-medium tracking-[-0.01em] text-foreground no-underline hover:bg-sunk-2"
                             >
                                 <svg
                                     class="size-[17px] flex-none fill-none stroke-ink-2 stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]"
@@ -294,9 +294,9 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                             :class="ROW"
                         >
                             <i class="mt-[5px] size-[7px] flex-none rounded-full" :class="entry.fresh ? 'bg-action' : 'bg-mark'" />
-                            <div class="text-[12.5px] leading-[1.4]">
+                            <div class="text-small leading-[1.4]">
                                 {{ entry.text }}
-                                <span class="mt-0.5 block text-[11px] text-faint">{{ entry.when }}</span>
+                                <span class="mt-0.5 block text-small text-faint">{{ entry.when }}</span>
                             </div>
                         </Link>
                     </Panel>
@@ -308,15 +308,15 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                         :count="owes ? openTasks + todo.length : quotesOut.length"
                     >
                         <template v-if="owes" #action>
-                            <Link class="ml-auto text-[11.5px] text-ink-2 no-underline" href="/aufgaben">{{ $t("dashboard.allTasks") }}</Link>
+                            <Link class="ml-auto text-small text-ink-2 no-underline" href="/aufgaben">{{ $t("dashboard.allTasks") }}</Link>
                         </template>
 
                         <div v-for="(row, index) in footerRows" :key="row.key" class="flex items-center gap-3 py-2" :class="ROW">
                             <div class="min-w-0 flex-1">
-                                <Link class="block truncate text-[13.5px] font-semibold tracking-[-0.015em] text-foreground no-underline" :href="row.href">
+                                <Link class="block truncate text-ui font-semibold tracking-[-0.015em] text-foreground no-underline" :href="row.href">
                                     {{ row.who }}
                                 </Link>
-                                <span class="block truncate text-[12.5px] text-ink-2 [&_em]:text-action [&_em]:not-italic">
+                                <span class="block truncate text-small text-ink-2 [&_em]:text-action [&_em]:not-italic">
                                     {{ row.what }} <em v-if="row.emphasis">{{ row.emphasis }}</em>
                                     <template v-if="row.whatTail">{{ row.whatTail }}</template>
                                 </span>
@@ -338,8 +338,8 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                             :class="ROW"
                             :href="`/auftraege/${row.projectId}`"
                         >
-                            <span class="block text-[13px] font-semibold tracking-[-0.015em]">{{ row.who }}</span>
-                            <span class="block text-[11.5px] text-ink-2">{{ row.what }}<template v-if="row.emphasis"> {{ row.emphasis }}</template><template v-if="row.whatTail">{{ row.whatTail }}</template></span>
+                            <span class="block text-small font-semibold tracking-[-0.015em]">{{ row.who }}</span>
+                            <span class="block text-small text-ink-2">{{ row.what }}<template v-if="row.emphasis"> {{ row.emphasis }}</template><template v-if="row.whatTail">{{ row.whatTail }}</template></span>
                         </Link>
                     </Panel>
                 </div>

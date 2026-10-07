@@ -48,7 +48,7 @@ function upload(event: Event) {
 
     <template #summary>
       <span
-        class="rounded-[10px] px-2 py-0.5 text-[11px] leading-none font-semibold"
+        class="rounded-[10px] px-2 py-0.5 text-small leading-none font-semibold"
         :class="portalStatus === 'included' ? 'bg-sunk-2 text-ink-2' : 'bg-[var(--accent-bg)] text-[var(--accent)]'"
       >{{ $t(portalLabels[portalStatus]) }}</span>
       <span class="tabular-nums">{{ formatEuros(amount) }}</span>
@@ -114,7 +114,7 @@ function upload(event: Event) {
           :src="`/pakete/${packageId}/positionen/${row.id}/bild`"
           alt=""
         />
-        <span class="text-[12.5px] text-[var(--accent)] underline">{{ $t('packages.itemImage') }}</span>
+        <span class="text-small text-[var(--accent)] underline">{{ $t('packages.itemImage') }}</span>
         <input class="hidden" type="file" accept="image/png,image/jpeg" @change="upload">
       </label>
 
@@ -127,7 +127,7 @@ function upload(event: Event) {
         >
           {{ $t('common.remove') }}
         </Button>
-        <span class="text-[15px] font-semibold tabular-nums">{{ formatEuros(amount) }}</span>
+        <span class="text-body font-semibold tabular-nums">{{ formatEuros(amount) }}</span>
       </div>
     </div>
   </QuoteCard>

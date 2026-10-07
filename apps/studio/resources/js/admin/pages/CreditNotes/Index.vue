@@ -56,7 +56,7 @@ const shown = computed(() => {
                 </TableCell>
                 <TableCell>
                   {{ note.contact }}
-                  <Link v-if="note.projectId" class="block text-[11.5px] text-ink-2" :href="`/auftraege/${note.projectId}/angebote`">
+                  <Link v-if="note.projectId" class="block text-small text-ink-2" :href="`/auftraege/${note.projectId}/angebote`">
                     {{ note.projectName }}
                   </Link>
                 </TableCell>

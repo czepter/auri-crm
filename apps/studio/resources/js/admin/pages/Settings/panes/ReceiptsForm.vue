@@ -30,7 +30,7 @@ defineExpose({ form, submit })
 <template>
   <form id="receipts-form" @submit.prevent="submit">
     <div class="mt-0">
-      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.documentsLayoutLabel') }}</div>
+      <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.documentsLayoutLabel') }}</div>
       <div class="mb-6">
         <RadioGroup
           name="documentlayout"
@@ -48,15 +48,15 @@ defineExpose({ form, submit })
             class="block cursor-pointer rounded-md bg-muted px-4 pt-4 pb-6 shadow-[inset_0_0_0_1px_transparent] has-[[data-state=checked]]:shadow-[inset_0_0_0_2px_var(--accent)]"
           >
             <RadioGroupItem :value="option.value" class="sr-only" />
-            <b class="block text-[18px] leading-tight font-semibold text-foreground">{{ $t(option.labelKey) }}</b>
-            <em class="mt-2 block text-[12.5px] leading-[1.5] font-normal not-italic text-muted-foreground">{{ $t(option.descKey) }}</em>
+            <b class="block text-title leading-tight font-semibold text-foreground">{{ $t(option.labelKey) }}</b>
+            <em class="mt-2 block text-small leading-[1.5] font-normal not-italic text-muted-foreground">{{ $t(option.descKey) }}</em>
           </label>
         </RadioGroup>
       </div>
     </div>
 
     <div class="mt-8 first-of-type:mt-6">
-      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.documentsQuoteLabel') }}</div>
+      <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.documentsQuoteLabel') }}</div>
       <div class="mb-6">
         <Field
           id="d-gueltigkeit"

@@ -394,7 +394,7 @@ const nextStage = computed(
                                 v-for="entry in week"
                                 :key="`${entry.date}${entry.what}`"
                                 :href="`/auftraege/${entry.projectId}`"
-                                class="group -mx-2 flex gap-2.5 rounded-lg px-2 py-1.5 text-[12.5px] leading-[1.47] shadow-[inset_0_1px_0_#ECECEE] transition-colors first:shadow-none hover:bg-paper"
+                                class="group -mx-2 flex gap-2.5 rounded-lg px-2 py-1.5 text-small leading-[1.47] shadow-[inset_0_1px_0_#ECECEE] transition-colors first:shadow-none hover:bg-paper"
                             >
                                 <span class="w-[62px] flex-none font-semibold tabular-nums">{{ day(entry.date) }}</span>
                                 <span class="text-ink-2 transition-colors group-hover:text-foreground">{{
@@ -404,7 +404,7 @@ const nextStage = computed(
                         </template>
                         <div
                             v-else
-                            class="-mx-2 flex gap-2.5 rounded-lg bg-paper px-2 py-1.5 text-[12.5px] leading-[1.47]"
+                            class="-mx-2 flex gap-2.5 rounded-lg bg-paper px-2 py-1.5 text-small leading-[1.47]"
                         >
                             <span class="font-medium text-[#3F6B4A]">{{ $t("lead.weekFree") }}</span>
                         </div>
@@ -414,7 +414,7 @@ const nextStage = computed(
                         <div
                             v-for="(conflict, index) in conflicts"
                             :key="index"
-                            class="-mx-2 flex gap-2.5 rounded-lg bg-paper px-2 py-1.5 text-[12.5px] leading-[1.47]"
+                            class="-mx-2 flex gap-2.5 rounded-lg bg-paper px-2 py-1.5 text-small leading-[1.47]"
                         >
                             <span class="font-medium text-action">{{
                                 conflict.label ?? conflict.projectName
@@ -487,7 +487,7 @@ const nextStage = computed(
                         <!-- Der Anfragetext. Die Personen stehen in ihrer
                              eigenen Karte: eine Seitenspalte trägt keinen
                              Zeileneditor. -->
-                        <p class="m-0 max-w-[58ch] text-[14px] leading-[1.5] tracking-[-0.008em] whitespace-pre-line">
+                        <p class="m-0 max-w-[58ch] text-ui leading-[1.5] tracking-[-0.008em] whitespace-pre-line">
                             {{ lead.inquiryText ?? $t("lead.noText") }}
                         </p>
 
@@ -512,17 +512,17 @@ const nextStage = computed(
                             class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
                         >
                             <Link
-                                class="w-[168px] flex-none text-[13px] leading-[1.35] font-semibold tracking-[-0.012em] text-foreground no-underline underline-offset-[3px] hover:underline"
+                                class="w-[168px] flex-none text-small leading-[1.35] font-semibold tracking-[-0.012em] text-foreground no-underline underline-offset-[3px] hover:underline"
                                 :href="`/kontakte/${person.id}`"
                             >
                                 {{ person.name }}
                             </Link>
-                            <span class="rounded-[var(--r-pill)] bg-sunk-2 px-[9px] py-0.5 text-[10.5px] leading-[1.4] tracking-[0.05em] uppercase text-ink-2">
+                            <span class="rounded-[var(--r-pill)] bg-sunk-2 px-[9px] py-0.5 text-small leading-[1.4] tracking-[0.05em] uppercase text-ink-2">
                                 {{ roleLabel(person.role) }}
                             </span>
-                            <a v-if="person.email" class="text-[12.5px] text-action no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
-                            <a v-if="person.phone" class="ml-auto text-[12.5px] tabular-nums text-action no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
-                            <span v-if="!person.email && !person.phone" class="ml-auto text-[12.5px] text-mark">{{ $t("lead.noReach") }}</span>
+                            <a v-if="person.email" class="text-small text-action no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
+                            <a v-if="person.phone" class="ml-auto text-small tabular-nums text-action no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
+                            <span v-if="!person.email && !person.phone" class="ml-auto text-small text-mark">{{ $t("lead.noReach") }}</span>
                         </div>
 
                         <template #edit>
@@ -552,7 +552,7 @@ const nextStage = computed(
                                 <Button
                                     v-if="index > 0"
                                     variant="ghost"
-                                    class="pb-2 text-[12px]"
+                                    class="pb-2 text-small"
                                     type="button"
                                     @click="removeContact(person.id)"
                                 >
@@ -616,7 +616,7 @@ const nextStage = computed(
                                 <Button
                                     v-if="index > 0"
                                     variant="ghost"
-                                    class="mt-5 text-[12px]"
+                                    class="mt-5 text-small"
                                     type="button"
                                     @click="removeShoot(shoot.id)"
                                 >
@@ -636,12 +636,12 @@ const nextStage = computed(
                         :default-open="quote !== null"
                     >
                         <template v-if="quote" #meta>
-                            <span v-if="quote.number" class="text-[13.5px] leading-[1.2] tracking-[-0.015em] text-ink-2 tabular-nums">{{ quote.number }}</span>
+                            <span v-if="quote.number" class="text-ui leading-[1.2] tracking-[-0.015em] text-ink-2 tabular-nums">{{ quote.number }}</span>
                             <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
                         </template>
                         <template v-if="header.canManageQuotes" #action>
                             <Link
-                                class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
+                                class="text-small tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
                                 :href="quote ? `/angebote/${quote.id}` : newQuote"
                             >{{ quote ? $t("common.edit") : $t("quotes.create") }}</Link>
                         </template>
@@ -663,7 +663,7 @@ const nextStage = computed(
                             <Link
                                 v-for="pkg in packages"
                                 :key="pkg.id"
-                                class="cursor-pointer rounded-[var(--r-pill)] border-0 bg-sunk px-[11px] py-[5px] text-[12px] leading-[1.4] font-normal text-ink-2 hover:bg-sunk-2 [&_b]:font-semibold [&_b]:text-foreground"
+                                class="cursor-pointer rounded-[var(--r-pill)] border-0 bg-sunk px-[11px] py-[5px] text-small leading-[1.4] font-normal text-ink-2 hover:bg-sunk-2 [&_b]:font-semibold [&_b]:text-foreground"
                                 :href="`/auftraege/${lead.projectId}/angebote`"
                                 method="post"
                                 as="button"
@@ -685,7 +685,7 @@ const nextStage = computed(
                         >
                             <input
                                 v-model="task.title"
-                                class="border-0 bg-transparent px-3.5 pt-3 pb-1.5 text-[13px] outline-none"
+                                class="border-0 bg-transparent px-3.5 pt-3 pb-1.5 text-small outline-none"
                                 type="text"
                                 :placeholder="$t('lead.taskTitle')"
                             >
@@ -719,10 +719,10 @@ const nextStage = computed(
                                     class="size-[15px] flex-none rounded-[5px]"
                                     :class="row.isDone ? 'bg-foreground' : 'bg-sunk-2'"
                                 />
-                                <span class="text-[13.5px] leading-[1.47]" :class="row.isDone && 'text-ink-2'">{{ row.title }}</span>
-                                <span class="text-[10.5px] leading-[1.47] tracking-[0.05em] uppercase text-ink-2">{{ row.audience }}</span>
+                                <span class="text-ui leading-[1.47]" :class="row.isDone && 'text-ink-2'">{{ row.title }}</span>
+                                <span class="text-small leading-[1.47] tracking-[0.05em] uppercase text-ink-2">{{ row.audience }}</span>
                                 <span
-                                    class="ml-auto text-[12px] leading-[1.47] tabular-nums"
+                                    class="ml-auto text-small leading-[1.47] tabular-nums"
                                     :class="row.isOverdue ? 'text-action' : 'text-ink-2'"
                                 >{{ row.dueOn ? day(row.dueOn) : "" }}</span>
                             </div>

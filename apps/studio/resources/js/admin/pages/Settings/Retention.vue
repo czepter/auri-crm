@@ -132,15 +132,15 @@ function submit() {
                 <Switch id="retention-on" v-model="enabled" />
                 <Label for="retention-on">{{ $t('settings.retentionOn') }}</Label>
                 <ChoiceGroup v-model="months" variant="segmented" :options="monthOptions" :class="enabled ? '' : 'pointer-events-none opacity-50'" />
-                <span class="text-[13px] text-ink-2">{{ $t('settings.retentionMonths') }}</span>
+                <span class="text-small text-ink-2">{{ $t('settings.retentionMonths') }}</span>
               </div>
 
               <div :class="enabled ? '' : 'pointer-events-none opacity-45'" :inert="!enabled">
                 <div class="mt-6 grid grid-cols-4 gap-3 max-[900px]:grid-cols-2">
                   <div v-for="tile in tiles" :key="tile.key" class="rounded-lg border border-rule px-4 py-3.5">
-                    <div class="text-[11px] font-semibold tracking-[0.06em] text-ink-2 uppercase">{{ $t(`settings.retention${tile.key}`) }}</div>
-                    <div class="mt-1 text-[26px] leading-[1.1] font-semibold tabular-nums" :class="tile.hot && 'text-destructive'">{{ tile.value }}</div>
-                    <div class="mt-1 text-[12.5px] text-ink-2">
+                    <div class="text-small font-semibold tracking-[0.06em] text-ink-2 uppercase">{{ $t(`settings.retention${tile.key}`) }}</div>
+                    <div class="mt-1 text-heading leading-[1.1] font-semibold tabular-nums" :class="tile.hot && 'text-destructive'">{{ tile.value }}</div>
+                    <div class="mt-1 text-small text-ink-2">
                       <template v-if="tile.sub === 'due'">{{ $t('settings.retentionDueSub', { lost: lostCount, declined: due.length - lostCount }) }}</template>
                       <template v-else-if="tile.sub === 'exempt'">{{ $t('settings.retentionExemptSub') }}</template>
                       <template v-else-if="!tile.hot">{{ $t('settings.retentionUnchanged') }}</template>
@@ -159,7 +159,7 @@ function submit() {
                       @update:model-value="pickTemplate"
                     />
 
-                    <div class="mt-6 flex justify-between text-[11px] font-semibold tracking-[0.06em] text-ink-2 uppercase">
+                    <div class="mt-6 flex justify-between text-small font-semibold tracking-[0.06em] text-ink-2 uppercase">
                       <span>{{ $t('settings.retentionParts') }}</span>
                       <span>{{ $t('settings.retentionAffected') }}</span>
                     </div>
@@ -171,10 +171,10 @@ function submit() {
                       :inert="chosen.order && part !== 'order'"
                     >
                       <div class="min-w-0 flex-1">
-                        <div class="text-[13.5px] font-semibold">{{ $t(`settings.retentionPart${part[0].toUpperCase()}${part.slice(1)}`) }}</div>
-                        <div class="text-[12.5px] text-ink-2">{{ $t(`settings.retentionPart${part[0].toUpperCase()}${part.slice(1)}Sub`) }}</div>
+                        <div class="text-ui font-semibold">{{ $t(`settings.retentionPart${part[0].toUpperCase()}${part.slice(1)}`) }}</div>
+                        <div class="text-small text-ink-2">{{ $t(`settings.retentionPart${part[0].toUpperCase()}${part.slice(1)}Sub`) }}</div>
                       </div>
-                      <span class="w-8 text-right text-[13.5px] tabular-nums">{{ counts[part] }}</span>
+                      <span class="w-8 text-right text-ui tabular-nums">{{ counts[part] }}</span>
                       <ChoiceGroup
                         variant="segmented"
                         :model-value="effective[part] ? 'off' : 'keep'"
@@ -188,11 +188,11 @@ function submit() {
                   </div>
 
                   <div class="min-w-0">
-                    <div class="flex justify-between text-[11px] font-semibold tracking-[0.06em] text-ink-2 uppercase">
+                    <div class="flex justify-between text-small font-semibold tracking-[0.06em] text-ink-2 uppercase">
                       <span>{{ $t('settings.retentionDue') }}</span>
                       <span>{{ due.length }}</span>
                     </div>
-                    <div class="mt-2 grid grid-cols-[150px_minmax(0,1fr)_100px_76px] gap-3 py-2 text-[11px] font-semibold tracking-[0.06em] text-ink-2 uppercase shadow-[inset_0_-1px_0_var(--rule)]">
+                    <div class="mt-2 grid grid-cols-[150px_minmax(0,1fr)_100px_76px] gap-3 py-2 text-small font-semibold tracking-[0.06em] text-ink-2 uppercase shadow-[inset_0_-1px_0_var(--rule)]">
                       <span>{{ $t('settings.retentionColContact') }}</span>
                       <span>{{ $t('settings.retentionColRequest') }}</span>
                       <span>{{ $t('settings.retentionColOutcome') }}</span>
@@ -205,18 +205,18 @@ function submit() {
                         class="grid grid-cols-[150px_minmax(0,1fr)_100px_76px] items-center gap-3 py-2 shadow-[inset_0_-1px_0_var(--rule)]"
                       >
                         <div class="min-w-0">
-                          <div class="truncate text-[13.5px] font-semibold" :class="effective.name && 'font-normal text-ink-2 italic'">
+                          <div class="truncate text-ui font-semibold" :class="effective.name && 'font-normal text-ink-2 italic'">
                             {{ effective.name ? '[gelöscht]' : candidate.name }}
                           </div>
-                          <div class="truncate text-[12px] text-ink-2">{{ candidate.type }}</div>
+                          <div class="truncate text-small text-ink-2">{{ candidate.type }}</div>
                         </div>
-                        <div class="truncate text-[13px]" :class="effective.text && 'text-ink-2'">{{ effective.text ? '—' : candidate.text }}</div>
-                        <div class="text-[12.5px]">
+                        <div class="truncate text-small" :class="effective.text && 'text-ink-2'">{{ effective.text ? '—' : candidate.text }}</div>
+                        <div class="text-small">
                           {{ candidate.outcomeLabel }}
-                          <div class="text-[12px] text-ink-2">{{ $t('settings.retentionIdle', { n: candidate.idleMonths }) }}</div>
+                          <div class="text-small text-ink-2">{{ $t('settings.retentionIdle', { n: candidate.idleMonths }) }}</div>
                         </div>
                         <span
-                          class="w-fit rounded-full px-2.5 py-0.5 text-[12px] font-semibold"
+                          class="w-fit rounded-full px-2.5 py-0.5 text-small font-semibold"
                           :class="effective.order ? 'bg-late-bg text-destructive' : 'bg-sunk text-ink-2'"
                         >
                           {{ effective.order ? $t('settings.retentionRemoved') : $t('settings.retentionStays') }}
@@ -245,19 +245,19 @@ function submit() {
             </AlertDialogHeader>
             <AlertDialogBody>
               <div>
-                <div v-for="part in removedParts" :key="part" class="flex justify-between gap-4 py-2 text-[13.5px] shadow-[inset_0_-1px_0_var(--rule)]">
+                <div v-for="part in removedParts" :key="part" class="flex justify-between gap-4 py-2 text-ui shadow-[inset_0_-1px_0_var(--rule)]">
                   <span class="font-medium">{{ $t(`settings.retentionPart${part[0].toUpperCase()}${part.slice(1)}`) }}</span>
                   <span class="tabular-nums text-ink-2">
                     {{ $t(part === 'name' ? 'settings.retentionDoneAnonymized' : 'settings.retentionDoneDeleted', { count: counts[part] }) }}
                   </span>
                 </div>
-                <div v-if="removedLeads" class="flex justify-between gap-4 py-2 text-[13.5px] font-semibold text-destructive shadow-[inset_0_-1px_0_var(--rule)]">
+                <div v-if="removedLeads" class="flex justify-between gap-4 py-2 text-ui font-semibold text-destructive shadow-[inset_0_-1px_0_var(--rule)]">
                   <span>{{ $t('settings.retentionRate') }}</span>
                   <span class="tabular-nums">{{ rateBefore }} % → {{ rateAfter }} %</span>
                 </div>
               </div>
 
-              <p class="m-0 rounded-md bg-late-bg px-3.5 py-3 text-[13px] leading-[1.45] text-destructive">
+              <p class="m-0 rounded-md bg-late-bg px-3.5 py-3 text-small leading-[1.45] text-destructive">
                 <strong>{{ $t('settings.retentionFinal') }}</strong> {{ $t(`settings.retentionWarn${warning}`) }}
               </p>
 

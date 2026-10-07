@@ -193,7 +193,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
          offen da; erst ab Versendet wird er zur zuklappbaren Karte. -->
     <section v-if="canManageQuotes && quote.status === 'draft' && drafts[quote.id]" class="mt-3 first:mt-0">
       <header v-if="showHeader" class="mb-3 flex items-center gap-3">
-        <h2 class="m-0 text-[15px] leading-[1.2] font-semibold tracking-[-0.015em]">{{ quoteTitle(quote, t) }}</h2>
+        <h2 class="m-0 text-body leading-[1.2] font-semibold tracking-[-0.015em]">{{ quoteTitle(quote, t) }}</h2>
         <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
         <QuoteActions :project-id="projectId" :quote="quote" :can-manage-quotes="canManageQuotes" />
       </header>
@@ -210,7 +210,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
         @change="save(quote.id)"
       />
 
-      <p v-if="saveErrors[quote.id]" class="mt-2 text-[12px] text-destructive">{{ saveErrors[quote.id] }}</p>
+      <p v-if="saveErrors[quote.id]" class="mt-2 text-small text-destructive">{{ saveErrors[quote.id] }}</p>
     </section>
 
   <div v-else class="mt-3 flex gap-6 first:mt-0">
@@ -222,24 +222,24 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
     >
       <template #action>
         <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
-        <span v-if="quote.sentChannel" class="text-[11.5px] text-ink-2">
+        <span v-if="quote.sentChannel" class="text-small text-ink-2">
           {{ quote.sentChannel === 'mail' ? $t('quotes.sentByMail') : $t('quotes.sentBySelf') }}
         </span>
 
         <QuoteActions :project-id="projectId" :quote="quote" :can-manage-quotes="canManageQuotes" />
       </template>
 
-        <p v-if="quote.intro" class="mb-3 text-[12.5px] leading-[1.55] whitespace-pre-line">{{ quote.intro }}</p>
+        <p v-if="quote.intro" class="mb-3 text-small leading-[1.55] whitespace-pre-line">{{ quote.intro }}</p>
 
         <div
           v-for="item in quote.items"
           :key="item.id"
-          class="flex gap-3 py-[9px] text-[13px]"
+          class="flex gap-3 py-[9px] text-small"
           :class="item.isIncluded ? 'text-ink-2' : 'text-foreground'"
         >
           <span class="flex-1">
             {{ item.title }}
-            <span v-if="item.description" class="mt-px block text-[11.5px] text-ink-2">
+            <span v-if="item.description" class="mt-px block text-small text-ink-2">
               {{ item.description }}
             </span>
           </span>
@@ -252,21 +252,21 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
           v-for="(row, index) in summaryRows(quote)"
           :key="`${row.label}-${index}`"
           class="flex gap-3 py-1.5"
-          :class="row.last ? 'mt-1.5 pt-2.5 font-semibold shadow-[inset_0_1px_0_var(--line)]' : 'text-[12.5px]'"
+          :class="row.last ? 'mt-1.5 pt-2.5 font-semibold shadow-[inset_0_1px_0_var(--line)]' : 'text-small'"
         >
-          <span class="flex-1" :class="{ 'text-[13.5px]': row.last }">
+          <span class="flex-1" :class="{ 'text-ui': row.last }">
             {{ row.rate === undefined ? $t(row.label) : $t('quotes.vat', { rate: basisPointsToPercent(row.rate) }) }}
           </span>
-          <span class="w-[110px] flex-none text-right tabular-nums" :class="{ 'text-[14px]': row.last }">{{ row.value }}</span>
+          <span class="w-[110px] flex-none text-right tabular-nums" :class="{ 'text-ui': row.last }">{{ row.value }}</span>
         </div>
 
         <!-- Q-04: nur ein bereits versendetes Angebot trägt den §19-Satz —
              ein Entwurf hat kein vatMode. -->
-        <p v-if="quote.vatMode === 'small_business'" class="mt-1.5 text-[11.5px] leading-[1.45] text-ink-2">
+        <p v-if="quote.vatMode === 'small_business'" class="mt-1.5 text-small leading-[1.45] text-ink-2">
           {{ quote.vatNote }}
         </p>
 
-        <p v-if="quote.outro" class="mt-3 text-[12.5px] leading-[1.55] whitespace-pre-line">{{ quote.outro }}</p>
+        <p v-if="quote.outro" class="mt-3 text-small leading-[1.55] whitespace-pre-line">{{ quote.outro }}</p>
     </Card>
 
     <!-- Same 1180px column threshold QuoteEditor uses for its own preview
@@ -296,18 +296,18 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
     <div
       v-for="installment in paymentPlan?.installments ?? []"
       :key="installment.id"
-      class="flex items-center gap-3 py-[9px] text-[13px]"
+      class="flex items-center gap-3 py-[9px] text-small"
     >
       <span class="w-[110px] flex-none text-ink-2">{{ dayWithWeekday(installment.dueOn) }}</span>
       <span class="flex-1">{{ installment.label }}</span>
       <a
         v-if="installment.invoiceId && installment.hasInvoiceDocument"
-        class="text-[12px] text-ink-2"
+        class="text-small text-ink-2"
         :href="`/rechnungen/${installment.invoiceId}/pdf`"
         target="_blank"
       >{{ installment.invoiceNumber }}</a>
-      <span v-else-if="installment.invoiceNumber" class="text-[12px] text-ink-2">{{ installment.invoiceNumber }}</span>
-      <span class="text-[12px] text-ink-2">{{ installment.statusLabel }}</span>
+      <span v-else-if="installment.invoiceNumber" class="text-small text-ink-2">{{ installment.invoiceNumber }}</span>
+      <span class="text-small text-ink-2">{{ installment.statusLabel }}</span>
       <span class="w-[110px] flex-none text-right font-semibold tabular-nums">{{ formatEuros(installment.amount) }}</span>
       <Button
         v-if="canManagePaymentPlan && !installment.invoiceId && installment.status !== 'cancelled'"
@@ -334,7 +334,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
     <div
       v-for="note in creditNotes"
       :key="note.note.id"
-      class="flex items-center gap-3 py-[9px] text-[13px] text-ink-2"
+      class="flex items-center gap-3 py-[9px] text-small text-ink-2"
     >
       <span class="w-[110px] flex-none">{{ dayWithWeekday(note.note.issuedOn) }}</span>
       <a
@@ -365,13 +365,13 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
         <Button type="submit" variant="pill" :disabled="planForm.processing">{{ $t('payments.create') }}</Button>
       </div>
 
-      <p v-if="planForm.errors.installments" class="col-span-2 text-[12px] text-destructive">
+      <p v-if="planForm.errors.installments" class="col-span-2 text-small text-destructive">
         {{ planForm.errors.installments }}
       </p>
     </form>
   </Card>
 
-  <p v-if="!quotes.length && !canManageQuotes" class="mt-3 text-[11.5px] leading-[1.45] text-faint">
+  <p v-if="!quotes.length && !canManageQuotes" class="mt-3 text-small leading-[1.45] text-faint">
     {{ $t('quotes.empty') }}
   </p>
 </template>

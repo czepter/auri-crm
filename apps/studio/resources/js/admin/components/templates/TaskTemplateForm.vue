@@ -59,7 +59,7 @@ function remove() {
 <template>
   <form :id="`task-template-${template.id}`" @submit.prevent="submit">
     <div class="mb-6 flex items-center gap-3">
-      <h2 class="m-0 min-w-0 flex-1 truncate text-[19px] leading-[1.2] font-semibold tracking-[-0.02em]">{{ template.title }}</h2>
+      <h2 class="m-0 min-w-0 flex-1 truncate text-title leading-[1.2] font-semibold tracking-[-0.02em]">{{ template.title }}</h2>
       <div class="flex flex-none items-center gap-2.5">
         <Label variant="inline" :for="`active-${template.id}`">{{ $t('taskTemplates.activeField') }}</Label>
         <Checkbox :id="`active-${template.id}`" v-model="form.is_active" />
@@ -70,7 +70,7 @@ function remove() {
       <div class="col-span-full flex min-w-0 flex-col gap-1.5">
         <Label :for="`title-${template.id}`">{{ $t('taskTemplates.titleField') }}</Label>
         <Input :id="`title-${template.id}`" v-model="form.title" type="text" maxlength="255" />
-        <p v-if="form.errors.title" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.title }}</p>
+        <p v-if="form.errors.title" class="text-small leading-[1.45] text-destructive">{{ form.errors.title }}</p>
       </div>
 
       <div class="flex min-w-0 flex-col gap-1.5">
@@ -97,14 +97,14 @@ function remove() {
           <InputGroupInput :id="`offset-${template.id}`" v-model.number="form.day_offset" class="tabular-nums" type="number" />
           <InputGroupAddon align="inline-end">{{ $t('common.unitDays') }}</InputGroupAddon>
         </InputGroup>
-        <span class="text-[11.5px] leading-[1.45] text-faint">{{ $t('taskTemplates.dayOffsetHint') }}</span>
-        <p v-if="form.errors.day_offset" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.day_offset }}</p>
+        <span class="text-small leading-[1.45] text-faint">{{ $t('taskTemplates.dayOffsetHint') }}</span>
+        <p v-if="form.errors.day_offset" class="text-small leading-[1.45] text-destructive">{{ form.errors.day_offset }}</p>
       </div>
 
       <div class="flex min-w-0 flex-col gap-1.5">
         <Label :for="`sort-${template.id}`">{{ $t('taskTemplates.sortOrderField') }}</Label>
         <Input :id="`sort-${template.id}`" v-model.number="form.sort_order" class="tabular-nums" type="number" min="0" />
-        <p v-if="form.errors.sort_order" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.sort_order }}</p>
+        <p v-if="form.errors.sort_order" class="text-small leading-[1.45] text-destructive">{{ form.errors.sort_order }}</p>
       </div>
     </div>
 
@@ -113,7 +113,7 @@ function remove() {
         <Button type="submit" :disabled="form.processing">
           {{ $t('taskTemplates.save') }}
         </Button>
-        <span class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due">{{ $t('settings.unsaved') }}</span>
+        <span class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due">{{ $t('settings.unsaved') }}</span>
       </template>
       <Button class="ml-auto" type="button" variant="outline" @click="remove">{{ $t('taskTemplates.delete') }}</Button>
     </div>

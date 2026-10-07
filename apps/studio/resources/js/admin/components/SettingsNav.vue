@@ -78,13 +78,13 @@ const shown = computed(() =>
     <template v-for="item in shown" :key="item.key ?? item.group">
       <div
         v-if="item.group"
-        class="mt-4 px-2.5 pb-1 text-[10.5px] tracking-[0.06em] uppercase text-ink-2 first:mt-0 max-[640px]:hidden"
+        class="mt-4 px-2.5 pb-1 text-small tracking-[0.06em] uppercase text-ink-2 first:mt-0 max-[640px]:hidden"
       >
         {{ $t(item.group) }}
       </div>
       <Link
         v-else
-        class="flex items-center gap-2.5 rounded-[7px] px-2.5 py-[9px] text-[14px] leading-none whitespace-nowrap no-underline transition-[background-color] duration-[.12s] ease-out hover:bg-muted [&_svg]:size-[17px]" :class="[
+        class="flex items-center gap-2.5 rounded-[7px] px-2.5 py-[9px] text-ui leading-none whitespace-nowrap no-underline transition-[background-color] duration-[.12s] ease-out hover:bg-muted [&_svg]:size-[17px]" :class="[
           item.key === active && !item.external
             ? 'font-semibold text-foreground [&_svg]:opacity-100'
             : 'font-normal text-muted-foreground [&_svg]:opacity-75',

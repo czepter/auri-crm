@@ -85,7 +85,7 @@ const shown = computed(() => {
                   </TableCell>
                   <TableCell>
                     {{ invoice.contact }}
-                    <Link v-if="invoice.projectId" class="block text-[11.5px] text-ink-2" :href="`/auftraege/${invoice.projectId}/angebote`">
+                    <Link v-if="invoice.projectId" class="block text-small text-ink-2" :href="`/auftraege/${invoice.projectId}/angebote`">
                       {{ invoice.projectName }}
                     </Link>
                   </TableCell>
@@ -93,18 +93,18 @@ const shown = computed(() => {
                   <TableCell class="whitespace-nowrap">{{ invoice.dueOn ? dayWithWeekday(invoice.dueOn) : '' }}</TableCell>
                   <TableCell align="right" class="whitespace-nowrap">
                     {{ formatEuros(invoice.amount) }}
-                    <span v-if="invoice.status === 'partial' || (invoice.status === 'overdue' && invoice.paidAmount)" class="block text-[11.5px] text-ink-2">
+                    <span v-if="invoice.status === 'partial' || (invoice.status === 'overdue' && invoice.paidAmount)" class="block text-small text-ink-2">
                       {{ $t('payments.open', { amount: formatEuros(invoice.amount - invoice.paidAmount) }) }}
                     </span>
                   </TableCell>
                   <TableCell class="whitespace-nowrap">
                     <span class="chip" :class="CHIP[invoice.status]">{{ invoice.statusLabel }}</span>
-                    <span v-if="invoice.viewedOn || invoice.sentOn" class="ml-2 text-[11.5px] text-ink-2">
+                    <span v-if="invoice.viewedOn || invoice.sentOn" class="ml-2 text-small text-ink-2">
                       {{ $t(invoice.viewedOn ? 'invoicesOverview.viewed' : 'invoicesOverview.sent') }}
                     </span>
                   </TableCell>
                   <TableCell align="right">
-                    <div v-if="invoice.status !== 'cancelled'" class="flex justify-end gap-1.5">
+                    <div v-if="invoice.status !== 'cancelled'" class="flex flex-wrap justify-end gap-1.5">
                       <Button
                         v-if="OPEN.includes(invoice.status)"
                         :as="Link"

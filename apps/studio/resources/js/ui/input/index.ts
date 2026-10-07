@@ -26,11 +26,11 @@ export const inputVariants = cva(
     variants: {
       size: {
         /* forms.css .inp */
-        default: "px-[11px] py-[9px] text-[13px] leading-[1.35]",
+        default: "px-[11px] py-[9px] text-ui leading-[1.35]",
         /* forms.css select.inp.sm — the control that sits inside a row rather than a form */
-        sm: "px-2 py-[5px] text-xs leading-[1.35]",
+        sm: "px-2 py-[5px] text-small leading-[1.35]",
         /* forms.css .fld.lead .inp — the main date the whole intake hangs off */
-        lead: "px-[13px] py-3 text-[15px] font-semibold leading-[1.2] tracking-[-0.01em]",
+        lead: "px-[13px] py-3 text-body font-semibold leading-[1.2] tracking-[-0.01em]",
       },
     },
     defaultVariants: {

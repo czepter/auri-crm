@@ -94,7 +94,7 @@ function choose(field: Field, option: string) {
       :key="field.id"
       class="flex items-center gap-4 border-b border-border py-[9px] last:border-b-0"
     >
-      <span class="w-[164px] flex-none text-[12.5px] leading-[1.47] text-ink-2">{{ field.label }}</span>
+      <span class="w-[164px] flex-none text-small leading-[1.47] text-ink-2">{{ field.label }}</span>
 
       <div class="min-w-0 flex-1">
         <template v-if="!editing">
@@ -102,11 +102,11 @@ function choose(field: Field, option: string) {
             <span
               v-for="tag in tags(field)"
               :key="tag"
-              class="rounded-[var(--r-pill)] bg-sunk-2 px-2.5 py-1 text-[11.5px] leading-none"
+              class="rounded-[var(--r-pill)] bg-sunk-2 px-2.5 py-1 text-small leading-none"
             >{{ tag }}</span>
-            <span v-if="!tags(field).length" class="text-[13.5px] leading-[1.47]">—</span>
+            <span v-if="!tags(field).length" class="text-ui leading-[1.47]">—</span>
           </span>
-          <span v-else class="text-[13.5px] leading-[1.47]">{{ read(field) }}</span>
+          <span v-else class="text-ui leading-[1.47]">{{ read(field) }}</span>
         </template>
 
         <template v-else>
@@ -191,7 +191,7 @@ function choose(field: Field, option: string) {
             <span
               v-for="tag in tags(field)"
               :key="tag"
-              class="inline-flex items-center gap-1.5 rounded-[var(--r-pill)] bg-background px-2.5 py-1 text-[11.5px] leading-none"
+              class="inline-flex items-center gap-1.5 rounded-[var(--r-pill)] bg-background px-2.5 py-1 text-small leading-none"
             >
               {{ tag }}
               <button
@@ -202,7 +202,7 @@ function choose(field: Field, option: string) {
               >×</button>
             </span>
             <input
-              class="min-w-[120px] flex-1 border-0 bg-transparent text-[13px] leading-[1.35] outline-none placeholder:text-faint"
+              class="min-w-[120px] flex-1 border-0 bg-transparent text-small leading-[1.35] outline-none placeholder:text-faint"
               :list="`tags-${field.id}`"
               :placeholder="$t('project.fieldTagAdd')"
               type="text"
@@ -224,7 +224,7 @@ function choose(field: Field, option: string) {
 
           <p
             v-if="errors[`fields.${field.key}`]"
-            class="mt-1 text-[11.5px] leading-[1.45] text-destructive"
+            class="mt-1 text-small leading-[1.45] text-destructive"
           >{{ errors[`fields.${field.key}`] }}</p>
         </template>
       </div>

@@ -73,7 +73,7 @@ const id = () => props.id ?? fallback
   >
     <Label v-if="label" :for="id()" :variant="dense ? 'micro' : 'field'">{{ label }}</Label>
     <slot :id="id()" />
-    <span v-if="hint" class="text-[11.5px] leading-[1.45] text-faint">{{ hint }}</span>
-    <p v-if="error || native" class="text-[11.5px] leading-[1.45] text-destructive">{{ error || native }}</p>
+    <span v-if="hint" class="text-small leading-[1.45] text-faint">{{ hint }}</span>
+    <p v-if="error || native" class="text-small leading-[1.45] text-destructive">{{ error || native }}</p>
   </div>
 </template>

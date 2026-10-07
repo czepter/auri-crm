@@ -128,23 +128,23 @@ function day(value: string | null): string {
     <ProjectShell :header="header" active="documents" child="contract">
       <template #rail>
         <Rail v-if="contract">
-          <h3 class="m-0 text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">
+          <h3 class="m-0 text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">
             {{ $t('project.contractSigners') }}
           </h3>
 
           <ul class="mt-3 flex list-none flex-col gap-2.5 p-0">
             <li v-for="entry in contract.signers" :key="entry.id" class="flex flex-col gap-0.5">
               <div class="flex items-baseline gap-2">
-                <span class="text-[12.5px] font-medium">{{ entry.name }}</span>
-                <span v-if="entry.role" class="text-[11px] text-faint">{{ entry.role }}</span>
+                <span class="text-small font-medium">{{ entry.name }}</span>
+                <span v-if="entry.role" class="text-small text-faint">{{ entry.role }}</span>
               </div>
-              <span v-if="entry.signedAt" class="text-[11px] text-ok">
+              <span v-if="entry.signedAt" class="text-small text-ok">
                 {{ $t('project.contractSigned', { date: day(entry.signedAt) }) }}
               </span>
-              <span v-else-if="entry.remindedAt" class="text-[11px] text-ink-2">
+              <span v-else-if="entry.remindedAt" class="text-small text-ink-2">
                 {{ $t('project.contractReminded', { date: day(entry.remindedAt) }) }}
               </span>
-              <span v-else class="text-[11px] text-faint">{{ $t('project.contractSignerPending') }}</span>
+              <span v-else class="text-small text-faint">{{ $t('project.contractSignerPending') }}</span>
 
               <div v-if="header.canManageContracts && !entry.signedAt" class="flex gap-2">
                 <Button variant="outline" type="button" @click="remind(entry.id)">
@@ -171,7 +171,7 @@ function day(value: string | null): string {
             </Button>
           </form>
 
-          <h3 class="mt-7 m-0 text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">
+          <h3 class="mt-7 m-0 text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">
             {{ $t('project.contractDeadline') }}
           </h3>
 
@@ -182,18 +182,18 @@ function day(value: string | null): string {
             @update:model-value="setDeadline"
           />
 
-          <h3 class="mt-7 m-0 text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">
+          <h3 class="mt-7 m-0 text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">
             {{ $t('project.contractVersions') }}
           </h3>
 
           <ul class="mt-3 flex list-none flex-col gap-2.5 p-0">
             <li v-for="version in versions" :key="version.id" class="flex flex-col gap-0.5">
-              <span class="text-[11px] text-faint">{{ day(version.sentAt ?? version.renderedAt) }}</span>
+              <span class="text-small text-faint">{{ day(version.sentAt ?? version.renderedAt) }}</span>
               <div class="flex items-baseline gap-2">
-                <span class="text-[12.5px]">{{ $t('project.contractVersionLabel', { version: version.version }) }}</span>
+                <span class="text-small">{{ $t('project.contractVersionLabel', { version: version.version }) }}</span>
                 <span :class="['chip', chipClass(version.state)]">{{ version.stateLabel }}</span>
               </div>
-              <a v-if="version.downloadUrl" class="text-[11px] text-ink-2 underline" :href="version.downloadUrl" download>
+              <a v-if="version.downloadUrl" class="text-small text-ink-2 underline" :href="version.downloadUrl" download>
                 {{ $t('project.contractDownload') }}
               </a>
             </li>
@@ -217,20 +217,20 @@ function day(value: string | null): string {
           </template>
         </template>
 
-        <p v-if="signed && contract.state === 'draft'" class="text-[11.5px] leading-[1.45] text-faint">
+        <p v-if="signed && contract.state === 'draft'" class="text-small leading-[1.45] text-faint">
           {{ $t('project.contractHoldsUntilSent', { version: signed.version }) }}
         </p>
 
         <div class="mt-4 grid min-h-0 grid-cols-[minmax(0,1fr)_7px_minmax(0,1fr)] gap-0 max-[1100px]:grid-cols-[minmax(0,1fr)]">
           <section class="flex min-w-0 flex-col">
             <div class="flex items-center gap-2.5 border-b border-border pb-2.5">
-              <span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('documentTemplates.body') }}</span>
-              <span class="ml-auto text-[11.5px] leading-[1.45] text-faint">{{ $t('documentTemplates.bodyHint') }}</span>
+              <span class="mb-[5px] text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('documentTemplates.body') }}</span>
+              <span class="ml-auto text-small leading-[1.45] text-faint">{{ $t('documentTemplates.bodyHint') }}</span>
             </div>
             <div class="mx-auto mt-6 w-full max-w-[520px] rounded-[2px] border border-border bg-white px-10 pb-10">
-              <div class="-mx-10 mb-6 border-b border-dashed border-line-hover bg-[#FCFBFA] px-3 py-[9px] text-[10px] leading-[1.4] font-medium tracking-[0.06em] uppercase text-faint">{{ $t('documentTemplates.letterhead') }}</div>
+              <div class="-mx-10 mb-6 border-b border-dashed border-line-hover bg-[#FCFBFA] px-3 py-[9px] text-small leading-[1.4] font-medium tracking-[0.06em] uppercase text-faint">{{ $t('documentTemplates.letterhead') }}</div>
               <DocumentEditor :key="contract.id" v-model="doc" :palette="palette" :merge-fields="mergeFields" />
-              <div class="-mx-10 -mb-10 mt-6 border-t border-dashed border-line-hover bg-[#FCFBFA] px-3 py-[9px] text-[10px] leading-[1.4] font-medium tracking-[0.06em] uppercase text-faint">{{ $t('documentTemplates.footer') }}</div>
+              <div class="-mx-10 -mb-10 mt-6 border-t border-dashed border-line-hover bg-[#FCFBFA] px-3 py-[9px] text-small leading-[1.4] font-medium tracking-[0.06em] uppercase text-faint">{{ $t('documentTemplates.footer') }}</div>
             </div>
           </section>
 
@@ -256,7 +256,7 @@ function day(value: string | null): string {
       <Section v-else :title="$t('project.contract')">
         <p
           v-if="!header.canManageContracts || !templates.length"
-          class="text-[11.5px] leading-[1.45] text-faint"
+          class="text-small leading-[1.45] text-faint"
         >{{ $t('project.contractNone') }}</p>
 
         <div v-if="header.canManageContracts && templates.length" class="mb-6">

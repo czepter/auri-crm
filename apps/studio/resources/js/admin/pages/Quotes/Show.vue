@@ -66,7 +66,7 @@ const facts = computed(() => {
         <PageHead :title="quoteTitle(quote, t)" :kicker="recipientName ?? projectName">
           <div class="ml-auto flex items-center gap-3.5">
             <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
-            <span v-if="quote.sentChannel" class="text-[11.5px] text-ink-2">
+            <span v-if="quote.sentChannel" class="text-small text-ink-2">
               {{ quote.sentChannel === 'mail' ? $t('quotes.sentByMail') : $t('quotes.sentBySelf') }}
             </span>
             <Button :as="Link" variant="outline" :href="`/auftraege/${projectId}`">
@@ -77,7 +77,7 @@ const facts = computed(() => {
         </PageHead>
 
         <dl v-if="facts.length" class="mx-8 mt-1 flex flex-wrap gap-x-6 gap-y-1">
-          <div v-for="fact in facts" :key="fact.label" class="flex gap-1.5 text-[12.5px]">
+          <div v-for="fact in facts" :key="fact.label" class="flex gap-1.5 text-small">
             <dt class="text-ink-2">{{ fact.label }}</dt>
             <dd class="m-0 font-medium">{{ fact.value }}</dd>
           </div>

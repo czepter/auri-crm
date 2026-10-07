@@ -18,7 +18,7 @@ const profileRef = ref<InstanceType<typeof ProfileForm>>()
   <Dialog :open="open" @update:open="(value) => value || emit('cancel')">
     <DialogContent hide-close class="max-w-[560px]">
       <DialogHeader>
-        <span class="text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-muted-foreground">{{ $t('gates.beforeInvoice') }}</span>
+        <span class="text-small leading-none font-semibold tracking-[0.09em] uppercase text-muted-foreground">{{ $t('gates.beforeInvoice') }}</span>
         <DialogTitle class="mt-3">{{ $t('gates.invoiceDataTitle') }}</DialogTitle>
         <DialogDescription>{{ $t('gates.invoiceDataHint') }}</DialogDescription>
       </DialogHeader>

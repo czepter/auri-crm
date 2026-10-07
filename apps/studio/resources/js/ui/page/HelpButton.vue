@@ -16,7 +16,7 @@ const href = computed(() =>
 <template>
   <button
     v-if="dockt"
-    class="flex cursor-pointer items-center gap-[7px] rounded-lg border-0 bg-transparent px-2.5 py-1.5 text-[11.5px] leading-none text-ink-2 transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground"
+    class="flex cursor-pointer items-center gap-[7px] rounded-lg border-0 bg-transparent px-2.5 py-1.5 text-small leading-none text-ink-2 transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground"
     type="button"
     @click="helpPanel.oeffnen()"
   >
@@ -30,7 +30,7 @@ const href = computed(() =>
 
   <Link
     v-else
-    class="flex cursor-pointer items-center gap-[7px] rounded-lg px-2.5 py-1.5 text-[11.5px] leading-none text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground"
+    class="flex cursor-pointer items-center gap-[7px] rounded-lg px-2.5 py-1.5 text-small leading-none text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground"
     :href="href"
   >
     <svg class="size-3.5 flex-none fill-none stroke-ink-2 stroke-[1.6] [stroke-linecap:round]" viewBox="0 0 24 24">

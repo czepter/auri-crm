@@ -49,6 +49,6 @@
    body, and a declaration there beats one inherited from html whatever the
    order of the sheets. */
 body {
-  font: 400 13px/1.47 var(--font);
+  font: 400 var(--text-small)/1.47 var(--font);
   letter-spacing: -.006em;
 }

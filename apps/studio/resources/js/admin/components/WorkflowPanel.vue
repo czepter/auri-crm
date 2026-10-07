@@ -115,7 +115,7 @@ function meta(template: App.Crm.Data.TaskTemplateData) {
        stellt ProjectSettings, das auch den Typ waehlt. -->
   <div v-if="workflow" class="mt-7">
         <section v-for="column in workflow.columns" :key="column.stage" class="mb-11">
-          <h2 class="text-[15px] leading-[1.3] font-semibold tracking-[-0.015em]">{{ column.label }}</h2>
+          <h2 class="text-body leading-[1.3] font-semibold tracking-[-0.015em]">{{ column.label }}</h2>
 
           <div v-if="column.templates.length" class="mt-3.5 flex flex-col gap-2 rounded-xl bg-sunk p-3">
             <button
@@ -127,12 +127,12 @@ function meta(template: App.Crm.Data.TaskTemplateData) {
               @click="open(column, template)"
             >
               <span class="flex items-baseline gap-2.5">
-                <span class="min-w-0 flex-1 text-[13.5px] leading-[1.3] font-semibold tracking-[-0.014em]">{{ template.title }}</span>
-                <span class="flex-none text-[12px] tabular-nums text-ink-2">{{ meta(template) }}</span>
+                <span class="min-w-0 flex-1 text-ui leading-[1.3] font-semibold tracking-[-0.014em]">{{ template.title }}</span>
+                <span class="flex-none text-small tabular-nums text-ink-2">{{ meta(template) }}</span>
               </span>
               <span class="mt-1.5 flex items-center gap-1.5">
                 <span class="size-1.5 flex-none rounded-full" :class="template.audience === 'client' ? 'bg-action' : 'bg-faint'" />
-                <span class="text-[11.5px] leading-none text-muted-foreground">{{ template.audienceLabel }}</span>
+                <span class="text-small leading-none text-muted-foreground">{{ template.audienceLabel }}</span>
               </span>
             </button>
           </div>
@@ -154,7 +154,7 @@ function meta(template: App.Crm.Data.TaskTemplateData) {
             <div class="flex min-w-0 flex-col gap-1.5">
               <Label for="workflow-title">{{ $t('taskTemplates.titleField') }}</Label>
               <Input id="workflow-title" v-model="form.title" maxlength="255" type="text" />
-              <p v-if="form.errors.title" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.title }}</p>
+              <p v-if="form.errors.title" class="text-small leading-[1.45] text-destructive">{{ form.errors.title }}</p>
             </div>
 
             <div class="flex min-w-0 flex-col gap-1.5">
@@ -191,7 +191,7 @@ function meta(template: App.Crm.Data.TaskTemplateData) {
                 <InputGroupInput id="workflow-offset" v-model.number="form.day_offset" class="tabular-nums" type="number" />
                 <InputGroupAddon align="inline-end">{{ $t('common.unitDays') }}</InputGroupAddon>
               </InputGroup>
-              <p v-if="form.errors.day_offset" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.day_offset }}</p>
+              <p v-if="form.errors.day_offset" class="text-small leading-[1.45] text-destructive">{{ form.errors.day_offset }}</p>
             </div>
 
             <div class="flex items-center gap-2.5">

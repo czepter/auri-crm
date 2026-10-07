@@ -15,19 +15,19 @@ function submit() {
 
 <template>
   <AuthLayout :title="$t('setup.title')">
-    <p class="mb-6 text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('setup.hint') }}</p>
+    <p class="mb-6 text-small leading-[1.45] font-normal text-faint">{{ $t('setup.hint') }}</p>
 
     <form @submit.prevent="submit">
       <Field class="mb-6">
         <Label for="name">{{ $t('setup.name') }}</Label>
         <Input id="name" v-model="form.name" type="text" autocomplete="name" required />
-        <p v-if="form.errors.name" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.name }}</p>
+        <p v-if="form.errors.name" class="text-small leading-[1.45] text-destructive">{{ form.errors.name }}</p>
       </Field>
 
       <Field class="mb-6">
         <Label for="email">{{ $t('setup.email') }}</Label>
         <Input id="email" v-model="form.email" type="email" autocomplete="email" required />
-        <p v-if="form.errors.email" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.email }}</p>
+        <p v-if="form.errors.email" class="text-small leading-[1.45] text-destructive">{{ form.errors.email }}</p>
       </Field>
 
       <Field class="mb-6">
@@ -38,7 +38,7 @@ function submit() {
           type="password"
           autocomplete="new-password"
           required />
-        <p v-if="form.errors.password" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.password }}</p>
+        <p v-if="form.errors.password" class="text-small leading-[1.45] text-destructive">{{ form.errors.password }}</p>
       </Field>
 
       <Field class="mb-6">
