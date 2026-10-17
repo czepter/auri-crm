@@ -43,10 +43,11 @@
   --faint: #71717A;
   --mark: #D4D4D8;
 
-  /* Fewer lines: rules fade almost into the white, only controls keep a
-     real outline (--input, 3:1). */
-  --rule: #F0F0F1;
-  --line: #EDEDEF;
+  /* Lines only where they order a list: rows of a table, items of a
+     quote. Light, so they separate without framing; controls keep the
+     stronger --input outline (3:1). */
+  --rule: #E4E4E7;
+  --line: #E4E4E7;
   --line-hover: #D4D4D8;
   --input: #8F8F98;
 
