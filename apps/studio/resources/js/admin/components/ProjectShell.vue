@@ -129,7 +129,7 @@ function destroy() {
         <Link v-else href="/anfragen">{{ $t('board.title') }}</Link>
       </div>
 
-      <div class="sticky top-0 z-[5] mt-0.5 bg-paper">
+      <div data-slot="project-head" class="sticky top-0 z-[5] mt-0.5 bg-paper">
         <div class="flex items-center gap-3">
           <slot name="title">
             <h1 data-slot="page-title" class="m-0 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px]">

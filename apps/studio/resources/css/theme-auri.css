@@ -144,9 +144,21 @@
 [data-theme="auri"] [data-slot="page-title"] { font-size: 20px; line-height: 28px; letter-spacing: -.02em; }
 
 /* Project tabs: a segmented track instead of an underline. */
+/* The track scrolls when the tabs outgrow the column: a local background
+   paints the whole scroll width, not just the visible box. */
 [data-theme="auri"] [data-slot="tabs"] {
   display: inline-flex; max-width: 100%; gap: 2px; padding: 3px;
-  border-radius: 8px; background: var(--sunk); box-shadow: none;
+  border-radius: 8px; box-shadow: none; scrollbar-width: none;
+  background: linear-gradient(var(--sunk), var(--sunk)) local;
+}
+[data-theme="auri"] [data-slot="tabs"]::-webkit-scrollbar { display: none; }
+
+/* The sticky head covers what scrolls beneath it, down to a gap below the tabs. */
+[data-theme="auri"] [data-slot="project-head"] {
+  margin-inline: -26px; padding: 0 26px 16px; background: var(--bg);
+}
+@media (max-width: 640px) {
+  [data-theme="auri"] [data-slot="project-head"] { margin-inline: -20px; padding-inline: 20px; }
 }
 [data-theme="auri"] [data-slot="tabs"] > a {
   padding: 4px 10px; border-radius: var(--r-sm); box-shadow: none; font-weight: 500;
