@@ -363,6 +363,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         </template>
                         <template v-if="header.canManageQuotes" #action>
                             <Link
+                                :data-slot="quote ? 'card-action' : undefined"
                                 class="text-small tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
                                 :href="quote ? `/angebote/${quote.id}` : `/angebote/neu?projekt=${header.id}`"
                             >{{ quote ? $t("common.edit") : $t("quotes.create") }}</Link>

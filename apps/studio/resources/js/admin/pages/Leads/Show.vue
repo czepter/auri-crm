@@ -641,6 +641,7 @@ const nextStage = computed(
                         </template>
                         <template v-if="header.canManageQuotes" #action>
                             <Link
+                                :data-slot="quote ? 'card-action' : undefined"
                                 class="text-small tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
                                 :href="quote ? `/angebote/${quote.id}` : newQuote"
                             >{{ quote ? $t("common.edit") : $t("quotes.create") }}</Link>
