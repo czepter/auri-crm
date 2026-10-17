@@ -5,15 +5,12 @@
  *
  * Only Storybook imports this file, behind its theme switch. Its selectors
  * sit at the same specificity as crm.css's :root, so it must be imported
- * after admin.css.
- *
- * ponytail: Geist is not self-hosted yet, so the stack falls back to
- * system-ui. Before the product uses this theme, add the woff2 files to
- * public/fonts and fonts.css, as with every other family (#233).
+ * after admin.css. Geist and Geist Mono are self-hosted in fonts.css.
  */
 [data-theme="auri"] {
   --font: 'Geist', ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font);
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
   --display-tracking: -.02em;
 
   --bg: #FFFFFF;
@@ -87,3 +84,49 @@
   background: var(--paper);
   box-shadow: var(--shadow-card);
 }
+
+/*
+ * Structure, not only colour: the draft's board and shell differ from
+ * Nordlicht in shape, so the theme reaches the elements by data-slot.
+ * Unlayered on purpose, so these beat the Tailwind utilities in the markup.
+ */
+[data-theme="auri"] [data-slot="page-head"] { padding: 20px 24px 0; }
+[data-theme="auri"] [data-slot="page-head"] h1 { font-size: 20px; line-height: 28px; letter-spacing: -.02em; }
+
+[data-theme="auri"] [data-slot="button"][data-variant="pill"] {
+  height: 36px; padding: 0 14px; border-radius: var(--r-sm); font-size: 14px;
+}
+
+/* Board: columns are plain stacks on the page, no grey lane. */
+[data-theme="auri"] [data-slot="board"] { gap: 24px; padding: 16px 24px 24px; }
+[data-theme="auri"] [data-slot="board-column"] { gap: 10px; padding: 0; border-radius: var(--r); background: transparent; }
+[data-theme="auri"] [data-slot="board-column"].bg-sunk-2 { background: var(--accent-bg); }
+[data-theme="auri"] [data-slot="board-column-head"] { align-items: center; padding: 4px 4px 2px; }
+[data-theme="auri"] [data-slot="board-column-head"] b {
+  font-size: 13.5px; letter-spacing: 0; text-transform: none; color: var(--ink);
+}
+[data-theme="auri"] [data-slot="board-column-head"] span { font-family: var(--font-mono); font-size: 12.5px; }
+
+[data-theme="auri"] [data-slot="lead-card"] {
+  padding: 14px; border-color: transparent; border-radius: var(--r);
+  background: var(--paper); box-shadow: var(--shadow-card);
+}
+[data-theme="auri"] [data-slot="lead-card"]:hover { border-color: transparent; background: var(--hover); }
+[data-theme="auri"] [data-slot="lead-card-foot"] { margin-top: 10px; padding-top: 0; border-top: 0; }
+[data-theme="auri"] [data-slot="lead-card-foot"] > span:first-child { font-family: var(--font-mono); font-weight: 500; }
+
+/* Shell: navigation without fills, the active item by weight and a petrol icon. */
+@media (min-width: 1081px) {
+  [data-theme="auri"] [data-slot="sidebar"] { width: 240px; padding: 16px 8px; }
+}
+[data-theme="auri"] [data-slot="sidebar-group-label"] {
+  padding-top: 12px; font-size: 12px; letter-spacing: 0; text-transform: none;
+}
+[data-theme="auri"] [data-slot="sidebar-item"] { padding-top: 7px; padding-bottom: 7px; border-radius: var(--r-sm); }
+[data-theme="auri"] [data-slot="sidebar-item"]:hover { background: var(--hover); }
+[data-theme="auri"] [data-slot="sidebar-item"][data-active] { background: transparent; font-weight: 600; }
+[data-theme="auri"] [data-slot="sidebar-item"][data-active] svg { stroke: var(--ring); }
+
+/* Segmented toggle: white thumb with the shadcn hairline shadow. */
+[data-theme="auri"] [data-slot="choice-group"] { background: var(--sunk); padding: 3px; }
+[data-theme="auri"] [data-slot="choice-group"] input:checked + * { box-shadow: 0 1px 2px rgba(24, 24, 27, .08); }

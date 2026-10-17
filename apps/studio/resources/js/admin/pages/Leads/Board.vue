@@ -302,17 +302,19 @@ const workflowAllowed = computed(() =>
              sichtbar wurde sie erst an ihrer Trennlinie. -->
                 <div
                     v-if="view === 'board'"
+                    data-slot="board"
                     class="flex items-stretch gap-2.5 overflow-x-auto px-5 pt-5 pb-7"
                 >
                     <section
                         v-for="(column, index) in columns"
                         :key="column.stage"
+                        data-slot="board-column"
                         class="flex min-w-0 shrink-0 grow basis-[200px] flex-col gap-2 rounded-xl bg-sunk p-2.5"
                         :class="target === index && 'bg-sunk-2'"
                         @dragover="onDragOver($event, index, null)"
                         @drop.prevent="onDrop(index)"
                     >
-                        <header class="flex items-baseline gap-1.5 px-1 pt-0.5 pb-1">
+                        <header data-slot="board-column-head" class="flex items-baseline gap-1.5 px-1 pt-0.5 pb-1">
                             <b
                                 class="text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2"
                                 >{{ column.label }}</b
@@ -340,6 +342,7 @@ const workflowAllowed = computed(() =>
                             />
 
                             <Link
+                                data-slot="lead-card"
                                 class="relative block cursor-grab rounded-lg border border-border bg-paper px-2.5 py-[9px] text-inherit no-underline transition-[background,border-color] duration-[120ms] ease-out hover:border-line-hover"
                                 :class="
                                     moving?.id === card.id && 'cursor-grabbing'
@@ -409,6 +412,7 @@ const workflowAllowed = computed(() =>
                      liegt, sind die beiden Zahlen, nach denen die
                      naechste Karte ausgesucht wird. -->
                                 <span
+                                    data-slot="lead-card-foot"
                                     class="mt-[9px] flex items-center gap-2.5 border-t border-sunk-2 pt-2"
                                 >
                                     <span

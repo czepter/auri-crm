@@ -84,6 +84,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
            does work: the wrapper stretches to the flex row, so the nav pins
            against it while main scrolls. -->
             <nav
+                data-slot="sidebar"
                 class="flex w-[214px] flex-col px-3 py-4.5 max-[1080px]:w-14 max-[1080px]:px-2 max-[640px]:sticky max-[640px]:bottom-0 max-[640px]:z-30 max-[640px]:order-2 max-[640px]:w-auto max-[640px]:flex-row max-[640px]:justify-around max-[640px]:bg-paper max-[640px]:px-1 max-[640px]:py-1.5 max-[640px]:shadow-[inset_0_1px_0_var(--rule)] sticky top-0 h-screen overflow-y-auto max-[640px]:top-auto max-[640px]:h-auto max-[640px]:overflow-visible"
             >
                 <div class="mb-px flex items-start gap-1 pb-5.5 max-[1080px]:hidden">
@@ -151,6 +152,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                         </button>
                         <div
                             v-else
+                            data-slot="sidebar-group-label"
                             class="px-2.5 pb-1.5 text-small tracking-[0.06em] uppercase text-ink-2 max-[1080px]:hidden"
                         >
                             {{ item.group }}
@@ -218,6 +220,8 @@ const collectorsOpen = ref<Record<string, boolean>>(
                from one. -->
                     <Link
                         v-else
+                        data-slot="sidebar-item"
+                        :data-active="item.key === props.active || undefined"
                         class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 py-1.5 text-ui tracking-[-0.01em] text-foreground no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2"
                         :class="[
                             item.key === props.active &&
