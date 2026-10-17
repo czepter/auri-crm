@@ -97,8 +97,8 @@ function submit() {
               <div class="flex flex-col gap-6">
                 <div class="relative block cursor-default rounded-lg border border-border p-2.5">
                   <div class="mb-4 flex items-center justify-between">
-                    <span class="mb-[5px] text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('formTemplates.fieldsKick') }}</span>
-                    <span class="flex-none rounded-[5px] px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase" :class="form.is_active ? 'bg-ok-bg text-ok' : 'bg-muted text-faint'">
+                    <span class="mb-[5px] text-small leading-none font-semibold text-faint">{{ $t('formTemplates.fieldsKick') }}</span>
+                    <span class="flex-none rounded-[5px] px-2 py-[3px] text-small leading-[1.5] font-semibold" :class="form.is_active ? 'bg-ok-bg text-ok' : 'bg-muted text-faint'">
                       {{ form.is_active ? $t('formTemplates.active') : $t('formTemplates.paused') }}
                     </span>
                   </div>

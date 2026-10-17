@@ -304,7 +304,7 @@ h1:not(:where([data-tokens] h1)) { font:700 var(--text-heading)/1 var(--font); l
 .card.static .blkfoot { display:block; }
 
 /* ---------- shoot list: one row per shooting occasion ---------- */
-.chip { font:600 var(--text-small)/1.5 var(--font); letter-spacing:.04em; text-transform:uppercase;
+.chip { font:500 var(--text-small)/1.5 var(--font);
         padding:3px 8px; border-radius:var(--r-sm); flex:none; }
 .chip.done { background:var(--ok-bg); color:var(--ok); }
 .chip.now  { background:var(--due-bg); color:var(--due); }

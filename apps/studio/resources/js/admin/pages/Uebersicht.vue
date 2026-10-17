@@ -217,7 +217,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
 
                         <template v-if="entries.length">
                             <div v-for="day in days" :key="day.date" class="pt-3 first:pt-0">
-                                <div class="text-small tracking-[0.06em] uppercase text-ink-2">{{ day.label }}</div>
+                                <div class="text-small text-ink-2">{{ day.label }}</div>
                                 <div v-for="entry in day.entries" :key="`${entry.time}${entry.what}`" class="flex items-baseline gap-2.5 py-[7px]" :class="ROW">
                                     <span class="w-[46px] flex-none text-small font-semibold tabular-nums">{{ entry.time ?? "—" }}</span>
                                     <component
@@ -251,7 +251,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                         </template>
 
                         <div v-for="figure in figures" :key="figure.key" class="py-[11px] first:pt-0" :class="ROW">
-                            <div class="text-small tracking-[0.07em] uppercase text-ink-2">{{ figure.label }}</div>
+                            <div class="text-small text-ink-2">{{ figure.label }}</div>
                             <div
                                 class="mt-[3px] flex items-baseline gap-1 text-[21px] leading-none font-semibold tracking-[-0.03em] tabular-nums"
                                 :class="figure.warn && 'text-action'"

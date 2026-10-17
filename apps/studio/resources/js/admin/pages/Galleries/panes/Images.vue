@@ -382,7 +382,7 @@ onUnmounted(() => {
     <p v-if="precheckError" class="mt-2 text-small text-destructive">{{ $t('media.precheckFailed') }}</p>
 
     <div v-if="failedAssets.length > 0" class="mt-6">
-      <div class="mb-2 text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">
+      <div class="mb-2 text-small leading-none font-semibold text-faint">
         {{ $t('media.needsAttention') }} · {{ $t('media.needsAttentionCount', failedAssets.length) }}
       </div>
       <div class="overflow-hidden rounded-md border border-border">

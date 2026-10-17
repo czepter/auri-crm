@@ -83,7 +83,7 @@ const width = computed(() => {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('settings.kicker')" :title="$t('portalSettings.title')">
-          <span v-if="formRef?.form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
+          <span v-if="formRef?.form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
           <Button
             v-if="formRef?.form.isDirty"
             class="ml-auto"
@@ -106,7 +106,7 @@ const width = computed(() => {
 
             <aside class="sticky top-6 min-w-[360px] flex-1 max-[1440px]:hidden">
               <div class="mb-2.5 flex flex-wrap items-center gap-2">
-                <span class="mr-auto text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.previewPortal') }}</span>
+                <span class="mr-auto text-small leading-none font-semibold text-faint">{{ $t('settings.previewPortal') }}</span>
                 <ChoiceGroup v-model="state" variant="segmented" :options="stateOptions" />
                 <ChoiceGroup v-model="device" icon variant="segmented" :options="deviceOptions">
                   <template #option="{ option }">

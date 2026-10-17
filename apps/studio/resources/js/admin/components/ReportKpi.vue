@@ -12,7 +12,7 @@ defineProps<{
 
 <template>
   <div class="flex flex-col gap-3 rounded-md border border-border bg-card px-5 py-4">
-    <span class="text-small leading-none font-semibold tracking-[0.08em] uppercase text-faint">{{ label }}</span>
+    <span class="text-small leading-none font-semibold text-faint">{{ label }}</span>
 
     <div class="flex flex-col gap-1.5">
       <b class="text-[30px] leading-none font-semibold tracking-[-0.02em] tabular-nums text-foreground">{{ value }}</b>

@@ -88,7 +88,7 @@ function destroy() {
                 >
                     <span class="h-px flex-1 bg-[var(--rule)]" />
                     <span
-                        class="text-small leading-none tracking-[0.06em] uppercase text-ink-2"
+                        class="text-small leading-none text-ink-2"
                     >{{ dayWithWeekday(entry.at, '') }}</span>
                     <span class="h-px flex-1 bg-[var(--rule)]" />
                 </div>

@@ -30,10 +30,8 @@ function click(event: MouseEvent) {
     <component
         :is="href ? Link : 'a'"
         :href="href ?? '#'"
-        class="block px-3.5 py-[9px] text-inherit no-underline"
-        :class="active
-            ? 'bg-paper shadow-[inset_0_1px_0_var(--rule),inset_2px_0_0_var(--accent)]'
-            : 'shadow-[inset_0_1px_0_var(--rule)]'"
+        class="block rounded-[var(--r-sm)] px-3 py-2 text-inherit no-underline"
+        :class="active ? 'bg-sunk' : 'hover:bg-accent'"
         @click="click"
     >
         <span class="flex items-baseline gap-2">

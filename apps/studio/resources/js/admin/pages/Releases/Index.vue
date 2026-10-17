@@ -52,7 +52,7 @@ defineProps<{
                             </div>
                             <span
                                 v-if="releaseMark(release.version, installed)"
-                                class="mt-2 inline-flex rounded-[12px] px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase"
+                                class="mt-2 inline-flex rounded-[12px] px-2 py-[3px] text-small leading-[1.5] font-semibold"
                                 :class="releaseMark(release.version, installed)!.class"
                             >
                                 {{ $t(releaseMark(release.version, installed)!.key) }}

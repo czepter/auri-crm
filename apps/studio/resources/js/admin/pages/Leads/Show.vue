@@ -22,7 +22,7 @@ import RailSection from "@/ui/page/RailSection.vue";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
 import { Textarea } from "@/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui/dropdown-menu";
-import { ChevronDown } from "lucide-vue-next";
+import { ChevronDown, Pencil } from "lucide-vue-next";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/admin/lib/money";
 import { quoteChipClass } from "@/admin/lib/quoteDisplay";
@@ -517,7 +517,7 @@ const nextStage = computed(
                             >
                                 {{ person.name }}
                             </Link>
-                            <span class="rounded-[var(--r-pill)] bg-sunk-2 px-[9px] py-0.5 text-small leading-[1.4] tracking-[0.05em] uppercase text-ink-2">
+                            <span class="rounded-[var(--r-pill)] bg-sunk-2 px-[9px] py-0.5 text-small leading-[1.4] text-ink-2">
                                 {{ roleLabel(person.role) }}
                             </span>
                             <a v-if="person.email" class="text-small text-action no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
@@ -641,10 +641,17 @@ const nextStage = computed(
                         </template>
                         <template v-if="header.canManageQuotes" #action>
                             <Link
-                                :data-slot="quote ? 'card-action' : undefined"
+                                v-if="quote"
+                                class="grid size-7 place-items-center rounded-[var(--r-sm)] text-ink-2 hover:bg-sunk hover:text-foreground"
+                                :href="`/angebote/${quote.id}`"
+                                :aria-label="$t('common.edit')"
+                                :title="$t('common.edit')"
+                            ><Pencil class="size-[15px]" /></Link>
+                            <Link
+                                v-else
                                 class="text-small tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
-                                :href="quote ? `/angebote/${quote.id}` : newQuote"
-                            >{{ quote ? $t("common.edit") : $t("quotes.create") }}</Link>
+                                :href="newQuote"
+                            >{{ $t("quotes.create") }}</Link>
                         </template>
 
                         <QuoteSummary
@@ -721,7 +728,7 @@ const nextStage = computed(
                                     :class="row.isDone ? 'bg-foreground' : 'bg-sunk-2'"
                                 />
                                 <span class="text-ui leading-[1.47]" :class="row.isDone && 'text-ink-2'">{{ row.title }}</span>
-                                <span class="text-small leading-[1.47] tracking-[0.05em] uppercase text-ink-2">{{ row.audience }}</span>
+                                <span class="text-small leading-[1.47] text-ink-2">{{ row.audience }}</span>
                                 <span
                                     class="ml-auto text-small leading-[1.47] tabular-nums"
                                     :class="row.isOverdue ? 'text-action' : 'text-ink-2'"

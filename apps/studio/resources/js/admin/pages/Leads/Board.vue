@@ -302,25 +302,23 @@ const workflowAllowed = computed(() =>
              sichtbar wurde sie erst an ihrer Trennlinie. -->
                 <div
                     v-if="view === 'board'"
-                    data-slot="board"
-                    class="flex items-stretch gap-2.5 overflow-x-auto px-5 pt-5 pb-7"
+                    class="flex items-stretch gap-6 overflow-x-auto px-6 pt-4 pb-6"
                 >
                     <section
                         v-for="(column, index) in columns"
                         :key="column.stage"
-                        data-slot="board-column"
-                        class="flex min-w-0 shrink-0 grow basis-[200px] flex-col gap-2 rounded-xl bg-sunk p-2.5"
-                        :class="target === index && 'bg-sunk-2'"
+                        class="flex min-w-0 shrink-0 grow basis-[200px] flex-col gap-2.5 rounded-[var(--r)]"
+                        :class="target === index && 'bg-[var(--accent-bg)]'"
                         @dragover="onDragOver($event, index, null)"
                         @drop.prevent="onDrop(index)"
                     >
-                        <header data-slot="board-column-head" class="flex items-baseline gap-1.5 px-1 pt-0.5 pb-1">
+                        <header class="flex items-center gap-1.5 px-1 pt-1 pb-0.5">
                             <b
-                                class="text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2"
+                                class="text-[13.5px] leading-none font-semibold text-foreground"
                                 >{{ column.label }}</b
                             >
                             <span
-                                class="ml-auto text-small tabular-nums text-ink-2"
+                                class="ml-auto font-mono text-[12.5px] tabular-nums text-ink-2"
                             >
                                 {{ column.cards.length
                                 }}<template v-if="column.total">
@@ -342,8 +340,7 @@ const workflowAllowed = computed(() =>
                             />
 
                             <Link
-                                data-slot="lead-card"
-                                class="relative block cursor-grab rounded-lg border border-border bg-paper px-2.5 py-[9px] text-inherit no-underline transition-[background,border-color] duration-[120ms] ease-out hover:border-line-hover"
+                                class="relative block cursor-grab rounded-[var(--r)] bg-paper p-3.5 text-inherit no-underline shadow-card transition-[background] duration-[120ms] ease-out hover:bg-accent"
                                 :class="
                                     moving?.id === card.id && 'cursor-grabbing'
                                 "
@@ -412,11 +409,10 @@ const workflowAllowed = computed(() =>
                      liegt, sind die beiden Zahlen, nach denen die
                      naechste Karte ausgesucht wird. -->
                                 <span
-                                    data-slot="lead-card-foot"
-                                    class="mt-[9px] flex items-center gap-2.5 border-t border-sunk-2 pt-2"
+                                    class="mt-2.5 flex items-center gap-2.5"
                                 >
                                     <span
-                                        class="text-small leading-none font-semibold tracking-[-0.02em] tabular-nums"
+                                        class="font-mono text-small leading-none font-medium tabular-nums"
                                     >
                                         {{
                                             card.value === null

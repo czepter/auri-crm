@@ -83,7 +83,7 @@ function chipClass(status: string): string {
         <PageHead :kicker="$t('automations.title')" kicker-href="/einstellungen/automationen" :title="rule.name">
           <span
             v-if="form.isDirty"
-            class="ml-auto flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due"
+            class="ml-auto flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold text-due"
           >{{ $t('settings.unsaved') }}</span>
           <Button :class="form.isDirty ? '' : 'ml-auto'" type="button" :disabled="form.processing" @click="save">
             {{ $t('common.save') }}
@@ -92,7 +92,7 @@ function chipClass(status: string): string {
 
         <div class="flex items-start gap-10 px-8 pt-7 pb-8 max-[900px]:flex-col">
           <form class="max-w-[620px] min-w-0 flex-1" @submit.prevent="save">
-            <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+            <div class="mb-2.5 text-small leading-none font-semibold text-faint">
               {{ $t('automations.triggerSection') }}
             </div>
 
@@ -164,7 +164,7 @@ function chipClass(status: string): string {
               </Field>
             </div>
 
-            <div class="mt-8 mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+            <div class="mt-8 mb-2.5 text-small leading-none font-semibold text-faint">
               {{ $t('automations.condition') }}
             </div>
 
@@ -196,7 +196,7 @@ function chipClass(status: string): string {
               </Select>
             </div>
 
-            <div class="mt-8 mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+            <div class="mt-8 mb-2.5 text-small leading-none font-semibold text-faint">
               {{ $t('automations.messageSection') }}
             </div>
 
@@ -231,7 +231,7 @@ function chipClass(status: string): string {
           </form>
 
           <aside class="w-[320px] flex-none max-[900px]:w-full">
-            <div class="text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+            <div class="text-small leading-none font-semibold text-faint">
               {{ $t('automations.preview') }}
             </div>
 
@@ -247,7 +247,7 @@ function chipClass(status: string): string {
               </div>
             </div>
 
-            <div class="mt-7 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+            <div class="mt-7 text-small leading-none font-semibold text-faint">
               {{ $t('automations.runs') }}
             </div>
 

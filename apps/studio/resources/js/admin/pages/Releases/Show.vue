@@ -70,7 +70,7 @@ function toggle(key: string, index: number) {
                         </span>
                         <span
                             v-if="mark"
-                            class="inline-flex rounded-[12px] px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase"
+                            class="inline-flex rounded-[12px] px-2 py-[3px] text-small leading-[1.5] font-semibold"
                             :class="mark.class"
                         >
                             {{ $t(mark.key) }}

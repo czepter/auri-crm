@@ -40,7 +40,7 @@ const shown = computed(() => {
 
 <template>
     <Queue>
-        <div class="flex flex-col gap-2 px-3.5 pb-3">
+        <div class="flex flex-col gap-2 px-3 pb-3">
             <div class="flex items-center gap-2">
                 <span
                     id="queue-due"

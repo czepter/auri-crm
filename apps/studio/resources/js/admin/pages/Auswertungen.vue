@@ -416,7 +416,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               </div>
 
               <div v-if="referrers.length" class="mt-auto flex flex-col gap-2 border-t border-border pt-3.5">
-                <span class="text-small leading-none font-semibold tracking-[0.08em] uppercase text-faint">{{ $t('reports.referrersTitle') }}</span>
+                <span class="text-small leading-none font-semibold text-faint">{{ $t('reports.referrersTitle') }}</span>
                 <ul class="m-0 flex list-none flex-col gap-1.5 p-0">
                   <li v-for="row in referrers" :key="row.name" class="flex items-baseline justify-between gap-3 text-small">
                     <span>{{ row.name }}</span>
@@ -451,9 +451,9 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               <table class="w-full border-collapse text-ui">
                 <thead>
                   <tr>
-                    <th class="pb-2 text-left text-small leading-none font-semibold tracking-[0.06em] uppercase text-faint">{{ $t('reports.contact') }}</th>
-                    <th class="pb-2 text-right text-small leading-none font-semibold tracking-[0.06em] uppercase text-faint">{{ $t('reports.projects') }}</th>
-                    <th class="pb-2 text-right text-small leading-none font-semibold tracking-[0.06em] uppercase text-faint">{{ $t('reports.revenue') }}</th>
+                    <th class="pb-2 text-left text-small leading-none font-semibold text-faint">{{ $t('reports.contact') }}</th>
+                    <th class="pb-2 text-right text-small leading-none font-semibold text-faint">{{ $t('reports.projects') }}</th>
+                    <th class="pb-2 text-right text-small leading-none font-semibold text-faint">{{ $t('reports.revenue') }}</th>
                   </tr>
                 </thead>
                 <tbody>

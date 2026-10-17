@@ -120,7 +120,7 @@ function shortDate(date: string | null) {
           <div
             v-for="weekday in WEEKDAYS"
             :key="weekday"
-            class="pb-2 pl-0.5 text-small leading-none font-semibold tracking-[0.06em] uppercase text-ink-2"
+            class="pb-2 pl-0.5 text-small leading-none font-semibold text-ink-2"
           >
             {{ weekday }}
           </div>

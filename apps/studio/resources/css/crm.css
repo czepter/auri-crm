@@ -24,25 +24,49 @@
  * `text-action`.
  */
 :root {
-  --font: 'Hanken Grotesk', system-ui, sans-serif;
+  /* Auri: zinc neutrals, ink acts, petrol only marks focus. Source: the
+     "Auri" design system (https://claude.ai/artifact/JARFDFBYnf4B3sWSxsAj9c). */
+  --font: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font);
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+  --display-tracking: -.02em;
 
+  --bg: #FFFFFF;
   --paper: #FFFFFF;
-  --sunk: #F5F7F8;
-  --sunk-2: #F0F3F5;
+  --sunk: #F4F4F5;
+  --sunk-2: #EBEBED;
+  --hover: #F0F0F1;
 
-  --ink: #151A22;
-  --ink-2: #626B78;
-  --mark: #CFD6DB;      /* an unfilled dot — not text, so it gets its own value */
-  --rule: #E2E7EB;
+  --ink: #18181B;
+  --ink-2: #616169;
+  --muted: #616169;
+  --faint: #71717A;
+  --mark: #D4D4D8;
 
-  --accent: #1C6870;
+  /* Fewer lines: rules fade almost into the white, only controls keep a
+     real outline (--input, 3:1). */
+  --rule: #F0F0F1;
+  --line: #EDEDEF;
+  --line-hover: #D4D4D8;
+  --input: #8F8F98;
+
+  --accent: #18181B;
+  --accent-bg: #E7F1F2;
+  --ring: #1C6870;
+
+  --ok: #2D6A3E;    --ok-bg: #E8F3EB;
+  --due: #865600;   --due-bg: #FBF1DC;
+  --late: #C0262D;  --late-bg: #FDEDED;
 
   --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
   --s5: 20px; --s6: 28px; --s7: 32px;
 
-  --r: 20px;
-  --r-sm: 12px;
+  --r: 12px;
+  --r-sm: 6px;
   --r-pill: 980px;
+
+  /* White cards on a white page: the shadow sets them apart, not a border. */
+  --card-shadow: 0 1px 3px rgba(24, 24, 27, .06), 0 6px 20px rgba(24, 24, 27, .05);
 }
 
 /* Not on :root with the values above — tokens.css sets the same shorthand on

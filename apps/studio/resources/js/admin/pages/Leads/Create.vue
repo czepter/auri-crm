@@ -161,7 +161,7 @@ function submit() {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <div class="px-8 pt-[22px] max-[640px]:px-5 max-[640px]:pt-4">
-          <div class="text-small tracking-[0.05em] uppercase text-ink-2">
+          <div class="text-small text-ink-2">
             <Link href="/anfragen">{{ $t('board.title') }}</Link>
           </div>
           <h1 class="m-0 mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px]">
@@ -255,7 +255,7 @@ function submit() {
             </Field>
 
             <div v-else class="mt-4">
-              <div class="text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">
+              <div class="text-small leading-none font-semibold text-faint">
                 {{ $t('leads.capturedAt') }}
               </div>
               <div class="mt-1.5 flex items-center gap-2.5 text-ui leading-[1.35]">

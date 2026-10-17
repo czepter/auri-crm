@@ -84,7 +84,6 @@ const collectorsOpen = ref<Record<string, boolean>>(
            does work: the wrapper stretches to the flex row, so the nav pins
            against it while main scrolls. -->
             <nav
-                data-slot="sidebar"
                 class="flex w-[214px] flex-col px-3 py-4.5 max-[1080px]:w-14 max-[1080px]:px-2 max-[640px]:sticky max-[640px]:bottom-0 max-[640px]:z-30 max-[640px]:order-2 max-[640px]:w-auto max-[640px]:flex-row max-[640px]:justify-around max-[640px]:bg-paper max-[640px]:px-1 max-[640px]:py-1.5 max-[640px]:shadow-[inset_0_1px_0_var(--rule)] sticky top-0 h-screen overflow-y-auto max-[640px]:top-auto max-[640px]:h-auto max-[640px]:overflow-visible"
             >
                 <div class="mb-px flex items-start gap-1 pb-5.5 max-[1080px]:hidden">
@@ -136,8 +135,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                    the rows again. -->
                         <button
                             v-if="item.fold"
-                            data-slot="sidebar-group-label"
-                            class="flex w-full cursor-pointer items-center border-0 bg-transparent px-2.5 pb-1.5 text-left text-small tracking-[0.06em] uppercase text-ink-2 transition-colors duration-[120ms] ease-out hover:text-foreground max-[1080px]:hidden"
+                            class="flex w-full cursor-pointer items-center border-0 bg-transparent px-2.5 pb-1.5 text-left text-small font-medium text-ink-2 transition-colors duration-[120ms] ease-out hover:text-foreground max-[1080px]:hidden"
                             type="button"
                             :aria-expanded="studioOpen"
                             @click="studioOpen = !studioOpen"
@@ -153,8 +151,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                         </button>
                         <div
                             v-else
-                            data-slot="sidebar-group-label"
-                            class="px-2.5 pb-1.5 text-small tracking-[0.06em] uppercase text-ink-2 max-[1080px]:hidden"
+                            class="px-2.5 pb-1.5 text-small font-medium text-ink-2 max-[1080px]:hidden"
                         >
                             {{ item.group }}
                         </div>
@@ -190,7 +187,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                             </svg>
                         </button>
                         <div
-                            class="mb-px ml-[19px] border-l border-rule pl-1.5 max-[1080px]:ml-0 max-[1080px]:border-0 max-[1080px]:pl-0"
+                            class="mb-px ml-[19px] pl-1.5 max-[1080px]:ml-0 max-[1080px]:pl-0"
                             :class="!collectorsOpen[item.key!] && 'hidden max-[1080px]:block'"
                         >
                             <Link
@@ -199,7 +196,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                                 class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 py-1 text-ui tracking-[-0.01em] text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2"
                                 :class="
                                     child.key === props.active &&
-                                    'bg-sunk-2 font-semibold text-foreground'
+                                    'font-semibold text-foreground'
                                 "
                                 :href="child.href!"
                             >
@@ -221,12 +218,9 @@ const collectorsOpen = ref<Record<string, boolean>>(
                from one. -->
                     <Link
                         v-else
-                        data-slot="sidebar-item"
-                        :data-active="item.key === props.active || undefined"
                         class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 py-1.5 text-ui tracking-[-0.01em] text-foreground no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2"
                         :class="[
-                            item.key === props.active &&
-                                'bg-sunk-2 font-semibold',
+                            item.key === props.active && 'font-semibold',
                             item.studio &&
                                 !studioOpen &&
                                 'hidden max-[1080px]:flex',
@@ -238,7 +232,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                             class="size-4.25 flex-none fill-none stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]"
                             :class="
                                 item.key === props.active
-                                    ? 'stroke-foreground'
+                                    ? 'stroke-ring'
                                     : 'stroke-ink-2'
                             "
                             viewBox="0 0 24 24"
@@ -266,7 +260,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                     <Link
                         v-if="release"
                         class="flex items-center gap-[7px] rounded-lg px-2.5 py-1.5 text-ui leading-none tabular-nums text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground"
-                        :class="props.active === 'neuigkeiten' && 'bg-sunk-2 font-semibold text-foreground'"
+                        :class="props.active === 'neuigkeiten' && 'font-semibold text-foreground'"
                         href="/neuigkeiten"
                     >
                         v{{ release.installed }}

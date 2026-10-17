@@ -122,7 +122,7 @@ function initials(name: string) {
 
         <div class="max-w-[900px] px-8 pt-7 pb-8">
           <section v-if="invitations.length" class="mb-7">
-            <h2 class="m-0 mb-[9px] text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ $t('team.pending') }}</h2>
+            <h2 class="m-0 mb-[9px] text-small leading-none font-semibold text-ink-2">{{ $t('team.pending') }}</h2>
             <div
               v-for="invitation in invitations"
               :key="invitation.id"
@@ -152,7 +152,7 @@ function initials(name: string) {
           </section>
 
           <section>
-            <h2 class="m-0 mb-[9px] text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ $t('team.members') }}</h2>
+            <h2 class="m-0 mb-[9px] text-small leading-none font-semibold text-ink-2">{{ $t('team.members') }}</h2>
             <div
               v-for="member in staff"
               :key="member.id"
@@ -167,7 +167,7 @@ function initials(name: string) {
               <!-- An account without the second factor cannot reach anything, so
                    the list says so rather than looking complete. -->
               <span
-                class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase"
+                class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold"
                 :class="member.mfaConfirmed ? 'bg-ok-bg text-ok' : 'bg-sunk-2 text-faint'"
               >
                 {{ member.mfaConfirmed ? $t('team.mfaOn') : $t('team.mfaPending') }}
@@ -200,7 +200,7 @@ function initials(name: string) {
           </Dialog>
 
           <section class="mt-7">
-            <h2 class="m-0 text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ $t('team.permissions') }}</h2>
+            <h2 class="m-0 text-small leading-none font-semibold text-ink-2">{{ $t('team.permissions') }}</h2>
             <Table class="mt-3 [&_td]:px-3 [&_td:first-child]:pl-0 [&_th]:px-3 [&_th:first-child]:pl-0">
               <thead>
                 <tr>

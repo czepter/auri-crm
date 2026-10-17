@@ -32,7 +32,7 @@ defineExpose({ form, submit })
 <template>
   <form id="vat-form" @submit.prevent="submit">
     <div class="mt-0">
-      <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.vatModeLabel') }}</div>
+      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.vatModeLabel') }}</div>
       <div class="mb-6">
         <RadioGroup
           name="vatmode"
@@ -68,7 +68,7 @@ defineExpose({ form, submit })
 
     <template v-if="form.vat_mode === 'small_business'">
     <div class="mt-8 first-of-type:mt-6">
-      <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.vatNoteLabel') }}</div>
+      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.vatNoteLabel') }}</div>
       <div class="mb-6">
         <Field :error="form.errors.vat_note" v-slot="{ id }">
           <Label :for="id">{{ $t('settings.vatNoteFieldLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
@@ -78,9 +78,9 @@ defineExpose({ form, submit })
     </div>
 
     <div class="mt-8 first-of-type:mt-6">
-      <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.vatPreviewLabel') }}</div>
+      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.vatPreviewLabel') }}</div>
       <div class="relative block cursor-default rounded-lg border border-border p-2.5">
-        <div class="mb-4 flex items-center justify-between"><span class="mb-[5px] text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('settings.vatPreviewKicker') }}</span></div>
+        <div class="mb-4 flex items-center justify-between"><span class="mb-[5px] text-small leading-none font-semibold text-faint">{{ $t('settings.vatPreviewKicker') }}</span></div>
         <p v-if="form.vat_note" style="margin: 0; font: 400 13px/1.5 var(--font); color: var(--ink)">
           {{ form.vat_note }}
         </p>

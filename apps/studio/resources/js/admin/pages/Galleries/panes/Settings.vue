@@ -150,7 +150,7 @@ function day(iso: string | null) {
         {{ $t(`galleryRecord.settingsNav.${name}`) }}
         <span
           v-if="pill[name] !== null"
-          class="ml-auto rounded-[var(--r-sm)] px-1.5 py-[2px] text-[9.5px] leading-[1.5] font-semibold tracking-[0.04em] uppercase"
+          class="ml-auto rounded-[var(--r-sm)] px-1.5 py-[2px] text-[9.5px] leading-[1.5] font-semibold"
           :class="pill[name] ? 'bg-ok-bg text-ok' : 'bg-sunk-2 text-faint'"
         >{{ pill[name] ? $t('galleryPresets.on') : $t('galleryPresets.off') }}</span>
       </Link>
@@ -177,7 +177,7 @@ function day(iso: string | null) {
     </div>
 
     <div class="mb-5 flex flex-col gap-2 pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
-      <div class="text-small tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.slugLabel') }}</div>
+      <div class="text-small text-ink-2">{{ $t('galleryRecord.slugLabel') }}</div>
       <!-- Ein Feld, nicht zwei Dinge nebeneinander: der feste Teil der
            Adresse ist nichts zum Tippen, und kopiert wird die ganze. -->
       <InputGroup class="max-w-[440px]">
@@ -202,12 +202,12 @@ function day(iso: string | null) {
 
     <div class="mb-5 flex items-start gap-[26px] pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
       <div v-if="gallery.eventDate" class="flex min-w-0 flex-col gap-2">
-        <div class="text-small tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.eventDate') }}</div>
+        <div class="text-small text-ink-2">{{ $t('galleryRecord.eventDate') }}</div>
         <div class="mt-[5px] text-body leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ day(gallery.eventDate) }}</div>
       </div>
 
       <div class="flex min-w-0 flex-col gap-2">
-        <div class="text-small tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.expiry') }}</div>
+        <div class="text-small text-ink-2">{{ $t('galleryRecord.expiry') }}</div>
         <!-- One-way, not v-model: general.expires_at must hold only a
              settled value — see saveGeneral()'s own doc, and the note on
              saveExpiryOnBlur() above. update:modelValue would otherwise write
@@ -238,7 +238,7 @@ function day(iso: string | null) {
     </div>
 
     <div class="flex flex-col gap-2">
-      <div class="text-small tracking-[0.06em] uppercase text-ink-2">{{ $t('gallery.gateDownload') }}</div>
+      <div class="text-small text-ink-2">{{ $t('gallery.gateDownload') }}</div>
       <Input v-model="downloadPin.download_pin" class="w-[110px]" type="text" @blur="saveDownloadPin" />
     </div>
   </template>
@@ -253,7 +253,7 @@ function day(iso: string | null) {
     <div>
       <div v-for="list in lists" :key="list.id" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none">
         <span class="text-small font-medium tracking-[-0.01em]">{{ list.name ?? $t('gallery.heart') }}</span>
-        <span class="w-14 flex-none text-small tracking-[0.05em] uppercase text-ink-2">{{ list.owner ?? $t('galleryRecord.guest') }}</span>
+        <span class="w-14 flex-none text-small text-ink-2">{{ list.owner ?? $t('galleryRecord.guest') }}</span>
         <span class="ml-auto text-small whitespace-nowrap text-ink-2">{{ $t('contacts.assetCount', list.count) }}</span>
       </div>
       <p v-if="!lists.length" class="text-small leading-[1.45] text-faint">{{ $t('gallery.listEmpty') }}</p>

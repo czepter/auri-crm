@@ -43,7 +43,7 @@ defineExpose({ form, submit })
 <template>
   <form id="mail-form" @submit.prevent="submit">
     <div class="mt-0">
-      <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.mailSenderFromEnv') }}</div>
+      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.mailSenderFromEnv') }}</div>
       <div class="mb-6 flex flex-col gap-1.5">
         <div class="flex items-center gap-3 rounded-[var(--r-sm)] bg-sunk px-3 py-2.5">
           <span class="text-small font-medium">{{ settings.mailFromName }}</span>
@@ -66,7 +66,7 @@ defineExpose({ form, submit })
     </div>
 
     <div class="mt-8 first-of-type:mt-6">
-      <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.mailReplyLabel') }}</div>
+      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.mailReplyLabel') }}</div>
       <div class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :error="form.errors.mail_reply_to" v-slot="{ id }">
@@ -82,7 +82,7 @@ defineExpose({ form, submit })
     </div>
 
     <div class="mt-8 first-of-type:mt-6">
-      <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.mailSignatureLabel') }}</div>
+      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.mailSignatureLabel') }}</div>
       <div class="mb-6">
         <Field :error="form.errors.mail_signature" v-slot="{ id }">
           <Label :for="id">{{ $t('settings.mailSignatureFieldLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
@@ -92,7 +92,7 @@ defineExpose({ form, submit })
     </div>
 
     <div class="mt-8 first-of-type:mt-6">
-      <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.mailDeliveryLabel') }}</div>
+      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.mailDeliveryLabel') }}</div>
       <div class="mb-6 flex items-center gap-2.5">
         <Checkbox id="cb-mail-clients-enabled" v-model="form.mail_clients_enabled" />
         <Label variant="inline" for="cb-mail-clients-enabled">{{ $t('settings.mailClientsEnabledLabel') }}</Label>

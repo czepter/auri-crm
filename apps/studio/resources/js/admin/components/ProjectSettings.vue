@@ -328,7 +328,7 @@ function release(row: Stage | Field) {
 
       <div class="flex gap-10 pt-6 max-[720px]:flex-col max-[720px]:gap-6">
         <nav class="w-[168px] flex-none">
-          <h3 class="m-0 mb-[7px] text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+          <h3 class="m-0 mb-[7px] text-small leading-none font-semibold text-ink-2">
             {{ $t('stages.stagesNav') }}
           </h3>
           <button
@@ -342,7 +342,7 @@ function release(row: Stage | Field) {
             {{ one.label }}
           </button>
 
-          <h3 class="m-0 mt-6 mb-[7px] text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+          <h3 class="m-0 mt-6 mb-[7px] text-small leading-none font-semibold text-ink-2">
             {{ $t('stages.typesSection') }}
           </h3>
           <button
@@ -374,7 +374,7 @@ function release(row: Stage | Field) {
             <button
               v-for="stage in stageRows"
               :key="stage.id"
-              class="inline-flex touch-none cursor-grab items-center gap-[7px] rounded-full border border-border bg-background px-3 py-1.5 text-small leading-[1.4] font-semibold tracking-[0.05em] uppercase transition-[border-color,opacity] select-none hover:border-line-hover active:cursor-grabbing"
+              class="inline-flex touch-none cursor-grab items-center gap-[7px] rounded-full border border-border bg-background px-3 py-1.5 text-small leading-[1.4] font-semibold transition-[border-color,opacity] select-none hover:border-line-hover active:cursor-grabbing"
               :class="[
                 stage.isActive ? 'text-ink-2' : 'text-faint',
                 held?.id === stage.id && held?.moved ? 'opacity-40' : '',

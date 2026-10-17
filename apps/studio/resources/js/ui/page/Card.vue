@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ChevronDown } from 'lucide-vue-next'
+import { ChevronDown, Pencil } from 'lucide-vue-next'
 import { Button } from '@/ui/button'
 
 /*
@@ -41,12 +41,12 @@ function cancel() {
 </script>
 
 <template>
-    <section data-slot="card" class="rounded-md border border-rule bg-background">
+    <section class="rounded-[var(--r)] bg-paper shadow-card">
         <header
-            class="flex h-[46px] cursor-pointer items-center gap-3 px-[18px]"
+            class="flex h-[52px] cursor-pointer items-center gap-3 pr-5 pl-6"
             @click="open = !open"
         >
-            <h2 class="m-0 text-ui leading-[1.2] font-semibold tracking-[-0.015em]">
+            <h2 class="m-0 text-[15px] leading-[1.2] font-semibold tracking-[-0.015em]">
                 {{ title }}
             </h2>
             <slot name="meta" />
@@ -60,11 +60,12 @@ function cancel() {
                 <template v-if="editable && open">
                     <a
                         v-if="!editing"
-                        data-slot="card-action"
-                        class="text-small tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
+                        class="grid size-7 place-items-center rounded-[var(--r-sm)] text-ink-2 hover:bg-sunk hover:text-foreground"
                         href="#"
+                        :aria-label="$t('common.edit')"
+                        :title="$t('common.edit')"
                         @click.stop.prevent="start"
-                    >{{ $t('common.edit') }}</a>
+                    ><Pencil class="size-[15px]" /></a>
                     <template v-else>
                         <a
                             class="text-small tracking-[-0.01em] whitespace-nowrap text-ink-2 no-underline hover:underline"
@@ -84,7 +85,7 @@ function cancel() {
             </div>
         </header>
 
-        <div v-if="open" class="px-[18px] pb-[18px]">
+        <div v-if="open" class="px-6 pb-6">
             <slot v-if="editing" name="edit" />
             <slot v-else />
         </div>

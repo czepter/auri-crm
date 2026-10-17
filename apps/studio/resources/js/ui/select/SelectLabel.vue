@@ -11,12 +11,11 @@ const delegatedProps = reactiveOmit(props, "class")
 </script>
 
 <template>
-  <!-- the group heading inside the listbox, set in the system's micro-label:
-       the same uppercase 10px/.09em .fld > label and .kick use -->
+  <!-- the group heading inside the listbox, set like a field caption -->
   <SelectLabel
     data-slot="select-label"
     v-bind="delegatedProps"
-    :class="cn('px-[11px] py-[6px] text-small font-semibold uppercase leading-none tracking-[0.09em] text-faint', props.class)"
+    :class="cn('px-[11px] py-[6px] text-small font-semibold leading-none text-faint', props.class)"
   >
     <slot />
   </SelectLabel>

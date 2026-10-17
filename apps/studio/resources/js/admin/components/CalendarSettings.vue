@@ -61,7 +61,7 @@ function saveWorkingDays() {
 
       <div class="pt-6">
         <form id="working-days-form" @submit.prevent="saveWorkingDays">
-          <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.workingDaysLabel') }}</div>
+          <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.workingDaysLabel') }}</div>
           <div class="mb-6">
             <div class="flex flex-wrap gap-4">
               <div v-for="day in weekdays" :key="day.value" class="flex items-center gap-2">
@@ -81,7 +81,7 @@ function saveWorkingDays() {
               <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" /></svg>
               {{ $t('settings.numberingSave') }}
             </Button>
-            <span class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
+            <span class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
           </div>
         </form>
       </div>

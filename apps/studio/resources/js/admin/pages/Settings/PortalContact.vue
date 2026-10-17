@@ -69,7 +69,7 @@ function submit() {
           kicker-href="/einstellungen/portal"
           :title="$t('portalSettings.contactTitle')"
         >
-          <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
+          <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
           <Button
             v-if="form.isDirty"
             class="ml-auto"

@@ -32,7 +32,7 @@ const top = computed(() => topLines(props.quote.items))
       </div>
     </div>
 
-    <div data-slot="quote-total" class="flex items-baseline gap-3.5 pt-2.5 shadow-[inset_0_1px_0_#D8D8DC]">
+    <div class="flex items-baseline gap-3.5 pt-2.5 shadow-[inset_0_1px_0_var(--line-hover)]">
       <span class="min-w-0 flex-1 text-small leading-[1.47] font-semibold">{{ $t('quotes.total') }}</span>
       <span class="w-28 flex-none text-right text-body leading-[1.47] font-semibold tracking-[-0.018em] tabular-nums">
         {{ formatEurosRounded(quote.net) }}

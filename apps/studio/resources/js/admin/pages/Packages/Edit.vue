@@ -184,12 +184,12 @@ watch(() => form.data(), autosave, { deep: true })
           </Field>
 
           <div class="mt-8 first-of-type:mt-6">
-            <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.items') }}</div>
+            <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('packages.items') }}</div>
             <PackageItemsEditor v-model="form.items" :package-id="package.id" :catalog-items="catalogItems" />
           </div>
 
           <div class="mt-8">
-            <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.showcase') }}</div>
+            <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('packages.showcase') }}</div>
             <ShowcaseImages :base="`/pakete/${package.id}/schaufenster`" :count="package.showcaseCount" />
             <span class="text-small leading-[1.45] font-normal text-faint">{{ $t('packages.showcaseHint') }}</span>
           </div>
@@ -203,7 +203,7 @@ watch(() => form.data(), autosave, { deep: true })
                ließe sich eine Leistung nicht einem einzelnen Kunden
                vorschlagen, ohne sie gleich allen hinzustellen. -->
           <div class="mt-8">
-            <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.portalSection') }}</div>
+            <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('packages.portalSection') }}</div>
 
             <div class="flex items-center gap-2.5">
               <Switch id="portal-offered" v-model="form.portal_offered" />
@@ -253,7 +253,7 @@ watch(() => form.data(), autosave, { deep: true })
 
             <PreviewOverlay :min="1280" :label="$t('common.preview')" wrapper-class="mt-6">
               <div class="overflow-hidden rounded-[10px] border border-border">
-                <div class="border-b border-border px-[26px] py-4 text-small leading-none font-semibold tracking-[0.11em] uppercase text-faint">
+                <div class="border-b border-border px-[26px] py-4 text-small leading-none font-semibold text-faint">
                   {{ $t('packages.preview') }}
                 </div>
                 <PackagePortalPreview
@@ -274,7 +274,7 @@ watch(() => form.data(), autosave, { deep: true })
              über dieses Paket, keine über alle. -->
         <section v-if="requests.length" class="max-w-[640px] px-8 pb-8">
           <div class="mb-2.5 flex items-baseline gap-2.5">
-            <span class="text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.requestsSection') }}</span>
+            <span class="text-small leading-none font-semibold text-faint">{{ $t('packages.requestsSection') }}</span>
             <span class="text-small text-ink-2">{{ package.requestedCount }} · {{ $t('packages.bookedCount', { count: package.bookedCount }) }}</span>
           </div>
           <div

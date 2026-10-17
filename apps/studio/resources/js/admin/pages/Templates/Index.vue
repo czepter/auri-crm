@@ -169,7 +169,7 @@ function open(row: Row) {
           <!-- Übersicht: jede Art als eigene Karte, in der Reihenfolge der Chips. -->
           <div v-if="kind === null" class="max-w-[980px]">
             <section v-for="entry in kinds" :key="entry" class="mt-7 first:mt-0">
-              <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+              <div class="mb-2.5 text-small leading-none font-semibold text-faint">
                 {{ $t(KIND_LABEL[entry]) }}
               </div>
 
@@ -188,7 +188,7 @@ function open(row: Row) {
                   <span v-if="row.note" class="flex-none text-small tabular-nums text-faint">{{ row.note }}</span>
                   <span
                     v-if="!row.active"
-                    class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase text-faint"
+                    class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-small leading-[1.5] font-semibold text-faint"
                   >{{ $t('formTemplates.paused') }}</span>
                 </component>
 
@@ -221,7 +221,7 @@ function open(row: Row) {
                 <span v-if="row.note" class="flex-none text-small tabular-nums text-faint">{{ row.note }}</span>
                 <span
                   v-if="!row.active"
-                  class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase text-faint"
+                  class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-small leading-[1.5] font-semibold text-faint"
                 >{{ $t('formTemplates.paused') }}</span>
               </component>
 

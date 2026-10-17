@@ -55,12 +55,12 @@ const DOT: Record<string, string> = {
           class="flex size-[46px] flex-none flex-col items-center justify-center rounded-[12px] bg-[linear-gradient(158deg,#4D3A2C,#C0A184)] leading-none text-white"
         >
           <b class="text-title leading-none font-semibold tracking-[-0.03em]">{{ day.number }}</b>
-          <i class="mt-[3px] text-[8px] not-italic tracking-[0.09em] uppercase opacity-85">{{ day.weekday }}</i>
+          <i class="mt-[3px] text-[8px] not-italic opacity-85">{{ day.weekday }}</i>
         </div>
         <div>
           <!-- 11px, not the 10.5px of the metric's own label: .metric.date
                .what span outranks .metric .lab on this one. -->
-          <span class="text-small tracking-[0.07em] uppercase text-ink-2">{{ label }}</span>
+          <span class="text-small text-ink-2">{{ label }}</span>
           <b class="mt-0.5 block text-ui leading-[1.25] font-semibold tracking-[-0.018em]">{{ day.what }}</b>
           <span class="text-small text-ink-2">{{ day.who }}</span>
         </div>
@@ -68,7 +68,7 @@ const DOT: Record<string, string> = {
     </template>
 
     <template v-else>
-      <div class="text-small tracking-[0.07em] uppercase text-ink-2">{{ label }}</div>
+      <div class="text-small text-ink-2">{{ label }}</div>
       <div
         class="mt-2 flex items-baseline gap-[3px] text-[28px] leading-none tracking-[-0.034em] tabular-nums"
         :class="['font-semibold', warn && 'text-action']"

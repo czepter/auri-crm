@@ -188,7 +188,7 @@ const studioOffers = computed(() => ({
           </svg>
         </button>
         <span class="text-body leading-[1.3] font-semibold tracking-[-0.015em]">{{ $t('gallerySettings.roomTitle') }}</span>
-        <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due">
+        <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold text-due">
           {{ $t('settings.unsaved') }}
         </span>
         <Button class="ml-auto" type="button" :disabled="form.processing" @click="form.isDirty ? save() : emit('close')">
@@ -198,7 +198,7 @@ const studioOffers = computed(() => ({
 
       <div class="flex gap-10 pt-6 max-[720px]:flex-col max-[720px]:gap-6">
         <nav class="w-[168px] flex-none">
-          <h3 class="m-0 mb-[7px] text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+          <h3 class="m-0 mb-[7px] text-small leading-none font-semibold text-ink-2">
             {{ $t('galleries.title') }}
           </h3>
           <button
@@ -236,7 +236,7 @@ const studioOffers = computed(() => ({
           </div>
 
           <PreviewOverlay :min="1121" :label="$t('common.preview')" wrapper-class="min-w-0 flex-1">
-            <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+            <div class="mb-2.5 text-small leading-none font-semibold text-faint">
               {{ $t('galleryRecord.preview') }}
             </div>
             <GalleryPreview
@@ -265,7 +265,7 @@ const studioOffers = computed(() => ({
           </div>
 
           <PreviewOverlay :min="1121" :label="$t('common.preview')" wrapper-class="min-w-0 flex-1">
-            <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+            <div class="mb-2.5 text-small leading-none font-semibold text-faint">
               {{ $t('galleryRecord.preview') }}
             </div>
             <GalleryPreview
@@ -293,7 +293,7 @@ const studioOffers = computed(() => ({
                 @click="chosen = row.id"
               >
                 <span class="min-w-0 flex-1 truncate">{{ row.name }}</span>
-                <span v-if="row.isDefault" class="flex-none rounded-[var(--r-sm)] bg-accent px-1.5 py-0.5 text-small leading-[1.4] font-semibold tracking-[0.04em] uppercase text-action">
+                <span v-if="row.isDefault" class="flex-none rounded-[var(--r-sm)] bg-accent px-1.5 py-0.5 text-small leading-[1.4] font-semibold text-action">
                   {{ $t('gallerySettings.defaultMark') }}
                 </span>
               </button>
@@ -364,7 +364,7 @@ const studioOffers = computed(() => ({
 
             <PreviewOverlay v-if="preset" :min="1121" :label="$t('common.preview')" wrapper-class="min-w-0 flex-1">
               <div class="mb-2.5 flex items-baseline gap-2">
-                <span class="text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+                <span class="text-small leading-none font-semibold text-faint">
                   {{ $t('galleryRecord.preview') }}
                 </span>
                 <span v-if="presetForm.design === null" class="text-small leading-none text-faint">

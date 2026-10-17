@@ -64,7 +64,7 @@ const ROW = [
         {{ model.contactName }}
       </div>
     </div>
-    <span class="flex-none text-small tracking-[0.05em] uppercase" :class="model.isBooked ? 'text-ink-2' : 'text-action'">
+    <span class="flex-none text-small" :class="model.isBooked ? 'text-ink-2' : 'text-action'">
       {{ model.isBooked ? $t('create.project') : $t('create.lead') }}
     </span>
     <Button class="ml-auto" type="button" variant="pill-muted" @click="clear">{{ $t('common.edit') }}</Button>
@@ -86,7 +86,7 @@ const ROW = [
         <span v-if="project.contactName" class="flex-none text-small leading-[1.3] text-muted-foreground">
           {{ project.contactName }}
         </span>
-        <span class="w-[62px] flex-none text-right text-small tracking-[0.05em] uppercase" :class="project.isBooked ? 'text-ink-2' : 'text-action'">
+        <span class="w-[62px] flex-none text-right text-small" :class="project.isBooked ? 'text-ink-2' : 'text-action'">
           {{ project.isBooked ? $t('create.project') : $t('create.lead') }}
         </span>
       </Button>

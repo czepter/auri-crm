@@ -10,8 +10,7 @@ defineProps<{ title: string }>()
 <template>
     <section class="[&+&]:mt-5">
         <h2
-            data-slot="rail-caption"
-            class="m-0 mb-[9px] text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2"
+            class="m-0 mb-[9px] text-small leading-none font-medium text-ink-2"
         >
             {{ title }}
         </h2>

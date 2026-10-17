@@ -264,7 +264,7 @@ function reset() {
             @drop.prevent="onDrop(index)"
           >
             <header class="flex items-baseline gap-1.5 px-1 pt-0.5 pb-1">
-              <b class="text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ column.name }}</b>
+              <b class="text-small leading-none font-semibold text-ink-2">{{ column.name }}</b>
               <span class="ml-auto text-small tabular-nums text-ink-2">
                 {{ column.cards.length }}<template v-if="column.total"> · {{ formatEurosRounded(column.total) }}</template>
               </span>

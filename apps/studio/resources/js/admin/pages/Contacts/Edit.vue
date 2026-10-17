@@ -233,7 +233,7 @@ function eraseDsgvoData() {
         <PageHead :kicker="$t('contacts.title')" kicker-href="/kontakte" :title="contact.name">
           <div class="ml-auto flex items-center gap-2">
             <template v-if="editing">
-              <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
+              <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
               <Button variant="pill-muted" type="button" @click="cancelEdit">{{ $t('common.cancel') }}</Button>
               <Button v-if="form.isDirty" variant="pill" type="submit" form="contact-form" :disabled="form.processing">
                 {{ $t('common.save') }}
@@ -305,7 +305,7 @@ function eraseDsgvoData() {
               </form>
 
               <section v-else-if="contact.phone || contact.email || hasAddress" class="mb-7">
-                <h2 class="mt-0 mb-3 text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
                   {{ $t('contacts.reach') }}
                 </h2>
 
@@ -336,7 +336,7 @@ function eraseDsgvoData() {
               </section>
 
               <section v-if="connected.length" class="mb-7">
-                <h2 class="mt-0 mb-3 text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
                   {{ $t('contacts.connected') }}
                 </h2>
 
@@ -354,7 +354,7 @@ function eraseDsgvoData() {
               </div>
               </section>
               <section v-if="canManageDsgvo" class="mb-7">
-                <h2 class="mt-0 mb-3 text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
                   {{ $t('contacts.dsgvo') }}
                 </h2>
 
@@ -410,7 +410,7 @@ function eraseDsgvoData() {
               <!-- Two sections, never one list: a project is an order with money
                    and dates, a gallery a delivery with an expiry. -->
               <section v-if="projects.length" class="mb-7">
-                <h2 class="mt-0 mb-3 text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
                   {{ $t('contacts.projects') }}
                 </h2>
                 <div
@@ -434,7 +434,7 @@ function eraseDsgvoData() {
               </section>
 
               <section v-if="galleries.length" class="mb-7">
-                <h2 class="mt-0 mb-3 text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
                   {{ $t('contacts.galleries') }}
                 </h2>
                 <div
@@ -465,7 +465,7 @@ function eraseDsgvoData() {
                    every project. A thread only ever knows its own project, so this
                    is the one screen that can answer the question at all. -->
               <section v-if="correspondence.length" class="mb-7">
-                <h2 class="mt-0 mb-3 text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
                   {{ $t('contacts.correspondence') }}
                 </h2>
                 <div
@@ -570,7 +570,7 @@ function eraseDsgvoData() {
                    bedienen. Deshalb rechts und in Karten wie die Übersicht,
                    nicht in einer grauen Randspalte. -->
               <aside class="w-[280px] flex-none max-[1180px]:w-full">
-                <h2 class="mt-0 mb-2.5 text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                <h2 class="mt-0 mb-2.5 text-small leading-none font-semibold text-ink-2">
                   {{ $t('contacts.portalAccess') }}
                 </h2>
 

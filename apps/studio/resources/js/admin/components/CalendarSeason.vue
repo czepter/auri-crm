@@ -129,7 +129,7 @@ function classes(entry: ReturnType<typeof cell>, height: string) {
         <span
           v-for="month in row.months"
           :key="month.label"
-          class="text-small leading-none font-semibold tracking-[0.06em] whitespace-nowrap uppercase text-ink-2"
+          class="text-small leading-none font-semibold whitespace-nowrap text-ink-2"
           :style="{ gridRow: 1, gridColumn: month.column }"
         >{{ month.label }}</span>
 

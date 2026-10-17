@@ -40,7 +40,7 @@ function copy() {
 
   <div class="mb-5 flex items-start gap-[26px] pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
     <div class="flex min-w-0 flex-1 flex-col gap-2">
-      <div class="text-small tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.link') }}</div>
+      <div class="text-small text-ink-2">{{ $t('galleryRecord.link') }}</div>
       <div class="mt-1.5 flex items-center gap-2.5">
         <a class="text-title tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline" :href="gallery.url">{{ gallery.url }}</a>
         <Button type="button" variant="pill-muted" @click="copy">{{ copied ? $t('gallery.copied') : $t('gallery.copy') }}</Button>
@@ -63,7 +63,7 @@ function copy() {
     </div>
 
     <div class="flex min-w-0 flex-col gap-2">
-      <div class="text-small tracking-[0.06em] uppercase text-ink-2">{{ $t('gallery.gateView') }}</div>
+      <div class="text-small text-ink-2">{{ $t('gallery.gateView') }}</div>
       <Input v-model="secret.view_password" class="w-[190px]" type="text" @blur="saveSecret" />
     </div>
   </div>

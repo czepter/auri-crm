@@ -58,7 +58,7 @@ defineExpose({ form, submit })
          A-04's hide-project/revoke-contact forms — never a third
          catch-all access control. -->
     <div class="mt-0">
-      <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('portalSettings.maintenanceSection') }}</div>
+      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('portalSettings.maintenanceSection') }}</div>
       <div class="mb-6">
         <div class="flex items-center gap-2.5">
           <Checkbox id="cb-portal-maintenance-enabled" v-model="form.portal_maintenance_enabled" />
@@ -77,7 +77,7 @@ defineExpose({ form, submit })
          portal into each capability, whether or not the feature behind
          it already ships elsewhere. -->
     <div class="mt-8">
-      <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('portalSettings.capabilitiesSection') }}</div>
+      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('portalSettings.capabilitiesSection') }}</div>
       <div class="mb-2 overflow-hidden rounded-[var(--r)] border border-border">
         <div
           v-for="capability in CAPABILITIES"
@@ -94,7 +94,7 @@ defineExpose({ form, submit })
     <!-- P-04 (#223) made a thread without a booking possible, which is a
          third state rather than a second position of one switch. -->
     <div class="mt-8">
-      <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('portalSettings.messagingLabel') }}</div>
+      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('portalSettings.messagingLabel') }}</div>
       <div class="mb-6">
         <RadioGroup v-model="form.portal_messaging_mode">
           <div v-for="mode in ['off', 'booking', 'any']" :key="mode" class="flex items-center gap-2.5">
@@ -108,11 +108,11 @@ defineExpose({ form, submit })
     </div>
 
     <div class="mt-8">
-      <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('portalSettings.welcomeSection') }}</div>
+      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('portalSettings.welcomeSection') }}</div>
       <div class="mb-2 overflow-hidden rounded-[var(--r)] border border-border">
         <div v-for="state in STATES" :key="state" class="px-4 py-3 not-first:border-t not-first:border-border">
           <div class="mb-2 flex flex-wrap items-center gap-2.5">
-            <span class="rounded-[var(--r-sm)] bg-sunk px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase text-muted-foreground">{{ $t(`portalSettings.welcomeState.${state}`) }}</span>
+            <span class="rounded-[var(--r-sm)] bg-sunk px-2 py-[3px] text-small leading-[1.5] font-semibold text-muted-foreground">{{ $t(`portalSettings.welcomeState.${state}`) }}</span>
             <Label variant="inline" :for="`ta-welcome-${state}`">{{ $t(`portalSettings.welcomeWhen.${state}`) }}</Label>
           </div>
           <Textarea :id="`ta-welcome-${state}`" v-model="form[`portal_welcome_${state}`]" rows="2" />

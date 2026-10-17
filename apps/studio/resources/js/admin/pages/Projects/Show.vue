@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { Link, router, useForm } from "@inertiajs/vue3";
+import { Pencil } from "lucide-vue-next";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/alert";
 import { Button } from "@/ui/button";
@@ -297,7 +298,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             >
                                 {{ person.name }}
                             </Link>
-                            <span data-slot="badge" class="rounded-[var(--r-pill)] bg-sunk-2 px-[9px] py-0.5 text-small leading-[1.4] tracking-[0.05em] uppercase text-ink-2">
+                            <span class="rounded-[var(--r-sm)] bg-sunk-2 px-2 py-0.5 text-small leading-[1.4] font-medium text-ink-2">
                                 {{ roleLabel(person.role) }}
                             </span>
                             <a v-if="person.email" class="text-small text-action no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
@@ -363,10 +364,17 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         </template>
                         <template v-if="header.canManageQuotes" #action>
                             <Link
-                                :data-slot="quote ? 'card-action' : undefined"
+                                v-if="quote"
+                                class="grid size-7 place-items-center rounded-[var(--r-sm)] text-ink-2 hover:bg-sunk hover:text-foreground"
+                                :href="`/angebote/${quote.id}`"
+                                :aria-label="$t('common.edit')"
+                                :title="$t('common.edit')"
+                            ><Pencil class="size-[15px]" /></Link>
+                            <Link
+                                v-else
                                 class="text-small tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
-                                :href="quote ? `/angebote/${quote.id}` : `/angebote/neu?projekt=${header.id}`"
-                            >{{ quote ? $t("common.edit") : $t("quotes.create") }}</Link>
+                                :href="`/angebote/neu?projekt=${header.id}`"
+                            >{{ $t("quotes.create") }}</Link>
                         </template>
                         <QuoteSummary
                             v-if="quote"
@@ -447,8 +455,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 row.title
                             }}</span>
                             <span
-                                data-slot="caption"
-                                class="text-small leading-[1.47] tracking-[0.05em] uppercase text-ink-2"
+                                class="text-small leading-[1.47] text-ink-2"
                             >{{ row.audienceLabel }}</span>
                             <span v-if="row.shootLabel" class="text-small leading-[1.47] text-faint">{{
                                 row.shootLabel
@@ -571,7 +578,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                     </Section>
 
                     <Card
-                        class="mt-10"
+                        class="mt-3"
                         :title="$t('lead.notes')"
                         :summary="`${notes.length}`"
                         :default-open="false"
