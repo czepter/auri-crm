@@ -136,6 +136,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                    the rows again. -->
                         <button
                             v-if="item.fold"
+                            data-slot="sidebar-group-label"
                             class="flex w-full cursor-pointer items-center border-0 bg-transparent px-2.5 pb-1.5 text-left text-small tracking-[0.06em] uppercase text-ink-2 transition-colors duration-[120ms] ease-out hover:text-foreground max-[1080px]:hidden"
                             type="button"
                             :aria-expanded="studioOpen"

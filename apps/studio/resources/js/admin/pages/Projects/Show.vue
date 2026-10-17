@@ -297,7 +297,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             >
                                 {{ person.name }}
                             </Link>
-                            <span class="rounded-[var(--r-pill)] bg-sunk-2 px-[9px] py-0.5 text-small leading-[1.4] tracking-[0.05em] uppercase text-ink-2">
+                            <span data-slot="badge" class="rounded-[var(--r-pill)] bg-sunk-2 px-[9px] py-0.5 text-small leading-[1.4] tracking-[0.05em] uppercase text-ink-2">
                                 {{ roleLabel(person.role) }}
                             </span>
                             <a v-if="person.email" class="text-small text-action no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
@@ -446,6 +446,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 row.title
                             }}</span>
                             <span
+                                data-slot="caption"
                                 class="text-small leading-[1.47] tracking-[0.05em] uppercase text-ink-2"
                             >{{ row.audienceLabel }}</span>
                             <span v-if="row.shootLabel" class="text-small leading-[1.47] text-faint">{{

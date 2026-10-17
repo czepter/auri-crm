@@ -116,9 +116,6 @@
 [data-theme="auri"] [data-slot="lead-card-foot"] > span:first-child { font-family: var(--font-mono); font-weight: 500; }
 
 /* Shell: navigation without fills, the active item by weight and a petrol icon. */
-@media (min-width: 1081px) {
-  [data-theme="auri"] [data-slot="sidebar"] { width: 240px; padding: 16px 8px; }
-}
 [data-theme="auri"] [data-slot="sidebar-group-label"] {
   padding-top: 12px; font-size: 12px; letter-spacing: 0; text-transform: none;
 }
@@ -130,3 +127,56 @@
 /* Segmented toggle: white thumb with the shadcn hairline shadow. */
 [data-theme="auri"] [data-slot="choice-group"] { background: var(--sunk); padding: 3px; }
 [data-theme="auri"] [data-slot="choice-group"] input:checked + * { box-shadow: 0 1px 2px rgba(24, 24, 27, .08); }
+
+/* Captions in sentence case: Nordlicht sets every small label in tracked
+   capitals, the draft names things in plain words. */
+[data-theme="auri"] [data-slot="page-kicker"],
+[data-theme="auri"] [data-slot="rail-caption"],
+[data-theme="auri"] [data-slot="label"],
+[data-theme="auri"] [data-slot="table-head"],
+[data-theme="auri"] [data-slot="table-group-row"] > td,
+[data-theme="auri"] [data-slot="badge"],
+[data-theme="auri"] [data-slot="caption"],
+[data-theme="auri"] .chip {
+  letter-spacing: 0; text-transform: none;
+}
+[data-theme="auri"] [data-slot="label"] { color: var(--ink); font-weight: 500; }
+[data-theme="auri"] [data-slot="page-title"] { font-size: 20px; line-height: 28px; letter-spacing: -.02em; }
+
+/* Project tabs: a segmented track instead of an underline. */
+[data-theme="auri"] [data-slot="tabs"] {
+  display: inline-flex; max-width: 100%; gap: 2px; padding: 3px;
+  border-radius: 8px; background: var(--sunk); box-shadow: none;
+}
+[data-theme="auri"] [data-slot="tabs"] > a {
+  padding: 4px 10px; border-radius: var(--r-sm); box-shadow: none; font-weight: 500;
+}
+[data-theme="auri"] [data-slot="tabs"] > a[aria-current="page"] {
+  background: var(--paper); box-shadow: 0 1px 2px rgba(24, 24, 27, .08);
+}
+
+/* Side columns sit on the page, not on a grey panel. */
+[data-theme="auri"] [data-slot="queue"],
+[data-theme="auri"] [data-slot="rail"] { background: var(--bg); }
+[data-theme="auri"] [data-slot="rail-history"] { border-top: 0; }
+
+/* Card: more room, and the edit link as a small outline button. */
+[data-theme="auri"] [data-slot="card"] > header { height: 52px; padding: 0 20px 0 24px; }
+[data-theme="auri"] [data-slot="card"] > header h2 { font-size: 15px; }
+[data-theme="auri"] [data-slot="card"] > header + div { padding: 0 24px 24px; }
+[data-theme="auri"] [data-slot="card-action"] {
+  padding: 5px 10px; border-radius: var(--r-sm); color: var(--ink);
+  background: var(--paper); box-shadow: inset 0 0 0 1px var(--line), 0 1px 2px rgba(24, 24, 27, .05);
+}
+[data-theme="auri"] [data-slot="card-action"]:hover { background: var(--hover); text-decoration: none; }
+
+/* Status chips: a word on its tint, no capitals. */
+[data-theme="auri"] .chip,
+[data-theme="auri"] [data-slot="badge"] { font-weight: 500; border-radius: var(--r-sm); }
+
+/* Tables: no row lines, rounded hover rows. */
+[data-theme="auri"] [data-slot="table-head"] { font-weight: 500; }
+[data-theme="auri"] [data-slot="table-cell"] { box-shadow: none; }
+[data-theme="auri"] [data-slot="table-row"]:hover > td:first-child { border-radius: 8px 0 0 8px; }
+[data-theme="auri"] [data-slot="table-row"]:hover > td:last-child { border-radius: 0 8px 8px 0; }
+[data-theme="auri"] [data-slot="quote-total"] { box-shadow: inset 0 1px 0 var(--line-hover); }

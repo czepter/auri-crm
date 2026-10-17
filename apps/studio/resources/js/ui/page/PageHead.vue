@@ -13,6 +13,7 @@ defineProps<{ title: string; kicker?: string; kickerHref?: string }>()
     <div data-slot="page-head" class="px-8 pt-[22px] max-[640px]:px-5 max-[640px]:pt-4">
         <div
             v-if="kicker"
+            data-slot="page-kicker"
             class="mb-[5px] text-small leading-none font-semibold tracking-[0.05em] uppercase text-ink-2"
         >
             <Link v-if="kickerHref" class="text-inherit no-underline hover:text-foreground" :href="kickerHref">{{ kicker }}</Link>

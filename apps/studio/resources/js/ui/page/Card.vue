@@ -60,6 +60,7 @@ function cancel() {
                 <template v-if="editable && open">
                     <a
                         v-if="!editing"
+                        data-slot="card-action"
                         class="text-small tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
                         href="#"
                         @click.stop.prevent="start"

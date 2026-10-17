@@ -124,7 +124,7 @@ function destroy() {
     </template>
 
     <div class="min-w-0 flex-1 px-[26px] pt-5 pb-7 max-[640px]:px-5">
-      <div class="text-small tracking-[0.05em] uppercase text-ink-2">
+      <div data-slot="page-kicker" class="text-small tracking-[0.05em] uppercase text-ink-2">
         <Link v-if="header.isBooked" href="/projekte">{{ $t('projects.title') }}</Link>
         <Link v-else href="/anfragen">{{ $t('board.title') }}</Link>
       </div>
@@ -132,7 +132,7 @@ function destroy() {
       <div class="sticky top-0 z-[5] mt-0.5 bg-paper">
         <div class="flex items-center gap-3">
           <slot name="title">
-            <h1 class="m-0 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px]">
+            <h1 data-slot="page-title" class="m-0 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px]">
               {{ header.name }}
             </h1>
           </slot>
@@ -191,7 +191,7 @@ function destroy() {
 
         <StageTrack class="mt-4" :steps="header.track" />
 
-        <nav class="mt-[18px] flex gap-[18px] overflow-x-auto text-small shadow-[inset_0_-1px_0_var(--rule)]">
+        <nav data-slot="tabs" class="mt-[18px] flex gap-[18px] overflow-x-auto text-small shadow-[inset_0_-1px_0_var(--rule)]">
           <Link
             v-for="tab in header.tabs"
             :key="tab.key"

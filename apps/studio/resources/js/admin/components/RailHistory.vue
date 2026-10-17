@@ -24,8 +24,9 @@ const byline = (author: string | null) =>
 <template>
     <!-- Der Verlauf steht am Fuß der Rail: er wird gelesen, wenn die
          Gruppen darüber eine Frage offen lassen. -->
-    <div v-if="events.length" class="mt-7 border-t border-line-hover pt-3">
+    <div v-if="events.length" data-slot="rail-history" class="mt-7 border-t border-line-hover pt-3">
         <h3
+            data-slot="rail-caption"
             class="m-0 mb-[7px] text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2"
         >
             {{ $t("project.history") }}

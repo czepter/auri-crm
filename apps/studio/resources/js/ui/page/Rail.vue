@@ -15,6 +15,7 @@ const props = defineProps<{ class?: HTMLAttributes["class"] }>()
 
 <template>
     <aside
+        data-slot="rail"
         :class="cn(
             'sticky top-0 ml-auto h-screen w-70 flex-none overflow-y-auto bg-sunk px-5 py-4 max-[1080px]:hidden',
             props.class,
