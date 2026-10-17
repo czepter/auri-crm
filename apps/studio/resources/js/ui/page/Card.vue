@@ -41,7 +41,7 @@ function cancel() {
 </script>
 
 <template>
-    <section class="rounded-md border border-rule bg-background">
+    <section data-slot="card" class="rounded-md border border-rule bg-background">
         <header
             class="flex h-[46px] cursor-pointer items-center gap-3 px-[18px]"
             @click="open = !open"

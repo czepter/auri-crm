@@ -134,7 +134,7 @@ function destroy() {
                             type="button"
                             :aria-label="$t('common.save')"
                             :disabled="!edit.body.trim() || edit.processing"
-                            class="grid size-[30px] flex-none cursor-pointer place-items-center rounded-full border-0 bg-action text-white transition-[filter,opacity] duration-[120ms] ease-out hover:brightness-[1.08] disabled:cursor-default disabled:opacity-35"
+                            class="grid size-[30px] flex-none cursor-pointer place-items-center rounded-full border-0 bg-action text-action-foreground transition-[filter,opacity] duration-[120ms] ease-out hover:brightness-[1.08] disabled:cursor-default disabled:opacity-35"
                             @click="save"
                         >
                             <svg
@@ -167,7 +167,7 @@ function destroy() {
                         class="max-w-[78%] px-3 py-2"
                         :class="
                             entry.author === me
-                                ? 'rounded-[14px] rounded-br-[4px] bg-action text-white'
+                                ? 'rounded-[14px] rounded-br-[4px] bg-action text-action-foreground'
                                 : 'rounded-[14px] rounded-bl-[4px] bg-sunk'
                         "
                     >
@@ -231,7 +231,7 @@ function destroy() {
                     type="submit"
                     :aria-label="$t('lead.addNote')"
                     :disabled="!note.body.trim() || note.processing"
-                    class="grid size-[30px] flex-none cursor-pointer place-items-center rounded-full border-0 bg-action text-white transition-[filter,opacity] duration-[120ms] ease-out hover:brightness-[1.08] disabled:cursor-default disabled:opacity-35"
+                    class="grid size-[30px] flex-none cursor-pointer place-items-center rounded-full border-0 bg-action text-action-foreground transition-[filter,opacity] duration-[120ms] ease-out hover:brightness-[1.08] disabled:cursor-default disabled:opacity-35"
                 >
                     <svg
                         viewBox="0 0 16 16"

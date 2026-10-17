@@ -1,0 +1,89 @@
+/*
+ * Auri — candidate successor to Atelier Nordlicht, as a theme over the same
+ * tokens. Source: the "Auri" design system artifact
+ * (https://claude.ai/artifact/JARFDFBYnf4B3sWSxsAj9c).
+ *
+ * Only Storybook imports this file, behind its theme switch. Its selectors
+ * sit at the same specificity as crm.css's :root, so it must be imported
+ * after admin.css.
+ *
+ * ponytail: Geist is not self-hosted yet, so the stack falls back to
+ * system-ui. Before the product uses this theme, add the woff2 files to
+ * public/fonts and fonts.css, as with every other family (#233).
+ */
+[data-theme="auri"] {
+  --font: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font);
+  --display-tracking: -.02em;
+
+  --bg: #FFFFFF;
+  --paper: #FFFFFF;
+  --sunk: #F4F4F5;
+  --sunk-2: #EBEBED;
+  --hover: #F0F0F1;
+
+  --ink: #18181B;
+  --ink-2: #616169;
+  --muted: #616169;
+  --faint: #71717A;
+  --mark: #D4D4D8;
+
+  /* Fewer lines: rules and hairlines fade almost into the white, only
+     controls keep a real outline (--input, 3:1). */
+  --rule: #F0F0F1;
+  --line: #EDEDEF;
+  --line-hover: #D4D4D8;
+  --input: #8F8F98;
+
+  /* Ink acts, petrol shows: the button fill is ink, focus is petrol. */
+  --accent: #18181B;
+  --accent-bg: #E7F1F2;
+  --ring: #1C6870;
+
+  --ok: #2D6A3E;    --ok-bg: #E8F3EB;
+  --due: #865600;   --due-bg: #FBF1DC;
+  --late: #C0262D;  --late-bg: #FDEDED;
+
+  --r: 12px;
+  --r-sm: 6px;
+
+  --shadow-card: 0 1px 3px rgba(24, 24, 27, .06), 0 6px 20px rgba(24, 24, 27, .05);
+}
+
+[data-theme="auri"].dark {
+  --bg: #09090B;
+  --paper: #141416;
+  --sunk: #141416;
+  --sunk-2: #27272A;
+  --hover: #1F1F23;
+
+  --ink: #FAFAFA;
+  --ink-2: #A1A1AA;
+  --muted: #A1A1AA;
+  --faint: #8B8B94;
+  --mark: #3F3F46;
+
+  --rule: #1F1F23;
+  --line: #27272A;
+  --line-hover: #3F3F46;
+  --input: #6B6B74;
+
+  --accent: #FAFAFA;
+  --accent-bg: #10292A;
+  --ring: #5CB5B0;
+
+  --ok: #7FC595;    --ok-bg: #13221A;
+  --due: #E6B75E;   --due-bg: #271F10;
+  --late: #F0716A;  --late-bg: #2A1414;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, .5);
+
+  color-scheme: dark;
+}
+
+/* White cards on a white page: the shadow sets them apart instead of a border. */
+[data-theme="auri"] [data-slot="card"] {
+  border-color: transparent;
+  background: var(--paper);
+  box-shadow: var(--shadow-card);
+}
