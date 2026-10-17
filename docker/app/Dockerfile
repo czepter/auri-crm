@@ -12,8 +12,8 @@
 FROM dunglas/frankenphp:1-php8.5 AS base
 
 # install-php-extensions ships inside the FrankenPHP image and resolves each
-# extension's system libraries itself, so the list here is the one CI installs
-# via shivammathur/setup-php (pdo_pgsql, bcmath, gd, intl, exif), plus pcntl —
+# extension's system libraries itself, so the list here is the one CI tests
+# against in the `ci` stage below (pdo_pgsql, bcmath, gd, intl, exif), plus pcntl —
 # Horizon traps SIGTERM/SIGUSR2 through it, see docker/php/Dockerfile — plus
 # opcache, which the dev image has no use for, and zip, which Composer needs to
 # unpack a dist archive at all.
@@ -32,6 +32,34 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libvips-tools \
         libheif-plugin-aomenc \
     && rm -rf /var/lib/apt/lists/*
+
+# ---------------------------------------------------------------- ci
+# ci.yml's studio and e2e jobs run in this stage, so the suite runs on the
+# runtime production serves. The jobs run as the runner's own uid to keep the
+# workspace they share with the host jobs runner-owned, and that user cannot
+# apt-get: everything a job used to install on the host is baked in here,
+# Chromium pinned to the lockfile's Playwright through the build arg.
+# memory_limit=-1 matches docker/php/Dockerfile; php.ini-production's 128M
+# kills the suite on the AWS SDK's endpoints table.
+FROM base AS ci
+ARG PLAYWRIGHT_VERSION
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+COPY --from=node:24-slim /usr/local/bin/node /usr/local/bin/node
+COPY --from=node:24-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
+    && printf 'memory_limit=-1\n' > "$PHP_INI_DIR/conf.d/zz-memory-limit.ini" \
+    && apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates curl gnupg git unzip \
+    && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+        | gpg --dearmor -o /usr/share/keyrings/pgdg.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/pgdg.gpg] https://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo "$VERSION_CODENAME")-pgdg main" \
+        > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update && apt-get install -y --no-install-recommends postgresql-client-18 \
+    && npx -y playwright@${PLAYWRIGHT_VERSION} install --with-deps chromium \
+    && chmod -R a+rX /ms-playwright \
+    && rm -rf /var/lib/apt/lists/* /root/.npm
 
 # ---------------------------------------------------------------- assets
 FROM node:24-alpine AS assets

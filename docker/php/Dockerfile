@@ -5,8 +5,9 @@ FROM php:8.5-cli
 # drifted apart it resolved a Pest release the container could not run.
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
-# Matches the extension list CI installs via shivammathur/setup-php
-# (pdo_pgsql, bcmath, gd, intl, exif) so a test that passes here passes there.
+# Matches the extension list of docker/app/Dockerfile, whose `ci` stage CI
+# runs the suite in (pdo_pgsql, bcmath, gd, intl, exif), so a test that passes
+# here passes there.
 #
 # pcntl is the odd one out: CI's setup-php action enables it by default, so it
 # was never listed there, but this image builds PHP from source and needs it
@@ -24,9 +25,8 @@ COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 # it, decode-only formats work fine either way.
 #
 # libvips-tools (G-03, #52) is the odd one out a third way: it's a CLI tool,
-# not a PHP extension, so it never appears in setup-php's list either — CI's
-# `studio` job installs the matching apt package directly, the same pattern
-# X-03 set for postgresql-client. App\Media\Support\LibvipsDerivativePipeline
+# not a PHP extension, so docker/app/Dockerfile installs it by apt as well.
+# App\Media\Support\LibvipsDerivativePipeline
 # shells out to vipsthumbnail/vipsheader rather than binding libvips into PHP
 # (no ext-vips, no jcupitt/vips) — one CLI call per derivative is simple and
 # the P3 gallery spike's own throughput numbers show it's nowhere near the
@@ -71,8 +71,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && docker-php-ext-install -j"$(nproc)" pdo_pgsql bcmath gd intl pcntl exif zip \
     && rm -rf /var/lib/apt/lists/*
 
-# CI runs the suite under setup-php, which sets memory_limit=-1 — so the whole
-# suite passed there while the same run in this image died on the AWS SDK's
+# CI runs the suite with memory_limit=-1 (docker/app/Dockerfile's `ci` stage,
+# as setup-php did before it) — so the whole suite passed there while the same run in this image died on the AWS SDK's
 # endpoints table at php-cli's 128M default. Matching CI is the point: a test
 # that passes here passes there.
 RUN printf 'memory_limit=-1\n' > /usr/local/etc/php/conf.d/zz-memory-limit.ini
