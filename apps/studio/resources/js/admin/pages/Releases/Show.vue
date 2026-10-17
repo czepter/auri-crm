@@ -45,7 +45,7 @@ function toggle(key: string, index: number) {
     <AdminLayout active="neuigkeiten">
         <Page data-tokens wide>
             <div class="min-w-0 flex-1">
-                <div class="px-8 pt-[22px] max-[640px]:px-5 max-[640px]:pt-4">
+                <div class="px-6 pt-5 max-[640px]:px-5 max-[640px]:pt-4">
                     <Link
                         class="inline-flex items-center gap-1.5 text-small leading-none font-medium text-ink-2 no-underline hover:text-foreground"
                         href="/neuigkeiten"
@@ -61,7 +61,7 @@ function toggle(key: string, index: number) {
 
                     <div class="mt-2.5 flex items-baseline gap-3">
                         <h1
-                            class="m-0 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px]"
+                            class="m-0 text-[20px] leading-7 font-semibold tracking-[-0.02em]"
                         >
                             {{ release.version }}
                         </h1>
@@ -93,7 +93,7 @@ function toggle(key: string, index: number) {
                     </p>
                 </div>
 
-                <div v-if="image" class="px-8 pt-5 max-[640px]:px-5">
+                <div v-if="image" class="px-6 pt-5 max-[640px]:px-5">
                     <img
                         class="block w-[560px] max-w-full rounded-[12px] border border-rule"
                         :src="image"
@@ -101,7 +101,7 @@ function toggle(key: string, index: number) {
                     />
                 </div>
 
-                <div class="flex gap-2 px-8 pt-6 max-[640px]:px-5">
+                <div class="flex gap-2 px-6 pt-6 max-[640px]:px-5">
                     <Button
                         variant="outline"
                         :class="filter === null && 'border-foreground bg-foreground text-background hover:border-foreground'"
@@ -122,7 +122,7 @@ function toggle(key: string, index: number) {
                     </Button>
                 </div>
 
-                <div class="px-8 pb-15 max-[640px]:px-5">
+                <div class="px-6 pb-15 max-[640px]:px-5">
                     <section
                         v-for="section in sections"
                         :key="section.key"
@@ -142,7 +142,7 @@ function toggle(key: string, index: number) {
                             :key="change.commit + index"
                         >
                             <button
-                                class="-mx-2.5 flex w-[calc(100%+20px)] cursor-pointer items-baseline gap-2.5 border-0 bg-transparent px-2.5 py-[9px] text-left shadow-[inset_0_1px_0_#F0F0F2] hover:bg-sunk"
+                                class="-mx-2.5 flex w-[calc(100%+20px)] cursor-pointer items-baseline gap-2.5 border-0 bg-transparent px-2.5 py-[9px] text-left shadow-[inset_0_1px_0_var(--rule)] hover:bg-sunk"
                                 type="button"
                                 @click="toggle(section.key, index)"
                             >

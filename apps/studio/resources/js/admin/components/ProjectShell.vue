@@ -90,7 +90,7 @@ function destroy() {
             <RailSection v-if="people" :title="$t('lead.people')">
               <div v-for="person in header.people" :key="person.id" class="flex items-center gap-2 py-[5px] text-small leading-[1.47]">
                 <Link :href="`/kontakte/${person.id}`">{{ person.name }}</Link>
-                <span class="ml-auto text-small leading-[1.47] text-[#3F6B4A]">{{ $t(`contacts.role.${person.role}`) }}</span>
+                <span class="ml-auto text-small leading-[1.47] text-ok">{{ $t(`contacts.role.${person.role}`) }}</span>
               </div>
             </RailSection>
           </slot>

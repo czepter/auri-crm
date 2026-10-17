@@ -228,9 +228,9 @@ function day(value: string | null): string {
               <span class="ml-auto text-small leading-[1.45] text-faint">{{ $t('documentTemplates.bodyHint') }}</span>
             </div>
             <div class="mx-auto mt-6 w-full max-w-[520px] rounded-[2px] border border-border bg-white px-10 pb-10">
-              <div class="-mx-10 mb-6 border-b border-dashed border-line-hover bg-[#FCFBFA] px-3 py-[9px] text-small leading-[1.4] font-medium text-faint">{{ $t('documentTemplates.letterhead') }}</div>
+              <div class="-mx-10 mb-6 border-b border-dashed border-line-hover bg-sunk px-3 py-[9px] text-small leading-[1.4] font-medium text-faint">{{ $t('documentTemplates.letterhead') }}</div>
               <DocumentEditor :key="contract.id" v-model="doc" :palette="palette" :merge-fields="mergeFields" />
-              <div class="-mx-10 -mb-10 mt-6 border-t border-dashed border-line-hover bg-[#FCFBFA] px-3 py-[9px] text-small leading-[1.4] font-medium text-faint">{{ $t('documentTemplates.footer') }}</div>
+              <div class="-mx-10 -mb-10 mt-6 border-t border-dashed border-line-hover bg-sunk px-3 py-[9px] text-small leading-[1.4] font-medium text-faint">{{ $t('documentTemplates.footer') }}</div>
             </div>
           </section>
 

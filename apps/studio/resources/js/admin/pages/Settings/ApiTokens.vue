@@ -76,7 +76,7 @@ function revoke() {
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('settings.kicker')" :title="$t('apiTokens.title')" />
 
-        <div class="px-8 pt-7 pb-8">
+        <div class="px-6 pt-7 pb-8">
           <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
             <SettingsNav active="api-tokens" />
 

@@ -32,9 +32,9 @@ const proof = computed(() => drawDots(props.dots))
    shade rather than a label. */
 const DOT: Record<string, string> = {
   on: 'bg-foreground',
-  s2: 'bg-[#5F5F63]',
-  s3: 'bg-[#A1A1A6]',
-  warn: 'bg-action',
+  s2: 'bg-ink-2',
+  s3: 'bg-faint',
+  warn: 'bg-due',
 }
 </script>
 
@@ -42,17 +42,17 @@ const DOT: Record<string, string> = {
   <component
     :is="href ? Link : 'div'"
     :href="href"
-    class="flex min-h-[130px] flex-col rounded-md no-underline text-foreground"
+    class="flex min-h-[130px] flex-col rounded-[var(--r)] no-underline text-foreground"
     :class="[
-      'bg-sunk',
+      'bg-paper shadow-card',
       day ? 'overflow-hidden p-0' : 'px-[17px] pt-[15px] pb-3.5',
-      href && 'hover:bg-mark',
+      href && 'hover:bg-accent',
     ]"
   >
     <template v-if="day">
       <div class="flex items-start gap-[11px] px-[17px] pt-[15px]">
         <div
-          class="flex size-[46px] flex-none flex-col items-center justify-center rounded-[12px] bg-[linear-gradient(158deg,#4D3A2C,#C0A184)] leading-none text-white"
+          class="flex size-[46px] flex-none flex-col items-center justify-center rounded-[var(--r-sm)] bg-foreground leading-none text-paper"
         >
           <b class="text-title leading-none font-semibold tracking-[-0.03em]">{{ day.number }}</b>
           <i class="mt-[3px] text-[8px] not-italic opacity-85">{{ day.weekday }}</i>
@@ -70,8 +70,8 @@ const DOT: Record<string, string> = {
     <template v-else>
       <div class="text-small text-ink-2">{{ label }}</div>
       <div
-        class="mt-2 flex items-baseline gap-[3px] text-[28px] leading-none tracking-[-0.034em] tabular-nums"
-        :class="['font-semibold', warn && 'text-action']"
+        class="mt-2 flex items-baseline gap-[3px] font-mono text-[24px] leading-none font-medium tracking-[-0.02em] tabular-nums"
+        :class="warn && 'text-due'"
       >
         {{ value }}<span v-if="unit" class="text-[0.52em] font-medium text-ink-2">{{ unit }}</span>
       </div>

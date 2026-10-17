@@ -175,7 +175,7 @@ function run(key: ActionKey) {
 
       <DropdownMenu>
         <DropdownMenuTrigger
-          class="flex items-center rounded-r-[var(--r-pill)] border-l border-white/20 bg-action px-2 text-action-foreground"
+          class="flex items-center rounded-r-[var(--r-sm)] border-l border-white/20 bg-action px-2 text-action-foreground"
           :aria-label="$t('quotes.moreActions')"
           @click.stop
         >

@@ -144,7 +144,7 @@ function open(row: Row) {
           </div>
         </PageHead>
 
-        <div class="flex flex-wrap items-center gap-2 px-8 pt-5">
+        <div class="flex flex-wrap items-center gap-2 px-6 pt-5">
           <Link
             class="rounded-lg px-2.5 py-[5px] text-small leading-[1.3] no-underline"
             :class="kind === null ? 'bg-foreground text-background' : 'bg-sunk-2 text-foreground'"
@@ -165,7 +165,7 @@ function open(row: Row) {
           </Link>
         </div>
 
-        <div class="px-8 pt-6 pb-8">
+        <div class="px-6 pt-6 pb-8">
           <!-- Übersicht: jede Art als eigene Karte, in der Reihenfolge der Chips. -->
           <div v-if="kind === null" class="max-w-[980px]">
             <section v-for="entry in kinds" :key="entry" class="mt-7 first:mt-0">
@@ -173,7 +173,7 @@ function open(row: Row) {
                 {{ $t(KIND_LABEL[entry]) }}
               </div>
 
-              <div v-if="matching(rows[entry]).length" class="overflow-hidden rounded-md border border-border">
+              <div v-if="matching(rows[entry]).length" class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
                 <component
                   :is="row.href ? Link : 'button'"
                   v-for="row in matching(rows[entry]).slice(0, 4)"

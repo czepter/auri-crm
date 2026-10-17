@@ -317,12 +317,12 @@ const TONE: Record<string, string> = {
           </Dialog>
         </template>
 
-        <div class="mb-3 inline-flex gap-0.5 rounded-full bg-sunk-2 p-0.5">
+        <div class="mb-3 inline-flex gap-0.5 rounded-lg bg-sunk p-[3px]">
           <button
             v-for="tab in filters"
             :key="tab.key"
             type="button"
-            class="rounded-full px-2.5 py-1 text-small leading-none text-ink-2"
+            class="rounded-[var(--r-sm)] px-2.5 py-1 text-small leading-none text-ink-2"
             :class="filter === tab.key && 'bg-paper font-semibold text-foreground'"
             @click="filter = tab.key"
           >
@@ -483,7 +483,7 @@ const TONE: Record<string, string> = {
                         <span v-if="entry.note" class="ml-1.5 text-faint">{{ entry.note }}</span>
                       </span>
                       <span v-if="header.canManageShoots" class="hidden flex-none items-center gap-2.5 group-hover:flex">
-                        <button type="button" class="cursor-pointer text-small text-action" @click="startEditTimelineEntry(entry)">{{ $t('common.edit') }}</button>
+                        <button type="button" class="cursor-pointer text-small text-ring" @click="startEditTimelineEntry(entry)">{{ $t('common.edit') }}</button>
                         <button type="button" class="cursor-pointer text-small text-ink-2" @click="removeTimelineEntry(entry)">{{ $t('project.timelineRemove') }}</button>
                       </span>
                     </div>

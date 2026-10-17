@@ -9,7 +9,7 @@ defineProps<{ title: string; href?: string; meta?: string | null }>()
 </script>
 
 <template>
-    <div class="py-2 shadow-[inset_0_1px_0_#ECECEE]">
+    <div class="py-2 shadow-[inset_0_1px_0_var(--rule)]">
         <component
             :is="href ? Link : 'div'"
             :href="href"

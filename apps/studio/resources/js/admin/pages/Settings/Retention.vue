@@ -123,7 +123,7 @@ function submit() {
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('settings.kicker')" :title="$t('settings.navRetention')" />
 
-        <div class="px-8 pt-7 pb-8">
+        <div class="px-6 pt-7 pb-8">
           <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
             <SettingsNav active="retention" />
 
@@ -137,7 +137,7 @@ function submit() {
 
               <div :class="enabled ? '' : 'pointer-events-none opacity-45'" :inert="!enabled">
                 <div class="mt-6 grid grid-cols-4 gap-3 max-[900px]:grid-cols-2">
-                  <div v-for="tile in tiles" :key="tile.key" class="rounded-lg border border-rule px-4 py-3.5">
+                  <div v-for="tile in tiles" :key="tile.key" class="rounded-[var(--r)] bg-paper shadow-card px-5 py-4">
                     <div class="text-small font-semibold text-ink-2">{{ $t(`settings.retention${tile.key}`) }}</div>
                     <div class="mt-1 text-heading leading-[1.1] font-semibold tabular-nums" :class="tile.hot && 'text-destructive'">{{ tile.value }}</div>
                     <div class="mt-1 text-small text-ink-2">
@@ -216,7 +216,7 @@ function submit() {
                           <div class="text-small text-ink-2">{{ $t('settings.retentionIdle', { n: candidate.idleMonths }) }}</div>
                         </div>
                         <span
-                          class="w-fit rounded-full px-2.5 py-0.5 text-small font-semibold"
+                          class="w-fit rounded-[var(--r-sm)] px-2.5 py-0.5 text-small font-semibold"
                           :class="effective.order ? 'bg-late-bg text-destructive' : 'bg-sunk text-ink-2'"
                         >
                           {{ effective.order ? $t('settings.retentionRemoved') : $t('settings.retentionStays') }}

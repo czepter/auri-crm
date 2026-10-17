@@ -22,7 +22,7 @@ const forwardedProps = useForwardProps(delegatedProps)
       buttonVariants({ variant: 'ghost' }),
       'size-8 justify-center rounded-md p-0 text-ui font-normal text-foreground hover:bg-muted hover:text-foreground',
       // today is named, not filled: a fill here reads as a selection
-      '[&[data-today]:not([data-selected])]:font-semibold [&[data-today]:not([data-selected])]:text-action',
+      '[&[data-today]:not([data-selected])]:font-semibold [&[data-today]:not([data-selected])]:text-ring',
       // Selected
       'data-[selected]:bg-action data-[selected]:font-semibold data-[selected]:text-action-foreground data-[selected]:hover:bg-action data-[selected]:hover:text-action-foreground',
       // Disabled

@@ -116,7 +116,7 @@ function when(at: string) {
     <!-- upper third: the list grows downward, the eye stays -->
     <Input
       v-model="frage"
-      class="rounded-none border-0 bg-transparent px-5.5 py-4.5 text-title leading-[1.3] tracking-[-0.022em] shadow-[inset_0_-1px_0_var(--rule)] placeholder:text-[#B0B0B5]"
+      class="rounded-none border-0 bg-transparent px-5.5 py-4.5 text-title leading-[1.3] tracking-[-0.022em] shadow-[inset_0_-1px_0_var(--rule)] placeholder:text-faint"
       type="search"
       :placeholder="$t('palette.placeholder')"
       autofocus

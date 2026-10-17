@@ -164,7 +164,7 @@ function receivedAt(iso: string) {
           <div class="mt-[5px] flex items-start gap-3.5">
             <div>
               <div class="text-small leading-[1.47] text-ink-2">{{ $t(`inbox.origin.${open.origin}`) }}</div>
-              <h1 class="m-0 mt-0.5 text-[25px] leading-[1.08] font-semibold tracking-[-0.032em]">{{ open.subject }}</h1>
+              <h1 class="m-0 mt-0.5 text-[20px] leading-7 font-semibold tracking-[-0.02em]">{{ open.subject }}</h1>
             </div>
             <Button class="ml-auto" variant="pill-muted" type="button" @click="close(open.id)">
               {{ open.state === 'erledigt' ? $t('inbox.reopen') : $t('inbox.done') }}

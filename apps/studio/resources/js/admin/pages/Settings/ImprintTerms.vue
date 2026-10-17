@@ -60,7 +60,7 @@ function submit() {
           </Button>
         </PageHead>
 
-        <div class="px-8 pt-7 pb-8">
+        <div class="px-6 pt-7 pb-8">
           <div class="flex flex-wrap items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
             <SettingsNav active="imprint-terms" />
 

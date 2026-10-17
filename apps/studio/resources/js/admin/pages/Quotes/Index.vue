@@ -37,7 +37,7 @@ function day(iso: string) {
         </PageHead>
 
         <template v-if="quotes.length">
-          <div class="flex px-8 pt-4.5">
+          <div class="flex px-6 pt-4.5">
             <Input v-model="query" class="h-8 w-64" type="search" :placeholder="$t('quotesOverview.searchPlaceholder')" />
           </div>
 

@@ -90,7 +90,7 @@ function chipClass(status: string): string {
           </Button>
         </PageHead>
 
-        <div class="flex items-start gap-10 px-8 pt-7 pb-8 max-[900px]:flex-col">
+        <div class="flex items-start gap-10 px-6 pt-7 pb-8 max-[900px]:flex-col">
           <form class="max-w-[620px] min-w-0 flex-1" @submit.prevent="save">
             <div class="mb-2.5 text-small leading-none font-semibold text-faint">
               {{ $t('automations.triggerSection') }}
@@ -251,7 +251,7 @@ function chipClass(status: string): string {
               {{ $t('automations.runs') }}
             </div>
 
-            <div class="mt-2 overflow-hidden rounded-[10px] border border-rule">
+            <div class="mt-2 overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
               <div
                 v-for="run in runs"
                 :key="run.id"

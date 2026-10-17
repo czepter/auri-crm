@@ -72,7 +72,7 @@ const LONG = ['text', 'name_list', 'group_photos']
           </span>
         </PageHead>
 
-        <div class="px-8 pt-5 pb-8">
+        <div class="px-6 pt-5 pb-8">
           <Field v-slot="{ id }" class="max-w-[720px]" :label="$t('create.pick')">
             <ProjectTypeahead :id="id" v-model="project" />
           </Field>

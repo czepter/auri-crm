@@ -43,7 +43,7 @@ function submit() {
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('packages.createTitle')" />
 
-        <form class="flex items-start gap-8 px-8 pt-7 pb-8" @submit.prevent="submit">
+        <form class="flex items-start gap-8 px-6 pt-7 pb-8" @submit.prevent="submit">
           <div class="max-w-[640px] min-w-0 flex-1">
             <Field id="name" class="mb-6" :label="$t('packages.name')" :error="form.errors.name">
               <Input id="name" v-model="form.name" type="text" required />

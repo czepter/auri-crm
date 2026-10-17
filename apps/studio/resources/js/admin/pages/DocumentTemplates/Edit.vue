@@ -47,7 +47,7 @@ function submit() {
           <Button variant="pill" type="button" :disabled="form.processing" @click="submit">{{ $t('common.save') }}</Button>
         </PageHead>
 
-        <div class="px-8 pt-7 pb-8">
+        <div class="px-6 pt-7 pb-8">
           <p class="text-small leading-[1.45] text-faint">{{ $t('documentTemplates.version', { version: template.version }) }} · {{ $t('documentTemplates.editHint') }}</p>
           <p v-if="form.errors.blocks" class="text-small leading-[1.45] text-destructive">{{ form.errors.blocks }}</p>
           <p v-if="form.errors.body" class="text-small leading-[1.45] text-destructive">{{ form.errors.body }}</p>
@@ -65,9 +65,9 @@ function submit() {
                 <span class="ml-auto text-small leading-[1.45] text-faint">{{ $t('documentTemplates.bodyHint') }}</span>
               </div>
               <div class="mx-auto mt-6 w-full max-w-[520px] rounded-[2px] border border-border bg-white px-10 pb-10">
-                <div class="-mx-10 border-dashed border-line-hover bg-[#FCFBFA] px-3 py-[9px] text-small leading-[1.4] font-medium text-faint mb-6 border-b">{{ $t('documentTemplates.letterhead') }}</div>
+                <div class="-mx-10 border-dashed border-line-hover bg-sunk px-3 py-[9px] text-small leading-[1.4] font-medium text-faint mb-6 border-b">{{ $t('documentTemplates.letterhead') }}</div>
                 <DocumentEditor v-model="doc" :palette="palette" :merge-fields="mergeFields" />
-                <div class="-mx-10 border-dashed border-line-hover bg-[#FCFBFA] px-3 py-[9px] text-small leading-[1.4] font-medium text-faint -mb-10 mt-6 border-t">{{ $t('documentTemplates.footer') }}</div>
+                <div class="-mx-10 border-dashed border-line-hover bg-sunk px-3 py-[9px] text-small leading-[1.4] font-medium text-faint -mb-10 mt-6 border-t">{{ $t('documentTemplates.footer') }}</div>
               </div>
 
               <!-- C-16 (#252): what this document type may not have stands dimmed
@@ -75,11 +75,11 @@ function submit() {
                    menu, so the list sits under the sheet instead of inside it —
                    replacing that inserter is a rewrite of the editor shell, not
                    this issue's subject. -->
-              <div class="flex flex-wrap gap-x-3.5 gap-y-1.5 px-0.5 pt-2.5 text-small text-[#6E6E73]">
+              <div class="flex flex-wrap gap-x-3.5 gap-y-1.5 px-0.5 pt-2.5 text-small text-ink-2">
                 <span
                   v-for="entry in palette.filter((block) => !block.inline)"
                   :key="entry.type"
-                  :class="entry.allowed === false && 'text-[#DEDEE1]'"
+                  :class="entry.allowed === false && 'text-mark'"
                 >
                   {{ entry.label }}
                   <template v-if="entry.allowed === false"> · {{ $t('documentTemplates.blockOnly', { types: entry.only }) }}</template>

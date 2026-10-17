@@ -281,7 +281,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                         class="flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent p-2.5 text-left text-ui leading-none font-medium text-foreground transition-colors duration-[120ms] ease-out hover:bg-sunk data-[state=open]:bg-sunk max-[1080px]:hidden"
                     >
                         <span
-                            class="flex size-6 flex-none items-center justify-center rounded-full bg-[#F0F0F2] text-small font-semibold text-ink-2"
+                            class="flex size-6 flex-none items-center justify-center rounded-full bg-sunk text-small font-semibold text-ink-2"
                         >
                             {{ initials }}
                         </span>

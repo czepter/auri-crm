@@ -374,7 +374,7 @@ function release(row: Stage | Field) {
             <button
               v-for="stage in stageRows"
               :key="stage.id"
-              class="inline-flex touch-none cursor-grab items-center gap-[7px] rounded-full border border-border bg-background px-3 py-1.5 text-small leading-[1.4] font-semibold transition-[border-color,opacity] select-none hover:border-line-hover active:cursor-grabbing"
+              class="inline-flex touch-none cursor-grab items-center gap-[7px] rounded-[var(--r-sm)] border border-border bg-background px-3 py-1.5 text-small leading-[1.4] font-semibold transition-[border-color,opacity] select-none hover:border-line-hover active:cursor-grabbing"
               :class="[
                 stage.isActive ? 'text-ink-2' : 'text-faint',
                 held?.id === stage.id && held?.moved ? 'opacity-40' : '',

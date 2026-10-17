@@ -112,7 +112,7 @@ function add() {
           <Button variant="pill" type="button" @click="adding = true">{{ $t('absences.add') }}</Button>
         </Empty>
 
-        <div v-else class="max-w-[900px] px-8 pt-7 pb-8">
+        <div v-else class="max-w-[900px] px-6 pt-7 pb-8">
           <div
             v-for="absence in absences"
             :key="absence.id"

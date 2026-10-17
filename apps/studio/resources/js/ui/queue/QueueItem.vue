@@ -43,7 +43,7 @@ function click(event: MouseEvent) {
             <span
                 v-if="meta"
                 class="ml-auto flex-none text-small leading-[1.47] whitespace-nowrap"
-                :class="alert ? 'text-action' : 'text-ink-2'"
+                :class="alert ? 'text-due' : 'text-ink-2'"
             >
                 {{ meta }}
             </span>

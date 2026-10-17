@@ -301,8 +301,8 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             <span class="rounded-[var(--r-sm)] bg-sunk-2 px-2 py-0.5 text-small leading-[1.4] font-medium text-ink-2">
                                 {{ roleLabel(person.role) }}
                             </span>
-                            <a v-if="person.email" class="text-small text-action no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
-                            <a v-if="person.phone" class="ml-auto text-small tabular-nums text-action no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
+                            <a v-if="person.email" class="text-small text-ring no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
+                            <a v-if="person.phone" class="ml-auto text-small tabular-nums text-ring no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
                         </div>
 
                         <template #edit>
@@ -372,7 +372,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             ><Pencil class="size-[15px]" /></Link>
                             <Link
                                 v-else
-                                class="text-small tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
+                                class="text-small tracking-[-0.01em] whitespace-nowrap text-ring no-underline hover:underline"
                                 :href="`/angebote/neu?projekt=${header.id}`"
                             >{{ $t("quotes.create") }}</Link>
                         </template>
@@ -386,7 +386,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             <Link
                                 v-for="pkg in packages"
                                 :key="pkg.id"
-                                class="cursor-pointer rounded-[var(--r-pill)] border-0 bg-sunk px-[11px] py-[5px] text-small leading-[1.4] font-normal text-ink-2 hover:bg-sunk-2"
+                                class="cursor-pointer rounded-[var(--r-sm)] border-0 bg-sunk px-[11px] py-[5px] text-small leading-[1.4] font-normal text-ink-2 hover:bg-sunk-2"
                                 :href="`/auftraege/${header.id}/angebote`"
                                 method="post"
                                 as="button"
@@ -401,9 +401,9 @@ function complete(row: App.Crm.Data.TaskRowData) {
 
                     <Card :title="$t('project.tasks')" :summary="taskSummary" :default-open="overdue > 0">
                         <div class="mb-1.5 flex items-center gap-2.5">
-                            <span class="inline-flex gap-0.5 rounded-[var(--r-pill)] bg-sunk-2 p-0.5">
+                            <span class="inline-flex gap-0.5 rounded-lg bg-sunk p-[3px]">
                                 <button
-                                    class="cursor-pointer rounded-[var(--r-pill)] px-[11px] py-1 text-small leading-none"
+                                    class="cursor-pointer rounded-[var(--r-sm)] px-[11px] py-1 text-small leading-none"
                                     :class="showDone ? 'text-ink-2' : 'bg-paper font-semibold'"
                                     type="button"
                                     @click="showDone = false"
@@ -411,7 +411,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                     {{ $t("project.tasksOpen", { count: open.length }) }}
                                 </button>
                                 <button
-                                    class="cursor-pointer rounded-[var(--r-pill)] px-[11px] py-1 text-small leading-none"
+                                    class="cursor-pointer rounded-[var(--r-sm)] px-[11px] py-1 text-small leading-none"
                                     :class="showDone ? 'bg-paper font-semibold' : 'text-ink-2'"
                                     type="button"
                                     @click="showDone = true"
@@ -462,7 +462,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             }}</span>
                             <span
                                 class="ml-auto text-small leading-[1.47] tabular-nums"
-                                :class="row.isOverdue && !row.isDone ? 'text-action' : 'text-ink-2'"
+                                :class="row.isOverdue && !row.isDone ? 'text-destructive' : 'text-ink-2'"
                             >{{ row.dueOn ? day(row.dueOn) : "" }}</span>
                         </div>
                     </Card>
@@ -549,27 +549,27 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             :items="scope.items"
                         >
                             <template #note="{ item }">
-                                <span v-if="item.state" class="ml-[3px] text-small text-action">{{
+                                <span v-if="item.state" class="ml-[3px] text-small text-ring">{{
                                     $t(`project.scope_${item.state}`)
                                 }}</span>
                             </template>
                             <template #priceNote="{ item }">
                                 <span
                                     v-if="item.state === 'changed'"
-                                    class="mt-0.5 block text-small font-normal text-action"
+                                    class="mt-0.5 block text-small font-normal text-ring"
                                 >{{ euro(item.wasUnitPrice) }}</span>
                             </template>
                         </LineItems>
 
                         <p
                             v-if="scope.delta"
-                            class="mt-[7px] text-small text-ink-2 [&_em]:not-italic [&_em]:text-action"
+                            class="mt-[7px] text-small text-ink-2 [&_em]:not-italic [&_em]:text-ring"
                         >
                             <em>{{
                                 $t("project.scopeDelta", { amount: euro(Math.abs(scope.delta)) })
                             }}</em>
                             <Link
-                                class="ml-3 text-small tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
+                                class="ml-3 text-small tracking-[-0.01em] whitespace-nowrap text-ring no-underline hover:underline"
                                 :href="`/auftraege/${header.id}/angebote`"
                             >
                                 {{ $t("project.sendAddendum") }}

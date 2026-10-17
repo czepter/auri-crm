@@ -223,7 +223,7 @@ function destroy() {
                 <Textarea
                     v-model="note.body"
                     rows="1"
-                    class="field-sizing-content max-h-40 min-h-0 resize-none rounded-none border-0 bg-transparent p-0 py-[5px] text-ui leading-[1.45] tracking-[-0.01em] placeholder:text-[#B0B0B5] hover:border-transparent focus:border-transparent"
+                    class="field-sizing-content max-h-40 min-h-0 resize-none rounded-none border-0 bg-transparent p-0 py-[5px] text-ui leading-[1.45] tracking-[-0.01em] placeholder:text-faint hover:border-transparent focus:border-transparent"
                     :placeholder="$t('project.notePlaceholder')"
                     @keydown.enter.exact.prevent="send"
                 />

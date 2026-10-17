@@ -250,8 +250,8 @@ const groupRows = computed(() => {
    goes warm at the one that still needs an answer. */
 const STAGE_DOT = [
     "bg-foreground",
-    "bg-[#5F5F63]",
-    "bg-[#A1A1A6]",
+    "bg-ink-2",
+    "bg-faint",
     "bg-action",
     "bg-mark",
 ];
@@ -336,7 +336,7 @@ const workflowAllowed = computed(() =>
                         >
                             <div
                                 v-if="target === index && insertAt === row"
-                                class="-mx-1.5 h-0.5 rounded-[1px] bg-action"
+                                class="-mx-1.5 h-0.5 rounded-[1px] bg-ring"
                             />
 
                             <Link
@@ -443,12 +443,12 @@ const workflowAllowed = computed(() =>
                 <!-- List — grouped by who owes the next move, not by stage. A board
              shows where something stands, a table shows what is next. -->
                 <template v-else>
-                <div class="flex flex-wrap items-center gap-4 px-8 pt-4.5">
+                <div class="flex flex-wrap items-center gap-4 px-6 pt-4.5">
                     <div class="flex flex-wrap gap-1.5">
                         <button
                             v-for="option in pills"
                             :key="option.key"
-                            class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-pill)] px-3 py-1.5 text-small"
+                            class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] px-3 py-1.5 text-small"
                             :class="stage === option.key ? 'bg-foreground text-paper' : 'bg-sunk text-foreground'"
                             type="button"
                             :aria-pressed="stage === option.key"
@@ -464,7 +464,7 @@ const workflowAllowed = computed(() =>
                             <span class="mx-1 self-center h-[18px] w-px bg-rule" />
 
                             <button
-                                class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-pill)] bg-no-repeat bg-[length:12px_12px] bg-[position:12px_center] py-1.5 pr-3 pl-[28px] text-small"
+                                class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] bg-no-repeat bg-[length:12px_12px] bg-[position:12px_center] py-1.5 pr-3 pl-[28px] text-small"
                                 :class="
                                     onlyStale
                                         ? 'bg-due-bg bg-icon-clock-due font-medium text-due'
@@ -522,7 +522,7 @@ const workflowAllowed = computed(() =>
                                     }}
                                     <span
                                         v-if="card.conflicts.length"
-                                        class="text-action"
+                                        class="text-due"
                                     >
                                         · {{ $t("board.dateDoubled") }}</span
                                     >

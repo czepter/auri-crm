@@ -385,7 +385,7 @@ onUnmounted(() => {
       <div class="mb-2 text-small leading-none font-semibold text-faint">
         {{ $t('media.needsAttention') }} · {{ $t('media.needsAttentionCount', failedAssets.length) }}
       </div>
-      <div class="overflow-hidden rounded-md border border-border">
+      <div class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
         <div v-for="asset in failedAssets" :key="asset.publicId" class="flex items-center gap-2.5 border-t border-border p-2.5 text-small first:border-t-0">
           <span class="font-medium text-foreground">{{ asset.filename }}</span>
           <span class="text-ink-2">{{ asset.error }}</span>
@@ -402,7 +402,7 @@ onUnmounted(() => {
 
     <div
       v-if="selection.selected.size > 0"
-      class="fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-4 rounded-full bg-foreground px-5 py-2.5 text-small text-paper"
+      class="fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-4 rounded-[var(--r)] bg-foreground px-5 py-2.5 text-small text-paper"
     >
       <b>{{ $t('galleryRecord.selected', selection.selected.size) }}</b>
       <!-- Die Auswahl ist eine Aktion, kein Zustand: der Wert bleibt leer,

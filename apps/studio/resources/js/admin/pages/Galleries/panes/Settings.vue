@@ -220,7 +220,7 @@ function day(iso: string | null) {
 
     <h2 class="mt-9">{{ $t('galleryRecord.versions') }}</h2>
     <div class="mb-9">
-      <div v-for="version in versions" :key="version.version" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none">
+      <div v-for="version in versions" :key="version.version" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none">
         <span class="w-[62px] flex-none text-small font-semibold tracking-[-0.01em] tabular-nums">{{ $t('galleryRecord.version', { version: version.version }) }}</span>
         <span class="text-small font-medium tracking-[-0.01em]">{{ $t('contacts.assetCount', version.assetCount) }}</span>
         <span class="ml-auto text-small whitespace-nowrap text-ink-2">{{ day(version.publishedAt) }}</span>
@@ -251,7 +251,7 @@ function day(iso: string | null) {
     </div>
 
     <div>
-      <div v-for="list in lists" :key="list.id" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none">
+      <div v-for="list in lists" :key="list.id" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none">
         <span class="text-small font-medium tracking-[-0.01em]">{{ list.name ?? $t('gallery.heart') }}</span>
         <span class="w-14 flex-none text-small text-ink-2">{{ list.owner ?? $t('galleryRecord.guest') }}</span>
         <span class="ml-auto text-small whitespace-nowrap text-ink-2">{{ $t('contacts.assetCount', list.count) }}</span>

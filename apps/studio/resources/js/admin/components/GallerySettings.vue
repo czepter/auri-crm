@@ -293,7 +293,7 @@ const studioOffers = computed(() => ({
                 @click="chosen = row.id"
               >
                 <span class="min-w-0 flex-1 truncate">{{ row.name }}</span>
-                <span v-if="row.isDefault" class="flex-none rounded-[var(--r-sm)] bg-accent px-1.5 py-0.5 text-small leading-[1.4] font-semibold text-action">
+                <span v-if="row.isDefault" class="flex-none rounded-[var(--r-sm)] bg-accent px-1.5 py-0.5 text-small leading-[1.4] font-semibold text-ring">
                   {{ $t('gallerySettings.defaultMark') }}
                 </span>
               </button>

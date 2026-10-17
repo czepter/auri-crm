@@ -174,7 +174,7 @@ watch(() => form.data(), autosave, { deep: true })
           </AlertDialogContent>
         </AlertDialog>
 
-        <form class="flex items-start gap-8 px-8 pt-7 pb-8" @submit.prevent="save">
+        <form class="flex items-start gap-8 px-6 pt-7 pb-8" @submit.prevent="save">
           <div class="max-w-[640px] min-w-0 flex-1">
           <Field id="name" class="mb-6" :label="$t('packages.name')" :error="form.errors.name">
             <Input id="name" v-model="form.name" type="text" required />
@@ -252,7 +252,7 @@ watch(() => form.data(), autosave, { deep: true })
             <PackagePriceSummary :items="form.items" />
 
             <PreviewOverlay :min="1280" :label="$t('common.preview')" wrapper-class="mt-6">
-              <div class="overflow-hidden rounded-[10px] border border-border">
+              <div class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
                 <div class="border-b border-border px-[26px] py-4 text-small leading-none font-semibold text-faint">
                   {{ $t('packages.preview') }}
                 </div>
@@ -272,7 +272,7 @@ watch(() => form.data(), autosave, { deep: true })
 
         <!-- Steht am Paket, nicht in der Übersicht: es beantwortet eine Frage
              über dieses Paket, keine über alle. -->
-        <section v-if="requests.length" class="max-w-[640px] px-8 pb-8">
+        <section v-if="requests.length" class="max-w-[640px] px-6 pb-8">
           <div class="mb-2.5 flex items-baseline gap-2.5">
             <span class="text-small leading-none font-semibold text-faint">{{ $t('packages.requestsSection') }}</span>
             <span class="text-small text-ink-2">{{ package.requestedCount }} · {{ $t('packages.bookedCount', { count: package.bookedCount }) }}</span>
@@ -287,7 +287,7 @@ watch(() => form.data(), autosave, { deep: true })
               <a :href="`/projekte/${request.project}`">{{ request.contact }}</a>
               <span v-if="request.date" class="block text-small text-ink-2">{{ $t('packages.requestDate', { date: day(request.date) }) }}</span>
             </span>
-            <span class="text-small" :class="request.booked ? 'text-action' : 'text-ink-2'">
+            <span class="text-small" :class="request.booked ? 'text-ok' : 'text-ink-2'">
               {{ request.booked ? $t('packages.requestBooked') : $t('packages.requestOpen') }}
             </span>
           </div>

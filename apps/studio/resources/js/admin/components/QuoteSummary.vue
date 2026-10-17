@@ -19,7 +19,7 @@ const top = computed(() => topLines(props.quote.items))
       <span
         v-for="old in superseded"
         :key="old.id"
-        class="rounded-[var(--r-pill)] bg-sunk px-[11px] py-[5px] text-small leading-[1.4] text-ink-2 line-through"
+        class="rounded-[var(--r-sm)] bg-sunk px-[11px] py-[5px] text-small leading-[1.4] text-ink-2 line-through"
       >
         {{ old.number ?? $t('quotes.draft') }} {{ formatEurosRounded(old.net) }}
       </span>

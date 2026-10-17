@@ -45,7 +45,7 @@ function day(iso: string | null) {
           <Button :as="Link" variant="pill" href="/galerien/neu">{{ $t('galleries.create') }}</Button>
         </Empty>
 
-        <div v-else class="max-w-[900px] px-8 pt-7 pb-8 max-[640px]:px-5">
+        <div v-else class="max-w-[900px] px-6 pt-7 pb-8 max-[640px]:px-5">
           <div
             v-for="gallery in galleries"
             :key="gallery.id"

@@ -82,7 +82,7 @@ function submit() {
           </Button>
         </PageHead>
 
-        <div class="px-8 pt-7 pb-8">
+        <div class="px-6 pt-7 pb-8">
           <div class="mt-2.5 flex flex-row gap-6">
             <span class="inline-flex items-center bg-left bg-no-repeat bg-[length:13px_13px] pl-[19px] text-small leading-[1.35] font-normal text-muted-foreground bg-icon-kind">{{ projectTypeLabel }}</span>
             <span class="inline-flex items-center bg-left bg-no-repeat bg-[length:13px_13px] pl-[19px] text-small leading-[1.35] font-normal text-muted-foreground bg-icon-date">{{ $t('formTemplates.updatedAt', { date: new Date(template.updatedAt).toLocaleDateString('de-DE') }) }}</span>

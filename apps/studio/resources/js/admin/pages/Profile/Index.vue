@@ -154,7 +154,7 @@ function regenerateFeedUrl() {
           </Button>
         </PageHead>
 
-        <div class="px-8 pt-7 pb-8">
+        <div class="px-6 pt-7 pb-8">
           <div class="flex items-start gap-8">
             <nav class="flex w-[196px] flex-none flex-col gap-0.5">
               <Link

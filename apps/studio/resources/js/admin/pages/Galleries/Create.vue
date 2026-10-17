@@ -98,7 +98,7 @@ function submit() {
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('galleries.create')" />
 
-        <form class="max-w-[620px] px-8 pt-7 pb-8" @submit.prevent="submit">
+        <form class="max-w-[620px] px-6 pt-7 pb-8" @submit.prevent="submit">
           <ChoiceGroup
             :model-value="mode"
             :options="MODES.map((option) => ({ value: option, label: $t(`galleries.mode_${option}`) }))"
