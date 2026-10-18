@@ -17,8 +17,8 @@ why of any individual line.
 ## The image pipeline
 
 `.github/workflows/release-image.yml` builds `docker/app/Dockerfile` and
-`docker/gallery/Dockerfile` on every push to `main` that touches `apps/`,
-`docker/` or the workspace manifests, and pushes both to GHCR:
+`docker/gallery/Dockerfile` once per published GitHub release, and pushes both
+to GHCR:
 
 ```
 ghcr.io/czepter/auri-crm/studio     six services: admin, portal, api, horizon, scheduler, migrate
@@ -41,7 +41,7 @@ Tags per build:
 |---|---|---|
 | `v<version>` | Einem veröffentlichten GitHub-Release | Was `docker-compose.coolify.yml` benennt |
 | `latest` | Ebenfalls nur bei einem Release | Zeigt auf den neuesten Release |
-| `<branch>` | Push auf `main`, sonst manuell per `workflow_dispatch` | Einen Branch auf einem Staging-Stack testen |
+| `<branch>` | Manuell per `workflow_dispatch` | Einen Branch auf einem Staging-Stack testen |
 | `sha-<commit>` | Nie wieder bewegt | Einen konkreten Build benennen |
 
 `latest` und `v<version>` entstehen zusammen und zeigen auf dasselbe Image.
