@@ -42,8 +42,9 @@ jobs:
     runs-on: [self-hosted, Linux, X64]
     steps:
       - uses: actions/checkout@v7
+      # In a container, not the host's PHP: ci.yml says why.
       - name: Check the Compose file against Coolify's parser rules
-        run: php docker/app/check-coolify-compose.php
+        run: docker run --rm -v "$PWD:/repo:ro" -w /repo php:8.5-cli php docker/app/check-coolify-compose.php
 
   build:
     needs: check
