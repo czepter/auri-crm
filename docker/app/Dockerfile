@@ -9,7 +9,9 @@
 # was never meant to face a proxy.
 
 # ---------------------------------------------------------------- base
-FROM dunglas/frankenphp:1-php8.5 AS base
+# Pinned: 1.13 bundles Mercure 1.0, which rejects the 0.x tokens
+# App\Support\LiveUpdate mints and the publisher_jwt directives in mercure.caddy.
+FROM dunglas/frankenphp:1.12.7-php8.5 AS base
 
 # install-php-extensions ships inside the FrankenPHP image and resolves each
 # extension's system libraries itself, so the list here is the one CI tests
