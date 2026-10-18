@@ -31,7 +31,22 @@ function liveUpdateClaims(string $jwt, string $key): array
     $expected = rtrim(strtr(base64_encode(hash_hmac('sha256', "{$header}.{$payload}", $key, true)), '+/', '-_'), '=');
     expect(hash_equals($expected, $signature))->toBeTrue();
 
-    return json_decode(base64_decode(strtr($payload, '-_', '+/')), true)['mercure'];
+    expect(json_decode(base64_decode(strtr($header, '-_', '+/')), true))->toBe(['alg' => 'HS256', 'typ' => 'at+jwt']);
+
+    $claims = json_decode(base64_decode(strtr($payload, '-_', '+/')), true);
+    expect($claims)->toMatchArray(['iss' => 'https://auri-crm.de', 'aud' => 'https://auri-crm.de/.well-known/mercure'])
+        ->and($claims['exp'])->toBeGreaterThan(time());
+
+    return $claims['authorization_details'];
+}
+
+function liveUpdateGrant(string $action): array
+{
+    return [[
+        'type' => 'https://mercure.rocks/authorization-detail',
+        'actions' => [$action],
+        'topics' => [['match' => LiveUpdate::topic()]],
+    ]];
 }
 
 it('publishes to the hub when an entry is audited', function () {
@@ -39,7 +54,7 @@ it('publishes to the hub when an entry is audited', function () {
 
     Http::assertSent(fn (Request $request) => $request->url() === 'http://hub/.well-known/mercure'
         && $request['topic'] === LiveUpdate::topic()
-        && liveUpdateClaims(substr($request->header('Authorization')[0], 7), 'publisher-key') === ['publish' => [LiveUpdate::topic()]]);
+        && liveUpdateClaims(substr($request->header('Authorization')[0], 7), 'publisher-key') === liveUpdateGrant('publish'));
 });
 
 it('stays silent on a deploy whose hub has no key', function () {
@@ -77,9 +92,19 @@ it('does not publish for an mcp read', function () {
 });
 
 it('hands signed-in staff a subscriber cookie for the topic', function () {
+    config(['session.secure' => true]);
+
     $response = $this->actingAs(User::factory()->create(), 'staff')->get('/einrichtung/studio');
 
     $response->assertOk();
-    expect(liveUpdateClaims($response->getCookie('mercureAuthorization', false)->getValue(), 'subscriber-key'))
-        ->toBe(['subscribe' => [LiveUpdate::topic()]]);
+    expect(liveUpdateClaims($response->getCookie('__Secure-mercure_access_token', false)->getValue(), 'subscriber-key'))
+        ->toBe(liveUpdateGrant('subscribe'));
+});
+
+it('drops the cookie prefix on plain http', function () {
+    config(['session.secure' => false]);
+
+    $this->actingAs(User::factory()->create(), 'staff')->get('/einrichtung/studio')
+        ->assertCookie('mercure_access_token', encrypted: false)
+        ->assertCookieMissing('__Secure-mercure_access_token');
 });

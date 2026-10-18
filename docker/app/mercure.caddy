@@ -1,7 +1,19 @@
 # #357: imported by the admin service alone, through
 # CADDY_SERVER_EXTRA_DIRECTIVES in docker-compose.coolify.yml. No `anonymous`:
 # a subscriber needs the cookie App\Support\LiveUpdate mints for signed-in staff.
+#
+# Issuer and resource identifier are LiveUpdate::ISSUER and ::AUDIENCE. The
+# audience is pinned because publishers reach the hub on the internal
+# MERCURE_URL and browsers on the tenant's host; derived per request, the two
+# would differ.
 mercure {
-	publisher_jwt {env.MERCURE_PUBLISHER_JWT_KEY}
-	subscriber_jwt {env.MERCURE_SUBSCRIBER_JWT_KEY}
+	issuer https://auri-crm.de {
+		publisher {
+			jwt {env.MERCURE_PUBLISHER_JWT_KEY}
+		}
+		subscriber {
+			jwt {env.MERCURE_SUBSCRIBER_JWT_KEY}
+		}
+	}
+	resource_identifier https://auri-crm.de/.well-known/mercure
 }
