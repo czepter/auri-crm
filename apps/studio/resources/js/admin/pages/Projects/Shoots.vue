@@ -317,12 +317,12 @@ const TONE: Record<string, string> = {
           </Dialog>
         </template>
 
-        <div class="mb-3 inline-flex gap-0.5 rounded-full bg-sunk-2 p-0.5">
+        <div class="mb-3 inline-flex gap-0.5 rounded-lg bg-sunk p-[3px]">
           <button
             v-for="tab in filters"
             :key="tab.key"
             type="button"
-            class="rounded-full px-2.5 py-1 text-small leading-none text-ink-2"
+            class="rounded-[var(--r-sm)] px-2.5 py-1 text-small leading-none text-ink-2"
             :class="filter === tab.key && 'bg-paper font-semibold text-foreground'"
             @click="filter = tab.key"
           >
@@ -342,10 +342,10 @@ const TONE: Record<string, string> = {
             :default-open="shoot.date === null || shoot.date >= today"
           >
             <template #action>
-              <span v-if="shoot.isPrimary" class="text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase text-foreground">
+              <span v-if="shoot.isPrimary" class="text-small leading-[1.5] font-semibold text-foreground">
                 {{ $t('project.primary') }}
               </span>
-              <span :class="['rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase', TONE[chipClass(shoot, header.position.value)]]">
+              <span :class="['rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold', TONE[chipClass(shoot, header.position.value)]]">
                 {{ shoot.statusLabel }}
               </span>
 
@@ -405,13 +405,13 @@ const TONE: Record<string, string> = {
             <template v-else>
               <div class="grid grid-cols-4 gap-[18px] max-[640px]:grid-cols-2">
                 <div v-for="metric in metrics(shoot)" :key="metric.label">
-                  <div class="text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t(metric.label) }}</div>
+                  <div class="text-small leading-none font-semibold text-faint">{{ $t(metric.label) }}</div>
                   <div class="mt-1.5 text-ui leading-[1.35]">{{ metric.value }}</div>
                 </div>
               </div>
 
               <div v-if="!soloStudio" class="mt-4 pt-3 shadow-[inset_0_1px_0_var(--rule)]">
-                <div class="text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('project.crew') }}</div>
+                <div class="text-small leading-none font-semibold text-faint">{{ $t('project.crew') }}</div>
 
                 <div v-for="member in shoot.crew" :key="member.id" class="mt-1.5 flex items-center gap-2.5">
                   <span class="flex size-[22px] flex-none items-center justify-center rounded-full bg-sunk-2 text-[9.5px] leading-none font-semibold text-ink-2">{{ member.initials }}</span>
@@ -441,7 +441,7 @@ const TONE: Record<string, string> = {
               </div>
 
               <div v-if="shoot.date || shoot.timeline.length" class="mt-4 pt-3 shadow-[inset_0_1px_0_var(--rule)]">
-                <div class="text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('project.timeline') }}</div>
+                <div class="text-small leading-none font-semibold text-faint">{{ $t('project.timeline') }}</div>
 
                 <!-- Der Ablauf als Zeitstrahl: eine Linie verbindet die
                      Punkte, ein Fahrt/Übergang-Eintrag steht gedimmt und
@@ -483,7 +483,7 @@ const TONE: Record<string, string> = {
                         <span v-if="entry.note" class="ml-1.5 text-faint">{{ entry.note }}</span>
                       </span>
                       <span v-if="header.canManageShoots" class="hidden flex-none items-center gap-2.5 group-hover:flex">
-                        <button type="button" class="cursor-pointer text-small text-action" @click="startEditTimelineEntry(entry)">{{ $t('common.edit') }}</button>
+                        <button type="button" class="cursor-pointer text-small text-ring" @click="startEditTimelineEntry(entry)">{{ $t('common.edit') }}</button>
                         <button type="button" class="cursor-pointer text-small text-ink-2" @click="removeTimelineEntry(entry)">{{ $t('project.timelineRemove') }}</button>
                       </span>
                     </div>

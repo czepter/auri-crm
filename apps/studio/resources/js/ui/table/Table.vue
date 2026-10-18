@@ -6,7 +6,7 @@ const props = defineProps<{ class?: HTMLAttributes["class"] }>()
 </script>
 
 <template>
-  <table data-slot="table" :class="cn('mt-5 w-full border-collapse', props.class)">
+  <table data-slot="table" :class="cn('mt-5 w-full border-separate border-spacing-0', props.class)">
     <slot />
   </table>
 </template>

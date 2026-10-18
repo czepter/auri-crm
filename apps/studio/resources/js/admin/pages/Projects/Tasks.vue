@@ -175,7 +175,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
           </form>
 
           <template v-for="group in groups" :key="group.key">
-            <div v-if="group.rows.length" class="mt-[18px] mb-1 text-small font-semibold tracking-[0.07em] uppercase text-ink-2">
+            <div v-if="group.rows.length" class="mt-[18px] mb-1 text-small font-semibold text-ink-2">
               {{ $t(group.key) }}
             </div>
 
@@ -187,7 +187,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
                 @click="complete(row)"
               />
               <span class="text-ui leading-[1.47]">{{ row.title }}</span>
-              <span class="text-small tracking-[0.05em] uppercase text-ink-2">{{ row.audienceLabel }}</span>
+              <span class="text-small text-ink-2">{{ row.audienceLabel }}</span>
               <span v-if="row.shootLabel" class="text-small text-faint">{{ row.shootLabel }}</span>
               <span v-if="row.isBlocked" class="text-small text-faint">{{
                 $t('project.taskBlockedBy', { title: row.blockedBy })

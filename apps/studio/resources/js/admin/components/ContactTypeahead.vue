@@ -54,7 +54,7 @@ function choose(contact: App.Crm.Data.ContactSuggestionData) {
 
 const ROW = [
   'flex w-full cursor-pointer items-center gap-[9px] border-0 bg-none px-[11px] py-2 text-left text-inherit no-underline',
-  'shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none',
+  'shadow-[inset_0_1px_0_var(--rule)] first:shadow-none',
   'not-first:border-t not-first:border-muted',
 ].join(' ')
 </script>
@@ -62,7 +62,7 @@ const ROW = [
 <template>
   <div v-if="model" class="flex items-center gap-[11px] rounded-[6px] border border-line-hover px-3 py-[9px]">
     <span
-      class="flex size-[30px] flex-none items-center justify-center rounded-full bg-[#EDE7F6] text-small leading-none font-semibold text-[#5B4B8A]"
+      class="flex size-[30px] flex-none items-center justify-center rounded-full bg-sunk-2 text-small leading-none font-semibold text-foreground"
     >
       {{ initials }}
     </span>
@@ -108,7 +108,7 @@ const ROW = [
           type="button"
           @click="choose(contact)"
         >
-          <span class="flex size-[26px] flex-none items-center justify-center rounded-full bg-[#E7F1F2] text-small leading-none font-semibold text-[#1C6870]">{{ contact.name.slice(0, 1).toUpperCase() }}</span>
+          <span class="flex size-[26px] flex-none items-center justify-center rounded-full bg-sunk-2 text-small leading-none font-semibold text-foreground">{{ contact.name.slice(0, 1).toUpperCase() }}</span>
           <span class="flex flex-col">
             <span class="text-small leading-[1.25] font-semibold">{{ contact.name }}</span>
             <span class="mt-px text-small leading-[1.3] font-normal text-muted-foreground">{{ contact.email }}</span>

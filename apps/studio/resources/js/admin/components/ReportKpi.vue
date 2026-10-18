@@ -11,17 +11,17 @@ defineProps<{
 </script>
 
 <template>
-  <div class="flex flex-col gap-3 rounded-md border border-border bg-card px-5 py-4">
-    <span class="text-small leading-none font-semibold tracking-[0.08em] uppercase text-faint">{{ label }}</span>
+  <div class="flex flex-col gap-3 rounded-[var(--r)] bg-paper shadow-card px-6 py-5">
+    <span class="text-small leading-none font-medium text-ink-2">{{ label }}</span>
 
     <div class="flex flex-col gap-1.5">
-      <b class="text-[30px] leading-none font-semibold tracking-[-0.02em] tabular-nums text-foreground">{{ value }}</b>
+      <b class="font-mono text-[26px] leading-none font-medium tracking-[-0.02em] tabular-nums text-foreground">{{ value }}</b>
       <span v-if="sub" class="text-small leading-[1.35] text-muted-foreground">{{ sub }}</span>
     </div>
 
     <span
       v-if="delta"
-      class="inline-flex items-center gap-1.5 self-start rounded-full px-2 py-1 text-small leading-none font-semibold"
+      class="inline-flex items-center gap-1.5 self-start rounded-[var(--r-sm)] px-2 py-1 text-small leading-none font-semibold"
       :class="{
         'bg-ok-bg text-ok': tone === 'up',
         'bg-late-bg text-destructive': tone === 'down',

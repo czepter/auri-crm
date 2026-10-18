@@ -102,7 +102,7 @@ function choose(field: Field, option: string) {
             <span
               v-for="tag in tags(field)"
               :key="tag"
-              class="rounded-[var(--r-pill)] bg-sunk-2 px-2.5 py-1 text-small leading-none"
+              class="rounded-[var(--r-sm)] bg-sunk-2 px-2.5 py-1 text-small leading-none"
             >{{ tag }}</span>
             <span v-if="!tags(field).length" class="text-ui leading-[1.47]">—</span>
           </span>
@@ -191,7 +191,7 @@ function choose(field: Field, option: string) {
             <span
               v-for="tag in tags(field)"
               :key="tag"
-              class="inline-flex items-center gap-1.5 rounded-[var(--r-pill)] bg-background px-2.5 py-1 text-small leading-none"
+              class="inline-flex items-center gap-1.5 rounded-[var(--r-sm)] bg-background px-2.5 py-1 text-small leading-none"
             >
               {{ tag }}
               <button

@@ -82,7 +82,7 @@ function submit() {
           </Button>
         </PageHead>
 
-        <div class="px-8 pt-7 pb-8">
+        <div class="px-6 pt-7 pb-8">
           <div class="mt-2.5 flex flex-row gap-6">
             <span class="inline-flex items-center bg-left bg-no-repeat bg-[length:13px_13px] pl-[19px] text-small leading-[1.35] font-normal text-muted-foreground bg-icon-kind">{{ projectTypeLabel }}</span>
             <span class="inline-flex items-center bg-left bg-no-repeat bg-[length:13px_13px] pl-[19px] text-small leading-[1.35] font-normal text-muted-foreground bg-icon-date">{{ $t('formTemplates.updatedAt', { date: new Date(template.updatedAt).toLocaleDateString('de-DE') }) }}</span>
@@ -97,8 +97,8 @@ function submit() {
               <div class="flex flex-col gap-6">
                 <div class="relative block cursor-default rounded-lg border border-border p-2.5">
                   <div class="mb-4 flex items-center justify-between">
-                    <span class="mb-[5px] text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('formTemplates.fieldsKick') }}</span>
-                    <span class="flex-none rounded-[5px] px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase" :class="form.is_active ? 'bg-ok-bg text-ok' : 'bg-muted text-faint'">
+                    <span class="mb-[5px] text-small leading-none font-semibold text-faint">{{ $t('formTemplates.fieldsKick') }}</span>
+                    <span class="flex-none rounded-[5px] px-2 py-[3px] text-small leading-[1.5] font-semibold" :class="form.is_active ? 'bg-ok-bg text-ok' : 'bg-muted text-faint'">
                       {{ form.is_active ? $t('formTemplates.active') : $t('formTemplates.paused') }}
                     </span>
                   </div>

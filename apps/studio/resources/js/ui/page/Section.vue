@@ -1,26 +1,20 @@
 <script setup lang="ts">
 /*
- * Ein Abschnitt einer Fallseite: der Titel links neben seinem Inhalt, ab
- * 1180px — dem Maß, auf das die Seiten ohnehin gebaut sind (--container-case).
- * Darunter rückt er darüber und wird größer, weil dann nur noch der Abstand
- * trennt.
- *
- * Keine Linie, weder über dem Abschnitt noch zwischen seinen Zeilen: die
- * Zeilen hatten bereits eine, und die zweite darüber machte aus der Seite ein
- * Gitter.
+ * Ein Abschnitt einer Fallseite, der sich nicht aufklappen lässt: dieselbe
+ * Fläche wie eine Karte, der Titel darüber. Neben den Karten las er sich
+ * rahmenlos wie verwaist, und ein Titel links daneben ließ dem Inhalt zu
+ * wenig Breite.
  */
 defineProps<{ title: string }>()
 </script>
 
 <template>
-    <section class="mt-10 min-[1180px]:mt-9 min-[1180px]:flex min-[1180px]:gap-6">
-        <h2
-            class="m-0 mb-2.5 text-body leading-[1.2] font-semibold tracking-[-0.02em] min-[1180px]:mt-[5px] min-[1180px]:mb-0 min-[1180px]:w-28 min-[1180px]:flex-none min-[1180px]:text-small min-[1180px]:tracking-[-0.012em] min-[1180px]:text-ink-2"
-        >
+    <section class="mt-3 rounded-[var(--r)] bg-paper px-6 pb-5 shadow-card">
+        <h2 class="m-0 flex h-[52px] items-center text-[15px] leading-[1.2] font-semibold tracking-[-0.015em]">
             {{ title }}
         </h2>
 
-        <div class="min-w-0 min-[1180px]:flex-1">
+        <div class="min-w-0">
             <div v-if="$slots.actions" class="mb-1.5 flex items-center gap-2.5">
                 <slot name="actions" />
             </div>

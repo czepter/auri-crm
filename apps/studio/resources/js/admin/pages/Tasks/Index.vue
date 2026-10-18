@@ -95,13 +95,13 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
           <StudioTaskCreateDialog :staff-options="staffOptions" />
         </PageHead>
 
-        <div class="px-8 pt-4 pb-8">
-          <div class="mb-4 flex gap-5">
+        <div class="px-6 pt-4 pb-8">
+          <div class="mb-4 inline-flex gap-0.5 rounded-lg bg-sunk p-[3px] text-small font-medium">
             <button
               v-for="key in TABS"
               :key="key"
-              class="cursor-pointer text-ui leading-none"
-              :class="tab === key ? 'font-semibold' : 'text-ink-2'"
+              class="cursor-pointer rounded-[var(--r-sm)] border-0 bg-transparent px-2.5 py-1 leading-[1.4]"
+              :class="tab === key ? 'bg-paper text-foreground shadow-[0_1px_2px_rgba(24,24,27,.08)]' : 'text-ink-2 hover:text-foreground'"
               type="button"
               @click="tab = key"
             >
@@ -111,7 +111,7 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
 
           <Empty v-if="shown.length === 0" :text="$t('tasks.empty')" />
 
-          <div v-else class="overflow-hidden rounded-[10px] border border-rule">
+          <div v-else class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
             <div
               v-for="task in shown"
               :key="task.id"

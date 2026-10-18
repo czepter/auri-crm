@@ -58,7 +58,7 @@ function submit() {
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('create.kicker')" :title="$t('project.addShoot')" />
 
-        <form class="flex max-w-[620px] flex-col gap-4 px-8 pt-7 pb-8" @submit.prevent="submit">
+        <form class="flex max-w-[620px] flex-col gap-4 px-6 pt-7 pb-8" @submit.prevent="submit">
           <Field v-slot="{ id }" :label="$t('create.pick')">
             <ProjectTypeahead :id="id" v-model="project" />
           </Field>

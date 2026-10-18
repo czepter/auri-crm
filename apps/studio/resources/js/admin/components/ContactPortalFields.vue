@@ -122,10 +122,9 @@ function defaultLabel(key: string) {
 
   <!-- Four options, the longest of them a sentence: beside its caption the
        select would run into it, so it stands under. -->
-  <!-- The caption is the inline one, not the uppercase field caption: the
-       rail already spends uppercase on its section headings, and a second one
-       under them reads as a third section rather than as the name of the
-       control. -->
+  <!-- The caption is the inline one, not the field caption: under the
+       rail's section headings a second heading-like caption reads as a third
+       section rather than as the name of the control. -->
   <div v-if="group === 'all' || group === 'permissions'" class="py-[9px] shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
     <Label variant="inline" for="portal-messaging">
       {{ $t('contacts.portalKey.messaging_mode') }}

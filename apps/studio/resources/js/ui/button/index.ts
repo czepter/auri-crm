@@ -38,7 +38,7 @@ export const buttonVariants = cva(
         default:
           "ml-auto rounded-md border-0 bg-action px-[14px] py-[9px] text-ui font-semibold leading-none text-action-foreground [&_svg]:size-[15px]",
         outline:
-          "flex-none gap-1.5 rounded-[var(--r-pill)] border border-line-hover bg-background px-3.5 py-[5px] text-small font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-colors duration-[.12s] ease-out hover:border-faint [&_svg]:size-[13px]",
+          "flex-none gap-1.5 rounded-[var(--r-control,var(--r-pill))] border border-line-hover bg-background px-3.5 py-[5px] text-small font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-colors duration-[.12s] ease-out hover:border-faint [&_svg]:size-[13px]",
         ghost:
           "border-0 bg-transparent px-0 py-[9px] text-ui font-medium leading-none text-muted-foreground hover:text-foreground [&_svg]:size-[15px] [&_svg]:opacity-80",
         /*
@@ -80,9 +80,9 @@ export const buttonVariants = cva(
          */
         "portal-filter":
           "rounded-[var(--r-pill)] border border-line-hover px-[15px] py-2.5 text-[13px] leading-none font-medium text-muted-foreground transition-colors hover:border-foreground hover:text-foreground data-[active=true]:border-foreground! data-[active=true]:bg-foreground data-[active=true]:font-semibold data-[active=true]:text-background!",
-        pill: "gap-1.5 rounded-[var(--r-pill)] border-0 bg-action px-3.5 py-1.5 text-small font-medium tracking-[-0.01em] whitespace-nowrap text-white transition-[filter,background-color] duration-[.12s] ease-out hover:brightness-[1.08]",
+        pill: "gap-1.5 rounded-[var(--r-sm)] border-0 bg-action px-3.5 py-2 text-small font-medium tracking-[-0.01em] whitespace-nowrap text-action-foreground transition-[filter,background-color] duration-[.12s] ease-out hover:brightness-[1.08]",
         "pill-muted":
-          "gap-1.5 rounded-[var(--r-pill)] border-0 bg-sunk-2 px-3.5 py-1.5 text-small font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-[filter,background-color] duration-[.12s] ease-out hover:bg-[#E9E9EC]",
+          "gap-1.5 rounded-[var(--r-sm)] border-0 bg-sunk-2 px-3.5 py-2 text-small font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-[filter,background-color] duration-[.12s] ease-out hover:bg-line-hover",
       },
       tone: {
         default: "",
@@ -96,7 +96,7 @@ export const buttonVariants = cva(
       {
         variant: "outline",
         tone: "accent",
-        class: "border-[#EAC9B8] text-action hover:border-action hover:text-action",
+        class: "border-input text-foreground hover:border-foreground",
       },
       {
         variant: "default",

@@ -40,7 +40,7 @@ function create() {
           </Button>
         </PageHead>
 
-        <div class="px-8 pt-7 pb-8">
+        <div class="px-6 pt-7 pb-8">
           <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
             <SettingsNav active="automations" />
 
@@ -49,7 +49,7 @@ function create() {
                 <Button variant="pill" type="button" @click="create">{{ $t('automations.add') }}</Button>
               </Empty>
 
-              <div v-else class="overflow-hidden rounded-[10px] border border-rule">
+              <div v-else class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
                 <Link
                   v-for="rule in rules"
                   :key="rule.id"

@@ -116,11 +116,11 @@ function shortDate(date: string | null) {
           </Button>
         </PageHead>
 
-        <div v-if="view === 'monat'" class="grid grid-cols-7 px-8 py-5">
+        <div v-if="view === 'monat'" class="grid grid-cols-7 px-6 py-5">
           <div
             v-for="weekday in WEEKDAYS"
             :key="weekday"
-            class="pb-2 pl-0.5 text-small leading-none font-semibold tracking-[0.06em] uppercase text-ink-2"
+            class="pb-2 pl-0.5 text-small leading-none font-semibold text-ink-2"
           >
             {{ weekday }}
           </div>
@@ -144,7 +144,7 @@ function shortDate(date: string | null) {
               v-for="(entry, index) in entries(day)"
               :key="index"
               class="mt-[5px] block text-small no-underline"
-              :class="{ hold: 'text-action', away: 'text-ink-2' }[entry.kind ?? ''] ?? 'text-inherit'"
+              :class="{ hold: 'text-ring', away: 'text-ink-2' }[entry.kind ?? ''] ?? 'text-inherit'"
               :href="entry.projectId ? `/auftraege/${entry.projectId}` : undefined"
             >
               <span
@@ -204,7 +204,7 @@ function shortDate(date: string | null) {
                 </TableCell>
                 <TableCell tone="muted">{{ shoot.venue ?? '—' }}</TableCell>
                 <TableCell v-if="!$page.props.soloStudio" tone="muted">{{ shoot.crew.map((member) => member.name).join(', ') || '—' }}</TableCell>
-                <TableCell :class="mine.includes(shoot.id) && 'text-action'">{{ shoot.statusLabel }}</TableCell>
+                <TableCell :class="mine.includes(shoot.id) && 'text-ring'">{{ shoot.statusLabel }}</TableCell>
               </TableRow>
             </template>
           </tbody>

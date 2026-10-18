@@ -76,13 +76,13 @@ function revoke() {
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('settings.kicker')" :title="$t('apiTokens.title')" />
 
-        <div class="px-8 pt-7 pb-8">
+        <div class="px-6 pt-7 pb-8">
           <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
             <SettingsNav active="api-tokens" />
 
             <div class="max-w-[620px] min-w-0 flex-1">
               <div v-if="secret" class="mb-8">
-                <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('apiTokens.secret') }}</div>
+                <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('apiTokens.secret') }}</div>
                 <code class="block break-all text-ui tabular-nums">{{ secret }}</code>
                 <span class="text-small leading-[1.45] font-normal text-faint">{{ $t('apiTokens.secretHint') }}</span>
                 <div class="mt-2">
@@ -93,7 +93,7 @@ function revoke() {
               </div>
 
               <div v-if="tokens.length" class="mb-8">
-                <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('apiTokens.active') }}</div>
+                <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('apiTokens.active') }}</div>
                 <div
                   v-for="token in tokens"
                   :key="token.id"
@@ -116,7 +116,7 @@ function revoke() {
               </div>
 
               <div class="mb-8">
-                <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">MCP</div>
+                <div class="mb-2.5 text-small leading-none font-semibold text-faint">MCP</div>
                 <div
                   v-for="client in clients"
                   :key="client.name"
@@ -134,7 +134,7 @@ function revoke() {
               </div>
 
               <form id="api-token-form" @submit.prevent="create">
-                <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('apiTokens.new') }}</div>
+                <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('apiTokens.new') }}</div>
                 <div class="mb-6 flex min-w-0 flex-col gap-1.5">
                   <Label for="api-token-name">{{ $t('apiTokens.name') }}</Label>
                   <Input id="api-token-name" v-model="form.name" type="text" maxlength="255" />

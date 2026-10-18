@@ -30,7 +30,7 @@ defineProps<{
 
       <div class="min-w-0 flex-1">
         <PageHead :title="artikel.titel" />
-        <div class="help-prose max-w-[68ch] px-8 pt-7 pb-8" v-html="artikel.html" />
+        <div class="help-prose max-w-[68ch] px-6 pt-7 pb-8" v-html="artikel.html" />
       </div>
     </Page>
   </AdminLayout>

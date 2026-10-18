@@ -118,7 +118,7 @@ function submit() {
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('invoicesCreate.title')" />
 
-        <div class="flex gap-6 px-8 pt-5 pb-8">
+        <div class="flex gap-6 px-6 pt-5 pb-8">
           <form class="grid w-[720px] max-w-full flex-none content-start gap-4" @submit.prevent="submit">
             <Field :label="$t('invoicesCreate.project')">
               <ProjectTypeahead v-model="project" />

@@ -29,7 +29,7 @@ const total = computed(() => props.payments?.rows.reduce((sum, row) => sum + row
       </Button>
     </div>
 
-    <section v-if="quotes.length" class="rounded-md border border-rule bg-background py-1.5">
+    <section v-if="quotes.length" class="rounded-[var(--r)] bg-paper shadow-card py-1.5">
       <Link
         v-for="quote in quotes"
         :key="quote.id"
@@ -60,7 +60,7 @@ const total = computed(() => props.payments?.rows.reduce((sum, row) => sum + row
         <span class="flex-1">{{ row.label }}</span>
         <span class="w-28 flex-none text-right font-semibold tabular-nums">{{ formatEuros(row.amount) }}</span>
       </div>
-      <div class="flex items-baseline gap-3 pt-2.5 shadow-[inset_0_1px_0_#D8D8DC]">
+      <div class="flex items-baseline gap-3 pt-2.5 shadow-[inset_0_1px_0_var(--line-hover)]">
         <span class="flex-1 text-small font-semibold">{{ $t('quotes.total') }}</span>
         <span class="w-28 flex-none text-right text-body font-semibold tracking-[-0.018em] tabular-nums">{{ formatEuros(total) }}</span>
       </div>

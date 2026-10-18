@@ -15,9 +15,9 @@ defineProps<{ aufgaben: Eintrag[]; referenz: Eintrag[] }>()
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('help.title')" />
 
-        <div class="px-8 pt-7 pb-8">
+        <div class="px-6 pt-7 pb-8">
           <section v-for="gruppe in [{ key: 'aufgaben', rows: aufgaben }, { key: 'referenz', rows: referenz }]" :key="gruppe.key" class="mb-8">
-            <h2 class="mb-2 text-small tracking-[0.06em] uppercase text-ink-2">
+            <h2 class="mb-2 text-small text-ink-2">
               {{ $t(`help.group.${gruppe.key}`) }}
             </h2>
 

@@ -135,7 +135,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                    the rows again. -->
                         <button
                             v-if="item.fold"
-                            class="flex w-full cursor-pointer items-center border-0 bg-transparent px-2.5 pb-1.5 text-left text-small tracking-[0.06em] uppercase text-ink-2 transition-colors duration-[120ms] ease-out hover:text-foreground max-[1080px]:hidden"
+                            class="flex w-full cursor-pointer items-center border-0 bg-transparent px-2.5 pb-1.5 text-left text-small font-medium text-ink-2 transition-colors duration-[120ms] ease-out hover:text-foreground max-[1080px]:hidden"
                             type="button"
                             :aria-expanded="studioOpen"
                             @click="studioOpen = !studioOpen"
@@ -151,7 +151,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                         </button>
                         <div
                             v-else
-                            class="px-2.5 pb-1.5 text-small tracking-[0.06em] uppercase text-ink-2 max-[1080px]:hidden"
+                            class="px-2.5 pb-1.5 text-small font-medium text-ink-2 max-[1080px]:hidden"
                         >
                             {{ item.group }}
                         </div>
@@ -187,7 +187,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                             </svg>
                         </button>
                         <div
-                            class="mb-px ml-[19px] border-l border-rule pl-1.5 max-[1080px]:ml-0 max-[1080px]:border-0 max-[1080px]:pl-0"
+                            class="mb-px ml-[19px] pl-1.5 max-[1080px]:ml-0 max-[1080px]:pl-0"
                             :class="!collectorsOpen[item.key!] && 'hidden max-[1080px]:block'"
                         >
                             <Link
@@ -196,7 +196,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                                 class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 py-1 text-ui tracking-[-0.01em] text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2"
                                 :class="
                                     child.key === props.active &&
-                                    'bg-sunk-2 font-semibold text-foreground'
+                                    'font-semibold text-foreground'
                                 "
                                 :href="child.href!"
                             >
@@ -220,8 +220,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                         v-else
                         class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 py-1.5 text-ui tracking-[-0.01em] text-foreground no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2"
                         :class="[
-                            item.key === props.active &&
-                                'bg-sunk-2 font-semibold',
+                            item.key === props.active && 'font-semibold',
                             item.studio &&
                                 !studioOpen &&
                                 'hidden max-[1080px]:flex',
@@ -233,7 +232,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                             class="size-4.25 flex-none fill-none stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]"
                             :class="
                                 item.key === props.active
-                                    ? 'stroke-foreground'
+                                    ? 'stroke-ring'
                                     : 'stroke-ink-2'
                             "
                             viewBox="0 0 24 24"
@@ -261,7 +260,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                     <Link
                         v-if="release"
                         class="flex items-center gap-[7px] rounded-lg px-2.5 py-1.5 text-ui leading-none tabular-nums text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground"
-                        :class="props.active === 'neuigkeiten' && 'bg-sunk-2 font-semibold text-foreground'"
+                        :class="props.active === 'neuigkeiten' && 'font-semibold text-foreground'"
                         href="/neuigkeiten"
                     >
                         v{{ release.installed }}
@@ -282,7 +281,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                         class="flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent p-2.5 text-left text-ui leading-none font-medium text-foreground transition-colors duration-[120ms] ease-out hover:bg-sunk data-[state=open]:bg-sunk max-[1080px]:hidden"
                     >
                         <span
-                            class="flex size-6 flex-none items-center justify-center rounded-full bg-[#F0F0F2] text-small font-semibold text-ink-2"
+                            class="flex size-6 flex-none items-center justify-center rounded-full bg-sunk text-small font-semibold text-ink-2"
                         >
                             {{ initials }}
                         </span>

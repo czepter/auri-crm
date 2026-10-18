@@ -144,7 +144,7 @@ function open(row: Row) {
           </div>
         </PageHead>
 
-        <div class="flex flex-wrap items-center gap-2 px-8 pt-5">
+        <div class="flex flex-wrap items-center gap-2 px-6 pt-5">
           <Link
             class="rounded-lg px-2.5 py-[5px] text-small leading-[1.3] no-underline"
             :class="kind === null ? 'bg-foreground text-background' : 'bg-sunk-2 text-foreground'"
@@ -165,15 +165,15 @@ function open(row: Row) {
           </Link>
         </div>
 
-        <div class="px-8 pt-6 pb-8">
+        <div class="px-6 pt-6 pb-8">
           <!-- Übersicht: jede Art als eigene Karte, in der Reihenfolge der Chips. -->
           <div v-if="kind === null" class="max-w-[980px]">
             <section v-for="entry in kinds" :key="entry" class="mt-7 first:mt-0">
-              <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+              <div class="mb-2.5 text-small leading-none font-semibold text-faint">
                 {{ $t(KIND_LABEL[entry]) }}
               </div>
 
-              <div v-if="matching(rows[entry]).length" class="overflow-hidden rounded-md border border-border">
+              <div v-if="matching(rows[entry]).length" class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
                 <component
                   :is="row.href ? Link : 'button'"
                   v-for="row in matching(rows[entry]).slice(0, 4)"
@@ -188,7 +188,7 @@ function open(row: Row) {
                   <span v-if="row.note" class="flex-none text-small tabular-nums text-faint">{{ row.note }}</span>
                   <span
                     v-if="!row.active"
-                    class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase text-faint"
+                    class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-small leading-[1.5] font-semibold text-faint"
                   >{{ $t('formTemplates.paused') }}</span>
                 </component>
 
@@ -221,7 +221,7 @@ function open(row: Row) {
                 <span v-if="row.note" class="flex-none text-small tabular-nums text-faint">{{ row.note }}</span>
                 <span
                   v-if="!row.active"
-                  class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase text-faint"
+                  class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-small leading-[1.5] font-semibold text-faint"
                 >{{ $t('formTemplates.paused') }}</span>
               </component>
 

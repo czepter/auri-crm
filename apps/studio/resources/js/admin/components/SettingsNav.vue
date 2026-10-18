@@ -78,7 +78,7 @@ const shown = computed(() =>
     <template v-for="item in shown" :key="item.key ?? item.group">
       <div
         v-if="item.group"
-        class="mt-4 px-2.5 pb-1 text-small tracking-[0.06em] uppercase text-ink-2 first:mt-0 max-[640px]:hidden"
+        class="mt-4 px-2.5 pb-1 text-small text-ink-2 first:mt-0 max-[640px]:hidden"
       >
         {{ $t(item.group) }}
       </div>

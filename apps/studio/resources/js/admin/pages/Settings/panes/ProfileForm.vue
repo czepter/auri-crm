@@ -14,6 +14,7 @@ import { ColorPicker } from '@/ui/color-picker'
 import { Combobox, ComboboxAnchor, ComboboxContent, ComboboxInput, ComboboxItem } from '@/ui/combobox'
 import { browserTimezone, searchTimezones, timezoneLabel } from '@/admin/lib/timezones'
 import { requiresRegister } from '@/admin/lib/legalForm'
+import { groupIban, ibanCaret } from '@/lib/iban'
 
 type Section = 'legal' | 'tax' | 'brand' | 'bank' | 'general'
 
@@ -70,9 +71,23 @@ const form = useForm({
   timezone: props.settings.timezone,
   logo: null as File | null,
   bank_account_holder: props.settings.bankAccountHolder ?? '',
-  bank_iban: props.settings.bankIban ?? '',
+  bank_iban: groupIban(props.settings.bankIban ?? ''),
   bank_bic: props.settings.bankBic ?? '',
 })
+
+// Groups as you type or paste. Done in the input event itself: the field
+// then already holds what the model gets, so Vue does not rewrite it and the
+// caret stays where it was, counted without spaces.
+function groupIbanInPlace(event: Event) {
+  const input = event.target as HTMLInputElement
+  const grouped = groupIban(input.value)
+  if (grouped === input.value) return
+  const chars = input.value.slice(0, input.selectionStart ?? 0).replace(/\s/g, '').length
+  input.value = grouped
+  form.bank_iban = grouped
+  const at = ibanCaret(chars)
+  input.setSelectionRange(at, at)
+}
 
 // The scheme is drawn by the field rather than typed into it, but what is
 // stored stays the whole URL the controller validates `url` against. The
@@ -133,7 +148,7 @@ defineExpose({ form, submit, adaptExisting })
 <template>
   <form id="settings-form" @submit.prevent="submit">
     <div v-if="shows('brand')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.brand') }}</div>
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.brand') }}</div>
       <div class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.displayName')" id="p-anzeigename" :error="form.errors.display_name">
@@ -196,7 +211,7 @@ defineExpose({ form, submit, adaptExisting })
     </div>
 
     <div v-if="shows('legal')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.legalEntity') }}</div>
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.legalEntity') }}</div>
       <div class="mb-6">
         <Field :label="$t('settings.legalName')" id="p-firma" wide :error="form.errors.legal_name">
           <Input id="p-firma" v-model="form.legal_name" type="text" />
@@ -257,7 +272,7 @@ defineExpose({ form, submit, adaptExisting })
     </div>
 
     <div v-if="shows('general')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.timezoneLabel') }}</div>
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.timezoneLabel') }}</div>
       <div class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :error="form.errors.timezone" v-slot="{ id }">
@@ -297,7 +312,7 @@ defineExpose({ form, submit, adaptExisting })
     </div>
 
     <div v-if="shows('tax')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.taxSection') }}</div>
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.taxSection') }}</div>
       <div class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.taxNumber')" id="p-steuernr" :error="form.errors.tax_number">
@@ -325,7 +340,7 @@ defineExpose({ form, submit, adaptExisting })
     </div>
 
     <div v-if="shows('bank')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.bank') }}</div>
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.bank') }}</div>
       <div class="mb-6">
         <Field :label="$t('settings.bankAccountHolder')" id="p-kontoinhaber" wide :error="form.errors.bank_account_holder">
           <Input id="p-kontoinhaber" v-model="form.bank_account_holder" type="text" />
@@ -334,7 +349,7 @@ defineExpose({ form, submit, adaptExisting })
       <div class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.bankIban')" id="p-iban" :error="form.errors.bank_iban">
-            <Input id="p-iban" v-model="form.bank_iban" class="tabular-nums" rule="iban" type="text" />
+            <Input id="p-iban" v-model="form.bank_iban" class="tabular-nums" rule="iban" type="text" @input="groupIbanInPlace" />
           </Field>
           <Field :label="$t('settings.bankBic')" id="p-bic" :error="form.errors.bank_bic">
             <Input id="p-bic" v-model="form.bank_bic" class="tabular-nums" rule="bic" type="text" />

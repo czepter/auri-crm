@@ -116,14 +116,14 @@ function when(at: string) {
     <!-- upper third: the list grows downward, the eye stays -->
     <Input
       v-model="frage"
-      class="rounded-none border-0 bg-transparent px-5.5 py-4.5 text-title leading-[1.3] tracking-[-0.022em] shadow-[inset_0_-1px_0_var(--rule)] placeholder:text-[#B0B0B5]"
+      class="rounded-none border-0 bg-transparent px-5.5 py-4.5 text-title leading-[1.3] tracking-[-0.022em] shadow-[inset_0_-1px_0_var(--rule)] placeholder:text-faint"
       type="search"
       :placeholder="$t('palette.placeholder')"
       autofocus
     />
 
     <div class="max-h-[52vh] overflow-auto pt-1.5 pb-2">
-      <div class="px-5.5 pt-3 pb-1 text-small tracking-[0.07em] uppercase text-ink-2">
+      <div class="px-5.5 pt-3 pb-1 text-small text-ink-2">
         {{ $t('palette.recent') }}
       </div>
       <a
@@ -132,7 +132,7 @@ function when(at: string) {
         class="flex items-baseline gap-3 px-5.5 py-2 text-foreground no-underline hover:bg-sunk focus-visible:bg-sunk focus-visible:outline-0"
         :href="entry.href"
       >
-        <span class="w-[62px] flex-none text-small tracking-[0.05em] uppercase text-ink-2">
+        <span class="w-[62px] flex-none text-small text-ink-2">
           {{ $t(`palette.kind.${entry.kind}`) }}
         </span>
         <span class="text-ui font-medium tracking-[-0.014em]">{{ entry.title }}</span>
@@ -140,7 +140,7 @@ function when(at: string) {
       </a>
 
       <template v-if="results.length">
-        <div class="px-5.5 pt-3 pb-1 text-small tracking-[0.07em] uppercase text-ink-2">
+        <div class="px-5.5 pt-3 pb-1 text-small text-ink-2">
           {{ $t('palette.results') }}
         </div>
         <a
@@ -149,7 +149,7 @@ function when(at: string) {
           class="flex items-baseline gap-3 px-5.5 py-2 text-foreground no-underline hover:bg-sunk focus-visible:bg-sunk focus-visible:outline-0"
           :href="entry.href"
         >
-          <span class="w-[62px] flex-none text-small tracking-[0.05em] uppercase text-ink-2">
+          <span class="w-[62px] flex-none text-small text-ink-2">
             {{ $t(`palette.kind.${entry.kind}`) }}
           </span>
           <span class="text-ui font-medium tracking-[-0.014em]">{{ entry.title }}</span>
@@ -157,7 +157,7 @@ function when(at: string) {
       </template>
 
       <template v-if="frage">
-        <div class="px-5.5 pt-3 pb-1 text-small tracking-[0.07em] uppercase text-ink-2">
+        <div class="px-5.5 pt-3 pb-1 text-small text-ink-2">
           {{ $t('help.title') }}
         </div>
 
@@ -168,7 +168,7 @@ function when(at: string) {
           type="button"
           @click="waehlen(eintrag.slug)"
         >
-          <span class="w-[62px] flex-none text-small tracking-[0.05em] uppercase text-ink-2">
+          <span class="w-[62px] flex-none text-small text-ink-2">
             {{ $t(`help.art.${eintrag.art}`) }}
           </span>
           <span class="text-ui font-medium tracking-[-0.014em]">{{ eintrag.titel }}</span>

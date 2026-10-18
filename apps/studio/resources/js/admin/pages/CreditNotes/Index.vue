@@ -33,7 +33,7 @@ const shown = computed(() => {
         <PageHead :title="$t('creditNotesOverview.title')" />
 
         <template v-if="creditNotes.length">
-          <div class="flex flex-wrap items-center gap-3 px-8 pt-4.5">
+          <div class="flex flex-wrap items-center gap-3 px-6 pt-4.5">
             <Input v-model="query" class="h-8 w-64" type="search" :placeholder="$t('creditNotesOverview.searchPlaceholder')" />
           </div>
 

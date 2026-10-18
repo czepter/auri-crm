@@ -123,7 +123,7 @@ function submit() {
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('settings.kicker')" :title="$t('settings.navRetention')" />
 
-        <div class="px-8 pt-7 pb-8">
+        <div class="px-6 pt-7 pb-8">
           <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
             <SettingsNav active="retention" />
 
@@ -137,8 +137,8 @@ function submit() {
 
               <div :class="enabled ? '' : 'pointer-events-none opacity-45'" :inert="!enabled">
                 <div class="mt-6 grid grid-cols-4 gap-3 max-[900px]:grid-cols-2">
-                  <div v-for="tile in tiles" :key="tile.key" class="rounded-lg border border-rule px-4 py-3.5">
-                    <div class="text-small font-semibold tracking-[0.06em] text-ink-2 uppercase">{{ $t(`settings.retention${tile.key}`) }}</div>
+                  <div v-for="tile in tiles" :key="tile.key" class="rounded-[var(--r)] bg-paper shadow-card px-5 py-4">
+                    <div class="text-small font-semibold text-ink-2">{{ $t(`settings.retention${tile.key}`) }}</div>
                     <div class="mt-1 text-heading leading-[1.1] font-semibold tabular-nums" :class="tile.hot && 'text-destructive'">{{ tile.value }}</div>
                     <div class="mt-1 text-small text-ink-2">
                       <template v-if="tile.sub === 'due'">{{ $t('settings.retentionDueSub', { lost: lostCount, declined: due.length - lostCount }) }}</template>
@@ -159,7 +159,7 @@ function submit() {
                       @update:model-value="pickTemplate"
                     />
 
-                    <div class="mt-6 flex justify-between text-small font-semibold tracking-[0.06em] text-ink-2 uppercase">
+                    <div class="mt-6 flex justify-between text-small font-semibold text-ink-2">
                       <span>{{ $t('settings.retentionParts') }}</span>
                       <span>{{ $t('settings.retentionAffected') }}</span>
                     </div>
@@ -188,11 +188,11 @@ function submit() {
                   </div>
 
                   <div class="min-w-0">
-                    <div class="flex justify-between text-small font-semibold tracking-[0.06em] text-ink-2 uppercase">
+                    <div class="flex justify-between text-small font-semibold text-ink-2">
                       <span>{{ $t('settings.retentionDue') }}</span>
                       <span>{{ due.length }}</span>
                     </div>
-                    <div class="mt-2 grid grid-cols-[150px_minmax(0,1fr)_100px_76px] gap-3 py-2 text-small font-semibold tracking-[0.06em] text-ink-2 uppercase shadow-[inset_0_-1px_0_var(--rule)]">
+                    <div class="mt-2 grid grid-cols-[150px_minmax(0,1fr)_100px_76px] gap-3 py-2 text-small font-semibold text-ink-2 shadow-[inset_0_-1px_0_var(--rule)]">
                       <span>{{ $t('settings.retentionColContact') }}</span>
                       <span>{{ $t('settings.retentionColRequest') }}</span>
                       <span>{{ $t('settings.retentionColOutcome') }}</span>
@@ -216,7 +216,7 @@ function submit() {
                           <div class="text-small text-ink-2">{{ $t('settings.retentionIdle', { n: candidate.idleMonths }) }}</div>
                         </div>
                         <span
-                          class="w-fit rounded-full px-2.5 py-0.5 text-small font-semibold"
+                          class="w-fit rounded-[var(--r-sm)] px-2.5 py-0.5 text-small font-semibold"
                           :class="effective.order ? 'bg-late-bg text-destructive' : 'bg-sunk text-ink-2'"
                         >
                           {{ effective.order ? $t('settings.retentionRemoved') : $t('settings.retentionStays') }}

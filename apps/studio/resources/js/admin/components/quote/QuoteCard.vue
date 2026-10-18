@@ -6,7 +6,7 @@ const open = defineModel<boolean>('open', { required: true })
 </script>
 
 <template>
-  <div :class="flat ? '' : 'rounded-[20px] border border-border bg-background'">
+  <div :class="flat ? '' : 'rounded-[var(--r)] bg-paper shadow-card'">
     <div class="flex items-center">
     <slot name="handle" />
     <button

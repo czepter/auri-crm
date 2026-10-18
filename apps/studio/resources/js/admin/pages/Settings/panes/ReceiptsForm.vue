@@ -30,7 +30,7 @@ defineExpose({ form, submit })
 <template>
   <form id="receipts-form" @submit.prevent="submit">
     <div class="mt-0">
-      <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.documentsLayoutLabel') }}</div>
+      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.documentsLayoutLabel') }}</div>
       <div class="mb-6">
         <RadioGroup
           name="documentlayout"
@@ -56,7 +56,7 @@ defineExpose({ form, submit })
     </div>
 
     <div class="mt-8 first-of-type:mt-6">
-      <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.documentsQuoteLabel') }}</div>
+      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.documentsQuoteLabel') }}</div>
       <div class="mb-6">
         <Field
           id="d-gueltigkeit"

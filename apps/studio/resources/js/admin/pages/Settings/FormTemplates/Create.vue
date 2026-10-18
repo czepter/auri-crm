@@ -28,7 +28,7 @@ function submit() {
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('settings.kicker')" :title="$t('formTemplates.createTitle')" />
 
-        <form class="max-w-[480px] px-8 pt-7 pb-8" @submit.prevent="submit">
+        <form class="max-w-[480px] px-6 pt-7 pb-8" @submit.prevent="submit">
           <Field id="name" class="mb-6" :label="$t('formTemplates.nameField')" :error="form.errors.name">
             <Input id="name" v-model="form.name" type="text" required maxlength="255" />
           </Field>

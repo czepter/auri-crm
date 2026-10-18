@@ -24,7 +24,7 @@ const vatRef = ref<InstanceType<typeof VatForm>>()
   <Dialog :open="open" @update:open="(value) => value || emit('cancel')">
     <DialogContent hide-close class="max-w-[560px]">
       <DialogHeader>
-        <span class="text-small leading-none font-semibold tracking-[0.09em] uppercase text-muted-foreground">{{ $t('gates.beforeQuote') }}</span>
+        <span class="text-small leading-none font-semibold text-muted-foreground">{{ $t('gates.beforeQuote') }}</span>
         <DialogTitle class="mt-3">{{ $t('gates.businessDataTitle') }}</DialogTitle>
         <DialogDescription>{{ $t('gates.businessDataHint') }}</DialogDescription>
       </DialogHeader>
