@@ -36,8 +36,8 @@ beforeEach(() => {
 })
 
 it('opens one source per session and reloads on an event', () => {
-  followLiveUpdates('/.well-known/mercure?topic=crm')
-  followLiveUpdates('/.well-known/mercure?topic=crm')
+  followLiveUpdates('/.well-known/mercure?match=crm')
+  followLiveUpdates('/.well-known/mercure?match=crm')
 
   expect(FakeEventSource.opened).toHaveLength(1)
   expect(FakeEventSource.opened[0].init).toEqual({ withCredentials: true })
