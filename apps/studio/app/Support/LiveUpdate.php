@@ -18,6 +18,11 @@ use Illuminate\Support\Facades\Http;
  */
 class LiveUpdate
 {
+    /** The `issuer` and `resource_identifier` in docker/app/mercure.caddy. */
+    private const ISSUER = 'https://auri-crm.de';
+
+    private const AUDIENCE = 'https://auri-crm.de/.well-known/mercure';
+
     public static function publish(): void
     {
         $url = config('services.mercure.url');
@@ -34,7 +39,7 @@ class LiveUpdate
         // happened, but it gets reported.
         DB::afterCommit(fn () => rescue(fn () => Http::connectTimeout(1)
             ->timeout(2)
-            ->withToken(self::token('publish', $key))
+            ->withToken(self::token('publish', $key, now()->addMinute()->timestamp))
             ->asForm()
             ->post($url, ['topic' => self::topic(), 'data' => '{}'])
             ->throw()));
@@ -55,15 +60,17 @@ class LiveUpdate
 
         $minutes = (int) config('session.lifetime');
 
+        // The hub reads the __Secure- name by default; a local hub on plain
+        // HTTP is told the bare one (docker-compose.yml).
         Cookie::queue(cookie(
-            'mercureAuthorization',
+            config('session.secure') ? '__Secure-mercure_access_token' : 'mercure_access_token',
             self::token('subscribe', $key, now()->addMinutes($minutes)->timestamp),
             $minutes,
             '/.well-known/mercure',
             sameSite: 'lax',
         ));
 
-        return config('services.mercure.public_url').'?topic='.rawurlencode(self::topic());
+        return config('services.mercure.public_url').'?match='.rawurlencode(self::topic());
     }
 
     public static function topic(): string
@@ -71,14 +78,23 @@ class LiveUpdate
         return 'crm/'.config('tenancy.tenant_id');
     }
 
-    /** HS256, the algorithm the hub is configured for. Two claims do not need a JWT library. */
-    private static function token(string $action, string $key, ?int $expiresAt = null): string
+    /** HS256, the algorithm the hub is configured for. A handful of claims do not need a JWT library. */
+    private static function token(string $action, string $key, int $expiresAt): string
     {
-        $claims = ['mercure' => [$action => [self::topic()]]] + ($expiresAt === null ? [] : ['exp' => $expiresAt]);
+        $claims = [
+            'iss' => self::ISSUER,
+            'aud' => self::AUDIENCE,
+            'exp' => $expiresAt,
+            'authorization_details' => [[
+                'type' => 'https://mercure.rocks/authorization-detail',
+                'actions' => [$action],
+                'topics' => [['match' => self::topic()]],
+            ]],
+        ];
 
         $segments = array_map(
             fn (array $part) => self::base64Url(json_encode($part, JSON_UNESCAPED_SLASHES)),
-            [['alg' => 'HS256', 'typ' => 'JWT'], $claims],
+            [['alg' => 'HS256', 'typ' => 'at+jwt'], $claims],
         );
 
         $segments[] = self::base64Url(hash_hmac('sha256', implode('.', $segments), $key, true));

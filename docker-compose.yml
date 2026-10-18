@@ -304,13 +304,19 @@ services:
   # (docker/app/mercure.caddy). Locally the surfaces run `artisan serve`,
   # which carries none, so it stands alone.
   mercure:
-    image: dunglas/mercure:v0.21
+    image: dunglas/mercure:v1.1.1
     environment:
       SERVER_NAME: ":80"
+      MERCURE_TRUSTED_ISSUERS: https://auri-crm.de
       MERCURE_PUBLISHER_JWT_KEY: local-mercure-publisher-key
       MERCURE_SUBSCRIBER_JWT_KEY: local-mercure-subscriber-key
-      # The admin screen is another origin here, one port over.
-      MERCURE_EXTRA_DIRECTIVES: cors_origins http://localhost:${APP_PORT:-8000}
+      # The rest of docker/app/mercure.caddy, plus what plain HTTP needs: the
+      # admin screen is another origin here, one port over, and a browser
+      # refuses a __Secure- cookie without TLS.
+      MERCURE_EXTRA_DIRECTIVES: |
+        resource_identifier https://auri-crm.de/.well-known/mercure
+        cors_origins http://localhost:${APP_PORT:-8000}
+        cookie_name mercure_access_token
     ports:
       - "127.0.0.1:${MERCURE_PORT:-3001}:80"
 
