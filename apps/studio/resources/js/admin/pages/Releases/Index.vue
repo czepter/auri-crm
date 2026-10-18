@@ -32,11 +32,11 @@ defineProps<{
                     :title="$t('releases.title')"
                 />
 
-                <div class="px-8 pt-5 pb-11 max-[640px]:px-5">
+                <div class="px-6 pt-5 pb-11 max-[640px]:px-5">
                     <Link
                         v-for="release in releases"
                         :key="release.version"
-                        class="-mx-3 flex items-start gap-6 px-3 py-[15px] text-foreground no-underline shadow-[inset_0_1px_0_#F0F0F2] hover:bg-sunk max-[640px]:gap-4"
+                        class="-mx-3 flex items-start gap-6 px-3 py-[15px] text-foreground no-underline shadow-[inset_0_1px_0_var(--rule)] hover:bg-sunk max-[640px]:gap-4"
                         :href="`/neuigkeiten/${release.version}`"
                     >
                         <div class="w-28 flex-none">
@@ -52,7 +52,7 @@ defineProps<{
                             </div>
                             <span
                                 v-if="releaseMark(release.version, installed)"
-                                class="mt-2 inline-flex rounded-[12px] px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase"
+                                class="mt-2 inline-flex rounded-[12px] px-2 py-[3px] text-small leading-[1.5] font-semibold"
                                 :class="releaseMark(release.version, installed)!.class"
                             >
                                 {{ $t(releaseMark(release.version, installed)!.key) }}

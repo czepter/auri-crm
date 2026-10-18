@@ -4,7 +4,7 @@ defineProps<{ title: string; count: number }>()
 </script>
 
 <template>
-    <h2 v-if="count" class="m-0 flex items-baseline px-3.5 pb-2 [a+&]:pt-5">
+    <h2 v-if="count" class="m-0 flex items-baseline px-3 pb-2 [a+&]:pt-5">
         <b class="text-small leading-none font-semibold tracking-[-0.012em]">
             {{ title }}
         </b>

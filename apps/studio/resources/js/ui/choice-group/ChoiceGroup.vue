@@ -46,14 +46,14 @@ const name = useId()
 
 const CONTAINER = {
   default: "flex flex-wrap gap-1.5",
-  segmented: "flex rounded-lg bg-sunk-2 p-0.5",
+  segmented: "flex rounded-lg bg-sunk p-[3px]",
 }
 
 const ITEM = {
   default:
-    "inline-block cursor-pointer rounded-[var(--r-pill)] bg-sunk px-3 py-1.5 text-small text-foreground peer-checked:bg-foreground peer-checked:text-paper",
+    "inline-block cursor-pointer rounded-[var(--r-sm)] bg-sunk px-3 py-1.5 text-small text-foreground peer-checked:bg-foreground peer-checked:text-paper",
   segmented:
-    "inline-block cursor-pointer rounded-[6px] px-3.5 py-1 text-small leading-[1.4] font-normal text-foreground transition-colors duration-[120ms] ease-out peer-checked:bg-paper peer-checked:font-medium",
+    "inline-block cursor-pointer rounded-[6px] px-3.5 py-1 text-small leading-[1.4] font-normal text-foreground transition-colors duration-[120ms] ease-out peer-checked:bg-paper peer-checked:font-medium peer-checked:shadow-[0_1px_2px_rgba(24,24,27,.08)]",
 }
 
 /* Ein Zeichen füllt keine Textzeile: es steht mittig in einem Feld, das so

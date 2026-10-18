@@ -43,7 +43,7 @@ function submit() {
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('packages.createTitle')" />
 
-        <form class="flex items-start gap-8 px-8 pt-7 pb-8" @submit.prevent="submit">
+        <form class="flex items-start gap-8 px-6 pt-7 pb-8" @submit.prevent="submit">
           <div class="max-w-[640px] min-w-0 flex-1">
             <Field id="name" class="mb-6" :label="$t('packages.name')" :error="form.errors.name">
               <Input id="name" v-model="form.name" type="text" required />
@@ -53,7 +53,7 @@ function submit() {
             </Field>
 
             <div class="mt-8 first-of-type:mt-6">
-              <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.items') }}</div>
+              <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('packages.items') }}</div>
               <PackageItemsEditor v-model="form.items" :catalog-items="catalogItems" />
             </div>
 

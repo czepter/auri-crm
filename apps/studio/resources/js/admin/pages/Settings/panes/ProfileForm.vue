@@ -133,7 +133,7 @@ defineExpose({ form, submit, adaptExisting })
 <template>
   <form id="settings-form" @submit.prevent="submit">
     <div v-if="shows('brand')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.brand') }}</div>
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.brand') }}</div>
       <div class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.displayName')" id="p-anzeigename" :error="form.errors.display_name">
@@ -196,7 +196,7 @@ defineExpose({ form, submit, adaptExisting })
     </div>
 
     <div v-if="shows('legal')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.legalEntity') }}</div>
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.legalEntity') }}</div>
       <div class="mb-6">
         <Field :label="$t('settings.legalName')" id="p-firma" wide :error="form.errors.legal_name">
           <Input id="p-firma" v-model="form.legal_name" type="text" />
@@ -257,7 +257,7 @@ defineExpose({ form, submit, adaptExisting })
     </div>
 
     <div v-if="shows('general')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.timezoneLabel') }}</div>
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.timezoneLabel') }}</div>
       <div class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :error="form.errors.timezone" v-slot="{ id }">
@@ -297,7 +297,7 @@ defineExpose({ form, submit, adaptExisting })
     </div>
 
     <div v-if="shows('tax')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.taxSection') }}</div>
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.taxSection') }}</div>
       <div class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.taxNumber')" id="p-steuernr" :error="form.errors.tax_number">
@@ -325,7 +325,7 @@ defineExpose({ form, submit, adaptExisting })
     </div>
 
     <div v-if="shows('bank')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.bank') }}</div>
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.bank') }}</div>
       <div class="mb-6">
         <Field :label="$t('settings.bankAccountHolder')" id="p-kontoinhaber" wide :error="form.errors.bank_account_holder">
           <Input id="p-kontoinhaber" v-model="form.bank_account_holder" type="text" />

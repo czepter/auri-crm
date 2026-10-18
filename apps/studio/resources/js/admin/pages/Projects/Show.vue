@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { Link, router, useForm } from "@inertiajs/vue3";
+import { Pencil } from "lucide-vue-next";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/alert";
 import { Button } from "@/ui/button";
@@ -297,11 +298,11 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             >
                                 {{ person.name }}
                             </Link>
-                            <span class="rounded-[var(--r-pill)] bg-sunk-2 px-[9px] py-0.5 text-small leading-[1.4] tracking-[0.05em] uppercase text-ink-2">
+                            <span class="rounded-[var(--r-sm)] bg-sunk-2 px-2 py-0.5 text-small leading-[1.4] font-medium text-ink-2">
                                 {{ roleLabel(person.role) }}
                             </span>
-                            <a v-if="person.email" class="text-small text-action no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
-                            <a v-if="person.phone" class="ml-auto text-small tabular-nums text-action no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
+                            <a v-if="person.email" class="text-small text-ring no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
+                            <a v-if="person.phone" class="ml-auto text-small tabular-nums text-ring no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
                         </div>
 
                         <template #edit>
@@ -363,9 +364,17 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         </template>
                         <template v-if="header.canManageQuotes" #action>
                             <Link
-                                class="text-small tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
-                                :href="quote ? `/angebote/${quote.id}` : `/angebote/neu?projekt=${header.id}`"
-                            >{{ quote ? $t("common.edit") : $t("quotes.create") }}</Link>
+                                v-if="quote"
+                                class="grid size-7 place-items-center rounded-[var(--r-sm)] text-ink-2 hover:bg-sunk hover:text-foreground"
+                                :href="`/angebote/${quote.id}`"
+                                :aria-label="$t('common.edit')"
+                                :title="$t('common.edit')"
+                            ><Pencil class="size-[15px]" /></Link>
+                            <Link
+                                v-else
+                                class="text-small tracking-[-0.01em] whitespace-nowrap text-ring no-underline hover:underline"
+                                :href="`/angebote/neu?projekt=${header.id}`"
+                            >{{ $t("quotes.create") }}</Link>
                         </template>
                         <QuoteSummary
                             v-if="quote"
@@ -377,7 +386,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             <Link
                                 v-for="pkg in packages"
                                 :key="pkg.id"
-                                class="cursor-pointer rounded-[var(--r-pill)] border-0 bg-sunk px-[11px] py-[5px] text-small leading-[1.4] font-normal text-ink-2 hover:bg-sunk-2"
+                                class="cursor-pointer rounded-[var(--r-sm)] border-0 bg-sunk px-[11px] py-[5px] text-small leading-[1.4] font-normal text-ink-2 hover:bg-sunk-2"
                                 :href="`/auftraege/${header.id}/angebote`"
                                 method="post"
                                 as="button"
@@ -392,9 +401,9 @@ function complete(row: App.Crm.Data.TaskRowData) {
 
                     <Card :title="$t('project.tasks')" :summary="taskSummary" :default-open="overdue > 0">
                         <div class="mb-1.5 flex items-center gap-2.5">
-                            <span class="inline-flex gap-0.5 rounded-[var(--r-pill)] bg-sunk-2 p-0.5">
+                            <span class="inline-flex gap-0.5 rounded-lg bg-sunk p-[3px]">
                                 <button
-                                    class="cursor-pointer rounded-[var(--r-pill)] px-[11px] py-1 text-small leading-none"
+                                    class="cursor-pointer rounded-[var(--r-sm)] px-[11px] py-1 text-small leading-none"
                                     :class="showDone ? 'text-ink-2' : 'bg-paper font-semibold'"
                                     type="button"
                                     @click="showDone = false"
@@ -402,7 +411,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                     {{ $t("project.tasksOpen", { count: open.length }) }}
                                 </button>
                                 <button
-                                    class="cursor-pointer rounded-[var(--r-pill)] px-[11px] py-1 text-small leading-none"
+                                    class="cursor-pointer rounded-[var(--r-sm)] px-[11px] py-1 text-small leading-none"
                                     :class="showDone ? 'bg-paper font-semibold' : 'text-ink-2'"
                                     type="button"
                                     @click="showDone = true"
@@ -446,14 +455,14 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 row.title
                             }}</span>
                             <span
-                                class="text-small leading-[1.47] tracking-[0.05em] uppercase text-ink-2"
+                                class="text-small leading-[1.47] text-ink-2"
                             >{{ row.audienceLabel }}</span>
                             <span v-if="row.shootLabel" class="text-small leading-[1.47] text-faint">{{
                                 row.shootLabel
                             }}</span>
                             <span
                                 class="ml-auto text-small leading-[1.47] tabular-nums"
-                                :class="row.isOverdue && !row.isDone ? 'text-action' : 'text-ink-2'"
+                                :class="row.isOverdue && !row.isDone ? 'text-destructive' : 'text-ink-2'"
                             >{{ row.dueOn ? day(row.dueOn) : "" }}</span>
                         </div>
                     </Card>
@@ -540,27 +549,27 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             :items="scope.items"
                         >
                             <template #note="{ item }">
-                                <span v-if="item.state" class="ml-[3px] text-small text-action">{{
+                                <span v-if="item.state" class="ml-[3px] text-small text-ring">{{
                                     $t(`project.scope_${item.state}`)
                                 }}</span>
                             </template>
                             <template #priceNote="{ item }">
                                 <span
                                     v-if="item.state === 'changed'"
-                                    class="mt-0.5 block text-small font-normal text-action"
+                                    class="mt-0.5 block text-small font-normal text-ring"
                                 >{{ euro(item.wasUnitPrice) }}</span>
                             </template>
                         </LineItems>
 
                         <p
                             v-if="scope.delta"
-                            class="mt-[7px] text-small text-ink-2 [&_em]:not-italic [&_em]:text-action"
+                            class="mt-[7px] text-small text-ink-2 [&_em]:not-italic [&_em]:text-ring"
                         >
                             <em>{{
                                 $t("project.scopeDelta", { amount: euro(Math.abs(scope.delta)) })
                             }}</em>
                             <Link
-                                class="ml-3 text-small tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
+                                class="ml-3 text-small tracking-[-0.01em] whitespace-nowrap text-ring no-underline hover:underline"
                                 :href="`/auftraege/${header.id}/angebote`"
                             >
                                 {{ $t("project.sendAddendum") }}
@@ -569,7 +578,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                     </Section>
 
                     <Card
-                        class="mt-10"
+                        class="mt-3"
                         :title="$t('lead.notes')"
                         :summary="`${notes.length}`"
                         :default-open="false"

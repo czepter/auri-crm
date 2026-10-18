@@ -39,7 +39,7 @@ function submit() {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('settings.kicker')" :title="$t('paymentSettings.title')">
-          <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
+          <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
           <Button
             v-if="form.isDirty"
             class="ml-auto"
@@ -52,13 +52,13 @@ function submit() {
           </Button>
         </PageHead>
 
-        <div class="px-8 pt-7 pb-8">
+        <div class="px-6 pt-7 pb-8">
           <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
             <SettingsNav active="payments" />
 
             <form id="payment-settings-form" style="flex: 1; min-width: 0; max-width: 620px" @submit.prevent="submit">
               <div>
-                <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('paymentSettings.stripeSection') }}</div>
+                <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('paymentSettings.stripeSection') }}</div>
 
                 <div class="mb-6">
                   <div class="flex items-center gap-2.5">
@@ -90,7 +90,7 @@ function submit() {
                 </div>
 
                 <div class="mb-6">
-                  <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('paymentSettings.stripeTestKeys') }}</div>
+                  <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('paymentSettings.stripeTestKeys') }}</div>
                   <div class="grid grid-cols-2 gap-4">
                     <div class="flex min-w-0 flex-col gap-1.5">
                       <Label for="ps-test-pk">{{ $t('paymentSettings.stripePublishableKey') }}</Label>
@@ -121,7 +121,7 @@ function submit() {
                 </div>
 
                 <div class="mb-6">
-                  <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('paymentSettings.stripeLiveKeys') }}</div>
+                  <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('paymentSettings.stripeLiveKeys') }}</div>
                   <div class="grid grid-cols-2 gap-4">
                     <div class="flex min-w-0 flex-col gap-1.5">
                       <Label for="ps-live-pk">{{ $t('paymentSettings.stripePublishableKey') }}</Label>

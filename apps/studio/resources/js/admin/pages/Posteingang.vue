@@ -164,7 +164,7 @@ function receivedAt(iso: string) {
           <div class="mt-[5px] flex items-start gap-3.5">
             <div>
               <div class="text-small leading-[1.47] text-ink-2">{{ $t(`inbox.origin.${open.origin}`) }}</div>
-              <h1 class="m-0 mt-0.5 text-[25px] leading-[1.08] font-semibold tracking-[-0.032em]">{{ open.subject }}</h1>
+              <h1 class="m-0 mt-0.5 text-[20px] leading-7 font-semibold tracking-[-0.02em]">{{ open.subject }}</h1>
             </div>
             <Button class="ml-auto" variant="pill-muted" type="button" @click="close(open.id)">
               {{ open.state === 'erledigt' ? $t('inbox.reopen') : $t('inbox.done') }}
@@ -195,7 +195,7 @@ function receivedAt(iso: string) {
         </template>
 
         <section :class="open && 'mt-8'">
-          <h2 class="m-0 mb-[9px] text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ $t('inbox.addressTitle') }}</h2>
+          <h2 class="m-0 mb-[9px] text-small leading-none font-semibold text-ink-2">{{ $t('inbox.addressTitle') }}</h2>
 
           <p v-if="!configured" class="m-0 text-small leading-[1.47] text-ink-2">{{ $t('inbox.notConfigured') }}</p>
           <template v-else>
@@ -224,7 +224,7 @@ function receivedAt(iso: string) {
         </section>
 
         <section v-if="drafts.length" class="mt-8">
-          <h2 class="m-0 mb-[9px] text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ $t('inbox.draftsTitle') }}</h2>
+          <h2 class="m-0 mb-[9px] text-small leading-none font-semibold text-ink-2">{{ $t('inbox.draftsTitle') }}</h2>
 
           <div v-for="draft in drafts" :key="draft.id" class="py-3 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
             <div class="flex items-baseline gap-[9px]">
@@ -244,7 +244,7 @@ function receivedAt(iso: string) {
              booking. Nothing else in the admin lists it — every other thread is
              reachable through its project screen. -->
         <section v-if="unfiled.length" class="mt-8">
-          <h2 class="m-0 mb-[9px] text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ $t('inbox.unfiledTitle') }}</h2>
+          <h2 class="m-0 mb-[9px] text-small leading-none font-semibold text-ink-2">{{ $t('inbox.unfiledTitle') }}</h2>
 
           <div v-for="row in unfiled" :key="row.id" class="py-3 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
             <div class="flex items-baseline gap-[9px]">
@@ -276,7 +276,7 @@ function receivedAt(iso: string) {
         </section>
 
         <section v-if="pending.length" class="mt-8">
-          <h2 class="m-0 mb-[9px] text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ $t('inbox.triageTitle') }}</h2>
+          <h2 class="m-0 mb-[9px] text-small leading-none font-semibold text-ink-2">{{ $t('inbox.triageTitle') }}</h2>
 
           <div v-for="row in pending" :key="row.id" class="py-3 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
             <div class="flex items-baseline gap-[9px]">

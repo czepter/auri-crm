@@ -233,7 +233,7 @@ function eraseDsgvoData() {
         <PageHead :kicker="$t('contacts.title')" kicker-href="/kontakte" :title="contact.name">
           <div class="ml-auto flex items-center gap-2">
             <template v-if="editing">
-              <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
+              <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
               <Button variant="pill-muted" type="button" @click="cancelEdit">{{ $t('common.cancel') }}</Button>
               <Button v-if="form.isDirty" variant="pill" type="submit" form="contact-form" :disabled="form.processing">
                 {{ $t('common.save') }}
@@ -243,14 +243,13 @@ function eraseDsgvoData() {
           </div>
         </PageHead>
 
-        <!-- Formsprache der Galerieverwaltung: Kante unter der Leiste, zwei
-             Pixel unter dem aktiven Eintrag, keine Fläche. -->
-        <div class="flex gap-5 px-8 shadow-[inset_0_-1px_0_var(--rule)]">
+        <!-- Dieselbe Reiterspur wie im Auftrag (ProjectShell). -->
+        <div class="mx-6 mt-4 inline-flex max-w-full gap-0.5 overflow-x-auto rounded-lg bg-sunk p-[3px] text-small font-medium">
           <button
             v-for="key in TABS"
             :key="key"
-            class="cursor-pointer border-0 bg-transparent px-0 pt-2.5 pb-[11px] text-small leading-none"
-            :class="tab === key ? 'font-semibold text-foreground shadow-[inset_0_-2px_0_var(--ink)]' : 'text-ink-2 hover:text-foreground'"
+            class="cursor-pointer rounded-[var(--r-sm)] border-0 bg-transparent px-2.5 py-1 leading-[1.4] whitespace-nowrap"
+            :class="tab === key ? 'bg-paper text-foreground shadow-[0_1px_2px_rgba(24,24,27,.08)]' : 'text-ink-2 hover:text-foreground'"
             type="button"
             @click="tab = key"
           >
@@ -258,7 +257,7 @@ function eraseDsgvoData() {
           </button>
         </div>
 
-        <div class="px-8 pt-7">
+        <div class="px-6 pt-6">
           <!-- Nur der Portal-Reiter hat eine zweite Spalte und braucht das
                volle Maß der Fallseite; die übrigen bleiben auf Lesebreite. -->
           <div :class="tab === 'portal' ? 'max-w-[1100px]' : 'max-w-[760px]'">
@@ -266,14 +265,14 @@ function eraseDsgvoData() {
               <div v-if="!editing" class="mb-7 flex gap-2">
                 <a
                   v-if="contact.phone"
-                  class="inline-flex items-center gap-[7px] rounded-full bg-action px-[15px] py-2 text-small text-action-foreground no-underline"
+                  class="inline-flex items-center gap-[7px] rounded-[var(--r-sm)] bg-action px-[15px] py-2 text-small text-action-foreground no-underline"
                   :href="`tel:${contact.phone}`"
                 >
                   {{ $t('contacts.call') }}
                 </a>
                 <a
                   v-if="contact.email"
-                  class="inline-flex items-center gap-[7px] rounded-full bg-sunk px-[15px] py-2 text-small text-foreground no-underline hover:bg-sunk-2"
+                  class="inline-flex items-center gap-[7px] rounded-[var(--r-sm)] bg-sunk px-[15px] py-2 text-small text-foreground no-underline hover:bg-sunk-2"
                   :href="`mailto:${contact.email}`"
                 >
                   {{ $t('contacts.email') }}
@@ -305,7 +304,7 @@ function eraseDsgvoData() {
               </form>
 
               <section v-else-if="contact.phone || contact.email || hasAddress" class="mb-7">
-                <h2 class="mt-0 mb-3 text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
                   {{ $t('contacts.reach') }}
                 </h2>
 
@@ -336,14 +335,14 @@ function eraseDsgvoData() {
               </section>
 
               <section v-if="connected.length" class="mb-7">
-                <h2 class="mt-0 mb-3 text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
                   {{ $t('contacts.connected') }}
                 </h2>
 
               <div
                 v-for="person in connected"
                 :key="person.id"
-                class="py-2 shadow-[inset_0_1px_0_#ECECEE] first:shadow-none"
+                class="py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
               >
                 <Link class="text-small font-semibold tracking-[-0.012em]" :href="`/kontakte/${person.id}`">
                   {{ person.name }}
@@ -354,7 +353,7 @@ function eraseDsgvoData() {
               </div>
               </section>
               <section v-if="canManageDsgvo" class="mb-7">
-                <h2 class="mt-0 mb-3 text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
                   {{ $t('contacts.dsgvo') }}
                 </h2>
 
@@ -363,9 +362,9 @@ function eraseDsgvoData() {
               <div
                 v-for="request in dsgvoRequests"
                 :key="request.id"
-                class="py-2 shadow-[inset_0_1px_0_#ECECEE] first:shadow-none"
+                class="py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
               >
-                <div class="mt-px text-small text-action">
+                <div class="mt-px text-small text-due">
                   {{ $t(`contacts.dsgvoRequested.${request.kind}`, { date: day(request.requestedAt) }) }}
                 </div>
               </div>
@@ -410,7 +409,7 @@ function eraseDsgvoData() {
               <!-- Two sections, never one list: a project is an order with money
                    and dates, a gallery a delivery with an expiry. -->
               <section v-if="projects.length" class="mb-7">
-                <h2 class="mt-0 mb-3 text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
                   {{ $t('contacts.projects') }}
                 </h2>
                 <div
@@ -434,7 +433,7 @@ function eraseDsgvoData() {
               </section>
 
               <section v-if="galleries.length" class="mb-7">
-                <h2 class="mt-0 mb-3 text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
                   {{ $t('contacts.galleries') }}
                 </h2>
                 <div
@@ -465,7 +464,7 @@ function eraseDsgvoData() {
                    every project. A thread only ever knows its own project, so this
                    is the one screen that can answer the question at all. -->
               <section v-if="correspondence.length" class="mb-7">
-                <h2 class="mt-0 mb-3 text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
                   {{ $t('contacts.correspondence') }}
                 </h2>
                 <div
@@ -508,7 +507,7 @@ function eraseDsgvoData() {
                      als Zahl. Rechts steht, warum sie dort steht. -->
                 <Panel :title="$t('contacts.suggestionsSection')">
                   <template #action>
-                    <Link class="ml-auto text-small text-action no-underline hover:underline" href="/pakete">
+                    <Link class="ml-auto text-small text-ring no-underline hover:underline" href="/pakete">
                       {{ $t('contacts.changeInPackages') }}
                     </Link>
                   </template>
@@ -516,12 +515,12 @@ function eraseDsgvoData() {
                   <ContactPortalFields group="offers" :portal="portal" :defaults="portalDefaults" @change="savePortal" />
 
                   <template v-for="row in offerRows" :key="row.id">
-                    <div class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_#EEEEF0]">
+                    <div class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)]">
                       <div class="min-w-0">
                         <div class="text-body leading-none font-semibold tracking-[-0.012em]">{{ row.name }}</div>
                         <div class="mt-px text-small text-ink-2">{{ row.terms }}</div>
                       </div>
-                      <span class="ml-auto flex-none text-small" :class="row.suggestion ? 'text-action' : 'text-ink-2'">
+                      <span class="ml-auto flex-none text-small" :class="row.suggestion ? 'text-ring' : 'text-ink-2'">
                         {{ row.suggestion ? $t('contacts.offerSuggested', { name: contact.name }) : $t('contacts.offerForAll') }}
                       </span>
                     </div>
@@ -570,7 +569,7 @@ function eraseDsgvoData() {
                    bedienen. Deshalb rechts und in Karten wie die Übersicht,
                    nicht in einer grauen Randspalte. -->
               <aside class="w-[280px] flex-none max-[1180px]:w-full">
-                <h2 class="mt-0 mb-2.5 text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                <h2 class="mt-0 mb-2.5 text-small leading-none font-semibold text-ink-2">
                   {{ $t('contacts.portalAccess') }}
                 </h2>
 

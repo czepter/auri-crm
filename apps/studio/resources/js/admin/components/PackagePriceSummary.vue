@@ -11,9 +11,9 @@ const selectableCount = computed(() => props.items.filter((row) => row.selectabl
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-[10px] border border-border">
+  <div class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
     <div class="p-[26px]">
-      <div class="text-small leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('packages.priceSummary') }}</div>
+      <div class="text-small leading-none font-semibold text-faint">{{ $t('packages.priceSummary') }}</div>
       <div class="mt-3.5 text-[42px] leading-[1.1] font-bold tracking-[-0.02em] tabular-nums">{{ formatEuros(total) }}</div>
       <div class="mt-2 text-ui text-ink-2">
         {{ $t('packages.itemCount', items.length) }}<template v-if="selectableCount">

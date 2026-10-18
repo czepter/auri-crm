@@ -276,7 +276,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
       v-if="quote.status !== 'draft'"
       :min="1180"
       :label="$t('common.preview')"
-      wrapper-class="min-w-[420px] flex-1 rounded-md border border-rule bg-background px-[18px] py-[15px]"
+      wrapper-class="min-w-[420px] flex-1 rounded-[var(--r)] bg-paper shadow-card px-6 py-5"
     >
       <QuotePreviewPane :quote-id="quote.id" />
     </PreviewOverlay>

@@ -90,7 +90,7 @@ function destroy() {
             <RailSection v-if="people" :title="$t('lead.people')">
               <div v-for="person in header.people" :key="person.id" class="flex items-center gap-2 py-[5px] text-small leading-[1.47]">
                 <Link :href="`/kontakte/${person.id}`">{{ person.name }}</Link>
-                <span class="ml-auto text-small leading-[1.47] text-[#3F6B4A]">{{ $t(`contacts.role.${person.role}`) }}</span>
+                <span class="ml-auto text-small leading-[1.47] text-ok">{{ $t(`contacts.role.${person.role}`) }}</span>
               </div>
             </RailSection>
           </slot>
@@ -124,15 +124,15 @@ function destroy() {
     </template>
 
     <div class="min-w-0 flex-1 px-[26px] pt-5 pb-7 max-[640px]:px-5">
-      <div class="text-small tracking-[0.05em] uppercase text-ink-2">
+      <div class="text-small font-medium text-ink-2">
         <Link v-if="header.isBooked" href="/projekte">{{ $t('projects.title') }}</Link>
         <Link v-else href="/anfragen">{{ $t('board.title') }}</Link>
       </div>
 
-      <div class="sticky top-0 z-[5] mt-0.5 bg-paper">
+      <div class="sticky top-0 z-[5] -mx-[26px] mt-0.5 bg-background px-[26px] pb-4 max-[640px]:-mx-5 max-[640px]:px-5">
         <div class="flex items-center gap-3">
           <slot name="title">
-            <h1 class="m-0 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px]">
+            <h1 class="m-0 text-[20px] leading-7 font-semibold tracking-[-0.02em]">
               {{ header.name }}
             </h1>
           </slot>
@@ -191,14 +191,16 @@ function destroy() {
 
         <StageTrack class="mt-4" :steps="header.track" />
 
-        <nav class="mt-[18px] flex gap-[18px] overflow-x-auto text-small shadow-[inset_0_-1px_0_var(--rule)]">
+        <!-- The track scrolls once the tabs outgrow the column; a local
+             background paints its whole scroll width, not only what shows. -->
+        <nav class="mt-4 inline-flex max-w-full gap-0.5 overflow-x-auto rounded-lg p-[3px] text-small font-medium [background:linear-gradient(var(--sunk),var(--sunk))_local] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Link
             v-for="tab in header.tabs"
             :key="tab.key"
             :href="tab.href"
-            class="pb-2 whitespace-nowrap no-underline"
+            class="rounded-[var(--r-sm)] px-2.5 py-1 whitespace-nowrap no-underline"
             :class="tab.key === active
-              ? 'font-semibold text-foreground shadow-[inset_0_-2px_0_var(--ink)]'
+              ? 'bg-paper text-foreground shadow-[0_1px_2px_rgba(24,24,27,.08)]'
               : 'text-ink-2 hover:text-foreground'"
             :aria-current="tab.key === active ? 'page' : undefined"
           >
@@ -208,7 +210,7 @@ function destroy() {
 
         <nav
           v-if="subTabs.length"
-          class="flex gap-[18px] py-2.5 text-small shadow-[inset_0_-1px_0_var(--rule)]"
+          class="flex gap-[18px] pt-3 text-small"
         >
           <Link
             v-for="entry in subTabs"

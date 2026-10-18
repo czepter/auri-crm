@@ -160,16 +160,16 @@ function submit() {
   <AdminLayout active="anfragen">
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
-        <div class="px-8 pt-[22px] max-[640px]:px-5 max-[640px]:pt-4">
-          <div class="text-small tracking-[0.05em] uppercase text-ink-2">
+        <div class="px-6 pt-5 max-[640px]:px-5 max-[640px]:pt-4">
+          <div class="text-small text-ink-2">
             <Link href="/anfragen">{{ $t('board.title') }}</Link>
           </div>
-          <h1 class="m-0 mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px]">
+          <h1 class="m-0 mt-0.5 text-[20px] leading-7 font-semibold tracking-[-0.02em]">
             {{ $t('leads.createTitle') }}
           </h1>
         </div>
 
-        <form class="flex max-w-[820px] flex-col gap-3 px-8 pt-5 pb-8 max-[640px]:px-5" @submit.prevent="submit">
+        <form class="flex max-w-[820px] flex-col gap-3 px-6 pt-5 pb-8 max-[640px]:px-5" @submit.prevent="submit">
           <Card :title="$t('leads.contact')">
             <Field :error="form.errors.contact_name">
               <ContactTypeahead v-model="contact" @create-new="startCreating" />
@@ -255,13 +255,13 @@ function submit() {
             </Field>
 
             <div v-else class="mt-4">
-              <div class="text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">
+              <div class="text-small leading-none font-semibold text-faint">
                 {{ $t('leads.capturedAt') }}
               </div>
               <div class="mt-1.5 flex items-center gap-2.5 text-ui leading-[1.35]">
                 {{ capturedAtLabel }}
                 <a
-                  class="text-small tracking-[-0.01em] text-action no-underline hover:underline"
+                  class="text-small tracking-[-0.01em] text-ring no-underline hover:underline"
                   href="#"
                   @click.prevent="backdating = true"
                 >{{ $t('common.edit') }}</a>
@@ -356,7 +356,7 @@ function submit() {
 
           <div class="mt-2 flex items-center gap-3 pt-4 shadow-[inset_0_1px_0_var(--rule)] [&>button:last-child]:ml-auto">
             <a
-              class="text-small tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
+              class="text-small tracking-[-0.01em] whitespace-nowrap text-ring no-underline hover:underline"
               href="/anfragen"
             >{{ $t('common.cancel') }}</a>
             <Button variant="pill-muted" type="submit" :disabled="form.processing" @click="again = true">

@@ -40,9 +40,9 @@ function copy() {
 
   <div class="mb-5 flex items-start gap-[26px] pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
     <div class="flex min-w-0 flex-1 flex-col gap-2">
-      <div class="text-small tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.link') }}</div>
+      <div class="text-small text-ink-2">{{ $t('galleryRecord.link') }}</div>
       <div class="mt-1.5 flex items-center gap-2.5">
-        <a class="text-title tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline" :href="gallery.url">{{ gallery.url }}</a>
+        <a class="text-title tracking-[-0.01em] whitespace-nowrap text-ring no-underline hover:underline" :href="gallery.url">{{ gallery.url }}</a>
         <Button type="button" variant="pill-muted" @click="copy">{{ copied ? $t('gallery.copied') : $t('gallery.copy') }}</Button>
       </div>
 
@@ -50,20 +50,20 @@ function copy() {
         <Link
           v-for="sibling in siblings"
           :key="sibling.id"
-          class="inline-flex items-baseline gap-1.5 rounded-full px-3 py-1.5 text-small no-underline"
+          class="inline-flex items-baseline gap-1.5 rounded-[var(--r-sm)] px-3 py-1.5 text-small no-underline"
           :class="sibling.open ? 'bg-foreground text-paper' : 'bg-sunk text-foreground'"
           :href="`/galerien/${sibling.id}`"
         >
           {{ sibling.title ?? '—' }}<span
             class="text-small"
-            :class="sibling.open ? 'text-[#B9B9BD]' : 'text-ink-2'"
+            :class="sibling.open ? 'text-faint' : 'text-ink-2'"
           >{{ sibling.assetCount }}</span>
         </Link>
       </div>
     </div>
 
     <div class="flex min-w-0 flex-col gap-2">
-      <div class="text-small tracking-[0.06em] uppercase text-ink-2">{{ $t('gallery.gateView') }}</div>
+      <div class="text-small text-ink-2">{{ $t('gallery.gateView') }}</div>
       <Input v-model="secret.view_password" class="w-[190px]" type="text" @blur="saveSecret" />
     </div>
   </div>

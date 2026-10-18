@@ -72,7 +72,7 @@ const LONG = ['text', 'name_list', 'group_photos']
           </span>
         </PageHead>
 
-        <div class="px-8 pt-5 pb-8">
+        <div class="px-6 pt-5 pb-8">
           <Field v-slot="{ id }" class="max-w-[720px]" :label="$t('create.pick')">
             <ProjectTypeahead :id="id" v-model="project" />
           </Field>
@@ -119,12 +119,12 @@ const LONG = ['text', 'name_list', 'group_photos']
                  jede Änderung an einer Frage steht sofort hier. -->
             <section class="min-w-0 max-w-[420px] flex-1">
               <div class="flex items-center gap-2.5 border-b border-border pb-2.5">
-                <span class="text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('quotes.preview') }}</span>
+                <span class="text-small leading-none font-semibold text-faint">{{ $t('quotes.preview') }}</span>
               </div>
 
               <div class="mt-6 bg-sunk p-4">
                 <div class="border border-border bg-white px-[26px] py-7 shadow-[0_18px_40px_-24px_rgba(20,16,14,.28)]">
-                  <p class="text-[9px] leading-none font-semibold tracking-[0.17em] uppercase text-ink-2">{{ project.name }}</p>
+                  <p class="text-[9px] leading-none font-semibold text-ink-2">{{ project.name }}</p>
                   <h2 class="mt-2.5 mb-6 text-[28px] leading-[0.98] font-medium tracking-[-0.03em]">{{ form.name }}</h2>
 
                   <template v-for="(field, index) in form.fields" :key="index">

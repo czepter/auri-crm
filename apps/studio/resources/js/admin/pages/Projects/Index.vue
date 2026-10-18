@@ -183,7 +183,7 @@ function reset() {
         </PageHead>
 
         <template v-if="projects.length && view === 'liste'">
-          <div class="flex flex-wrap items-center gap-4 px-8 pt-4.5">
+          <div class="flex flex-wrap items-center gap-4 px-6 pt-4.5">
             <ChoiceGroup
               v-model="scope"
               :options="[
@@ -197,7 +197,7 @@ function reset() {
               <button
                 v-for="option in pills"
                 :key="option.key"
-                class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-pill)] px-3 py-1.5 text-small"
+                class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] px-3 py-1.5 text-small"
                 :class="stage === option.key ? 'bg-foreground text-paper' : 'bg-sunk text-foreground'"
                 type="button"
                 :aria-pressed="stage === option.key"
@@ -254,27 +254,27 @@ function reset() {
           </Button>
         </template>
 
-        <div v-else-if="projects.length" class="flex items-stretch gap-2.5 overflow-x-auto px-5 pt-5 pb-7">
+        <div v-else-if="projects.length" class="flex items-stretch gap-6 overflow-x-auto px-6 pt-4 pb-6">
           <section
             v-for="(column, index) in columns"
             :key="column.key"
-            class="flex min-w-0 shrink-0 grow basis-[200px] flex-col gap-2 rounded-xl bg-sunk p-2.5"
-            :class="target === index && 'bg-sunk-2'"
+            class="flex min-w-0 shrink-0 grow basis-[200px] flex-col gap-2.5 rounded-[var(--r)]"
+            :class="target === index && 'bg-[var(--accent-bg)]'"
             @dragover="onDragOver($event, index, null)"
             @drop.prevent="onDrop(index)"
           >
-            <header class="flex items-baseline gap-1.5 px-1 pt-0.5 pb-1">
-              <b class="text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ column.name }}</b>
-              <span class="ml-auto text-small tabular-nums text-ink-2">
+            <header class="flex items-center gap-1.5 px-1 pt-1 pb-0.5">
+              <b class="text-[13.5px] leading-none font-semibold text-foreground">{{ column.name }}</b>
+              <span class="ml-auto font-mono text-[12.5px] tabular-nums text-ink-2">
                 {{ column.cards.length }}<template v-if="column.total"> · {{ formatEurosRounded(column.total) }}</template>
               </span>
             </header>
 
             <template v-for="(project, row) in column.cards" :key="project.id">
-              <div v-if="target === index && insertAt === row" class="-mx-1.5 h-0.5 rounded-[1px] bg-action" />
+              <div v-if="target === index && insertAt === row" class="-mx-1.5 h-0.5 rounded-[1px] bg-ring" />
 
               <Link
-                class="relative block cursor-grab rounded-lg border border-border bg-paper px-2.5 py-[9px] text-inherit no-underline transition-[background,border-color] duration-[120ms] ease-out hover:border-line-hover"
+                class="relative block cursor-grab rounded-[var(--r)] bg-paper p-3.5 text-inherit no-underline shadow-card transition-[background] duration-[120ms] ease-out hover:bg-accent"
                 :class="moving?.id === project.id && 'cursor-grabbing'"
                 :href="`/auftraege/${project.id}`"
                 draggable="true"

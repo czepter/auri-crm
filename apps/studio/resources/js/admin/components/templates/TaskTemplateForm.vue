@@ -113,7 +113,7 @@ function remove() {
         <Button type="submit" :disabled="form.processing">
           {{ $t('taskTemplates.save') }}
         </Button>
-        <span class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due">{{ $t('settings.unsaved') }}</span>
+        <span class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold text-due">{{ $t('settings.unsaved') }}</span>
       </template>
       <Button class="ml-auto" type="button" variant="outline" @click="remove">{{ $t('taskTemplates.delete') }}</Button>
     </div>

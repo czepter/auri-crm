@@ -51,7 +51,7 @@ function clear() {
 
 const ROW = [
   'flex w-full cursor-pointer items-baseline gap-[9px] border-0 bg-none px-0 py-2 text-left text-inherit no-underline',
-  'shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none',
+  'shadow-[inset_0_1px_0_var(--rule)] first:shadow-none',
   'not-first:border-t not-first:border-muted',
 ].join(' ')
 </script>
@@ -64,7 +64,7 @@ const ROW = [
         {{ model.contactName }}
       </div>
     </div>
-    <span class="flex-none text-small tracking-[0.05em] uppercase" :class="model.isBooked ? 'text-ink-2' : 'text-action'">
+    <span class="flex-none text-small" :class="model.isBooked ? 'text-ink-2' : 'text-ring'">
       {{ model.isBooked ? $t('create.project') : $t('create.lead') }}
     </span>
     <Button class="ml-auto" type="button" variant="pill-muted" @click="clear">{{ $t('common.edit') }}</Button>
@@ -86,7 +86,7 @@ const ROW = [
         <span v-if="project.contactName" class="flex-none text-small leading-[1.3] text-muted-foreground">
           {{ project.contactName }}
         </span>
-        <span class="w-[62px] flex-none text-right text-small tracking-[0.05em] uppercase" :class="project.isBooked ? 'text-ink-2' : 'text-action'">
+        <span class="w-[62px] flex-none text-right text-small" :class="project.isBooked ? 'text-ink-2' : 'text-ring'">
           {{ project.isBooked ? $t('create.project') : $t('create.lead') }}
         </span>
       </Button>

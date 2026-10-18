@@ -22,7 +22,7 @@ import RailSection from "@/ui/page/RailSection.vue";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
 import { Textarea } from "@/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui/dropdown-menu";
-import { ChevronDown } from "lucide-vue-next";
+import { ChevronDown, Pencil } from "lucide-vue-next";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/admin/lib/money";
 import { quoteChipClass } from "@/admin/lib/quoteDisplay";
@@ -394,7 +394,7 @@ const nextStage = computed(
                                 v-for="entry in week"
                                 :key="`${entry.date}${entry.what}`"
                                 :href="`/auftraege/${entry.projectId}`"
-                                class="group -mx-2 flex gap-2.5 rounded-lg px-2 py-1.5 text-small leading-[1.47] shadow-[inset_0_1px_0_#ECECEE] transition-colors first:shadow-none hover:bg-paper"
+                                class="group -mx-2 flex gap-2.5 rounded-lg px-2 py-1.5 text-small leading-[1.47] shadow-[inset_0_1px_0_var(--rule)] transition-colors first:shadow-none hover:bg-paper"
                             >
                                 <span class="w-[62px] flex-none font-semibold tabular-nums">{{ day(entry.date) }}</span>
                                 <span class="text-ink-2 transition-colors group-hover:text-foreground">{{
@@ -406,7 +406,7 @@ const nextStage = computed(
                             v-else
                             class="-mx-2 flex gap-2.5 rounded-lg bg-paper px-2 py-1.5 text-small leading-[1.47]"
                         >
-                            <span class="font-medium text-[#3F6B4A]">{{ $t("lead.weekFree") }}</span>
+                            <span class="font-medium text-ok">{{ $t("lead.weekFree") }}</span>
                         </div>
                     </RailSection>
 
@@ -416,7 +416,7 @@ const nextStage = computed(
                             :key="index"
                             class="-mx-2 flex gap-2.5 rounded-lg bg-paper px-2 py-1.5 text-small leading-[1.47]"
                         >
-                            <span class="font-medium text-action">{{
+                            <span class="font-medium text-due">{{
                                 conflict.label ?? conflict.projectName
                             }}</span>
                         </div>
@@ -517,11 +517,11 @@ const nextStage = computed(
                             >
                                 {{ person.name }}
                             </Link>
-                            <span class="rounded-[var(--r-pill)] bg-sunk-2 px-[9px] py-0.5 text-small leading-[1.4] tracking-[0.05em] uppercase text-ink-2">
+                            <span class="rounded-[var(--r-sm)] bg-sunk-2 px-2 py-0.5 text-small leading-[1.4] text-ink-2">
                                 {{ roleLabel(person.role) }}
                             </span>
-                            <a v-if="person.email" class="text-small text-action no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
-                            <a v-if="person.phone" class="ml-auto text-small tabular-nums text-action no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
+                            <a v-if="person.email" class="text-small text-ring no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
+                            <a v-if="person.phone" class="ml-auto text-small tabular-nums text-ring no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
                             <span v-if="!person.email && !person.phone" class="ml-auto text-small text-mark">{{ $t("lead.noReach") }}</span>
                         </div>
 
@@ -641,9 +641,17 @@ const nextStage = computed(
                         </template>
                         <template v-if="header.canManageQuotes" #action>
                             <Link
-                                class="text-small tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
-                                :href="quote ? `/angebote/${quote.id}` : newQuote"
-                            >{{ quote ? $t("common.edit") : $t("quotes.create") }}</Link>
+                                v-if="quote"
+                                class="grid size-7 place-items-center rounded-[var(--r-sm)] text-ink-2 hover:bg-sunk hover:text-foreground"
+                                :href="`/angebote/${quote.id}`"
+                                :aria-label="$t('common.edit')"
+                                :title="$t('common.edit')"
+                            ><Pencil class="size-[15px]" /></Link>
+                            <Link
+                                v-else
+                                class="text-small tracking-[-0.01em] whitespace-nowrap text-ring no-underline hover:underline"
+                                :href="newQuote"
+                            >{{ $t("quotes.create") }}</Link>
                         </template>
 
                         <QuoteSummary
@@ -663,7 +671,7 @@ const nextStage = computed(
                             <Link
                                 v-for="pkg in packages"
                                 :key="pkg.id"
-                                class="cursor-pointer rounded-[var(--r-pill)] border-0 bg-sunk px-[11px] py-[5px] text-small leading-[1.4] font-normal text-ink-2 hover:bg-sunk-2 [&_b]:font-semibold [&_b]:text-foreground"
+                                class="cursor-pointer rounded-[var(--r-sm)] border-0 bg-sunk px-[11px] py-[5px] text-small leading-[1.4] font-normal text-ink-2 hover:bg-sunk-2 [&_b]:font-semibold [&_b]:text-foreground"
                                 :href="`/auftraege/${lead.projectId}/angebote`"
                                 method="post"
                                 as="button"
@@ -720,10 +728,10 @@ const nextStage = computed(
                                     :class="row.isDone ? 'bg-foreground' : 'bg-sunk-2'"
                                 />
                                 <span class="text-ui leading-[1.47]" :class="row.isDone && 'text-ink-2'">{{ row.title }}</span>
-                                <span class="text-small leading-[1.47] tracking-[0.05em] uppercase text-ink-2">{{ row.audience }}</span>
+                                <span class="text-small leading-[1.47] text-ink-2">{{ row.audience }}</span>
                                 <span
                                     class="ml-auto text-small leading-[1.47] tabular-nums"
-                                    :class="row.isOverdue ? 'text-action' : 'text-ink-2'"
+                                    :class="row.isOverdue ? 'text-destructive' : 'text-ink-2'"
                                 >{{ row.dueOn ? day(row.dueOn) : "" }}</span>
                             </div>
                         </div>

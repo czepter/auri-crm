@@ -304,11 +304,11 @@ function megabytes(bytes: number) {
              every tab (ProjectShell's isBooked chip is the pattern). -->
         <span
           v-if="figures.published !== null"
-          class="flex-none rounded-[var(--r-sm)] bg-ok-bg px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase text-ok"
+          class="flex-none rounded-[var(--r-sm)] bg-ok-bg px-2 py-[3px] text-small leading-[1.5] font-semibold text-ok"
         >{{ $t('galleryRecord.version', { version: figures.published }) }}</span>
         <span
           v-else-if="gallery.prerelease"
-          class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due"
+          class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold text-due"
         >{{ $t('galleryRecord.prerelease') }}</span>
 
         <span v-if="actionStatus" class="ml-auto flex items-center gap-1.5">
@@ -445,7 +445,7 @@ function megabytes(bytes: number) {
         <div v-else-if="tab === 'gestaltung'" class="flex min-w-0 flex-1">
           <div class="w-80 flex-none pt-5 pr-4 pb-7 pl-8">
             <div class="mb-4 flex flex-col gap-1">
-              <span class="pl-0.5 text-small leading-none font-normal tracking-[0.05em] uppercase text-ink-2">{{ $t('galleryRecord.cover') }}</span>
+              <span class="pl-0.5 text-small leading-none font-normal text-ink-2">{{ $t('galleryRecord.cover') }}</span>
               <ChoiceGroup
                 v-model="design.design.cover"
                 :options="COVERS.map((option) => ({ value: option, label: $t(`galleryRecord.cover_${option}`) }))"
@@ -454,7 +454,7 @@ function megabytes(bytes: number) {
             </div>
 
             <div class="mb-4 flex flex-col gap-1">
-              <span class="pl-0.5 text-small leading-none font-normal tracking-[0.05em] uppercase text-ink-2">{{ $t('galleryRecord.colour') }}</span>
+              <span class="pl-0.5 text-small leading-none font-normal text-ink-2">{{ $t('galleryRecord.colour') }}</span>
               <ChoiceGroup
                 v-model="design.design.colour"
                 :options="COLOURS.map((option) => ({ value: option, label: $t(`galleryRecord.colour_${option}`) }))"
@@ -463,7 +463,7 @@ function megabytes(bytes: number) {
             </div>
 
             <div class="flex flex-col gap-1">
-              <span class="pl-0.5 text-small leading-none font-normal tracking-[0.05em] uppercase text-ink-2">{{ $t('galleryRecord.grid') }}</span>
+              <span class="pl-0.5 text-small leading-none font-normal text-ink-2">{{ $t('galleryRecord.grid') }}</span>
               <ChoiceGroup
                 v-model="design.design.grid"
                 :options="GRIDS.map((option) => ({ value: option, label: $t(`galleryRecord.grid_${option}`) }))"
@@ -472,12 +472,12 @@ function megabytes(bytes: number) {
             </div>
           </div>
 
-          <div class="min-w-0 flex-1 bg-sunk px-8 pt-5 pb-7">
+          <div class="min-w-0 flex-1 bg-sunk px-6 pt-5 pb-7">
             <div class="overflow-hidden rounded-[12px] bg-paper">
               <div class="relative">
                 <img v-if="cover?.src" class="block aspect-video w-full object-cover" :src="`${cover.src}?w=1200&fmt=jpeg`" alt="" />
                 <div class="absolute inset-x-0 bottom-0 bg-[linear-gradient(transparent,rgba(20,16,14,0.55))] px-5 py-[22px] text-center text-paper">
-                  <b class="block text-title leading-[1.2] font-semibold tracking-[0.04em] uppercase">{{ gallery.title }}</b>
+                  <b class="block text-title leading-[1.2] font-semibold">{{ gallery.title }}</b>
                   <span class="text-small opacity-85">{{ $t('contacts.assetCount', figures.assets) }}</span>
                 </div>
               </div>
@@ -494,31 +494,31 @@ function megabytes(bytes: number) {
             </div>
 
             <div class="mt-4 flex items-center gap-3">
-              <a class="ml-auto text-small tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline" :href="gallery.url">{{ $t('galleryRecord.openLive') }}</a>
+              <a class="ml-auto text-small tracking-[-0.01em] whitespace-nowrap text-ring no-underline hover:underline" :href="gallery.url">{{ $t('galleryRecord.openLive') }}</a>
             </div>
           </div>
         </div>
 
         <!-- Einstellungen: Pixieset's General Settings shape — a
              sub-navigation in the rail, one labelled section at a time here. -->
-        <div v-else-if="tab === 'einstellungen'" class="flex min-w-0 flex-1 px-8 pt-7 pb-8">
+        <div v-else-if="tab === 'einstellungen'" class="flex min-w-0 flex-1 px-6 pt-7 pb-8">
           <Settings :gallery="gallery" :siblings="siblings" :versions="versions" :lists="lists" :settings-section="settingsSection" />
         </div>
 
-        <div v-else class="min-w-0 flex-1 px-8 pt-7 pb-8">
+        <div v-else class="min-w-0 flex-1 px-6 pt-7 pb-8">
           <!-- Marked/downloaded/viewed: a look backwards, so they sit above
                the sheets that spell the same facts out row by row. -->
           <div class="mb-5 flex">
             <div class="min-w-0 flex-1 px-[18px] shadow-[inset_1px_0_0_var(--rule)] first:pl-0 first:shadow-none">
-              <div class="text-small tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.marked') }}</div>
+              <div class="text-small text-ink-2">{{ $t('galleryRecord.marked') }}</div>
               <div class="mt-[5px] text-title leading-[1.2] font-semibold tracking-[-0.02em] tabular-nums">{{ figures.marked }}</div>
             </div>
             <div class="min-w-0 flex-1 px-[18px] shadow-[inset_1px_0_0_var(--rule)] first:pl-0 first:shadow-none">
-              <div class="text-small tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.downloaded') }}</div>
+              <div class="text-small text-ink-2">{{ $t('galleryRecord.downloaded') }}</div>
               <div class="mt-[5px] text-title leading-[1.2] font-semibold tracking-[-0.02em] tabular-nums">{{ figures.downloaded }}</div>
             </div>
             <div class="min-w-0 flex-1 px-[18px] shadow-[inset_1px_0_0_var(--rule)] first:pl-0 first:shadow-none">
-              <div class="text-small tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.viewed') }}</div>
+              <div class="text-small text-ink-2">{{ $t('galleryRecord.viewed') }}</div>
               <div class="mt-[5px] text-title leading-[1.2] font-semibold tracking-[-0.02em] tabular-nums">{{ figures.viewed }}</div>
             </div>
           </div>
@@ -532,38 +532,38 @@ function megabytes(bytes: number) {
           <table class="mt-4 w-full border-collapse">
             <thead>
               <tr>
-                <th class="px-8 pb-2 text-left text-small leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.who') }}</th>
-                <th class="px-8 pb-2 text-left text-small leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.what') }}</th>
-                <th class="px-8 pb-2 text-left text-small leading-none font-semibold tracking-[0.06em] uppercase text-ink-2 text-right">{{ $t('galleryRecord.when') }}</th>
+                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.who') }}</th>
+                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.what') }}</th>
+                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2 text-right">{{ $t('galleryRecord.when') }}</th>
               </tr>
             </thead>
             <tbody>
               <template v-if="sheet === 'downloads'">
                 <tr v-for="(row, index) in activity.downloads" :key="index">
-                  <td class="px-8 py-2.5 align-baseline text-ui font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_#F0F0F2]">{{ row.who }}</td>
-                  <td class="px-8 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_#F0F0F2] text-ink-2">{{ row.what ?? $t('gallery.everything') }} · {{ $t(`gallery.size.${row.size}`) }}</td>
-                  <td class="px-8 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_#F0F0F2] text-right tabular-nums">{{ day(row.on) }}</td>
+                  <td class="px-6 py-2.5 align-baseline text-ui font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_var(--rule)]">{{ row.who }}</td>
+                  <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-ink-2">{{ row.what ?? $t('gallery.everything') }} · {{ $t(`gallery.size.${row.size}`) }}</td>
+                  <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-right tabular-nums">{{ day(row.on) }}</td>
                 </tr>
               </template>
 
               <template v-else-if="sheet === 'marks'">
                 <tr v-for="(row, index) in activity.marks" :key="index">
-                  <td class="px-8 py-2.5 align-baseline text-ui font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_#F0F0F2]">{{ row.who ?? $t('galleryRecord.guest') }}</td>
-                  <td class="px-8 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_#F0F0F2] text-ink-2">{{ row.what }}</td>
-                  <td class="px-8 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_#F0F0F2] text-right tabular-nums">{{ day(row.on) }}</td>
+                  <td class="px-6 py-2.5 align-baseline text-ui font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_var(--rule)]">{{ row.who ?? $t('galleryRecord.guest') }}</td>
+                  <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-ink-2">{{ row.what }}</td>
+                  <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-right tabular-nums">{{ day(row.on) }}</td>
                 </tr>
                 <tr v-for="(row, index) in activity.comments" :key="`c${index}`">
-                  <td class="px-8 py-2.5 align-baseline text-ui font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_#F0F0F2]">{{ row.who ?? $t('galleryRecord.guest') }}</td>
-                  <td class="px-8 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_#F0F0F2] text-ink-2">{{ row.what }}</td>
-                  <td class="px-8 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_#F0F0F2] text-right tabular-nums">{{ day(row.on) }}</td>
+                  <td class="px-6 py-2.5 align-baseline text-ui font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_var(--rule)]">{{ row.who ?? $t('galleryRecord.guest') }}</td>
+                  <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-ink-2">{{ row.what }}</td>
+                  <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-right tabular-nums">{{ day(row.on) }}</td>
                 </tr>
               </template>
 
               <template v-else>
                 <tr v-for="(row, index) in activity.views" :key="index">
-                  <td class="px-8 py-2.5 align-baseline text-ui font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_#F0F0F2]">{{ row.who ?? $t('galleryRecord.guest') }}</td>
-                  <td class="px-8 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_#F0F0F2] text-ink-2">—</td>
-                  <td class="px-8 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_#F0F0F2] text-right tabular-nums">{{ day(row.on) }}</td>
+                  <td class="px-6 py-2.5 align-baseline text-ui font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_var(--rule)]">{{ row.who ?? $t('galleryRecord.guest') }}</td>
+                  <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-ink-2">—</td>
+                  <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-right tabular-nums">{{ day(row.on) }}</td>
                 </tr>
               </template>
             </tbody>
@@ -575,18 +575,18 @@ function megabytes(bytes: number) {
           <table v-if="builds.length" class="w-full border-collapse">
             <thead>
               <tr>
-                <th class="px-8 pb-2 text-left text-small leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('gallery.sizeLabel') }}</th>
-                <th class="px-8 pb-2 text-left text-small leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.parts') }}</th>
-                <th class="px-8 pb-2 text-left text-small leading-none font-semibold tracking-[0.06em] uppercase text-ink-2 text-right">{{ $t('galleryRecord.size') }}</th>
-                <th class="px-8 pb-2 text-left text-small leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.state') }}</th>
+                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('gallery.sizeLabel') }}</th>
+                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.parts') }}</th>
+                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2 text-right">{{ $t('galleryRecord.size') }}</th>
+                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.state') }}</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="build in builds" :key="build.id">
-                <td class="px-8 py-2.5 align-baseline text-ui font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_#F0F0F2]">{{ $t(`gallery.size.${build.size}`) }}</td>
-                <td class="px-8 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_#F0F0F2] text-ink-2">{{ build.parts }}</td>
-                <td class="px-8 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_#F0F0F2] text-right tabular-nums">{{ megabytes(build.bytes) }}</td>
-                <td class="px-8 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_#F0F0F2] text-ink-2">{{ build.status }}</td>
+                <td class="px-6 py-2.5 align-baseline text-ui font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_var(--rule)]">{{ $t(`gallery.size.${build.size}`) }}</td>
+                <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-ink-2">{{ build.parts }}</td>
+                <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-right tabular-nums">{{ megabytes(build.bytes) }}</td>
+                <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-ink-2">{{ build.status }}</td>
               </tr>
             </tbody>
           </table>

@@ -68,7 +68,7 @@ const inPortal = computed(() => props.packages.filter((pkg) => pkg.portalOffered
                 <TableCell tone="muted" align="right">
                   <template v-if="!pkg.requestedCount">—</template>
                   <template v-else>
-                    {{ pkg.requestedCount }} · <span class="text-action">{{ $t('packages.bookedCount', { count: pkg.bookedCount }) }}</span>
+                    {{ pkg.requestedCount }} · <span class="text-ok">{{ $t('packages.bookedCount', { count: pkg.bookedCount }) }}</span>
                   </template>
                 </TableCell>
               </TableRow>

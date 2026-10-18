@@ -213,7 +213,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
           </div>
         </div>
 
-        <div class="px-8 pt-7 pb-8">
+        <div class="px-6 pt-7 pb-8">
           <!-- Nothing on this screen is entered here: every figure comes out of
                the funnel, so a studio without history gets the funnel's own
                control rather than nine cards reporting no data. -->
@@ -353,7 +353,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                 </span>
                 <span
                   v-if="cashAhead && cashFlow.overdue"
-                  class="ml-auto inline-flex items-center gap-1.5 rounded-full bg-late-bg px-2.5 py-1 text-small leading-none font-semibold text-destructive"
+                  class="ml-auto inline-flex items-center gap-1.5 rounded-[var(--r-sm)] bg-late-bg px-2.5 py-1 text-small leading-none font-semibold text-destructive"
                 >
                   {{ $t('reports.overdue', { amount: formatEurosRounded(cashFlow.overdue) }) }}
                 </span>
@@ -416,7 +416,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               </div>
 
               <div v-if="referrers.length" class="mt-auto flex flex-col gap-2 border-t border-border pt-3.5">
-                <span class="text-small leading-none font-semibold tracking-[0.08em] uppercase text-faint">{{ $t('reports.referrersTitle') }}</span>
+                <span class="text-small leading-none font-semibold text-faint">{{ $t('reports.referrersTitle') }}</span>
                 <ul class="m-0 flex list-none flex-col gap-1.5 p-0">
                   <li v-for="row in referrers" :key="row.name" class="flex items-baseline justify-between gap-3 text-small">
                     <span>{{ row.name }}</span>
@@ -451,16 +451,16 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               <table class="w-full border-collapse text-ui">
                 <thead>
                   <tr>
-                    <th class="pb-2 text-left text-small leading-none font-semibold tracking-[0.06em] uppercase text-faint">{{ $t('reports.contact') }}</th>
-                    <th class="pb-2 text-right text-small leading-none font-semibold tracking-[0.06em] uppercase text-faint">{{ $t('reports.projects') }}</th>
-                    <th class="pb-2 text-right text-small leading-none font-semibold tracking-[0.06em] uppercase text-faint">{{ $t('reports.revenue') }}</th>
+                    <th class="pb-2 text-left text-small leading-none font-semibold text-faint">{{ $t('reports.contact') }}</th>
+                    <th class="pb-2 text-right text-small leading-none font-semibold text-faint">{{ $t('reports.projects') }}</th>
+                    <th class="pb-2 text-right text-small leading-none font-semibold text-faint">{{ $t('reports.revenue') }}</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="row in perContact" :key="row.name">
                     <td class="border-t border-border py-2">
                       <span class="inline-flex items-center gap-2.5">
-                        <span class="inline-flex size-[26px] items-center justify-center rounded-full bg-[var(--accent-bg)] text-small font-semibold text-action">
+                        <span class="inline-flex size-[26px] items-center justify-center rounded-full bg-[var(--accent-bg)] text-small font-semibold text-ring">
                           {{ initials(row.name) }}
                         </span>
                         {{ row.name }}
@@ -534,7 +534,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
 
             <ReportCard class="mb-6 break-inside-avoid" v-if="steps.length" :title="$t('reports.leadTimeTitle')" :sub="$t('reports.leadTimeSub')">
               <template #head>
-                <span v-if="leadTimes.median !== null" class="rounded-full bg-[var(--accent-bg)] px-2.5 py-1 text-small leading-none font-semibold text-action">
+                <span v-if="leadTimes.median !== null" class="rounded-[var(--r-sm)] bg-[var(--accent-bg)] px-2.5 py-1 text-small leading-none font-semibold text-ring">
                   {{ $t('reports.median', { value: leadTimes.median }) }}
                 </span>
               </template>
@@ -556,7 +556,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
 
             <ReportCard class="mb-6 break-inside-avoid" v-if="steps.length" :title="$t('reports.responseTitle')" :sub="$t('reports.responseSub')">
               <template #head>
-                <span v-if="responseTimes.medianHours !== null" class="rounded-full bg-[var(--accent-bg)] px-2.5 py-1 text-small leading-none font-semibold text-action">
+                <span v-if="responseTimes.medianHours !== null" class="rounded-[var(--r-sm)] bg-[var(--accent-bg)] px-2.5 py-1 text-small leading-none font-semibold text-ring">
                   {{ $t('reports.medianHours', { hours: responseTimes.medianHours }) }}
                 </span>
               </template>

@@ -250,8 +250,8 @@ const groupRows = computed(() => {
    goes warm at the one that still needs an answer. */
 const STAGE_DOT = [
     "bg-foreground",
-    "bg-[#5F5F63]",
-    "bg-[#A1A1A6]",
+    "bg-ink-2",
+    "bg-faint",
     "bg-action",
     "bg-mark",
 ];
@@ -302,23 +302,23 @@ const workflowAllowed = computed(() =>
              sichtbar wurde sie erst an ihrer Trennlinie. -->
                 <div
                     v-if="view === 'board'"
-                    class="flex items-stretch gap-2.5 overflow-x-auto px-5 pt-5 pb-7"
+                    class="flex items-stretch gap-6 overflow-x-auto px-6 pt-4 pb-6"
                 >
                     <section
                         v-for="(column, index) in columns"
                         :key="column.stage"
-                        class="flex min-w-0 shrink-0 grow basis-[200px] flex-col gap-2 rounded-xl bg-sunk p-2.5"
-                        :class="target === index && 'bg-sunk-2'"
+                        class="flex min-w-0 shrink-0 grow basis-[200px] flex-col gap-2.5 rounded-[var(--r)]"
+                        :class="target === index && 'bg-[var(--accent-bg)]'"
                         @dragover="onDragOver($event, index, null)"
                         @drop.prevent="onDrop(index)"
                     >
-                        <header class="flex items-baseline gap-1.5 px-1 pt-0.5 pb-1">
+                        <header class="flex items-center gap-1.5 px-1 pt-1 pb-0.5">
                             <b
-                                class="text-small leading-none font-semibold tracking-[0.07em] uppercase text-ink-2"
+                                class="text-[13.5px] leading-none font-semibold text-foreground"
                                 >{{ column.label }}</b
                             >
                             <span
-                                class="ml-auto text-small tabular-nums text-ink-2"
+                                class="ml-auto font-mono text-[12.5px] tabular-nums text-ink-2"
                             >
                                 {{ column.cards.length
                                 }}<template v-if="column.total">
@@ -336,11 +336,11 @@ const workflowAllowed = computed(() =>
                         >
                             <div
                                 v-if="target === index && insertAt === row"
-                                class="-mx-1.5 h-0.5 rounded-[1px] bg-action"
+                                class="-mx-1.5 h-0.5 rounded-[1px] bg-ring"
                             />
 
                             <Link
-                                class="relative block cursor-grab rounded-lg border border-border bg-paper px-2.5 py-[9px] text-inherit no-underline transition-[background,border-color] duration-[120ms] ease-out hover:border-line-hover"
+                                class="relative block cursor-grab rounded-[var(--r)] bg-paper p-3.5 text-inherit no-underline shadow-card transition-[background] duration-[120ms] ease-out hover:bg-accent"
                                 :class="
                                     moving?.id === card.id && 'cursor-grabbing'
                                 "
@@ -409,10 +409,10 @@ const workflowAllowed = computed(() =>
                      liegt, sind die beiden Zahlen, nach denen die
                      naechste Karte ausgesucht wird. -->
                                 <span
-                                    class="mt-[9px] flex items-center gap-2.5 border-t border-sunk-2 pt-2"
+                                    class="mt-2.5 flex items-center gap-2.5"
                                 >
                                     <span
-                                        class="text-small leading-none font-semibold tracking-[-0.02em] tabular-nums"
+                                        class="font-mono text-small leading-none font-medium tabular-nums"
                                     >
                                         {{
                                             card.value === null
@@ -443,12 +443,12 @@ const workflowAllowed = computed(() =>
                 <!-- List — grouped by who owes the next move, not by stage. A board
              shows where something stands, a table shows what is next. -->
                 <template v-else>
-                <div class="flex flex-wrap items-center gap-4 px-8 pt-4.5">
+                <div class="flex flex-wrap items-center gap-4 px-6 pt-4.5">
                     <div class="flex flex-wrap gap-1.5">
                         <button
                             v-for="option in pills"
                             :key="option.key"
-                            class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-pill)] px-3 py-1.5 text-small"
+                            class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] px-3 py-1.5 text-small"
                             :class="stage === option.key ? 'bg-foreground text-paper' : 'bg-sunk text-foreground'"
                             type="button"
                             :aria-pressed="stage === option.key"
@@ -464,7 +464,7 @@ const workflowAllowed = computed(() =>
                             <span class="mx-1 self-center h-[18px] w-px bg-rule" />
 
                             <button
-                                class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-pill)] bg-no-repeat bg-[length:12px_12px] bg-[position:12px_center] py-1.5 pr-3 pl-[28px] text-small"
+                                class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] bg-no-repeat bg-[length:12px_12px] bg-[position:12px_center] py-1.5 pr-3 pl-[28px] text-small"
                                 :class="
                                     onlyStale
                                         ? 'bg-due-bg bg-icon-clock-due font-medium text-due'
@@ -522,7 +522,7 @@ const workflowAllowed = computed(() =>
                                     }}
                                     <span
                                         v-if="card.conflicts.length"
-                                        class="text-action"
+                                        class="text-due"
                                     >
                                         · {{ $t("board.dateDoubled") }}</span
                                     >

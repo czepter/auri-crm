@@ -43,8 +43,13 @@
   --color-destructive: var(--late);
   --color-destructive-foreground: var(--bg);
   --color-border: var(--line);
-  --color-input: var(--line);
-  --color-ring: var(--accent);
+  /* The admin splits --input and --ring from --line and --accent
+     (crm.css); the portal does not, and falls back. */
+  --color-input: var(--input, var(--line));
+  --color-ring: var(--ring, var(--accent));
+
+  /* crm.css's card shadow as `shadow-card`; the admin's only surface depth. */
+  --shadow-card: var(--card-shadow);
 
   /* No shadcn name means these two, but the controls need them: --faint is
      placeholder and micro-label text, --line-hover the border a field takes

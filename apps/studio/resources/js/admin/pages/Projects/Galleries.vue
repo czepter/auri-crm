@@ -67,7 +67,7 @@ function day(iso: string | null) {
                 }}
               </span>
             </div>
-            <span :class="['flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold tracking-[0.04em] uppercase', TONE[gallery.state]]">
+            <span :class="['flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold', TONE[gallery.state]]">
               {{ $t(`project.galleryState.${gallery.state}`) }}
             </span>
           </div>

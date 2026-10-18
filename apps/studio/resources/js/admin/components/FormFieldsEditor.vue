@@ -127,8 +127,8 @@ function optionsHint(type: string): string {
           <div class="min-w-0 flex-1">
             <div class="text-small leading-[1.4] font-medium">{{ field.label || $t('formTemplates.untitled') }}</div>
             <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
-              <span class="block rounded-[5px] bg-muted px-[7px] py-0.5 text-small leading-[1.5] font-semibold tracking-[0.05em] uppercase text-muted-foreground">{{ typeLabel(field.type) }}</span>
-              <span v-if="field.required" class="block rounded-[5px] bg-muted px-[7px] py-0.5 text-small leading-[1.5] font-semibold tracking-[0.05em] uppercase text-muted-foreground">{{ $t('formTemplates.requiredChip') }}</span>
+              <span class="block rounded-[5px] bg-muted px-[7px] py-0.5 text-small leading-[1.5] font-semibold text-muted-foreground">{{ typeLabel(field.type) }}</span>
+              <span v-if="field.required" class="block rounded-[5px] bg-muted px-[7px] py-0.5 text-small leading-[1.5] font-semibold text-muted-foreground">{{ $t('formTemplates.requiredChip') }}</span>
               <span v-if="(field.type === 'select' || field.type === 'file' || field.type === 'group_photos') && field.optionsText" class="text-small leading-[1.5] text-faint">{{ field.optionsText.split('\n').filter(Boolean).join(', ') }}</span>
               <span v-if="field.type === 'name_list'" class="text-small leading-[1.5] text-faint">{{ $t('formTemplates.nameListHint') }}</span>
             </div>

@@ -128,7 +128,7 @@ function day(value: string | null): string {
     <ProjectShell :header="header" active="documents" child="contract">
       <template #rail>
         <Rail v-if="contract">
-          <h3 class="m-0 text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">
+          <h3 class="m-0 text-small leading-none font-semibold text-faint">
             {{ $t('project.contractSigners') }}
           </h3>
 
@@ -171,7 +171,7 @@ function day(value: string | null): string {
             </Button>
           </form>
 
-          <h3 class="mt-7 m-0 text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">
+          <h3 class="mt-7 m-0 text-small leading-none font-semibold text-faint">
             {{ $t('project.contractDeadline') }}
           </h3>
 
@@ -182,7 +182,7 @@ function day(value: string | null): string {
             @update:model-value="setDeadline"
           />
 
-          <h3 class="mt-7 m-0 text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">
+          <h3 class="mt-7 m-0 text-small leading-none font-semibold text-faint">
             {{ $t('project.contractVersions') }}
           </h3>
 
@@ -224,13 +224,13 @@ function day(value: string | null): string {
         <div class="mt-4 grid min-h-0 grid-cols-[minmax(0,1fr)_7px_minmax(0,1fr)] gap-0 max-[1100px]:grid-cols-[minmax(0,1fr)]">
           <section class="flex min-w-0 flex-col">
             <div class="flex items-center gap-2.5 border-b border-border pb-2.5">
-              <span class="mb-[5px] text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('documentTemplates.body') }}</span>
+              <span class="mb-[5px] text-small leading-none font-semibold text-faint">{{ $t('documentTemplates.body') }}</span>
               <span class="ml-auto text-small leading-[1.45] text-faint">{{ $t('documentTemplates.bodyHint') }}</span>
             </div>
             <div class="mx-auto mt-6 w-full max-w-[520px] rounded-[2px] border border-border bg-white px-10 pb-10">
-              <div class="-mx-10 mb-6 border-b border-dashed border-line-hover bg-[#FCFBFA] px-3 py-[9px] text-small leading-[1.4] font-medium tracking-[0.06em] uppercase text-faint">{{ $t('documentTemplates.letterhead') }}</div>
+              <div class="-mx-10 mb-6 border-b border-dashed border-line-hover bg-sunk px-3 py-[9px] text-small leading-[1.4] font-medium text-faint">{{ $t('documentTemplates.letterhead') }}</div>
               <DocumentEditor :key="contract.id" v-model="doc" :palette="palette" :merge-fields="mergeFields" />
-              <div class="-mx-10 -mb-10 mt-6 border-t border-dashed border-line-hover bg-[#FCFBFA] px-3 py-[9px] text-small leading-[1.4] font-medium tracking-[0.06em] uppercase text-faint">{{ $t('documentTemplates.footer') }}</div>
+              <div class="-mx-10 -mb-10 mt-6 border-t border-dashed border-line-hover bg-sunk px-3 py-[9px] text-small leading-[1.4] font-medium text-faint">{{ $t('documentTemplates.footer') }}</div>
             </div>
           </section>
 

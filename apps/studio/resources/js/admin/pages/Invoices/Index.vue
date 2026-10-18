@@ -59,7 +59,7 @@ const shown = computed(() => {
         </PageHead>
 
         <template v-if="invoices.length">
-          <div class="flex flex-wrap items-center gap-3 px-8 pt-4.5">
+          <div class="flex flex-wrap items-center gap-3 px-6 pt-4.5">
             <Input v-model="query" class="h-8 w-64" type="search" :placeholder="$t('invoicesOverview.searchPlaceholder')" />
             <ChoiceGroup v-model="filter" variant="segmented" :options="filters" />
           </div>

@@ -35,13 +35,13 @@ function save(rangeId: string) {
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('settings.kicker')" :title="$t('settings.numberingTitle')" />
 
-        <div class="px-8 pt-7 pb-8">
+        <div class="px-6 pt-7 pb-8">
           <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
             <SettingsNav active="numbering" />
 
             <div class="max-w-[620px] min-w-0 flex-1">
               <div v-for="range in ranges" :key="range.id" class="mt-8 first-of-type:mt-6">
-                <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ range.documentTypeLabel }}</div>
+                <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ range.documentTypeLabel }}</div>
 
                 <form :id="`number-range-form-${range.id}`" @submit.prevent="save(range.id)">
                   <div class="mb-6 grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-6 gap-y-4">

@@ -144,11 +144,11 @@ function submit() {
           </Field>
 
           <Field wide :label="$t('project.taskDue')" :error="form.errors.anchor ?? form.errors.due_on">
-            <span class="inline-flex w-fit gap-0.5 rounded-[var(--r-pill)] bg-sunk-2 p-0.5">
+            <span class="inline-flex w-fit gap-0.5 rounded-lg bg-sunk p-[3px]">
               <button
                 v-for="option in (['fixed', 'anchor'] as const)"
                 :key="option"
-                class="cursor-pointer rounded-[var(--r-pill)] px-[11px] py-1 text-small leading-none"
+                class="cursor-pointer rounded-[var(--r-sm)] px-[11px] py-1 text-small leading-none"
                 :class="mode === option ? 'bg-paper font-semibold' : 'text-ink-2'"
                 type="button"
                 @click="mode = option"
