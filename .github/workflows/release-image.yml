@@ -7,21 +7,11 @@ name: Release images
 # sized for neither. Here the build is already cached, already tested by ci.yml
 # on the same commit, and the deploy is a pull.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apps/**'
-      - 'packages/**'
-      - 'docker/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'pnpm-workspace.yaml'
-      - '.dockerignore'
-      - '.github/workflows/release-image.yml'
-  # A published release is what names a deployable version. Its own trigger
-  # rather than `push: tags:` because a tag push carries no changed files, so
-  # the paths filter above would skip it — and the filter cannot be set per
-  # trigger inside one `push` block.
+  # A published release is what names a deployable version, and the only
+  # build production pulls. A push to main used to build too: the same commit
+  # twice per release, and the self-hosted runners share a host whose memory
+  # two overlapping builds exhaust. A branch image for staging is a manual
+  # workflow_dispatch.
   release:
     types: [published]
   workflow_dispatch:
@@ -96,7 +86,7 @@ jobs:
           # SENTRY_RELEASE tags a GlitchTip event with the build it came from,
           # so it is the commit. APP_VERSION is what the running app calls
           # itself: the release tag where there is one, otherwise the branch —
-          # `github.event.release.tag_name` is empty on a push and falls
+          # `github.event.release.tag_name` is empty on a dispatch and falls
           # through, so a branch build reads `dev` — which config/app.php
           # documents as not being a version at all.
           build-args: |

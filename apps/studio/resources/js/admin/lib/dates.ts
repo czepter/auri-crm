@@ -18,6 +18,16 @@ export function shiftDate(from: Date, span: { weeks?: number; months?: number })
   return isoDate(date)
 }
 
+/** Sieben Tage ab einem YYYY-MM-DD. Mittags geparst, weil new Date('2026-10-19') UTC liest und westlich davon auf den Vortag fällt. */
+export function weekFrom(iso: string): string[] {
+  return Array.from({ length: 7 }, (_, offset) => {
+    const date = new Date(`${iso}T12:00:00`)
+    date.setDate(date.getDate() + offset)
+
+    return isoDate(date)
+  })
+}
+
 /**
  * Tage bis zu einem YYYY-MM-DD. NaN, solange das Feld leer oder halb getippt
  * ist — die Form wird geprüft, weil Date.parse('2026-08-') den Ersten des
