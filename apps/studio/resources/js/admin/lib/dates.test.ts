@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dayWithWeekday, daysUntil, isoDate, monthDate, relativeDate, shiftDate } from './dates'
+import { dayWithWeekday, daysUntil, isoDate, monthDate, relativeDate, shiftDate, weekFrom } from './dates'
 
 describe('shiftDate', () => {
   it('adds weeks as days', () => {
@@ -70,5 +70,13 @@ describe('monthDate', () => {
 
   it('bleibt leer ohne Datum', () => {
     expect(monthDate(null)).toBe('')
+  })
+})
+
+describe('weekFrom', () => {
+  it('runs seven days across a month end and the October clock change', () => {
+    expect(weekFrom('2026-10-28')).toEqual(['2026-10-28', '2026-10-29', '2026-10-30', '2026-10-31', '2026-11-01', '2026-11-02', '2026-11-03'])
+    expect(weekFrom('2026-10-24')[1]).toBe('2026-10-25')
+    expect(weekFrom('2026-10-24')[2]).toBe('2026-10-26')
   })
 })

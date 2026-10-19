@@ -15,6 +15,7 @@ import { TimePicker } from '@/ui/time-picker'
 const props = defineProps<{
   project: App.Crm.Data.CaseSuggestionData | null
   kinds: string[]
+  date: string | null
 }>()
 
 const project = ref(props.project)
@@ -22,7 +23,7 @@ const project = ref(props.project)
 const form = useForm({
   kind: '',
   label: '',
-  date: '',
+  date: props.date ?? '',
   call_time: '',
   end_time: '',
   venue_name: '',
@@ -43,6 +44,7 @@ watch(
     const response = await fetch(`/verfuegbarkeit?datum=${date}`, { headers: { Accept: 'application/json' } })
     conflicts.value = (await response.json()).conflicts
   },
+  { immediate: true },
 )
 
 function submit() {
