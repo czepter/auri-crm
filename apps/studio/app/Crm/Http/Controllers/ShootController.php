@@ -29,6 +29,7 @@ class ShootController extends Controller
     {
         $viewer = $request->user('staff');
         abort_unless($viewer->can(Capability::ManageShoots->value), 403);
+        $request->validate(['datum' => ['nullable', 'date_format:Y-m-d']]);
 
         $case = $request->filled('projekt')
             ? ClientCase::query()->visibleTo($viewer)->where('public_id', $request->query('projekt'))->first()
@@ -37,6 +38,7 @@ class ShootController extends Controller
         return Inertia::render('Shoots/Create', [
             'project' => $case ? CaseSuggestionData::fromModel($case) : null,
             'kinds' => Shoot::kindSuggestions(),
+            'date' => $request->query('datum'),
         ]);
     }
 

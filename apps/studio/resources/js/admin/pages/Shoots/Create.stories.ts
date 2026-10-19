@@ -6,6 +6,7 @@ const meta = {
   component: Create,
   parameters: { layout: 'fullscreen', url: '/shootings/neu' },
   args: {
+    date: null,
     project: {
       id: 'p-soehnke',
       name: 'Söhnke, Britta & Nils',

@@ -25,6 +25,10 @@ it('carries the chosen project, never an integer identifier', function (string $
         ->and($chosen['isBooked'])->toBeFalse();
 })->with(['/shootings/neu', '/angebote/neu', '/frageboegen/neu']);
 
+it('seeds the shoot date from the dashboard week', function () {
+    expect(props('/shootings/neu?datum=2026-10-21')['date'])->toBe('2026-10-21');
+});
+
 it('leads a shoot created from the wizard to its project', function () {
     $project = ClientCase::factory()->create();
 
