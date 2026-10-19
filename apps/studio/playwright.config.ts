@@ -102,7 +102,11 @@ export default defineConfig({
       // while that page is still pulling assets waits behind them — which is
       // what gallery-record's five-second assertion on a minted link kept
       // losing to on CI. Respected only alongside --no-reload above.
-      env: { APP_SURFACE: 'admin', PHP_CLI_SERVER_WORKERS: '4', PORTAL_URL: 'http://localhost:8001', ...clock },
+      // Four were too few once CI ran five Playwright workers: signIn's
+      // POST /login and POST /auth/mfa sat queued (nprogress still busy) past
+      // the five-second toHaveURL in run 39224109581.
+      // ponytail: sized for ~5 browsers; raise with the Playwright worker count.
+      env: { APP_SURFACE: 'admin', PHP_CLI_SERVER_WORKERS: '16', PORTAL_URL: 'http://localhost:8001', ...clock },
       timeout: 120_000,
     },
     ...(process.env.CI ? [portalServer, ...mcpServers] : []),
