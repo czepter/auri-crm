@@ -7,6 +7,7 @@ use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Documents\Support\MergeFieldResolver;
 use App\Http\Controllers\Controller;
+use App\Portal\Support\PortalSettings;
 use App\Settings\Support\StudioSettingsResolver;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -23,11 +24,9 @@ use Inertia\Response;
  */
 class LegalTextController extends Controller
 {
-    public const TEXTS = ['impressum', 'datenschutz', 'agb', 'widerruf'];
-
     public function __invoke(string $text, StudioSettingsResolver $settings, DocumentMergeDataBuilder $merge): Response
     {
-        abort_unless(in_array($text, self::TEXTS, true), 404);
+        abort_unless(in_array($text, PortalSettings::LEGAL_TEXTS, true), 404);
 
         $family = $settings->legalFamily($text);
 

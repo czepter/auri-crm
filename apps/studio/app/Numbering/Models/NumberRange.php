@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Settings\Models;
+namespace App\Numbering\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Numbering\Enums\DocumentType;
 use App\Numbering\Enums\NumberRangeResetRule;
-use App\Numbering\Models\NumberCounter;
 use Database\Factories\Settings\NumberRangeFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

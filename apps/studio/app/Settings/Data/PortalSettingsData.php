@@ -2,7 +2,7 @@
 
 namespace App\Settings\Data;
 
-use App\Portal\Http\Controllers\LegalTextController;
+use App\Portal\Support\PortalSettings;
 use App\Settings\Support\StudioSettingsResolver;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -61,7 +61,7 @@ class PortalSettingsData extends Data
             widerrufUrl: $settings->legalTextUrl('widerruf'),
             agbAttach: $settings->legalAttach('agb'),
             widerrufAttach: $settings->legalAttach('widerruf'),
-            legalFamilies: collect(LegalTextController::TEXTS)
+            legalFamilies: collect(PortalSettings::LEGAL_TEXTS)
                 ->mapWithKeys(fn (string $text) => [$text => $settings->legalFamily($text)])
                 ->all(),
             acceptQuotesEnabled: $settings->acceptQuotesEnabled(),

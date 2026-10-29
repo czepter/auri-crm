@@ -8,7 +8,7 @@ use App\Concerns\AuthorizesStaffSettings;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Http\Controllers\Controller;
-use App\Portal\Http\Controllers\LegalTextController;
+use App\Portal\Support\PortalSettings;
 use App\Settings\Data\PortalSettingsData;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Enums\FontPair;
@@ -103,7 +103,7 @@ class PortalSettingsController extends Controller
                 'accentColor' => preg_match('/^#[0-9A-Fa-f]{6}$/', (string) $request->query('akzent')) ? $request->query('akzent') : $settings->attributes()['accent_color'],
                 'address' => $request->has('adresse') ? Str::limit(trim((string) $request->query('adresse')), 200, '') : $settings->postalLine(),
             ],
-            'portalLegal' => collect(LegalTextController::TEXTS)
+            'portalLegal' => collect(PortalSettings::LEGAL_TEXTS)
                 ->mapWithKeys(fn (string $text) => [$text.'Url' => $settings->legalUrl($text)])
                 ->all(),
             'portalNav' => null,

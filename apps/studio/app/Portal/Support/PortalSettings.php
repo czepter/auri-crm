@@ -28,6 +28,8 @@ use App\Settings\Support\StudioSettingsResolver;
  */
 class PortalSettings
 {
+    public const LEGAL_TEXTS = ['impressum', 'datenschutz', 'agb', 'widerruf'];
+
     /** Messaging is three states, not a switch — see P-04 (#223). */
     public const MESSAGING_OFF = 'off';
 

@@ -3,7 +3,7 @@
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
 use App\Numbering\Models\NumberCounter;
-use App\Settings\Models\NumberRange;
+use App\Numbering\Models\NumberRange;
 use App\Settings\Support\StudioSettingsResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\UniqueConstraintViolationException;

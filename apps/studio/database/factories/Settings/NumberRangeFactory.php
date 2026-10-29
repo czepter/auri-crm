@@ -4,7 +4,7 @@ namespace Database\Factories\Settings;
 
 use App\Numbering\Enums\DocumentType;
 use App\Numbering\Enums\NumberRangeResetRule;
-use App\Settings\Models\NumberRange;
+use App\Numbering\Models\NumberRange;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 

@@ -3,7 +3,7 @@
 namespace App\Settings\Data;
 
 use App\Numbering\Actions\AllocateDocumentNumber;
-use App\Settings\Models\NumberRange;
+use App\Numbering\Models\NumberRange;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 

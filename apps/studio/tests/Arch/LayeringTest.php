@@ -72,7 +72,6 @@ $baseline = [
         'App\Quotes\Models\Quote',
         'App\Quotes\Notifications\QuoteSent',
         'App\Quotes\Support\SampleQuoteData',
-        'App\Settings\Data\PortalSettingsData',
         'App\Settings\Support\StudioSettingsResolver',
     ],
     565 => [

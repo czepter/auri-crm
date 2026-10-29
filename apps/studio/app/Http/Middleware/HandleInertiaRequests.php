@@ -10,7 +10,6 @@ use App\Documents\Support\DocumentBlockCatalog;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Help\Support\HelpIndex;
 use App\Models\User;
-use App\Portal\Http\Controllers\LegalTextController;
 use App\Portal\Support\PortalSettings;
 use App\Releases\Support\ReleaseLog;
 use App\Settings\Support\StudioSettingsResolver;
@@ -159,7 +158,7 @@ class HandleInertiaRequests extends Middleware
                 ],
                 // Je Text die fremde Adresse, die eigene Seite oder nichts —
                 // siehe StudioSettingsResolver::legalUrl().
-                'portalLegal' => fn () => collect(LegalTextController::TEXTS)
+                'portalLegal' => fn () => collect(PortalSettings::LEGAL_TEXTS)
                     ->mapWithKeys(fn (string $text) => [
                         $text.'Url' => app(StudioSettingsResolver::class)->legalUrl($text),
                     ])

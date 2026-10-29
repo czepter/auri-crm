@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Settings\Actions;
+namespace App\Numbering\Actions;
 
 use App\Models\User;
 use App\Numbering\Enums\NumberRangeResetRule;
-use App\Settings\Models\NumberRange;
+use App\Numbering\Models\NumberRange;
 use App\Support\AuditLogger;
 use Illuminate\Validation\ValidationException;
 

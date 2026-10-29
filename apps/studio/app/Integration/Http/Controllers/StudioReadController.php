@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Integration\Data\StudioSettingsReadData;
 use App\Models\StudioClosure;
 use App\Numbering\Actions\AllocateDocumentNumber;
+use App\Numbering\Models\NumberRange;
 use App\Settings\Data\NumberRangeData;
 use App\Settings\Data\StudioClosureData;
-use App\Settings\Models\NumberRange;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\JsonResponse;
 

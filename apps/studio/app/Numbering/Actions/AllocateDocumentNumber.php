@@ -5,7 +5,7 @@ namespace App\Numbering\Actions;
 use App\Numbering\Enums\DocumentType;
 use App\Numbering\Enums\NumberRangeResetRule;
 use App\Numbering\Models\NumberCounter;
-use App\Settings\Models\NumberRange;
+use App\Numbering\Models\NumberRange;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Support\Facades\DB;
 
