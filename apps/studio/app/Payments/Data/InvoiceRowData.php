@@ -2,6 +2,7 @@
 
 namespace App\Payments\Data;
 
+use App\Documents\Data\DocumentViewData;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\CreditNote;
 use App\Payments\Models\Invoice;
@@ -15,6 +16,7 @@ class InvoiceRowData extends Data
 {
     /**
      * @param  list<array{id: string, remaining: int}>  $openInstallments
+     * @param  list<DocumentViewData>  $views
      * @param  list<array{id: string, number: string, amount: int, issuedOn: string, hasDocument: bool}>  $creditNotes
      */
     public function __construct(
@@ -32,6 +34,7 @@ class InvoiceRowData extends Data
         public string $statusLabel,
         public ?string $sentOn,
         public ?string $viewedOn,
+        public array $views,
         public bool $hasDocument,
         public array $openInstallments,
         public array $creditNotes,
@@ -53,7 +56,8 @@ class InvoiceRowData extends Data
             status: $invoice->status(),
             statusLabel: __("payments.invoiceStatus.{$invoice->status()}"),
             sentOn: $invoice->sent_at?->format('Y-m-d'),
-            viewedOn: $invoice->viewed_at?->format('Y-m-d'),
+            viewedOn: $invoice->views->where('counts', true)->min('viewed_at')?->format('Y-m-d'),
+            views: $invoice->views->sortByDesc('viewed_at')->map(DocumentViewData::fromModel(...))->values()->all(),
             hasDocument: $invoice->pdf_path !== null,
             openInstallments: $invoice->isCancelled() ? [] : $invoice->installments
                 ->filter(fn (PaymentInstallment $row) => in_array($row->status, PaymentInstallmentStatus::open(), true))

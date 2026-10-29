@@ -2,6 +2,7 @@
 
 namespace App\Portal\Http\Controllers;
 
+use App\Documents\Actions\RecordDocumentView;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
@@ -30,7 +31,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class QuoteController extends Controller
 {
-    public function show(string $case, StudioSettingsResolver $settings): Response
+    public function show(Request $request, string $case, StudioSettingsResolver $settings, RecordDocumentView $record): Response
     {
         $contact = auth('portal')->user();
 
@@ -38,6 +39,10 @@ class QuoteController extends Controller
             ->with(['latestQuote.items', 'latestQuote.predecessor', 'latestQuote.paymentStages'])
             ->firstOrFail();
         $quote = $found->latestQuote;
+
+        if ($quote !== null) {
+            $record($request, $quote, 'portal');
+        }
 
         return Inertia::render('Quotes/Show', [
             'contact' => ['name' => $contact->name],
