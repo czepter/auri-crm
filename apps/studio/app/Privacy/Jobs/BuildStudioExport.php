@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Settings\Jobs;
+namespace App\Privacy\Jobs;
 
-use App\Settings\Actions\PackStudioExport;
-use App\Settings\Models\StudioExport;
+use App\Privacy\Actions\PackStudioExport;
+use App\Privacy\Models\StudioExport;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;

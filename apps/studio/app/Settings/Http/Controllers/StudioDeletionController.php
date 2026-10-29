@@ -5,7 +5,7 @@ namespace App\Settings\Http\Controllers;
 use App\Enums\StaffRole;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
-use App\Settings\Actions\StudioDeletionConfirmation;
+use App\Privacy\Actions\StudioDeletionConfirmation;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

@@ -2,10 +2,11 @@
 
 use App\Crm\Models\Contact;
 use App\Crm\Models\Task;
+use App\Enums\StaffRole;
 use App\Notifications\Studio\DsgvoRequested;
-use App\Portal\Models\DsgvoRequest;
 use App\Portal\Models\EmailChange;
 use App\Portal\Notifications\EmailChangeConfirmation;
+use App\Privacy\Models\DsgvoRequest;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -162,7 +163,7 @@ it('closes the request when the studio answers it', function () {
     $contact = Contact::factory()->create();
     DsgvoRequest::create(['contact_id' => $contact->id, 'kind' => DsgvoRequest::EXPORT]);
 
-    test()->actingAs(staffMember(App\Enums\StaffRole::Admin), 'staff')
+    test()->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get("/kontakte/{$contact->public_id}/dsgvo/export")
         ->assertOk();
 
@@ -196,7 +197,7 @@ it('completes the task when the studio answers the request', function () {
     $task = Task::factory()->create(['case_id' => null, 'contact_id' => $contact->id]);
     DsgvoRequest::create(['contact_id' => $contact->id, 'kind' => DsgvoRequest::EXPORT, 'task_id' => $task->id]);
 
-    test()->actingAs(staffMember(App\Enums\StaffRole::Admin), 'staff')
+    test()->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get("/kontakte/{$contact->public_id}/dsgvo/export")
         ->assertOk();
 

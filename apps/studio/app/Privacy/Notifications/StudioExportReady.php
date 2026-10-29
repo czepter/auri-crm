@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Settings\Notifications;
+namespace App\Privacy\Notifications;
 
 use App\Notifications\Contracts\Transactional;
 use Illuminate\Notifications\Notification;

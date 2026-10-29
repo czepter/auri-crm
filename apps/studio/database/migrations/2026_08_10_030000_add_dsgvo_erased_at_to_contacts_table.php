@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('contacts', function (Blueprint $table) {
-            // Null until App\Crm\Actions\EraseContactDsgvo runs (X-04). The
+            // Null until App\Privacy\Actions\EraseContactDsgvo runs (X-04). The
             // row itself is never dropped — contract_signatures.contact_id
             // and quotes.accepted_by_contact_id both restrictOnDelete a
             // Contact who has signed or accepted something (see those

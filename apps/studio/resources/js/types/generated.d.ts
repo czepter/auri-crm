@@ -947,6 +947,32 @@ export type PaymentInstallmentStatus = 'scheduled' | 'paid' | 'invoiced' | 'canc
 export type SettledVia = 'stripe' | 'transfer' | 'manual';
 }
 }
+namespace Privacy {
+namespace Data {
+export type RetentionCandidateData = {
+id: string,
+name: string,
+type: string,
+text: string | null,
+outcome: string,
+outcomeLabel: string,
+idleMonths: number,
+invoiced: boolean,
+leads: number,
+messages: number,
+offers: number,
+galleries: number,
+};
+export type RetentionPolicyData = {
+name: boolean,
+text: boolean,
+messages: boolean,
+offers: boolean,
+galleries: boolean,
+order: boolean,
+};
+}
+}
 namespace Quotes {
 namespace Data {
 export type QuoteData = {
@@ -1097,28 +1123,6 @@ contactAvatarUrl: string | null,
 contactPhone: string | null,
 contactEmail: string | null,
 contactResponseTime: string | null,
-};
-export type RetentionCandidateData = {
-id: string,
-name: string,
-type: string,
-text: string | null,
-outcome: string,
-outcomeLabel: string,
-idleMonths: number,
-invoiced: boolean,
-leads: number,
-messages: number,
-offers: number,
-galleries: number,
-};
-export type RetentionPolicyData = {
-name: boolean,
-text: boolean,
-messages: boolean,
-offers: boolean,
-galleries: boolean,
-order: boolean,
 };
 export type StudioClosureData = {
 id: string,

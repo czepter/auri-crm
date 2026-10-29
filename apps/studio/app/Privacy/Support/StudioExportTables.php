@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Settings\Support;
+namespace App\Privacy\Support;
 
 /**
  * Jede Tabelle mit tenant_id steht hier, im Export oder mit Grund nicht.

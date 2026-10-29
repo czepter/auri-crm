@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Settings\Actions;
+namespace App\Privacy\Actions;
 
 use App\Models\StudioSettings;
 use App\Settings\Jobs\ReadStudioSettingsJob;

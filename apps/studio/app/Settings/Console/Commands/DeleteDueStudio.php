@@ -6,7 +6,7 @@ use App\Enums\StaffRole;
 use App\Models\User;
 use App\Notifications\NotificationService;
 use App\Notifications\Studio\StudioDeletionReminder;
-use App\Settings\Actions\DeleteTenant;
+use App\Privacy\Actions\DeleteTenant;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Console\Command;
 

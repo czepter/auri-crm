@@ -7,13 +7,13 @@ use App\Automation\Enums\AutomationOffsetDirection;
 use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Enums\AutomationRunStatus;
 use App\Automation\Models\AutomationRule;
-use App\Crm\Actions\EraseContactDsgvo;
 use App\Crm\Actions\RemindDueTasks;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Task;
 use App\Notifications\Enums\NotificationMode;
 use App\Notifications\Studio\TasksDue;
 use App\Notifications\Support\NotificationPreferences;
+use App\Privacy\Actions\EraseContactDsgvo;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 

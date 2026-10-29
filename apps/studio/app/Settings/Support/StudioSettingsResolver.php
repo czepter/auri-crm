@@ -6,7 +6,7 @@ use App\Gallery\Models\GalleryPreset;
 use App\Gallery\Support\ImageVariant;
 use App\Models\StudioSettings;
 use App\Models\User;
-use App\Settings\Data\RetentionPolicyData;
+use App\Privacy\Data\RetentionPolicyData;
 use App\Settings\Enums\FontPair;
 use App\Support\AuditLogger;
 use Carbon\CarbonImmutable;

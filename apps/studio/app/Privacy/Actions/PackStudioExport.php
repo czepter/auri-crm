@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Settings\Actions;
+namespace App\Privacy\Actions;
 
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
@@ -13,12 +13,12 @@ use App\Notifications\NotificationService;
 use App\Payments\Models\CreditNote;
 use App\Payments\Models\Invoice;
 use App\Payments\Support\InvoiceFigures;
+use App\Privacy\Models\StudioExport;
+use App\Privacy\Notifications\StudioExportReady;
 use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Settings\Enums\StudioExportKind;
-use App\Settings\Models\StudioExport;
-use App\Settings\Notifications\StudioExportReady;
 use App\Settings\Support\StudioRecords;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\LiveUpdate;

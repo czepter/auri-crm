@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Settings\Support;
+namespace App\Privacy\Support;
 
 use App\Crm\Enums\LeadOutcome;
 use App\Crm\Models\Contact;
@@ -9,9 +9,9 @@ use App\Crm\Models\Lead;
 use App\Engagement\Models\Thread;
 use App\Gallery\Models\Gallery;
 use App\Payments\Models\Invoice;
+use App\Privacy\Data\RetentionCandidateData;
 use App\Quotes\Models\Quote;
 use App\Reporting\Support\BookingFunnel;
-use App\Settings\Data\RetentionCandidateData;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;

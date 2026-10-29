@@ -3,7 +3,7 @@
 namespace App\Notifications\Studio;
 
 use App\Crm\Models\ClientCase;
-use App\Portal\Models\DsgvoRequest;
+use App\Privacy\Models\DsgvoRequest;
 
 class DsgvoRequested extends StudioEventNotification
 {

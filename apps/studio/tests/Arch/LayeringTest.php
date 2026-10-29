@@ -68,11 +68,7 @@ $baseline = [
         'App\Quotes\Notifications\QuoteSent',
         'App\Quotes\Support\SampleQuoteData',
         'App\Settings\Data\PortalSettingsData',
-    ],
-    559 => [
-        'App\Crm\Actions\EraseContactDsgvo',
-        'App\Crm\Actions\ExportContactDsgvoData',
-        'App\Settings\Support\RetentionCandidates',
+        'App\Settings\Support\StudioSettingsResolver',
     ],
     563 => [
         'App\Notifications\Actions\BuildMorningBriefing',

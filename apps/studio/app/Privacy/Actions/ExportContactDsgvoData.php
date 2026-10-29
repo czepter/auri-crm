@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Crm\Actions;
+namespace App\Privacy\Actions;
 
 use App\Catalog\Models\ServiceSuggestion;
 use App\Crm\Models\ClientCase;
@@ -19,7 +19,7 @@ use App\Portal\Models\ClientAccess;
 
 /**
  * X-04's read half: everything the studio holds about one Contact, walked
- * out from the same fan-out App\Crm\Actions\EraseContactDsgvo purges —
+ * out from the same fan-out App\Privacy\Actions\EraseContactDsgvo purges —
  * every table one belongs to the other, kept in sync on purpose. public_id
  * only, everywhere: no internal id ever leaves this array, the same rule
  * every Inertia prop in this app already follows.

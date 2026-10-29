@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Settings\Data;
+namespace App\Privacy\Data;
 
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;

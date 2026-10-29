@@ -1,7 +1,7 @@
 <?php
 
 use App\Integration\Models\IdempotencyKey;
-use App\Settings\Models\StudioExport;
+use App\Privacy\Models\StudioExport;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;

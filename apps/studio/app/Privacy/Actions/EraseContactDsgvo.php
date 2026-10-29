@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Crm\Actions;
+namespace App\Privacy\Actions;
 
 use App\Automation\Models\AutomationRun;
 use App\Catalog\Models\ServiceSuggestion;
@@ -23,8 +23,8 @@ use App\Models\User;
 use App\Notifications\Models\InAppNotification;
 use App\Notifications\Models\NotificationPreference;
 use App\Portal\Models\ClientAccess;
+use App\Privacy\Data\RetentionPolicyData;
 use App\Quotes\Models\Quote;
-use App\Settings\Data\RetentionPolicyData;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;

@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Settings\Actions;
+namespace App\Privacy\Actions;
 
 use App\Gallery\Models\Gallery;
 use App\Media\Enums\ZipBuildStatus;
 use App\Models\User;
+use App\Privacy\Jobs\BuildStudioExport;
+use App\Privacy\Models\StudioExport;
 use App\Settings\Enums\StudioExportKind;
-use App\Settings\Jobs\BuildStudioExport;
-use App\Settings\Models\StudioExport;
 use App\Support\AuditLogger;
 
 /**

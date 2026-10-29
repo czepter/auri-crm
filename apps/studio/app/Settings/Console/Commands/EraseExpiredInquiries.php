@@ -2,7 +2,7 @@
 
 namespace App\Settings\Console\Commands;
 
-use App\Settings\Actions\ApplyRetention;
+use App\Privacy\Actions\ApplyRetention;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Console\Command;
 

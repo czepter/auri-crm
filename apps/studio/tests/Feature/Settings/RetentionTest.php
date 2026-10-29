@@ -9,7 +9,7 @@ use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Models\StudioSettings;
 use App\Payments\Models\Invoice;
-use App\Settings\Data\RetentionPolicyData;
+use App\Privacy\Data\RetentionPolicyData;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;

@@ -2,9 +2,9 @@
 
 use App\Catalog\Models\Package;
 use App\Catalog\Models\ServiceSuggestion;
-use App\Crm\Actions\EraseContactDsgvo;
 use App\Crm\Models\Contact;
 use App\Models\User;
+use App\Privacy\Actions\EraseContactDsgvo;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);

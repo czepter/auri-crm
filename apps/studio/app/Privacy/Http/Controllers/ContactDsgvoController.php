@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Crm\Http\Controllers;
+namespace App\Privacy\Http\Controllers;
 
-use App\Crm\Actions\EraseContactDsgvo;
-use App\Crm\Actions\ExportContactDsgvoData;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Task;
 use App\Http\Controllers\Controller;
-use App\Portal\Models\DsgvoRequest;
+use App\Privacy\Actions\EraseContactDsgvo;
+use App\Privacy\Actions\ExportContactDsgvoData;
+use App\Privacy\Models\DsgvoRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 

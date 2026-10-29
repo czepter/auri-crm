@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Settings\Actions;
+namespace App\Privacy\Actions;
 
-use App\Crm\Actions\EraseContactDsgvo;
 use App\Crm\Models\Contact;
 use App\Models\User;
-use App\Settings\Support\RetentionCandidates;
+use App\Privacy\Support\RetentionCandidates;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 

@@ -4,9 +4,9 @@ namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
-use App\Settings\Actions\ApplyRetention;
-use App\Settings\Data\RetentionPolicyData;
-use App\Settings\Support\RetentionCandidates;
+use App\Privacy\Actions\ApplyRetention;
+use App\Privacy\Data\RetentionPolicyData;
+use App\Privacy\Support\RetentionCandidates;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

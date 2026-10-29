@@ -93,7 +93,7 @@ class Contact extends Model implements Authenticatable
         ];
     }
 
-    /** X-04: has App\Crm\Actions\EraseContactDsgvo already scrubbed this row? */
+    /** X-04: has App\Privacy\Actions\EraseContactDsgvo already scrubbed this row? */
     public function isDsgvoErased(): bool
     {
         return $this->dsgvo_erased_at !== null;
