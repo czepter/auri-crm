@@ -46,8 +46,11 @@ class InboxController extends Controller
 
         $secret = $settings->inboundSecret();
         $user = auth('staff')->user();
+        $visible = fn ($query) => $query->whereNull('case_id')
+            ->orWhereIn('case_id', ClientCase::query()->visibleTo($user)->select('cases.id'));
 
         $threads = Thread::query()
+            ->where($visible)
             ->with(['case.primaryShoot', 'latestMessage', 'participants.contact', 'participants.user'])
             ->withExists(['messages as from_mail' => fn ($query) => $query->whereNotNull('contact_id')])
             ->latest()
@@ -78,6 +81,7 @@ class InboxController extends Controller
             'canRotate' => $user?->can(Capability::ManageSettings->value) ?? false,
             'pending' => InboundMessage::query()
                 ->whereIn('state', [InboundMessageState::Triage, InboundMessageState::Quarantined])
+                ->where(fn ($query) => $query->whereNull('thread_id')->orWhereHas('thread', $visible))
                 ->with('thread.case')
                 ->latest()
                 ->limit(100)
@@ -120,6 +124,8 @@ class InboxController extends Controller
                 ->latest('fired_at')
                 ->limit(100)
                 ->get()
+                ->filter(fn (AutomationRun $run) => ($project = FireAutomationRule::projectOf($run->anchorable)) === null
+                    || $user->can('view', $project))
                 ->map(fn (AutomationRun $run) => [
                     'id' => $run->public_id,
                     'subject' => $run->subject,
@@ -129,6 +135,7 @@ class InboxController extends Controller
                 ])
                 ->all(),
             'projects' => ClientCase::query()
+                ->visibleTo($user)
                 ->latest()
                 ->limit(200)
                 ->get()
@@ -138,6 +145,7 @@ class InboxController extends Controller
             // with a client on them. A thread with no contact participant has
             // nobody the mail could have come from.
             'threads' => Thread::query()
+                ->where($visible)
                 ->whereHas('participants', fn ($query) => $query->whereNotNull('contact_id'))
                 ->with('case')
                 ->latest()
@@ -221,7 +229,7 @@ class InboxController extends Controller
      */
     public function close(Thread $thread): RedirectResponse
     {
-        $this->authorizeInbox();
+        $this->authorizeThread($thread);
 
         $thread->forceFill([
             'closed_message_id' => $thread->workState() === 'erledigt' ? null : $thread->latestMessage?->id,
@@ -233,7 +241,7 @@ class InboxController extends Controller
     /** The studio's own reply, from the screen the conversation is read on. */
     public function reply(Request $request, Thread $thread, PostMessage $post): RedirectResponse
     {
-        $this->authorizeInbox();
+        $this->authorizeThread($thread);
 
         $post($thread, auth('staff')->user(), $request->validate([
             'body' => ['required', 'string', 'max:20000'],
@@ -250,10 +258,14 @@ class InboxController extends Controller
     public function attach(Request $request, InboundMessage $inboundMessage, PostMessage $post): RedirectResponse
     {
         $this->authorizeInbox();
+        if ($inboundMessage->thread !== null) {
+            $this->authorizeThread($inboundMessage->thread);
+        }
 
         $validated = $request->validate(['thread' => ['required', 'string']]);
 
         $thread = Thread::query()->where('public_id', $validated['thread'])->firstOrFail();
+        $this->authorizeThread($thread);
 
         $contact = $thread->participants()
             ->whereNotNull('contact_id')
@@ -285,11 +297,14 @@ class InboxController extends Controller
      */
     public function file(Request $request, Thread $thread, AttachThreadToCase $attach): RedirectResponse
     {
-        $this->authorizeInbox();
+        $this->authorizeThread($thread);
 
         $validated = $request->validate(['project' => ['required', 'string']]);
 
-        $attach($thread, ClientCase::query()->where('public_id', $validated['project'])->firstOrFail());
+        $project = ClientCase::query()->where('public_id', $validated['project'])->firstOrFail();
+        $this->authorize('manageMessages', $project);
+
+        $attach($thread, $project);
 
         return back();
     }
@@ -301,6 +316,16 @@ class InboxController extends Controller
         $rotate(auth('staff')->user());
 
         return back();
+    }
+
+    /** Wie ThreadController: ein Thread mit Projekt gehört dessen Crew. */
+    private function authorizeThread(Thread $thread): void
+    {
+        $this->authorizeInbox();
+
+        if ($thread->case !== null) {
+            $this->authorize('manageMessages', $thread->case);
+        }
     }
 
     private function authorizeInbox(): void

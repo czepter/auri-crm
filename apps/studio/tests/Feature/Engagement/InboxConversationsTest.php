@@ -4,6 +4,7 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
+use App\Enums\StaffRole;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -87,4 +88,17 @@ it('answers a thread from the inbox, booking or no booking', function () {
 
     expect($thread->fresh()->latestMessage->body)->toBe('Sehr gern.')
         ->and($thread->fresh()->workState())->toBe('wartet');
+});
+
+it('hides conversations of projects the contributor is not crewed on', function () {
+    $thread = threadWhereLastSpoke('client', 'Fremd');
+    $contributor = staffMember(StaffRole::Contributor);
+
+    $props = $this->actingAs($contributor, 'staff')->get('/posteingang')->assertOk()->viewData('page')['props'];
+
+    expect(collect($props['groups'])->flatMap(fn ($group) => $group['rows'])->pluck('subject')->all())->not->toContain('Fremd')
+        ->and(collect($props['projects'])->pluck('id')->all())->not->toContain($thread->case->public_id);
+
+    $this->post("/posteingang/unterhaltung/{$thread->public_id}/antwort", ['body' => 'Hallo'])->assertForbidden();
+    expect($thread->messages()->where('author_id', $contributor->id)->exists())->toBeFalse();
 });
