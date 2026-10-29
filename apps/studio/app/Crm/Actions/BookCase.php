@@ -5,7 +5,7 @@ namespace App\Crm\Actions;
 use App\Crm\Enums\BookedVia;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
-use App\Crm\Events\ProjectBooked;
+use App\Crm\Events\CaseBooked;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\DB;
  * Risk carried: this ships two sprints before S-06, so every staff role can
  * book a project until role policies land.
  */
-class BookProject
+class BookCase
 {
     public function __construct(
         private readonly AdvanceShootStatus $advance,
@@ -37,7 +37,7 @@ class BookProject
      * fires nothing.
      *
      * $actor is never inferred from the ambient session: the manual button
-     * (ProjectController::book) already names it explicitly, and P-05b's
+     * (CaseController::book) already names it explicitly, and P-05b's
      * listener relies on null staying null even when it runs inside a
      * staff-authenticated request (e.g. the same request in which a staff
      * member marked an installment paid by hand) — a signature is a trigger
@@ -94,7 +94,7 @@ class BookProject
             return null;
         }
 
-        ProjectBooked::dispatch($project);
+        CaseBooked::dispatch($project);
 
         return $project;
     }

@@ -3,7 +3,7 @@
 namespace App\Crm\Screens;
 
 use App\Crm\Actions\DeriveCasePosition;
-use App\Crm\Data\ProjectQueueRowData;
+use App\Crm\Data\CaseQueueRowData;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\ClientCase;
@@ -21,7 +21,7 @@ use App\Payments\Models\PaymentInstallment;
  * behind us whose status never moved, or a rate past due. The other three are
  * the calendar and the post-production in order. Delivered has left the queue.
  */
-class OpenProjects
+class OpenCases
 {
     private const GROUPS = ['haengt', 'woche', 'bearbeitung', 'spaeter'];
 
@@ -34,7 +34,7 @@ class OpenProjects
      * ponytail: every booked project on every project page, grouped in PHP —
      * fine at a studio's few hundred; past that, keep delivered ones out in SQL.
      *
-     * @return list<array{key: string, rows: list<ProjectQueueRowData>}>
+     * @return list<array{key: string, rows: list<CaseQueueRowData>}>
      */
     public function queue(User $user, ?ClientCase $open = null): array
     {
@@ -77,7 +77,7 @@ class OpenProjects
             && ($shoot === null || $shoot->status->sort_order < $this->sortOf(StageAnchor::Delivered));
     }
 
-    /** @return array{group: string, row: ProjectQueueRowData}|null */
+    /** @return array{group: string, row: CaseQueueRowData}|null */
     private function row(ClientCase $project, ?ClientCase $open): ?array
     {
         if (! $this->isOpen($project)) {
@@ -105,7 +105,7 @@ class OpenProjects
             default => ['spaeter', null, null],
         };
 
-        return ['group' => $group, 'row' => new ProjectQueueRowData(
+        return ['group' => $group, 'row' => new CaseQueueRowData(
             id: $project->public_id,
             name: $project->contactNames(),
             date: ($stalled ?? $next ?? $project->primaryShoot)?->date?->format('Y-m-d'),

@@ -15,7 +15,7 @@ const standesamt: App.Crm.Data.ShootData = {
     isPrimary: false,
 }
 
-const galleries: App.Crm.Screens.ProjectGalleryData[] = [
+const galleries: App.Crm.Screens.CaseGalleryData[] = [
     {
         id: 'g-rahn-tag',
         title: 'Hochzeitstag',

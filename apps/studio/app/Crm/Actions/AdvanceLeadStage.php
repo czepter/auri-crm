@@ -29,8 +29,8 @@ use Illuminate\Support\Facades\DB;
 class AdvanceLeadStage
 {
     public function __construct(
-        private readonly BookProject $book,
-        private readonly UnbookProject $unbook,
+        private readonly BookCase $book,
+        private readonly UnbookCase $unbook,
         private readonly AdvanceShootStatus $shoots,
         private readonly CrmVocabulary $stages,
     ) {}
@@ -74,7 +74,7 @@ class AdvanceLeadStage
         DB::transaction(function () use ($lead, $from, $next, $backwards, $actor, $enteredAt) {
             // Taking back the won stage takes back the booking with it, or the
             // board and the project list each show what the other one denies.
-            // Throws when the booking has a payment plan — see UnbookProject.
+            // Throws when the booking has a payment plan — see UnbookCase.
             if ($backwards && $from->anchor === StageAnchor::Won) {
                 ($this->unbook)($lead->case, $actor ?? auth('staff')->user(), $enteredAt);
             }
@@ -114,7 +114,7 @@ class AdvanceLeadStage
             // "Gebucht" is the booking, not a label for one. Without this the
             // stage and the booking disagree, and the two lists that read them —
             // /anfragen by stage, /projekte by booking — each show the record
-            // the other one is missing. Idempotent: BookProject writes nothing
+            // the other one is missing. Idempotent: BookCase writes nothing
             // on a booked project. Inside the transaction: a booking that
             // throws leaves the stage where it was instead of "Gebucht"
             // without a booking.

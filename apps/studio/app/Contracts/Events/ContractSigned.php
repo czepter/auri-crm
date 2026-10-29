@@ -8,7 +8,7 @@ use Illuminate\Foundation\Events\Dispatchable;
 
 /**
  * Carries the full Contract and ContractSignature, the same shape
- * App\Crm\Events\ProjectBooked carries its Project — so P-05b (sprint 9)
+ * App\Crm\Events\CaseBooked carries its Project — so P-05b (sprint 9)
  * can act on a signature without re-querying it. Fires exactly once per
  * contract, because SignContract refuses to write a second signature row.
  */

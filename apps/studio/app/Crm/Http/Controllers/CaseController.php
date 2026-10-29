@@ -4,17 +4,17 @@ namespace App\Crm\Http\Controllers;
 
 use App\Crm\Actions\AdvanceLeadStage;
 use App\Crm\Actions\AdvanceShootStatus;
-use App\Crm\Actions\BookProject;
+use App\Crm\Actions\BookCase;
 use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\CheckDateAvailability;
-use App\Crm\Actions\CompleteProject;
+use App\Crm\Actions\CompleteCase;
 use App\Crm\Actions\CrewAvailability;
 use App\Crm\Actions\DeriveCasePosition;
 use App\Crm\Actions\WorkflowColumns;
 use App\Crm\Actions\WriteProjectFieldValues;
 use App\Crm\Data\CasePersonData;
+use App\Crm\Data\CaseRowData;
 use App\Crm\Data\FormInstanceData;
-use App\Crm\Data\ProjectRowData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
 use App\Crm\Enums\CaseContactRole;
@@ -27,9 +27,9 @@ use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
 use App\Crm\Models\TaskTemplate;
+use App\Crm\Screens\CaseGalleryData;
 use App\Crm\Screens\CaseHeaderData;
-use App\Crm\Screens\ProjectGalleryData;
-use App\Crm\Screens\ReadProjectScreen;
+use App\Crm\Screens\ReadCaseScreen;
 use App\Crm\Support\CrmVocabulary;
 use App\Crm\Support\OtherSuggestions;
 use App\Crm\Support\StageSettingsPayload;
@@ -55,13 +55,13 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class ProjectController extends Controller
+class CaseController extends Controller
 {
     public function __construct(
         private readonly DeriveCasePosition $position,
         private readonly CheckDateAvailability $availability,
         private readonly BuildThread $thread,
-        private readonly ReadProjectScreen $screen,
+        private readonly ReadCaseScreen $screen,
     ) {}
 
     /**
@@ -97,8 +97,8 @@ class ProjectController extends Controller
 
         return Inertia::render('Projects/Index', [
             'view' => request()->query('ansicht') === 'board' ? 'board' : 'liste',
-            'projects' => ProjectRowData::collect(
-                $projects->map(fn (ClientCase $case) => ProjectRowData::fromProject($case, $this->position))
+            'projects' => CaseRowData::collect(
+                $projects->map(fn (ClientCase $case) => CaseRowData::fromProject($case, $this->position))
             ),
             // #364: the filter pills and the board's columns, in the studio's
             // own order and names — from the booking to the delivery, since
@@ -161,7 +161,7 @@ class ProjectController extends Controller
             'staffOptions' => $this->staffOptions(),
             'anchors' => $anchors->forCase($case),
             // Notes, the whitelisted audit trail and what got done, in one
-            // order. Admin-only by omission: the portal's own ProjectController
+            // order. Admin-only by omission: the portal's own CaseController
             // does not render this key. An internal trace on a client page
             // would disclose staff names and internal event vocabulary.
             'thread' => ($this->thread)($case),
@@ -396,7 +396,7 @@ class ProjectController extends Controller
 
         return Inertia::render('Projects/Galleries', [
             'header' => $this->header($case),
-            'galleries' => ProjectGalleryData::collect(
+            'galleries' => CaseGalleryData::collect(
                 $case->galleries()->with(['shoot', 'currentVersion'])->get()
             ),
             'shoots' => ShootData::collect($this->shootsOf($case)),
@@ -481,7 +481,7 @@ class ProjectController extends Controller
         ]);
     }
 
-    public function book(ClientCase $case, BookProject $book): RedirectResponse
+    public function book(ClientCase $case, BookCase $book): RedirectResponse
     {
         $this->authorize('book', $case);
 
@@ -493,7 +493,7 @@ class ProjectController extends Controller
         return back();
     }
 
-    public function complete(ClientCase $case, CompleteProject $complete): RedirectResponse
+    public function complete(ClientCase $case, CompleteCase $complete): RedirectResponse
     {
         $this->authorize('manageShoots', $case);
 
@@ -506,7 +506,7 @@ class ProjectController extends Controller
         return back();
     }
 
-    public function reopen(ClientCase $case, CompleteProject $complete): RedirectResponse
+    public function reopen(ClientCase $case, CompleteCase $complete): RedirectResponse
     {
         $this->authorize('manageShoots', $case);
 

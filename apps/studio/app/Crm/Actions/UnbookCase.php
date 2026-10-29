@@ -15,7 +15,7 @@ use DomainException;
 use Illuminate\Support\Facades\DB;
 
 /**
- * The counterpart to BookProject: a lead moved onto the won stage by mistake
+ * The counterpart to BookCase: a lead moved onto the won stage by mistake
  * stayed booked when it was moved back, so /anfragen and /projekte each
  * showed a record the other one denied.
  *
@@ -29,7 +29,7 @@ use Illuminate\Support\Facades\DB;
  * delivered event cannot be recalled, and a task somebody has since ticked is
  * theirs, not the booking's. Only the booking itself is taken back.
  */
-class UnbookProject
+class UnbookCase
 {
     public function __construct(private readonly CrmVocabulary $stages) {}
 

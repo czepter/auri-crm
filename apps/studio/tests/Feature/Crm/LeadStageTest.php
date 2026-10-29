@@ -1,7 +1,7 @@
 <?php
 
 use App\Crm\Actions\AdvanceLeadStage;
-use App\Crm\Actions\BookProject;
+use App\Crm\Actions\BookCase;
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Events\LeadLost;
@@ -228,7 +228,7 @@ it('refuses to take the booking back once a payment plan hangs off it', function
 });
 
 it('leaves the stage alone when the booking fails', function () {
-    $this->mock(BookProject::class)->shouldReceive('__invoke')->andThrow(new DomainException('Shoot'));
+    $this->mock(BookCase::class)->shouldReceive('__invoke')->andThrow(new DomainException('Shoot'));
     $lead = Lead::factory()->atStage(LeadStage::QuoteAccepted)->create();
 
     expect(fn () => app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), User::factory()->create()))

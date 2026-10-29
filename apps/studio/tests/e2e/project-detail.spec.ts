@@ -6,7 +6,7 @@ test('the project screen shows its cards and an activity trace', async ({ page }
 
   // C-02 (#236) gave Projects/* the list it never had, so the way in is the
   // list rather than the board — the board leads to the inquiry now (C-08).
-  // The booking, not the seeder's inquiry: ProjectController::index lists
+  // The booking, not the seeder's inquiry: CaseController::index lists
   // booked projects only, and an inquiry belongs on the board at /anfragen.
   await page.goto('/projekte')
   await page.getByRole('link', { name: /E2E Buchung/ }).first().click()

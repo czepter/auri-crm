@@ -180,6 +180,31 @@ source: string,
 value: string | null,
 label: string,
 };
+export type CaseQueueRowData = {
+id: string,
+name: string,
+date: string | null,
+stage: string,
+reason: string | null,
+days: number | null,
+open: boolean,
+};
+export type CaseRowData = {
+id: string,
+name: string,
+type: string,
+typeKey: string,
+date: string | null,
+venue: string | null,
+position: string,
+positionKey: string | null,
+phase: string,
+contact: string | null,
+openTasks: number,
+taskCount: number,
+value: number | null,
+lastAt: string | null,
+};
 export type CaseSuggestionData = {
 id: string,
 name: string,
@@ -335,31 +360,6 @@ label: string,
 done: boolean,
 }[],
 };
-export type ProjectQueueRowData = {
-id: string,
-name: string,
-date: string | null,
-stage: string,
-reason: string | null,
-days: number | null,
-open: boolean,
-};
-export type ProjectRowData = {
-id: string,
-name: string,
-type: string,
-typeKey: string,
-date: string | null,
-venue: string | null,
-position: string,
-positionKey: string | null,
-phase: string,
-contact: string | null,
-openTasks: number,
-taskCount: number,
-value: number | null,
-lastAt: string | null,
-};
 export type RowActionData = {
 label: string,
 kind: string,
@@ -461,6 +461,16 @@ export type StagePipeline = 'lead' | 'project';
 export type TaskAudience = 'internal' | 'client';
 }
 namespace Screens {
+export type CaseGalleryData = {
+id: string,
+title: string | null,
+shootId: string | null,
+state: string,
+assetCount: number,
+version: number | null,
+expiresAt: string | null,
+inPortal: boolean,
+};
 export type CaseHeaderData = {
 id: string,
 name: string,
@@ -512,7 +522,7 @@ state: string,
 }[],
 queue: {
 key: string,
-rows: App.Crm.Data.ProjectQueueRowData[],
+rows: App.Crm.Data.CaseQueueRowData[],
 }[],
 people: App.Crm.Data.CasePersonData[],
 paymentPlan: App.Payments.Data.PaymentPlanData | null,
@@ -522,16 +532,6 @@ title: string | null,
 expiresAt: string | null,
 }[],
 history: App.Crm.Data.ThreadEntryData[],
-};
-export type ProjectGalleryData = {
-id: string,
-title: string | null,
-shootId: string | null,
-state: string,
-assetCount: number,
-version: number | null,
-expiresAt: string | null,
-inPortal: boolean,
 };
 }
 }
@@ -693,6 +693,14 @@ stageEnteredAt: string | null,
 export type CaseMoneyReadData = {
 paymentPlan: App.Payments.Data.PaymentPlanData | null,
 };
+export type CaseReadData = {
+id: string,
+name: string,
+type: string,
+portalVisible: boolean,
+fields: object,
+updatedAt: string,
+};
 export type ContactReadData = {
 id: string,
 name: string,
@@ -760,14 +768,6 @@ options: string[],
 unit: string | null,
 required: boolean,
 allowNewOptions: boolean,
-};
-export type ProjectReadData = {
-id: string,
-name: string,
-type: string,
-portalVisible: boolean,
-fields: object,
-updatedAt: string,
 };
 export type ProjectTypeReadData = {
 id: string,

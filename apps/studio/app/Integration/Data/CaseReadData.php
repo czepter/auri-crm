@@ -11,7 +11,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * public_id only — see HasPublicId — never the row's internal id.
  */
 #[TypeScript]
-class ProjectReadData extends Data
+class CaseReadData extends Data
 {
     public function __construct(
         public string $id,

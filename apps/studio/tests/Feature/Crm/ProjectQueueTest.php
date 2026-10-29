@@ -5,7 +5,7 @@ use App\Crm\Data\CasePositionData;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
-use App\Crm\Screens\OpenProjects;
+use App\Crm\Screens\OpenCases;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -27,7 +27,7 @@ it('groups booked projects by what the day asks of them', function () {
     $later = bookedAt(ShootStatus::Booked, now()->addMonths(4)->toDateString());
     bookedAt(ShootStatus::Delivered, now()->subDays(60)->toDateString());
 
-    $groups = collect(app(OpenProjects::class)->queue(User::factory()->withMfa()->create()))
+    $groups = collect(app(OpenCases::class)->queue(User::factory()->withMfa()->create()))
         ->mapWithKeys(fn (array $group) => [$group['key'] => array_map(fn ($row) => $row->id, $group['rows'])]);
 
     expect($groups->all())->toBe([

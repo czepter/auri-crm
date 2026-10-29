@@ -14,13 +14,13 @@ use ReflectionProperty;
 /**
  * E-08's domain-event half. Wired once as a wildcard listener
  * (`Event::listen('*', ...)` in AppServiceProvider::boot()) rather than once
- * per event class: a rule naming `App\Crm\Events\ProjectBooked` in its own
+ * per event class: a rule naming `App\Crm\Events\CaseBooked` in its own
  * event_class column IS the subscription, so a new rule for an event class
  * this app already dispatches needs no code change here.
  *
  * The anchor is whichever public ClientCase or Shoot property the firing event
  * carries — every domain event in this codebase already exposes its subject
- * that way (see ProjectBooked, InstallmentPaid), and ClientCase
+ * that way (see CaseBooked, InstallmentPaid), and ClientCase
  * and Shoot are the only two entities E-08 ever anchors a rule to. An event
  * naming neither is simply not something an AutomationRule can watch yet.
  */

@@ -1,7 +1,7 @@
 <?php
 
 use App\Crm\Actions\ApplyTaskTemplates;
-use App\Crm\Actions\BookProject;
+use App\Crm\Actions\BookCase;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
@@ -126,7 +126,7 @@ it('produces each template against the correct shoot when a project is booked', 
     TaskTemplate::factory()->offset(-1)->create(['title' => 'Crew-Briefing verschicken']);
     TaskTemplate::factory()->offset(-7)->forKind('Hochzeitstag')->create(['title' => 'Familienliste einholen']);
 
-    app(BookProject::class)($project, User::factory()->create());
+    app(BookCase::class)($project, User::factory()->create());
 
     expect(Task::count())->toBe(3)
         ->and(Task::where('title', 'Familienliste einholen')->sole()->due_on->format('Y-m-d'))->toBe('2026-06-07');
@@ -179,7 +179,7 @@ it('previews the same due dates the real booking action produces for the same sh
 
     $project = ClientCase::factory()->create();
     Shoot::factory()->for($project, 'case')->on('2026-06-14')->create(['kind' => 'Hochzeitstag']);
-    app(BookProject::class)($project, User::factory()->create());
+    app(BookCase::class)($project, User::factory()->create());
 
     $actual = Task::query()->orderBy('title')->get()
         ->map(fn (Task $task) => ['title' => $task->title, 'dueOn' => $task->due_on?->format('Y-m-d')])

@@ -25,7 +25,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * rebuilt, and a signed contract is never touched at all — sign() hashed
  * those exact bytes.
  *
- * Asks Contact::visibleProjects() the same question ProjectController does,
+ * Asks Contact::visibleProjects() the same question CaseController does,
  * so a project the contact is not on and one the studio has not made
  * portal_visible fail identically, as a 404 rather than a 403.
  */

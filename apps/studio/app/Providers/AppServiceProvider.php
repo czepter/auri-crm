@@ -5,9 +5,9 @@ namespace App\Providers;
 use App\Automation\Listeners\FireAutomationRulesForEvent;
 use App\Catalog\Models\Package;
 use App\Crm\Actions\RescheduleAnchoredTasks;
+use App\Crm\Events\CaseBooked;
 use App\Crm\Events\LeadCaptured;
 use App\Crm\Events\LeadStageChanged;
-use App\Crm\Events\ProjectBooked;
 use App\Crm\Events\ShootStatusChanged;
 use App\Crm\Listeners\ApplyTemplatesOnBooking;
 use App\Crm\Listeners\ApplyTemplatesOnStage;
@@ -49,7 +49,7 @@ use App\Policies\ShootPolicy;
 use App\Policies\StagePolicy;
 use App\Policies\TaskPolicy;
 use App\Policies\TaskTemplatePolicy;
-use App\Portal\Listeners\RevealProjectOnBooking;
+use App\Portal\Listeners\RevealCaseOnBooking;
 use App\Quotes\Support\QuoteMergeData;
 use App\Staff\Listeners\NotifyStudioOfDomainEvent;
 use App\Staff\Listeners\WithholdClientMail;
@@ -209,8 +209,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Registered by hand: auto-discovery only scans app/Listeners, and the
         // CRM keeps its listeners beside the events they answer to.
-        Event::listen(ProjectBooked::class, ApplyTemplatesOnBooking::class);
-        Event::listen(ProjectBooked::class, RevealProjectOnBooking::class);
+        Event::listen(CaseBooked::class, ApplyTemplatesOnBooking::class);
+        Event::listen(CaseBooked::class, RevealCaseOnBooking::class);
 
         // Every other stage of both pipelines. Booking stays above: it is
         // reachable without a lead stage ever changing.

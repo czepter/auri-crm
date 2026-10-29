@@ -137,7 +137,7 @@ class EraseContactDsgvo
      * A project with a payment plan stays, booking included, under a
      * scrubbed name: the plan carries allocated invoice numbers and issued
      * invoices, which § 147 AO requires kept (Art. 17(3)(b) DSGVO) and which
-     * UnbookProject refuses to drop for the same reason.
+     * UnbookCase refuses to drop for the same reason.
      */
     private function purgeSoleContactProject(ClientCase $project, RetentionPolicyData $policy): void
     {

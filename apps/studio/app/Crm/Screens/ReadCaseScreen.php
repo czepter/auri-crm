@@ -12,7 +12,7 @@ use App\Quotes\Models\Quote;
  * accepted quote is read once, and the divergence rule below has an interface a
  * test can reach without a request.
  */
-class ReadProjectScreen
+class ReadCaseScreen
 {
     /** @var array<int, ?Quote> */
     private array $accepted = [];

@@ -13,7 +13,7 @@ beforeEach(fn () => useSurface(Surface::API));
 
 // #401: book/complete/reopen on the api surface, mirroring the admin
 // project screen's own buttons — see App\Crm\Http\Controllers\
-// ProjectController::book()/complete()/reopen().
+// CaseController::book()/complete()/reopen().
 it('books a project, advancing its shoots and answering with its detail', function () {
     $token = ApiToken::factory()->withScopes(Capability::BookProject)->create();
     $project = ClientCase::factory()->create();
@@ -32,7 +32,7 @@ it('books a project, advancing its shoots and answering with its detail', functi
         ->and(integerIdPaths($response->json()))->toBe([]);
 });
 
-it('refuses booking to a token that does not hold BookProject', function () {
+it('refuses booking to a token that does not hold BookCase', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
     $project = ClientCase::factory()->create();
 

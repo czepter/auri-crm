@@ -7,7 +7,7 @@ use App\Automation\Enums\AutomationOffsetDirection;
 use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Enums\AutomationTriggerType;
 use App\Crm\Enums\ProjectType;
-use App\Crm\Events\ProjectBooked;
+use App\Crm\Events\CaseBooked;
 
 /**
  * E-09: the default AutomationRule set, shipped as config rather than a
@@ -220,7 +220,7 @@ return [
             'key' => 'booking-confirmation',
             'name' => 'Buchungsbestätigung',
             'trigger_type' => AutomationTriggerType::Event,
-            'event_class' => ProjectBooked::class,
+            'event_class' => CaseBooked::class,
             'notification_subject' => [
                 'formal' => 'Ihre Buchung ist bestätigt',
                 'informal' => 'Deine Buchung ist bestätigt',

@@ -152,7 +152,7 @@ return Application::configure(basePath: dirname(__DIR__))
         /*
          * The two closed doors a client actually meets, on the surface they
          * meet them on. Every "not yours" on the portal is a 404 by design
-         * (see ProjectController), and a client who follows a stale link out
+         * (see CaseController), and a client who follows a stale link out
          * of a two-year-old mail was landing on the framework's bare white
          * page with the studio's name nowhere on it.
          *

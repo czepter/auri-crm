@@ -31,7 +31,7 @@ use Inertia\Response;
  * things that change at that scale, both driven by counts computed here.
  *
  * Everything is scoped through Contact::visibleProjects(), the same question
- * ProjectController asks for direct entry, so a booking the studio has not
+ * CaseController asks for direct entry, so a booking the studio has not
  * made portal_visible is as absent here as it is 404 there.
  */
 class HomeController extends Controller

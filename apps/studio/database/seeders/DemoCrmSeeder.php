@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Automation\Actions\FireAutomationRule;
 use App\Automation\Models\AutomationRule;
 use App\Crm\Actions\AdvanceShootStatus;
-use App\Crm\Actions\BookProject;
+use App\Crm\Actions\BookCase;
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
@@ -237,7 +237,7 @@ class DemoCrmSeeder extends Seeder
      * positions, a crew that differs per shoot, and the notes the studio wrote
      * to itself.
      *
-     * Walked through BookProject and AdvanceShootStatus rather than written
+     * Walked through BookCase and AdvanceShootStatus rather than written
      * with statuses set by hand — same reasoning as the rest of this seeder.
      * The demo data is produced by the code paths the studio uses, so a broken
      * guard shows up here rather than only in a test.
@@ -301,7 +301,7 @@ class DemoCrmSeeder extends Seeder
         ]);
 
         // Booking moves all four to booked in one transaction.
-        app(BookProject::class)($project, $christian);
+        app(BookCase::class)($project, $christian);
 
         // Then the two that have happened walk forward, and the wedding day
         // sits in prep — so the derived header reads the least-advanced of

@@ -7,7 +7,7 @@ use App\Automation\Models\AutomationRule;
 use App\Automation\Models\AutomationRun;
 use App\Automation\Notifications\AutomationReminder;
 use App\Crm\Enums\CaseContactRole;
-use App\Crm\Events\ProjectBooked;
+use App\Crm\Events\CaseBooked;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Enums\StaffRole;
@@ -24,7 +24,7 @@ beforeEach(function () {
     $project = ClientCase::factory()->create(['name' => 'Hochzeit Meier', 'portal_visible' => true]);
     $project->attachContact($this->contact, CaseContactRole::Primary);
 
-    $rule = AutomationRule::factory()->event(ProjectBooked::class)->create([
+    $rule = AutomationRule::factory()->event(CaseBooked::class)->create([
         'recipient_type' => AutomationRecipient::Client,
         'notification_subject' => 'Ihre Buchung',
         'notification_body' => 'Wir freuen uns auf {{ project.name }}.',

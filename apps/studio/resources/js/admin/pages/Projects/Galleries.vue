@@ -9,7 +9,7 @@ import { dayAndMonth, weekday } from '@/admin/lib/shoots'
 
 const props = defineProps<{
   header: App.Crm.Screens.CaseHeaderData
-  galleries: App.Crm.Screens.ProjectGalleryData[]
+  galleries: App.Crm.Screens.CaseGalleryData[]
   shoots: App.Crm.Data.ShootData[]
 }>()
 

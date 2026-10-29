@@ -12,9 +12,9 @@ use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
 use App\Integration\Data\CaseDetailReadData;
 use App\Integration\Data\CaseMoneyReadData;
+use App\Integration\Data\CaseReadData;
 use App\Integration\Data\ContactReadData;
 use App\Integration\Data\LeadReadData;
-use App\Integration\Data\ProjectReadData;
 use App\Integration\Data\ShootReadData;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -56,7 +56,7 @@ class CrmReadController extends Controller
 
     public function projects(Request $request): JsonResponse
     {
-        return $this->page(ClientCase::query()->booked(), $request, ProjectReadData::class);
+        return $this->page(ClientCase::query()->booked(), $request, CaseReadData::class);
     }
 
     /**

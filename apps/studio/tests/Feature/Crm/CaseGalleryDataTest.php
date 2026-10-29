@@ -2,7 +2,7 @@
 
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
-use App\Crm\Screens\ProjectGalleryData;
+use App\Crm\Screens\CaseGalleryData;
 use App\Gallery\Models\Gallery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -13,7 +13,7 @@ it('reads a draft gallery as not published and not in the portal', function () {
     $shoot = Shoot::factory()->for($project, 'case')->on('2026-09-03')->create();
     $gallery = Gallery::factory()->for($project, 'case')->for($shoot)->create(['title' => 'Trauung']);
 
-    $row = ProjectGalleryData::fromModel($gallery->fresh());
+    $row = CaseGalleryData::fromModel($gallery->fresh());
 
     expect($row->state)->toBe('draft')
         ->and($row->shootId)->toBe($shoot->public_id)
@@ -26,12 +26,12 @@ it('reads a published gallery as in the portal, and a withdrawn one as out of it
     $gallery = Gallery::factory()->create();
     $gallery->publish();
 
-    expect(ProjectGalleryData::fromModel($gallery->fresh())->state)->toBe('published')
-        ->and(ProjectGalleryData::fromModel($gallery->fresh())->inPortal)->toBeTrue()
-        ->and(ProjectGalleryData::fromModel($gallery->fresh())->version)->toBe(1);
+    expect(CaseGalleryData::fromModel($gallery->fresh())->state)->toBe('published')
+        ->and(CaseGalleryData::fromModel($gallery->fresh())->inPortal)->toBeTrue()
+        ->and(CaseGalleryData::fromModel($gallery->fresh())->version)->toBe(1);
 
     $gallery->forceFill(['unpublished_at' => now()])->save();
 
-    expect(ProjectGalleryData::fromModel($gallery->fresh())->state)->toBe('withdrawn')
-        ->and(ProjectGalleryData::fromModel($gallery->fresh())->inPortal)->toBeFalse();
+    expect(CaseGalleryData::fromModel($gallery->fresh())->state)->toBe('withdrawn')
+        ->and(CaseGalleryData::fromModel($gallery->fresh())->inPortal)->toBeFalse();
 });

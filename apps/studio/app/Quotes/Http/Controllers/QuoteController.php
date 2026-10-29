@@ -5,7 +5,7 @@ namespace App\Quotes\Http\Controllers;
 use App\Catalog\Actions\SavePackage;
 use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
-use App\Crm\Actions\BookProject;
+use App\Crm\Actions\BookCase;
 use App\Crm\Data\CaseSuggestionData;
 use App\Crm\Models\ClientCase;
 use App\Documents\Support\InlineHtmlSanitizer;
@@ -359,7 +359,7 @@ class QuoteController extends Controller
         return back();
     }
 
-    public function markAccepted(Quote $quote, AcceptQuote $accept, BookProject $book): RedirectResponse
+    public function markAccepted(Quote $quote, AcceptQuote $accept, BookCase $book): RedirectResponse
     {
         $this->authorize('manageQuotes', $quote->case);
 

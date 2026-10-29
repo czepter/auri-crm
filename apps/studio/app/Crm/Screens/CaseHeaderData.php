@@ -7,7 +7,7 @@ use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\ReadStageTrack;
 use App\Crm\Data\CasePersonData;
 use App\Crm\Data\CasePositionData;
-use App\Crm\Data\ProjectQueueRowData;
+use App\Crm\Data\CaseQueueRowData;
 use App\Crm\Data\ThreadEntryData;
 use App\Crm\Models\ClientCase;
 use App\Payments\Data\PaymentPlanData;
@@ -29,7 +29,7 @@ class CaseHeaderData extends Data
 {
     /** @param  list<array{key: string, label: string, href: string, count: int|null, countTo: int|null, children: list<array{key: string, label: string, translate: bool, href: string, count: int|null, reorderable: bool}>}>  $tabs
      * @param  list<array{key: string, label: string, pipeline: string, state: string}>  $track
-     * @param  list<array{key: string, rows: list<ProjectQueueRowData>}>  $queue
+     * @param  list<array{key: string, rows: list<CaseQueueRowData>}>  $queue
      * @param  list<CasePersonData>  $people
      * @param  list<array{id: string, title: string|null, expiresAt: string|null}>  $galleries
      * @param  list<ThreadEntryData>  $history
@@ -120,7 +120,7 @@ class CaseHeaderData extends Data
                 self::documentsTab($project),
             ],
             track: app(ReadStageTrack::class)($position),
-            queue: $user === null || ! $queue ? [] : app(OpenProjects::class)->queue($user, $project),
+            queue: $user === null || ! $queue ? [] : app(OpenCases::class)->queue($user, $project),
             people: $project->contacts->map(CasePersonData::fromContact(...))->all(),
             paymentPlan: $project->paymentPlan
                 ? PaymentPlanData::fromModel($project->paymentPlan->load('installments.invoice.creditNotes'))

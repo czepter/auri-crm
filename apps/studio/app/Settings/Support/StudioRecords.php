@@ -3,7 +3,7 @@
 namespace App\Settings\Support;
 
 use App\Crm\Actions\DeriveCasePosition;
-use App\Crm\Data\ProjectRowData;
+use App\Crm\Data\CaseRowData;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use Illuminate\Database\Eloquent\Builder;
@@ -49,8 +49,8 @@ class StudioRecords
         return $this->projectQuery()
             ->with(['primaryShoot', 'lead', 'shoots', 'contacts', 'latestQuote'])
             ->get()
-            ->map(fn (ClientCase $project) => ProjectRowData::fromProject($project, $this->position))
-            ->map(fn (ProjectRowData $row) => [$row->name, $row->date, $row->venue, $row->position, $row->contact]);
+            ->map(fn (ClientCase $project) => CaseRowData::fromProject($project, $this->position))
+            ->map(fn (CaseRowData $row) => [$row->name, $row->date, $row->venue, $row->position, $row->contact]);
     }
 
     /**

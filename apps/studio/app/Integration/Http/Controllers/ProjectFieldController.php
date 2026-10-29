@@ -8,7 +8,7 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\ProjectField;
 use App\Crm\Models\ProjectType;
 use App\Http\Controllers\Controller;
-use App\Integration\Data\ProjectReadData;
+use App\Integration\Data\CaseReadData;
 use App\Integration\Data\ProjectTypeReadData;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -43,7 +43,7 @@ class ProjectFieldController extends Controller
         // names the field that was wrong rather than the request that was.
         $write($case, $validated['fields'], $this->actor($request));
 
-        return response()->json(['data' => ProjectReadData::fromModel($case->fresh())]);
+        return response()->json(['data' => CaseReadData::fromModel($case->fresh())]);
     }
 
     public function store(Request $request, ProjectType $projectType): JsonResponse

@@ -4,7 +4,7 @@ use App\Automation\Enums\AutomationAnchor;
 use App\Automation\Enums\AutomationOffsetDirection;
 use App\Automation\Enums\AutomationTriggerType;
 use App\Automation\Models\AutomationRule;
-use App\Crm\Events\ProjectBooked;
+use App\Crm\Events\CaseBooked;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -32,7 +32,7 @@ it('clears the date-offset columns when saving an event rule', function () {
 
     $rule->update([
         'trigger_type' => AutomationTriggerType::Event,
-        'event_class' => ProjectBooked::class,
+        'event_class' => CaseBooked::class,
     ]);
 
     expect($rule->fresh())

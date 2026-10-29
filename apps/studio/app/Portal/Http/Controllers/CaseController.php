@@ -44,7 +44,7 @@ use Inertia\Response;
  * 403: the difference between "not yours" and "does not exist" is not this
  * surface's to give away.
  */
-class ProjectController extends Controller
+class CaseController extends Controller
 {
     public function __invoke(string $case, PortalSettings $settings, PortalOffers $offers): Response
     {

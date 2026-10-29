@@ -4,7 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Crm\Actions\OpenLeads;
 use App\Crm\Models\Stage;
-use App\Crm\Screens\OpenProjects;
+use App\Crm\Screens\OpenCases;
 use App\Data\StaffProfileData;
 use App\Documents\Support\DocumentBlockCatalog;
 use App\Documents\Support\MergeFieldVocabulary;
@@ -97,7 +97,7 @@ class HandleInertiaRequests extends Middleware
                 'unread' => fn () => $user->inAppNotifications()->whereNull('read_at')->count(),
                 // The projects the rail and the list's "Laufend" show: booked,
                 // visible to this role, not delivered, completed or closed.
-                'projects' => fn () => app(OpenProjects::class)->count($user),
+                'projects' => fn () => app(OpenCases::class)->count($user),
             ],
             // Die laufende Version und ob release-log eine höhere kennt. Chrome
             // wie die Zähler darüber: die Zeile steht auf jedem Admin-Screen

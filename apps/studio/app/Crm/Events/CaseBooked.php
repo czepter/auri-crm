@@ -8,9 +8,9 @@ use Illuminate\Foundation\Events\Dispatchable;
 /**
  * The anchor several later features hang off: S-03's task templates apply
  * here. Fires exactly once per project,
- * because BookProject only books a project that is not booked yet.
+ * because BookCase only books a project that is not booked yet.
  */
-class ProjectBooked
+class CaseBooked
 {
     use Dispatchable;
 

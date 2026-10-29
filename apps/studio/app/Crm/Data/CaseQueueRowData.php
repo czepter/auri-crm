@@ -10,7 +10,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * — when it hangs — why and for how long.
  */
 #[TypeScript]
-class ProjectQueueRowData extends Data
+class CaseQueueRowData extends Data
 {
     public function __construct(
         public string $id,

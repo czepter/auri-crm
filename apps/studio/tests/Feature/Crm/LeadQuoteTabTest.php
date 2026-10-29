@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Actions\BookProject;
+use App\Crm\Actions\BookCase;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
 use App\Models\User;
@@ -66,7 +66,7 @@ it('shows the inquiry tabs until the booking and sends the booked inquiry to its
     expect(collect($header['tabs'])->pluck('key')->all())->toBe(['overview', 'quotes', 'messages'])
         ->and($header['queue'])->toBe([]);
 
-    app(BookProject::class)($project, auth('staff')->user());
+    app(BookCase::class)($project, auth('staff')->user());
 
     test()->get("/anfragen/{$lead->case->public_id}")->assertRedirect("/auftraege/{$project->public_id}");
 });

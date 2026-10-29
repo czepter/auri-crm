@@ -330,7 +330,7 @@ class ContactController extends Controller
      * magic link and any session already open elsewhere. Never deletes the
      * case_contacts row and never touches any other contact (A-04).
      * Hiding a project from the portal is a separate action on
-     * ProjectController, on purpose.
+     * CaseController, on purpose.
      */
     /**
      * P-09 (#228): "Vorschau als Kunde", on the issue's own terms —

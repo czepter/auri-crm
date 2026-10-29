@@ -68,7 +68,7 @@ class ShootController extends Controller
             + array_filter(['status_entered_at' => $validated['entered_at'] ?? null])
         );
 
-        // BookProject only moves the shoots that exist at booking time.
+        // BookCase only moves the shoots that exist at booking time.
         if ($case->isBooked()) {
             $advance(
                 $shoot,

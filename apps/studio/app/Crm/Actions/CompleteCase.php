@@ -14,7 +14,7 @@ use DomainException;
  * the studio says so, and a shoot left at "Bearbeitung" or one never moved
  * past "Gebucht" must not keep it open.
  */
-class CompleteProject
+class CompleteCase
 {
     public function __invoke(ClientCase $project, ?User $actor = null): ClientCase
     {

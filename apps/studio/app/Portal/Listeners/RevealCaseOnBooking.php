@@ -2,7 +2,7 @@
 
 namespace App\Portal\Listeners;
 
-use App\Crm\Events\ProjectBooked;
+use App\Crm\Events\CaseBooked;
 use App\Portal\Support\PortalSettings;
 
 /**
@@ -10,11 +10,11 @@ use App\Portal\Support\PortalSettings;
  * projectsVisibleByDefault() answers false for a contact with no override,
  * which is the inquiry's default and not a refusal.
  */
-class RevealProjectOnBooking
+class RevealCaseOnBooking
 {
     public function __construct(private readonly PortalSettings $portal) {}
 
-    public function handle(ProjectBooked $event): void
+    public function handle(CaseBooked $event): void
     {
         $project = $event->project;
 

@@ -13,7 +13,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * the client can see it.
  */
 #[TypeScript]
-class ProjectGalleryData extends Data
+class CaseGalleryData extends Data
 {
     public function __construct(
         public string $id,

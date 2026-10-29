@@ -422,7 +422,7 @@ const TONE: Record<string, string> = {
                 </div>
 
                 <!-- T-10: CheckDateAvailability's third source, already narrowed by
-                     ProjectController::shootsOf() to this shoot's date and this
+                     CaseController::shootsOf() to this shoot's date and this
                      shoot's own crew. Warns, same as every other conflict that
                      action produces — the assignment above stays exactly as
                      possible whether or not this shows. -->

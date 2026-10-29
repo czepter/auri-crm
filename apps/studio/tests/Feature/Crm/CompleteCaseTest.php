@@ -3,7 +3,7 @@
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
-use App\Crm\Screens\OpenProjects;
+use App\Crm\Screens\OpenCases;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -21,7 +21,7 @@ it('completes a project whatever its shoots say, and reopens it', function () {
 
     $this->post("/auftraege/{$this->case->public_id}/abschluss")->assertRedirect();
 
-    $queued = collect(app(OpenProjects::class)->queue($this->staff))->pluck('rows')->flatten()->pluck('id');
+    $queued = collect(app(OpenCases::class)->queue($this->staff))->pluck('rows')->flatten()->pluck('id');
     $header = $this->get("/auftraege/{$this->case->public_id}")->viewData('page')['props']['header'];
 
     expect($this->case->fresh()->isCompleted())->toBeTrue()

@@ -181,7 +181,7 @@ class E2eSeeder extends Seeder
         $project = ClientCase::updateOrCreate(
             ['name' => 'Meier & Kowalski — Hochzeit'],
             // Visible in the portal, and with nothing reserved on it: that is
-            // the state ProjectController renders Projects/Inquiry for, and
+            // the state CaseController renders Projects/Inquiry for, and
             // there is otherwise no database in which that screen has a frame.
             ['type' => ProjectType::Wedding, 'portal_visible' => true],
         );

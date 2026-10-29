@@ -20,7 +20,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * than a second rule read off the lead, for the reason that class exists.
  */
 #[TypeScript]
-class ProjectRowData extends Data
+class CaseRowData extends Data
 {
     public function __construct(
         public string $id,
