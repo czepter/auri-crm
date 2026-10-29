@@ -6,6 +6,7 @@ use App\Catalog\Data\CatalogItemData;
 use App\Catalog\Data\PackageData;
 use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
+use App\Crm\Actions\CreateContact;
 use App\Crm\Data\CaseSuggestionData;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
@@ -135,7 +136,7 @@ class InvoiceController extends Controller
         ]);
     }
 
-    public function store(Request $request, IssueInvoice $issue): RedirectResponse
+    public function store(Request $request, IssueInvoice $issue, CreateContact $createContact): RedirectResponse
     {
         self::authorizeProject(null);
 
@@ -149,7 +150,7 @@ class InvoiceController extends Controller
         $project = $this->case($validated);
         $contact = match (true) {
             isset($validated['contact_id']) => Contact::query()->where('public_id', $validated['contact_id'])->firstOrFail(),
-            isset($validated['contact']['name']) => Contact::create(array_filter($validated['contact'], fn ($value) => $value !== null)),
+            isset($validated['contact']['name']) => $createContact(array_filter($validated['contact'], fn ($value) => $value !== null)),
             default => $project?->primaryContact(),
         };
 

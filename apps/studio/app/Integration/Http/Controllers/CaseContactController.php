@@ -2,6 +2,7 @@
 
 namespace App\Integration\Http\Controllers;
 
+use App\Crm\Actions\CreateContact;
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
@@ -18,7 +19,7 @@ use Illuminate\Http\Response;
  */
 class CaseContactController extends Controller
 {
-    public function store(Request $request, ClientCase $case): JsonResponse
+    public function store(Request $request, ClientCase $case, CreateContact $createContact): JsonResponse
     {
         $validated = $request->validate([
             'contact_id' => ['nullable', 'string', 'size:24', 'required_without:name'],
@@ -32,7 +33,9 @@ class CaseContactController extends Controller
 
         abort_if($this->isPrimary($role), 422);
 
-        $contact = $this->resolveContact($validated);
+        $contact = filled($validated['contact_id'] ?? null)
+            ? Contact::query()->where('public_id', $validated['contact_id'])->firstOrFail()
+            : $createContact->resolve($validated);
 
         // unique(case_id, contact_id, role) would throw on a second attach.
         if (! $case->contacts()->whereKey($contact->id)->wherePivot('role', $role)->exists()) {
@@ -69,26 +72,5 @@ class CaseContactController extends Controller
         $case->contacts()->detach($contact->id);
 
         return response()->noContent();
-    }
-
-    /**
-     * @param  array<string, mixed>  $validated
-     */
-    private function resolveContact(array $validated): Contact
-    {
-        if (filled($validated['contact_id'] ?? null)) {
-            return Contact::query()->where('public_id', $validated['contact_id'])->firstOrFail();
-        }
-
-        // Same rule as CaptureInquiry: an address on file is that person.
-        $existing = filled($validated['email'] ?? null)
-            ? Contact::query()->where('email', $validated['email'])->first()
-            : null;
-
-        return $existing ?? Contact::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'] ?? null,
-            'phone' => $validated['phone'] ?? null,
-        ]);
     }
 }

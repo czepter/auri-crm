@@ -2,6 +2,7 @@
 
 namespace App\Crm\Http\Controllers;
 
+use App\Crm\Actions\CreateContact;
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
@@ -23,7 +24,7 @@ use Illuminate\Http\Request;
  */
 class LeadContactController extends Controller
 {
-    public function store(Request $request, ClientCase $case): RedirectResponse
+    public function store(Request $request, ClientCase $case, CreateContact $createContact): RedirectResponse
     {
         $this->authorize('manageShoots', $case);
 
@@ -39,7 +40,9 @@ class LeadContactController extends Controller
 
         abort_if($this->isPrimary($role), 422);
 
-        $contact = $this->resolveContact($validated);
+        $contact = filled($validated['contact_id'] ?? null)
+            ? Contact::query()->where('public_id', $validated['contact_id'])->firstOrFail()
+            : $createContact->resolve($validated);
 
         // unique(case_id, contact_id, role) würde beim zweiten Anhängen
         // werfen.
@@ -72,27 +75,5 @@ class LeadContactController extends Controller
     {
         return $role === CaseContactRole::Primary->value
             || $role === CaseContactRole::Primary->label();
-    }
-
-    /**
-     * @param  array<string, mixed>  $validated
-     */
-    private function resolveContact(array $validated): Contact
-    {
-        if (filled($validated['contact_id'] ?? null)) {
-            return Contact::query()->where('public_id', $validated['contact_id'])->firstOrFail();
-        }
-
-        // Dieselbe Regel wie CaptureInquiry: eine bekannte Adresse ist diese
-        // Person, nicht eine zweite mit demselben Namen.
-        $existing = filled($validated['email'] ?? null)
-            ? Contact::query()->where('email', $validated['email'])->first()
-            : null;
-
-        return $existing ?? Contact::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'] ?? null,
-            'phone' => $validated['phone'] ?? null,
-        ]);
     }
 }

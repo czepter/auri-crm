@@ -6,6 +6,8 @@ use App\Catalog\Data\PackageData;
 use App\Catalog\Enums\PortalPriceMode;
 use App\Catalog\Models\Package;
 use App\Catalog\Models\ServiceSuggestion;
+use App\Crm\Actions\CreateContact;
+use App\Crm\Actions\UpdateContact;
 use App\Crm\Data\ContactRowData;
 use App\Crm\Data\ContactSuggestionData;
 use App\Crm\Models\ClientCase;
@@ -262,7 +264,7 @@ class ContactController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, CreateContact $createContact): RedirectResponse
     {
         // ContactPolicy grants the address book one authority, and update()
         // is the write half of it — there is no create ability to name.
@@ -288,25 +290,12 @@ class ContactController extends Controller
 
         $overrides = array_filter($validated['portal'] ?? [], fn ($value) => $value !== null && $value !== '');
 
-        $contact = Contact::create(Arr::except($validated, 'portal'));
-
-        // The model's own creating hook writes the studio greeting; these
-        // depart from it, so they are merged onto what it left rather than
-        // replacing it.
-        if ($overrides !== []) {
-            $contact->forceFill(['portal_overrides' => array_merge($contact->portal_overrides ?? [], $overrides)])->save();
-        }
-
-        AuditLogger::record(
-            event: 'contact.created',
-            actor: auth('staff')->user(),
-            subject: $contact->public_id,
-        );
+        $contact = $createContact(Arr::except($validated, 'portal'), $overrides, auth('staff')->user());
 
         return redirect("/kontakte/{$contact->public_id}");
     }
 
-    public function update(Request $request, Contact $contact): RedirectResponse
+    public function update(Request $request, Contact $contact, UpdateContact $updateContact): RedirectResponse
     {
         $this->authorize('update', $contact);
 
@@ -331,7 +320,7 @@ class ContactController extends Controller
             'city' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $contact->update($validated);
+        $updateContact($contact, $validated);
 
         return redirect("/kontakte/{$contact->public_id}");
     }

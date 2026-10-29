@@ -6,6 +6,7 @@ use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\CheckDateAvailability;
 use App\Crm\Actions\DeriveCasePosition;
 use App\Crm\Actions\OpenLeads;
+use App\Crm\Actions\UpdateContact;
 use App\Crm\Data\CasePersonData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
@@ -157,7 +158,7 @@ class LeadCaseController extends Controller
      * edit. Refused rather than silently dropped: a save that reports success
      * and changes nothing is worse than one that says no.
      */
-    public function update(Request $request, ClientCase $case): RedirectResponse
+    public function update(Request $request, ClientCase $case, UpdateContact $updateContact): RedirectResponse
     {
         $lead = $case->lead()->firstOrFail();
         // The same authority that moves a shoot: the case's own fields are
@@ -192,7 +193,7 @@ class LeadCaseController extends Controller
             'shoots.*.end_time' => ['nullable', 'date_format:H:i'],
         ]);
 
-        DB::transaction(function () use ($case, $lead, $validated) {
+        DB::transaction(function () use ($case, $lead, $validated, $updateContact) {
             // Ein Termin verschiebt sich, auch nachdem gebucht wurde — das ist
             // der häufigste Vorgang überhaupt und war bis hierher ein 422.
             if (array_key_exists('type', $validated)) {
@@ -215,7 +216,7 @@ class LeadCaseController extends Controller
                     continue;
                 }
 
-                $contact->update([
+                $updateContact($contact, [
                     'name' => $person['name'],
                     'email' => $person['email'] ?? null,
                     'phone' => $person['phone'] ?? null,

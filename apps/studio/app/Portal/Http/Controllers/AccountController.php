@@ -4,6 +4,7 @@ namespace App\Portal\Http\Controllers;
 
 use App\Crm\Actions\CreateTask;
 use App\Crm\Actions\NotifyStudio;
+use App\Crm\Actions\UpdateContact;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Contact;
 use App\Http\Controllers\Controller;
@@ -77,7 +78,7 @@ class AccountController extends Controller
      * the login, so it goes out as a confirmation to the new address and
      * nothing on the contact changes until that link is followed.
      */
-    public function update(Request $request): RedirectResponse
+    public function update(Request $request, UpdateContact $updateContact): RedirectResponse
     {
         $contact = auth('portal')->user();
 
@@ -96,7 +97,7 @@ class AccountController extends Controller
         $newEmail = mb_strtolower($data['email']);
         unset($data['email']);
 
-        $contact->update($data);
+        $updateContact($contact, $data);
 
         if ($newEmail !== mb_strtolower((string) $contact->email)) {
             $this->requestEmailChange($contact, $newEmail);
