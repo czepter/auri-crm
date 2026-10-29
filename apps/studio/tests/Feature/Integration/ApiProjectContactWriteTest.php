@@ -16,7 +16,7 @@ beforeEach(function () {
 
 // #355: the partner a migration run dropped has to be added after capture.
 it('adds a partner to an existing project once, reusing a known address', function () {
-    $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
+    $token = ApiToken::factory()->withScopes(Capability::ManageShoots, Capability::ManageContacts)->create();
     $project = ClientCase::factory()->create();
     $known = Contact::factory()->create(['email' => 'friedrich@example.test']);
 
@@ -33,7 +33,7 @@ it('adds a partner to an existing project once, reusing a known address', functi
 });
 
 it('accepts a role outside the enum, like the admin screen does', function () {
-    $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
+    $token = ApiToken::factory()->withScopes(Capability::ManageShoots, Capability::ManageContacts)->create();
     $project = ClientCase::factory()->create();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
@@ -44,11 +44,37 @@ it('accepts a role outside the enum, like the admin screen does', function () {
 });
 
 it('refuses a second primary contact', function () {
-    $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
+    $token = ApiToken::factory()->withScopes(Capability::ManageShoots, Capability::ManageContacts)->create();
     $project = ClientCase::factory()->create();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'primary')
         ->postJson("/api/cases/{$project->public_id}/contacts", ['name' => 'X', 'role' => 'primary'])
         ->assertUnprocessable();
+});
+
+it('refuses a leads token', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
+    $project = ClientCase::factory()->create();
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'leads')
+        ->postJson("/api/cases/{$project->public_id}/contacts", ['name' => 'X'])
+        ->assertForbidden();
+});
+
+it('needs manage_contacts to create a new contact', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
+    $project = ClientCase::factory()->create();
+    $known = Contact::factory()->create();
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'new')
+        ->postJson("/api/cases/{$project->public_id}/contacts", ['name' => 'Neu', 'email' => 'neu@example.test'])
+        ->assertForbidden();
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'known')
+        ->postJson("/api/cases/{$project->public_id}/contacts", ['contact_id' => $known->public_id])
+        ->assertCreated();
 });

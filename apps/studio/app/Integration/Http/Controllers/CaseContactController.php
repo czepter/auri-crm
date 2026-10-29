@@ -5,7 +5,9 @@ namespace App\Integration\Http\Controllers;
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Enums\Capability;
 use App\Http\Controllers\Controller;
+use App\Integration\Models\ApiToken;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -32,7 +34,7 @@ class CaseContactController extends Controller
 
         abort_if($this->isPrimary($role), 422);
 
-        $contact = $this->resolveContact($validated);
+        $contact = $this->resolveContact($request, $validated);
 
         // unique(case_id, contact_id, role) would throw on a second attach.
         if (! $case->contacts()->whereKey($contact->id)->wherePivot('role', $role)->exists()) {
@@ -74,7 +76,7 @@ class CaseContactController extends Controller
     /**
      * @param  array<string, mixed>  $validated
      */
-    private function resolveContact(array $validated): Contact
+    private function resolveContact(Request $request, array $validated): Contact
     {
         if (filled($validated['contact_id'] ?? null)) {
             return Contact::query()->where('public_id', $validated['contact_id'])->firstOrFail();
@@ -84,6 +86,18 @@ class CaseContactController extends Controller
         $existing = filled($validated['email'] ?? null)
             ? Contact::query()->where('email', $validated['email'])->first()
             : null;
+
+        if ($existing === null) {
+            $principal = $request->user('api');
+
+            // Ein neuer Kontakt ist dieselbe Befugnis wie POST /api/contacts.
+            abort_unless(
+                $principal instanceof ApiToken
+                    ? $principal->allows(Capability::ManageContacts)
+                    : $principal->tokenCan(Capability::ManageContacts->value),
+                403,
+            );
+        }
 
         return $existing ?? Contact::create([
             'name' => $validated['name'],
