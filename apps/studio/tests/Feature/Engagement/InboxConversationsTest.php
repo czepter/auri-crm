@@ -132,3 +132,22 @@ it('still lists the Posteingang when a draft lost its anchor', function () {
 
     expect($props['drafts'][0]['projectName'])->toBeNull();
 });
+
+it('keeps a draft without anchor from contributors', function () {
+    $run = AutomationRun::create([
+        'automation_rule_id' => AutomationRule::factory()->create()->id,
+        'anchorable_type' => (new ClientCase)->getMorphClass(),
+        'anchorable_id' => 999999,
+        'idempotency_key' => 'orphan-contributor',
+        'fired_at' => now(),
+        'status' => AutomationRunStatus::AwaitingApproval,
+        'subject' => 'Verwaist',
+    ]);
+    $contributor = staffMember(StaffRole::Contributor);
+
+    $props = $this->actingAs($contributor, 'staff')->get('/posteingang')->assertOk()->viewData('page')['props'];
+
+    expect($props['drafts'])->toBeEmpty();
+    $this->post("/posteingang/entwuerfe/{$run->public_id}/verwerfen")->assertForbidden();
+    expect($run->fresh()->status)->toBe(AutomationRunStatus::AwaitingApproval);
+});

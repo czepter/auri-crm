@@ -125,8 +125,9 @@ class InboxController extends Controller
                 ->limit(100)
                 ->get()
                 ->filter(fn (AutomationRun $run) => $run->anchorable === null
-                    || ($project = FireAutomationRule::projectOf($run->anchorable)) === null
-                    || $user->can('view', $project))
+                    ? $user->can(Capability::ViewAllCases->value)
+                    : ($project = FireAutomationRule::projectOf($run->anchorable)) === null
+                        || $user->can('view', $project))
                 ->map(fn (AutomationRun $run) => [
                     'id' => $run->public_id,
                     'subject' => $run->subject,
