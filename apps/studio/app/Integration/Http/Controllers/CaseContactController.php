@@ -8,7 +8,7 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
-use App\Integration\Models\ApiToken;
+use App\Http\Middleware\EnsureApiTokenScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -82,9 +82,7 @@ class CaseContactController extends Controller
     private function authorizeContactUse(Request $request, array $validated): void
     {
         $principal = $request->user('api');
-        $can = fn (Capability $c) => $principal instanceof ApiToken
-            ? $principal->allows($c)
-            : $principal->tokenCan($c->value);
+        $can = fn (Capability $c) => EnsureApiTokenScope::allows($principal, $c);
 
         // Reading an existing contact back through the 201 body is an e-mail
         // oracle, so it needs the same authority as reading contacts.

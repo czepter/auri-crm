@@ -47,11 +47,8 @@ class EnsureApiTokenScope
 
         $principal = $request->user('api');
 
-        $allowed = match (true) {
-            $principal instanceof ApiToken => collect($required)->contains(fn (Capability $c) => $principal->allows($c)),
-            $principal instanceof User => collect($required)->contains(fn (Capability $c) => $principal->tokenCan($c->value) && $principal->role->allows($c)),
-            default => false,
-        };
+        $allowed = ($principal instanceof ApiToken || $principal instanceof User)
+            && collect($required)->contains(fn (Capability $c) => self::allows($principal, $c));
 
         // Was a Contributor's token for a project nobody crewed them on; the
         // admin twin of every one of these routes goes through ClientCasePolicy.
@@ -64,6 +61,15 @@ class EnsureApiTokenScope
         }
 
         return $next($request);
+    }
+
+    public static function allows(ApiToken|User $principal, Capability $capability): bool
+    {
+        if ($principal instanceof ApiToken) {
+            return $principal->allows($capability);
+        }
+
+        return $principal->tokenCan($capability->value) && $principal->role->allows($capability);
     }
 
     /** Capability is settled by now; what is left is the crew rule ClientCasePolicy::view adds. */

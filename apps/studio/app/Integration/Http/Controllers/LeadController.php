@@ -14,7 +14,7 @@ use App\Crm\Models\Lead;
 use App\Crm\Support\CrmVocabulary;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
-use App\Integration\Models\ApiToken;
+use App\Http\Middleware\EnsureApiTokenScope;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use DomainException;
@@ -121,12 +121,7 @@ class LeadController extends Controller
         if (! $target->is($lead->stage) && ($target->anchor === StageAnchor::Won || $lead->stage->anchor === StageAnchor::Won)) {
             $principal = $request->user('api');
 
-            abort_unless(
-                $principal instanceof ApiToken
-                    ? $principal->allows(Capability::BookProject)
-                    : $principal->tokenCan(Capability::BookProject->value),
-                403,
-            );
+            abort_unless(EnsureApiTokenScope::allows($principal, Capability::BookProject), 403);
         }
 
         try {
