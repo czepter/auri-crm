@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
-import PaymentInstallmentsEditor, { type PaymentInstallmentRow } from '@/admin/components/PaymentInstallmentsEditor.vue'
+import PaymentInstallmentsEditor, { type PaymentInstallmentRow } from '@/admin/components/payments/PaymentInstallmentsEditor.vue'
 import { Button } from '@/ui/button'
 import {
   Dialog,

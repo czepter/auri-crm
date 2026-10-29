@@ -16,7 +16,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Label } from '@/ui/label'
 import QuoteCard from './QuoteCard.vue'
 import DiscountInput from './DiscountInput.vue'
-import VatRateSelect from '@/admin/components/VatRateSelect.vue'
+import VatRateSelect from '@/admin/components/quote/VatRateSelect.vue'
 import DragHandle from './DragHandle.vue'
 
 const props = defineProps<{

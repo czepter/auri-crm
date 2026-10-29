@@ -1,4 +1,4 @@
-import type { FormFieldRow } from '@/admin/components/FormFieldsEditor.vue'
+import type { FormFieldRow } from '@/admin/components/templates/FormFieldsEditor.vue'
 
 // Shared by the project's questionnaire cards and the create wizard, so an
 // instance field turns into an editor row, and back, one way only.

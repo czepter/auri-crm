@@ -16,10 +16,10 @@ import { DatePicker } from '@/ui/date-picker'
 import { Label } from '@/ui/label'
 import { useI18n } from 'vue-i18n'
 import QuoteActions from '@/admin/components/quote/QuoteActions.vue'
-import InstallmentPaidDialog from '@/admin/components/InstallmentPaidDialog.vue'
-import InstallmentStornoDialog from '@/admin/components/InstallmentStornoDialog.vue'
-import CreditNoteDialog from '@/admin/components/CreditNoteDialog.vue'
-import PaymentPlanDialog from '@/admin/components/PaymentPlanDialog.vue'
+import InstallmentPaidDialog from '@/admin/components/payments/InstallmentPaidDialog.vue'
+import InstallmentStornoDialog from '@/admin/components/payments/InstallmentStornoDialog.vue'
+import CreditNoteDialog from '@/admin/components/payments/CreditNoteDialog.vue'
+import PaymentPlanDialog from '@/admin/components/payments/PaymentPlanDialog.vue'
 
 const props = withDefaults(
   defineProps<{

@@ -5,7 +5,7 @@ import { useI18n } from "vue-i18n";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import Page from "@/ui/page/Page.vue";
 import PageHead from "@/ui/page/PageHead.vue";
-import Panel from "@/admin/components/Panel.vue";
+import Panel from "@/admin/components/crm/Panel.vue";
 import { Button } from "@/ui/button";
 import { formatEurosRounded } from "@/lib/money";
 import { weekFrom } from "@/admin/lib/dates";

@@ -2,10 +2,10 @@
 import { computed, ref } from "vue";
 import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
-import LeadQueue from "@/admin/components/LeadQueue.vue";
+import LeadQueue from "@/admin/components/crm/LeadQueue.vue";
 import Page from "@/ui/page/Page.vue";
 import PageHead from "@/ui/page/PageHead.vue";
-import ProjectSettings from "@/admin/components/ProjectSettings.vue";
+import ProjectSettings from "@/admin/components/crm/ProjectSettings.vue";
 import {
     Table,
     TableCell,

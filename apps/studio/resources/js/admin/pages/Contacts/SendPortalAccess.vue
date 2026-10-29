@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3'
-import SendByMailView from '@/admin/components/SendByMailView.vue'
+import SendByMailView from '@/admin/components/templates/SendByMailView.vue'
 import { toPlainText } from '@/admin/documents/blocks/serialize'
 import type { EditorDocument } from '@/admin/documents/blocks/types'
 import { useLiveProps } from '@/admin/lib/liveReload'

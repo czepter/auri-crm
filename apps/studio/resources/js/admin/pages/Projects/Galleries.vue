@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import ProjectShell from '@/admin/components/ProjectShell.vue'
+import ProjectShell from '@/admin/components/crm/ProjectShell.vue'
 import Card from '@/ui/page/Card.vue'
 import { Button } from '@/ui/button'
 import { dayAndMonth, weekday } from '@/admin/lib/shoots'

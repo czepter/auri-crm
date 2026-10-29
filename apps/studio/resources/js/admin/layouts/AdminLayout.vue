@@ -9,7 +9,7 @@ import {
     DropdownMenuTrigger,
 } from "@/ui/dropdown-menu";
 import { Toaster } from "@/ui/sonner";
-import CommandPalette from "@/admin/components/CommandPalette.vue";
+import CommandPalette from "@/admin/layouts/CommandPalette.vue";
 import { Alert } from "@/ui/alert";
 import { Button } from "@/ui/button";
 import HelpButton from "@/ui/page/HelpButton.vue";
