@@ -331,7 +331,7 @@ function syntheticJpeg(int $width = 300, int $height = 200): string
 /**
  * A MultipartUpload already Completed, with $bytes actually sitting at its
  * quarantine key on the faked `s3` disk — the state G-03's
- * App\Media\Actions\IngestCompletedUpload expects to find one in once
+ * App\Gallery\Actions\IngestCompletedUpload expects to find one in once
  * MultipartUploadController::complete() has run. Call Storage::fake('s3')
  * before this.
  */

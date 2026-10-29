@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Media\Actions;
+namespace App\Gallery\Actions;
 
-use App\Media\Jobs\ProcessIngestedAsset;
+use App\Gallery\Jobs\ProcessIngestedAsset;
 use App\Media\Models\Asset;
 use App\Media\Models\MultipartUpload;
 

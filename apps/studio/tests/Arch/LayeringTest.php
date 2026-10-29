@@ -33,6 +33,7 @@ $baseline = [
         'App\Documents\Support\DocumentRenderer',
         'App\Engagement\Actions\SendStaffReply',
         'App\Engagement\Notifications\StaffReplyPosted',
+        'App\Gallery\Actions\NotifyZipWaiters',
         'App\Gallery\Actions\PublishGallery',
         'App\Gallery\Actions\RequestGalleryEmailVerification',
         'App\Gallery\Actions\RequestGalleryGuestCode',
@@ -95,15 +96,6 @@ $baseline = [
         'App\Notifications\Studio\TasksDue',
         'App\Notifications\Support\StudioAudience',
         'App\Notifications\Support\StudioEvents',
-    ],
-    564 => [
-        'App\Media\Concerns\HasShowcaseImages',
-        'App\Media\Concerns\HasShowcaseImages',
-        'App\Media\Actions\BuildGalleryZip',
-        'App\Media\Actions\IngestCompletedUpload',
-        'App\Media\Actions\NotifyZipWaiters',
-        'App\Media\Actions\RequestZipBuild',
-        'App\Media\Actions\StartOrResumeMultipartUpload',
     ],
     565 => [
         'App\Documents\Data\MailTemplateData',

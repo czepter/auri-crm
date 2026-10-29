@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Media\Actions;
+namespace App\Gallery\Actions;
 
+use App\Gallery\Jobs\BuildZip;
 use App\Gallery\Models\GalleryVersion;
 use App\Media\Enums\ZipBuildScope;
 use App\Media\Enums\ZipBuildSize;
 use App\Media\Enums\ZipBuildStatus;
-use App\Media\Jobs\BuildZip;
 use App\Media\Models\ZipBuild;
 
 /**
@@ -14,7 +14,7 @@ use App\Media\Models\ZipBuild;
  * same (version, scope, size) reuses the built archive." Finds-or-creates
  * against zip_builds' own (tenant, gallery_version, scope, size) unique
  * index, which is the actual dedupe mechanism, and only dispatches
- * App\Media\Jobs\BuildZip onto media.zip for a row that isn't already Ready
+ * App\Gallery\Jobs\BuildZip onto media.zip for a row that isn't already Ready
  * or already Building.
  */
 class RequestZipBuild

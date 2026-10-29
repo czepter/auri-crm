@@ -1,10 +1,9 @@
 <?php
 
-namespace App\Media\Actions;
+namespace App\Gallery\Actions;
 
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GallerySet;
-use App\Media\Console\Commands\ReapIncompleteMultipartUploads;
 use App\Media\Enums\MultipartUploadStatus;
 use App\Media\Models\MultipartUpload;
 use App\Media\Services\MultipartUploadGateway;
@@ -66,7 +65,7 @@ class StartOrResumeMultipartUpload
         }
 
         $publicId = (string) new Cuid2;
-        $key = ReapIncompleteMultipartUploads::QUARANTINE_PREFIX.$publicId.'/'.$filename;
+        $key = MultipartUpload::QUARANTINE_PREFIX.$publicId.'/'.$filename;
         $uploadId = $this->gateway->create($key, $contentType);
 
         $upload = MultipartUpload::create([

@@ -4,8 +4,8 @@ namespace App\Privacy\Actions;
 
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
+use App\Gallery\Actions\BuildGalleryZip;
 use App\Gallery\Models\Gallery;
-use App\Media\Actions\BuildGalleryZip;
 use App\Media\Enums\ZipBuildStatus;
 use App\Media\Models\Asset;
 use App\Media\Support\ZipBuildMember;

@@ -1,8 +1,7 @@
 <?php
 
-namespace App\Media\Actions;
+namespace App\Gallery\Actions;
 
-use App\Gallery\Actions\EnsureGalleryCover;
 use App\Gallery\Models\Gallery;
 use App\Media\Enums\AssetStatus;
 use App\Media\Enums\MultipartUploadStatus;
@@ -23,7 +22,7 @@ use Visus\Cuid2\Cuid2;
 /**
  * G-03: what promotes a completed quarantine object (G-02) into a gallery
  * asset — checksum, EXIF, perceptual hash, libvips derivatives, blurhash.
- * Dispatched onto the media.ingest queue (App\Media\Jobs\ProcessIngestedAsset)
+ * Dispatched onto the media.ingest queue (App\Gallery\Jobs\ProcessIngestedAsset)
  * the moment MultipartUploadController::complete() marks a session Completed.
  *
  * Idempotent on SHA-256, per #52: this can run twice for the same

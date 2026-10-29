@@ -2,8 +2,8 @@
 
 namespace App\Media\Http\Controllers;
 
+use App\Gallery\Actions\RetryFailedAsset;
 use App\Http\Controllers\Controller;
-use App\Media\Actions\RetryFailedAsset;
 use App\Media\Enums\AssetStatus;
 use App\Media\Models\Asset;
 use Illuminate\Http\RedirectResponse;

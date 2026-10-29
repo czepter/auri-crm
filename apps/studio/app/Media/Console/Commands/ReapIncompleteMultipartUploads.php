@@ -2,6 +2,7 @@
 
 namespace App\Media\Console\Commands;
 
+use App\Media\Models\MultipartUpload;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
@@ -22,12 +23,6 @@ use Illuminate\Support\Facades\Storage;
  */
 class ReapIncompleteMultipartUploads extends Command
 {
-    /**
-     * Every multipart upload this command is willing to touch lives under
-     * this prefix — nothing else on the bucket is ever listed or aborted.
-     */
-    public const QUARANTINE_PREFIX = 'quarantine/';
-
     protected $signature = 'media:reap-multipart-uploads
         {--older-than=24 : Hours since a part was last uploaded before its upload is aborted}';
 
@@ -56,7 +51,7 @@ class ReapIncompleteMultipartUploads extends Command
 
         foreach ($pages as $page) {
             foreach ($page['Uploads'] ?? [] as $upload) {
-                if (! str_starts_with($upload['Key'], self::QUARANTINE_PREFIX)) {
+                if (! str_starts_with($upload['Key'], MultipartUpload::QUARANTINE_PREFIX)) {
                     continue;
                 }
 
@@ -74,7 +69,7 @@ class ReapIncompleteMultipartUploads extends Command
             }
         }
 
-        $this->info("Aborted {$reaped} incomplete multipart upload(s) under ".self::QUARANTINE_PREFIX);
+        $this->info("Aborted {$reaped} incomplete multipart upload(s) under ".MultipartUpload::QUARANTINE_PREFIX);
 
         return self::SUCCESS;
     }

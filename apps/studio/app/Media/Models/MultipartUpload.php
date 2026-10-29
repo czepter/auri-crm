@@ -15,8 +15,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * One resumable S3 multipart upload session, quarantined under
- * ReapIncompleteMultipartUploads::QUARANTINE_PREFIX until it either
- * completes or is aborted. See App\Media\Actions\StartOrResumeMultipartUpload
+ * QUARANTINE_PREFIX until it either
+ * completes or is aborted. See App\Gallery\Actions\StartOrResumeMultipartUpload
  * for how a returning browser tab finds this same row again by fingerprint
  * (filename, file_size, file_modified_at) rather than by any id it was never
  * given.
@@ -32,6 +32,13 @@ class MultipartUpload extends Model
     use BelongsToTenant;
     use HasFactory;
     use HasPublicId;
+
+    /**
+     * Every multipart upload ReapIncompleteMultipartUploads is willing to
+     * touch lives under this prefix — nothing else on the bucket is ever
+     * listed or aborted.
+     */
+    public const QUARANTINE_PREFIX = 'quarantine/';
 
     protected $fillable = [
         'public_id', 'gallery_id', 'gallery_set_id', 'replaces_asset_id', 'key', 'upload_id', 'filename', 'file_size',
@@ -63,7 +70,7 @@ class MultipartUpload extends Model
     }
 
     /**
-     * The asset G-03's App\Media\Actions\IngestCompletedUpload concluded
+     * The asset G-03's App\Gallery\Actions\IngestCompletedUpload concluded
      * this upload as — set on every conclusion, including a duplicate
      * (checksum already known) and a Failed one, never only on success.
      */

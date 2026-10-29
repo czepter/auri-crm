@@ -1,9 +1,9 @@
 <?php
 
 use App\Enums\StaffRole;
+use App\Gallery\Jobs\ProcessIngestedAsset;
 use App\Gallery\Models\Gallery;
 use App\Media\Enums\AssetStatus;
-use App\Media\Jobs\ProcessIngestedAsset;
 use App\Media\Models\Asset;
 use App\Media\Models\MultipartUpload;
 use Illuminate\Foundation\Testing\RefreshDatabase;

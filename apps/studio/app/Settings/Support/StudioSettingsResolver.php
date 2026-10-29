@@ -3,7 +3,7 @@
 namespace App\Settings\Support;
 
 use App\Gallery\Models\GalleryPreset;
-use App\Gallery\Support\ImageVariant;
+use App\Media\Support\ImageVariant;
 use App\Models\StudioSettings;
 use App\Models\User;
 use App\Privacy\Data\RetentionPolicyData;

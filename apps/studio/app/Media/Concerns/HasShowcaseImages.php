@@ -2,7 +2,7 @@
 
 namespace App\Media\Concerns;
 
-use App\Gallery\Support\ImageVariant;
+use App\Media\Support\ImageVariant;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;

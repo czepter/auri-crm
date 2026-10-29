@@ -1,8 +1,7 @@
 <?php
 
-namespace App\Media\Actions;
+namespace App\Gallery\Actions;
 
-use App\Gallery\Actions\IssueGalleryDownloadLink;
 use App\Gallery\Notifications\GalleryZipReady;
 use App\Media\Models\ZipBuild;
 use App\Media\Models\ZipBuildWaiter;

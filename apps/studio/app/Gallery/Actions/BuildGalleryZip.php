@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Media\Actions;
+namespace App\Gallery\Actions;
 
 use App\Gallery\Models\GalleryList;
 use App\Gallery\Models\GalleryVersion;

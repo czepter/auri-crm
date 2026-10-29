@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Media\Jobs;
+namespace App\Gallery\Jobs;
 
-use App\Media\Actions\BuildGalleryZip;
+use App\Gallery\Actions\BuildGalleryZip;
 use App\Media\Models\ZipBuild;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;

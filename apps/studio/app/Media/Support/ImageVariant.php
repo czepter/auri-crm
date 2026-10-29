@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Gallery\Support;
+namespace App\Media\Support;
 
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;

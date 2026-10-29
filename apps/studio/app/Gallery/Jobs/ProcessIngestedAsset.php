@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Media\Jobs;
+namespace App\Gallery\Jobs;
 
-use App\Media\Actions\IngestCompletedUpload;
+use App\Gallery\Actions\IngestCompletedUpload;
 use App\Media\Models\MultipartUpload;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -15,7 +15,7 @@ use Illuminate\Queue\SerializesModels;
  * supervisor-media-ingest, 20s timeout, 3 tries). Dispatched by
  * App\Media\Http\Controllers\MultipartUploadController::complete() the
  * moment a session moves to Completed — the actual work lives in
- * App\Media\Actions\IngestCompletedUpload, kept separate so it is callable
+ * App\Gallery\Actions\IngestCompletedUpload, kept separate so it is callable
  * directly from a test without a queue round-trip.
  */
 class ProcessIngestedAsset implements ShouldQueue
