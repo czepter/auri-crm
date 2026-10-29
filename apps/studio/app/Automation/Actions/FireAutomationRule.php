@@ -16,14 +16,14 @@ use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Crm\Support\StudioAudience;
-use App\Documents\Support\DocumentMergeDataBuilder;
+use App\Documents\Support\DocumentMergeData;
 use App\Documents\Support\MergeFieldResolver;
 use App\Gallery\Models\Gallery;
 use App\Models\User;
 use App\Notifications\NotificationService;
 use App\Payments\Models\PaymentInstallment;
+use App\Payments\Support\InvoiceMergeData;
 use App\Portal\Support\ClientAudience;
-use App\Settings\Support\StudioSettingsResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -51,11 +51,11 @@ class FireAutomationRule
 {
     public function __construct(
         private readonly NotificationService $notifications,
-        private readonly StudioSettingsResolver $settings,
         private readonly StudioAudience $audience,
         private readonly ClientAudience $clients,
         private readonly AutomationConditions $conditions,
-        private readonly DocumentMergeDataBuilder $merge,
+        private readonly DocumentMergeData $merge,
+        private readonly InvoiceMergeData $invoiceMerge,
     ) {}
 
     public function __invoke(AutomationRule $rule, Model $anchor, string $triggerDate): ?AutomationRun
@@ -93,11 +93,12 @@ class FireAutomationRule
 
         // E-15: resolved against the anchor's own project, so "morgen ist ein
         // Shooting" names which one.
-        $data = $project === null ? [] : $this->merge->fromProject(
-            $project,
-            $this->settings,
-            $anchor instanceof PaymentInstallment ? $anchor->invoice : null,
-        );
+        $invoice = $anchor instanceof PaymentInstallment ? $anchor->invoice : null;
+        $data = match (true) {
+            $project === null => [],
+            $invoice !== null => $this->invoiceMerge->forInvoice($invoice),
+            default => $this->merge->forCase($project),
+        };
         $subject = MergeFieldResolver::resolve($rule->notification_subject, $data, keepUnknown: true);
         $body = MergeFieldResolver::resolve($rule->notification_body, $data, keepUnknown: true);
 

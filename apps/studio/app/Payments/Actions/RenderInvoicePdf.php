@@ -4,12 +4,12 @@ namespace App\Payments\Actions;
 
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
-use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Documents\Support\DocumentRenderer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Payments\Models\CreditNote;
 use App\Payments\Models\Invoice;
 use App\Payments\Support\InvoiceDocument;
+use App\Payments\Support\InvoiceMergeData;
 use App\Payments\Support\Layouts\ClassicInvoiceLayout;
 use App\Payments\Support\Layouts\HeaderBandInvoiceLayout;
 use App\Payments\Support\Layouts\InvoiceLayoutRenderer;
@@ -35,7 +35,7 @@ class RenderInvoicePdf
 {
     public function __construct(
         private readonly StudioSettingsResolver $settings,
-        private readonly DocumentMergeDataBuilder $mergeData,
+        private readonly InvoiceMergeData $mergeData,
         private readonly DocumentRenderer $renderer,
     ) {}
 
@@ -46,7 +46,7 @@ class RenderInvoicePdf
      */
     public function forInvoice(Invoice $invoice, ?QuoteLayout $layoutOverride = null, ?string $snapshotPath = null): string
     {
-        $build = fn (): array => $this->mergeData->fromInvoice($invoice, $this->settings);
+        $build = fn (): array => $this->mergeData->forInvoice($invoice);
         $data = $snapshotPath === null ? $build() : MergeDataSnapshot::remember($snapshotPath, $build);
 
         return $this->wrap(
@@ -62,7 +62,7 @@ class RenderInvoicePdf
 
     public function forCreditNote(CreditNote $creditNote, ?QuoteLayout $layoutOverride = null, ?string $snapshotPath = null): string
     {
-        $build = fn (): array => $this->mergeData->fromInvoice($creditNote->invoice, $this->settings, $creditNote);
+        $build = fn (): array => $this->mergeData->forInvoice($creditNote->invoice, $creditNote);
         $data = $snapshotPath === null ? $build() : MergeDataSnapshot::remember($snapshotPath, $build);
 
         return $this->wrap(

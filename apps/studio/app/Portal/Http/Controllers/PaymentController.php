@@ -3,7 +3,6 @@
 namespace App\Portal\Http\Controllers;
 
 use App\Crm\Models\ClientCase;
-use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Http\Controllers\Controller;
 use App\Payments\Actions\ConfirmInstallmentCheckoutSession;
 use App\Payments\Data\PaymentPlanData;
@@ -11,6 +10,7 @@ use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Support\InvoiceDocument;
+use App\Payments\Support\InvoiceMergeData;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -95,7 +95,7 @@ class PaymentController extends Controller
         string $case,
         string $invoice,
         StudioSettingsResolver $settings,
-        DocumentMergeDataBuilder $mergeData,
+        InvoiceMergeData $mergeData,
     ): Response {
         $contact = auth('portal')->user();
         [$found, $row] = $this->find($case, $invoice);
@@ -106,7 +106,7 @@ class PaymentController extends Controller
             $row->update(['viewed_at' => now()]);
         }
 
-        $document = InvoiceDocument::forInvoice($row, $mergeData->fromInvoice($row, $settings), $settings);
+        $document = InvoiceDocument::forInvoice($row, $mergeData->forInvoice($row), $settings);
         $open = $row->installments->first(fn (PaymentInstallment $one) => in_array($one->status, PaymentInstallmentStatus::open(), true));
 
         return Inertia::render('Payments/Invoice', [

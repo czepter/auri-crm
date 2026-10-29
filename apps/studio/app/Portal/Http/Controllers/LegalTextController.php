@@ -4,7 +4,7 @@ namespace App\Portal\Http\Controllers;
 
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
-use App\Documents\Support\DocumentMergeDataBuilder;
+use App\Documents\Support\DocumentMergeData;
 use App\Documents\Support\MergeFieldResolver;
 use App\Http\Controllers\Controller;
 use App\Portal\Support\PortalSettings;
@@ -24,7 +24,7 @@ use Inertia\Response;
  */
 class LegalTextController extends Controller
 {
-    public function __invoke(string $text, StudioSettingsResolver $settings, DocumentMergeDataBuilder $merge): Response
+    public function __invoke(string $text, StudioSettingsResolver $settings, DocumentMergeData $merge): Response
     {
         abort_unless(in_array($text, PortalSettings::LEGAL_TEXTS, true), 404);
 
@@ -40,7 +40,7 @@ class LegalTextController extends Controller
 
         return Inertia::render('Rechtstext', [
             'title' => $template->name,
-            'body' => MergeFieldResolver::resolve($template->body, $merge->fromStudio($settings)),
+            'body' => MergeFieldResolver::resolve($template->body, $merge->forStudio()),
         ]);
     }
 }

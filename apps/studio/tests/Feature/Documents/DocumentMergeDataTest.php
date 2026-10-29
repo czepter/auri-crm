@@ -1,13 +1,13 @@
 <?php
 
 use App\Crm\Models\Shoot;
-use App\Documents\Support\DocumentMergeDataBuilder;
+use App\Documents\Support\DocumentMergeData;
 use App\Gallery\Models\Gallery;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Payments\Support\InvoiceMergeData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -17,7 +17,7 @@ uses(RefreshDatabase::class);
 it('builds the same merge data shape any document type resolves against', function () {
     $project = bookedContactProject();
 
-    $data = (new DocumentMergeDataBuilder)->fromProject($project, new StudioSettingsResolver);
+    $data = app(DocumentMergeData::class)->forCase($project);
 
     expect($data['project']['name'])->toBe('Hochzeit Meier & Kowalski')
         ->and($data['project']['type'])->toBe($project->type->name)
@@ -29,17 +29,16 @@ it('builds the same merge data shape any document type resolves against', functi
 
 /**
  * T-12's own acceptance criterion: the same merge field resolves identically
- * wherever it is read from. DocumentMergeDataBuilder takes no document type
+ * wherever it is read from. DocumentMergeData takes no document type
  * at all — it is the one place that array is built, so a contract, a quote
  * and a mail rendered from the same project read the exact same values.
  */
 it('is the one place the array is built — nothing about it varies by document type', function () {
     $project = bookedContactProject();
-    $settings = new StudioSettingsResolver;
-    $builder = new DocumentMergeDataBuilder;
+    $builder = app(DocumentMergeData::class);
 
-    $first = $builder->fromProject($project, $settings);
-    $second = $builder->fromProject($project, $settings);
+    $first = $builder->forCase($project);
+    $second = $builder->forCase($project);
 
     expect($first)->toBe($second);
 });
@@ -52,7 +51,7 @@ it('points the gallery merge field at the viewer host, not this app', function (
     $project = bookedContactProject();
     Gallery::factory()->for($project, 'case')->create(['title' => 'Hochzeit Meier', 'slug' => 'hochzeit-meier']);
 
-    $data = (new DocumentMergeDataBuilder)->fromProject($project, new StudioSettingsResolver);
+    $data = app(DocumentMergeData::class)->forCase($project);
 
     expect($data['gallery']['link'])->toBe('http://gallery.test/g/hochzeit-meier');
 });
@@ -72,14 +71,25 @@ it('prints the Vereinnahmungsdatum on an Anzahlung paid before it was issued', f
         'invoice_id' => $invoice->id,
     ]);
 
-    $data = (new DocumentMergeDataBuilder)->fromInvoice($invoice, new StudioSettingsResolver);
+    $data = app(InvoiceMergeData::class)->forInvoice($invoice);
 
     expect($data['invoice']['servicePeriod'])->toBe('02.03.2026');
 
     // Paid after issue: the shoot day is the supply, as before.
     $installment->update(['paid_on' => '2026-03-09']);
 
-    $data = (new DocumentMergeDataBuilder)->fromInvoice($invoice->fresh(), new StudioSettingsResolver);
+    $data = app(InvoiceMergeData::class)->forInvoice($invoice->fresh());
 
     expect($data['invoice']['servicePeriod'])->toBe('20.06.2026');
+});
+
+// #565: the blocks come from each module's MergeDataProvider. Without a case
+// all of them are still there, so a field on the wrong document renders as
+// nothing rather than as a raw placeholder.
+it('gathers every block from the registered providers, even without a case', function () {
+    $data = app(DocumentMergeData::class)->forCase(null);
+
+    expect(array_keys($data))->toBe(['project', 'contact', 'shoot', 'invoice', 'creditNote', 'quote', 'gallery', 'studio'])
+        ->and($data['gallery']['link'])->toBe('')
+        ->and($data['invoice']['number'])->toBe('');
 });

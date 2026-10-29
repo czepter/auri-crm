@@ -21,9 +21,12 @@ use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
 use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
+use App\Crm\Support\CaseMergeData;
 use App\Crm\Support\CrmVocabulary;
+use App\Documents\Contracts\MergeDataProvider;
 use App\Documents\Models\DocumentTemplate;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Support\GalleryMergeData;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\NotificationPreferences;
 use App\Notifications\Support\StudioMailFooter;
@@ -31,6 +34,7 @@ use App\Notifications\Transports\InAppTransport;
 use App\Notifications\Transports\MailTransport;
 use App\Payments\Events\InstallmentOverdue;
 use App\Payments\Events\InstallmentPaid;
+use App\Payments\Support\InvoiceMergeData;
 use App\Policies\ClientCasePolicy;
 use App\Policies\ContactPolicy;
 use App\Policies\DocumentTemplatePolicy;
@@ -45,6 +49,7 @@ use App\Policies\StagePolicy;
 use App\Policies\TaskPolicy;
 use App\Policies\TaskTemplatePolicy;
 use App\Portal\Listeners\RevealProjectOnBooking;
+use App\Quotes\Support\QuoteMergeData;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Staff\Listeners\NotifyStudioOfDomainEvent;
 use App\Staff\Listeners\WithholdClientMail;
@@ -104,6 +109,15 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(S3Client::class, fn () => Storage::disk('s3')->getClient());
 
         $this->app->singleton(CrmVocabulary::class);
+
+        // #565: each module's blocks of the merge-field array, gathered by
+        // DocumentMergeData. The order is the order of the blocks.
+        $this->app->tag([
+            CaseMergeData::class,
+            InvoiceMergeData::class,
+            QuoteMergeData::class,
+            GalleryMergeData::class,
+        ], MergeDataProvider::class);
     }
 
     /**

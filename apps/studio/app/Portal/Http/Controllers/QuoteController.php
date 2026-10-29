@@ -2,7 +2,7 @@
 
 namespace App\Portal\Http\Controllers;
 
-use App\Documents\Support\DocumentMergeDataBuilder;
+use App\Documents\Support\DocumentMergeData;
 use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Http\Controllers\Controller;
@@ -53,7 +53,7 @@ class QuoteController extends Controller
                 // #480: the letter as the client reads it — fields filled, escaped.
                 ...collect(['intro' => $quote->intro, 'outro' => $quote->outro])->map(fn (?string $html) => MergeFieldResolver::resolve(
                     InlineHtmlSanitizer::letter($html) ?? '',
-                    app(DocumentMergeDataBuilder::class)->fromProject($quote->case, $settings),
+                    app(DocumentMergeData::class)->forCase($quote->case),
                     escape: true,
                 ))->all(),
                 // Display only — see AcceptQuote for the re-check this

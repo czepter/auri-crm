@@ -5,7 +5,7 @@ namespace App\Contracts\Actions;
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Models\Contract;
 use App\Documents\Enums\DocumentTemplateType;
-use App\Documents\Support\DocumentMergeDataBuilder;
+use App\Documents\Support\DocumentMergeData;
 use App\Documents\Support\DocumentRenderer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Settings\Support\StudioSettingsResolver;
@@ -38,7 +38,7 @@ class EnsureContractArtifact
     public function __construct(
         private readonly GotenbergClient $gotenberg,
         private readonly StudioSettingsResolver $settings,
-        private readonly DocumentMergeDataBuilder $mergeData,
+        private readonly DocumentMergeData $mergeData,
         private readonly DocumentRenderer $renderer,
     ) {}
 
@@ -61,7 +61,7 @@ class EnsureContractArtifact
     {
         $resolved = MergeFieldResolver::resolve(
             $contract->resolvedBody(),
-            $this->mergeData->fromProject($contract->case, $this->settings),
+            $this->mergeData->forCase($contract->case),
         );
 
         $html = $this->renderer->wrap(DocumentTemplateType::Contract, $resolved, $this->settings);

@@ -37,13 +37,12 @@ use App\Crm\Support\TaskAnchors;
 use App\Documents\Data\MailTemplateData;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
-use App\Documents\Support\DocumentMergeDataBuilder;
+use App\Documents\Support\DocumentMergeData;
 use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Quotes\Actions\ReadCaseQuote;
 use App\Quotes\Screens\ReadQuoteList;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use App\Support\LiveUpdate;
 use App\Support\RecordVisit;
@@ -458,8 +457,7 @@ class ProjectController extends Controller
      */
     public function messages(
         ClientCase $case,
-        StudioSettingsResolver $settings,
-        DocumentMergeDataBuilder $mergeData,
+        DocumentMergeData $mergeData,
     ): Response {
         $this->authorize('view', $case);
 
@@ -478,7 +476,7 @@ class ProjectController extends Controller
                 ->forShootKind($case->primaryShoot?->kind)
                 ->orderBy('name')
                 ->get()
-                ->map(fn (DocumentTemplate $template) => MailTemplateData::fromModel($template, $case, $settings, $mergeData))
+                ->map(fn (DocumentTemplate $template) => MailTemplateData::fromModel($template, $mergeData->forCase($case)))
                 ->all(),
         ]);
     }

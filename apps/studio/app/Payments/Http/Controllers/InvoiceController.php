@@ -11,7 +11,6 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Documents\Actions\SeedStarterTemplates;
 use App\Documents\Enums\DocumentTemplateType;
-use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\StarterTemplateCatalog;
 use App\Enums\Capability;
@@ -34,6 +33,7 @@ use App\Payments\Models\PaymentPlan;
 use App\Payments\Notifications\InvoiceSent;
 use App\Payments\Support\InvoiceDocument;
 use App\Payments\Support\InvoiceFigures;
+use App\Payments\Support\InvoiceMergeData;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Support\StudioReadiness;
 use App\Settings\Support\StudioSettingsResolver;
@@ -180,7 +180,7 @@ class InvoiceController extends Controller
     public function preview(
         Request $request,
         RenderInvoicePdf $render,
-        DocumentMergeDataBuilder $mergeData,
+        InvoiceMergeData $mergeData,
         StudioSettingsResolver $settings,
     ): HttpResponse|JsonResponse {
         self::authorizeProject(null);
@@ -190,7 +190,7 @@ class InvoiceController extends Controller
 
         return match ($validated['format'] ?? 'pdf') {
             'portal' => response()->json(
-                InvoiceDocument::forInvoice($invoice, $mergeData->fromInvoice($invoice, $settings), $settings)->page(),
+                InvoiceDocument::forInvoice($invoice, $mergeData->forInvoice($invoice), $settings)->page(),
             ),
             'mail' => response(MailPreview::html(
                 new InvoiceSent($invoice, '', InvoiceSent::defaultMessage($invoice)),

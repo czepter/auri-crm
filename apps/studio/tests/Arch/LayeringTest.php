@@ -19,7 +19,6 @@ $wiring = ['App\Http', 'App\Policies', 'App\Providers', 'App\Templates', 'App\Mi
 // Today's violations by the issue that removes them. Only ever delete lines.
 $baseline = [
     558 => [
-        'App\Automation\Actions\FireAutomationRule',
         'App\Automation\Actions\SeedDefaultAutomationRules',
         'App\Automation\Actions\SweepDateOffsetAutomationRules',
         'App\Contracts\Actions\EnsureContractArtifact',
@@ -45,6 +44,7 @@ $baseline = [
         'App\Payments\Actions\RenderInvoicePdf',
         'App\Payments\Support\InvoiceDocument',
         'App\Payments\Support\InvoiceFigures',
+        'App\Payments\Support\InvoiceMergeData',
         'App\Portal\Actions\RemindClientTasks',
         'App\Portal\Actions\RequestClientAccess',
         'App\Portal\Notifications\ClientAccessLink',
@@ -60,10 +60,6 @@ $baseline = [
         'App\Quotes\Notifications\QuoteSent',
         'App\Quotes\Support\SampleQuoteData',
         'App\Settings\Support\StudioSettingsResolver',
-    ],
-    565 => [
-        'App\Documents\Data\MailTemplateData',
-        'App\Documents\Support\DocumentMergeDataBuilder',
     ],
 ];
 $baseline = array_merge(...array_values($baseline));

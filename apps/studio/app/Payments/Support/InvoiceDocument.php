@@ -13,7 +13,7 @@ use App\Settings\Support\StudioSettingsResolver;
  * a Gutschrift are one shape and no layout carries the branch between them.
  *
  * Everything here is already a formatted string, taken from the merge data
- * App\Documents\Support\DocumentMergeDataBuilder built: the euro formatting
+ * App\Documents\Support\DocumentMergeData built: the euro formatting
  * and the net/VAT split happened there, once, and a layout that recomputed
  * either would be a second opinion about the same figures.
  */

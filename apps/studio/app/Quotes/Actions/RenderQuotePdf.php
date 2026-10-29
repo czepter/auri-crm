@@ -4,7 +4,7 @@ namespace App\Quotes\Actions;
 
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
-use App\Documents\Support\DocumentMergeDataBuilder;
+use App\Documents\Support\DocumentMergeData;
 use App\Documents\Support\DocumentRenderer;
 use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
@@ -41,7 +41,7 @@ class RenderQuotePdf
     public function __construct(
         private readonly GotenbergClient $gotenberg,
         private readonly StudioSettingsResolver $settings,
-        private readonly DocumentMergeDataBuilder $mergeData,
+        private readonly DocumentMergeData $mergeData,
         private readonly DocumentRenderer $renderer,
     ) {}
 
@@ -54,7 +54,7 @@ class RenderQuotePdf
     {
         $quote = $quote->asSeenByClient();
         $project = $quote->case;
-        $data = $this->mergeData->fromProject($project, $this->settings);
+        $data = $this->mergeData->forCase($project);
 
         $template = DocumentTemplate::query()
             ->current()

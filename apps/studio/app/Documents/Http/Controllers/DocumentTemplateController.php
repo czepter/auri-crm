@@ -8,7 +8,7 @@ use App\Documents\Data\DocumentTemplateData;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentBlockCatalog;
-use App\Documents\Support\DocumentMergeDataBuilder;
+use App\Documents\Support\DocumentMergeData;
 use App\Documents\Support\DocumentRenderer;
 use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
@@ -194,7 +194,7 @@ class DocumentTemplateController extends Controller
                 ? MergeFieldVocabulary::sample()
                 // Nested, like MergeFieldVocabulary::sample() — the resolver
                 // walks the path, it does not look up a dotted key.
-                : app(DocumentMergeDataBuilder::class)->fromProject($project, $settings),
+                : app(DocumentMergeData::class)->forCase($project),
         );
         $html = $renderer->wrap($type, $resolved, $settings);
 

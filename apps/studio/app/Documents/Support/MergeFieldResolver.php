@@ -8,7 +8,7 @@ namespace App\Documents\Support;
  * resolver for every App\Documents\Enums\DocumentTemplateType: a quote, an
  * invoice and a mail all read `{{ project.name }}` the same way, because they
  * all run through this one class against App\Documents\Support\
- * DocumentMergeDataBuilder's one array. See docs/documents.md for the syntax.
+ * DocumentMergeData's one array. See docs/documents.md for the syntax.
  */
 class MergeFieldResolver
 {

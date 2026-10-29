@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Storage;
  * #416, GoBD Rz. 59 Beispiel 4 and Rz. 125: the PDF a client holds has to be
  * reproducible from the data of the day it was issued. Every figure and every
  * address on an invoice comes from one merge array
- * (App\Documents\Support\DocumentMergeDataBuilder), so freezing that array
+ * (App\Documents\Support\DocumentMergeData), so freezing that array
  * beside the file freezes the document — a re-render after the PDF is gone
  * reads it back rather than asking today's settings, today's contact address
  * and today's quote what they say now.
