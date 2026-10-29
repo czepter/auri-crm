@@ -171,3 +171,29 @@ it('refuses a guest pass as a view pass', function () {
     test()->withToken($guestPass)->getJson("/api/galleries/{$gallery->public_id}")->assertNotFound();
     test()->getJson("/api/galleries/{$gallery->public_id}?pass={$guestPass}")->assertNotFound();
 });
+
+// R44: every guest reaches the api as the SSR container, so one IP's misses
+// must not lock the correct password of a real gallery.
+it('keeps a real gallery open after ten wrong passwords for made-up ids from one IP', function () {
+    $gallery = gatedGallery();
+
+    foreach (range(1, 10) as $i) {
+        test()->postJson("/api/galleries/ghost-{$i}/passwort", ['password' => 'falsch'])->assertStatus(422);
+    }
+
+    test()->postJson("/api/galleries/{$gallery->public_id}/passwort", ['password' => 'basthorst2026'])->assertOk();
+});
+
+it('counts slug and public_id of one gallery against the same limit', function () {
+    $gallery = gatedGallery();
+    $gallery->update(['slug' => 'hochzeit-basthorst']);
+
+    foreach (range(1, 15) as $i) {
+        foreach (['hochzeit-basthorst', $gallery->public_id] as $key) {
+            test()->withServerVariables(['REMOTE_ADDR' => "10.2.{$i}.".strlen($key)])
+                ->postJson("/api/galleries/{$key}/passwort", ['password' => 'falsch'])->assertStatus(422);
+        }
+    }
+
+    test()->postJson("/api/galleries/{$gallery->public_id}/passwort", ['password' => 'basthorst2026'])->assertStatus(422);
+});
