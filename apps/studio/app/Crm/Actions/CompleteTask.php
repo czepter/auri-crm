@@ -31,7 +31,13 @@ class CompleteTask
             'completed_by_id' => $actor?->id,
         ])->save();
 
-        $this->audit('task.completed', $task, $actor);
+        AuditLogger::record(
+            event: 'task.completed',
+            actor: $actor,
+            context: ['title' => $task->title],
+            subject: $task->public_id,
+            projectId: $task->case_id,
+        );
 
         return $task;
     }
@@ -40,19 +46,14 @@ class CompleteTask
     {
         $task->forceFill(['completed_at' => null, 'completed_by_id' => null])->save();
 
-        $this->audit('task.reopened', $task, $actor);
-
-        return $task;
-    }
-
-    private function audit(string $event, Task $task, ?User $actor): void
-    {
         AuditLogger::record(
-            event: $event,
+            event: 'task.reopened',
             actor: $actor,
             context: ['title' => $task->title],
             subject: $task->public_id,
             projectId: $task->case_id,
         );
+
+        return $task;
     }
 }
