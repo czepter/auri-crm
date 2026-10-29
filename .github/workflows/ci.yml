@@ -105,7 +105,7 @@ jobs:
               - *php
               - *web
 
-  # studio and e2e run inside docker/app/Dockerfile's `ci` stage rather than
+  # studio, web and e2e run inside docker/app/Dockerfile's `ci` stage rather than
   # on the host: two runners share one host, and every apt-get and setup-php a
   # job ran there left state behind for the next one — a held apt lock failed
   # four attempts in a row, and a reboot mid-upgrade took libxml2 from the
@@ -257,10 +257,19 @@ jobs:
           git diff --exit-code -- resources/views/vendor/mail \
             || { echo "Compiled mail templates are stale. Run 'php artisan mail:build' in apps/studio and commit the result."; exit 1; }
 
+  # In the ci image like studio and e2e: on the host, action-setup's
+  # self-installer runs the runner's bundled npm, whose bin/npm no longer
+  # finds ../lib/cli.js since runner 2.338.0.
   web:
-    needs: changes
+    needs: [changes, ci-image]
     if: needs.changes.outputs.web == 'true'
     runs-on: [self-hosted, Linux, X64]
+    container:
+      image: ${{ needs.ci-image.outputs.image }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+      options: --user ${{ needs.ci-image.outputs.user }}
     steps:
       - uses: actions/checkout@v7
       # No version here on purpose. package.json's packageManager field pins
