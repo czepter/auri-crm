@@ -13,7 +13,6 @@ use App\Integration\Data\GalleryDetailData;
 use App\Integration\Data\GalleryReadData;
 use App\Models\User;
 use App\Notifications\NotificationService;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use App\Support\LiveUpdate;
 use Illuminate\Http\JsonResponse;
@@ -122,7 +121,7 @@ class GalleryController extends Controller
         return $this->answer($gallery);
     }
 
-    public function publish(Request $request, Gallery $gallery, PublishGallery $publish, NotificationService $notifications, StudioSettingsResolver $settings): JsonResponse
+    public function publish(Request $request, Gallery $gallery, PublishGallery $publish, NotificationService $notifications): JsonResponse
     {
         $validated = $request->validate([
             'subject' => ['nullable', 'string', 'max:255'],
@@ -141,7 +140,7 @@ class GalleryController extends Controller
         $contact = $gallery->case?->primaryContact();
 
         if (filled($validated['subject'] ?? null) && filled($contact?->email)) {
-            $notifications->send($contact, new GalleryPublished($gallery, $validated['subject'], $validated['message'] ?? null, $settings));
+            $notifications->send($contact, new GalleryPublished($gallery, $validated['subject'], $validated['message'] ?? null));
         }
 
         return $this->answer($gallery);

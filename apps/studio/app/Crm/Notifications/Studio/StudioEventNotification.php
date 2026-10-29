@@ -5,7 +5,6 @@ namespace App\Crm\Notifications\Studio;
 use App\Concerns\AppliesStudioMailIdentity;
 use App\Crm\Models\ClientCase;
 use App\Notifications\Contracts\AboutCase;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -74,7 +73,7 @@ abstract class StudioEventNotification extends Notification implements AboutCase
 
         $message->action('Ansehen', url($this->url()));
 
-        return $this->appendStudioMailIdentity($message, app(StudioSettingsResolver::class));
+        return $this->appendStudioMailIdentity($message);
     }
 
     /** @return array<string, string> */

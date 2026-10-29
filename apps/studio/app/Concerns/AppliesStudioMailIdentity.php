@@ -2,7 +2,7 @@
 
 namespace App\Concerns;
 
-use App\Settings\Support\StudioSettingsResolver;
+use App\Models\StudioSettings;
 use Illuminate\Notifications\Messages\MailMessage;
 
 /**
@@ -19,15 +19,16 @@ use Illuminate\Notifications\Messages\MailMessage;
  */
 trait AppliesStudioMailIdentity
 {
-    protected function appendStudioMailIdentity(MailMessage $message, StudioSettingsResolver $settings): MailMessage
+    protected function appendStudioMailIdentity(MailMessage $message): MailMessage
     {
+        $settings = StudioSettings::current();
         $message->from($settings->mailFromAddress(), $settings->mailFromName());
 
-        if ($replyTo = $settings->mailReplyTo()) {
+        if ($replyTo = $settings->mail_reply_to) {
             $message->replyTo($replyTo);
         }
 
-        if ($bcc = $settings->mailBcc()) {
+        if ($bcc = $settings->mail_bcc) {
             $message->bcc($bcc);
         }
 

@@ -5,7 +5,6 @@ namespace App\Gallery\Notifications;
 use App\Concerns\AppliesStudioMailIdentity;
 use App\Crm\Concerns\WritesComposedMail;
 use App\Gallery\Models\Gallery;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -23,7 +22,6 @@ class GalleryPublished extends Notification
         private readonly Gallery $gallery,
         private readonly string $subject,
         private readonly ?string $body,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     /** @return list<string> */
@@ -37,6 +35,6 @@ class GalleryPublished extends Notification
         $message = $this->composedMail($this->subject, $this->body)
             ->action('Galerie ansehen', $this->gallery->publicUrl());
 
-        return $this->appendStudioMailIdentity($this->appendUnsubscribe($message, $notifiable), $this->settings);
+        return $this->appendStudioMailIdentity($this->appendUnsubscribe($message, $notifiable));
     }
 }

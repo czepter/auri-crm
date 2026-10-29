@@ -128,7 +128,7 @@ class FireAutomationRule
         // nothing even if a colleague joined the crew in between.
         try {
             foreach ($recipients as $recipient) {
-                $this->notifications->send($recipient, new AutomationReminder($subject, $body, $this->settings));
+                $this->notifications->send($recipient, new AutomationReminder($subject, $body));
             }
 
             $run->update(['status' => AutomationRunStatus::Sent]);

@@ -166,7 +166,7 @@ class StudioSettingsController extends Controller
         }
 
         $html = MailPreview::html(
-            new PortalAccessInvitation(config('portal.url').'/zugang/…', '', 'Hallo Maxi Musterfrau,', $settings),
+            new PortalAccessInvitation(config('portal.url').'/zugang/…', '', 'Hallo Maxi Musterfrau,'),
             (object) [],
         );
 

@@ -42,6 +42,6 @@ class StaffOwnershipTransferred extends Notification implements Transactional
             : $message
                 ->line("Du hast {$this->to->name} die Inhaberschaft für {$studio} übertragen und bist jetzt {$this->from->role->label()}.");
 
-        return $this->appendStudioMailIdentity($message, $this->settings);
+        return $this->appendStudioMailIdentity($message);
     }
 }

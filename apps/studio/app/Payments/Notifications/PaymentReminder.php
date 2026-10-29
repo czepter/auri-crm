@@ -6,7 +6,6 @@ use App\Concerns\AppliesStudioMailIdentity;
 use App\Crm\Models\Contact;
 use App\Payments\Concerns\AttachesInvoicePdf;
 use App\Payments\Models\PaymentInstallment;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Number;
@@ -26,7 +25,6 @@ class PaymentReminder extends Notification
 
     public function __construct(
         private readonly PaymentInstallment $installment,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     /** @return list<string> */
@@ -65,6 +63,6 @@ class PaymentReminder extends Notification
             );
         }
 
-        return $this->appendStudioMailIdentity($message, $this->settings);
+        return $this->appendStudioMailIdentity($message);
     }
 }

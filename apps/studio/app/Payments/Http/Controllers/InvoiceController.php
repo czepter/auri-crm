@@ -193,7 +193,7 @@ class InvoiceController extends Controller
                 InvoiceDocument::forInvoice($invoice, $mergeData->fromInvoice($invoice, $settings), $settings)->page(),
             ),
             'mail' => response(MailPreview::html(
-                new InvoiceSent($invoice, '', InvoiceSent::defaultMessage($invoice), $settings),
+                new InvoiceSent($invoice, '', InvoiceSent::defaultMessage($invoice)),
                 $invoice->contact ?? (object) [],
             ), 200, ['Content-Type' => 'text/html']),
             default => response($render->forInvoice($invoice), 200, ['Content-Type' => 'text/html']),
@@ -343,7 +343,7 @@ class InvoiceController extends Controller
      * recipient, the subject and the message on the left, this notification's
      * own render on the right.
      */
-    public function sendView(Invoice $invoice, StudioSettingsResolver $settings): Response
+    public function sendView(Invoice $invoice): Response
     {
         self::authorizeProject($invoice->case);
 
@@ -360,7 +360,7 @@ class InvoiceController extends Controller
             'recipients' => $recipients->map(fn (Contact $contact) => ['name' => $contact->name, 'email' => $contact->email])->values(),
             'message' => InvoiceSent::defaultMessage($invoice),
             'mailHtml' => MailPreview::html(
-                new InvoiceSent($invoice, '', MailPreview::MESSAGE, $settings),
+                new InvoiceSent($invoice, '', MailPreview::MESSAGE),
                 $recipients->first() ?? (object) [],
             ),
         ]);
@@ -371,7 +371,7 @@ class InvoiceController extends Controller
      * mail goes. `sent_at` records the first one and is not moved by a
      * second — it answers when the client was told, not how often.
      */
-    public function send(Request $request, Invoice $invoice, NotificationService $notifications, StudioSettingsResolver $settings): RedirectResponse
+    public function send(Request $request, Invoice $invoice, NotificationService $notifications): RedirectResponse
     {
         self::authorizeProject($invoice->case);
 
@@ -381,7 +381,7 @@ class InvoiceController extends Controller
         ]);
 
         foreach ($this->recipients($invoice) as $contact) {
-            $notifications->send($contact, new InvoiceSent($invoice, $validated['subject'], $validated['message'] ?? null, $settings));
+            $notifications->send($contact, new InvoiceSent($invoice, $validated['subject'], $validated['message'] ?? null));
         }
 
         if ($invoice->sent_at === null) {

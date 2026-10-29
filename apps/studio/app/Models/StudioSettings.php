@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * One row per tenant (T-01) — never read directly outside
@@ -35,6 +36,11 @@ class StudioSettings extends Model
     use HasPublicId;
 
     public const DELETION_GRACE_DAYS = 30;
+
+    // Redis, not the default cache: the web and the worker must see the same row.
+    private const CACHE_KEY_PREFIX = 'studio_settings:';
+
+    private const TTL = 3600;
 
     protected $fillable = [
         'display_name',
@@ -77,6 +83,31 @@ class StudioSettings extends Model
         'payments_stripe_test_publishable_key', 'payments_stripe_test_secret_key',
         'payments_stripe_live_publishable_key', 'payments_stripe_live_secret_key',
     ];
+
+    public static function current(): self
+    {
+        return Cache::store('redis')->remember(
+            self::CACHE_KEY_PREFIX.config('tenancy.tenant_id'),
+            self::TTL,
+            fn () => static::query()->firstOrFail(),
+        );
+    }
+
+    public static function forgetCurrent(): void
+    {
+        Cache::store('redis')->forget(self::CACHE_KEY_PREFIX.config('tenancy.tenant_id'));
+    }
+
+    /** config('mail.from.*') stands in until the E-Mail pane sets the tenant's own. */
+    public function mailFromName(): string
+    {
+        return $this->mail_from_name ?: config('mail.from.name');
+    }
+
+    public function mailFromAddress(): string
+    {
+        return $this->mail_from_address ?: config('mail.from.address');
+    }
 
     protected function casts(): array
     {

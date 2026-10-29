@@ -6,7 +6,6 @@ use App\Concerns\AppliesStudioMailIdentity;
 use App\Crm\Models\Contact;
 use App\Crm\Models\FormInstance;
 use App\Crm\Models\Task;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -26,7 +25,6 @@ class TaskDue extends Notification
 
     public function __construct(
         private readonly Task $task,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     /** @return list<string> */
@@ -50,7 +48,7 @@ class TaskDue extends Notification
             );
         }
 
-        return $this->appendStudioMailIdentity($message, $this->settings);
+        return $this->appendStudioMailIdentity($message);
     }
 
     private function target(): string

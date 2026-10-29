@@ -23,7 +23,6 @@ use App\Documents\Support\StarterBlockSerializer;
 use App\Http\Controllers\Controller;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\MailPreview;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Closure;
 use Illuminate\Http\RedirectResponse;
@@ -195,7 +194,7 @@ class ContractController extends Controller
         return back();
     }
 
-    public function compose(Contract $contract, StudioSettingsResolver $settings): Response
+    public function compose(Contract $contract): Response
     {
         $this->authorize('manageContracts', $contract->case);
 
@@ -209,7 +208,7 @@ class ContractController extends Controller
             'recipients' => $recipients
                 ->map(fn ($contact) => ['name' => $contact->name, 'email' => $contact->email])
                 ->values(),
-            'mailHtml' => MailPreview::html(new ContractSent($contract, '', MailPreview::MESSAGE, $settings), $recipients->first() ?? (object) []),
+            'mailHtml' => MailPreview::html(new ContractSent($contract, '', MailPreview::MESSAGE), $recipients->first() ?? (object) []),
         ]);
     }
 
@@ -218,7 +217,7 @@ class ContractController extends Controller
      * Mails every signer only when the compose screen posted a subject; a
      * Fassung without signers is sent straight from the tab's button.
      */
-    public function send(Request $request, Contract $contract, NotificationService $notifications, StudioSettingsResolver $settings): RedirectResponse
+    public function send(Request $request, Contract $contract, NotificationService $notifications): RedirectResponse
     {
         $this->authorize('manageContracts', $contract->case);
 
@@ -248,7 +247,7 @@ class ContractController extends Controller
         }
 
         foreach ($this->recipients($contract) as $contact) {
-            $notifications->send($contact, new ContractSent($contract, $validated['subject'], $validated['message'] ?? null, $settings));
+            $notifications->send($contact, new ContractSent($contract, $validated['subject'], $validated['message'] ?? null));
         }
 
         return redirect("/auftraege/{$contract->case->public_id}/vertrag");

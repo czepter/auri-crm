@@ -32,10 +32,6 @@ use Illuminate\Support\Facades\Storage;
  */
 class StudioSettingsResolver
 {
-    private const CACHE_KEY_PREFIX = 'studio_settings:';
-
-    private const TTL = 3600;
-
     public function displayName(): ?string
     {
         return $this->row()->display_name;
@@ -269,7 +265,7 @@ class StudioSettingsResolver
 
         $row->update(['logo_path' => $path]);
 
-        Cache::store('redis')->forget($this->cacheKey());
+        StudioSettings::forgetCurrent();
 
         AuditLogger::record(
             event: 'studio_settings.updated',
@@ -325,7 +321,7 @@ class StudioSettingsResolver
     {
         $row->update(['portal_contact_avatar_path' => $path]);
 
-        Cache::store('redis')->forget($this->cacheKey());
+        StudioSettings::forgetCurrent();
 
         AuditLogger::record(
             event: 'studio_settings.updated',
@@ -356,7 +352,7 @@ class StudioSettingsResolver
 
         $row->update([$key => $value]);
 
-        Cache::store('redis')->forget($this->cacheKey());
+        StudioSettings::forgetCurrent();
 
         AuditLogger::record(
             event: 'studio_settings.updated',
@@ -491,7 +487,7 @@ class StudioSettingsResolver
 
         $row->update($updates);
 
-        Cache::store('redis')->forget($this->cacheKey());
+        StudioSettings::forgetCurrent();
 
         AuditLogger::record(
             event: 'studio_settings.updated',
@@ -510,12 +506,12 @@ class StudioSettingsResolver
      */
     public function mailFromName(): string
     {
-        return $this->row()->mail_from_name ?: config('mail.from.name');
+        return $this->row()->mailFromName();
     }
 
     public function mailFromAddress(): string
     {
-        return $this->row()->mail_from_address ?: config('mail.from.address');
+        return $this->row()->mailFromAddress();
     }
 
     /** Null when unset — a reply then goes to mailFromAddress(), the mailer's own default. */
@@ -788,20 +784,11 @@ class StudioSettingsResolver
 
     public function forget(): void
     {
-        Cache::store('redis')->forget($this->cacheKey());
+        StudioSettings::forgetCurrent();
     }
 
     private function row(): StudioSettings
     {
-        return Cache::store('redis')->remember(
-            $this->cacheKey(),
-            self::TTL,
-            fn () => StudioSettings::query()->firstOrFail(),
-        );
-    }
-
-    private function cacheKey(): string
-    {
-        return self::CACHE_KEY_PREFIX.config('tenancy.tenant_id');
+        return StudioSettings::current();
     }
 }

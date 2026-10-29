@@ -5,7 +5,6 @@ namespace App\Staff\Notifications;
 use App\Concerns\AppliesStudioMailIdentity;
 use App\Notifications\Contracts\Transactional;
 use App\Notifications\Models\InAppNotification;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Collection;
@@ -42,6 +41,6 @@ class StudioDigest extends Notification implements Transactional
 
         $message->action('Im Studio ansehen', url('/benachrichtigungen'));
 
-        return $this->appendStudioMailIdentity($message, app(StudioSettingsResolver::class));
+        return $this->appendStudioMailIdentity($message);
     }
 }

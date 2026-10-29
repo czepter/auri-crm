@@ -253,7 +253,7 @@ class ProfileController extends Controller
         AuditLogger::record('profile.session_revoked', $user, ['count' => count($ids)]);
     }
 
-    private function requestEmailChange(User $user, string $newEmail, StudioSettingsResolver $settings): void
+    private function requestEmailChange(User $user, string $newEmail): void
     {
         $token = bin2hex(random_bytes(32));
 
@@ -268,7 +268,7 @@ class ProfileController extends Controller
         // is the whole of the proof.
         SendMailNotification::dispatch(
             Notification::route('mail', $newEmail),
-            new StaffEmailChangeConfirmation($user, url("/profil/e-mail-bestaetigen/{$token}"), $settings),
+            new StaffEmailChangeConfirmation($user, url("/profil/e-mail-bestaetigen/{$token}")),
         );
     }
 }

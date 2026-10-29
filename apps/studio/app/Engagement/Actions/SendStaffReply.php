@@ -57,7 +57,7 @@ class SendStaffReply
 
         try {
             foreach ($recipients as $contact) {
-                $this->notifications->send($contact, new StaffReplyPosted($message, $this->settings, $replyTo));
+                $this->notifications->send($contact, new StaffReplyPosted($message, $replyTo));
             }
 
             $message->forceFill(['delivery_state' => 'sent'])->save();

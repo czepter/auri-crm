@@ -6,7 +6,6 @@ use App\Gallery\Notifications\GalleryZipReady;
 use App\Media\Models\ZipBuild;
 use App\Media\Models\ZipBuildWaiter;
 use App\Notifications\Jobs\SendMailNotification;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Support\Facades\Notification;
 
 /**
@@ -19,7 +18,6 @@ use Illuminate\Support\Facades\Notification;
 class NotifyZipWaiters
 {
     public function __construct(
-        private readonly StudioSettingsResolver $settings,
         private readonly IssueGalleryDownloadLink $issueLink,
     ) {}
 
@@ -43,7 +41,7 @@ class NotifyZipWaiters
 
                 SendMailNotification::dispatch(
                     Notification::route('mail', $waiter->guest->email),
-                    new GalleryZipReady($gallery, $url, $parts, $this->settings),
+                    new GalleryZipReady($gallery, $url, $parts),
                 );
             });
     }

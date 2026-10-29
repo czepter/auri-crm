@@ -4,7 +4,6 @@ namespace App\Gallery\Notifications;
 
 use App\Concerns\AppliesStudioMailIdentity;
 use App\Gallery\Models\Gallery;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -30,7 +29,6 @@ class GalleryPrereleasePublished extends Notification implements ShouldQueue
 
     public function __construct(
         private readonly Gallery $gallery,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     /** @return list<string> */
@@ -47,6 +45,6 @@ class GalleryPrereleasePublished extends Notification implements ShouldQueue
             ->line('Eure Galerie ist ab jetzt zu sehen.')
             ->action('Galerie ansehen', $this->gallery->publicUrl());
 
-        return $this->appendStudioMailIdentity($message, $this->settings);
+        return $this->appendStudioMailIdentity($message);
     }
 }

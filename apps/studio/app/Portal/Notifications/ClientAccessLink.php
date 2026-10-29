@@ -47,6 +47,6 @@ class ClientAccessLink extends Notification implements Transactional
 
         // T-06: from/reply-to/BCC and the signature+legal footer, resolved
         // per tenant at send time rather than from MAIL_FROM_ADDRESS.
-        return $this->appendStudioMailIdentity($message, $this->settings);
+        return $this->appendStudioMailIdentity($message);
     }
 }

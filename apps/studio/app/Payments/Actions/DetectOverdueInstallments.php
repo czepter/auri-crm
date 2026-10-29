@@ -175,7 +175,7 @@ class DetectOverdueInstallments
             }
 
             foreach ($recipients as $contact) {
-                $this->notifications->send($contact, new PaymentReminder($installment, $this->settings));
+                $this->notifications->send($contact, new PaymentReminder($installment));
             }
 
             $installment->forceFill([

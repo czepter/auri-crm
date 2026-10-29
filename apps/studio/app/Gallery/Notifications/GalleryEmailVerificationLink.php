@@ -42,6 +42,6 @@ class GalleryEmailVerificationLink extends Notification
                 ? 'Wenn du das nicht angefordert hast, kannst du diese E-Mail ignorieren.'
                 : 'Wenn Sie das nicht angefordert haben, können Sie diese E-Mail ignorieren.');
 
-        return $this->appendStudioMailIdentity($message, $this->settings);
+        return $this->appendStudioMailIdentity($message);
     }
 }

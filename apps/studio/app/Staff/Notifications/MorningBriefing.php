@@ -3,7 +3,6 @@
 namespace App\Staff\Notifications;
 
 use App\Concerns\AppliesStudioMailIdentity;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -44,6 +43,6 @@ class MorningBriefing extends Notification
 
         $message->action('Zur Übersicht', url('/uebersicht'));
 
-        return $this->appendStudioMailIdentity($message, app(StudioSettingsResolver::class));
+        return $this->appendStudioMailIdentity($message);
     }
 }

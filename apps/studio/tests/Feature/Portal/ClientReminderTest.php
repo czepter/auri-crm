@@ -12,7 +12,6 @@ use App\Payments\Models\PaymentPlan;
 use App\Payments\Notifications\PaymentReminder;
 use App\Portal\Actions\RemindClientTasks;
 use App\Portal\Notifications\TaskDue;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 
@@ -72,7 +71,7 @@ it('names the remaining amount in the payment reminder', function () {
         'due_on' => now()->subDays(5)->toDateString(),
     ]);
 
-    $mail = (new PaymentReminder($installment, app(StudioSettingsResolver::class)))->toMail($contact);
+    $mail = (new PaymentReminder($installment))->toMail($contact);
 
     expect(implode(' ', array_map('strval', $mail->introLines)))->toContain('300,00');
 });

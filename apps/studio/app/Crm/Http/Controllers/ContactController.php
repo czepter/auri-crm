@@ -385,7 +385,7 @@ class ContactController extends Controller
         return Inertia::location(config('portal.url')."/zugang/{$token}");
     }
 
-    public function composePortalAccess(Contact $contact, StudioSettingsResolver $settings): Response
+    public function composePortalAccess(Contact $contact): Response
     {
         $this->authorize('sendPortalAccess', $contact);
         abort_if($contact->portal_access_revoked_at !== null || blank($contact->email), 404);
@@ -394,14 +394,14 @@ class ContactController extends Controller
             'contactId' => $contact->public_id,
             'recipients' => [['name' => $contact->name, 'email' => $contact->email]],
             'mailHtml' => MailPreview::html(
-                new PortalAccessInvitation(config('portal.url').'/zugang/…', '', MailPreview::MESSAGE, $settings),
+                new PortalAccessInvitation(config('portal.url').'/zugang/…', '', MailPreview::MESSAGE),
                 $contact,
             ),
         ]);
     }
 
     /** The same ClientAccess row a requested link is, only longer-lived — see INVITATION_VALID_FOR_DAYS. */
-    public function sendPortalAccess(Request $request, Contact $contact, StudioSettingsResolver $settings, NotificationService $notifications): RedirectResponse
+    public function sendPortalAccess(Request $request, Contact $contact, NotificationService $notifications): RedirectResponse
     {
         $this->authorize('sendPortalAccess', $contact);
         abort_if($contact->portal_access_revoked_at !== null || blank($contact->email), 404);
@@ -424,7 +424,6 @@ class ContactController extends Controller
             config('portal.url')."/zugang/{$token}",
             $validated['subject'],
             $validated['message'] ?? null,
-            $settings,
         ));
 
         AuditLogger::record(

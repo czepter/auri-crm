@@ -6,7 +6,6 @@ use App\Concerns\AppliesStudioMailIdentity;
 use App\Models\User;
 use App\Models\UserEmailChange;
 use App\Notifications\Contracts\Transactional;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -24,7 +23,6 @@ class StaffEmailChangeConfirmation extends Notification implements Transactional
     public function __construct(
         private readonly User $user,
         private readonly string $url,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     /** @return list<string> */
@@ -42,6 +40,6 @@ class StaffEmailChangeConfirmation extends Notification implements Transactional
             ->line('Der Link gilt '.UserEmailChange::VALID_FOR_HOURS.' Stunden.')
             ->line('Bis dahin meldest du dich mit der bisherigen Adresse an.');
 
-        return $this->appendStudioMailIdentity($message, $this->settings);
+        return $this->appendStudioMailIdentity($message);
     }
 }

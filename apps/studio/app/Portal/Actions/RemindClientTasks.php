@@ -54,7 +54,7 @@ class RemindClientTasks
             }
 
             foreach ($recipients as $contact) {
-                $this->notifications->send($contact, new TaskDue($task, $this->settings));
+                $this->notifications->send($contact, new TaskDue($task));
             }
 
             $task->forceFill([

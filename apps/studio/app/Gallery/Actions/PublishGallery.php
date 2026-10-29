@@ -87,7 +87,7 @@ class PublishGallery
 
             foreach ($signups as $signup) {
                 Notification::route('mail', $signup->email)
-                    ->notify((new GalleryPrereleasePublished($gallery, $settings))->afterCommit());
+                    ->notify((new GalleryPrereleasePublished($gallery))->afterCommit());
             }
         });
     }

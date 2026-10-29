@@ -43,6 +43,6 @@ class EmailChangeConfirmation extends Notification implements Transactional
                 ? 'Bis dahin bleibt die bisherige Adresse dein Zugang.'
                 : 'Bis dahin bleibt die bisherige Adresse Ihr Zugang.');
 
-        return $this->appendStudioMailIdentity($message, $this->settings);
+        return $this->appendStudioMailIdentity($message);
     }
 }

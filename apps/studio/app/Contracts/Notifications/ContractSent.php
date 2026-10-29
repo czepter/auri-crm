@@ -5,7 +5,6 @@ namespace App\Contracts\Notifications;
 use App\Concerns\AppliesStudioMailIdentity;
 use App\Contracts\Models\Contract;
 use App\Crm\Concerns\WritesComposedMail;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -23,7 +22,6 @@ class ContractSent extends Notification
         private readonly Contract $contract,
         private readonly string $subject,
         private readonly ?string $body,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     /** @return list<string> */
@@ -40,6 +38,6 @@ class ContractSent extends Notification
             $message->action('Vertrag ansehen', config('portal.url')."/projekte/{$this->contract->case->public_id}/vertrag");
         }
 
-        return $this->appendStudioMailIdentity($this->appendUnsubscribe($message, $notifiable), $this->settings);
+        return $this->appendStudioMailIdentity($this->appendUnsubscribe($message, $notifiable));
     }
 }
