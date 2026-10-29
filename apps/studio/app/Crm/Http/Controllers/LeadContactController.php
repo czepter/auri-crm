@@ -40,9 +40,7 @@ class LeadContactController extends Controller
 
         abort_if($this->isPrimary($role), 422);
 
-        $contact = filled($validated['contact_id'] ?? null)
-            ? Contact::query()->where('public_id', $validated['contact_id'])->firstOrFail()
-            : $createContact->resolve($validated);
+        $contact = $createContact->pickOrResolve($validated['contact_id'] ?? null, $validated);
 
         // unique(case_id, contact_id, role) würde beim zweiten Anhängen
         // werfen.

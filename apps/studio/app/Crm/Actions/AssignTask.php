@@ -11,11 +11,14 @@ class AssignTask
     public function __invoke(Task $task, ?string $assigneePublicId): Task
     {
         $task->update([
-            'assignee_id' => $assigneePublicId === null
-                ? null
-                : User::query()->where('public_id', $assigneePublicId)->value('id'),
+            'assignee_id' => self::userId($assigneePublicId),
         ]);
 
         return $task;
+    }
+
+    public static function userId(?string $publicId): ?int
+    {
+        return $publicId === null ? null : User::query()->where('public_id', $publicId)->value('id');
     }
 }

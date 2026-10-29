@@ -50,8 +50,8 @@ class QuoteController extends Controller
 
         $quote = $create(
             $case,
-            $this->actor($request),
-            package: isset($validated['package']) ? Package::active()->where('public_id', $validated['package'])->firstOrFail() : null,
+            actor: $this->actor($request),
+            package: isset($validated['package']) ? Package::findActive($validated['package']) : null,
         );
 
         $save($quote, $this->withMode([

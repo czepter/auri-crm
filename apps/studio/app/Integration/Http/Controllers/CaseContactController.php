@@ -33,9 +33,7 @@ class CaseContactController extends Controller
 
         abort_if($this->isPrimary($role), 422);
 
-        $contact = filled($validated['contact_id'] ?? null)
-            ? Contact::query()->where('public_id', $validated['contact_id'])->firstOrFail()
-            : $createContact->resolve($validated);
+        $contact = $createContact->pickOrResolve($validated['contact_id'] ?? null, $validated);
 
         // unique(case_id, contact_id, role) would throw on a second attach.
         if (! $case->contacts()->whereKey($contact->id)->wherePivot('role', $role)->exists()) {

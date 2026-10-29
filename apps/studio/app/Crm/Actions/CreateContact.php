@@ -32,6 +32,16 @@ class CreateContact
     }
 
     /**
+     * @param  array{name: ?string, email?: ?string, phone?: ?string}  $attributes  used when $publicId is blank
+     */
+    public function pickOrResolve(?string $publicId, array $attributes): Contact
+    {
+        return filled($publicId)
+            ? Contact::query()->where('public_id', $publicId)->firstOrFail()
+            : $this->resolve($attributes);
+    }
+
+    /**
      * An address already on file is that person, not a second contact — the
      * partial unique index on (tenant_id, email) would refuse the insert
      * anyway. The stored name wins over the submitted one.

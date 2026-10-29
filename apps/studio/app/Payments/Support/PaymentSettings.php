@@ -16,11 +16,7 @@ final class PaymentSettings
      */
     public static function hasStripeKeys(string $mode): bool
     {
-        $row = StudioSettings::current();
-
-        return $mode === 'live'
-            ? $row->payments_stripe_live_publishable_key !== null && $row->payments_stripe_live_secret_key !== null
-            : $row->payments_stripe_test_publishable_key !== null && $row->payments_stripe_test_secret_key !== null;
+        return self::key($mode, 'publishable') !== null && self::key($mode, 'secret') !== null;
     }
 
     /**
@@ -31,19 +27,17 @@ final class PaymentSettings
      */
     public static function activeStripeSecretKey(): ?string
     {
-        $row = StudioSettings::current();
-
-        return $row->payments_stripe_mode === 'live'
-            ? $row->payments_stripe_live_secret_key
-            : $row->payments_stripe_test_secret_key;
+        return self::key(StudioSettings::current()->payments_stripe_mode, 'secret');
     }
 
     public static function activeStripePublishableKey(): ?string
     {
-        $row = StudioSettings::current();
+        return self::key(StudioSettings::current()->payments_stripe_mode, 'publishable');
+    }
 
-        return $row->payments_stripe_mode === 'live'
-            ? $row->payments_stripe_live_publishable_key
-            : $row->payments_stripe_test_publishable_key;
+    /** Anything but 'live' reads the test pair. */
+    private static function key(string $mode, string $kind): ?string
+    {
+        return StudioSettings::current()->{'payments_stripe_'.($mode === 'live' ? 'live' : 'test')."_{$kind}_key"};
     }
 }

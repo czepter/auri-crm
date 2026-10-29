@@ -171,10 +171,10 @@ class QuoteController extends Controller
 
         $create(
             $case,
-            auth('staff')->user(),
-            $validated['valid_until'] ?? null,
-            ! empty($validated['package']) ? Package::active()->where('public_id', $validated['package'])->firstOrFail() : null,
-            $predecessor,
+            actor: auth('staff')->user(),
+            validUntil: $validated['valid_until'] ?? null,
+            package: ! empty($validated['package']) ? Package::findActive($validated['package']) : null,
+            predecessor: $predecessor,
         );
 
         return back();

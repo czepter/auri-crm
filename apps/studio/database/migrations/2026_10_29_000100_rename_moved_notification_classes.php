@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
 /**
- * #563: both columns store a notification's class name, and the class moved.
+ * #563, #560 (PaymentReminder): both columns store a notification's class name, and the class moved.
  * Left alone, a preference falls back to its default and the digest no
  * longer finds the in-app rows it collects.
  */
@@ -33,6 +33,7 @@ return new class extends Migration
         'App\Notifications\Studio\StudioEmailVerification' => 'App\Staff\Notifications\StudioEmailVerification',
         'App\Notifications\Studio\MorningBriefing' => 'App\Staff\Notifications\MorningBriefing',
         'App\Notifications\Studio\StudioDigest' => 'App\Staff\Notifications\StudioDigest',
+        'App\Portal\Notifications\PaymentReminder' => 'App\Payments\Notifications\PaymentReminder',
     ];
 
     public function up(): void

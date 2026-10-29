@@ -24,6 +24,6 @@ class CreateQuoteAddendum
             throw new DomainException("Quote {$predecessor->public_id} is not accepted and cannot take an addendum.");
         }
 
-        return ($this->create)($predecessor->case, $actor, predecessor: $predecessor);
+        return ($this->create)($predecessor->case, actor: $actor, predecessor: $predecessor);
     }
 }

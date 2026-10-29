@@ -83,6 +83,11 @@ class Package extends Model
         $query->where('is_active', true);
     }
 
+    public static function findActive(string $publicId): self
+    {
+        return static::active()->where('public_id', $publicId)->firstOrFail();
+    }
+
     /**
      * Was ein Bestandskunde unter „Weitere Leistungen" sieht. Getrennt von
      * scopeActive(): stillgelegt heißt „nicht mehr als Angebotsvorlage" und

@@ -7,7 +7,6 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Task;
 use App\Crm\Support\TaskAnchors;
-use App\Models\User;
 
 /** The only writer of new tasks. */
 class CreateTask
@@ -35,7 +34,7 @@ class CreateTask
         $anchor = $validated['anchor'] ?? null;
         $offset = $anchor === null ? null : (int) ($validated['offset_days'] ?? 0);
 
-        // Only what this project can still reach. An anchor from a cancelled
+        // Only what this case can still reach. An anchor from a cancelled
         // shoot or a stage the funnel already skipped would never resolve to
         // a day, and would sit on the list as a deadline that never arrives.
         abort_if(
@@ -57,7 +56,7 @@ class CreateTask
                 ? $case->shoots()->where('public_id', $validated['shoot'])->value('id')
                 : null,
             'depends_on_task_id' => $predecessor?->id,
-            'assignee_id' => $this->assigneeId($validated['assignee'] ?? null),
+            'assignee_id' => AssignTask::userId($validated['assignee'] ?? null),
         ]);
     }
 
@@ -73,15 +72,10 @@ class CreateTask
             'title' => $validated['title'],
             'audience' => TaskAudience::Internal,
             'due_on' => $validated['due_on'] ?? null,
-            'assignee_id' => $this->assigneeId($validated['assignee'] ?? null),
+            'assignee_id' => AssignTask::userId($validated['assignee'] ?? null),
             'contact_id' => isset($validated['contact'])
                 ? Contact::query()->where('public_id', $validated['contact'])->value('id')
                 : null,
         ]);
-    }
-
-    private function assigneeId(?string $publicId): ?int
-    {
-        return $publicId === null ? null : User::query()->where('public_id', $publicId)->value('id');
     }
 }
