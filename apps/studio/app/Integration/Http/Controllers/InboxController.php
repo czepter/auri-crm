@@ -24,9 +24,13 @@ use LogicException;
  */
 class InboxController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $threads = Thread::query()
+            ->when($request->user('api') instanceof User, fn ($query) => $query->where(
+                fn ($visible) => $visible->whereDoesntHave('case')
+                    ->orWhereHas('case', fn ($case) => $case->visibleTo($request->user('api')))
+            ))
             ->with(['case', 'latestMessage', 'participants.contact'])
             ->withExists(['messages as from_mail' => fn ($query) => $query->whereNotNull('contact_id')])
             ->latest()

@@ -33,6 +33,20 @@ it('hands the role over and leaves exactly one owner', function () {
     Notification::assertSentTo([$owner, $nina], StaffOwnershipTransferred::class);
 });
 
+it('revokes the previous owner\'s mcp tokens', function () {
+    Notification::fake();
+
+    $owner = owner();
+    $owner->createToken('mcp', ['manage_settings']);
+    $nina = staffMember(StaffRole::Contributor);
+
+    $this->actingAs($owner, 'staff')
+        ->post("/team/{$nina->public_id}/inhaber", ['current_password' => 'correct-horse'])
+        ->assertRedirect();
+
+    expect($owner->tokens()->count())->toBe(0);
+});
+
 it('refuses a wrong password', function () {
     $owner = owner();
     $nina = staffMember(StaffRole::Contributor);
