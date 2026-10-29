@@ -2,6 +2,7 @@
 
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GallerySet;
+use App\Gallery\Support\GalleryGuestPass;
 use App\Gallery\Support\GalleryViewPass;
 use App\Media\Models\Asset;
 use App\Support\Surface;
@@ -158,4 +159,15 @@ it('opens the asset list from the query as well as the header', function () {
         ->json('pass');
 
     test()->getJson("/api/galleries/{$gallery->public_id}?pass=".urlencode($pass))->assertOk();
+});
+
+it('refuses a guest pass as a view pass', function () {
+    $gallery = gatedGallery();
+    [$guest] = confirmedGuest($gallery);
+    // Kennung mit passendem Ziffernpräfix, so wie ein Gast sie offline erzeugt.
+    $guest->forceFill(['identifier' => $gallery->view_password_version.'f00d'])->save();
+    $guestPass = app(GalleryGuestPass::class)->issue($gallery, $guest);
+
+    test()->withToken($guestPass)->getJson("/api/galleries/{$gallery->public_id}")->assertNotFound();
+    test()->getJson("/api/galleries/{$gallery->public_id}?pass={$guestPass}")->assertNotFound();
 });
