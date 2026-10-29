@@ -86,7 +86,7 @@ class AutomationDraftController extends Controller
         abort_unless(auth('staff')->user()?->can(Capability::ManageMessages->value) ?? false, 403);
         abort_unless($run->status === AutomationRunStatus::AwaitingApproval, 404);
 
-        $project = FireAutomationRule::projectOf($run->anchorable);
+        $project = $run->anchorable === null ? null : FireAutomationRule::projectOf($run->anchorable);
         if ($project !== null) {
             $this->authorize('manageMessages', $project);
         }
