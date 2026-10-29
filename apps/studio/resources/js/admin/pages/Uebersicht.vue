@@ -7,7 +7,7 @@ import Page from "@/ui/page/Page.vue";
 import PageHead from "@/ui/page/PageHead.vue";
 import Panel from "@/admin/components/Panel.vue";
 import { Button } from "@/ui/button";
-import { formatEurosRounded } from "@/admin/lib/money";
+import { formatEurosRounded } from "@/lib/money";
 import { weekFrom } from "@/admin/lib/dates";
 import { NOTICEABLE_DAYS, since } from "@/admin/lib/leadQueue";
 import { useLiveProps } from "@/admin/lib/liveReload";

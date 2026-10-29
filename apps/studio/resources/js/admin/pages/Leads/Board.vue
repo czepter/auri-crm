@@ -23,7 +23,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/ui/alert-dialog";
-import { formatEurosRounded } from "@/admin/lib/money";
+import { formatEurosRounded } from "@/lib/money";
 import { relative, TYPE_DOT } from "@/admin/lib/boardCard";
 import { useLiveProps } from "@/admin/lib/liveReload";
 import { Button } from "@/ui/button";

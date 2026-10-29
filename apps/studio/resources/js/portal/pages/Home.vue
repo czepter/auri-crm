@@ -12,7 +12,7 @@ import PortalRow from '@/portal/components/PortalRow.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 import { reachable, type Studio } from '@/portal/lib/studio'
-import { formatEuros } from '@/admin/lib/money'
+import { formatEuros } from '@/lib/money'
 import { Button } from '@/ui/button'
 
 type Phase = 'open' | 'upcoming' | 'delivered'

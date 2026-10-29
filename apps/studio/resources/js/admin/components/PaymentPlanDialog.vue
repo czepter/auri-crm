@@ -15,7 +15,7 @@ import {
 } from '@/ui/dialog'
 import { Field } from '@/ui/field'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
-import { centsToEuros, eurosToCents } from '@/admin/lib/money'
+import { centsToEuros, eurosToCents } from '@/lib/money'
 
 const props = defineProps<{ plan: App.Payments.Data.PaymentPlanData }>()
 

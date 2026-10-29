@@ -11,7 +11,7 @@ import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Input } from '@/ui/input'
 import { isoDate } from '@/admin/lib/dates'
-import { formatEurosRounded } from '@/admin/lib/money'
+import { formatEurosRounded } from '@/lib/money'
 import { relative, TYPE_DOT } from '@/admin/lib/boardCard'
 import { useLiveProps } from '@/admin/lib/liveReload'
 

@@ -13,7 +13,7 @@ import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 import { reachable, type Studio } from '@/portal/lib/studio'
 import { Button } from '@/ui/button'
-import { formatEuros } from '@/admin/lib/money'
+import { formatEuros } from '@/lib/money'
 
 type Shoot = {
   id: string

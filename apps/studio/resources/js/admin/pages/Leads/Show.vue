@@ -24,7 +24,7 @@ import { Textarea } from "@/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui/dropdown-menu";
 import { ChevronDown, Pencil } from "lucide-vue-next";
 import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui/alert-dialog";
-import { formatEurosRounded } from "@/admin/lib/money";
+import { formatEurosRounded } from "@/lib/money";
 import { quoteChipClass } from "@/admin/lib/quoteDisplay";
 import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
 import { dayWithWeekday as day } from "@/admin/lib/dates";

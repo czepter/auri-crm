@@ -22,7 +22,7 @@ import TaskCreateDialog from "@/admin/components/TaskCreateDialog.vue";
 import Card from "@/ui/page/Card.vue";
 import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
 import Section from "@/ui/page/Section.vue";
-import { formatEurosRounded } from "@/admin/lib/money";
+import { formatEurosRounded } from "@/lib/money";
 import { quoteChipClass } from "@/admin/lib/quoteDisplay";
 import { dayWithWeekday as day } from "@/admin/lib/dates";
 import { useLiveProps } from "@/admin/lib/liveReload";

@@ -16,7 +16,7 @@ import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
-import { centsToEuros, formatEuros } from '@/admin/lib/money'
+import { centsToEuros, formatEuros } from '@/lib/money'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Rate = { id: string; label: string; amount: number; dueOn: string }

@@ -16,7 +16,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import InstallmentPaidDialog from '@/admin/components/InstallmentPaidDialog.vue'
 import InstallmentStornoDialog from '@/admin/components/InstallmentStornoDialog.vue'
 import CreditNoteDialog from '@/admin/components/CreditNoteDialog.vue'
-import { formatEuros } from '@/admin/lib/money'
+import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
 

@@ -10,7 +10,7 @@ import ReportKpi from '@/admin/components/ReportKpi.vue'
 import { Button } from '@/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { ChoiceGroup } from '@/ui/choice-group'
-import { formatEurosRounded } from '@/admin/lib/money'
+import { formatEurosRounded } from '@/lib/money'
 import { barHeight, ratePoints as ratePointsFor } from '@/admin/lib/chart'
 import { useLiveProps } from '@/admin/lib/liveReload'
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useForm, usePage } from '@inertiajs/vue3'
-import { basisPointsToPercent, formatEuros } from '@/admin/lib/money'
+import { basisPointsToPercent, formatEuros } from '@/lib/money'
 import PortalDot from '@/portal/components/PortalDot.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
