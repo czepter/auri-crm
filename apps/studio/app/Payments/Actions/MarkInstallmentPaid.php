@@ -9,6 +9,7 @@ use App\Payments\Events\InstallmentPaid;
 use App\Payments\Models\PaymentInstallment;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 /**
  * The only writer of an installment's settlement — status, settled_via,
@@ -39,6 +40,17 @@ class MarkInstallmentPaid
         ?int $amount = null,
     ): PaymentInstallment {
         if ($installment->status === PaymentInstallmentStatus::Paid) {
+            return $installment;
+        }
+
+        if ($installment->status === PaymentInstallmentStatus::Cancelled) {
+            report(new RuntimeException(sprintf(
+                'Zahlung für stornierte Rate %s eingegangen (Session %s, Betrag %s).',
+                $installment->public_id,
+                $installment->stripe_checkout_session_id ?? '-',
+                $amount ?? $installment->remaining(),
+            )));
+
             return $installment;
         }
 

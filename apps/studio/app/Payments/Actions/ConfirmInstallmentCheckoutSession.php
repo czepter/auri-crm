@@ -6,6 +6,7 @@ use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Enums\SettledVia;
 use App\Payments\Models\PaymentInstallment;
 use App\Settings\Support\StudioSettingsResolver;
+use RuntimeException;
 use Stripe\StripeClient;
 
 /**
@@ -66,6 +67,12 @@ class ConfirmInstallmentCheckoutSession
             return $installment;
         }
 
+        if ($session->amount_total === null) {
+            report(new RuntimeException("Checkout-Session {$sessionId} ohne amount_total."));
+
+            return $installment;
+        }
+
         $paymentIntent = $session->payment_intent;
 
         return ($this->markPaid)(
@@ -73,6 +80,7 @@ class ConfirmInstallmentCheckoutSession
             SettledVia::Stripe,
             now('UTC')->toDateString(),
             is_string($paymentIntent) ? $paymentIntent : null,
+            amount: (int) $session->amount_total,
         );
     }
 }
