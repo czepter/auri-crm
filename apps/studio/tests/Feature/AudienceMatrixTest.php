@@ -134,7 +134,7 @@ const PUBLIC_ROUTES = [
         // the same shape otherwise: share_token in the path is the whole
         // credential, checked by QuoteShareController's own lookup rather
         // than an `audience:` guard.
-        'angebot/{quote}/teilen', 'angebot/{quote}/teilen/bild/{item}', 'angebot/{quote}/teilen/annehmen',
+        'angebot/{quote}/teilen', 'angebot/{quote}/teilen/bild/{item}', 'angebot/{quote}/teilen/annehmen', 'angebot/{quote}/teilen/gesehen',
         // Q-10: das Reglerraster dieses Angebots. Oeffentlich aus demselben
         // Grund wie die Positionsbilder daneben — share_token im Pfad ist
         // der ganze Zugriffsschutz. Der Index laesst keinen Dateinamen raten.

@@ -8,6 +8,7 @@ use App\Concerns\HasPublicId;
 use App\Concerns\HasShowcaseImages;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Documents\Models\DocumentView;
 use App\Payments\Support\PaymentStageSplitter;
 use App\Quotes\Enums\DiscountType;
 use App\Quotes\Enums\PricingMode;
@@ -132,6 +133,11 @@ class Quote extends Model
     public function case(): BelongsTo
     {
         return $this->belongsTo(ClientCase::class);
+    }
+
+    public function views(): HasMany
+    {
+        return $this->hasMany(DocumentView::class);
     }
 
     public function items(): HasMany

@@ -7,6 +7,7 @@ import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { Button } from '@/ui/button'
+import DocumentViews from '@/admin/components/DocumentViews.vue'
 import QuoteActions from '@/admin/components/quote/QuoteActions.vue'
 import QuoteWorkspace from '@/admin/components/QuoteWorkspace.vue'
 import { useI18n } from 'vue-i18n'
@@ -24,6 +25,7 @@ const props = defineProps<{
   canManageCatalog: boolean
   paymentPlan: App.Payments.Data.PaymentPlanData | null
   recipientName: string | null
+  views: App.Documents.Data.DocumentViewData[]
   vatSettings: VatSettings
 }>()
 
@@ -98,6 +100,11 @@ const facts = computed(() => {
             :vat-settings="vatSettings"
           />
         </div>
+
+        <section v-if="views.length" class="mx-8 mt-8">
+          <h2 class="m-0 mb-2 text-body font-semibold">{{ $t('documentViews.title') }}</h2>
+          <DocumentViews :views="views" />
+        </section>
       </div>
     </Page>
   </AdminLayout>

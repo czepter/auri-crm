@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useForm, usePage } from '@inertiajs/vue3'
 import { basisPointsToPercent, formatEuros } from '@/admin/lib/money'
 import PortalDot from '@/portal/components/PortalDot.vue'
@@ -66,6 +66,7 @@ const props = defineProps<{
   // different targets. Both default to the session routes every logged-in
   // contact uses.
   acceptUrl?: string
+  viewUrl?: string
   imageUrlBase?: string
 }>()
 
@@ -74,6 +75,17 @@ const agbUrl = computed(() => attached.value?.agb ?? null)
 const widerrufUrl = computed(() => attached.value?.widerruf ?? null)
 
 const form = useForm({ terms: false })
+
+// Link previews fetch the page without running it, so the opening is
+// reported from the browser rather than recorded on the GET.
+onMounted(() => {
+  if (props.viewUrl) {
+    fetch(props.viewUrl, {
+      method: 'POST',
+      headers: { 'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '' },
+    })
+  }
+})
 
 // AcceptQuote's own re-check rejects under a 'quote' key, not a field this
 // form declares — see App\Quotes\Actions\AcceptQuote.

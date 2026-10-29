@@ -7,6 +7,7 @@ use App\Concerns\HasPublicId;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Documents\Models\DocumentTemplate;
+use App\Documents\Models\DocumentView;
 use App\Payments\Enums\CancellationKind;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Quotes\Enums\DiscountType;
@@ -31,7 +32,7 @@ class Invoice extends Model
 
     protected $fillable = [
         'number', 'issued_at', 'intro', 'outro', 'contact_id', 'case_id', 'template_id', 'pdf_path',
-        'sent_at', 'viewed_at', 'cancelled_at', 'cancellation_kind', 'cancellation_reason',
+        'sent_at', 'cancelled_at', 'cancellation_kind', 'cancellation_reason',
         'discount_type', 'discount_value',
     ];
 
@@ -40,7 +41,6 @@ class Invoice extends Model
         return [
             'issued_at' => 'immutable_datetime',
             'sent_at' => 'immutable_datetime',
-            'viewed_at' => 'immutable_datetime',
             'cancelled_at' => 'immutable_datetime',
             'cancellation_kind' => CancellationKind::class,
             'discount_type' => DiscountType::class,
@@ -50,6 +50,11 @@ class Invoice extends Model
     public function installments(): HasMany
     {
         return $this->hasMany(PaymentInstallment::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function views(): HasMany
+    {
+        return $this->hasMany(DocumentView::class);
     }
 
     public function items(): HasMany

@@ -9,6 +9,7 @@ use App\Catalog\Models\Package;
 use App\Crm\Actions\BookProject;
 use App\Crm\Data\CaseSuggestionData;
 use App\Crm\Models\ClientCase;
+use App\Documents\Data\DocumentViewData;
 use App\Documents\Support\InlineHtmlSanitizer;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
@@ -97,6 +98,7 @@ class QuoteController extends Controller
             // beside it to resolve that id into a name, so it needs the
             // name itself.
             'recipientName' => $quote->recipientContact?->name,
+            'views' => $quote->views()->latest('viewed_at')->get()->map(DocumentViewData::fromModel(...)),
         ]);
     }
 
