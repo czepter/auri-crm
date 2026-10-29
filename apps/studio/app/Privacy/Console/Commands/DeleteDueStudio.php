@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Settings\Console\Commands;
+namespace App\Privacy\Console\Commands;
 
 use App\Enums\StaffRole;
 use App\Models\StudioSettings;

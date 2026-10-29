@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Settings\Console\Commands;
+namespace App\Privacy\Console\Commands;
 
 use App\Models\StudioSettings;
 use App\Privacy\Actions\ApplyRetention;
