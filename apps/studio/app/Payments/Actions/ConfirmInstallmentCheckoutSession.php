@@ -73,6 +73,7 @@ class ConfirmInstallmentCheckoutSession
             SettledVia::Stripe,
             now('UTC')->toDateString(),
             is_string($paymentIntent) ? $paymentIntent : null,
+            amount: (int) $session->amount_total,
         );
     }
 }

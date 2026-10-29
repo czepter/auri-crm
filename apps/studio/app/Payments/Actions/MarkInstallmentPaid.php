@@ -38,7 +38,7 @@ class MarkInstallmentPaid
         ?User $actor = null,
         ?int $amount = null,
     ): PaymentInstallment {
-        if ($installment->status === PaymentInstallmentStatus::Paid) {
+        if (in_array($installment->status, [PaymentInstallmentStatus::Paid, PaymentInstallmentStatus::Cancelled], true)) {
             return $installment;
         }
 

@@ -58,13 +58,19 @@ class UpdatePaymentPlan
                     continue;
                 }
 
+                $status = $payload['status'] ?? $row->status->value;
+
                 $row->update($row->isInvoiced()
                     ? ['due_on' => $payload['due_on'], 'sort_order' => $index]
                     : [
                         'amount' => $payload['amount'],
                         'due_on' => $payload['due_on'],
-                        'status' => $payload['status'] ?? $row->status->value,
+                        'status' => $status,
                         'sort_order' => $index,
+                        // Eine offene Checkout-Session trägt den alten Betrag.
+                        ...((int) $payload['amount'] !== (int) $row->amount || $status !== $row->status->value
+                            ? ['stripe_checkout_session_id' => null]
+                            : []),
                     ]);
             }
 

@@ -74,6 +74,12 @@ class StripeWebhookController extends Controller
     {
         $secret = (string) config('services.stripe.webhook_secret');
 
+        // Ein leerer Schlüssel ist ein gültiger HMAC-Schlüssel: ohne Secret
+        // wäre jede Signatur fälschbar.
+        if ($secret === '') {
+            return null;
+        }
+
         try {
             return Webhook::constructEvent(
                 $request->getContent(),

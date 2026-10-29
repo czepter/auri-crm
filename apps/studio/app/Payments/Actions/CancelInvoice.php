@@ -74,6 +74,7 @@ class CancelInvoice
         $installment->update([
             'status' => PaymentInstallmentStatus::Cancelled,
             'cancelled_at' => now(),
+            'stripe_checkout_session_id' => null,
         ]);
 
         if ($installment->plan === null) {
