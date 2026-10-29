@@ -89,6 +89,19 @@ Other middleware in the global and per-route stacks:
 studio has switched off should look like a feature that does not exist. The
 hidden button in the Vue component is the affordance half of the same rule.
 
+## Glossary
+
+| Term | Meaning |
+|---|---|
+| Case | `ClientCase`: the record of one job for a client, from first inquiry to delivery. |
+| Lead | The sales facet of a case: source, stage, reminders, inquiry text. |
+| Shoot | One appointment on a case; a case has one or several. |
+| Projekt | What the UI calls a booked case. |
+
+Inquiry and project are one case in two phases. Class names say `Case`;
+`Project` survives only in the type and field names (`ProjectType`,
+`ProjectField`) and in route, page and translation names.
+
 ## Domain modules
 
 `apps/studio/app` is organised by domain, not by Laravel artifact type. There
@@ -100,22 +113,34 @@ app/Crm/
   Actions/  Data/  Enums/  Events/  Http/  Listeners/  Models/  Support/
 ```
 
-| Module | Owns |
-|---|---|
-| `Crm` | Contacts, projects, shoots, leads, the board, tasks, forms, timeline |
-| `Catalog` | Packages and priced items |
-| `Quotes` | Quote building, sending, acceptance |
-| `Documents` | Templates, merge fields, the shared vocabulary behind all three document types |
-| `Payments` | Payment plans, installments, Stripe |
-| `Numbering` | Document number ranges and allocation |
-| `Media` | Ingest, multipart upload, derivatives, ZIP builds |
-| `Gallery` | Galleries, versions, gates, favorites, comments, delivery |
-| `Portal` | The client surface's own screens and notifications |
-| `Engagement` | Message threads between studio and client |
-| `Automation` | Rules that fire on events and on date offsets |
-| `Integration` | The public integration API, API tokens |
-| `Migration` | Cutover snapshot and restore |
-| `Settings` | Studio profile, portal capabilities, document settings |
+| # | Module | Owns |
+|---|---|---|
+| 1 | `Numbering` | Document number ranges and allocation |
+| 2 | `Documents` | Templates, merge fields, the shared vocabulary behind all three document types |
+| 3 | `Media` | Ingest, multipart upload, derivatives, ZIP builds |
+| 4 | `Crm` | Cases, leads, contacts, shoots, the board, tasks, forms, timeline |
+| 5 | `Catalog` | Packages and priced items |
+| 6 | `Engagement` | Message threads between studio and client |
+| 7 | `Portal` | The client surface's own screens and notifications |
+| 8 | `Quotes` | Quote building, sending, acceptance |
+| 9 | `Contracts` | Contracts, signers, signatures, clause catalog |
+| 10 | `Payments` | Payment plans, installments, Stripe |
+| 11 | `Gallery` | Galleries, versions, gates, favorites, comments, delivery |
+| 12 | `Automation` | Rules that fire on events and on date offsets |
+| 13 | `Settings` | Studio profile, portal capabilities, document settings |
+| 14 | `Reporting` | Revenue, funnel, cash-flow and shoot reports |
+| 15 | `Privacy` | Studio export and deletion, DSGVO requests, retention |
+| 16 | `Integration` | The public integration API, API tokens |
+| 17 | `Help` | Help articles |
+| 18 | `Releases` | The release log |
+| 19 | `Staff` | Staff notifications, digests, onboarding reminders |
+
+`tests/Arch/LayeringTest.php` holds this list. A module may use the kernel
+(`Concerns`, `Support`, `Enums`, `Models`, `Data`, `Jobs`, `Notifications`)
+and the modules above it; never one below. `Http`, `Console`, `Mcp` and
+`Screens` inside any module are consumer code: they may use anything, nothing
+may use them. The top-level `Http`, `Policies`, `Providers`, `Templates` and
+`Migration` wire modules together and sit outside the order.
 
 Only genuinely cross-cutting things stay at the top level: `Http/Middleware`,
 `Concerns`, `Support`, `Providers`, `Policies`, `Enums`, and the four models
