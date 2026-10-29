@@ -28,6 +28,8 @@ use Webklex\PHPIMAP\Message;
  * Marks a message read only after ingest returns. A crash mid-ingest leaves
  * it unread and it is picked up next minute — and picking it up twice is
  * already harmless, because ingest is idempotent on the sender's Message-ID.
+ * An ingest that throws is reported and marked read, so it cannot block the
+ * window.
  */
 class PollInboundMailbox extends Command
 {
@@ -48,7 +50,7 @@ class PollInboundMailbox extends Command
         }
 
         try {
-            $client = (new ClientManager)->make([
+            $client = app(ClientManager::class)->make([
                 'host' => $config['host'],
                 'port' => $config['port'],
                 'encryption' => $config['encryption'],
@@ -97,11 +99,11 @@ class PollInboundMailbox extends Command
                 $message->setFlag('Seen');
                 $handled++;
             } catch (Throwable $e) {
-                // Left unread on purpose, so the next pass retries it. A
-                // message this app cannot parse is exactly the case that must
-                // not vanish quietly — the same rule the triage tray exists
-                // for, one layer earlier.
+                // Reported and marked read, but not deleted: left unread, one
+                // message that always fails would keep its slot in the oldest
+                // `--limit` and starve everything behind it.
                 report($e);
+                $message->setFlag('Seen');
                 $this->components->warn('Could not ingest a message: '.$e->getMessage());
             }
         }

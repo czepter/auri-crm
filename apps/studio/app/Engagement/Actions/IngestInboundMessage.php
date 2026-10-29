@@ -68,6 +68,12 @@ class IngestInboundMessage
             return $this->reject($delivery);
         }
 
+        // Column is varchar(255); a longer id is not one a mail server issued.
+        // Dropping it costs replay idempotency for this one delivery only.
+        if (mb_strlen((string) ($delivery['message_id'] ?? '')) > 255) {
+            $delivery['message_id'] = null;
+        }
+
         $existing = filled($delivery['message_id'] ?? null)
             ? InboundMessage::query()->where('message_id', $delivery['message_id'])->first()
             : null;
@@ -81,7 +87,7 @@ class IngestInboundMessage
                 'message_id' => $delivery['message_id'] ?? null,
                 'from_address' => mb_strtolower($delivery['from']),
                 'to_address' => mb_strtolower($delivery['to']),
-                'subject' => $delivery['subject'] ?? null,
+                'subject' => isset($delivery['subject']) ? mb_substr($delivery['subject'], 0, 255) : null,
                 'body' => $delivery['body'],
                 'spf' => $delivery['spf'] ?? null,
                 'dkim' => $delivery['dkim'] ?? null,
@@ -133,6 +139,14 @@ class IngestInboundMessage
         if (mb_strtolower((string) $row->dmarc) === 'fail') {
             $row->state = InboundMessageState::Quarantined;
             $row->reason = 'dmarc_fail';
+
+            return;
+        }
+
+        if (mb_strtolower((string) $row->dmarc) !== 'pass') {
+            // No verdict is not a pass: only a confirmed sender may post into
+            // a conversation.
+            $row->reason = 'dmarc_unverified';
 
             return;
         }
