@@ -5,7 +5,9 @@ namespace App\Integration\Http\Controllers;
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Enums\Capability;
 use App\Http\Controllers\Controller;
+use App\Integration\Models\ApiToken;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -32,7 +34,7 @@ class CaseContactController extends Controller
 
         abort_if($this->isPrimary($role), 422);
 
-        $contact = $this->resolveContact($validated);
+        $contact = $this->resolveContact($request, $validated);
 
         // unique(case_id, contact_id, role) would throw on a second attach.
         if (! $case->contacts()->whereKey($contact->id)->wherePivot('role', $role)->exists()) {
@@ -74,9 +76,20 @@ class CaseContactController extends Controller
     /**
      * @param  array<string, mixed>  $validated
      */
-    private function resolveContact(array $validated): Contact
+    private function resolveContact(Request $request, array $validated): Contact
     {
+        $principal = $request->user('api');
+        $can = fn (Capability $c) => $principal instanceof ApiToken
+            ? $principal->allows($c)
+            : $principal->tokenCan($c->value);
+
+        // Reading an existing contact back through the 201 body is an e-mail
+        // oracle, so it needs the same authority as reading contacts.
+        $mayUseExisting = $can(Capability::ManageContacts) || $can(Capability::ViewAllCases);
+
         if (filled($validated['contact_id'] ?? null)) {
+            abort_unless($mayUseExisting, 403);
+
             return Contact::query()->where('public_id', $validated['contact_id'])->firstOrFail();
         }
 
@@ -84,6 +97,9 @@ class CaseContactController extends Controller
         $existing = filled($validated['email'] ?? null)
             ? Contact::query()->where('email', $validated['email'])->first()
             : null;
+
+        // A new contact is the same authority as POST /api/contacts.
+        abort_unless($existing !== null ? $mayUseExisting : $can(Capability::ManageContacts), 403);
 
         return $existing ?? Contact::create([
             'name' => $validated['name'],
