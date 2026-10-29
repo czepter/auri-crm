@@ -2,6 +2,7 @@
 
 namespace App\Gallery\Http\Controllers;
 
+use App\Gallery\Actions\UpdateGallery;
 use App\Gallery\Data\GalleryNavData;
 use App\Gallery\Data\GalleryPresetData;
 use App\Gallery\Models\AssetComment;
@@ -23,7 +24,6 @@ use App\Media\Models\Asset;
 use App\Media\Models\DownloadEvent;
 use App\Media\Models\MultipartUpload;
 use App\Media\Models\ZipBuild;
-use App\Support\LiveUpdate;
 use App\Support\RecordVisit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -354,7 +354,7 @@ class GalleryRecordController extends Controller
     }
 
     /** The two secrets and the look, set where they are read. */
-    public function update(Request $request, Gallery $gallery): RedirectResponse
+    public function update(Request $request, Gallery $gallery, UpdateGallery $updateGallery): RedirectResponse
     {
         $this->authorize('manageMedia', $gallery);
 
@@ -402,19 +402,15 @@ class GalleryRecordController extends Controller
             $gallery->rotateEmailVerification($validated['requires_verified_email']);
         }
 
-        if ($request->has('design')) {
-            $gallery->update(['design' => $validated['design'] ?? null]);
-        }
-
         $fields = array_intersect_key($validated, array_flip([
             'slug', 'expires_at', 'external_url', 'external_password', 'info', 'downloads_enabled', 'lists_enabled', 'comments_enabled',
         ]));
 
-        if ($fields !== []) {
-            $gallery->update($fields);
+        if ($request->has('design')) {
+            $fields['design'] = $validated['design'] ?? null;
         }
 
-        LiveUpdate::publish();
+        $updateGallery($gallery, $fields);
 
         return back();
     }

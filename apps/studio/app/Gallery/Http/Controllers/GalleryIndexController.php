@@ -5,6 +5,7 @@ namespace App\Gallery\Http\Controllers;
 use App\Crm\Data\CaseSuggestionData;
 use App\Crm\Models\ClientCase;
 use App\Enums\Capability;
+use App\Gallery\Actions\CreateGallery;
 use App\Gallery\Data\GalleryPresetData;
 use App\Gallery\Data\GalleryRowData;
 use App\Gallery\Models\Gallery;
@@ -13,7 +14,6 @@ use App\Gallery\Support\GallerySettings;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
 use App\Settings\Data\GallerySettingsData;
-use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -91,7 +91,7 @@ class GalleryIndexController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, CreateGallery $createGallery): RedirectResponse
     {
         $this->authorize('create', Gallery::class);
 
@@ -120,19 +120,11 @@ class GalleryIndexController extends Controller
                 ->where('public_id', $validated['case_id'])
                 ->firstOrFail();
 
-        $gallery = Gallery::create([
-            ...Arr::except($validated, ['case_id', 'shoot_id']),
-            'case_id' => $project?->id,
-            'shoot_id' => isset($validated['shoot_id'])
-                ? $project?->shoots()->where('public_id', $validated['shoot_id'])->value('id')
-                : null,
-        ]);
-
-        AuditLogger::record(
-            event: 'gallery.created',
-            actor: auth('staff')->user(),
-            context: ['title' => $gallery->title],
-            subject: $gallery->public_id,
+        $gallery = $createGallery(
+            Arr::except($validated, ['case_id', 'shoot_id']),
+            $project,
+            $validated['shoot_id'] ?? null,
+            auth('staff')->user(),
         );
 
         return redirect("/galerien/{$gallery->public_id}");

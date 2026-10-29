@@ -5,7 +5,11 @@ namespace App\Gallery\Actions;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Notifications\GalleryPrereleasePublished;
+use App\Gallery\Notifications\GalleryPublished;
 use App\Gallery\Support\DraftDeviation;
+use App\Models\User;
+use App\Notifications\NotificationService;
+use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
@@ -17,6 +21,29 @@ use Illuminate\Validation\ValidationException;
  */
 class PublishGallery
 {
+    public function __construct(private readonly NotificationService $notifications) {}
+
+    /** Publishes, records it and mails the project's primary contact when a subject is given. */
+    public function announce(Gallery $gallery, ?User $actor, ?string $subject = null, ?string $message = null): ?GalleryVersion
+    {
+        $version = $this($gallery);
+
+        AuditLogger::record(
+            event: 'gallery.published',
+            actor: $actor,
+            context: ['version' => $version?->version],
+            subject: $gallery->public_id,
+        );
+
+        $contact = $gallery->case?->primaryContact();
+
+        if (filled($subject) && filled($contact?->email)) {
+            $this->notifications->send($contact, new GalleryPublished($gallery, $subject, $message));
+        }
+
+        return $version;
+    }
+
     public function __invoke(Gallery $gallery): ?GalleryVersion
     {
         if (! DraftDeviation::of($gallery)) {
