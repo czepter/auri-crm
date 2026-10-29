@@ -67,7 +67,7 @@ class ContractController extends Controller
         }
 
         return Inertia::render('Projects/Contract', [
-            'header' => CaseHeaderData::fromProject(
+            'header' => CaseHeaderData::fromCase(
                 $case,
                 (new DeriveCasePosition)($case),
             ),

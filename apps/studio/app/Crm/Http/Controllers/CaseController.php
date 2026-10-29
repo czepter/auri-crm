@@ -98,7 +98,7 @@ class CaseController extends Controller
         return Inertia::render('Projects/Index', [
             'view' => request()->query('ansicht') === 'board' ? 'board' : 'liste',
             'projects' => CaseRowData::collect(
-                $projects->map(fn (ClientCase $case) => CaseRowData::fromProject($case, $this->position))
+                $projects->map(fn (ClientCase $case) => CaseRowData::fromCase($case, $this->position))
             ),
             // #364: the filter pills and the board's columns, in the studio's
             // own order and names — from the booking to the delivery, since
@@ -578,7 +578,7 @@ class CaseController extends Controller
 
     private function header(ClientCase $case): CaseHeaderData
     {
-        return CaseHeaderData::fromProject(
+        return CaseHeaderData::fromCase(
             $case->load(['contacts', 'shoots', 'primaryShoot']),
             ($this->position)($case),
         );

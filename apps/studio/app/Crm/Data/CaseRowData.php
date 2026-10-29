@@ -39,7 +39,7 @@ class CaseRowData extends Data
         public ?string $lastAt,
     ) {}
 
-    public static function fromProject(ClientCase $project, DeriveCasePosition $position): self
+    public static function fromCase(ClientCase $project, DeriveCasePosition $position): self
     {
         $shoot = $project->primaryShoot;
         $at = $position($project);

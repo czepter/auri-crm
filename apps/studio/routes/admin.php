@@ -876,7 +876,7 @@ Route::middleware('audience:staff')->group(function () {
 
         // No GET here: the Zahlungen card lives on the project overview
         // itself (CaseController::show), not a tab of its own — see the
-        // note in CaseHeaderData::fromProject.
+        // note in CaseHeaderData::fromCase.
         Route::post('/auftraege/{case}/zahlungsplan', [PaymentPlanController::class, 'store'])
             ->name('payment-plans.store');
         Route::patch('/zahlungsplaene/{paymentPlan}', [PaymentPlanController::class, 'update'])

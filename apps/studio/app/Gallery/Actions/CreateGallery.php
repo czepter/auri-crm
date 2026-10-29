@@ -11,13 +11,13 @@ use App\Support\AuditLogger;
 class CreateGallery
 {
     /** @param array<string, mixed> $attributes */
-    public function __invoke(array $attributes, ?ClientCase $project, ?string $shootPublicId, ?User $actor): Gallery
+    public function __invoke(array $attributes, ?ClientCase $case, ?string $shootPublicId, ?User $actor): Gallery
     {
         $gallery = Gallery::create([
             ...$attributes,
-            'case_id' => $project?->id,
+            'case_id' => $case?->id,
             'shoot_id' => $shootPublicId !== null
-                ? $project?->shoots()->where('public_id', $shootPublicId)->value('id')
+                ? $case?->shoots()->where('public_id', $shootPublicId)->value('id')
                 : null,
         ]);
 

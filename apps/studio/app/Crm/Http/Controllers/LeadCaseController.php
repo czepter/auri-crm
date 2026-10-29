@@ -87,7 +87,7 @@ class LeadCaseController extends Controller
 
         return Inertia::render('Leads/Show', [
             'tab' => $tab,
-            'header' => CaseHeaderData::fromProject($case, app(DeriveCasePosition::class)($case), queue: false),
+            'header' => CaseHeaderData::fromCase($case, app(DeriveCasePosition::class)($case), queue: false),
             'conversation' => $conversation === null ? null : ThreadData::fromModel($conversation),
             ...($tab === 'quotes' ? app(ReadQuoteList::class)($case) : ['quotes' => [], 'payments' => null]),
             'queue' => $this->leads->queue($lead),

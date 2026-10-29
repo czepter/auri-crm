@@ -76,7 +76,7 @@ class CaseHeaderData extends Data
     ) {}
 
     /** @param  bool  $queue  false where the page brings its own left pane */
-    public static function fromProject(ClientCase $project, CasePositionData $position, bool $queue = true): self
+    public static function fromCase(ClientCase $project, CasePositionData $position, bool $queue = true): self
     {
         $user = auth('staff')->user();
 

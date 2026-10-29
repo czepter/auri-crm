@@ -49,7 +49,7 @@ class StudioRecords
         return $this->projectQuery()
             ->with(['primaryShoot', 'lead', 'shoots', 'contacts', 'latestQuote'])
             ->get()
-            ->map(fn (ClientCase $project) => CaseRowData::fromProject($project, $this->position))
+            ->map(fn (ClientCase $project) => CaseRowData::fromCase($project, $this->position))
             ->map(fn (CaseRowData $row) => [$row->name, $row->date, $row->venue, $row->position, $row->contact]);
     }
 
