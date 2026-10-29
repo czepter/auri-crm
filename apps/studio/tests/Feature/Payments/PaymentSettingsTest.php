@@ -2,7 +2,7 @@
 
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
-use App\Settings\Models\StudioSettings;
+use App\Models\StudioSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;

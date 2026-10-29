@@ -2,6 +2,7 @@
 
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
+use App\Models\StudioSettings;
 use App\Payments\Actions\DetectOverdueInstallments;
 use App\Payments\Actions\IssueInvoice;
 use App\Payments\Actions\MarkInstallmentPaid;
@@ -11,7 +12,6 @@ use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Enums\SettledVia;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
-use App\Settings\Models\StudioSettings;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;

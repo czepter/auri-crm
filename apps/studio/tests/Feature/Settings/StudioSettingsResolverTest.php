@@ -2,8 +2,8 @@
 
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
+use App\Models\StudioSettings;
 use App\Settings\Jobs\ReadStudioSettingsJob;
-use App\Settings\Models\StudioSettings;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;

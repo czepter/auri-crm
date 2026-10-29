@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Concerns;
+namespace App\Media\Concerns;
 
 use App\Gallery\Support\ImageVariant;
 use Illuminate\Http\UploadedFile;

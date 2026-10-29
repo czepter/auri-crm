@@ -3,9 +3,12 @@
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Engagement\Actions\PostMessage;
+use App\Engagement\Actions\StartThread;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
-use App\Settings\Models\StudioSettings;
+use App\Models\StudioSettings;
+use App\Models\User;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -128,7 +131,7 @@ it('replies on a thread without repeating its subject', function () {
 
 it('refuses a reply on a thread the contact is not a participant on', function () {
     [$project, $owner] = bookedContact();
-    $thread = app(App\Engagement\Actions\StartThread::class)($project, $owner, 'Thema', 'Text.');
+    $thread = app(StartThread::class)($project, $owner, 'Thema', 'Text.');
 
     $stranger = Contact::factory()->create();
 
@@ -142,8 +145,8 @@ it('refuses a reply on a thread the contact is not a participant on', function (
 it('lists every thread of the contact, booked and general alike, with its reference', function () {
     [$project, $contact] = bookedContact();
 
-    app(App\Engagement\Actions\StartThread::class)($project, $contact, 'Zum Ablauf', 'Text.');
-    app(App\Engagement\Actions\StartThread::class)(null, $contact, 'Im Herbst frei?', 'Text.');
+    app(StartThread::class)($project, $contact, 'Zum Ablauf', 'Text.');
+    app(StartThread::class)(null, $contact, 'Im Herbst frei?', 'Text.');
 
     $props = test()->actingAs($contact, 'portal')
         ->get('/nachrichten')
@@ -157,10 +160,10 @@ it('lists every thread of the contact, booked and general alike, with its refere
 
 it('shows the studio\'s reply beside the client\'s own message', function () {
     [$project, $contact] = bookedContact();
-    $staff = App\Models\User::factory()->create(['name' => 'Christian']);
+    $staff = User::factory()->create(['name' => 'Christian']);
 
-    $thread = app(App\Engagement\Actions\StartThread::class)($project, $contact, 'Thema', 'Erste Nachricht.');
-    app(App\Engagement\Actions\PostMessage::class)($thread, $staff, 'Antwort vom Studio.');
+    $thread = app(StartThread::class)($project, $contact, 'Thema', 'Erste Nachricht.');
+    app(PostMessage::class)($thread, $staff, 'Antwort vom Studio.');
 
     $props = test()->actingAs($contact, 'portal')
         ->get('/nachrichten')
@@ -174,11 +177,11 @@ it('shows the studio\'s reply beside the client\'s own message', function () {
 
 it('marks only the threads the studio wrote last as waiting on the client', function () {
     [$project, $contact] = bookedContact();
-    $staff = App\Models\User::factory()->create(['name' => 'Christian']);
+    $staff = User::factory()->create(['name' => 'Christian']);
 
-    $answered = app(App\Engagement\Actions\StartThread::class)($project, $contact, 'Beantwortet', 'Frage.');
-    app(App\Engagement\Actions\PostMessage::class)($answered, $staff, 'Antwort vom Studio.');
-    app(App\Engagement\Actions\StartThread::class)(null, $contact, 'Offen', 'Noch keine Antwort.');
+    $answered = app(StartThread::class)($project, $contact, 'Beantwortet', 'Frage.');
+    app(PostMessage::class)($answered, $staff, 'Antwort vom Studio.');
+    app(StartThread::class)(null, $contact, 'Offen', 'Noch keine Antwort.');
 
     $props = test()->actingAs($contact, 'portal')
         ->get('/nachrichten')
@@ -192,8 +195,8 @@ it('marks only the threads the studio wrote last as waiting on the client', func
 it('opens the conversation ?unterhaltung= names rather than the newest one', function () {
     [$project, $contact] = bookedContact();
 
-    $older = app(App\Engagement\Actions\StartThread::class)($project, $contact, 'Zum Ablauf', 'Text.');
-    app(App\Engagement\Actions\StartThread::class)(null, $contact, 'Im Herbst frei?', 'Text.');
+    $older = app(StartThread::class)($project, $contact, 'Zum Ablauf', 'Text.');
+    app(StartThread::class)(null, $contact, 'Im Herbst frei?', 'Text.');
 
     $props = test()->actingAs($contact, 'portal')
         ->get("/nachrichten?unterhaltung={$older->public_id}")

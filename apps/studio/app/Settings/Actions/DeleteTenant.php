@@ -2,8 +2,8 @@
 
 namespace App\Settings\Actions;
 
+use App\Models\StudioSettings;
 use App\Settings\Jobs\ReadStudioSettingsJob;
-use App\Settings\Models\StudioSettings;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Contracts\Queue\ClearableQueue;

@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Staff;
 
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
+use App\Integration\Support\OAuthClients;
 use App\Models\User;
 use App\Support\AuditLogger;
 use App\Support\OAuthAuthorizationCode;
-use App\Support\OAuthClients;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;

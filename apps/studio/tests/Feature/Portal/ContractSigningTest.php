@@ -4,7 +4,7 @@ use App\Contracts\Models\ContractSignature;
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Settings\Models\StudioSettings;
+use App\Models\StudioSettings;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;

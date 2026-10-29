@@ -12,7 +12,7 @@ use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
-use App\Settings\Models\StudioSettings;
+use App\Models\StudioSettings;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 

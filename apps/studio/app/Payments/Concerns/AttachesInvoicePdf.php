@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Concerns;
+namespace App\Payments\Concerns;
 
 use App\Payments\Models\Invoice;
 use Illuminate\Notifications\Messages\MailMessage;

@@ -4,11 +4,11 @@ namespace App\Integration\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Integration\Data\StudioSettingsReadData;
+use App\Models\StudioClosure;
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Settings\Data\NumberRangeData;
 use App\Settings\Data\StudioClosureData;
 use App\Settings\Models\NumberRange;
-use App\Settings\Models\StudioClosure;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\JsonResponse;
 

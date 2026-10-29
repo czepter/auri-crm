@@ -4,8 +4,8 @@ namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
+use App\Models\StudioClosure;
 use App\Settings\Data\StudioClosureData;
-use App\Settings\Models\StudioClosure;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
 use App\Integration\Models\OAuthClient;
-use App\Support\OAuthClients;
+use App\Integration\Support\OAuthClients;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;

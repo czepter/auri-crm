@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Settings\Models;
+namespace App\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;

@@ -2,9 +2,9 @@
 
 use App\Enums\StaffRole;
 use App\Models\StaffInvitation;
+use App\Models\StudioSettings;
 use App\Models\User;
 use App\Notifications\StaffInvited;
-use App\Settings\Models\StudioSettings;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;

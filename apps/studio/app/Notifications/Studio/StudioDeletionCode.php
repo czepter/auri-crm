@@ -2,9 +2,9 @@
 
 namespace App\Notifications\Studio;
 
+use App\Models\StudioSettings;
 use App\Notifications\Contracts\Transactional;
 use App\Settings\Actions\StudioDeletionConfirmation;
-use App\Settings\Models\StudioSettings;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 

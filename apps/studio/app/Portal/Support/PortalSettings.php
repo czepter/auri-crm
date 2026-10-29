@@ -4,8 +4,8 @@ namespace App\Portal\Support;
 
 use App\Crm\Models\Contact;
 use App\Enums\StaffRole;
+use App\Models\StudioClosure;
 use App\Models\User;
-use App\Settings\Models\StudioClosure;
 use App\Settings\Support\StudioSettingsResolver;
 
 /**

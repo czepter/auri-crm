@@ -2,9 +2,8 @@
 
 // apps/studio/tests/Feature/Notifications/TwoBrandMailTest.php
 
-use App\Enums\StaffRole;
+use App\Models\StudioSettings;
 use App\Models\User;
-use App\Settings\Models\StudioSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;

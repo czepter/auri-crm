@@ -3,6 +3,7 @@
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Models\StudioSettings;
 use App\Payments\Actions\ConfirmInstallmentCheckoutSession;
 use App\Payments\Actions\CreateInstallmentCheckoutSession;
 use App\Payments\Enums\PaymentInstallmentStatus;
@@ -10,7 +11,6 @@ use App\Payments\Enums\SettledVia;
 use App\Payments\Events\InstallmentPaid;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
-use App\Settings\Models\StudioSettings;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;

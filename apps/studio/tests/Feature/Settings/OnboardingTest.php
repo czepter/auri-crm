@@ -4,7 +4,7 @@ use App\Automation\Models\AutomationRule;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Enums\StaffRole;
-use App\Settings\Models\StudioSettings;
+use App\Models\StudioSettings;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;

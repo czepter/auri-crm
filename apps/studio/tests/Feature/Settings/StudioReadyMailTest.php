@@ -3,8 +3,8 @@
 // apps/studio/tests/Feature/Settings/StudioReadyMailTest.php
 
 use App\Enums\StaffRole;
+use App\Models\StudioSettings;
 use App\Notifications\Studio\StudioReady;
-use App\Settings\Models\StudioSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;

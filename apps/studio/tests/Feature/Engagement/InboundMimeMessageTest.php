@@ -4,7 +4,7 @@ use App\Engagement\Actions\IngestInboundMessage;
 use App\Engagement\Enums\InboundMessageState;
 use App\Engagement\Support\InboundAddress;
 use App\Engagement\Support\InboundMimeMessage;
-use App\Settings\Models\StudioSettings;
+use App\Models\StudioSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;

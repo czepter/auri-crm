@@ -3,7 +3,7 @@
 namespace App\Gallery\Notifications;
 
 use App\Concerns\AppliesStudioMailIdentity;
-use App\Concerns\WritesComposedMail;
+use App\Crm\Concerns\WritesComposedMail;
 use App\Gallery\Models\Gallery;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;

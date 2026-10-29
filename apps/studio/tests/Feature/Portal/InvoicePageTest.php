@@ -3,13 +3,13 @@
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Models\StudioSettings;
 use App\Payments\Actions\CancelInvoice;
 use App\Payments\Actions\IssueInvoice;
 use App\Payments\Enums\CancellationKind;
 use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
-use App\Settings\Models\StudioSettings;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;

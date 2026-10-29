@@ -3,8 +3,8 @@
 namespace App\Settings\Actions;
 
 use App\Enums\Capability;
+use App\Models\StudioSettings;
 use App\Models\User;
-use App\Settings\Models\StudioSettings;
 use App\Support\AuditLogger;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\HttpException;

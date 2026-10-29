@@ -1,6 +1,6 @@
 <?php
 
-use App\Settings\Models\StudioSettings;
+use App\Models\StudioSettings;
 use App\Settings\Support\StudioReadiness;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;

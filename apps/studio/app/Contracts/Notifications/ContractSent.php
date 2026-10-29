@@ -3,8 +3,8 @@
 namespace App\Contracts\Notifications;
 
 use App\Concerns\AppliesStudioMailIdentity;
-use App\Concerns\WritesComposedMail;
 use App\Contracts\Models\Contract;
+use App\Crm\Concerns\WritesComposedMail;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;

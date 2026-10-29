@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Schema;
  * StudioSettingsResolver::activeStripeSecretKey()).
  *
  * The four key columns are `text`, not `string` — the model's `encrypted`
- * cast (App\Settings\Models\StudioSettings) stores ciphertext plus an IV,
+ * cast (App\Models\StudioSettings) stores ciphertext plus an IV,
  * which is longer than the plaintext key it replaces and would silently
  * truncate under a 255-char varchar. Nothing here, and nothing this
  * migration seeds, ever writes one in plaintext.

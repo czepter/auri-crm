@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support;
+namespace App\Integration\Support;
 
 use App\Integration\Models\OAuthClient;
 

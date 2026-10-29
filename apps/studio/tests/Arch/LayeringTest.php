@@ -18,20 +18,12 @@ $wiring = ['App\Http', 'App\Policies', 'App\Providers', 'App\Templates', 'App\Mi
 
 // Today's violations by the issue that removes them. Only ever delete lines.
 $baseline = [
-    556 => [
-        'App\Concerns\AppliesStudioMailIdentity',
-        'App\Concerns\AttachesInvoicePdf',
-        'App\Concerns\WritesComposedMail',
-        'App\Crm\Actions\CheckDateAvailability',
-        'App\Crm\Data\DateConflictData',
-        'App\Engagement\Support\InboundRecipient',
-        'App\Support\OAuthClients',
-    ],
     558 => [
         'App\Automation\Actions\FireAutomationRule',
         'App\Automation\Actions\SeedDefaultAutomationRules',
         'App\Automation\Actions\SweepDateOffsetAutomationRules',
         'App\Automation\Notifications\AutomationReminder',
+        'App\Concerns\AppliesStudioMailIdentity',
         'App\Contracts\Actions\EnsureContractArtifact',
         'App\Contracts\Notifications\ContractSent',
         'App\Crm\Actions\ApplyTaskTemplates',
@@ -109,7 +101,8 @@ $baseline = [
         'App\Notifications\Support\StudioEvents',
     ],
     564 => [
-        'App\Concerns\HasShowcaseImages',
+        'App\Media\Concerns\HasShowcaseImages',
+        'App\Media\Concerns\HasShowcaseImages',
         'App\Media\Actions\BuildGalleryZip',
         'App\Media\Actions\IngestCompletedUpload',
         'App\Media\Actions\NotifyZipWaiters',

@@ -3,7 +3,8 @@
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Settings\Models\StudioSettings;
+use App\Enums\StaffRole;
+use App\Models\StudioSettings;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -110,7 +111,7 @@ it('leaves the admin surface untouched by the portal maintenance switch', functi
 
     useSurface(Surface::ADMIN);
 
-    $owner = staffMember(\App\Enums\StaffRole::Admin);
+    $owner = staffMember(StaffRole::Admin);
     $page = $this->actingAs($owner, 'staff')->get('/einstellungen/allgemein')->assertOk()->viewData('page');
 
     expect($page['component'])->toBe('Settings/Index');

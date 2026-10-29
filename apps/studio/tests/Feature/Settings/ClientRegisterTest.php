@@ -3,10 +3,10 @@
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Models\StudioSettings;
 use App\Portal\Notifications\ClientAccessLink;
 use App\Quotes\Models\Quote;
 use App\Quotes\Notifications\QuoteSent;
-use App\Settings\Models\StudioSettings;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;

@@ -4,6 +4,7 @@ namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Notifications\Support\MailPreview;
 use App\Portal\Notifications\PortalAccessInvitation;
 use App\Quotes\Actions\RenderQuotePdf;
@@ -12,7 +13,6 @@ use App\Quotes\Support\SampleQuoteData;
 use App\Settings\Actions\AdaptClientRegister;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Enums\FontPair;
-use App\Settings\Models\StudioSettings;
 use App\Settings\Rules\ValidFormat;
 use App\Settings\Rules\ValidIban;
 use App\Settings\Support\LogoResponse;

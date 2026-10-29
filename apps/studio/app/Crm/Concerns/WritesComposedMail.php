@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Concerns;
+namespace App\Crm\Concerns;
 
 use App\Crm\Models\Contact;
 use Illuminate\Notifications\Messages\MailMessage;

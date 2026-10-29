@@ -3,7 +3,7 @@
 namespace App\Portal\Notifications;
 
 use App\Concerns\AppliesStudioMailIdentity;
-use App\Concerns\WritesComposedMail;
+use App\Crm\Concerns\WritesComposedMail;
 use App\Notifications\Contracts\Transactional;
 use App\Portal\Models\ClientAccess;
 use App\Settings\Support\StudioSettingsResolver;

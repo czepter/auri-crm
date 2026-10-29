@@ -3,8 +3,8 @@
 namespace App\Payments\Notifications;
 
 use App\Concerns\AppliesStudioMailIdentity;
-use App\Concerns\AttachesInvoicePdf;
-use App\Concerns\WritesComposedMail;
+use App\Crm\Concerns\WritesComposedMail;
+use App\Payments\Concerns\AttachesInvoicePdf;
 use App\Payments\Models\Invoice;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
