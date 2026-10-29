@@ -2,6 +2,7 @@
 
 namespace App\Automation\Http\Controllers;
 
+use App\Automation\Actions\FireAutomationRule;
 use App\Automation\Enums\AutomationRunStatus;
 use App\Automation\Models\AutomationRun;
 use App\Automation\Notifications\AutomationReminder;
@@ -84,5 +85,16 @@ class AutomationDraftController extends Controller
     {
         abort_unless(auth('staff')->user()?->can(Capability::ManageMessages->value) ?? false, 403);
         abort_unless($run->status === AutomationRunStatus::AwaitingApproval, 404);
+
+        if ($run->anchorable === null) {
+            abort_unless(auth('staff')->user()->can(Capability::ViewAllCases->value), 403);
+
+            return;
+        }
+
+        $project = FireAutomationRule::projectOf($run->anchorable);
+        if ($project !== null) {
+            $this->authorize('manageMessages', $project);
+        }
     }
 }
