@@ -200,7 +200,7 @@ Route::middleware('portal.maintenance')->group(function () {
         // whole mailbox, GET and POST alike, the same full-screen shape
         // payment_status takes rather than gating only a submit the way
         // accept_quotes/sign_contracts do. See EnsurePortalCapability and
-        // StudioSettingsResolver::messagingEnabled().
+        // App\Portal\Support\PortalSettings::messagingEnabled().
         //
         // P-04 (#223): one mailbox, no project in the path. A thread names a
         // booking or it does not, and the route can no longer require what

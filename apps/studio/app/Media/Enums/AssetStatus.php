@@ -3,7 +3,7 @@
 namespace App\Media\Enums;
 
 /**
- * Terminal, and only ever written once by App\Media\Actions\
+ * Terminal, and only ever written once by App\Gallery\Actions\
  * IngestCompletedUpload — there is no in-between "processing" state
  * persisted, because that action runs the whole pipeline to a conclusion
  * before it ever writes the row. Failed is not an error state the operator

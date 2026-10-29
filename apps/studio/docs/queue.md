@@ -13,7 +13,7 @@ named queue per workload:
 
 Nothing dispatches onto `mail`, `render` or `media.zip` yet — each story ships
 the queue seam ahead of the job that will use it. `media.ingest` carries
-`App\Media\Jobs\ProcessIngestedAsset` (G-03) — dispatched by
+`App\Gallery\Jobs\ProcessIngestedAsset` (G-03) — dispatched by
 `MultipartUploadController::complete()` the moment a multipart upload session
 is marked Completed; see docs/media.md's own "Ingest processing (G-03)"
 section. Dispatch onto the queue that matches what the job does:

@@ -12,8 +12,8 @@ use Illuminate\Queue\SerializesModels;
 
 /**
  * G-10 (#59): the media.zip queue's only job (config/horizon.php's
- * supervisor-media-zip, 40min timeout). Dispatched by App\Media\Actions\
- * RequestZipBuild — the actual work lives in App\Media\Actions\
+ * supervisor-media-zip, 40min timeout). Dispatched by App\Gallery\Actions\
+ * RequestZipBuild — the actual work lives in App\Gallery\Actions\
  * BuildGalleryZip, kept separate so it's callable directly from a test
  * without a queue round-trip.
  */
