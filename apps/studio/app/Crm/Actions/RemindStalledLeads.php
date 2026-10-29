@@ -5,10 +5,10 @@ namespace App\Crm\Actions;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Stage;
+use App\Crm\Notifications\Studio\LeadStalled;
+use App\Crm\Support\StudioAudience;
 use App\Models\User;
 use App\Notifications\NotificationService;
-use App\Notifications\Studio\LeadStalled;
-use App\Notifications\Support\StudioAudience;
 use App\Support\FibonacciReminderSchedule;
 use Illuminate\Support\Collection;
 

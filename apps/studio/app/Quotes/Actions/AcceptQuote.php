@@ -3,13 +3,13 @@
 namespace App\Quotes\Actions;
 
 use App\Crm\Actions\AdvanceLeadStage;
+use App\Crm\Actions\NotifyStudio;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Models\Contact;
-use App\Notifications\Actions\NotifyStudio;
-use App\Notifications\Studio\QuoteAccepted;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
+use App\Quotes\Notifications\Studio\QuoteAccepted;
 use App\Quotes\Support\QuoteRange;
 use App\Quotes\Support\VatLines;
 use App\Support\AuditLogger;

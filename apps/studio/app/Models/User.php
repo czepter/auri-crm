@@ -22,7 +22,7 @@ use Spatie\Permission\Traits\HasRoles;
  * HasApiTokens (N-04): a staff user can hold their own Sanctum personal
  * access tokens, alongside App\Integration\Models\ApiToken's machine ones —
  * the same tokenable relation, the same api guard, a different kind of
- * caller. See App\Http\Controllers\Staff\OAuthAuthorizationController for
+ * caller. See App\Integration\Http\Controllers\OAuthAuthorizationController for
  * where one gets minted and why its abilities can never exceed this user's
  * own StaffRole::capabilities().
  *

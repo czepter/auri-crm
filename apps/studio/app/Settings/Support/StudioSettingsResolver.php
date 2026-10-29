@@ -536,7 +536,7 @@ class StudioSettingsResolver
         return $this->row()->mail_bcc;
     }
 
-    /** Read by App\Notifications\Listeners\WithholdClientMail alone. */
+    /** Read by App\Staff\Listeners\WithholdClientMail alone. */
     public function clientMailEnabled(): bool
     {
         return $this->row()->mail_clients_enabled;
@@ -758,7 +758,7 @@ class StudioSettingsResolver
         return $this->row()->onboarding_completed_at !== null;
     }
 
-    /** Whether App\Notifications\Actions\RemindOnboarding has already sent its one nudge. */
+    /** Whether App\Staff\Actions\RemindOnboarding has already sent its one nudge. */
     public function onboardingReminderSent(): bool
     {
         return $this->row()->onboarding_reminder_sent_at !== null;

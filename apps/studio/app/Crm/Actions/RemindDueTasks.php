@@ -4,10 +4,10 @@ namespace App\Crm\Actions;
 
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Task;
+use App\Crm\Notifications\Studio\TasksDue;
+use App\Crm\Support\StudioAudience;
 use App\Models\User;
 use App\Notifications\NotificationService;
-use App\Notifications\Studio\TasksDue;
-use App\Notifications\Support\StudioAudience;
 use App\Portal\Notifications\TaskDue;
 use App\Portal\Support\ClientAudience;
 use App\Settings\Support\StudioSettingsResolver;

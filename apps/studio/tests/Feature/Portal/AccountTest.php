@@ -3,10 +3,10 @@
 use App\Crm\Models\Contact;
 use App\Crm\Models\Task;
 use App\Enums\StaffRole;
-use App\Notifications\Studio\DsgvoRequested;
 use App\Portal\Models\EmailChange;
 use App\Portal\Notifications\EmailChangeConfirmation;
 use App\Privacy\Models\DsgvoRequest;
+use App\Privacy\Notifications\Studio\DsgvoRequested;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;

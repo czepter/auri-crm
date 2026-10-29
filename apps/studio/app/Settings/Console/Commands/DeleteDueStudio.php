@@ -5,8 +5,8 @@ namespace App\Settings\Console\Commands;
 use App\Enums\StaffRole;
 use App\Models\User;
 use App\Notifications\NotificationService;
-use App\Notifications\Studio\StudioDeletionReminder;
 use App\Privacy\Actions\DeleteTenant;
+use App\Privacy\Notifications\Studio\StudioDeletionReminder;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Console\Command;
 

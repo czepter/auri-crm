@@ -2,14 +2,14 @@
 
 namespace App\Portal\Http\Controllers;
 
+use App\Crm\Actions\NotifyStudio;
 use App\Crm\Data\FormInstanceFieldData;
 use App\Crm\Enums\FormFieldType;
 use App\Crm\Models\FormInstance;
 use App\Crm\Models\FormInstanceField;
 use App\Crm\Models\FormInstanceFile;
 use App\Http\Controllers\Controller;
-use App\Notifications\Actions\NotifyStudio;
-use App\Notifications\Studio\QuestionnaireSubmitted;
+use App\Portal\Notifications\Studio\QuestionnaireSubmitted;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

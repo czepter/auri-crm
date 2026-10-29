@@ -5,7 +5,7 @@ namespace App\Privacy\Actions;
 use App\Models\User;
 use App\Models\UserEmailVerification;
 use App\Notifications\NotificationService;
-use App\Notifications\Studio\StudioDeletionCode;
+use App\Privacy\Notifications\Studio\StudioDeletionCode;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;

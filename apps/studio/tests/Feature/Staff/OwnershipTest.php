@@ -3,8 +3,8 @@
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Models\User;
-use App\Notifications\StaffOwnershipTransferred;
 use App\Settings\Support\StudioSettingsResolver;
+use App\Staff\Notifications\StaffOwnershipTransferred;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;

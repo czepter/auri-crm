@@ -1,10 +1,10 @@
 <?php
 
+use App\Engagement\Notifications\Studio\ClientMessagePosted;
 use App\Notifications\Enums\NotificationMode;
 use App\Notifications\Models\InAppNotification;
-use App\Notifications\Studio\ClientMessagePosted;
-use App\Notifications\Studio\StudioDigest;
 use App\Notifications\Support\NotificationPreferences;
+use App\Staff\Notifications\StudioDigest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 

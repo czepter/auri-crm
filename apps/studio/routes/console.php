@@ -45,7 +45,7 @@ Schedule::command('notifications:send-morning-briefing')->dailyAt('07:00')->time
 // 00:00, and half an hour clear of T-23's briefing.
 Schedule::command('notifications:send-digests')->dailyAt('07:30')->timezone($studioTimezone);
 
-// The onboarding nudge — see App\Notifications\Actions\RemindOnboarding for
+// The onboarding nudge — see App\Staff\Actions\RemindOnboarding for
 // the three-condition guard. 09:00 so it lands with the rest of the morning
 // mail, not overnight.
 Schedule::command('notifications:remind-onboarding')->dailyAt('09:00')->timezone($studioTimezone);

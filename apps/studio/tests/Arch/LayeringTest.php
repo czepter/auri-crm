@@ -28,6 +28,7 @@ $baseline = [
         'App\Contracts\Notifications\ContractSent',
         'App\Crm\Actions\ApplyTaskTemplates',
         'App\Crm\Models\Contact',
+        'App\Crm\Notifications\Studio\StudioEventNotification',
         'App\Crm\Models\TaskTemplate',
         'App\Crm\Support\TaskAnchors',
         'App\Documents\Support\DocumentRenderer',
@@ -70,32 +71,6 @@ $baseline = [
         'App\Quotes\Support\SampleQuoteData',
         'App\Settings\Data\PortalSettingsData',
         'App\Settings\Support\StudioSettingsResolver',
-    ],
-    563 => [
-        'App\Notifications\Actions\BuildMorningBriefing',
-        'App\Notifications\Actions\RemindOnboarding',
-        'App\Notifications\Listeners\NotifyStudioOfDomainEvent',
-        'App\Notifications\Listeners\WithholdClientMail',
-        'App\Notifications\StaffEmailChangeConfirmation',
-        'App\Notifications\StaffInvited',
-        'App\Notifications\StaffOwnershipTransferred',
-        'App\Notifications\Studio\ClientMessagePosted',
-        'App\Notifications\Studio\ContractSigned',
-        'App\Notifications\Studio\DsgvoRequested',
-        'App\Notifications\Studio\InquiryReceived',
-        'App\Notifications\Studio\InstallmentDueSoon',
-        'App\Notifications\Studio\InstallmentOverdue',
-        'App\Notifications\Studio\InstallmentPaid',
-        'App\Notifications\Studio\LeadStalled',
-        'App\Notifications\Studio\MorningBriefing',
-        'App\Notifications\Studio\QuestionnaireSubmitted',
-        'App\Notifications\Studio\QuoteAccepted',
-        'App\Notifications\Studio\StudioDeletionCode',
-        'App\Notifications\Studio\StudioDigest',
-        'App\Notifications\Studio\StudioEventNotification',
-        'App\Notifications\Studio\TasksDue',
-        'App\Notifications\Support\StudioAudience',
-        'App\Notifications\Support\StudioEvents',
     ],
     565 => [
         'App\Documents\Data\MailTemplateData',
@@ -150,8 +125,20 @@ $violations = function () use ($kernel, $modules, $wiring): array {
             continue;
         }
 
-        foreach (PhpToken::tokenize(file_get_contents($file->getPathname())) as $token) {
+        $source = file_get_contents($file->getPathname());
+        preg_match_all('/^use ([\w\\\\]+)(?: as (\w+))?;/m', $source, $imports, PREG_SET_ORDER);
+        $aliases = [];
+        foreach ($imports as $import) {
+            $aliases[($import[2] ?? '') ?: substr(strrchr('\\'.$import[1], '\\'), 1)] = $import[1];
+        }
+
+        foreach (PhpToken::tokenize($source) as $token) {
             $name = ltrim($token->text, '\\');
+            $head = strstr($name, '\\', true);
+
+            if ($head !== false && isset($aliases[$head])) {
+                $name = $aliases[$head].substr($name, strlen($head));
+            }
 
             if ($token->is([T_NAME_QUALIFIED, T_NAME_FULLY_QUALIFIED])
                 && ! ($isModel($class) && $isModel($name))

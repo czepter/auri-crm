@@ -4,7 +4,7 @@
 
 use App\Enums\StaffRole;
 use App\Models\StudioSettings;
-use App\Notifications\Studio\StudioReady;
+use App\Staff\Notifications\StudioReady;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;

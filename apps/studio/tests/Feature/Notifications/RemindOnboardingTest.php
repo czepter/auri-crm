@@ -5,8 +5,8 @@
 use App\Enums\StaffRole;
 use App\Models\StudioSettings;
 use App\Models\User;
-use App\Notifications\Actions\RemindOnboarding;
-use App\Notifications\Studio\StudioSetupPending;
+use App\Staff\Actions\RemindOnboarding;
+use App\Staff\Notifications\StudioSetupPending;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;

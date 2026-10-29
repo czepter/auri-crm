@@ -2,14 +2,14 @@
 
 namespace App\Payments\Actions;
 
+use App\Crm\Support\StudioAudience;
 use App\Models\User;
 use App\Notifications\NotificationService;
-use App\Notifications\Studio;
-use App\Notifications\Support\StudioAudience;
 use App\Payments\Enums\OverdueReason;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Events\InstallmentOverdue;
 use App\Payments\Models\PaymentInstallment;
+use App\Payments\Notifications\Studio;
 use App\Portal\Notifications\PaymentReminder;
 use App\Portal\Support\ClientAudience;
 use App\Settings\Support\StudioSettingsResolver;

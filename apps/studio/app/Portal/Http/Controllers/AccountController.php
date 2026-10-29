@@ -2,17 +2,17 @@
 
 namespace App\Portal\Http\Controllers;
 
+use App\Crm\Actions\NotifyStudio;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Task;
 use App\Http\Controllers\Controller;
-use App\Notifications\Actions\NotifyStudio;
 use App\Notifications\Jobs\SendMailNotification;
-use App\Notifications\Studio\DsgvoRequested;
 use App\Notifications\Support\NotificationPreferences;
 use App\Portal\Models\EmailChange;
 use App\Portal\Notifications\EmailChangeConfirmation;
 use App\Privacy\Models\DsgvoRequest;
+use App\Privacy\Notifications\Studio\DsgvoRequested;
 use App\Settings\Rules\ValidFormat;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
