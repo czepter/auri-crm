@@ -2,10 +2,10 @@
 
 namespace App\Portal\Http\Controllers;
 
+use App\Crm\Actions\CreateTask;
 use App\Crm\Actions\NotifyStudio;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Task;
 use App\Http\Controllers\Controller;
 use App\Notifications\Jobs\SendMailNotification;
 use App\Notifications\Support\NotificationPreferences;
@@ -155,7 +155,7 @@ class AccountController extends Controller
     }
 
     /** Art. 15 and Art. 17, as requests. Clicking twice is impatience, not a second obligation. */
-    public function requestDsgvo(Request $request, NotifyStudio $notifyStudio): RedirectResponse
+    public function requestDsgvo(Request $request, NotifyStudio $notifyStudio, CreateTask $createTask): RedirectResponse
     {
         $contact = auth('portal')->user();
 
@@ -170,7 +170,7 @@ class AccountController extends Controller
 
         if (! $already) {
             $dsgvoRequest = DsgvoRequest::create(['contact_id' => $contact->id, 'kind' => $kind]);
-            $task = Task::create([
+            $task = $createTask([
                 'title' => "Datenschutz-Anfrage: {$dsgvoRequest->label()}",
                 'audience' => TaskAudience::Internal,
                 'due_on' => $dsgvoRequest->dueOn(),

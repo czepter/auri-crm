@@ -10,6 +10,7 @@ use App\Automation\Models\AutomationRule;
 use App\Automation\Models\AutomationRun;
 use App\Automation\Notifications\AutomationReminder;
 use App\Automation\Support\AutomationConditions;
+use App\Crm\Actions\CreateTask;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\CrewAssignment;
@@ -56,6 +57,7 @@ class FireAutomationRule
         private readonly AutomationConditions $conditions,
         private readonly DocumentMergeData $merge,
         private readonly InvoiceMergeData $invoiceMerge,
+        private readonly CreateTask $createTask,
     ) {}
 
     public function __invoke(AutomationRule $rule, Model $anchor, string $triggerDate): ?AutomationRun
@@ -151,7 +153,7 @@ class FireAutomationRule
         $offset = $rule->offset_days ?? 0;
 
         try {
-            Task::create([
+            ($this->createTask)([
                 'case_id' => $project?->id,
                 'shoot_id' => $anchor instanceof Shoot ? $anchor->id : null,
                 'title' => $title,
