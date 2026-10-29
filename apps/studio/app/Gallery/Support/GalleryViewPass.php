@@ -42,6 +42,7 @@ class GalleryViewPass
     public function issue(Gallery $gallery): string
     {
         $payload = implode('.', [
+            'view',
             $gallery->public_id,
             $gallery->view_password_version,
             now()->addHours(self::VALID_FOR_HOURS)->timestamp,
@@ -65,19 +66,21 @@ class GalleryViewPass
 
         $parts = explode('.', $token);
 
-        if (count($parts) !== 4) {
+        // Der Typ-Literal trennt den Pass vom Gast-Pass (gleicher Schlüssel, sonst gleiche Form).
+        if (count($parts) !== 5 || $parts[0] !== 'view') {
             return false;
         }
 
-        [$galleryId, $version, $expires, $signature] = $parts;
+        [, $galleryId, $version, $expires, $signature] = $parts;
 
         // Constant time, so the comparison leaks nothing about the key.
-        if (! hash_equals($this->sign("{$galleryId}.{$version}.{$expires}"), $signature)) {
+        if (! hash_equals($this->sign("view.{$galleryId}.{$version}.{$expires}"), $signature)) {
             return false;
         }
 
+        // Exakter String: (int) würde bei einer Hex-Kennung nur das Ziffernpräfix lesen.
         return $galleryId === $gallery->public_id
-            && (int) $version === $gallery->view_password_version
+            && $version === (string) $gallery->view_password_version
             && (int) $expires > now()->timestamp;
     }
 

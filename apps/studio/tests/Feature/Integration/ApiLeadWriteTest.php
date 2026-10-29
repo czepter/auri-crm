@@ -133,6 +133,37 @@ it('refuses to advance a stage without the manage_leads scope', function () {
     expect($lead->fresh()->stage->key)->toBe(LeadStage::New->value);
 });
 
+it('refuses to move a lead onto or off the won stage without book_project', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
+    $open = Lead::factory()->atStage(LeadStage::QuoteAccepted)->create();
+    $won = Lead::factory()->atStage(LeadStage::Booked)->create();
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'won-1')
+        ->postJson("/api/cases/{$open->case->public_id}/lead/stage", ['stage' => LeadStage::Booked->value])
+        ->assertForbidden();
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'won-2')
+        ->postJson("/api/cases/{$won->case->public_id}/lead/stage", ['stage' => LeadStage::QuoteAccepted->value])
+        ->assertForbidden();
+
+    expect($open->case->fresh()->isBooked())->toBeFalse()
+        ->and($won->fresh()->stage->key)->toBe(LeadStage::Booked->value);
+});
+
+it('books through the won stage with book_project', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageLeads, Capability::BookProject)->create();
+    $lead = Lead::factory()->atStage(LeadStage::QuoteAccepted)->create();
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'won-3')
+        ->postJson("/api/cases/{$lead->case->public_id}/lead/stage", ['stage' => LeadStage::Booked->value])
+        ->assertOk();
+
+    expect($lead->case->fresh()->isBooked())->toBeTrue();
+});
+
 it('404s advancing a stage for a lead public_id from another tenant or that does not exist', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
 

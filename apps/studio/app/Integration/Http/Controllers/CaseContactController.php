@@ -6,7 +6,9 @@ use App\Crm\Actions\CreateContact;
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Enums\Capability;
 use App\Http\Controllers\Controller;
+use App\Integration\Models\ApiToken;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -32,6 +34,8 @@ class CaseContactController extends Controller
         $role = $validated['role'] ?? CaseContactRole::Partner->value;
 
         abort_if($this->isPrimary($role), 422);
+
+        $this->authorizeContactUse($request, $validated);
 
         $contact = $createContact->pickOrResolve($validated['contact_id'] ?? null, $validated);
 
@@ -70,5 +74,33 @@ class CaseContactController extends Controller
         $case->contacts()->detach($contact->id);
 
         return response()->noContent();
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     */
+    private function authorizeContactUse(Request $request, array $validated): void
+    {
+        $principal = $request->user('api');
+        $can = fn (Capability $c) => $principal instanceof ApiToken
+            ? $principal->allows($c)
+            : $principal->tokenCan($c->value);
+
+        // Reading an existing contact back through the 201 body is an e-mail
+        // oracle, so it needs the same authority as reading contacts.
+        $mayUseExisting = $can(Capability::ManageContacts) || $can(Capability::ViewAllCases);
+
+        if (filled($validated['contact_id'] ?? null)) {
+            abort_unless($mayUseExisting, 403);
+
+            return;
+        }
+
+        // Same rule as CaptureInquiry: an address on file is that person.
+        $existing = filled($validated['email'] ?? null)
+            && Contact::query()->where('email', $validated['email'])->exists();
+
+        // A new contact is the same authority as POST /api/contacts.
+        abort_unless($existing ? $mayUseExisting : $can(Capability::ManageContacts), 403);
     }
 }

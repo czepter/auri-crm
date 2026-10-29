@@ -6,6 +6,7 @@ use App\Crm\Actions\CreateContact;
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Settings\Rules\ValidFormat;
 use Illuminate\Http\RedirectResponse;
@@ -41,6 +42,16 @@ class LeadContactController extends Controller
         abort_if($this->isPrimary($role), 422);
 
         $contact = $createContact->pickOrResolve($validated['contact_id'] ?? null, $validated);
+
+        // Ein fremder Kontakt am eigenen Fall wäre sonst der Weg zu seiner
+        // Portal-Anmeldung: Contributor sehen nur Fälle, an denen sie crewen.
+        $user = auth('staff')->user();
+        abort_unless(
+            $contact->wasRecentlyCreated
+                || $user->can(Capability::ManageContacts->value)
+                || $user->can(Capability::ViewAllCases->value),
+            403,
+        );
 
         // unique(case_id, contact_id, role) würde beim zweiten Anhängen
         // werfen.

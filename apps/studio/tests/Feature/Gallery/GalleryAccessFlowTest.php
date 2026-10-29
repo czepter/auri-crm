@@ -405,6 +405,22 @@ it('queues one build per selection and size, and reuses a fresh one', function (
     Queue::assertPushed(BuildZip::class, 2);
 });
 
+it('pushes one build on media.zip for repeated requests while it runs', function () {
+    Queue::fake();
+
+    $gallery = Gallery::factory()->create();
+    Asset::factory()->for($gallery)->create(['key' => 'galleries/g/a.jpg']);
+    $gallery->publish();
+    leaveAddress($gallery);
+
+    foreach ([1, 2] as $_) {
+        test()->post("/galerien/{$gallery->public_id}/download/vorbereiten", ['size' => 'original']);
+    }
+
+    Queue::assertPushed(BuildZip::class, 1);
+    Queue::assertPushedOn('media.zip', BuildZip::class);
+});
+
 it('refuses to prepare a list the visitor does not own', function () {
     Queue::fake();
 

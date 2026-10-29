@@ -391,6 +391,23 @@ it('refuses a redirect_uri that is neither https nor http loopback', function (s
     'http://evil.example/callback',
     'https://evil.example/callback#fragment',
     'not-a-url',
+    'https://attacker.example\\@claude.ai/api/mcp/auth_callback',
+    'http://user@127.0.0.1:33418/callback',
+]);
+
+it('refuses a redirect_uri the browser would read differently than the server', function (string $uri) {
+    [, $challenge] = pkcePair();
+
+    $this->actingAs(staffMember(), 'staff')->get('/oauth/authorize?'.http_build_query([
+        'response_type' => 'code',
+        'client_id' => 'studio-mcp',
+        'redirect_uri' => $uri,
+        'code_challenge' => $challenge,
+        'code_challenge_method' => 'S256',
+    ]))->assertStatus(400);
+})->with([
+    'http://attacker.example\\@127.0.0.1:33418/callback',
+    'http://user@127.0.0.1:33418/callback',
 ]);
 
 it('refuses to pretend a client has a secret', function () {

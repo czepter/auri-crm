@@ -154,6 +154,7 @@ class ProfileController extends Controller
         ]);
 
         $user->update(['password' => $data['password']]);
+        $user->tokens()->where('name', 'mcp')->delete();
 
         AuditLogger::record('staff.profile.password_changed', $user);
 

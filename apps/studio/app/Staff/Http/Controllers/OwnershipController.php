@@ -34,6 +34,8 @@ class OwnershipController extends Controller
             $rows[$actor->id]->update(['role' => StaffRole::Manager]);
             $rows[$user->id]->update(['role' => StaffRole::Admin]);
 
+            $rows[$actor->id]->tokens()->where('name', 'mcp')->delete();
+
             AuditLogger::record('staff.ownership_transferred', $actor, subject: $user->public_id);
         });
 

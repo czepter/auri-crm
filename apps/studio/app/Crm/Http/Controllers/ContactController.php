@@ -320,6 +320,15 @@ class ContactController extends Controller
             'city' => ['nullable', 'string', 'max:255'],
         ]);
 
+        if ($validated['email'] !== $contact->email) {
+            AuditLogger::record(
+                event: 'contact.email_changed',
+                actor: auth('staff')->user(),
+                context: ['from' => $contact->email, 'to' => $validated['email']],
+                subject: $contact->public_id,
+            );
+        }
+
         $updateContact($contact, $validated);
 
         return redirect("/kontakte/{$contact->public_id}");

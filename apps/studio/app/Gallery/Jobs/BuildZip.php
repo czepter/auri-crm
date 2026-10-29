@@ -21,7 +21,10 @@ class BuildZip implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(public readonly ZipBuild $zipBuild) {}
+    public function __construct(public readonly ZipBuild $zipBuild)
+    {
+        $this->onQueue('media.zip');
+    }
 
     public function handle(BuildGalleryZip $build): void
     {

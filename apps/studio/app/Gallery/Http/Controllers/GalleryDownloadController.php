@@ -134,6 +134,15 @@ class GalleryDownloadController extends Controller
             return back();
         }
 
+        // Ein laufender Build wird weder neu gestartet noch seine Teile gelöscht; nach dem
+        // media.zip-Timeout gilt er als tot.
+        if ($build->exists && $build->status === ZipBuildStatus::Building
+            && $build->updated_at->gt(now()->subSeconds(config('horizon.defaults.supervisor-media-zip.timeout')))) {
+            $this->waitFor($build, $gallery, $claims);
+
+            return back();
+        }
+
         $build->fill(['status' => ZipBuildStatus::Building, 'error' => null])->save();
         $build->parts()->delete();
 

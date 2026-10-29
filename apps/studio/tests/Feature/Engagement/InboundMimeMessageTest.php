@@ -8,6 +8,13 @@ use App\Models\StudioSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Webklex\PHPIMAP\Client;
+use Webklex\PHPIMAP\ClientManager;
+use Webklex\PHPIMAP\Folder;
+use Webklex\PHPIMAP\Header;
+use Webklex\PHPIMAP\Message;
+use Webklex\PHPIMAP\Query\WhereQuery;
+use Webklex\PHPIMAP\Support\MessageCollection;
 
 uses(RefreshDatabase::class);
 
@@ -194,4 +201,72 @@ it('holds no studio mailbox credential — the one it uses is this app\'s own', 
 
     expect($columns->filter(fn ($c) => str_contains($c, 'imap'))->all())->toBe([]);
     expect(StudioSettings::query()->firstOrFail()->getAttributes())->not->toHaveKey('imap_password');
+});
+
+// --- poison messages and forged verdicts ---------------------------------
+
+it('reads only the leading method=result of each resinfo', function () {
+    $raw = rawMail(['Authentication-Results' => 'mx.'.inboundDomain().'; spf=pass smtp.mailfrom=dmarc=pass@x.test; dmarc=fail header.from=x.test']);
+
+    expect(InboundMimeMessage::fromRaw($raw)['dmarc'])->toBe('fail');
+});
+
+it('files a delivery without a DMARC pass in triage instead of threading it', function () {
+    $secret = withSecret();
+    $thread = inboundThread();
+
+    $raw = rawMail([
+        'Delivered-To' => InboundAddress::forThread($thread, $secret),
+        'Authentication-Results' => null,
+    ]);
+
+    $row = app(IngestInboundMessage::class)(InboundMimeMessage::fromRaw($raw));
+
+    expect($row->state)->toBe(InboundMessageState::Triage)
+        ->and($thread->messages()->count())->toBe(0);
+});
+
+it('stores a delivery with an over-long subject and Message-ID', function () {
+    $secret = withSecret();
+    $row = app(IngestInboundMessage::class)([
+        'message_id' => '<'.str_repeat('a', 300).'@x>',
+        'from' => 'lena@example.test',
+        'to' => InboundAddress::catchAll('Studio', $secret),
+        'subject' => str_repeat('ä', 300),
+        'body' => 'Text',
+    ]);
+
+    expect(mb_strlen($row->subject))->toBe(255)
+        ->and($row->message_id)->toBeNull();
+});
+
+it('marks a message that fails ingest as read so it leaves the window', function () {
+    config()->set('mail.inbound.imap.host', 'imap.test');
+    config()->set('mail.inbound.imap.username', 'u');
+
+    $header = Mockery::mock(Header::class);
+    $header->raw = rawMail();
+    $message = Mockery::mock(Message::class);
+    $message->shouldReceive('getHeader')->andReturn($header);
+    $message->shouldReceive('getRawBody')->andReturn('Text');
+    $message->shouldReceive('setFlag')->with('Seen')->once();
+
+    $query = Mockery::mock(WhereQuery::class);
+    $query->shouldReceive('unseen')->andReturnSelf();
+    $query->shouldReceive('limit')->andReturnSelf();
+    $query->shouldReceive('get')->andReturn(new MessageCollection([$message]));
+    $folder = Mockery::mock(Folder::class);
+    $folder->shouldReceive('query')->andReturn($query);
+    $client = Mockery::mock(Client::class);
+    $client->shouldReceive('connect');
+    $client->shouldReceive('getFolder')->andReturn($folder);
+    $manager = Mockery::mock(ClientManager::class);
+    $manager->shouldReceive('make')->andReturn($client);
+    app()->instance(ClientManager::class, $manager);
+
+    $ingest = Mockery::mock(IngestInboundMessage::class);
+    $ingest->shouldReceive('__invoke')->andThrow(new RuntimeException('boom'));
+    app()->instance(IngestInboundMessage::class, $ingest);
+
+    $this->artisan('mail:poll-inbound')->assertSuccessful();
 });

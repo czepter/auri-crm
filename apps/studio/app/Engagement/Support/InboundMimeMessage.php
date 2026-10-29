@@ -107,9 +107,12 @@ class InboundMimeMessage
 
         $verdicts = [];
 
-        foreach (['spf', 'dkim', 'dmarc'] as $method) {
-            if (preg_match('/\b'.$method.'=(\w+)/i', $line, $match) === 1) {
-                $verdicts[$method] = mb_strtolower($match[1]);
+        // Per resinfo (`;`-separated), and only the leading `method=result`:
+        // a property value such as `smtp.mailfrom=dmarc=pass@x` is the
+        // sender's text, not a verdict.
+        foreach (explode(';', $line) as $resinfo) {
+            if (preg_match('/^\s*(spf|dkim|dmarc)\s*=\s*(\w+)/i', $resinfo, $match) === 1) {
+                $verdicts[mb_strtolower($match[1])] ??= mb_strtolower($match[2]);
             }
         }
 

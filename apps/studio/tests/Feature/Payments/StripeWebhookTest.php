@@ -1,5 +1,6 @@
 <?php
 
+use App\Payments\Actions\UpdatePaymentPlan;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Enums\SettledVia;
 use App\Payments\Events\InstallmentOverdue;
@@ -11,6 +12,7 @@ use App\Payments\Models\StripeEvent;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Queue;
 
 uses(RefreshDatabase::class);
@@ -46,6 +48,7 @@ function m05CheckoutSessionEvent(
     string $paymentStatus = 'paid',
     ?string $paymentIntent = 'pi_test_456',
     ?string $eventId = null,
+    int $amountTotal = 45000,
 ): array {
     return [
         'id' => $eventId ?? 'evt_test_'.$sessionId.'_'.$type,
@@ -58,6 +61,7 @@ function m05CheckoutSessionEvent(
                 'mode' => 'payment',
                 'payment_status' => $paymentStatus,
                 'payment_intent' => $paymentIntent,
+                'amount_total' => $amountTotal,
             ],
         ],
     ];
@@ -120,6 +124,17 @@ it('rejects a request with no Stripe-Signature header at all', function () {
 
     $response->assertStatus(400);
     expect(StripeEvent::query()->count())->toBe(0);
+});
+
+it('rejects every request while no webhook secret is configured, even one signed with the empty key', function () {
+    config(['services.stripe.webhook_secret' => null]);
+    $installment = m05Installment();
+    [$payload, $signature] = m05SignedEvent(m05CheckoutSessionEvent($installment->stripe_checkout_session_id), '');
+
+    m05Post($payload, $signature)->assertStatus(400);
+
+    expect(StripeEvent::query()->count())->toBe(0)
+        ->and($installment->fresh()->status)->toBe(PaymentInstallmentStatus::Scheduled);
 });
 
 // --- Acknowledge-before-process ----------------------------------------------
@@ -214,6 +229,60 @@ it('marks the installment paid on async_payment_succeeded, the delayed-payment-m
     m05Post($payload, $signature)->assertSuccessful();
 
     expect($installment->fresh()->status)->toBe(PaymentInstallmentStatus::Paid);
+});
+
+it('books the collected amount_total, so a payment for an old amount leaves a raised installment partial', function () {
+    $installment = m05Installment(amount: 50000);
+
+    app(UpdatePaymentPlan::class)($installment->plan, 80000, [
+        ['public_id' => $installment->public_id, 'amount' => 80000, 'due_on' => $installment->due_on->toDateString()],
+    ]);
+
+    [$payload, $signature] = m05SignedEvent(m05CheckoutSessionEvent('cs_test_123', amountTotal: 50000));
+    m05Post($payload, $signature)->assertSuccessful();
+
+    $fresh = $installment->fresh();
+    expect($fresh->status)->toBe(PaymentInstallmentStatus::Partial)
+        ->and($fresh->paid_amount)->toBe(50000);
+});
+
+it('books only amount_total when it is lower than the installment', function () {
+    $installment = m05Installment(amount: 80000);
+    [$payload, $signature] = m05SignedEvent(m05CheckoutSessionEvent('cs_test_123', amountTotal: 50000));
+
+    m05Post($payload, $signature)->assertSuccessful();
+
+    $fresh = $installment->fresh();
+    expect($fresh->status)->toBe(PaymentInstallmentStatus::Partial)
+        ->and($fresh->paid_amount)->toBe(50000);
+});
+
+it('does not settle a cancelled installment and reports the received payment', function () {
+    Exceptions::fake();
+    $installment = m05Installment(attributes: ['status' => PaymentInstallmentStatus::Cancelled, 'cancelled_at' => now()]);
+    [$payload, $signature] = m05SignedEvent(m05CheckoutSessionEvent('cs_test_123'));
+
+    m05Post($payload, $signature)->assertSuccessful();
+
+    expect($installment->fresh()->status)->toBe(PaymentInstallmentStatus::Cancelled)
+        ->and($installment->fresh()->paid_amount)->toBe(0);
+    Exceptions::assertReported(fn (RuntimeException $e) => str_contains($e->getMessage(), $installment->public_id)
+        && str_contains($e->getMessage(), 'cs_test_123')
+        && str_contains($e->getMessage(), '45000'));
+});
+
+it('reports and skips a paid session without amount_total', function () {
+    Exceptions::fake();
+    $installment = m05Installment();
+    $event = m05CheckoutSessionEvent('cs_test_123');
+    unset($event['data']['object']['amount_total']);
+    [$payload, $signature] = m05SignedEvent($event);
+
+    m05Post($payload, $signature)->assertSuccessful();
+
+    expect($installment->fresh()->status)->toBe(PaymentInstallmentStatus::Scheduled)
+        ->and($installment->fresh()->paid_amount)->toBe(0);
+    Exceptions::assertReported(RuntimeException::class);
 });
 
 it('leaves the installment untouched on checkout.session.completed when payment_status is not yet paid', function () {

@@ -3,8 +3,10 @@
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
+use App\Enums\StaffRole;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -112,4 +114,23 @@ it('moves a date after the booking', function () {
     ])->assertRedirect();
 
     expect($shoot->fresh()->date->toDateString())->toBe('2027-06-19');
+});
+
+it('refuses a contributor attaching a foreign contact', function () {
+    $lead = leadWithPrimary();
+    $contributor = staffMember(StaffRole::Contributor);
+    CrewAssignment::factory()->for($lead->case->shoots()->first())->for($contributor)->create();
+    $victim = Contact::factory()->create();
+
+    $this->actingAs($contributor, 'staff')
+        ->post("/anfragen/{$lead->case->public_id}/kontakte", ['contact_id' => $victim->public_id])
+        ->assertForbidden();
+
+    $this->actingAs($contributor, 'staff')
+        ->post("/anfragen/{$lead->case->public_id}/kontakte", ['name' => 'Neu', 'email' => 'neu@example.test'])
+        ->assertRedirect();
+
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
+        ->post("/anfragen/{$lead->case->public_id}/kontakte", ['contact_id' => $victim->public_id])
+        ->assertRedirect();
 });

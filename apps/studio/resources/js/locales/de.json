@@ -575,6 +575,7 @@
     "file": "Zuordnen",
     "reason": {
       "dmarc_fail": "Absender nicht bestätigt",
+      "dmarc_unverified": "Absender nicht bestätigt",
       "no_inbound_secret": "Keine Adresse eingerichtet",
       "unrecognised_address": "Adresse nicht zuordenbar",
       "unknown_thread": "Auftrag nicht gefunden",

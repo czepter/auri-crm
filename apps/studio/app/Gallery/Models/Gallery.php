@@ -113,7 +113,8 @@ class Gallery extends Model
 
     public static function findByPublicIdOrSlug(string $value): ?self
     {
-        return static::query()->where('slug', $value)->orWhere('public_id', $value)->first();
+        return static::query()->where('public_id', $value)->first()
+            ?? static::query()->where('slug', $value)->first();
     }
 
     /**

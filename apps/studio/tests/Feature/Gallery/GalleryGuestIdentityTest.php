@@ -139,7 +139,7 @@ it('refuses a forged or expired pass', function () {
     $parts = explode('.', $pass);
 
     expect(app(GalleryGuestPass::class)->identify($this->gallery, $pass.'x'))->toBeNull()
-        ->and(app(GalleryGuestPass::class)->identify($this->gallery, "{$parts[0]}.{$parts[1]}.1.{$parts[3]}"))->toBeNull();
+        ->and(app(GalleryGuestPass::class)->identify($this->gallery, "{$parts[0]}.{$parts[1]}.{$parts[2]}.1.{$parts[4]}"))->toBeNull();
 });
 
 // Entscheidung 5 und 6: wer erst markiert und dann aufgefordert wird, sich

@@ -35,6 +35,7 @@ class GalleryGuestPass
     public function issue(Gallery $gallery, GalleryGuest $guest): string
     {
         $payload = implode('.', [
+            'guest',
             $gallery->public_id,
             $guest->identifier,
             now()->addDays(self::VALID_FOR_DAYS)->timestamp,
@@ -57,13 +58,14 @@ class GalleryGuestPass
 
         $parts = explode('.', $token);
 
-        if (count($parts) !== 4) {
+        // Der Typ-Literal trennt den Pass vom Ansichtspass (gleicher Schlüssel, sonst gleiche Form).
+        if (count($parts) !== 5 || $parts[0] !== 'guest') {
             return null;
         }
 
-        [$galleryId, $identifier, $expires, $signature] = $parts;
+        [, $galleryId, $identifier, $expires, $signature] = $parts;
 
-        if (! hash_equals($this->sign("{$galleryId}.{$identifier}.{$expires}"), $signature)) {
+        if (! hash_equals($this->sign("guest.{$galleryId}.{$identifier}.{$expires}"), $signature)) {
             return null;
         }
 

@@ -11,9 +11,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-function contactApi(Capability $scope, string $key)
+function contactApi(string $key, Capability ...$scopes)
 {
-    $token = ApiToken::factory()->withScopes($scope)->create();
+    $token = ApiToken::factory()->withScopes(...$scopes)->create();
 
     return test()->withHeader('Authorization', 'Bearer '.bearerToken($token))->withHeader('Idempotency-Key', $key);
 }
@@ -24,7 +24,7 @@ it('creates contacts through CreateContact from admin and api', function () {
     test()->actingAs(staffMember(), 'staff')->post('/kontakte', ['name' => 'Admin Kontakt'])->assertRedirect();
 
     useSurface(Surface::API);
-    contactApi(Capability::ManageContacts, 'contact')->postJson('/api/contacts', ['name' => 'Api Kontakt'])->assertCreated();
+    contactApi('contact', Capability::ManageContacts)->postJson('/api/contacts', ['name' => 'Api Kontakt'])->assertCreated();
 
     expect(Contact::count())->toBe(2);
 });
@@ -37,7 +37,7 @@ it('resolves contacts through CreateContact from the lead screen and the api', f
         ->post("/anfragen/{$project->public_id}/kontakte", ['name' => 'Partner Eins'])->assertRedirect();
 
     useSurface(Surface::API);
-    contactApi(Capability::ManageLeads, 'case-contact')
+    contactApi('case-contact', Capability::ManageShoots, Capability::ManageContacts)
         ->postJson("/api/cases/{$project->public_id}/contacts", ['name' => 'Partner Zwei'])->assertCreated();
 
     expect(Contact::count())->toBe(2);
@@ -61,7 +61,7 @@ it('updates contacts through UpdateContact from admin, api and portal', function
         ->patch("/kontakte/{$contact->public_id}", ['name' => 'Admin', 'email' => 'a@example.test'])->assertRedirect();
 
     useSurface(Surface::API);
-    contactApi(Capability::ManageContacts, 'update')
+    contactApi('update', Capability::ManageContacts)
         ->patchJson("/api/contacts/{$contact->public_id}", ['name' => 'Api'])->assertOk();
 
     useSurface(Surface::PORTAL);

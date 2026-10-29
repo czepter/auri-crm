@@ -39,6 +39,10 @@ class GalleryController extends Controller
 
         /** @var CursorPaginator $paginator */
         $paginator = Gallery::query()
+            ->when($request->user('api') instanceof User, fn ($query) => $query->where(
+                fn ($visible) => $visible->whereDoesntHave('case')
+                    ->orWhereHas('case', fn ($case) => $case->visibleTo($request->user('api')))
+            ))
             ->with(['case:id,public_id', 'currentVersion'])
             ->withCount(['assets as asset_count' => fn ($query) => $query->inDraft()])
             ->when($since, fn ($query) => $query->where('updated_at', '>=', $since))
@@ -79,6 +83,8 @@ class GalleryController extends Controller
         $project = ($validated['case_id'] ?? null) === null
             ? null
             : ClientCase::query()->where('public_id', $validated['case_id'])->firstOrFail();
+
+        abort_if($project && $request->user('api') instanceof User && ! $request->user('api')->can('view', $project), 403);
 
         $gallery = $createGallery([
             'title' => $validated['title'],
