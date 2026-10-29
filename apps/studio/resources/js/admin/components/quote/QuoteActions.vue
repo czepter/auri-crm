@@ -37,12 +37,15 @@ function send() {
   router.visit(`/angebote/${props.quote.id}/senden`)
 }
 
+// Die Ablehnung kommt als errors.quote, ohne Feld, an dem sie stehen könnte.
+const onError = (errors: Record<string, string>) => toast.error(errors.quote)
+
 function markSent() {
-  router.post(`/angebote/${props.quote.id}/versendet`, {}, { preserveScroll: true })
+  router.post(`/angebote/${props.quote.id}/versendet`, {}, { preserveScroll: true, onError })
 }
 
 function markAccepted() {
-  router.post(`/angebote/${props.quote.id}/angenommen`, {}, { preserveScroll: true })
+  router.post(`/angebote/${props.quote.id}/angenommen`, {}, { preserveScroll: true, onError })
 }
 
 function duplicate() {
