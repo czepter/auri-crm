@@ -78,7 +78,18 @@ class CaseContactController extends Controller
      */
     private function resolveContact(Request $request, array $validated): Contact
     {
+        $principal = $request->user('api');
+        $can = fn (Capability $c) => $principal instanceof ApiToken
+            ? $principal->allows($c)
+            : $principal->tokenCan($c->value);
+
+        // Reading an existing contact back through the 201 body is an e-mail
+        // oracle, so it needs the same authority as reading contacts.
+        $mayUseExisting = $can(Capability::ManageContacts) || $can(Capability::ViewAllCases);
+
         if (filled($validated['contact_id'] ?? null)) {
+            abort_unless($mayUseExisting, 403);
+
             return Contact::query()->where('public_id', $validated['contact_id'])->firstOrFail();
         }
 
@@ -87,17 +98,8 @@ class CaseContactController extends Controller
             ? Contact::query()->where('email', $validated['email'])->first()
             : null;
 
-        if ($existing === null) {
-            $principal = $request->user('api');
-
-            // Ein neuer Kontakt ist dieselbe Befugnis wie POST /api/contacts.
-            abort_unless(
-                $principal instanceof ApiToken
-                    ? $principal->allows(Capability::ManageContacts)
-                    : $principal->tokenCan(Capability::ManageContacts->value),
-                403,
-            );
-        }
+        // A new contact is the same authority as POST /api/contacts.
+        abort_unless($existing !== null ? $mayUseExisting : $can(Capability::ManageContacts), 403);
 
         return $existing ?? Contact::create([
             'name' => $validated['name'],

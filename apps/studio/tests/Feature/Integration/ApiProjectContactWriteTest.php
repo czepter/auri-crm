@@ -66,15 +66,34 @@ it('refuses a leads token', function () {
 it('needs manage_contacts to create a new contact', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
     $project = ClientCase::factory()->create();
-    $known = Contact::factory()->create();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'new')
         ->postJson("/api/cases/{$project->public_id}/contacts", ['name' => 'Neu', 'email' => 'neu@example.test'])
         ->assertForbidden();
 
+});
+
+it('lets a view_all_cases token attach an existing contact', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageShoots, Capability::ViewAllCases)->create();
+    $project = ClientCase::factory()->create();
+    $known = Contact::factory()->create();
+
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'known')
         ->postJson("/api/cases/{$project->public_id}/contacts", ['contact_id' => $known->public_id])
         ->assertCreated();
+});
+
+it('refuses attaching an existing contact by e-mail without contact authority', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
+    $project = ClientCase::factory()->create();
+    $known = Contact::factory()->create(['email' => 'oracle@example.test']);
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'oracle')
+        ->postJson("/api/cases/{$project->public_id}/contacts", ['name' => 'X', 'email' => 'oracle@example.test'])
+        ->assertForbidden();
+
+    expect($project->contacts()->whereKey($known->id)->exists())->toBeFalse();
 });
