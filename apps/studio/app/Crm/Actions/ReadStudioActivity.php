@@ -4,6 +4,7 @@ namespace App\Crm\Actions;
 
 use App\Crm\Models\ClientCase;
 use App\Crm\Support\CaseActivity;
+use App\Documents\Models\DocumentView;
 use App\Gallery\Models\GalleryView;
 use App\Models\AuditLog;
 use App\Models\User;
@@ -17,7 +18,8 @@ use Illuminate\Support\Str;
  * Audit rows pass through the project history's own allow-list, so nothing
  * shows here that the project would hide. Gallery openings come from
  * GalleryView, which records a day rather than a moment — those lines carry
- * no time and are never marked fresh.
+ * no time and are never marked fresh. Quote and invoice openings come from
+ * DocumentView, counting ones only.
  */
 class ReadStudioActivity
 {
@@ -70,12 +72,32 @@ class ReadStudioActivity
                 'timed' => false,
             ]);
 
+        $documents = DocumentView::query()
+            ->where('counts', true)
+            ->where('viewed_at', '>=', $since)
+            ->where(fn ($query) => $query
+                ->whereHas('quote', fn ($quote) => $quote->whereIn('case_id', $visible))
+                ->orWhereHas('invoice', fn ($invoice) => $invoice->whereIn('case_id', $visible)))
+            ->with(['quote:id,case_id', 'invoice:id,case_id'])
+            ->orderByDesc('viewed_at')
+            ->limit(self::LIMIT * 4)
+            ->get()
+            // One line per document per day, as with galleries above.
+            ->unique(fn (DocumentView $view) => ($view->quote_id ? "q{$view->quote_id}" : "i{$view->invoice_id}").'|'.$view->viewed_at->toDateString())
+            ->map(fn (DocumentView $view) => [
+                'project' => ($view->quote ?? $view->invoice)->case_id,
+                'label' => __($view->quote ? 'activity.quote.viewed' : 'activity.invoice.viewed'),
+                'tab' => 'angebote',
+                'at' => $view->viewed_at,
+                'timed' => true,
+            ]);
+
         $projects = ClientCase::query()
-            ->whereIn('id', $events->pluck('project')->concat($views->pluck('project'))->unique())
+            ->whereIn('id', $events->pluck('project')->concat($views->pluck('project'))->concat($documents->pluck('project'))->unique())
             ->get(['id', 'name', 'public_id'])
             ->keyBy('id');
 
-        return $events->concat($views)
+        return $events->concat($views)->concat($documents)
             ->sortByDesc(fn (array $row) => $row['at']->getTimestamp())
             ->take(self::LIMIT)
             ->map(fn (array $row) => [

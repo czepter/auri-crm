@@ -565,6 +565,14 @@ type: string,
 typeLabel: string,
 shootKind: string | null,
 };
+export type DocumentViewData = {
+id: string,
+viewedAt: string,
+via: string,
+device: string,
+network: string | null,
+counts: boolean,
+};
 export type MailTemplateData = {
 id: string,
 name: string,
@@ -891,6 +899,7 @@ status: string,
 statusLabel: string,
 sentOn: string | null,
 viewedOn: string | null,
+views: App.Documents.Data.DocumentViewData[],
 hasDocument: boolean,
 openInstallments: {
 id: string,

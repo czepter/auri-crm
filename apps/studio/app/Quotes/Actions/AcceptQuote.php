@@ -145,6 +145,9 @@ class AcceptQuote
         $total = QuoteRange::subtotalFor($quote, $hours, $chosen->pluck('id'));
         $net = QuoteRange::totalFor($quote, $hours, $chosen->pluck('id'));
 
+        // VatLines weighs only charged lines, so it has to see the client's choice, not the preselection.
+        $selectable->each(fn (QuoteItem $item) => $item->selected = $chosen->contains('id', $item->id));
+
         return [
             'quote' => [
                 'hours' => $hours,
@@ -157,7 +160,7 @@ class AcceptQuote
                     : collect(VatLines::fromItems($quote->items, (int) $quote->vat_rate, $net))->sum('vat'),
             ],
             'selected' => $selectable
-                ->mapWithKeys(fn (QuoteItem $item) => [$item->id => $chosen->contains('id', $item->id)])
+                ->mapWithKeys(fn (QuoteItem $item) => [$item->id => $item->selected])
                 ->all(),
         ];
     }

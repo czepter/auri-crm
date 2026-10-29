@@ -3,6 +3,7 @@
 namespace App\Portal\Http\Controllers;
 
 use App\Crm\Models\ClientCase;
+use App\Documents\Actions\RecordDocumentView;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Http\Controllers\Controller;
 use App\Payments\Actions\ConfirmInstallmentCheckoutSession;
@@ -92,6 +93,8 @@ class PaymentController extends Controller
      * the file cannot disagree about a figure.
      */
     public function show(
+        Request $request,
+        RecordDocumentView $record,
         string $case,
         string $invoice,
         StudioSettingsResolver $settings,
@@ -100,11 +103,7 @@ class PaymentController extends Controller
         $contact = auth('portal')->user();
         [$found, $row] = $this->find($case, $invoice);
 
-        // #415: the first look, and only the first — the column answers
-        // whether the client has seen the invoice, not how often.
-        if ($row->viewed_at === null) {
-            $row->update(['viewed_at' => now()]);
-        }
+        $record($request, $row, 'portal');
 
         $document = InvoiceDocument::forInvoice($row, $mergeData->fromInvoice($row, $settings), $settings);
         $open = $row->installments->first(fn (PaymentInstallment $one) => in_array($one->status, PaymentInstallmentStatus::open(), true));

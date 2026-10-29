@@ -352,7 +352,7 @@ class DocumentMergeDataBuilder
     {
         $lines = $quote->items
             ->map(fn (QuoteItem $item) => [
-                'title' => $item->title,
+                'title' => $item->label(),
                 'quantity' => (string) $item->quantity,
                 'unitPrice' => $item->isIncluded() ? '' : $this->money((int) $item->unit_price),
                 'discount' => $item->discount_amount > 0 ? '−'.$this->money((int) $item->discount_amount) : '',

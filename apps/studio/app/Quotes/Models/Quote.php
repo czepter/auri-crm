@@ -8,6 +8,7 @@ use App\Concerns\HasPublicId;
 use App\Concerns\HasShowcaseImages;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Documents\Models\DocumentView;
 use App\Payments\Support\PaymentStageSplitter;
 use App\Quotes\Enums\DiscountType;
 use App\Quotes\Enums\PricingMode;
@@ -134,6 +135,11 @@ class Quote extends Model
         return $this->belongsTo(ClientCase::class);
     }
 
+    public function views(): HasMany
+    {
+        return $this->hasMany(DocumentView::class);
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(QuoteItem::class)->orderBy('sort_order');
@@ -219,7 +225,7 @@ class Quote extends Model
      */
     public static function computeTotals(iterable $items, ?DiscountType $discountType, ?int $discountValue): array
     {
-        $items = collect($items);
+        $items = collect($items)->filter(fn (QuoteItem $item) => $item->isCharged());
         $subtotal = $items->sum(fn (QuoteItem $item) => $item->discountedLineTotal());
         $discountAmount = DiscountCalculator::resolve($subtotal, $discountType, $discountValue);
 
@@ -249,7 +255,7 @@ class Quote extends Model
         $nets = collect(VatLines::fromItems($this->items, $rate, (int) $this->net))->pluck('net', 'rate');
         $items = $this->items->map(fn (QuoteItem $item) => clone $item);
 
-        foreach ($items->filter(fn (QuoteItem $item) => $item->discountedLineTotal() > 0)->groupBy(fn (QuoteItem $item) => $item->vat_rate ?? $rate) as $key => $group) {
+        foreach ($items->filter(fn (QuoteItem $item) => $item->isCharged() && $item->discountedLineTotal() > 0)->groupBy(fn (QuoteItem $item) => $item->vat_rate ?? $rate) as $key => $group) {
             $amounts = DiscountCalculator::spread($group->map(fn (QuoteItem $item) => $item->discountedLineTotal())->all(), $nets[$key] ?? 0);
 
             foreach ($group as $index => $item) {

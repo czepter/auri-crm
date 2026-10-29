@@ -35,6 +35,7 @@ const meta = {
         statusLabel: 'Teilweise bezahlt',
         sentOn: '2026-09-04',
         viewedOn: '2026-09-05',
+        views: [{ id: 'dv-1', viewedAt: '2026-09-05T08:12:00+02:00', via: 'portal', device: 'iPhone · Safari', network: '3fa91c', counts: true }],
         hasDocument: true,
         openInstallments: [{ id: 'ra-2', remaining: 10_000 }],
         creditNotes: [
@@ -62,6 +63,7 @@ const meta = {
         statusLabel: 'Teilweise bezahlt',
         sentOn: '2026-09-15',
         viewedOn: null,
+        views: [],
         hasDocument: true,
         openInstallments: [{ id: 'ra-3', remaining: 60_000 }],
         creditNotes: [],
@@ -81,6 +83,7 @@ const meta = {
         statusLabel: 'Überfällig',
         sentOn: '2026-08-20',
         viewedOn: '2026-08-21',
+        views: [{ id: 'dv-2', viewedAt: '2026-08-21T19:40:00+02:00', via: 'portal', device: 'Mac · Chrome', network: 'b27e04', counts: true }],
         hasDocument: true,
         openInstallments: [{ id: 'ra-4', remaining: 35_700 }],
         creditNotes: [],

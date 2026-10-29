@@ -51,9 +51,9 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-ui [&>td]:leading-[1.5] [&
 
       <div v-else class="mt-10 max-w-[680px] border-t border-border pt-8">
         <table class="w-full border-collapse">
-          <tr v-for="item in quote.items" :key="item.id" :class="[ROW, item.isIncluded && '[&>td]:text-muted-foreground']">
+          <tr v-for="item in quote.items" :key="item.id" :class="[ROW, (item.isIncluded || (item.selectable && !item.selected)) && '[&>td]:text-muted-foreground']">
             <td>
-              {{ item.title }}
+              <template v-if="item.selectable && !item.selected">{{ $t('quotes.optional') }}: </template>{{ item.title }}
               <div v-if="item.description" class="text-small leading-[1.45] text-muted-foreground">
                 {{ item.description }}
               </div>
