@@ -1,8 +1,11 @@
 <?php
 
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\Contact;
 use App\Enums\Capability;
 use App\Integration\Models\ApiToken;
+use App\Models\StudioSettings;
+use App\Quotes\Actions\AcceptQuote;
 use App\Quotes\Actions\AdoptQuoteRecipient;
 use App\Quotes\Actions\CreateQuote;
 use App\Quotes\Actions\DeleteQuote;
@@ -11,6 +14,7 @@ use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 
 uses(RefreshDatabase::class);
 
@@ -91,4 +95,26 @@ it('adopts the recipient address through AdoptQuoteRecipient from admin and api'
     quoteApi('adopt')->postJson("/api/quotes/{$quote->public_id}/adopt-recipient")->assertOk();
 
     expect($contact->fresh()->city)->toBe('Jena');
+});
+
+it('accepts quotes through AcceptQuote from admin, portal, share link and api', function () {
+    expectCalls(AcceptQuote::class, 4);
+    Cache::store('redis')->flush();
+    StudioSettings::query()->update(['portal_accept_quotes_enabled' => true]);
+    [$user, $project] = studioWithProject();
+    $contact = Contact::factory()->create();
+    $project->attachContact($contact, CaseContactRole::Primary);
+    $sent = fn () => Quote::factory()->for($project, 'case')->create([
+        'status' => QuoteStatus::Sent, 'sent_at' => now(), 'valid_until' => now()->addDays(14), 'recipient_contact_id' => $contact->id,
+    ]);
+    [$admin, $share, $api] = [$sent(), $sent(), $sent()];
+
+    test()->actingAs($user, 'staff')->post("/angebote/{$admin->public_id}/angenommen")->assertRedirect();
+
+    useSurface(Surface::PORTAL);
+    test()->actingAs($contact, 'portal')->post("/projekte/{$project->public_id}/angebot/annehmen")->assertRedirect();
+    test()->post("/angebot/{$share->share_token}/teilen/annehmen")->assertRedirect();
+
+    useSurface(Surface::API);
+    quoteApi('accept')->postJson("/api/quotes/{$api->public_id}/accept")->assertOk();
 });
