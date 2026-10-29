@@ -73,7 +73,7 @@ class OAuthAuthorizationController extends Controller
             // cannot be the only thing on screen: registration is open, and
             // a second client may call itself the same. The host the code
             // actually lands on is the part nobody can spoof.
-            'redirectHost' => parse_url($redirectUri, PHP_URL_HOST),
+            'redirectHost' => OAuthClients::hostOf($redirectUri),
             'redirectUri' => $redirectUri,
             'codeChallenge' => $codeChallenge,
             'state' => $state,

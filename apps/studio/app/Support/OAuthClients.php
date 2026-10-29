@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Integration\Models\OAuthClient;
+use Uri\WhatWg\Url;
 
 /**
  * N-04's client allow list. Two kinds of client, one lookup: the well-known
@@ -27,7 +28,7 @@ final class OAuthClients
     {
         $allowed = self::redirectUrisFor($clientId);
 
-        if ($allowed === null || $redirectUri === '') {
+        if ($allowed === null || self::parse($redirectUri) === null) {
             return false;
         }
 
@@ -51,9 +52,9 @@ final class OAuthClients
      */
     public static function isRegisterableRedirectUri(string $redirectUri): bool
     {
-        $parts = parse_url($redirectUri);
+        $parts = self::parse($redirectUri);
 
-        if ($parts === false || isset($parts['fragment']) || ! isset($parts['scheme'], $parts['host'])) {
+        if ($parts === null || isset($parts['fragment'])) {
             return false;
         }
 
@@ -85,7 +86,7 @@ final class OAuthClients
     /** @param list<string> $allowed */
     private static function isLoopbackMatch(string $redirectUri, array $allowed): bool
     {
-        $candidate = parse_url($redirectUri);
+        $candidate = self::parse($redirectUri);
 
         if (($candidate['scheme'] ?? null) !== 'http' || ! self::isLoopbackHost($candidate['host'] ?? '')) {
             return false;
@@ -102,6 +103,37 @@ final class OAuthClients
         }
 
         return false;
+    }
+
+    /**
+     * The host a browser will actually send the code to, or null when the URI
+     * is not one we can vouch for. parse_url and the WHATWG parser a browser
+     * uses disagree on `http://evil.example\@127.0.0.1/`; anything the two
+     * do not read the same, or that carries userinfo, is refused.
+     */
+    public static function hostOf(string $redirectUri): ?string
+    {
+        return self::parse($redirectUri)['host'] ?? null;
+    }
+
+    /** @return array<string, mixed>|null */
+    private static function parse(string $redirectUri): ?array
+    {
+        if ($redirectUri === '' || preg_match('/[\\\\\x00-\x20\x7f]/', $redirectUri)) {
+            return null;
+        }
+
+        $url = Url::parse($redirectUri);
+        $parts = parse_url($redirectUri);
+
+        if ($url === null || $parts === false
+            || $url->getUsername() !== null || $url->getPassword() !== null
+            || $url->getScheme() !== strtolower($parts['scheme'] ?? '')
+            || $url->getAsciiHost() !== strtolower($parts['host'] ?? '')) {
+            return null;
+        }
+
+        return $parts;
     }
 
     private static function isLoopbackHost(string $host): bool
