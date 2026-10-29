@@ -6,12 +6,13 @@ use App\Catalog\Actions\SavePackage;
 use App\Catalog\Models\Package;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Quotes\Actions\AdoptQuoteRecipient;
 use App\Quotes\Actions\CreatePackageFromQuote;
 use App\Quotes\Actions\CreateQuoteAddendum;
+use App\Quotes\Actions\DeleteQuote;
 use App\Quotes\Actions\DuplicateQuote;
 use App\Quotes\Actions\MarkQuoteSent;
 use App\Quotes\Data\QuoteData;
-use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Support\AuditLogger;
 use DomainException;
@@ -33,15 +34,7 @@ class QuoteActionController extends Controller
     /** The admin store()'s `addendum_to` path (CreateQuoteAddendum), for an already-accepted quote. */
     public function addendum(Request $request, Quote $quote, CreateQuoteAddendum $create): JsonResponse
     {
-        $addendum = $this->attempt(fn () => $create($quote));
-
-        AuditLogger::record(
-            event: 'quote.created',
-            actor: $this->actor($request),
-            context: ['project' => $quote->case->public_id, 'addendum_to' => $quote->public_id],
-            subject: $addendum->public_id,
-            projectId: $quote->case_id,
-        );
+        $addendum = $this->attempt(fn () => $create($quote, $this->actor($request)));
 
         return $this->answer($addendum, 201);
     }
@@ -49,37 +42,15 @@ class QuoteActionController extends Controller
     /** QuoteController::duplicate() — a new independent draft, never the source's history. */
     public function duplicate(Request $request, Quote $quote, DuplicateQuote $duplicate): JsonResponse
     {
-        $copy = $duplicate($quote);
-
-        AuditLogger::record(
-            event: 'quote.duplicated',
-            actor: $this->actor($request),
-            context: ['from' => $quote->public_id],
-            subject: $copy->public_id,
-            projectId: $quote->case_id,
-        );
+        $copy = $duplicate($quote, $this->actor($request));
 
         return $this->answer($copy, 201);
     }
 
     /** QuoteController::destroy() — only a draft; a sent quote may have already reached the client. */
-    public function destroy(Request $request, Quote $quote): Response
+    public function destroy(Request $request, Quote $quote, DeleteQuote $delete): Response
     {
-        if ($quote->status !== QuoteStatus::Draft) {
-            throw ValidationException::withMessages([
-                'quote' => "Quote {$quote->public_id} is {$quote->status->value} and cannot be deleted. Only a draft can.",
-            ]);
-        }
-
-        AuditLogger::record(
-            event: 'quote.deleted',
-            actor: $this->actor($request),
-            context: ['number' => $quote->number],
-            subject: $quote->public_id,
-            projectId: $quote->case_id,
-        );
-
-        $quote->delete();
+        $this->attempt(fn () => $delete($quote, $this->actor($request)));
 
         return response()->noContent();
     }
@@ -93,15 +64,11 @@ class QuoteActionController extends Controller
     }
 
     /** QuoteController::adoptRecipient() — writes the quote's own address back onto its recipient contact. */
-    public function adoptRecipient(Quote $quote): JsonResponse
+    public function adoptRecipient(Quote $quote, AdoptQuoteRecipient $adopt): JsonResponse
     {
         abort_if($quote->recipient_contact_id === null, 404);
 
-        $quote->recipientContact->update([
-            'street' => $quote->recipient_street,
-            'postcode' => $quote->recipient_postcode,
-            'city' => $quote->recipient_city,
-        ]);
+        $adopt($quote);
 
         return $this->answer($quote);
     }

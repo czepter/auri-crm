@@ -13,15 +13,14 @@ use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
 use App\Notifications\Support\MailPreview;
-use App\Numbering\Actions\AllocateDocumentNumber;
-use App\Numbering\Enums\DocumentType;
 use App\Quotes\Actions\AcceptQuote;
+use App\Quotes\Actions\AdoptQuoteRecipient;
 use App\Quotes\Actions\CreatePackageFromQuote;
+use App\Quotes\Actions\CreateQuote;
+use App\Quotes\Actions\DeleteQuote;
 use App\Quotes\Actions\DuplicateQuote;
 use App\Quotes\Actions\MarkQuoteSent;
 use App\Quotes\Actions\RenderQuotePdf;
-use App\Quotes\Actions\ResolveQuoteRecipient;
-use App\Quotes\Actions\SeedQuoteFromPackage;
 use App\Quotes\Actions\SendQuote;
 use App\Quotes\Actions\UpdateQuote;
 use App\Quotes\Data\QuoteData;
@@ -37,10 +36,10 @@ use App\Settings\Data\StudioSettingsData;
 use App\Settings\Support\StudioReadiness;
 use App\Support\AuditLogger;
 use Carbon\CarbonInterval;
+use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -149,7 +148,7 @@ class QuoteController extends Controller
         ]);
     }
 
-    public function store(Request $request, ClientCase $case, SeedQuoteFromPackage $seed, AllocateDocumentNumber $allocate, ResolveQuoteRecipient $resolveRecipient): RedirectResponse
+    public function store(Request $request, ClientCase $case, CreateQuote $create): RedirectResponse
     {
         $this->authorize('manageQuotes', $case);
 
@@ -163,14 +162,6 @@ class QuoteController extends Controller
             'addendum_to' => ['nullable', 'string'],
         ]);
 
-        // T-05's fallback: Package carries no default_validity_days column
-        // today (App\Catalog\Models\Package), so a quote with no explicit
-        // valid_until — seeded from a package or not — takes it from the
-        // tenant's own default. Read once, at creation, and never again: a
-        // later change to the setting is not this quote's concern (see
-        // StudioSettings' quote_validity_days).
-        $validUntil = $validated['valid_until'] ?? now()->addDays(StudioSettings::current()->quote_validity_days)->toDateString();
-
         // Der Nachtrag lässt seinen Vorgänger angenommen, anders als die
         // Revision, die ihn auf superseded setzt (ReviseQuote).
         $predecessor = ! empty($validated['addendum_to'])
@@ -178,33 +169,12 @@ class QuoteController extends Controller
                 ->where('status', QuoteStatus::Accepted)->firstOrFail()
             : null;
 
-        $quote = DB::transaction(function () use ($case, $validUntil, $predecessor, $allocate, $resolveRecipient) {
-            $allocation = ($allocate)(documentType: DocumentType::Quote);
-            $recipient = ($resolveRecipient)($case);
-
-            return $case->quotes()->create([
-                'valid_until' => $validUntil,
-                'is_addendum' => $predecessor !== null,
-                'predecessor_id' => $predecessor?->id,
-                'number' => $allocation['number'],
-                'recipient_contact_id' => $recipient?->id,
-                'recipient_street' => $recipient?->street,
-                'recipient_postcode' => $recipient?->postcode,
-                'recipient_city' => $recipient?->city,
-            ]);
-        });
-
-        if (! empty($validated['package'])) {
-            $package = Package::active()->where('public_id', $validated['package'])->firstOrFail();
-            $seed($quote, $package);
-        }
-
-        AuditLogger::record(
-            event: 'quote.created',
-            actor: auth('staff')->user(),
-            context: ['project' => $case->public_id],
-            subject: $quote->public_id,
-            projectId: $case->id,
+        $create(
+            $case,
+            auth('staff')->user(),
+            $validated['valid_until'] ?? null,
+            ! empty($validated['package']) ? Package::active()->where('public_id', $validated['package'])->firstOrFail() : null,
+            $predecessor,
         );
 
         return back();
@@ -432,15 +402,7 @@ class QuoteController extends Controller
     {
         $this->authorize('manageQuotes', $quote->case);
 
-        $copy = $duplicate($quote);
-
-        AuditLogger::record(
-            event: 'quote.duplicated',
-            actor: auth('staff')->user(),
-            context: ['from' => $quote->public_id],
-            subject: $copy->public_id,
-            projectId: $quote->case_id,
-        );
+        $copy = $duplicate($quote, auth('staff')->user());
 
         return redirect("/angebote/{$copy->public_id}");
     }
@@ -450,22 +412,17 @@ class QuoteController extends Controller
      * further, and deleting one that a client has already seen would erase
      * a record they might still hold a copy or a mail of.
      */
-    public function destroy(Quote $quote): RedirectResponse
+    public function destroy(Quote $quote, DeleteQuote $delete): RedirectResponse
     {
         $this->authorize('manageQuotes', $quote->case);
-        abort_unless($quote->status === QuoteStatus::Draft, 422, 'Nur ein Entwurf lässt sich löschen.');
 
         $projectId = $quote->case->public_id;
 
-        AuditLogger::record(
-            event: 'quote.deleted',
-            actor: auth('staff')->user(),
-            context: ['number' => $quote->number],
-            subject: $quote->public_id,
-            projectId: $quote->case_id,
-        );
-
-        $quote->delete();
+        try {
+            $delete($quote, auth('staff')->user());
+        } catch (DomainException) {
+            abort(422, 'Nur ein Entwurf lässt sich löschen.');
+        }
 
         return redirect("/auftraege/{$projectId}/angebote");
     }
@@ -475,17 +432,13 @@ class QuoteController extends Controller
      * Request-Body: eine ausgefüllte, aber noch nicht gespeicherte
      * Formularzeile darf den Kontakt nie überschreiben.
      */
-    public function adoptRecipient(Quote $quote): RedirectResponse
+    public function adoptRecipient(Quote $quote, AdoptQuoteRecipient $adopt): RedirectResponse
     {
         $this->authorize('manageQuotes', $quote->case);
 
         abort_if($quote->recipient_contact_id === null, 404);
 
-        $quote->recipientContact->update([
-            'street' => $quote->recipient_street,
-            'postcode' => $quote->recipient_postcode,
-            'city' => $quote->recipient_city,
-        ]);
+        $adopt($quote);
 
         return back();
     }

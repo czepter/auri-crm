@@ -3,9 +3,11 @@
 namespace App\Quotes\Actions;
 
 use App\Models\StudioSettings;
+use App\Models\User;
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
 use App\Quotes\Models\Quote;
+use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -20,11 +22,11 @@ class DuplicateQuote
         private readonly AllocateDocumentNumber $allocate,
     ) {}
 
-    public function __invoke(Quote $source): Quote
+    public function __invoke(Quote $source, ?User $actor = null): Quote
     {
         $source->loadMissing(['items', 'paymentStages']);
 
-        return DB::transaction(function () use ($source) {
+        $copy = DB::transaction(function () use ($source) {
             $allocation = ($this->allocate)(documentType: DocumentType::Quote);
 
             $quote = $source->case->quotes()->create([
@@ -67,5 +69,15 @@ class DuplicateQuote
 
             return $quote;
         });
+
+        AuditLogger::record(
+            event: 'quote.duplicated',
+            actor: $actor,
+            context: ['from' => $source->public_id],
+            subject: $copy->public_id,
+            projectId: $source->case_id,
+        );
+
+        return $copy;
     }
 }

@@ -7,13 +7,10 @@ use App\Crm\Models\ClientCase;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
 use App\Models\User;
-use App\Numbering\Actions\AllocateDocumentNumber;
-use App\Numbering\Enums\DocumentType;
 use App\Quotes\Actions\AcceptQuote;
+use App\Quotes\Actions\CreateQuote;
 use App\Quotes\Actions\MarkQuoteSent;
-use App\Quotes\Actions\ResolveQuoteRecipient;
 use App\Quotes\Actions\ReviseQuote;
-use App\Quotes\Actions\SeedQuoteFromPackage;
 use App\Quotes\Actions\SendQuote;
 use App\Quotes\Actions\UpdateQuote;
 use App\Quotes\Data\QuoteData;
@@ -21,14 +18,12 @@ use App\Quotes\Enums\PricingMode;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
-use App\Support\AuditLogger;
 use App\Support\SilentWrite;
 use Carbon\CarbonImmutable;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -46,48 +41,24 @@ class QuoteController extends Controller
         Request $request,
         ClientCase $case,
         UpdateQuote $save,
-        SeedQuoteFromPackage $seed,
-        AllocateDocumentNumber $allocate,
-        ResolveQuoteRecipient $resolveRecipient,
+        CreateQuote $create,
     ): JsonResponse {
         $validated = $request->validate([
             ...UpdateQuote::rules(),
             'package' => ['nullable', 'string', Rule::exists('packages', 'public_id')->where('is_active', true)],
         ]);
 
-        // Same number and recipient as the admin store
-        // (Quotes\Http\Controllers\QuoteController::store()) — a quote from
-        // the API is the same document, not a lesser one.
-        $quote = DB::transaction(function () use ($case, $allocate, $resolveRecipient) {
-            $allocation = ($allocate)(documentType: DocumentType::Quote);
-            $recipient = ($resolveRecipient)($case);
-
-            return $case->quotes()->create([
-                'number' => $allocation['number'],
-                'recipient_contact_id' => $recipient?->id,
-                'recipient_street' => $recipient?->street,
-                'recipient_postcode' => $recipient?->postcode,
-                'recipient_city' => $recipient?->city,
-            ]);
-        });
-
-        if (isset($validated['package'])) {
-            $seed($quote, Package::active()->where('public_id', $validated['package'])->firstOrFail());
-        }
+        $quote = $create(
+            $case,
+            $this->actor($request),
+            package: isset($validated['package']) ? Package::active()->where('public_id', $validated['package'])->firstOrFail() : null,
+        );
 
         $save($quote, $this->withMode([
             ...$this->current($quote->fresh(['items', 'paymentStages'])),
             ...Arr::except($validated, 'package'),
             'valid_until' => $validated['valid_until'] ?? now()->addDays(StudioSettings::current()->quote_validity_days)->toDateString(),
         ]));
-
-        AuditLogger::record(
-            event: 'quote.created',
-            actor: $this->actor($request),
-            context: ['project' => $case->public_id],
-            subject: $quote->public_id,
-            projectId: $case->id,
-        );
 
         return $this->answer($quote, 201);
     }
