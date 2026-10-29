@@ -2,11 +2,11 @@
 
 namespace App\Quotes\Actions;
 
+use App\Models\StudioSettings;
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
-use App\Settings\Support\StudioSettingsResolver;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 
@@ -21,7 +21,6 @@ class CreateQuoteAddendum
     public function __construct(
         private readonly AllocateDocumentNumber $allocate,
         private readonly ResolveQuoteRecipient $resolveRecipient,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     public function __invoke(Quote $predecessor): Quote
@@ -35,7 +34,7 @@ class CreateQuoteAddendum
             $recipient = ($this->resolveRecipient)($predecessor->case);
 
             return $predecessor->case->quotes()->create([
-                'valid_until' => now()->addDays($this->settings->quoteValidityDays())->toDateString(),
+                'valid_until' => now()->addDays(StudioSettings::current()->quote_validity_days)->toDateString(),
                 'is_addendum' => true,
                 'predecessor_id' => $predecessor->id,
                 'number' => $allocation['number'],

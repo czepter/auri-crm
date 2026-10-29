@@ -5,7 +5,6 @@ namespace App\Quotes\Data;
 use App\Quotes\Models\Quote;
 use App\Quotes\Support\QuoteRange;
 use App\Quotes\Support\VatLines;
-use App\Settings\Support\StudioSettingsResolver;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -94,7 +93,7 @@ class QuoteData extends Data
         // same shape from the tenant's current settings instead of nulls.
         $vat = $quote->vat_mode !== null
             ? ['vat_mode' => $quote->vat_mode, 'vat_rate' => $quote->vat_rate, 'vat_note' => $quote->vat_note, 'vat_amount' => $quote->vat_amount]
-            : Quote::computeVat($quote->net, app(StudioSettingsResolver::class));
+            : Quote::computeVat($quote->net);
 
         return new self(
             id: $quote->public_id,

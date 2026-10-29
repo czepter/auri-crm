@@ -4,7 +4,6 @@ namespace App\Privacy\Actions;
 
 use App\Models\StudioSettings;
 use App\Settings\Jobs\ReadStudioSettingsJob;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Contracts\Queue\ClearableQueue;
 use Illuminate\Support\Facades\Cache;
@@ -24,8 +23,6 @@ use Illuminate\Support\Facades\Storage;
  */
 class DeleteTenant
 {
-    public function __construct(private readonly StudioSettingsResolver $settings) {}
-
     public function __invoke(string $tenantId, string $trigger): void
     {
         $this->files($tenantId);
@@ -39,7 +36,7 @@ class DeleteTenant
             AuditLogger::record('studio.deleted', context: ['trigger' => $trigger]);
         });
 
-        $this->settings->forget();
+        StudioSettings::forgetCurrent();
         Cache::store('redis')->forget(ReadStudioSettingsJob::CACHE_KEY);
 
         DB::table('sessions')->delete();

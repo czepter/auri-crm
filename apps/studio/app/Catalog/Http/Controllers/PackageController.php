@@ -11,7 +11,7 @@ use App\Catalog\Models\PackageItem;
 use App\Crm\Models\Lead;
 use App\Crm\Models\ProjectType;
 use App\Http\Controllers\Controller;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Models\StudioSettings;
 use App\Support\AuditLogger;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -63,7 +63,7 @@ class PackageController extends Controller
         return redirect('/pakete');
     }
 
-    public function edit(Package $package, StudioSettingsResolver $studio): Response
+    public function edit(Package $package): Response
     {
         $this->authorize('update', $package);
 
@@ -74,7 +74,7 @@ class PackageController extends Controller
             'catalogItems' => self::catalogItems(),
             // Wie ServiceController::show(): ein Kleinunternehmer hat keinen
             // Satz, und dann steht unter dem Preis nichts.
-            'vatRate' => $studio->effectiveVatRate() ?: null,
+            'vatRate' => StudioSettings::current()->effectiveVatRate() ?: null,
             // Ohne Projekttyp hat eine Anfrage aus dem Portal keine Form —
             // siehe App\Portal\Actions\RequestService.
             'projectTypes' => ProjectType::query()->active()

@@ -20,7 +20,6 @@ use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Settings\Enums\StudioExportKind;
 use App\Settings\Support\StudioRecords;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\LiveUpdate;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Storage;
@@ -43,7 +42,6 @@ class PackStudioExport
     public function __construct(
         private readonly BuildGalleryZip $zips,
         private readonly StudioRecords $records,
-        private readonly StudioSettingsResolver $settings,
         private readonly RenderQuotePdf $quotePdf,
         private readonly NotificationService $notifications,
     ) {}
@@ -94,7 +92,7 @@ class PackStudioExport
 
         $rows = [];
         foreach (Invoice::query()->with(['installments', 'items', 'contact'])->orderBy('number')->get() as $invoice) {
-            $rows[] = $this->row($invoice->number, $invoice->issued_at, InvoiceFigures::forInvoice($invoice, $this->settings)->gross, $invoice->contact?->name);
+            $rows[] = $this->row($invoice->number, $invoice->issued_at, InvoiceFigures::forInvoice($invoice)->gross, $invoice->contact?->name);
             $this->pdf($zip, 'rechnungen', 'rechnung', $invoice->number, $invoice->issued_at, $this->stored($invoice->pdf_path));
         }
         $zip->addFile('rechnungen/rechnungen.csv', StudioRecords::csv(self::DOCUMENT_COLUMNS, $rows));

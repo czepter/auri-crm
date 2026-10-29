@@ -11,7 +11,6 @@ use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
 use App\Crm\Support\CrmVocabulary;
 use App\Crm\Support\TaskAnchors;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\SilentWrite;
 use Carbon\CarbonImmutable;
 
@@ -33,7 +32,6 @@ use Carbon\CarbonImmutable;
 class ApplyTaskTemplates
 {
     public function __construct(
-        private readonly StudioSettingsResolver $settings,
         private readonly TaskAnchors $anchors,
         private readonly CrmVocabulary $vocabulary,
     ) {}
@@ -131,7 +129,7 @@ class ApplyTaskTemplates
             ->filter(fn (TaskTemplate $template) => $template->appliesTo($shoot))
             ->map(fn (TaskTemplate $template) => [
                 'title' => $template->title,
-                'dueOn' => $template->dueFor($shoot, $this->settings)?->format('Y-m-d'),
+                'dueOn' => $template->dueFor($shoot)?->format('Y-m-d'),
             ])
             ->values()
             ->all();

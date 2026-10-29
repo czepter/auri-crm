@@ -11,8 +11,8 @@ use Illuminate\Notifications\Messages\MailMessage;
  * identity rather than MAIL_FROM_ADDRESS/_NAME, and carries the same legal
  * particulars the rendered contract PDF does.
  *
- * One trait, used by both, is the whole point: StudioSettingsResolver::
- * attributes() is the one place this and App\Contracts\Jobs\RenderContractJob
+ * One trait, used by both, is the whole point: StudioSettings::
+ * profile() is the one place this and App\Contracts\Jobs\RenderContractJob
  * ::mergeData() both read legal_name/street/postcode/city/tax_number/vat_id
  * from — a second, separately-typed footer per notification is exactly the
  * drift the story's acceptance criterion rules out.

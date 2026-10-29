@@ -2,7 +2,7 @@
 
 namespace App\Integration\Data;
 
-use App\Settings\Support\StudioSettingsResolver;
+use App\Models\StudioSettings;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -22,14 +22,14 @@ class StudioSettingsReadData extends Data
         public int $depositPercentage,
     ) {}
 
-    public static function fromResolver(StudioSettingsResolver $settings): self
+    public static function current(): self
     {
         return new self(
-            vatMode: $settings->vatMode(),
-            vatRate: $settings->vatRate(),
-            quoteValidityDays: $settings->quoteValidityDays(),
-            paymentTermDays: $settings->paymentTermDays(),
-            depositPercentage: $settings->depositPercentage(),
+            vatMode: StudioSettings::current()->vat_mode,
+            vatRate: StudioSettings::current()->vat_rate,
+            quoteValidityDays: StudioSettings::current()->quote_validity_days,
+            paymentTermDays: StudioSettings::current()->payment_term_days,
+            depositPercentage: StudioSettings::current()->deposit_percentage,
         );
     }
 }

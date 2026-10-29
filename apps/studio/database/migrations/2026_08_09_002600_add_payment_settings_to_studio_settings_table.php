@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Schema;
  * schema. Explicit test/live mode, each with its own key pair, so flipping
  * `payments_stripe_mode` never requires re-entering keys: both pairs always
  * live on this row, and only the active mode's pair is ever read (see
- * StudioSettingsResolver::activeStripeSecretKey()).
+ * App\Payments\Support\PaymentSettings::activeStripeSecretKey()).
  *
  * The four key columns are `text`, not `string` — the model's `encrypted`
  * cast (App\Models\StudioSettings) stores ciphertext plus an IV,

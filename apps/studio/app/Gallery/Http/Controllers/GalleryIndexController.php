@@ -9,9 +9,10 @@ use App\Gallery\Data\GalleryPresetData;
 use App\Gallery\Data\GalleryRowData;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryPreset;
+use App\Gallery\Support\GallerySettings;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Settings\Data\GallerySettingsData;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,7 +31,7 @@ use Inertia\Response;
  */
 class GalleryIndexController extends Controller
 {
-    public function index(StudioSettingsResolver $settings): Response
+    public function index(): Response
     {
         $this->authorize('viewAny', Gallery::class);
 
@@ -52,7 +53,7 @@ class GalleryIndexController extends Controller
 
         return Inertia::render('Galleries/Index', [
             'galleries' => GalleryRowData::collect($galleries),
-            'settings' => $mayManage ? GallerySettingsData::fromResolver($settings) : null,
+            'settings' => $mayManage ? GallerySettingsData::current() : null,
             'presets' => $mayManage
                 ? GalleryPresetData::collect(GalleryPreset::query()->orderBy('name')->get())
                 : [],
@@ -62,7 +63,7 @@ class GalleryIndexController extends Controller
         ]);
     }
 
-    public function create(Request $request, StudioSettingsResolver $settings): Response
+    public function create(Request $request): Response
     {
         $this->authorize('create', Gallery::class);
 
@@ -81,11 +82,11 @@ class GalleryIndexController extends Controller
             // Die unterste Stufe der Geburtskette; die beiden darüber reichen
             // Vorlage und Projektvorschlag nach.
             'studioDefaults' => [
-                'downloads' => $settings->galleryDownloadsEnabled(),
-                'lists' => $settings->galleryListsEnabled(),
-                'comments' => $settings->galleryCommentsEnabled(),
-                'expiryDays' => $settings->galleryDefaults()['expiryDays'],
-                'design' => $settings->galleryDesign(),
+                'downloads' => (bool) StudioSettings::current()->gallery_default_downloads_enabled,
+                'lists' => (bool) StudioSettings::current()->gallery_default_lists_enabled,
+                'comments' => (bool) StudioSettings::current()->gallery_default_comments_enabled,
+                'expiryDays' => GallerySettings::defaults()['expiryDays'],
+                'design' => GallerySettings::design(),
             ],
         ]);
     }

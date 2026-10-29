@@ -3,7 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\Capability;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Models\StudioSettings;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,15 +20,13 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class RequireStudioOnboarding
 {
-    public function __construct(private StudioSettingsResolver $settings) {}
-
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user('staff');
 
         if ($request->isMethod('GET')
             && ($user?->can(Capability::ManageSettings->value) ?? false)
-            && ! $this->settings->onboardingCompleted()
+            && ! StudioSettings::current()->onboardingCompleted()
         ) {
             return redirect('/einrichtung/studio');
         }

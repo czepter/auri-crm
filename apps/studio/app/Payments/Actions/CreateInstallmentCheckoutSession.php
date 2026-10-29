@@ -3,7 +3,7 @@
 namespace App\Payments\Actions;
 
 use App\Payments\Models\PaymentInstallment;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Payments\Support\PaymentSettings;
 use Stripe\StripeClient;
 
 /**
@@ -34,11 +34,9 @@ use Stripe\StripeClient;
  */
 class CreateInstallmentCheckoutSession
 {
-    public function __construct(private StudioSettingsResolver $settings) {}
-
     public function __invoke(PaymentInstallment $installment, string $successUrl, string $cancelUrl): string
     {
-        $client = new StripeClient($this->settings->activeStripeSecretKey());
+        $client = new StripeClient(PaymentSettings::activeStripeSecretKey());
         $payable = $installment->remaining();
 
         if ($installment->stripe_checkout_session_id !== null) {

@@ -9,7 +9,6 @@ use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Models\NumberRange;
 use App\Settings\Data\NumberRangeData;
 use App\Settings\Data\StudioClosureData;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -21,9 +20,9 @@ use Illuminate\Http\JsonResponse;
  */
 class StudioReadController extends Controller
 {
-    public function settings(StudioSettingsResolver $settings): JsonResponse
+    public function settings(): JsonResponse
     {
-        return response()->json(['data' => StudioSettingsReadData::fromResolver($settings)]);
+        return response()->json(['data' => StudioSettingsReadData::current()]);
     }
 
     public function closures(): JsonResponse

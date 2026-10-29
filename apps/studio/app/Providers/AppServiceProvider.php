@@ -27,6 +27,7 @@ use App\Documents\Contracts\MergeDataProvider;
 use App\Documents\Models\DocumentTemplate;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Support\GalleryMergeData;
+use App\Models\StudioSettings;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\NotificationPreferences;
 use App\Notifications\Support\StudioMailFooter;
@@ -50,7 +51,6 @@ use App\Policies\TaskPolicy;
 use App\Policies\TaskTemplatePolicy;
 use App\Portal\Listeners\RevealProjectOnBooking;
 use App\Quotes\Support\QuoteMergeData;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Staff\Listeners\NotifyStudioOfDomainEvent;
 use App\Staff\Listeners\WithholdClientMail;
 use App\Support\PersonalAccessToken;
@@ -160,11 +160,9 @@ class AppServiceProvider extends ServiceProvider
                 return;
             }
 
-            $settings = app(StudioSettingsResolver::class);
-
             $view->with([
-                'brand' => $settings->displayName() ?? config('app.name'),
-                'logoUrl' => $settings->logoPath()
+                'brand' => StudioSettings::current()->display_name ?? config('app.name'),
+                'logoUrl' => StudioSettings::current()->logo_path
                     ? rtrim((string) config('portal.url'), '/').'/branding/logo'
                     : null,
                 // Signature and legal particulars belong in the footer zone,
@@ -172,7 +170,7 @@ class AppServiceProvider extends ServiceProvider
                 // same reason brand is: Blade hands a view's data to no nested
                 // component, so the layout's own scope is the only place that
                 // can be reached.
-                'mailFooter' => app(StudioMailFooter::class)($settings),
+                'mailFooter' => app(StudioMailFooter::class)(),
             ]);
         });
 
@@ -180,7 +178,7 @@ class AppServiceProvider extends ServiceProvider
         // every mail, product or studio, shows the current tenant's own accent, with
         // a neutral fallback before any studio has set one.
         View::composer('mail::button', function ($view) {
-            $accent = app(StudioSettingsResolver::class)->attributes()['accent_color'] ?? null;
+            $accent = StudioSettings::current()->profile()['accent_color'] ?? null;
             $view->with('accent', $accent ?: '#111111');
         });
 

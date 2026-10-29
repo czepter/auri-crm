@@ -6,7 +6,6 @@ use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Notifications\GalleryPrereleasePublished;
 use App\Gallery\Support\DraftDeviation;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
@@ -82,8 +81,6 @@ class PublishGallery
             }
 
             $gallery->prereleaseSignups()->whereIn('id', $signups->pluck('id'))->delete();
-
-            $settings = app(StudioSettingsResolver::class);
 
             foreach ($signups as $signup) {
                 Notification::route('mail', $signup->email)

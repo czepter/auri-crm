@@ -4,14 +4,15 @@ namespace App\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * One row per tenant (T-01) — never read directly outside
- * StudioSettingsResolver, which is what caches this row on the Redis store
- * the web and worker processes share, and what turns a write into an audit
- * row. display_name is T-01's scaffolding column; vat_mode, vat_rate and
+ * One row per tenant (T-01), read through current(), which caches it on the
+ * Redis store the web and worker processes share. Writes go through the
+ * Settings Actions, which also leave the audit row. display_name is T-01's scaffolding column; vat_mode, vat_rate and
  * vat_note are T-03's (Zahlungsdaten & USt — Q-04 reads these once it
  * ships); timezone
  * and working_days are T-13's (Allgemein); the rest below is T-02's
@@ -75,7 +76,7 @@ class StudioSettings extends Model
         'retention_months', 'retention_policy',
     ];
 
-    // Defence in depth beside StudioSettingsResolver never exposing these
+    // Defence in depth beside StudioSettings::current() never exposing these
     // past itself (T-01's own rule) — the same belt the four MFA columns
     // wear on App\Models\User. A secret key must never ride along in a
     // serialised StudioSettings even by accident.
@@ -109,13 +110,116 @@ class StudioSettings extends Model
         return $this->mail_from_address ?: config('mail.from.address');
     }
 
+    /**
+     * IANA identifier (e.g. "Europe/Vienna") — the tenant value once T-13's
+     * Allgemein pane has set one, config('app.timezone') until then. A
+     * studio that has not opened this pane yet sees exactly what it saw
+     * before this story existed.
+     */
+    public function localTimezone(): string
+    {
+        return $this->timezone ?? config('app.timezone');
+    }
+
+    /**
+     * ISO weekday integers (1 Monday .. 7 Sunday). An empty set reads as
+     * every day: TaskTemplate::dueFor() loops on it, and an empty one would
+     * hang a request.
+     *
+     * @return list<int>
+     */
+    public function workingDays(): array
+    {
+        return empty($this->working_days) ? [1, 2, 3, 4, 5, 6, 7] : $this->working_days;
+    }
+
+    /**
+     * T-02's legal-entity, brand and bank columns, keyed by column name, as
+     * plain values — what the Studio-Profil screen and the `studio.*` merge
+     * fields read.
+     *
+     * @return array<string, mixed>
+     */
+    public function profile(): array
+    {
+        return Arr::only($this->getAttributes(), [
+            'display_name',
+            'legal_name', 'legal_form', 'street', 'postcode', 'city', 'country',
+            'tax_number', 'vat_id', 'register_number', 'register_court', 'representative',
+            'website', 'accent_color', 'logo_path', 'font_pair',
+            'bank_account_holder', 'bank_iban', 'bank_bic',
+        ]);
+    }
+
+    /**
+     * T-02's postal particulars as the one line a footer wears, composed
+     * from the parts a studio filled in: a studio with a city and no street
+     * still has an address to name.
+     */
+    public function postalLine(): ?string
+    {
+        $line = implode(', ', array_filter([
+            $this->street,
+            implode(' ', array_filter([$this->postcode, $this->city])),
+        ]));
+
+        return $line === '' ? null : $line;
+    }
+
+    /**
+     * #439: how a client text addresses its readers. Informal splits on the
+     * count, so a couple reads "ihr" where a single contact reads "du".
+     *
+     * @return 'sie'|'du'|'ihr'
+     */
+    public function clientAddress(int $recipients = 1): string
+    {
+        return match (true) {
+            $this->client_register === 'formal' => 'sie',
+            $recipients > 1 => 'ihr',
+            default => 'du',
+        };
+    }
+
+    /**
+     * What a document actually prints — zero under small_business whatever
+     * vat_rate holds, so a mode switch never leaves a stale 19% behind. The
+     * stored rate stays, or switching back to standard has nothing to restore.
+     */
+    public function effectiveVatRate(): int
+    {
+        return $this->vat_mode === 'small_business' ? 0 : $this->vat_rate;
+    }
+
+    /** Der Löschtag: Tag des Antrags plus Frist, in der Zeit des Studios. Ab dessen Morgen läuft DeleteTenant. */
+    public function deletionDate(): ?CarbonImmutable
+    {
+        return $this->deletion_requested_at
+            ?->toImmutable()
+            ->setTimezone($this->localTimezone())
+            ->addDays(self::DELETION_GRACE_DAYS)
+            ->startOfDay();
+    }
+
+    /** Whether the first-run wizard (App\Http\Middleware\RequireStudioOnboarding) has been completed. */
+    public function onboardingCompleted(): bool
+    {
+        return $this->onboarding_completed_at !== null;
+    }
+
+    /** Whether App\Staff\Actions\RemindOnboarding has already sent its one nudge. */
+    public function onboardingReminderSent(): bool
+    {
+        return $this->onboarding_reminder_sent_at !== null;
+    }
+
     protected function casts(): array
     {
         return [
             'portal_legal_agb_attach' => 'boolean',
             'portal_legal_widerruf_attach' => 'boolean',
             // ISO weekday integers (1 Monday .. 7 Sunday) — see
-            // StudioSettingsResolver::workingDays().
+            // StudioSettings::workingDays().
             'working_days' => 'array',
             'payments_stripe_enabled' => 'boolean',
             'payments_stripe_test_publishable_key' => 'encrypted',

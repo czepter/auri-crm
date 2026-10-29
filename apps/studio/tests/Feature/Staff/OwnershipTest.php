@@ -3,7 +3,6 @@
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Models\User;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Staff\Notifications\StaffOwnershipTransferred;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -73,7 +72,7 @@ it('tells each side of the transfer something different', function () {
     $owner = owner();
     $nina = staffMember(StaffRole::Contributor);
     $owner->role = StaffRole::Manager;
-    $mail = new StaffOwnershipTransferred($owner, $nina, app(StudioSettingsResolver::class));
+    $mail = new StaffOwnershipTransferred($owner, $nina);
 
     expect((string) $mail->toMail($nina)->render())->toContain('hat dir die Inhaberschaft')
         ->and((string) $mail->toMail($owner)->render())->toContain('bist jetzt Manager');

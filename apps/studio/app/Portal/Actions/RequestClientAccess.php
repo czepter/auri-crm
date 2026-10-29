@@ -6,7 +6,6 @@ use App\Crm\Models\Contact;
 use App\Notifications\NotificationService;
 use App\Portal\Models\ClientAccess;
 use App\Portal\Notifications\ClientAccessLink;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
@@ -49,7 +48,6 @@ class RequestClientAccess
     private const FLOOR_MS = 250;
 
     public function __construct(
-        private readonly StudioSettingsResolver $settings,
         private readonly NotificationService $notifications,
     ) {}
 
@@ -90,7 +88,7 @@ class RequestClientAccess
         // did.
         $this->notifications->send(
             Notification::route('mail', $contact->email),
-            new ClientAccessLink($contact, url("/zugang/{$token}"), $this->settings),
+            new ClientAccessLink($contact, url("/zugang/{$token}")),
         );
 
         // One row per issued link. The token is not in it: an audit log that

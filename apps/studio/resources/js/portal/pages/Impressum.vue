@@ -4,7 +4,7 @@ import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 
-// § 5 TMG. Reads straight through StudioSettingsResolver's T-02 columns —
+// § 5 TMG. Reads straight through StudioSettings::current()'s T-02 columns —
 // the same particulars the `studio.*` merge fields already
 // read (docs/documents.md) — never a second, independently-maintained copy.
 // Labels reuse the `settings.*` strings T-02's own admin form already

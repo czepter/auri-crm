@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
  * N-04's authorization code — deliberately Cache-backed, not a table: a code
  * lives for config('mcp_oauth.code_ttl') seconds and is redeemed exactly
  * once, the same "no ceremony for a value nobody reads twice" call
- * StudioSettingsResolver's own cache entry already makes elsewhere in this
+ * StudioSettings::current()'s own cache entry already makes elsewhere in this
  * app. No public_id, no tenant_id migration to carry, because there is no
  * row — a code that outlives the request that issued it only by minutes has
  * nothing worth persisting once OAuthTokenController consumes it.

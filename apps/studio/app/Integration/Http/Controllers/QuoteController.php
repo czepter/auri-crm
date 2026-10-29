@@ -5,6 +5,7 @@ namespace App\Integration\Http\Controllers;
 use App\Catalog\Models\Package;
 use App\Crm\Models\ClientCase;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Models\User;
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
@@ -20,7 +21,6 @@ use App\Quotes\Enums\PricingMode;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use App\Support\SilentWrite;
 use Carbon\CarbonImmutable;
@@ -47,7 +47,6 @@ class QuoteController extends Controller
         ClientCase $case,
         UpdateQuote $save,
         SeedQuoteFromPackage $seed,
-        StudioSettingsResolver $settings,
         AllocateDocumentNumber $allocate,
         ResolveQuoteRecipient $resolveRecipient,
     ): JsonResponse {
@@ -79,7 +78,7 @@ class QuoteController extends Controller
         $save($quote, $this->withMode([
             ...$this->current($quote->fresh(['items', 'paymentStages'])),
             ...Arr::except($validated, 'package'),
-            'valid_until' => $validated['valid_until'] ?? now()->addDays($settings->quoteValidityDays())->toDateString(),
+            'valid_until' => $validated['valid_until'] ?? now()->addDays(StudioSettings::current()->quote_validity_days)->toDateString(),
         ]));
 
         AuditLogger::record(

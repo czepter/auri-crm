@@ -14,7 +14,6 @@ use App\Portal\Notifications\EmailChangeConfirmation;
 use App\Privacy\Models\DsgvoRequest;
 use App\Privacy\Notifications\Studio\DsgvoRequested;
 use App\Settings\Rules\ValidFormat;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -78,7 +77,7 @@ class AccountController extends Controller
      * the login, so it goes out as a confirmation to the new address and
      * nothing on the contact changes until that link is followed.
      */
-    public function update(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    public function update(Request $request): RedirectResponse
     {
         $contact = auth('portal')->user();
 
@@ -100,7 +99,7 @@ class AccountController extends Controller
         $contact->update($data);
 
         if ($newEmail !== mb_strtolower((string) $contact->email)) {
-            $this->requestEmailChange($contact, $newEmail, $settings);
+            $this->requestEmailChange($contact, $newEmail);
         }
 
         return back();
@@ -210,7 +209,7 @@ class AccountController extends Controller
         return back();
     }
 
-    private function requestEmailChange(Contact $contact, string $newEmail, StudioSettingsResolver $settings): void
+    private function requestEmailChange(Contact $contact, string $newEmail): void
     {
         $token = bin2hex(random_bytes(32));
 
@@ -227,7 +226,7 @@ class AccountController extends Controller
         // holds the new value.
         SendMailNotification::dispatch(
             Notification::route('mail', $newEmail),
-            new EmailChangeConfirmation($contact, url("/e-mail-bestaetigen/{$token}"), $settings),
+            new EmailChangeConfirmation($contact, url("/e-mail-bestaetigen/{$token}")),
         );
     }
 }

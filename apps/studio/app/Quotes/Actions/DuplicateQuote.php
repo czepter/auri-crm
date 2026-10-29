@@ -2,10 +2,10 @@
 
 namespace App\Quotes\Actions;
 
+use App\Models\StudioSettings;
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
 use App\Quotes\Models\Quote;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -18,7 +18,6 @@ class DuplicateQuote
 {
     public function __construct(
         private readonly AllocateDocumentNumber $allocate,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     public function __invoke(Quote $source): Quote
@@ -31,7 +30,7 @@ class DuplicateQuote
             $quote = $source->case->quotes()->create([
                 'pricing_mode' => $source->pricing_mode,
                 'number' => $allocation['number'],
-                'valid_until' => now()->addDays($this->settings->quoteValidityDays())->toDateString(),
+                'valid_until' => now()->addDays(StudioSettings::current()->quote_validity_days)->toDateString(),
                 'intro' => $source->intro,
                 'outro' => $source->outro,
                 'discount_type' => $source->discount_type,

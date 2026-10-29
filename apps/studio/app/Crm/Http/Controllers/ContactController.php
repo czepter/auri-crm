@@ -16,6 +16,7 @@ use App\Enums\Capability;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryView;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\MailPreview;
 use App\Portal\Models\ClientAccess;
@@ -23,7 +24,6 @@ use App\Portal\Notifications\PortalAccessInvitation;
 use App\Portal\Support\PortalSettings;
 use App\Privacy\Models\DsgvoRequest;
 use App\Settings\Rules\ValidFormat;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use App\Support\RecordVisit;
 use Illuminate\Http\RedirectResponse;
@@ -53,19 +53,19 @@ class ContactController extends Controller
     ];
 
     /** @return array<string, string|bool|null> */
-    private function portalDefaults(StudioSettingsResolver $settings, PortalSettings $portal): array
+    private function portalDefaults(PortalSettings $portal): array
     {
         return [
-            'accept_quotes' => $settings->acceptQuotesEnabled(),
-            'payment_status' => $settings->paymentStatusEnabled(),
-            'messaging_mode' => $settings->messagingMode(),
-            'gallery_downloads' => $settings->galleryDownloadsEnabled(),
-            'gallery_lists' => $settings->galleryListsEnabled(),
-            'gallery_comments' => $settings->galleryCommentsEnabled(),
-            'offers' => $settings->offersEnabled(),
-            'welcome_inquiry' => $settings->portalWelcomeInquiry(),
-            'welcome_active' => $settings->portalWelcomeActive(),
-            'welcome_done' => $settings->portalWelcomeDone(),
+            'accept_quotes' => (bool) StudioSettings::current()->portal_accept_quotes_enabled,
+            'payment_status' => (bool) StudioSettings::current()->portal_payment_status_enabled,
+            'messaging_mode' => (string) StudioSettings::current()->portal_messaging_mode,
+            'gallery_downloads' => (bool) StudioSettings::current()->gallery_default_downloads_enabled,
+            'gallery_lists' => (bool) StudioSettings::current()->gallery_default_lists_enabled,
+            'gallery_comments' => (bool) StudioSettings::current()->gallery_default_comments_enabled,
+            'offers' => (bool) StudioSettings::current()->portal_offers_enabled,
+            'welcome_inquiry' => StudioSettings::current()->portal_welcome_inquiry,
+            'welcome_active' => StudioSettings::current()->portal_welcome_active,
+            'welcome_done' => StudioSettings::current()->portal_welcome_done,
             'portal_visible' => $portal->projectsVisibleByDefault(),
         ];
     }
@@ -113,16 +113,16 @@ class ContactController extends Controller
             ->map(ContactRowData::fromContact(...));
     }
 
-    public function create(StudioSettingsResolver $settings, PortalSettings $portal): Response
+    public function create(PortalSettings $portal): Response
     {
         $this->authorize('update', new Contact);
 
         return Inertia::render('Contacts/Create', [
-            'portalDefaults' => $this->portalDefaults($settings, $portal),
+            'portalDefaults' => $this->portalDefaults($portal),
         ]);
     }
 
-    public function edit(Contact $contact, StudioSettingsResolver $settings, PortalSettings $portal): Response
+    public function edit(Contact $contact, PortalSettings $portal): Response
     {
         $this->authorize('update', $contact);
 
@@ -240,7 +240,7 @@ class ContactController extends Controller
             // and not per project — a venue with forty dates a year is set up
             // once. Each value is three-valued: absent means inherit, which
             // is why the studio's own value travels beside it.
-            'portalDefaults' => $this->portalDefaults($settings, $portal),
+            'portalDefaults' => $this->portalDefaults($portal),
             'portalOverrides' => (object) ($contact->portal_overrides ?? []),
             // P-09 (#228): may this person open "Vorschau als Kunde"? The
             // link itself is minted on POST, not rendered into the page — a

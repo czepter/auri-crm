@@ -3,10 +3,10 @@
 namespace App\Staff\Actions;
 
 use App\Enums\StaffRole;
+use App\Models\StudioSettings;
 use App\Models\User;
 use App\Notifications\NotificationService;
 use App\Settings\Actions\UpdateStudioSetting;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Staff\Notifications\StudioSetupPending;
 
 /**
@@ -17,13 +17,12 @@ use App\Staff\Notifications\StudioSetupPending;
 class RemindOnboarding
 {
     public function __construct(
-        private readonly StudioSettingsResolver $settings,
         private readonly NotificationService $notifications,
     ) {}
 
     public function __invoke(): int
     {
-        if ($this->settings->onboardingCompleted() || $this->settings->onboardingReminderSent()) {
+        if (StudioSettings::current()->onboardingCompleted() || StudioSettings::current()->onboardingReminderSent()) {
             return 0;
         }
 

@@ -2,7 +2,8 @@
 
 namespace App\Settings\Data;
 
-use App\Settings\Support\StudioSettingsResolver;
+use App\Gallery\Support\GallerySettings;
+use App\Models\StudioSettings;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -25,15 +26,15 @@ class GallerySettingsData extends Data
         public array $design,
     ) {}
 
-    public static function fromResolver(StudioSettingsResolver $settings): self
+    public static function current(): self
     {
         return new self(
-            id: $settings->publicId(),
-            expiryDays: $settings->galleryDefaults()['expiryDays'],
-            downloadsEnabled: $settings->galleryDownloadsEnabled(),
-            listsEnabled: $settings->galleryListsEnabled(),
-            commentsEnabled: $settings->galleryCommentsEnabled(),
-            design: $settings->galleryDesign(),
+            id: StudioSettings::current()->public_id,
+            expiryDays: GallerySettings::defaults()['expiryDays'],
+            downloadsEnabled: (bool) StudioSettings::current()->gallery_default_downloads_enabled,
+            listsEnabled: (bool) StudioSettings::current()->gallery_default_lists_enabled,
+            commentsEnabled: (bool) StudioSettings::current()->gallery_default_comments_enabled,
+            design: GallerySettings::design(),
         );
     }
 }

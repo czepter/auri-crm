@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 use App\Models\StaffInvitation;
 use App\Models\User;
 use App\Notifications\NotificationService;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Staff\Notifications\StaffInvited;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
@@ -60,7 +59,7 @@ class InvitationController extends Controller
         ]);
     }
 
-    public function store(Request $request, StudioSettingsResolver $settings, NotificationService $notifications): RedirectResponse
+    public function store(Request $request, NotificationService $notifications): RedirectResponse
     {
         $this->authorizeStaffManagement();
 
@@ -95,7 +94,7 @@ class InvitationController extends Controller
         // so this still leaves exactly one email, same as ->notify() did.
         $notifications->send(
             Notification::route('mail', $invitation->email),
-            new StaffInvited($invitation, url("/einladung/{$token}"), $settings),
+            new StaffInvited($invitation, url("/einladung/{$token}")),
         );
 
         // The token is deliberately absent from the audit row: an audit log

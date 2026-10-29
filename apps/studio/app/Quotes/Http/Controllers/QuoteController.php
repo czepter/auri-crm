@@ -11,6 +11,7 @@ use App\Crm\Models\ClientCase;
 use App\Documents\Support\InlineHtmlSanitizer;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Notifications\Support\MailPreview;
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
@@ -34,7 +35,6 @@ use App\Quotes\Notifications\QuoteSent;
 use App\Quotes\Screens\ReadQuoteWorkspace;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Support\StudioReadiness;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Carbon\CarbonInterval;
 use Illuminate\Http\RedirectResponse;
@@ -119,13 +119,13 @@ class QuoteController extends Controller
             'quote' => QuoteData::fromModel($quote),
             'recipientName' => $contact?->name ?? '',
             'recipientEmail' => $contact?->email ?? '',
-            'address' => app(StudioSettingsResolver::class)->clientAddress($quote->case->contacts()->count()),
+            'address' => StudioSettings::current()->clientAddress($quote->case->contacts()->count()),
             'mailHtml' => MailPreview::html(new QuoteSent($quote, null, MailPreview::MESSAGE), $contact ?? (object) []),
         ]);
     }
 
     /** The Übersicht's wizard: the project or inquiry first, then the workspace its Angebote tab shows. */
-    public function create(Request $request, ReadQuoteWorkspace $workspace, StudioSettingsResolver $settings): InertiaResponse
+    public function create(Request $request, ReadQuoteWorkspace $workspace): InertiaResponse
     {
         $viewer = $request->user('staff');
         abort_unless($viewer->can(Capability::ManageQuotes->value), 403);
@@ -136,7 +136,7 @@ class QuoteController extends Controller
 
         return Inertia::render('Quotes/Create', [
             'project' => $case ? CaseSuggestionData::fromModel($case) : null,
-            'studioSettings' => StudioSettingsData::fromResolver($settings),
+            'studioSettings' => StudioSettingsData::current(),
             // Mit dem ersten Angebot geht ein Portal-Link hinaus; was das
             // Impressum trägt, muss vorher stehen.
             'missingBusinessData' => app(StudioReadiness::class)->missingForQuote(),
@@ -144,12 +144,12 @@ class QuoteController extends Controller
                 ? Arr::except($workspace($case, $viewer), 'paymentPlan')
                 : [
                     'quotes' => [], 'packages' => [], 'catalogItems' => [], 'contacts' => [], 'canManageCatalog' => false,
-                    'vatSettings' => ['mode' => $settings->vatMode(), 'rate' => $settings->effectiveVatRate(), 'note' => $settings->vatNote()],
+                    'vatSettings' => ['mode' => StudioSettings::current()->vat_mode, 'rate' => StudioSettings::current()->effectiveVatRate(), 'note' => StudioSettings::current()->vat_note],
                 ]),
         ]);
     }
 
-    public function store(Request $request, ClientCase $case, SeedQuoteFromPackage $seed, StudioSettingsResolver $settings, AllocateDocumentNumber $allocate, ResolveQuoteRecipient $resolveRecipient): RedirectResponse
+    public function store(Request $request, ClientCase $case, SeedQuoteFromPackage $seed, AllocateDocumentNumber $allocate, ResolveQuoteRecipient $resolveRecipient): RedirectResponse
     {
         $this->authorize('manageQuotes', $case);
 
@@ -168,8 +168,8 @@ class QuoteController extends Controller
         // valid_until — seeded from a package or not — takes it from the
         // tenant's own default. Read once, at creation, and never again: a
         // later change to the setting is not this quote's concern (see
-        // StudioSettingsResolver::quoteValidityDays()).
-        $validUntil = $validated['valid_until'] ?? now()->addDays($settings->quoteValidityDays())->toDateString();
+        // StudioSettings' quote_validity_days).
+        $validUntil = $validated['valid_until'] ?? now()->addDays(StudioSettings::current()->quote_validity_days)->toDateString();
 
         // Der Nachtrag lässt seinen Vorgänger angenommen, anders als die
         // Revision, die ihn auf superseded setzt (ReviseQuote).
@@ -549,7 +549,7 @@ class QuoteController extends Controller
      * its items or stages, so the live sheet always trails the form and
      * never the stored row.
      */
-    public function preview(Request $request, Quote $quote, RenderQuotePdf $render, StudioSettingsResolver $settings): Response
+    public function preview(Request $request, Quote $quote, RenderQuotePdf $render): Response
     {
         $this->authorize('manageQuotes', $quote->case);
 
@@ -639,7 +639,7 @@ class QuoteController extends Controller
         ])));
 
         $preview->fill(Quote::computeTotals($items, $preview->discount_type, $preview->discount_value));
-        $preview->fill(Quote::computeVat($preview->net, $settings, $items));
+        $preview->fill(Quote::computeVat($preview->net, $items));
 
         return response($render->html($preview), 200, ['Content-Type' => 'text/html']);
     }

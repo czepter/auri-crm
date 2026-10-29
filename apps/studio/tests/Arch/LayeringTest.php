@@ -16,54 +16,6 @@ $modules = [
 
 $wiring = ['App\Http', 'App\Policies', 'App\Providers', 'App\Templates', 'App\Migration'];
 
-// Today's violations by the issue that removes them. Only ever delete lines.
-$baseline = [
-    558 => [
-        'App\Automation\Actions\SeedDefaultAutomationRules',
-        'App\Automation\Actions\SweepDateOffsetAutomationRules',
-        'App\Contracts\Actions\EnsureContractArtifact',
-        'App\Crm\Actions\ApplyTaskTemplates',
-        'App\Crm\Models\Contact',
-        'App\Crm\Models\TaskTemplate',
-        'App\Crm\Support\TaskAnchors',
-        'App\Documents\Support\DocumentRenderer',
-        'App\Engagement\Actions\SendStaffReply',
-        'App\Gallery\Actions\PublishGallery',
-        'App\Gallery\Actions\RequestGalleryEmailVerification',
-        'App\Gallery\Actions\RequestGalleryGuestCode',
-        'App\Gallery\Models\Gallery',
-        'App\Gallery\Notifications\GalleryEmailVerificationLink',
-        'App\Gallery\Notifications\GalleryGuestCode',
-        'App\Notifications\Support\StudioMailFooter',
-        'App\Numbering\Actions\AllocateDocumentNumber',
-        'App\Payments\Actions\ConfirmInstallmentCheckoutSession',
-        'App\Payments\Actions\CreateInstallmentCheckoutSession',
-        'App\Payments\Actions\DetectOverdueInstallments',
-        'App\Payments\Actions\IssueCreditNote',
-        'App\Payments\Actions\IssueInvoice',
-        'App\Payments\Actions\RenderInvoicePdf',
-        'App\Payments\Support\InvoiceDocument',
-        'App\Payments\Support\InvoiceFigures',
-        'App\Payments\Support\InvoiceMergeData',
-        'App\Portal\Actions\RemindClientTasks',
-        'App\Portal\Actions\RequestClientAccess',
-        'App\Portal\Notifications\ClientAccessLink',
-        'App\Portal\Notifications\EmailChangeConfirmation',
-        'App\Portal\Support\PortalSettings',
-        'App\Quotes\Actions\CreateQuoteAddendum',
-        'App\Quotes\Actions\DuplicateQuote',
-        'App\Quotes\Actions\MarkQuoteSent',
-        'App\Quotes\Actions\RenderQuotePdf',
-        'App\Quotes\Actions\ReviseQuote',
-        'App\Quotes\Data\QuoteData',
-        'App\Quotes\Models\Quote',
-        'App\Quotes\Notifications\QuoteSent',
-        'App\Quotes\Support\SampleQuoteData',
-        'App\Settings\Support\StudioSettingsResolver',
-    ],
-];
-$baseline = array_merge(...array_values($baseline));
-
 // Reads names from tokens rather than through arch(): Pest's parser keeps an
 // AST per file per namespace queried and ran out of 512 MB after the suite.
 $violations = function () use ($kernel, $modules, $wiring): array {
@@ -120,10 +72,6 @@ $violations = function () use ($kernel, $modules, $wiring): array {
     return $found;
 };
 
-it('keeps every module to the kernel and the modules to its left', function () use ($violations, $baseline) {
-    expect(array_diff_key($violations(), array_flip($baseline)))->toBe([]);
-});
-
-it('lists only live violations in the baseline', function () use ($violations, $baseline) {
-    expect(array_values(array_diff($baseline, array_keys($violations()))))->toBe([]);
+it('keeps every module to the kernel and the modules to its left', function () use ($violations) {
+    expect($violations())->toBe([]);
 });

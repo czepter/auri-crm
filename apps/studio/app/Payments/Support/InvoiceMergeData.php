@@ -6,6 +6,7 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Support\CaseMergeData;
 use App\Documents\Contracts\MergeDataProvider;
 use App\Documents\Support\DocumentMergeData;
+use App\Models\StudioSettings;
 use App\Payments\Data\PaymentPlanData;
 use App\Payments\Models\CreditNote;
 use App\Payments\Models\Invoice;
@@ -14,7 +15,6 @@ use App\Payments\Models\PaymentInstallment;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Quotes\Support\VatLines;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -27,8 +27,6 @@ use Illuminate\Database\Eloquent\Model;
 class InvoiceMergeData implements MergeDataProvider
 {
     private const INVOICE_KEYS = ['number', 'date', 'servicePeriod', 'description', 'net', 'vatRate', 'vat', 'gross', 'vatNote', 'dueOn', 'paymentTerm'];
-
-    public function __construct(private readonly StudioSettingsResolver $settings) {}
 
     /** @return array<string, array<string, mixed>> */
     public function blocks(?Model $case): array
@@ -81,7 +79,7 @@ class InvoiceMergeData implements MergeDataProvider
      */
     private function invoice(Invoice $invoice, ?ClientCase $project): array
     {
-        $figures = InvoiceFigures::forInvoice($invoice, $this->settings);
+        $figures = InvoiceFigures::forInvoice($invoice);
         $installments = $invoice->installments;
         $dueOn = $installments->max('due_on')?->format('d.m.Y') ?? '';
         // paid_on is only ever written alongside the paid status, by
@@ -143,8 +141,8 @@ class InvoiceMergeData implements MergeDataProvider
      */
     private function positionLines(Invoice $invoice, InvoiceFigures $figures): array
     {
-        $smallBusiness = $this->settings->vatMode() === 'small_business';
-        $defaultRate = $this->settings->effectiveVatRate();
+        $smallBusiness = StudioSettings::current()->vat_mode === 'small_business';
+        $defaultRate = StudioSettings::current()->effectiveVatRate();
         $free = $invoice->items->whereNull('payment_installment_id')->map(fn (InvoiceItem $item) => $item->asQuoteItem());
         $discount = Quote::computeTotals($free, $invoice->discount_type, $invoice->discount_value)['discount_amount'];
 
@@ -293,7 +291,7 @@ class InvoiceMergeData implements MergeDataProvider
             ->orderBy('id')
             ->get()
             ->map(function (Invoice $earlier) {
-                $figures = InvoiceFigures::forInvoice($earlier, $this->settings)->share($earlier->amount() - $earlier->creditedAmount());
+                $figures = InvoiceFigures::forInvoice($earlier)->share($earlier->amount() - $earlier->creditedAmount());
 
                 return [
                     'number' => $earlier->number,
@@ -328,7 +326,7 @@ class InvoiceMergeData implements MergeDataProvider
         }
 
         $invoice = $creditNote->invoice;
-        $figures = InvoiceFigures::forInvoice($invoice, $this->settings)->share((int) $creditNote->amount);
+        $figures = InvoiceFigures::forInvoice($invoice)->share((int) $creditNote->amount);
 
         return [
             'number' => $creditNote->number,

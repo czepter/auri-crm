@@ -64,7 +64,7 @@ class E2eSeeder extends Seeder
         // The Playwright accounts below sign in past this seeder's own
         // wizard on purpose — E2eSeeder is idempotent fixture data, not a
         // first-run scenario, and no spec here exercises /einrichtung/studio.
-        // The cache flush matters here too: StudioSettingsResolver reads
+        // The cache flush matters here too: StudioSettings::current() reads
         // through a redis-backed cache this raw update does not bust (see
         // its own doc comment), and this seeder can run against a
         // dev-server process that already has the pre-onboarding row cached.

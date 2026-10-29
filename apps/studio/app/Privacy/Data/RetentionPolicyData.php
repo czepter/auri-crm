@@ -2,6 +2,7 @@
 
 namespace App\Privacy\Data;
 
+use App\Models\StudioSettings;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -40,6 +41,12 @@ class RetentionPolicyData extends Data
     }
 
     /** @param  list<string>|null  $stored */
+    /** Was der Lauf mit einer abgelaufenen Anfrage tut; ohne Wahl wird anonymisiert. */
+    public static function current(): self
+    {
+        return self::fromStored(StudioSettings::current()->retention_policy);
+    }
+
     public static function fromStored(?array $stored): self
     {
         if ($stored === null) {

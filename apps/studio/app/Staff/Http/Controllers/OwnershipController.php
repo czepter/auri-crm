@@ -6,7 +6,6 @@ use App\Enums\StaffRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Notifications\NotificationService;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Staff\Notifications\StaffOwnershipTransferred;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
@@ -19,7 +18,6 @@ class OwnershipController extends Controller
         Request $request,
         User $user,
         NotificationService $notifications,
-        StudioSettingsResolver $settings,
     ): RedirectResponse {
         $actor = $request->user('staff');
 
@@ -43,7 +41,7 @@ class OwnershipController extends Controller
         $user->refresh();
 
         foreach ([$actor, $user] as $recipient) {
-            $notifications->send($recipient, new StaffOwnershipTransferred($actor, $user, $settings));
+            $notifications->send($recipient, new StaffOwnershipTransferred($actor, $user));
         }
 
         return back();

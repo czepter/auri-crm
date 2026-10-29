@@ -5,9 +5,9 @@ use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Jobs\RenderContractJob;
 use App\Contracts\Models\Contract;
 use App\Documents\Models\DocumentTemplate;
+use App\Models\StudioSettings;
 use App\Settings\Actions\StoreStudioLogo;
 use App\Settings\Actions\UpdateStudioSetting;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Http\Client\RequestException;
@@ -72,7 +72,6 @@ it('resolves studio.* merge fields from T-02\'s settings row, including the one 
     Http::fake(['*/forms/chromium/convert/html' => Http::response('%PDF-fake-bytes', 200)]);
 
     $owner = staffMember();
-    $settings = new StudioSettingsResolver;
     app(UpdateStudioSetting::class)('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
     app(UpdateStudioSetting::class)('city', 'Hamburg', $owner);
     app(StoreStudioLogo::class)(UploadedFile::fake()->image('logo.png'), $owner);
@@ -84,7 +83,7 @@ it('resolves studio.* merge fields from T-02\'s settings row, including the one 
 
     (new RenderContractJob($contract))->handle(app(EnsureContractArtifact::class));
 
-    $expectedLogoPath = (new StudioSettingsResolver)->logoPath();
+    $expectedLogoPath = StudioSettings::current()->logo_path;
     expect($expectedLogoPath)->not->toBeNull();
 
     Http::assertSent(function (HttpRequest $request) use ($expectedLogoPath) {

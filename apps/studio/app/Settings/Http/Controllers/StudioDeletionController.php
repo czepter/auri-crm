@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
 use App\Privacy\Actions\StudioDeletionConfirmation;
 use App\Settings\Actions\UpdateStudioSetting;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -38,7 +37,7 @@ class StudioDeletionController extends Controller
         return back();
     }
 
-    public function store(Request $request, StudioSettingsResolver $settings, StudioDeletionConfirmation $confirmation): RedirectResponse
+    public function store(Request $request, StudioDeletionConfirmation $confirmation): RedirectResponse
     {
         self::authorizeOwner();
 
@@ -48,7 +47,7 @@ class StudioDeletionController extends Controller
         return back();
     }
 
-    public function destroy(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    public function destroy(Request $request): RedirectResponse
     {
         self::authorizeOwner();
 

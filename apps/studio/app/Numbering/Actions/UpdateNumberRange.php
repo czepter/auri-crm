@@ -11,7 +11,7 @@ use Illuminate\Validation\ValidationException;
 /**
  * Writes a range's prefix, reset rule and starting counter, and leaves an
  * audit row naming the actor and every changed value — the same convention
- * StudioSettingsResolver::set() (T-01) established for this section.
+ * App\Settings\Actions\UpdateStudioSetting (T-01) established for this section.
  *
  * The one rule with teeth: starting_counter is REFUSED, not silently
  * ignored, the moment the range has issued a number for its current period

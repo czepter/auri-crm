@@ -9,7 +9,6 @@ use App\Notifications\Enums\NotificationMode;
 use App\Notifications\Jobs\SendMailNotification;
 use App\Notifications\Support\NotificationPreferences;
 use App\Settings\Rules\ValidFormat;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Staff\Notifications\StaffEmailChangeConfirmation;
 use App\Staff\Support\StudioEvents;
 use App\Support\AuditLogger;
@@ -91,7 +90,7 @@ class ProfileController extends Controller
      * changes until that link is followed — a typo here would lock the only
      * account that could fix it out of the studio.
      */
-    public function update(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    public function update(Request $request): RedirectResponse
     {
         $user = $request->user('staff');
 
@@ -114,7 +113,7 @@ class ProfileController extends Controller
             // is already open. Renaming yourself does not.
             $request->validate(['current_password' => ['required', 'current_password:staff']]);
 
-            $this->requestEmailChange($user, $newEmail, $settings);
+            $this->requestEmailChange($user, $newEmail);
         }
 
         return back();

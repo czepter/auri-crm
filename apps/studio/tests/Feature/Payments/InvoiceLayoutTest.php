@@ -13,7 +13,6 @@ use App\Payments\Models\Invoice;
 use App\Payments\Support\InvoiceDocument;
 use App\Quotes\Enums\QuoteLayout;
 use App\Settings\Actions\UpdateStudioSetting;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
@@ -42,7 +41,6 @@ function layoutInvoice(): Invoice
 // --- #419: every layout carries the § 14 particulars itself --------------
 
 it('prints the number, the gross and the § 19 note in every layout under the small-business rule', function (QuoteLayout $layout) {
-    $settings = app(StudioSettingsResolver::class);
     app(UpdateStudioSetting::class)('vat_mode', 'small_business', null);
     app(UpdateStudioSetting::class)('vat_note', 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.', null);
 
@@ -107,7 +105,6 @@ it('carries the Verzugshinweis once, in every layout', function (QuoteLayout $la
 ]);
 
 it('carries the bank details and the Verwendungszweck without a template block', function () {
-    $settings = app(StudioSettingsResolver::class);
     app(UpdateStudioSetting::class)('bank_account_holder', 'Atelier Nordlicht', null);
     app(UpdateStudioSetting::class)('bank_iban', 'DE02120300000000202051', null);
 

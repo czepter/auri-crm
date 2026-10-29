@@ -3,9 +3,9 @@
 namespace App\Staff\Notifications;
 
 use App\Concerns\AppliesStudioMailIdentity;
+use App\Models\StudioSettings;
 use App\Models\User;
 use App\Notifications\Contracts\Transactional;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -17,7 +17,6 @@ class StaffOwnershipTransferred extends Notification implements Transactional
     public function __construct(
         private readonly User $from,
         private readonly User $to,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     /** @return list<string> */
@@ -28,7 +27,7 @@ class StaffOwnershipTransferred extends Notification implements Transactional
 
     public function toMail(object $notifiable): MailMessage
     {
-        $studio = $this->settings->displayName() ?? 'das Studio';
+        $studio = StudioSettings::current()->display_name ?? 'das Studio';
 
         $message = (new MailMessage)
             ->subject('Inhaberschaft übertragen')

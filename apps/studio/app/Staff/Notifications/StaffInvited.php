@@ -4,8 +4,8 @@ namespace App\Staff\Notifications;
 
 use App\Concerns\AppliesStudioMailIdentity;
 use App\Models\StaffInvitation;
+use App\Models\StudioSettings;
 use App\Notifications\Contracts\Transactional;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -24,7 +24,6 @@ class StaffInvited extends Notification implements Transactional
     public function __construct(
         private readonly StaffInvitation $invitation,
         private readonly string $url,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     /** @return list<string> */
@@ -35,7 +34,7 @@ class StaffInvited extends Notification implements Transactional
 
     public function toMail(object $notifiable): MailMessage
     {
-        $studio = $this->settings->displayName();
+        $studio = StudioSettings::current()->display_name;
 
         $message = (new MailMessage)
             ->subject($studio === null ? 'Dein Zugang zum Studio' : "Dein Zugang zu {$studio}")

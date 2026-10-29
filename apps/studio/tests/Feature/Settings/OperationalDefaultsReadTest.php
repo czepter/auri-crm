@@ -5,7 +5,6 @@ use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Models\StudioSettings;
 use App\Settings\Actions\UpdateStudioSetting;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -24,19 +23,17 @@ it('seeds a null timezone and every day as a working day', function () {
 });
 
 it('falls back to config(app.timezone) while the tenant timezone is unset', function () {
-    $resolver = app(StudioSettingsResolver::class);
 
-    expect($resolver->timezone())->toBe(config('app.timezone'));
+    expect(StudioSettings::current()->localTimezone())->toBe(config('app.timezone'));
 });
 
 it('returns the tenant timezone once set, not the environment fallback', function () {
     $owner = staffMember(StaffRole::Admin);
-    $resolver = new StudioSettingsResolver;
 
     app(UpdateStudioSetting::class)('timezone', 'Europe/Vienna', $owner);
 
-    expect($resolver->timezone())->toBe('Europe/Vienna')
-        ->and($resolver->timezone())->not->toBe(config('app.timezone'));
+    expect(StudioSettings::current()->localTimezone())->toBe('Europe/Vienna')
+        ->and(StudioSettings::current()->localTimezone())->not->toBe(config('app.timezone'));
 });
 
 it('treats an empty working_days set as every day, guarding the roll in dueFor() against looping forever', function () {
@@ -44,14 +41,11 @@ it('treats an empty working_days set as every day, guarding the roll in dueFor()
     // the resolver's own guard holds even if a row were ever corrupted.
     DB::table('studio_settings')->update(['working_days' => '[]']);
 
-    $resolver = app(StudioSettingsResolver::class);
-
-    expect($resolver->workingDays())->toBe([1, 2, 3, 4, 5, 6, 7]);
+    expect(StudioSettings::current()->workingDays())->toBe([1, 2, 3, 4, 5, 6, 7]);
 });
 
 it('writes one audit row per changed operational-defaults field', function () {
     $owner = staffMember(StaffRole::Admin);
-    $resolver = new StudioSettingsResolver;
 
     app(UpdateStudioSetting::class)('timezone', 'Europe/Zurich', $owner);
     app(UpdateStudioSetting::class)('working_days', [1, 2, 3, 4, 5], $owner);

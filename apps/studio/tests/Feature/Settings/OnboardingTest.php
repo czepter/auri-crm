@@ -6,7 +6,6 @@ use App\Documents\Models\DocumentTemplate;
 use App\Enums\StaffRole;
 use App\Models\StudioSettings;
 use App\Settings\Actions\UpdateStudioSetting;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 
@@ -16,7 +15,7 @@ uses(RefreshDatabase::class);
 // studio as already onboarded) — this file exercises the unfinished state
 // on purpose, so it resets the flag back. The cache flush is required for
 // the same reason the global hook now carries one: a raw query()->update()
-// never busts StudioSettingsResolver's redis-backed cache.
+// never busts StudioSettings::current()'s redis-backed cache.
 beforeEach(function () {
     StudioSettings::query()->update(['onboarding_completed_at' => null]);
     Cache::store('redis')->flush();

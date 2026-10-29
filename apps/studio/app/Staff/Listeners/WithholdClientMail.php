@@ -4,9 +4,9 @@ namespace App\Staff\Listeners;
 
 use App\Gallery\Notifications\GalleryEmailVerificationLink;
 use App\Gallery\Notifications\GalleryGuestCode;
+use App\Models\StudioSettings;
 use App\Models\User;
 use App\Portal\Notifications\ClientAccessLink;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Staff\Notifications\StaffEmailChangeConfirmation;
 use App\Staff\Notifications\StaffInvited;
 use App\Support\AuditLogger;
@@ -23,8 +23,6 @@ use Illuminate\Notifications\Events\NotificationSending;
  */
 class WithholdClientMail
 {
-    public function __construct(private readonly StudioSettingsResolver $settings) {}
-
     public function handle(NotificationSending $event): ?bool
     {
         if ($event->channel !== 'mail'
@@ -34,7 +32,7 @@ class WithholdClientMail
             || $event->notification instanceof ClientAccessLink
             || $event->notification instanceof GalleryGuestCode
             || $event->notification instanceof GalleryEmailVerificationLink
-            || $this->settings->clientMailEnabled()) {
+            || (bool) StudioSettings::current()->mail_clients_enabled) {
             return null;
         }
 

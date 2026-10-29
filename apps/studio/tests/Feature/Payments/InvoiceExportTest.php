@@ -9,7 +9,6 @@ use App\Payments\Actions\RenderInvoicePdf;
 use App\Payments\Jobs\RenderInvoiceJob;
 use App\Payments\Support\MergeDataSnapshot;
 use App\Settings\Actions\UpdateStudioSetting;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\GotenbergClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -72,7 +71,6 @@ it('re-renders a lost PDF from the snapshot, not from today settings', function 
         'body' => 'Rechnung {{ invoice.number }}',
     ]);
 
-    $settings = app(StudioSettingsResolver::class);
     app(UpdateStudioSetting::class)('bank_iban', 'DE02120300000000202051', null);
 
     $seen = [];

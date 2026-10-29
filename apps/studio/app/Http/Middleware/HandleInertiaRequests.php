@@ -9,10 +9,10 @@ use App\Data\StaffProfileData;
 use App\Documents\Support\DocumentBlockCatalog;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Help\Support\HelpIndex;
+use App\Models\StudioSettings;
 use App\Models\User;
 use App\Portal\Support\PortalSettings;
 use App\Releases\Support\ReleaseLog;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\LiveUpdate;
 use App\Support\RecordVisit;
 use App\Support\Surface;
@@ -54,12 +54,12 @@ class HandleInertiaRequests extends Middleware
                 'templates' => app(TemplateHubController::class)->allowedKinds() !== [],
             ],
             // #490: der Löschtag, solange das Studio zum Löschen vorgemerkt ist.
-            'studioDeletion' => fn () => $user === null ? null : app(StudioSettingsResolver::class)->deletionDate()?->format('d.m.Y'),
+            'studioDeletion' => fn () => $user === null ? null : StudioSettings::current()->deletionDate()?->format('d.m.Y'),
             // The studio's own name. Shared on every surface rather than only
             // in the portal's branding block: the admin wordmark and the
             // sign-in screens wear it with nobody signed in yet. Falls back
             // until onboarding names the studio.
-            'brand' => fn () => app(StudioSettingsResolver::class)->displayName() ?? config('app.name'),
+            'brand' => fn () => StudioSettings::current()->display_name ?? config('app.name'),
             // P-09 (#228): whether this is a studio member looking at what a
             // client sees. Every portal screen wears the banner, so it is
             // shared rather than passed per page.
@@ -149,30 +149,30 @@ class HandleInertiaRequests extends Middleware
                     // wordmark stands on every screen of this surface, and a
                     // studio that has not been through onboarding yet would
                     // otherwise wear a bare dot where its name goes.
-                    'displayName' => app(StudioSettingsResolver::class)->displayName() ?? config('app.name'),
-                    'logoUrl' => app(StudioSettingsResolver::class)->logoPath() !== null
+                    'displayName' => StudioSettings::current()->display_name ?? config('app.name'),
+                    'logoUrl' => StudioSettings::current()->logo_path !== null
                         ? '/branding/logo'
                         : null,
-                    'accentColor' => app(StudioSettingsResolver::class)->attributes()['accent_color'],
-                    'address' => app(StudioSettingsResolver::class)->postalLine(),
+                    'accentColor' => StudioSettings::current()->profile()['accent_color'],
+                    'address' => StudioSettings::current()->postalLine(),
                 ],
                 // Je Text die fremde Adresse, die eigene Seite oder nichts —
-                // siehe StudioSettingsResolver::legalUrl().
+                // siehe PortalSettings::legalUrl().
                 'portalLegal' => fn () => collect(PortalSettings::LEGAL_TEXTS)
                     ->mapWithKeys(fn (string $text) => [
-                        $text.'Url' => app(StudioSettingsResolver::class)->legalUrl($text),
+                        $text.'Url' => PortalSettings::legalUrl($text),
                     ])
                     ->all(),
                 // AGB und Widerruf, die dem Angebot beiliegen: nur diese
                 // stehen neben „Angebot annehmen“.
-                'portalQuoteLegal' => fn () => app(StudioSettingsResolver::class)->attachedLegalUrls(),
+                'portalQuoteLegal' => fn () => PortalSettings::attachedLegalUrls(),
                 // The header stands on every screen and its links are the
                 // same four everywhere, so what decides them is shared
                 // rather than passed per page. Null with nobody signed in:
                 // the sign-in screen has no navigation to draw.
                 'portalNav' => fn () => $this->portalNav($request),
                 // #439: picks the portal's Sie or ihr string set in portal/main.ts.
-                'clientRegister' => fn () => app(StudioSettingsResolver::class)->clientRegister(),
+                'clientRegister' => fn () => StudioSettings::current()->client_register,
             ] : []),
         ];
     }

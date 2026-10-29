@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Models\StudioClosure;
 use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Data\StudioClosureData;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,7 +33,7 @@ class StudioClosureController extends Controller
     }
 
     // At least one day: an empty selection leaves TaskTemplate::dueFor() nothing to roll onto.
-    public function updateWorkingDays(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    public function updateWorkingDays(Request $request): RedirectResponse
     {
         $this->authorizeSettings();
 

@@ -3,11 +3,11 @@
 namespace App\Settings\Console\Commands;
 
 use App\Enums\StaffRole;
+use App\Models\StudioSettings;
 use App\Models\User;
 use App\Notifications\NotificationService;
 use App\Privacy\Actions\DeleteTenant;
 use App\Privacy\Notifications\Studio\StudioDeletionReminder;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Console\Command;
 
 class DeleteDueStudio extends Command
@@ -16,9 +16,9 @@ class DeleteDueStudio extends Command
 
     protected $description = 'Löscht das Studio, dessen Löschtag erreicht ist, und erinnert den Inhaber am Tag davor.';
 
-    public function handle(StudioSettingsResolver $settings, DeleteTenant $delete, NotificationService $notifications): int
+    public function handle(DeleteTenant $delete, NotificationService $notifications): int
     {
-        $date = $settings->deletionDate();
+        $date = StudioSettings::current()->deletionDate();
 
         if ($date === null) {
             return self::SUCCESS;

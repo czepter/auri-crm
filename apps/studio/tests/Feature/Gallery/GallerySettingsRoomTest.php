@@ -2,9 +2,9 @@
 
 use App\Enums\StaffRole;
 use App\Gallery\Models\GalleryPreset;
+use App\Gallery\Support\GallerySettings;
 use App\Models\User;
 use App\Settings\Actions\UpdateStudioSetting;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -40,7 +40,7 @@ it('writes the design the room chose', function () {
         'gallery_default_design' => ['cover' => 'plain', 'type' => 'serif', 'colour' => 'dark', 'grid' => 'dense'],
     ])->assertRedirect('/galerien');
 
-    expect(app(StudioSettingsResolver::class)->galleryDesign())
+    expect(GallerySettings::design())
         ->toBe(['cover' => 'plain', 'type' => 'serif', 'colour' => 'dark', 'grid' => 'dense']);
 });
 
@@ -54,7 +54,7 @@ it('refuses a half design', function () {
 });
 
 it('falls back to the built-in design until the studio says otherwise', function () {
-    expect(app(StudioSettingsResolver::class)->galleryDesign())->toBe(GalleryPreset::DESIGN);
+    expect(GallerySettings::design())->toBe(GalleryPreset::DESIGN);
 });
 
 it('moves the start mark to the preset that was chosen', function () {

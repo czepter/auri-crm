@@ -22,7 +22,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     useSurface(Surface::PORTAL);
-    // StudioSettingsResolver caches the settings row (T-01).
+    // StudioSettings::current() caches the settings row (T-01).
     Cache::store('redis')->flush();
     // ->first()->update(), not the query builder's mass update: the latter
     // bypasses the model's `encrypted` cast and writes the key columns as

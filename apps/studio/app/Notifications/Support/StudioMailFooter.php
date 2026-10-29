@@ -2,7 +2,7 @@
 
 namespace App\Notifications\Support;
 
-use App\Settings\Support\StudioSettingsResolver;
+use App\Models\StudioSettings;
 use Illuminate\Support\Collection;
 
 /**
@@ -17,14 +17,17 @@ use Illuminate\Support\Collection;
  * the layout's own scope — the same reason `brand` is resolved there.
  *
  * The particulars are the ones App\Contracts\Jobs\RenderContractJob's
- * `studio.*` merge fields read, from StudioSettingsResolver::attributes(),
+ * `studio.*` merge fields read, from StudioSettings::profile(),
  * so the mail footer and the rendered contract cannot drift apart.
  */
 final class StudioMailFooter
 {
-    public function __invoke(StudioSettingsResolver $settings): ?string
+    /** The settings screen's preview passes the signature as typed, before it is saved. */
+    public function __construct(private readonly ?string $signature = null) {}
+
+    public function __invoke(): ?string
     {
-        $studio = $settings->attributes();
+        $studio = StudioSettings::current()->profile();
 
         $legal = Collection::make([
             $studio['legal_name'] ?: $studio['display_name'],
@@ -36,7 +39,7 @@ final class StudioMailFooter
             ])->filter()->implode(' · '),
         ])->filter()->implode(' · ');
 
-        $lines = Collection::make([$settings->mailSignature(), $legal ?: null])
+        $lines = Collection::make([$this->signature ?? StudioSettings::current()->mail_signature, $legal ?: null])
             ->filter()
             ->map(fn (string $line) => e($line));
 

@@ -7,7 +7,6 @@ use App\Gallery\Models\GalleryEmailVerification;
 use App\Gallery\Models\GalleryGuest;
 use App\Gallery\Notifications\GalleryGuestCode;
 use App\Notifications\Jobs\SendMailNotification;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\Notification;
 
@@ -24,8 +23,6 @@ use Illuminate\Support\Facades\Notification;
  */
 class RequestGalleryGuestCode
 {
-    public function __construct(private readonly StudioSettingsResolver $settings) {}
-
     public function __invoke(Gallery $gallery, string $email, string $name): GalleryEmailVerification
     {
         $email = mb_strtolower(trim($email));
@@ -51,7 +48,6 @@ class RequestGalleryGuestCode
                 $gallery,
                 $code,
                 rtrim((string) config('services.gallery.url'), '/')."/g/{$gallery->public_id}?bestaetigung={$token}",
-                $this->settings,
             ),
         );
 

@@ -6,11 +6,11 @@ use App\Documents\Support\DocumentMergeData;
 use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Portal\Support\PortalSettings;
 use App\Quotes\Actions\AcceptQuote;
 use App\Quotes\Data\QuoteData;
 use App\Quotes\Models\Quote;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -28,7 +28,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class QuoteShareController extends Controller
 {
-    public function show(Quote $quote, StudioSettingsResolver $settings): Response
+    public function show(Quote $quote): Response
     {
         $quote->loadMissing(['items', 'predecessor', 'paymentStages', 'case', 'recipientContact']);
 
@@ -36,7 +36,7 @@ class QuoteShareController extends Controller
             'contact' => ['name' => ''],
             'showSwitcher' => false,
             'project' => ['id' => $quote->case->public_id, 'name' => $quote->case->name],
-            'canAccept' => $settings->acceptQuotesEnabled(),
+            'canAccept' => (bool) StudioSettings::current()->portal_accept_quotes_enabled,
             'acceptUrl' => "/angebot/{$quote->share_token}/teilen/annehmen",
             'imageUrlBase' => "/angebot/{$quote->share_token}/teilen",
             'quote' => [
@@ -71,7 +71,7 @@ class QuoteShareController extends Controller
         return Storage::disk('local')->response($path);
     }
 
-    public function accept(Request $request, Quote $quote, AcceptQuote $accept, PortalSettings $settings, StudioSettingsResolver $studio): RedirectResponse
+    public function accept(Request $request, Quote $quote, AcceptQuote $accept, PortalSettings $settings): RedirectResponse
     {
         $contact = $quote->recipientContact;
 
@@ -82,7 +82,7 @@ class QuoteShareController extends Controller
             'hours' => ['nullable', 'integer', 'min:0'],
             'items' => ['array'],
             'items.*' => ['string'],
-            'terms' => Rule::when($studio->attachedLegalUrls() !== [], ['accepted']),
+            'terms' => Rule::when(PortalSettings::attachedLegalUrls() !== [], ['accepted']),
         ], ['terms.accepted' => __('portal.quote_terms_required')]);
 
         $accept(

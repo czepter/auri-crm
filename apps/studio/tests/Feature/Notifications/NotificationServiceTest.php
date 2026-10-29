@@ -8,7 +8,6 @@ use App\Notifications\NotificationService;
 use App\Notifications\Transports\InAppTransport;
 use App\Portal\Notifications\ClientAccessLink;
 use App\Settings\Actions\UpdateStudioSetting;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\AnonymousNotifiable;
@@ -144,7 +143,7 @@ it('withholds mail to clients while the studio has switched it off, and still ma
     app(NotificationService::class)->send(User::factory()->create(), new E07DemoNotification('x'));
     app(NotificationService::class)->send(
         NotificationFacade::route('mail', $contact->email),
-        new ClientAccessLink($contact, 'https://example.test/zugang/one', new StudioSettingsResolver),
+        new ClientAccessLink($contact, 'https://example.test/zugang/one'),
     );
 
     expect($sent)->toBe([E07DemoNotification::class, ClientAccessLink::class]);

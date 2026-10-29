@@ -6,7 +6,6 @@ use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryEmailVerification;
 use App\Gallery\Notifications\GalleryEmailVerificationLink;
 use App\Notifications\Jobs\SendMailNotification;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\Notification;
 
@@ -19,8 +18,6 @@ use Illuminate\Support\Facades\Notification;
  */
 class RequestGalleryEmailVerification
 {
-    public function __construct(private readonly StudioSettingsResolver $settings) {}
-
     public function __invoke(Gallery $gallery, string $email): void
     {
         $token = bin2hex(random_bytes(32));
@@ -37,7 +34,6 @@ class RequestGalleryEmailVerification
             new GalleryEmailVerificationLink(
                 $gallery,
                 url("/galerien/{$gallery->public_id}/download/email/{$token}"),
-                $this->settings,
             ),
         );
 

@@ -8,11 +8,11 @@ use App\Documents\Actions\SeedStarterTemplates;
 use App\Documents\Support\StarterTemplateCatalog;
 use App\Engagement\Support\InboundAddress;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Models\UserEmailVerification;
 use App\Notifications\NotificationService;
 use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Data\StudioSettingsData;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Staff\Notifications\StudioReady;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -29,19 +29,18 @@ class StudioOnboardingController extends Controller
 {
     use AuthorizesStaffSettings;
 
-    public function show(StudioSettingsResolver $settings): Response
+    public function show(): Response
     {
         $this->authorizeSettings();
 
         return Inertia::render('Auth/Onboarding', [
-            'settings' => StudioSettingsData::fromResolver($settings),
+            'settings' => StudioSettingsData::current(),
             'emailVerified' => auth('staff')->user()->email_verified_at !== null,
             'hasLiveVerification' => UserEmailVerification::forUser(auth('staff')->user()) !== null,
         ]);
     }
 
     public function complete(
-        StudioSettingsResolver $settings,
         SeedStarterTemplates $seed,
         SeedDefaultAutomationRules $seedRules,
         NotificationService $notifications,
@@ -54,14 +53,14 @@ class StudioOnboardingController extends Controller
         // nothing. Idempotent, so a second pass writes nothing. The invoice
         // starter is not among them — InvoiceController::create writes it
         // once the VAT mode is answered.
-        $seed(StarterTemplateCatalog::onboardingDefaults(), $owner, $settings->clientRegister());
+        $seed(StarterTemplateCatalog::onboardingDefaults(), $owner, StudioSettings::current()->client_register);
         $seedRules();
 
         app(UpdateStudioSetting::class)('onboarding_completed_at', now(), $owner);
 
-        $inboundAddress = $settings->inboundSecret() === null
+        $inboundAddress = StudioSettings::current()->inbound_secret === null
             ? null
-            : InboundAddress::catchAll($settings->displayName() ?? '', $settings->inboundSecret());
+            : InboundAddress::catchAll(StudioSettings::current()->display_name ?? '', StudioSettings::current()->inbound_secret);
 
         $notifications->send($owner, new StudioReady($owner->name, $inboundAddress));
 

@@ -4,9 +4,9 @@ namespace App\Portal\Notifications;
 
 use App\Concerns\AppliesStudioMailIdentity;
 use App\Crm\Models\Contact;
+use App\Models\StudioSettings;
 use App\Notifications\Contracts\Transactional;
 use App\Portal\Models\EmailChange;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -23,7 +23,6 @@ class EmailChangeConfirmation extends Notification implements Transactional
     public function __construct(
         private readonly Contact $contact,
         private readonly string $url,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     /** @return list<string> */
@@ -39,7 +38,7 @@ class EmailChangeConfirmation extends Notification implements Transactional
             ->greeting("Hallo {$this->contact->name},")
             ->action('Adresse bestätigen', $this->url)
             ->line('Der Link gilt '.EmailChange::VALID_FOR_HOURS.' Stunden.')
-            ->line($this->settings->clientAddress() === 'du'
+            ->line(StudioSettings::current()->clientAddress() === 'du'
                 ? 'Bis dahin bleibt die bisherige Adresse dein Zugang.'
                 : 'Bis dahin bleibt die bisherige Adresse Ihr Zugang.');
 

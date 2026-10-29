@@ -15,6 +15,7 @@ use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\StarterTemplateCatalog;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\MailPreview;
 use App\Payments\Actions\CancelInvoice;
@@ -36,7 +37,6 @@ use App\Payments\Support\InvoiceFigures;
 use App\Payments\Support\InvoiceMergeData;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Support\StudioReadiness;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -79,7 +79,6 @@ class InvoiceController extends Controller
 
     public function create(
         Request $request,
-        StudioSettingsResolver $settings,
         RenderInvoicePdf $render,
         SeedStarterTemplates $seed,
         StudioReadiness $readiness,
@@ -91,9 +90,9 @@ class InvoiceController extends Controller
         // SeedStarterTemplates dedupliziert über Typ und Name, ein zweiter
         // Aufruf schreibt also nichts.
         $seed(
-            StarterTemplateCatalog::invoiceDefaults($settings->vatMode()),
+            StarterTemplateCatalog::invoiceDefaults(StudioSettings::current()->vat_mode),
             $request->user('staff'),
-            $settings->clientRegister(),
+            StudioSettings::current()->client_register,
         );
 
         $viewer = $request->user('staff');
@@ -122,14 +121,14 @@ class InvoiceController extends Controller
             'packages' => PackageData::collect(Package::active()->with('items')->orderBy('name')->get()),
             'catalogItems' => CatalogItemData::collect(CatalogItem::query()->orderBy('title')->get()),
             'vatSettings' => [
-                'mode' => $settings->vatMode(),
-                'rate' => $settings->effectiveVatRate(),
-                'note' => $settings->vatNote(),
+                'mode' => StudioSettings::current()->vat_mode,
+                'rate' => StudioSettings::current()->effectiveVatRate(),
+                'note' => StudioSettings::current()->vat_note,
             ],
             // The invoice template's prose: the starting point for this
             // invoice's own letter, merge fields left for the render.
             'intro' => InlineHtmlSanitizer::letter($render->currentTemplate(DocumentTemplateType::Invoice)?->body) ?? '',
-            'studioSettings' => StudioSettingsData::fromResolver($settings),
+            'studioSettings' => StudioSettingsData::current(),
             // Was IssueInvoice beim Ausstellen ohnehin verlangt, steht hier
             // vor dem Formular statt hinter dem Absenden.
             'missingInvoiceData' => $readiness->missingForInvoice(),
@@ -181,16 +180,15 @@ class InvoiceController extends Controller
         Request $request,
         RenderInvoicePdf $render,
         InvoiceMergeData $mergeData,
-        StudioSettingsResolver $settings,
     ): HttpResponse|JsonResponse {
         self::authorizeProject(null);
 
         $validated = $request->validate([...$this->rules(), 'format' => ['nullable', 'in:pdf,portal,mail']]);
-        $invoice = $this->draft($validated, $settings);
+        $invoice = $this->draft($validated);
 
         return match ($validated['format'] ?? 'pdf') {
             'portal' => response()->json(
-                InvoiceDocument::forInvoice($invoice, $mergeData->forInvoice($invoice), $settings)->page(),
+                InvoiceDocument::forInvoice($invoice, $mergeData->forInvoice($invoice))->page(),
             ),
             'mail' => response(MailPreview::html(
                 new InvoiceSent($invoice, '', InvoiceSent::defaultMessage($invoice)),
@@ -277,7 +275,7 @@ class InvoiceController extends Controller
      *
      * @param  array<string, mixed>  $validated
      */
-    private function draft(array $validated, StudioSettingsResolver $settings): Invoice
+    private function draft(array $validated): Invoice
     {
         $project = $this->case($validated);
 
@@ -303,7 +301,7 @@ class InvoiceController extends Controller
 
         if ($free->isNotEmpty()) {
             $installments->push(new PaymentInstallment([
-                'amount' => InvoiceFigures::forPositions($free, $invoice->discount_type, $invoice->discount_value, $settings)->gross,
+                'amount' => InvoiceFigures::forPositions($free, $invoice->discount_type, $invoice->discount_value)->gross,
                 'due_on' => $validated['due_on'] ?? null,
                 'status' => PaymentInstallmentStatus::Invoiced,
             ]));

@@ -15,7 +15,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     useSurface(Surface::PORTAL);
-    // StudioSettingsResolver caches the settings row (T-01) — several tests
+    // StudioSettings::current() caches the settings row (T-01) — several tests
     // below write straight to the row via the model, bypassing the resolver's
     // own cache-busting set(), so the cache needs clearing itself.
     Cache::store('redis')->flush();

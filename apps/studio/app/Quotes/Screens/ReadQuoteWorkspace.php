@@ -8,10 +8,10 @@ use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Models\StudioSettings;
 use App\Models\User;
 use App\Payments\Data\PaymentPlanData;
 use App\Quotes\Data\QuoteData;
-use App\Settings\Support\StudioSettingsResolver;
 
 /**
  * What the quote editor needs, read the same on the project's Angebot tab and
@@ -19,8 +19,6 @@ use App\Settings\Support\StudioSettingsResolver;
  */
 class ReadQuoteWorkspace
 {
-    public function __construct(private StudioSettingsResolver $settings) {}
-
     public function __invoke(ClientCase $project, ?User $user): array
     {
         return [
@@ -48,9 +46,9 @@ class ReadQuoteWorkspace
             // QuotePortalPreview.vue's own live mockup of the mode/rate the
             // portal preview computes server-side, so the two never drift.
             'vatSettings' => [
-                'mode' => $this->settings->vatMode(),
-                'rate' => $this->settings->effectiveVatRate(),
-                'note' => $this->settings->vatNote(),
+                'mode' => StudioSettings::current()->vat_mode,
+                'rate' => StudioSettings::current()->effectiveVatRate(),
+                'note' => StudioSettings::current()->vat_note,
             ],
         ];
     }

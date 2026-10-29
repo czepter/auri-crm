@@ -6,6 +6,7 @@ use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentRenderer;
 use App\Documents\Support\MergeFieldResolver;
+use App\Models\StudioSettings;
 use App\Payments\Models\CreditNote;
 use App\Payments\Models\Invoice;
 use App\Payments\Support\InvoiceDocument;
@@ -18,7 +19,6 @@ use App\Payments\Support\Layouts\MinimalInvoiceLayout;
 use App\Payments\Support\Layouts\StructuredInvoiceLayout;
 use App\Payments\Support\MergeDataSnapshot;
 use App\Quotes\Enums\QuoteLayout;
-use App\Settings\Support\StudioSettingsResolver;
 
 /**
  * #419. What RenderQuotePdf does for an Angebot, for the Rechnung and the
@@ -34,7 +34,6 @@ use App\Settings\Support\StudioSettingsResolver;
 class RenderInvoicePdf
 {
     public function __construct(
-        private readonly StudioSettingsResolver $settings,
         private readonly InvoiceMergeData $mergeData,
         private readonly DocumentRenderer $renderer,
     ) {}
@@ -51,7 +50,7 @@ class RenderInvoicePdf
 
         return $this->wrap(
             DocumentTemplateType::Invoice,
-            InvoiceDocument::forInvoice($invoice, $data, $this->settings),
+            InvoiceDocument::forInvoice($invoice, $data),
             $data,
             // #480: the invoice's letter is its own intro and outro, filled
             // from the template when it was written — not the template again.
@@ -67,7 +66,7 @@ class RenderInvoicePdf
 
         return $this->wrap(
             DocumentTemplateType::CreditNote,
-            InvoiceDocument::forCreditNote($creditNote, $data, $this->settings),
+            InvoiceDocument::forCreditNote($creditNote, $data),
             $data,
             MergeFieldResolver::resolve(($creditNote->template ?? $this->currentTemplate(DocumentTemplateType::CreditNote))?->body ?? '', $data),
             $layoutOverride,
@@ -84,13 +83,13 @@ class RenderInvoicePdf
     {
         $body = $this->layoutRenderer($layoutOverride)->render($document, $data, $prose);
 
-        return $this->renderer->wrap($type, $body, $this->settings);
+        return $this->renderer->wrap($type, $body);
     }
 
     /** The same five as the quote, read from the same setting — see QuoteLayout. */
     private function layoutRenderer(?QuoteLayout $override = null): InvoiceLayoutRenderer
     {
-        $layout = $override ?? QuoteLayout::tryFrom($this->settings->documentLayout()) ?? QuoteLayout::Classic;
+        $layout = $override ?? QuoteLayout::tryFrom(StudioSettings::current()->document_layout) ?? QuoteLayout::Classic;
 
         return match ($layout) {
             QuoteLayout::Classic => new ClassicInvoiceLayout,

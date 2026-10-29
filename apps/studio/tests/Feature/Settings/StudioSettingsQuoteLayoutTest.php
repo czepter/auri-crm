@@ -1,7 +1,7 @@
 <?php
 
+use App\Models\StudioSettings;
 use App\Settings\Actions\UpdateStudioSetting;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -9,7 +9,7 @@ uses(RefreshDatabase::class);
 it('defaults document_layout to classic', function () {
     [$user, $project] = studioWithProject();
 
-    expect(app(StudioSettingsResolver::class)->documentLayout())->toBe('classic');
+    expect(StudioSettings::current()->document_layout)->toBe('classic');
 });
 
 it('reads back a saved document_layout', function () {
@@ -17,7 +17,7 @@ it('reads back a saved document_layout', function () {
 
     app(UpdateStudioSetting::class)('document_layout', 'header_band');
 
-    expect(app(StudioSettingsResolver::class)->documentLayout())->toBe('header_band');
+    expect(StudioSettings::current()->document_layout)->toBe('header_band');
 });
 
 it('saves document_layout through the Belege page', function () {
@@ -27,7 +27,7 @@ it('saves document_layout through the Belege page', function () {
         'document_layout' => 'minimal',
     ])->assertRedirect();
 
-    expect(app(StudioSettingsResolver::class)->documentLayout())->toBe('minimal');
+    expect(StudioSettings::current()->document_layout)->toBe('minimal');
 });
 
 it('rejects an unknown document_layout', function () {

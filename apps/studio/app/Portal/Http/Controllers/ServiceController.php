@@ -5,9 +5,9 @@ namespace App\Portal\Http\Controllers;
 use App\Catalog\Data\PortalServiceData;
 use App\Catalog\Models\Package;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Portal\Actions\RequestService;
 use App\Portal\Support\PortalOffers;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -30,7 +30,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class ServiceController extends Controller
 {
-    public function show(Package $package, StudioSettingsResolver $studio, PortalOffers $offers): Response
+    public function show(Package $package, PortalOffers $offers): Response
     {
         abort_unless($package->portal_offered, 404);
 
@@ -43,8 +43,8 @@ class ServiceController extends Controller
             // Paketpreise sind netto — dieselbe Rechnung, die das Angebot
             // aufmacht. Ein Kleinunternehmer hat keinen Satz, und dann steht
             // unter dem Preis nichts: der Preis ist der Preis.
-            'vatRate' => $studio->effectiveVatRate() ?: null,
-            'studio' => ['name' => $studio->displayName()],
+            'vatRate' => StudioSettings::current()->effectiveVatRate() ?: null,
+            'studio' => ['name' => StudioSettings::current()->display_name],
         ]);
     }
 

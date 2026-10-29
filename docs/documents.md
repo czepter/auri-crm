@@ -43,7 +43,7 @@ look like at the moment a render runs:
 | `studio.registerCourt`  | Registering court (Registergericht).          |
 | `studio.representative` | Authorised representative.                    |
 | `studio.website`     | |
-| `studio.logoPath`    | The logo's stored path on the `local` disk (T-02, `StudioSettingsResolver::logoPath()`) — a filesystem path, not yet a URL. |
+| `studio.logoPath`    | The logo's stored path on the `local` disk (T-02, `StudioSettings' logo_path`) — a filesystem path, not yet a URL. |
 | `studio.bankHolder`  | Account holder (T-02, Bank fieldset). |
 | `studio.bankIban`    | |
 | `studio.bankBic`     | |
@@ -180,7 +180,7 @@ corporate work ever needs it, it is a second output of this same renderer
 against this same merge data, not a second data model.
 
 All `studio.*` and `settings.*` fields read through
-`App\Settings\Support\StudioSettingsResolver` (T-02/T-05) — the same tenant
+`App\Models\StudioSettings::current()` (T-02/T-05) — the same tenant
 settings row the Studio-Profil and Dokumente admin panes edit — rather than
 `APP_NAME` or anything ad hoc.
 
@@ -253,7 +253,7 @@ a client reads.
 
 `App\Documents\Support\DocumentRenderer` wraps a Quote, Invoice or
 CreditNote's resolved body in the studio's one configured letterhead (above) and footer
-(below) — `StudioSettingsResolver::documentLetterheadHtml()` /
+(below) — `StudioSettings::current()::documentLetterheadHtml()` /
 `documentFooterHtml()`, the Dokumente pane — rather than either being pasted
 into every template. Mail is not a PDF, so `DocumentRenderer` leaves a mail
 body untouched.

@@ -4,11 +4,11 @@ namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Privacy\Actions\ApplyRetention;
 use App\Privacy\Data\RetentionPolicyData;
 use App\Privacy\Support\RetentionCandidates;
 use App\Settings\Actions\UpdateStudioSetting;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -19,28 +19,28 @@ class RetentionController extends Controller
 {
     use AuthorizesStaffSettings;
 
-    public function show(StudioSettingsResolver $settings): Response
+    public function show(): Response
     {
         $this->authorizeSettings();
 
         return Inertia::render('Settings/Retention', [
-            'months' => $settings->retentionMonths(),
-            'policy' => $settings->retentionPolicy(),
+            'months' => StudioSettings::current()->retention_months,
+            'policy' => RetentionPolicyData::current(),
             'candidates' => RetentionCandidates::preview(),
             'funnel' => RetentionCandidates::funnel(),
         ]);
     }
 
-    public function update(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    public function update(Request $request): RedirectResponse
     {
         $this->authorizeSettings();
 
-        $this->save($request, $settings);
+        $this->save($request);
 
         return back();
     }
 
-    public function run(Request $request, StudioSettingsResolver $settings, ApplyRetention $apply): RedirectResponse
+    public function run(Request $request, ApplyRetention $apply): RedirectResponse
     {
         $this->authorizeSettings();
 
@@ -49,13 +49,13 @@ class RetentionController extends Controller
             'current_password' => ['required', 'current_password:staff'],
         ]);
 
-        $months = $this->save($request, $settings);
+        $months = $this->save($request);
         $apply($months, $request->user('staff'));
 
         return back();
     }
 
-    private function save(Request $request, StudioSettingsResolver $settings): ?int
+    private function save(Request $request): ?int
     {
         $validated = $request->validate([
             'retention_months' => ['nullable', 'integer', 'min:1', 'max:120'],

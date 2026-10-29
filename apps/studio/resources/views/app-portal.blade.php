@@ -3,7 +3,7 @@
      the gallery inherit it — they are the two surfaces a client sees, and the
      admin deliberately writes in the system stack (C-01). --}}
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="portal"
-      data-font="{{ app(App\Settings\Support\StudioSettingsResolver::class)->fontPair()->value }}">
+      data-font="{{ \App\Settings\Enums\FontPair::current()->value }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,7 +12,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     {{-- A client's own gallery and paperwork, never something to index. --}}
     <meta name="robots" content="noindex, nofollow">
-    <title inertia>{{ app(App\Settings\Support\StudioSettingsResolver::class)->displayName() ?? config('app.name', 'Studio') }}</title>
+    <title inertia>{{ \App\Models\StudioSettings::current()->display_name ?? config('app.name', 'Studio') }}</title>
     @vite('resources/js/portal/main.ts')
     @inertiaHead
 </head>

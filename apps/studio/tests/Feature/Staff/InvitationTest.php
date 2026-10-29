@@ -5,7 +5,6 @@ use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Models\StaffInvitation;
 use App\Models\User;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Staff\Notifications\StaffInvited;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -162,7 +161,7 @@ it('renders the calendar and reply blocks, and drops the 2FA line', function () 
     $owner = User::factory()->create(['role' => StaffRole::Admin]);
     $invitation = invite(['invited_by_id' => $owner->id]);
 
-    $html = (string) (new StaffInvited($invitation, 'https://example.test/einladung/abc', app(StudioSettingsResolver::class)))
+    $html = (string) (new StaffInvited($invitation, 'https://example.test/einladung/abc'))
         ->toMail($owner)
         ->render();
 

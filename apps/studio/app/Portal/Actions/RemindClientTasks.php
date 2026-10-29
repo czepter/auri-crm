@@ -4,10 +4,10 @@ namespace App\Portal\Actions;
 
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Task;
+use App\Models\StudioSettings;
 use App\Notifications\NotificationService;
 use App\Portal\Notifications\TaskDue;
 use App\Portal\Support\ClientAudience;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\FibonacciReminderSchedule;
 
 class RemindClientTasks
@@ -15,7 +15,6 @@ class RemindClientTasks
     public function __construct(
         private readonly NotificationService $notifications,
         private readonly ClientAudience $clients,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     /**
@@ -28,7 +27,7 @@ class RemindClientTasks
      */
     public function __invoke(): void
     {
-        if ($this->settings->maintenanceEnabled()) {
+        if ((bool) StudioSettings::current()->portal_maintenance_enabled) {
             return;
         }
 

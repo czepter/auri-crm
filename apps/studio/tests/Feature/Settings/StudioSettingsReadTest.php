@@ -6,7 +6,6 @@ use App\Models\StudioSettings;
 use App\Settings\Actions\StoreStudioLogo;
 use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Jobs\ReadStudioSettingsJob;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
@@ -35,10 +34,9 @@ it('resolves the seeded row through a plain, container-constructed instance', fu
     // No binding, no facade — the resolver is autowired the same way
     // GotenbergClient and every other plain support class in this codebase
     // is, so a controller only has to type-hint it.
-    $resolver = app(StudioSettingsResolver::class);
 
-    expect($resolver->displayName())->toBeNull()
-        ->and($resolver->publicId())->toBe(StudioSettings::query()->sole()->public_id);
+    expect(StudioSettings::current()->display_name)->toBeNull()
+        ->and(StudioSettings::current()->public_id)->toBe(StudioSettings::query()->sole()->public_id);
 });
 
 it('makes a write visible to a completely fresh resolver instance, with no cache-clear command', function () {
@@ -46,8 +44,7 @@ it('makes a write visible to a completely fresh resolver instance, with no cache
 
     // Warm the cache the way a long-running worker process would — reading
     // once before anything changes.
-    $warm = new StudioSettingsResolver;
-    expect($warm->displayName())->toBeNull();
+    expect(StudioSettings::current()->display_name)->toBeNull();
 
     // Written through a second, unrelated instance — the web process.
     app(UpdateStudioSetting::class)('display_name', 'Atelier Nordlicht', $owner);
@@ -57,7 +54,7 @@ it('makes a write visible to a completely fresh resolver instance, with no cache
     // hands the very next job it pops. A naive array or file cache would
     // still pass this line inside one PHP process; the redis store is what
     // makes it mean something.
-    expect((new StudioSettingsResolver)->displayName())->toBe('Atelier Nordlicht');
+    expect(StudioSettings::current()->display_name)->toBe('Atelier Nordlicht');
 });
 
 it('lets a job popped by a real queue worker read a setting the web process changed', function () {
@@ -96,7 +93,6 @@ it('writes an audit row naming the actor, the key and both values', function () 
 
 it('leaves no audit row for a write that changes nothing', function () {
     $owner = staffMember(StaffRole::Admin);
-    $resolver = new StudioSettingsResolver;
 
     app(UpdateStudioSetting::class)('display_name', null, $owner);
 
@@ -107,7 +103,7 @@ it('returns T-02\'s legal-entity, brand and bank columns as one plain array', fu
     $owner = staffMember(StaffRole::Admin);
     app(UpdateStudioSetting::class)('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
 
-    $attributes = (new StudioSettingsResolver)->attributes();
+    $attributes = StudioSettings::current()->profile();
 
     expect($attributes['legal_name'])->toBe('Atelier Nordlicht Fotografie GmbH')
         ->and($attributes)->toHaveKeys(['display_name', 'tax_number', 'vat_id', 'bank_iban', 'logo_path']);
@@ -119,8 +115,8 @@ it('stores the uploaded logo once and resolves the same path from an independent
 
     app(StoreStudioLogo::class)(UploadedFile::fake()->image('logo.png'), $owner);
 
-    $fromOneInstance = (new StudioSettingsResolver)->logoPath();
-    $fromAnotherInstance = (new StudioSettingsResolver)->logoPath();
+    $fromOneInstance = StudioSettings::current()->logo_path;
+    $fromAnotherInstance = StudioSettings::current()->logo_path;
 
     expect($fromOneInstance)->not->toBeNull()
         ->and($fromAnotherInstance)->toBe($fromOneInstance);
@@ -133,10 +129,10 @@ it('deletes the previous logo file when a new one replaces it', function () {
     $owner = staffMember(StaffRole::Admin);
 
     app(StoreStudioLogo::class)(UploadedFile::fake()->image('first.png'), $owner);
-    $firstPath = (new StudioSettingsResolver)->logoPath();
+    $firstPath = StudioSettings::current()->logo_path;
 
     app(StoreStudioLogo::class)(UploadedFile::fake()->image('second.svg'), $owner);
-    $secondPath = (new StudioSettingsResolver)->logoPath();
+    $secondPath = StudioSettings::current()->logo_path;
 
     expect($secondPath)->not->toBe($firstPath);
     Storage::disk('local')->assertMissing($firstPath);

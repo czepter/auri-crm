@@ -30,7 +30,7 @@ use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Support\AuditLogger;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
@@ -173,7 +173,7 @@ class DemoCrmSeeder extends Seeder
      * in — so this writes both, in the one order that matters: a plausible
      * identity first, the completion stamp last.
      *
-     * Through StudioSettingsResolver::set(), the same seam
+     * Through App\Settings\Actions\UpdateStudioSetting, the same seam
      * StudioSettingsController::update() and StudioOnboardingController::
      * complete() call — never a raw update on the table — so this seeder
      * keeps proving the resolver's own cache-bust and audit-row guarantees
@@ -191,7 +191,7 @@ class DemoCrmSeeder extends Seeder
             return;
         }
 
-        $settings = app(StudioSettingsResolver::class);
+        $settings = app(UpdateStudioSetting::class);
 
         foreach ([
             'display_name' => 'Nordlicht Fotografie',
@@ -207,10 +207,10 @@ class DemoCrmSeeder extends Seeder
             'representative' => 'Christian Bergmann',
             'website' => 'https://nordlicht-fotografie.test',
         ] as $key => $value) {
-            $settings->set($key, $value, $actor);
+            $settings($key, $value, $actor);
         }
 
-        $settings->set('onboarding_completed_at', now(), $actor);
+        $settings('onboarding_completed_at', now(), $actor);
     }
 
     /**

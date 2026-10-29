@@ -5,9 +5,9 @@ namespace App\Quotes\Actions;
 use App\Crm\Actions\AdvanceLeadStage;
 use App\Crm\Enums\StageAnchor;
 use App\Models\User;
+use App\Portal\Support\PortalSettings;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Carbon\CarbonInterface;
 use DomainException;
@@ -23,7 +23,6 @@ use Illuminate\Validation\ValidationException;
 class MarkQuoteSent
 {
     public function __construct(
-        private readonly StudioSettingsResolver $settings,
         private readonly AdvanceLeadStage $leads,
     ) {}
 
@@ -39,7 +38,7 @@ class MarkQuoteSent
         // Verbrauchers nicht zu laufen (§ 356 Abs. 3 BGB), und das gilt
         // unabhängig davon, ob das Angebot als Mail oder über WhatsApp
         // rausgeht — deshalb steht die Prüfung hier und nicht in SendQuote.
-        if ($this->settings->legalUrl('widerruf') === null) {
+        if (PortalSettings::legalUrl('widerruf') === null) {
             throw ValidationException::withMessages(['quote' => __('quotes.widerrufMissing')]);
         }
 
@@ -49,7 +48,7 @@ class MarkQuoteSent
             // once status itself is already sent/superseded there, so this
             // order is what lets the update() call below keep working
             // unchanged — see Quote::snapshotVat()'s own docblock.
-            $quote->snapshotVat($this->settings);
+            $quote->snapshotVat();
 
             $quote->update([
                 'status' => QuoteStatus::Sent,

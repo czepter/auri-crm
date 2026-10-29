@@ -8,6 +8,7 @@ use App\Documents\Support\DocumentMergeData;
 use App\Documents\Support\DocumentRenderer;
 use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
+use App\Models\StudioSettings;
 use App\Quotes\Enums\DiscountType;
 use App\Quotes\Enums\QuoteLayout;
 use App\Quotes\Enums\QuoteStatus;
@@ -21,7 +22,6 @@ use App\Quotes\Support\Layouts\QuoteLayoutRenderer;
 use App\Quotes\Support\Layouts\StructuredQuoteLayout;
 use App\Quotes\Support\QuoteRange;
 use App\Quotes\Support\VatLines;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\GotenbergClient;
 use Illuminate\Support\Number;
 
@@ -40,7 +40,6 @@ class RenderQuotePdf
 {
     public function __construct(
         private readonly GotenbergClient $gotenberg,
-        private readonly StudioSettingsResolver $settings,
         private readonly DocumentMergeData $mergeData,
         private readonly DocumentRenderer $renderer,
     ) {}
@@ -73,12 +72,12 @@ class RenderQuotePdf
         $body .= $this->paymentStages($quote);
         $body .= $this->letter($quote->outro, $data);
 
-        return $this->renderer->wrap(DocumentTemplateType::Quote, $body, $this->settings);
+        return $this->renderer->wrap(DocumentTemplateType::Quote, $body);
     }
 
     private function layoutRenderer(?QuoteLayout $override = null): QuoteLayoutRenderer
     {
-        $layout = $override ?? QuoteLayout::tryFrom($this->settings->documentLayout()) ?? QuoteLayout::Classic;
+        $layout = $override ?? QuoteLayout::tryFrom(StudioSettings::current()->document_layout) ?? QuoteLayout::Classic;
 
         return match ($layout) {
             QuoteLayout::Classic => new ClassicQuoteLayout,

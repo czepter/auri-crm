@@ -15,8 +15,8 @@ use App\Concerns\AuthorizesStaffSettings;
 use App\Crm\Models\ProjectType;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Models\User;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -33,7 +33,7 @@ class AutomationRuleController extends Controller
 {
     use AuthorizesStaffSettings;
 
-    public function index(StudioSettingsResolver $settings): Response
+    public function index(): Response
     {
         $this->authorizeSettings();
 
@@ -43,7 +43,7 @@ class AutomationRuleController extends Controller
             ),
             // Der Sweep laeuft in Studiozeit, nicht in Containerzeit. Wer
             // die Spalte "letzter Lauf" liest, liest sie auf dieser Uhr.
-            'timezone' => $settings->timezone(),
+            'timezone' => StudioSettings::current()->localTimezone(),
         ]);
     }
 

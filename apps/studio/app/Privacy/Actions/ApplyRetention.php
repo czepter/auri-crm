@@ -4,18 +4,18 @@ namespace App\Privacy\Actions;
 
 use App\Crm\Models\Contact;
 use App\Models\User;
+use App\Privacy\Data\RetentionPolicyData;
 use App\Privacy\Support\RetentionCandidates;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 
 /** Wendet die Wahl des Studios auf jede Anfrage an, die seit `$months` Monaten ruht; gibt die Zahl der Kontakte zurück. */
 class ApplyRetention
 {
-    public function __construct(private StudioSettingsResolver $settings, private EraseContactDsgvo $erase) {}
+    public function __construct(private EraseContactDsgvo $erase) {}
 
     public function __invoke(int $months, ?User $actor = null): int
     {
-        $policy = $this->settings->retentionPolicy();
+        $policy = RetentionPolicyData::current();
         $count = 0;
 
         RetentionCandidates::query(now()->subMonths($months))

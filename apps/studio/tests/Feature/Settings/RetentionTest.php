@@ -10,7 +10,6 @@ use App\Models\AuditLog;
 use App\Models\StudioSettings;
 use App\Payments\Models\Invoice;
 use App\Privacy\Data\RetentionPolicyData;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 
@@ -19,7 +18,7 @@ uses(RefreshDatabase::class);
 function retentionMonths(?int $months, ?RetentionPolicyData $policy = null): void
 {
     StudioSettings::query()->update(['retention_months' => $months, 'retention_policy' => $policy?->removed()]);
-    app(StudioSettingsResolver::class)->forget();
+    StudioSettings::forgetCurrent();
 }
 
 function inquiry(?LeadOutcome $outcome = LeadOutcome::Lost, int $idleMonths = 13): Contact
@@ -104,11 +103,11 @@ it('shows the page and saves the deadline for the owner only', function () {
     $this->actingAs(staffMember(StaffRole::Admin), 'staff');
     $this->get('/einstellungen/aufbewahrung')->assertOk()->assertInertia(fn ($page) => $page->where('months', null));
     $this->patch('/einstellungen/aufbewahrung', ['retention_months' => 6, 'policy' => ['name' => true, 'text' => true, 'messages' => true, 'offers' => true, 'galleries' => true, 'order' => false]])->assertRedirect();
-    expect(app(StudioSettingsResolver::class)->retentionMonths())->toBe(6);
+    expect(StudioSettings::current()->retention_months)->toBe(6);
 
     $this->patch('/einstellungen/aufbewahrung', ['retention_months' => 121])->assertSessionHasErrors('retention_months');
     $this->patch('/einstellungen/aufbewahrung', ['retention_months' => null])->assertRedirect();
-    expect(app(StudioSettingsResolver::class)->retentionMonths())->toBeNull();
+    expect(StudioSettings::current()->retention_months)->toBeNull();
 });
 
 it('removes lead and project when the policy takes the order', function () {
@@ -146,8 +145,8 @@ it('runs now only with the owner\'s password, and saves what was chosen', functi
     $this->post('/einstellungen/aufbewahrung/durchfuehren', $body + ['current_password' => 'password'])->assertRedirect()->assertSessionHasNoErrors();
     expect(erased($contact))->toBeFalse()
         ->and(Lead::query()->whereNotNull('inquiry_text')->count())->toBe(0)
-        ->and(app(StudioSettingsResolver::class)->retentionMonths())->toBe(12)
-        ->and(app(StudioSettingsResolver::class)->retentionPolicy()->name)->toBeFalse();
+        ->and(StudioSettings::current()->retention_months)->toBe(12)
+        ->and(RetentionPolicyData::current()->name)->toBeFalse();
 });
 
 it('offers every candidate to the page, with its age and whether an invoice keeps it', function () {

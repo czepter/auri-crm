@@ -14,7 +14,6 @@ use App\Payments\Support\InvoiceMergeData;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Settings\Actions\UpdateStudioSetting;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Storage;
@@ -26,7 +25,6 @@ beforeEach(function () {
     Storage::fake('local');
     Bus::fake();
 
-    $settings = app(StudioSettingsResolver::class);
     app(UpdateStudioSetting::class)('tax_number', '22/123/45678', null);
     app(UpdateStudioSetting::class)('vat_mode', 'standard', null);
     app(UpdateStudioSetting::class)('vat_rate', 1900, null);
@@ -57,7 +55,7 @@ function planBehindQuote(array $dueDates, int $discountValue = 0, array $slider 
 
     $quote->recalculateTotal();
     $quote->refresh()->forceFill($slider)->save();
-    $quote->refresh()->snapshotVat(app(StudioSettingsResolver::class));
+    $quote->refresh()->snapshotVat();
     $quote->forceFill(['status' => QuoteStatus::Accepted, 'accepted_at' => now()])->save();
 
     $quote = $quote->fresh();
@@ -108,7 +106,7 @@ it('lists the quote lines, deducts the Anzahlung and sums to the cent', function
         ->and($html)->not->toContain('{{');
 
     // Netto + Steuer des Restbetrags ergeben genau die Rate.
-    $figures = InvoiceFigures::forInvoice($finalInvoice, app(StudioSettingsResolver::class));
+    $figures = InvoiceFigures::forInvoice($finalInvoice);
     expect($figures->net + $figures->vat)->toBe((int) $final->amount);
 });
 

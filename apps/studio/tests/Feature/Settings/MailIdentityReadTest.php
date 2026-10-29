@@ -1,8 +1,8 @@
 <?php
 
 use App\Enums\StaffRole;
+use App\Models\StudioSettings;
 use App\Settings\Actions\UpdateStudioSetting;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 
@@ -15,13 +15,11 @@ beforeEach(fn () => Cache::store('redis')->flush());
 it('falls back to config(mail.from.*) until a studio sets its own', function () {
     config(['mail.from.address' => 'hello@example.com', 'mail.from.name' => 'Example']);
 
-    $resolver = new StudioSettingsResolver;
-
-    expect($resolver->mailFromAddress())->toBe('hello@example.com')
-        ->and($resolver->mailFromName())->toBe('Example')
-        ->and($resolver->mailReplyTo())->toBeNull()
-        ->and($resolver->mailBcc())->toBeNull()
-        ->and($resolver->mailSignature())->toBeNull();
+    expect(StudioSettings::current()->mailFromAddress())->toBe('hello@example.com')
+        ->and(StudioSettings::current()->mailFromName())->toBe('Example')
+        ->and(StudioSettings::current()->mail_reply_to)->toBeNull()
+        ->and(StudioSettings::current()->mail_bcc)->toBeNull()
+        ->and(StudioSettings::current()->mail_signature)->toBeNull();
 });
 
 it('resolves the tenant value the moment it is set, with no deploy', function () {
@@ -34,12 +32,11 @@ it('resolves the tenant value the moment it is set, with no deploy', function ()
     app(UpdateStudioSetting::class)('mail_signature', 'Herzliche Grüße, das Team von Atelier Nordlicht', $owner);
 
     // A completely fresh instance — the same "no cache-clear command" shape
-    // StudioSettingsResolverTest already proves for display_name.
-    $fresh = new StudioSettingsResolver;
+    // StudioSettingsReadTest already proves for display_name.
 
-    expect($fresh->mailFromAddress())->toBe('studio@nordlicht.test')
-        ->and($fresh->mailFromName())->toBe('Atelier Nordlicht')
-        ->and($fresh->mailReplyTo())->toBe('buero@nordlicht.test')
-        ->and($fresh->mailBcc())->toBe('ablage@nordlicht.test')
-        ->and($fresh->mailSignature())->toBe('Herzliche Grüße, das Team von Atelier Nordlicht');
+    expect(StudioSettings::current()->mailFromAddress())->toBe('studio@nordlicht.test')
+        ->and(StudioSettings::current()->mailFromName())->toBe('Atelier Nordlicht')
+        ->and(StudioSettings::current()->mail_reply_to)->toBe('buero@nordlicht.test')
+        ->and(StudioSettings::current()->mail_bcc)->toBe('ablage@nordlicht.test')
+        ->and(StudioSettings::current()->mail_signature)->toBe('Herzliche Grüße, das Team von Atelier Nordlicht');
 });

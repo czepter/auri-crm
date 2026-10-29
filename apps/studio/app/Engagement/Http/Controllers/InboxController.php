@@ -14,8 +14,8 @@ use App\Engagement\Models\Thread;
 use App\Engagement\Support\InboundAddress;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Settings\Actions\RotateInboundSecret;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -40,11 +40,11 @@ class InboxController extends Controller
     /** The three groups, in the order the day is worked. */
     private const STATES = ['unbeantwortet', 'wartet', 'erledigt'];
 
-    public function index(Request $request, StudioSettingsResolver $settings): Response
+    public function index(Request $request): Response
     {
         $this->authorizeInbox();
 
-        $secret = $settings->inboundSecret();
+        $secret = StudioSettings::current()->inbound_secret;
         $user = auth('staff')->user();
 
         $threads = Thread::query()
@@ -74,7 +74,7 @@ class InboxController extends Controller
             // or reads out over the phone.
             'catchAll' => $secret === null
                 ? null
-                : InboundAddress::catchAll($settings->displayName() ?? '', $secret),
+                : InboundAddress::catchAll(StudioSettings::current()->display_name ?? '', $secret),
             'canRotate' => $user?->can(Capability::ManageSettings->value) ?? false,
             'pending' => InboundMessage::query()
                 ->whereIn('state', [InboundMessageState::Triage, InboundMessageState::Quarantined])

@@ -1,8 +1,8 @@
 <?php
 
 use App\Enums\StaffRole;
+use App\Models\StudioSettings;
 use App\Settings\Actions\UpdateStudioSetting;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 
@@ -13,13 +13,12 @@ uses(RefreshDatabase::class);
 beforeEach(fn () => Cache::store('redis')->flush());
 
 it('seeds sensible document defaults on the migration itself', function () {
-    $settings = new StudioSettingsResolver;
 
-    expect($settings->quoteValidityDays())->toBe(14)
-        ->and($settings->paymentTermDays())->toBe(14)
-        ->and($settings->depositPercentage())->toBe(3000)
-        ->and($settings->documentLetterheadHtml())->toBeNull()
-        ->and($settings->documentFooterHtml())->toBeNull();
+    expect(StudioSettings::current()->quote_validity_days)->toBe(14)
+        ->and(StudioSettings::current()->payment_term_days)->toBe(14)
+        ->and(StudioSettings::current()->deposit_percentage)->toBe(3000)
+        ->and(StudioSettings::current()->document_letterhead_html)->toBeNull()
+        ->and(StudioSettings::current()->document_footer_html)->toBeNull();
 });
 
 it('writes each document default through set(), busts the cache, and audits the actor', function () {
@@ -31,11 +30,9 @@ it('writes each document default through set(), busts the cache, and audits the 
     app(UpdateStudioSetting::class)('document_letterhead_html', '<header>Nordlicht</header>', $owner);
     app(UpdateStudioSetting::class)('document_footer_html', '<footer>Seite 1</footer>', $owner);
 
-    $fresh = new StudioSettingsResolver;
-
-    expect($fresh->quoteValidityDays())->toBe(30)
-        ->and($fresh->paymentTermDays())->toBe(21)
-        ->and($fresh->depositPercentage())->toBe(5000)
-        ->and($fresh->documentLetterheadHtml())->toBe('<header>Nordlicht</header>')
-        ->and($fresh->documentFooterHtml())->toBe('<footer>Seite 1</footer>');
+    expect(StudioSettings::current()->quote_validity_days)->toBe(30)
+        ->and(StudioSettings::current()->payment_term_days)->toBe(21)
+        ->and(StudioSettings::current()->deposit_percentage)->toBe(5000)
+        ->and(StudioSettings::current()->document_letterhead_html)->toBe('<header>Nordlicht</header>')
+        ->and(StudioSettings::current()->document_footer_html)->toBe('<footer>Seite 1</footer>');
 });

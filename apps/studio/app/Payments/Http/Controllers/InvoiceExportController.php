@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Payments\Models\Invoice;
 use App\Payments\Support\InvoiceFigures;
 use App\Settings\Support\StudioRecords;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -29,7 +28,7 @@ class InvoiceExportController extends Controller
         'Brutto', 'bezahlt am', 'Status', 'Gutschriften',
     ];
 
-    public function __invoke(Request $request, StudioSettingsResolver $settings): StreamedResponse
+    public function __invoke(Request $request): StreamedResponse
     {
         $this->authorizeSettings();
 
@@ -43,14 +42,14 @@ class InvoiceExportController extends Controller
             ->orderBy('number')
             ->get();
 
-        return response()->streamDownload(function () use ($invoices, $settings) {
+        return response()->streamDownload(function () use ($invoices) {
             $out = fopen('php://output', 'w');
 
             fwrite($out, "\u{FEFF}");
             fputcsv($out, self::COLUMNS, ';');
 
             foreach ($invoices as $invoice) {
-                fputcsv($out, $this->row($invoice, $settings), ';');
+                fputcsv($out, $this->row($invoice), ';');
             }
 
             fclose($out);
@@ -58,9 +57,9 @@ class InvoiceExportController extends Controller
     }
 
     /** @return list<string> */
-    private function row(Invoice $invoice, StudioSettingsResolver $settings): array
+    private function row(Invoice $invoice): array
     {
-        $figures = InvoiceFigures::forInvoice($invoice, $settings);
+        $figures = InvoiceFigures::forInvoice($invoice);
         $credited = $invoice->creditedAmount();
 
         return [

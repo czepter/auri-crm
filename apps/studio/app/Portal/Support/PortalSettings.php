@@ -5,8 +5,8 @@ namespace App\Portal\Support;
 use App\Crm\Models\Contact;
 use App\Enums\StaffRole;
 use App\Models\StudioClosure;
+use App\Models\StudioSettings;
 use App\Models\User;
-use App\Settings\Support\StudioSettingsResolver;
 
 /**
  * P-09 (#228). What the portal does, for this client.
@@ -30,6 +30,66 @@ class PortalSettings
 {
     public const LEGAL_TEXTS = ['impressum', 'datenschutz', 'agb', 'widerruf'];
 
+    /**
+     * Wohin ein Rechtstext im Portal zeigt: auf die fremde Adresse, wenn eine
+     * hinterlegt ist, sonst auf die eigene Seite, wenn eine Vorlage gewählt
+     * wurde. Das Impressum hat immer eine Seite — es wird aus den
+     * Studio-Daten gezeichnet, wenn nichts anderes gesetzt ist.
+     */
+    public static function legalUrl(string $text): ?string
+    {
+        $row = StudioSettings::current();
+
+        return match (true) {
+            filled($row->{"portal_legal_{$text}_url"} ?? null) => $row->{"portal_legal_{$text}_url"},
+            filled($row->{"portal_legal_{$text}_family"} ?? null) => "/rechtstexte/{$text}",
+            $text === 'impressum' => '/impressum',
+            default => null,
+        };
+    }
+
+    /** Die Vorlagen-Familie hinter einem Rechtstext, sofern eine gewählt ist. */
+    public static function legalFamily(string $text): ?string
+    {
+        return StudioSettings::current()->{"portal_legal_{$text}_family"} ?? null;
+    }
+
+    /** Ob AGB oder Widerrufsbelehrung dem Angebot beiliegen. */
+    public static function legalAttach(string $text): bool
+    {
+        return (bool) (StudioSettings::current()->{"portal_legal_{$text}_attach"} ?? false);
+    }
+
+    /**
+     * Was dem Angebot beiliegt: je eingeschaltetem Text seine Adresse, wie
+     * legalUrl() sie liefert — relativ, wenn der Text im Portal liegt.
+     *
+     * @return array<string, string>
+     */
+    public static function attachedLegalUrls(): array
+    {
+        return collect(['agb', 'widerruf'])
+            ->filter(fn (string $text) => self::legalAttach($text) && self::legalUrl($text) !== null)
+            ->mapWithKeys(fn (string $text) => [$text => self::legalUrl($text)])
+            ->all();
+    }
+
+    /** Die eingetragene fremde Adresse — was das Portal daraus macht, sagt legalUrl(). */
+    public static function legalTextUrl(string $text): ?string
+    {
+        return StudioSettings::current()->{"portal_legal_{$text}_url"} ?? null;
+    }
+
+    public static function legalDatenschutzUrl(): ?string
+    {
+        return self::legalTextUrl('datenschutz');
+    }
+
+    public static function legalAgbUrl(): ?string
+    {
+        return self::legalTextUrl('agb');
+    }
+
     /** Messaging is three states, not a switch — see P-04 (#223). */
     public const MESSAGING_OFF = 'off';
 
@@ -44,21 +104,19 @@ class PortalSettings
         'gallery_downloads', 'gallery_lists', 'gallery_comments', 'portal_visible', 'offers',
     ];
 
-    public function __construct(private readonly StudioSettingsResolver $studio) {}
-
     public function acceptQuotesEnabled(?Contact $contact = null): bool
     {
-        return (bool) $this->resolve($contact, 'accept_quotes', $this->studio->acceptQuotesEnabled());
+        return (bool) $this->resolve($contact, 'accept_quotes', (bool) StudioSettings::current()->portal_accept_quotes_enabled);
     }
 
     public function signContractsEnabled(?Contact $contact = null): bool
     {
-        return (bool) $this->resolve($contact, 'sign_contracts', $this->studio->signContractsEnabled());
+        return (bool) $this->resolve($contact, 'sign_contracts', (bool) StudioSettings::current()->portal_sign_contracts_enabled);
     }
 
     public function paymentStatusEnabled(?Contact $contact = null): bool
     {
-        return (bool) $this->resolve($contact, 'payment_status', $this->studio->paymentStatusEnabled());
+        return (bool) $this->resolve($contact, 'payment_status', (bool) StudioSettings::current()->portal_payment_status_enabled);
     }
 
     /**
@@ -69,12 +127,12 @@ class PortalSettings
      */
     public function offersEnabled(?Contact $contact = null): bool
     {
-        return (bool) $this->resolve($contact, 'offers', $this->studio->offersEnabled());
+        return (bool) $this->resolve($contact, 'offers', (bool) StudioSettings::current()->portal_offers_enabled);
     }
 
     public function messagingMode(?Contact $contact = null): string
     {
-        return (string) $this->resolve($contact, 'messaging_mode', $this->studio->messagingMode());
+        return (string) $this->resolve($contact, 'messaging_mode', (string) StudioSettings::current()->portal_messaging_mode);
     }
 
     /** Whether the mailbox exists at all for this client. */
@@ -91,17 +149,17 @@ class PortalSettings
 
     public function galleryDownloadsEnabled(?Contact $contact = null): bool
     {
-        return (bool) $this->resolve($contact, 'gallery_downloads', $this->studio->galleryDownloadsEnabled());
+        return (bool) $this->resolve($contact, 'gallery_downloads', (bool) StudioSettings::current()->gallery_default_downloads_enabled);
     }
 
     public function galleryListsEnabled(?Contact $contact = null): bool
     {
-        return (bool) $this->resolve($contact, 'gallery_lists', $this->studio->galleryListsEnabled());
+        return (bool) $this->resolve($contact, 'gallery_lists', (bool) StudioSettings::current()->gallery_default_lists_enabled);
     }
 
     public function galleryCommentsEnabled(?Contact $contact = null): bool
     {
-        return (bool) $this->resolve($contact, 'gallery_comments', $this->studio->galleryCommentsEnabled());
+        return (bool) $this->resolve($contact, 'gallery_comments', (bool) StudioSettings::current()->gallery_default_comments_enabled);
     }
 
     /**
@@ -119,9 +177,9 @@ class PortalSettings
         }
 
         return match ($state) {
-            'inquiry' => $this->studio->portalWelcomeInquiry(),
-            'done' => $this->studio->portalWelcomeDone(),
-            default => $this->studio->portalWelcomeActive(),
+            'inquiry' => StudioSettings::current()->portal_welcome_inquiry,
+            'done' => StudioSettings::current()->portal_welcome_done,
+            default => StudioSettings::current()->portal_welcome_active,
         };
     }
 
@@ -153,11 +211,11 @@ class PortalSettings
     public function contactLine(): array
     {
         return [
-            'name' => $this->studio->portalContactName() ?? $this->studio->displayName(),
-            'avatarUrl' => $this->studio->portalContactAvatarPath() !== null ? '/branding/kontakt' : null,
-            'phone' => $this->studio->portalContactPhone() ?? $this->ownerPhone(),
-            'email' => $this->studio->portalContactEmail(),
-            'responseTime' => $this->closureNotice() ?? $this->studio->portalContactResponseTime(),
+            'name' => StudioSettings::current()->portal_contact_name ?? StudioSettings::current()->display_name,
+            'avatarUrl' => StudioSettings::current()->portal_contact_avatar_path !== null ? '/branding/kontakt' : null,
+            'phone' => StudioSettings::current()->portal_contact_phone ?? $this->ownerPhone(),
+            'email' => StudioSettings::current()->portal_contact_email,
+            'responseTime' => $this->closureNotice() ?? StudioSettings::current()->portal_contact_response_time,
         ];
     }
 

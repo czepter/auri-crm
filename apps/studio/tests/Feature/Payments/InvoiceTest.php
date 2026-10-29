@@ -23,7 +23,6 @@ use App\Payments\Models\Invoice;
 use App\Payments\Support\InvoiceFigures;
 use App\Payments\Support\InvoiceMergeData;
 use App\Settings\Actions\UpdateStudioSetting;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\GotenbergClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
@@ -43,7 +42,6 @@ beforeEach(function () {
 // live in tests/Pest.php.
 
 it('refuses to issue without a Steuernummer or USt-IdNr., drawing no number', function () {
-    $settings = app(StudioSettingsResolver::class);
     app(UpdateStudioSetting::class)('tax_number', null, null);
     app(UpdateStudioSetting::class)('vat_id', null, null);
 
@@ -57,7 +55,6 @@ it('refuses to issue without a Steuernummer or USt-IdNr., drawing no number', fu
 });
 
 it('issues on the USt-IdNr. alone', function () {
-    $settings = app(StudioSettingsResolver::class);
     app(UpdateStudioSetting::class)('tax_number', null, null);
     app(UpdateStudioSetting::class)('vat_id', 'DE123456789', null);
 
@@ -255,7 +252,7 @@ it('issues an invoice without a project from its items, with one installment to 
         ->and($invoice->installments->sole()->payment_plan_id)->toBeNull()
         ->and($invoice->installments->sole()->due_on->format('Y-m-d'))->toBe(now()->addMonth()->toDateString());
 
-    $figures = InvoiceFigures::forInvoice($invoice, app(StudioSettingsResolver::class));
+    $figures = InvoiceFigures::forInvoice($invoice);
 
     expect($figures->gross)->toBe(36_295)
         ->and($figures->net + $figures->vat)->toBe(36_295)
@@ -303,7 +300,7 @@ it('bills a picked rate at its own gross and charges free positions on top', fun
     ], '2026-10-15')->fresh(['installments', 'items']);
 
     $extra = $invoice->installments->firstWhere('payment_plan_id', null);
-    $figures = InvoiceFigures::forInvoice($invoice, app(StudioSettingsResolver::class));
+    $figures = InvoiceFigures::forInvoice($invoice);
 
     expect($installment->fresh()->invoice_id)->toBe($invoice->id)
         ->and($extra->amount)->toBe(10_710)

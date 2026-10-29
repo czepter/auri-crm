@@ -3,7 +3,7 @@
 namespace App\Portal\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Models\StudioSettings;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,9 +19,9 @@ use Inertia\Response;
  */
 class ImpressumController extends Controller
 {
-    public function __invoke(StudioSettingsResolver $settings): Response
+    public function __invoke(): Response
     {
-        $attrs = $settings->attributes();
+        $attrs = StudioSettings::current()->profile();
 
         return Inertia::render('Impressum', [
             // Same fallback RenderContractJob's `studio.name` merge field

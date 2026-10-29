@@ -4,7 +4,6 @@ use App\Enums\StaffRole;
 use App\Models\StaffInvitation;
 use App\Models\StudioSettings;
 use App\Models\User;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Staff\Notifications\StaffInvited;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -22,7 +21,7 @@ it('renders an unmodified notification through the compiled layout without error
         'invited_by_id' => $owner->id,
     ])->fresh();
 
-    $html = (new StaffInvited($invitation, 'https://example.test/einladung/abc', app(StudioSettingsResolver::class)))
+    $html = (new StaffInvited($invitation, 'https://example.test/einladung/abc'))
         ->toMail($owner)
         ->render();
 
@@ -45,7 +44,7 @@ it('carries the studio accent color into the rendered button', function () {
         'invited_by_id' => $owner->id,
     ])->fresh();
 
-    $html = (new StaffInvited($invitation, 'https://example.test/einladung/abc', app(StudioSettingsResolver::class)))
+    $html = (new StaffInvited($invitation, 'https://example.test/einladung/abc'))
         ->toMail($owner)
         ->render();
 

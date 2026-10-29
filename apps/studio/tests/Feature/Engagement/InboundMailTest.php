@@ -9,7 +9,6 @@ use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Models\StudioSettings;
 use App\Settings\Actions\RotateInboundSecret;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -280,7 +279,7 @@ it('falls back rather than minting an address with an empty handle', function ()
 it('shows the studio its own catch-all on the Posteingang screen', function () {
     withSecret();
     StudioSettings::query()->firstOrFail()->forceFill(['display_name' => 'Atelier Nordlicht'])->save();
-    app()->forgetInstance(StudioSettingsResolver::class);
+    StudioSettings::forgetCurrent();
 
     $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/posteingang')

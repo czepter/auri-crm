@@ -6,6 +6,7 @@ use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
 use App\Notifications\Support\MailPreview;
+use App\Notifications\Support\StudioMailFooter;
 use App\Portal\Notifications\PortalAccessInvitation;
 use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Enums\QuoteLayout;
@@ -18,7 +19,6 @@ use App\Settings\Enums\FontPair;
 use App\Settings\Rules\ValidFormat;
 use App\Settings\Rules\ValidIban;
 use App\Settings\Support\LogoResponse;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -44,7 +44,7 @@ class StudioSettingsController extends Controller
 {
     use AuthorizesStaffSettings;
 
-    public function edit(StudioSettingsResolver $settings, string $pane): Response
+    public function edit(string $pane): Response
     {
         $this->authorizeSettings();
 
@@ -67,7 +67,7 @@ class StudioSettingsController extends Controller
                 'name' => $row->mail_from_name === null,
                 'address' => $row->mail_from_address === null,
             ],
-            'settings' => StudioSettingsData::fromResolver($settings),
+            'settings' => StudioSettingsData::current(),
         ]);
     }
 
@@ -79,7 +79,7 @@ class StudioSettingsController extends Controller
      * Onboarding still posts all of them in one step; the loop below
      * writes whatever arrived either way.
      */
-    public function update(Request $request, StudioSettingsResolver $settings, AdaptClientRegister $adaptRegister): RedirectResponse
+    public function update(Request $request, AdaptClientRegister $adaptRegister): RedirectResponse
     {
         $this->authorizeSettings();
 
@@ -108,7 +108,7 @@ class StudioSettingsController extends Controller
             'client_register' => ['sometimes', 'required', 'in:formal,informal'],
             'adapt_existing' => ['sometimes', 'boolean', 'prohibited_unless:client_register,formal,informal'],
             // Blank returns the tenant to config('app.timezone'), per
-            // StudioSettingsResolver's fallback contract.
+            // StudioSettings::current()'s fallback contract.
             'timezone' => ['sometimes', 'nullable', 'timezone'],
             // SVG ist erlaubt, weil App\Settings\Support\LogoResponse die
             // Datei mit Sandbox-CSP ausliefert; ohne die beiden Kopfzeilen
@@ -124,7 +124,7 @@ class StudioSettingsController extends Controller
         ]);
 
         $actor = auth('staff')->user();
-        $registerChanged = isset($validated['client_register']) && $validated['client_register'] !== $settings->clientRegister();
+        $registerChanged = isset($validated['client_register']) && $validated['client_register'] !== StudioSettings::current()->client_register;
 
         foreach (collect($validated)->except('logo', 'adapt_existing') as $key => $value) {
             app(UpdateStudioSetting::class)($key, $value, $actor);
@@ -150,21 +150,12 @@ class StudioSettingsController extends Controller
      * Anschrift im Fuß. Die Signatur kommt getippt statt gespeichert, damit
      * die Vorschau mitläuft.
      */
-    public function previewMail(Request $request, StudioSettingsResolver $settings): HttpResponse
+    public function previewMail(Request $request): HttpResponse
     {
         $this->authorizeSettings();
 
         if ($request->has('signatur')) {
-            $settings = new class(Str::limit((string) $request->query('signatur'), 1000, '')) extends StudioSettingsResolver
-            {
-                public function __construct(private readonly string $signature) {}
-
-                public function mailSignature(): ?string
-                {
-                    return $this->signature ?: null;
-                }
-            };
-            app()->instance(StudioSettingsResolver::class, $settings);
+            app()->instance(StudioMailFooter::class, new StudioMailFooter(Str::limit((string) $request->query('signatur'), 1000, '')));
         }
 
         $html = MailPreview::html(
@@ -189,14 +180,14 @@ class StudioSettingsController extends Controller
      * `studio.logoPath` merge field points at — behind the settings screen's
      * own auth gate rather than a public path a filename could be guessed
      * against. A future portal-branding read (T-08's Impressum) reaches the
-     * same StudioSettingsResolver::logoPath() this does; nothing here is
+     * same StudioSettings' logo_path this does; nothing here is
      * admin-specific beyond the gate itself.
      */
-    public function logo(StudioSettingsResolver $settings): StreamedResponse
+    public function logo(): StreamedResponse
     {
         $this->authorizeSettings();
 
-        $path = $settings->logoPath();
+        $path = StudioSettings::current()->logo_path;
 
         abort_if($path === null, 404);
 
@@ -213,7 +204,7 @@ class StudioSettingsController extends Controller
      * resources/js/admin/lib/money.ts) — the same "never a float" boundary
      * App\Quotes\Enums\DiscountType documents for discount percentages.
      */
-    public function updateVat(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    public function updateVat(Request $request): RedirectResponse
     {
         $this->authorizeSettings();
 
@@ -238,7 +229,7 @@ class StudioSettingsController extends Controller
      * deposit_percentage arrives already in basis points, same boundary
      * vat_rate crosses in updateVat().
      */
-    public function updatePayment(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    public function updatePayment(Request $request): RedirectResponse
     {
         $this->authorizeSettings();
 
@@ -259,7 +250,7 @@ class StudioSettingsController extends Controller
         return back();
     }
 
-    public function updateReceipts(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    public function updateReceipts(Request $request): RedirectResponse
     {
         $this->authorizeSettings();
 
@@ -288,7 +279,7 @@ class StudioSettingsController extends Controller
      * pane's DocumentPreview.vue shows. App\Quotes\Support\SampleQuoteData
      * never touches the database, so this route needs no project or quote.
      */
-    public function previewQuoteLayout(Request $request, RenderQuotePdf $render, StudioSettingsResolver $settings): HttpResponse
+    public function previewQuoteLayout(Request $request, RenderQuotePdf $render): HttpResponse
     {
         $this->authorizeSettings();
 
@@ -297,7 +288,7 @@ class StudioSettingsController extends Controller
         ]);
 
         $layout = isset($validated['layout']) ? QuoteLayout::from($validated['layout']) : null;
-        $sample = SampleQuoteData::build($settings);
+        $sample = SampleQuoteData::build();
 
         return response($render->html($sample, $layout))->header('Content-Type', 'text/html; charset=utf-8');
     }
@@ -311,7 +302,7 @@ class StudioSettingsController extends Controller
      * has to stay aligned with. mail_sender_reset empties the two columns an
      * older installation may still carry and hands them back to the .env.
      */
-    public function updateMail(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    public function updateMail(Request $request): RedirectResponse
     {
         $this->authorizeSettings();
 

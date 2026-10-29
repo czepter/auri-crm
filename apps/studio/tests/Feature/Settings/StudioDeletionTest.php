@@ -19,7 +19,6 @@ use App\Privacy\Notifications\Studio\StudioDeletionReminder;
 use App\Quotes\Models\Quote;
 use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Enums\StudioExportKind;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -120,7 +119,7 @@ it('removes the files of the studio from both disks and only those', function ()
 it('keeps the studio until the day, then deletes it and reminds the day before', function () {
     $owner = staffMember(StaffRole::Admin);
     requestDeletionAt(now()->toDateTimeString());
-    $day = app(StudioSettingsResolver::class)->deletionDate();
+    $day = StudioSettings::current()->deletionDate();
 
     $this->travelTo($day->subDays(2)->setTime(3, 0));
     $this->artisan('studio:delete-due')->assertSuccessful();
@@ -154,7 +153,7 @@ it('withdraws the request on cancel', function () {
     $this->actingAs($owner, 'staff')->delete(CODE_PATH)->assertRedirect();
 
     expect(StudioSettings::query()->sole()->deletion_requested_at)->toBeNull()
-        ->and(app(StudioSettingsResolver::class)->deletionDate())->toBeNull();
+        ->and(StudioSettings::current()->deletionDate())->toBeNull();
 
     $this->travelTo(now()->addDays(40));
     $this->artisan('studio:delete-due')->assertSuccessful();
@@ -188,7 +187,7 @@ it('marks the studio only for the code that was mailed, once', function () {
 
     $this->post(CODE_PATH, ['code' => $code])->assertSessionHasNoErrors();
     expect(StudioSettings::query()->sole()->deletion_requested_at)->not->toBeNull()
-        ->and(props('/')['studioDeletion'])->toBe(app(StudioSettingsResolver::class)->deletionDate()->format('d.m.Y'));
+        ->and(props('/')['studioDeletion'])->toBe(StudioSettings::current()->deletionDate()->format('d.m.Y'));
 
     $this->delete(CODE_PATH);
     $this->post(CODE_PATH, ['code' => $code])->assertSessionHasErrors('code');
