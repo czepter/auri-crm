@@ -15,6 +15,7 @@ use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\ClientCase;
+use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
 use App\Crm\Models\ProjectType;
 use App\Crm\Models\Shoot;
@@ -26,12 +27,14 @@ use App\Http\Controllers\Controller;
 use App\Quotes\Actions\ReadCaseQuote;
 use App\Quotes\Actions\ReadQuoteList;
 use App\Settings\Rules\ValidFormat;
+use App\Support\AuditLogger;
 use App\Support\RecordVisit;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -215,9 +218,28 @@ class LeadCaseController extends Controller
                     continue;
                 }
 
+                $email = $person['email'] ?? null;
+
+                // Die Adresse ist die Portal-Anmeldung dieses Kunden, nicht
+                // Teil des Falls: dieselbe Hoheit wie im Adressbuch.
+                if ($email !== $contact->email) {
+                    $this->authorize('update', $contact);
+
+                    if ($email !== null && Contact::query()->where('email', $email)->whereKeyNot($contact->id)->exists()) {
+                        throw ValidationException::withMessages(['people' => __('validation.unique', ['attribute' => 'email'])]);
+                    }
+
+                    AuditLogger::record(
+                        event: 'contact.email_changed',
+                        actor: auth('staff')->user(),
+                        context: ['from' => $contact->email, 'to' => $email],
+                        subject: $contact->public_id,
+                    );
+                }
+
                 $contact->update([
                     'name' => $person['name'],
-                    'email' => $person['email'] ?? null,
+                    'email' => $email,
                     'phone' => $person['phone'] ?? null,
                 ]);
 
