@@ -10,6 +10,7 @@ use App\Engagement\Support\InboundAddress;
 use App\Http\Controllers\Controller;
 use App\Models\UserEmailVerification;
 use App\Notifications\NotificationService;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Staff\Notifications\StudioReady;
@@ -56,7 +57,7 @@ class StudioOnboardingController extends Controller
         $seed(StarterTemplateCatalog::onboardingDefaults(), $owner, $settings->clientRegister());
         $seedRules();
 
-        $settings->set('onboarding_completed_at', now(), $owner);
+        app(UpdateStudioSetting::class)('onboarding_completed_at', now(), $owner);
 
         $inboundAddress = $settings->inboundSecret() === null
             ? null

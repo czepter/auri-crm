@@ -9,6 +9,8 @@ use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Http\Controllers\Controller;
 use App\Portal\Support\PortalSettings;
+use App\Settings\Actions\UpdatePortalContactAvatar;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Data\PortalSettingsData;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Enums\FontPair;
@@ -227,11 +229,11 @@ class PortalSettingsController extends Controller
         $actor = auth('staff')->user();
 
         foreach (collect($validated)->except('portal_contact_avatar') as $key => $value) {
-            $settings->set($key, $value, $actor);
+            app(UpdateStudioSetting::class)($key, $value, $actor);
         }
 
         if ($request->hasFile('portal_contact_avatar')) {
-            $settings->setPortalContactAvatar($request->file('portal_contact_avatar'), $actor);
+            app(UpdatePortalContactAvatar::class)($request->file('portal_contact_avatar'), $actor);
         }
 
         return back();
@@ -280,7 +282,7 @@ class PortalSettingsController extends Controller
         $actor = auth('staff')->user();
 
         foreach ($validated as $key => $value) {
-            $settings->set($key, $value, $actor);
+            app(UpdateStudioSetting::class)($key, $value, $actor);
         }
 
         return back();
@@ -290,7 +292,7 @@ class PortalSettingsController extends Controller
     {
         $this->authorizeSettings();
 
-        $settings->removePortalContactAvatar(auth('staff')->user());
+        app(UpdatePortalContactAvatar::class)(null, auth('staff')->user());
 
         return back();
     }
@@ -329,7 +331,7 @@ class PortalSettingsController extends Controller
         $actor = auth('staff')->user();
 
         foreach ($validated as $key => $value) {
-            $settings->set($key, $value, $actor);
+            app(UpdateStudioSetting::class)($key, $value, $actor);
         }
 
         return back();

@@ -3,6 +3,8 @@
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Models\StudioSettings;
+use App\Settings\Actions\StoreStudioLogo;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Jobs\ReadStudioSettingsJob;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -48,7 +50,7 @@ it('makes a write visible to a completely fresh resolver instance, with no cache
     expect($warm->displayName())->toBeNull();
 
     // Written through a second, unrelated instance — the web process.
-    (new StudioSettingsResolver)->set('display_name', 'Atelier Nordlicht', $owner);
+    app(UpdateStudioSetting::class)('display_name', 'Atelier Nordlicht', $owner);
 
     // Read through a third instance holding nothing the write above touched
     // directly, the same shape a Horizon worker's own container resolution
@@ -61,7 +63,7 @@ it('makes a write visible to a completely fresh resolver instance, with no cache
 it('lets a job popped by a real queue worker read a setting the web process changed', function () {
     $owner = staffMember(StaffRole::Admin);
 
-    (new StudioSettingsResolver)->set('display_name', 'Atelier Nordlicht', $owner);
+    app(UpdateStudioSetting::class)('display_name', 'Atelier Nordlicht', $owner);
 
     // A real Illuminate\Queue\Worker popping a real queued job — the same
     // "boots real infra" tier QueueRuntimeTest's FailingJob test uses,
@@ -82,7 +84,7 @@ it('lets a job popped by a real queue worker read a setting the web process chan
 it('writes an audit row naming the actor, the key and both values', function () {
     $owner = staffMember(StaffRole::Admin);
 
-    (new StudioSettingsResolver)->set('display_name', 'Atelier Nordlicht', $owner);
+    app(UpdateStudioSetting::class)('display_name', 'Atelier Nordlicht', $owner);
 
     $log = AuditLog::where('event', 'studio_settings.updated')->sole();
 
@@ -96,14 +98,14 @@ it('leaves no audit row for a write that changes nothing', function () {
     $owner = staffMember(StaffRole::Admin);
     $resolver = new StudioSettingsResolver;
 
-    $resolver->set('display_name', null, $owner);
+    app(UpdateStudioSetting::class)('display_name', null, $owner);
 
     expect(AuditLog::where('event', 'studio_settings.updated')->count())->toBe(0);
 });
 
 it('returns T-02\'s legal-entity, brand and bank columns as one plain array', function () {
     $owner = staffMember(StaffRole::Admin);
-    (new StudioSettingsResolver)->set('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
+    app(UpdateStudioSetting::class)('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
 
     $attributes = (new StudioSettingsResolver)->attributes();
 
@@ -115,7 +117,7 @@ it('stores the uploaded logo once and resolves the same path from an independent
     Storage::fake('local');
     $owner = staffMember(StaffRole::Admin);
 
-    (new StudioSettingsResolver)->setLogo(UploadedFile::fake()->image('logo.png'), $owner);
+    app(StoreStudioLogo::class)(UploadedFile::fake()->image('logo.png'), $owner);
 
     $fromOneInstance = (new StudioSettingsResolver)->logoPath();
     $fromAnotherInstance = (new StudioSettingsResolver)->logoPath();
@@ -130,10 +132,10 @@ it('deletes the previous logo file when a new one replaces it', function () {
     Storage::fake('local');
     $owner = staffMember(StaffRole::Admin);
 
-    (new StudioSettingsResolver)->setLogo(UploadedFile::fake()->image('first.png'), $owner);
+    app(StoreStudioLogo::class)(UploadedFile::fake()->image('first.png'), $owner);
     $firstPath = (new StudioSettingsResolver)->logoPath();
 
-    (new StudioSettingsResolver)->setLogo(UploadedFile::fake()->image('second.svg'), $owner);
+    app(StoreStudioLogo::class)(UploadedFile::fake()->image('second.svg'), $owner);
     $secondPath = (new StudioSettingsResolver)->logoPath();
 
     expect($secondPath)->not->toBe($firstPath);
@@ -145,7 +147,7 @@ it('writes an audit row for a logo upload naming the actor', function () {
     Storage::fake('local');
     $owner = staffMember(StaffRole::Admin);
 
-    (new StudioSettingsResolver)->setLogo(UploadedFile::fake()->image('logo.png'), $owner);
+    app(StoreStudioLogo::class)(UploadedFile::fake()->image('logo.png'), $owner);
 
     $log = AuditLog::where('event', 'studio_settings.updated')->where('context->key', 'logo_path')->sole();
     expect($log->actor_id)->toBe($owner->id)

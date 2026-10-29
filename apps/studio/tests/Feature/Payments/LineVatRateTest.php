@@ -7,6 +7,7 @@ use App\Payments\Models\PaymentInstallment;
 use App\Payments\Support\InvoiceFigures;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
@@ -28,10 +29,10 @@ beforeEach(function () {
 function mixedRateInstallment(array $lines, int $deposit, string $vatMode = 'standard'): PaymentInstallment
 {
     $settings = app(StudioSettingsResolver::class);
-    $settings->set('vat_mode', $vatMode, null);
-    $settings->set('vat_rate', 1900, null);
+    app(UpdateStudioSetting::class)('vat_mode', $vatMode, null);
+    app(UpdateStudioSetting::class)('vat_rate', 1900, null);
     // § 14 Abs. 4 Nr. 2: IssueInvoice refuses without one.
-    $settings->set('tax_number', '22/123/45678', null);
+    app(UpdateStudioSetting::class)('tax_number', '22/123/45678', null);
 
     $project = bookedContactProject();
 

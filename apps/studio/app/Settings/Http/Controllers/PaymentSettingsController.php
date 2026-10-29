@@ -4,6 +4,7 @@ namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
+use App\Settings\Actions\UpdatePaymentSettings;
 use App\Settings\Data\PaymentSettingsData;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
@@ -55,7 +56,7 @@ class PaymentSettingsController extends Controller
             'payments_stripe_live_secret_key' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $settings->setPaymentSettings($validated, auth('staff')->user());
+        app(UpdatePaymentSettings::class)($validated, auth('staff')->user());
 
         return redirect('/einstellungen/zahlungen');
     }

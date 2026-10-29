@@ -5,6 +5,7 @@ namespace App\Staff\Actions;
 use App\Enums\StaffRole;
 use App\Models\User;
 use App\Notifications\NotificationService;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Staff\Notifications\StudioSetupPending;
 
@@ -33,7 +34,7 @@ class RemindOnboarding
         }
 
         $this->notifications->send($owner, new StudioSetupPending($owner->name));
-        $this->settings->set('onboarding_reminder_sent_at', now(), null);
+        app(UpdateStudioSetting::class)('onboarding_reminder_sent_at', now(), null);
 
         return 1;
     }

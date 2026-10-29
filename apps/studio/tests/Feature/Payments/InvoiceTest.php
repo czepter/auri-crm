@@ -22,6 +22,7 @@ use App\Payments\Jobs\RenderInvoiceJob;
 use App\Payments\Models\Invoice;
 use App\Payments\Support\InvoiceFigures;
 use App\Payments\Support\InvoiceMergeData;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\GotenbergClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -35,7 +36,7 @@ uses(RefreshDatabase::class);
 // column is nullable with no default — a studio far enough along to invoice
 // has filed one.
 beforeEach(function () {
-    app(StudioSettingsResolver::class)->set('tax_number', '22/123/45678', null);
+    app(UpdateStudioSetting::class)('tax_number', '22/123/45678', null);
 });
 
 // bookedContactProject(), staffMember() and invoiceablePlan()
@@ -43,8 +44,8 @@ beforeEach(function () {
 
 it('refuses to issue without a Steuernummer or USt-IdNr., drawing no number', function () {
     $settings = app(StudioSettingsResolver::class);
-    $settings->set('tax_number', null, null);
-    $settings->set('vat_id', null, null);
+    app(UpdateStudioSetting::class)('tax_number', null, null);
+    app(UpdateStudioSetting::class)('vat_id', null, null);
 
     $installment = invoiceablePlan();
 
@@ -57,8 +58,8 @@ it('refuses to issue without a Steuernummer or USt-IdNr., drawing no number', fu
 
 it('issues on the USt-IdNr. alone', function () {
     $settings = app(StudioSettingsResolver::class);
-    $settings->set('tax_number', null, null);
-    $settings->set('vat_id', 'DE123456789', null);
+    app(UpdateStudioSetting::class)('tax_number', null, null);
+    app(UpdateStudioSetting::class)('vat_id', 'DE123456789', null);
 
     expect(app(IssueInvoice::class)(invoiceablePlan())->number)->toStartWith('RE-');
 });

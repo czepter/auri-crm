@@ -12,7 +12,7 @@ use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Enums\SettledVia;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Settings\Actions\UpdateStudioSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
@@ -25,7 +25,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     Storage::fake('local');
     Bus::fake();
-    app(StudioSettingsResolver::class)->set('tax_number', '22/123/45678', null);
+    app(UpdateStudioSetting::class)('tax_number', '22/123/45678', null);
 });
 
 /**

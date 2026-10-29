@@ -17,6 +17,7 @@ use App\Privacy\Models\StudioExport;
 use App\Privacy\Notifications\Studio\StudioDeletionCode;
 use App\Privacy\Notifications\Studio\StudioDeletionReminder;
 use App\Quotes\Models\Quote;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Enums\StudioExportKind;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
@@ -67,7 +68,7 @@ function requestDeletionAt(string $when): void
 
 it('leaves no row in any table with a tenant_id', function () {
     Queue::fake();
-    app(StudioSettingsResolver::class)->set('tax_number', '22/123/45678', null);
+    app(UpdateStudioSetting::class)('tax_number', '22/123/45678', null);
     $owner = staffMember(StaffRole::Admin);
     $installment = creditableInstallment();
     $project = $installment->invoice->case;

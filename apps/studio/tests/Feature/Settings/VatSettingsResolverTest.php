@@ -3,6 +3,7 @@
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Models\StudioSettings;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -42,8 +43,8 @@ it('forces the effective rate to zero under small_business, regardless of what v
     // A deliberately non-zero, non-default rate left on the row — proving
     // effectiveVatRate() ignores it entirely under small_business rather
     // than happening to return zero because vat_rate was already zero.
-    $resolver->set('vat_rate', 2100, $owner);
-    $resolver->set('vat_mode', 'small_business', $owner);
+    app(UpdateStudioSetting::class)('vat_rate', 2100, $owner);
+    app(UpdateStudioSetting::class)('vat_mode', 'small_business', $owner);
 
     expect($resolver->effectiveVatRate())->toBe(0)
         ->and($resolver->vatRate())->toBe(2100);
@@ -53,11 +54,11 @@ it('reverts to the stored rate the moment mode switches back to standard', funct
     $owner = staffMember(StaffRole::Admin);
     $resolver = new StudioSettingsResolver;
 
-    $resolver->set('vat_rate', 2100, $owner);
-    $resolver->set('vat_mode', 'small_business', $owner);
+    app(UpdateStudioSetting::class)('vat_rate', 2100, $owner);
+    app(UpdateStudioSetting::class)('vat_mode', 'small_business', $owner);
     expect($resolver->effectiveVatRate())->toBe(0);
 
-    $resolver->set('vat_mode', 'standard', $owner);
+    app(UpdateStudioSetting::class)('vat_mode', 'standard', $owner);
 
     // vat_rate was never touched by the small_business switch — switching
     // back does not lose it, per the issue's own scope line.
@@ -68,8 +69,8 @@ it('writes one audit row per changed VAT field', function () {
     $owner = staffMember(StaffRole::Admin);
     $resolver = new StudioSettingsResolver;
 
-    $resolver->set('vat_mode', 'small_business', $owner);
-    $resolver->set('vat_note', 'Individueller Hinweistext.', $owner);
+    app(UpdateStudioSetting::class)('vat_mode', 'small_business', $owner);
+    app(UpdateStudioSetting::class)('vat_note', 'Individueller Hinweistext.', $owner);
 
     expect(AuditLog::where('event', 'studio_settings.updated')->count())->toBe(2)
         ->and(AuditLog::where('context->key', 'vat_mode')->sole()->context['new'])->toBe('small_business')

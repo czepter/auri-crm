@@ -5,7 +5,7 @@ use App\Documents\Models\DocumentTemplate;
 use App\Enums\StaffRole;
 use App\Payments\Actions\IssueInvoice;
 use App\Payments\Notifications\InvoiceSent;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Support\GotenbergClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Storage;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    app(StudioSettingsResolver::class)->set('tax_number', '22/123/45678', null);
+    app(UpdateStudioSetting::class)('tax_number', '22/123/45678', null);
 });
 
 /** An issued invoice whose PDF is on the faked disk. */

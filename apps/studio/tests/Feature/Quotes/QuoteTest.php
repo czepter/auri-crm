@@ -21,6 +21,7 @@ use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Quotes\Notifications\QuoteSent;
 use App\Quotes\Support\DiscountCalculator;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -235,7 +236,7 @@ describe('T-05: quote validity default', function () {
     });
 
     it('takes its validity from the tenant setting when created without a package and no explicit valid_until', function () {
-        app(StudioSettingsResolver::class)->set('quote_validity_days', 21);
+        app(UpdateStudioSetting::class)('quote_validity_days', 21);
         $project = ClientCase::factory()->create();
 
         $this->actingAs(quoteOwner(), 'staff')
@@ -248,7 +249,7 @@ describe('T-05: quote validity default', function () {
     });
 
     it('leaves an explicit valid_until alone rather than overriding it with the default', function () {
-        app(StudioSettingsResolver::class)->set('quote_validity_days', 21);
+        app(UpdateStudioSetting::class)('quote_validity_days', 21);
         $project = ClientCase::factory()->create();
 
         $this->actingAs(quoteOwner(), 'staff')
@@ -259,7 +260,7 @@ describe('T-05: quote validity default', function () {
     });
 
     it('moves no existing quote\'s valid_until when the default changes afterwards', function () {
-        app(StudioSettingsResolver::class)->set('quote_validity_days', 14);
+        app(UpdateStudioSetting::class)('quote_validity_days', 14);
         $project = ClientCase::factory()->create();
 
         $this->actingAs(quoteOwner(), 'staff')
@@ -268,7 +269,7 @@ describe('T-05: quote validity default', function () {
         $quote = $project->quotes()->sole();
         $originalValidUntil = $quote->valid_until->format('Y-m-d');
 
-        app(StudioSettingsResolver::class)->set('quote_validity_days', 60);
+        app(UpdateStudioSetting::class)('quote_validity_days', 60);
 
         expect($quote->fresh()->valid_until->format('Y-m-d'))->toBe($originalValidUntil);
     });
@@ -574,8 +575,8 @@ describe('Q-04: VAT snapshot', function () {
     });
 
     it('snapshots the standard rate, computing vat_amount off the already-rounded net via DiscountCalculator', function () {
-        app(StudioSettingsResolver::class)->set('vat_mode', 'standard');
-        app(StudioSettingsResolver::class)->set('vat_rate', 1900); // 19.00%
+        app(UpdateStudioSetting::class)('vat_mode', 'standard');
+        app(UpdateStudioSetting::class)('vat_rate', 1900); // 19.00%
 
         $quote = Quote::factory()->create();
         QuoteItem::factory()->for($quote)->create(['quantity' => 1, 'unit_price' => 453782]);
@@ -596,8 +597,8 @@ describe('Q-04: VAT snapshot', function () {
         // 4.537,82 € net at 19.00%: 453782 × 1900 = 862.186.580,
         // + half the basis-point divisor (5.000), /10000 rounded down
         // (DiscountCalculator's round-half-up) = 86.219 (862,19 €).
-        app(StudioSettingsResolver::class)->set('vat_mode', 'standard');
-        app(StudioSettingsResolver::class)->set('vat_rate', 1900);
+        app(UpdateStudioSetting::class)('vat_mode', 'standard');
+        app(UpdateStudioSetting::class)('vat_rate', 1900);
 
         $quote = Quote::factory()->create(['net' => 453782]);
         $quote->snapshotVat(app(StudioSettingsResolver::class));
@@ -606,8 +607,8 @@ describe('Q-04: VAT snapshot', function () {
     });
 
     it('snapshots small_business as zero VAT charged, printing the note instead of a rate', function () {
-        app(StudioSettingsResolver::class)->set('vat_mode', 'small_business');
-        app(StudioSettingsResolver::class)->set('vat_note', 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.');
+        app(UpdateStudioSetting::class)('vat_mode', 'small_business');
+        app(UpdateStudioSetting::class)('vat_note', 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.');
 
         $quote = Quote::factory()->create(['net' => 100000]);
         $quote->snapshotVat(app(StudioSettingsResolver::class));
@@ -623,8 +624,8 @@ describe('Q-04: VAT snapshot', function () {
         // T-03's own rule: vat_rate is never zeroed by a mode switch, so a
         // studio holds e.g. 19% on file while small_business is active. The
         // snapshot must still charge nothing.
-        app(StudioSettingsResolver::class)->set('vat_rate', 1900);
-        app(StudioSettingsResolver::class)->set('vat_mode', 'small_business');
+        app(UpdateStudioSetting::class)('vat_rate', 1900);
+        app(UpdateStudioSetting::class)('vat_mode', 'small_business');
 
         $quote = Quote::factory()->create(['net' => 100000]);
         $quote->snapshotVat(app(StudioSettingsResolver::class));
@@ -634,8 +635,8 @@ describe('Q-04: VAT snapshot', function () {
     });
 
     it('leaves an already-snapshotted quote entirely unaffected when the tenant later changes its VAT mode', function () {
-        app(StudioSettingsResolver::class)->set('vat_mode', 'standard');
-        app(StudioSettingsResolver::class)->set('vat_rate', 1900);
+        app(UpdateStudioSetting::class)('vat_mode', 'standard');
+        app(UpdateStudioSetting::class)('vat_rate', 1900);
 
         $quote = Quote::factory()->create(['net' => 500000]);
         $quote->snapshotVat(app(StudioSettingsResolver::class));
@@ -645,7 +646,7 @@ describe('Q-04: VAT snapshot', function () {
         // The studio switches to small_business after the quote already
         // carries its own snapshot — Q-04's whole point, and the reason
         // nothing here re-reads StudioSettingsResolver.
-        app(StudioSettingsResolver::class)->set('vat_mode', 'small_business');
+        app(UpdateStudioSetting::class)('vat_mode', 'small_business');
 
         expect($quote->fresh()->only(['vat_mode', 'vat_rate', 'vat_note', 'vat_amount']))->toBe($before);
     });
@@ -655,14 +656,14 @@ describe('Q-04: VAT snapshot', function () {
         $draft = Quote::factory()->for($project, 'case')->create(['net' => 50000]);
 
         $sent = Quote::factory()->for($project, 'case')->create(['net' => 100000]);
-        app(StudioSettingsResolver::class)->set('vat_mode', 'standard');
-        app(StudioSettingsResolver::class)->set('vat_rate', 1900);
+        app(UpdateStudioSetting::class)('vat_mode', 'standard');
+        app(UpdateStudioSetting::class)('vat_rate', 1900);
         $sent->snapshotVat(app(StudioSettingsResolver::class));
 
         // The tenant's rate changes after the send — the sent quote must not
         // see it, the still-unsent draft must, since nothing of its is
         // frozen yet.
-        app(StudioSettingsResolver::class)->set('vat_rate', 700);
+        app(UpdateStudioSetting::class)('vat_rate', 700);
 
         $props = $this->actingAs(quoteOwner(), 'staff')
             ->get("/auftraege/{$project->public_id}/angebote")

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Privacy\Actions\ApplyRetention;
 use App\Privacy\Data\RetentionPolicyData;
 use App\Privacy\Support\RetentionCandidates;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -64,10 +65,10 @@ class RetentionController extends Controller
 
         $months = $validated['retention_months'] === null ? null : (int) $validated['retention_months'];
 
-        $settings->set('retention_months', $months, $request->user('staff'));
+        app(UpdateStudioSetting::class)('retention_months', $months, $request->user('staff'));
 
         if ($months !== null) {
-            $settings->set('retention_policy', (new RetentionPolicyData(...$validated['policy']))->removed(), $request->user('staff'));
+            app(UpdateStudioSetting::class)('retention_policy', (new RetentionPolicyData(...$validated['policy']))->removed(), $request->user('staff'));
         }
 
         return $months;

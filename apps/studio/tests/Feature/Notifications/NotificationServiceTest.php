@@ -7,6 +7,7 @@ use App\Notifications\Models\InAppNotification;
 use App\Notifications\NotificationService;
 use App\Notifications\Transports\InAppTransport;
 use App\Portal\Notifications\ClientAccessLink;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -130,7 +131,7 @@ it('queues the framework password-reset mail too, the one send that never reache
 });
 
 it('withholds mail to clients while the studio has switched it off, and still mails staff and login links', function () {
-    app(StudioSettingsResolver::class)->set('mail_clients_enabled', false);
+    app(UpdateStudioSetting::class)('mail_clients_enabled', false);
 
     $sent = [];
     Event::listen(NotificationSent::class, function (NotificationSent $event) use (&$sent) {

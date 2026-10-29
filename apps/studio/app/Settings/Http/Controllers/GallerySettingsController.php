@@ -4,6 +4,7 @@ namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -39,7 +40,7 @@ class GallerySettingsController extends Controller
         $actor = auth('staff')->user();
 
         foreach ($validated as $key => $value) {
-            $settings->set($key, $value, $actor);
+            app(UpdateStudioSetting::class)($key, $value, $actor);
         }
 
         return redirect('/galerien');

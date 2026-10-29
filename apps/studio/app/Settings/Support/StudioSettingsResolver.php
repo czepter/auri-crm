@@ -3,17 +3,12 @@
 namespace App\Settings\Support;
 
 use App\Gallery\Models\GalleryPreset;
-use App\Media\Support\ImageVariant;
 use App\Models\StudioSettings;
-use App\Models\User;
 use App\Privacy\Data\RetentionPolicyData;
 use App\Settings\Enums\FontPair;
-use App\Support\AuditLogger;
 use Carbon\CarbonImmutable;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * The tenant-scoped config service Vision §12 asked for and nothing built
@@ -236,132 +231,6 @@ class StudioSettingsResolver
         return $line === '' ? null : $line;
     }
 
-    /**
-     * The logo is stored once (T-02's acceptance criterion) — a re-upload
-     * replaces the same tenant's file and removes whatever it replaces,
-     * rather than accumulating a second one under a second name. Uses the
-     * `local` disk the exact way RenderContractJob stores a rendered
-     * contract (Storage::disk('local'), see docs/documents.md), not a
-     * second filesystem convention invented for branding alone.
-     */
-    public function setLogo(UploadedFile $file, ?User $actor = null): void
-    {
-        $row = StudioSettings::query()->firstOrFail();
-        $old = $row->logo_path;
-
-        // SVG bleibt, wie es ankommt. Alles andere wird auf die Breite gebracht,
-        // die ein Beleg braucht: aus einer Kamera oder einem Export kommen
-        // Megapixel für ein Zeichen von wenigen Zentimetern.
-        if ($file->extension() === 'svg') {
-            $path = $file->storeAs("branding/{$row->tenant_id}", 'logo.svg', 'local');
-        } else {
-            $path = "branding/{$row->tenant_id}/logo.webp";
-            Storage::disk('local')->put($path, ImageVariant::resizeAndEncode($file->get(), 800, 'webp'));
-        }
-
-        if ($old !== null && $old !== $path) {
-            Storage::disk('local')->delete($old);
-        }
-
-        $row->update(['logo_path' => $path]);
-
-        StudioSettings::forgetCurrent();
-
-        AuditLogger::record(
-            event: 'studio_settings.updated',
-            actor: $actor,
-            context: ['key' => 'logo_path', 'old' => $old, 'new' => $path],
-            subject: $row->public_id,
-        );
-    }
-
-    /**
-     * Denselben Weg wie das Logo, mit zwei Unterschieden: niemals SVG — das
-     * Bild geht öffentlich über BrandingController raus, und eine SVG-Datei
-     * ist Markup — und die Datei wird nicht abgelegt, wie sie ankommt.
-     *
-     * Aus einer Kamera kommen acht Megapixel für einen Kreis von 54. Abgelegt
-     * wird deshalb nur, was die Karte braucht: 320 Pixel breit, als WebP,
-     * über dieselbe GD-Strecke, die die Galerie für ihre Varianten fährt.
-     */
-    public function setPortalContactAvatar(UploadedFile $file, ?User $actor = null): void
-    {
-        $row = StudioSettings::query()->firstOrFail();
-        $old = $row->portal_contact_avatar_path;
-
-        $path = "branding/{$row->tenant_id}/kontakt.webp";
-
-        Storage::disk('local')->put(
-            $path,
-            ImageVariant::resizeAndEncode($file->get(), 320, 'webp'),
-        );
-
-        if ($old !== null && $old !== $path) {
-            Storage::disk('local')->delete($old);
-        }
-
-        $this->writeContactAvatar($row, $path, $old, $actor);
-    }
-
-    public function removePortalContactAvatar(?User $actor = null): void
-    {
-        $row = StudioSettings::query()->firstOrFail();
-        $old = $row->portal_contact_avatar_path;
-
-        if ($old === null) {
-            return;
-        }
-
-        Storage::disk('local')->delete($old);
-
-        $this->writeContactAvatar($row, null, $old, $actor);
-    }
-
-    private function writeContactAvatar(StudioSettings $row, ?string $path, ?string $old, ?User $actor): void
-    {
-        $row->update(['portal_contact_avatar_path' => $path]);
-
-        StudioSettings::forgetCurrent();
-
-        AuditLogger::record(
-            event: 'studio_settings.updated',
-            actor: $actor,
-            context: ['key' => 'portal_contact_avatar_path', 'old' => $old, 'new' => $path],
-            subject: $row->public_id,
-        );
-    }
-
-    /**
-     * Writes one column, busts the cache both processes read through, and
-     * leaves an audit row naming the actor and both values — T-01's issue,
-     * "every write goes through the existing AuditLog". Reads the row fresh
-     * off the database rather than through row()'s cache, so a stale cached
-     * copy can never write a wrong "old" value into the audit trail.
-     *
-     * A no-op write (old === new) leaves neither an audit row nor a cache
-     * bust: "every change" in the acceptance criteria, not every request.
-     */
-    public function set(string $key, mixed $value, ?User $actor = null): void
-    {
-        $row = StudioSettings::query()->firstOrFail();
-        $old = $row->{$key};
-
-        if ($old === $value) {
-            return;
-        }
-
-        $row->update([$key => $value]);
-
-        StudioSettings::forgetCurrent();
-
-        AuditLogger::record(
-            event: 'studio_settings.updated',
-            actor: $actor,
-            context: ['key' => $key, 'old' => $old, 'new' => $value],
-            subject: $row->public_id,
-        );
-    }
-
     // --- T-07: Stripe as an optional capability, and the provider-independent defaults ---
 
     public function stripeEnabled(): bool
@@ -427,74 +296,6 @@ class StudioSettingsResolver
     public function remindersEnabled(): bool
     {
         return $this->row()->payments_reminders_enabled;
-    }
-
-    /**
-     * T-07's own pane, saved in one submit like Studio-Profil (T-02) and
-     * unlike Zahlungsdaten & USt's own endpoint — nothing here needs the
-     * "own fieldset, own button" separation those two have, because every
-     * field on this pane lives or dies with the same "Zahlungen" save.
-     *
-     * The four key columns are written only when a NEW, non-empty value is
-     * given — the write-only form (never echoing a stored key back) has no
-     * other way to say "leave this pair alone", and an empty string arriving
-     * from an untouched field must never null out a key that already works.
-     * Audited by column name only: a key's value never rides along into
-     * AuditLog, the same "never leaves the cast that decrypts it" rule that
-     * keeps it out of every Inertia prop and API response.
-     *
-     * @param  array{
-     *     payments_stripe_enabled: bool,
-     *     payments_stripe_mode: string,
-     *     payments_stripe_test_publishable_key?: ?string,
-     *     payments_stripe_test_secret_key?: ?string,
-     *     payments_stripe_live_publishable_key?: ?string,
-     *     payments_stripe_live_secret_key?: ?string,
-     * }  $attributes
-     */
-    public function setPaymentSettings(array $attributes, ?User $actor = null): void
-    {
-        $row = StudioSettings::query()->firstOrFail();
-
-        $plainKeys = ['payments_stripe_enabled', 'payments_stripe_mode'];
-        $keyColumns = [
-            'payments_stripe_test_publishable_key', 'payments_stripe_test_secret_key',
-            'payments_stripe_live_publishable_key', 'payments_stripe_live_secret_key',
-        ];
-
-        $updates = [];
-        $changedNames = [];
-        $plainChanges = [];
-
-        foreach ($plainKeys as $key) {
-            if ($attributes[$key] !== $row->{$key}) {
-                $plainChanges[$key] = [$row->{$key}, $attributes[$key]];
-                $updates[$key] = $attributes[$key];
-                $changedNames[] = $key;
-            }
-        }
-
-        foreach ($keyColumns as $column) {
-            if (! empty($attributes[$column] ?? null)) {
-                $updates[$column] = $attributes[$column];
-                $changedNames[] = $column;
-            }
-        }
-
-        if ($updates === []) {
-            return;
-        }
-
-        $row->update($updates);
-
-        StudioSettings::forgetCurrent();
-
-        AuditLogger::record(
-            event: 'studio_settings.updated',
-            actor: $actor,
-            context: ['keys' => $changedNames, 'changes' => $plainChanges],
-            subject: $row->public_id,
-        );
     }
 
     // --- T-06: mail identity — who a tenant's outgoing mail leaves under ---

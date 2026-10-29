@@ -13,6 +13,7 @@ use App\Payments\Support\InvoiceFigures;
 use App\Payments\Support\InvoiceMergeData;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
@@ -26,9 +27,9 @@ beforeEach(function () {
     Bus::fake();
 
     $settings = app(StudioSettingsResolver::class);
-    $settings->set('tax_number', '22/123/45678', null);
-    $settings->set('vat_mode', 'standard', null);
-    $settings->set('vat_rate', 1900, null);
+    app(UpdateStudioSetting::class)('tax_number', '22/123/45678', null);
+    app(UpdateStudioSetting::class)('vat_mode', 'standard', null);
+    app(UpdateStudioSetting::class)('vat_rate', 1900, null);
 });
 
 /**

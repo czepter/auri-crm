@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\StaffRole;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -24,11 +25,11 @@ it('seeds sensible document defaults on the migration itself', function () {
 it('writes each document default through set(), busts the cache, and audits the actor', function () {
     $owner = staffMember(StaffRole::Admin);
 
-    (new StudioSettingsResolver)->set('quote_validity_days', 30, $owner);
-    (new StudioSettingsResolver)->set('payment_term_days', 21, $owner);
-    (new StudioSettingsResolver)->set('deposit_percentage', 5000, $owner);
-    (new StudioSettingsResolver)->set('document_letterhead_html', '<header>Nordlicht</header>', $owner);
-    (new StudioSettingsResolver)->set('document_footer_html', '<footer>Seite 1</footer>', $owner);
+    app(UpdateStudioSetting::class)('quote_validity_days', 30, $owner);
+    app(UpdateStudioSetting::class)('payment_term_days', 21, $owner);
+    app(UpdateStudioSetting::class)('deposit_percentage', 5000, $owner);
+    app(UpdateStudioSetting::class)('document_letterhead_html', '<header>Nordlicht</header>', $owner);
+    app(UpdateStudioSetting::class)('document_footer_html', '<footer>Seite 1</footer>', $owner);
 
     $fresh = new StudioSettingsResolver;
 

@@ -5,6 +5,7 @@ use App\Enums\StaffRole;
 use App\Models\StaffInvitation;
 use App\Models\User;
 use App\Portal\Notifications\ClientAccessLink;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Staff\Notifications\StaffInvited;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -61,8 +62,8 @@ it("leaves ClientAccessLink's mail under the tenant's own address, sourced live 
     // The setting changes — no deploy, no cache-clear command, exactly the
     // write StudioSettingsResolver::set() already busts the shared cache
     // for.
-    (new StudioSettingsResolver)->set('mail_from_address', 'studio@nordlicht.test', $owner);
-    (new StudioSettingsResolver)->set('mail_from_name', 'Atelier Nordlicht', $owner);
+    app(UpdateStudioSetting::class)('mail_from_address', 'studio@nordlicht.test', $owner);
+    app(UpdateStudioSetting::class)('mail_from_name', 'Atelier Nordlicht', $owner);
 
     // Second send, through a completely fresh resolver instance — the same
     // shape a new request or a queued job would build.
@@ -81,8 +82,8 @@ it('sets reply-to and BCC on ClientAccessLink only when the tenant configured th
     expect($bare->replyTo)->toBe([])
         ->and($bare->bcc)->toBe([]);
 
-    (new StudioSettingsResolver)->set('mail_reply_to', 'buero@nordlicht.test', $owner);
-    (new StudioSettingsResolver)->set('mail_bcc', 'ablage@nordlicht.test', $owner);
+    app(UpdateStudioSetting::class)('mail_reply_to', 'buero@nordlicht.test', $owner);
+    app(UpdateStudioSetting::class)('mail_bcc', 'ablage@nordlicht.test', $owner);
 
     $configured = (new ClientAccessLink($contact, 'https://example.test/zugang', new StudioSettingsResolver))->toMail($contact);
     expect($configured->replyTo)->toBe([['buero@nordlicht.test', null]])
@@ -92,7 +93,7 @@ it('sets reply-to and BCC on ClientAccessLink only when the tenant configured th
 it("appends the studio's signature block as its own line on ClientAccessLink", function () {
     $owner = staffMember(StaffRole::Admin);
     $contact = Contact::factory()->create();
-    (new StudioSettingsResolver)->set('mail_signature', 'Herzliche Grüße, das Team von Atelier Nordlicht', $owner);
+    app(UpdateStudioSetting::class)('mail_signature', 'Herzliche Grüße, das Team von Atelier Nordlicht', $owner);
 
     $message = (new ClientAccessLink($contact, 'https://example.test/zugang', new StudioSettingsResolver))->toMail($contact);
 
@@ -105,12 +106,12 @@ it(
         $owner = staffMember(StaffRole::Admin);
         $contact = Contact::factory()->create();
         $settings = new StudioSettingsResolver;
-        $settings->set('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
-        $settings->set('street', 'Elbchaussee 112', $owner);
-        $settings->set('postcode', '22763', $owner);
-        $settings->set('city', 'Hamburg', $owner);
-        $settings->set('tax_number', '22/123/45678', $owner);
-        $settings->set('vat_id', 'DE284957312', $owner);
+        app(UpdateStudioSetting::class)('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
+        app(UpdateStudioSetting::class)('street', 'Elbchaussee 112', $owner);
+        app(UpdateStudioSetting::class)('postcode', '22763', $owner);
+        app(UpdateStudioSetting::class)('city', 'Hamburg', $owner);
+        app(UpdateStudioSetting::class)('tax_number', '22/123/45678', $owner);
+        app(UpdateStudioSetting::class)('vat_id', 'DE284957312', $owner);
 
         // The one source both this mail footer and the
         // mergeData() read from — see App\Concerns\AppliesStudioMailIdentity.
@@ -147,8 +148,8 @@ it("leaves StaffInvited's mail under the tenant's own address, resolved live at 
     $first = (new StaffInvited($invitation, 'https://example.test/einladung/raw', new StudioSettingsResolver))
         ->toMail($invitation);
 
-    (new StudioSettingsResolver)->set('mail_from_address', 'studio@nordlicht.test', $owner);
-    (new StudioSettingsResolver)->set('mail_from_name', 'Atelier Nordlicht', $owner);
+    app(UpdateStudioSetting::class)('mail_from_address', 'studio@nordlicht.test', $owner);
+    app(UpdateStudioSetting::class)('mail_from_name', 'Atelier Nordlicht', $owner);
 
     $second = (new StaffInvited($invitation, 'https://example.test/einladung/raw', new StudioSettingsResolver))
         ->toMail($invitation);
@@ -162,8 +163,8 @@ it(
     function () {
         $owner = staffMember(StaffRole::Admin);
         $invitation = t06Invitation();
-        (new StudioSettingsResolver)->set('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
-        (new StudioSettingsResolver)->set('city', 'Hamburg', $owner);
+        app(UpdateStudioSetting::class)('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
+        app(UpdateStudioSetting::class)('city', 'Hamburg', $owner);
 
         $studio = (new StudioSettingsResolver)->attributes();
 
@@ -178,8 +179,8 @@ it("renders the studio's legal particulars inside the layout's footer zone, not 
     $owner = staffMember(StaffRole::Admin);
     $contact = Contact::factory()->create();
     $settings = new StudioSettingsResolver;
-    $settings->set('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
-    $settings->set('city', 'Hamburg', $owner);
+    app(UpdateStudioSetting::class)('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
+    app(UpdateStudioSetting::class)('city', 'Hamburg', $owner);
 
     $html = renderedMail((new ClientAccessLink($contact, 'https://example.test/zugang', new StudioSettingsResolver))->toMail($contact));
 

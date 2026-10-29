@@ -4,6 +4,7 @@ use App\Crm\Models\ClientCase;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Models\StudioSettings;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -32,7 +33,7 @@ it('returns the tenant timezone once set, not the environment fallback', functio
     $owner = staffMember(StaffRole::Admin);
     $resolver = new StudioSettingsResolver;
 
-    $resolver->set('timezone', 'Europe/Vienna', $owner);
+    app(UpdateStudioSetting::class)('timezone', 'Europe/Vienna', $owner);
 
     expect($resolver->timezone())->toBe('Europe/Vienna')
         ->and($resolver->timezone())->not->toBe(config('app.timezone'));
@@ -52,8 +53,8 @@ it('writes one audit row per changed operational-defaults field', function () {
     $owner = staffMember(StaffRole::Admin);
     $resolver = new StudioSettingsResolver;
 
-    $resolver->set('timezone', 'Europe/Zurich', $owner);
-    $resolver->set('working_days', [1, 2, 3, 4, 5], $owner);
+    app(UpdateStudioSetting::class)('timezone', 'Europe/Zurich', $owner);
+    app(UpdateStudioSetting::class)('working_days', [1, 2, 3, 4, 5], $owner);
 
     expect(AuditLog::where('event', 'studio_settings.updated')->count())->toBe(2)
         ->and(AuditLog::where('context->key', 'timezone')->sole()->context['new'])->toBe('Europe/Zurich')
@@ -69,8 +70,8 @@ it('leaves an existing stored timestamp exactly as it was, unaffected by an oper
     $project = ClientCase::factory()->create();
     $before = DB::table('cases')->where('id', $project->id)->value('created_at');
 
-    (new StudioSettingsResolver)->set('timezone', 'Europe/Vienna', $owner);
-    (new StudioSettingsResolver)->set('working_days', [1, 2, 3, 4, 5], $owner);
+    app(UpdateStudioSetting::class)('timezone', 'Europe/Vienna', $owner);
+    app(UpdateStudioSetting::class)('working_days', [1, 2, 3, 4, 5], $owner);
 
     $after = DB::table('cases')->where('id', $project->id)->value('created_at');
 

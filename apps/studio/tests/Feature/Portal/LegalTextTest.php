@@ -2,6 +2,7 @@
 
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -24,8 +25,8 @@ function legalTemplate(string $name = 'Widerrufsbelehrung'): DocumentTemplate
 function pointAt(string $text, ?string $family = null, ?string $url = null): StudioSettingsResolver
 {
     $settings = app(StudioSettingsResolver::class);
-    $settings->set("portal_legal_{$text}_family", $family, null);
-    $settings->set("portal_legal_{$text}_url", $url, null);
+    app(UpdateStudioSetting::class)("portal_legal_{$text}_family", $family, null);
+    app(UpdateStudioSetting::class)("portal_legal_{$text}_url", $url, null);
     Cache::store('redis')->flush();
 
     return app(StudioSettingsResolver::class);
@@ -69,7 +70,7 @@ it('keeps all four legal links in the footer and lists only attached ones beside
             ->where('portalLegal.widerrufUrl', '/rechtstexte/widerruf')
             ->where('portalQuoteLegal', []));
 
-    app(StudioSettingsResolver::class)->set('portal_legal_widerruf_attach', true, null);
+    app(UpdateStudioSetting::class)('portal_legal_widerruf_attach', true, null);
     Cache::store('redis')->flush();
 
     $this->get('/rechtstexte/widerruf')
@@ -91,8 +92,8 @@ it('resolves the studio fields a Widerrufsbelehrung names', function () {
     ]);
 
     $settings = app(StudioSettingsResolver::class);
-    $settings->set('legal_name', 'Atelier Nordlicht Fotografie GmbH', null);
-    $settings->set('city', 'Hamburg', null);
+    app(UpdateStudioSetting::class)('legal_name', 'Atelier Nordlicht Fotografie GmbH', null);
+    app(UpdateStudioSetting::class)('city', 'Hamburg', null);
     pointAt('widerruf', $template->family_id);
 
     $this->get('/rechtstexte/widerruf')

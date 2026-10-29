@@ -8,7 +8,7 @@ use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
 use App\Models\User;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Settings\Actions\UpdateStudioSetting;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -138,7 +138,7 @@ it('rolls a due date landing on a non-working day forward to the next working da
     // narrows the studio's working days to Monday-Friday first — the same
     // configuration T-13's issue names as the motivating example.
     $owner = User::factory()->create();
-    app(StudioSettingsResolver::class)->set('working_days', [1, 2, 3, 4, 5], $owner);
+    app(UpdateStudioSetting::class)('working_days', [1, 2, 3, 4, 5], $owner);
 
     $project = ClientCase::factory()->create();
     Shoot::factory()->for($project, 'case')->on('2026-06-15')->create();
@@ -156,7 +156,7 @@ it('rolls forward only as far as the next configured working day, even when a si
     // offset lands on Saturday 2026-06-13; Sunday 2026-06-14 is still a
     // working day under this configuration, so the roll stops there.
     $owner = User::factory()->create();
-    app(StudioSettingsResolver::class)->set('working_days', [1, 2, 3, 4, 5, 7], $owner);
+    app(UpdateStudioSetting::class)('working_days', [1, 2, 3, 4, 5, 7], $owner);
 
     $project = ClientCase::factory()->create();
     Shoot::factory()->for($project, 'case')->on('2026-06-15')->create();
@@ -190,7 +190,7 @@ it('previews the same due dates the real booking action produces for the same sh
 
 it('leaves a due date that already lands on a working day untouched', function () {
     $owner = User::factory()->create();
-    app(StudioSettingsResolver::class)->set('working_days', [1, 2, 3, 4, 5], $owner);
+    app(UpdateStudioSetting::class)('working_days', [1, 2, 3, 4, 5], $owner);
 
     $project = ClientCase::factory()->create();
     Shoot::factory()->for($project, 'case')->on('2026-06-15')->create(); // Monday

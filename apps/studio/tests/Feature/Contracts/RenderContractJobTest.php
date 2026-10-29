@@ -5,6 +5,8 @@ use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Jobs\RenderContractJob;
 use App\Contracts\Models\Contract;
 use App\Documents\Models\DocumentTemplate;
+use App\Settings\Actions\StoreStudioLogo;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as HttpRequest;
@@ -71,9 +73,9 @@ it('resolves studio.* merge fields from T-02\'s settings row, including the one 
 
     $owner = staffMember();
     $settings = new StudioSettingsResolver;
-    $settings->set('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
-    $settings->set('city', 'Hamburg', $owner);
-    $settings->setLogo(UploadedFile::fake()->image('logo.png'), $owner);
+    app(UpdateStudioSetting::class)('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
+    app(UpdateStudioSetting::class)('city', 'Hamburg', $owner);
+    app(StoreStudioLogo::class)(UploadedFile::fake()->image('logo.png'), $owner);
 
     $template = DocumentTemplate::factory()->create([
         'body' => '<p>{{ studio.name }}, {{ studio.city }} — Logo: {{ studio.logoPath }}</p>',

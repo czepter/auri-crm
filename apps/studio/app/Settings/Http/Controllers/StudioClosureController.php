@@ -5,6 +5,7 @@ namespace App\Settings\Http\Controllers;
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
 use App\Models\StudioClosure;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Data\StudioClosureData;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
@@ -42,7 +43,7 @@ class StudioClosureController extends Controller
             'working_days.*' => ['integer', 'between:1,7', 'distinct'],
         ]);
 
-        $settings->set('working_days', array_values($validated['working_days']), auth('staff')->user());
+        app(UpdateStudioSetting::class)('working_days', array_values($validated['working_days']), auth('staff')->user());
 
         return back();
     }

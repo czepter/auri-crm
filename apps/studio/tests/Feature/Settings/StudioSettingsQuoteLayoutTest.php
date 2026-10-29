@@ -1,5 +1,6 @@
 <?php
 
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -14,7 +15,7 @@ it('defaults document_layout to classic', function () {
 it('reads back a saved document_layout', function () {
     [$user, $project] = studioWithProject();
 
-    app(StudioSettingsResolver::class)->set('document_layout', 'header_band');
+    app(UpdateStudioSetting::class)('document_layout', 'header_band');
 
     expect(app(StudioSettingsResolver::class)->documentLayout())->toBe('header_band');
 });

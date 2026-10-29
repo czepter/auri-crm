@@ -1,10 +1,15 @@
 <?php
 
 use App\Crm\Models\Contact;
+use App\Documents\Enums\DocumentTemplateType;
+use App\Documents\Models\DocumentTemplate;
 use App\Enums\Capability;
 use App\Enums\StaffRole;
+use App\Numbering\Models\NumberCounter;
 use App\Payments\Actions\IssueInvoice;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Payments\Actions\RenderInvoicePdf;
+use App\Payments\Models\Invoice;
+use App\Settings\Actions\UpdateStudioSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Storage;
@@ -12,7 +17,7 @@ use Illuminate\Support\Facades\Storage;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    app(StudioSettingsResolver::class)->set('tax_number', '22/123/45678', null);
+    app(UpdateStudioSetting::class)('tax_number', '22/123/45678', null);
     Storage::fake('local');
     Bus::fake();
 });
@@ -88,8 +93,8 @@ it('previews an invoice without a project as it will print, drawing no number', 
         ->and($html)->toContain('Abzug 30×45')
         ->and($html)->toContain('357,00')
         ->and($html)->toContain('01.10.2026')
-        ->and(App\Payments\Models\Invoice::count())->toBe(0)
-        ->and(App\Numbering\Models\NumberCounter::count())->toBe(0);
+        ->and(Invoice::count())->toBe(0)
+        ->and(NumberCounter::count())->toBe(0);
 });
 
 it('previews the chosen rates of a plan', function () {
@@ -105,7 +110,7 @@ it('previews the chosen rates of a plan', function () {
 
     expect($html)->toContain('1.500,00')
         ->and($html)->toContain('Lena Meier')
-        ->and(App\Payments\Models\Invoice::count())->toBe(0);
+        ->and(Invoice::count())->toBe(0);
 });
 
 it('keeps the letter text on the invoice and prints it around the positions', function () {
@@ -119,8 +124,8 @@ it('keeps the letter text on the invoice and prints it around the positions', fu
         ])
         ->assertRedirect();
 
-    $invoice = App\Payments\Models\Invoice::sole();
-    $html = app(App\Payments\Actions\RenderInvoicePdf::class)->forInvoice($invoice->load('installments', 'items', 'contact'));
+    $invoice = Invoice::sole();
+    $html = app(RenderInvoicePdf::class)->forInvoice($invoice->load('installments', 'items', 'contact'));
 
     expect($invoice->intro)->toBe('Hallo {{ contact.name }},')
         ->and($html)->toContain('Hallo Jonas Gast,')
@@ -153,8 +158,8 @@ it('previews the draft as the portal page and as the mail', function () {
 });
 
 it('starts the letter from the invoice template, without the tax line the layout prints', function () {
-    App\Documents\Models\DocumentTemplate::factory()->create([
-        'type' => App\Documents\Enums\DocumentTemplateType::Invoice,
+    DocumentTemplate::factory()->create([
+        'type' => DocumentTemplateType::Invoice,
         'body' => '<p>Guten Tag {{ contact.name }},</p><p>vielen Dank f&uuml;r den Auftrag.</p>',
     ]);
 
@@ -167,7 +172,7 @@ it('starts the letter from the invoice template, without the tax line the layout
 it('prints the Steuernummer from the layout whatever the letter says', function () {
     $invoice = app(IssueInvoice::class)(invoiceablePlan(), null, ['intro' => 'Hallo.'])->fresh();
 
-    $html = app(App\Payments\Actions\RenderInvoicePdf::class)->forInvoice($invoice);
+    $html = app(RenderInvoicePdf::class)->forInvoice($invoice);
 
     expect($html)->toContain('Steuernummer')
         ->and($html)->toContain('22/123/45678')
@@ -175,7 +180,7 @@ it('prints the Steuernummer from the layout whatever the letter says', function 
 });
 
 it('keeps only letter markup and escapes what a merge field brings in', function () {
-    $contact = App\Crm\Models\Contact::factory()->create(['name' => '<b>Jonas</b>']);
+    $contact = Contact::factory()->create(['name' => '<b>Jonas</b>']);
 
     $this->actingAs(staffMember(), 'staff')
         ->post('/rechnungen', [
@@ -186,8 +191,8 @@ it('keeps only letter markup and escapes what a merge field brings in', function
         ])
         ->assertRedirect();
 
-    $invoice = App\Payments\Models\Invoice::sole();
-    $html = app(App\Payments\Actions\RenderInvoicePdf::class)->forInvoice($invoice->load('installments', 'items', 'contact'));
+    $invoice = Invoice::sole();
+    $html = app(RenderInvoicePdf::class)->forInvoice($invoice->load('installments', 'items', 'contact'));
 
     expect($invoice->intro)->toBe('<h2>Hallo {{ contact.name }}</h2><p>Danke</p>')
         ->and($html)->toContain('<h2>Hallo &lt;b&gt;Jonas&lt;/b&gt;</h2>');

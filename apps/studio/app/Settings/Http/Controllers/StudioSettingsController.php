@@ -11,6 +11,8 @@ use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Enums\QuoteLayout;
 use App\Quotes\Support\SampleQuoteData;
 use App\Settings\Actions\AdaptClientRegister;
+use App\Settings\Actions\StoreStudioLogo;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Enums\FontPair;
 use App\Settings\Rules\ValidFormat;
@@ -125,11 +127,11 @@ class StudioSettingsController extends Controller
         $registerChanged = isset($validated['client_register']) && $validated['client_register'] !== $settings->clientRegister();
 
         foreach (collect($validated)->except('logo', 'adapt_existing') as $key => $value) {
-            $settings->set($key, $value, $actor);
+            app(UpdateStudioSetting::class)($key, $value, $actor);
         }
 
         if ($request->hasFile('logo')) {
-            $settings->setLogo($request->file('logo'), $actor);
+            app(StoreStudioLogo::class)($request->file('logo'), $actor);
         }
 
         if ($registerChanged && ($validated['adapt_existing'] ?? false)) {
@@ -222,9 +224,9 @@ class StudioSettingsController extends Controller
         ]);
 
         $actor = auth('staff')->user();
-        $settings->set('vat_mode', $validated['vat_mode'], $actor);
-        $settings->set('vat_rate', $validated['vat_rate'], $actor);
-        $settings->set('vat_note', $validated['vat_note'] ?? null, $actor);
+        app(UpdateStudioSetting::class)('vat_mode', $validated['vat_mode'], $actor);
+        app(UpdateStudioSetting::class)('vat_rate', $validated['vat_rate'], $actor);
+        app(UpdateStudioSetting::class)('vat_note', $validated['vat_note'] ?? null, $actor);
 
         return back();
     }
@@ -251,7 +253,7 @@ class StudioSettingsController extends Controller
         $actor = auth('staff')->user();
 
         foreach ($validated as $key => $value) {
-            $settings->set($key, $value, $actor);
+            app(UpdateStudioSetting::class)($key, $value, $actor);
         }
 
         return back();
@@ -273,7 +275,7 @@ class StudioSettingsController extends Controller
         $actor = auth('staff')->user();
 
         foreach ($validated as $key => $value) {
-            $settings->set($key, $value, $actor);
+            app(UpdateStudioSetting::class)($key, $value, $actor);
         }
 
         return back();
@@ -324,12 +326,12 @@ class StudioSettingsController extends Controller
         $actor = auth('staff')->user();
 
         if (Arr::pull($validated, 'mail_sender_reset')) {
-            $settings->set('mail_from_name', null, $actor);
-            $settings->set('mail_from_address', null, $actor);
+            app(UpdateStudioSetting::class)('mail_from_name', null, $actor);
+            app(UpdateStudioSetting::class)('mail_from_address', null, $actor);
         }
 
         foreach ($validated as $key => $value) {
-            $settings->set($key, $value, $actor);
+            app(UpdateStudioSetting::class)($key, $value, $actor);
         }
 
         return back();

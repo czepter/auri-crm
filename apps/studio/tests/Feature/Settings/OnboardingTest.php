@@ -5,6 +5,7 @@ use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Enums\StaffRole;
 use App\Models\StudioSettings;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -71,7 +72,7 @@ it('writes the starter templates on finish, the invoice aside', function () {
 });
 
 it('seeds the default automation rules on finish, in the studio register', function () {
-    app(StudioSettingsResolver::class)->set('client_register', 'informal', null);
+    app(UpdateStudioSetting::class)('client_register', 'informal', null);
 
     $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/einrichtung/studio/abschluss')
@@ -84,7 +85,7 @@ it('seeds the default automation rules on finish, in the studio register', funct
 });
 
 it('writes the Kleinunternehmer invoice when the first invoice is drafted in that mode', function () {
-    app(StudioSettingsResolver::class)->set('vat_mode', 'small_business', null);
+    app(UpdateStudioSetting::class)('vat_mode', 'small_business', null);
 
     $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/einrichtung/studio/abschluss')

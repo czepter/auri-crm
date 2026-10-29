@@ -8,6 +8,7 @@ use App\Payments\Actions\IssueInvoice;
 use App\Payments\Actions\RenderInvoicePdf;
 use App\Payments\Jobs\RenderInvoiceJob;
 use App\Payments\Support\MergeDataSnapshot;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\GotenbergClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\Storage;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    app(StudioSettingsResolver::class)->set('tax_number', '22/123/45678', null);
+    app(UpdateStudioSetting::class)('tax_number', '22/123/45678', null);
 });
 
 it('exports one line per issued invoice of the year, with a BOM and the header row', function () {
@@ -72,7 +73,7 @@ it('re-renders a lost PDF from the snapshot, not from today settings', function 
     ]);
 
     $settings = app(StudioSettingsResolver::class);
-    $settings->set('bank_iban', 'DE02120300000000202051', null);
+    app(UpdateStudioSetting::class)('bank_iban', 'DE02120300000000202051', null);
 
     $seen = [];
     $this->mock(GotenbergClient::class)
@@ -89,7 +90,7 @@ it('re-renders a lost PDF from the snapshot, not from today settings', function 
 
     expect(Storage::disk('local')->exists(MergeDataSnapshot::pathFor($path)))->toBeTrue();
 
-    $settings->set('bank_iban', 'DE89370400440532013000', null);
+    app(UpdateStudioSetting::class)('bank_iban', 'DE89370400440532013000', null);
     Storage::disk('local')->delete($path);
 
     (new RenderInvoiceJob($invoice->fresh()))->handle(

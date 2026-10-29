@@ -3,6 +3,7 @@
 use App\Enums\StaffRole;
 use App\Gallery\Models\GalleryPreset;
 use App\Models\User;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -67,7 +68,7 @@ it('moves the start mark to the preset that was chosen', function () {
 });
 
 it('ships the studio design to the create screen', function () {
-    app(StudioSettingsResolver::class)->set('gallery_default_design', [
+    app(UpdateStudioSetting::class)('gallery_default_design', [
         'cover' => 'split', 'type' => 'serif', 'colour' => 'warm', 'grid' => 'single',
     ]);
 

@@ -12,6 +12,7 @@ use App\Payments\Models\CreditNote;
 use App\Payments\Models\Invoice;
 use App\Payments\Support\InvoiceDocument;
 use App\Quotes\Enums\QuoteLayout;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
@@ -21,7 +22,7 @@ use Illuminate\Support\Facades\Storage;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    app(StudioSettingsResolver::class)->set('tax_number', '22/123/45678', null);
+    app(UpdateStudioSetting::class)('tax_number', '22/123/45678', null);
 });
 
 function layoutInvoice(): Invoice
@@ -42,8 +43,8 @@ function layoutInvoice(): Invoice
 
 it('prints the number, the gross and the § 19 note in every layout under the small-business rule', function (QuoteLayout $layout) {
     $settings = app(StudioSettingsResolver::class);
-    $settings->set('vat_mode', 'small_business', null);
-    $settings->set('vat_note', 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.', null);
+    app(UpdateStudioSetting::class)('vat_mode', 'small_business', null);
+    app(UpdateStudioSetting::class)('vat_note', 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.', null);
 
     $invoice = layoutInvoice();
 
@@ -86,7 +87,7 @@ it('prints the Netto → Umsatzsteuer → Gesamtbetrag chain in every layout at 
 ]);
 
 it('reads the layout from the same setting the quote reads', function () {
-    app(StudioSettingsResolver::class)->set('document_layout', 'header_band', null);
+    app(UpdateStudioSetting::class)('document_layout', 'header_band', null);
 
     $html = app(RenderInvoicePdf::class)->forInvoice(layoutInvoice());
 
@@ -107,8 +108,8 @@ it('carries the Verzugshinweis once, in every layout', function (QuoteLayout $la
 
 it('carries the bank details and the Verwendungszweck without a template block', function () {
     $settings = app(StudioSettingsResolver::class);
-    $settings->set('bank_account_holder', 'Atelier Nordlicht', null);
-    $settings->set('bank_iban', 'DE02120300000000202051', null);
+    app(UpdateStudioSetting::class)('bank_account_holder', 'Atelier Nordlicht', null);
+    app(UpdateStudioSetting::class)('bank_iban', 'DE02120300000000202051', null);
 
     $invoice = layoutInvoice();
 

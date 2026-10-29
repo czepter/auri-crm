@@ -6,6 +6,7 @@ use App\Enums\StaffRole;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
 use App\Privacy\Actions\StudioDeletionConfirmation;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,7 +43,7 @@ class StudioDeletionController extends Controller
         self::authorizeOwner();
 
         $confirmation->redeem($request->user('staff'), $request->validate(['code' => ['required', 'string']])['code']);
-        $settings->set('deletion_requested_at', now(), $request->user('staff'));
+        app(UpdateStudioSetting::class)('deletion_requested_at', now(), $request->user('staff'));
 
         return back();
     }
@@ -51,7 +52,7 @@ class StudioDeletionController extends Controller
     {
         self::authorizeOwner();
 
-        $settings->set('deletion_requested_at', null, $request->user('staff'));
+        app(UpdateStudioSetting::class)('deletion_requested_at', null, $request->user('staff'));
 
         return back();
     }

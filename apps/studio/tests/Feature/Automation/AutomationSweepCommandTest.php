@@ -9,7 +9,7 @@ use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Shoot;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Settings\Actions\UpdateStudioSetting;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -39,7 +39,7 @@ it('runs from the artisan command, reporting how many rules it fired', function 
 // 00:30 in Berlin is still yesterday in UTC; the sweep must count from the studio's day.
 it('counts today on the studio clock', function () {
     Notification::fake();
-    app(StudioSettingsResolver::class)->set('timezone', 'Europe/Berlin', null);
+    app(UpdateStudioSetting::class)('timezone', 'Europe/Berlin', null);
     $this->travelTo(CarbonImmutable::parse('2026-06-01 22:30', 'UTC'));
 
     $project = ClientCase::factory()->create();

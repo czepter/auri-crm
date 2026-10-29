@@ -2,7 +2,7 @@
 
 use App\Crm\Models\ClientCase;
 use App\Models\User;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Settings\Actions\UpdateStudioSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -54,7 +54,7 @@ it('shares the studio name rather than a hardcoded one', function () {
     // The admin wordmark and every sign-in screen read this prop, all of them
     // with nobody signed in yet.
     $user = User::factory()->create();
-    (new StudioSettingsResolver)->set('display_name', 'Atelier Weitwinkel', $user);
+    app(UpdateStudioSetting::class)('display_name', 'Atelier Weitwinkel', $user);
 
     $this->get('/login')
         ->assertOk()

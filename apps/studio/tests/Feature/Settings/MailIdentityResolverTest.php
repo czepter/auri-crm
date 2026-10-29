@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\StaffRole;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -26,11 +27,11 @@ it('falls back to config(mail.from.*) until a studio sets its own', function () 
 it('resolves the tenant value the moment it is set, with no deploy', function () {
     $owner = staffMember(StaffRole::Admin);
 
-    (new StudioSettingsResolver)->set('mail_from_address', 'studio@nordlicht.test', $owner);
-    (new StudioSettingsResolver)->set('mail_from_name', 'Atelier Nordlicht', $owner);
-    (new StudioSettingsResolver)->set('mail_reply_to', 'buero@nordlicht.test', $owner);
-    (new StudioSettingsResolver)->set('mail_bcc', 'ablage@nordlicht.test', $owner);
-    (new StudioSettingsResolver)->set('mail_signature', 'Herzliche Grüße, das Team von Atelier Nordlicht', $owner);
+    app(UpdateStudioSetting::class)('mail_from_address', 'studio@nordlicht.test', $owner);
+    app(UpdateStudioSetting::class)('mail_from_name', 'Atelier Nordlicht', $owner);
+    app(UpdateStudioSetting::class)('mail_reply_to', 'buero@nordlicht.test', $owner);
+    app(UpdateStudioSetting::class)('mail_bcc', 'ablage@nordlicht.test', $owner);
+    app(UpdateStudioSetting::class)('mail_signature', 'Herzliche Grüße, das Team von Atelier Nordlicht', $owner);
 
     // A completely fresh instance — the same "no cache-clear command" shape
     // StudioSettingsResolverTest already proves for display_name.
