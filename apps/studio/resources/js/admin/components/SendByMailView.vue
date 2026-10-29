@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
+import { Toaster } from '@/ui/sonner'
 import DocumentEditor from '@/admin/components/DocumentEditor.vue'
 import { toPlainText } from '@/admin/documents/blocks/serialize'
 import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/types'
@@ -98,5 +99,6 @@ function send() {
         <iframe :srcdoc="previewHtml" sandbox="" :title="$t('sendMail.preview')" class="min-h-0 flex-1 rounded-md border-0 bg-sunk" />
       </div>
     </div>
+    <Toaster position="bottom-right" rich-colors />
   </div>
 </template>
