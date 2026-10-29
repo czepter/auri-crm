@@ -7,7 +7,7 @@ use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentMergeData;
 use App\Documents\Support\MergeFieldResolver;
 use App\Http\Controllers\Controller;
-use App\Portal\Support\PortalSettings;
+use App\Portal\Support\LegalTexts;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -25,9 +25,9 @@ class LegalTextController extends Controller
 {
     public function __invoke(string $text, DocumentMergeData $merge): Response
     {
-        abort_unless(in_array($text, PortalSettings::LEGAL_TEXTS, true), 404);
+        abort_unless(in_array($text, LegalTexts::ALL, true), 404);
 
-        $family = PortalSettings::legalFamily($text);
+        $family = LegalTexts::family($text);
 
         abort_if($family === null, 404);
 

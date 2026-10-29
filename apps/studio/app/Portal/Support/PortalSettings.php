@@ -28,68 +28,6 @@ use App\Models\User;
  */
 class PortalSettings
 {
-    public const LEGAL_TEXTS = ['impressum', 'datenschutz', 'agb', 'widerruf'];
-
-    /**
-     * Wohin ein Rechtstext im Portal zeigt: auf die fremde Adresse, wenn eine
-     * hinterlegt ist, sonst auf die eigene Seite, wenn eine Vorlage gewählt
-     * wurde. Das Impressum hat immer eine Seite — es wird aus den
-     * Studio-Daten gezeichnet, wenn nichts anderes gesetzt ist.
-     */
-    public static function legalUrl(string $text): ?string
-    {
-        $row = StudioSettings::current();
-
-        return match (true) {
-            filled($row->{"portal_legal_{$text}_url"} ?? null) => $row->{"portal_legal_{$text}_url"},
-            filled($row->{"portal_legal_{$text}_family"} ?? null) => "/rechtstexte/{$text}",
-            $text === 'impressum' => '/impressum',
-            default => null,
-        };
-    }
-
-    /** Die Vorlagen-Familie hinter einem Rechtstext, sofern eine gewählt ist. */
-    public static function legalFamily(string $text): ?string
-    {
-        return StudioSettings::current()->{"portal_legal_{$text}_family"} ?? null;
-    }
-
-    /** Ob AGB oder Widerrufsbelehrung dem Angebot beiliegen. */
-    public static function legalAttach(string $text): bool
-    {
-        return (bool) (StudioSettings::current()->{"portal_legal_{$text}_attach"} ?? false);
-    }
-
-    /**
-     * Was dem Angebot beiliegt: je eingeschaltetem Text seine Adresse, wie
-     * legalUrl() sie liefert — relativ, wenn der Text im Portal liegt.
-     *
-     * @return array<string, string>
-     */
-    public static function attachedLegalUrls(): array
-    {
-        return collect(['agb', 'widerruf'])
-            ->filter(fn (string $text) => self::legalAttach($text) && self::legalUrl($text) !== null)
-            ->mapWithKeys(fn (string $text) => [$text => self::legalUrl($text)])
-            ->all();
-    }
-
-    /** Die eingetragene fremde Adresse — was das Portal daraus macht, sagt legalUrl(). */
-    public static function legalTextUrl(string $text): ?string
-    {
-        return StudioSettings::current()->{"portal_legal_{$text}_url"} ?? null;
-    }
-
-    public static function legalDatenschutzUrl(): ?string
-    {
-        return self::legalTextUrl('datenschutz');
-    }
-
-    public static function legalAgbUrl(): ?string
-    {
-        return self::legalTextUrl('agb');
-    }
-
     /** Messaging is three states, not a switch — see P-04 (#223). */
     public const MESSAGING_OFF = 'off';
 

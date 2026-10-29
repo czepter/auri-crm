@@ -7,7 +7,7 @@ use App\Crm\Data\CaptureInquiryData;
 use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadSource;
 use App\Http\Controllers\Controller;
-use App\Portal\Support\PortalSettings;
+use App\Portal\Support\LegalTexts;
 use App\Support\AuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -116,7 +116,7 @@ class PublicInquiryController extends Controller
         AuditLogger::record(
             event: 'lead.consent_recorded',
             context: [
-                'datenschutz_url' => PortalSettings::legalUrl('datenschutz'),
+                'datenschutz_url' => LegalTexts::url('datenschutz'),
                 'channel' => CaptureChannel::WebForm->value,
             ],
             subject: $project->public_id,

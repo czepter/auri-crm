@@ -9,7 +9,7 @@ use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
-use App\Portal\Support\PortalSettings;
+use App\Portal\Support\LegalTexts;
 use App\Settings\Actions\UpdatePortalContactAvatar;
 use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Data\PortalSettingsData;
@@ -105,8 +105,8 @@ class PortalSettingsController extends Controller
                 'accentColor' => preg_match('/^#[0-9A-Fa-f]{6}$/', (string) $request->query('akzent')) ? $request->query('akzent') : StudioSettings::current()->profile()['accent_color'],
                 'address' => $request->has('adresse') ? Str::limit(trim((string) $request->query('adresse')), 200, '') : StudioSettings::current()->postalLine(),
             ],
-            'portalLegal' => collect(PortalSettings::LEGAL_TEXTS)
-                ->mapWithKeys(fn (string $text) => [$text.'Url' => PortalSettings::legalUrl($text)])
+            'portalLegal' => collect(LegalTexts::ALL)
+                ->mapWithKeys(fn (string $text) => [$text.'Url' => LegalTexts::url($text)])
                 ->all(),
             'portalNav' => null,
         ]);

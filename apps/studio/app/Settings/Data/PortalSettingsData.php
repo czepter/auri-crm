@@ -3,7 +3,7 @@
 namespace App\Settings\Data;
 
 use App\Models\StudioSettings;
-use App\Portal\Support\PortalSettings;
+use App\Portal\Support\LegalTexts;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -55,14 +55,14 @@ class PortalSettingsData extends Data
             id: StudioSettings::current()->public_id,
             maintenanceEnabled: (bool) StudioSettings::current()->portal_maintenance_enabled,
             maintenanceMessage: StudioSettings::current()->portal_maintenance_message,
-            datenschutzUrl: PortalSettings::legalDatenschutzUrl(),
-            agbUrl: PortalSettings::legalAgbUrl(),
-            impressumUrl: PortalSettings::legalTextUrl('impressum'),
-            widerrufUrl: PortalSettings::legalTextUrl('widerruf'),
-            agbAttach: PortalSettings::legalAttach('agb'),
-            widerrufAttach: PortalSettings::legalAttach('widerruf'),
-            legalFamilies: collect(PortalSettings::LEGAL_TEXTS)
-                ->mapWithKeys(fn (string $text) => [$text => PortalSettings::legalFamily($text)])
+            datenschutzUrl: LegalTexts::externalUrl('datenschutz'),
+            agbUrl: LegalTexts::externalUrl('agb'),
+            impressumUrl: LegalTexts::externalUrl('impressum'),
+            widerrufUrl: LegalTexts::externalUrl('widerruf'),
+            agbAttach: LegalTexts::attach('agb'),
+            widerrufAttach: LegalTexts::attach('widerruf'),
+            legalFamilies: collect(LegalTexts::ALL)
+                ->mapWithKeys(fn (string $text) => [$text => LegalTexts::family($text)])
                 ->all(),
             acceptQuotesEnabled: (bool) StudioSettings::current()->portal_accept_quotes_enabled,
             signContractsEnabled: (bool) StudioSettings::current()->portal_sign_contracts_enabled,

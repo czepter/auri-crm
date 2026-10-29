@@ -4,7 +4,7 @@ namespace App\Quotes\Notifications;
 
 use App\Crm\Models\Contact;
 use App\Models\StudioSettings;
-use App\Portal\Support\PortalSettings;
+use App\Portal\Support\LegalTexts;
 use App\Quotes\Models\Quote;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -96,7 +96,7 @@ class QuoteSent extends Notification
         }
 
         // A text hosted in the portal comes back as a relative path.
-        foreach (PortalSettings::attachedLegalUrls() as $text => $url) {
+        foreach (LegalTexts::attachedUrls() as $text => $url) {
             $label = $text === 'agb' ? 'AGB' : 'Widerrufsbelehrung';
             $message->line("[{$label}](".(str_starts_with($url, '/') ? config('portal.url').$url : $url).')');
         }

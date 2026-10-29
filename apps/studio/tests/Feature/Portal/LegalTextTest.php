@@ -2,7 +2,7 @@
 
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
-use App\Portal\Support\PortalSettings;
+use App\Portal\Support\LegalTexts;
 use App\Settings\Actions\UpdateStudioSetting;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -45,11 +45,11 @@ it('prefers an external address over a template', function () {
     $template = legalTemplate();
     pointAt('widerruf', $template->family_id, 'https://example.test/widerruf');
 
-    expect(PortalSettings::legalUrl('widerruf'))->toBe('https://example.test/widerruf');
+    expect(LegalTexts::url('widerruf'))->toBe('https://example.test/widerruf');
 });
 
 it('keeps the generated Impressum page when nothing else is set', function () {
-    expect(PortalSettings::legalUrl('impressum'))->toBe('/impressum');
+    expect(LegalTexts::url('impressum'))->toBe('/impressum');
 });
 
 it('keeps all four legal links in the footer and lists only attached ones beside the quote', function () {

@@ -7,7 +7,7 @@ use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
-use App\Portal\Support\PortalSettings;
+use App\Portal\Support\LegalTexts;
 use App\Quotes\Actions\AcceptQuote;
 use App\Quotes\Data\QuoteData;
 use Illuminate\Http\RedirectResponse;
@@ -127,7 +127,7 @@ class QuoteController extends Controller
             'items.*' => ['string'],
             // The acceptance stands in for a contract, so the AGB are part of
             // it wherever the studio attaches any.
-            'terms' => Rule::when(PortalSettings::attachedLegalUrls() !== [], ['accepted']),
+            'terms' => Rule::when(LegalTexts::attachedUrls() !== [], ['accepted']),
         ], ['terms.accepted' => __('portal.quote_terms_required')]);
 
         $accept(

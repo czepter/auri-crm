@@ -7,6 +7,7 @@ use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
+use App\Portal\Support\LegalTexts;
 use App\Portal\Support\PortalSettings;
 use App\Quotes\Actions\AcceptQuote;
 use App\Quotes\Data\QuoteData;
@@ -82,7 +83,7 @@ class QuoteShareController extends Controller
             'hours' => ['nullable', 'integer', 'min:0'],
             'items' => ['array'],
             'items.*' => ['string'],
-            'terms' => Rule::when(PortalSettings::attachedLegalUrls() !== [], ['accepted']),
+            'terms' => Rule::when(LegalTexts::attachedUrls() !== [], ['accepted']),
         ], ['terms.accepted' => __('portal.quote_terms_required')]);
 
         $accept(

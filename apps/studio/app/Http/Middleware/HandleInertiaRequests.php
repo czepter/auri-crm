@@ -11,6 +11,7 @@ use App\Documents\Support\MergeFieldVocabulary;
 use App\Help\Support\HelpIndex;
 use App\Models\StudioSettings;
 use App\Models\User;
+use App\Portal\Support\LegalTexts;
 use App\Portal\Support\PortalSettings;
 use App\Releases\Support\ReleaseLog;
 use App\Support\LiveUpdate;
@@ -157,15 +158,15 @@ class HandleInertiaRequests extends Middleware
                     'address' => StudioSettings::current()->postalLine(),
                 ],
                 // Je Text die fremde Adresse, die eigene Seite oder nichts —
-                // siehe PortalSettings::legalUrl().
-                'portalLegal' => fn () => collect(PortalSettings::LEGAL_TEXTS)
+                // siehe LegalTexts::url().
+                'portalLegal' => fn () => collect(LegalTexts::ALL)
                     ->mapWithKeys(fn (string $text) => [
-                        $text.'Url' => PortalSettings::legalUrl($text),
+                        $text.'Url' => LegalTexts::url($text),
                     ])
                     ->all(),
                 // AGB und Widerruf, die dem Angebot beiliegen: nur diese
                 // stehen neben „Angebot annehmen“.
-                'portalQuoteLegal' => fn () => PortalSettings::attachedLegalUrls(),
+                'portalQuoteLegal' => fn () => LegalTexts::attachedUrls(),
                 // The header stands on every screen and its links are the
                 // same four everywhere, so what decides them is shared
                 // rather than passed per page. Null with nobody signed in:
