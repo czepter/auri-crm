@@ -9,6 +9,7 @@ return [
     'api_token.rate_limited' => 'API-Aufruf gedrosselt',
     'contact.created' => 'Kontakt angelegt',
     'contact.dsgvo_erased' => 'Kontakt gelöscht (DSGVO)',
+    'contact.email_changed' => 'E-Mail des Kontakts geändert',
     'contact.portal_access_revoked' => 'Portalzugang widerrufen',
     'contact.portal_overrides_updated' => 'Portal-Einstellungen des Kontakts geändert',
     'contract.render_requested' => 'Vertrag erzeugt',
