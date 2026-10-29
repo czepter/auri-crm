@@ -195,6 +195,24 @@ it('grants the caller\'s full role when no scope is requested', function () {
     );
 });
 
+it('ignores a scope this server does not know, the way claude.ai asks for one', function () {
+    $user = staffMember(StaffRole::Contributor);
+    [, $challenge] = pkcePair();
+
+    $props = $this->actingAs($user, 'staff')->get('/oauth/authorize?'.http_build_query([
+        'response_type' => 'code',
+        'client_id' => 'studio-mcp',
+        'redirect_uri' => REDIRECT_URI,
+        'code_challenge' => $challenge,
+        'code_challenge_method' => 'S256',
+        'scope' => 'claudeai',
+    ]))->assertOk()->viewData('page')['props'];
+
+    expect(collect($props['scopes'])->pluck('value')->all())->toEqualCanonicalizing(
+        array_map(fn (Capability $c) => $c->value, StaffRole::Contributor->capabilities())
+    );
+});
+
 it('redirects with access_denied when the staff member declines', function () {
     $user = staffMember();
     [, $challenge] = pkcePair();

@@ -144,7 +144,10 @@ class OAuthAuthorizationController extends Controller
      */
     private function scopesFor(User $user, array $requested): array
     {
-        $requested = array_values(array_filter($requested, fn (string $s) => $s !== ''));
+        // claude.ai asks for `claudeai`, a scope of its own rather than one
+        // this server advertises; left in, it emptied the grant and the flow
+        // ended in invalid_scope before the consent screen.
+        $requested = array_values(array_filter($requested, fn (string $s) => Capability::tryFrom($s) !== null));
         $roleScopes = array_map(fn (Capability $c) => $c->value, $user->role->capabilities());
 
         return $requested === [] ? $roleScopes : array_values(array_intersect($requested, $roleScopes));
