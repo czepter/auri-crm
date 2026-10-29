@@ -22,11 +22,11 @@ use App\Integration\Console\Commands\RevokeApiTokenCommand;
 use App\Media\Console\Commands\ReapIncompleteMultipartUploads;
 use App\Migration\Console\Commands\CutoverRestoreCommand;
 use App\Migration\Console\Commands\CutoverSnapshotCommand;
+use App\Models\StudioSettings;
 use App\Notifications\Console\Commands\BuildMailTemplatesCommand;
 use App\Payments\Console\Commands\DetectOverdueInstallmentsCommand;
 use App\Settings\Console\Commands\DeleteDueStudio;
 use App\Settings\Console\Commands\EraseExpiredInquiries;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Staff\Console\Commands\RemindOnboardingCommand;
 use App\Staff\Console\Commands\SendStudioDigestsCommand;
 use App\Support\Surface;
@@ -82,7 +82,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command(SweepDateOffsetAutomationRulesCommand::class)
             ->daily()
             ->timezone(rescue(
-                fn () => app(StudioSettingsResolver::class)->timezone(),
+                fn () => StudioSettings::current()->localTimezone(),
                 config('app.timezone'),
                 report: false,
             ));

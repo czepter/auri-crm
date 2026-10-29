@@ -14,6 +14,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\Facades\Notification;
 
 uses(RefreshDatabase::class);
@@ -69,4 +70,19 @@ it('registers the sweep on the daily schedule', function () {
 
     expect($events)->not->toBeEmpty()
         ->and($events->first()->expression)->toBe('0 0 * * *');
+});
+
+it('runs the sweep and the overdue scan on the studio clock', function () {
+    app(UpdateStudioSetting::class)('timezone', 'Pacific/Auckland', null);
+    Artisan::call('inspire');
+    app()->forgetInstance(Schedule::class);
+    Facade::clearResolvedInstance(Schedule::class);
+    require base_path('routes/console.php');
+
+    $events = collect(app(Schedule::class)->events());
+    $sweep = $events->first(fn ($event) => str_contains($event->command ?? '', 'automation:sweep-date-offset-rules'));
+    $overdue = $events->first(fn ($event) => str_contains($event->command ?? '', 'payments:detect-overdue-installments'));
+
+    expect($sweep->timezone)->toBe('Pacific/Auckland')
+        ->and($overdue->timezone)->toBe('Pacific/Auckland');
 });

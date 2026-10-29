@@ -1,8 +1,8 @@
 <?php
 
 use App\Integration\Models\IdempotencyKey;
+use App\Models\StudioSettings;
 use App\Privacy\Models\StudioExport;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -17,7 +17,7 @@ Artisan::command('inspire', function () {
 // parsed by every artisan command — including the migrate that first creates
 // the settings row.
 $studioTimezone = rescue(
-    fn () => app(StudioSettingsResolver::class)->timezone(),
+    fn () => StudioSettings::current()->localTimezone(),
     config('app.timezone'),
     report: false,
 );
