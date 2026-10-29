@@ -251,6 +251,18 @@ it('falls back to thirty days for a range it does not know', function () {
     expect(props('/?zeitraum=kaputt')['range'])->toBe('30');
 });
 
+it('lists counting quote openings in the activity and skips the others', function () {
+    $project = ClientCase::factory()->create(['name' => 'Ahrens']);
+    $quote = Quote::factory()->for($project, 'case')->create();
+    $quote->views()->create(['via' => 'link', 'viewed_at' => now()->subHour(), 'counts' => false]);
+    $quote->views()->create(['via' => 'link', 'viewed_at' => now()->subMinutes(5)]);
+
+    $activity = props('/')['activity'];
+
+    expect(collect($activity)->pluck('text')->all())->toBe(['Ahrens · Angebot geöffnet'])
+        ->and($activity[0]['href'])->toBe('/auftraege/'.$project->public_id.'/angebote');
+});
+
 it('counts booked shooting days in the range and a year earlier', function () {
     $project = bookedForDashboard();
     Shoot::factory()->for($project, 'case')->on(now()->subDays(10)->format('Y-m-d'))->create();

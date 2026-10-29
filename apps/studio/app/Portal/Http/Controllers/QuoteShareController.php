@@ -2,6 +2,7 @@
 
 namespace App\Portal\Http\Controllers;
 
+use App\Documents\Actions\RecordDocumentView;
 use App\Documents\Support\DocumentMergeData;
 use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
@@ -14,6 +15,7 @@ use App\Quotes\Data\QuoteData;
 use App\Quotes\Models\Quote;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -38,6 +40,7 @@ class QuoteShareController extends Controller
             'showSwitcher' => false,
             'project' => ['id' => $quote->case->public_id, 'name' => $quote->case->name],
             'canAccept' => (bool) StudioSettings::current()->portal_accept_quotes_enabled,
+            'viewUrl' => "/angebot/{$quote->share_token}/teilen/gesehen",
             'acceptUrl' => "/angebot/{$quote->share_token}/teilen/annehmen",
             'imageUrlBase' => "/angebot/{$quote->share_token}/teilen",
             'quote' => [
@@ -52,6 +55,13 @@ class QuoteShareController extends Controller
                 'acceptedAt' => $quote->accepted_at?->format('Y-m-d'),
             ],
         ]);
+    }
+
+    public function viewed(Request $request, Quote $quote, RecordDocumentView $record): HttpResponse
+    {
+        $record($request, $quote, 'link');
+
+        return response()->noContent();
     }
 
     public function showcase(Quote $quote, int $index): StreamedResponse

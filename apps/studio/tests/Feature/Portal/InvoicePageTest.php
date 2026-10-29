@@ -131,22 +131,16 @@ it('lists only invoices on the project page', function () {
         ->and($props['project']['invoices'][0]['amount'])->toBe(100_000);
 });
 
-it('stamps viewed_at on the first look and leaves it on the second', function () {
+it('records every look at the invoice', function () {
     [$project, $contact, $invoice] = portalIssuedInvoice();
 
-    expect($invoice->viewed_at)->toBeNull();
+    expect($invoice->views()->count())->toBe(0);
 
-    $this->actingAs($contact, 'portal')
-        ->get("/projekte/{$project->public_id}/zahlungen/{$invoice->public_id}")
-        ->assertOk();
+    foreach ([1, 2] as $_) {
+        $this->actingAs($contact, 'portal')
+            ->get("/projekte/{$project->public_id}/zahlungen/{$invoice->public_id}")
+            ->assertOk();
+    }
 
-    $first = $invoice->fresh()->viewed_at;
-    expect($first)->not->toBeNull();
-
-    $this->travel(1)->day();
-    $this->actingAs($contact, 'portal')
-        ->get("/projekte/{$project->public_id}/zahlungen/{$invoice->public_id}")
-        ->assertOk();
-
-    expect($invoice->fresh()->viewed_at->equalTo($first))->toBeTrue();
+    expect($invoice->views()->where('via', 'portal')->count())->toBe(2);
 });

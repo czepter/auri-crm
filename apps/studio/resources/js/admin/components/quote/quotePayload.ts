@@ -172,7 +172,7 @@ export function buildPreviewQuote(draft: QuoteDraft, vat: VatSettings): App.Quot
   const hours = draft.slider.hours ?? draft.slider.minHours ?? 0
   const timeTotal = draft.pricingMode === 'choice' ? hours * rate : 0
 
-  const chargedItems = draft.pricingMode === 'classic' ? items : items.filter((item) => !item.selectable || item.selected)
+  const chargedItems = items.filter((item) => !item.selectable || item.selected)
   const itemsSubtotal = subtotal(
     chargedItems.map((item) => ({
       quantity: item.quantity,
@@ -257,7 +257,7 @@ export function buildPreviewQuote(draft: QuoteDraft, vat: VatSettings): App.Quot
  * Sätzen kann eine Zeile hier um einen Cent vom PDF abweichen.
  */
 function hideDiscount(items: App.Quotes.Data.QuoteItemData[], net: number) {
-  const charged = items.filter((item) => item.netTotal > 0)
+  const charged = items.filter((item) => item.netTotal > 0 && (!item.selectable || item.selected))
   const amounts = spread(charged.map((item) => item.netTotal), net)
 
   charged.forEach((item, index) => {

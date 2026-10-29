@@ -356,7 +356,7 @@ jobs:
       # A missing baseline is written by the failing run. This is where it is
       # picked up: README.md, "Visual baselines".
       - if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: visual-snapshots
           path: |

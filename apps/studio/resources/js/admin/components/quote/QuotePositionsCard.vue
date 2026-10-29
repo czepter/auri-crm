@@ -148,9 +148,7 @@ function endDrag() {
   over.value = null
 }
 
-const chargedRows = computed(() =>
-  props.mode === 'classic' ? draft.value.rows : draft.value.rows.filter((row) => !row.selectable || row.selected),
-)
+const chargedRows = computed(() => draft.value.rows.filter((row) => !row.selectable || row.selected))
 
 const quoteSubtotal = computed(() => subtotal(chargedRows.value.map(quoteRowToLine), props.mode === 'choice' ? timeTotal.value : 0))
 

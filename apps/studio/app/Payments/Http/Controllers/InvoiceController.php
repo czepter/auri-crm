@@ -64,7 +64,7 @@ class InvoiceController extends Controller
 
         $invoices = Invoice::query()
             ->where(fn ($query) => $query->whereNull('case_id')->orWhereHas('case', fn ($project) => $project->visibleTo($viewer)))
-            ->with(['installments', 'creditNotes', 'contact', 'case'])
+            ->with(['installments', 'creditNotes', 'contact', 'case', 'views'])
             ->orderByDesc('issued_at')
             ->orderByDesc('id')
             ->get();

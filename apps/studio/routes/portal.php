@@ -61,6 +61,8 @@ Route::middleware('portal.maintenance')->group(function () {
         ->whereNumber('index')->name('portal.quotes.share.showcase');
     Route::post('/angebot/{quote:share_token}/teilen/annehmen', [QuoteShareController::class, 'accept'])
         ->name('portal.quotes.share.accept');
+    Route::post('/angebot/{quote:share_token}/teilen/gesehen', [QuoteShareController::class, 'viewed'])
+        ->middleware('throttle:30,1')->name('portal.quotes.share.viewed');
 
     Route::middleware('audience:portal')->group(function () {
         Route::post('/abmelden', [MagicLinkController::class, 'destroy'])->name('portal.logout');

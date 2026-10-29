@@ -38,7 +38,7 @@ final class StudioExportTables
             'staff_invitations', 'user_email_changes', 'user_email_verifications', 'users',
         ],
         'Betriebsdaten' => [
-            'audit_logs', 'automation_runs', 'download_events', 'gallery_grid_prefs', 'gallery_views',
+            'audit_logs', 'automation_runs', 'document_views', 'download_events', 'gallery_grid_prefs', 'gallery_views',
             'idempotency_keys', 'in_app_notifications', 'multipart_uploads', 'notification_preferences',
             'quote_number_counters', 'recent_views', 'stripe_events', 'studio_exports',
             'zip_build_parts', 'zip_build_waiters', 'zip_builds',

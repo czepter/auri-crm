@@ -79,6 +79,18 @@ class QuoteItem extends Model
         return $this->selectable;
     }
 
+    /** Counts toward the quote's sums: fixed, or an optional line switched on. */
+    public function isCharged(): bool
+    {
+        return ! $this->selectable || $this->selected;
+    }
+
+    /** The title as a classic quote prints it. */
+    public function label(): string
+    {
+        return $this->isCharged() ? $this->title : 'Optional: '.$this->title;
+    }
+
     /** Enthaltene Leistung: part of what was already paid for, not a price this line invents. */
     public function isIncluded(): bool
     {

@@ -33,6 +33,7 @@ use App\Crm\Http\Controllers\TaskController;
 use App\Crm\Http\Controllers\TaskTemplateController;
 use App\Crm\Http\Controllers\TimelineController;
 use App\Documents\Http\Controllers\DocumentTemplateController;
+use App\Documents\Http\Controllers\DocumentViewController;
 use App\Engagement\Http\Controllers\InboxController;
 use App\Engagement\Http\Controllers\ThreadController;
 use App\Gallery\Http\Controllers\GalleryAssetController;
@@ -692,6 +693,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/angebote/letzte-aktion', [QuoteController::class, 'chooseLastAction'])->name('quotes.last-action');
         Route::post('/angebote/{quote}/duplizieren', [QuoteController::class, 'duplicate'])->name('quotes.duplicate');
         Route::delete('/angebote/{quote}', [QuoteController::class, 'destroy'])->name('quotes.destroy');
+        Route::patch('/oeffnungen/{view}', [DocumentViewController::class, 'update'])->name('document-views.update');
 
         // E-02: a project's own questionnaires, seeded from a FormTemplate
         // or started blank, then personalised freely — see FormInstance's

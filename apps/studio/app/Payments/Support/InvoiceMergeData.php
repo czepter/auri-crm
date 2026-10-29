@@ -222,7 +222,7 @@ class InvoiceMergeData implements MergeDataProvider
     {
         $lines = $quote->items
             ->map(fn (QuoteItem $item) => [
-                'title' => $item->title,
+                'title' => $item->label(),
                 'quantity' => (string) $item->quantity,
                 'unitPrice' => $item->isIncluded() ? '' : DocumentMergeData::money((int) $item->unit_price),
                 'discount' => $item->discount_amount > 0 ? '−'.DocumentMergeData::money((int) $item->discount_amount) : '',
