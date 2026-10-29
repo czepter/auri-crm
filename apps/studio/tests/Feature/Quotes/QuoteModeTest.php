@@ -115,6 +115,26 @@ it('raeumt die Reglerspalten beim Umschalten auf klassisch', function () {
         ->and($quote->total)->toBe(90000);
 });
 
+it('rechnet optionale Positionen im klassischen Angebot nicht mit', function () {
+    [$user, $project] = studioWithProject();
+    $quote = Quote::factory()->for($project, 'case')->create();
+
+    $this->actingAs($user, 'staff')->patch("/angebote/{$quote->public_id}", [
+        'pricing_mode' => 'classic',
+        'items' => [
+            ['title' => 'Begleitung', 'quantity' => 1, 'unit_price' => 43000],
+            ['title' => 'Album', 'quantity' => 1, 'unit_price' => 39000, 'selectable' => true],
+        ],
+        'stages' => [],
+    ])->assertRedirect();
+
+    $quote->refresh();
+
+    expect($quote->total)->toBe(43000)
+        ->and($quote->net)->toBe(43000)
+        ->and($quote->items->last()->label())->toBe('Optional: Album');
+});
+
 it('uebernimmt den Modus aus dem Paket', function () {
     $withRate = Package::factory()->create(['hourly_rate' => 25000, 'min_hours' => 4, 'max_hours' => 10]);
     $withoutRate = Package::factory()->create(['hourly_rate' => null]);

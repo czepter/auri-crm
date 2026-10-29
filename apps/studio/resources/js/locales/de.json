@@ -908,6 +908,7 @@
     "text": "Text",
     "payment": "Zahlung",
     "portalIncluded": "Inklusive",
+    "optional": "Optional",
     "imagesUnit": "Bilder",
     "rateInvalid": "Muss über 0 liegen",
     "minHoursInvalid": "Mindestens 1 Stunde",

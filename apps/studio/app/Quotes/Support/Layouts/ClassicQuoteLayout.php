@@ -79,7 +79,7 @@ class ClassicQuoteLayout implements QuoteLayoutRenderer
     private function items(Quote $quote): string
     {
         $rows = $quote->items->map(fn (QuoteItem $item) => $this->row(
-            e($item->title).($item->description === null ? '' : '<br><small>'.e($item->description).'</small>'),
+            e($item->label()).($item->description === null ? '' : '<br><small>'.e($item->description).'</small>'),
             (string) $item->quantity,
             $item->isIncluded() ? '' : $this->money($item->unit_price),
             $item->isIncluded() ? 'inklusive' : $this->money($item->discountedLineTotal()),
