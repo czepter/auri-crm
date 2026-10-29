@@ -7,11 +7,14 @@ use App\Crm\Actions\CaptureInquiry;
 use App\Crm\Data\CaptureInquiryData;
 use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadOutcome;
+use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
 use App\Crm\Support\CrmVocabulary;
+use App\Enums\Capability;
 use App\Http\Controllers\Controller;
+use App\Integration\Models\ApiToken;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use DomainException;
@@ -111,10 +114,25 @@ class LeadController extends Controller
             'entered_at' => ['nullable', 'date', 'before_or_equal:now'],
         ]);
 
+        $target = $stages->byKey(StagePipeline::Lead, $validated['stage']);
+
+        // Onto or off the won stage books or unbooks; /book needs book_project,
+        // so this route does too. A User token is also held by its policy in the action.
+        if (! $target->is($lead->stage) && ($target->anchor === StageAnchor::Won || $lead->stage->anchor === StageAnchor::Won)) {
+            $principal = $request->user('api');
+
+            abort_unless(
+                $principal instanceof ApiToken
+                    ? $principal->allows(Capability::BookProject)
+                    : $principal->tokenCan(Capability::BookProject->value),
+                403,
+            );
+        }
+
         try {
             $advance(
                 $lead,
-                $stages->byKey(StagePipeline::Lead, $validated['stage']),
+                $target,
                 $this->actor($request),
                 isset($validated['entered_at']) ? CarbonImmutable::parse($validated['entered_at']) : null,
             );
