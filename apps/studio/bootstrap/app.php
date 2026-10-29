@@ -14,6 +14,7 @@ use App\Http\Middleware\EnsureIdempotentWrite;
 use App\Http\Middleware\EnsureNoStaffExists;
 use App\Http\Middleware\EnsurePortalCapability;
 use App\Http\Middleware\EnsurePortalMaintenanceClosure;
+use App\Http\Middleware\EnsurePortalSessionLifecycle;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\MarkSilentWrite;
 use App\Http\Middleware\RequireStudioOnboarding;
@@ -110,6 +111,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prepend(AssignRequestId::class);
 
         $middleware->web(append: [
+            EnsurePortalSessionLifecycle::class,
             HandleInertiaRequests::class,
         ]);
 
