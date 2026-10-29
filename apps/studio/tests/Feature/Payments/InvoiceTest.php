@@ -4,7 +4,6 @@ use App\Crm\Models\Contact;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentBlockCatalog;
-use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Documents\Support\MergeFieldResolver;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Enums\StaffRole;
@@ -22,7 +21,8 @@ use App\Payments\Enums\SettledVia;
 use App\Payments\Jobs\RenderInvoiceJob;
 use App\Payments\Models\Invoice;
 use App\Payments\Support\InvoiceFigures;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Payments\Support\InvoiceMergeData;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Support\GotenbergClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
@@ -35,16 +35,15 @@ uses(RefreshDatabase::class);
 // column is nullable with no default — a studio far enough along to invoice
 // has filed one.
 beforeEach(function () {
-    app(StudioSettingsResolver::class)->set('tax_number', '22/123/45678', null);
+    app(UpdateStudioSetting::class)('tax_number', '22/123/45678', null);
 });
 
 // bookedContactProject(), staffMember() and invoiceablePlan()
 // live in tests/Pest.php.
 
 it('refuses to issue without a Steuernummer or USt-IdNr., drawing no number', function () {
-    $settings = app(StudioSettingsResolver::class);
-    $settings->set('tax_number', null, null);
-    $settings->set('vat_id', null, null);
+    app(UpdateStudioSetting::class)('tax_number', null, null);
+    app(UpdateStudioSetting::class)('vat_id', null, null);
 
     $installment = invoiceablePlan();
 
@@ -56,9 +55,8 @@ it('refuses to issue without a Steuernummer or USt-IdNr., drawing no number', fu
 });
 
 it('issues on the USt-IdNr. alone', function () {
-    $settings = app(StudioSettingsResolver::class);
-    $settings->set('tax_number', null, null);
-    $settings->set('vat_id', 'DE123456789', null);
+    app(UpdateStudioSetting::class)('tax_number', null, null);
+    app(UpdateStudioSetting::class)('vat_id', 'DE123456789', null);
 
     expect(app(IssueInvoice::class)(invoiceablePlan())->number)->toStartWith('RE-');
 });
@@ -176,7 +174,7 @@ it('puts several rates of one plan on one invoice, one number and one sum', func
     expect(Invoice::count())->toBe(1)
         ->and($invoice->fresh('installments')->amount())->toBe(150_000)
         ->and($rates->map->fresh()->pluck('invoice_id')->unique()->all())->toBe([$invoice->id])
-        ->and(app(DocumentMergeDataBuilder::class)->fromInvoice($invoice->fresh(), app(StudioSettingsResolver::class))['invoice']['description'])
+        ->and(app(InvoiceMergeData::class)->forInvoice($invoice->fresh())['invoice']['description'])
         ->toBe('Hochzeit Meier & Kowalski — Anzahlung, Restbetrag');
 });
 
@@ -254,7 +252,7 @@ it('issues an invoice without a project from its items, with one installment to 
         ->and($invoice->installments->sole()->payment_plan_id)->toBeNull()
         ->and($invoice->installments->sole()->due_on->format('Y-m-d'))->toBe(now()->addMonth()->toDateString());
 
-    $figures = InvoiceFigures::forInvoice($invoice, app(StudioSettingsResolver::class));
+    $figures = InvoiceFigures::forInvoice($invoice);
 
     expect($figures->gross)->toBe(36_295)
         ->and($figures->net + $figures->vat)->toBe(36_295)
@@ -264,7 +262,7 @@ it('issues an invoice without a project from its items, with one installment to 
 it('prints the items and the guest as recipient on an invoice without a project', function () {
     $invoice = freeInvoice();
 
-    $data = app(DocumentMergeDataBuilder::class)->fromInvoice($invoice->fresh(), app(StudioSettingsResolver::class));
+    $data = app(InvoiceMergeData::class)->forInvoice($invoice->fresh());
 
     expect($data['contact']['name'])->toBe('Jonas Gast')
         ->and($data['project']['name'])->toBe('')
@@ -302,7 +300,7 @@ it('bills a picked rate at its own gross and charges free positions on top', fun
     ], '2026-10-15')->fresh(['installments', 'items']);
 
     $extra = $invoice->installments->firstWhere('payment_plan_id', null);
-    $figures = InvoiceFigures::forInvoice($invoice, app(StudioSettingsResolver::class));
+    $figures = InvoiceFigures::forInvoice($invoice);
 
     expect($installment->fresh()->invoice_id)->toBe($invoice->id)
         ->and($extra->amount)->toBe(10_710)

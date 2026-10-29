@@ -1,6 +1,6 @@
 <?php
 
-use App\Settings\Models\StudioSettings;
+use App\Models\StudioSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);

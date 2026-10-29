@@ -73,7 +73,7 @@ class Stage extends Model
      * nothing happened.
      *
      * This answers "may a move that is asked for implicitly go here", which is
-     * why BookProject filters its shoots on it. A correction somebody asks for
+     * why BookCase filters its shoots on it. A correction somebody asks for
      * by hand goes backwards on either pipeline — see AdvanceShootStatus.
      */
     public function canTransitionTo(self $next): bool

@@ -2,11 +2,11 @@
 
 namespace App\Gallery\Http\Controllers;
 
+use App\Gallery\Actions\StartGalleryPrerelease;
+use App\Gallery\Actions\StopGalleryPrerelease;
 use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
-use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Validation\ValidationException;
 
 /**
  * R32/R39: the More menu's "Pre-release" — shares a gallery's address
@@ -18,48 +18,20 @@ use Illuminate\Validation\ValidationException;
  */
 class GalleryPrereleaseController extends Controller
 {
-    public function store(Gallery $gallery): RedirectResponse
+    public function store(Gallery $gallery, StartGalleryPrerelease $start): RedirectResponse
     {
         $this->authorize('publish', $gallery);
 
-        // Both guarded here, not just hidden from the More menu: a gallery
-        // already published has nothing left for R39's "no version yet" to
-        // mean, and an external gallery owns no draft to be "prepared" —
-        // Gallery::publish() itself refuses one for the same reason.
-        if ($gallery->currentVersion !== null || $gallery->is_external) {
-            throw ValidationException::withMessages(['gallery' => __('gallery.prerelease_unavailable')]);
-        }
-
-        $gallery->forceFill(['prerelease_at' => now()])->save();
-
-        AuditLogger::record(
-            event: 'gallery.prerelease_started',
-            actor: auth('staff')->user(),
-            context: [],
-            subject: $gallery->public_id,
-        );
+        $start($gallery, auth('staff')->user());
 
         return back();
     }
 
-    public function destroy(Gallery $gallery): RedirectResponse
+    public function destroy(Gallery $gallery, StopGalleryPrerelease $stop): RedirectResponse
     {
         $this->authorize('publish', $gallery);
 
-        $gallery->forceFill(['prerelease_at' => null])->save();
-
-        // GalleryPrereleaseSignup's own docblock: the waiting list belongs
-        // to this pre-release window, not to the gallery for ever. Any row
-        // still here was never notified (a notified one deletes itself,
-        // see PublishGallery), so there is nothing to preserve.
-        $gallery->prereleaseSignups()->delete();
-
-        AuditLogger::record(
-            event: 'gallery.prerelease_stopped',
-            actor: auth('staff')->user(),
-            context: [],
-            subject: $gallery->public_id,
-        );
+        $stop($gallery, auth('staff')->user());
 
         return back();
     }

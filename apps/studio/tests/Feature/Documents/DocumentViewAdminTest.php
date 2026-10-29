@@ -3,7 +3,7 @@
 use App\Enums\StaffRole;
 use App\Payments\Actions\IssueInvoice;
 use App\Quotes\Models\Quote;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Settings\Actions\UpdateStudioSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
@@ -35,7 +35,7 @@ it('refuses a staff member without quote rights and hides another tenant\'s view
 });
 
 it('dates an invoice by its earliest counting view', function () {
-    app(StudioSettingsResolver::class)->set('tax_number', '22/123/45678', null);
+    app(UpdateStudioSetting::class)('tax_number', '22/123/45678', null);
     Storage::fake('local');
     Bus::fake();
 

@@ -10,8 +10,8 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * What GET /projects/{project} answers with, and nothing else does:
- * ProjectReadData plus what a caller would otherwise have to page three more
- * endpoints for. The index keeps ProjectReadData — a contact join on every
+ * CaseReadData plus what a caller would otherwise have to page three more
+ * endpoints for. The index keeps CaseReadData — a contact join on every
  * row is the wrong price for reading one.
  *
  * Internal notes stay out: they hang off ManageNotes, and a token holding

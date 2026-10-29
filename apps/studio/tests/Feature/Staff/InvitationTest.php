@@ -1,10 +1,11 @@
 <?php
 
+use App\Enums\Capability;
 use App\Enums\StaffRole;
+use App\Models\AuditLog;
 use App\Models\StaffInvitation;
 use App\Models\User;
-use App\Notifications\StaffInvited;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Staff\Notifications\StaffInvited;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 
@@ -68,7 +69,7 @@ it('keeps the token out of the audit row', function () {
             'role' => StaffRole::Contributor->value,
         ]);
 
-    $context = App\Models\AuditLog::where('event', 'staff.invited')->sole()->context;
+    $context = AuditLog::where('event', 'staff.invited')->sole()->context;
 
     expect(json_encode($context))->not->toContain('token');
 });
@@ -160,7 +161,7 @@ it('renders the calendar and reply blocks, and drops the 2FA line', function () 
     $owner = User::factory()->create(['role' => StaffRole::Admin]);
     $invitation = invite(['invited_by_id' => $owner->id]);
 
-    $html = (string) (new StaffInvited($invitation, 'https://example.test/einladung/abc', app(StudioSettingsResolver::class)))
+    $html = (string) (new StaffInvited($invitation, 'https://example.test/einladung/abc'))
         ->toMail($owner)
         ->render();
 
@@ -176,5 +177,5 @@ it('shows each role with the capabilities the enum grants it', function () {
         ->assertInertia(fn ($page) => $page
             ->where('roles.1.value', StaffRole::Manager->value)
             ->where('roles.1.capabilities', array_map(fn ($capability) => $capability->value, StaffRole::Manager->capabilities()))
-            ->has('capabilities', count(App\Enums\Capability::cases())));
+            ->has('capabilities', count(Capability::cases())));
 });

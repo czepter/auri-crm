@@ -4,10 +4,11 @@ namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
-use App\Settings\Actions\ApplyRetention;
-use App\Settings\Data\RetentionPolicyData;
-use App\Settings\Support\RetentionCandidates;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Models\StudioSettings;
+use App\Privacy\Actions\ApplyRetention;
+use App\Privacy\Data\RetentionPolicyData;
+use App\Privacy\Support\RetentionCandidates;
+use App\Settings\Actions\UpdateStudioSetting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,28 +19,28 @@ class RetentionController extends Controller
 {
     use AuthorizesStaffSettings;
 
-    public function show(StudioSettingsResolver $settings): Response
+    public function show(): Response
     {
         $this->authorizeSettings();
 
         return Inertia::render('Settings/Retention', [
-            'months' => $settings->retentionMonths(),
-            'policy' => $settings->retentionPolicy(),
+            'months' => StudioSettings::current()->retention_months,
+            'policy' => RetentionPolicyData::current(),
             'candidates' => RetentionCandidates::preview(),
             'funnel' => RetentionCandidates::funnel(),
         ]);
     }
 
-    public function update(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    public function update(Request $request): RedirectResponse
     {
         $this->authorizeSettings();
 
-        $this->save($request, $settings);
+        $this->save($request);
 
         return back();
     }
 
-    public function run(Request $request, StudioSettingsResolver $settings, ApplyRetention $apply): RedirectResponse
+    public function run(Request $request, ApplyRetention $apply): RedirectResponse
     {
         $this->authorizeSettings();
 
@@ -48,13 +49,13 @@ class RetentionController extends Controller
             'current_password' => ['required', 'current_password:staff'],
         ]);
 
-        $months = $this->save($request, $settings);
+        $months = $this->save($request);
         $apply($months, $request->user('staff'));
 
         return back();
     }
 
-    private function save(Request $request, StudioSettingsResolver $settings): ?int
+    private function save(Request $request): ?int
     {
         $validated = $request->validate([
             'retention_months' => ['nullable', 'integer', 'min:1', 'max:120'],
@@ -64,10 +65,10 @@ class RetentionController extends Controller
 
         $months = $validated['retention_months'] === null ? null : (int) $validated['retention_months'];
 
-        $settings->set('retention_months', $months, $request->user('staff'));
+        app(UpdateStudioSetting::class)('retention_months', $months, $request->user('staff'));
 
         if ($months !== null) {
-            $settings->set('retention_policy', (new RetentionPolicyData(...$validated['policy']))->removed(), $request->user('staff'));
+            app(UpdateStudioSetting::class)('retention_policy', (new RetentionPolicyData(...$validated['policy']))->removed(), $request->user('staff'));
         }
 
         return $months;

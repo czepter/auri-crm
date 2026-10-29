@@ -2,11 +2,11 @@
 
 namespace App\Engagement\Actions;
 
+use App\Crm\Actions\NotifyStudio;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Engagement\Models\Thread;
-use App\Notifications\Actions\NotifyStudio;
-use App\Notifications\Studio\ClientMessagePosted;
+use App\Engagement\Notifications\Studio\ClientMessagePosted;
 use Illuminate\Support\Facades\DB;
 
 /**

@@ -4,7 +4,7 @@ import ProjectShell from '@/admin/components/ProjectShell.vue'
 import QuoteList from '@/admin/components/quote/QuoteList.vue'
 
 defineProps<{
-  header: App.Crm.Data.CaseHeaderData
+  header: App.Crm.Screens.CaseHeaderData
   quotes: App.Quotes.Data.QuoteData[]
   payments: { number: string | null; rows: { label: string; amount: number }[] } | null
 }>()

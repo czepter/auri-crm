@@ -459,7 +459,7 @@
         "/cases/{case}/book": {
             "post": {
                 "operationId": "cases.book",
-                "summary": "#401: book/complete/reopen on the api surface, mirroring\nApp\\Crm\\Http\\Controllers\\ProjectController \u2014 the same BookProject and\nCompleteProject actions the admin buttons call, and the same\nalready-booked no-op BookProject itself guards",
+                "summary": "#401: book/complete/reopen on the api surface, mirroring\nApp\\Crm\\Http\\Controllers\\CaseController \u2014 the same BookCase and\nCompleteCase actions the admin buttons call, and the same\nalready-booked no-op BookCase itself guards",
                 "tags": [
                     "Case"
                 ],
@@ -614,7 +614,7 @@
         "/cases/{case}/portal-visibility": {
             "post": {
                 "operationId": "cases.portal-visibility.update",
-                "summary": "Mirrors App\\Crm\\Http\\Controllers\\ProjectController::togglePortalVisibility,\nbut takes the value rather than flipping it: a retried toggle after a\ndropped response would land on the wrong state, which `idempotent`\n(routes/api.php) must never allow",
+                "summary": "Mirrors App\\Crm\\Http\\Controllers\\CaseController::togglePortalVisibility,\nbut takes the value rather than flipping it: a retried toggle after a\ndropped response would land on the wrong state, which `idempotent`\n(routes/api.php) must never allow",
                 "tags": [
                     "Case"
                 ],
@@ -2241,6 +2241,28 @@
                             }
                         }
                     },
+                    "403": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
                     }
@@ -3466,7 +3488,7 @@
                                             "string",
                                             "null"
                                         ],
-                                        "maxLength": 998
+                                        "maxLength": 255
                                     },
                                     "from": {
                                         "type": "string",
@@ -3769,6 +3791,28 @@
                             }
                         }
                     },
+                    "403": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
                     },
@@ -3820,6 +3864,28 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/MessageData"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
                                 }
                             }
                         }
@@ -4157,6 +4223,28 @@
                                         "stage",
                                         "enteredAt",
                                         "closedAt"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
                                     ]
                                 }
                             }
@@ -5238,7 +5326,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/components/schemas/ProjectReadData"
+                                            "$ref": "#/components/schemas/CaseReadData"
                                         }
                                     },
                                     "required": [
@@ -8431,6 +8519,11 @@
                 "additionalProperties": {},
                 "title": "CaseMoneyReadData"
             },
+            "CaseReadData": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "CaseReadData"
+            },
             "CrewAssignmentReadData": {
                 "type": "object",
                 "additionalProperties": {},
@@ -8560,11 +8653,6 @@
                     "boolean"
                 ],
                 "title": "ProjectFieldType"
-            },
-            "ProjectReadData": {
-                "type": "object",
-                "additionalProperties": {},
-                "title": "ProjectReadData"
             },
             "ProjectTypeReadData": {
                 "type": "object",

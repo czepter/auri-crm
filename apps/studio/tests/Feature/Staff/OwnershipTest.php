@@ -3,8 +3,7 @@
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Models\User;
-use App\Notifications\StaffOwnershipTransferred;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Staff\Notifications\StaffOwnershipTransferred;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
@@ -31,6 +30,20 @@ it('hands the role over and leaves exactly one owner', function () {
         ->and(AuditLog::where('event', 'staff.ownership_transferred')->count())->toBe(1);
 
     Notification::assertSentTo([$owner, $nina], StaffOwnershipTransferred::class);
+});
+
+it('revokes the previous owner\'s mcp tokens', function () {
+    Notification::fake();
+
+    $owner = owner();
+    $owner->createToken('mcp', ['manage_settings']);
+    $nina = staffMember(StaffRole::Contributor);
+
+    $this->actingAs($owner, 'staff')
+        ->post("/team/{$nina->public_id}/inhaber", ['current_password' => 'correct-horse'])
+        ->assertRedirect();
+
+    expect($owner->tokens()->count())->toBe(0);
 });
 
 it('refuses a wrong password', function () {
@@ -73,7 +86,7 @@ it('tells each side of the transfer something different', function () {
     $owner = owner();
     $nina = staffMember(StaffRole::Contributor);
     $owner->role = StaffRole::Manager;
-    $mail = new StaffOwnershipTransferred($owner, $nina, app(StudioSettingsResolver::class));
+    $mail = new StaffOwnershipTransferred($owner, $nina);
 
     expect((string) $mail->toMail($nina)->render())->toContain('hat dir die Inhaberschaft')
         ->and((string) $mail->toMail($owner)->render())->toContain('bist jetzt Manager');

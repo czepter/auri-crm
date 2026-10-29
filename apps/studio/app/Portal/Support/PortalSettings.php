@@ -4,9 +4,9 @@ namespace App\Portal\Support;
 
 use App\Crm\Models\Contact;
 use App\Enums\StaffRole;
+use App\Models\StudioClosure;
+use App\Models\StudioSettings;
 use App\Models\User;
-use App\Settings\Models\StudioClosure;
-use App\Settings\Support\StudioSettingsResolver;
 
 /**
  * P-09 (#228). What the portal does, for this client.
@@ -42,21 +42,19 @@ class PortalSettings
         'gallery_downloads', 'gallery_lists', 'gallery_comments', 'portal_visible', 'offers',
     ];
 
-    public function __construct(private readonly StudioSettingsResolver $studio) {}
-
     public function acceptQuotesEnabled(?Contact $contact = null): bool
     {
-        return (bool) $this->resolve($contact, 'accept_quotes', $this->studio->acceptQuotesEnabled());
+        return (bool) $this->resolve($contact, 'accept_quotes', (bool) StudioSettings::current()->portal_accept_quotes_enabled);
     }
 
     public function signContractsEnabled(?Contact $contact = null): bool
     {
-        return (bool) $this->resolve($contact, 'sign_contracts', $this->studio->signContractsEnabled());
+        return (bool) $this->resolve($contact, 'sign_contracts', (bool) StudioSettings::current()->portal_sign_contracts_enabled);
     }
 
     public function paymentStatusEnabled(?Contact $contact = null): bool
     {
-        return (bool) $this->resolve($contact, 'payment_status', $this->studio->paymentStatusEnabled());
+        return (bool) $this->resolve($contact, 'payment_status', (bool) StudioSettings::current()->portal_payment_status_enabled);
     }
 
     /**
@@ -67,12 +65,12 @@ class PortalSettings
      */
     public function offersEnabled(?Contact $contact = null): bool
     {
-        return (bool) $this->resolve($contact, 'offers', $this->studio->offersEnabled());
+        return (bool) $this->resolve($contact, 'offers', (bool) StudioSettings::current()->portal_offers_enabled);
     }
 
     public function messagingMode(?Contact $contact = null): string
     {
-        return (string) $this->resolve($contact, 'messaging_mode', $this->studio->messagingMode());
+        return (string) $this->resolve($contact, 'messaging_mode', (string) StudioSettings::current()->portal_messaging_mode);
     }
 
     /** Whether the mailbox exists at all for this client. */
@@ -89,17 +87,17 @@ class PortalSettings
 
     public function galleryDownloadsEnabled(?Contact $contact = null): bool
     {
-        return (bool) $this->resolve($contact, 'gallery_downloads', $this->studio->galleryDownloadsEnabled());
+        return (bool) $this->resolve($contact, 'gallery_downloads', (bool) StudioSettings::current()->gallery_default_downloads_enabled);
     }
 
     public function galleryListsEnabled(?Contact $contact = null): bool
     {
-        return (bool) $this->resolve($contact, 'gallery_lists', $this->studio->galleryListsEnabled());
+        return (bool) $this->resolve($contact, 'gallery_lists', (bool) StudioSettings::current()->gallery_default_lists_enabled);
     }
 
     public function galleryCommentsEnabled(?Contact $contact = null): bool
     {
-        return (bool) $this->resolve($contact, 'gallery_comments', $this->studio->galleryCommentsEnabled());
+        return (bool) $this->resolve($contact, 'gallery_comments', (bool) StudioSettings::current()->gallery_default_comments_enabled);
     }
 
     /**
@@ -117,9 +115,9 @@ class PortalSettings
         }
 
         return match ($state) {
-            'inquiry' => $this->studio->portalWelcomeInquiry(),
-            'done' => $this->studio->portalWelcomeDone(),
-            default => $this->studio->portalWelcomeActive(),
+            'inquiry' => StudioSettings::current()->portal_welcome_inquiry,
+            'done' => StudioSettings::current()->portal_welcome_done,
+            default => StudioSettings::current()->portal_welcome_active,
         };
     }
 
@@ -151,11 +149,11 @@ class PortalSettings
     public function contactLine(): array
     {
         return [
-            'name' => $this->studio->portalContactName() ?? $this->studio->displayName(),
-            'avatarUrl' => $this->studio->portalContactAvatarPath() !== null ? '/branding/kontakt' : null,
-            'phone' => $this->studio->portalContactPhone() ?? $this->ownerPhone(),
-            'email' => $this->studio->portalContactEmail(),
-            'responseTime' => $this->closureNotice() ?? $this->studio->portalContactResponseTime(),
+            'name' => StudioSettings::current()->portal_contact_name ?? StudioSettings::current()->display_name,
+            'avatarUrl' => StudioSettings::current()->portal_contact_avatar_path !== null ? '/branding/kontakt' : null,
+            'phone' => StudioSettings::current()->portal_contact_phone ?? $this->ownerPhone(),
+            'email' => StudioSettings::current()->portal_contact_email,
+            'responseTime' => $this->closureNotice() ?? StudioSettings::current()->portal_contact_response_time,
         ];
     }
 
@@ -196,6 +194,6 @@ class PortalSettings
 
     private function resolve(?Contact $contact, string $key, mixed $default): mixed
     {
-        return $this->overrides($contact)[$key] ?? $default;
+        return $contact?->portalOverride($key, $default) ?? $default;
     }
 }

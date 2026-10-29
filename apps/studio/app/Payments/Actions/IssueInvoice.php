@@ -6,6 +6,7 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
+use App\Models\StudioSettings;
 use App\Models\User;
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
@@ -15,7 +16,6 @@ use App\Payments\Jobs\RenderInvoiceJob;
 use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Support\InvoiceFigures;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -46,7 +46,6 @@ class IssueInvoice
 {
     public function __construct(
         private readonly AllocateDocumentNumber $allocate,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     /**
@@ -129,7 +128,7 @@ class IssueInvoice
         return $this->issue(
             ['contact_id' => $contact?->id, 'case_id' => $project?->id, ...$attributes],
             function (Invoice $invoice) use ($positions, $dueOn) {
-                $defaultRate = $this->settings->vatMode() === 'small_business' ? 0 : $this->settings->effectiveVatRate();
+                $defaultRate = StudioSettings::current()->vat_mode === 'small_business' ? 0 : StudioSettings::current()->effectiveVatRate();
 
                 foreach ($positions as $index => $position) {
                     $row = $position['installment'] ?? null;
@@ -163,7 +162,7 @@ class IssueInvoice
                 if ($free->isNotEmpty()) {
                     PaymentInstallment::create([
                         'invoice_id' => $invoice->id,
-                        'amount' => InvoiceFigures::forPositions($free, $invoice->discount_type, $invoice->discount_value, $this->settings)->gross,
+                        'amount' => InvoiceFigures::forPositions($free, $invoice->discount_type, $invoice->discount_value)->gross,
                         'due_on' => $dueOn,
                         'status' => PaymentInstallmentStatus::Invoiced,
                     ]);
@@ -178,7 +177,7 @@ class IssueInvoice
     {
         // Ahead of the transaction: a number drawn for a document that cannot
         // be issued would leave a gap in the tenant's invoice sequence.
-        $studio = $this->settings->attributes();
+        $studio = StudioSettings::current()->profile();
 
         if (blank($studio['tax_number']) && blank($studio['vat_id'])) {
             throw ValidationException::withMessages(['invoice' => __('payments.taxIdentifierMissing')]);

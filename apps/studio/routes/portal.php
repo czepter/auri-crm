@@ -7,6 +7,7 @@ use App\Gallery\Http\Controllers\GalleryImageController;
 use App\Gallery\Http\Controllers\GalleryPasswordController;
 use App\Portal\Http\Controllers\AccountController;
 use App\Portal\Http\Controllers\BrandingController;
+use App\Portal\Http\Controllers\CaseController;
 use App\Portal\Http\Controllers\ContractController;
 use App\Portal\Http\Controllers\GalleryController as PortalGalleryController;
 use App\Portal\Http\Controllers\HomeController;
@@ -16,7 +17,6 @@ use App\Portal\Http\Controllers\MagicLinkController;
 use App\Portal\Http\Controllers\MailboxController;
 use App\Portal\Http\Controllers\PaymentCheckoutController;
 use App\Portal\Http\Controllers\PaymentController;
-use App\Portal\Http\Controllers\ProjectController;
 use App\Portal\Http\Controllers\QuestionnaireController;
 use App\Portal\Http\Controllers\QuoteController;
 use App\Portal\Http\Controllers\QuoteShareController;
@@ -78,19 +78,19 @@ Route::middleware('portal.maintenance')->group(function () {
         Route::get('/', HomeController::class)->name('portal.home');
 
         // Direct entry. Bound on the public id and re-asking the same
-        // visibility scope HomeController asks — see ProjectController — so a
+        // visibility scope HomeController asks — see CaseController — so a
         // project the contact is not on, or one the studio has not made
         // portal_visible, is a 404 here exactly as it is absent from the
         // switcher. Never a 403: the difference between "not yours" and
         // "does not exist" is not this surface's to give away.
-        Route::get('/projekte/{case}', ProjectController::class)->name('portal.projects.show');
+        Route::get('/projekte/{case}', CaseController::class)->name('portal.projects.show');
 
         // P-03 (#222). The portal's first write path onto a project. Open
         // only while nothing is reserved — a booked project answers 404 here
         // rather than 422, the same shape every other closed door on this
         // surface takes. See UpdateCaseDetails for the audit row and the
         // line it writes into the conversation.
-        Route::patch('/projekte/{case}/angaben', [ProjectController::class, 'update'])
+        Route::patch('/projekte/{case}/angaben', [CaseController::class, 'update'])
             ->name('portal.projects.details.update');
 
         // P-03 (#222): the questionnaire the inquiry screen has always linked
@@ -202,7 +202,7 @@ Route::middleware('portal.maintenance')->group(function () {
         // whole mailbox, GET and POST alike, the same full-screen shape
         // payment_status takes rather than gating only a submit the way
         // accept_quotes/sign_contracts do. See EnsurePortalCapability and
-        // StudioSettingsResolver::messagingEnabled().
+        // App\Portal\Support\PortalSettings::messagingEnabled().
         //
         // P-04 (#223): one mailbox, no project in the path. A thread names a
         // booking or it does not, and the route can no longer require what

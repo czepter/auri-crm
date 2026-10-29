@@ -10,20 +10,21 @@ use App\Automation\Models\AutomationRule;
 use App\Automation\Models\AutomationRun;
 use App\Automation\Notifications\AutomationReminder;
 use App\Automation\Support\AutomationConditions;
+use App\Crm\Actions\CreateTask;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
-use App\Documents\Support\DocumentMergeDataBuilder;
+use App\Crm\Support\StudioAudience;
+use App\Documents\Support\DocumentMergeData;
 use App\Documents\Support\MergeFieldResolver;
 use App\Gallery\Models\Gallery;
 use App\Models\User;
 use App\Notifications\NotificationService;
-use App\Notifications\Support\StudioAudience;
 use App\Payments\Models\PaymentInstallment;
+use App\Payments\Support\InvoiceMergeData;
 use App\Portal\Support\ClientAudience;
-use App\Settings\Support\StudioSettingsResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -51,11 +52,12 @@ class FireAutomationRule
 {
     public function __construct(
         private readonly NotificationService $notifications,
-        private readonly StudioSettingsResolver $settings,
         private readonly StudioAudience $audience,
         private readonly ClientAudience $clients,
         private readonly AutomationConditions $conditions,
-        private readonly DocumentMergeDataBuilder $merge,
+        private readonly DocumentMergeData $merge,
+        private readonly InvoiceMergeData $invoiceMerge,
+        private readonly CreateTask $createTask,
     ) {}
 
     public function __invoke(AutomationRule $rule, Model $anchor, string $triggerDate): ?AutomationRun
@@ -93,11 +95,12 @@ class FireAutomationRule
 
         // E-15: resolved against the anchor's own project, so "morgen ist ein
         // Shooting" names which one.
-        $data = $project === null ? [] : $this->merge->fromProject(
-            $project,
-            $this->settings,
-            $anchor instanceof PaymentInstallment ? $anchor->invoice : null,
-        );
+        $invoice = $anchor instanceof PaymentInstallment ? $anchor->invoice : null;
+        $data = match (true) {
+            $project === null => [],
+            $invoice !== null => $this->invoiceMerge->forInvoice($invoice),
+            default => $this->merge->forCase($project),
+        };
         $subject = MergeFieldResolver::resolve($rule->notification_subject, $data, keepUnknown: true);
         $body = MergeFieldResolver::resolve($rule->notification_body, $data, keepUnknown: true);
 
@@ -128,7 +131,7 @@ class FireAutomationRule
         // nothing even if a colleague joined the crew in between.
         try {
             foreach ($recipients as $recipient) {
-                $this->notifications->send($recipient, new AutomationReminder($subject, $body, $this->settings));
+                $this->notifications->send($recipient, new AutomationReminder($subject, $body));
             }
 
             $run->update(['status' => AutomationRunStatus::Sent]);
@@ -150,7 +153,7 @@ class FireAutomationRule
         $offset = $rule->offset_days ?? 0;
 
         try {
-            Task::create([
+            ($this->createTask)([
                 'case_id' => $project?->id,
                 'shoot_id' => $anchor instanceof Shoot ? $anchor->id : null,
                 'title' => $title,

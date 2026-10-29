@@ -18,11 +18,11 @@ use DomainException;
  * No transitions table: the ledger is audit_logs, which P1a already made
  * append-only, and status_entered_at holds the one derived fact the board
  * needs. Guarding here rather than in a controller means the project screen,
- * BookProject and any future automation all get the same rules — BookProject
+ * BookCase and any future automation all get the same rules — BookCase
  * in particular routes through this rather than mass-updating the column.
  *
  * A correction backwards is the one move Stage::canTransitionTo refuses on
- * this pipeline, and it is refused there for BookProject's sake: booking a
+ * this pipeline, and it is refused there for BookCase's sake: booking a
  * project must never drag a delivered shoot back to gebucht. A move somebody
  * asks for by hand is a different thing from one a side effect makes, so it is
  * allowed here and guarded there.

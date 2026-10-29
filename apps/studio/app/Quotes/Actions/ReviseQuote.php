@@ -2,6 +2,7 @@
 
 namespace App\Quotes\Actions;
 
+use App\Models\StudioSettings;
 use App\Models\User;
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
@@ -9,7 +10,6 @@ use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Events\QuoteRevised;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use DomainException;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +33,6 @@ class ReviseQuote
 {
     public function __construct(
         private readonly AllocateDocumentNumber $allocate,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     public function __invoke(Quote $predecessor, ?User $actor = null): Quote
@@ -49,7 +48,7 @@ class ReviseQuote
             // revision straight into AcceptQuote's expiry check — give it a
             // fresh one instead of copying a date already in the past.
             $validUntil = $predecessor->valid_until !== null && $predecessor->valid_until->isPast()
-                ? now()->addDays($this->settings->quoteValidityDays())->toDateString()
+                ? now()->addDays(StudioSettings::current()->quote_validity_days)->toDateString()
                 : $predecessor->valid_until;
 
             $revision = $predecessor->case->quotes()->create([

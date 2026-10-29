@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import Retention from './Retention.vue'
 
-type Kandidat = App.Settings.Data.RetentionCandidateData
+type Kandidat = App.Privacy.Data.RetentionCandidateData
 
 function kandidat(id: string, name: string, type: string, outcome: 'lost' | 'declined', idleMonths: number, text: string, rest: Partial<Kandidat> = {}): Kandidat {
   return {

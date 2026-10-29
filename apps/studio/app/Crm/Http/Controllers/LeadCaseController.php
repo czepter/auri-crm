@@ -6,7 +6,7 @@ use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\CheckDateAvailability;
 use App\Crm\Actions\DeriveCasePosition;
 use App\Crm\Actions\OpenLeads;
-use App\Crm\Data\CaseHeaderData;
+use App\Crm\Actions\UpdateContact;
 use App\Crm\Data\CasePersonData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
@@ -15,23 +15,27 @@ use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\ClientCase;
+use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
 use App\Crm\Models\ProjectType;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
+use App\Crm\Screens\CaseHeaderData;
 use App\Crm\Support\CrmVocabulary;
 use App\Crm\Support\OtherSuggestions;
 use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
 use App\Quotes\Actions\ReadCaseQuote;
-use App\Quotes\Actions\ReadQuoteList;
+use App\Quotes\Screens\ReadQuoteList;
 use App\Settings\Rules\ValidFormat;
+use App\Support\AuditLogger;
 use App\Support\RecordVisit;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -86,7 +90,7 @@ class LeadCaseController extends Controller
 
         return Inertia::render('Leads/Show', [
             'tab' => $tab,
-            'header' => CaseHeaderData::fromProject($case, app(DeriveCasePosition::class)($case), queue: false),
+            'header' => CaseHeaderData::fromCase($case, app(DeriveCasePosition::class)($case), queue: false),
             'conversation' => $conversation === null ? null : ThreadData::fromModel($conversation),
             ...($tab === 'quotes' ? app(ReadQuoteList::class)($case) : ['quotes' => [], 'payments' => null]),
             'queue' => $this->leads->queue($lead),
@@ -157,7 +161,7 @@ class LeadCaseController extends Controller
      * edit. Refused rather than silently dropped: a save that reports success
      * and changes nothing is worse than one that says no.
      */
-    public function update(Request $request, ClientCase $case): RedirectResponse
+    public function update(Request $request, ClientCase $case, UpdateContact $updateContact): RedirectResponse
     {
         $lead = $case->lead()->firstOrFail();
         // The same authority that moves a shoot: the case's own fields are
@@ -192,7 +196,7 @@ class LeadCaseController extends Controller
             'shoots.*.end_time' => ['nullable', 'date_format:H:i'],
         ]);
 
-        DB::transaction(function () use ($case, $lead, $validated) {
+        DB::transaction(function () use ($case, $lead, $validated, $updateContact) {
             // Ein Termin verschiebt sich, auch nachdem gebucht wurde — das ist
             // der häufigste Vorgang überhaupt und war bis hierher ein 422.
             if (array_key_exists('type', $validated)) {
@@ -215,9 +219,28 @@ class LeadCaseController extends Controller
                     continue;
                 }
 
-                $contact->update([
+                $email = $person['email'] ?? null;
+
+                // Die Adresse ist die Portal-Anmeldung dieses Kunden, nicht
+                // Teil des Falls: dieselbe Hoheit wie im Adressbuch.
+                if ($email !== $contact->email) {
+                    $this->authorize('update', $contact);
+
+                    if ($email !== null && Contact::query()->where('email', $email)->whereKeyNot($contact->id)->exists()) {
+                        throw ValidationException::withMessages(['people' => __('validation.unique', ['attribute' => 'email'])]);
+                    }
+
+                    AuditLogger::record(
+                        event: 'contact.email_changed',
+                        actor: auth('staff')->user(),
+                        context: ['from' => $contact->email, 'to' => $email],
+                        subject: $contact->public_id,
+                    );
+                }
+
+                $updateContact($contact, [
                     'name' => $person['name'],
-                    'email' => $person['email'] ?? null,
+                    'email' => $email,
                     'phone' => $person['phone'] ?? null,
                 ]);
 

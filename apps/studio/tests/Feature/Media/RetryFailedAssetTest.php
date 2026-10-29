@@ -1,15 +1,15 @@
 <?php
 
+use App\Gallery\Actions\IngestCompletedUpload;
+use App\Gallery\Actions\RetryFailedAsset;
+use App\Gallery\Jobs\ProcessIngestedAsset;
 use App\Gallery\Models\Gallery;
-use App\Media\Actions\IngestCompletedUpload;
-use App\Media\Actions\RetryFailedAsset;
 use App\Media\Enums\AssetStatus;
-use App\Media\Jobs\ProcessIngestedAsset;
 use App\Media\Models\Asset;
-use App\Media\Models\MultipartUpload;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 uses(RefreshDatabase::class);
 
@@ -109,4 +109,4 @@ it('aborts with a 409 when no upload session ever pointed at this asset', functi
     $asset = Asset::factory()->create(['status' => AssetStatus::Failed]);
 
     app(RetryFailedAsset::class)($asset);
-})->throws(Symfony\Component\HttpKernel\Exception\HttpException::class);
+})->throws(HttpException::class);

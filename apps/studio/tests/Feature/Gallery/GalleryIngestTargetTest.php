@@ -1,8 +1,8 @@
 <?php
 
+use App\Gallery\Actions\IngestCompletedUpload;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GallerySet;
-use App\Media\Actions\IngestCompletedUpload;
 use App\Media\Enums\AssetStatus;
 use App\Media\Enums\MultipartUploadStatus;
 use App\Media\Models\Asset;

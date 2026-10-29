@@ -2,9 +2,9 @@
 
 namespace App\Media\Models;
 
-use App\Gallery\Models\GalleryList;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
+use App\Gallery\Models\GalleryList;
 use App\Gallery\Models\GalleryVersion;
 use App\Media\Enums\ZipBuildScope;
 use App\Media\Enums\ZipBuildSize;
@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * One deduped (gallery_version_id, scope, size) archive build (G-10, #59) —
  * see the migration's unique index, which is the actual dedupe mechanism;
- * App\Media\Actions\RequestZipBuild is just what finds-or-creates against it.
+ * App\Gallery\Actions\RequestZipBuild is just what finds-or-creates against it.
  * One or more ZipBuildPart rows carry the object key(s) split produced it,
  * per the 3.9GiB volume boundary — the same one-to-many precedent
  * Asset/AssetDerivative (G-03) already set.

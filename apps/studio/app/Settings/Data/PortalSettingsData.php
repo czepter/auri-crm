@@ -2,8 +2,8 @@
 
 namespace App\Settings\Data;
 
-use App\Portal\Http\Controllers\LegalTextController;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Models\StudioSettings;
+use App\Portal\Support\LegalTexts;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -49,35 +49,35 @@ class PortalSettingsData extends Data
         public ?string $contactResponseTime,
     ) {}
 
-    public static function fromResolver(StudioSettingsResolver $settings): self
+    public static function current(): self
     {
         return new self(
-            id: $settings->publicId(),
-            maintenanceEnabled: $settings->maintenanceEnabled(),
-            maintenanceMessage: $settings->maintenanceMessage(),
-            datenschutzUrl: $settings->legalDatenschutzUrl(),
-            agbUrl: $settings->legalAgbUrl(),
-            impressumUrl: $settings->legalTextUrl('impressum'),
-            widerrufUrl: $settings->legalTextUrl('widerruf'),
-            agbAttach: $settings->legalAttach('agb'),
-            widerrufAttach: $settings->legalAttach('widerruf'),
-            legalFamilies: collect(LegalTextController::TEXTS)
-                ->mapWithKeys(fn (string $text) => [$text => $settings->legalFamily($text)])
+            id: StudioSettings::current()->public_id,
+            maintenanceEnabled: (bool) StudioSettings::current()->portal_maintenance_enabled,
+            maintenanceMessage: StudioSettings::current()->portal_maintenance_message,
+            datenschutzUrl: LegalTexts::externalUrl('datenschutz'),
+            agbUrl: LegalTexts::externalUrl('agb'),
+            impressumUrl: LegalTexts::externalUrl('impressum'),
+            widerrufUrl: LegalTexts::externalUrl('widerruf'),
+            agbAttach: LegalTexts::attach('agb'),
+            widerrufAttach: LegalTexts::attach('widerruf'),
+            legalFamilies: collect(LegalTexts::ALL)
+                ->mapWithKeys(fn (string $text) => [$text => LegalTexts::family($text)])
                 ->all(),
-            acceptQuotesEnabled: $settings->acceptQuotesEnabled(),
-            signContractsEnabled: $settings->signContractsEnabled(),
-            paymentStatusEnabled: $settings->paymentStatusEnabled(),
-            offersEnabled: $settings->offersEnabled(),
-            messagingMode: $settings->messagingMode(),
-            clientRegister: $settings->clientRegister(),
-            welcomeInquiry: $settings->portalWelcomeInquiry(),
-            welcomeActive: $settings->portalWelcomeActive(),
-            welcomeDone: $settings->portalWelcomeDone(),
-            contactName: $settings->portalContactName(),
-            contactAvatarUrl: $settings->portalContactAvatarPath() !== null ? route('settings.portal.contact.avatar') : null,
-            contactPhone: $settings->portalContactPhone(),
-            contactEmail: $settings->portalContactEmail(),
-            contactResponseTime: $settings->portalContactResponseTime(),
+            acceptQuotesEnabled: (bool) StudioSettings::current()->portal_accept_quotes_enabled,
+            signContractsEnabled: (bool) StudioSettings::current()->portal_sign_contracts_enabled,
+            paymentStatusEnabled: (bool) StudioSettings::current()->portal_payment_status_enabled,
+            offersEnabled: (bool) StudioSettings::current()->portal_offers_enabled,
+            messagingMode: (string) StudioSettings::current()->portal_messaging_mode,
+            clientRegister: StudioSettings::current()->client_register,
+            welcomeInquiry: StudioSettings::current()->portal_welcome_inquiry,
+            welcomeActive: StudioSettings::current()->portal_welcome_active,
+            welcomeDone: StudioSettings::current()->portal_welcome_done,
+            contactName: StudioSettings::current()->portal_contact_name,
+            contactAvatarUrl: StudioSettings::current()->portal_contact_avatar_path !== null ? route('settings.portal.contact.avatar') : null,
+            contactPhone: StudioSettings::current()->portal_contact_phone,
+            contactEmail: StudioSettings::current()->portal_contact_email,
+            contactResponseTime: StudioSettings::current()->portal_contact_response_time,
         );
     }
 }

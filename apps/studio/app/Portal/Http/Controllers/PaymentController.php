@@ -4,15 +4,15 @@ namespace App\Portal\Http\Controllers;
 
 use App\Crm\Models\ClientCase;
 use App\Documents\Actions\RecordDocumentView;
-use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Payments\Actions\ConfirmInstallmentCheckoutSession;
 use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Support\InvoiceDocument;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Payments\Support\InvoiceMergeData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -29,7 +29,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * "Überweisen" always renders — the studio's bank details (T-02) and the
  * plan's own reference (T-04's numbering, PaymentPlanData::$reference) —
  * regardless of whether Stripe is on. "Jetzt zahlen" is gated on
- * StudioSettingsResolver::stripeEnabled() alone. Nothing here ever CREATES a
+ * StudioSettings' payments_stripe_enabled alone. Nothing here ever CREATES a
  * Stripe object — that is App\Payments\Actions\CreateInstallmentCheckoutSession's
  * job, called only from the client's own click on PaymentCheckoutController.
  *
@@ -46,7 +46,6 @@ class PaymentController extends Controller
     public function __invoke(
         Request $request,
         string $case,
-        StudioSettingsResolver $settings,
         ConfirmInstallmentCheckoutSession $confirm,
     ): Response {
         $contact = auth('portal')->user();
@@ -59,7 +58,7 @@ class PaymentController extends Controller
         $plan = $found->paymentPlan;
 
         $sessionId = $request->query('session_id');
-        if ($plan !== null && is_string($sessionId) && $settings->stripeEnabled()) {
+        if ($plan !== null && is_string($sessionId) && (bool) StudioSettings::current()->payments_stripe_enabled) {
             $installment = $plan->installments->firstWhere('stripe_checkout_session_id', $sessionId);
 
             if ($installment !== null) {
@@ -68,7 +67,7 @@ class PaymentController extends Controller
             }
         }
 
-        $bank = $settings->attributes();
+        $bank = StudioSettings::current()->profile();
         $status = $request->query('status');
 
         return Inertia::render('Payments/Show', [
@@ -76,7 +75,7 @@ class PaymentController extends Controller
             'showSwitcher' => $contact->visibleProjects()->count() > 1,
             'project' => ['id' => $found->public_id, 'name' => $found->name],
             'plan' => $plan === null ? null : PaymentPlanData::fromModel($plan->load('installments.invoice.creditNotes')),
-            'stripeEnabled' => $settings->stripeEnabled(),
+            'stripeEnabled' => (bool) StudioSettings::current()->payments_stripe_enabled,
             'paymentStatus' => in_array($status, ['success', 'cancelled'], true) ? $status : null,
             'bankDetails' => [
                 'accountHolder' => $bank['bank_account_holder'],
@@ -97,15 +96,14 @@ class PaymentController extends Controller
         RecordDocumentView $record,
         string $case,
         string $invoice,
-        StudioSettingsResolver $settings,
-        DocumentMergeDataBuilder $mergeData,
+        InvoiceMergeData $mergeData,
     ): Response {
         $contact = auth('portal')->user();
         [$found, $row] = $this->find($case, $invoice);
 
         $record($request, $row, 'portal');
 
-        $document = InvoiceDocument::forInvoice($row, $mergeData->fromInvoice($row, $settings), $settings);
+        $document = InvoiceDocument::forInvoice($row, $mergeData->forInvoice($row));
         $open = $row->installments->first(fn (PaymentInstallment $one) => in_array($one->status, PaymentInstallmentStatus::open(), true));
 
         return Inertia::render('Payments/Invoice', [
@@ -127,7 +125,7 @@ class PaymentController extends Controller
             ],
             // #408: a cancelled invoice stays readable and loses the button.
             // #480: the button charges the earliest rate still open on it.
-            'payInstallmentId' => $settings->stripeEnabled() && ! $row->isCancelled() ? $open?->public_id : null,
+            'payInstallmentId' => (bool) StudioSettings::current()->payments_stripe_enabled && ! $row->isCancelled() ? $open?->public_id : null,
         ]);
     }
 

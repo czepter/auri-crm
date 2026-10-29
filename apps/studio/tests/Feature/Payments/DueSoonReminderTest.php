@@ -1,10 +1,10 @@
 <?php
 
-use App\Notifications\Studio\InstallmentDueSoon;
 use App\Payments\Actions\DetectOverdueInstallments;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
+use App\Payments\Notifications\Studio\InstallmentDueSoon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 

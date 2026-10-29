@@ -79,7 +79,7 @@ shoot, that is not a compromise.
 This is the weakest surface, and not because of details.
 
 **There is no way to the pictures.** Verified: `Projects/Show.vue`,
-`Home.vue` and `Portal\Http\Controllers\ProjectController` do not contain
+`Home.vue` and `Portal\Http\Controllers\CaseController` do not contain
 the word gallery once. On `portal/014-projekt.png` two shoots are marked
 `GELIEFERT` and the client can go nowhere from there. A couple signs in to a
 portal to see photographs. The portal knows nothing about the photographs.

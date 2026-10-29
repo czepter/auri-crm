@@ -5,9 +5,9 @@ namespace App\Providers;
 use App\Automation\Listeners\FireAutomationRulesForEvent;
 use App\Catalog\Models\Package;
 use App\Crm\Actions\RescheduleAnchoredTasks;
+use App\Crm\Events\CaseBooked;
 use App\Crm\Events\LeadCaptured;
 use App\Crm\Events\LeadStageChanged;
-use App\Crm\Events\ProjectBooked;
 use App\Crm\Events\ShootStatusChanged;
 use App\Crm\Listeners\ApplyTemplatesOnBooking;
 use App\Crm\Listeners\ApplyTemplatesOnStage;
@@ -21,11 +21,13 @@ use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
 use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
+use App\Crm\Support\CaseMergeData;
 use App\Crm\Support\CrmVocabulary;
+use App\Documents\Contracts\MergeDataProvider;
 use App\Documents\Models\DocumentTemplate;
 use App\Gallery\Models\Gallery;
-use App\Notifications\Listeners\NotifyStudioOfDomainEvent;
-use App\Notifications\Listeners\WithholdClientMail;
+use App\Gallery\Support\GalleryMergeData;
+use App\Models\StudioSettings;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\NotificationPreferences;
 use App\Notifications\Support\StudioMailFooter;
@@ -33,6 +35,7 @@ use App\Notifications\Transports\InAppTransport;
 use App\Notifications\Transports\MailTransport;
 use App\Payments\Events\InstallmentOverdue;
 use App\Payments\Events\InstallmentPaid;
+use App\Payments\Support\InvoiceMergeData;
 use App\Policies\ClientCasePolicy;
 use App\Policies\ContactPolicy;
 use App\Policies\DocumentTemplatePolicy;
@@ -46,8 +49,10 @@ use App\Policies\ShootPolicy;
 use App\Policies\StagePolicy;
 use App\Policies\TaskPolicy;
 use App\Policies\TaskTemplatePolicy;
-use App\Portal\Listeners\RevealProjectOnBooking;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Portal\Listeners\RevealCaseOnBooking;
+use App\Quotes\Support\QuoteMergeData;
+use App\Staff\Listeners\NotifyStudioOfDomainEvent;
+use App\Staff\Listeners\WithholdClientMail;
 use App\Support\PersonalAccessToken;
 use App\Support\Surface;
 use Aws\S3\S3Client;
@@ -104,6 +109,15 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(S3Client::class, fn () => Storage::disk('s3')->getClient());
 
         $this->app->singleton(CrmVocabulary::class);
+
+        // #565: each module's blocks of the merge-field array, gathered by
+        // DocumentMergeData. The order is the order of the blocks.
+        $this->app->tag([
+            CaseMergeData::class,
+            InvoiceMergeData::class,
+            QuoteMergeData::class,
+            GalleryMergeData::class,
+        ], MergeDataProvider::class);
     }
 
     /**
@@ -146,11 +160,9 @@ class AppServiceProvider extends ServiceProvider
                 return;
             }
 
-            $settings = app(StudioSettingsResolver::class);
-
             $view->with([
-                'brand' => $settings->displayName() ?? config('app.name'),
-                'logoUrl' => $settings->logoPath()
+                'brand' => StudioSettings::current()->display_name ?? config('app.name'),
+                'logoUrl' => StudioSettings::current()->logo_path
                     ? rtrim((string) config('portal.url'), '/').'/branding/logo'
                     : null,
                 // Signature and legal particulars belong in the footer zone,
@@ -158,7 +170,7 @@ class AppServiceProvider extends ServiceProvider
                 // same reason brand is: Blade hands a view's data to no nested
                 // component, so the layout's own scope is the only place that
                 // can be reached.
-                'mailFooter' => app(StudioMailFooter::class)($settings),
+                'mailFooter' => app(StudioMailFooter::class)(),
             ]);
         });
 
@@ -166,7 +178,7 @@ class AppServiceProvider extends ServiceProvider
         // every mail, product or studio, shows the current tenant's own accent, with
         // a neutral fallback before any studio has set one.
         View::composer('mail::button', function ($view) {
-            $accent = app(StudioSettingsResolver::class)->attributes()['accent_color'] ?? null;
+            $accent = StudioSettings::current()->profile()['accent_color'] ?? null;
             $view->with('accent', $accent ?: '#111111');
         });
 
@@ -197,8 +209,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Registered by hand: auto-discovery only scans app/Listeners, and the
         // CRM keeps its listeners beside the events they answer to.
-        Event::listen(ProjectBooked::class, ApplyTemplatesOnBooking::class);
-        Event::listen(ProjectBooked::class, RevealProjectOnBooking::class);
+        Event::listen(CaseBooked::class, ApplyTemplatesOnBooking::class);
+        Event::listen(CaseBooked::class, RevealCaseOnBooking::class);
 
         // Every other stage of both pipelines. Booking stays above: it is
         // reachable without a lead stage ever changing.

@@ -8,8 +8,10 @@ use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
 use App\Engagement\Models\Thread;
 use App\Models\AuditLog;
+use App\Models\StudioSettings;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 
 uses(RefreshDatabase::class);
 
@@ -135,8 +137,8 @@ it('closes the letter as soon as a shoot moves past requested, without a job', f
 });
 
 it('names the studio on both shapes of the booking screen', function () {
-    App\Settings\Models\StudioSettings::query()->update(['display_name' => 'Nordlicht Fotografie']);
-    Illuminate\Support\Facades\Cache::store('redis')->flush();
+    StudioSettings::query()->update(['display_name' => 'Nordlicht Fotografie']);
+    Cache::store('redis')->flush();
 
     $contact = Contact::factory()->create();
     $project = inquiryProject($contact);

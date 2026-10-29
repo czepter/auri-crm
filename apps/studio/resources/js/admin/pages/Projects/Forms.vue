@@ -16,7 +16,7 @@ import { Switch } from '@/ui/switch'
 import { Textarea } from '@/ui/textarea'
 
 const props = defineProps<{
-  header: App.Crm.Data.CaseHeaderData
+  header: App.Crm.Screens.CaseHeaderData
   formInstances: App.Crm.Data.FormInstanceData[]
   formTemplates: { value: string; label: string }[]
   fieldTypes: { value: string; label: string }[]

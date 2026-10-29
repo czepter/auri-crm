@@ -4,9 +4,9 @@ use App\Gallery\Notifications\AssetCommented;
 use App\Gallery\Notifications\AssetFavorited;
 use App\Models\UserEmailChange;
 use App\Notifications\Models\NotificationPreference;
-use App\Notifications\StaffEmailChangeConfirmation;
 use App\Notifications\Support\NotificationPreferences;
-use App\Notifications\Support\StudioEvents;
+use App\Staff\Notifications\StaffEmailChangeConfirmation;
+use App\Staff\Support\StudioEvents;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
@@ -93,6 +93,7 @@ it('moves the login once the link from the new inbox is followed', function () {
 it('changes the password only against the current one', function () {
     $user = staffMember();
     $user->forceFill(['password' => Hash::make('correct-horse')])->save();
+    $user->createToken('mcp', ['manage_notes']);
 
     $this->actingAs($user, 'staff')
         ->put('/profil/passwort', [
@@ -112,7 +113,8 @@ it('changes the password only against the current one', function () {
         ])
         ->assertRedirect();
 
-    expect(Hash::check('battery-staple-42', $user->fresh()->password))->toBeTrue();
+    expect(Hash::check('battery-staple-42', $user->fresh()->password))->toBeTrue()
+        ->and($user->tokens()->count())->toBe(0);
 });
 
 it('replaces every recovery code at once', function () {

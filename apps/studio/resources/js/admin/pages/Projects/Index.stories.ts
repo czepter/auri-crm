@@ -10,7 +10,7 @@ const stages = [
     { key: 'delivered', name: 'Übergeben', phase: 'delivered' },
 ]
 
-const projects: App.Crm.Data.ProjectRowData[] = [
+const projects: App.Crm.Data.CaseRowData[] = [
     {
         id: 'p-rahn',
         type: 'Hochzeit',

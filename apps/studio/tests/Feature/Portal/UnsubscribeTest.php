@@ -6,7 +6,6 @@ use App\Notifications\NotificationService;
 use App\Portal\Notifications\ClientAccessLink;
 use App\Quotes\Models\Quote;
 use App\Quotes\Notifications\QuoteSent;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 
@@ -60,7 +59,7 @@ it('an unsubscribed contact still gets a Transactional ClientAccessLink mail', f
 
     app(NotificationService::class)->send(
         $contact,
-        new ClientAccessLink($contact, 'https://example.test/zugang/token', app(StudioSettingsResolver::class)),
+        new ClientAccessLink($contact, 'https://example.test/zugang/token'),
     );
 
     Notification::assertSentTo($contact, ClientAccessLink::class);

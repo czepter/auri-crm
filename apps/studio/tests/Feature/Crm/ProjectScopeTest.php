@@ -1,7 +1,7 @@
 <?php
 
-use App\Crm\Actions\ReadProjectScreen;
 use App\Crm\Models\ClientCase;
+use App\Crm\Screens\ReadCaseScreen;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
@@ -11,7 +11,7 @@ uses(RefreshDatabase::class);
 
 function scopeOf(ClientCase $project): array
 {
-    return app(ReadProjectScreen::class)->scope($project->fresh());
+    return app(ReadCaseScreen::class)->scope($project->fresh());
 }
 
 function quoteWith(ClientCase $project, QuoteStatus $status, array $items, int $total = 0): Quote

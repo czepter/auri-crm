@@ -171,7 +171,7 @@ it('personalises an instance\'s fields and name, wholesale replacing what was th
 
 it('opens the project forms screen to whoever can view the project, regardless of ManageFormTemplates', function (StaffRole $role, int $status) {
     // The screen itself only gates on ClientCase::view — the same rule every
-    // other project tab uses (ProjectController::quotes(), ::shoots()) — so
+    // other project tab uses (CaseController::quotes(), ::shoots()) — so
     // Contributor, who holds no ViewAllCases capability and is not
     // crewed on this uncrewed project, gets 403 here just as it would on
     // /shootings or /angebote. canManageForms is what the screen itself

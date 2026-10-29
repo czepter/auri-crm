@@ -8,7 +8,7 @@ use App\Documents\Data\DocumentTemplateData;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentBlockCatalog;
-use App\Documents\Support\DocumentMergeDataBuilder;
+use App\Documents\Support\DocumentMergeData;
 use App\Documents\Support\DocumentRenderer;
 use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
@@ -16,7 +16,7 @@ use App\Documents\Support\MergeFieldVocabulary;
 use App\Documents\Support\SafeHtml;
 use App\Documents\Support\StarterTemplateCatalog;
 use App\Http\Controllers\Controller;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Models\StudioSettings;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -57,7 +57,7 @@ class DocumentTemplateController extends Controller
             // first — a template is written for the work in front of you.
             'projects' => ClientCase::query()->latest()->limit(50)->get()
                 ->map(fn (ClientCase $project) => ['id' => $project->public_id, 'name' => $project->name])->all(),
-            'starters' => StarterTemplateCatalog::byType(app(StudioSettingsResolver::class)->clientRegister()),
+            'starters' => StarterTemplateCatalog::byType(StudioSettings::current()->client_register),
         ]);
     }
 
@@ -170,7 +170,7 @@ class DocumentTemplateController extends Controller
      * and edit screens both call this against whatever is currently typed
      * into the form, published or not.
      */
-    public function preview(Request $request, DocumentRenderer $renderer, StudioSettingsResolver $settings): HttpResponse
+    public function preview(Request $request, DocumentRenderer $renderer): HttpResponse
     {
         $this->authorize('create', DocumentTemplate::class);
 
@@ -194,9 +194,9 @@ class DocumentTemplateController extends Controller
                 ? MergeFieldVocabulary::sample()
                 // Nested, like MergeFieldVocabulary::sample() — the resolver
                 // walks the path, it does not look up a dotted key.
-                : app(DocumentMergeDataBuilder::class)->fromProject($project, $settings),
+                : app(DocumentMergeData::class)->forCase($project),
         );
-        $html = $renderer->wrap($type, $resolved, $settings);
+        $html = $renderer->wrap($type, $resolved);
 
         return response($html)->header('Content-Type', 'text/html; charset=utf-8');
     }

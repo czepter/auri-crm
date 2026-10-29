@@ -2,7 +2,7 @@
 
 namespace App\Engagement\Support;
 
-use App\Settings\Models\StudioSettings;
+use App\Models\StudioSettings;
 
 /**
  * Which studio account, if any, an inbound address belongs to.

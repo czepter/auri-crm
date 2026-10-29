@@ -54,7 +54,7 @@ class ShootData extends Data
     /**
      * T-10: $conflicts is CheckDateAvailability's own list, already narrowed
      * by the caller to this shoot's date and this shoot's crew — see
-     * ProjectController::shootsOf(). S-02's picker warns off it; it never
+     * CaseController::shootsOf(). S-02's picker warns off it; it never
      * blocks the assignment, same as every other source that action produces.
      *
      * @param  list<DateConflictData>  $conflicts

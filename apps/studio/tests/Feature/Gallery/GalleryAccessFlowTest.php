@@ -4,6 +4,7 @@ use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Gallery\Actions\ConsumeGalleryEmailVerification;
+use App\Gallery\Jobs\BuildZip;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryEmailVerification;
 use App\Gallery\Models\GalleryGuest;
@@ -14,7 +15,6 @@ use App\Media\Enums\AssetStatus;
 use App\Media\Enums\ZipBuildScope;
 use App\Media\Enums\ZipBuildSize;
 use App\Media\Enums\ZipBuildStatus;
-use App\Media\Jobs\BuildZip;
 use App\Media\Models\Asset;
 use App\Media\Models\ZipBuild;
 use App\Support\Surface;
@@ -403,6 +403,22 @@ it('queues one build per selection and size, and reuses a fresh one', function (
     test()->post("/galerien/{$gallery->public_id}/download/vorbereiten", ['size' => 'original']);
 
     Queue::assertPushed(BuildZip::class, 2);
+});
+
+it('pushes one build on media.zip for repeated requests while it runs', function () {
+    Queue::fake();
+
+    $gallery = Gallery::factory()->create();
+    Asset::factory()->for($gallery)->create(['key' => 'galleries/g/a.jpg']);
+    $gallery->publish();
+    leaveAddress($gallery);
+
+    foreach ([1, 2] as $_) {
+        test()->post("/galerien/{$gallery->public_id}/download/vorbereiten", ['size' => 'original']);
+    }
+
+    Queue::assertPushed(BuildZip::class, 1);
+    Queue::assertPushedOn('media.zip', BuildZip::class);
 });
 
 it('refuses to prepare a list the visitor does not own', function () {

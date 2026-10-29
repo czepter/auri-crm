@@ -16,7 +16,7 @@ return new class extends Migration
 
             $table->foreignId('gallery_id')->constrained()->cascadeOnDelete();
 
-            // Set even on a Failed row — App\Media\Actions\IngestCompletedUpload
+            // Set even on a Failed row — App\Gallery\Actions\IngestCompletedUpload
             // computes this before anything else can go wrong, and it is the
             // one thing every re-run of the same bytes has in common. Nullable
             // only for the rare case the download itself never completed.

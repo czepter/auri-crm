@@ -14,6 +14,7 @@ use App\Http\Middleware\EnsureIdempotentWrite;
 use App\Http\Middleware\EnsureNoStaffExists;
 use App\Http\Middleware\EnsurePortalCapability;
 use App\Http\Middleware\EnsurePortalMaintenanceClosure;
+use App\Http\Middleware\EnsurePortalSessionLifecycle;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\MarkSilentWrite;
 use App\Http\Middleware\RequireStudioOnboarding;
@@ -22,13 +23,13 @@ use App\Integration\Console\Commands\RevokeApiTokenCommand;
 use App\Media\Console\Commands\ReapIncompleteMultipartUploads;
 use App\Migration\Console\Commands\CutoverRestoreCommand;
 use App\Migration\Console\Commands\CutoverSnapshotCommand;
+use App\Models\StudioSettings;
 use App\Notifications\Console\Commands\BuildMailTemplatesCommand;
-use App\Notifications\Console\Commands\RemindOnboardingCommand;
-use App\Notifications\Console\Commands\SendStudioDigestsCommand;
 use App\Payments\Console\Commands\DetectOverdueInstallmentsCommand;
-use App\Settings\Console\Commands\DeleteDueStudio;
-use App\Settings\Console\Commands\EraseExpiredInquiries;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Privacy\Console\Commands\DeleteDueStudio;
+use App\Privacy\Console\Commands\EraseExpiredInquiries;
+use App\Staff\Console\Commands\RemindOnboardingCommand;
+use App\Staff\Console\Commands\SendStudioDigestsCommand;
 use App\Support\Surface;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
@@ -82,7 +83,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command(SweepDateOffsetAutomationRulesCommand::class)
             ->daily()
             ->timezone(rescue(
-                fn () => app(StudioSettingsResolver::class)->timezone(),
+                fn () => StudioSettings::current()->localTimezone(),
                 config('app.timezone'),
                 report: false,
             ));
@@ -110,6 +111,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prepend(AssignRequestId::class);
 
         $middleware->web(append: [
+            EnsurePortalSessionLifecycle::class,
             HandleInertiaRequests::class,
         ]);
 
@@ -152,7 +154,7 @@ return Application::configure(basePath: dirname(__DIR__))
         /*
          * The two closed doors a client actually meets, on the surface they
          * meet them on. Every "not yours" on the portal is a 404 by design
-         * (see ProjectController), and a client who follows a stale link out
+         * (see CaseController), and a client who follows a stale link out
          * of a two-year-old mail was landing on the framework's bare white
          * page with the studio's name nowhere on it.
          *

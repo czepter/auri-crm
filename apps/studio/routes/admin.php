@@ -9,9 +9,9 @@ use App\Contracts\Http\Controllers\ContractIndexController;
 use App\Contracts\Http\Controllers\ContractSignerController;
 use App\Crm\Http\Controllers\AvailabilityController;
 use App\Crm\Http\Controllers\CalendarController;
+use App\Crm\Http\Controllers\CaseController;
 use App\Crm\Http\Controllers\CaseSearchController;
 use App\Crm\Http\Controllers\ContactController;
-use App\Crm\Http\Controllers\ContactDsgvoController;
 use App\Crm\Http\Controllers\ContactSearchController;
 use App\Crm\Http\Controllers\CrewController;
 use App\Crm\Http\Controllers\FormInstanceController;
@@ -23,7 +23,6 @@ use App\Crm\Http\Controllers\LeadCaseController;
 use App\Crm\Http\Controllers\LeadContactController;
 use App\Crm\Http\Controllers\LeadStageController;
 use App\Crm\Http\Controllers\PaletteSearchController;
-use App\Crm\Http\Controllers\ProjectController;
 use App\Crm\Http\Controllers\ProjectFieldController;
 use App\Crm\Http\Controllers\ProjectTypeController;
 use App\Crm\Http\Controllers\ShootController;
@@ -48,23 +47,10 @@ use App\Gallery\Http\Controllers\GalleryRecordController;
 use App\Gallery\Http\Controllers\GallerySetController;
 use App\Gallery\Models\Gallery;
 use App\Help\Http\Controllers\HelpController;
-use App\Http\Controllers\Staff\AbsenceController;
-use App\Http\Controllers\Staff\DashboardController;
-use App\Http\Controllers\Staff\DevLoginController;
-use App\Http\Controllers\Staff\EmailVerificationController;
-use App\Http\Controllers\Staff\InvitationController;
-use App\Http\Controllers\Staff\MfaChallengeController;
-use App\Http\Controllers\Staff\MfaEnrollmentController;
-use App\Http\Controllers\Staff\NotificationController;
-use App\Http\Controllers\Staff\OAuthAuthorizationController;
-use App\Http\Controllers\Staff\OAuthClientRegistrationController;
-use App\Http\Controllers\Staff\OAuthMetadataController;
-use App\Http\Controllers\Staff\OAuthTokenController;
-use App\Http\Controllers\Staff\OwnershipController;
-use App\Http\Controllers\Staff\PasswordResetController;
-use App\Http\Controllers\Staff\ProfileController;
-use App\Http\Controllers\Staff\SessionController;
-use App\Http\Controllers\Staff\SetupController;
+use App\Integration\Http\Controllers\OAuthAuthorizationController;
+use App\Integration\Http\Controllers\OAuthClientRegistrationController;
+use App\Integration\Http\Controllers\OAuthMetadataController;
+use App\Integration\Http\Controllers\OAuthTokenController;
 use App\Media\Http\Controllers\FailedAssetController;
 use App\Media\Http\Controllers\MultipartUploadController;
 use App\Media\Http\Controllers\UploadPrecheckController;
@@ -73,6 +59,7 @@ use App\Payments\Http\Controllers\InvoiceController;
 use App\Payments\Http\Controllers\InvoiceExportController;
 use App\Payments\Http\Controllers\PaymentInstallmentController;
 use App\Payments\Http\Controllers\PaymentPlanController;
+use App\Privacy\Http\Controllers\ContactDsgvoController;
 use App\Quotes\Http\Controllers\QuoteController;
 use App\Releases\Http\Controllers\ReleaseController;
 use App\Reporting\Http\Controllers\ReportController;
@@ -89,6 +76,19 @@ use App\Settings\Http\Controllers\StudioDeletionController;
 use App\Settings\Http\Controllers\StudioExportController;
 use App\Settings\Http\Controllers\StudioOnboardingController;
 use App\Settings\Http\Controllers\StudioSettingsController;
+use App\Staff\Http\Controllers\AbsenceController;
+use App\Staff\Http\Controllers\DashboardController;
+use App\Staff\Http\Controllers\DevLoginController;
+use App\Staff\Http\Controllers\EmailVerificationController;
+use App\Staff\Http\Controllers\InvitationController;
+use App\Staff\Http\Controllers\MfaChallengeController;
+use App\Staff\Http\Controllers\MfaEnrollmentController;
+use App\Staff\Http\Controllers\NotificationController;
+use App\Staff\Http\Controllers\OwnershipController;
+use App\Staff\Http\Controllers\PasswordResetController;
+use App\Staff\Http\Controllers\ProfileController;
+use App\Staff\Http\Controllers\SessionController;
+use App\Staff\Http\Controllers\SetupController;
 use App\Templates\Http\Controllers\TemplateHubController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -610,46 +610,46 @@ Route::middleware('audience:staff')->group(function () {
         // C-02 (#236): the list behind the sidebar's Projekte entry. Its own
         // path, not /auftraege: a booked project becomes an Auftrag, and
         // the list covers every project whether booked yet or not.
-        Route::get('/projekte', [ProjectController::class, 'index'])->name('projects.index');
+        Route::get('/projekte', [CaseController::class, 'index'])->name('projects.index');
         Route::get('/projekte/suche', CaseSearchController::class)->name('projects.search');
-        Route::get('/auftraege/einstellungen/stufen', [ProjectController::class, 'index'])
+        Route::get('/auftraege/einstellungen/stufen', [CaseController::class, 'index'])
             ->defaults('pipeline', 'project')
             ->name('projects.settings.stages');
-        Route::get('/auftraege/einstellungen/typen/{key}', [ProjectController::class, 'index'])
+        Route::get('/auftraege/einstellungen/typen/{key}', [CaseController::class, 'index'])
             ->name('projects.settings.type');
 
         // The project screen. Shoot and crew mutations hang off /shootings
         // rather than under the project, because the shoot's public id already
         // identifies it and nesting would let the two disagree.
-        Route::get('/auftraege/{case}', [ProjectController::class, 'show'])->name('projects.show');
+        Route::get('/auftraege/{case}', [CaseController::class, 'show'])->name('projects.show');
         // C-12 (#248): editing is a state of the screen, so it posts back to
         // the same record.
-        Route::patch('/auftraege/{case}', [ProjectController::class, 'update'])
+        Route::patch('/auftraege/{case}', [CaseController::class, 'update'])
             ->name('projects.update');
-        Route::post('/auftraege/{case}/stufe', [ProjectController::class, 'stage'])
+        Route::post('/auftraege/{case}/stufe', [CaseController::class, 'stage'])
             ->name('projects.stage');
-        Route::get('/auftraege/{case}/shootings', [ProjectController::class, 'shoots'])
+        Route::get('/auftraege/{case}/shootings', [CaseController::class, 'shoots'])
             ->name('projects.shoots');
-        Route::get('/auftraege/{case}/aufgaben', [ProjectController::class, 'tasks'])
+        Route::get('/auftraege/{case}/aufgaben', [CaseController::class, 'tasks'])
             ->name('projects.tasks');
-        Route::get('/auftraege/{case}/galerien', [ProjectController::class, 'galleries'])
+        Route::get('/auftraege/{case}/galerien', [CaseController::class, 'galleries'])
             ->name('projects.galleries');
-        Route::delete('/auftraege/{case}', [ProjectController::class, 'destroy'])
+        Route::delete('/auftraege/{case}', [CaseController::class, 'destroy'])
             ->name('projects.destroy');
-        Route::post('/auftraege/{case}/buchung', [ProjectController::class, 'book'])
+        Route::post('/auftraege/{case}/buchung', [CaseController::class, 'book'])
             ->name('projects.book');
-        Route::post('/auftraege/{case}/abschluss', [ProjectController::class, 'complete'])
+        Route::post('/auftraege/{case}/abschluss', [CaseController::class, 'complete'])
             ->name('projects.complete');
-        Route::delete('/auftraege/{case}/abschluss', [ProjectController::class, 'reopen'])
+        Route::delete('/auftraege/{case}/abschluss', [CaseController::class, 'reopen'])
             ->name('projects.reopen');
-        Route::post('/auftraege/{case}/portal-sichtbarkeit', [ProjectController::class, 'togglePortalVisibility'])
+        Route::post('/auftraege/{case}/portal-sichtbarkeit', [CaseController::class, 'togglePortalVisibility'])
             ->name('projects.portal-visibility.toggle');
 
         // E-06. The client is the only one who can start a thread (see
         // StartThread, reached from routes/portal.php) — this GET reads
         // whatever the client has already opened, and the POST beside it is
         // staff's reply on it, never an origination of its own.
-        Route::get('/auftraege/{case}/nachrichten', [ProjectController::class, 'messages'])
+        Route::get('/auftraege/{case}/nachrichten', [CaseController::class, 'messages'])
             ->name('projects.messages');
         Route::post('/auftraege/{case}/nachrichten', [ThreadController::class, 'reply'])
             ->name('threads.reply');
@@ -661,7 +661,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::delete('/auftraege/{case}/nachrichten/{message}', [ThreadController::class, 'cancel'])
             ->name('threads.cancel');
 
-        Route::get('/auftraege/{case}/angebote', [ProjectController::class, 'quotes'])
+        Route::get('/auftraege/{case}/angebote', [CaseController::class, 'quotes'])
             ->name('projects.quotes');
 
         // The sidebar's own Angebote entry, between Anfragen and Projekte:
@@ -698,7 +698,7 @@ Route::middleware('audience:staff')->group(function () {
         // E-02: a project's own questionnaires, seeded from a FormTemplate
         // or started blank, then personalised freely — see FormInstance's
         // own doc comment.
-        Route::get('/auftraege/{case}/frageboegen', [ProjectController::class, 'forms'])
+        Route::get('/auftraege/{case}/frageboegen', [CaseController::class, 'forms'])
             ->name('projects.forms');
         Route::post('/auftraege/{case}/frageboegen', [FormInstanceController::class, 'store'])
             ->name('form-instances.store');
@@ -877,8 +877,8 @@ Route::middleware('audience:staff')->group(function () {
             ->name('galleries.prerelease.stop');
 
         // No GET here: the Zahlungen card lives on the project overview
-        // itself (ProjectController::show), not a tab of its own — see the
-        // note in CaseHeaderData::fromProject.
+        // itself (CaseController::show), not a tab of its own — see the
+        // note in CaseHeaderData::fromCase.
         Route::post('/auftraege/{case}/zahlungsplan', [PaymentPlanController::class, 'store'])
             ->name('payment-plans.store');
         Route::patch('/zahlungsplaene/{paymentPlan}', [PaymentPlanController::class, 'update'])

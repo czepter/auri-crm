@@ -378,8 +378,8 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageMessages->value, '
         ->name('api.inbox.messages.attach');
 });
 
-// ManageLeads, the scope leads.store already attaches contacts under.
-Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
+// ManageShoots like the DELETE sibling: a contact on a project opens it in the portal.
+Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
     ->post('/cases/{case:public_id}/contacts', [CaseContactController::class, 'store'])
     ->name('api.cases.contacts.store');
 
@@ -403,8 +403,8 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageSettings->value, '
     ->name('api.project-types.fields.store');
 
 // #401: booking, completion and reopening, mirroring App\Crm\Http\
-// Controllers\ProjectController's own book()/complete()/reopen() — same
-// BookProject and CompleteProject actions, so a token can commit or close a
+// Controllers\CaseController's own book()/complete()/reopen() — same
+// BookCase and CompleteCase actions, so a token can commit or close a
 // project exactly as staff do from the project screen.
 Route::middleware(['audience:api', 'scope:'.Capability::BookProject->value, 'idempotent'])
     ->post('/cases/{case:public_id}/book', [CaseController::class, 'book'])

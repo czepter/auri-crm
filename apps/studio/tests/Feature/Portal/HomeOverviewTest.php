@@ -4,15 +4,18 @@ use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Shoot;
+use App\Engagement\Actions\PostMessage;
+use App\Engagement\Actions\StartThread;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GallerySet;
 use App\Media\Models\Asset;
+use App\Models\StudioSettings;
+use App\Models\User;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
-use App\Settings\Models\StudioSettings;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -102,8 +105,8 @@ it('counts a thread the studio answered last as waiting on the client', function
     $project = bookingFor($contact);
     bookingFor($contact);
 
-    $thread = app(App\Engagement\Actions\StartThread::class)($project, $contact, 'Ablauf', 'Frage.');
-    app(App\Engagement\Actions\PostMessage::class)($thread, App\Models\User::factory()->create(), 'Antwort.');
+    $thread = app(StartThread::class)($project, $contact, 'Ablauf', 'Frage.');
+    app(PostMessage::class)($thread, User::factory()->create(), 'Antwort.');
 
     $props = test()->actingAs($contact, 'portal')->get('/')->assertOk()->viewData('page')['props'];
 
@@ -112,7 +115,7 @@ it('counts a thread the studio answered last as waiting on the client', function
 
 it('does not count a thread the client spoke on last', function () {
     $contact = Contact::factory()->create();
-    app(App\Engagement\Actions\StartThread::class)(bookingFor($contact), $contact, 'Ablauf', 'Frage.');
+    app(StartThread::class)(bookingFor($contact), $contact, 'Ablauf', 'Frage.');
     bookingFor($contact);
 
     $props = test()->actingAs($contact, 'portal')->get('/')->assertOk()->viewData('page')['props'];

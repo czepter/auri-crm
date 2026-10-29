@@ -11,10 +11,10 @@ use Illuminate\Support\Facades\Schema;
  * schema. Explicit test/live mode, each with its own key pair, so flipping
  * `payments_stripe_mode` never requires re-entering keys: both pairs always
  * live on this row, and only the active mode's pair is ever read (see
- * StudioSettingsResolver::activeStripeSecretKey()).
+ * App\Payments\Support\PaymentSettings::activeStripeSecretKey()).
  *
  * The four key columns are `text`, not `string` — the model's `encrypted`
- * cast (App\Settings\Models\StudioSettings) stores ciphertext plus an IV,
+ * cast (App\Models\StudioSettings) stores ciphertext plus an IV,
  * which is longer than the plaintext key it replaces and would silently
  * truncate under a 255-char varchar. Nothing here, and nothing this
  * migration seeds, ever writes one in plaintext.

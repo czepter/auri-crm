@@ -115,7 +115,7 @@ services:
       AWS_ENDPOINT: ${SERVICE_FQDN_RUSTFS}
       AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
       AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:?}
       MERCURE_PUBLISHER_JWT_KEY: ${SERVICE_PASSWORD_64_MERCUREPUB}
       # N-04: this surface carries the MCP endpoint claude.ai connects to,
       # and the RFC 9728 document beside it names admin as the issuer —

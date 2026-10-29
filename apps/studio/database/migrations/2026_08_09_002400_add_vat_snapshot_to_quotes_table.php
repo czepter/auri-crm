@@ -13,7 +13,7 @@ return new class extends Migration
             // All four stay null until Q-06 sends the quote and calls
             // Quote::snapshotVat() — a draft has decided nothing yet, so it
             // has nothing to freeze. Once set, a quote's own read path never
-            // falls through to StudioSettingsResolver again: that is the
+            // falls through to StudioSettings::current() again: that is the
             // whole point of a snapshot (see Quote::snapshotVat()'s docblock).
             $table->string('vat_mode')->nullable()->after('net');
             $table->unsignedInteger('vat_rate')->nullable()->after('vat_mode');

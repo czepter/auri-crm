@@ -2,7 +2,7 @@
 
 namespace App\Settings\Data;
 
-use App\Settings\Support\StudioSettingsResolver;
+use App\Models\StudioSettings;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -14,7 +14,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * `logoUrl` is the one route the logo is ever served from
  * (StudioSettingsController::logo) — never the raw storage path, which
  * would leak a filesystem detail into the client. See
- * StudioSettingsResolver::logoPath() for the stored-once file this is
+ * StudioSettings' logo_path for the stored-once file this is
  * built from.
  */
 #[TypeScript]
@@ -64,12 +64,12 @@ class StudioSettingsData extends Data
         public bool $mailClientsEnabled,
     ) {}
 
-    public static function fromResolver(StudioSettingsResolver $settings): self
+    public static function current(): self
     {
-        $attrs = $settings->attributes();
+        $attrs = StudioSettings::current()->profile();
 
         return new self(
-            id: $settings->publicId(),
+            id: StudioSettings::current()->public_id,
             displayName: $attrs['display_name'],
             legalName: $attrs['legal_name'],
             legalForm: $attrs['legal_form'],
@@ -85,29 +85,29 @@ class StudioSettingsData extends Data
             website: $attrs['website'],
             accentColor: $attrs['accent_color'],
             fontPair: $attrs['font_pair'] ?? null,
-            logoUrl: $settings->logoPath() !== null ? route('settings.logo') : null,
+            logoUrl: StudioSettings::current()->logo_path !== null ? route('settings.logo') : null,
             bankAccountHolder: $attrs['bank_account_holder'],
             bankIban: $attrs['bank_iban'],
             bankBic: $attrs['bank_bic'],
-            vatMode: $settings->vatMode(),
-            vatRate: $settings->vatRate(),
-            vatNote: $settings->vatNote(),
-            quoteValidityDays: $settings->quoteValidityDays(),
-            paymentTermDays: $settings->paymentTermDays(),
-            depositPercentage: $settings->depositPercentage(),
-            documentLayout: $settings->documentLayout(),
-            remindersEnabled: $settings->remindersEnabled(),
-            clientRegister: $settings->clientRegister(),
-            documentLetterheadHtml: $settings->documentLetterheadHtml(),
-            documentFooterHtml: $settings->documentFooterHtml(),
-            timezone: $settings->timezone(),
-            workingDays: $settings->workingDays(),
-            mailFromName: $settings->mailFromName(),
-            mailFromAddress: $settings->mailFromAddress(),
-            mailReplyTo: $settings->mailReplyTo(),
-            mailSignature: $settings->mailSignature(),
-            mailBcc: $settings->mailBcc(),
-            mailClientsEnabled: $settings->clientMailEnabled(),
+            vatMode: StudioSettings::current()->vat_mode,
+            vatRate: StudioSettings::current()->vat_rate,
+            vatNote: StudioSettings::current()->vat_note,
+            quoteValidityDays: StudioSettings::current()->quote_validity_days,
+            paymentTermDays: StudioSettings::current()->payment_term_days,
+            depositPercentage: StudioSettings::current()->deposit_percentage,
+            documentLayout: StudioSettings::current()->document_layout,
+            remindersEnabled: (bool) StudioSettings::current()->payments_reminders_enabled,
+            clientRegister: StudioSettings::current()->client_register,
+            documentLetterheadHtml: StudioSettings::current()->document_letterhead_html,
+            documentFooterHtml: StudioSettings::current()->document_footer_html,
+            timezone: StudioSettings::current()->localTimezone(),
+            workingDays: StudioSettings::current()->workingDays(),
+            mailFromName: StudioSettings::current()->mailFromName(),
+            mailFromAddress: StudioSettings::current()->mailFromAddress(),
+            mailReplyTo: StudioSettings::current()->mail_reply_to,
+            mailSignature: StudioSettings::current()->mail_signature,
+            mailBcc: StudioSettings::current()->mail_bcc,
+            mailClientsEnabled: (bool) StudioSettings::current()->mail_clients_enabled,
         );
     }
 }

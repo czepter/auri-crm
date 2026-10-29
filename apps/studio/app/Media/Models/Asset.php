@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * One SHA-256-deduplicated original ingested into a gallery (G-03), plus
- * everything App\Media\Actions\IngestCompletedUpload derived from it. Written
+ * everything App\Gallery\Actions\IngestCompletedUpload derived from it. Written
  * exactly once per (tenant, gallery, checksum) — see the migration's partial
  * unique index — so a retry, a redelivered queue message, or the same file
  * uploaded twice through the browser all converge on this same row rather

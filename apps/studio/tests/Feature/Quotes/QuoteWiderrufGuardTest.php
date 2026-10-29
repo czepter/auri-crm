@@ -2,10 +2,10 @@
 
 use App\Crm\Models\ClientCase;
 use App\Enums\StaffRole;
+use App\Models\StudioSettings;
 use App\Quotes\Actions\MarkQuoteSent;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
-use App\Settings\Models\StudioSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;

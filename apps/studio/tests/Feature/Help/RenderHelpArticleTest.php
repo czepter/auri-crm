@@ -2,7 +2,7 @@
 
 use App\Help\Actions\RenderHelpArticle;
 use App\Help\Support\HelpIndex;
-use App\Settings\Models\StudioSettings;
+use App\Models\StudioSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);

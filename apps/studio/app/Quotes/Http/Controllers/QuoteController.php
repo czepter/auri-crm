@@ -2,27 +2,26 @@
 
 namespace App\Quotes\Http\Controllers;
 
-use App\Catalog\Actions\CreatePackageFromQuote;
 use App\Catalog\Actions\SavePackage;
 use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
-use App\Crm\Actions\BookProject;
+use App\Crm\Actions\BookCase;
 use App\Crm\Data\CaseSuggestionData;
 use App\Crm\Models\ClientCase;
 use App\Documents\Data\DocumentViewData;
 use App\Documents\Support\InlineHtmlSanitizer;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Notifications\Support\MailPreview;
-use App\Numbering\Actions\AllocateDocumentNumber;
-use App\Numbering\Enums\DocumentType;
 use App\Quotes\Actions\AcceptQuote;
+use App\Quotes\Actions\AdoptQuoteRecipient;
+use App\Quotes\Actions\CreatePackageFromQuote;
+use App\Quotes\Actions\CreateQuote;
+use App\Quotes\Actions\DeleteQuote;
 use App\Quotes\Actions\DuplicateQuote;
 use App\Quotes\Actions\MarkQuoteSent;
-use App\Quotes\Actions\ReadQuoteWorkspace;
 use App\Quotes\Actions\RenderQuotePdf;
-use App\Quotes\Actions\ResolveQuoteRecipient;
-use App\Quotes\Actions\SeedQuoteFromPackage;
 use App\Quotes\Actions\SendQuote;
 use App\Quotes\Actions\UpdateQuote;
 use App\Quotes\Data\QuoteData;
@@ -33,15 +32,15 @@ use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Quotes\Models\QuotePaymentStage;
 use App\Quotes\Notifications\QuoteSent;
+use App\Quotes\Screens\ReadQuoteWorkspace;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Support\StudioReadiness;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Carbon\CarbonInterval;
+use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -121,13 +120,13 @@ class QuoteController extends Controller
             'quote' => QuoteData::fromModel($quote),
             'recipientName' => $contact?->name ?? '',
             'recipientEmail' => $contact?->email ?? '',
-            'address' => app(StudioSettingsResolver::class)->clientAddress($quote->case->contacts()->count()),
+            'address' => StudioSettings::current()->clientAddress($quote->case->contacts()->count()),
             'mailHtml' => MailPreview::html(new QuoteSent($quote, null, MailPreview::MESSAGE), $contact ?? (object) []),
         ]);
     }
 
     /** The Übersicht's wizard: the project or inquiry first, then the workspace its Angebote tab shows. */
-    public function create(Request $request, ReadQuoteWorkspace $workspace, StudioSettingsResolver $settings): InertiaResponse
+    public function create(Request $request, ReadQuoteWorkspace $workspace): InertiaResponse
     {
         $viewer = $request->user('staff');
         abort_unless($viewer->can(Capability::ManageQuotes->value), 403);
@@ -138,7 +137,7 @@ class QuoteController extends Controller
 
         return Inertia::render('Quotes/Create', [
             'project' => $case ? CaseSuggestionData::fromModel($case) : null,
-            'studioSettings' => StudioSettingsData::fromResolver($settings),
+            'studioSettings' => StudioSettingsData::current(),
             // Mit dem ersten Angebot geht ein Portal-Link hinaus; was das
             // Impressum trägt, muss vorher stehen.
             'missingBusinessData' => app(StudioReadiness::class)->missingForQuote(),
@@ -146,12 +145,12 @@ class QuoteController extends Controller
                 ? Arr::except($workspace($case, $viewer), 'paymentPlan')
                 : [
                     'quotes' => [], 'packages' => [], 'catalogItems' => [], 'contacts' => [], 'canManageCatalog' => false,
-                    'vatSettings' => ['mode' => $settings->vatMode(), 'rate' => $settings->effectiveVatRate(), 'note' => $settings->vatNote()],
+                    'vatSettings' => ['mode' => StudioSettings::current()->vat_mode, 'rate' => StudioSettings::current()->effectiveVatRate(), 'note' => StudioSettings::current()->vat_note],
                 ]),
         ]);
     }
 
-    public function store(Request $request, ClientCase $case, SeedQuoteFromPackage $seed, StudioSettingsResolver $settings, AllocateDocumentNumber $allocate, ResolveQuoteRecipient $resolveRecipient): RedirectResponse
+    public function store(Request $request, ClientCase $case, CreateQuote $create): RedirectResponse
     {
         $this->authorize('manageQuotes', $case);
 
@@ -165,14 +164,6 @@ class QuoteController extends Controller
             'addendum_to' => ['nullable', 'string'],
         ]);
 
-        // T-05's fallback: Package carries no default_validity_days column
-        // today (App\Catalog\Models\Package), so a quote with no explicit
-        // valid_until — seeded from a package or not — takes it from the
-        // tenant's own default. Read once, at creation, and never again: a
-        // later change to the setting is not this quote's concern (see
-        // StudioSettingsResolver::quoteValidityDays()).
-        $validUntil = $validated['valid_until'] ?? now()->addDays($settings->quoteValidityDays())->toDateString();
-
         // Der Nachtrag lässt seinen Vorgänger angenommen, anders als die
         // Revision, die ihn auf superseded setzt (ReviseQuote).
         $predecessor = ! empty($validated['addendum_to'])
@@ -180,33 +171,12 @@ class QuoteController extends Controller
                 ->where('status', QuoteStatus::Accepted)->firstOrFail()
             : null;
 
-        $quote = DB::transaction(function () use ($case, $validUntil, $predecessor, $allocate, $resolveRecipient) {
-            $allocation = ($allocate)(documentType: DocumentType::Quote);
-            $recipient = ($resolveRecipient)($case);
-
-            return $case->quotes()->create([
-                'valid_until' => $validUntil,
-                'is_addendum' => $predecessor !== null,
-                'predecessor_id' => $predecessor?->id,
-                'number' => $allocation['number'],
-                'recipient_contact_id' => $recipient?->id,
-                'recipient_street' => $recipient?->street,
-                'recipient_postcode' => $recipient?->postcode,
-                'recipient_city' => $recipient?->city,
-            ]);
-        });
-
-        if (! empty($validated['package'])) {
-            $package = Package::active()->where('public_id', $validated['package'])->firstOrFail();
-            $seed($quote, $package);
-        }
-
-        AuditLogger::record(
-            event: 'quote.created',
+        $create(
+            $case,
             actor: auth('staff')->user(),
-            context: ['project' => $case->public_id],
-            subject: $quote->public_id,
-            projectId: $case->id,
+            validUntil: $validated['valid_until'] ?? null,
+            package: ! empty($validated['package']) ? Package::findActive($validated['package']) : null,
+            predecessor: $predecessor,
         );
 
         return back();
@@ -391,7 +361,7 @@ class QuoteController extends Controller
         return back();
     }
 
-    public function markAccepted(Quote $quote, AcceptQuote $accept, BookProject $book): RedirectResponse
+    public function markAccepted(Quote $quote, AcceptQuote $accept, BookCase $book): RedirectResponse
     {
         $this->authorize('manageQuotes', $quote->case);
 
@@ -434,15 +404,7 @@ class QuoteController extends Controller
     {
         $this->authorize('manageQuotes', $quote->case);
 
-        $copy = $duplicate($quote);
-
-        AuditLogger::record(
-            event: 'quote.duplicated',
-            actor: auth('staff')->user(),
-            context: ['from' => $quote->public_id],
-            subject: $copy->public_id,
-            projectId: $quote->case_id,
-        );
+        $copy = $duplicate($quote, auth('staff')->user());
 
         return redirect("/angebote/{$copy->public_id}");
     }
@@ -452,22 +414,17 @@ class QuoteController extends Controller
      * further, and deleting one that a client has already seen would erase
      * a record they might still hold a copy or a mail of.
      */
-    public function destroy(Quote $quote): RedirectResponse
+    public function destroy(Quote $quote, DeleteQuote $delete): RedirectResponse
     {
         $this->authorize('manageQuotes', $quote->case);
-        abort_unless($quote->status === QuoteStatus::Draft, 422, 'Nur ein Entwurf lässt sich löschen.');
 
         $projectId = $quote->case->public_id;
 
-        AuditLogger::record(
-            event: 'quote.deleted',
-            actor: auth('staff')->user(),
-            context: ['number' => $quote->number],
-            subject: $quote->public_id,
-            projectId: $quote->case_id,
-        );
-
-        $quote->delete();
+        try {
+            $delete($quote, auth('staff')->user());
+        } catch (DomainException) {
+            abort(422, 'Nur ein Entwurf lässt sich löschen.');
+        }
 
         return redirect("/auftraege/{$projectId}/angebote");
     }
@@ -477,17 +434,13 @@ class QuoteController extends Controller
      * Request-Body: eine ausgefüllte, aber noch nicht gespeicherte
      * Formularzeile darf den Kontakt nie überschreiben.
      */
-    public function adoptRecipient(Quote $quote): RedirectResponse
+    public function adoptRecipient(Quote $quote, AdoptQuoteRecipient $adopt): RedirectResponse
     {
         $this->authorize('manageQuotes', $quote->case);
 
         abort_if($quote->recipient_contact_id === null, 404);
 
-        $quote->recipientContact->update([
-            'street' => $quote->recipient_street,
-            'postcode' => $quote->recipient_postcode,
-            'city' => $quote->recipient_city,
-        ]);
+        $adopt($quote);
 
         return back();
     }
@@ -551,7 +504,7 @@ class QuoteController extends Controller
      * its items or stages, so the live sheet always trails the form and
      * never the stored row.
      */
-    public function preview(Request $request, Quote $quote, RenderQuotePdf $render, StudioSettingsResolver $settings): Response
+    public function preview(Request $request, Quote $quote, RenderQuotePdf $render): Response
     {
         $this->authorize('manageQuotes', $quote->case);
 
@@ -641,7 +594,7 @@ class QuoteController extends Controller
         ])));
 
         $preview->fill(Quote::computeTotals($items, $preview->discount_type, $preview->discount_value));
-        $preview->fill(Quote::computeVat($preview->net, $settings, $items));
+        $preview->fill(Quote::computeVat($preview->net, $items));
 
         return response($render->html($preview), 200, ['Content-Type' => 'text/html']);
     }

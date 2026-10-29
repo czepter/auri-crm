@@ -6,9 +6,9 @@ use App\Crm\Models\Shoot;
 use App\Enums\Capability;
 use App\Enums\StaffRole;
 use App\Integration\Models\ApiToken;
+use App\Models\StudioClosure;
 use App\Models\User;
-use App\Settings\Models\NumberRange;
-use App\Settings\Models\StudioClosure;
+use App\Numbering\Models\NumberRange;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 

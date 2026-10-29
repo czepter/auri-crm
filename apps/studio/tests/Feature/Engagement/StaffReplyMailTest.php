@@ -7,10 +7,10 @@ use App\Engagement\Actions\PostMessage;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Engagement\Notifications\StaffReplyPosted;
+use App\Engagement\Notifications\Studio\ClientMessagePosted;
 use App\Engagement\Support\MessageIdentifier;
 use App\Enums\StaffRole;
 use App\Models\User;
-use App\Notifications\Studio\ClientMessagePosted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 

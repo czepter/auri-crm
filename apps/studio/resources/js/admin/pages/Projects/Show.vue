@@ -29,13 +29,13 @@ import { dayWithWeekday as day } from "@/admin/lib/dates";
 type ProjectFieldDefinition = InstanceType<typeof ProjectFields>["$props"]["fields"][number];
 
 const props = defineProps<{
-    header: App.Crm.Data.CaseHeaderData;
+    header: App.Crm.Screens.CaseHeaderData;
     shoots: App.Crm.Data.ShootData[];
     thread: App.Crm.Data.ThreadEntryData[];
     tasks: App.Crm.Data.TaskRowData[];
     shootOptions: { value: string; label: string }[];
     staffOptions: { value: string; label: string }[];
-    // Kommt von ProjectController@show; bis dahin bleibt die Ankerliste leer.
+    // Kommt von CaseController@show; bis dahin bleibt die Ankerliste leer.
     anchors?: { value: string; label: string; group: string; on: string | null }[];
     quote: App.Quotes.Data.QuoteData | null;
     supersededQuotes: { id: string; number: string | null; net: number }[];

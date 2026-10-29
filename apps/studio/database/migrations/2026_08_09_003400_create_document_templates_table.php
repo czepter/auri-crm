@@ -36,7 +36,7 @@ return new class extends Migration
 
             // {{ path.to.field }} merge fields, resolved by App\Documents\
             // Support\MergeFieldResolver against App\Documents\Support\
-            // DocumentMergeDataBuilder's array — never here, never by a
+            // DocumentMergeData's array — never here, never by a
             // controller. See docs/documents.md.
             $table->longText('body');
 

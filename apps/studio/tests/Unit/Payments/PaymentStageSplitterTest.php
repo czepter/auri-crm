@@ -1,6 +1,6 @@
 <?php
 
-use App\Payments\Support\PaymentStageSplitter;
+use App\Quotes\Support\PaymentStageSplitter;
 
 function paymentStage(int $percent, string $label, int $minimum = 0): object
 {

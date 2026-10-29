@@ -17,9 +17,9 @@ use App\Crm\Models\ProjectField;
 use App\Crm\Models\ProjectType as ProjectTypeModel;
 use App\Crm\Models\Shoot;
 use App\Models\AuditLog;
+use App\Models\StudioClosure;
 use App\Models\User;
 use App\Reporting\Support\BookingFunnel;
-use App\Settings\Models\StudioClosure;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 

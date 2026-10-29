@@ -1,8 +1,8 @@
 <?php
 
+use App\Gallery\Actions\BuildGalleryZip;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryVersion;
-use App\Media\Actions\BuildGalleryZip;
 use App\Media\Enums\AssetStatus;
 use App\Media\Enums\ZipBuildScope;
 use App\Media\Enums\ZipBuildSize;
@@ -161,7 +161,7 @@ it('never spools to local disk — neither action nor uploader ever opens a loca
     // someone else's unrelated file, not on this code. What #59 actually
     // requires — no full-archive spool — is a property of what these two
     // files call, so assert that directly.
-    $action = file_get_contents(app_path('Media/Actions/BuildGalleryZip.php'));
+    $action = file_get_contents(app_path('Gallery/Actions/BuildGalleryZip.php'));
     $uploader = file_get_contents(app_path('Media/Services/MultipartZipUploader.php'));
 
     foreach (['tempnam(', 'fopen(', 'file_put_contents(', "Storage::disk('local')", 'Storage::disk("local")'] as $spool) {

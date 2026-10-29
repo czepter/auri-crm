@@ -13,11 +13,11 @@ use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Crm\Support\CrmVocabulary;
 use App\Gallery\Models\Gallery;
+use App\Models\StudioSettings;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
-use App\Settings\Support\StudioSettingsResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 
@@ -46,7 +46,6 @@ class SweepDateOffsetAutomationRules
 {
     public function __construct(
         private readonly FireAutomationRule $fire,
-        private readonly StudioSettingsResolver $settings,
         private readonly CrmVocabulary $stages,
     ) {}
 
@@ -54,7 +53,7 @@ class SweepDateOffsetAutomationRules
     {
         // The schedule runs at 00:00 studio time, when UTC east of Greenwich
         // still reads yesterday.
-        $today = ($today ?? CarbonImmutable::now($this->settings->timezone()))->startOfDay();
+        $today = ($today ?? CarbonImmutable::now(StudioSettings::current()->localTimezone()))->startOfDay();
         $fired = 0;
 
         foreach (AutomationRule::query()->active()->dateOffset()->get() as $rule) {

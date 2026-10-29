@@ -7,7 +7,7 @@ return [
      * public client — no client secret, PKCE mandatory — because every MCP
      * client this server talks to today is this same one; a marketplace of
      * third-party MCP clients registering themselves is not a problem this
-     * app has yet. See App\Support\OAuthClients.
+     * app has yet. See App\Integration\Support\OAuthClients.
      */
     'client_id' => env('MCP_OAUTH_CLIENT_ID', 'studio-mcp'),
 

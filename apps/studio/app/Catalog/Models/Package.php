@@ -6,9 +6,9 @@ use App\Catalog\Enums\PortalPriceMode;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasHourlyPricing;
 use App\Concerns\HasPublicId;
-use App\Concerns\HasShowcaseImages;
 use App\Crm\Models\Lead;
 use App\Crm\Models\ProjectType;
+use App\Media\Concerns\HasShowcaseImages;
 use Database\Factories\Catalog\PackageFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -81,6 +81,11 @@ class Package extends Model
     public function scopeActive(Builder $query): void
     {
         $query->where('is_active', true);
+    }
+
+    public static function findActive(string $publicId): self
+    {
+        return static::active()->where('public_id', $publicId)->firstOrFail();
     }
 
     /**

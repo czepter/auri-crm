@@ -10,16 +10,16 @@ use App\Media\Models\Asset;
 use App\Models\AuditLog;
 use App\Notifications\Models\InAppNotification;
 use App\Payments\Actions\IssueCreditNote;
+use App\Privacy\Actions\PackStudioExport;
+use App\Privacy\Actions\RequestStudioExport;
+use App\Privacy\Jobs\BuildStudioExport;
+use App\Privacy\Models\StudioExport;
+use App\Privacy\Notifications\StudioExportReady;
+use App\Privacy\Support\StudioExportTables;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
-use App\Settings\Actions\PackStudioExport;
-use App\Settings\Actions\RequestStudioExport;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Enums\StudioExportKind;
-use App\Settings\Jobs\BuildStudioExport;
-use App\Settings\Models\StudioExport;
-use App\Settings\Notifications\StudioExportReady;
-use App\Settings\Support\StudioExportTables;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\GotenbergClient;
 use Aws\S3\S3Client;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -33,7 +33,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     Storage::fake('s3');
     Queue::fake();
-    app(StudioSettingsResolver::class)->set('tax_number', '22/123/45678', null);
+    app(UpdateStudioSetting::class)('tax_number', '22/123/45678', null);
 });
 
 /** The archive the fake bucket received, opened. */

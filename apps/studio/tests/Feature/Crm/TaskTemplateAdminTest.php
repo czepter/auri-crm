@@ -1,6 +1,6 @@
 <?php
 
-use App\Crm\Actions\BookProject;
+use App\Crm\Actions\BookCase;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
@@ -80,7 +80,7 @@ it("edits a template's offset and it reaches the next booking, never one already
 
     $alreadyBooked = ClientCase::factory()->create();
     Shoot::factory()->for($alreadyBooked, 'case')->on('2026-06-14')->create();
-    app(BookProject::class)($alreadyBooked, $owner);
+    app(BookCase::class)($alreadyBooked, $owner);
 
     $this->actingAs($owner, 'staff')
         ->from('/einstellungen/aufgabenvorlagen')
@@ -96,7 +96,7 @@ it("edits a template's offset and it reaches the next booking, never one already
 
     $newlyBooked = ClientCase::factory()->create();
     Shoot::factory()->for($newlyBooked, 'case')->on('2026-06-14')->create();
-    app(BookProject::class)($newlyBooked, $owner);
+    app(BookCase::class)($newlyBooked, $owner);
 
     expect(Task::where('case_id', $alreadyBooked->id)->sole()->due_on->format('Y-m-d'))->toBe('2026-06-13')
         ->and(Task::where('case_id', $newlyBooked->id)->sole()->due_on->format('Y-m-d'))->toBe('2026-06-11');
@@ -108,7 +108,7 @@ it('deactivating a template leaves the tasks it already created alone', function
 
     $project = ClientCase::factory()->create();
     Shoot::factory()->for($project, 'case')->on('2026-06-14')->create();
-    app(BookProject::class)($project, $owner);
+    app(BookCase::class)($project, $owner);
 
     $task = Task::sole();
 
@@ -136,7 +136,7 @@ it('deletes a template without touching the tasks it already created', function 
 
     $project = ClientCase::factory()->create();
     Shoot::factory()->for($project, 'case')->on('2026-06-14')->create();
-    app(BookProject::class)($project, $owner);
+    app(BookCase::class)($project, $owner);
 
     $this->actingAs($owner, 'staff')
         ->from('/einstellungen/aufgabenvorlagen')

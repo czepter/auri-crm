@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Settings\Support\StudioSettingsResolver;
+use App\Models\StudioSettings;
 use Closure;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
  * message — never a third revocation path beside A-04's hide-project and
  * revoke-contact forms. This middleware never reads or writes
  * `case_contacts` or `contacts.portal_access_revoked_at`; it is the one
- * place StudioSettingsResolver::maintenanceEnabled() is read on this
+ * place StudioSettings' portal_maintenance_enabled is read on this
  * surface, and it renders the same closure screen to everyone rather than
  * changing what any one contact is allowed to see.
  *
@@ -29,16 +29,14 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class EnsurePortalMaintenanceClosure
 {
-    public function __construct(private StudioSettingsResolver $settings) {}
-
     public function handle(Request $request, Closure $next): Response
     {
-        if (! $this->settings->maintenanceEnabled()) {
+        if (! (bool) StudioSettings::current()->portal_maintenance_enabled) {
             return $next($request);
         }
 
         return Inertia::render('Maintenance', [
-            'message' => $this->settings->maintenanceMessage(),
+            'message' => StudioSettings::current()->portal_maintenance_message,
         ])->toResponse($request);
     }
 }

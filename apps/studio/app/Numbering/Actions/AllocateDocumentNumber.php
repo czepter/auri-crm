@@ -2,11 +2,11 @@
 
 namespace App\Numbering\Actions;
 
+use App\Models\StudioSettings;
 use App\Numbering\Enums\DocumentType;
 use App\Numbering\Enums\NumberRangeResetRule;
 use App\Numbering\Models\NumberCounter;
-use App\Settings\Models\NumberRange;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Numbering\Models\NumberRange;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -35,8 +35,6 @@ use Illuminate\Support\Facades\DB;
  */
 class AllocateDocumentNumber
 {
-    public function __construct(private readonly StudioSettingsResolver $settings) {}
-
     /**
      * @return array{number: string, year: int, counter: int}
      */
@@ -46,7 +44,7 @@ class AllocateDocumentNumber
         DocumentType $documentType = DocumentType::Quote,
     ): array {
         $tenantId ??= config('tenancy.tenant_id');
-        $year ??= now($this->settings->timezone())->year;
+        $year ??= now(StudioSettings::current()->localTimezone())->year;
 
         return DB::transaction(function () use ($documentType, $tenantId, $year) {
             // withoutGlobalScope('tenant'): NumberRange carries BelongsToTenant
@@ -89,7 +87,7 @@ class AllocateDocumentNumber
      */
     public function preview(NumberRange $range): string
     {
-        $year = now($this->settings->timezone())->year;
+        $year = now(StudioSettings::current()->localTimezone())->year;
         $period = $this->period($range, $year);
         $counter = $this->nextCounter($range, $range->tenant_id, $period);
 

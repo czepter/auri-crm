@@ -4,8 +4,8 @@
 
 use App\Models\User;
 use App\Models\UserEmailVerification;
-use App\Notifications\Studio\StudioEmailVerification;
-use App\Notifications\Studio\StudioWelcome;
+use App\Staff\Notifications\StudioEmailVerification;
+use App\Staff\Notifications\StudioWelcome;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 

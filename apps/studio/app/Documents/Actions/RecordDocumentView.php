@@ -3,13 +3,12 @@
 namespace App\Documents\Actions;
 
 use App\Documents\Models\DocumentView;
-use App\Payments\Models\Invoice;
-use App\Quotes\Models\Quote;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
 class RecordDocumentView
 {
-    public function __invoke(Request $request, Quote|Invoice $document, string $via): DocumentView
+    public function __invoke(Request $request, Model $document, string $via): DocumentView
     {
         return $document->views()->create([
             'via' => $via,

@@ -2,48 +2,28 @@
 
 namespace App\Quotes\Actions;
 
-use App\Numbering\Actions\AllocateDocumentNumber;
-use App\Numbering\Enums\DocumentType;
+use App\Models\User;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
-use App\Settings\Support\StudioSettingsResolver;
 use DomainException;
-use Illuminate\Support\Facades\DB;
 
 /**
- * A new draft beside an already-accepted quote — the admin store()'s
- * `addendum_to` path (Q-06), extracted so the api surface can reach it too.
- * Unlike ReviseQuote, the predecessor stays accepted: an addendum adds to a
- * booking, it does not replace it.
+ * A new draft beside an already-accepted quote (Q-06). Unlike ReviseQuote,
+ * the predecessor stays accepted: an addendum adds to a booking, it does not
+ * replace it.
  */
 class CreateQuoteAddendum
 {
     public function __construct(
-        private readonly AllocateDocumentNumber $allocate,
-        private readonly ResolveQuoteRecipient $resolveRecipient,
-        private readonly StudioSettingsResolver $settings,
+        private readonly CreateQuote $create,
     ) {}
 
-    public function __invoke(Quote $predecessor): Quote
+    public function __invoke(Quote $predecessor, ?User $actor = null): Quote
     {
         if ($predecessor->status !== QuoteStatus::Accepted) {
             throw new DomainException("Quote {$predecessor->public_id} is not accepted and cannot take an addendum.");
         }
 
-        return DB::transaction(function () use ($predecessor) {
-            $allocation = ($this->allocate)(documentType: DocumentType::Quote);
-            $recipient = ($this->resolveRecipient)($predecessor->case);
-
-            return $predecessor->case->quotes()->create([
-                'valid_until' => now()->addDays($this->settings->quoteValidityDays())->toDateString(),
-                'is_addendum' => true,
-                'predecessor_id' => $predecessor->id,
-                'number' => $allocation['number'],
-                'recipient_contact_id' => $recipient?->id,
-                'recipient_street' => $recipient?->street,
-                'recipient_postcode' => $recipient?->postcode,
-                'recipient_city' => $recipient?->city,
-            ]);
-        });
+        return ($this->create)($predecessor->case, actor: $actor, predecessor: $predecessor);
     }
 }

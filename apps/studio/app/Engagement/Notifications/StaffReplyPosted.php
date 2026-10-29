@@ -5,7 +5,6 @@ namespace App\Engagement\Notifications;
 use App\Concerns\AppliesStudioMailIdentity;
 use App\Engagement\Models\Message;
 use App\Notifications\Contracts\Transactional;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Symfony\Component\Mime\Email;
@@ -35,7 +34,6 @@ class StaffReplyPosted extends Notification implements Transactional
 
     public function __construct(
         private readonly Message $message,
-        private readonly StudioSettingsResolver $settings,
         /** E-12's `t.<thread>.<hmac>@…` address, once that story lands. Null until then. */
         private readonly ?string $replyTo = null,
     ) {}
@@ -52,7 +50,7 @@ class StaffReplyPosted extends Notification implements Transactional
             ->subject($this->message->thread->subject)
             ->line($this->message->body);
 
-        $mail = $this->appendStudioMailIdentity($mail, $this->settings);
+        $mail = $this->appendStudioMailIdentity($mail);
 
         // After the identity trait, so a thread-scoped reply address wins
         // over the studio's general one — a reply to *this* conversation

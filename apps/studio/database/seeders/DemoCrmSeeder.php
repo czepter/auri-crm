@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Automation\Actions\FireAutomationRule;
 use App\Automation\Models\AutomationRule;
 use App\Crm\Actions\AdvanceShootStatus;
-use App\Crm\Actions\BookProject;
+use App\Crm\Actions\BookCase;
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
@@ -30,7 +30,7 @@ use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Support\AuditLogger;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
@@ -173,7 +173,7 @@ class DemoCrmSeeder extends Seeder
      * in — so this writes both, in the one order that matters: a plausible
      * identity first, the completion stamp last.
      *
-     * Through StudioSettingsResolver::set(), the same seam
+     * Through App\Settings\Actions\UpdateStudioSetting, the same seam
      * StudioSettingsController::update() and StudioOnboardingController::
      * complete() call — never a raw update on the table — so this seeder
      * keeps proving the resolver's own cache-bust and audit-row guarantees
@@ -191,7 +191,7 @@ class DemoCrmSeeder extends Seeder
             return;
         }
 
-        $settings = app(StudioSettingsResolver::class);
+        $settings = app(UpdateStudioSetting::class);
 
         foreach ([
             'display_name' => 'Nordlicht Fotografie',
@@ -207,10 +207,10 @@ class DemoCrmSeeder extends Seeder
             'representative' => 'Christian Bergmann',
             'website' => 'https://nordlicht-fotografie.test',
         ] as $key => $value) {
-            $settings->set($key, $value, $actor);
+            $settings($key, $value, $actor);
         }
 
-        $settings->set('onboarding_completed_at', now(), $actor);
+        $settings('onboarding_completed_at', now(), $actor);
     }
 
     /**
@@ -237,7 +237,7 @@ class DemoCrmSeeder extends Seeder
      * positions, a crew that differs per shoot, and the notes the studio wrote
      * to itself.
      *
-     * Walked through BookProject and AdvanceShootStatus rather than written
+     * Walked through BookCase and AdvanceShootStatus rather than written
      * with statuses set by hand — same reasoning as the rest of this seeder.
      * The demo data is produced by the code paths the studio uses, so a broken
      * guard shows up here rather than only in a test.
@@ -301,7 +301,7 @@ class DemoCrmSeeder extends Seeder
         ]);
 
         // Booking moves all four to booked in one transaction.
-        app(BookProject::class)($project, $christian);
+        app(BookCase::class)($project, $christian);
 
         // Then the two that have happened walk forward, and the wedding day
         // sits in prep — so the derived header reads the least-advanced of
@@ -336,7 +336,7 @@ class DemoCrmSeeder extends Seeder
 
     /**
      * Mockup 01's four columns and its header link, each fed by the exact
-     * predicate its reader checks — App\Quotes\Actions\ReadInquiryColumn,
+     * predicate its reader checks — App\Quotes\Screens\ReadInquiryColumn,
      * App\Payments\Actions\ReadPaymentColumn, App\Gallery\Actions\
      * ReadAfterDeliveryColumn and DashboardController::unanswered() — rather
      * than by a row shaped to merely look right next to the mockup.

@@ -5,7 +5,7 @@ namespace App\Crm\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Engagement\Models\Thread;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Models\StudioSettings;
 use Database\Factories\Crm\ContactFactory;
 use Illuminate\Auth\Authenticatable as AuthenticatableTrait;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -67,12 +67,10 @@ class Contact extends Model implements Authenticatable
                 return;
             }
 
-            $studio = app(StudioSettingsResolver::class);
-
             $welcome = array_filter([
-                'welcome_inquiry' => $studio->portalWelcomeInquiry(),
-                'welcome_active' => $studio->portalWelcomeActive(),
-                'welcome_done' => $studio->portalWelcomeDone(),
+                'welcome_inquiry' => StudioSettings::current()->portal_welcome_inquiry,
+                'welcome_active' => StudioSettings::current()->portal_welcome_active,
+                'welcome_done' => StudioSettings::current()->portal_welcome_done,
             ], 'filled');
 
             if ($welcome !== []) {
@@ -93,7 +91,13 @@ class Contact extends Model implements Authenticatable
         ];
     }
 
-    /** X-04: has App\Crm\Actions\EraseContactDsgvo already scrubbed this row? */
+    /** One key of this client's portal_overrides, or the default where the studio's applies. */
+    public function portalOverride(string $key, mixed $default = null): mixed
+    {
+        return ($this->portal_overrides ?? [])[$key] ?? $default;
+    }
+
+    /** X-04: has App\Privacy\Actions\EraseContactDsgvo already scrubbed this row? */
     public function isDsgvoErased(): bool
     {
         return $this->dsgvo_erased_at !== null;

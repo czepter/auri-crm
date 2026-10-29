@@ -3,6 +3,7 @@
 namespace App\Settings\Enums;
 
 use App\Crm\Enums\HasLabel;
+use App\Models\StudioSettings;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
@@ -56,5 +57,11 @@ enum FontPair: string implements HasLabel
             self::Cormorant => 'Feine Serif, schmale Grotesk',
             self::Grotesk => 'Technische Grotesk',
         };
+    }
+
+    /** #234: the display pair this studio's portal and gallery are written in. Null is Hanken, the product's own default. */
+    public static function current(): self
+    {
+        return self::tryFrom((string) StudioSettings::current()->font_pair) ?? self::Hanken;
     }
 }

@@ -34,7 +34,7 @@
 @isset($actionText)
 <x-slot:subcopy>
 @lang(
-    app(\App\Settings\Support\StudioSettingsResolver::class)->clientAddress() === 'sie'
+    \App\Models\StudioSettings::current()->clientAddress() === 'sie'
         ? "If you're having trouble clicking the \":actionText\" button, copy and paste the URL below\n".'into your web browser:'
         : 'Wenn der Button „:actionText“ nicht funktioniert, öffne diesen Link im Browser:',
     [

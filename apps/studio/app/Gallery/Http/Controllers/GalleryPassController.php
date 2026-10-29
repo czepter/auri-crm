@@ -14,9 +14,8 @@ use Illuminate\Http\Request;
  * its own gate screen and keep the guest on the fast viewer the whole way.
  *
  * The same GallerySecretGate the portal's own gate uses — one implementation
- * of "is this the password", so the two cannot drift apart, and with it the
- * per-IP and per-gallery rate limits that make eighty wedding guests behind
- * one venue NAT work while a distributed guesser does not.
+ * of "is this the password", so the two cannot drift apart. Only the
+ * per-gallery limit applies here: see the $ip note on GallerySecretGate::attempt.
  *
  * $gallery arrives as a raw slug-or-public_id rather than an implicit-bound
  * model, same reasoning as GalleryPasswordController::store: a 404 from
@@ -50,7 +49,9 @@ class GalleryPassController extends Controller
 
         $password = $request->validate(['password' => ['required', 'string']])['password'];
 
-        $granted = $gate->attempt($request->ip(), $gallery, $model === null ? null : $model->checkViewPassword(...), $password);
+        // R44: no IP here, every guest arrives as the SSR container. Keyed on
+        // the resolved id so slug and public_id share one counter.
+        $granted = $gate->attempt(null, $model?->id ?? $gallery, $model === null ? null : $model->checkViewPassword(...), $password);
 
         if (! $granted || $model === null) {
             return response()->json(['message' => __('gallery.password_wrong')], 422);

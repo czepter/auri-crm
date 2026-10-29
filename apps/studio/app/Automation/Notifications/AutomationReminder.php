@@ -3,7 +3,6 @@
 namespace App\Automation\Notifications;
 
 use App\Concerns\AppliesStudioMailIdentity;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -21,7 +20,6 @@ class AutomationReminder extends Notification
     public function __construct(
         private readonly string $subject,
         private readonly string $body,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     /** @return list<string> */
@@ -38,7 +36,7 @@ class AutomationReminder extends Notification
             $message->line($paragraph);
         }
 
-        return $this->appendStudioMailIdentity($message, $this->settings);
+        return $this->appendStudioMailIdentity($message);
     }
 
     public function subject(): string

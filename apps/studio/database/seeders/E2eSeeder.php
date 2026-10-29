@@ -27,13 +27,13 @@ use App\Gallery\Models\Gallery;
 use App\Media\Enums\AssetStatus;
 use App\Media\Models\Asset;
 use App\Models\StaffInvitation;
+use App\Models\StudioSettings;
 use App\Models\User;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
-use App\Settings\Models\StudioSettings;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -64,7 +64,7 @@ class E2eSeeder extends Seeder
         // The Playwright accounts below sign in past this seeder's own
         // wizard on purpose — E2eSeeder is idempotent fixture data, not a
         // first-run scenario, and no spec here exercises /einrichtung/studio.
-        // The cache flush matters here too: StudioSettingsResolver reads
+        // The cache flush matters here too: StudioSettings::current() reads
         // through a redis-backed cache this raw update does not bust (see
         // its own doc comment), and this seeder can run against a
         // dev-server process that already has the pre-onboarding row cached.
@@ -181,7 +181,7 @@ class E2eSeeder extends Seeder
         $project = ClientCase::updateOrCreate(
             ['name' => 'Meier & Kowalski — Hochzeit'],
             // Visible in the portal, and with nothing reserved on it: that is
-            // the state ProjectController renders Projects/Inquiry for, and
+            // the state CaseController renders Projects/Inquiry for, and
             // there is otherwise no database in which that screen has a frame.
             ['type' => ProjectType::Wedding, 'portal_visible' => true],
         );

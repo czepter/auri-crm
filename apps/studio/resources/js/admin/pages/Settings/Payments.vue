@@ -15,7 +15,7 @@ const props = defineProps<{ settings: App.Settings.Data.PaymentSettingsData }>()
 
 // Keys are write-only (T-07): the server never echoes a stored value back,
 // so this form always starts with them blank. Submitting blank leaves the
-// stored pair untouched — see StudioSettingsResolver::setPaymentSettings().
+// stored pair untouched — see App\Settings\Actions\UpdatePaymentSettings.
 const form = useForm({
   payments_stripe_enabled: props.settings.stripeEnabled,
   payments_stripe_mode: props.settings.stripeMode,

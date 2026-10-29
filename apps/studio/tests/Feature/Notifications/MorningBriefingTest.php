@@ -5,11 +5,12 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
-use App\Notifications\Actions\BuildMorningBriefing;
+use App\Crm\Notifications\Studio\TasksDue;
 use App\Notifications\Enums\NotificationMode;
-use App\Notifications\Studio\MorningBriefing;
-use App\Notifications\Studio\TasksDue;
 use App\Notifications\Support\NotificationPreferences;
+use App\Staff\Actions\BuildMorningBriefing;
+use App\Staff\Notifications\MorningBriefing;
+use App\Staff\Support\StudioEvents;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 
@@ -40,7 +41,7 @@ it('sends nothing to somebody who reads the scans immediately', function () {
     $user = staffMember();
     Task::factory()->due(now()->toDateString())->create();
 
-    foreach (NotificationMode::BRIEFABLE as $class) {
+    foreach (StudioEvents::BRIEFABLE as $class) {
         app(NotificationPreferences::class)->setMode($user, $class, NotificationMode::Immediate);
     }
 

@@ -6,7 +6,7 @@ use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\StarterTemplateCatalog;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
-use App\Settings\Models\StudioSettings;
+use App\Models\StudioSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 

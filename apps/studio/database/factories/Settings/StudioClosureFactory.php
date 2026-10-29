@@ -2,7 +2,7 @@
 
 namespace Database\Factories\Settings;
 
-use App\Settings\Models\StudioClosure;
+use App\Models\StudioClosure;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

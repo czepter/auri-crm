@@ -1,7 +1,7 @@
 <?php
 
 use App\Quotes\Models\Quote;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Settings\Actions\UpdateStudioSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -21,7 +21,7 @@ it('previews a chosen layout without persisting anything', function () {
 
 it('falls back to the saved layout when none is requested', function () {
     [$user, $project] = studioWithProject();
-    app(StudioSettingsResolver::class)->set('document_layout', 'minimal');
+    app(UpdateStudioSetting::class)('document_layout', 'minimal');
 
     $response = $this->actingAs($user, 'staff')->get('/einstellungen/belege/angebot-vorschau');
 

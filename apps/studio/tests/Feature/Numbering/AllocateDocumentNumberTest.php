@@ -3,8 +3,8 @@
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
 use App\Numbering\Models\NumberCounter;
-use App\Settings\Models\NumberRange;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Numbering\Models\NumberRange;
+use App\Settings\Actions\UpdateStudioSetting;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -82,7 +82,7 @@ it('keeps two tenants on independent sequences for the same year', function () {
 });
 
 it("defaults to the current tenant and the studio's year when called with no arguments", function () {
-    app(StudioSettingsResolver::class)->set('timezone', 'Europe/Berlin');
+    app(UpdateStudioSetting::class)('timezone', 'Europe/Berlin');
     // 00:30 on 1 January in Berlin, still New Year's Eve in UTC.
     $this->travelTo(CarbonImmutable::parse('2031-12-31 23:30', 'UTC'));
 

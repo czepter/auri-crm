@@ -414,7 +414,7 @@ const permissions = {
 }
 
 /** Der gebuchte Auftrag: sieben Reiter, Stufenbalken in der Projektpipeline. */
-export const header: App.Crm.Data.CaseHeaderData = {
+export const header: App.Crm.Screens.CaseHeaderData = {
     id: RAHN,
     name: 'Hochzeit Rahn',
     names: 'Jana und Michael Rahn',
@@ -458,7 +458,7 @@ export const header: App.Crm.Data.CaseHeaderData = {
 }
 
 /** Dieselbe Kopfzeile vor der Buchung: drei Reiter, Stufenbalken in der Anfragepipeline. */
-export const leadHeader: App.Crm.Data.CaseHeaderData = {
+export const leadHeader: App.Crm.Screens.CaseHeaderData = {
     id: BRANDT,
     name: 'Familie Brandt — Hochzeit',
     names: 'Lena und Tom Brandt',

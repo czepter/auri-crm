@@ -21,7 +21,7 @@ abstract class TestCase extends BaseTestCase
         // question for the browser, and the e2e job builds for real and answers it.
         $this->withoutVite();
 
-        // StudioSettingsResolver reads and busts its cache through the `redis`
+        // StudioSettings::current() reads and busts its cache through the `redis`
         // store by name, which walks straight past CACHE_STORE=array — so one
         // Redis is shared by every test process at once. `artisan test
         // --parallel` runs six, and tests/Pest.php flushes that store before

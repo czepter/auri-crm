@@ -6,14 +6,13 @@ use App\Notifications\Support\MailPreview;
 use App\Portal\Notifications\PortalAccessInvitation;
 use App\Quotes\Models\Quote;
 use App\Quotes\Notifications\QuoteSent;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 it('renders the real mail with the message stand-in as its own paragraph', function () {
     $html = MailPreview::html(
-        new PortalAccessInvitation('https://example.test/zugang/abc', '', MailPreview::MESSAGE, app(StudioSettingsResolver::class)),
+        new PortalAccessInvitation('https://example.test/zugang/abc', '', MailPreview::MESSAGE),
         Contact::factory()->create(),
     );
 

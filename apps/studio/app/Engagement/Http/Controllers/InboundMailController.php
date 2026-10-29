@@ -32,7 +32,7 @@ class InboundMailController extends Controller
         abort_unless($this->signatureValid($request), 401);
 
         $validated = $request->validate([
-            'message_id' => ['nullable', 'string', 'max:998'],
+            'message_id' => ['nullable', 'string', 'max:255'],
             'from' => ['required', 'email', 'max:255'],
             'to' => ['required', 'string', 'max:255'],
             'subject' => ['nullable', 'string', 'max:998'],

@@ -8,8 +8,8 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
 use App\Models\Absence;
+use App\Models\StudioClosure;
 use App\Models\User;
-use App\Settings\Models\StudioClosure;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 

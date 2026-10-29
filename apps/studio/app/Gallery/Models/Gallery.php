@@ -6,10 +6,10 @@ use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
+use App\Gallery\Support\GallerySettings;
 use App\Gallery\Support\GallerySlug;
 use App\Media\Models\Asset;
 use App\Media\Models\MultipartUpload;
-use App\Settings\Support\StudioSettingsResolver;
 use Carbon\CarbonImmutable;
 use Database\Factories\Gallery\GalleryFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -113,7 +113,8 @@ class Gallery extends Model
 
     public static function findByPublicIdOrSlug(string $value): ?self
     {
-        return static::query()->where('slug', $value)->orWhere('public_id', $value)->first();
+        return static::query()->where('public_id', $value)->first()
+            ?? static::query()->where('slug', $value)->first();
     }
 
     /**
@@ -241,7 +242,7 @@ class Gallery extends Model
         }
 
         return DB::transaction(function () {
-            $retention = app(StudioSettingsResolver::class)->galleryDefaults()['expiryDays'];
+            $retention = GallerySettings::defaults()['expiryDays'];
 
             if ($retention !== null && $this->expires_at === null) {
                 // Stamped once, on first publish. A second version does not

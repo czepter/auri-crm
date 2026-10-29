@@ -11,7 +11,7 @@ return new class extends Migration
      * T-13: the last two settings vision §8 wants off the environment
      * (timezone, locale — config('app.timezone') / config('app.locale')
      * stay as the FALLBACK, read only when the column here is null; see
-     * StudioSettingsResolver::timezone()/locale()), plus working days,
+     * StudioSettings::localTimezone()/locale()), plus working days,
      * which TaskTemplate::dueFor() needs to roll a due date off a day
      * nobody works.
      *
@@ -23,7 +23,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('studio_settings', function (Blueprint $table) {
-            // Nullable, unset by default: StudioSettingsResolver falls
+            // Nullable, unset by default: StudioSettings::current() falls
             // back to config('app.timezone') until a studio picks one.
             // Free-form IANA identifier — StudioSettingsController's
             // 'timezone' validation rule is what actually constrains it

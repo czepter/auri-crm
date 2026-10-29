@@ -6,6 +6,8 @@ use App\Catalog\Data\PackageData;
 use App\Catalog\Enums\PortalPriceMode;
 use App\Catalog\Models\Package;
 use App\Catalog\Models\ServiceSuggestion;
+use App\Crm\Actions\CreateContact;
+use App\Crm\Actions\UpdateContact;
 use App\Crm\Data\ContactRowData;
 use App\Crm\Data\ContactSuggestionData;
 use App\Crm\Models\ClientCase;
@@ -16,14 +18,14 @@ use App\Enums\Capability;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryView;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\MailPreview;
 use App\Portal\Models\ClientAccess;
-use App\Portal\Models\DsgvoRequest;
 use App\Portal\Notifications\PortalAccessInvitation;
 use App\Portal\Support\PortalSettings;
+use App\Privacy\Models\DsgvoRequest;
 use App\Settings\Rules\ValidFormat;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use App\Support\RecordVisit;
 use Illuminate\Http\RedirectResponse;
@@ -53,19 +55,19 @@ class ContactController extends Controller
     ];
 
     /** @return array<string, string|bool|null> */
-    private function portalDefaults(StudioSettingsResolver $settings, PortalSettings $portal): array
+    private function portalDefaults(PortalSettings $portal): array
     {
         return [
-            'accept_quotes' => $settings->acceptQuotesEnabled(),
-            'payment_status' => $settings->paymentStatusEnabled(),
-            'messaging_mode' => $settings->messagingMode(),
-            'gallery_downloads' => $settings->galleryDownloadsEnabled(),
-            'gallery_lists' => $settings->galleryListsEnabled(),
-            'gallery_comments' => $settings->galleryCommentsEnabled(),
-            'offers' => $settings->offersEnabled(),
-            'welcome_inquiry' => $settings->portalWelcomeInquiry(),
-            'welcome_active' => $settings->portalWelcomeActive(),
-            'welcome_done' => $settings->portalWelcomeDone(),
+            'accept_quotes' => (bool) StudioSettings::current()->portal_accept_quotes_enabled,
+            'payment_status' => (bool) StudioSettings::current()->portal_payment_status_enabled,
+            'messaging_mode' => (string) StudioSettings::current()->portal_messaging_mode,
+            'gallery_downloads' => (bool) StudioSettings::current()->gallery_default_downloads_enabled,
+            'gallery_lists' => (bool) StudioSettings::current()->gallery_default_lists_enabled,
+            'gallery_comments' => (bool) StudioSettings::current()->gallery_default_comments_enabled,
+            'offers' => (bool) StudioSettings::current()->portal_offers_enabled,
+            'welcome_inquiry' => StudioSettings::current()->portal_welcome_inquiry,
+            'welcome_active' => StudioSettings::current()->portal_welcome_active,
+            'welcome_done' => StudioSettings::current()->portal_welcome_done,
             'portal_visible' => $portal->projectsVisibleByDefault(),
         ];
     }
@@ -113,16 +115,16 @@ class ContactController extends Controller
             ->map(ContactRowData::fromContact(...));
     }
 
-    public function create(StudioSettingsResolver $settings, PortalSettings $portal): Response
+    public function create(PortalSettings $portal): Response
     {
         $this->authorize('update', new Contact);
 
         return Inertia::render('Contacts/Create', [
-            'portalDefaults' => $this->portalDefaults($settings, $portal),
+            'portalDefaults' => $this->portalDefaults($portal),
         ]);
     }
 
-    public function edit(Contact $contact, StudioSettingsResolver $settings, PortalSettings $portal): Response
+    public function edit(Contact $contact, PortalSettings $portal): Response
     {
         $this->authorize('update', $contact);
 
@@ -240,7 +242,7 @@ class ContactController extends Controller
             // and not per project — a venue with forty dates a year is set up
             // once. Each value is three-valued: absent means inherit, which
             // is why the studio's own value travels beside it.
-            'portalDefaults' => $this->portalDefaults($settings, $portal),
+            'portalDefaults' => $this->portalDefaults($portal),
             'portalOverrides' => (object) ($contact->portal_overrides ?? []),
             // P-09 (#228): may this person open "Vorschau als Kunde"? The
             // link itself is minted on POST, not rendered into the page — a
@@ -262,7 +264,7 @@ class ContactController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, CreateContact $createContact): RedirectResponse
     {
         // ContactPolicy grants the address book one authority, and update()
         // is the write half of it — there is no create ability to name.
@@ -288,25 +290,12 @@ class ContactController extends Controller
 
         $overrides = array_filter($validated['portal'] ?? [], fn ($value) => $value !== null && $value !== '');
 
-        $contact = Contact::create(Arr::except($validated, 'portal'));
-
-        // The model's own creating hook writes the studio greeting; these
-        // depart from it, so they are merged onto what it left rather than
-        // replacing it.
-        if ($overrides !== []) {
-            $contact->forceFill(['portal_overrides' => array_merge($contact->portal_overrides ?? [], $overrides)])->save();
-        }
-
-        AuditLogger::record(
-            event: 'contact.created',
-            actor: auth('staff')->user(),
-            subject: $contact->public_id,
-        );
+        $contact = $createContact(Arr::except($validated, 'portal'), $overrides, auth('staff')->user());
 
         return redirect("/kontakte/{$contact->public_id}");
     }
 
-    public function update(Request $request, Contact $contact): RedirectResponse
+    public function update(Request $request, Contact $contact, UpdateContact $updateContact): RedirectResponse
     {
         $this->authorize('update', $contact);
 
@@ -331,7 +320,16 @@ class ContactController extends Controller
             'city' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $contact->update($validated);
+        if ($validated['email'] !== $contact->email) {
+            AuditLogger::record(
+                event: 'contact.email_changed',
+                actor: auth('staff')->user(),
+                context: ['from' => $contact->email, 'to' => $validated['email']],
+                subject: $contact->public_id,
+            );
+        }
+
+        $updateContact($contact, $validated);
 
         return redirect("/kontakte/{$contact->public_id}");
     }
@@ -341,7 +339,7 @@ class ContactController extends Controller
      * magic link and any session already open elsewhere. Never deletes the
      * case_contacts row and never touches any other contact (A-04).
      * Hiding a project from the portal is a separate action on
-     * ProjectController, on purpose.
+     * CaseController, on purpose.
      */
     /**
      * P-09 (#228): "Vorschau als Kunde", on the issue's own terms —
@@ -385,7 +383,7 @@ class ContactController extends Controller
         return Inertia::location(config('portal.url')."/zugang/{$token}");
     }
 
-    public function composePortalAccess(Contact $contact, StudioSettingsResolver $settings): Response
+    public function composePortalAccess(Contact $contact): Response
     {
         $this->authorize('sendPortalAccess', $contact);
         abort_if($contact->portal_access_revoked_at !== null || blank($contact->email), 404);
@@ -394,14 +392,14 @@ class ContactController extends Controller
             'contactId' => $contact->public_id,
             'recipients' => [['name' => $contact->name, 'email' => $contact->email]],
             'mailHtml' => MailPreview::html(
-                new PortalAccessInvitation(config('portal.url').'/zugang/…', '', MailPreview::MESSAGE, $settings),
+                new PortalAccessInvitation(config('portal.url').'/zugang/…', '', MailPreview::MESSAGE),
                 $contact,
             ),
         ]);
     }
 
     /** The same ClientAccess row a requested link is, only longer-lived — see INVITATION_VALID_FOR_DAYS. */
-    public function sendPortalAccess(Request $request, Contact $contact, StudioSettingsResolver $settings, NotificationService $notifications): RedirectResponse
+    public function sendPortalAccess(Request $request, Contact $contact, NotificationService $notifications): RedirectResponse
     {
         $this->authorize('sendPortalAccess', $contact);
         abort_if($contact->portal_access_revoked_at !== null || blank($contact->email), 404);
@@ -424,7 +422,6 @@ class ContactController extends Controller
             config('portal.url')."/zugang/{$token}",
             $validated['subject'],
             $validated['message'] ?? null,
-            $settings,
         ));
 
         AuditLogger::record(

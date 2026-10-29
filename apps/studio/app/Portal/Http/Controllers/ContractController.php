@@ -6,7 +6,7 @@ use App\Contracts\Actions\SignContract;
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Jobs\RenderContractJob;
 use App\Http\Controllers\Controller;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Models\StudioSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
@@ -25,13 +25,13 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * rebuilt, and a signed contract is never touched at all — sign() hashed
  * those exact bytes.
  *
- * Asks Contact::visibleProjects() the same question ProjectController does,
+ * Asks Contact::visibleProjects() the same question CaseController does,
  * so a project the contact is not on and one the studio has not made
  * portal_visible fail identically, as a 404 rather than a 403.
  */
 class ContractController extends Controller
 {
-    public function show(string $case, StudioSettingsResolver $settings): Response
+    public function show(string $case): Response
     {
         $contact = auth('portal')->user();
 
@@ -54,7 +54,7 @@ class ContractController extends Controller
             // contracts", the sign() route below is the authorisation half
             // via `portal.capability:sign_contracts`. Never hides an
             // existing signature — this only gates the form, not the record.
-            'canSign' => $settings->signContractsEnabled(),
+            'canSign' => (bool) StudioSettings::current()->portal_sign_contracts_enabled,
             'contract' => $contract === null ? null : [
                 'status' => $contract->status->value,
                 'downloadUrl' => $contract->status === ContractStatus::Rendered && $contract->hasArtifact()

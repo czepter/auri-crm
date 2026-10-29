@@ -9,7 +9,7 @@ use Illuminate\Support\Arr;
  * both docs/documents.md and DocumentTemplateController::preview() read
  * from, so the vocabulary a template author sees and the one a preview
  * renders against can never drift apart. Keep this list and
- * DocumentMergeDataBuilder::fromProject()'s array shape in sync: a path
+ * DocumentMergeData::forCase()'s array shape in sync: a path
  * here with nothing on that side resolves to an empty string forever, and a
  * path on that side with nothing here is undocumented.
  *
@@ -37,7 +37,7 @@ class MergeFieldVocabulary
         'contact.city' => 'Hamburg',
         // T-17's starters need the occasion's own date and the two figures a
         // quote states about itself. Resolved from the project's primary
-        // shoot and its latest sent quote — see DocumentMergeDataBuilder.
+        // shoot and its latest sent quote — see CaseMergeData and QuoteMergeData.
         'shoot.date' => '14.06.2026',
         'quote.validUntil' => '30.09.2026',
         'quote.vatNote' => 'Alle Preise verstehen sich zzgl. 19 % Umsatzsteuer.',

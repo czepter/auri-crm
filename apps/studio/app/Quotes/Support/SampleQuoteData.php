@@ -8,7 +8,6 @@ use App\Crm\Models\Contact;
 use App\Quotes\Enums\DiscountType;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
-use App\Settings\Support\StudioSettingsResolver;
 
 /**
  * A quote that has never touched the database — exactly what Einstellungen
@@ -19,7 +18,7 @@ use App\Settings\Support\StudioSettingsResolver;
  */
 class SampleQuoteData
 {
-    public static function build(StudioSettingsResolver $settings): Quote
+    public static function build(): Quote
     {
         $project = new ClientCase(['name' => 'Musterauftrag', 'type' => ProjectType::Other]);
         $contact = new Contact(['name' => 'Muster GmbH', 'street' => 'Musterstraße 1', 'postcode' => '12345', 'city' => 'Musterstadt']);
@@ -50,7 +49,7 @@ class SampleQuoteData
         $quote->setRelation('items', $items);
         $quote->setRelation('paymentStages', collect());
         $quote->fill(Quote::computeTotals($items, $quote->discount_type, $quote->discount_value));
-        $quote->fill(Quote::computeVat($quote->net, $settings, $items));
+        $quote->fill(Quote::computeVat($quote->net, $items));
 
         return $quote;
     }

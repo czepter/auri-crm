@@ -3,12 +3,12 @@
 use App\Crm\Enums\LeadStage;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
+use App\Crm\Notifications\Studio\InquiryReceived;
 use App\Enums\Capability;
 use App\Integration\Mcp\ApiTool;
 use App\Integration\Mcp\CrmServer;
 use App\Integration\Models\ApiToken;
 use App\Models\User;
-use App\Notifications\Studio\InquiryReceived;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;

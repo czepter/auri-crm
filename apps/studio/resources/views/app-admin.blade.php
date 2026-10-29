@@ -8,7 +8,7 @@
          POST this surface makes, so it needs the token by hand rather than
          through Inertia's own CSRF handling. --}}
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title inertia>{{ app(App\Settings\Support\StudioSettingsResolver::class)->displayName() ?? config('app.name', 'Studio') }}</title>
+    <title inertia>{{ \App\Models\StudioSettings::current()->display_name ?? config('app.name', 'Studio') }}</title>
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     @vite('resources/js/admin/main.ts')

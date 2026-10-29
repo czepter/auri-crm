@@ -11,7 +11,7 @@ use Illuminate\Foundation\Events\Dispatchable;
  * exactly the same as it will for a real Stripe payment once M-04/M-05
  * land — carrying the PaymentInstallment is what lets every listener reach
  * ->settled_via, ->plan and ->plan->case without re-querying, the same shape
- * App\Crm\Events\ProjectBooked already carries its own subject in.
+ * App\Crm\Events\CaseBooked already carries its own subject in.
  *
  * Fires at most once per installment: App\Payments\Actions\
  * MarkInstallmentPaid guards a second "mark paid", so a doubled request never dispatches this

@@ -28,7 +28,7 @@ use Illuminate\Support\Facades\Schema;
  * plain external links — no CMS, no local page, matching the issue's own
  * "a simple settings-configured URL field for each is enough". The Impressum
  * has no column of its own: it renders straight from T-02's existing legal
- * fields (StudioSettingsResolver::attributes()).
+ * fields (StudioSettings::profile()).
  */
 return new class extends Migration
 {

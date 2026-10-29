@@ -12,6 +12,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use RuntimeException;
 
 /**
  * M-05: the actual work behind a verified, deduplicated Stripe event —
@@ -93,6 +94,12 @@ class ProcessStripeWebhookEvent implements ShouldQueue
             return;
         }
 
+        if (! isset($session['amount_total'])) {
+            report(new RuntimeException("Checkout-Session {$session['id']} ohne amount_total."));
+
+            return;
+        }
+
         $paymentIntent = $session['payment_intent'] ?? null;
 
         $markPaid(
@@ -100,6 +107,7 @@ class ProcessStripeWebhookEvent implements ShouldQueue
             SettledVia::Stripe,
             now('UTC')->toDateString(),
             is_string($paymentIntent) ? $paymentIntent : null,
+            amount: (int) $session['amount_total'],
         );
     }
 }

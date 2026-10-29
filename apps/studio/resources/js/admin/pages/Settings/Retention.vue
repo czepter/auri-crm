@@ -13,13 +13,13 @@ import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 import { Switch } from '@/ui/switch'
 
-type Policy = App.Settings.Data.RetentionPolicyData
+type Policy = App.Privacy.Data.RetentionPolicyData
 type Part = keyof Policy
 
 const props = defineProps<{
   months: number | null
   policy: Policy
-  candidates: App.Settings.Data.RetentionCandidateData[]
+  candidates: App.Privacy.Data.RetentionCandidateData[]
   funnel: { total: number; booked: number }
 }>()
 

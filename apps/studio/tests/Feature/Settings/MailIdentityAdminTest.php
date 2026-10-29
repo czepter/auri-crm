@@ -2,8 +2,8 @@
 
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
-use App\Settings\Models\StudioSettings;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Models\StudioSettings;
+use App\Settings\Actions\UpdateStudioSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 
@@ -60,8 +60,8 @@ it('leaves the sender to the environment: no field writes it, and a reset emptie
     ]);
     expect(StudioSettings::query()->sole()->mail_from_address)->toBeNull();
 
-    (new StudioSettingsResolver)->set('mail_from_name', 'Atelier Nordlicht', $owner);
-    (new StudioSettingsResolver)->set('mail_from_address', 'studio@nordlicht.test', $owner);
+    app(UpdateStudioSetting::class)('mail_from_name', 'Atelier Nordlicht', $owner);
+    app(UpdateStudioSetting::class)('mail_from_address', 'studio@nordlicht.test', $owner);
 
     $this->actingAs($owner, 'staff')
         ->from('/einstellungen/email')
@@ -137,7 +137,7 @@ it('previews the client mail with the typed signature in its footer', function (
 
 it('addresses the fallback link line in the studio register', function (string $register, string $expected) {
     [$user] = studioWithProject();
-    app(StudioSettingsResolver::class)->set('client_register', $register);
+    app(UpdateStudioSetting::class)('client_register', $register);
 
     $this->actingAs($user, 'staff')->get('/einstellungen/email/vorschau')
         ->assertOk()

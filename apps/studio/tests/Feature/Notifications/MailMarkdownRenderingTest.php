@@ -3,9 +3,9 @@
 use App\Crm\Models\Contact;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Notifications\GalleryGuestCode;
+use App\Portal\Notifications\ClientAccessLink;
 use App\Quotes\Models\Quote;
 use App\Quotes\Notifications\QuoteSent;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -13,7 +13,7 @@ uses(RefreshDatabase::class);
 it('renders greeting markdown as a real heading instead of a literal hash', function () {
     $contact = Contact::factory()->create(['name' => 'Sophie Krause']);
 
-    $html = (string) (new App\Portal\Notifications\ClientAccessLink($contact, 'https://example.test/zugang/abc', app(StudioSettingsResolver::class)))
+    $html = (string) (new ClientAccessLink($contact, 'https://example.test/zugang/abc'))
         ->toMail($contact)
         ->render();
 
@@ -25,7 +25,7 @@ it('renders greeting markdown as a real heading instead of a literal hash', func
 it('bolds the gallery guest code instead of leaving literal asterisks', function () {
     $gallery = Gallery::factory()->create(['title' => 'Testgalerie']);
 
-    $html = (string) (new GalleryGuestCode($gallery, '482913', 'https://example.test/code', app(StudioSettingsResolver::class)))
+    $html = (string) (new GalleryGuestCode($gallery, '482913', 'https://example.test/code'))
         ->toMail((object) [])
         ->render();
 
