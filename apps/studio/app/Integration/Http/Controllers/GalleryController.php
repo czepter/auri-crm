@@ -85,6 +85,8 @@ class GalleryController extends Controller
             ? null
             : ClientCase::query()->where('public_id', $validated['case_id'])->firstOrFail();
 
+        abort_if($project && $request->user('api') instanceof User && ! $request->user('api')->can('view', $project), 403);
+
         $gallery = Gallery::create([
             'title' => $validated['title'],
             'is_external' => $validated['is_external'],

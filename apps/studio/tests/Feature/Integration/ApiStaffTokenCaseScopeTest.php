@@ -6,6 +6,7 @@ use App\Crm\Models\InternalNote;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
 use App\Enums\Capability;
+use App\Engagement\Models\Thread;
 use App\Enums\StaffRole;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -59,4 +60,16 @@ it('refuses a token whose owner no longer holds the capability', function () {
     $bearer = 'Bearer '.$user->createToken('mcp', [Capability::ManageSettings->value])->plainTextToken;
 
     $this->withHeader('Authorization', $bearer)->getJson('/api/studio-settings')->assertForbidden();
+});
+
+it('refuses filing a thread to a project the contributor is not crewed on', function () {
+    [, $bearer] = contributorToken([Capability::ManageMessages->value]);
+    $project = ClientCase::factory()->create();
+    $thread = Thread::factory()->create(['case_id' => null]);
+
+    $this->withHeader('Authorization', $bearer)->withHeader('Idempotency-Key', 'k2')
+        ->postJson("/api/inbox/threads/{$thread->public_id}/file", ['case' => $project->public_id])
+        ->assertForbidden();
+
+    expect($thread->fresh()->case_id)->toBeNull();
 });

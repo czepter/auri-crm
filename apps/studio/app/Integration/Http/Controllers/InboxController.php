@@ -72,6 +72,8 @@ class InboxController extends Controller
 
         $thread = Thread::query()->where('public_id', $validated['thread'])->firstOrFail();
 
+        abort_if($thread->case && $request->user('api') instanceof User && ! $request->user('api')->can('view', $thread->case), 403);
+
         $contact = $thread->participants()
             ->whereNotNull('contact_id')
             ->with('contact')
@@ -102,6 +104,8 @@ class InboxController extends Controller
         $validated = $request->validate(['case' => ['required', 'string']]);
 
         $project = ClientCase::query()->where('public_id', $validated['case'])->firstOrFail();
+
+        abort_if($request->user('api') instanceof User && ! $request->user('api')->can('view', $project), 403);
 
         try {
             $attach($thread, $project);
