@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Quotes\Actions;
+namespace App\Quotes\Screens;
 
 use App\Catalog\Data\CatalogItemData;
 use App\Catalog\Data\PackageData;

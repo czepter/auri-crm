@@ -63,7 +63,7 @@ const props = defineProps<{
     conflicts: App.Crm.Data.DateConflictData[];
     stages: { value: string; label: string; anchor: string | null }[];
     tab: "overview" | "quotes" | "messages";
-    header: App.Crm.Data.CaseHeaderData;
+    header: App.Crm.Screens.CaseHeaderData;
     conversation: App.Engagement.Data.ThreadData | null;
     quotes: App.Quotes.Data.QuoteData[];
     payments: { number: string | null; rows: { label: string; amount: number }[] } | null;

@@ -5,9 +5,9 @@ namespace App\Payments\Actions;
 use App\Crm\Models\ClientCase;
 use App\Payments\Models\PaymentPlan;
 use App\Payments\Support\PaymentInstallmentSplitter;
-use App\Payments\Support\PaymentStageSplitter;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
+use App\Quotes\Support\PaymentStageSplitter;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
 

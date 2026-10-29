@@ -14,7 +14,6 @@ use App\Crm\Models\ProjectType;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
 use App\Models\User;
-use App\Portal\Support\PortalSettings;
 use App\Support\AuditLogger;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -35,7 +34,6 @@ use Illuminate\Support\Facades\DB;
 class CaptureInquiry
 {
     public function __construct(
-        private readonly PortalSettings $portal,
         private readonly CrmVocabulary $stages,
         private readonly WriteProjectFieldValues $writeFields,
     ) {}
@@ -52,7 +50,7 @@ class CaptureInquiry
                 // Off for a stranger (vision §3.1), on for a client the
                 // studio already shows its work to — that is this contact's
                 // own portal_visible override, not a per-booking decision.
-                'portal_visible' => $this->portal->projectsVisibleByDefault($contact),
+                'portal_visible' => (bool) $contact->portalOverride('portal_visible', false),
             ]);
 
             $project->attachContact($contact, CaseContactRole::Primary);

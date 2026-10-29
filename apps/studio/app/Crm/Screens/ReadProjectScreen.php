@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Crm\Actions;
+namespace App\Crm\Screens;
 
+use App\Crm\Actions\DeriveCasePosition;
 use App\Crm\Models\ClientCase;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;

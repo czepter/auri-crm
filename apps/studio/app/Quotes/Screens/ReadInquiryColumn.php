@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Quotes\Actions;
+namespace App\Quotes\Screens;
 
 use App\Automation\Models\AutomationRun;
 use App\Crm\Data\DomainRowData;

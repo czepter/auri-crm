@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Crm\Actions;
+namespace App\Crm\Screens;
 
 use App\Crm\Models\ClientCase;
 use App\Crm\Support\CaseActivity;

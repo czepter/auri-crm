@@ -1,9 +1,9 @@
 <?php
 
-use App\Catalog\Actions\CreatePackageFromQuote;
 use App\Catalog\Models\Package;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Quotes\Actions\CreatePackageFromQuote;
 use App\Quotes\Enums\DiscountType;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;

@@ -2,7 +2,6 @@
 
 namespace App\Portal\Http\Controllers;
 
-use App\Catalog\Support\PortalOffers;
 use App\Contracts\Models\Contract;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
@@ -16,6 +15,7 @@ use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
 use App\Portal\Actions\UpdateCaseDetails;
+use App\Portal\Support\PortalOffers;
 use App\Portal\Support\PortalSettings;
 use App\Quotes\Enums\QuoteStatus;
 use Illuminate\Http\RedirectResponse;

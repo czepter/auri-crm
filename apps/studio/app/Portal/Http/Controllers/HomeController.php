@@ -2,7 +2,6 @@
 
 namespace App\Portal\Http\Controllers;
 
-use App\Catalog\Support\PortalOffers;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Engagement\Models\Thread;
@@ -10,6 +9,7 @@ use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
+use App\Portal\Support\PortalOffers;
 use App\Portal\Support\PortalSettings;
 use App\Quotes\Enums\QuoteStatus;
 use Illuminate\Http\RedirectResponse;

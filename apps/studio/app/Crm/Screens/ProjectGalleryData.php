@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Crm\Data;
+namespace App\Crm\Screens;
 
 use App\Gallery\Models\Gallery;
 use Spatie\LaravelData\Data;

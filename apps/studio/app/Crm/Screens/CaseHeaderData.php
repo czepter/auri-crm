@@ -1,11 +1,14 @@
 <?php
 
-namespace App\Crm\Data;
+namespace App\Crm\Screens;
 
 use App\Contracts\Enums\ContractStatus;
 use App\Crm\Actions\BuildThread;
-use App\Crm\Actions\OpenProjects;
 use App\Crm\Actions\ReadStageTrack;
+use App\Crm\Data\CasePersonData;
+use App\Crm\Data\CasePositionData;
+use App\Crm\Data\ProjectQueueRowData;
+use App\Crm\Data\ThreadEntryData;
 use App\Crm\Models\ClientCase;
 use App\Payments\Data\PaymentPlanData;
 use App\Quotes\Enums\QuoteStatus;

@@ -1,6 +1,5 @@
 <?php
 
-use App\Crm\Actions\RemindDueTasks;
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\ClientCase;
@@ -10,7 +9,8 @@ use App\Payments\Actions\DetectOverdueInstallments;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
-use App\Portal\Notifications\PaymentReminder;
+use App\Payments\Notifications\PaymentReminder;
+use App\Portal\Actions\RemindClientTasks;
 use App\Portal\Notifications\TaskDue;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -88,11 +88,11 @@ it('reminds the client of their own open task on the second rung', function () {
         'audience' => TaskAudience::Client,
     ]);
 
-    app(RemindDueTasks::class)();
+    app(RemindClientTasks::class)();
     Notification::assertNotSentTo($contact, TaskDue::class);
 
     $this->travel(3)->days();
-    app(RemindDueTasks::class)();
+    app(RemindClientTasks::class)();
 
     Notification::assertSentTo($contact, TaskDue::class);
 });
@@ -110,7 +110,7 @@ it('says nothing where no contact can reach the portal', function () {
         'audience' => TaskAudience::Client,
     ]);
 
-    app(RemindDueTasks::class)();
+    app(RemindClientTasks::class)();
 
     Notification::assertNotSentTo($contact, TaskDue::class);
 });

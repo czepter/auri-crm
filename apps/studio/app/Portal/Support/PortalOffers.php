@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Catalog\Support;
+namespace App\Portal\Support;
 
 use App\Catalog\Data\PortalServiceData;
 use App\Catalog\Models\Package;
 use App\Catalog\Models\ServiceSuggestion;
 use App\Crm\Models\Contact;
-use App\Portal\Support\PortalSettings;
 
 /**
  * Was ein Bestandskunde über seine Buchungen hinaus anfragen kann.

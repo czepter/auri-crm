@@ -3,8 +3,8 @@
 namespace App\Http\Middleware;
 
 use App\Crm\Actions\OpenLeads;
-use App\Crm\Actions\OpenProjects;
 use App\Crm\Models\Stage;
+use App\Crm\Screens\OpenProjects;
 use App\Data\StaffProfileData;
 use App\Documents\Support\DocumentBlockCatalog;
 use App\Documents\Support\MergeFieldVocabulary;

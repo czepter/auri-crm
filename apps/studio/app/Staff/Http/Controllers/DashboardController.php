@@ -2,13 +2,13 @@
 
 namespace App\Staff\Http\Controllers;
 
-use App\Crm\Actions\ReadStudioActivity;
 use App\Crm\Data\DomainRowData;
 use App\Crm\Data\RowActionData;
 use App\Crm\Data\TaskRowData;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
+use App\Crm\Screens\ReadStudioActivity;
 use App\Gallery\Actions\ReadAfterDeliveryColumn;
 use App\Http\Controllers\Controller;
 use App\Models\Absence;
@@ -16,9 +16,9 @@ use App\Models\User;
 use App\Payments\Actions\ReadPaymentColumn;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
-use App\Quotes\Actions\ReadInquiryColumn;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
+use App\Quotes\Screens\ReadInquiryColumn;
 use App\Quotes\Support\QuoteAcceptanceRate;
 use App\Quotes\Support\QuotePipeline;
 use Carbon\Carbon;

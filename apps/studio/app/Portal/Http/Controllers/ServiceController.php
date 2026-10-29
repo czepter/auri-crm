@@ -4,9 +4,9 @@ namespace App\Portal\Http\Controllers;
 
 use App\Catalog\Data\PortalServiceData;
 use App\Catalog\Models\Package;
-use App\Catalog\Support\PortalOffers;
 use App\Http\Controllers\Controller;
 use App\Portal\Actions\RequestService;
+use App\Portal\Support\PortalOffers;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

@@ -2,7 +2,6 @@
 
 namespace App\Quotes\Http\Controllers;
 
-use App\Catalog\Actions\CreatePackageFromQuote;
 use App\Catalog\Actions\SavePackage;
 use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
@@ -16,9 +15,9 @@ use App\Notifications\Support\MailPreview;
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
 use App\Quotes\Actions\AcceptQuote;
+use App\Quotes\Actions\CreatePackageFromQuote;
 use App\Quotes\Actions\DuplicateQuote;
 use App\Quotes\Actions\MarkQuoteSent;
-use App\Quotes\Actions\ReadQuoteWorkspace;
 use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Actions\ResolveQuoteRecipient;
 use App\Quotes\Actions\SeedQuoteFromPackage;
@@ -32,6 +31,7 @@ use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Quotes\Models\QuotePaymentStage;
 use App\Quotes\Notifications\QuoteSent;
+use App\Quotes\Screens\ReadQuoteWorkspace;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Support\StudioReadiness;
 use App\Settings\Support\StudioSettingsResolver;

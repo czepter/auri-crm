@@ -29,7 +29,7 @@ import { dayWithWeekday as day } from "@/admin/lib/dates";
 type ProjectFieldDefinition = InstanceType<typeof ProjectFields>["$props"]["fields"][number];
 
 const props = defineProps<{
-    header: App.Crm.Data.CaseHeaderData;
+    header: App.Crm.Screens.CaseHeaderData;
     shoots: App.Crm.Data.ShootData[];
     thread: App.Crm.Data.ThreadEntryData[];
     tasks: App.Crm.Data.TaskRowData[];

@@ -2,11 +2,11 @@
 
 namespace App\Integration\Http\Controllers;
 
-use App\Catalog\Actions\CreatePackageFromQuote;
 use App\Catalog\Actions\SavePackage;
 use App\Catalog\Models\Package;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Quotes\Actions\CreatePackageFromQuote;
 use App\Quotes\Actions\CreateQuoteAddendum;
 use App\Quotes\Actions\DuplicateQuote;
 use App\Quotes\Actions\MarkQuoteSent;

@@ -1,7 +1,7 @@
 <?php
 
-use App\Crm\Actions\ReadProjectScreen;
 use App\Crm\Models\ClientCase;
+use App\Crm\Screens\ReadProjectScreen;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;

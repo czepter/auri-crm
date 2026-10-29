@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Quotes\Actions;
+namespace App\Quotes\Screens;
 
 use App\Crm\Models\ClientCase;
 use App\Payments\Data\PaymentPlanData;

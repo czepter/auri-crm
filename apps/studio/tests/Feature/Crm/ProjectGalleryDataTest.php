@@ -1,8 +1,8 @@
 <?php
 
-use App\Crm\Data\ProjectGalleryData;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
+use App\Crm\Screens\ProjectGalleryData;
 use App\Gallery\Models\Gallery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 

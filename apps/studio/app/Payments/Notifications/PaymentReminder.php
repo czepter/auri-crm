@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Portal\Notifications;
+namespace App\Payments\Notifications;
 
 use App\Concerns\AppliesStudioMailIdentity;
 use App\Crm\Models\Contact;

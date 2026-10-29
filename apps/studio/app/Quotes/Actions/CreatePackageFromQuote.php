@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Catalog\Actions;
+namespace App\Quotes\Actions;
 
 use App\Catalog\Models\Package;
 use App\Quotes\Models\Quote;

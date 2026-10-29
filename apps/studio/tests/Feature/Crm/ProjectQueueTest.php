@@ -1,11 +1,11 @@
 <?php
 
-use App\Crm\Actions\OpenProjects;
 use App\Crm\Actions\ReadStageTrack;
 use App\Crm\Data\CasePositionData;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
+use App\Crm\Screens\OpenProjects;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 

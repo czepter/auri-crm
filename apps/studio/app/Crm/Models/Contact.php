@@ -93,6 +93,12 @@ class Contact extends Model implements Authenticatable
         ];
     }
 
+    /** One key of this client's portal_overrides, or the default where the studio's applies. */
+    public function portalOverride(string $key, mixed $default = null): mixed
+    {
+        return ($this->portal_overrides ?? [])[$key] ?? $default;
+    }
+
     /** X-04: has App\Privacy\Actions\EraseContactDsgvo already scrubbed this row? */
     public function isDsgvoErased(): bool
     {

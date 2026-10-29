@@ -196,6 +196,6 @@ class PortalSettings
 
     private function resolve(?Contact $contact, string $key, mixed $default): mixed
     {
-        return $this->overrides($contact)[$key] ?? $default;
+        return $contact?->portalOverride($key, $default) ?? $default;
     }
 }

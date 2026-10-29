@@ -336,7 +336,7 @@ class DemoCrmSeeder extends Seeder
 
     /**
      * Mockup 01's four columns and its header link, each fed by the exact
-     * predicate its reader checks — App\Quotes\Actions\ReadInquiryColumn,
+     * predicate its reader checks — App\Quotes\Screens\ReadInquiryColumn,
      * App\Payments\Actions\ReadPaymentColumn, App\Gallery\Actions\
      * ReadAfterDeliveryColumn and DashboardController::unanswered() — rather
      * than by a row shaped to merely look right next to the mockup.

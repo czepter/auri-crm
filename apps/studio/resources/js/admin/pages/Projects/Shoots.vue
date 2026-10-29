@@ -22,7 +22,7 @@ import { Dialog, DialogBody, DialogClose, DialogContent, DialogDescription, Dial
 const { t } = useI18n()
 
 const props = defineProps<{
-  header: App.Crm.Data.CaseHeaderData
+  header: App.Crm.Screens.CaseHeaderData
   shoots: App.Crm.Data.ShootData[]
   crewAvailability: Record<string, App.Crm.Data.CrewCandidateData[]>
   soloStudio: boolean

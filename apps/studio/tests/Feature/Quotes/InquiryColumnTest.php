@@ -10,9 +10,9 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Enums\StaffRole;
 use App\Models\User;
-use App\Quotes\Actions\ReadInquiryColumn;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
+use App\Quotes\Screens\ReadInquiryColumn;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);

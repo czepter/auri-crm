@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Payments\Support;
+namespace App\Quotes\Support;
 
 use Illuminate\Support\Collection;
 
