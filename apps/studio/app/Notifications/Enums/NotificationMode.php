@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Enums;
 
+use App\Notifications\Contracts\BriefedByDefault;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
@@ -31,14 +32,13 @@ enum NotificationMode: string
     }
 
     /**
-     * What a staff member gets before touching the pane: the notification's
-     * own defaultMode() where it declares one. The kernel cannot name the
-     * domain's notifications, so each one says this for itself.
+     * What a staff member gets before touching the pane: the briefing for a
+     * BriefedByDefault notification, otherwise at once.
      */
     public static function defaultFor(string $notificationClass): self
     {
-        return method_exists($notificationClass, 'defaultMode')
-            ? $notificationClass::defaultMode()
+        return is_subclass_of($notificationClass, BriefedByDefault::class)
+            ? self::Briefing
             : self::Immediate;
     }
 

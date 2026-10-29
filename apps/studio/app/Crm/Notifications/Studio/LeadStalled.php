@@ -4,7 +4,7 @@ namespace App\Crm\Notifications\Studio;
 
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
-use App\Notifications\Enums\NotificationMode;
+use App\Notifications\Contracts\BriefedByDefault;
 use Illuminate\Support\Collection;
 
 /**
@@ -14,15 +14,9 @@ use Illuminate\Support\Collection;
  *
  * @param  Collection<int, Lead>  $leads
  */
-class LeadStalled extends StudioEventNotification
+class LeadStalled extends StudioEventNotification implements BriefedByDefault
 {
     public function __construct(private readonly Collection $leads) {}
-
-    /** An untouched inquiry is as true at 07:00 as it is now. */
-    public static function defaultMode(): NotificationMode
-    {
-        return NotificationMode::Briefing;
-    }
 
     public function title(): string
     {
