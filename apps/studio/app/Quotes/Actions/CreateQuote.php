@@ -12,7 +12,7 @@ use App\Quotes\Models\Quote;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
 
-/** The only writer of new quotes. */
+/** The only writer of blank quotes; DuplicateQuote and ReviseQuote copy an existing one. */
 class CreateQuote
 {
     public function __construct(

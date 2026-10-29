@@ -46,7 +46,7 @@ final class StudioEvents
 
     /**
      * The three scan events, and only them. They describe states that are
-     * still true in the morning; the other eight happen at a moment, and a
+     * still true in the morning; the others happen at a moment, and a
      * second collecting channel beside the summary would be the same
      * function under another name.
      *

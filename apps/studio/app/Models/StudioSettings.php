@@ -76,10 +76,10 @@ class StudioSettings extends Model
         'retention_months', 'retention_policy',
     ];
 
-    // Defence in depth beside StudioSettings::current() never exposing these
-    // past itself (T-01's own rule) — the same belt the four MFA columns
-    // wear on App\Models\User. A secret key must never ride along in a
-    // serialised StudioSettings even by accident.
+    // current() hands out the whole model, so the keys are guarded here: the
+    // 'encrypted' casts keep them ciphertext at rest, and $hidden keeps them
+    // out of toArray()/toJson() and so out of any Inertia prop — the same belt
+    // the four MFA columns wear on App\Models\User.
     protected $hidden = [
         'payments_stripe_test_publishable_key', 'payments_stripe_test_secret_key',
         'payments_stripe_live_publishable_key', 'payments_stripe_live_secret_key',
