@@ -71,6 +71,15 @@ class AdvanceLeadStage
             );
         }
 
+        // The move onto or off the won stage books or unbooks, so it needs the
+        // booking capability — LeadPolicy's manage right alone is the funnel's.
+        // A null actor is the api surface's token, checked in its controller.
+        $by = $actor ?? auth('staff')->user();
+
+        if ($by !== null && ($from->anchor === StageAnchor::Won || $next->anchor === StageAnchor::Won) && $by->cannot('book', $lead->case)) {
+            throw new DomainException("Auftrag {$lead->case->public_id} darf nicht gebucht werden.");
+        }
+
         DB::transaction(function () use ($lead, $from, $next, $backwards, $actor, $enteredAt) {
             // Taking back the won stage takes back the booking with it, or the
             // board and the project list each show what the other one denies.

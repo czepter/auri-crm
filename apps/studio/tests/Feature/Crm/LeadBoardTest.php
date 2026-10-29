@@ -8,6 +8,7 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
+use App\Enums\StaffRole;
 use App\Models\User;
 use App\Quotes\Models\Quote;
 use App\Settings\Models\StudioClosure;
@@ -211,6 +212,16 @@ it('advances a lead using the identifier the card carries', function () {
         ->assertRedirect('/anfragen');
 
     expect($lead->fresh()->stage->key)->toBe(LeadStage::Contacted->value);
+});
+
+it('refuses a board move onto the won stage to staff without the booking capability', function () {
+    $lead = leadOn('2026-06-14', LeadStage::QuoteAccepted);
+
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Contributor]), 'staff')
+        ->post("/anfragen/{$lead->case->public_id}/stufe", ['stage' => 'booked'])
+        ->assertSessionHasErrors('stage');
+
+    expect($lead->case->fresh()->isBooked())->toBeFalse();
 });
 
 it('advances a lead from the board', function () {
