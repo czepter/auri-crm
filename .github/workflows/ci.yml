@@ -270,6 +270,11 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
       options: --user ${{ needs.ci-image.outputs.user }}
+    # The image's XDG_CONFIG_HOME is root-owned /config, and astro check
+    # dies creating its telemetry store there before it reads any opt-out
+    # but this one.
+    env:
+      ASTRO_TELEMETRY_DISABLED: 1
     steps:
       - uses: actions/checkout@v7
       # No version here on purpose. package.json's packageManager field pins
