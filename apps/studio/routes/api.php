@@ -23,6 +23,7 @@ use App\Integration\Http\Controllers\GalleryController;
 use App\Integration\Http\Controllers\InboxController;
 use App\Integration\Http\Controllers\InternalNoteController;
 use App\Integration\Http\Controllers\LeadController;
+use App\Integration\Http\Controllers\LegalTextController;
 use App\Integration\Http\Controllers\MessageController;
 use App\Integration\Http\Controllers\PackageController;
 use App\Integration\Http\Controllers\PaymentController;
@@ -492,6 +493,10 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageSettings->value])-
     Route::get('/studio-closures', [StudioReadController::class, 'closures'])->name('api.studio-closures.index');
     Route::get('/number-ranges', [StudioReadController::class, 'numberRanges'])->name('api.number-ranges.index');
 });
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageSettings->value, 'idempotent'])
+    ->patch('/studio-settings/legal-texts', [LegalTextController::class, 'update'])
+    ->name('api.studio-settings.legal-texts.update');
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageCrew->value])->group(function () {
     Route::get('/staff', [CrewController::class, 'staff'])->name('api.staff.index');
