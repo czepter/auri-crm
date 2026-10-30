@@ -13,7 +13,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * name, its key or its position — the anchor is the only thing the code may
  * branch on. A stage without one is presentation, which is most of them.
  *
- * The cases are exactly the branches that exist today (BookProject,
+ * The cases are exactly the branches that exist today (BookCase,
  * AdvanceLeadStage, CalendarController, BookingFunnel, the portal's phase
  * grouping). A tenth case belongs here only when code needs to ask for it.
  */

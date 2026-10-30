@@ -5,7 +5,7 @@ namespace App\Gallery\Notifications;
 use App\Concerns\AppliesStudioMailIdentity;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryEmailVerification;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Models\StudioSettings;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -22,7 +22,6 @@ class GalleryGuestCode extends Notification
         private readonly Gallery $gallery,
         private readonly string $code,
         private readonly string $url,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     /** @return list<string> */
@@ -33,7 +32,7 @@ class GalleryGuestCode extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $du = $this->settings->clientAddress() === 'du';
+        $du = StudioSettings::current()->clientAddress() === 'du';
 
         $message = (new MailMessage)
             ->subject(($du ? 'Dein' : 'Ihr')." Code für die Galerie „{$this->gallery->title}“")
@@ -46,6 +45,6 @@ class GalleryGuestCode extends Notification
                 ? 'Wenn du das nicht angefordert hast, kannst du diese E-Mail ignorieren.'
                 : 'Wenn Sie das nicht angefordert haben, können Sie diese E-Mail ignorieren.');
 
-        return $this->appendStudioMailIdentity($message, $this->settings);
+        return $this->appendStudioMailIdentity($message);
     }
 }

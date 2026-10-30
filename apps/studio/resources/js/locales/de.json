@@ -450,6 +450,13 @@
     "sent": "Versendet",
     "viewed": "Geöffnet"
   },
+  "documentViews": {
+    "title": "Öffnungen",
+    "link": "Link",
+    "portal": "Portal",
+    "network": "Netz {network}",
+    "counts": "Zählt"
+  },
   "contractWizard": {
     "open": "Schnellbau",
     "title": "Vertrag zusammenstellen",
@@ -568,6 +575,7 @@
     "file": "Zuordnen",
     "reason": {
       "dmarc_fail": "Absender nicht bestätigt",
+      "dmarc_unverified": "Absender nicht bestätigt",
       "no_inbound_secret": "Keine Adresse eingerichtet",
       "unrecognised_address": "Adresse nicht zuordenbar",
       "unknown_thread": "Auftrag nicht gefunden",
@@ -908,6 +916,7 @@
     "text": "Text",
     "payment": "Zahlung",
     "portalIncluded": "Inklusive",
+    "optional": "Optional",
     "imagesUnit": "Bilder",
     "rateInvalid": "Muss über 0 liegen",
     "minHoursInvalid": "Mindestens 1 Stunde",

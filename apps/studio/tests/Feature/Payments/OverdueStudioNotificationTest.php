@@ -1,11 +1,11 @@
 <?php
 
 use App\Models\User;
-use App\Notifications\Studio\InstallmentOverdue;
 use App\Payments\Actions\DetectOverdueInstallments;
 use App\Payments\Enums\OverdueReason;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
+use App\Payments\Notifications\Studio\InstallmentOverdue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 

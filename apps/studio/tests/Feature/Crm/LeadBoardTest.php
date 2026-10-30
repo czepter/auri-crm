@@ -8,9 +8,10 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
+use App\Models\StudioClosure;
+use App\Enums\StaffRole;
 use App\Models\User;
 use App\Quotes\Models\Quote;
-use App\Settings\Models\StudioClosure;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 
@@ -175,7 +176,7 @@ it('issues no more queries for eleven cards spanning several closures than it di
         leadOn(sprintf('2026-%02d-14', $i), name: "Projekt {$i}");
     }
 
-    // Warms StudioSettingsResolver's own redis-backed cache (read once by
+    // Warms StudioSettings::current()'s own redis-backed cache (read once by
     // RequireStudioOnboarding on every GET) before either measurement below
     // — otherwise only the first of the two request/response cycles pays
     // that one-off cache-miss query, and the two counts this test compares
@@ -211,6 +212,16 @@ it('advances a lead using the identifier the card carries', function () {
         ->assertRedirect('/anfragen');
 
     expect($lead->fresh()->stage->key)->toBe(LeadStage::Contacted->value);
+});
+
+it('refuses a board move onto the won stage to staff without the booking capability', function () {
+    $lead = leadOn('2026-06-14', LeadStage::QuoteAccepted);
+
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Contributor]), 'staff')
+        ->post("/anfragen/{$lead->case->public_id}/stufe", ['stage' => 'booked'])
+        ->assertSessionHasErrors('stage');
+
+    expect($lead->case->fresh()->isBooked())->toBeFalse();
 });
 
 it('advances a lead from the board', function () {

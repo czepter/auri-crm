@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
  * see the migration's own docblock for the '*' wildcard notification_class
  * an unsubscribe writes. Never read outside App\Notifications\Support\
  * NotificationPreferences, the same "one resolver, never the raw row"
- * discipline StudioSettings keeps with StudioSettingsResolver.
+ * discipline StudioSettings keeps with StudioSettings::current().
  */
 class NotificationPreference extends Model
 {

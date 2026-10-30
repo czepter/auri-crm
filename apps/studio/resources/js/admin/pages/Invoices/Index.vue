@@ -9,6 +9,8 @@ import Empty from '@/ui/page/Empty.vue'
 import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
 import { Input } from '@/ui/input'
 import { Button } from '@/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/ui/popover'
+import DocumentViews from '@/admin/components/DocumentViews.vue'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 import InstallmentPaidDialog from '@/admin/components/InstallmentPaidDialog.vue'
@@ -99,8 +101,16 @@ const shown = computed(() => {
                   </TableCell>
                   <TableCell class="whitespace-nowrap">
                     <span class="chip" :class="CHIP[invoice.status]">{{ invoice.statusLabel }}</span>
-                    <span v-if="invoice.viewedOn || invoice.sentOn" class="ml-2 text-small text-ink-2">
-                      {{ $t(invoice.viewedOn ? 'invoicesOverview.viewed' : 'invoicesOverview.sent') }}
+                    <Popover v-if="invoice.views.length">
+                      <PopoverTrigger class="ml-2 cursor-pointer border-0 bg-transparent p-0 text-small text-ink-2 underline decoration-dotted">
+                        {{ $t(invoice.viewedOn ? 'invoicesOverview.viewed' : 'documentViews.title') }}
+                      </PopoverTrigger>
+                      <PopoverContent class="w-[420px]">
+                        <DocumentViews :views="invoice.views" />
+                      </PopoverContent>
+                    </Popover>
+                    <span v-else-if="invoice.sentOn" class="ml-2 text-small text-ink-2">
+                      {{ $t('invoicesOverview.sent') }}
                     </span>
                   </TableCell>
                   <TableCell align="right">

@@ -6,9 +6,11 @@ use App\Crm\Models\Shoot;
 use App\Enums\Capability;
 use App\Enums\StaffRole;
 use App\Integration\Models\ApiToken;
+use App\Models\StudioClosure;
+use App\Models\StudioSettings;
 use App\Models\User;
-use App\Settings\Models\NumberRange;
-use App\Settings\Models\StudioClosure;
+use App\Numbering\Models\NumberRange;
+use App\Portal\Support\LegalTexts;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -55,6 +57,28 @@ it('reads studio settings, closures and number ranges', function () {
     $this->getJson('/api/studio-settings')->assertOk()->assertJsonStructure(['data' => ['vatMode', 'vatRate', 'quoteValidityDays']]);
     $this->getJson('/api/studio-closures')->assertOk()->assertJsonPath('data.0.label', 'Weihnachtspause')->assertJsonPath('data.0.message', 'Zurück am 2. Januar.');
     $this->getJson('/api/number-ranges')->assertOk()->assertJsonCount(NumberRange::query()->count(), 'data');
+});
+
+it('sets legal text links and leaves the others alone', function () {
+    $this->withHeader('Authorization', 'Bearer '.opsToken(Capability::ManageSettings));
+    StudioSettings::query()->firstOrFail()->update(['portal_legal_agb_url' => 'https://example.test/agb']);
+    StudioSettings::forgetCurrent();
+
+    $this->withHeader('Idempotency-Key', 'legal-1')
+        ->patchJson('/api/studio-settings/legal-texts', [
+            'widerruf' => 'https://example.test/widerrufsbelehrung',
+            'impressum' => 'https://example.test/impressum',
+        ])
+        ->assertOk()
+        ->assertJsonPath('data.widerruf', 'https://example.test/widerrufsbelehrung')
+        ->assertJsonPath('data.impressum', 'https://example.test/impressum')
+        ->assertJsonPath('data.agb', 'https://example.test/agb');
+
+    expect(LegalTexts::url('widerruf'))->toBe('https://example.test/widerrufsbelehrung');
+
+    $this->withHeader('Idempotency-Key', 'legal-2')
+        ->patchJson('/api/studio-settings/legal-texts', ['widerruf' => 'kein-link'])
+        ->assertUnprocessable();
 });
 
 it('creates a form from a template, updates it, shares it and records an answer', function () {

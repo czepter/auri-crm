@@ -2,10 +2,13 @@
 
 namespace App\Integration\Http\Controllers;
 
+use App\Crm\Actions\CreateContact;
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Enums\Capability;
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\EnsureApiTokenScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -18,7 +21,7 @@ use Illuminate\Http\Response;
  */
 class CaseContactController extends Controller
 {
-    public function store(Request $request, ClientCase $case): JsonResponse
+    public function store(Request $request, ClientCase $case, CreateContact $createContact): JsonResponse
     {
         $validated = $request->validate([
             'contact_id' => ['nullable', 'string', 'size:24', 'required_without:name'],
@@ -32,7 +35,9 @@ class CaseContactController extends Controller
 
         abort_if($this->isPrimary($role), 422);
 
-        $contact = $this->resolveContact($validated);
+        $this->authorizeContactUse($request, $validated);
+
+        $contact = $createContact->pickOrResolve($validated['contact_id'] ?? null, $validated);
 
         // unique(case_id, contact_id, role) would throw on a second attach.
         if (! $case->contacts()->whereKey($contact->id)->wherePivot('role', $role)->exists()) {
@@ -74,21 +79,26 @@ class CaseContactController extends Controller
     /**
      * @param  array<string, mixed>  $validated
      */
-    private function resolveContact(array $validated): Contact
+    private function authorizeContactUse(Request $request, array $validated): void
     {
+        $principal = $request->user('api');
+        $can = fn (Capability $c) => EnsureApiTokenScope::allows($principal, $c);
+
+        // Reading an existing contact back through the 201 body is an e-mail
+        // oracle, so it needs the same authority as reading contacts.
+        $mayUseExisting = $can(Capability::ManageContacts) || $can(Capability::ViewAllCases);
+
         if (filled($validated['contact_id'] ?? null)) {
-            return Contact::query()->where('public_id', $validated['contact_id'])->firstOrFail();
+            abort_unless($mayUseExisting, 403);
+
+            return;
         }
 
         // Same rule as CaptureInquiry: an address on file is that person.
         $existing = filled($validated['email'] ?? null)
-            ? Contact::query()->where('email', $validated['email'])->first()
-            : null;
+            && Contact::query()->where('email', $validated['email'])->exists();
 
-        return $existing ?? Contact::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'] ?? null,
-            'phone' => $validated['phone'] ?? null,
-        ]);
+        // A new contact is the same authority as POST /api/contacts.
+        abort_unless($existing ? $mayUseExisting : $can(Capability::ManageContacts), 403);
     }
 }

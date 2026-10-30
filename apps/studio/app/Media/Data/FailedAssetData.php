@@ -9,7 +9,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 /**
  * One row of G-04's "needs attention" tray (mockups/admin/05-medien.html,
  * the `.dsec`/`.trow` block): a filename and the error
- * App\Media\Actions\IngestCompletedUpload gave up with, plus the public id
+ * App\Gallery\Actions\IngestCompletedUpload gave up with, plus the public id
  * the retry action needs and nothing a client could enumerate with.
  */
 #[TypeScript]

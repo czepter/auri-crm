@@ -4,6 +4,7 @@ namespace App\Gallery\Http\Controllers;
 
 use App\Gallery\Actions\ConsumeGalleryEmailVerification;
 use App\Gallery\Actions\RequestGalleryEmailVerification;
+use App\Gallery\Jobs\BuildZip;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryDownloadLink;
 use App\Gallery\Models\GalleryGuest;
@@ -17,7 +18,6 @@ use App\Media\Enums\AssetStatus;
 use App\Media\Enums\ZipBuildScope;
 use App\Media\Enums\ZipBuildSize;
 use App\Media\Enums\ZipBuildStatus;
-use App\Media\Jobs\BuildZip;
 use App\Media\Models\Asset;
 use App\Media\Models\AssetDerivative;
 use App\Media\Models\ZipBuild;
@@ -131,6 +131,15 @@ class GalleryDownloadController extends Controller
         ]);
 
         if ($build->exists && $build->status === ZipBuildStatus::Ready && $this->isFresh($build)) {
+            return back();
+        }
+
+        // Ein laufender Build wird weder neu gestartet noch seine Teile gelöscht; nach dem
+        // media.zip-Timeout gilt er als tot.
+        if ($build->exists && $build->status === ZipBuildStatus::Building
+            && $build->updated_at->gt(now()->subSeconds(config('horizon.defaults.supervisor-media-zip.timeout')))) {
+            $this->waitFor($build, $gallery, $claims);
+
             return back();
         }
 

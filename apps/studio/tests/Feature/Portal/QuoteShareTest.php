@@ -3,9 +3,9 @@
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Models\AuditLog;
+use App\Models\StudioSettings;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
-use App\Settings\Models\StudioSettings;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;

@@ -7,7 +7,7 @@ use App\Payments\Models\PaymentInstallment;
 use App\Payments\Support\InvoiceFigures;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Settings\Actions\UpdateStudioSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Storage;
@@ -27,11 +27,10 @@ beforeEach(function () {
  */
 function mixedRateInstallment(array $lines, int $deposit, string $vatMode = 'standard'): PaymentInstallment
 {
-    $settings = app(StudioSettingsResolver::class);
-    $settings->set('vat_mode', $vatMode, null);
-    $settings->set('vat_rate', 1900, null);
+    app(UpdateStudioSetting::class)('vat_mode', $vatMode, null);
+    app(UpdateStudioSetting::class)('vat_rate', 1900, null);
     // § 14 Abs. 4 Nr. 2: IssueInvoice refuses without one.
-    $settings->set('tax_number', '22/123/45678', null);
+    app(UpdateStudioSetting::class)('tax_number', '22/123/45678', null);
 
     $project = bookedContactProject();
 
@@ -51,7 +50,7 @@ function mixedRateInstallment(array $lines, int $deposit, string $vatMode = 'sta
     }
 
     $quote->recalculateTotal();
-    $quote->refresh()->snapshotVat($settings);
+    $quote->refresh()->snapshotVat();
     $quote->forceFill(['status' => QuoteStatus::Accepted, 'accepted_at' => now()])->save();
 
     $total = $quote->fresh()->net + $quote->fresh()->vat_amount;
@@ -83,7 +82,7 @@ it('splits an Anzahlung pro rata over both rates, summing to the installment exa
     // the Anzahlung below.
     $installment = mixedRateInstallment([[100_000, null], [10_000, 700]], 64_850);
 
-    $figures = InvoiceFigures::forInvoice(app(IssueInvoice::class)($installment), app(StudioSettingsResolver::class));
+    $figures = InvoiceFigures::forInvoice(app(IssueInvoice::class)($installment));
 
     expect(array_column($figures->rates, 'rate'))->toBe([1900, 700])
         ->and(array_sum(array_column($figures->rates, 'net')) + array_sum(array_column($figures->rates, 'vat')))
@@ -95,7 +94,7 @@ it('puts the rounding difference on the largest rate so the shares still sum to 
     // 3 cent over three unequal shares: the division cannot come out even.
     $installment = mixedRateInstallment([[100_000, null], [33_333, 700]], 99_999);
 
-    $figures = InvoiceFigures::forInvoice(app(IssueInvoice::class)($installment), app(StudioSettingsResolver::class));
+    $figures = InvoiceFigures::forInvoice(app(IssueInvoice::class)($installment));
 
     $shares = array_map(fn (array $line) => $line['net'] + $line['vat'], $figures->rates);
 
@@ -104,10 +103,9 @@ it('puts the rounding difference on the largest rate so the shares still sum to 
 });
 
 it('leaves the small-business case at one zero rate', function () {
-    $settings = app(StudioSettingsResolver::class);
     $installment = mixedRateInstallment([[100_000, null], [10_000, 700]], 55_000, vatMode: 'small_business');
 
-    $figures = InvoiceFigures::forInvoice(app(IssueInvoice::class)($installment), $settings);
+    $figures = InvoiceFigures::forInvoice(app(IssueInvoice::class)($installment));
 
     expect($figures->rate)->toBe(0)
         ->and($figures->vat)->toBe(0)

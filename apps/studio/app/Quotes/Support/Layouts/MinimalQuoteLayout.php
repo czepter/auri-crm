@@ -45,7 +45,7 @@ class MinimalQuoteLayout implements QuoteLayoutRenderer
     private function items(Quote $quote): string
     {
         $rows = $quote->items->map(function (QuoteItem $item) {
-            $title = e($item->title).($item->quantity > 1 ? ' · '.$item->quantity.' × '.$this->money($item->unit_price ?? 0) : '');
+            $title = e($item->label()).($item->quantity > 1 ? ' · '.$item->quantity.' × '.$this->money($item->unit_price ?? 0) : '');
             $desc = $item->description === null ? '' : '<div class="dlm-desc">'.e($item->description).'</div>';
             $amount = $item->isIncluded() ? 'inklusive' : $this->money($item->discountedLineTotal());
 

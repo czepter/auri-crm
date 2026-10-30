@@ -18,7 +18,7 @@ return new class extends Migration
 
             // The object's eventual quarantine location and the S3-issued
             // UploadId that names this multipart session there — see
-            // App\Media\Actions\StartOrResumeMultipartUpload. Both are only
+            // App\Gallery\Actions\StartOrResumeMultipartUpload. Both are only
             // known once CreateMultipartUpload has actually run, but neither
             // is nullable: the row is only ever inserted after that call
             // returns, key and upload_id already in hand.

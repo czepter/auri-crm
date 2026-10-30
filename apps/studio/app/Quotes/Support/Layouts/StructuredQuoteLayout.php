@@ -54,7 +54,7 @@ class StructuredQuoteLayout implements QuoteLayoutRenderer
     private function items(Quote $quote): string
     {
         $rows = $quote->items->map(fn (QuoteItem $item) => '<tr><td>'
-            .e($item->title).($item->description === null ? '' : '<br><small>'.e($item->description).'</small>')
+            .e($item->label()).($item->description === null ? '' : '<br><small>'.e($item->description).'</small>')
             .'</td><td class="doc-num">'.$item->quantity.'</td><td class="doc-num">'
             .($item->isIncluded() ? 'inklusive' : $this->money($item->discountedLineTotal()))
             .'</td></tr>')->implode('');

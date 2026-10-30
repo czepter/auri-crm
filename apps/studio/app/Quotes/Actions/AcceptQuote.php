@@ -3,13 +3,13 @@
 namespace App\Quotes\Actions;
 
 use App\Crm\Actions\AdvanceLeadStage;
+use App\Crm\Actions\NotifyStudio;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Models\Contact;
-use App\Notifications\Actions\NotifyStudio;
-use App\Notifications\Studio\QuoteAccepted;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
+use App\Quotes\Notifications\Studio\QuoteAccepted;
 use App\Quotes\Support\QuoteRange;
 use App\Quotes\Support\VatLines;
 use App\Support\AuditLogger;
@@ -145,6 +145,9 @@ class AcceptQuote
         $total = QuoteRange::subtotalFor($quote, $hours, $chosen->pluck('id'));
         $net = QuoteRange::totalFor($quote, $hours, $chosen->pluck('id'));
 
+        // VatLines weighs only charged lines, so it has to see the client's choice, not the preselection.
+        $selectable->each(fn (QuoteItem $item) => $item->selected = $chosen->contains('id', $item->id));
+
         return [
             'quote' => [
                 'hours' => $hours,
@@ -157,7 +160,7 @@ class AcceptQuote
                     : collect(VatLines::fromItems($quote->items, (int) $quote->vat_rate, $net))->sum('vat'),
             ],
             'selected' => $selectable
-                ->mapWithKeys(fn (QuoteItem $item) => [$item->id => $chosen->contains('id', $item->id)])
+                ->mapWithKeys(fn (QuoteItem $item) => [$item->id => $item->selected])
                 ->all(),
         ];
     }

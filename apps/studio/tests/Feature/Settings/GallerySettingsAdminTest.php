@@ -2,8 +2,8 @@
 
 use App\Crm\Models\Contact;
 use App\Enums\StaffRole;
+use App\Models\StudioSettings;
 use App\Portal\Support\PortalSettings;
-use App\Settings\Models\StudioSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 

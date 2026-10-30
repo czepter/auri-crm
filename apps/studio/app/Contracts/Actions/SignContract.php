@@ -17,8 +17,8 @@ use Illuminate\Support\Facades\Storage;
  * The hash is read once, outside the transaction, from the exact bytes
  * Storage holds for this Contract — never a re-render — because that read is
  * what pins the signature to the document a client actually saw. Writing the
- * row and dispatching ContractSigned happen together the same way BookProject
- * pairs the booking with ProjectBooked: one DB::transaction for the write,
+ * row and dispatching ContractSigned happen together the same way BookCase
+ * pairs the booking with CaseBooked: one DB::transaction for the write,
  * the event dispatched immediately after it returns.
  */
 class SignContract

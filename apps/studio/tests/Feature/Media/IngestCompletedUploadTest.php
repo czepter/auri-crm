@@ -1,10 +1,10 @@
 <?php
 
+use App\Gallery\Actions\IngestCompletedUpload;
+use App\Gallery\Jobs\ProcessIngestedAsset;
 use App\Gallery\Models\Gallery;
-use App\Media\Actions\IngestCompletedUpload;
 use App\Media\Enums\AssetStatus;
 use App\Media\Enums\MultipartUploadStatus;
-use App\Media\Jobs\ProcessIngestedAsset;
 use App\Media\Models\Asset;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;

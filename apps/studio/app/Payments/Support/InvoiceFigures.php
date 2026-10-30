@@ -2,12 +2,12 @@
 
 namespace App\Payments\Support;
 
+use App\Models\StudioSettings;
 use App\Payments\Models\Invoice;
 use App\Payments\Models\InvoiceItem;
 use App\Quotes\Enums\DiscountType;
 use App\Quotes\Models\Quote;
 use App\Quotes\Support\VatLines;
-use App\Settings\Support\StudioSettingsResolver;
 
 /**
  * The net / VAT / gross split one invoice prints, derived from the gross it
@@ -27,7 +27,7 @@ use App\Settings\Support\StudioSettingsResolver;
  * other answer available.
  *
  * Basis points throughout (1900 = 19%), the convention DiscountCalculator
- * and StudioSettingsResolver::vatRate() already share.
+ * and StudioSettings' vat_rate already share.
  */
 final class InvoiceFigures
 {
@@ -54,12 +54,12 @@ final class InvoiceFigures
      * sum of its installments; an invoice without a project splits each
      * item's gross at the item's own rate.
      */
-    public static function forInvoice(Invoice $invoice, StudioSettingsResolver $settings): self
+    public static function forInvoice(Invoice $invoice): self
     {
         // Rates alone keep their plan's own split over the quote's rates (#412).
         return $invoice->items->whereNull('payment_installment_id')->isNotEmpty()
-            ? self::forPositions($invoice->items, $invoice->discount_type, $invoice->discount_value, $settings)
-            : self::forGross($invoice->amount(), self::acceptedQuote($invoice), $settings);
+            ? self::forPositions($invoice->items, $invoice->discount_type, $invoice->discount_value)
+            : self::forGross($invoice->amount(), self::acceptedQuote($invoice));
     }
 
     /**
@@ -71,11 +71,11 @@ final class InvoiceFigures
      *
      * @param  iterable<InvoiceItem>  $items
      */
-    public static function forPositions(iterable $items, ?DiscountType $discountType, ?int $discountValue, StudioSettingsResolver $settings): self
+    public static function forPositions(iterable $items, ?DiscountType $discountType, ?int $discountValue): self
     {
         $items = collect($items);
-        $smallBusiness = $settings->vatMode() === 'small_business';
-        $defaultRate = $smallBusiness ? 0 : $settings->effectiveVatRate();
+        $smallBusiness = StudioSettings::current()->vat_mode === 'small_business';
+        $defaultRate = $smallBusiness ? 0 : StudioSettings::current()->effectiveVatRate();
 
         [$picked, $free] = $items->partition(fn (InvoiceItem $item) => $item->payment_installment_id !== null);
 
@@ -104,7 +104,7 @@ final class InvoiceFigures
         $net = array_sum(array_column($rates, 'net'));
         $vat = array_sum(array_column($rates, 'vat'));
 
-        return new self($net + $vat, $net, $vat, $rates[0]['rate'] ?? $defaultRate, $smallBusiness ? $settings->vatNote() : null, $rates);
+        return new self($net + $vat, $net, $vat, $rates[0]['rate'] ?? $defaultRate, $smallBusiness ? StudioSettings::current()->vat_note : null, $rates);
     }
 
     /** A part of an invoice — a Gutschrift, a deducted Anzahlung — at that invoice's rate. */
@@ -124,15 +124,15 @@ final class InvoiceFigures
         return new self($gross, $net, $gross - $net, $this->rate, $this->vatNote, $rates);
     }
 
-    private static function forGross(int $gross, ?Quote $quote, StudioSettingsResolver $settings): self
+    private static function forGross(int $gross, ?Quote $quote): self
     {
         $rate = $quote?->vat_mode === 'small_business'
             ? 0
-            : ($quote?->vat_rate ?? $settings->effectiveVatRate());
+            : ($quote?->vat_rate ?? StudioSettings::current()->effectiveVatRate());
 
         $note = $quote !== null
             ? $quote->vat_note
-            : ($settings->vatMode() === 'small_business' ? $settings->vatNote() : null);
+            : (StudioSettings::current()->vat_mode === 'small_business' ? StudioSettings::current()->vat_note : null);
 
         $figures = self::fromGross($gross, (int) $rate, $note);
 

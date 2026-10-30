@@ -2,13 +2,15 @@
 
 namespace App\Portal\Http\Controllers;
 
-use App\Documents\Support\DocumentMergeDataBuilder;
+use App\Documents\Actions\RecordDocumentView;
+use App\Documents\Support\DocumentMergeData;
 use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
+use App\Portal\Support\LegalTexts;
 use App\Quotes\Actions\AcceptQuote;
 use App\Quotes\Data\QuoteData;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -30,7 +32,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class QuoteController extends Controller
 {
-    public function show(string $case, StudioSettingsResolver $settings): Response
+    public function show(Request $request, string $case, RecordDocumentView $record): Response
     {
         $contact = auth('portal')->user();
 
@@ -38,6 +40,10 @@ class QuoteController extends Controller
             ->with(['latestQuote.items', 'latestQuote.predecessor', 'latestQuote.paymentStages'])
             ->firstOrFail();
         $quote = $found->latestQuote;
+
+        if ($quote !== null) {
+            $record($request, $quote, 'portal');
+        }
 
         return Inertia::render('Quotes/Show', [
             'contact' => ['name' => $contact->name],
@@ -47,13 +53,13 @@ class QuoteController extends Controller
             // quotes online", the accept() route below is the authorisation
             // half via `portal.capability:accept_quotes`. Never hides an
             // already-accepted quote — only the button that would accept one.
-            'canAccept' => $settings->acceptQuotesEnabled(),
+            'canAccept' => (bool) StudioSettings::current()->portal_accept_quotes_enabled,
             'quote' => $quote === null ? null : [
                 ...QuoteData::fromModel($quote->asSeenByClient())->toArray(),
                 // #480: the letter as the client reads it — fields filled, escaped.
                 ...collect(['intro' => $quote->intro, 'outro' => $quote->outro])->map(fn (?string $html) => MergeFieldResolver::resolve(
                     InlineHtmlSanitizer::letter($html) ?? '',
-                    app(DocumentMergeDataBuilder::class)->fromProject($quote->case, $settings),
+                    app(DocumentMergeData::class)->forCase($quote->case),
                     escape: true,
                 ))->all(),
                 // Display only — see AcceptQuote for the re-check this
@@ -106,7 +112,7 @@ class QuoteController extends Controller
      * handed the screen — so a quote invalidated in the gap between the two
      * requests is refused here regardless of what was on screen.
      */
-    public function accept(Request $request, string $case, AcceptQuote $accept, StudioSettingsResolver $studio): RedirectResponse
+    public function accept(Request $request, string $case, AcceptQuote $accept): RedirectResponse
     {
         $contact = auth('portal')->user();
 
@@ -126,7 +132,7 @@ class QuoteController extends Controller
             'items.*' => ['string'],
             // The acceptance stands in for a contract, so the AGB are part of
             // it wherever the studio attaches any.
-            'terms' => Rule::when($studio->attachedLegalUrls() !== [], ['accepted']),
+            'terms' => Rule::when(LegalTexts::attachedUrls() !== [], ['accepted']),
         ], ['terms.accepted' => __('portal.quote_terms_required')]);
 
         $accept(

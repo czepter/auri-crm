@@ -3,10 +3,11 @@
 // apps/studio/tests/Feature/Notifications/RemindOnboardingTest.php
 
 use App\Enums\StaffRole;
+use App\Models\StudioSettings;
 use App\Models\User;
-use App\Notifications\Actions\RemindOnboarding;
-use App\Notifications\Studio\StudioSetupPending;
-use App\Settings\Models\StudioSettings;
+use App\Staff\Actions\RemindOnboarding;
+use App\Staff\Notifications\StudioSetupPending;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
@@ -59,7 +60,7 @@ it('does not send a second reminder on a repeated run', function () {
 });
 
 it('registers the reminder on the daily schedule', function () {
-    $schedule = app(Illuminate\Console\Scheduling\Schedule::class);
+    $schedule = app(Schedule::class);
     $events = collect($schedule->events())
         ->filter(fn ($event) => str_contains($event->command ?? '', 'notifications:remind-onboarding'));
 

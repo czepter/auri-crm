@@ -6,7 +6,7 @@ use App\Crm\Data\DateConflictData;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Models\Absence;
-use App\Settings\Models\StudioClosure;
+use App\Models\StudioClosure;
 
 /**
  * Vision §7: availability scans shoots.date for projects whose lead is not

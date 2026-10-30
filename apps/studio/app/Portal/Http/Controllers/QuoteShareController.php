@@ -2,17 +2,20 @@
 
 namespace App\Portal\Http\Controllers;
 
-use App\Documents\Support\DocumentMergeDataBuilder;
+use App\Documents\Actions\RecordDocumentView;
+use App\Documents\Support\DocumentMergeData;
 use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
+use App\Portal\Support\LegalTexts;
 use App\Portal\Support\PortalSettings;
 use App\Quotes\Actions\AcceptQuote;
 use App\Quotes\Data\QuoteData;
 use App\Quotes\Models\Quote;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -28,7 +31,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class QuoteShareController extends Controller
 {
-    public function show(Quote $quote, StudioSettingsResolver $settings): Response
+    public function show(Quote $quote): Response
     {
         $quote->loadMissing(['items', 'predecessor', 'paymentStages', 'case', 'recipientContact']);
 
@@ -36,7 +39,8 @@ class QuoteShareController extends Controller
             'contact' => ['name' => ''],
             'showSwitcher' => false,
             'project' => ['id' => $quote->case->public_id, 'name' => $quote->case->name],
-            'canAccept' => $settings->acceptQuotesEnabled(),
+            'canAccept' => (bool) StudioSettings::current()->portal_accept_quotes_enabled,
+            'viewUrl' => "/angebot/{$quote->share_token}/teilen/gesehen",
             'acceptUrl' => "/angebot/{$quote->share_token}/teilen/annehmen",
             'imageUrlBase' => "/angebot/{$quote->share_token}/teilen",
             'quote' => [
@@ -44,13 +48,20 @@ class QuoteShareController extends Controller
                 // #480: the letter as the client reads it — fields filled, escaped.
                 ...collect(['intro' => $quote->intro, 'outro' => $quote->outro])->map(fn (?string $html) => MergeFieldResolver::resolve(
                     InlineHtmlSanitizer::letter($html) ?? '',
-                    app(DocumentMergeDataBuilder::class)->fromProject($quote->case, $settings),
+                    app(DocumentMergeData::class)->forCase($quote->case),
                     escape: true,
                 ))->all(),
                 'expired' => $quote->valid_until !== null && $quote->valid_until->copy()->endOfDay()->isPast(),
                 'acceptedAt' => $quote->accepted_at?->format('Y-m-d'),
             ],
         ]);
+    }
+
+    public function viewed(Request $request, Quote $quote, RecordDocumentView $record): HttpResponse
+    {
+        $record($request, $quote, 'link');
+
+        return response()->noContent();
     }
 
     public function showcase(Quote $quote, int $index): StreamedResponse
@@ -71,7 +82,7 @@ class QuoteShareController extends Controller
         return Storage::disk('local')->response($path);
     }
 
-    public function accept(Request $request, Quote $quote, AcceptQuote $accept, PortalSettings $settings, StudioSettingsResolver $studio): RedirectResponse
+    public function accept(Request $request, Quote $quote, AcceptQuote $accept, PortalSettings $settings): RedirectResponse
     {
         $contact = $quote->recipientContact;
 
@@ -82,7 +93,7 @@ class QuoteShareController extends Controller
             'hours' => ['nullable', 'integer', 'min:0'],
             'items' => ['array'],
             'items.*' => ['string'],
-            'terms' => Rule::when($studio->attachedLegalUrls() !== [], ['accepted']),
+            'terms' => Rule::when(LegalTexts::attachedUrls() !== [], ['accepted']),
         ], ['terms.accepted' => __('portal.quote_terms_required')]);
 
         $accept(

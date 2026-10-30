@@ -6,8 +6,8 @@ use App\Engagement\Models\Message;
 use App\Engagement\Notifications\StaffReplyPosted;
 use App\Engagement\Support\InboundAddress;
 use App\Engagement\Support\MessageIdentifier;
+use App\Models\StudioSettings;
 use App\Notifications\NotificationService;
-use App\Settings\Support\StudioSettingsResolver;
 use Throwable;
 
 /**
@@ -30,7 +30,6 @@ class SendStaffReply
 {
     public function __construct(
         private readonly NotificationService $notifications,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     public function __invoke(Message $message): void
@@ -52,12 +51,12 @@ class SendStaffReply
         // any mail client threads exactly. Null until an inbound domain and a
         // secret both exist — the mail then falls back to T-06's studio
         // reply-to, which is where it went before this story.
-        $secret = $this->settings->inboundSecret();
+        $secret = StudioSettings::current()->inbound_secret;
         $replyTo = $secret === null ? null : InboundAddress::forThread($message->thread, $secret);
 
         try {
             foreach ($recipients as $contact) {
-                $this->notifications->send($contact, new StaffReplyPosted($message, $this->settings, $replyTo));
+                $this->notifications->send($contact, new StaffReplyPosted($message, $replyTo));
             }
 
             $message->forceFill(['delivery_state' => 'sent'])->save();

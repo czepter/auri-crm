@@ -2,6 +2,8 @@
 
 namespace App\Integration\Http\Controllers;
 
+use App\Crm\Actions\CreateContact;
+use App\Crm\Actions\UpdateContact;
 use App\Crm\Models\Contact;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
@@ -18,7 +20,7 @@ use Illuminate\Validation\Rule;
  */
 class ContactController extends Controller
 {
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, CreateContact $createContact): JsonResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -30,7 +32,7 @@ class ContactController extends Controller
             'phone' => ['nullable', 'string', 'max:64'],
         ]);
 
-        $contact = Contact::create($validated);
+        $contact = $createContact($validated);
 
         return response()->json([
             'id' => $contact->public_id,
@@ -46,7 +48,7 @@ class ContactController extends Controller
      * only the validated array, so a caller resending name alone never wipes
      * the billing address beside it.
      */
-    public function update(Request $request, Contact $contact): JsonResponse
+    public function update(Request $request, Contact $contact, UpdateContact $updateContact): JsonResponse
     {
         $validated = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:255'],
@@ -62,7 +64,7 @@ class ContactController extends Controller
             'city' => ['sometimes', 'nullable', 'string', 'max:255'],
         ]);
 
-        $contact->update($validated);
+        $updateContact($contact, $validated);
 
         return response()->json([
             'id' => $contact->public_id,

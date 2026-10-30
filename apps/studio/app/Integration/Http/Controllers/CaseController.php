@@ -2,8 +2,8 @@
 
 namespace App\Integration\Http\Controllers;
 
-use App\Crm\Actions\BookProject;
-use App\Crm\Actions\CompleteProject;
+use App\Crm\Actions\BookCase;
+use App\Crm\Actions\CompleteCase;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Models\ClientCase;
 use App\Http\Controllers\Controller;
@@ -93,18 +93,18 @@ class CaseController extends Controller
 
     /**
      * #401: book/complete/reopen on the api surface, mirroring
-     * App\Crm\Http\Controllers\ProjectController — the same BookProject and
-     * CompleteProject actions the admin buttons call, and the same
-     * already-booked no-op BookProject itself guards.
+     * App\Crm\Http\Controllers\CaseController — the same BookCase and
+     * CompleteCase actions the admin buttons call, and the same
+     * already-booked no-op BookCase itself guards.
      */
-    public function book(Request $request, ClientCase $case, BookProject $book): JsonResponse
+    public function book(Request $request, ClientCase $case, BookCase $book): JsonResponse
     {
         $book($case, $this->actor($request));
 
         return response()->json(['data' => CaseDetailReadData::fromModel($case)]);
     }
 
-    public function complete(Request $request, ClientCase $case, CompleteProject $complete): JsonResponse
+    public function complete(Request $request, ClientCase $case, CompleteCase $complete): JsonResponse
     {
         try {
             $complete($case, $this->actor($request));
@@ -115,7 +115,7 @@ class CaseController extends Controller
         return response()->json(['data' => ['id' => $case->public_id, 'completedAt' => $case->completed_at?->toIso8601String()]]);
     }
 
-    public function reopen(Request $request, ClientCase $case, CompleteProject $complete): JsonResponse
+    public function reopen(Request $request, ClientCase $case, CompleteCase $complete): JsonResponse
     {
         try {
             $complete->reopen($case, $this->actor($request));
@@ -135,7 +135,7 @@ class CaseController extends Controller
     }
 
     /**
-     * Mirrors App\Crm\Http\Controllers\ProjectController::togglePortalVisibility,
+     * Mirrors App\Crm\Http\Controllers\CaseController::togglePortalVisibility,
      * but takes the value rather than flipping it: a retried toggle after a
      * dropped response would land on the wrong state, which `idempotent`
      * (routes/api.php) must never allow.

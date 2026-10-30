@@ -4,7 +4,7 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
-use App\Notifications\Support\StudioAudience;
+use App\Crm\Support\StudioAudience;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);

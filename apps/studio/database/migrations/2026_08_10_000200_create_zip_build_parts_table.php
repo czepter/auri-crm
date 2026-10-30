@@ -15,7 +15,7 @@ return new class extends Migration
 
             $table->foreignId('zip_build_id')->constrained()->cascadeOnDelete();
 
-            // 1-based, in the order App\Media\Actions\BuildGalleryZip closed
+            // 1-based, in the order App\Gallery\Actions\BuildGalleryZip closed
             // each archive volume — the split-at-3.9GiB boundary (#59), never
             // a byte range within one volume.
             $table->unsignedInteger('part_number');

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useForm, usePage } from '@inertiajs/vue3'
 import { basisPointsToPercent, formatEuros } from '@/admin/lib/money'
 import PortalDot from '@/portal/components/PortalDot.vue'
@@ -19,6 +19,8 @@ type QuoteItem = {
   description: string | null
   isIncluded: boolean
   netTotal: number
+  selectable: boolean
+  selected: boolean
 }
 
 type Quote = {
@@ -64,6 +66,7 @@ const props = defineProps<{
   // different targets. Both default to the session routes every logged-in
   // contact uses.
   acceptUrl?: string
+  viewUrl?: string
   imageUrlBase?: string
 }>()
 
@@ -72,6 +75,17 @@ const agbUrl = computed(() => attached.value?.agb ?? null)
 const widerrufUrl = computed(() => attached.value?.widerruf ?? null)
 
 const form = useForm({ terms: false })
+
+// Link previews fetch the page without running it, so the opening is
+// reported from the browser rather than recorded on the GET.
+onMounted(() => {
+  if (props.viewUrl) {
+    fetch(props.viewUrl, {
+      method: 'POST',
+      headers: { 'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '' },
+    })
+  }
+})
 
 // AcceptQuote's own re-check rejects under a 'quote' key, not a field this
 // form declares — see App\Quotes\Actions\AcceptQuote.
@@ -149,9 +163,9 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
         </div>
 
         <table class="mt-8 w-full border-collapse">
-          <tr v-for="item in quote.items" :key="item.id" :class="[ROW, item.isIncluded && '[&>td]:text-muted-foreground']">
+          <tr v-for="item in quote.items" :key="item.id" :class="[ROW, (item.isIncluded || (item.selectable && !item.selected)) && '[&>td]:text-muted-foreground']">
             <td>
-              {{ item.title }}
+              <template v-if="item.selectable && !item.selected">{{ $t('quotes.optional') }}: </template>{{ item.title }}
               <div v-if="item.description" class="text-[13px] leading-[1.45] text-muted-foreground">
                 {{ item.description }}
               </div>

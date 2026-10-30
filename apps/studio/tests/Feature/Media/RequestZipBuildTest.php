@@ -1,11 +1,11 @@
 <?php
 
+use App\Gallery\Actions\RequestZipBuild;
+use App\Gallery\Jobs\BuildZip;
 use App\Gallery\Models\GalleryVersion;
-use App\Media\Actions\RequestZipBuild;
 use App\Media\Enums\ZipBuildScope;
 use App\Media\Enums\ZipBuildSize;
 use App\Media\Enums\ZipBuildStatus;
-use App\Media\Jobs\BuildZip;
 use App\Media\Models\ZipBuild;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -15,8 +15,8 @@ uses(RefreshDatabase::class);
 // #59's own acceptance criterion: "a second request for the same (version,
 // scope, size) reuses the built archive." zip_builds' own unique index
 // (tenant, gallery_version_id, scope, size) is the actual dedupe mechanism
-// — these prove App\Media\Actions\RequestZipBuild finds-or-creates against
-// it correctly, and only dispatches App\Media\Jobs\BuildZip when there is
+// — these prove App\Gallery\Actions\RequestZipBuild finds-or-creates against
+// it correctly, and only dispatches App\Gallery\Jobs\BuildZip when there is
 // genuinely new work to do.
 
 it('creates a Building row and dispatches BuildZip onto media.zip for a brand new triple', function () {

@@ -3,10 +3,11 @@
 use App\Crm\Models\Contact;
 use App\Enums\StaffRole;
 use App\Models\StaffInvitation;
+use App\Models\StudioSettings;
 use App\Models\User;
-use App\Notifications\StaffInvited;
 use App\Portal\Notifications\ClientAccessLink;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Settings\Actions\UpdateStudioSetting;
+use App\Staff\Notifications\StaffInvited;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Markdown;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -54,19 +55,19 @@ it("leaves ClientAccessLink's mail under the tenant's own address, sourced live 
 
     // First send, before any tenant override — the env default.
     config(['mail.from.address' => 'hello@example.com', 'mail.from.name' => 'Example']);
-    $first = (new ClientAccessLink($contact, 'https://example.test/zugang/one', new StudioSettingsResolver))
+    $first = (new ClientAccessLink($contact, 'https://example.test/zugang/one'))
         ->toMail($contact);
     expect($first->from)->toBe(['hello@example.com', 'Example']);
 
     // The setting changes — no deploy, no cache-clear command, exactly the
-    // write StudioSettingsResolver::set() already busts the shared cache
+    // write App\Settings\Actions\UpdateStudioSetting already busts the shared cache
     // for.
-    (new StudioSettingsResolver)->set('mail_from_address', 'studio@nordlicht.test', $owner);
-    (new StudioSettingsResolver)->set('mail_from_name', 'Atelier Nordlicht', $owner);
+    app(UpdateStudioSetting::class)('mail_from_address', 'studio@nordlicht.test', $owner);
+    app(UpdateStudioSetting::class)('mail_from_name', 'Atelier Nordlicht', $owner);
 
     // Second send, through a completely fresh resolver instance — the same
     // shape a new request or a queued job would build.
-    $second = (new ClientAccessLink($contact, 'https://example.test/zugang/two', new StudioSettingsResolver))
+    $second = (new ClientAccessLink($contact, 'https://example.test/zugang/two'))
         ->toMail($contact);
 
     expect($second->from)->toBe(['studio@nordlicht.test', 'Atelier Nordlicht'])
@@ -77,14 +78,14 @@ it('sets reply-to and BCC on ClientAccessLink only when the tenant configured th
     $owner = staffMember(StaffRole::Admin);
     $contact = Contact::factory()->create();
 
-    $bare = (new ClientAccessLink($contact, 'https://example.test/zugang', new StudioSettingsResolver))->toMail($contact);
+    $bare = (new ClientAccessLink($contact, 'https://example.test/zugang'))->toMail($contact);
     expect($bare->replyTo)->toBe([])
         ->and($bare->bcc)->toBe([]);
 
-    (new StudioSettingsResolver)->set('mail_reply_to', 'buero@nordlicht.test', $owner);
-    (new StudioSettingsResolver)->set('mail_bcc', 'ablage@nordlicht.test', $owner);
+    app(UpdateStudioSetting::class)('mail_reply_to', 'buero@nordlicht.test', $owner);
+    app(UpdateStudioSetting::class)('mail_bcc', 'ablage@nordlicht.test', $owner);
 
-    $configured = (new ClientAccessLink($contact, 'https://example.test/zugang', new StudioSettingsResolver))->toMail($contact);
+    $configured = (new ClientAccessLink($contact, 'https://example.test/zugang'))->toMail($contact);
     expect($configured->replyTo)->toBe([['buero@nordlicht.test', null]])
         ->and($configured->bcc)->toBe([['ablage@nordlicht.test', null]]);
 });
@@ -92,9 +93,9 @@ it('sets reply-to and BCC on ClientAccessLink only when the tenant configured th
 it("appends the studio's signature block as its own line on ClientAccessLink", function () {
     $owner = staffMember(StaffRole::Admin);
     $contact = Contact::factory()->create();
-    (new StudioSettingsResolver)->set('mail_signature', 'Herzliche Grüße, das Team von Atelier Nordlicht', $owner);
+    app(UpdateStudioSetting::class)('mail_signature', 'Herzliche Grüße, das Team von Atelier Nordlicht', $owner);
 
-    $message = (new ClientAccessLink($contact, 'https://example.test/zugang', new StudioSettingsResolver))->toMail($contact);
+    $message = (new ClientAccessLink($contact, 'https://example.test/zugang'))->toMail($contact);
 
     expect(renderedMail($message))->toContain('Herzliche Grüße, das Team von Atelier Nordlicht');
 });
@@ -104,19 +105,18 @@ it(
     function () {
         $owner = staffMember(StaffRole::Admin);
         $contact = Contact::factory()->create();
-        $settings = new StudioSettingsResolver;
-        $settings->set('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
-        $settings->set('street', 'Elbchaussee 112', $owner);
-        $settings->set('postcode', '22763', $owner);
-        $settings->set('city', 'Hamburg', $owner);
-        $settings->set('tax_number', '22/123/45678', $owner);
-        $settings->set('vat_id', 'DE284957312', $owner);
+        app(UpdateStudioSetting::class)('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
+        app(UpdateStudioSetting::class)('street', 'Elbchaussee 112', $owner);
+        app(UpdateStudioSetting::class)('postcode', '22763', $owner);
+        app(UpdateStudioSetting::class)('city', 'Hamburg', $owner);
+        app(UpdateStudioSetting::class)('tax_number', '22/123/45678', $owner);
+        app(UpdateStudioSetting::class)('vat_id', 'DE284957312', $owner);
 
         // The one source both this mail footer and the
         // mergeData() read from — see App\Concerns\AppliesStudioMailIdentity.
-        $studio = (new StudioSettingsResolver)->attributes();
+        $studio = StudioSettings::current()->profile();
 
-        $message = (new ClientAccessLink($contact, 'https://example.test/zugang', new StudioSettingsResolver))->toMail($contact);
+        $message = (new ClientAccessLink($contact, 'https://example.test/zugang'))->toMail($contact);
         expect(renderedMail($message))->toContain($studio['legal_name'])
             ->toContain($studio['street'])
             ->toContain($studio['postcode'])
@@ -129,7 +129,7 @@ it(
 it('omits the footer line entirely when the studio has entered no legal particulars at all', function () {
     $contact = Contact::factory()->create();
 
-    $message = (new ClientAccessLink($contact, 'https://example.test/zugang', new StudioSettingsResolver))->toMail($contact);
+    $message = (new ClientAccessLink($contact, 'https://example.test/zugang'))->toMail($contact);
 
     // No signature, no legal particulars — the composer hands the layout a
     // null footer, so the whole ruled band is skipped rather than drawn empty.
@@ -144,13 +144,13 @@ it("leaves StaffInvited's mail under the tenant's own address, resolved live at 
     $owner = staffMember(StaffRole::Admin);
     $invitation = t06Invitation();
 
-    $first = (new StaffInvited($invitation, 'https://example.test/einladung/raw', new StudioSettingsResolver))
+    $first = (new StaffInvited($invitation, 'https://example.test/einladung/raw'))
         ->toMail($invitation);
 
-    (new StudioSettingsResolver)->set('mail_from_address', 'studio@nordlicht.test', $owner);
-    (new StudioSettingsResolver)->set('mail_from_name', 'Atelier Nordlicht', $owner);
+    app(UpdateStudioSetting::class)('mail_from_address', 'studio@nordlicht.test', $owner);
+    app(UpdateStudioSetting::class)('mail_from_name', 'Atelier Nordlicht', $owner);
 
-    $second = (new StaffInvited($invitation, 'https://example.test/einladung/raw', new StudioSettingsResolver))
+    $second = (new StaffInvited($invitation, 'https://example.test/einladung/raw'))
         ->toMail($invitation);
 
     expect($second->from)->toBe(['studio@nordlicht.test', 'Atelier Nordlicht'])
@@ -162,12 +162,12 @@ it(
     function () {
         $owner = staffMember(StaffRole::Admin);
         $invitation = t06Invitation();
-        (new StudioSettingsResolver)->set('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
-        (new StudioSettingsResolver)->set('city', 'Hamburg', $owner);
+        app(UpdateStudioSetting::class)('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
+        app(UpdateStudioSetting::class)('city', 'Hamburg', $owner);
 
-        $studio = (new StudioSettingsResolver)->attributes();
+        $studio = StudioSettings::current()->profile();
 
-        $message = (new StaffInvited($invitation, 'https://example.test/einladung/raw', new StudioSettingsResolver))
+        $message = (new StaffInvited($invitation, 'https://example.test/einladung/raw'))
             ->toMail($invitation);
         expect(renderedMail($message))->toContain($studio['legal_name'])
             ->toContain($studio['city']);
@@ -177,11 +177,10 @@ it(
 it("renders the studio's legal particulars inside the layout's footer zone, not as a body paragraph", function () {
     $owner = staffMember(StaffRole::Admin);
     $contact = Contact::factory()->create();
-    $settings = new StudioSettingsResolver;
-    $settings->set('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
-    $settings->set('city', 'Hamburg', $owner);
+    app(UpdateStudioSetting::class)('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
+    app(UpdateStudioSetting::class)('city', 'Hamburg', $owner);
 
-    $html = renderedMail((new ClientAccessLink($contact, 'https://example.test/zugang', new StudioSettingsResolver))->toMail($contact));
+    $html = renderedMail((new ClientAccessLink($contact, 'https://example.test/zugang'))->toMail($contact));
 
     // The slot the views set and the slot the compiled layout reads were
     // named differently once, which dropped every footer silently. Assert on

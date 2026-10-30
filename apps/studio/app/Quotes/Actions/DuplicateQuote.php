@@ -2,10 +2,12 @@
 
 namespace App\Quotes\Actions;
 
+use App\Models\StudioSettings;
+use App\Models\User;
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
 use App\Quotes\Models\Quote;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -18,20 +20,19 @@ class DuplicateQuote
 {
     public function __construct(
         private readonly AllocateDocumentNumber $allocate,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
-    public function __invoke(Quote $source): Quote
+    public function __invoke(Quote $source, ?User $actor = null): Quote
     {
         $source->loadMissing(['items', 'paymentStages']);
 
-        return DB::transaction(function () use ($source) {
+        $copy = DB::transaction(function () use ($source) {
             $allocation = ($this->allocate)(documentType: DocumentType::Quote);
 
             $quote = $source->case->quotes()->create([
                 'pricing_mode' => $source->pricing_mode,
                 'number' => $allocation['number'],
-                'valid_until' => now()->addDays($this->settings->quoteValidityDays())->toDateString(),
+                'valid_until' => now()->addDays(StudioSettings::current()->quote_validity_days)->toDateString(),
                 'intro' => $source->intro,
                 'outro' => $source->outro,
                 'discount_type' => $source->discount_type,
@@ -68,5 +69,15 @@ class DuplicateQuote
 
             return $quote;
         });
+
+        AuditLogger::record(
+            event: 'quote.duplicated',
+            actor: $actor,
+            context: ['from' => $source->public_id],
+            subject: $copy->public_id,
+            projectId: $source->case_id,
+        );
+
+        return $copy;
     }
 }

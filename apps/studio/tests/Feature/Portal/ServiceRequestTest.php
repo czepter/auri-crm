@@ -3,7 +3,6 @@
 use App\Catalog\Models\Package;
 use App\Catalog\Models\PackageItem;
 use App\Catalog\Models\ServiceSuggestion;
-use App\Catalog\Support\PortalOffers;
 use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadSource;
@@ -12,7 +11,8 @@ use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
-use App\Settings\Models\StudioSettings;
+use App\Models\StudioSettings;
+use App\Portal\Support\PortalOffers;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 

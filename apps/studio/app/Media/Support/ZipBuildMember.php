@@ -3,7 +3,7 @@
 namespace App\Media\Support;
 
 /**
- * One file App\Media\Actions\BuildGalleryZip reads from the `s3` disk and
+ * One file App\Gallery\Actions\BuildGalleryZip reads from the `s3` disk and
  * writes into an archive volume: which object to read ($key), what to name
  * it inside the zip ($name), and its size in bytes — known up front from
  * Asset::byte_size / AssetDerivative::bytes, which is what lets

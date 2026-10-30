@@ -7,8 +7,8 @@ use App\Crm\Models\Contact;
 use App\Enums\StaffRole;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\StudioSettings;
 use App\Models\User;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -24,7 +24,7 @@ class AuditLogController extends Controller
 {
     private const PER_PAGE = 50;
 
-    public function index(Request $request, StudioSettingsResolver $settings): Response
+    public function index(Request $request): Response
     {
         abort_unless(auth('staff')->user()?->role === StaffRole::Admin, 404);
 
@@ -35,7 +35,7 @@ class AuditLogController extends Controller
             'bis' => ['nullable', 'date_format:Y-m-d'],
         ]);
 
-        $zone = $settings->timezone();
+        $zone = StudioSettings::current()->localTimezone();
 
         $logs = AuditLog::query()
             ->with('actor:id,name')

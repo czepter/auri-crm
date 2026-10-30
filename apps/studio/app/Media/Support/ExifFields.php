@@ -12,7 +12,7 @@ use Illuminate\Support\Carbon;
  *
  * The documented gap: exif_read_data() only understands JPEG and TIFF.
  * HEIC/AVIF captures, PNG exports and RAW formats never reach this class at
- * all — App\Media\Actions\IngestCompletedUpload only calls it after
+ * all — App\Gallery\Actions\IngestCompletedUpload only calls it after
  * confirming the source is a JPEG via exif_imagetype(), and every other
  * format simply carries no camera metadata on its Asset row. Dimensions
  * still come from libvips regardless of format; only taken_at/camera_make/

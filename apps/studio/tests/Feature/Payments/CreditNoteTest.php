@@ -5,6 +5,7 @@ use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
+use App\Models\StudioSettings;
 use App\Numbering\Enums\DocumentType;
 use App\Numbering\Models\NumberCounter;
 use App\Payments\Actions\IssueCreditNote;
@@ -12,8 +13,7 @@ use App\Payments\Actions\IssueInvoice;
 use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\SettledVia;
 use App\Payments\Models\CreditNote;
-use App\Settings\Models\StudioSettings;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Support\GotenbergClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -26,7 +26,7 @@ use Tests\Support\FakeStripeHttpClient;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    app(StudioSettingsResolver::class)->set('tax_number', '22/123/45678', null);
+    app(UpdateStudioSetting::class)('tax_number', '22/123/45678', null);
 });
 
 afterEach(fn () => ApiRequestor::setHttpClient(null));

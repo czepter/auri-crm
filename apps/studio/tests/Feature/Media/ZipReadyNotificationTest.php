@@ -1,9 +1,9 @@
 <?php
 
+use App\Gallery\Actions\NotifyZipWaiters;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryGuest;
 use App\Gallery\Notifications\GalleryZipReady;
-use App\Media\Actions\NotifyZipWaiters;
 use App\Media\Enums\ZipBuildScope;
 use App\Media\Enums\ZipBuildSize;
 use App\Media\Enums\ZipBuildStatus;

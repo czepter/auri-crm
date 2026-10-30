@@ -7,7 +7,7 @@ use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Stage;
 use App\Models\AuditLog;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Models\StudioSettings;
 use Carbon\CarbonImmutable;
 
 /**
@@ -21,7 +21,6 @@ use Carbon\CarbonImmutable;
 final class TaskAnchors
 {
     public function __construct(
-        private readonly StudioSettingsResolver $settings,
         private readonly CrmVocabulary $stages,
     ) {}
 
@@ -111,7 +110,7 @@ final class TaskAnchors
 
         return $date === null
             ? null
-            : self::workingDay($date->addDays($offsetDays), $this->settings);
+            : self::workingDay($date->addDays($offsetDays));
     }
 
     /** How the anchor reads on a screen. Null once the shoot behind it is gone. */
@@ -140,9 +139,9 @@ final class TaskAnchors
      * T-13's rule, shared with TaskTemplate::dueFor(): a deadline that lands
      * on a day the studio does not work rolls forward, never backward.
      */
-    public static function workingDay(CarbonImmutable $date, StudioSettingsResolver $settings): CarbonImmutable
+    public static function workingDay(CarbonImmutable $date): CarbonImmutable
     {
-        $workingDays = $settings->workingDays();
+        $workingDays = StudioSettings::current()->workingDays();
 
         while (! in_array($date->dayOfWeekIso, $workingDays, true)) {
             $date = $date->addDay();

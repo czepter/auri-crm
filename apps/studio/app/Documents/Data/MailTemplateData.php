@@ -2,13 +2,10 @@
 
 namespace App\Documents\Data;
 
-use App\Crm\Models\ClientCase;
 use App\Documents\Models\DocumentTemplate;
-use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Documents\Support\MergeFieldResolver;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Documents\Support\PlainTextBody;
-use App\Settings\Support\StudioSettingsResolver;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -39,17 +36,16 @@ class MailTemplateData extends Data
         public array $unknownFields,
     ) {}
 
+    /** @param  array<string, mixed>  $mergeData */
     public static function fromModel(
         DocumentTemplate $template,
-        ClientCase $project,
-        StudioSettingsResolver $settings,
-        DocumentMergeDataBuilder $mergeData,
+        array $mergeData,
     ): self {
         return new self(
             id: $template->public_id,
             name: $template->name,
             body: PlainTextBody::fromHtml(
-                MergeFieldResolver::resolve($template->body, $mergeData->fromProject($project, $settings)),
+                MergeFieldResolver::resolve($template->body, $mergeData),
             ),
             unknownFields: MergeFieldVocabulary::unknownPathsIn($template->body),
         );

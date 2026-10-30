@@ -1,11 +1,10 @@
 <?php
 
 use App\Enums\StaffRole;
+use App\Gallery\Jobs\ProcessIngestedAsset;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GallerySet;
-use App\Media\Console\Commands\ReapIncompleteMultipartUploads;
 use App\Media\Enums\MultipartUploadStatus;
-use App\Media\Jobs\ProcessIngestedAsset;
 use App\Media\Models\Asset;
 use App\Media\Models\MultipartUpload;
 use Aws\Command;
@@ -50,7 +49,7 @@ it('starts a fresh multipart upload under the quarantine prefix', function () {
         ->and($upload->gallery_id)->toBe($gallery->id)
         ->and($upload->upload_id)->toBe('upload-abc')
         ->and($upload->status)->toBe(MultipartUploadStatus::InProgress)
-        ->and($upload->key)->toStartWith(ReapIncompleteMultipartUploads::QUARANTINE_PREFIX)
+        ->and($upload->key)->toStartWith(MultipartUpload::QUARANTINE_PREFIX)
         ->and($upload->key)->toEndWith('/IMG_4788.jpg')
         ->and($response->json('upload.gallery_set_id'))->toBe($upload->set->public_id);
 
@@ -70,7 +69,7 @@ it('never puts a storage path, bucket name or upload id in the response body', f
     expect($response->getContent())
         ->not->toContain('super-secret-upload-id')
         ->not->toContain(config('filesystems.disks.s3.bucket'))
-        ->not->toContain(ReapIncompleteMultipartUploads::QUARANTINE_PREFIX);
+        ->not->toContain(MultipartUpload::QUARANTINE_PREFIX);
 });
 
 it('resumes the same in-progress session for a returning tab, asking the bucket rather than its own bookkeeping', function () {
@@ -262,7 +261,7 @@ it('refuses to upload a part into a session that is no longer in progress', func
 
 it('completes an upload by assembling the parts list from ListParts, never from the browser, and hands it to G-03 ingest', function () {
     // Faked rather than left to actually run: QUEUE_CONNECTION is `sync` in
-    // tests, and App\Media\Jobs\ProcessIngestedAsset would otherwise execute
+    // tests, and App\Gallery\Jobs\ProcessIngestedAsset would otherwise execute
     // inline against this same mocked S3Client — consuming MockHandler
     // results this test never queued and failing for a reason that has
     // nothing to do with what it asserts. G-03's own suite exercises the job

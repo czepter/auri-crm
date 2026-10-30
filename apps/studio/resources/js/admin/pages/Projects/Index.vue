@@ -14,11 +14,11 @@ import { isoDate } from '@/admin/lib/dates'
 import { formatEurosRounded } from '@/admin/lib/money'
 import { relative, TYPE_DOT } from '@/admin/lib/boardCard'
 
-type Phase = App.Crm.Data.ProjectRowData['phase']
+type Phase = App.Crm.Data.CaseRowData['phase']
 
 const props = defineProps<{
   view: 'liste' | 'board'
-  projects: App.Crm.Data.ProjectRowData[]
+  projects: App.Crm.Data.CaseRowData[]
   stages: { key: string; name: string; phase: Phase }[]
   stageSettings: Omit<InstanceType<typeof ProjectSettings>['$props'], 'workflow' | 'canManageTasks' | 'selection' | 'returnTo'> | null
   workflow?: Record<string, unknown> | null
@@ -79,7 +79,7 @@ const moving = ref<{ id: string; column: number } | null>(null)
 const target = ref<number | null>(null)
 const insertAt = ref<number | null>(null)
 
-function onDragStart(event: DragEvent, project: App.Crm.Data.ProjectRowData, column: number) {
+function onDragStart(event: DragEvent, project: App.Crm.Data.CaseRowData, column: number) {
   moving.value = { id: project.id, column }
   if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
 }
@@ -111,7 +111,7 @@ function move(id: string, key: string) {
 }
 
 // Without a mouse: dragging a card across five columns is unusable on an iPad.
-function onKey(event: KeyboardEvent, project: App.Crm.Data.ProjectRowData, column: number) {
+function onKey(event: KeyboardEvent, project: App.Crm.Data.CaseRowData, column: number) {
   if (!event.metaKey && !event.ctrlKey) return
 
   const to = event.key === 'ArrowRight' ? column + 1 : event.key === 'ArrowLeft' ? column - 1 : null
@@ -123,9 +123,9 @@ function onKey(event: KeyboardEvent, project: App.Crm.Data.ProjectRowData, colum
   }
 }
 
-const menu = ref<{ project: App.Crm.Data.ProjectRowData; x: number; y: number } | null>(null)
+const menu = ref<{ project: App.Crm.Data.CaseRowData; x: number; y: number } | null>(null)
 
-function openMenu(event: MouseEvent, project: App.Crm.Data.ProjectRowData) {
+function openMenu(event: MouseEvent, project: App.Crm.Data.CaseRowData) {
   event.preventDefault()
   menu.value = { project, x: event.clientX, y: event.clientY }
 }
@@ -136,11 +136,11 @@ function day(iso: string) {
 
 // The date passed and nobody has shot it: the one row on this screen that
 // needs someone.
-function late(project: App.Crm.Data.ProjectRowData) {
+function late(project: App.Crm.Data.CaseRowData) {
   return project.phase === 'upcoming' && project.date !== null && project.date < today
 }
 
-function dots(project: App.Crm.Data.ProjectRowData) {
+function dots(project: App.Crm.Data.CaseRowData) {
   const reached = props.stages.findIndex((option) => option.key === project.positionKey)
   const upTo = reached < 0 && project.phase === 'delivered' ? props.stages.length - 1 : reached
 

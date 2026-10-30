@@ -3,7 +3,7 @@
  *
  * Impressum ist nicht dabei: ohne Adresse und ohne Vorlage zeichnet das
  * Portal die Seite aus den Studio-Daten, es gibt dort also immer eine
- * (siehe StudioSettingsResolver::legalUrl()). AGB sind eine Entscheidung des
+ * (siehe LegalTexts::url()). AGB sind eine Entscheidung des
  * Studios, keine Pflicht. Die Widerrufsbelehrung ist beides nicht: ohne sie
  * beginnt die Frist eines Verbrauchers gar nicht erst zu laufen.
  */

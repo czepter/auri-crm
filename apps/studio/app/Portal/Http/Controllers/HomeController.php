@@ -2,7 +2,6 @@
 
 namespace App\Portal\Http\Controllers;
 
-use App\Catalog\Support\PortalOffers;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Engagement\Models\Thread;
@@ -10,6 +9,7 @@ use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
+use App\Portal\Support\PortalOffers;
 use App\Portal\Support\PortalSettings;
 use App\Quotes\Enums\QuoteStatus;
 use Illuminate\Http\RedirectResponse;
@@ -31,7 +31,7 @@ use Inertia\Response;
  * things that change at that scale, both driven by counts computed here.
  *
  * Everything is scoped through Contact::visibleProjects(), the same question
- * ProjectController asks for direct entry, so a booking the studio has not
+ * CaseController asks for direct entry, so a booking the studio has not
  * made portal_visible is as absent here as it is 404 there.
  */
 class HomeController extends Controller

@@ -3,8 +3,9 @@
 namespace App\Quotes\Notifications;
 
 use App\Crm\Models\Contact;
+use App\Models\StudioSettings;
+use App\Portal\Support\LegalTexts;
 use App\Quotes\Models\Quote;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Number;
@@ -55,7 +56,7 @@ class QuoteSent extends Notification
             'sie' => 'Ihr',
             'du' => 'Dein',
             'ihr' => 'Euer',
-        ][app(StudioSettingsResolver::class)->clientAddress($this->quote->case->contacts()->count())];
+        ][StudioSettings::current()->clientAddress($this->quote->case->contacts()->count())];
 
         $message = (new MailMessage)->subject($this->customSubject ?: "{$possessive} Angebot {$this->quote->number}");
 
@@ -95,7 +96,7 @@ class QuoteSent extends Notification
         }
 
         // A text hosted in the portal comes back as a relative path.
-        foreach (app(StudioSettingsResolver::class)->attachedLegalUrls() as $text => $url) {
+        foreach (LegalTexts::attachedUrls() as $text => $url) {
             $label = $text === 'agb' ? 'AGB' : 'Widerrufsbelehrung';
             $message->line("[{$label}](".(str_starts_with($url, '/') ? config('portal.url').$url : $url).')');
         }

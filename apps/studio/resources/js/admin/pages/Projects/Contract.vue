@@ -22,7 +22,7 @@ import { serialize } from '@/admin/documents/blocks/serialize'
 import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/types'
 
 const props = defineProps<{
-  header: App.Crm.Data.CaseHeaderData
+  header: App.Crm.Screens.CaseHeaderData
   templates: { value: string; label: string }[]
   contract: App.Contracts.Data.ContractData | null
   versions: App.Contracts.Data.ContractData[]

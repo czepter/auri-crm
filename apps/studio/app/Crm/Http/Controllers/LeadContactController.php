@@ -2,9 +2,11 @@
 
 namespace App\Crm\Http\Controllers;
 
+use App\Crm\Actions\CreateContact;
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Settings\Rules\ValidFormat;
 use Illuminate\Http\RedirectResponse;
@@ -23,7 +25,7 @@ use Illuminate\Http\Request;
  */
 class LeadContactController extends Controller
 {
-    public function store(Request $request, ClientCase $case): RedirectResponse
+    public function store(Request $request, ClientCase $case, CreateContact $createContact): RedirectResponse
     {
         $this->authorize('manageShoots', $case);
 
@@ -39,7 +41,17 @@ class LeadContactController extends Controller
 
         abort_if($this->isPrimary($role), 422);
 
-        $contact = $this->resolveContact($validated);
+        $contact = $createContact->pickOrResolve($validated['contact_id'] ?? null, $validated);
+
+        // Ein fremder Kontakt am eigenen Fall wäre sonst der Weg zu seiner
+        // Portal-Anmeldung: Contributor sehen nur Fälle, an denen sie crewen.
+        $user = auth('staff')->user();
+        abort_unless(
+            $contact->wasRecentlyCreated
+                || $user->can(Capability::ManageContacts->value)
+                || $user->can(Capability::ViewAllCases->value),
+            403,
+        );
 
         // unique(case_id, contact_id, role) würde beim zweiten Anhängen
         // werfen.
@@ -72,27 +84,5 @@ class LeadContactController extends Controller
     {
         return $role === CaseContactRole::Primary->value
             || $role === CaseContactRole::Primary->label();
-    }
-
-    /**
-     * @param  array<string, mixed>  $validated
-     */
-    private function resolveContact(array $validated): Contact
-    {
-        if (filled($validated['contact_id'] ?? null)) {
-            return Contact::query()->where('public_id', $validated['contact_id'])->firstOrFail();
-        }
-
-        // Dieselbe Regel wie CaptureInquiry: eine bekannte Adresse ist diese
-        // Person, nicht eine zweite mit demselben Namen.
-        $existing = filled($validated['email'] ?? null)
-            ? Contact::query()->where('email', $validated['email'])->first()
-            : null;
-
-        return $existing ?? Contact::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'] ?? null,
-            'phone' => $validated['phone'] ?? null,
-        ]);
     }
 }

@@ -4,11 +4,11 @@ use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Models\AuditLog;
+use App\Models\StudioSettings;
 use App\Quotes\Actions\ReviseQuote;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
-use App\Settings\Models\StudioSettings;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -19,7 +19,7 @@ uses(RefreshDatabase::class);
 // tests/Feature/Portal/CapabilitySwitchesTest.php for that default and the
 // 404 it produces while off) — every test below exercises the accept action
 // itself, so the switch is on for all of them. Cache::flush() first:
-// StudioSettingsResolver caches the row (T-01), and a row already cached by
+// StudioSettings::current() caches the row (T-01), and a row already cached by
 // an earlier test in the same suite run would otherwise still read as off.
 beforeEach(function () {
     useSurface(Surface::PORTAL);

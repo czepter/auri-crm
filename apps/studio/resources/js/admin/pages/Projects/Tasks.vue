@@ -22,7 +22,7 @@ import { dayWithWeekday, isoDate } from '@/admin/lib/dates'
 const { t } = useI18n()
 
 const props = defineProps<{
-  header: App.Crm.Data.CaseHeaderData
+  header: App.Crm.Screens.CaseHeaderData
   tasks: App.Crm.Data.TaskRowData[]
   shootOptions: { value: string; label: string }[]
   staffOptions: { value: string; label: string }[]

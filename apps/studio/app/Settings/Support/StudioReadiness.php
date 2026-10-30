@@ -2,6 +2,8 @@
 
 namespace App\Settings\Support;
 
+use App\Models\StudioSettings;
+
 /**
  * Was ein Studio hinterlegt haben muss, bevor es das erste Angebot schreibt
  * und bevor es die erste Rechnung stellt.
@@ -19,8 +21,6 @@ namespace App\Settings\Support;
  */
 class StudioReadiness
 {
-    public function __construct(private readonly StudioSettingsResolver $settings) {}
-
     /** @return list<string> */
     public function missingForQuote(): array
     {
@@ -30,7 +30,7 @@ class StudioReadiness
     /** @return list<string> */
     public function missingForInvoice(): array
     {
-        $attributes = $this->settings->attributes();
+        $attributes = StudioSettings::current()->profile();
 
         $missing = $this->missing(['bank_account_holder', 'bank_iban']);
 
@@ -51,7 +51,7 @@ class StudioReadiness
      */
     private function missing(array $keys): array
     {
-        $attributes = $this->settings->attributes();
+        $attributes = StudioSettings::current()->profile();
 
         return array_values(array_filter($keys, fn (string $key) => blank($attributes[$key] ?? null)));
     }

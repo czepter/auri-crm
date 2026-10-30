@@ -23,6 +23,7 @@ use App\Integration\Http\Controllers\GalleryController;
 use App\Integration\Http\Controllers\InboxController;
 use App\Integration\Http\Controllers\InternalNoteController;
 use App\Integration\Http\Controllers\LeadController;
+use App\Integration\Http\Controllers\LegalTextController;
 use App\Integration\Http\Controllers\MessageController;
 use App\Integration\Http\Controllers\PackageController;
 use App\Integration\Http\Controllers\PaymentController;
@@ -378,8 +379,8 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageMessages->value, '
         ->name('api.inbox.messages.attach');
 });
 
-// ManageLeads, the scope leads.store already attaches contacts under.
-Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
+// ManageShoots like the DELETE sibling: a contact on a project opens it in the portal.
+Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
     ->post('/cases/{case:public_id}/contacts', [CaseContactController::class, 'store'])
     ->name('api.cases.contacts.store');
 
@@ -403,8 +404,8 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageSettings->value, '
     ->name('api.project-types.fields.store');
 
 // #401: booking, completion and reopening, mirroring App\Crm\Http\
-// Controllers\ProjectController's own book()/complete()/reopen() — same
-// BookProject and CompleteProject actions, so a token can commit or close a
+// Controllers\CaseController's own book()/complete()/reopen() — same
+// BookCase and CompleteCase actions, so a token can commit or close a
 // project exactly as staff do from the project screen.
 Route::middleware(['audience:api', 'scope:'.Capability::BookProject->value, 'idempotent'])
     ->post('/cases/{case:public_id}/book', [CaseController::class, 'book'])
@@ -492,6 +493,10 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageSettings->value])-
     Route::get('/studio-closures', [StudioReadController::class, 'closures'])->name('api.studio-closures.index');
     Route::get('/number-ranges', [StudioReadController::class, 'numberRanges'])->name('api.number-ranges.index');
 });
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageSettings->value, 'idempotent'])
+    ->patch('/studio-settings/legal-texts', [LegalTextController::class, 'update'])
+    ->name('api.studio-settings.legal-texts.update');
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageCrew->value])->group(function () {
     Route::get('/staff', [CrewController::class, 'staff'])->name('api.staff.index');

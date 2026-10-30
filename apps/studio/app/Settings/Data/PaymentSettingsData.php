@@ -2,7 +2,8 @@
 
 namespace App\Settings\Data;
 
-use App\Settings\Support\StudioSettingsResolver;
+use App\Models\StudioSettings;
+use App\Payments\Support\PaymentSettings;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -18,7 +19,6 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * `hasStripeTestKeys` / `hasStripeLiveKeys` are the only signal the form
  * gets about whether a pair already exists, the same "already configured"
  * indicator a changed-password form gives without echoing the old one.
- *
  */
 #[TypeScript]
 class PaymentSettingsData extends Data
@@ -31,14 +31,14 @@ class PaymentSettingsData extends Data
         public bool $hasStripeLiveKeys,
     ) {}
 
-    public static function fromResolver(StudioSettingsResolver $settings): self
+    public static function current(): self
     {
         return new self(
-            id: $settings->publicId(),
-            stripeEnabled: $settings->stripeEnabled(),
-            stripeMode: $settings->stripeMode(),
-            hasStripeTestKeys: $settings->hasStripeKeys('test'),
-            hasStripeLiveKeys: $settings->hasStripeKeys('live'),
+            id: StudioSettings::current()->public_id,
+            stripeEnabled: (bool) StudioSettings::current()->payments_stripe_enabled,
+            stripeMode: StudioSettings::current()->payments_stripe_mode,
+            hasStripeTestKeys: PaymentSettings::hasStripeKeys('test'),
+            hasStripeLiveKeys: PaymentSettings::hasStripeKeys('live'),
         );
     }
 }

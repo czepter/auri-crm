@@ -6,6 +6,7 @@ use App\Crm\Enums\LeadStage;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
 use App\Models\AuditLog;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\RateLimiter;
@@ -111,12 +112,13 @@ it('refuses a submission without consent, the one thing it will report', functio
 });
 
 it('records the consent against the lead, naming what was agreed to', function () {
+    app(UpdateStudioSetting::class)('portal_legal_datenschutz_url', 'https://example.test/datenschutz');
     submit();
 
     $row = AuditLog::where('event', 'lead.consent_recorded')->sole();
 
     expect($row->subject)->toBe(Lead::sole()->case->public_id)
-        ->and($row->context)->toHaveKey('datenschutz_url')
+        ->and($row->context['datenschutz_url'])->toBe('https://example.test/datenschutz')
         ->and($row->context['channel'])->toBe('web_form');
 });
 

@@ -184,3 +184,22 @@ it('formats a slug as lowercase letters, digits and hyphens only, within its bou
     expect(GallerySlug::format('Hôtel  --  de   Ville!! 42'))->toMatch(GallerySlug::PATTERN)
         ->and(strlen(GallerySlug::format(str_repeat('a', 200))))->toBeLessThanOrEqual(GallerySlug::MAX);
 });
+
+it('refuses the public_id of another gallery as a slug', function () {
+    $other = Gallery::factory()->create();
+    $gallery = Gallery::factory()->create();
+
+    test()->patch("/galerien/{$gallery->public_id}", ['slug' => $other->public_id])
+        ->assertSessionHasErrors('slug');
+
+    expect($gallery->fresh()->slug)->not->toBe($other->public_id);
+});
+
+it('resolves a public_id to its own gallery even when another carries it as slug', function () {
+    $owner = Gallery::factory()->create(['expires_at' => now()->addDays(30)]);
+    $squatter = Gallery::factory()->create(['expires_at' => now()->addDay()]);
+    $squatter->update(['slug' => $owner->public_id]);
+    $owner->update(['title' => 'bewegt']);
+
+    expect(Gallery::findByPublicIdOrSlug($owner->public_id)->id)->toBe($owner->id);
+});

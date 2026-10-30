@@ -2,19 +2,19 @@
 
 namespace App\Portal\Http\Controllers;
 
+use App\Crm\Actions\CreateTask;
+use App\Crm\Actions\NotifyStudio;
+use App\Crm\Actions\UpdateContact;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Task;
 use App\Http\Controllers\Controller;
-use App\Notifications\Actions\NotifyStudio;
 use App\Notifications\Jobs\SendMailNotification;
-use App\Notifications\Studio\DsgvoRequested;
 use App\Notifications\Support\NotificationPreferences;
-use App\Portal\Models\DsgvoRequest;
 use App\Portal\Models\EmailChange;
 use App\Portal\Notifications\EmailChangeConfirmation;
+use App\Privacy\Models\DsgvoRequest;
+use App\Privacy\Notifications\Studio\DsgvoRequested;
 use App\Settings\Rules\ValidFormat;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -78,7 +78,7 @@ class AccountController extends Controller
      * the login, so it goes out as a confirmation to the new address and
      * nothing on the contact changes until that link is followed.
      */
-    public function update(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    public function update(Request $request, UpdateContact $updateContact): RedirectResponse
     {
         $contact = auth('portal')->user();
 
@@ -97,10 +97,10 @@ class AccountController extends Controller
         $newEmail = mb_strtolower($data['email']);
         unset($data['email']);
 
-        $contact->update($data);
+        $updateContact($contact, $data);
 
         if ($newEmail !== mb_strtolower((string) $contact->email)) {
-            $this->requestEmailChange($contact, $newEmail, $settings);
+            $this->requestEmailChange($contact, $newEmail);
         }
 
         return back();
@@ -156,7 +156,7 @@ class AccountController extends Controller
     }
 
     /** Art. 15 and Art. 17, as requests. Clicking twice is impatience, not a second obligation. */
-    public function requestDsgvo(Request $request, NotifyStudio $notifyStudio): RedirectResponse
+    public function requestDsgvo(Request $request, NotifyStudio $notifyStudio, CreateTask $createTask): RedirectResponse
     {
         $contact = auth('portal')->user();
 
@@ -171,7 +171,7 @@ class AccountController extends Controller
 
         if (! $already) {
             $dsgvoRequest = DsgvoRequest::create(['contact_id' => $contact->id, 'kind' => $kind]);
-            $task = Task::create([
+            $task = $createTask([
                 'title' => "Datenschutz-Anfrage: {$dsgvoRequest->label()}",
                 'audience' => TaskAudience::Internal,
                 'due_on' => $dsgvoRequest->dueOn(),
@@ -210,7 +210,7 @@ class AccountController extends Controller
         return back();
     }
 
-    private function requestEmailChange(Contact $contact, string $newEmail, StudioSettingsResolver $settings): void
+    private function requestEmailChange(Contact $contact, string $newEmail): void
     {
         $token = bin2hex(random_bytes(32));
 
@@ -227,7 +227,7 @@ class AccountController extends Controller
         // holds the new value.
         SendMailNotification::dispatch(
             Notification::route('mail', $newEmail),
-            new EmailChangeConfirmation($contact, url("/e-mail-bestaetigen/{$token}"), $settings),
+            new EmailChangeConfirmation($contact, url("/e-mail-bestaetigen/{$token}")),
         );
     }
 }

@@ -8,13 +8,15 @@ use App\Concerns\AuthorizesStaffSettings;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Http\Controllers\Controller;
-use App\Portal\Http\Controllers\LegalTextController;
+use App\Models\StudioSettings;
+use App\Portal\Support\LegalTexts;
+use App\Settings\Actions\UpdatePortalContactAvatar;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Data\PortalSettingsData;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Enums\FontPair;
 use App\Settings\Rules\LegalTemplateFamily;
 use App\Settings\Rules\ValidFormat;
-use App\Settings\Support\StudioSettingsResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -39,16 +41,16 @@ class PortalSettingsController extends Controller
 {
     use AuthorizesStaffSettings;
 
-    public function edit(StudioSettingsResolver $settings): Response
+    public function edit(): Response
     {
         $this->authorizeSettings();
 
         return Inertia::render('Settings/Portal', [
-            'settings' => PortalSettingsData::fromResolver($settings),
+            'settings' => PortalSettingsData::current(),
             // The pane's preview draws the portal head, which is the
             // studio's logo, pair and accent — none of which belongs in
             // PortalSettingsData, all of which this DTO already carries.
-            'branding' => StudioSettingsData::fromResolver($settings),
+            'branding' => StudioSettingsData::current(),
         ]);
     }
 
@@ -63,7 +65,7 @@ class PortalSettingsController extends Controller
      * geteilten Props herein, die HandleInertiaRequests der Portal-Oberfläche
      * gibt — die Bauteile des Portals lesen sie dort.
      */
-    public function preview(Request $request, StudioSettingsResolver $settings): Response
+    public function preview(Request $request): Response
     {
         $this->authorizeSettings();
 
@@ -74,9 +76,9 @@ class PortalSettingsController extends Controller
         // Getippt statt gespeichert: das Formular schickt, was gerade im Feld
         // steht, damit die Vorschau mitläuft.
         $welcome = $request->query('text', match ($state) {
-            'inquiry' => $settings->portalWelcomeInquiry(),
-            'done' => $settings->portalWelcomeDone(),
-            default => $settings->portalWelcomeActive(),
+            'inquiry' => StudioSettings::current()->portal_welcome_inquiry,
+            'done' => StudioSettings::current()->portal_welcome_done,
+            default => StudioSettings::current()->portal_welcome_active,
         });
 
         return Inertia::render('Settings/PortalHomePreview', [
@@ -89,22 +91,22 @@ class PortalSettingsController extends Controller
             'client' => 'Maxi Musterfrau',
             'welcomeText' => $welcome,
             'closed' => $request->boolean('geschlossen'),
-            'shelf' => $request->boolean('leistungen', $settings->offersEnabled()) ? $this->sampleShelf() : [],
-            'maintenanceMessage' => $request->query('hinweis', $settings->maintenanceMessage()),
-            'fontPair' => (FontPair::tryFrom((string) $request->query('schrift')) ?? $settings->fontPair())->value,
+            'shelf' => $request->boolean('leistungen', (bool) StudioSettings::current()->portal_offers_enabled) ? $this->sampleShelf() : [],
+            'maintenanceMessage' => $request->query('hinweis', StudioSettings::current()->portal_maintenance_message),
+            'fontPair' => (FontPair::tryFrom((string) $request->query('schrift')) ?? FontPair::current())->value,
             // Getippt schlägt gespeichert, wie beim Text: die Seite Allgemein
             // schickt Name, Farbe, Logo und Anschrift, wie sie im Formular stehen.
             'portalBranding' => [
-                'displayName' => Str::limit(trim((string) $request->query('name')), 120, '') ?: ($settings->displayName() ?? config('app.name')),
+                'displayName' => Str::limit(trim((string) $request->query('name')), 120, '') ?: (StudioSettings::current()->display_name ?? config('app.name')),
                 // Nur ein Blob des eigenen Browsers: ein fremder Wert in einem <img> wäre ein Tracking-Pixel.
                 'logoUrl' => str_starts_with((string) $request->query('logo'), 'blob:')
                     ? $request->query('logo')
-                    : ($settings->logoPath() !== null ? '/einstellungen/logo' : null),
-                'accentColor' => preg_match('/^#[0-9A-Fa-f]{6}$/', (string) $request->query('akzent')) ? $request->query('akzent') : $settings->attributes()['accent_color'],
-                'address' => $request->has('adresse') ? Str::limit(trim((string) $request->query('adresse')), 200, '') : $settings->postalLine(),
+                    : (StudioSettings::current()->logo_path !== null ? '/einstellungen/logo' : null),
+                'accentColor' => preg_match('/^#[0-9A-Fa-f]{6}$/', (string) $request->query('akzent')) ? $request->query('akzent') : StudioSettings::current()->profile()['accent_color'],
+                'address' => $request->has('adresse') ? Str::limit(trim((string) $request->query('adresse')), 200, '') : StudioSettings::current()->postalLine(),
             ],
-            'portalLegal' => collect(LegalTextController::TEXTS)
-                ->mapWithKeys(fn (string $text) => [$text.'Url' => $settings->legalUrl($text)])
+            'portalLegal' => collect(LegalTexts::ALL)
+                ->mapWithKeys(fn (string $text) => [$text.'Url' => LegalTexts::url($text)])
                 ->all(),
             'portalNav' => null,
         ]);
@@ -196,18 +198,18 @@ class PortalSettingsController extends Controller
      * Person ist und keine Freigabe: Name, Bild, Telefon, E-Mail und die
      * Antwortzeit stehen auf der Kundenseite zusammen in einer Karte.
      */
-    public function contact(StudioSettingsResolver $settings): Response
+    public function contact(): Response
     {
         $this->authorizeSettings();
 
         return Inertia::render('Settings/PortalContact', [
-            'settings' => PortalSettingsData::fromResolver($settings),
+            'settings' => PortalSettingsData::current(),
             // Die Vorschau zeigt, was ohne eigenen Namen dort stünde: die Marke.
-            'branding' => StudioSettingsData::fromResolver($settings),
+            'branding' => StudioSettingsData::current(),
         ]);
     }
 
-    public function updateContact(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    public function updateContact(Request $request): RedirectResponse
     {
         $this->authorizeSettings();
 
@@ -227,23 +229,23 @@ class PortalSettingsController extends Controller
         $actor = auth('staff')->user();
 
         foreach (collect($validated)->except('portal_contact_avatar') as $key => $value) {
-            $settings->set($key, $value, $actor);
+            app(UpdateStudioSetting::class)($key, $value, $actor);
         }
 
         if ($request->hasFile('portal_contact_avatar')) {
-            $settings->setPortalContactAvatar($request->file('portal_contact_avatar'), $actor);
+            app(UpdatePortalContactAvatar::class)($request->file('portal_contact_avatar'), $actor);
         }
 
         return back();
     }
 
     /** Was Kunden im Portal lesen: die vier Rechtstexte, je als Link oder Dokumentvorlage. */
-    public function imprintTerms(StudioSettingsResolver $settings): Response
+    public function imprintTerms(): Response
     {
         $this->authorizeSettings();
 
         return Inertia::render('Settings/ImprintTerms', [
-            'settings' => PortalSettingsData::fromResolver($settings),
+            'settings' => PortalSettingsData::current(),
             'legalTemplates' => DocumentTemplate::query()
                 ->current()
                 ->ofType(DocumentTemplateType::Legal)
@@ -258,7 +260,7 @@ class PortalSettingsController extends Controller
         ]);
     }
 
-    public function updateImprintTerms(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    public function updateImprintTerms(Request $request): RedirectResponse
     {
         $this->authorizeSettings();
 
@@ -280,34 +282,34 @@ class PortalSettingsController extends Controller
         $actor = auth('staff')->user();
 
         foreach ($validated as $key => $value) {
-            $settings->set($key, $value, $actor);
+            app(UpdateStudioSetting::class)($key, $value, $actor);
         }
 
         return back();
     }
 
-    public function destroyContactAvatar(StudioSettingsResolver $settings): RedirectResponse
+    public function destroyContactAvatar(): RedirectResponse
     {
         $this->authorizeSettings();
 
-        $settings->removePortalContactAvatar(auth('staff')->user());
+        app(UpdatePortalContactAvatar::class)(null, auth('staff')->user());
 
         return back();
     }
 
     /** Der eigene Blick auf das Bild; das Portal liefert dieselbe Datei öffentlich aus. */
-    public function contactAvatar(StudioSettingsResolver $settings): StreamedResponse
+    public function contactAvatar(): StreamedResponse
     {
         $this->authorizeSettings();
 
-        $path = $settings->portalContactAvatarPath();
+        $path = StudioSettings::current()->portal_contact_avatar_path;
 
         abort_if($path === null, 404);
 
         return Storage::disk('local')->response($path);
     }
 
-    public function update(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    public function update(Request $request): RedirectResponse
     {
         $this->authorizeSettings();
 
@@ -329,7 +331,7 @@ class PortalSettingsController extends Controller
         $actor = auth('staff')->user();
 
         foreach ($validated as $key => $value) {
-            $settings->set($key, $value, $actor);
+            app(UpdateStudioSetting::class)($key, $value, $actor);
         }
 
         return back();

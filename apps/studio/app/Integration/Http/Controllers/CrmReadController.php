@@ -12,10 +12,11 @@ use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
 use App\Integration\Data\CaseDetailReadData;
 use App\Integration\Data\CaseMoneyReadData;
+use App\Integration\Data\CaseReadData;
 use App\Integration\Data\ContactReadData;
 use App\Integration\Data\LeadReadData;
-use App\Integration\Data\ProjectReadData;
 use App\Integration\Data\ShootReadData;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -56,7 +57,7 @@ class CrmReadController extends Controller
 
     public function projects(Request $request): JsonResponse
     {
-        return $this->page(ClientCase::query()->booked(), $request, ProjectReadData::class);
+        return $this->page(ClientCase::query()->booked(), $request, CaseReadData::class);
     }
 
     /**
@@ -94,6 +95,7 @@ class CrmReadController extends Controller
         ]);
 
         $query = Lead::query()
+            ->when($request->user('api') instanceof User, fn (Builder $q) => $q->whereHas('case', fn (Builder $case) => $case->visibleTo($request->user('api'))))
             ->with('case:id,public_id,name,closed_at')
             ->when($filters['stage'] ?? null, fn (Builder $q, string $stage) => $q->where('stage', $stage))
             ->when($request->has('closed'), fn (Builder $q) => $request->boolean('closed')
@@ -144,10 +146,11 @@ class CrmReadController extends Controller
      * the same `open()` scope: a lost lead left its stage the moment it was
      * marked lost, so it no longer belongs to any column's count.
      */
-    public function pipelineSnapshot(): JsonResponse
+    public function pipelineSnapshot(Request $request): JsonResponse
     {
         $counts = Lead::query()
             ->open()
+            ->when($request->user('api') instanceof User, fn (Builder $q) => $q->whereHas('case', fn (Builder $case) => $case->visibleTo($request->user('api'))))
             ->select('stage')
             ->selectRaw('count(*) as count')
             ->groupBy('stage')

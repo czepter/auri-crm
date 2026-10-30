@@ -5,7 +5,6 @@ namespace App\Gallery\Notifications;
 use App\Concerns\AppliesStudioMailIdentity;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryDownloadLink;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -31,7 +30,6 @@ class GalleryZipReady extends Notification
         private readonly Gallery $gallery,
         private readonly string $url,
         private readonly int $parts,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     /** @return list<string> */
@@ -51,6 +49,6 @@ class GalleryZipReady extends Notification
             ->action('Herunterladen', $this->url)
             ->line('Der Link ist '.GalleryDownloadLink::VALID_FOR_DAYS.' Tage gültig.');
 
-        return $this->appendStudioMailIdentity($message, $this->settings);
+        return $this->appendStudioMailIdentity($message);
     }
 }

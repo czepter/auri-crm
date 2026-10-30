@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('reset_rule');
 
             // Settable while the range has issued nothing for its current
-            // period (App\Settings\Models\NumberRange::hasIssued()) — how
+            // period (App\Numbering\Models\NumberRange::hasIssued()) — how
             // X-01's future historical import starts a studio's live
             // numbering at the count it already reached, rather than at 1
             // under a number a client has already been sent.

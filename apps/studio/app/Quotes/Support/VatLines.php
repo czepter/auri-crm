@@ -36,7 +36,7 @@ final class VatLines
         foreach ($items as $item) {
             $base = $item->discountedLineTotal();
 
-            if ($base === 0) {
+            if ($base === 0 || ! $item->isCharged()) {
                 continue;
             }
 

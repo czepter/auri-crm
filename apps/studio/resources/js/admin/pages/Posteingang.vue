@@ -11,7 +11,7 @@ import RailSection from '@/ui/page/RailSection.vue'
 import { Queue, QueueGroup, QueueItem } from '@/ui/queue'
 import { Textarea } from '@/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
+import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
 
 type Row = {
   id: string
@@ -213,7 +213,9 @@ function receivedAt(iso: string) {
                 <AlertDialogHeader>
                   <AlertDialogTitle>{{ $t('inbox.rotateConfirm') }}</AlertDialogTitle>
                 </AlertDialogHeader>
-                <p>{{ $t('inbox.rotateConsequence') }}</p>
+                <AlertDialogBody>
+                  <p class="m-0">{{ $t('inbox.rotateConsequence') }}</p>
+                </AlertDialogBody>
                 <AlertDialogFooter>
                   <AlertDialogAction tone="destructive" @click="rotate">{{ $t('inbox.rotate') }}</AlertDialogAction>
                   <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>

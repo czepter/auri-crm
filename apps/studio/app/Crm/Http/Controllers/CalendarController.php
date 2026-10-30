@@ -13,9 +13,9 @@ use App\Crm\Support\ShootCalendar;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Models\Absence;
+use App\Models\StudioClosure;
+use App\Models\StudioSettings;
 use App\Models\User;
-use App\Settings\Models\StudioClosure;
-use App\Settings\Support\StudioSettingsResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -41,7 +41,7 @@ class CalendarController extends Controller
      * widest block above the working area; it lives under
      * /profil/kalender now.
      */
-    public function index(Request $request, CrmVocabulary $vocabulary, StudioSettingsResolver $settings): InertiaResponse
+    public function index(Request $request, CrmVocabulary $vocabulary): InertiaResponse
     {
         $user = auth('staff')->user();
         $manages = $user->can(Capability::ManageSettings->value);
@@ -136,7 +136,7 @@ class CalendarController extends Controller
                 ->pluck('public_id')
                 ->values(),
             'season' => $view === 'saison' ? $this->season($user, $vocabulary) : null,
-            'workingDays' => $manages ? $settings->workingDays() : null,
+            'workingDays' => $manages ? StudioSettings::current()->workingDays() : null,
             'settingsOpen' => $request->route('settings') === true,
         ]);
     }

@@ -22,7 +22,7 @@ use RuntimeException;
  *
  * A source this cannot decode at all (a corrupt file, a format this
  * libvips build has no loader for) throws from dimensions() before any
- * derivative work starts — App\Media\Actions\IngestCompletedUpload turns
+ * derivative work starts — App\Gallery\Actions\IngestCompletedUpload turns
  * that into a Failed asset rather than an unhandled job failure.
  */
 class LibvipsDerivativePipeline

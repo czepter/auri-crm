@@ -87,7 +87,7 @@ function rememberGuest(identity: { name: string; pass: string }) {
     path: `/g/${galleryId}`,
     httpOnly: true,
     sameSite: 'lax' as const,
-    secure: Astro.url.protocol === 'https:',
+    secure: import.meta.env.PROD,
     maxAge: GUEST_MAX_AGE_SECONDS,
   }
 
@@ -172,7 +172,7 @@ if (Astro.request.method === 'POST') {
         path: `/g/${galleryId}`,
         httpOnly: true,
         sameSite: 'lax',
-        secure: Astro.url.protocol === 'https:',
+        secure: import.meta.env.PROD,
         maxAge: PASS_MAX_AGE_SECONDS,
       })
     }

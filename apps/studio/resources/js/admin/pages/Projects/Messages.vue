@@ -7,7 +7,7 @@ import Card from '@/ui/page/Card.vue'
 import { dayWithWeekday } from '@/admin/lib/dates'
 
 const props = defineProps<{
-  header: App.Crm.Data.CaseHeaderData
+  header: App.Crm.Screens.CaseHeaderData
   thread: App.Engagement.Data.ThreadData | null
   mailTemplates: App.Documents.Data.MailTemplateData[]
 }>()

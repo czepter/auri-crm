@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('multipart_uploads', function (Blueprint $table) {
-            // G-03: set once App\Media\Actions\IngestCompletedUpload has run
+            // G-03: set once App\Gallery\Actions\IngestCompletedUpload has run
             // to a conclusion (Ready or Failed asset) for this upload — never
             // reset. A row with completed_at set but processed_at still null
             // is exactly what a stuck/never-dispatched ingest job looks like.

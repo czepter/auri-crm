@@ -4,9 +4,9 @@ namespace App\Settings\Http\Controllers;
 
 use App\Enums\StaffRole;
 use App\Http\Controllers\Controller;
-use App\Settings\Actions\StudioDeletionConfirmation;
-use App\Settings\Models\StudioSettings;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Models\StudioSettings;
+use App\Privacy\Actions\StudioDeletionConfirmation;
+use App\Settings\Actions\UpdateStudioSetting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -37,21 +37,21 @@ class StudioDeletionController extends Controller
         return back();
     }
 
-    public function store(Request $request, StudioSettingsResolver $settings, StudioDeletionConfirmation $confirmation): RedirectResponse
+    public function store(Request $request, StudioDeletionConfirmation $confirmation): RedirectResponse
     {
         self::authorizeOwner();
 
         $confirmation->redeem($request->user('staff'), $request->validate(['code' => ['required', 'string']])['code']);
-        $settings->set('deletion_requested_at', now(), $request->user('staff'));
+        app(UpdateStudioSetting::class)('deletion_requested_at', now(), $request->user('staff'));
 
         return back();
     }
 
-    public function destroy(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    public function destroy(Request $request): RedirectResponse
     {
         self::authorizeOwner();
 
-        $settings->set('deletion_requested_at', null, $request->user('staff'));
+        app(UpdateStudioSetting::class)('deletion_requested_at', null, $request->user('staff'));
 
         return back();
     }

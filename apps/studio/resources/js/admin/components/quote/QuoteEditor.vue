@@ -76,8 +76,7 @@ const timeSummary = computed(() =>
 )
 
 const positionsTotal = computed(() => {
-  const charged =
-    draft.value.pricingMode === 'classic' ? draft.value.rows : draft.value.rows.filter((row) => !row.selectable || row.selected)
+  const charged = draft.value.rows.filter((row) => !row.selectable || row.selected)
   const hours = draft.value.slider.hours ?? draft.value.slider.minHours ?? 0
   const timeTotal = draft.value.pricingMode === 'choice' ? hours * rate.value : 0
 

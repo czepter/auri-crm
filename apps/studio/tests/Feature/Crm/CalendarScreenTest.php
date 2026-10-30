@@ -5,8 +5,8 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Shoot;
 use App\Models\Absence;
+use App\Models\StudioClosure;
 use App\Models\User;
-use App\Settings\Models\StudioClosure;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);

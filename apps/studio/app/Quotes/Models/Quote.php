@@ -5,17 +5,18 @@ namespace App\Quotes\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasHourlyPricing;
 use App\Concerns\HasPublicId;
-use App\Concerns\HasShowcaseImages;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
-use App\Payments\Support\PaymentStageSplitter;
+use App\Documents\Models\DocumentView;
+use App\Media\Concerns\HasShowcaseImages;
+use App\Models\StudioSettings;
 use App\Quotes\Enums\DiscountType;
 use App\Quotes\Enums\PricingMode;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Support\DiscountCalculator;
+use App\Quotes\Support\PaymentStageSplitter;
 use App\Quotes\Support\QuoteRange;
 use App\Quotes\Support\VatLines;
-use App\Settings\Support\StudioSettingsResolver;
 use Database\Factories\Quotes\QuoteFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -134,6 +135,11 @@ class Quote extends Model
         return $this->belongsTo(ClientCase::class);
     }
 
+    public function views(): HasMany
+    {
+        return $this->hasMany(DocumentView::class);
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(QuoteItem::class)->orderBy('sort_order');
@@ -219,7 +225,7 @@ class Quote extends Model
      */
     public static function computeTotals(iterable $items, ?DiscountType $discountType, ?int $discountValue): array
     {
-        $items = collect($items);
+        $items = collect($items)->filter(fn (QuoteItem $item) => $item->isCharged());
         $subtotal = $items->sum(fn (QuoteItem $item) => $item->discountedLineTotal());
         $discountAmount = DiscountCalculator::resolve($subtotal, $discountType, $discountValue);
 
@@ -249,7 +255,7 @@ class Quote extends Model
         $nets = collect(VatLines::fromItems($this->items, $rate, (int) $this->net))->pluck('net', 'rate');
         $items = $this->items->map(fn (QuoteItem $item) => clone $item);
 
-        foreach ($items->filter(fn (QuoteItem $item) => $item->discountedLineTotal() > 0)->groupBy(fn (QuoteItem $item) => $item->vat_rate ?? $rate) as $key => $group) {
+        foreach ($items->filter(fn (QuoteItem $item) => $item->isCharged() && $item->discountedLineTotal() > 0)->groupBy(fn (QuoteItem $item) => $item->vat_rate ?? $rate) as $key => $group) {
             $amounts = DiscountCalculator::spread($group->map(fn (QuoteItem $item) => $item->discountedLineTotal())->all(), $nets[$key] ?? 0);
 
             foreach ($group as $index => $item) {
@@ -277,12 +283,12 @@ class Quote extends Model
      *
      * Once these four columns are populated, QuoteData::fromModel() reads
      * them straight off the row and never falls through to
-     * StudioSettingsResolver again — that is what makes a later change to
+     * StudioSettings::current() again — that is what makes a later change to
      * the tenant's VAT mode alter nothing an already-sent quote renders.
      */
-    public function snapshotVat(StudioSettingsResolver $settings): void
+    public function snapshotVat(): void
     {
-        $this->update(self::computeVat($this->net, $settings, $this->items()->get()));
+        $this->update(self::computeVat($this->net, $this->items()->get()));
     }
 
     /**
@@ -318,10 +324,10 @@ class Quote extends Model
      * @param  iterable<QuoteItem>  $items
      * @return array{vat_mode: string, vat_rate: int, vat_note: ?string, vat_amount: int}
      */
-    public static function computeVat(int $net, StudioSettingsResolver $settings, iterable $items = []): array
+    public static function computeVat(int $net, iterable $items = []): array
     {
-        $mode = $settings->vatMode();
-        $rate = $settings->effectiveVatRate();
+        $mode = StudioSettings::current()->vat_mode;
+        $rate = StudioSettings::current()->effectiveVatRate();
 
         return [
             'vat_mode' => $mode,
@@ -329,7 +335,7 @@ class Quote extends Model
             // Only small_business prints anything — see the mockup and
             // QuoteData: standard shows a computed VAT line instead, so it
             // has no use for the note text.
-            'vat_note' => $mode === 'small_business' ? $settings->vatNote() : null,
+            'vat_note' => $mode === 'small_business' ? StudioSettings::current()->vat_note : null,
             // § 19 UStG: no rate is charged, so a line's own rate is ignored
             // rather than broken out against a base that carries no tax.
             'vat_amount' => $mode === 'small_business'

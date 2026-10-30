@@ -38,7 +38,7 @@ export const buttonVariants = cva(
         default:
           "ml-auto rounded-md border-0 bg-action px-[14px] py-[9px] text-ui font-semibold leading-none text-action-foreground [&_svg]:size-[15px]",
         outline:
-          "flex-none gap-1.5 rounded-[var(--r-control,var(--r-pill))] border border-line-hover bg-background px-3.5 py-[5px] text-small font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-colors duration-[.12s] ease-out hover:border-faint [&_svg]:size-[13px]",
+          "flex-none gap-1.5 rounded-[var(--r-control,var(--r-pill))] border border-line-hover bg-background px-3.5 py-[7px] text-small font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-colors duration-[.12s] ease-out hover:border-faint [&_svg]:size-[13px]",
         ghost:
           "border-0 bg-transparent px-0 py-[9px] text-ui font-medium leading-none text-muted-foreground hover:text-foreground [&_svg]:size-[15px] [&_svg]:opacity-80",
         /*

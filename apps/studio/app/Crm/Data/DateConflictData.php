@@ -5,7 +5,7 @@ namespace App\Crm\Data;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Models\Shoot;
 use App\Models\Absence;
-use App\Settings\Models\StudioClosure;
+use App\Models\StudioClosure;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 

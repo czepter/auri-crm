@@ -2,13 +2,13 @@
 
 namespace App\Engagement\Actions;
 
+use App\Crm\Actions\NotifyStudio;
 use App\Crm\Models\Contact;
 use App\Engagement\Jobs\SendScheduledMessage;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
+use App\Engagement\Notifications\Studio\ClientMessagePosted;
 use App\Models\User;
-use App\Notifications\Actions\NotifyStudio;
-use App\Notifications\Studio\ClientMessagePosted;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 

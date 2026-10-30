@@ -39,13 +39,16 @@ class GallerySecretGate
 
     private const DECAY_SECONDS = 300;
 
-    /** @param  ?Closure(string): bool  $verify  the gallery's own check, or null where there is nothing to check against */
+    /**
+     * @param  ?string  $ip  null drops the per-IP key: the api surface only ever sees the gallery SSR container's address (R44)
+     * @param  ?Closure(string): bool  $verify  the gallery's own check, or null where there is nothing to check against
+     */
     public function attempt(?string $ip, string $galleryKey, ?Closure $verify, string $secret): bool
     {
-        $ipKey = 'gallery-secret-ip:'.($ip ?? 'unknown');
+        $ipKey = $ip !== null ? "gallery-secret-ip:{$ip}" : null;
         $galleryLimitKey = "gallery-secret-gallery:{$galleryKey}";
 
-        if (RateLimiter::tooManyAttempts($ipKey, self::PER_IP)
+        if (($ipKey !== null && RateLimiter::tooManyAttempts($ipKey, self::PER_IP))
             || RateLimiter::tooManyAttempts($galleryLimitKey, self::PER_GALLERY)) {
             return false;
         }
@@ -53,13 +56,17 @@ class GallerySecretGate
         $matches = $verify !== null ? $verify($secret) : $this->dummy($secret);
 
         if (! $matches) {
-            RateLimiter::hit($ipKey, self::DECAY_SECONDS);
+            if ($ipKey !== null) {
+                RateLimiter::hit($ipKey, self::DECAY_SECONDS);
+            }
             RateLimiter::hit($galleryLimitKey, self::DECAY_SECONDS);
 
             return false;
         }
 
-        RateLimiter::clear($ipKey);
+        if ($ipKey !== null) {
+            RateLimiter::clear($ipKey);
+        }
         RateLimiter::clear($galleryLimitKey);
 
         return true;

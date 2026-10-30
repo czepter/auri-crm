@@ -83,7 +83,7 @@ against the legacy source; longer if that source is hard to reach):
   snapshot**, consulted read-only to verify what §3 imported, never written
   to going forward.
 - Consider enabling the portal's maintenance closure (T-08 — a studio
-  setting, `StudioSettingsResolver::maintenanceEnabled()`) for the short
+  setting, `portal_maintenance_enabled`, read via `App\Models\StudioSettings::current()`) for the short
   span between §2 and the go/no-go call in §5, if clients might accept
   quotes or otherwise write through the portal during it. A rollback
   (§6) discards portal writes made after the snapshot exactly as it

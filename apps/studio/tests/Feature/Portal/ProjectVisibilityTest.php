@@ -22,7 +22,7 @@ beforeEach(function () {
 
 /**
  * The one visibility scope, exercised the same way HomeController and
- * ProjectController call it: projects joined through case_contacts for
+ * CaseController call it: projects joined through case_contacts for
  * the authenticated contact, where portal_visible. A second, differently
  * worded rule anywhere in this file would be the bug A-03 exists to prevent.
  */
@@ -174,7 +174,7 @@ it('offers the switcher link on a project screen only when there is more than on
  * rather than by inspecting the controller: seed an absence for someone
  * crewed on this project's own shoot, then hash the whole JSON body for any
  * trace of it — the category, the date range, or the person's name — not
- * only the crew list ProjectController already never sends.
+ * only the crew list CaseController already never sends.
  */
 it('never lets an absence category or date reach the portal, even for a shoot crewed by someone away on it', function () {
     $contact = Contact::factory()->create();
@@ -210,7 +210,7 @@ it('never lets an absence category or date reach the portal, even for a shoot cr
 /**
  * T-09's other half of the activity feed's boundary: Task 8's admin
  * CaseActivity prop is admin-only by omission, since Portal's own
- * ProjectController never references it. Proven here against the real
+ * CaseController never references it. Proven here against the real
  * response, not by absence of a reference in the controller — an internal
  * audit trail on a client-facing page would disclose staff names, IP
  * addresses and internal event vocabulary the client has no business

@@ -3,10 +3,9 @@
 namespace App\Payments\Notifications;
 
 use App\Concerns\AppliesStudioMailIdentity;
-use App\Concerns\AttachesInvoicePdf;
-use App\Concerns\WritesComposedMail;
+use App\Crm\Concerns\WritesComposedMail;
+use App\Payments\Concerns\AttachesInvoicePdf;
 use App\Payments\Models\Invoice;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Number;
@@ -30,7 +29,6 @@ class InvoiceSent extends Notification
         private readonly Invoice $invoice,
         private readonly string $subject,
         private readonly ?string $body,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     /** @return list<string> */
@@ -70,6 +68,6 @@ class InvoiceSent extends Notification
         $this->attachInvoicePdf($message, $this->invoice);
 
         // No unsubscribe: an invoice is transactional, not a notification a client can opt out of.
-        return $this->appendStudioMailIdentity($message, $this->settings);
+        return $this->appendStudioMailIdentity($message);
     }
 }

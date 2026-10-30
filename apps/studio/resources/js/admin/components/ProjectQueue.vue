@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /*
  * The booked projects beside the one open — LeadQueue's pane for the
- * production side. OpenProjects decides the groups; this only narrows them,
+ * production side. OpenCases decides the groups; this only narrows them,
  * in the URL, so the pane a link opens is the pane the sender was looking at.
  */
 import { computed, ref } from "vue"
@@ -13,7 +13,7 @@ import { Queue, QueueGroup, QueueItem } from "@/ui/queue"
 import { Switch } from "@/ui/switch"
 
 const props = defineProps<{
-    groups: { key: string; rows: App.Crm.Data.ProjectQueueRowData[] }[]
+    groups: { key: string; rows: App.Crm.Data.CaseQueueRowData[] }[]
 }>()
 
 const initial = new URLSearchParams(window.location.search)

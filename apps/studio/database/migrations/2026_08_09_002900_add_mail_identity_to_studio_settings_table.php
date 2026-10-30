@@ -6,13 +6,13 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * T-06: who a tenant's outgoing mail leaves under, and what it says at the
- * bottom. All nullable — StudioSettingsResolver::mailFromName()/
+ * bottom. All nullable — StudioSettings::mailFromName()/
  * mailFromAddress() fall back to config('mail.from.*') exactly the way
  * timezone()/locale() fall back to config('app.*'), so a studio that has not
  * opened this pane yet sees exactly what it saw before this story existed.
  *
  * No footer column: the footer is T-02's legal particulars
- * (StudioSettingsResolver::attributes()), composed at send time from the
+ * (StudioSettings::profile()), composed at send time from the
  * same columns RenderContractJob::mergeData() already reads — a second copy
  * here is exactly the drift T-06's acceptance criterion rules out.
  */

@@ -4,8 +4,8 @@ use App\Automation\Models\AutomationRule;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Enums\StaffRole;
-use App\Settings\Models\StudioSettings;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Models\StudioSettings;
+use App\Settings\Actions\UpdateStudioSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 
@@ -15,7 +15,7 @@ uses(RefreshDatabase::class);
 // studio as already onboarded) — this file exercises the unfinished state
 // on purpose, so it resets the flag back. The cache flush is required for
 // the same reason the global hook now carries one: a raw query()->update()
-// never busts StudioSettingsResolver's redis-backed cache.
+// never busts StudioSettings::current()'s redis-backed cache.
 beforeEach(function () {
     StudioSettings::query()->update(['onboarding_completed_at' => null]);
     Cache::store('redis')->flush();
@@ -71,7 +71,7 @@ it('writes the starter templates on finish, the invoice aside', function () {
 });
 
 it('seeds the default automation rules on finish, in the studio register', function () {
-    app(StudioSettingsResolver::class)->set('client_register', 'informal', null);
+    app(UpdateStudioSetting::class)('client_register', 'informal', null);
 
     $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/einrichtung/studio/abschluss')
@@ -84,7 +84,7 @@ it('seeds the default automation rules on finish, in the studio register', funct
 });
 
 it('writes the Kleinunternehmer invoice when the first invoice is drafted in that mode', function () {
-    app(StudioSettingsResolver::class)->set('vat_mode', 'small_business', null);
+    app(UpdateStudioSetting::class)('vat_mode', 'small_business', null);
 
     $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->post('/einrichtung/studio/abschluss')

@@ -79,6 +79,21 @@ final class StudioOpsTools
             ),
 
             new ToolDefinition(
+                name: 'update_legal_texts',
+                title: 'Set legal text links',
+                description: 'Links the portal and quote mails send clients to for Impressum, Datenschutz, AGB and Widerrufsbelehrung. Only the texts passed change; null clears a link. A quote cannot be sent while the Widerrufsbelehrung has neither a link nor a template.',
+                method: 'PATCH',
+                path: '/studio-settings/legal-texts',
+                schema: fn (JsonSchema $schema) => [
+                    'impressum' => $schema->string()->format('uri')->max(255)->nullable(),
+                    'datenschutz' => $schema->string()->format('uri')->max(255)->nullable(),
+                    'agb' => $schema->string()->format('uri')->max(255)->nullable(),
+                    'widerruf' => $schema->string()->format('uri')->max(255)->nullable(),
+                ],
+                annotations: ToolDefinition::OVERWRITES,
+            ),
+
+            new ToolDefinition(
                 name: 'list_studio_closures',
                 title: 'List studio closures',
                 description: 'The studio\'s own closed date ranges, the second conflict source shoots_in_date_range does not see on its own. A message, when set, is the notice clients read in the portal.',

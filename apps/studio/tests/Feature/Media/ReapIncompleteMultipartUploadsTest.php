@@ -1,6 +1,6 @@
 <?php
 
-use App\Media\Console\Commands\ReapIncompleteMultipartUploads;
+use App\Media\Models\MultipartUpload;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Artisan;
 
@@ -15,7 +15,7 @@ it('registers the reaper command with artisan', function () {
 });
 
 it('quarantines the same prefix a future multipart upload (G-02) would use', function () {
-    expect(ReapIncompleteMultipartUploads::QUARANTINE_PREFIX)->toBe('quarantine/');
+    expect(MultipartUpload::QUARANTINE_PREFIX)->toBe('quarantine/');
 });
 
 it('schedules the reaper to run daily', function () {

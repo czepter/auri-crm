@@ -23,7 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui/dropdown-menu";
 import { ChevronDown, Pencil } from "lucide-vue-next";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/admin/lib/money";
 import { quoteChipClass } from "@/admin/lib/quoteDisplay";
 import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
@@ -63,7 +63,7 @@ const props = defineProps<{
     conflicts: App.Crm.Data.DateConflictData[];
     stages: { value: string; label: string; anchor: string | null }[];
     tab: "overview" | "quotes" | "messages";
-    header: App.Crm.Data.CaseHeaderData;
+    header: App.Crm.Screens.CaseHeaderData;
     conversation: App.Engagement.Data.ThreadData | null;
     quotes: App.Quotes.Data.QuoteData[];
     payments: { number: string | null; rows: { label: string; amount: number }[] } | null;
@@ -466,7 +466,9 @@ const nextStage = computed(
                     <AlertDialogHeader>
                         <AlertDialogTitle>{{ $t("board.bookTitle") }}</AlertDialogTitle>
                     </AlertDialogHeader>
-                    <p>{{ $t("board.bookConsequence") }}</p>
+                    <AlertDialogBody>
+                        <p class="m-0">{{ $t("board.bookConsequence") }}</p>
+                    </AlertDialogBody>
                     <AlertDialogFooter>
                         <AlertDialogAction @click="book">{{ $t("board.book") }}</AlertDialogAction>
                         <AlertDialogCancel>{{ $t("common.cancel") }}</AlertDialogCancel>

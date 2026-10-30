@@ -4,9 +4,9 @@ namespace App\Gallery\Http\Controllers;
 
 use App\Gallery\Actions\EnsureGalleryCover;
 use App\Gallery\Models\Gallery;
-use App\Gallery\Support\ImageVariant;
 use App\Http\Controllers\Controller;
 use App\Media\Models\Asset;
+use App\Media\Support\ImageVariant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;

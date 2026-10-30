@@ -6,16 +6,17 @@ use App\Catalog\Data\CatalogItemData;
 use App\Catalog\Data\PackageData;
 use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
+use App\Crm\Actions\CreateContact;
 use App\Crm\Data\CaseSuggestionData;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Documents\Actions\SeedStarterTemplates;
 use App\Documents\Enums\DocumentTemplateType;
-use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\StarterTemplateCatalog;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\MailPreview;
 use App\Payments\Actions\CancelInvoice;
@@ -34,9 +35,9 @@ use App\Payments\Models\PaymentPlan;
 use App\Payments\Notifications\InvoiceSent;
 use App\Payments\Support\InvoiceDocument;
 use App\Payments\Support\InvoiceFigures;
+use App\Payments\Support\InvoiceMergeData;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Support\StudioReadiness;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -63,7 +64,7 @@ class InvoiceController extends Controller
 
         $invoices = Invoice::query()
             ->where(fn ($query) => $query->whereNull('case_id')->orWhereHas('case', fn ($project) => $project->visibleTo($viewer)))
-            ->with(['installments', 'creditNotes', 'contact', 'case'])
+            ->with(['installments', 'creditNotes', 'contact', 'case', 'views'])
             ->orderByDesc('issued_at')
             ->orderByDesc('id')
             ->get();
@@ -79,7 +80,6 @@ class InvoiceController extends Controller
 
     public function create(
         Request $request,
-        StudioSettingsResolver $settings,
         RenderInvoicePdf $render,
         SeedStarterTemplates $seed,
         StudioReadiness $readiness,
@@ -91,9 +91,9 @@ class InvoiceController extends Controller
         // SeedStarterTemplates dedupliziert über Typ und Name, ein zweiter
         // Aufruf schreibt also nichts.
         $seed(
-            StarterTemplateCatalog::invoiceDefaults($settings->vatMode()),
+            StarterTemplateCatalog::invoiceDefaults(StudioSettings::current()->vat_mode),
             $request->user('staff'),
-            $settings->clientRegister(),
+            StudioSettings::current()->client_register,
         );
 
         $viewer = $request->user('staff');
@@ -122,21 +122,21 @@ class InvoiceController extends Controller
             'packages' => PackageData::collect(Package::active()->with('items')->orderBy('name')->get()),
             'catalogItems' => CatalogItemData::collect(CatalogItem::query()->orderBy('title')->get()),
             'vatSettings' => [
-                'mode' => $settings->vatMode(),
-                'rate' => $settings->effectiveVatRate(),
-                'note' => $settings->vatNote(),
+                'mode' => StudioSettings::current()->vat_mode,
+                'rate' => StudioSettings::current()->effectiveVatRate(),
+                'note' => StudioSettings::current()->vat_note,
             ],
             // The invoice template's prose: the starting point for this
             // invoice's own letter, merge fields left for the render.
             'intro' => InlineHtmlSanitizer::letter($render->currentTemplate(DocumentTemplateType::Invoice)?->body) ?? '',
-            'studioSettings' => StudioSettingsData::fromResolver($settings),
+            'studioSettings' => StudioSettingsData::current(),
             // Was IssueInvoice beim Ausstellen ohnehin verlangt, steht hier
             // vor dem Formular statt hinter dem Absenden.
             'missingInvoiceData' => $readiness->missingForInvoice(),
         ]);
     }
 
-    public function store(Request $request, IssueInvoice $issue): RedirectResponse
+    public function store(Request $request, IssueInvoice $issue, CreateContact $createContact): RedirectResponse
     {
         self::authorizeProject(null);
 
@@ -150,7 +150,7 @@ class InvoiceController extends Controller
         $project = $this->case($validated);
         $contact = match (true) {
             isset($validated['contact_id']) => Contact::query()->where('public_id', $validated['contact_id'])->firstOrFail(),
-            isset($validated['contact']['name']) => Contact::create(array_filter($validated['contact'], fn ($value) => $value !== null)),
+            isset($validated['contact']['name']) => $createContact(array_filter($validated['contact'], fn ($value) => $value !== null)),
             default => $project?->primaryContact(),
         };
 
@@ -180,20 +180,19 @@ class InvoiceController extends Controller
     public function preview(
         Request $request,
         RenderInvoicePdf $render,
-        DocumentMergeDataBuilder $mergeData,
-        StudioSettingsResolver $settings,
+        InvoiceMergeData $mergeData,
     ): HttpResponse|JsonResponse {
         self::authorizeProject(null);
 
         $validated = $request->validate([...$this->rules(), 'format' => ['nullable', 'in:pdf,portal,mail']]);
-        $invoice = $this->draft($validated, $settings);
+        $invoice = $this->draft($validated);
 
         return match ($validated['format'] ?? 'pdf') {
             'portal' => response()->json(
-                InvoiceDocument::forInvoice($invoice, $mergeData->fromInvoice($invoice, $settings), $settings)->page(),
+                InvoiceDocument::forInvoice($invoice, $mergeData->forInvoice($invoice))->page(),
             ),
             'mail' => response(MailPreview::html(
-                new InvoiceSent($invoice, '', InvoiceSent::defaultMessage($invoice), $settings),
+                new InvoiceSent($invoice, '', InvoiceSent::defaultMessage($invoice)),
                 $invoice->contact ?? (object) [],
             ), 200, ['Content-Type' => 'text/html']),
             default => response($render->forInvoice($invoice), 200, ['Content-Type' => 'text/html']),
@@ -277,7 +276,7 @@ class InvoiceController extends Controller
      *
      * @param  array<string, mixed>  $validated
      */
-    private function draft(array $validated, StudioSettingsResolver $settings): Invoice
+    private function draft(array $validated): Invoice
     {
         $project = $this->case($validated);
 
@@ -303,7 +302,7 @@ class InvoiceController extends Controller
 
         if ($free->isNotEmpty()) {
             $installments->push(new PaymentInstallment([
-                'amount' => InvoiceFigures::forPositions($free, $invoice->discount_type, $invoice->discount_value, $settings)->gross,
+                'amount' => InvoiceFigures::forPositions($free, $invoice->discount_type, $invoice->discount_value)->gross,
                 'due_on' => $validated['due_on'] ?? null,
                 'status' => PaymentInstallmentStatus::Invoiced,
             ]));
@@ -343,7 +342,7 @@ class InvoiceController extends Controller
      * recipient, the subject and the message on the left, this notification's
      * own render on the right.
      */
-    public function sendView(Invoice $invoice, StudioSettingsResolver $settings): Response
+    public function sendView(Invoice $invoice): Response
     {
         self::authorizeProject($invoice->case);
 
@@ -360,7 +359,7 @@ class InvoiceController extends Controller
             'recipients' => $recipients->map(fn (Contact $contact) => ['name' => $contact->name, 'email' => $contact->email])->values(),
             'message' => InvoiceSent::defaultMessage($invoice),
             'mailHtml' => MailPreview::html(
-                new InvoiceSent($invoice, '', MailPreview::MESSAGE, $settings),
+                new InvoiceSent($invoice, '', MailPreview::MESSAGE),
                 $recipients->first() ?? (object) [],
             ),
         ]);
@@ -371,7 +370,7 @@ class InvoiceController extends Controller
      * mail goes. `sent_at` records the first one and is not moved by a
      * second — it answers when the client was told, not how often.
      */
-    public function send(Request $request, Invoice $invoice, NotificationService $notifications, StudioSettingsResolver $settings): RedirectResponse
+    public function send(Request $request, Invoice $invoice, NotificationService $notifications): RedirectResponse
     {
         self::authorizeProject($invoice->case);
 
@@ -381,7 +380,7 @@ class InvoiceController extends Controller
         ]);
 
         foreach ($this->recipients($invoice) as $contact) {
-            $notifications->send($contact, new InvoiceSent($invoice, $validated['subject'], $validated['message'] ?? null, $settings));
+            $notifications->send($contact, new InvoiceSent($invoice, $validated['subject'], $validated['message'] ?? null));
         }
 
         if ($invoice->sent_at === null) {

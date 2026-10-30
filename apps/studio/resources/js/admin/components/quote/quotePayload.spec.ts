@@ -3,7 +3,7 @@ import { buildPreviewQuote, buildQuotePayload, quoteRowToLine, type QuoteDraft, 
 
 const STANDARD: VatSettings = { mode: 'standard', rate: 1900, note: null }
 // effectiveVatRate() always zeroes the rate under small_business (see
-// StudioSettingsResolver) — ReadQuoteWorkspace never sends a nonzero one here.
+// StudioSettings::current()) — ReadQuoteWorkspace never sends a nonzero one here.
 const SMALL_BUSINESS: VatSettings = { mode: 'small_business', rate: 0, note: 'Kleinunternehmer nach § 19 UStG' }
 
 function baseDraft(pricingMode: QuoteDraft['pricingMode']): QuoteDraft {

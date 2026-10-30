@@ -4,9 +4,9 @@ namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
+use App\Models\StudioClosure;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Data\StudioClosureData;
-use App\Settings\Models\StudioClosure;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,7 +33,7 @@ class StudioClosureController extends Controller
     }
 
     // At least one day: an empty selection leaves TaskTemplate::dueFor() nothing to roll onto.
-    public function updateWorkingDays(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    public function updateWorkingDays(Request $request): RedirectResponse
     {
         $this->authorizeSettings();
 
@@ -42,7 +42,7 @@ class StudioClosureController extends Controller
             'working_days.*' => ['integer', 'between:1,7', 'distinct'],
         ]);
 
-        $settings->set('working_days', array_values($validated['working_days']), auth('staff')->user());
+        app(UpdateStudioSetting::class)('working_days', array_values($validated['working_days']), auth('staff')->user());
 
         return back();
     }

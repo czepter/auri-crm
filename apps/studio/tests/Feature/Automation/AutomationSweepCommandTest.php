@@ -9,11 +9,12 @@ use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Shoot;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Settings\Actions\UpdateStudioSetting;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\Facades\Notification;
 
 uses(RefreshDatabase::class);
@@ -39,7 +40,7 @@ it('runs from the artisan command, reporting how many rules it fired', function 
 // 00:30 in Berlin is still yesterday in UTC; the sweep must count from the studio's day.
 it('counts today on the studio clock', function () {
     Notification::fake();
-    app(StudioSettingsResolver::class)->set('timezone', 'Europe/Berlin', null);
+    app(UpdateStudioSetting::class)('timezone', 'Europe/Berlin', null);
     $this->travelTo(CarbonImmutable::parse('2026-06-01 22:30', 'UTC'));
 
     $project = ClientCase::factory()->create();
@@ -69,4 +70,19 @@ it('registers the sweep on the daily schedule', function () {
 
     expect($events)->not->toBeEmpty()
         ->and($events->first()->expression)->toBe('0 0 * * *');
+});
+
+it('runs the sweep and the overdue scan on the studio clock', function () {
+    app(UpdateStudioSetting::class)('timezone', 'Pacific/Auckland', null);
+    Artisan::call('inspire');
+    app()->forgetInstance(Schedule::class);
+    Facade::clearResolvedInstance(Schedule::class);
+    require base_path('routes/console.php');
+
+    $events = collect(app(Schedule::class)->events());
+    $sweep = $events->first(fn ($event) => str_contains($event->command ?? '', 'automation:sweep-date-offset-rules'));
+    $overdue = $events->first(fn ($event) => str_contains($event->command ?? '', 'payments:detect-overdue-installments'));
+
+    expect($sweep->timezone)->toBe('Pacific/Auckland')
+        ->and($overdue->timezone)->toBe('Pacific/Auckland');
 });

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3'
+import { toast } from 'vue-sonner'
 import SendByMailView from '@/admin/components/SendByMailView.vue'
 import { toPlainText } from '@/admin/documents/blocks/serialize'
 import type { EditorDocument } from '@/admin/documents/blocks/types'
@@ -37,7 +38,10 @@ function send({ subject, message }: { subject: string; message: EditorDocument }
   router.post(
     `/angebote/${props.quote.id}/versenden`,
     { subject, message: toPlainText(message) },
-    { onSuccess: () => router.visit(`/auftraege/${props.projectId}`) },
+    {
+      onSuccess: () => router.visit(`/auftraege/${props.projectId}`),
+      onError: (errors) => toast.error(errors.quote),
+    },
   )
 }
 </script>

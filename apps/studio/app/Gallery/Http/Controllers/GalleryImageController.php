@@ -3,8 +3,8 @@
 namespace App\Gallery\Http\Controllers;
 
 use App\Gallery\Models\GalleryVersion;
-use App\Gallery\Support\ImageVariant;
 use App\Http\Controllers\Controller;
+use App\Media\Support\ImageVariant;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 

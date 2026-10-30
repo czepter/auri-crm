@@ -5,7 +5,7 @@ use App\Automation\Models\AutomationRule;
 use App\Automation\Models\AutomationRun;
 use App\Automation\Notifications\AutomationReminder;
 use App\Crm\Enums\CaseContactRole;
-use App\Crm\Events\ProjectBooked;
+use App\Crm\Events\CaseBooked;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Payments\Events\InstallmentPaid;
@@ -23,9 +23,9 @@ it('fires an event-triggered rule when its named domain event dispatches, anchor
     $project->attachContact($contact, CaseContactRole::Primary);
     markBooked($project);
 
-    $rule = AutomationRule::factory()->event(ProjectBooked::class)->create();
+    $rule = AutomationRule::factory()->event(CaseBooked::class)->create();
 
-    event(new ProjectBooked($project));
+    event(new CaseBooked($project));
 
     $run = AutomationRun::where('automation_rule_id', $rule->id)->sole();
 
@@ -43,8 +43,8 @@ it('never fires a rule for an event class it does not name', function () {
     $project = ClientCase::factory()->create();
     $installment = PaymentInstallment::factory()->create();
 
-    // Watches ProjectBooked, not InstallmentPaid.
-    AutomationRule::factory()->event(ProjectBooked::class)->create();
+    // Watches CaseBooked, not InstallmentPaid.
+    AutomationRule::factory()->event(CaseBooked::class)->create();
 
     event(new InstallmentPaid($installment));
 
@@ -62,10 +62,10 @@ it('never re-fires an event-triggered rule for the same anchor if the event some
     $project->attachContact($contact, CaseContactRole::Primary);
     markBooked($project);
 
-    AutomationRule::factory()->event(ProjectBooked::class)->create();
+    AutomationRule::factory()->event(CaseBooked::class)->create();
 
-    event(new ProjectBooked($project));
-    event(new ProjectBooked($project));
+    event(new CaseBooked($project));
+    event(new CaseBooked($project));
 
     expect(AutomationRun::count())->toBe(1);
 });
@@ -76,9 +76,9 @@ it('never fires an inactive event-triggered rule', function () {
     $project = ClientCase::factory()->create();
     markBooked($project);
 
-    AutomationRule::factory()->event(ProjectBooked::class)->inactive()->create();
+    AutomationRule::factory()->event(CaseBooked::class)->inactive()->create();
 
-    event(new ProjectBooked($project));
+    event(new CaseBooked($project));
 
     expect(AutomationRun::count())->toBe(0);
 });

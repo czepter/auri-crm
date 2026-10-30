@@ -4,8 +4,10 @@ use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
+use App\Enums\StaffRole;
 use App\Models\User;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
@@ -251,4 +253,30 @@ it('sends an empty superseded list when a project has only one quote', function 
     Quote::factory()->for($lead->case, 'case')->create();
 
     expect(props("/anfragen/{$lead->case->public_id}")['supersededQuotes'])->toBe([]);
+});
+
+it('keeps a contributor from rewriting the e-mail of a contact', function () {
+    $lead = caseFor();
+    $lead->case->attachContact(
+        $contact = Contact::factory()->create(['email' => 'kunde@example.test']),
+        CaseContactRole::Primary,
+    );
+    CrewAssignment::factory()->for($lead->case->shoots()->first())->for($contributor = staffMember(StaffRole::Contributor))->create();
+    $person = ['id' => $contact->public_id, 'name' => $contact->name, 'email' => 'mallory@example.test'];
+
+    $this->actingAs($contributor, 'staff')
+        ->patch("/anfragen/{$lead->case->public_id}", ['people' => [$person]])
+        ->assertForbidden();
+
+    expect($contact->fresh()->email)->toBe('kunde@example.test');
+
+    $this->actingAs($contributor, 'staff')
+        ->patch("/anfragen/{$lead->case->public_id}", ['people' => [[...$person, 'email' => 'kunde@example.test', 'name' => 'Neuer Name']]])
+        ->assertRedirect();
+
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
+        ->patch("/anfragen/{$lead->case->public_id}", ['people' => [$person]])
+        ->assertRedirect();
+
+    expect($contact->fresh()->email)->toBe('mallory@example.test');
 });

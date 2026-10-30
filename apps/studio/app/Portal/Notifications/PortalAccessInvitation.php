@@ -3,10 +3,9 @@
 namespace App\Portal\Notifications;
 
 use App\Concerns\AppliesStudioMailIdentity;
-use App\Concerns\WritesComposedMail;
+use App\Crm\Concerns\WritesComposedMail;
 use App\Notifications\Contracts\Transactional;
 use App\Portal\Models\ClientAccess;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -24,7 +23,6 @@ class PortalAccessInvitation extends Notification implements Transactional
         private readonly string $url,
         private readonly string $subject,
         private readonly ?string $body,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     /** @return list<string> */
@@ -39,6 +37,6 @@ class PortalAccessInvitation extends Notification implements Transactional
             ->action('Kundenbereich öffnen', $this->url)
             ->line('Der Link gilt '.ClientAccess::INVITATION_VALID_FOR_DAYS.' Tage und funktioniert einmal.');
 
-        return $this->appendStudioMailIdentity($message, $this->settings);
+        return $this->appendStudioMailIdentity($message);
     }
 }

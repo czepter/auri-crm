@@ -10,7 +10,7 @@ use App\Quotes\Actions\UpdateQuote;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Support\QuoteRange;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Settings\Actions\UpdateStudioSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
@@ -93,8 +93,8 @@ it('refuses a line the studio never made switchable', function () {
 it('taxes the preselection at send and the chosen amount at acceptance', function () {
     Notification::fake();
     staffMember();
-    app(StudioSettingsResolver::class)->set('vat_mode', 'standard');
-    app(StudioSettingsResolver::class)->set('vat_rate', 1900);
+    app(UpdateStudioSetting::class)('vat_mode', 'standard');
+    app(UpdateStudioSetting::class)('vat_rate', 1900);
 
     $project = ClientCase::factory()->create(['portal_visible' => true]);
     $project->attachContact(Contact::factory()->create(), CaseContactRole::Primary);

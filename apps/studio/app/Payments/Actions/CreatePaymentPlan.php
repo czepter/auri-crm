@@ -5,9 +5,9 @@ namespace App\Payments\Actions;
 use App\Crm\Models\ClientCase;
 use App\Payments\Models\PaymentPlan;
 use App\Payments\Support\PaymentInstallmentSplitter;
-use App\Payments\Support\PaymentStageSplitter;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
+use App\Quotes\Support\PaymentStageSplitter;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
 
@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\DB;
  * signs nothing at all.
  *
  * One transaction for plan and installments together, same reasoning as
- * BookProject pairing the booking with its shoots: the deferred constraint
+ * BookCase pairing the booking with its shoots: the deferred constraint
  * trigger on payment_installments (2026_08_09_002500) only checks at COMMIT,
  * so the plan row and the installments that must sum to its total have to
  * land in the same transaction or an intermediate state gets checked and

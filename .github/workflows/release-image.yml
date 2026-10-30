@@ -66,10 +66,14 @@ jobs:
       # to `dev` (this repo's default branch), and it evaluates to true on a
       # tag ref as well, so it moved on both. Every build also gets its branch
       # name and its commit SHA; the SHA names one specific build forever.
+      # latest=false: the default flavor (latest=auto) adds `latest` to any
+      # semver tag build, so a workflow_dispatch on a tag moved it past the
+      # release guard below (runs 39159646395 and 39304416676).
       - id: meta
         uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository }}/${{ matrix.image }}
+          flavor: latest=false
           tags: |
             type=semver,pattern=v{{version}}
             type=raw,value=latest,enable=${{ github.event_name == 'release' }}

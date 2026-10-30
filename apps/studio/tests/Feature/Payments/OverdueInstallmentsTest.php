@@ -1,10 +1,10 @@
 <?php
 
+use App\Models\StudioSettings;
 use App\Payments\Actions\DetectOverdueInstallments;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Events\InstallmentOverdue;
 use App\Payments\Models\PaymentInstallment;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -78,5 +78,5 @@ it('registers the overdue scan on the daily schedule', function () {
 
     expect($events)->not->toBeEmpty()
         ->and($events->first()->expression)->toBe('30 6 * * *')
-        ->and($events->first()->timezone)->toBe(app(StudioSettingsResolver::class)->timezone());
+        ->and($events->first()->timezone)->toBe(StudioSettings::current()->localTimezone());
 });

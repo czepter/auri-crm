@@ -66,9 +66,9 @@ class ClientCase extends Model
             // C-25: keyed by ProjectField::$key. Written only through
             // WriteProjectFieldValues, which is why it is not fillable.
             'field_values' => 'array',
-            // Written only through CompleteProject.
+            // Written only through CompleteCase.
             'completed_at' => 'datetime',
-            // Written only through BookProject and UnbookProject.
+            // Written only through BookCase and UnbookCase.
             'booked_at' => 'immutable_datetime',
             'booked_via' => BookedVia::class,
             // Written only through AdvanceLeadStage::markLost() and reopen().

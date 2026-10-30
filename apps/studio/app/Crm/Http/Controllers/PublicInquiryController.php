@@ -7,7 +7,7 @@ use App\Crm\Data\CaptureInquiryData;
 use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadSource;
 use App\Http\Controllers\Controller;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Portal\Support\LegalTexts;
 use App\Support\AuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -57,7 +57,7 @@ class PublicInquiryController extends Controller
     /** A human has not read, understood and filled a form in under this. */
     private const MIN_ELAPSED_SECONDS = 2;
 
-    public function __invoke(Request $request, CaptureInquiry $capture, StudioSettingsResolver $settings): JsonResponse
+    public function __invoke(Request $request, CaptureInquiry $capture): JsonResponse
     {
         $validated = $request->validate([
             'contact_name' => ['required', 'string', 'max:255'],
@@ -116,7 +116,7 @@ class PublicInquiryController extends Controller
         AuditLogger::record(
             event: 'lead.consent_recorded',
             context: [
-                'datenschutz_url' => $settings->attributes()['portal_legal_datenschutz_url'] ?? null,
+                'datenschutz_url' => LegalTexts::url('datenschutz'),
                 'channel' => CaptureChannel::WebForm->value,
             ],
             subject: $project->public_id,

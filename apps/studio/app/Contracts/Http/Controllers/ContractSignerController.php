@@ -15,7 +15,7 @@ use Illuminate\Http\Request;
  * address typed into a contract screen.
  *
  * remind() records the nudge and sends nothing: there is no client-facing
- * contract notification in this app (App\Notifications\Studio\ContractSigned
+ * contract notification in this app (App\Contracts\Notifications\Studio\ContractSigned
  * goes to staff), and inventing one here would put wording in front of a
  * client that nobody wrote. The column is what a mail would read once that
  * notification exists.

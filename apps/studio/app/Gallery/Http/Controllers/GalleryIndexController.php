@@ -5,14 +5,15 @@ namespace App\Gallery\Http\Controllers;
 use App\Crm\Data\CaseSuggestionData;
 use App\Crm\Models\ClientCase;
 use App\Enums\Capability;
+use App\Gallery\Actions\CreateGallery;
 use App\Gallery\Data\GalleryPresetData;
 use App\Gallery\Data\GalleryRowData;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryPreset;
+use App\Gallery\Support\GallerySettings;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Settings\Data\GallerySettingsData;
-use App\Settings\Support\StudioSettingsResolver;
-use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -30,7 +31,7 @@ use Inertia\Response;
  */
 class GalleryIndexController extends Controller
 {
-    public function index(StudioSettingsResolver $settings): Response
+    public function index(): Response
     {
         $this->authorize('viewAny', Gallery::class);
 
@@ -52,7 +53,7 @@ class GalleryIndexController extends Controller
 
         return Inertia::render('Galleries/Index', [
             'galleries' => GalleryRowData::collect($galleries),
-            'settings' => $mayManage ? GallerySettingsData::fromResolver($settings) : null,
+            'settings' => $mayManage ? GallerySettingsData::current() : null,
             'presets' => $mayManage
                 ? GalleryPresetData::collect(GalleryPreset::query()->orderBy('name')->get())
                 : [],
@@ -62,7 +63,7 @@ class GalleryIndexController extends Controller
         ]);
     }
 
-    public function create(Request $request, StudioSettingsResolver $settings): Response
+    public function create(Request $request): Response
     {
         $this->authorize('create', Gallery::class);
 
@@ -81,16 +82,16 @@ class GalleryIndexController extends Controller
             // Die unterste Stufe der Geburtskette; die beiden darüber reichen
             // Vorlage und Projektvorschlag nach.
             'studioDefaults' => [
-                'downloads' => $settings->galleryDownloadsEnabled(),
-                'lists' => $settings->galleryListsEnabled(),
-                'comments' => $settings->galleryCommentsEnabled(),
-                'expiryDays' => $settings->galleryDefaults()['expiryDays'],
-                'design' => $settings->galleryDesign(),
+                'downloads' => (bool) StudioSettings::current()->gallery_default_downloads_enabled,
+                'lists' => (bool) StudioSettings::current()->gallery_default_lists_enabled,
+                'comments' => (bool) StudioSettings::current()->gallery_default_comments_enabled,
+                'expiryDays' => GallerySettings::defaults()['expiryDays'],
+                'design' => GallerySettings::design(),
             ],
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, CreateGallery $createGallery): RedirectResponse
     {
         $this->authorize('create', Gallery::class);
 
@@ -119,19 +120,11 @@ class GalleryIndexController extends Controller
                 ->where('public_id', $validated['case_id'])
                 ->firstOrFail();
 
-        $gallery = Gallery::create([
-            ...Arr::except($validated, ['case_id', 'shoot_id']),
-            'case_id' => $project?->id,
-            'shoot_id' => isset($validated['shoot_id'])
-                ? $project?->shoots()->where('public_id', $validated['shoot_id'])->value('id')
-                : null,
-        ]);
-
-        AuditLogger::record(
-            event: 'gallery.created',
-            actor: auth('staff')->user(),
-            context: ['title' => $gallery->title],
-            subject: $gallery->public_id,
+        $gallery = $createGallery(
+            Arr::except($validated, ['case_id', 'shoot_id']),
+            $project,
+            $validated['shoot_id'] ?? null,
+            auth('staff')->user(),
         );
 
         return redirect("/galerien/{$gallery->public_id}");

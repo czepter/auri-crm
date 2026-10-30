@@ -18,6 +18,7 @@ use App\Gallery\Models\GalleryGuest;
 use App\Gallery\Support\GalleryGuestPass;
 use App\Media\Enums\MultipartUploadStatus;
 use App\Media\Models\MultipartUpload;
+use App\Models\StudioSettings;
 use App\Models\User;
 use App\Payments\Actions\CreatePaymentPlan;
 use App\Payments\Actions\IssueInvoice;
@@ -26,8 +27,6 @@ use App\Payments\Enums\SettledVia;
 use App\Payments\Models\PaymentInstallment;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
-use App\Settings\Models\StudioSettings;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\Surface;
 use Aws\MockHandler;
 use Aws\Result;
@@ -67,7 +66,7 @@ pest()->extend(TestCase::class)
         // tests/Feature/Settings/OnboardingTest.php resets this per test to
         // exercise the unfinished state on purpose.
         //
-        // StudioSettingsResolver reads through the `redis` store by name (see
+        // StudioSettings::current() reads through the `redis` store by name (see
         // its own doc comment) and only busts that cache from its own set()/
         // setLogo() — a raw query()->update() like this one does not, and
         // Redis outlives any one test process, so a value cached by an
@@ -331,7 +330,7 @@ function syntheticJpeg(int $width = 300, int $height = 200): string
 /**
  * A MultipartUpload already Completed, with $bytes actually sitting at its
  * quarantine key on the faked `s3` disk — the state G-03's
- * App\Media\Actions\IngestCompletedUpload expects to find one in once
+ * App\Gallery\Actions\IngestCompletedUpload expects to find one in once
  * MultipartUploadController::complete() has run. Call Storage::fake('s3')
  * before this.
  */
@@ -398,7 +397,7 @@ function inboundThread(string $email = 'lena@example.test'): Thread
 function withSecret(string $secret = 'a-tenant-secret'): string
 {
     StudioSettings::query()->firstOrFail()->forceFill(['inbound_secret' => $secret])->save();
-    app()->forgetInstance(StudioSettingsResolver::class);
+    StudioSettings::forgetCurrent();
 
     return $secret;
 }
@@ -437,7 +436,7 @@ function invoiceablePlan(): PaymentInstallment
     Quote::factory()->for($project, 'case')->create([
         'status' => QuoteStatus::Accepted,
         'accepted_at' => now(),
-        ...Quote::computeVat(0, app(StudioSettingsResolver::class)),
+        ...Quote::computeVat(0),
     ]);
 
     $plan = app(CreatePaymentPlan::class)($project, 150_000, ['2026-09-01', '2026-10-01']);

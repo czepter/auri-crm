@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Crm\Actions\BookProject;
+use App\Crm\Actions\BookCase;
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
@@ -102,9 +102,9 @@ class MarketingScreenshotSeeder extends Seeder
             'captured_by_id' => $staff->id,
         ]);
 
-        // Shoots must exist before booking — BookProject only advances the
+        // Shoots must exist before booking — BookCase only advances the
         // ones already on the project.
-        app(BookProject::class)($project, $staff);
+        app(BookCase::class)($project, $staff);
 
         $quote = Quote::factory()->for($project, 'case')->create([
             'status' => QuoteStatus::Accepted,

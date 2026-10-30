@@ -168,68 +168,6 @@ what: string,
 who: string | null,
 projectId: string | null,
 };
-export type CaseHeaderData = {
-id: string,
-name: string,
-names: string,
-type: string,
-position: App.Crm.Data.CasePositionData,
-primaryDate: string | null,
-shootCount: number,
-isBooked: boolean,
-canBook: boolean,
-canManageShoots: boolean,
-canManageCrew: boolean,
-canManageTasks: boolean,
-canManageNotes: boolean,
-canManageMessages: boolean,
-portalVisible: boolean,
-canManagePortalVisibility: boolean,
-canManageQuotes: boolean,
-canManageContracts: boolean,
-canManagePaymentPlan: boolean,
-primaryShootCancelled: boolean,
-canManageForms: boolean,
-outcomeLabel: string | null,
-lostReason: string | null,
-canClose: boolean,
-isCompleted: boolean,
-canComplete: boolean,
-canDelete: boolean,
-tabs: {
-key: string,
-label: string,
-href: string,
-count: number | null,
-countTo: number | null,
-children: {
-key: string,
-label: string,
-translate: boolean,
-href: string,
-count: number | null,
-reorderable: boolean,
-}[],
-}[],
-track: {
-key: string,
-label: string,
-pipeline: string,
-state: string,
-}[],
-queue: {
-key: string,
-rows: App.Crm.Data.ProjectQueueRowData[],
-}[],
-people: App.Crm.Data.CasePersonData[],
-paymentPlan: App.Payments.Data.PaymentPlanData | null,
-galleries: {
-id: string,
-title: string | null,
-expiresAt: string | null,
-}[],
-history: App.Crm.Data.ThreadEntryData[],
-};
 export type CasePersonData = {
 id: string,
 name: string,
@@ -241,6 +179,31 @@ export type CasePositionData = {
 source: string,
 value: string | null,
 label: string,
+};
+export type CaseQueueRowData = {
+id: string,
+name: string,
+date: string | null,
+stage: string,
+reason: string | null,
+days: number | null,
+open: boolean,
+};
+export type CaseRowData = {
+id: string,
+name: string,
+type: string,
+typeKey: string,
+date: string | null,
+venue: string | null,
+position: string,
+positionKey: string | null,
+phase: string,
+contact: string | null,
+openTasks: number,
+taskCount: number,
+value: number | null,
+lastAt: string | null,
 };
 export type CaseSuggestionData = {
 id: string,
@@ -397,41 +360,6 @@ label: string,
 done: boolean,
 }[],
 };
-export type ProjectGalleryData = {
-id: string,
-title: string | null,
-shootId: string | null,
-state: string,
-assetCount: number,
-version: number | null,
-expiresAt: string | null,
-inPortal: boolean,
-};
-export type ProjectQueueRowData = {
-id: string,
-name: string,
-date: string | null,
-stage: string,
-reason: string | null,
-days: number | null,
-open: boolean,
-};
-export type ProjectRowData = {
-id: string,
-name: string,
-type: string,
-typeKey: string,
-date: string | null,
-venue: string | null,
-position: string,
-positionKey: string | null,
-phase: string,
-contact: string | null,
-openTasks: number,
-taskCount: number,
-value: number | null,
-lastAt: string | null,
-};
 export type RowActionData = {
 label: string,
 kind: string,
@@ -532,6 +460,80 @@ export type StageColor = 'grey' | 'red' | 'amber' | 'olive' | 'green' | 'teal' |
 export type StagePipeline = 'lead' | 'project';
 export type TaskAudience = 'internal' | 'client';
 }
+namespace Screens {
+export type CaseGalleryData = {
+id: string,
+title: string | null,
+shootId: string | null,
+state: string,
+assetCount: number,
+version: number | null,
+expiresAt: string | null,
+inPortal: boolean,
+};
+export type CaseHeaderData = {
+id: string,
+name: string,
+names: string,
+type: string,
+position: App.Crm.Data.CasePositionData,
+primaryDate: string | null,
+shootCount: number,
+isBooked: boolean,
+canBook: boolean,
+canManageShoots: boolean,
+canManageCrew: boolean,
+canManageTasks: boolean,
+canManageNotes: boolean,
+canManageMessages: boolean,
+portalVisible: boolean,
+canManagePortalVisibility: boolean,
+canManageQuotes: boolean,
+canManageContracts: boolean,
+canManagePaymentPlan: boolean,
+primaryShootCancelled: boolean,
+canManageForms: boolean,
+outcomeLabel: string | null,
+lostReason: string | null,
+canClose: boolean,
+isCompleted: boolean,
+canComplete: boolean,
+canDelete: boolean,
+tabs: {
+key: string,
+label: string,
+href: string,
+count: number | null,
+countTo: number | null,
+children: {
+key: string,
+label: string,
+translate: boolean,
+href: string,
+count: number | null,
+reorderable: boolean,
+}[],
+}[],
+track: {
+key: string,
+label: string,
+pipeline: string,
+state: string,
+}[],
+queue: {
+key: string,
+rows: App.Crm.Data.CaseQueueRowData[],
+}[],
+people: App.Crm.Data.CasePersonData[],
+paymentPlan: App.Payments.Data.PaymentPlanData | null,
+galleries: {
+id: string,
+title: string | null,
+expiresAt: string | null,
+}[],
+history: App.Crm.Data.ThreadEntryData[],
+};
+}
 }
 namespace Data {
 export type AbsenceData = {
@@ -564,6 +566,14 @@ version: number,
 type: string,
 typeLabel: string,
 shootKind: string | null,
+};
+export type DocumentViewData = {
+id: string,
+viewedAt: string,
+via: string,
+device: string,
+network: string | null,
+counts: boolean,
 };
 export type MailTemplateData = {
 id: string,
@@ -691,6 +701,14 @@ stageEnteredAt: string | null,
 export type CaseMoneyReadData = {
 paymentPlan: App.Payments.Data.PaymentPlanData | null,
 };
+export type CaseReadData = {
+id: string,
+name: string,
+type: string,
+portalVisible: boolean,
+fields: object,
+updatedAt: string,
+};
 export type ContactReadData = {
 id: string,
 name: string,
@@ -758,14 +776,6 @@ options: string[],
 unit: string | null,
 required: boolean,
 allowNewOptions: boolean,
-};
-export type ProjectReadData = {
-id: string,
-name: string,
-type: string,
-portalVisible: boolean,
-fields: object,
-updatedAt: string,
 };
 export type ProjectTypeReadData = {
 id: string,
@@ -891,6 +901,7 @@ status: string,
 statusLabel: string,
 sentOn: string | null,
 viewedOn: string | null,
+views: App.Documents.Data.DocumentViewData[],
 hasDocument: boolean,
 openInstallments: {
 id: string,
@@ -945,6 +956,32 @@ export type CancellationKind = 'correction' | 'void';
 export type OverdueReason = 'due_date_passed' | 'payment_failed';
 export type PaymentInstallmentStatus = 'scheduled' | 'paid' | 'invoiced' | 'cancelled' | 'partial';
 export type SettledVia = 'stripe' | 'transfer' | 'manual';
+}
+}
+namespace Privacy {
+namespace Data {
+export type RetentionCandidateData = {
+id: string,
+name: string,
+type: string,
+text: string | null,
+outcome: string,
+outcomeLabel: string,
+idleMonths: number,
+invoiced: boolean,
+leads: number,
+messages: number,
+offers: number,
+galleries: number,
+};
+export type RetentionPolicyData = {
+name: boolean,
+text: boolean,
+messages: boolean,
+offers: boolean,
+galleries: boolean,
+order: boolean,
+};
 }
 }
 namespace Quotes {
@@ -1097,28 +1134,6 @@ contactAvatarUrl: string | null,
 contactPhone: string | null,
 contactEmail: string | null,
 contactResponseTime: string | null,
-};
-export type RetentionCandidateData = {
-id: string,
-name: string,
-type: string,
-text: string | null,
-outcome: string,
-outcomeLabel: string,
-idleMonths: number,
-invoiced: boolean,
-leads: number,
-messages: number,
-offers: number,
-galleries: number,
-};
-export type RetentionPolicyData = {
-name: boolean,
-text: boolean,
-messages: boolean,
-offers: boolean,
-galleries: boolean,
-order: boolean,
 };
 export type StudioClosureData = {
 id: string,

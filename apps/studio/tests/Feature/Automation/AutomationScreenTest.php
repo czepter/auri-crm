@@ -4,7 +4,7 @@ use App\Automation\Enums\AutomationAction;
 use App\Automation\Enums\AutomationCondition;
 use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Models\AutomationRule;
-use App\Crm\Events\ProjectBooked;
+use App\Crm\Events\CaseBooked;
 use App\Enums\StaffRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -41,7 +41,7 @@ it('lists the rules and edits one', function () {
 // Eine Ereignisregel traegt weder Anker noch Abstand — AutomationRule::booted()
 // weist eine zurueck, die beides hat.
 it('saves an event rule, which carries no anchor', function () {
-    $rule = AutomationRule::factory()->event(ProjectBooked::class)->create();
+    $rule = AutomationRule::factory()->event(CaseBooked::class)->create();
 
     $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch("/einstellungen/automationen/{$rule->public_id}", [

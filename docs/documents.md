@@ -17,7 +17,7 @@ identically in a quote, an invoice and a mail" true by construction: every
 caller resolves the same body against the same shape of array.
 
 That array is built in exactly one place, `App\Documents\Support\
-DocumentMergeDataBuilder::fromProject()` — never assembled ad hoc by a
+DocumentMergeData::forCase()` — never assembled ad hoc by a
 controller or a job — from whatever the project/contact/studio settings
 look like at the moment a render runs:
 
@@ -43,7 +43,7 @@ look like at the moment a render runs:
 | `studio.registerCourt`  | Registering court (Registergericht).          |
 | `studio.representative` | Authorised representative.                    |
 | `studio.website`     | |
-| `studio.logoPath`    | The logo's stored path on the `local` disk (T-02, `StudioSettingsResolver::logoPath()`) — a filesystem path, not yet a URL. |
+| `studio.logoPath`    | The logo's stored path on the `local` disk (T-02, `StudioSettings' logo_path`) — a filesystem path, not yet a URL. |
 | `studio.bankHolder`  | Account holder (T-02, Bank fieldset). |
 | `studio.bankIban`    | |
 | `studio.bankBic`     | |
@@ -112,9 +112,9 @@ readable.
 ### The invoice block
 
 `invoice.*` is the one part of the vocabulary that is not derivable from the
-project. An invoice is about one `PaymentInstallment`, so `fromProject()`
-takes it as an optional third argument; every other document type passes
-`null` and gets empty strings rather than a missing key, which is what keeps
+project. An invoice is about one `Invoice`, so `InvoiceMergeData::forInvoice()`
+takes it on top of `forCase()`; every other document type has
+empty strings rather than a missing key, which is what keeps
 a merge field used on the wrong document type rendering as nothing instead of
 leaving `{{ invoice.number }}` in a PDF.
 
@@ -144,8 +144,8 @@ reportage and 7 % on the printed book in the same quote. The rate lives on
 
 ### The credit note block
 
-`creditNote.*` is the same shape one argument further along: `fromProject()`
-takes an optional fourth argument, a `CreditNote`, and every other document
+`creditNote.*` is the same shape one argument further along: `forInvoice()`
+takes an optional second argument, a `CreditNote`, and every other document
 type gets empty strings. It exists because a Gutschrift (#409) is not an
 invoice with a minus sign — it has its own number range (`DocumentType::CreditNote`,
 prefix `GS`), its own date, and a reference § 31 Abs. 5 UStDV requires.
@@ -180,7 +180,7 @@ corporate work ever needs it, it is a second output of this same renderer
 against this same merge data, not a second data model.
 
 All `studio.*` and `settings.*` fields read through
-`App\Settings\Support\StudioSettingsResolver` (T-02/T-05) — the same tenant
+`App\Models\StudioSettings::current()` (T-02/T-05) — the same tenant
 settings row the Studio-Profil and Dokumente admin panes edit — rather than
 `APP_NAME` or anything ad hoc.
 
@@ -191,7 +191,7 @@ path, `sample()` gives each one a realistic value, and
 against exactly that sample data — which is what proves a preview has "no
 unresolved placeholder" rather than merely exercising a few fields by hand.
 
-Add a path by extending `DocumentMergeDataBuilder::fromProject()` and both
+Add a path by extending `DocumentMergeData::forCase()` and both
 tables above in the same commit — the resolver has no knowledge of what a
 template is allowed to reference beyond what that array contains.
 
@@ -253,7 +253,7 @@ a client reads.
 
 `App\Documents\Support\DocumentRenderer` wraps a Quote, Invoice or
 CreditNote's resolved body in the studio's one configured letterhead (above) and footer
-(below) — `StudioSettingsResolver::documentLetterheadHtml()` /
+(below) — `StudioSettings::current()::documentLetterheadHtml()` /
 `documentFooterHtml()`, the Dokumente pane — rather than either being pasted
 into every template. Mail is not a PDF, so `DocumentRenderer` leaves a mail
 body untouched.

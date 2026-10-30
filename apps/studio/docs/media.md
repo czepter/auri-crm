@@ -97,9 +97,9 @@ this story only lands bytes there safely.
 ## Ingest processing (G-03)
 
 `App\Media\Http\Controllers\MultipartUploadController::complete()` dispatches
-`App\Media\Jobs\ProcessIngestedAsset` onto `media.ingest` the moment a session
+`App\Gallery\Jobs\ProcessIngestedAsset` onto `media.ingest` the moment a session
 is marked Completed. The job is a thin `ShouldQueue` wrapper; every actual
-step lives in `App\Media\Actions\IngestCompletedUpload`, kept separate so the
+step lives in `App\Gallery\Actions\IngestCompletedUpload`, kept separate so the
 whole pipeline is callable — and tested — without a queue round-trip:
 
 1. Streams the quarantine object into a local temp file while computing its
@@ -147,9 +147,9 @@ outcome here, not a Horizon failed-job.
 
 `App\Media\Models\ZipBuild` (tenant-scoped, `HasPublicId`) is one deduped
 archive for a `(gallery_version_id, scope, size)` triple — the migration's
-own unique index is the dedupe mechanism; `App\Media\Actions\RequestZipBuild`
+own unique index is the dedupe mechanism; `App\Gallery\Actions\RequestZipBuild`
 finds-or-creates against it and only dispatches
-`App\Media\Jobs\BuildZip` (`media.zip`, #59) for a row that isn't already
+`App\Gallery\Jobs\BuildZip` (`media.zip`, #59) for a row that isn't already
 Ready or already Building. `scope` has one case today (`all`); `size` is
 `original` (each `Asset`'s own bytes) or `web` (each asset's widest WebP
 derivative from G-03 — the one of its two formats every target platform can
@@ -157,7 +157,7 @@ at least open). A `ZipBuild` has one or more `ZipBuildPart` rows, the
 `Asset`/`AssetDerivative` one-to-many precedent, each one archive volume's
 output object key.
 
-`App\Media\Actions\BuildGalleryZip` does the actual assembly — S3 to S3,
+`App\Gallery\Actions\BuildGalleryZip` does the actual assembly — S3 to S3,
 same "no server-side copy" rule as everywhere else in this doc: each member
 is read from the `s3` disk and written straight into a
 [zipstream-php](https://github.com/maennchen/zipstream-php) archive (STORE,

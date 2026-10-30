@@ -1,8 +1,7 @@
 <?php
 
-use App\Settings\Models\StudioSettings;
+use App\Models\StudioSettings;
 use App\Settings\Support\StudioReadiness;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 
@@ -13,7 +12,7 @@ function readiness(array $attributes): StudioReadiness
     StudioSettings::query()->update($attributes);
     Cache::store('redis')->flush();
 
-    return new StudioReadiness(new StudioSettingsResolver);
+    return new StudioReadiness;
 }
 
 it('names the Impressum fields the first quote needs', function () {

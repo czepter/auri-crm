@@ -8,7 +8,6 @@ use App\Crm\Enums\DueAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Support\TaskAnchors;
-use App\Settings\Support\StudioSettingsResolver;
 use Carbon\CarbonImmutable;
 use Database\Factories\Crm\TaskTemplateFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -69,18 +68,18 @@ class TaskTemplate extends Model
      * honest day to put on it until the shoot has one.
      *
      * T-13: an offset that lands on a day the studio does not work
-     * (StudioSettingsResolver::workingDays()) rolls FORWARD, one day at a
+     * (StudioSettings::workingDays()) rolls FORWARD, one day at a
      * time, to the next day that is one — never backward, and never to the
      * "nearest" one. Forward is the conservative direction for a deadline:
      * a task that slips a day or two later is merely later, but pulling it
      * earlier could make it due before whatever it depends on (the shoot
      * itself, or an earlier task) is even ready. $settings is a parameter
-     * rather than app(StudioSettingsResolver::class) reached for inside
+     * rather than StudioSettings::current() reached for inside
      * this method, per that class's own rule — a caller's dependency on
      * the settings store shows up in its own constructor, and
      * ApplyTaskTemplates is that caller here.
      */
-    public function dueFor(Shoot $shoot, StudioSettingsResolver $settings): ?CarbonImmutable
+    public function dueFor(Shoot $shoot): ?CarbonImmutable
     {
         $date = $shoot->date?->addDays($this->day_offset);
 
@@ -88,7 +87,7 @@ class TaskTemplate extends Model
             return null;
         }
 
-        return TaskAnchors::workingDay($date, $settings);
+        return TaskAnchors::workingDay($date);
     }
 
     protected static function newFactory(): Factory

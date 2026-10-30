@@ -12,7 +12,7 @@ use App\Payments\Jobs\RenderCreditNoteJob;
 use App\Payments\Models\CreditNote;
 use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Payments\Support\PaymentSettings;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -39,7 +39,6 @@ class IssueCreditNote
 {
     public function __construct(
         private readonly AllocateDocumentNumber $allocate,
-        private readonly StudioSettingsResolver $settings,
     ) {}
 
     public function __invoke(
@@ -126,7 +125,7 @@ class IssueCreditNote
             throw ValidationException::withMessages(['amount' => __('payments.creditNoteNoStripePayment')]);
         }
 
-        $refund = (new StripeClient($this->settings->activeStripeSecretKey()))->refunds->create([
+        $refund = (new StripeClient(PaymentSettings::activeStripeSecretKey()))->refunds->create([
             'payment_intent' => $intent,
             'amount' => $amount,
         ], [

@@ -6,14 +6,13 @@ use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Payments\Models\CreditNote;
 use App\Payments\Models\Invoice;
-use App\Settings\Support\StudioSettingsResolver;
 
 /**
  * #419. What the five invoice layouts print, normalised — so a Rechnung and
  * a Gutschrift are one shape and no layout carries the branch between them.
  *
  * Everything here is already a formatted string, taken from the merge data
- * App\Documents\Support\DocumentMergeDataBuilder built: the euro formatting
+ * App\Documents\Support\DocumentMergeData built: the euro formatting
  * and the net/VAT split happened there, once, and a layout that recomputed
  * either would be a second opinion about the same figures.
  */
@@ -78,7 +77,7 @@ final class InvoiceDocument
     ) {}
 
     /** @param array<string, mixed> $mergeData */
-    public static function forInvoice(Invoice $record, array $mergeData, StudioSettingsResolver $settings): self
+    public static function forInvoice(Invoice $record, array $mergeData): self
     {
         $invoice = $mergeData['invoice'] ?? [];
         $studio = $mergeData['studio'] ?? [];
@@ -107,7 +106,7 @@ final class InvoiceDocument
             vat: $invoice['vat'] ?? '',
             gross: $invoice['gross'] ?? '',
             vatNote: $invoice['vatNote'] ?? '',
-            smallBusiness: InvoiceFigures::forInvoice($record, $settings)->rate === 0,
+            smallBusiness: InvoiceFigures::forInvoice($record)->rate === 0,
             sign: '',
             recipient: self::recipient($mergeData),
             paymentLines: $payment,
@@ -124,7 +123,7 @@ final class InvoiceDocument
     }
 
     /** @param array<string, mixed> $mergeData */
-    public static function forCreditNote(CreditNote $creditNote, array $mergeData, StudioSettingsResolver $settings): self
+    public static function forCreditNote(CreditNote $creditNote, array $mergeData): self
     {
         $note = $mergeData['creditNote'] ?? [];
 
@@ -145,7 +144,7 @@ final class InvoiceDocument
             vat: $note['vat'] ?? '',
             gross: $note['gross'] ?? '',
             vatNote: $note['vatNote'] ?? '',
-            smallBusiness: InvoiceFigures::forInvoice($creditNote->invoice, $settings)->rate === 0,
+            smallBusiness: InvoiceFigures::forInvoice($creditNote->invoice)->rate === 0,
             sign: '−',
             recipient: self::recipient($mergeData),
             // § 31 Abs. 5 UStDV: the document has to point at the invoice it

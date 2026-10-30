@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, useId } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { Ellipsis } from 'lucide-vue-next'
 import type { PricingMode, QuoteRow } from './quotePayload'
@@ -7,6 +7,7 @@ import { quoteRowToLine } from './quotePayload'
 import { lineAmount } from './quoteTotals'
 import { eurosToCents, formatEuros } from '@/admin/lib/money'
 import { Button } from '@/ui/button'
+import { Checkbox } from '@/ui/checkbox'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
@@ -40,6 +41,15 @@ const portalLabels: Record<string, string> = {
 function setPortalStatus(value: string) {
   props.row.selectable = value !== 'included'
   props.row.selected = value === 'preselected'
+  emit('change')
+}
+
+const optionalId = useId()
+const optional = computed(() => props.row.selectable && !props.row.selected)
+
+function setOptional(value: boolean | 'indeterminate') {
+  props.row.selectable = value === true
+  props.row.selected = false
   emit('change')
 }
 
@@ -86,6 +96,10 @@ function saveAsPackage() {
         class="rounded-[10px] px-2 py-0.5 text-small leading-none font-semibold"
         :class="portalStatus === 'included' ? 'bg-sunk-2 text-ink-2' : 'bg-[var(--accent-bg)] text-[var(--accent)]'"
       >{{ $t(portalLabels[portalStatus]) }}</span>
+      <span
+        v-else-if="optional"
+        class="rounded-[10px] bg-sunk-2 px-2 py-0.5 text-small leading-none font-semibold text-ink-2"
+      >{{ $t('quotes.optional') }}</span>
       <span class="tabular-nums">{{ formatEuros(amount) }}</span>
     </template>
 
@@ -145,6 +159,11 @@ function saveAsPackage() {
         class="self-start"
         @update:model-value="setPortalStatus"
       />
+
+      <div v-else class="flex items-center gap-2">
+        <Checkbox :id="optionalId" :model-value="optional" @update:model-value="setOptional" />
+        <Label variant="inline" :for="optionalId">{{ $t('quotes.optional') }}</Label>
+      </div>
 
       <div class="flex items-center justify-between pt-1">
         <div class="flex items-center gap-1">

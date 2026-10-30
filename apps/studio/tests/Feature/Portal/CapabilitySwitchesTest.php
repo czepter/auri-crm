@@ -3,11 +3,12 @@
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Engagement\Models\Thread;
+use App\Models\StudioSettings;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
-use App\Settings\Models\StudioSettings;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -142,7 +143,7 @@ it('404s the messages route the same way a route that does not exist would, whil
     $get->assertNotFound();
     $post->assertNotFound();
     expect($get->status())->toBe($missing->status());
-    expect(App\Engagement\Models\Thread::count())->toBe(0);
+    expect(Thread::count())->toBe(0);
 });
 
 it('hides the messages link on the project overview while the switch is off', function () {
@@ -169,7 +170,7 @@ it('lets a client start a thread once the studio switches messaging on', functio
         ->post('/nachrichten', ['subject' => 'Thema', 'body' => 'Hallo!', 'project' => $project->public_id])
         ->assertRedirect();
 
-    expect(App\Engagement\Models\Thread::where('case_id', $project->id)->count())->toBe(1);
+    expect(Thread::where('case_id', $project->id)->count())->toBe(1);
 });
 
 it('accepts once the studio switches accept-quotes on', function () {

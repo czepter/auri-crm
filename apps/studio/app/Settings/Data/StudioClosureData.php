@@ -2,7 +2,7 @@
 
 namespace App\Settings\Data;
 
-use App\Settings\Models\StudioClosure;
+use App\Models\StudioClosure;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 

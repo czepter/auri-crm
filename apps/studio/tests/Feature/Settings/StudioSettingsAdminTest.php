@@ -2,9 +2,8 @@
 
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
+use App\Models\StudioSettings;
 use App\Settings\Enums\FontPair;
-use App\Settings\Models\StudioSettings;
-use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
@@ -402,7 +401,7 @@ it('stores the chosen font pair and refuses one that is not licensed', function 
         ])
         ->assertRedirect('/einstellungen');
 
-    expect(app(StudioSettingsResolver::class)->fontPair())->toBe(FontPair::Fraunces);
+    expect(FontPair::current())->toBe(FontPair::Fraunces);
 
     $this->patch('/einstellungen', [
         'display_name' => 'Atelier Nordlicht', 'tax_number' => '22/123/45678',
@@ -412,7 +411,7 @@ it('stores the chosen font pair and refuses one that is not licensed', function 
 
 // A studio that never opens the setting keeps the product default.
 it('falls back to Hanken while nothing is chosen', function () {
-    expect(app(StudioSettingsResolver::class)->fontPair())->toBe(FontPair::Hanken);
+    expect(FontPair::current())->toBe(FontPair::Hanken);
 });
 
 it('rejects a malformed BIC, USt-IdNr. and Steuernummer', function () {

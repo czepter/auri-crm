@@ -3,10 +3,11 @@
 namespace App\Portal\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Payments\Actions\CreateInstallmentCheckoutSession;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Payments\Support\PaymentSettings;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -30,10 +31,9 @@ class PaymentCheckoutController extends Controller
     public function __invoke(
         string $case,
         PaymentInstallment $installment,
-        StudioSettingsResolver $settings,
         CreateInstallmentCheckoutSession $createSession,
     ): Response {
-        abort_unless($settings->stripeEnabled() && $settings->activeStripeSecretKey() !== null, 404);
+        abort_unless((bool) StudioSettings::current()->payments_stripe_enabled && PaymentSettings::activeStripeSecretKey() !== null, 404);
 
         $contact = auth('portal')->user();
         $visible = $contact->visibleProjects()->where('cases.public_id', $case)->exists();

@@ -9,7 +9,7 @@ use Visus\Cuid2\Cuid2;
 return new class extends Migration
 {
     /**
-     * App\Media\Actions\IngestCompletedUpload now fills gallery_set_id on
+     * App\Gallery\Actions\IngestCompletedUpload now fills gallery_set_id on
      * every Asset it creates, success and Failed alike — the column Task 2
      * left nullable because that writer didn't yet becomes a guarantee here.
      *

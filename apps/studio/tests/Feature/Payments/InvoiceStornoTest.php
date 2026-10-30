@@ -5,9 +5,11 @@ use App\Models\AuditLog;
 use App\Payments\Actions\CancelInvoice;
 use App\Payments\Actions\DetectOverdueInstallments;
 use App\Payments\Actions\IssueInvoice;
+use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\CancellationKind;
 use App\Payments\Enums\PaymentInstallmentStatus;
-use App\Settings\Support\StudioSettingsResolver;
+use App\Payments\Models\PaymentInstallment;
+use App\Settings\Actions\UpdateStudioSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Storage;
@@ -16,10 +18,10 @@ use Illuminate\Validation\ValidationException;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    app(StudioSettingsResolver::class)->set('tax_number', '22/123/45678', null);
+    app(UpdateStudioSetting::class)('tax_number', '22/123/45678', null);
 });
 
-function stornoableInstallment(): App\Payments\Models\PaymentInstallment
+function stornoableInstallment(): PaymentInstallment
 {
     Storage::fake('local');
     Bus::fake();
@@ -159,12 +161,12 @@ it('lets staff storno through the route', function () {
 
 it('keeps the surviving rates named as they were before the Storno', function () {
     $installment = stornoableInstallment();
-    $labelsBefore = App\Payments\Data\PaymentPlanData::fromModel($installment->plan->load('installments'))
+    $labelsBefore = PaymentPlanData::fromModel($installment->plan->load('installments'))
         ->installments;
 
     app(CancelInvoice::class)($installment->invoice, CancellationKind::Correction, 'Falscher Empfänger');
 
-    $after = App\Payments\Data\PaymentPlanData::fromModel($installment->plan->fresh()->load('installments'))
+    $after = PaymentPlanData::fromModel($installment->plan->fresh()->load('installments'))
         ->installments;
 
     expect($after[1]->label)->toBe($labelsBefore[1]->label)

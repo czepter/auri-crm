@@ -4,7 +4,8 @@ use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
-use App\Settings\Models\NumberRange;
+use App\Numbering\Enums\NumberRangeResetRule;
+use App\Numbering\Models\NumberRange;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -49,7 +50,7 @@ it('updates a range and leaves an audit row naming the owner and every changed v
 
     $updated = $range->fresh();
     expect($updated->prefix)->toBe('ANG')
-        ->and($updated->reset_rule)->toBe(\App\Numbering\Enums\NumberRangeResetRule::Continuous);
+        ->and($updated->reset_rule)->toBe(NumberRangeResetRule::Continuous);
 
     $audit = AuditLog::where('event', 'number_range.updated')->sole();
     expect($audit->actor_id)->toBe($owner->id)
