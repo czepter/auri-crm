@@ -28,3 +28,13 @@ export function filterQueue(
         ),
     }))
 }
+
+// Same wording the board's table carries in its Zuletzt column.
+export function since(days: number) {
+    return days < 1
+        ? "heute"
+        : new Intl.RelativeTimeFormat("de-DE", { numeric: "auto" }).format(
+              -days,
+              "day",
+          )
+}

@@ -38,6 +38,25 @@ const task = (id: string, projectId: string, projectName: string, title: string,
   contactName: null,
 })
 
+const lead = (id: string, name: string, waitingDays: number): App.Crm.Data.LeadQueueRowData => ({
+  id,
+  name,
+  date: null,
+  text: null,
+  open: false,
+  waitingDays,
+})
+
+const project = (id: string, name: string, date: string, stage: string, reason: string | null, days: number | null): App.Crm.Data.CaseQueueRowData => ({
+  id,
+  name,
+  date,
+  stage,
+  reason,
+  days,
+  open: false,
+})
+
 const meta = {
   title: 'Bildschirme/Übersicht',
   component: Uebersicht,
@@ -68,14 +87,17 @@ const meta = {
     tasks: [],
     openTasks: 0,
     todo: [],
-    quotesOut: [
-      row('Petersen, Ann-Kathrin', 'Verschickt vor', {
-        emphasis: '26 Tagen',
-        whatTail: ' · 3.400 €',
-        action: { label: 'Nachfassen', kind: 'quote', target: '/auftraege/p-petersen/angebote' },
-      }),
-      row('Timm, Merle', 'Verschickt vor 9 Tagen', { whatTail: ' · 2.800 €' }),
-      row('Voss, Katharina & Jan', 'Verschickt vor 4 Tagen', { whatTail: ' · 5.000 €' }),
+    dunning: [],
+    leads: [
+      { key: 'unbeantwortet', rows: [lead('l-brandt', 'Familie Brandt', 4)] },
+      { key: 'angebot', rows: [lead('l-petersen', 'Petersen, Ann-Kathrin', 26), lead('l-timm', 'Timm, Merle', 9)] },
+      { key: 'angenommen', rows: [] },
+    ],
+    projects: [
+      { key: 'haengt', rows: [project('p-ahrens', 'Ahrens, Sophie & Tim', '2026-09-05', 'Fotografiert', 'status', 17)] },
+      { key: 'woche', rows: [] },
+      { key: 'bearbeitung', rows: [project('p-voss', 'Voss, Katharina & Jan', '2026-09-01', 'Bearbeitung', null, null)] },
+      { key: 'spaeter', rows: [project('p-lembcke', 'Lembcke, Pia', '2027-05-22', 'Gebucht', null, null)] },
     ],
     galleries: [
       row('Voss, Katharina & Jan', 'Auswahl offen', { whatTail: ' · 312 Bilder' }),
@@ -119,6 +141,8 @@ export const VollerTag: Story = {
     openTasks: 6,
     todo: [
       row('Familie Brandt', 'Anfrage seit', { emphasis: '4 Tagen', action: { label: 'Angebot schreiben', kind: 'link', target: '/angebote/neu?projekt=p-brandt' } }),
+    ],
+    dunning: [
       row('Ahrens, Sophie & Tim', 'Stripe mahnt', { emphasis: 'seit 11 Tagen', whatTail: ' · 852 €', action: { label: 'Anrufen', kind: 'tel', target: 'tel:+49451123456' } }),
     ],
     galleries: [
@@ -141,7 +165,9 @@ export const Tag1: Story = {
     tasks: [],
     openTasks: 0,
     todo: [],
-    quotesOut: [],
+    dunning: [],
+    leads: [],
+    projects: [],
     galleries: [],
   },
   parameters: { page: { nav: { leads: 0, unread: 0, projects: 0 } } },
