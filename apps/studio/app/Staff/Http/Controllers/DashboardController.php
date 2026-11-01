@@ -2,12 +2,12 @@
 
 namespace App\Staff\Http\Controllers;
 
-use App\Crm\Data\DomainRowData;
-use App\Crm\Data\RowActionData;
+use App\Crm\Actions\OpenLeads;
 use App\Crm\Data\TaskRowData;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
+use App\Crm\Screens\OpenCases;
 use App\Crm\Screens\ReadStudioActivity;
 use App\Gallery\Actions\ReadAfterDeliveryColumn;
 use App\Http\Controllers\Controller;
@@ -24,14 +24,12 @@ use App\Quotes\Support\QuotePipeline;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Number;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * The Übersicht: the next dates, the figures with last year beside them, what
- * moved, and what is owed.
+ * The Übersicht: the figures with last year beside them, the next dates, the
+ * open inquiries and projects, what is owed, and what moved.
  *
  * The range (zeitraum) sets the window for the counts and the Verlauf. The
  * pipeline and the instalments are balances of today and ignore it; the
@@ -45,17 +43,14 @@ class DashboardController extends Controller
 
     private const TASKS = 4;
 
-    private const QUOTES_OUT = 4;
-
-    /** From here on a sent quote without an answer is owed a follow-up. */
-    private const FOLLOW_UP_DAYS = 14;
-
     public function __invoke(
         Request $request,
         ReadInquiryColumn $inquiries,
         ReadPaymentColumn $payments,
         ReadAfterDeliveryColumn $afterDelivery,
         ReadStudioActivity $activity,
+        OpenLeads $leads,
+        OpenCases $projects,
     ): Response {
         $viewer = auth('staff')->user();
         $range = (string) $request->query('zeitraum', '30');
@@ -89,8 +84,10 @@ class DashboardController extends Controller
             'activity' => $activity($viewer, $since),
             'tasks' => $this->tasks($viewer),
             'openTasks' => Task::query()->open()->visibleTo($viewer)->count(),
-            'todo' => $inquiries($viewer)->concat($payments($viewer))->values(),
-            'quotesOut' => $this->quotesOut($viewer),
+            'todo' => $inquiries($viewer),
+            'dunning' => $payments($viewer),
+            'leads' => $leads->queue(),
+            'projects' => $projects->queue($viewer),
             'galleries' => $afterDelivery($viewer),
         ]);
     }
@@ -218,38 +215,5 @@ class DashboardController extends Controller
             ->uncancelled()
             ->whereBetween('shoots.date', [$from->toDateString(), $to->toDateString()])
             ->count();
-    }
-
-    /**
-     * Sent quotes still waiting on the client, oldest first. Past the
-     * follow-up mark the age is the emphasis and the row offers the quote.
-     *
-     * @return Collection<int, DomainRowData>
-     */
-    private function quotesOut(User $viewer): Collection
-    {
-        return Quote::query()
-            ->where('status', QuoteStatus::Sent)
-            ->whereIn('case_id', $this->visible($viewer))
-            ->with('case')
-            ->orderBy('sent_at')
-            ->limit(self::QUOTES_OUT)
-            ->get()
-            ->map(function (Quote $quote) {
-                $days = (int) Carbon::parse($quote->sent_at)->diffInDays(now());
-                $age = $days === 1 ? '1 Tag' : "{$days} Tagen";
-                $late = $days >= self::FOLLOW_UP_DAYS;
-
-                return new DomainRowData(
-                    projectId: $quote->case->public_id,
-                    who: $quote->case->name,
-                    what: $late ? 'Verschickt vor' : "Verschickt vor {$age}",
-                    emphasis: $late ? $age : null,
-                    whatTail: ' · '.Number::currency($quote->total / 100, 'EUR', 'de', 0),
-                    action: $late ? RowActionData::link('Nachfassen', '/auftraege/'.$quote->case->public_id.'/angebote') : null,
-                    hot: $late,
-                );
-            })
-            ->values();
     }
 }

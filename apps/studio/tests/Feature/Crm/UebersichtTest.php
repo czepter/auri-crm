@@ -1,10 +1,13 @@
 <?php
 
 use App\Crm\Enums\CaseContactRole;
+use App\Crm\Enums\LeadStage;
+use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
+use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Enums\StaffRole;
@@ -143,7 +146,7 @@ it('never puts an integer identifier into the übersicht', function () {
     expect(integerIdPaths(props('/')))->toBe([]);
 });
 
-it('carries the rows owed on payments under what is to do', function () {
+it('carries the rows owed on payments under Zahlungen', function () {
     $project = ClientCase::factory()->create(['name' => 'Duhnkrack & W.']);
     $project->attachContact(Contact::factory()->create(['phone' => '+4940123']), CaseContactRole::Primary);
     markBooked($project);
@@ -154,10 +157,10 @@ it('carries the rows owed on payments under what is to do', function () {
         'overdue_notified_at' => now()->subDays(9),
     ]);
 
-    $todo = props('/')['todo'];
+    $dunning = props('/')['dunning'];
 
-    expect($todo)->toHaveCount(1)
-        ->and(collect($todo)->pluck('projectId')->unique()->all())->toBe([$project->public_id]);
+    expect($dunning)->toHaveCount(1)
+        ->and(collect($dunning)->pluck('projectId')->unique()->all())->toBe([$project->public_id]);
 });
 
 it('shows nothing to do when nothing is owed', function () {
@@ -167,20 +170,17 @@ it('shows nothing to do when nothing is owed', function () {
         ->and($props['tasks'])->toBeEmpty();
 });
 
-it('lists sent quotes still waiting, and offers a follow-up once they are old', function () {
-    $project = ClientCase::factory()->create(['name' => 'Petersen']);
-    Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Sent, 'sent_at' => now()->subDays(20), 'total' => 340_000]);
-    Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Sent, 'sent_at' => now()->subDays(4), 'total' => 500_000]);
-    Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Accepted, 'sent_at' => now()->subDays(30)]);
+it('puts the open inquiries and projects on the Übersicht', function () {
+    $inquiry = Lead::factory()->for(ClientCase::factory(), 'case')->atStage(LeadStage::New, 5)->create();
 
-    $rows = props('/')['quotesOut'];
+    $project = bookedForDashboard();
+    Shoot::factory()->for($project, 'case')->primary()->atStatus(ShootStatus::Editing)->on(now()->subDays(20)->toDateString())->create();
 
-    expect($rows)->toHaveCount(2)
-        ->and($rows[0]['emphasis'])->toBe('20 Tagen')
-        ->and($rows[0]['action']['label'])->toBe('Nachfassen')
-        ->and($rows[0]['whatTail'])->toContain('3.400')
-        ->and($rows[1]['what'])->toBe('Verschickt vor 4 Tagen')
-        ->and($rows[1]['action'])->toBeNull();
+    $props = props('/');
+    $ids = fn (array $groups) => collect($groups)->flatMap(fn (array $group) => array_column($group['rows'], 'id'))->all();
+
+    expect($ids($props['leads']))->toBe([$inquiry->case->public_id])
+        ->and($ids($props['projects']))->toBe([$project->public_id]);
 });
 
 it('carries the Galerien field', function () {
@@ -296,6 +296,7 @@ it('tells what moved across projects, from the history allow-list and gallery op
 
 it('counts only what the viewer may open', function () {
     $hidden = ClientCase::factory()->create();
+    markBooked($hidden);
     Quote::factory()->for($hidden, 'case')->create(['status' => QuoteStatus::Sent, 'total' => 250_00]);
     AuditLogger::record(event: 'payment_installment.paid', projectId: $hidden->id);
 
@@ -305,5 +306,5 @@ it('counts only what the viewer may open', function () {
 
     expect($props['pipeline']['total'])->toBe(0)
         ->and($props['activity'])->toBeEmpty()
-        ->and($props['quotesOut'])->toBeEmpty();
+        ->and(collect($props['projects'])->pluck('rows')->flatten()->all())->toBeEmpty();
 });
