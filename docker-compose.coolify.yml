@@ -172,7 +172,7 @@ services:
     environment:
       SERVICE_FQDN_GALLERY_4321:
       API_URL: http://api:8080
-      PUBLIC_API_URL: ${SERVICE_FQDN_API}
+      PUBLIC_API_URL: ${SERVICE_URL_API}
       SENTRY_DSN: ${GALLERY_SENTRY_DSN}
     # Any response, not a 2xx: the only route is /g/:galleryId, so every probe
     # path 404s and --fail would report a healthy server as down forever.
