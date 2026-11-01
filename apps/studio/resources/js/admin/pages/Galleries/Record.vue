@@ -11,6 +11,7 @@ import { Label } from '@/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
+import GalleryShareDialog from '@/admin/components/gallery/GalleryShareDialog.vue'
 import GalleryNav from '@/admin/components/gallery/GalleryNav.vue'
 import { publishLabelKey, showPublish as showPublishRule, showWithdraw as showWithdrawRule } from '@/admin/lib/galleryPublish'
 import { xsrfHeader } from '@/admin/lib/multipartUpload'
@@ -119,7 +120,13 @@ function publish() {
     return
   }
 
-  router.post(`/galerien/${props.gallery.id}/veroeffentlichen`, {}, { preserveScroll: true })
+  publishSilently()
+}
+
+const sharing = ref(false)
+
+function publishSilently() {
+  router.post(`/galerien/${props.gallery.id}/veroeffentlichen`, {}, { preserveScroll: true, onSuccess: () => (sharing.value = true) })
 }
 
 function withdraw() {
@@ -344,6 +351,7 @@ function megabytes(bytes: number) {
                  gating the preview link, presets.length gating "Vorlage
                  anwenden") stay pinned by a test that can fail. -->
             <DropdownMenuContent force-mount class="data-[state=closed]:hidden">
+              <DropdownMenuItem @select="sharing = true">{{ $t('galleryRecord.share') }}</DropdownMenuItem>
               <DropdownMenuItem @select="copyLink">{{ $t('galleryRecord.copyLink') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="gallery.canPublish" @select="createPreviewLink">{{ $t('galleryRecord.createPreviewLink') }}</DropdownMenuItem>
               <DropdownMenuItem @select="savingPreset = true">{{ $t('galleryRecord.saveAsPreset') }}</DropdownMenuItem>
@@ -355,9 +363,12 @@ function megabytes(bytes: number) {
 
           <Button type="button" variant="pill-muted" @click="openPreview">{{ $t('galleryRecord.preview') }}</Button>
           <Button v-if="showWithdraw" type="button" variant="pill-muted" @click="withdraw">{{ $t('galleryRecord.withdraw') }}</Button>
+          <Button v-if="showPublish && gallery.canMail" type="button" variant="pill-muted" @click="publishSilently">{{ $t('galleryRecord.publishSilently') }}</Button>
           <Button v-if="showPublish" type="button" @click="publish">{{ $t(publishLabel) }}</Button>
         </span>
       </PageHead>
+
+      <GalleryShareDialog v-model:open="sharing" :gallery="gallery" />
 
       <Dialog v-model:open="savingPreset">
         <DialogContent>

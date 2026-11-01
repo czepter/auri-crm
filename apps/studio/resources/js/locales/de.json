@@ -1968,6 +1968,8 @@
     "applyPresetChanges": "Ändert:",
     "publish": "Veröffentlichen",
     "republish": "Neu veröffentlichen",
+    "publishSilently": "Ohne E-Mail veröffentlichen",
+    "share": "Freigabe",
     "reopen": "Wieder freigeben",
     "withdraw": "Zurücknehmen",
     "preview": "Vorschau",
