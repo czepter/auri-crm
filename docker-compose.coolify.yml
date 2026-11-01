@@ -13,8 +13,8 @@ services:
       DB_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
       REDIS_PASSWORD: ${SERVICE_PASSWORD_REDIS}
       AWS_BUCKET: ${AWS_BUCKET:-studio}
-      # SERVICE_FQDN_* is the bare host; the AWS SDK rejects an endpoint without a scheme.
-      AWS_ENDPOINT: https://${SERVICE_FQDN_RUSTFS}
+      # SERVICE_URL_* carries the scheme; the AWS SDK rejects a bare host.
+      AWS_ENDPOINT: ${SERVICE_URL_RUSTFS}
       AWS_USE_PATH_STYLE_ENDPOINT: "true"
       AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
       AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
@@ -76,8 +76,8 @@ services:
       DB_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
       REDIS_PASSWORD: ${SERVICE_PASSWORD_REDIS}
       AWS_BUCKET: ${AWS_BUCKET:-studio}
-      # SERVICE_FQDN_* is the bare host; the AWS SDK rejects an endpoint without a scheme.
-      AWS_ENDPOINT: https://${SERVICE_FQDN_RUSTFS}
+      # SERVICE_URL_* carries the scheme; the AWS SDK rejects a bare host.
+      AWS_ENDPOINT: ${SERVICE_URL_RUSTFS}
       AWS_USE_PATH_STYLE_ENDPOINT: "true"
       AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
       AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
@@ -116,8 +116,8 @@ services:
       DB_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
       REDIS_PASSWORD: ${SERVICE_PASSWORD_REDIS}
       AWS_BUCKET: ${AWS_BUCKET:-studio}
-      # SERVICE_FQDN_* is the bare host; the AWS SDK rejects an endpoint without a scheme.
-      AWS_ENDPOINT: https://${SERVICE_FQDN_RUSTFS}
+      # SERVICE_URL_* carries the scheme; the AWS SDK rejects a bare host.
+      AWS_ENDPOINT: ${SERVICE_URL_RUSTFS}
       AWS_USE_PATH_STYLE_ENDPOINT: "true"
       AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
       AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
@@ -372,7 +372,7 @@ services:
     image: rustfs/rustfs:1.0.0-rc.1
     restart: unless-stopped
     environment:
-      SERVICE_FQDN_RUSTFS_9000:
+      SERVICE_URL_RUSTFS_9000:
       RUSTFS_ADDRESS: ":9000"
       RUSTFS_VOLUMES: /data
       RUSTFS_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSKEY}
