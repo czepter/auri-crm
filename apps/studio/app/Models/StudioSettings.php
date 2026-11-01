@@ -87,11 +87,18 @@ class StudioSettings extends Model
 
     public static function current(): self
     {
-        return Cache::store('redis')->remember(
-            self::CACHE_KEY_PREFIX.config('tenancy.tenant_id'),
-            self::TTL,
-            fn () => static::query()->firstOrFail(),
-        );
+        $store = Cache::store('redis');
+        $key = self::CACHE_KEY_PREFIX.config('tenancy.tenant_id');
+        $cached = $store->get($key);
+
+        if ($cached instanceof self) {
+            return $cached;
+        }
+
+        $row = static::query()->firstOrFail();
+        $store->put($key, $row, self::TTL);
+
+        return $row;
     }
 
     public static function forgetCurrent(): void

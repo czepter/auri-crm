@@ -22,16 +22,21 @@ final class HelpIndex
             ->values();
 
         $schluessel = 'help.index.'.md5($dateien->toJson());
+        $cached = Cache::get($schluessel);
 
-        return Cache::rememberForever(
-            $schluessel,
-            fn () => $dateien->map(fn ($paar) => $this->lesen($paar[0]))->values(),
-        );
+        if ($cached instanceof Collection && $cached->every(fn ($entry) => $entry instanceof HelpEntry)) {
+            return $cached;
+        }
+
+        $eintraege = $dateien->map(fn ($paar) => $this->lesen($paar[0]))->values();
+        Cache::forever($schluessel, $eintraege);
+
+        return $eintraege;
     }
 
     /**
      * @param  array<string>  $capabilities
-     * @return array<HelpEntry>  Null bis zwei, Aufgabe vor Referenz.
+     * @return array<HelpEntry> Null bis zwei, Aufgabe vor Referenz.
      */
     public function forRoute(string $routeName, array $capabilities): array
     {
