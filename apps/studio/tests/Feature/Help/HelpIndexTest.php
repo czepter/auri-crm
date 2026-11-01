@@ -1,6 +1,8 @@
 <?php
 
 use App\Help\Support\HelpIndex;
+use Illuminate\Support\Facades\Cache;
+use Symfony\Component\Finder\Finder;
 
 it('stellt die Aufgabe vor die Referenz', function () {
     $treffer = app(HelpIndex::class)->forRoute('leads.index', ['manage_leads']);
@@ -35,4 +37,22 @@ it('implementiert die Fähigkeitsregel nur an einer Stelle', function () {
     $controller = file_get_contents(app_path('Help/Http/Controllers/HelpController.php'));
 
     expect($controller)->not->toContain('faehigkeit');
+});
+
+it('ersetzt einen gecachten __PHP_Incomplete_Class-Eintrag nach einem verschobenen Namespace', function () {
+    $dateien = collect(Finder::create()->files()->in(resource_path('help'))->name('*.md'))
+        ->map(fn ($file) => [$file->getPathname(), $file->getMTime()])
+        ->sortBy(fn ($paar) => $paar[0])
+        ->values();
+
+    $schluessel = 'help.index.'.md5($dateien->toJson());
+
+    Cache::forever(
+        $schluessel,
+        collect([unserialize('O:23:"App\\Help\\Data\\HelpEntry":0:{}', ['allowed_classes' => false])]),
+    );
+
+    $treffer = app(HelpIndex::class)->forRoute('leads.index', ['manage_leads']);
+
+    expect($treffer[0]->slug)->toBe('lead-anlegen');
 });

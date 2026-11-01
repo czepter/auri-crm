@@ -149,3 +149,19 @@ it('writes an audit row for a logo upload naming the actor', function () {
     expect($log->actor_id)->toBe($owner->id)
         ->and($log->context['old'])->toBeNull();
 });
+
+it('replaces a cached __PHP_Incomplete_Class left behind by a moved model namespace', function () {
+    $key = 'studio_settings:'.config('tenancy.tenant_id');
+    Cache::store('redis')->put(
+        $key,
+        unserialize('O:34:"App\\Settings\\Models\\StudioSettings":0:{}', ['allowed_classes' => false]),
+        3600,
+    );
+
+    expect(Cache::store('redis')->get($key))->toBeInstanceOf(__PHP_Incomplete_Class::class);
+
+    $settings = StudioSettings::current();
+
+    expect($settings)->toBeInstanceOf(StudioSettings::class)
+        ->and(Cache::store('redis')->get($key))->toBeInstanceOf(StudioSettings::class);
+});
