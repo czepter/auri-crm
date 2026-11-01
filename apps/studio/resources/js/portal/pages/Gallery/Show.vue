@@ -167,6 +167,14 @@ const subtitle = computed(() => {
 // The grid deliberately stays under the proxy's allow-list.
 const SIZES = '(max-width: 760px) 50vw, (max-width: 1080px) 33vw, 25vw'
 
+const ROW_HEIGHT = 260
+
+function tileStyle(asset: { width: number | null; height: number | null }) {
+  const ratio = asset.width && asset.height ? asset.width / asset.height : 1.5
+
+  return { aspectRatio: String(ratio), flex: `${ratio * 100} 1 ${ratio * ROW_HEIGHT}px` }
+}
+
 // The first published asset carries the cover. Nothing in the schema names
 // one, so "the first" is the studio's own ordering rather than a guess.
 const cover = computed(() => props.assets?.[0] ?? null)
@@ -300,17 +308,19 @@ const COVER_INPUT = [
         <Button v-if="offers.downloads" as="a" :href="`/galerien/${gallery.id}/download`">{{ $t('gallery.downloadLink') }}</Button>
       </div>
 
-      <!-- columns, not grid: a photo wall wants the original proportions, and
-           `columns` is the only layout method that keeps them without JS. -->
+      <!-- Justified rows: basis and grow follow the aspect ratio, so every row
+           fills the width at one height. `columns` left ragged holes at the
+           column ends. The trailing spacer keeps the last row from stretching. -->
       <main
         v-if="shown.length"
         id="raster"
-        class="mx-auto max-w-[1240px] columns-4 gap-x-3.5 px-8 pt-11 pb-16 max-[1080px]:columns-3 max-[760px]:columns-2"
+        class="mx-auto flex max-w-[1240px] flex-wrap gap-3.5 px-8 pt-11 pb-16"
       >
         <span
           v-for="(asset, index) in shown"
           :key="asset.key"
-          class="relative mb-3.5 block cursor-zoom-in overflow-hidden rounded-[10px] bg-muted break-inside-avoid [&_img]:block [&_img]:w-full [&_img]:transition-transform [&_img]:duration-[1.2s] [&_img]:ease-[cubic-bezier(.22,.61,.36,1)] hover:[&_img]:scale-[1.03]"
+          class="relative block cursor-zoom-in overflow-hidden rounded-[10px] bg-muted [&_img]:block [&_img]:size-full [&_img]:object-cover [&_img]:transition-transform [&_img]:duration-[1.2s] [&_img]:ease-[cubic-bezier(.22,.61,.36,1)] hover:[&_img]:scale-[1.03]"
+          :style="tileStyle(asset)"
           @click="openAt = index"
         >
           <!-- The list menu replaces the single heart as soon as a client is
@@ -350,6 +360,7 @@ const COVER_INPUT = [
             />
           </picture>
         </span>
+        <span class="grow-[999]" />
       </main>
 
       <!-- Unlocked over a gallery nobody has published yet: a real state,

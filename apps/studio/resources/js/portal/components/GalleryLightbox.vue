@@ -167,12 +167,12 @@ function time(iso: string) {
     </header>
 
     <div
-      class="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_300px] gap-8 px-8 max-[860px]:grid-cols-[minmax(0,1fr)] max-[860px]:grid-rows-[minmax(0,1fr)_auto]"
+      class="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_300px] grid-rows-[minmax(0,1fr)] gap-8 px-8 max-[860px]:grid-cols-[minmax(0,1fr)] max-[860px]:grid-rows-[minmax(0,1fr)_auto]"
     >
       <!-- mt-5 is tokens.css .stage's own margin, which this stage never asked
            for and has always had: two files spell the same name. -->
       <div
-        class="relative mt-5 grid min-h-0 place-items-center [&>img]:block [&>img]:max-h-full [&>img]:max-w-full [&>img]:object-contain"
+        class="relative mt-5 grid min-h-0 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)] place-items-center [&>img]:block [&>img]:max-h-full [&>img]:max-w-full [&>img]:object-contain"
       >
         <button
           type="button"
