@@ -212,7 +212,7 @@ async function run(files: File[], replacements: Map<string, string>) {
   const targetSetId = pendingSetId.value
   if (targetSetId === null) return
 
-  tray.value = files.map((file) => ({ key: keyOf(file), name: file.name, size: file.size, status: 'queued', percent: 0 }))
+  tray.value = files.map((file) => ({ key: keyOf(file), file, name: file.name, size: file.size, status: 'queued', percent: 0, loaded: 0 }))
 
   for (const file of files) {
     const row = tray.value.find((entry) => entry.key === keyOf(file))!
@@ -222,7 +222,10 @@ async function run(files: File[], replacements: Map<string, string>) {
       const result = await uploadFile(
         `/galerien/${props.gallery.id}/uploads`,
         file,
-        ({ partsDone, partsTotal }) => (row.percent = partsTotal === 0 ? 0 : Math.round((partsDone / partsTotal) * 100)),
+        ({ partsDone, partsTotal, bytesDone }) => {
+          row.percent = partsTotal === 0 ? 0 : Math.round((partsDone / partsTotal) * 100)
+          row.loaded = bytesDone
+        },
         targetSetId,
         replacements.get(keyOf(file)),
       )
@@ -265,8 +268,13 @@ function guardUnload(event: BeforeUnloadEvent) {
 watch(transferring, (on) => (on ? window.addEventListener('beforeunload', guardUnload) : window.removeEventListener('beforeunload', guardUnload)))
 
 // beforeunload only catches the hard exit. Inertia swaps the page without
-// reloading, and the running transfer dies with this component.
-const stopInertiaGuard = router.on('before', () => (transferring.value ? window.confirm(t('media.leaveWhileUploading')) : true))
+// reloading, and the running transfer dies with this component. A visit to the
+// same path (live-update reload, set switch) keeps the component and the upload.
+const stopInertiaGuard = router.on('before', (event) =>
+  transferring.value && event.detail.visit.url.pathname !== window.location.pathname
+    ? window.confirm(t('media.leaveWhileUploading'))
+    : true,
+)
 
 onUnmounted(() => {
   window.removeEventListener('beforeunload', guardUnload)
