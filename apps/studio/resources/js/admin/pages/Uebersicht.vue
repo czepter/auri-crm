@@ -9,6 +9,7 @@ import Panel from "@/admin/components/Panel.vue";
 import { Button } from "@/ui/button";
 import { formatEurosRounded } from "@/admin/lib/money";
 import { weekFrom } from "@/admin/lib/dates";
+import { NOTICEABLE_DAYS, since } from "@/admin/lib/leadQueue";
 
 type Entry = {
     date: string;
@@ -41,7 +42,9 @@ const props = defineProps<{
     tasks: App.Crm.Data.TaskRowData[];
     openTasks: number;
     todo: App.Crm.Data.DomainRowData[];
-    quotesOut: App.Crm.Data.DomainRowData[];
+    dunning: App.Crm.Data.DomainRowData[];
+    leads: { key: string; rows: App.Crm.Data.LeadQueueRowData[] }[];
+    projects: { key: string; rows: App.Crm.Data.CaseQueueRowData[] }[];
     galleries: App.Crm.Data.DomainRowData[];
 }>();
 
@@ -84,6 +87,16 @@ const week = computed(() =>
 // unter der Leiste, damit eine ruhige Woche den nächsten Termin trotzdem zeigt.
 const later = computed(() => props.entries.filter((entry) => entry.date > week.value[6].date));
 
+// Verglichen wird mit demselben Fenster ein Jahr davor, nicht mit dem davor:
+// das Geschäft ist saisonal, Oktober gegen September zeigte nur den Herbst.
+function trend(now: number, prior: number | null, format: (value: number) => string) {
+    if (prior === null || now === prior) {
+        return { trend: null, delta: null };
+    }
+
+    return { trend: now > prior ? "up" : "down", delta: format(Math.abs(now - prior)) };
+}
+
 // Überfällig trägt den Betrag nur, wenn etwas überfällig ist; sonst zeigt die
 // Kachel das Geld, das läuft, mit dem nächsten Fälligkeitstag als Beleg.
 const figures = computed(() => {
@@ -97,6 +110,7 @@ const figures = computed(() => {
             value: formatEurosRounded(pipeline.total),
             unit: null,
             warn: false,
+            ...trend(pipeline.total, pipeline.priorYear, formatEurosRounded),
             note: pipeline.priorYear === null ? null : t("dashboard.priorYear", { value: formatEurosRounded(pipeline.priorYear) }),
         },
         {
@@ -105,6 +119,8 @@ const figures = computed(() => {
             value: formatEurosRounded(late ? payments.overdue : payments.open),
             unit: null,
             warn: late,
+            trend: null,
+            delta: null,
             note: late
                 ? t("dashboard.overdueNote", { open: payments.overdueInstalments, all: payments.instalments, days: payments.overdueSinceDays ?? 0 })
                 : payments.nextDueOn && payments.nextAmount !== null
@@ -117,6 +133,7 @@ const figures = computed(() => {
             value: String(quotes.accepted),
             unit: quotes.sent ? t("dashboard.ofSent", { count: quotes.sent }) : null,
             warn: false,
+            ...trend(quotes.accepted, quotes.priorSent === null ? null : (quotes.priorAccepted ?? 0), String),
             note:
                 quotes.priorSent === null
                     ? null
@@ -128,6 +145,7 @@ const figures = computed(() => {
             value: String(shoots.count),
             unit: shoots.count ? t(PAST[props.range]) : null,
             warn: false,
+            ...trend(shoots.count, shoots.priorYear, String),
             note: shoots.priorYear === null ? null : t("dashboard.priorYear", { value: shoots.priorYear }),
         },
     ];
@@ -135,7 +153,7 @@ const figures = computed(() => {
 
 const PAST = { "30": "dashboard.range30Past", "90": "dashboard.range90Past", year: "dashboard.lastTwelveMonths" } as const;
 
-type FooterRow = {
+type Row = {
     key: string;
     who: string;
     href: string;
@@ -146,7 +164,7 @@ type FooterRow = {
     task: App.Crm.Data.TaskRowData | null;
 };
 
-function fromTask(task: App.Crm.Data.TaskRowData): FooterRow {
+function fromTask(task: App.Crm.Data.TaskRowData): Row {
     return {
         key: `task:${task.id}`,
         who: task.projectName ?? task.contactName ?? '',
@@ -159,15 +177,54 @@ function fromTask(task: App.Crm.Data.TaskRowData): FooterRow {
     };
 }
 
-function fromRow(row: App.Crm.Data.DomainRowData): FooterRow {
+function fromRow(row: App.Crm.Data.DomainRowData): Row {
     return { key: `row:${row.projectId}:${row.what}`, who: row.who, href: `/auftraege/${row.projectId}`, what: row.what, emphasis: row.emphasis, whatTail: row.whatTail, action: row.action, task: null };
 }
 
-// Unten links steht, was heute zu tun ist; ist nichts zu tun, die Angebote,
-// auf die ein Kunde antworten muss.
-const owes = computed(() => props.tasks.length > 0 || props.todo.length > 0);
-const footerRows = computed(() =>
-    owes.value ? [...props.tasks.map(fromTask), ...props.todo.map(fromRow)].slice(0, 4) : props.quotesOut.slice(0, 4).map(fromRow),
+// Wie im Queue-Pane: erst ab NOTICEABLE_DAYS wird das Warten zur Betonung.
+function fromLead(group: string, lead: App.Crm.Data.LeadQueueRowData): Row {
+    const waited = since(lead.waitingDays);
+    const long = lead.waitingDays >= NOTICEABLE_DAYS;
+
+    return { key: `lead:${lead.id}`, who: lead.name, href: `/anfragen/${lead.id}`, what: t(`lead.group.${group}`), emphasis: long ? waited : null, whatTail: long ? null : ` · ${waited}`, action: null, task: null };
+}
+
+function fromProject(project: App.Crm.Data.CaseQueueRowData): Row {
+    const day = project.date ? ` · ${dayOf(project.date)}` : null;
+
+    return {
+        key: `project:${project.id}`,
+        who: project.name,
+        href: `/auftraege/${project.id}`,
+        what: project.reason ? t(`projectQueue.reason.${project.reason}`, { stage: project.stage }) : project.stage,
+        emphasis: project.days === null ? null : t("projectQueue.days", project.days),
+        whatTail: project.days === null ? day : null,
+        action: null,
+        task: null,
+    };
+}
+
+const SHOWN = 5;
+
+const leadRows = computed(() => props.leads.flatMap((group) => group.rows.map((lead) => fromLead(group.key, lead))));
+const projectRows = computed(() => props.projects.flatMap((group) => group.rows.map(fromProject)));
+
+const cards = computed(() =>
+    [
+        { key: "leads", title: t("dashboard.leads"), count: leadRows.value.length, href: "/anfragen", link: t("dashboard.toBoard"), rows: leadRows.value },
+        { key: "projects", title: t("dashboard.projects"), count: projectRows.value.length, href: "/projekte", link: t("dashboard.allProjects"), rows: projectRows.value },
+        { key: "dunning", title: t("dashboard.payments"), count: props.dunning.length, href: null, link: null, rows: props.dunning.map(fromRow) },
+        {
+            key: "todo",
+            title: t("dashboard.todo"),
+            count: props.openTasks + props.todo.length,
+            href: "/aufgaben",
+            link: t("dashboard.allTasks"),
+            rows: [...props.tasks.map(fromTask), ...props.todo.map(fromRow)],
+        },
+    ]
+        .filter((card) => card.rows.length > 0)
+        .map((card) => ({ ...card, rows: card.rows.slice(0, SHOWN) })),
 );
 
 function complete(task: App.Crm.Data.TaskRowData) {
@@ -189,7 +246,41 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
     <AdminLayout active="uebersicht">
         <Page data-tokens wide>
             <div class="flex min-w-0 flex-1 flex-col">
-                <PageHead :kicker="heading" :title="$t('dashboard.title')" />
+                <PageHead :kicker="heading" :title="$t('dashboard.title')">
+                    <div class="ml-auto flex flex-wrap items-center gap-1.5">
+                        <Link
+                            v-for="option in RANGES"
+                            :key="option.key"
+                            :href="`/?zeitraum=${option.key}`"
+                            class="rounded-[var(--r-sm)] px-3.5 py-[5px] text-small font-medium tracking-[-0.01em] no-underline"
+                            :class="range === option.key ? 'bg-foreground font-semibold text-background' : 'text-ink-2 shadow-[inset_0_0_0_1px_var(--line-hover)]'"
+                        >
+                            {{ $t(option.label) }}
+                        </Link>
+                        <Link class="ml-2.5 text-small tracking-[-0.01em] text-ring no-underline hover:underline" href="/auswertungen">
+                            {{ $t("dashboard.reports") }}
+                        </Link>
+                    </div>
+                </PageHead>
+
+                <div class="mx-6 mt-5 grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4">
+                    <div v-for="figure in figures" :key="figure.key" class="flex flex-col gap-1.5 rounded-[var(--r)] bg-paper px-6 py-5 shadow-card">
+                        <div class="text-small font-medium text-ink-2">{{ figure.label }}</div>
+                        <div class="flex items-baseline gap-1 text-[34px] leading-10 font-semibold tracking-[-0.03em] tabular-nums" :class="figure.warn && 'text-due'">
+                            {{ figure.value }}<span v-if="figure.unit" class="text-[14px] font-medium tracking-normal text-ink-2">{{ figure.unit }}</span>
+                        </div>
+                        <div v-if="figure.note || figure.delta" class="flex flex-wrap items-center gap-x-2 gap-y-1 text-small tabular-nums text-ink-2">
+                            <span
+                                v-if="figure.delta"
+                                class="rounded-[var(--r-sm)] px-1.5 py-px font-medium"
+                                :class="figure.trend === 'up' ? 'bg-ok-bg text-ok' : 'bg-late-bg text-destructive'"
+                            >
+                                {{ figure.trend === "up" ? "↑" : "↓" }} {{ figure.delta }}
+                            </span>
+                            <span v-if="figure.note">{{ figure.note }}</span>
+                        </div>
+                    </div>
+                </div>
 
                 <Panel class="mx-6 mt-5" :title="$t('dashboard.upcoming')" :count="entries.length || null">
                     <template #action>
@@ -244,37 +335,13 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                     </div>
                 </Panel>
 
-                <div class="columns-[300px] gap-4 px-6 pt-5 pb-8">
-                    <Panel class="mb-5 break-inside-avoid" :title="$t('dashboard.create')">
-                        <div class="grid grid-cols-2 gap-1.5">
-                            <Link
-                                v-for="action in CREATE"
-                                :key="action.href"
-                                :href="action.href"
-                                class="flex min-h-20 flex-col items-center justify-center gap-2 rounded-[var(--r-sm)] bg-sunk px-2 py-3 text-ui font-medium tracking-[-0.01em] text-foreground no-underline hover:bg-sunk-2"
-                            >
-                                <svg
-                                    class="size-[22px] flex-none fill-none stroke-ink-2 stroke-[1.75] [stroke-linecap:round] [stroke-linejoin:round]"
-                                    viewBox="0 0 24 24"
-                                    aria-hidden="true"
-                                    v-html="action.icon"
-                                />
-                                {{ $t(action.label) }}
-                            </Link>
-                        </div>
-                    </Panel>
-
-                    <Panel
-                        v-if="footerRows.length"
-                        class="mb-5 break-inside-avoid"
-                        :title="owes ? $t('dashboard.todo') : $t('dashboard.quotesOut')"
-                        :count="owes ? openTasks + todo.length : quotesOut.length"
-                    >
-                        <template v-if="owes" #action>
-                            <Link class="ml-auto text-small text-ink-2 no-underline" href="/aufgaben">{{ $t("dashboard.allTasks") }}</Link>
+                <div v-if="cards.length" class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] items-start gap-4 px-6 pt-5">
+                    <Panel v-for="card in cards" :key="card.key" :title="card.title" :count="card.count">
+                        <template v-if="card.href" #action>
+                            <Link class="ml-auto text-small text-ink-2 no-underline" :href="card.href">{{ card.link }}</Link>
                         </template>
 
-                        <div v-for="(row, index) in footerRows" :key="row.key" class="flex items-center gap-3 py-2" :class="ROW">
+                        <div v-for="(row, index) in card.rows" :key="row.key" class="flex items-center gap-3 py-2" :class="ROW">
                             <div class="min-w-0 flex-1">
                                 <Link class="block truncate text-ui font-semibold tracking-[-0.015em] text-foreground no-underline" :href="row.href">
                                     {{ row.who }}
@@ -292,37 +359,25 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                             </Button>
                         </div>
                     </Panel>
+                </div>
 
-                    <Panel class="mb-5 break-inside-avoid" :title="$t('dashboard.figures')">
-                        <template #action>
-                            <Link class="ml-auto text-small tracking-[-0.01em] text-ring no-underline hover:underline" href="/auswertungen">
-                                {{ $t("dashboard.reports") }}
-                            </Link>
-                        </template>
-
-                        <div class="mb-3.5 flex gap-1.5">
+                <div class="columns-[300px] gap-4 px-6 pt-5 pb-8">
+                    <Panel class="mb-5 break-inside-avoid" :title="$t('dashboard.create')">
+                        <div class="grid grid-cols-2 gap-1.5">
                             <Link
-                                v-for="option in RANGES"
-                                :key="option.key"
-                                :href="`/?zeitraum=${option.key}`"
-                                class="rounded-[var(--r-sm)] px-3.5 py-[5px] text-small font-medium tracking-[-0.01em] no-underline"
-                                :class="range === option.key ? 'bg-foreground font-semibold text-background' : 'text-ink-2 shadow-[inset_0_0_0_1px_var(--line-hover)]'"
+                                v-for="action in CREATE"
+                                :key="action.href"
+                                :href="action.href"
+                                class="flex min-h-20 flex-col items-center justify-center gap-2 rounded-[var(--r-sm)] bg-sunk px-2 py-3 text-ui font-medium tracking-[-0.01em] text-foreground no-underline hover:bg-sunk-2"
                             >
-                                {{ $t(option.label) }}
+                                <svg
+                                    class="size-[22px] flex-none fill-none stroke-ink-2 stroke-[1.75] [stroke-linecap:round] [stroke-linejoin:round]"
+                                    viewBox="0 0 24 24"
+                                    aria-hidden="true"
+                                    v-html="action.icon"
+                                />
+                                {{ $t(action.label) }}
                             </Link>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-x-4 gap-y-3.5">
-                            <div v-for="figure in figures" :key="figure.key">
-                                <div class="text-small text-ink-2">{{ figure.label }}</div>
-                                <div
-                                    class="mt-[3px] flex items-baseline gap-1 text-[21px] leading-none font-semibold tracking-[-0.03em] tabular-nums"
-                                    :class="figure.warn && 'text-due'"
-                                >
-                                    {{ figure.value }}<span v-if="figure.unit" class="text-[0.62em] font-medium text-ink-2">{{ figure.unit }}</span>
-                                </div>
-                                <div v-if="figure.note" class="mt-[3px] text-small tabular-nums text-faint">{{ figure.note }}</div>
-                            </div>
                         </div>
                     </Panel>
 

@@ -10,7 +10,7 @@
  */
 import { computed, ref, watch } from "vue"
 import { dayWithWeekday } from "@/admin/lib/dates"
-import { NOTICEABLE_DAYS, filterQueue } from "@/admin/lib/leadQueue"
+import { NOTICEABLE_DAYS, filterQueue, since } from "@/admin/lib/leadQueue"
 import { useQueueQuery } from "@/admin/lib/queueQuery"
 import { Input } from "@/ui/input"
 import { Queue, QueueGroup, QueueItem } from "@/ui/queue"
@@ -37,16 +37,6 @@ const shown = computed(() => filterQueue(props.groups, term.value, waiting.value
 watch(shown, (groups) => emit("update:rows", groups.flatMap((group) => group.rows)), {
     immediate: true,
 })
-
-// Same wording the board's table carries in its Zuletzt column.
-function since(days: number) {
-    return days < 1
-        ? "heute"
-        : new Intl.RelativeTimeFormat("de-DE", { numeric: "auto" }).format(
-              -days,
-              "day",
-          )
-}
 </script>
 
 <template>

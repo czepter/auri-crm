@@ -72,7 +72,7 @@ it('keys the booking rate on capture, so a month cannot exceed 100%', function (
     // Captured last month, booked today. Both sides of the ratio belong to
     // last month; a booking-dated numerator would give this month 100% off
     // an empty denominator.
-    $captured = now()->subMonth();
+    $captured = now()->subMonthNoOverflow();
 
     Lead::factory()->count(3)->create(['captured_at' => $captured, 'stage' => LeadStage::New]);
     Lead::factory()->create(['captured_at' => $captured, 'stage' => LeadStage::Booked]);
@@ -93,9 +93,9 @@ it('puts every month of the window on the funnel, including the ones without a l
 
     expect($months)->toHaveCount(4)
         ->and($months->pluck('month')->all())->toBe([
-            now()->subMonths(3)->format('Y-m'),
-            now()->subMonths(2)->format('Y-m'),
-            now()->subMonth()->format('Y-m'),
+            now()->subMonthsNoOverflow(3)->format('Y-m'),
+            now()->subMonthsNoOverflow(2)->format('Y-m'),
+            now()->subMonthNoOverflow()->format('Y-m'),
             now()->format('Y-m'),
         ])
         ->and($months->first()['captured'])->toBe(0)
@@ -180,7 +180,7 @@ it('books received money in its settlement month, not its due month', function (
     PaymentInstallment::factory()->for($plan, 'plan')->create([
         'amount' => 50_000,
         'due_on' => now()->startOfMonth(),
-        'paid_on' => now()->addMonth()->startOfMonth(),
+        'paid_on' => now()->addMonthNoOverflow()->startOfMonth(),
         'status' => PaymentInstallmentStatus::Paid,
     ]);
 
@@ -400,7 +400,7 @@ it('reads the lead-time steps in the unit most of the lead times fall into', fun
 });
 
 it('counts the shooting days by the date they fall on', function () {
-    Shoot::factory()->create(['date' => now()->subMonth()]);
+    Shoot::factory()->create(['date' => now()->subMonthNoOverflow()]);
     Shoot::factory()->count(2)->create(['date' => now()]);
     Shoot::factory()->create(['date' => null]);
 
@@ -409,7 +409,7 @@ it('counts the shooting days by the date they fall on', function () {
     expect($months->sum('shoots'))->toBe(3)
         ->and($months->firstWhere('month', now()->format('Y-m'))['shoots'])->toBe(2)
         // Ein Monat ohne Termin steht mit 0 in der Reihe statt zu fehlen.
-        ->and($months->firstWhere('month', now()->subMonths(6)->format('Y-m'))['shoots'])->toBe(0);
+        ->and($months->firstWhere('month', now()->subMonthsNoOverflow(6)->format('Y-m'))['shoots'])->toBe(0);
 });
 
 // --- RevenueReport ------------------------------------------------------
