@@ -11,10 +11,12 @@ import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 import { Textarea } from '@/ui/textarea'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   closures: App.Settings.Data.StudioClosureData[]
 }>()
+useLiveProps(['closures'])
 
 const rowForms = Object.fromEntries(
   props.closures.map((closure) => [

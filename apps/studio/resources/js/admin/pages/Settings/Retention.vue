@@ -12,6 +12,7 @@ import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 import { Switch } from '@/ui/switch'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Policy = App.Privacy.Data.RetentionPolicyData
 type Part = keyof Policy
@@ -22,6 +23,7 @@ const props = defineProps<{
   candidates: App.Privacy.Data.RetentionCandidateData[]
   funnel: { total: number; booked: number }
 }>()
+useLiveProps(['months', 'policy', 'candidates', 'funnel'])
 
 const PARTS: Part[] = ['name', 'text', 'messages', 'offers', 'galleries', 'order']
 const TEMPLATES: { id: string; policy: Policy }[] = [

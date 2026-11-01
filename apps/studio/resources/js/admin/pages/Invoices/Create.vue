@@ -17,6 +17,7 @@ import { DatePicker } from '@/ui/date-picker'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { centsToEuros, formatEuros } from '@/admin/lib/money'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Rate = { id: string; label: string; amount: number; dueOn: string }
 
@@ -30,6 +31,7 @@ const props = defineProps<{
   studioSettings: App.Settings.Data.StudioSettingsData
   missingInvoiceData: string[]
 }>()
+useLiveProps([])
 
 // IssueInvoice weist eine Rechnung ohne Steuernummer ohnehin ab; das Fenster
 // steht vor dem Formular statt hinter dem Absenden.

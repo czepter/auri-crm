@@ -10,6 +10,7 @@ import { Button } from "@/ui/button";
 import { formatEurosRounded } from "@/admin/lib/money";
 import { weekFrom } from "@/admin/lib/dates";
 import { NOTICEABLE_DAYS, since } from "@/admin/lib/leadQueue";
+import { useLiveProps } from "@/admin/lib/liveReload";
 
 type Entry = {
     date: string;
@@ -47,6 +48,7 @@ const props = defineProps<{
     projects: { key: string; rows: App.Crm.Data.CaseQueueRowData[] }[];
     galleries: App.Crm.Data.DomainRowData[];
 }>();
+useLiveProps(["today", "entries", "pipeline", "payments", "quotes", "shoots", "activity", "tasks", "openTasks", "todo", "dunning", "leads", "projects", "galleries"]);
 
 const { t } = useI18n();
 

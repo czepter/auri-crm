@@ -4,6 +4,7 @@ import { toast } from 'vue-sonner'
 import SendByMailView from '@/admin/components/SendByMailView.vue'
 import { toPlainText } from '@/admin/documents/blocks/serialize'
 import type { EditorDocument } from '@/admin/documents/blocks/types'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   projectId: string
@@ -13,6 +14,7 @@ const props = defineProps<{
   address: 'sie' | 'du' | 'ihr'
   mailHtml: string
 }>()
+useLiveProps([])
 
 const message: EditorDocument = {
   blocks: [

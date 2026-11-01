@@ -4,6 +4,8 @@ const { reload, on } = vi.hoisted(() => ({
   reload: vi.fn(),
   on: vi.fn(),
 }))
+const unmounted = vi.hoisted(() => [] as (() => void)[])
+vi.mock('vue', () => ({ onUnmounted: (fn: () => void) => unmounted.push(fn) }))
 vi.mock('@inertiajs/vue3', () => ({ router: { reload, on } }))
 vi.useFakeTimers()
 
@@ -27,7 +29,7 @@ class FakeEventSource {
 
 vi.stubGlobal('EventSource', FakeEventSource)
 
-const { followLiveUpdates } = await import('./liveReload')
+const { followLiveUpdates, useLiveProps } = await import('./liveReload')
 
 beforeEach(() => {
   followLiveUpdates(null)
@@ -44,6 +46,21 @@ it('opens one source per session and reloads on an event', () => {
 
   FakeEventSource.opened[0].onmessage!()
   expect(reload).toHaveBeenCalledOnce()
+  expect(reload).toHaveBeenCalledWith({ except: expect.arrayContaining(['letterEditor']) })
+})
+
+it('reloads only the props a page registered', () => {
+  followLiveUpdates('/hub')
+  useLiveProps(['assets'])
+  vi.advanceTimersByTime(2000)
+
+  FakeEventSource.opened[0].onmessage!()
+  expect(reload).toHaveBeenCalledWith({ only: ['nav', 'assets'] })
+
+  unmounted.forEach((fn) => fn())
+  vi.advanceTimersByTime(2000)
+  FakeEventSource.opened[0].onmessage!()
+  expect(reload).toHaveBeenLastCalledWith({ except: expect.any(Array) })
 })
 
 it('skips the reload while a visit is under way', () => {

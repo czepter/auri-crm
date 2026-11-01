@@ -7,6 +7,7 @@ import PageHead from '@/ui/page/PageHead.vue'
 import Empty from '@/ui/page/Empty.vue'
 import GallerySettings from '@/admin/components/GallerySettings.vue'
 import { Button } from '@/ui/button'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   galleries: App.Gallery.Data.GalleryRowData[]
@@ -14,6 +15,8 @@ const props = defineProps<{
   presets: App.Gallery.Data.GalleryPresetData[]
   galleryHost: string
 }>()
+
+useLiveProps(['galleries', 'settings', 'presets'])
 
 // G-14: der Abschnitt steht in der Adresse, damit die alten Einstellungspfade
 // hierher zeigen können. Ohne ihn bleibt der Raum zu.

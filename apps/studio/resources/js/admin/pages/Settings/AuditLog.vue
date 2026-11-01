@@ -10,6 +10,7 @@ import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { NONE, fromOption, toOption } from '@/lib/select'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Option = { value: string; label: string }
 
@@ -20,6 +21,7 @@ const props = defineProps<{
   events: Option[]
   people: Option[]
 }>()
+useLiveProps(['entries', 'nextCursor', 'events', 'people'])
 
 const query = reactive({ ...props.filters })
 

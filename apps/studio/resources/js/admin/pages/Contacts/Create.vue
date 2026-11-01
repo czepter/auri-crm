@@ -7,8 +7,10 @@ import Card from '@/ui/page/Card.vue'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 defineProps<{ portalDefaults: Record<string, string | boolean | null> }>()
+useLiveProps([])
 
 // P-09 (#228): '' is Standard, and the sheet's own encoding — the transform
 // below drops it, so a contact is born with only the keys that depart.

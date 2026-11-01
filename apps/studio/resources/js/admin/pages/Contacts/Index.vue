@@ -8,8 +8,10 @@ import Empty from '@/ui/page/Empty.vue'
 import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
 import { Button } from '@/ui/button'
 import { groupContacts } from '@/admin/lib/contactQueue'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{ contacts: App.Crm.Data.ContactRowData[] }>()
+useLiveProps(['contacts'])
 
 // C-15 (#251): grouped by standing, not alphabetically. Who the studio is
 // working with right now is the question this screen is opened with.

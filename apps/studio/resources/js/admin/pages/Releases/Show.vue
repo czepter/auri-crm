@@ -11,6 +11,7 @@ import {
     sectionLabel,
     type ReleaseDetail,
 } from "@/admin/lib/releases"
+import { useLiveProps } from "@/admin/lib/liveReload"
 
 /*
  * Ein Release mit allem, was darin steckt. Die Titel sind die Commit-Betreffe,
@@ -22,6 +23,7 @@ const props = defineProps<{
     installed: string
     mediaBase: string | null
 }>()
+useLiveProps([])
 
 const filter = ref<string | null>(null)
 const open = ref<Record<string, boolean>>({})

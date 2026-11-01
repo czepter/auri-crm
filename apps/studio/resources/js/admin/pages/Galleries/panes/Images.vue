@@ -241,8 +241,6 @@ async function run(files: File[], replacements: Map<string, string>) {
       row.status = 'error'
     }
   }
-
-  router.reload({ only: ['assets', 'sets'] })
 }
 
 function skipDuplicates() {

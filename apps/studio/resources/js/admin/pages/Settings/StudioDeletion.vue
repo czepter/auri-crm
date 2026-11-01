@@ -8,8 +8,10 @@ import SettingsNav from '@/admin/components/SettingsNav.vue'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 import { PinInput, PinInputGroup, PinInputSlot } from '@/ui/pin-input'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 defineProps<{ codeSent: boolean; graceDays: number }>()
+useLiveProps(['codeSent', 'studioDeletion'])
 
 const page = usePage()
 

@@ -6,6 +6,7 @@ import QuoteCard from '@/admin/components/quote/QuoteCard.vue'
 import { toPlainText } from '@/admin/documents/blocks/serialize'
 import type { EditorDocument } from '@/admin/documents/blocks/types'
 import { formatEuros } from '@/admin/lib/money'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   invoiceId: string
@@ -19,6 +20,7 @@ const props = defineProps<{
   message: string
   mailHtml: string
 }>()
+useLiveProps([])
 
 const message: EditorDocument = {
   blocks: props.message.split('\n\n').map((text) => ({ type: 'paragraph', data: { text } })),

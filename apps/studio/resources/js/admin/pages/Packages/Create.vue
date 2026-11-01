@@ -7,12 +7,14 @@ import PageHead from '@/ui/page/PageHead.vue'
 import PackageItemsEditor from '@/admin/components/PackageItemsEditor.vue'
 import PackagePriceSummary from '@/admin/components/PackagePriceSummary.vue'
 import { eurosToCents } from '@/admin/lib/money'
+import { useLiveProps } from '@/admin/lib/liveReload'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Field } from '@/ui/field'
 import { Label } from '@/ui/label'
 
 defineProps<{ catalogItems: App.Catalog.Data.CatalogItemData[] }>()
+useLiveProps([])
 
 const form = useForm({
   name: '',

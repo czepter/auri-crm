@@ -16,6 +16,7 @@ import { publishLabelKey, showPublish as showPublishRule, showWithdraw as showWi
 import { xsrfHeader } from '@/admin/lib/multipartUpload'
 import Images from '@/admin/pages/Galleries/panes/Images.vue'
 import Settings from '@/admin/pages/Galleries/panes/Settings.vue'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const { t } = useI18n()
 
@@ -84,6 +85,8 @@ const props = withDefaults(defineProps<{
   failedAssets: () => [],
   pendingUploads: () => [],
 })
+
+useLiveProps(['gallery', 'siblings', 'figures', 'sets', 'assets', 'versions', 'builds', 'lists', 'activity', 'failedAssets', 'pendingUploads'])
 
 const tab = computed(() => props.area)
 

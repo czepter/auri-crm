@@ -14,6 +14,7 @@ import { Label } from '@/ui/label'
 import { Textarea } from '@/ui/textarea'
 import { NONE, fromOption, toOption } from '@/lib/select'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   mode: 'internal' | 'external'
@@ -28,6 +29,8 @@ const props = defineProps<{
     design: Record<string, string>
   }
 }>()
+
+useLiveProps([])
 
 const MODES = ['internal', 'external']
 

@@ -9,8 +9,10 @@ import { Field } from '@/ui/field'
 import { NONE, fromOption, toOption } from '@/lib/select'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Label } from '@/ui/label'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 defineProps<{ projectTypes: { value: string; label: string }[] }>()
+useLiveProps([])
 
 const form = useForm({
   name: '',

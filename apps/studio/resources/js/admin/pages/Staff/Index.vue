@@ -12,6 +12,7 @@ import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Member = {
   id: string
@@ -31,6 +32,7 @@ defineProps<{
   roles: { value: string; label: string; capabilities: string[] }[]
   capabilities: { value: string; label: string }[]
 }>()
+useLiveProps(['staff', 'invitations'])
 
 const inviting = ref(false)
 const form = useForm({ name: '', email: '', role: 'contributor' })

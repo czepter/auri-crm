@@ -10,6 +10,7 @@ import { ChoiceGroup } from '@/ui/choice-group'
 import PageHead from '@/ui/page/PageHead.vue'
 import Empty from '@/ui/page/Empty.vue'
 import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   view: 'monat' | 'liste' | 'saison'
@@ -25,6 +26,7 @@ const props = defineProps<{
   workingDays: number[] | null
   settingsOpen: boolean
 }>()
+useLiveProps(['days', 'shoots', 'projects', 'mine', 'season', 'workingDays'])
 
 const seasonLabel = ref('')
 

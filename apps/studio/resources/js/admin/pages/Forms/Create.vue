@@ -8,6 +8,7 @@ import Card from '@/ui/page/Card.vue'
 import ProjectTypeahead from '@/admin/components/ProjectTypeahead.vue'
 import FormFieldsEditor from '@/admin/components/FormFieldsEditor.vue'
 import { toPayload, toRow } from '@/admin/lib/formFields'
+import { useLiveProps } from '@/admin/lib/liveReload'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { Field } from '@/ui/field'
@@ -21,6 +22,7 @@ const props = defineProps<{
   fieldTypes: { value: string; label: string }[]
   instance: App.Crm.Data.FormInstanceData | null
 }>()
+useLiveProps([])
 
 const project = ref(props.project)
 

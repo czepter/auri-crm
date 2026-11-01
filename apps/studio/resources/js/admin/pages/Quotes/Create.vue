@@ -10,6 +10,7 @@ import QuoteWorkspace from '@/admin/components/QuoteWorkspace.vue'
 import BusinessDataGate from '@/admin/pages/Settings/panes/BusinessDataGate.vue'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   project: App.Crm.Data.CaseSuggestionData | null
@@ -22,6 +23,7 @@ const props = defineProps<{
   studioSettings: App.Settings.Data.StudioSettingsData
   missingBusinessData: string[]
 }>()
+useLiveProps(['quotes', 'packages', 'catalogItems', 'contacts'])
 
 // Offen, solange Impressumsdaten fehlen; „Abbrechen" führt zurück, ohne zu
 // speichern, damit niemand im Formular festsitzt.

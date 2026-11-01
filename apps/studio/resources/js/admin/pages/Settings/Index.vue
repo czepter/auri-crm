@@ -15,6 +15,7 @@ import DocumentPreview from './previews/DocumentPreview.vue'
 import MailPreview from './previews/MailPreview.vue'
 import { Button } from '@/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   pane: 'payment' | 'receipts' | 'email' | 'general'
@@ -22,6 +23,7 @@ const props = defineProps<{
   mailSenderFromEnv: { name: boolean; address: boolean }
   settings: App.Settings.Data.StudioSettingsData
 }>()
+useLiveProps(['settings', 'mailSenderFromEnv'])
 
 // Template refs onto the extracted panes — each exposes { form, submit }
 // (see panes/ProfileForm.vue and its siblings). Only the panes of the current

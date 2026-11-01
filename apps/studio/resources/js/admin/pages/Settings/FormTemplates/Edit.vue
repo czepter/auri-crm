@@ -13,6 +13,7 @@ import { NONE, fromOption, toOption } from '@/lib/select'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const { t } = useI18n()
 
@@ -21,6 +22,7 @@ const props = defineProps<{
   projectTypes: { value: string; label: string }[]
   fieldTypes: { value: string; label: string }[]
 }>()
+useLiveProps(['template', 'projectTypes'])
 
 const form = useForm({
   name: props.template.name,

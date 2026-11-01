@@ -17,6 +17,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { formatEurosRounded } from '@/admin/lib/money'
 import { useI18n } from 'vue-i18n'
 import { MAX_DOTS, type Tone } from '@/admin/lib/metricDots'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? ''
 
@@ -88,6 +89,7 @@ const props = defineProps<{
   offerablePackages: { id: string; name: string; price: number | null; priceMode: string; requiresDate: boolean }[]
   portalLogins: { count: number; firstAt: string | null; lastAt: string | null }
 }>()
+useLiveProps(['contacts', 'contact', 'billingAddress', 'correspondence', 'projects', 'galleries', 'connected', 'suggestions', 'offerablePackages', 'portalLogins', 'portalAccessRevokedAt', 'canRevokePortalAccess', 'canSendPortalAccess', 'dsgvoErasedAt', 'canManageDsgvo', 'portalDefaults', 'portalOverrides', 'canPreviewPortal', 'dsgvoRequests'])
 
 const { t } = useI18n()
 

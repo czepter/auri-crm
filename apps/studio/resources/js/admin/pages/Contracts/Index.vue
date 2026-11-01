@@ -9,8 +9,10 @@ import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
 import { Input } from '@/ui/input'
 import { Button } from '@/ui/button'
 import { dayWithWeekday } from '@/admin/lib/dates'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{ contracts: App.Contracts.Data.ContractRowData[] }>()
+useLiveProps(['contracts'])
 
 const query = ref('')
 

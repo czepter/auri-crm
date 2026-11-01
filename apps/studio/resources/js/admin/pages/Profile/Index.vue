@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import SessionList from './SessionList.vue'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   pane: 'konto' | 'sicherheit' | 'benachrichtigungen' | 'kalender'
@@ -22,6 +23,7 @@ const props = defineProps<{
   events: Record<string, Mode>
   briefable: Record<string, boolean>
 }>()
+useLiveProps(['user', 'pendingEmail', 'mfaConfirmed', 'sessions', 'recoveryCodesLeft', 'digestFrequency', 'calendarFeedUrl', 'events'])
 
 type Mode = 'immediate' | 'briefing' | 'digest' | 'off'
 

@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DatePicker } from '@/ui/date-picker'
 import { Label } from '@/ui/label'
 import { dayWithWeekday, isoDate } from '@/admin/lib/dates'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const { t } = useI18n()
 
@@ -28,6 +29,7 @@ const props = defineProps<{
   staffOptions: { value: string; label: string }[]
   anchors: { value: string; label: string; group: string; on: string | null }[]
 }>()
+useLiveProps(['header', 'tasks', 'shootOptions', 'staffOptions', 'anchors'])
 
 const shoot = ref('all')
 const audience = ref('all')

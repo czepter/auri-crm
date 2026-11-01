@@ -10,6 +10,7 @@ import {
     sectionCounts,
     type FeedItem,
 } from "@/admin/lib/releases"
+import { useLiveProps } from "@/admin/lib/liveReload"
 
 /*
  * Der Feed. Die Einträge selbst liegen hinter der Zeile — release-log gibt
@@ -21,6 +22,7 @@ defineProps<{
     installed: string
     mediaBase: string | null
 }>()
+useLiveProps([])
 </script>
 
 <template>

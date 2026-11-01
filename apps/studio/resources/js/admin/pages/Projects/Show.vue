@@ -25,6 +25,7 @@ import Section from "@/ui/page/Section.vue";
 import { formatEurosRounded } from "@/admin/lib/money";
 import { quoteChipClass } from "@/admin/lib/quoteDisplay";
 import { dayWithWeekday as day } from "@/admin/lib/dates";
+import { useLiveProps } from "@/admin/lib/liveReload";
 
 type ProjectFieldDefinition = InstanceType<typeof ProjectFields>["$props"]["fields"][number];
 
@@ -80,6 +81,7 @@ const props = defineProps<{
         next: { key: string; label: string };
     } | null;
 }>();
+useLiveProps(["header", "shoots", "shootKinds", "tasks", "shootOptions", "staffOptions", "anchors", "thread", "scope", "quote", "supersededQuotes", "packages", "people", "fields", "fieldValues", "stages", "presets", "stage", "source", "sourceOther", "sourceLabel", "inquiry", "stalled"]);
 
 const { t } = useI18n();
 

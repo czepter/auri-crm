@@ -18,8 +18,10 @@ import InstallmentStornoDialog from '@/admin/components/InstallmentStornoDialog.
 import CreditNoteDialog from '@/admin/components/CreditNoteDialog.vue'
 import { formatEuros } from '@/admin/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{ invoices: App.Payments.Data.InvoiceRowData[], exportYears: number[] }>()
+useLiveProps(['invoices', 'exportYears'])
 
 const { t } = useI18n()
 
