@@ -57,8 +57,10 @@ return [
     // Astro process (docker-compose.yml's `gallery` service, default port
     // matching GALLERY_PORT there) — never the studio host this app itself
     // answers on. Gallery::publicUrl() is the only place this is read.
+    // Coolify's ${SERVICE_FQDN_GALLERY_4321} is the bare host; without a
+    // scheme publicUrl() resolves relative to the current surface.
     'gallery' => [
-        'url' => env('GALLERY_URL', 'http://localhost:4321'),
+        'url' => rtrim((string) $withScheme(env('GALLERY_URL') ?: 'http://localhost:4321'), '/'),
     ],
 
     // Die anderen zwei Surfaces, wie sie von außen erreichbar sind. Der
