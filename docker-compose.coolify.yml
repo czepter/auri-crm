@@ -154,6 +154,7 @@ services:
       SERVICE_FQDN_GALLERY_4321:
       API_URL: http://api:8080
       PUBLIC_API_URL: ${SERVICE_URL_API}
+      PUBLIC_PORTAL_URL: ${SERVICE_URL_PORTAL}
       SENTRY_DSN: ${GALLERY_SENTRY_DSN}
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4321/').then(()=>process.exit(0),()=>process.exit(1))"]
