@@ -151,7 +151,7 @@ services:
     image: ghcr.io/czepter/auri-crm/gallery:${VERSION}
     restart: unless-stopped
     environment:
-      SERVICE_FQDN_GALLERY_4321:
+      SERVICE_URL_GALLERY_4321:
       API_URL: http://api:8080
       PUBLIC_API_URL: ${SERVICE_URL_API}
       PUBLIC_PORTAL_URL: ${SERVICE_URL_PORTAL}
