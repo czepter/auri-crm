@@ -117,6 +117,11 @@ const PUBLIC_ROUTES = [
         // GalleryDraftImageController itself — the same shape as the
         // password pass above, not an `audience:` guard.
         'api/galleries/{gallery}/entwurf-bilder/{key}',
+        // Der Download des Gastes: Ansichtspass, PIN-Pass und Gast-Pass als
+        // Credentials, die Teile zusätzlich über die Signatur.
+        'api/galleries/{gallery}/download', 'api/galleries/{gallery}/download/pin',
+        'api/galleries/{gallery}/download/vorbereiten',
+        'api/galleries/{gallery}/download/{zipBuildPart}/{guestId}',
     ],
 
     // The client's way in. Public by necessity — the only person who needs it

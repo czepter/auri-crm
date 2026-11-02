@@ -4,7 +4,7 @@ namespace App\Gallery\Http\Controllers;
 
 use App\Gallery\Actions\ConsumeGalleryEmailVerification;
 use App\Gallery\Actions\RequestGalleryEmailVerification;
-use App\Gallery\Jobs\BuildZip;
+use App\Gallery\Actions\StartZipBuild;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryDownloadLink;
 use App\Gallery\Models\GalleryGuest;
@@ -12,17 +12,13 @@ use App\Gallery\Models\GalleryList;
 use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Support\GalleryAccessSession;
 use App\Gallery\Support\GallerySecretGate;
+use App\Gallery\Support\ZipSizes;
 use App\Gallery\Support\GalleryVisitor;
 use App\Http\Controllers\Controller;
-use App\Media\Enums\AssetStatus;
-use App\Media\Enums\ZipBuildScope;
 use App\Media\Enums\ZipBuildSize;
 use App\Media\Enums\ZipBuildStatus;
-use App\Media\Models\Asset;
-use App\Media\Models\AssetDerivative;
 use App\Media\Models\ZipBuild;
 use App\Media\Models\ZipBuildPart;
-use App\Media\Models\ZipBuildWaiter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -100,11 +96,7 @@ class GalleryDownloadController extends Controller
         return redirect()->route('gallery.download.show', ['gallery' => $gallery->public_id]);
     }
 
-    /**
-     * "Bilder vorbereiten". Reuses a Ready build rather than making a second
-     * archive of the same bytes; a Failed one is rebuilt, and anything older
-     * than the window below is rebuilt too, because its parts are stale.
-     */
+    /** "Bilder vorbereiten". */
     public function prepare(Request $request, Gallery $gallery, GalleryAccessSession $claims): RedirectResponse
     {
         abort_unless($this->step($gallery, $claims) === 'ready', 404);
@@ -121,34 +113,13 @@ class GalleryDownloadController extends Controller
             ? null
             : $this->ownList($gallery, $validated['list']);
 
-        $size = ZipBuildSize::from($validated['size']);
-
-        $build = ZipBuild::query()->firstOrNew([
-            'gallery_version_id' => $version->id,
-            'scope' => $list === null ? ZipBuildScope::All : ZipBuildScope::ListSelection,
-            'size' => $size,
-            'gallery_list_id' => $list?->id,
-        ]);
-
-        if ($build->exists && $build->status === ZipBuildStatus::Ready && $this->isFresh($build)) {
-            return back();
-        }
-
-        // Ein laufender Build wird weder neu gestartet noch seine Teile gelöscht; nach dem
-        // media.zip-Timeout gilt er als tot.
-        if ($build->exists && $build->status === ZipBuildStatus::Building
-            && $build->updated_at->gt(now()->subSeconds(config('horizon.defaults.supervisor-media-zip.timeout')))) {
-            $this->waitFor($build, $gallery, $claims);
-
-            return back();
-        }
-
-        $build->fill(['status' => ZipBuildStatus::Building, 'error' => null])->save();
-        $build->parts()->delete();
-
-        $this->waitFor($build, $gallery, $claims);
-
-        BuildZip::dispatch($build);
+        app(StartZipBuild::class)(
+            $version,
+            ZipBuildSize::from($validated['size']),
+            $list,
+            $claims->verifiedEmail($gallery) ?? $this->clientEmail($gallery),
+            self::PARTS_LIVE_HOURS,
+        );
 
         return back();
     }
@@ -249,10 +220,6 @@ class GalleryDownloadController extends Controller
      * What a visitor may ask for: everything, plus the signed-in client's own
      * selections (#225). A guest sees only "Alle" — a named list belongs to
      * the client, and G-02 draws the same line in the grid's filter bar.
-     *
-     * Sizes come off Asset::byte_size and the widest WebP derivative's own
-     * bytes, the same two numbers ZipVolumePlanner plans volumes with, so
-     * the figure on the line is the figure that gets transferred.
      */
     private function selections(Gallery $gallery, GalleryVersion $version): array
     {
@@ -267,7 +234,7 @@ class GalleryDownloadController extends Controller
             'id' => '',
             'name' => null,
             'count' => $keys->count(),
-            'sizes' => $this->sizesFor($gallery, $keys->all()),
+            'sizes' => ZipSizes::for($gallery, $keys->all()),
         ]];
 
         foreach ($this->visitor->lists($gallery) as $list) {
@@ -281,42 +248,11 @@ class GalleryDownloadController extends Controller
                 'id' => $list->public_id,
                 'name' => $list->name,
                 'count' => $onList->count(),
-                'sizes' => $this->sizesFor($gallery, $onList->all()),
+                'sizes' => ZipSizes::for($gallery, $onList->all()),
             ];
         }
 
         return $rows;
-    }
-
-    /**
-     * Bytes per size option for one set of keys.
-     *
-     * ponytail: two queries per selection row, so a client with four lists
-     * pays eight. Fine at a gallery's size; group them if a venue with forty
-     * lists ever appears.
-     *
-     * @param  list<string>  $keys
-     * @return array<string, int>
-     */
-    private function sizesFor(Gallery $gallery, array $keys): array
-    {
-        $assets = Asset::query()
-            ->where('gallery_id', $gallery->id)
-            ->whereIn('key', $keys)
-            ->where('status', AssetStatus::Ready)
-            ->get();
-
-        $web = AssetDerivative::query()
-            ->whereIn('asset_id', $assets->pluck('id'))
-            ->where('format', 'webp')
-            ->get()
-            ->groupBy('asset_id')
-            ->map(fn ($derivatives) => (int) $derivatives->sortByDesc('width')->first()?->bytes);
-
-        return [
-            ZipBuildSize::Original->value => (int) $assets->sum('byte_size'),
-            ZipBuildSize::Web->value => (int) $web->sum(),
-        ];
     }
 
     /**
@@ -379,25 +315,6 @@ class GalleryDownloadController extends Controller
         ]);
     }
 
-    /**
-     * Wer auf dieses Archiv wartet. Ein ZipBuild gehört niemandem — zwei
-     * Gäste, die dasselbe anfordern, teilen sich die Bände —, also hängt die
-     * Zustelladresse an einer eigenen Zeile und nicht am Bau.
-     */
-    private function waitFor(ZipBuild $build, Gallery $gallery, GalleryAccessSession $claims): void
-    {
-        $email = $claims->verifiedEmail($gallery) ?? $this->clientEmail($gallery);
-
-        if ($email === null) {
-            return;
-        }
-
-        ZipBuildWaiter::query()->firstOrCreate([
-            'zip_build_id' => $build->id,
-            'gallery_guest_id' => GalleryGuest::forGallery($gallery, $email)->id,
-        ]);
-    }
-
     /** Die Adresse eines angemeldeten Kunden dieser Galerie, sonst null. */
     private function clientEmail(Gallery $gallery): ?string
     {
@@ -444,12 +361,6 @@ class GalleryDownloadController extends Controller
         abort_if($found === null, 404);
 
         return $found;
-    }
-
-    /** ponytail: no reaper for stale volumes — see BuildGalleryZip's own note. A stale build is simply rebuilt. */
-    private function isFresh(ZipBuild $build): bool
-    {
-        return $build->updated_at->gt(now()->subHours(self::PARTS_LIVE_HOURS));
     }
 
     /**
