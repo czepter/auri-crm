@@ -51,6 +51,8 @@ it('redacts the Authorization and Cookie headers', function () {
         'headers' => [
             'Authorization' => 'Bearer secret-token',
             'Cookie' => 'studio_admin_session=abc123',
+            'X-Guest-Pass' => 'guest.abc.def.1.sig',
+            'X-Download-Pass' => 'download.abc.1.1.sig',
             'Accept' => 'application/json',
         ],
     ]);
@@ -60,6 +62,8 @@ it('redacts the Authorization and Cookie headers', function () {
 
     expect($headers['Authorization'])->toBe('[Filtered]')
         ->and($headers['Cookie'])->toBe('[Filtered]')
+        ->and($headers['X-Guest-Pass'])->toBe('[Filtered]')
+        ->and($headers['X-Download-Pass'])->toBe('[Filtered]')
         ->and($headers['Accept'])->toBe('application/json');
 });
 

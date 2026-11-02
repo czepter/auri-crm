@@ -21,9 +21,7 @@ const apiBase = process.env.API_URL ?? 'http://localhost:8000'
 const publicApi = process.env.PUBLIC_API_URL ?? apiBase
 const { galleryId } = Astro.params
 const requestId = Astro.locals.requestId
-// Der Download wohnt im Portal: dort liegen die PIN, die Adressprüfung und
-// die ZIP-Bände. Ein Pfad auf diesen Host lief ins Leere.
-const downloadUrl = `${(process.env.PUBLIC_PORTAL_URL ?? '').replace(/\/$/, '')}/galerien/${galleryId}/download`
+const downloadUrl = `/g/${galleryId}/download`
 const cookieName = passCookieName(galleryId!)
 const guestCookie = guestCookieName(galleryId!)
 // Zwei Cookies: der Pass bleibt undurchsichtig und signiert, der Name steht

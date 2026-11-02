@@ -5,6 +5,8 @@ use App\Engagement\Http\Controllers\InboundMailController;
 use App\Enums\Capability;
 use App\Gallery\Http\Controllers\AssetCommentController;
 use App\Gallery\Http\Controllers\AssetFavoriteController;
+use App\Gallery\Http\Controllers\DownloadZipPartController;
+use App\Gallery\Http\Controllers\GalleryDownloadOfferController;
 use App\Gallery\Http\Controllers\GalleryDraftImageController;
 use App\Gallery\Http\Controllers\GalleryGuestController;
 use App\Gallery\Http\Controllers\GalleryImageController;
@@ -110,6 +112,25 @@ Route::middleware('gallery.pass')->group(function () {
     Route::post('/galleries/{gallery}/guest/bestaetigung', [GalleryGuestController::class, 'confirm'])
         ->name('api.galleries.guest.confirm');
 });
+
+// Der Download des Gastes, damit er auf der Galerie-Adresse bleibt. Die PIN
+// kauft einen GalleryDownloadPass, die Adresse ist der bestätigte Gast; die
+// Teile liefert dieselbe Auslieferung wie im Portal.
+Route::middleware(['gallery.pass', 'gallery.feature:downloads'])->group(function () {
+    Route::get('/galleries/{gallery}/download', [GalleryDownloadOfferController::class, 'show'])
+        ->name('api.galleries.download.show');
+    Route::post('/galleries/{gallery}/download/pin', [GalleryDownloadOfferController::class, 'pin'])
+        ->name('api.galleries.download.pin');
+    Route::post('/galleries/{gallery}/download/vorbereiten', [GalleryDownloadOfferController::class, 'prepare'])
+        ->name('api.galleries.download.prepare');
+});
+
+// Außerhalb von gallery.pass: der Browser holt die Teile ohne Bearer, und die
+// Signatur wurde erst nach beiden Toren ausgestellt.
+Route::middleware(['gallery.feature:downloads', 'signed:relative'])
+    ->get('/galleries/{gallery}/download/{zipBuildPart}/{guestId}', DownloadZipPartController::class)
+    ->where('guestId', '[^/]{1,64}')
+    ->name('api.galleries.download.part');
 
 Route::middleware('gallery.pass')->group(function () {
     Route::get('/gallery-versions/{galleryVersion:public_id}/images/{key}', GalleryImageController::class)
