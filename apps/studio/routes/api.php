@@ -6,6 +6,7 @@ use App\Enums\Capability;
 use App\Gallery\Http\Controllers\AssetCommentController;
 use App\Gallery\Http\Controllers\AssetFavoriteController;
 use App\Gallery\Http\Controllers\DownloadZipPartController;
+use App\Gallery\Http\Controllers\GalleryAddressController;
 use App\Gallery\Http\Controllers\GalleryDownloadOfferController;
 use App\Gallery\Http\Controllers\GalleryDraftImageController;
 use App\Gallery\Http\Controllers\GalleryGuestController;
@@ -98,10 +99,12 @@ Route::get('/galleries/{gallery}/entwurf-bilder/{key}', GalleryDraftImageControl
     ->where('key', '.*')
     ->name('api.galleries.draft-images.show');
 
-// Implicit binding, not {gallery:public_id}: apps/gallery's own /g/{id}
-// route accepts a slug or a public_id (Gallery::resolveRouteBinding()),
-// and this is the read call it makes with whichever one is in the URL.
+// Implicit binding, not {gallery:public_id}: apps/gallery's
+// `/{prefix}/{slug}` route reads with `prefix~slug`, its `/{public_id}`
+// redirect with the public_id (Gallery::resolveRouteBinding()).
 Route::get('/galleries/{gallery}', GalleryReadController::class)->name('api.galleries.show');
+
+Route::get('/gallery-address/{reference}', GalleryAddressController::class)->name('api.gallery-address.show');
 
 // Die Anmeldung des Gastes. Hinter dem Ansichtspass, weil sie nur etwas ist,
 // das man in einer offenen Galerie tut — aber vor jedem Herz und jedem

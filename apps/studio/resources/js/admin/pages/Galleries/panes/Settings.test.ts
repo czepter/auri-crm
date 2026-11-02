@@ -22,7 +22,7 @@ const gallery = {
   id: 'g1',
   title: 'Hochzeit Bahlmann',
   slug: 'hochzeit-bahlmann',
-  url: 'http://localhost:4321/g/hochzeit-bahlmann',
+  url: 'http://localhost:4321/bahlmann/hochzeit-bahlmann',
   eventDate: null,
   viewPassword: null,
   downloadPin: null,
@@ -37,7 +37,7 @@ describe('Settings', () => {
   it('Allgemein shows the address, wrapped in the URL it produces', async () => {
     const html = await render({ ...base, settingsSection: 'allgemein' })
 
-    expect(html).toContain('http://localhost:4321/g/')
+    expect(html).toContain('http://localhost:4321/bahlmann/')
     expect(html).toContain('hochzeit-bahlmann')
     expect(html).toContain(de.galleryRecord.slugHint)
   })

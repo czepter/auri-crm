@@ -107,7 +107,7 @@ a root `.env` per worktree.
 |---|---|---|
 | Portal | http://localhost:8001 | The client-facing surface (`routes/portal.php`) |
 | API | http://localhost:8002 | `routes/api.php`, and what the gallery renders against |
-| Gallery | http://localhost:4321 | Guest-facing Astro SSR, `/g/:galleryId` |
+| Gallery | http://localhost:4321 | Guest-facing Astro SSR, `/:prefix/:slug` |
 | Mailpit | http://localhost:8025 | Every mail the app sends locally |
 | RustFS console | http://localhost:9001/rustfs/console/ | The `media` bucket (`studio` / `studio-media-secret`) |
 | Horizon | `/horizon` on the admin surface | Queue supervisors and failed jobs |

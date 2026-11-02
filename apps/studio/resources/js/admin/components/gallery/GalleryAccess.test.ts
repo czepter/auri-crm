@@ -18,7 +18,7 @@ function render(props: Record<string, unknown>) {
 
 const gallery = {
   id: 'g1',
-  url: 'https://example.test/g/unser-tag',
+  url: 'https://example.test/meier/unser-tag',
   viewPassword: 'geheim',
   requiresVerifiedEmail: false,
 }

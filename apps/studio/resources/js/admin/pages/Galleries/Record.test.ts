@@ -50,7 +50,7 @@ const gallery = {
   id: 'g1',
   title: 'Hochzeit Bahlmann',
   slug: 'hochzeit-bahlmann',
-  url: 'https://example.test/g/hochzeit-bahlmann',
+  url: 'https://example.test/bahlmann/hochzeit-bahlmann',
   eventDate: null,
   viewPassword: null,
   downloadPin: null,

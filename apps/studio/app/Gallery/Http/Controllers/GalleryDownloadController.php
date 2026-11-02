@@ -134,7 +134,7 @@ class GalleryDownloadController extends Controller
      */
     public function storePin(Request $request, string $gallery, GalleryAccessSession $claims, GallerySecretGate $gate): RedirectResponse
     {
-        $model = Gallery::findByPublicIdOrSlug($gallery);
+        $model = Gallery::findByReference($gallery);
         $requiresPin = $model === null || $model->requiresDownloadPin();
 
         if ($requiresPin) {

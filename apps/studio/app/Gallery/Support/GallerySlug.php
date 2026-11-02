@@ -5,9 +5,9 @@ namespace App\Gallery\Support;
 use Illuminate\Support\Str;
 
 /**
- * The readable half of a gallery's address (`galleries.slug`), globally
- * unique because `/galerien/{gallery}` carries no tenant — see
- * Gallery::resolveRouteBinding().
+ * The readable half of a gallery's address (`galleries.slug`), unique within
+ * its `prefix`. The prefix is formatted the same way and shares the reserved
+ * words, since it is the first segment on apps/gallery's host.
  *
  * Bounds: MIN 3 keeps a shared, un-tenanted namespace from filling with
  * meaningless two-letter handles; MAX 60 keeps a link glanceable in an email
@@ -15,13 +15,11 @@ use Illuminate\Support\Str;
  * (`galleries.title` itself caps at 255, Laravel's default string length —
  * a slug is a compressed address, not a mirror of it).
  *
- * RESERVED is the real, current list of static segments `/galerien/`
- * registers above `{gallery}` in routes/admin.php — a slug equal to one
- * would be a gallery that can never reach its own address. Grows with the
- * file; `extern` is in already, ahead of `/galerien/extern/neu` (not yet a
- * route — routes/admin.php has no such line today — but scheduled for the
- * next stage), since a gallery could otherwise slug itself into that word
- * before the route exists to reject it.
+ * RESERVED is the static segments `/galerien/` registers above `{gallery}`
+ * in routes/admin.php, plus the first segments apps/gallery serves itself
+ * (`api`, `health`, `build`, its asset paths, the legacy `g`) and the
+ * `download` page under an address. `extern` is in ahead of
+ * `/galerien/extern/neu`, which is not a route yet.
  */
 class GallerySlug
 {
@@ -29,7 +27,7 @@ class GallerySlug
 
     public const MAX = 60;
 
-    public const RESERVED = ['neu', 'extern'];
+    public const RESERVED = ['neu', 'extern', 'api', 'health', 'build', 'assets', '_astro', 'g', 'download'];
 
     public const PATTERN = '/^[a-z0-9]+(-[a-z0-9]+)*$/';
 

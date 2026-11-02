@@ -37,7 +37,7 @@ class GalleryDownloadOfferController extends Controller
 
     public function pin(Request $request, string $gallery, GallerySecretGate $gate, GalleryDownloadPass $pass, GalleryViewPass $view): JsonResponse
     {
-        $model = Gallery::findByPublicIdOrSlug($gallery);
+        $model = Gallery::findByReference($gallery);
 
         // Der String-Parameter umgeht gallery.pass (siehe GalleryPassController):
         // die Ansichtsfreigabe wird hier selbst geprüft, einheitlich als "gibt es nicht".
