@@ -18,8 +18,8 @@ beforeEach(function () {
     $this->gallery = Gallery::factory()->create();
 });
 
-it('mints a short-lived preview pass for the head button', function () {
-    $url = $this->post("/galerien/{$this->gallery->public_id}/vorschau")
+it('mints a short-lived preview pass for the head button as json', function () {
+    $url = $this->postJson("/galerien/{$this->gallery->public_id}/vorschau")
         ->assertOk()
         ->json('url');
 
@@ -27,6 +27,14 @@ it('mints a short-lived preview pass for the head button', function () {
 
     $token = explode('preview=', $url)[1];
     expect(app(GalleryPreviewPass::class)->opens($this->gallery, $token))->toBeTrue();
+});
+
+it('redirects the browser tab when the head button form posts without json accept', function () {
+    $response = $this->post("/galerien/{$this->gallery->public_id}/vorschau")
+        ->assertStatus(302);
+
+    expect($response->headers->get('Location'))
+        ->toStartWith($this->gallery->publicUrl().'?preview=');
 });
 
 it('refuses the head button for a role without manageMedia', function () {
@@ -45,10 +53,10 @@ it('refuses "Vorschaulink erzeugen" for a role without publish', function () {
 // fresh link kills every pass minted before it, the short button pass
 // included if one happened to still be open.
 it('revokes every earlier preview pass when a new link is generated', function () {
-    $buttonUrl = $this->post("/galerien/{$this->gallery->public_id}/vorschau")->json('url');
+    $buttonUrl = $this->postJson("/galerien/{$this->gallery->public_id}/vorschau")->json('url');
     $buttonToken = explode('preview=', $buttonUrl)[1];
 
-    $this->post("/galerien/{$this->gallery->public_id}/vorschau-link")->assertOk();
+    $this->postJson("/galerien/{$this->gallery->public_id}/vorschau-link")->assertOk();
 
     expect(app(GalleryPreviewPass::class)->opens($this->gallery->fresh(), $buttonToken))->toBeFalse();
 });
