@@ -191,6 +191,7 @@ services:
     restart: unless-stopped
     command: php artisan horizon
     stop_grace_period: 60s
+    mem_limit: 1g
     environment:
       APP_SURFACE: admin
       # This container's own surface, like every other service here: StudioDigest

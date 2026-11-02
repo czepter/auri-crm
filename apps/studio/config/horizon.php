@@ -299,29 +299,24 @@ return [
     'environments' => [
         'production' => [
             'supervisor-default' => [
-                'maxProcesses' => 10,
-                'balanceMaxShift' => 1,
-                'balanceCooldown' => 3,
+                'balance' => false,
+                'maxProcesses' => 2,
             ],
             'supervisor-mail' => [
-                'maxProcesses' => 4,
-                'balanceMaxShift' => 1,
-                'balanceCooldown' => 3,
+                'balance' => false,
+                'maxProcesses' => 1,
             ],
             'supervisor-render' => [
-                'maxProcesses' => 4,
-                'balanceMaxShift' => 1,
-                'balanceCooldown' => 3,
+                'balance' => false,
+                'maxProcesses' => 1,
             ],
             'supervisor-media-ingest' => [
-                'maxProcesses' => 4,
-                'balanceMaxShift' => 1,
-                'balanceCooldown' => 3,
+                'balance' => false,
+                'maxProcesses' => 2,
             ],
             'supervisor-media-zip' => [
-                'maxProcesses' => 2,
-                'balanceMaxShift' => 1,
-                'balanceCooldown' => 3,
+                'balance' => false,
+                'maxProcesses' => 1,
             ],
         ],
 
