@@ -4,8 +4,7 @@ import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
-import ContactTypeahead from '@/admin/components/ContactTypeahead.vue'
-import ProjectTypeahead from '@/admin/components/ProjectTypeahead.vue'
+import InvoiceTargetTypeahead from '@/admin/components/InvoiceTargetTypeahead.vue'
 import InvoicePreviewPane from '@/admin/components/InvoicePreviewPane.vue'
 import LetterField from '@/admin/components/LetterField.vue'
 import QuotePositionsCard from '@/admin/components/quote/QuotePositionsCard.vue'
@@ -23,6 +22,7 @@ type Rate = { id: string; label: string; amount: number; dueOn: string }
 
 const props = defineProps<{
   rates: Record<string, Rate[]>
+  billable: App.Crm.Data.CaseSuggestionData[]
   project: App.Crm.Data.CaseSuggestionData | null
   packages: App.Catalog.Data.PackageData[]
   catalogItems: App.Catalog.Data.CatalogItemData[]
@@ -122,10 +122,6 @@ function submit() {
 
         <div class="flex gap-6 px-6 pt-5 pb-8">
           <form class="grid w-[720px] max-w-full flex-none content-start gap-4" @submit.prevent="submit">
-            <Field :label="$t('invoicesCreate.project')">
-              <ProjectTypeahead v-model="project" />
-            </Field>
-
             <Field :label="$t('invoicesCreate.recipient')" :error="errors['contact.name'] ?? errors.contact_id">
               <div v-if="newContact" class="grid grid-cols-2 gap-3">
                 <Input v-model="newContact.name" :placeholder="$t('invoicesCreate.name')" required />
@@ -133,10 +129,16 @@ function submit() {
                 <Input v-model="newContact.street" class="col-span-2" :placeholder="$t('invoicesCreate.street')" />
                 <Input v-model="newContact.postcode" :placeholder="$t('invoicesCreate.postcode')" />
                 <Input v-model="newContact.city" :placeholder="$t('invoicesCreate.city')" />
+                <Button class="col-span-2 justify-self-start" type="button" variant="pill-muted" @click="newContact = null">
+                  {{ $t('common.edit') }}
+                </Button>
               </div>
-              <ContactTypeahead
+              <InvoiceTargetTypeahead
                 v-else
-                v-model="contact"
+                v-model:project="project"
+                v-model:contact="contact"
+                :rates="rates"
+                :billable="billable"
                 @create-new="(term) => (newContact = { name: term, email: '', street: '', postcode: '', city: '' })"
               />
             </Field>

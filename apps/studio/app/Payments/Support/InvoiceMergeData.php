@@ -127,9 +127,11 @@ class InvoiceMergeData implements MergeDataProvider
             return $invoice->items->pluck('title')->implode(', ');
         }
 
-        return $invoice->case->name.' — '.$invoice->installments
+        $rates = $invoice->installments
             ->map(fn (PaymentInstallment $row) => PaymentPlanData::labelForInstallment($row))
             ->implode(', ');
+
+        return collect([$invoice->case?->name, $rates])->filter()->implode(' — ');
     }
 
     /**
