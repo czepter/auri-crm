@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
-import PaymentInstallmentsEditor, { type PaymentInstallmentRow } from '@/admin/components/PaymentInstallmentsEditor.vue'
+import PaymentInstallmentsEditor, { type PaymentInstallmentRow } from '@/admin/components/payments/PaymentInstallmentsEditor.vue'
 import { Button } from '@/ui/button'
 import {
   Dialog,
@@ -15,7 +15,7 @@ import {
 } from '@/ui/dialog'
 import { Field } from '@/ui/field'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
-import { centsToEuros, eurosToCents } from '@/admin/lib/money'
+import { centsToEuros, eurosToCents } from '@/lib/money'
 
 const props = defineProps<{ plan: App.Payments.Data.PaymentPlanData }>()
 

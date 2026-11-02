@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, useId } from 'vue'
 import type { SliderDraft } from './quotePayload'
-import { eurosToCents } from '@/admin/lib/money'
+import { eurosToCents } from '@/lib/money'
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Label } from '@/ui/label'

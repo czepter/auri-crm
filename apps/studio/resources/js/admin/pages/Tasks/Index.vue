@@ -10,7 +10,7 @@
 import { computed, ref, watch } from 'vue'
 import { Link, router, useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import StudioTaskCreateDialog from '@/admin/components/StudioTaskCreateDialog.vue'
+import StudioTaskCreateDialog from '@/admin/components/crm/StudioTaskCreateDialog.vue'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
 import { Field } from '@/ui/field'

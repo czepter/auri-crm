@@ -3,7 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
-import { formatEuros } from '@/admin/lib/money'
+import { formatEuros } from '@/lib/money'
 
 type Rate = { id: string; label: string; amount: number; dueOn: string }
 

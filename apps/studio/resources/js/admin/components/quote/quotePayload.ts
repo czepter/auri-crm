@@ -1,5 +1,5 @@
-import { eurosToCents, parseDiscount } from '@/admin/lib/money'
-import { applyDiscount, lineAmount, spread, subtotal, vatLines } from './quoteTotals'
+import { eurosToCents, parseDiscount } from '@/lib/money'
+import { applyDiscount, lineAmount, spread, subtotal, vatLines } from '@/lib/quoteTotals'
 
 export type PricingMode = 'classic' | 'choice'
 

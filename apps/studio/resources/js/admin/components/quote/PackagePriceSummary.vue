@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import type { PackageItemRow } from '@/admin/lib/packageItem'
 import { lineTotal } from '@/admin/lib/packageItem'
-import { formatEuros } from '@/admin/lib/money'
+import { formatEuros } from '@/lib/money'
 
 const props = defineProps<{ items: PackageItemRow[] }>()
 

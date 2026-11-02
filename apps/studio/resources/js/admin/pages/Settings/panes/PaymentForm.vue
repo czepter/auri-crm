@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
-import { basisPointsToPercent, percentToBasisPoints } from '@/admin/lib/money'
+import { basisPointsToPercent, percentToBasisPoints } from '@/lib/money'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'

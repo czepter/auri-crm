@@ -1,5 +1,5 @@
 import { matched } from '@/admin/lib/insert'
-import { centsToEuros, eurosToCents, formatEurosRounded } from '@/admin/lib/money'
+import { centsToEuros, eurosToCents, formatEurosRounded } from '@/lib/money'
 
 export type PackageItemRow = {
   // Leer bei einer neuen Zeile: das Bild haengt an einer Zeile, die es in

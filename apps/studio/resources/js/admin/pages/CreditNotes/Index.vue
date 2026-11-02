@@ -8,7 +8,7 @@ import Empty from '@/ui/page/Empty.vue'
 import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
 import { Input } from '@/ui/input'
 import { Button } from '@/ui/button'
-import { formatEuros } from '@/admin/lib/money'
+import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
 

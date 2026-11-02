@@ -2,7 +2,7 @@
 import { Link } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import PortalLabel from '@/portal/components/PortalLabel.vue'
-import { formatEuros } from '@/admin/lib/money'
+import { formatEuros } from '@/lib/money'
 
 /*
  * Was das Studio diesem Kunden vorgeschlagen hat — nicht das Regal, das jeder
