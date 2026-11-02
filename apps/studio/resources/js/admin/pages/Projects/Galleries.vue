@@ -6,12 +6,14 @@ import ProjectShell from '@/admin/components/ProjectShell.vue'
 import Card from '@/ui/page/Card.vue'
 import { Button } from '@/ui/button'
 import { dayAndMonth, weekday } from '@/admin/lib/shoots'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   header: App.Crm.Screens.CaseHeaderData
   galleries: App.Crm.Screens.CaseGalleryData[]
   shoots: App.Crm.Data.ShootData[]
 }>()
+useLiveProps(['header', 'galleries', 'shoots'])
 
 /* tokens.css .chip's four tones. */
 const TONE: Record<string, string> = {

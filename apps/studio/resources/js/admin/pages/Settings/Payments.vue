@@ -10,8 +10,10 @@ import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{ settings: App.Settings.Data.PaymentSettingsData }>()
+useLiveProps(['settings'])
 
 // Keys are write-only (T-07): the server never echoes a stored value back,
 // so this form always starts with them blank. Submitting blank leaves the

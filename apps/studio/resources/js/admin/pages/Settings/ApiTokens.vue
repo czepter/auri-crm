@@ -18,12 +18,14 @@ import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   tokens: { id: string; name: string; scopes: string[]; createdAt: string }[]
   capabilities: { value: string; label: string }[]
   mcpUrl: string
 }>()
+useLiveProps(['tokens'])
 
 const secret = computed(() => usePage().props.flash?.secret as string | undefined)
 const copied = ref<string | null>(null)

@@ -11,11 +11,13 @@ import { Button } from '@/ui/button'
 import { DropArea } from '@/ui/drop-area'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   settings: App.Settings.Data.PortalSettingsData
   branding: App.Settings.Data.StudioSettingsData
 }>()
+useLiveProps(['settings', 'branding'])
 
 const form = useForm({
   portal_contact_name: props.settings.contactName ?? '',

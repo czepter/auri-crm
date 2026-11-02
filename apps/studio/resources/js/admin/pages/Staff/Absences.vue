@@ -10,12 +10,14 @@ import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHea
 import { DatePicker } from '@/ui/date-picker'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Label } from '@/ui/label'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   absences: App.Data.AbsenceData[]
   canManageCrew: boolean
   staff: App.Data.StaffProfileData[]
 }>()
+useLiveProps(['absences', 'canManageCrew', 'staff'])
 
 // One form per row, keyed by its id — an independent draft per row, the same
 // pattern Closures/Index.vue's rows use.

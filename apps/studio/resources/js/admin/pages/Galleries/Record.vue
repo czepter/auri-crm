@@ -16,6 +16,7 @@ import { publishLabelKey, showPublish as showPublishRule, showWithdraw as showWi
 import { xsrfHeader } from '@/admin/lib/multipartUpload'
 import Images from '@/admin/pages/Galleries/panes/Images.vue'
 import Settings from '@/admin/pages/Galleries/panes/Settings.vue'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const { t } = useI18n()
 
@@ -84,6 +85,8 @@ const props = withDefaults(defineProps<{
   failedAssets: () => [],
   pendingUploads: () => [],
 })
+
+useLiveProps(['gallery', 'siblings', 'figures', 'sets', 'assets', 'versions', 'builds', 'lists', 'activity', 'failedAssets', 'pendingUploads'])
 
 const tab = computed(() => props.area)
 
@@ -154,6 +157,8 @@ async function mintPreviewUrl(path: string): Promise<string | null> {
 // the buttons that triggered them. `url` is set only when a link exists but
 // could not be copied — shown selectable rather than lost, and left on
 // screen (no auto-clear) until the next action replaces it.
+const csrf = typeof document !== 'undefined' ? (document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '') : ''
+
 const actionStatus = ref<{ ok: boolean; message: string; url?: string } | null>(null)
 let actionStatusTimer: ReturnType<typeof setTimeout> | undefined
 
@@ -163,12 +168,6 @@ function flashStatus(ok: boolean, message: string, url?: string) {
   if (!url) {
     actionStatusTimer = setTimeout(() => (actionStatus.value = null), 3000)
   }
-}
-
-async function openPreview() {
-  const url = await mintPreviewUrl('vorschau')
-  if (url) window.open(url, '_blank')
-  else flashStatus(false, t('galleryRecord.actionFailed'))
 }
 
 // Fix round 3: `await navigator.clipboard?.writeText(url)` used to await
@@ -350,7 +349,15 @@ function megabytes(bytes: number) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button type="button" variant="pill-muted" @click="openPreview">{{ $t('galleryRecord.preview') }}</Button>
+          <form
+            :action="`/galerien/${gallery.id}/vorschau`"
+            method="post"
+            target="_blank"
+            class="inline-flex"
+          >
+            <input type="hidden" name="_token" :value="csrf">
+            <Button type="submit" variant="pill-muted">{{ $t('galleryRecord.preview') }}</Button>
+          </form>
           <Button v-if="showWithdraw" type="button" variant="pill-muted" @click="withdraw">{{ $t('galleryRecord.withdraw') }}</Button>
           <Button v-if="showPublish" type="button" @click="publish">{{ $t(publishLabel) }}</Button>
         </span>

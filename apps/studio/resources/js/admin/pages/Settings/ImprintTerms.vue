@@ -6,11 +6,13 @@ import PageHead from '@/ui/page/PageHead.vue'
 import SettingsNav from '@/admin/components/SettingsNav.vue'
 import LegalTextFields from './panes/LegalTextFields.vue'
 import { Button } from '@/ui/button'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   settings: App.Settings.Data.PortalSettingsData
   legalTemplates: { family: string; name: string; updatedAt: string | null }[]
 }>()
+useLiveProps(['settings', 'legalTemplates'])
 
 const form = useForm({
   portal_legal_impressum_url: props.settings.impressumUrl ?? '',

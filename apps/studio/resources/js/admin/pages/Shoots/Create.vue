@@ -11,12 +11,14 @@ import { DatePicker } from '@/ui/date-picker'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { TimePicker } from '@/ui/time-picker'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   project: App.Crm.Data.CaseSuggestionData | null
   kinds: string[]
   date: string | null
 }>()
+useLiveProps([])
 
 const project = ref(props.project)
 

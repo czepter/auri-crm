@@ -9,6 +9,7 @@ import TaskTemplateForm from '@/admin/components/templates/TaskTemplateForm.vue'
 import TemplateCreateDialog from '@/admin/components/templates/TemplateCreateDialog.vue'
 import TaskTemplatePreview from '@/admin/components/templates/TaskTemplatePreview.vue'
 import { Input } from '@/ui/input'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Kind = 'aufgaben' | 'fragebogen' | 'dokumente' | 'galerien'
 
@@ -44,6 +45,7 @@ const props = defineProps<{
   previewShootKind: string | null
   preview: { title: string; dueOn: string | null }[] | null
 }>()
+useLiveProps(['counts', 'taskTemplates', 'formTemplates', 'documentTemplates', 'galleryPresets', 'shootKinds', 'projectTypes', 'preview'])
 
 const { t } = useI18n()
 

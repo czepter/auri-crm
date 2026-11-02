@@ -12,6 +12,7 @@ import { Queue, QueueGroup, QueueItem } from '@/ui/queue'
 import { Textarea } from '@/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Row = {
   id: string
@@ -56,6 +57,7 @@ const props = defineProps<{
   drafts: { id: string; subject: string; body: string; projectName: string | null; to: string }[]
   projects: { id: string; label: string }[]
 }>()
+useLiveProps(['groups', 'open', 'catchAll', 'pending', 'threads', 'unfiled', 'drafts', 'projects'])
 
 // One open picker at a time, keyed by the row — the same shape the payments
 // card uses for marking an installment paid.

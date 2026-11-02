@@ -15,6 +15,7 @@ import { ChoiceGroup } from '@/ui/choice-group'
 import { Field } from '@/ui/field'
 import { Textarea } from '@/ui/textarea'
 import { dayWithWeekday, isoDate } from '@/admin/lib/dates'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Option = { value: string; label: string }
 
@@ -28,6 +29,7 @@ const props = defineProps<{
   fieldsByType: Record<string, FieldDefinition[]>
   presets: { type: string[]; source: string[]; channel: string[] }
 }>()
+useLiveProps([])
 
 // ProjectType::isCatchAll() und die beiden Other-Fälle der Enums hängen alle
 // an diesem einen Schlüssel; der Anzeigename daneben ist umbenennbar.

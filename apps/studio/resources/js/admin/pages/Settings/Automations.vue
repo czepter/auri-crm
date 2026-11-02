@@ -11,8 +11,10 @@ import PageHead from '@/ui/page/PageHead.vue'
 import Empty from '@/ui/page/Empty.vue'
 import SettingsNav from '@/admin/components/SettingsNav.vue'
 import { Button } from '@/ui/button'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 defineProps<{ rules: App.Automation.Data.AutomationRuleData[]; timezone: string }>()
+useLiveProps(['rules', 'timezone'])
 
 function create() {
   router.post('/einstellungen/automationen', {

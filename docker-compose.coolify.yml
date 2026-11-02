@@ -19,7 +19,7 @@ services:
       AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
       AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
       PORTAL_URL: ${SERVICE_FQDN_PORTAL}
-      GALLERY_URL: ${SERVICE_FQDN_GALLERY_4321}
+      GALLERY_URL: ${SERVICE_URL_GALLERY}
       API_URL: ${SERVICE_FQDN_API}
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
@@ -81,7 +81,7 @@ services:
       AWS_USE_PATH_STYLE_ENDPOINT: "true"
       AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
       AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
-      GALLERY_URL: ${SERVICE_FQDN_GALLERY_4321}
+      GALLERY_URL: ${SERVICE_URL_GALLERY}
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
@@ -172,7 +172,7 @@ services:
     environment:
       SERVICE_FQDN_GALLERY_4321:
       API_URL: http://api:8080
-      PUBLIC_API_URL: ${SERVICE_FQDN_API}
+      PUBLIC_API_URL: ${SERVICE_URL_API}
       SENTRY_DSN: ${GALLERY_SENTRY_DSN}
     # Any response, not a 2xx: the only route is /g/:galleryId, so every probe
     # path 404s and --fail would report a healthy server as down forever.
@@ -208,7 +208,7 @@ services:
       AWS_USE_PATH_STYLE_ENDPOINT: "true"
       AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
       AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
-      GALLERY_URL: ${SERVICE_FQDN_GALLERY_4321}
+      GALLERY_URL: ${SERVICE_URL_GALLERY}
       # QuoteSent composes portal links here whenever quiet hours defer the
       # send, and APP_URL above is the studio — config/portal.php's fallback
       # would aim them at the wrong surface.

@@ -10,11 +10,13 @@ import { ChoiceGroup } from '@/ui/choice-group'
 import { useI18n } from 'vue-i18n'
 import { onKeyStroke, refDebounced } from '@vueuse/core'
 import { Eye, Maximize2, Monitor, Smartphone, X } from 'lucide-vue-next'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 defineProps<{
   settings: App.Settings.Data.PortalSettingsData
   branding: App.Settings.Data.StudioSettingsData
 }>()
+useLiveProps(['settings', 'branding'])
 
 const { t } = useI18n()
 

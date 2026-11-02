@@ -2,12 +2,14 @@
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/ProjectShell.vue'
 import QuoteList from '@/admin/components/quote/QuoteList.vue'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 defineProps<{
   header: App.Crm.Screens.CaseHeaderData
   quotes: App.Quotes.Data.QuoteData[]
   payments: { number: string | null; rows: { label: string; amount: number }[] } | null
 }>()
+useLiveProps(['header', 'quotes', 'payments'])
 </script>
 
 <template>

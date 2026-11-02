@@ -25,6 +25,7 @@ import {
 } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/admin/lib/money";
 import { relative, TYPE_DOT } from "@/admin/lib/boardCard";
+import { useLiveProps } from "@/admin/lib/liveReload";
 import { Button } from "@/ui/button";
 import { ChoiceGroup } from "@/ui/choice-group";
 import { Field } from "@/ui/field";
@@ -54,6 +55,7 @@ const props = defineProps<{
     settingsSelection: InstanceType<typeof ProjectSettings>["$props"]["selection"] | null;
     returnTo: string | null;
 }>();
+useLiveProps(["columns", "groups", "queue", "stageSettings"]);
 
 const view = ref(props.view);
 

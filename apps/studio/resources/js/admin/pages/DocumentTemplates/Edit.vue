@@ -13,12 +13,14 @@ import { Label } from '@/ui/label'
 import { htmlToBlocks } from '@/admin/documents/blocks/importHtml'
 import { serialize } from '@/admin/documents/blocks/serialize'
 import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/types'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   template: App.Documents.Data.DocumentTemplateData
   palette: PaletteEntry[]
   mergeFields: { path: string; sample: string }[]
 }>()
+useLiveProps(['template', 'projects'])
 
 // A template written before the block editor has blocks = null; its body
 // becomes one rawHtml block the author can keep or replace. The import is

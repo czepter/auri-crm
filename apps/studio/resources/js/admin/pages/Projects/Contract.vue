@@ -17,6 +17,7 @@ import { Label } from '@/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { NONE, fromOption, toOption } from '@/lib/select'
 import { dayWithWeekday } from '@/admin/lib/dates'
+import { useLiveProps } from '@/admin/lib/liveReload'
 import { htmlToBlocks } from '@/admin/documents/blocks/importHtml'
 import { serialize } from '@/admin/documents/blocks/serialize'
 import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/types'
@@ -31,6 +32,7 @@ const props = defineProps<{
   mergeFields: { path: string; sample: string }[]
   clauses: { key: string; group: string; title: string; text: string; on: boolean }[]
 }>()
+useLiveProps(['header', 'templates', 'contract', 'versions', 'contacts', 'clauses'])
 
 const { t } = useI18n()
 

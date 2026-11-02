@@ -18,6 +18,7 @@ import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Switch } from '@/ui/switch'
 import { Textarea } from '@/ui/textarea'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Option = { value: string; label: string }
 
@@ -31,6 +32,7 @@ const props = defineProps<{
   mergeFields: { path: string; sample: string }[]
   runs: App.Automation.Data.AutomationRunData[]
 }>()
+useLiveProps(['rule', 'recipients', 'projectTypes', 'runs'])
 
 const NO_CONDITION = 'none'
 

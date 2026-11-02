@@ -7,6 +7,7 @@ import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import SettingsNav from '@/admin/components/SettingsNav.vue'
 import { Button } from '@/ui/button'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Archive = { id: string; status: 'building' | 'ready' | 'failed'; size: number | null; expiresAt: string | null; url: string | null }
 
@@ -15,6 +16,7 @@ const props = defineProps<{
   projects: number
   archives: { daten: Archive | null; galleries: { id: string; title: string; size: number; archive: Archive | null }[] } | null
 }>()
+useLiveProps(['contacts', 'projects', 'archives'])
 
 const { t } = useI18n()
 

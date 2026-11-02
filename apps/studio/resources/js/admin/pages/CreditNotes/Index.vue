@@ -10,8 +10,10 @@ import { Input } from '@/ui/input'
 import { Button } from '@/ui/button'
 import { formatEuros } from '@/admin/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
+import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{ creditNotes: App.Payments.Data.CreditNoteRowData[] }>()
+useLiveProps(['creditNotes'])
 
 const query = ref('')
 

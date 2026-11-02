@@ -135,6 +135,8 @@ export async function abortUpload(publicId: string): Promise<void> {
 export interface UploadProgress {
   partsDone: number
   partsTotal: number
+  /** Part-granular: fetch reports no upload progress, so this steps by whole parts. */
+  bytesDone: number
 }
 
 /**
@@ -164,8 +166,14 @@ export async function uploadFile(
   const session = await startOrResumeUpload(createUrl, file, gallerySetId, replacesAssetId)
   const total = partCount(file.size, session.partSize)
 
+  const bytesOf = (partNumber: number) => {
+    const [start, end] = partRange(partNumber, session.partSize, file.size)
+    return end - start
+  }
+
   let done = session.donePartNumbers.size
-  onProgress({ partsDone: done, partsTotal: total })
+  let bytes = [...session.donePartNumbers].reduce((sum, partNumber) => sum + bytesOf(partNumber), 0)
+  onProgress({ partsDone: done, partsTotal: total, bytesDone: bytes })
 
   for (let partNumber = 1; partNumber <= total; partNumber++) {
     if (session.donePartNumbers.has(partNumber)) {
@@ -176,7 +184,8 @@ export async function uploadFile(
     await uploadPart(session.publicId, partNumber, file.slice(start, end))
 
     done += 1
-    onProgress({ partsDone: done, partsTotal: total })
+    bytes += end - start
+    onProgress({ partsDone: done, partsTotal: total, bytesDone: bytes })
   }
 
   await completeUpload(session.publicId)
