@@ -28,7 +28,7 @@ class EnsureGalleryFeature
         }
 
         if ($gallery !== null && ! $gallery instanceof Gallery) {
-            $gallery = Gallery::findByPublicIdOrSlug((string) $gallery);
+            $gallery = Gallery::findByReference((string) $gallery);
         }
 
         // A gallery that does not exist has no offer to withhold, and a 403

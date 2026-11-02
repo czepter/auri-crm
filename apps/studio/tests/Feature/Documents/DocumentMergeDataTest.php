@@ -49,11 +49,11 @@ it('is the one place the array is built — nothing about it varies by document 
 it('points the gallery merge field at the viewer host, not this app', function () {
     config(['services.gallery.url' => 'http://gallery.test']);
     $project = bookedContactProject();
-    Gallery::factory()->for($project, 'case')->create(['title' => 'Hochzeit Meier', 'slug' => 'hochzeit-meier']);
+    Gallery::factory()->for($project, 'case')->create(['title' => 'Hochzeit Meier', 'prefix' => 'meier', 'slug' => 'hochzeit-meier']);
 
     $data = app(DocumentMergeData::class)->forCase($project);
 
-    expect($data['gallery']['link'])->toBe('http://gallery.test/g/hochzeit-meier');
+    expect($data['gallery']['link'])->toBe('http://gallery.test/meier/hochzeit-meier');
 });
 
 // § 14 Abs. 4 Nr. 6 UStG: an Anzahlung the client transferred before the

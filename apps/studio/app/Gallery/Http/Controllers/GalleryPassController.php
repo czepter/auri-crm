@@ -30,7 +30,7 @@ class GalleryPassController extends Controller
         GallerySecretGate $gate,
         GalleryViewPass $pass,
     ): JsonResponse {
-        $model = Gallery::findByPublicIdOrSlug($gallery);
+        $model = Gallery::findByReference($gallery);
 
         // G-07/G-14: same reasoning as GalleryPasswordController::store — a
         // 404 here would tell a garbage password apart from one aimed at a

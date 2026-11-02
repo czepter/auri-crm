@@ -31,6 +31,15 @@ describe('scrubEvent', () => {
     expect(scrubbed.request?.url).not.toContain('signature=abcdef0123456789')
   })
 
+  it('redacts the guest and download passes', () => {
+    const event = { request: { headers: { 'X-Guest-Pass': 'guest.a.b.1.sig', 'X-Download-Pass': 'download.a.1.1.sig' } } }
+
+    const headers = scrubEvent(event).request?.headers
+
+    expect(headers?.['X-Guest-Pass']).toBe('[Filtered]')
+    expect(headers?.['X-Download-Pass']).toBe('[Filtered]')
+  })
+
   it('redacts the Cookie header entirely', () => {
     const event = {
       request: { headers: { Cookie: 'gallery_session=abc123' } },

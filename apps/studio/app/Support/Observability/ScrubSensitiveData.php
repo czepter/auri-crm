@@ -33,7 +33,7 @@ class ScrubSensitiveData
     ];
 
     /** @see RequestIntegration::DEFAULT_SENSITIVE_HEADERS */
-    private const SENSITIVE_HEADERS = ['authorization', 'cookie', 'proxy-authorization', 'set-cookie'];
+    private const SENSITIVE_HEADERS = ['authorization', 'cookie', 'proxy-authorization', 'set-cookie', 'x-guest-pass', 'x-download-pass'];
 
     public function __invoke(Event $event, ?EventHint $hint = null): ?Event
     {

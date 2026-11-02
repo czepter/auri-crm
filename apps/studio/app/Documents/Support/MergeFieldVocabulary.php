@@ -47,7 +47,7 @@ class MergeFieldVocabulary
         // shared by messenger anyway, that is the normal case and not a new
         // hole.
         'gallery.title' => 'Meier & Kowalski — Hochzeitstag',
-        'gallery.link' => 'https://bilder.nordlicht.example/g/hochzeit-meier-kowalski',
+        'gallery.link' => 'https://bilder.nordlicht.example/hochzeit-meier-kowalski/afterwedding',
         'gallery.password' => 'basthorst2026',
         'gallery.downloadPin' => '4821',
         'gallery.expiresOn' => '28.08.2026',

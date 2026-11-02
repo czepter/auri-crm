@@ -43,7 +43,7 @@ class EnsureGalleryGate
         // will — a second lookup on this one path, not worth threading the
         // first one through the request just to save it.
         if ($gallery !== null && ! $gallery instanceof Gallery) {
-            $gallery = Gallery::findByPublicIdOrSlug((string) $gallery);
+            $gallery = Gallery::findByReference((string) $gallery);
         }
 
         // A gallery that does not exist has no gate to satisfy or fail —

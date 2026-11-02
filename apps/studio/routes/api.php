@@ -5,6 +5,9 @@ use App\Engagement\Http\Controllers\InboundMailController;
 use App\Enums\Capability;
 use App\Gallery\Http\Controllers\AssetCommentController;
 use App\Gallery\Http\Controllers\AssetFavoriteController;
+use App\Gallery\Http\Controllers\DownloadZipPartController;
+use App\Gallery\Http\Controllers\GalleryAddressController;
+use App\Gallery\Http\Controllers\GalleryDownloadOfferController;
 use App\Gallery\Http\Controllers\GalleryDraftImageController;
 use App\Gallery\Http\Controllers\GalleryGuestController;
 use App\Gallery\Http\Controllers\GalleryImageController;
@@ -96,10 +99,12 @@ Route::get('/galleries/{gallery}/entwurf-bilder/{key}', GalleryDraftImageControl
     ->where('key', '.*')
     ->name('api.galleries.draft-images.show');
 
-// Implicit binding, not {gallery:public_id}: apps/gallery's own /g/{id}
-// route accepts a slug or a public_id (Gallery::resolveRouteBinding()),
-// and this is the read call it makes with whichever one is in the URL.
+// Implicit binding, not {gallery:public_id}: apps/gallery's
+// `/{prefix}/{slug}` route reads with `prefix~slug`, its `/{public_id}`
+// redirect with the public_id (Gallery::resolveRouteBinding()).
 Route::get('/galleries/{gallery}', GalleryReadController::class)->name('api.galleries.show');
+
+Route::get('/gallery-address/{reference}', GalleryAddressController::class)->name('api.gallery-address.show');
 
 // Die Anmeldung des Gastes. Hinter dem Ansichtspass, weil sie nur etwas ist,
 // das man in einer offenen Galerie tut — aber vor jedem Herz und jedem
@@ -110,6 +115,25 @@ Route::middleware('gallery.pass')->group(function () {
     Route::post('/galleries/{gallery}/guest/bestaetigung', [GalleryGuestController::class, 'confirm'])
         ->name('api.galleries.guest.confirm');
 });
+
+// Der Download des Gastes, damit er auf der Galerie-Adresse bleibt. Die PIN
+// kauft einen GalleryDownloadPass, die Adresse ist der bestätigte Gast; die
+// Teile liefert dieselbe Auslieferung wie im Portal.
+Route::middleware(['gallery.pass', 'gallery.feature:downloads'])->group(function () {
+    Route::get('/galleries/{gallery}/download', [GalleryDownloadOfferController::class, 'show'])
+        ->name('api.galleries.download.show');
+    Route::post('/galleries/{gallery}/download/pin', [GalleryDownloadOfferController::class, 'pin'])
+        ->name('api.galleries.download.pin');
+    Route::post('/galleries/{gallery}/download/vorbereiten', [GalleryDownloadOfferController::class, 'prepare'])
+        ->name('api.galleries.download.prepare');
+});
+
+// Außerhalb von gallery.pass: der Browser holt die Teile ohne Bearer, und die
+// Signatur wurde erst nach beiden Toren ausgestellt.
+Route::middleware(['gallery.feature:downloads', 'signed:relative'])
+    ->get('/galleries/{gallery}/download/{zipBuildPart}/{guestId}', DownloadZipPartController::class)
+    ->where('guestId', '[^/]{1,64}')
+    ->name('api.galleries.download.part');
 
 Route::middleware('gallery.pass')->group(function () {
     Route::get('/gallery-versions/{galleryVersion:public_id}/images/{key}', GalleryImageController::class)

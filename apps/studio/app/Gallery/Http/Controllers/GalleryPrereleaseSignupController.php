@@ -66,7 +66,7 @@ class GalleryPrereleaseSignupController extends Controller
             return response()->json(['message' => __('gallery.prerelease_signup_refused')], 429);
         }
 
-        $model = Gallery::findByPublicIdOrSlug($gallery);
+        $model = Gallery::findByReference($gallery);
 
         if ($model !== null) {
             $signUp($model, $validated['email']);
