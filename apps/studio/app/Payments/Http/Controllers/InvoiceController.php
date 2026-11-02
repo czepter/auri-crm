@@ -99,18 +99,26 @@ class InvoiceController extends Controller
         $viewer = $request->user('staff');
 
         // The Schnellwahl: every rate still to be billed, keyed by project.
-        $rates = PaymentPlan::query()
+        $plans = PaymentPlan::query()
             ->whereNull('settled_at')
             ->whereHas('installments', fn ($query) => $query->whereNull('invoice_id')->whereNull('cancelled_at'))
             ->whereHas('case', fn ($query) => $query->visibleTo($viewer))
             ->with(['installments', 'case'])
-            ->get()
-            ->mapWithKeys(fn (PaymentPlan $plan) => [
-                $plan->case->public_id => collect(PaymentPlanData::fromModel($plan)->installments)
-                    ->filter(fn ($row) => $row->invoiceNumber === null && $row->status !== 'cancelled')
-                    ->map(fn ($row) => ['id' => $row->id, 'label' => $row->label, 'amount' => $row->amount, 'dueOn' => $row->dueOn])
-                    ->values(),
-            ]);
+            ->get();
+
+        $rates = $plans->mapWithKeys(fn (PaymentPlan $plan) => [
+            $plan->case->public_id => collect(PaymentPlanData::fromModel($plan)->installments)
+                ->filter(fn ($row) => $row->invoiceNumber === null && $row->status !== 'cancelled')
+                ->map(fn ($row) => ['id' => $row->id, 'label' => $row->label, 'amount' => $row->amount, 'dueOn' => $row->dueOn])
+                ->values(),
+        ]);
+
+        // What the search offers before anyone types: the projects with a rate
+        // still open, which is the invoice someone came here to write.
+        $billable = $plans
+            ->filter(fn (PaymentPlan $plan) => $rates[$plan->case->public_id]->isNotEmpty())
+            ->map(fn (PaymentPlan $plan) => CaseSuggestionData::fromModel($plan->case))
+            ->values();
 
         $project = $request->query('projekt') === null
             ? null
@@ -118,6 +126,7 @@ class InvoiceController extends Controller
 
         return Inertia::render('Invoices/Create', [
             'rates' => $rates,
+            'billable' => $billable,
             'project' => $project === null ? null : CaseSuggestionData::fromModel($project),
             'packages' => PackageData::collect(Package::active()->with('items')->orderBy('name')->get()),
             'catalogItems' => CatalogItemData::collect(CatalogItem::query()->orderBy('title')->get()),
