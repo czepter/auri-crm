@@ -39,6 +39,12 @@ class DownloadZipPartController extends Controller
 
     public function __invoke(Request $request, Gallery $gallery, ZipBuildPart $zipBuildPart, string $guestId): Response
     {
+        // Ein zurückgezogener Download und ein gedrehter Code sperren auch schon
+        // ausgestellte Links; `pv` steht nur in denen der api-Fläche, im Portal
+        // prüft gallery.gate:download dasselbe pro Aufruf.
+        abort_if($gallery->isWithdrawn(), 404);
+        abort_if($request->query->has('pv') && (int) $request->query('pv') !== $gallery->download_pin_version, 404);
+
         $zipBuild = $zipBuildPart->zipBuild;
 
         abort_unless($zipBuild->galleryVersion->gallery_id === $gallery->id, 404);

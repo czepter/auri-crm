@@ -7,6 +7,7 @@ use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryGuest;
 use App\Gallery\Support\GalleryDownloadPass;
 use App\Gallery\Support\GalleryGuestPass;
+use App\Gallery\Support\GalleryViewPass;
 use App\Gallery\Support\GallerySecretGate;
 use App\Gallery\Support\ZipSizes;
 use App\Http\Controllers\Controller;
@@ -34,11 +35,13 @@ class GalleryDownloadOfferController extends Controller
         return response()->json($this->state($gallery, $this->step($request, $gallery, $pass, $guests), $this->guest($request, $gallery, $guests)));
     }
 
-    public function pin(Request $request, string $gallery, GallerySecretGate $gate, GalleryDownloadPass $pass): JsonResponse
+    public function pin(Request $request, string $gallery, GallerySecretGate $gate, GalleryDownloadPass $pass, GalleryViewPass $view): JsonResponse
     {
         $model = Gallery::findByPublicIdOrSlug($gallery);
 
-        if ($model?->isWithdrawn()) {
+        // Der String-Parameter umgeht gallery.pass (siehe GalleryPassController):
+        // die Ansichtsfreigabe wird hier selbst geprüft, einheitlich als "gibt es nicht".
+        if ($model?->isWithdrawn() || ($model?->requiresViewPassword() && ! $view->opens($model, $request->bearerToken()))) {
             $model = null;
         }
 
@@ -48,7 +51,9 @@ class GalleryDownloadOfferController extends Controller
 
         $pin = $request->validate(['pin' => ['required', 'string']])['pin'];
 
-        $granted = $gate->attempt(null, $model?->id ?? $gallery, $model === null ? null : $model->checkDownloadPin(...), $pin);
+        // Eigener Zähler: ein Erfolg am Ansichtspasswort, das jeder Gast kennt,
+        // setzte sonst den der PIN zurück.
+        $granted = $gate->attempt(null, 'pin:'.($model?->id ?? $gallery), $model === null ? null : $model->checkDownloadPin(...), $pin);
 
         if (! $granted || $model === null) {
             return response()->json(['message' => __('gallery.pin_wrong')], 422);
@@ -139,7 +144,7 @@ class GalleryDownloadOfferController extends Controller
         return URL::temporarySignedRoute(
             'api.galleries.download.part',
             now()->addHours(GalleryDownloadController::PARTS_LIVE_HOURS),
-            ['gallery' => $gallery->public_id, 'zipBuildPart' => $part->public_id, 'guestId' => $guest->identifier],
+            ['gallery' => $gallery->public_id, 'zipBuildPart' => $part->public_id, 'guestId' => $guest->identifier, 'pv' => $gallery->download_pin_version],
             absolute: false,
         );
     }

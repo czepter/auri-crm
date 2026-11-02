@@ -81,3 +81,26 @@ it('hands out a part link that downloads without any bearer', function () {
     $this->get($path.'x')->assertForbidden();
     expect(GalleryGuest::query()->whereKey($guest->id)->exists())->toBeTrue();
 });
+
+it('refuses the pin to a visitor without the view pass of a locked gallery', function () {
+    $gallery = downloadableGallery('4711')->gallery;
+    $gallery->rotateViewPassword('geheim');
+
+    $this->postJson("/api/galleries/{$gallery->public_id}/download/pin", ['pin' => '4711'])->assertStatus(422);
+});
+
+it('stops a part link once the pin was rotated', function () {
+    $version = downloadableGallery('4711');
+    $gallery = $version->gallery;
+    [, $guestPass] = confirmedGuest($gallery);
+    $build = ZipBuild::factory()->for($version, 'galleryVersion')->create(['status' => ZipBuildStatus::Ready]);
+    ZipBuildPart::factory()->for($build)->create(['part_number' => 1]);
+    $pass = $this->postJson("/api/galleries/{$gallery->public_id}/download/pin", ['pin' => '4711'])->json('pass');
+
+    $path = $this->getJson("/api/galleries/{$gallery->public_id}/download", ['X-Guest-Pass' => $guestPass, 'X-Download-Pass' => $pass])
+        ->assertOk()->json('builds.0.parts.0.path');
+
+    $gallery->fresh()->rotateDownloadPin('0815');
+
+    $this->get($path)->assertNotFound();
+});
