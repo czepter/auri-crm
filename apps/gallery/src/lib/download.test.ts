@@ -8,7 +8,7 @@ describe('downloadCookieName', () => {
 })
 
 describe('readOffer', () => {
-  it('carries the guest and pin passes as query and the view pass as bearer', async () => {
+  it('carries the guest and pin passes as headers, never in the URL, and the view pass as bearer', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ step: 'ready' }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
 
@@ -17,8 +17,12 @@ describe('readOffer', () => {
     expect(offer?.step).toBe('ready')
 
     const [url, init] = fetchMock.mock.calls[0]
-    expect(url).toBe('https://api.example/api/galleries/abc/download?guest_pass=g&download_pass=d')
-    expect(new Headers(init.headers).get('Authorization')).toBe('Bearer v')
+    expect(url).toBe('https://api.example/api/galleries/abc/download')
+
+    const headers = new Headers(init.headers)
+    expect(headers.get('Authorization')).toBe('Bearer v')
+    expect(headers.get('X-Guest-Pass')).toBe('g')
+    expect(headers.get('X-Download-Pass')).toBe('d')
   })
 
   it('keeps the status when the api refuses', async () => {

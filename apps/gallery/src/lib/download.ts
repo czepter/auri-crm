@@ -27,15 +27,13 @@ interface Passes {
   download: string | null
 }
 
-function query(passes: Passes): string {
-  const params = new URLSearchParams()
+function passHeaders(passes: Passes): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', Accept: 'application/json' }
 
-  if (passes.guest) params.set('guest_pass', passes.guest)
-  if (passes.download) params.set('download_pass', passes.download)
+  if (passes.guest) headers['X-Guest-Pass'] = passes.guest
+  if (passes.download) headers['X-Download-Pass'] = passes.download
 
-  const encoded = params.toString()
-
-  return encoded === '' ? '' : `?${encoded}`
+  return headers
 }
 
 export async function readOffer(
@@ -46,9 +44,9 @@ export async function readOffer(
 ): Promise<{ status: number; offer: DownloadOffer | null }> {
   const response = await callApi(
     apiBase,
-    `/api/galleries/${galleryId}/download${query(passes)}`,
+    `/api/galleries/${galleryId}/download`,
     requestId,
-    { headers: { Accept: 'application/json' } },
+    { headers: passHeaders(passes) },
     passes.view,
   )
 
@@ -90,8 +88,8 @@ export async function prepareDownload(
     requestId,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ size, guest_pass: passes.guest, download_pass: passes.download }),
+      headers: passHeaders(passes),
+      body: JSON.stringify({ size }),
     },
     passes.view,
   )

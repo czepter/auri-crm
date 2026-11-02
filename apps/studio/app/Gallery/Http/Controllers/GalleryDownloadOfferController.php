@@ -146,7 +146,7 @@ class GalleryDownloadOfferController extends Controller
 
     private function step(Request $request, Gallery $gallery, GalleryDownloadPass $pass, GalleryGuestPass $guests): string
     {
-        if ($gallery->requiresDownloadPin() && ! $pass->opens($gallery, $request->input('download_pass'))) {
+        if ($gallery->requiresDownloadPin() && ! $pass->opens($gallery, $request->header('X-Download-Pass'))) {
             return 'pin';
         }
 
@@ -155,7 +155,7 @@ class GalleryDownloadOfferController extends Controller
 
     private function guest(Request $request, Gallery $gallery, GalleryGuestPass $guests): ?GalleryGuest
     {
-        $identifier = $guests->identify($gallery, $request->input('guest_pass'));
+        $identifier = $guests->identify($gallery, $request->header('X-Guest-Pass'));
 
         return $identifier === null ? null : GalleryGuest::query()
             ->where('gallery_id', $gallery->id)

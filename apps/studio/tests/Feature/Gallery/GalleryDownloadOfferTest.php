@@ -29,16 +29,16 @@ it('asks for the pin before the address, then for the address, then offers the s
     $gallery = $version->gallery;
     [, $guestPass] = confirmedGuest($gallery);
 
-    $this->getJson("/api/galleries/{$gallery->public_id}/download?guest_pass={$guestPass}")
+    $this->getJson("/api/galleries/{$gallery->public_id}/download", ['X-Guest-Pass' => $guestPass])
         ->assertOk()->assertJsonPath('step', 'pin');
 
     $downloadPass = $this->postJson("/api/galleries/{$gallery->public_id}/download/pin", ['pin' => '4711'])
         ->assertOk()->json('pass');
 
-    $this->getJson("/api/galleries/{$gallery->public_id}/download?download_pass={$downloadPass}")
+    $this->getJson("/api/galleries/{$gallery->public_id}/download", ['X-Download-Pass' => $downloadPass])
         ->assertOk()->assertJsonPath('step', 'email');
 
-    $this->getJson("/api/galleries/{$gallery->public_id}/download?download_pass={$downloadPass}&guest_pass={$guestPass}")
+    $this->getJson("/api/galleries/{$gallery->public_id}/download", ['X-Download-Pass' => $downloadPass, 'X-Guest-Pass' => $guestPass])
         ->assertOk()->assertJsonPath('step', 'ready')->assertJsonStructure(['sizes' => ['original', 'web']]);
 });
 
@@ -53,7 +53,7 @@ it('starts one build and remembers who waits for it', function () {
     $gallery = downloadableGallery()->gallery;
     [$guest, $guestPass] = confirmedGuest($gallery);
 
-    $this->postJson("/api/galleries/{$gallery->public_id}/download/vorbereiten", ['size' => 'web', 'guest_pass' => $guestPass])
+    $this->postJson("/api/galleries/{$gallery->public_id}/download/vorbereiten", ['size' => 'web'], ['X-Guest-Pass' => $guestPass])
         ->assertOk()->assertJsonPath('builds.0.status', 'building');
 
     Queue::assertPushed(BuildZip::class, 1);
@@ -73,7 +73,7 @@ it('hands out a part link that downloads without any bearer', function () {
     $build = ZipBuild::factory()->for($version, 'galleryVersion')->create(['status' => ZipBuildStatus::Ready]);
     ZipBuildPart::factory()->for($build)->create(['part_number' => 1]);
 
-    $path = $this->getJson("/api/galleries/{$gallery->public_id}/download?guest_pass={$guestPass}")
+    $path = $this->getJson("/api/galleries/{$gallery->public_id}/download", ['X-Guest-Pass' => $guestPass])
         ->assertOk()->json('builds.0.parts.0.path');
 
     expect($path)->toStartWith('/api/galleries/');
