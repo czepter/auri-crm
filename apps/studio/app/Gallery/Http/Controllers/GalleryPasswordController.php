@@ -122,7 +122,7 @@ class GalleryPasswordController extends Controller
      */
     public function store(Request $request, string $gallery, GalleryAccessSession $claims, GallerySecretGate $gate): RedirectResponse
     {
-        $model = Gallery::findByPublicIdOrSlug($gallery);
+        $model = Gallery::findByReference($gallery);
 
         // G-07/G-14: a withdrawn gallery must be indistinguishable from one
         // that never existed here — unlike show(), this is the uniform-

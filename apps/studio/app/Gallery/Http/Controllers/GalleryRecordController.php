@@ -363,9 +363,7 @@ class GalleryRecordController extends Controller
                 'sometimes', 'string',
                 'min:'.GallerySlug::MIN, 'max:'.GallerySlug::MAX,
                 'regex:'.GallerySlug::PATTERN,
-                Rule::unique('galleries', 'slug')->ignore($gallery->id),
-                // public_id und slug teilen sich den {gallery}-Namensraum.
-                Rule::unique('galleries', 'public_id')->ignore($gallery->id),
+                Rule::unique('galleries', 'slug')->where('prefix', $gallery->prefix)->ignore($gallery->id),
                 Rule::notIn(GallerySlug::RESERVED),
             ],
             'view_password' => ['nullable', 'string', 'min:4', 'max:64'],

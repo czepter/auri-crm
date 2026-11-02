@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use LogicException;
 
 /**
@@ -100,32 +101,71 @@ class Gallery extends Model
     }
 
     /**
-     * A `{gallery}` segment resolves by slug OR public_id, here and only
-     * here, so admin, portal and api routes all agree without each one
-     * carrying its own lookup. No slug history: a link sent under a slug
-     * that was later changed stops resolving, which is what the address
-     * field says on the settings pane.
+     * A `{gallery}` segment resolves by public_id or by `prefix~slug`
+     * (reference()), here and only here, so admin, portal and api routes
+     * all agree. A slug alone is no longer an address: it is unique within
+     * its prefix only.
      */
     public function resolveRouteBinding($value, $field = null): ?self
     {
-        return static::findByPublicIdOrSlug($value);
+        return static::findByReference($value);
     }
 
-    public static function findByPublicIdOrSlug(string $value): ?self
+    public static function findByReference(string $reference): ?self
     {
-        return static::query()->where('public_id', $value)->first()
-            ?? static::query()->where('slug', $value)->first();
+        [$prefix, $slug] = array_pad(explode('~', $reference, 2), 2, null);
+
+        return $slug === null
+            ? static::query()->where('public_id', $reference)->first()
+            : static::findByAddress($prefix, $slug);
+    }
+
+    public static function findByAddress(string $prefix, string $slug): ?self
+    {
+        return static::query()->where('prefix', $prefix)->where('slug', $slug)->first();
+    }
+
+    /** The slug of a link sent before prefixes existed, or null when two galleries share it. */
+    public static function findByLegacySlug(string $slug): ?self
+    {
+        $matches = static::query()->where('slug', $slug)->limit(2)->get();
+
+        return $matches->count() === 1 ? $matches->first() : null;
+    }
+
+    public function reference(): string
+    {
+        return $this->prefix.'~'.$this->slug;
     }
 
     /**
      * apps/gallery's own address for this gallery — a separate host from
-     * the studio this model lives on (config('services.gallery.url')). The
-     * slug wins once set; public_id keeps resolving for ever, so a link
-     * sent before a slug existed never breaks.
+     * the studio this model lives on (config('services.gallery.url')).
+     * public_id keeps resolving at `/{public_id}`, so a link sent before
+     * prefixes existed never breaks.
      */
     public function publicUrl(): string
     {
-        return rtrim((string) config('services.gallery.url'), '/').'/g/'.($this->slug ?? $this->public_id);
+        return rtrim((string) config('services.gallery.url'), '/').'/'.$this->prefix.'/'.$this->slug;
+    }
+
+    /**
+     * Galleries of one case share its name as prefix, whichever was created
+     * first; one without a case gets a random hash. Fixed at creation, so a
+     * renamed case never moves a link already sent.
+     */
+    private static function prefixFor(?int $caseId): string
+    {
+        if ($caseId === null) {
+            return Str::lower(Str::random(10));
+        }
+
+        $sibling = static::query()->withoutGlobalScope('tenant')->where('case_id', $caseId)->value('prefix');
+
+        return $sibling ?? GallerySlug::unique(
+            (string) ClientCase::query()->withoutGlobalScopes()->whereKey($caseId)->value('name'),
+            fn (string $candidate) => static::query()->withoutGlobalScope('tenant')->where('prefix', $candidate)->exists(),
+        );
     }
 
     public function versions(): HasMany
@@ -349,11 +389,12 @@ class Gallery extends Model
     protected static function booted(): void
     {
         static::creating(function (Gallery $gallery) {
+            $gallery->prefix ??= static::prefixFor($gallery->case_id);
             $gallery->slug ??= GallerySlug::unique(
                 $gallery->title ?? 'galerie',
-                // Global, not tenant-scoped: two studios choosing the same
-                // slug would collide on the same un-tenanted route.
-                fn (string $candidate) => static::query()->withoutGlobalScope('tenant')->where('slug', $candidate)->exists(),
+                // Across tenants too: the address carries no tenant.
+                fn (string $candidate) => static::query()->withoutGlobalScope('tenant')
+                    ->where('prefix', $gallery->prefix)->where('slug', $candidate)->exists(),
             );
         });
 

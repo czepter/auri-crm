@@ -1,0 +1,5 @@
+---
+import { legacyRedirect } from '../../../lib/address'
+
+return legacyRedirect(process.env.API_URL ?? 'http://localhost:8000', Astro.params.galleryId!, Astro.locals.requestId, Astro.url, '/download')
+---

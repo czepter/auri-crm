@@ -35,7 +35,7 @@ async function guest() {
 // ─── the Astro guest gallery: grid, lightbox, favorite, comment ─────────────
 {
   const page = await guest()
-  await visit(page, `${GALLERY}/g/${ID}`)
+  await visit(page, `${GALLERY}/${ID}`)
   await page.waitForTimeout(2500) // let the lazy grid decode
   await shot(page, 'gallery/guest', 'astro-raster')
   await page.locator('.tile').first().hover()
@@ -80,7 +80,7 @@ async function guest() {
     [390, 844, 'phone'],
   ]) {
     await page.setViewportSize({ width: w, height: h })
-    await visit(page, `${GALLERY}/g/${ID}`)
+    await visit(page, `${GALLERY}/${ID}`)
     await page.waitForTimeout(2000)
     await shot(page, `gallery/guest/${label}`, `astro-raster--${label}`)
     await page.locator('.tile').first().click()
@@ -88,7 +88,7 @@ async function guest() {
     await shot(page, `gallery/guest/${label}`, `astro-lightbox--${label}`, { full: false })
   }
 
-  await visit(page, `${GALLERY}/g/gibtesnicht0000000000000`)
+  await visit(page, `${GALLERY}/gibtesnicht0000000000000`)
   await shot(page, 'gallery/guest', 'astro--unbekannte-galerie')
   await page.context().close()
 }

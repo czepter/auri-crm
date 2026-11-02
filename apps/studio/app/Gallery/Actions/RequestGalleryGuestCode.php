@@ -47,7 +47,7 @@ class RequestGalleryGuestCode
             new GalleryGuestCode(
                 $gallery,
                 $code,
-                rtrim((string) config('services.gallery.url'), '/')."/g/{$gallery->public_id}?bestaetigung={$token}",
+                $gallery->publicUrl()."?bestaetigung={$token}",
             ),
         );
 

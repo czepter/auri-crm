@@ -5,7 +5,7 @@ const gallery = {
   id: 'g-rahn',
   title: 'Rahn — Auswahl',
   slug: 'rahn-auswahl',
-  url: 'https://bilder.atelier-nordlicht.de/g/rahn-auswahl',
+  url: 'https://bilder.atelier-nordlicht.de/rahn/auswahl',
   eventDate: '2026-09-13',
   viewPassword: 'basthorst',
   downloadPin: '4417',

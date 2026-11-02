@@ -23,6 +23,8 @@ const REDACTED = '[Filtered]'
 const SENSITIVE_HEADERS = [
   'authorization', // carries the guest's own bearer token (G-01's Sanctum guest token), forwarded on this SSR server's behalf
   'cookie',
+  'x-guest-pass',
+  'x-download-pass',
   'x-service-key', // this SSR process's own read-only metadata credential — never a guest's, but no less a leak
   'x-guest-token',
 ]

@@ -13,7 +13,6 @@ services:
       DB_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
       REDIS_PASSWORD: ${SERVICE_PASSWORD_REDIS}
       AWS_BUCKET: ${AWS_BUCKET:-studio}
-      # SERVICE_URL_* carries the scheme; the AWS SDK rejects a bare host.
       AWS_ENDPOINT: ${SERVICE_URL_RUSTFS}
       AWS_USE_PATH_STYLE_ENDPOINT: "true"
       AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
@@ -25,8 +24,6 @@ services:
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
       MAIL_SUPPORT_ADDRESS: ${MAIL_SUPPORT_ADDRESS}
-      # E-12: the inbox reads config('mail.inbound.domain') to show the
-      # catch-all address; unset, InboundAddress::configured() reports none.
       MAIL_INBOUND_DOMAIN: ${MAIL_INBOUND_DOMAIN}
       MAIL_INBOUND_AUTHSERV_ID: ${MAIL_INBOUND_AUTHSERV_ID}
       MAIL_INBOUND_MAX_BYTES: ${MAIL_INBOUND_MAX_BYTES:-26214400}
@@ -39,9 +36,6 @@ services:
       MAIL_INBOUND_IMAP_FOLDER: ${MAIL_INBOUND_IMAP_FOLDER:-INBOX}
       MAIL_INBOUND_SIGNING_SECRET: ${MAIL_INBOUND_SIGNING_SECRET}
       RELEASE_LOG_URL: ${RELEASE_LOG_URL:-https://uew53y9iuh4kievlxtcshuyc.coolify3.czpt.de}
-      # #357: this container carries the Mercure hub (docker/app/mercure.caddy);
-      # every other studio container publishes to it at MERCURE_URL, which the
-      # image bakes.
       CADDY_SERVER_EXTRA_DIRECTIVES: import /etc/frankenphp/mercure.caddy
       MERCURE_PUBLISHER_JWT_KEY: ${SERVICE_PASSWORD_64_MERCUREPUB}
       MERCURE_SUBSCRIBER_JWT_KEY: ${SERVICE_PASSWORD_64_MERCURESUB}
@@ -76,7 +70,6 @@ services:
       DB_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
       REDIS_PASSWORD: ${SERVICE_PASSWORD_REDIS}
       AWS_BUCKET: ${AWS_BUCKET:-studio}
-      # SERVICE_URL_* carries the scheme; the AWS SDK rejects a bare host.
       AWS_ENDPOINT: ${SERVICE_URL_RUSTFS}
       AWS_USE_PATH_STYLE_ENDPOINT: "true"
       AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
@@ -116,29 +109,17 @@ services:
       DB_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
       REDIS_PASSWORD: ${SERVICE_PASSWORD_REDIS}
       AWS_BUCKET: ${AWS_BUCKET:-studio}
-      # SERVICE_URL_* carries the scheme; the AWS SDK rejects a bare host.
       AWS_ENDPOINT: ${SERVICE_URL_RUSTFS}
       AWS_USE_PATH_STYLE_ENDPOINT: "true"
       AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
       AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:?}
       MERCURE_PUBLISHER_JWT_KEY: ${SERVICE_PASSWORD_64_MERCUREPUB}
-      # N-04: this surface carries the MCP endpoint claude.ai connects to,
-      # and the RFC 9728 document beside it names admin as the issuer —
-      # /oauth/authorize, /oauth/token and /oauth/register all live there.
       ADMIN_URL: ${SERVICE_FQDN_ADMIN}
-      # This surface raises notifications of its own — PublicInquiryController
-      # -> LeadCaptured -> InquiryReceived is the studio's only word that a
-      # lead arrived, and the Stripe webhook above raises InstallmentPaid the
-      # same way. SendMailNotification carries every one of them to horizon,
-      # so the DSN here is what keeps that true of a deploy that ever runs
-      # the queue synchronously rather than a promise the code makes.
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
       MAIL_SUPPORT_ADDRESS: ${MAIL_SUPPORT_ADDRESS}
-      # E-12: InboundMailController verifies the webhook against the signing
-      # secret, and refuses every delivery without it.
       MAIL_INBOUND_DOMAIN: ${MAIL_INBOUND_DOMAIN}
       MAIL_INBOUND_AUTHSERV_ID: ${MAIL_INBOUND_AUTHSERV_ID}
       MAIL_INBOUND_MAX_BYTES: ${MAIL_INBOUND_MAX_BYTES:-26214400}
@@ -170,12 +151,10 @@ services:
     image: ghcr.io/czepter/auri-crm/gallery:${VERSION}
     restart: unless-stopped
     environment:
-      SERVICE_FQDN_GALLERY_4321:
+      SERVICE_URL_GALLERY_4321:
       API_URL: http://api:8080
       PUBLIC_API_URL: ${SERVICE_URL_API}
       SENTRY_DSN: ${GALLERY_SENTRY_DSN}
-    # Any response, not a 2xx: the only route is /g/:galleryId, so every probe
-    # path 404s and --fail would report a healthy server as down forever.
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4321/').then(()=>process.exit(0),()=>process.exit(1))"]
       interval: 10s
@@ -191,11 +170,9 @@ services:
     restart: unless-stopped
     command: php artisan horizon
     stop_grace_period: 60s
+    mem_limit: 1g
     environment:
       APP_SURFACE: admin
-      # This container's own surface, like every other service here: StudioDigest
-      # links /benachrichtigungen, an admin route, and renders on this queue.
-      # Links onto the other surfaces name their host below.
       APP_URL: ${SERVICE_FQDN_ADMIN}
       APP_KEY: ${SERVICE_REALBASE64_APPKEY}
       SENTRY_LARAVEL_DSN: ${STUDIO_SENTRY_DSN}
@@ -209,17 +186,12 @@ services:
       AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
       AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
       GALLERY_URL: ${SERVICE_URL_GALLERY}
-      # QuoteSent composes portal links here whenever quiet hours defer the
-      # send, and APP_URL above is the studio — config/portal.php's fallback
-      # would aim them at the wrong surface.
       PORTAL_URL: ${SERVICE_FQDN_PORTAL}
       MERCURE_PUBLISHER_JWT_KEY: ${SERVICE_PASSWORD_64_MERCUREPUB}
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
       MAIL_SUPPORT_ADDRESS: ${MAIL_SUPPORT_ADDRESS}
-      # E-12: IngestInboundMessage runs here, and E-11 takes the domain half
-      # of every outgoing Message-ID from the inbound domain.
       MAIL_INBOUND_DOMAIN: ${MAIL_INBOUND_DOMAIN}
       MAIL_INBOUND_AUTHSERV_ID: ${MAIL_INBOUND_AUTHSERV_ID}
       MAIL_INBOUND_MAX_BYTES: ${MAIL_INBOUND_MAX_BYTES:-26214400}
@@ -250,16 +222,10 @@ services:
     image: ghcr.io/czepter/auri-crm/studio:${VERSION}
     restart: unless-stopped
     command: php artisan schedule:work
-    # No web server in this container, so the HTTP probe baked into the image
-    # would fail forever. schedule:work is PID 1: if it dies, so does the
-    # container, and restart brings it back.
     healthcheck:
       disable: true
     environment:
       APP_SURFACE: admin
-      # Admin, and the portal named separately — same reasoning as horizon.
-      # notifications:send-digests sends StudioDigest inline from here whenever
-      # quiet hours do not defer it to that queue.
       APP_URL: ${SERVICE_FQDN_ADMIN}
       PORTAL_URL: ${SERVICE_FQDN_PORTAL}
       APP_KEY: ${SERVICE_REALBASE64_APPKEY}
@@ -277,8 +243,6 @@ services:
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
       MAIL_SUPPORT_ADDRESS: ${MAIL_SUPPORT_ADDRESS}
-      # E-12: PollInboundMailbox runs on this schedule and needs the IMAP
-      # credentials of the catch-all mailbox.
       MAIL_INBOUND_DOMAIN: ${MAIL_INBOUND_DOMAIN}
       MAIL_INBOUND_AUTHSERV_ID: ${MAIL_INBOUND_AUTHSERV_ID}
       MAIL_INBOUND_MAX_BYTES: ${MAIL_INBOUND_MAX_BYTES:-26214400}
@@ -352,9 +316,6 @@ services:
   gotenberg:
     image: gotenberg/gotenberg:8
     restart: unless-stopped
-    # Only /forms/chromium/convert/html is ever called (App\Support\GotenbergClient),
-    # and supervisor-render runs one process (config/horizon.php), so the stock
-    # six parallel Chromium instances are five more than this stack can use.
     environment:
       CHROMIUM_MAX_CONCURRENCY: "2"
       CHROMIUM_MAX_QUEUE_SIZE: "8"
@@ -382,8 +343,6 @@ services:
     volumes:
       - rustfsdata:/data
     command: ["/data"]
-    # RustFS serves MinIO's health path — the same one docker-compose.yml probes
-    # against MinIO, so both stacks gate storage on one endpoint.
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:9000/minio/health/live"]
       interval: 5s

@@ -184,12 +184,11 @@ it('keeps a real gallery open after ten wrong passwords for made-up ids from one
     test()->postJson("/api/galleries/{$gallery->public_id}/passwort", ['password' => 'basthorst2026'])->assertOk();
 });
 
-it('counts slug and public_id of one gallery against the same limit', function () {
+it('counts address and public_id of one gallery against the same limit', function () {
     $gallery = gatedGallery();
-    $gallery->update(['slug' => 'hochzeit-basthorst']);
 
     foreach (range(1, 15) as $i) {
-        foreach (['hochzeit-basthorst', $gallery->public_id] as $key) {
+        foreach ([$gallery->reference(), $gallery->public_id] as $key) {
             test()->withServerVariables(['REMOTE_ADDR' => "10.2.{$i}.".strlen($key)])
                 ->postJson("/api/galleries/{$key}/passwort", ['password' => 'falsch'])->assertStatus(422);
         }

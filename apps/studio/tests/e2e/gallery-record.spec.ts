@@ -37,5 +37,5 @@ test('reports a failed copy, and shows the link, when the Clipboard API is unava
   await page.getByRole('menuitem', { name: 'Vorschaulink erzeugen' }).click()
 
   await expect(page.getByText('Fehlgeschlagen')).toBeVisible()
-  await expect(page.locator('input[readonly]')).toHaveValue(/\/g\//)
+  await expect(page.locator('input[readonly]')).toHaveValue(/\/e2e-buchung\/e2e-galerie/)
 })

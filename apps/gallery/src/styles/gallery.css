@@ -268,3 +268,11 @@ img { max-width: 100%; height: auto; }
   .bar .who { display: none; }
   .hair { margin: var(--s7) auto var(--s5); }
 }
+
+/* ── download ─────────────────────────────────────────────────────────── */
+.dl { list-style: none; margin: 0 auto; padding: 0; width: min(420px, 100%); text-align: left; }
+.dl li { display: flex; align-items: center; gap: var(--s4); padding: var(--s4) 0; border-bottom: 1px solid rgba(246,241,235,.2); }
+.dl-name { flex: 1; color: #fff; font-weight: 600; }
+.dl-size, .dl-state { color: rgba(246,241,235,.66); font-size: 13px; }
+.dl-parts { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.hint a { color: inherit; }

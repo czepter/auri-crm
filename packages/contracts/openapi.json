@@ -1773,6 +1773,73 @@
                 }
             }
         },
+        "/galleries/{gallery}/download/{zipBuildPart}/{guestId}": {
+            "get": {
+                "operationId": "galleries.download.part",
+                "tags": [
+                    "DownloadZipPart"
+                ],
+                "parameters": [
+                    {
+                        "name": "gallery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The gallery public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "zipBuildPart",
+                        "in": "path",
+                        "required": true,
+                        "description": "The zip build part public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "guestId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "416": {
+                        "description": "",
+                        "headers": {
+                            "Accept-Ranges": {
+                                "schema": {
+                                    "type": "string",
+                                    "const": "bytes"
+                                }
+                            },
+                            "Content-Range": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
         "/cases/{case}/forms": {
             "get": {
                 "operationId": "cases.forms.index",
@@ -2685,6 +2752,507 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/gallery-address/{reference}": {
+            "get": {
+                "operationId": "gallery-address.show",
+                "tags": [
+                    "GalleryAddress"
+                ],
+                "parameters": [
+                    {
+                        "name": "reference",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "path": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "path"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/galleries/{gallery}/download": {
+            "get": {
+                "operationId": "galleries.download.show",
+                "tags": [
+                    "GalleryDownloadOffer"
+                ],
+                "parameters": [
+                    {
+                        "name": "gallery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The gallery public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "step": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "email",
+                                                        "ready",
+                                                        "pin"
+                                                    ]
+                                                },
+                                                "gallery": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string"
+                                                        },
+                                                        "title": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "count": {
+                                                            "type": "integer",
+                                                            "minimum": 0
+                                                        },
+                                                        "expiresAt": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "title",
+                                                        "count",
+                                                        "expiresAt"
+                                                    ]
+                                                },
+                                                "sizes": {
+                                                    "type": "array",
+                                                    "prefixItems": [
+                                                        {
+                                                            "type": "integer"
+                                                        },
+                                                        {
+                                                            "type": "integer"
+                                                        }
+                                                    ],
+                                                    "minItems": 2,
+                                                    "maxItems": 2,
+                                                    "additionalItems": false
+                                                },
+                                                "builds": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "size": {
+                                                                "type": "string"
+                                                            },
+                                                            "status": {
+                                                                "type": "string"
+                                                            },
+                                                            "parts": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                }
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "size",
+                                                            "status",
+                                                            "parts"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "step",
+                                                "gallery",
+                                                "sizes",
+                                                "builds"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "step": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "email",
+                                                        "ready",
+                                                        "pin"
+                                                    ]
+                                                },
+                                                "gallery": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string"
+                                                        },
+                                                        "title": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "count": {
+                                                            "type": "integer",
+                                                            "minimum": 0
+                                                        },
+                                                        "expiresAt": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "title",
+                                                        "count",
+                                                        "expiresAt"
+                                                    ]
+                                                },
+                                                "sizes": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "minItems": 0,
+                                                    "maxItems": 0,
+                                                    "additionalItems": false
+                                                },
+                                                "builds": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "minItems": 0,
+                                                    "maxItems": 0,
+                                                    "additionalItems": false
+                                                }
+                                            },
+                                            "required": [
+                                                "step",
+                                                "gallery",
+                                                "sizes",
+                                                "builds"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/galleries/{gallery}/download/pin": {
+            "post": {
+                "operationId": "galleries.download.pin",
+                "tags": [
+                    "GalleryDownloadOffer"
+                ],
+                "parameters": [
+                    {
+                        "name": "gallery",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "pin": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "pin"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "pass": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "pass"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/galleries/{gallery}/download/vorbereiten": {
+            "post": {
+                "operationId": "galleries.download.prepare",
+                "tags": [
+                    "GalleryDownloadOffer"
+                ],
+                "parameters": [
+                    {
+                        "name": "gallery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The gallery public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "size": {
+                                        "$ref": "#/components/schemas/ZipBuildSize"
+                                    }
+                                },
+                                "required": [
+                                    "size"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "step": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "email",
+                                                        "ready",
+                                                        "pin"
+                                                    ]
+                                                },
+                                                "gallery": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string"
+                                                        },
+                                                        "title": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "count": {
+                                                            "type": "integer",
+                                                            "minimum": 0
+                                                        },
+                                                        "expiresAt": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "title",
+                                                        "count",
+                                                        "expiresAt"
+                                                    ]
+                                                },
+                                                "sizes": {
+                                                    "type": "array",
+                                                    "prefixItems": [
+                                                        {
+                                                            "type": "integer"
+                                                        },
+                                                        {
+                                                            "type": "integer"
+                                                        }
+                                                    ],
+                                                    "minItems": 2,
+                                                    "maxItems": 2,
+                                                    "additionalItems": false
+                                                },
+                                                "builds": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "size": {
+                                                                "type": "string"
+                                                            },
+                                                            "status": {
+                                                                "type": "string"
+                                                            },
+                                                            "parts": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                }
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "size",
+                                                            "status",
+                                                            "parts"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "step",
+                                                "gallery",
+                                                "sizes",
+                                                "builds"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "step": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "email",
+                                                        "ready",
+                                                        "pin"
+                                                    ]
+                                                },
+                                                "gallery": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string"
+                                                        },
+                                                        "title": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "count": {
+                                                            "type": "integer",
+                                                            "minimum": 0
+                                                        },
+                                                        "expiresAt": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "title",
+                                                        "count",
+                                                        "expiresAt"
+                                                    ]
+                                                },
+                                                "sizes": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "minItems": 0,
+                                                    "maxItems": 0,
+                                                    "additionalItems": false
+                                                },
+                                                "builds": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "minItems": 0,
+                                                    "maxItems": 0,
+                                                    "additionalItems": false
+                                                }
+                                            },
+                                            "required": [
+                                                "step",
+                                                "gallery",
+                                                "sizes",
+                                                "builds"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -9143,6 +9711,15 @@
                     }
                 },
                 "title": "UpdateQuote"
+            },
+            "ZipBuildSize": {
+                "type": "string",
+                "description": "Which bytes of each asset a ZipBuild packs. G-03's derivative ladder (400/800/1600/2560px, AVIF+WebP) has no single natural \"web\" rung on its own, so Web picks the widest available derivative in WebP \u2014 the one format of the two G-03 ships that every target platform in #59's acceptance (Explorer, Finder, iOS Files, Files by Google) can at least open, where AVIF support is still patchy on older Windows/Explorer installs.\n",
+                "enum": [
+                    "original",
+                    "web"
+                ],
+                "title": "ZipBuildSize"
             }
         },
         "responses": {
