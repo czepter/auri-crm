@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/ui/alert-dialog'
-import RecordNav from '@/admin/components/RecordNav.vue'
+import RecordNav from '@/admin/components/crm/RecordNav.vue'
 
 /*
  * Die Galerie füllt zwei Dinge in RecordNav, die ein Projekt nicht hat: das

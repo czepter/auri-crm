@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import type { PackageItemRow } from '@/admin/lib/packageItem'
 import { lineTotal } from '@/admin/lib/packageItem'
-import { formatEuros } from '@/admin/lib/money'
+import { formatEuros } from '@/lib/money'
 import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Input } from '@/ui/input'
@@ -10,7 +10,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Label } from '@/ui/label'
 import DragHandle from '@/admin/components/quote/DragHandle.vue'
 import QuoteCard from '@/admin/components/quote/QuoteCard.vue'
-import VatRateSelect from '@/admin/components/VatRateSelect.vue'
+import VatRateSelect from '@/admin/components/quote/VatRateSelect.vue'
 
 const props = defineProps<{ packageId?: string; row: PackageItemRow }>()
 

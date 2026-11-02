@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import ProjectShell from '@/admin/components/ProjectShell.vue'
+import ProjectShell from '@/admin/components/crm/ProjectShell.vue'
 import QuoteList from '@/admin/components/quote/QuoteList.vue'
 import { useLiveProps } from '@/admin/lib/liveReload'
 

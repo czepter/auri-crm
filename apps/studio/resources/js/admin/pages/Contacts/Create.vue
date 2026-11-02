@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import ContactPortalFields from '@/admin/components/ContactPortalFields.vue'
+import ContactPortalFields from '@/admin/components/crm/ContactPortalFields.vue'
 import Page from '@/ui/page/Page.vue'
 import Card from '@/ui/page/Card.vue'
 import { Button } from '@/ui/button'

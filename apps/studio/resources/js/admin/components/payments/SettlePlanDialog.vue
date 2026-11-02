@@ -18,7 +18,7 @@ import {
 } from '@/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
-import { centsToEuros, eurosToCents, formatEuros } from '@/admin/lib/money'
+import { centsToEuros, eurosToCents, formatEuros } from '@/lib/money'
 
 const props = defineProps<{ plan: App.Payments.Data.PaymentPlanData }>()
 

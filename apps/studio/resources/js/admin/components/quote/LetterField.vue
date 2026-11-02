@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { usePage } from '@inertiajs/vue3'
-import DocumentEditor from '@/admin/components/DocumentEditor.vue'
+import DocumentEditor from '@/admin/components/templates/DocumentEditor.vue'
 import { serialize } from '@/admin/documents/blocks/serialize'
 import type { EditorBlock, EditorDocument, PaletteEntry } from '@/admin/documents/blocks/types'
 

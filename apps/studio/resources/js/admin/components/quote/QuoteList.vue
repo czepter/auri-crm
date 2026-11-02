@@ -4,7 +4,7 @@ import { Link } from '@inertiajs/vue3'
 import { ChevronRight } from 'lucide-vue-next'
 import Card from '@/ui/page/Card.vue'
 import { Button } from '@/ui/button'
-import { formatEuros } from '@/admin/lib/money'
+import { formatEuros } from '@/lib/money'
 import { dayWithWeekday as day } from '@/admin/lib/dates'
 import { quoteChipClass } from '@/admin/lib/quoteDisplay'
 

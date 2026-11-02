@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { basisPointsToPercent, formatEuros } from '@/admin/lib/money'
+import { basisPointsToPercent, formatEuros } from '@/lib/money'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 import QuoteSlider from '@/portal/components/QuoteSlider.vue'
 import { splitStages } from '@/portal/lib/paymentStages'

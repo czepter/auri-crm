@@ -2,7 +2,7 @@
 import { computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { StageRow } from './quotePayload'
-import ValidUntilField from '@/admin/components/ValidUntilField.vue'
+import ValidUntilField from '@/admin/components/quote/ValidUntilField.vue'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'

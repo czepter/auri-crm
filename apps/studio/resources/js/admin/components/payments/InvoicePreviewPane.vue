@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
-import PaperSheet from '@/admin/components/PaperSheet.vue'
+import PaperSheet from '@/admin/components/quote/PaperSheet.vue'
 import InvoiceSheet, { type InvoicePage } from '@/portal/components/InvoiceSheet.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 import { ChoiceGroup } from '@/ui/choice-group'

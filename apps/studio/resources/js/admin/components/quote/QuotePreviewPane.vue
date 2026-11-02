@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
-import PaperSheet from '@/admin/components/PaperSheet.vue'
+import PaperSheet from '@/admin/components/quote/PaperSheet.vue'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { buildQuotePayload, type QuoteDraft, type VatSettings } from './quotePayload'
 import QuotePortalPreview from './QuotePortalPreview.vue'

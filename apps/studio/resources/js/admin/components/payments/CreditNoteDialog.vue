@@ -20,7 +20,7 @@ import {
 import { Field } from '@/ui/field'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Textarea } from '@/ui/textarea'
-import { centsToEuros, eurosToCents } from '@/admin/lib/money'
+import { centsToEuros, eurosToCents } from '@/lib/money'
 
 const props = defineProps<{ invoiceId: string; amount: number }>()
 

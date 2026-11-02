@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
-import ContactTypeahead from '@/admin/components/ContactTypeahead.vue'
+import ContactTypeahead from '@/admin/components/crm/ContactTypeahead.vue'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
 import {

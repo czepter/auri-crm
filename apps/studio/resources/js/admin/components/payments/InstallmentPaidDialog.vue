@@ -22,7 +22,7 @@ import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
-import { centsToEuros, eurosToCents } from '@/admin/lib/money'
+import { centsToEuros, eurosToCents } from '@/lib/money'
 
 const props = defineProps<{ installmentId: string; remaining: number }>()
 

@@ -9,7 +9,7 @@ import PageHead from '@/ui/page/PageHead.vue'
 import { Button } from '@/ui/button'
 import DocumentViews from '@/admin/components/DocumentViews.vue'
 import QuoteActions from '@/admin/components/quote/QuoteActions.vue'
-import QuoteWorkspace from '@/admin/components/QuoteWorkspace.vue'
+import QuoteWorkspace from '@/admin/components/quote/QuoteWorkspace.vue'
 import { useI18n } from 'vue-i18n'
 import { useLiveProps } from '@/admin/lib/liveReload'
 

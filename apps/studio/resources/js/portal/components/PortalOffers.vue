@@ -2,7 +2,7 @@
 import { Link } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import PortalLabel from '@/portal/components/PortalLabel.vue'
-import { formatEuros } from '@/admin/lib/money'
+import { formatEuros } from '@/lib/money'
 
 /*
  * Aftersales: was das Studio über die Buchungen hinaus anbietet. Steht auf der
