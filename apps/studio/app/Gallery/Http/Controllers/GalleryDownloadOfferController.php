@@ -144,7 +144,7 @@ class GalleryDownloadOfferController extends Controller
         return URL::temporarySignedRoute(
             'api.galleries.download.part',
             now()->addHours(GalleryDownloadController::PARTS_LIVE_HOURS),
-            ['gallery' => $gallery->public_id, 'zipBuildPart' => $part->public_id, 'guestId' => $guest->identifier, 'pv' => $gallery->download_pin_version],
+            ['gallery' => $gallery->public_id, 'zipBuildPart' => $part->public_id, 'guestId' => $guest->identifier, 'pv' => $gallery->download_pin_version, 'vv' => $gallery->view_password_version],
             absolute: false,
         );
     }

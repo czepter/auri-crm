@@ -104,3 +104,18 @@ it('stops a part link once the pin was rotated', function () {
 
     $this->get($path)->assertNotFound();
 });
+
+it('stops a part link once the view password was rotated', function () {
+    $version = downloadableGallery();
+    $gallery = $version->gallery;
+    [, $guestPass] = confirmedGuest($gallery);
+    $build = ZipBuild::factory()->for($version, 'galleryVersion')->create(['status' => ZipBuildStatus::Ready]);
+    ZipBuildPart::factory()->for($build)->create(['part_number' => 1]);
+
+    $path = $this->getJson("/api/galleries/{$gallery->public_id}/download", ['X-Guest-Pass' => $guestPass])
+        ->assertOk()->json('builds.0.parts.0.path');
+
+    $gallery->fresh()->rotateViewPassword('neu');
+
+    $this->get($path)->assertNotFound();
+});
