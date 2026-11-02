@@ -6,11 +6,16 @@ name: Release images
 # JavaScript bundles while the old containers are still serving, on hardware
 # sized for neither. Here the build is already cached, already tested by ci.yml
 # on the same commit, and the deploy is a pull.
+#
+# Each image is built natively per architecture (amd64 and arm64 hosted
+# runners, no QEMU), pushed by digest, and `merge` joins the digests into one
+# multi-arch tag.
 on:
   # A published release is what names a deployable version, and the only
   # build production pulls. A push to main used to build too: the same commit
-  # twice per release, and the self-hosted runners share a host whose memory
-  # two overlapping builds exhaust. A branch image for staging is a manual
+  # twice per release. Hosted runners, not the self-hosted ones: the matrix jobs
+  # shared one Docker daemon, and the gallery job's `buildx rm` stopped the
+  # studio job's buildkit mid-build (runs 39159553670, 35767126259). A branch image for staging is a manual
   # workflow_dispatch.
   release:
     types: [published]
@@ -29,7 +34,7 @@ jobs:
   # it checks produces a stack that deploys green with an empty secret or a
   # misrouted domain. Its own job so the matrix below does not run it twice.
   check:
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       # In a container, not the host's PHP: ci.yml says why.
@@ -38,19 +43,86 @@ jobs:
 
   build:
     needs: check
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
+        image: [studio, gallery]
+        arch: [amd64, arm64]
         include:
-          # Six of the seven app services run this one: three HTTP surfaces,
+          # Six of the seven app services run studio: three HTTP surfaces,
           # Horizon, the scheduler and the migration one-shot.
           - image: studio
             dockerfile: docker/app/Dockerfile
           - image: gallery
             dockerfile: docker/gallery/Dockerfile
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}/${{ matrix.image }}
+
+      - id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/${{ matrix.arch }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,name=ghcr.io/${{ github.repository }}/${{ matrix.image }},push-by-digest=true,name-canonical=true,push=true
+          # SENTRY_RELEASE tags a GlitchTip event with the build it came from,
+          # so it is the commit. APP_VERSION is what the running app calls
+          # itself: the release tag where there is one, otherwise the branch —
+          # `github.event.release.tag_name` is empty on a dispatch and falls
+          # through, so a branch build reads `dev` — which config/app.php
+          # documents as not being a version at all.
+          build-args: |
+            SENTRY_RELEASE=${{ github.sha }}
+            APP_VERSION=${{ github.event.release.tag_name || github.ref_name }}
+          cache-from: type=gha,scope=${{ matrix.image }}-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}-${{ matrix.arch }}
+
+      - name: Export digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/digests"
+          touch "$RUNNER_TEMP/digests/${DIGEST#sha256:}"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: digests-${{ matrix.image }}-${{ matrix.arch }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [studio, gallery]
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-${{ matrix.image }}-*
+          merge-multiple: true
 
       - uses: docker/setup-buildx-action@v4
 
@@ -80,21 +152,12 @@ jobs:
             type=ref,event=branch
             type=sha,format=long
 
-      - uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: ${{ matrix.dockerfile }}
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          # SENTRY_RELEASE tags a GlitchTip event with the build it came from,
-          # so it is the commit. APP_VERSION is what the running app calls
-          # itself: the release tag where there is one, otherwise the branch —
-          # `github.event.release.tag_name` is empty on a dispatch and falls
-          # through, so a branch build reads `dev` — which config/app.php
-          # documents as not being a version at all.
-          build-args: |
-            SENTRY_RELEASE=${{ github.sha }}
-            APP_VERSION=${{ github.event.release.tag_name || github.ref_name }}
-          cache-from: type=gha,scope=${{ matrix.image }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+      - name: Create the multi-arch manifest
+        working-directory: ${{ runner.temp }}/digests
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}/${{ matrix.image }}
+        run: |
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf "$IMAGE@sha256:%s " *)
+          docker buildx imagetools inspect "$(jq -r '.tags[0]' <<< "$DOCKER_METADATA_OUTPUT_JSON")"
