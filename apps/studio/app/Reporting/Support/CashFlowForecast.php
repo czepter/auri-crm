@@ -45,7 +45,7 @@ class CashFlowForecast
             'overdue' => self::overdue($start, $type),
             'projects' => self::projectsBehind($type, fn ($query) => $query
                 ->where('payment_installments.status', '!=', PaymentInstallmentStatus::Paid)
-                ->whereBetween('payment_installments.due_on', [$start, $end])),
+                ->where('payment_installments.due_on', '<=', $end)),
             'quotes' => self::openQuotes($type)
                 ->where('status', QuoteStatus::Sent)
                 ->whereNotNull('valid_until')

@@ -175,6 +175,17 @@ it('keeps overdue money out of the current month', function () {
         ->and($forecast['months'][0]['due'])->toBe(0);
 });
 
+it('counts the project behind overdue money', function () {
+    $plan = PaymentPlan::factory()->create(['total' => 30_000]);
+    PaymentInstallment::factory()->for($plan, 'plan')->create([
+        'amount' => 30_000,
+        'due_on' => now()->subMonths(3),
+        'status' => PaymentInstallmentStatus::Scheduled,
+    ]);
+
+    expect(CashFlowForecast::build()['projects'])->toBe(1);
+});
+
 it('books received money in its settlement month, not its due month', function () {
     $plan = PaymentPlan::factory()->create(['total' => 50_000]);
     PaymentInstallment::factory()->for($plan, 'plan')->create([
@@ -326,6 +337,16 @@ it('counts a lead that skipped a step as having passed it', function () {
     expect($steps['new']['leads'])->toBe(1)
         ->and($steps['quote_sent']['leads'])->toBe(1)
         ->and($steps['booked']['leads'])->toBe(1);
+});
+
+it('counts a lead without trail on the step it stands on', function () {
+    Lead::factory()->create(['captured_at' => now()->subMonth(), 'stage' => LeadStage::QuoteSent]);
+
+    $steps = collect(FunnelTimes::steps(now()->subYear(), now()))->keyBy('key');
+
+    expect($steps['contacted']['leads'])->toBe(1)
+        ->and($steps['quote_sent']['leads'])->toBe(1)
+        ->and($steps['booked']['leads'])->toBe(0);
 });
 
 it('measures the first answer from capture, and counts the unanswered separately', function () {
