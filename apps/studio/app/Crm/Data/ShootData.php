@@ -2,6 +2,7 @@
 
 namespace App\Crm\Data;
 
+use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
@@ -61,6 +62,10 @@ class ShootData extends Data
      */
     public static function fromShoot(Shoot $shoot, array $conflicts = []): self
     {
+        // Nothing has been shot before the day: from "Fotografiert" on, a
+        // future shoot offers only archiving.
+        $shotAt = $shoot->date?->isFuture() ? Stage::anchored(StagePipeline::Project, StageAnchor::Shot)?->sort_order : null;
+
         return new self(
             id: $shoot->public_id,
             kind: $shoot->kind,
@@ -84,6 +89,7 @@ class ShootData extends Data
             forwardStatuses: $shoot->isCancelled() ? [] : app(CrmVocabulary::class)
                 ->ordered(StagePipeline::Project)
                 ->filter(fn (Stage $status) => $status->is_active && $shoot->status->canTransitionTo($status))
+                ->reject(fn (Stage $status) => $shotAt !== null && $status->sort_order >= $shotAt && $status->anchor !== StageAnchor::Archived)
                 ->map(fn (Stage $status) => ['value' => $status->key, 'label' => $status->name])
                 ->values()
                 ->all(),

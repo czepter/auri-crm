@@ -1,6 +1,7 @@
 <?php
 
 use App\Crm\Actions\AdvanceShootStatus;
+use App\Crm\Data\ShootData;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Events\ShootCancelled;
 use App\Crm\Events\ShootStatusChanged;
@@ -157,4 +158,14 @@ it('stamps the status entry time on a shoot created outside the action', functio
     // CaptureInquiry writes shoots directly. A null here would make the
     // staleness read on P-04's board silently skip the newest rows.
     expect(Shoot::factory()->create()->status_entered_at)->not->toBeNull();
+});
+
+it('offers Fotografiert only from the shoot date on', function () {
+    $keys = fn (Shoot $shoot) => collect(ShootData::fromShoot($shoot)->forwardStatuses)->pluck('value')->all();
+
+    $future = Shoot::factory()->atStatus(ShootStatus::Booked)->create(['date' => now()->addDays(5)]);
+    $today = Shoot::factory()->atStatus(ShootStatus::Booked)->create(['date' => now()->startOfDay()]);
+
+    expect($keys($future))->toContain('prep')->not->toContain('shot')
+        ->and($keys($today))->toContain('prep', 'shot');
 });
