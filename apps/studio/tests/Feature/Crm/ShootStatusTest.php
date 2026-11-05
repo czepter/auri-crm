@@ -30,7 +30,7 @@ it('allows a forward skip and refuses a backward move', function () {
 });
 
 it('advances a shoot and restamps the status entry time', function () {
-    $shoot = Shoot::factory()->atStatus(ShootStatus::Booked, daysAgo: 11)->create();
+    $shoot = Shoot::factory()->atStatus(ShootStatus::Booked, daysAgo: 11)->on(now()->subDay()->toDateString())->create();
 
     $advanced = app(AdvanceShootStatus::class)($shoot, stage(ShootStatus::Shot));
 
@@ -64,7 +64,7 @@ it('writes an audit row naming the transition', function () {
 });
 
 it('takes a backward move back, restoring the moment it first stood there', function () {
-    $shoot = Shoot::factory()->atStatus(ShootStatus::Booked, daysAgo: 11)->create();
+    $shoot = Shoot::factory()->atStatus(ShootStatus::Booked, daysAgo: 11)->on(now()->subDay()->toDateString())->create();
     $entered = $shoot->status_entered_at;
 
     app(AdvanceShootStatus::class)($shoot, stage(ShootStatus::Shot));
@@ -91,7 +91,7 @@ it('leaves nothing behind when a transition is refused', function () {
 });
 
 it('backdates a status entered after the fact', function () {
-    $shoot = Shoot::factory()->atStatus(ShootStatus::Booked)->create();
+    $shoot = Shoot::factory()->atStatus(ShootStatus::Booked)->on(now()->subDay()->toDateString())->create();
 
     app(AdvanceShootStatus::class)($shoot, stage(ShootStatus::Shot), null, CarbonImmutable::parse('2026-07-03 09:00'));
 
@@ -99,7 +99,7 @@ it('backdates a status entered after the fact', function () {
 });
 
 it('takes back an absage so the shoot can move again', function () {
-    $shoot = Shoot::factory()->atStatus(ShootStatus::Booked)->create();
+    $shoot = Shoot::factory()->atStatus(ShootStatus::Booked)->on(now()->subDay()->toDateString())->create();
 
     app(AdvanceShootStatus::class)->cancel($shoot, 'Termin geplatzt');
     expect($shoot->fresh()->isCancelled())->toBeTrue();
@@ -168,4 +168,16 @@ it('offers Fotografiert only from the shoot date on', function () {
 
     expect($keys($future))->toContain('prep')->not->toContain('shot')
         ->and($keys($today))->toContain('prep', 'shot');
+});
+
+it('refuses Fotografiert and later before the shoot date, but not archiving', function () {
+    $advance = app(AdvanceShootStatus::class);
+    $future = Shoot::factory()->atStatus(ShootStatus::Booked)->create(['date' => now()->addDays(5)]);
+
+    expect(fn () => $advance($future, stage(ShootStatus::Delivered)))->toThrow(DomainException::class)
+        ->and(fn () => $advance($future, stage(ShootStatus::Shot)))->toThrow(DomainException::class);
+
+    $advance($future, stage(ShootStatus::Archived));
+
+    expect($future->fresh()->status->key)->toBe(ShootStatus::Archived->value);
 });

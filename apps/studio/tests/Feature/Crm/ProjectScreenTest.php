@@ -186,7 +186,7 @@ it('takes a second and a third shoot', function () {
 });
 
 it('advances a shoot from the screen', function () {
-    $shoot = Shoot::factory()->for($this->case, 'case')->atStatus(ShootStatus::Booked)->create();
+    $shoot = Shoot::factory()->for($this->case, 'case')->on(now()->subDay()->toDateString())->atStatus(ShootStatus::Booked)->create();
 
     $this->post("/shootings/{$shoot->public_id}/status", ['status' => 'shot'])
         ->assertRedirect();

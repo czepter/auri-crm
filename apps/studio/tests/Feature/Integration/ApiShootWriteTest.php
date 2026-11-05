@@ -83,7 +83,7 @@ it('refuses a shoot to a token that does not hold ManageShoots', function () {
 
 it('moves a shoot through the pipeline and back, reusing AdvanceShootStatus', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
-    $shoot = Shoot::factory()->atStatus(ShootStatus::Booked, daysAgo: 11)->create();
+    $shoot = Shoot::factory()->atStatus(ShootStatus::Booked, daysAgo: 11)->on(now()->subDay()->toDateString())->create();
     $entered = $shoot->status_entered_at;
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
