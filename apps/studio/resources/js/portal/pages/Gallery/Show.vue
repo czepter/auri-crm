@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { router, useForm, usePage } from '@inertiajs/vue3'
 import GalleryLightbox from '@/portal/components/GalleryLightbox.vue'
+import { shortDate } from '@/portal/lib/dates'
 import { ALL, countOf, selections, visible } from '@/portal/lib/gallerySelections'
 import { GRID_WIDTHS, srcSet } from '@/portal/lib/images'
 import { Button } from '@/ui/button'
@@ -155,7 +156,7 @@ function submit() {
 }
 
 const subtitle = computed(() => {
-  const parts = [props.gallery.date, props.gallery.venue].filter(Boolean)
+  const parts = [props.gallery.date && shortDate(props.gallery.date), props.gallery.venue].filter(Boolean)
 
   if (props.assets?.length) {
     parts.push(`${props.assets.length} Bilder`)

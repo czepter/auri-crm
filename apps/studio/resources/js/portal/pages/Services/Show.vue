@@ -9,7 +9,7 @@ import PortalLabel from '@/portal/components/PortalLabel.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 import { vatAmount } from '@/lib/quoteTotals'
-import { basisPointsToPercent, formatEuros } from '@/lib/money'
+import { formatEuros, formatPercent } from '@/lib/money'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
@@ -151,7 +151,7 @@ function submit() {
           <PortalLabel class="mb-2">{{ $t('portal.totalTitle') }}</PortalLabel>
           <span class="block text-[28px] leading-none font-semibold tracking-[-0.022em] tabular-nums">{{ price }}</span>
           <span v-if="vatRate && service.price !== null" class="mt-[7px] block text-[13px] text-muted-foreground">
-            {{ $t('portal.vatNote', { rate: basisPointsToPercent(vatRate) }) }}
+            {{ $t('portal.vatNote', { rate: formatPercent(vatRate) }) }}
           </span>
 
           <div class="mt-8 grid gap-4">

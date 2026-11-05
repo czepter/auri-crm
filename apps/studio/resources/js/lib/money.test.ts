@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatDiscount, parseDiscount } from './money'
+import { formatDiscount, formatPercent, parseDiscount } from './money'
 
 describe('parseDiscount', () => {
   it('reads a trailing percent sign as a percentage in basis points', () => {
@@ -33,5 +33,12 @@ describe('formatDiscount', () => {
   it('renders no discount as an empty cell', () => {
     expect(formatDiscount(null, null)).toBe('')
     expect(formatDiscount('percentage', null)).toBe('')
+  })
+})
+
+describe('formatPercent', () => {
+  it('drops trailing zeros and uses a decimal comma', () => {
+    expect(formatPercent(1900)).toBe('19')
+    expect(formatPercent(1250)).toBe('12,5')
   })
 })

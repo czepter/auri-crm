@@ -7,7 +7,7 @@ import Card from '@/ui/page/Card.vue'
 import { PreviewOverlay } from '@/ui/preview-overlay'
 import { debounced } from '@/admin/lib/autosave'
 import { buildQuotePayload, type QuoteContact, type QuoteDraft, type VatSettings } from '@/admin/components/quote/quotePayload'
-import { basisPointsToPercent, centsToEuros, eurosToCents, formatDiscount, formatEuros } from '@/lib/money'
+import { centsToEuros, eurosToCents, formatDiscount, formatEuros, formatPercent } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { quoteChipClass, quoteTitle } from '@/admin/lib/quoteDisplay'
 import { Button } from '@/ui/button'
@@ -154,11 +154,11 @@ function createPlan() {
 function summaryRows(quote: App.Quotes.Data.QuoteData) {
   const rows: { label: string; value: string; rate?: number }[] = quote.discountAmount
     ? [
-        { label: 'quotes.total', value: formatEuros(quote.total) },
+        { label: 'quotes.subtotal', value: formatEuros(quote.total) },
         { label: 'quotes.discount', value: `−${formatEuros(quote.discountAmount)}` },
         { label: 'quotes.net', value: formatEuros(quote.net) },
       ]
-    : [{ label: 'quotes.total', value: formatEuros(quote.total) }]
+    : [{ label: quote.vatMode === 'standard' ? 'quotes.net' : 'quotes.total', value: formatEuros(quote.total) }]
 
   if (quote.vatMode === 'standard') {
     // #412: eine Zeile je Steuersatz, bei einem Satz genau die eine.
@@ -255,7 +255,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
           :class="row.last ? 'mt-1.5 pt-2.5 font-semibold shadow-[inset_0_1px_0_var(--line)]' : 'text-small'"
         >
           <span class="flex-1" :class="{ 'text-ui': row.last }">
-            {{ row.rate === undefined ? $t(row.label) : $t('quotes.vat', { rate: basisPointsToPercent(row.rate) }) }}
+            {{ row.rate === undefined ? $t(row.label) : $t('quotes.vat', { rate: formatPercent(row.rate) }) }}
           </span>
           <span class="w-[110px] flex-none text-right tabular-nums" :class="{ 'text-ui': row.last }">{{ row.value }}</span>
         </div>

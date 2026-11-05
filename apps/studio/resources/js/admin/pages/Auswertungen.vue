@@ -167,6 +167,7 @@ const windowLabel = computed(() => {
 })
 
 const stepPeak = computed(() => Math.max(1, ...props.steps.map((s) => s.leads)))
+const decimal = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 1 })
 const dwellPeak = computed(() => Math.max(1, ...props.dwell.map((d) => d.days)))
 const replyPeak = computed(() => Math.max(1, ...props.responseTimes.buckets.map((b) => b.leads)))
 const leadTimePeak = computed(() => Math.max(1, ...props.leadTimes.buckets.map((b) => b.projects)))
@@ -488,7 +489,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                   <div class="h-2 overflow-hidden rounded-[4px] bg-muted">
                     <div class="h-2 rounded-[4px] bg-action" :style="{ width: barWidth(step.leads, stepPeak) }" />
                   </div>
-                  <span class="text-small tabular-nums" :class="step.lost ? 'text-destructive' : 'text-faint'">
+                  <span v-if="step.drop === null || step.lost" class="text-small tabular-nums" :class="step.lost ? 'text-destructive' : 'text-faint'">
                     {{ step.drop === null ? $t('reports.stepEntry') : $t('reports.stepDrop', { lost: step.lost, percent: step.drop }) }}
                   </span>
                 </div>
@@ -528,7 +529,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                     />
                   </div>
                   <span class="w-12 shrink-0 text-right text-small font-semibold tabular-nums">
-                    {{ $t('reports.days', { days: row.days }) }}
+                    {{ $t('reports.days', { days: decimal.format(row.days) }) }}
                   </span>
                 </div>
               </div>
@@ -559,7 +560,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
             <ReportCard class="mb-6 break-inside-avoid" v-if="steps.length" :title="$t('reports.responseTitle')" :sub="$t('reports.responseSub')">
               <template #head>
                 <span v-if="responseTimes.medianHours !== null" class="rounded-[var(--r-sm)] bg-[var(--accent-bg)] px-2.5 py-1 text-small leading-none font-semibold text-ring">
-                  {{ $t('reports.medianHours', { hours: responseTimes.medianHours }) }}
+                  {{ $t('reports.medianHours', { hours: decimal.format(responseTimes.medianHours) }) }}
                 </span>
               </template>
 
