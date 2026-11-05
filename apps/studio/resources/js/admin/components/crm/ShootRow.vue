@@ -25,30 +25,30 @@ function advance(status: string) {
         class="flex items-center gap-3.5 py-[11px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
     >
         <span
-            class="w-[150px] flex-none text-small leading-[1.47] font-semibold tracking-[-0.012em] tabular-nums"
+            class="w-[150px] flex-none max-[640px]:w-auto max-[640px]:basis-full text-small leading-[1.47] font-semibold tracking-[-0.012em] tabular-nums"
         >
             {{ dayWithWeekday(shoot.date) }}
             <span class="block text-small leading-[1.47] font-normal text-ink-2">{{
                 shoot.statusLabel
             }}</span>
         </span>
-        <span class="min-w-0 flex-1 text-ui leading-[1.47]">
+        <span class="min-w-0 flex-1 text-ui leading-[1.47] max-[640px]:basis-full">
             {{ shoot.label ?? shoot.kind }}
             <span v-if="shoot.venue" class="block text-small leading-[1.47] text-ink-2">{{ shoot.venue }}</span>
         </span>
-        <span v-if="!$page.props.soloStudio" class="w-[118px] flex-none text-right text-small max-[640px]:w-auto max-[640px]:text-left leading-[1.47] text-ink-2">{{
+        <span v-if="!$page.props.soloStudio" class="w-[118px] flex-none text-right text-small max-[640px]:w-auto max-[640px]:basis-full max-[640px]:text-left leading-[1.47] text-ink-2">{{
             shoot.crew.map((member) => member.name).join(", ") || "—"
         }}</span>
-        <div v-if="manageable && onward.length" class="flex flex-none">
-            <Button variant="pill" type="button" class="rounded-r-none" @click="advance(onward[0].value)">
+        <div v-if="manageable && onward.length" class="flex flex-none max-[640px]:basis-full">
+            <Button variant="outline" type="button" class="rounded-r-none max-[640px]:min-h-11" @click="advance(onward[0].value)">
                 {{ onward[0].label }}
             </Button>
             <DropdownMenu>
                 <DropdownMenuTrigger as-child>
                     <Button
-                        variant="pill"
+                        variant="outline"
                         type="button"
-                        class="rounded-l-none border-l border-white/30 px-2"
+                        class="rounded-l-none border-l-0 px-2 max-[640px]:min-h-11"
                         :aria-label="$t('board.colStage')"
                     >
                         <ChevronDown class="size-3.5" />

@@ -4,6 +4,7 @@ import { Link, router, useForm } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import Card from "@/ui/page/Card.vue";
+import CaseAddLinks from "@/admin/components/crm/CaseAddLinks.vue";
 import ContactTypeahead from "@/admin/components/crm/ContactTypeahead.vue";
 import LeadQueue from "@/admin/components/crm/LeadQueue.vue";
 import NoteThread from "@/admin/components/crm/NoteThread.vue";
@@ -293,6 +294,20 @@ const taskSummary = computed(() => {
 
 const notes = computed(() => props.thread.filter((entry) => !entry.system));
 
+const tasksAsked = ref(false);
+const notesAsked = ref(false);
+
+const addLinks = computed(() => [
+    !props.tasks.length && !tasksAsked.value && { key: "task", label: t("lead.taskAdd") },
+    !notes.value.length && !notesAsked.value && { key: "note", label: t("lead.noteAdd") },
+    props.header.canManageQuotes && !props.quote && { key: "quote", label: t("quotes.create"), href: newQuote.value },
+].filter((item) => item !== false));
+
+function askFor(key: string) {
+    if (key === "task") tasksAsked.value = true;
+    else notesAsked.value = true;
+}
+
 // Same rule as the board: "booked" writes the booking, so it asks first.
 const booking = ref(false);
 
@@ -540,7 +555,7 @@ const primary = computed(() => {
                             </span>
                             <a v-if="person.email" class="text-small text-ring no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
                             <a v-if="person.phone" class="ml-auto whitespace-nowrap text-small tabular-nums text-ring no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
-                            <span v-if="!person.email && !person.phone" class="ml-auto text-small text-mark">{{ $t("lead.noReach") }}</span>
+                            <span v-if="!person.email && !person.phone" class="ml-auto text-small text-ink-2">{{ $t("lead.noReach") }}</span>
                         </div>
 
                         <template #edit>
@@ -648,11 +663,7 @@ const primary = computed(() => {
                         </template>
                     </Card>
 
-                    <Card
-                        :title="$t('lead.quote')"
-                        :summary="quoteSummary"
-                        :default-open="quote !== null"
-                    >
+                    <Card v-if="quote" :title="$t('lead.quote')" :summary="quoteSummary">
                         <template v-if="quote" #meta>
                             <span v-if="quote.number" class="text-ui leading-[1.2] tracking-[-0.015em] text-ink-2 tabular-nums">{{ quote.number }}</span>
                             <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
@@ -665,11 +676,6 @@ const primary = computed(() => {
                                 :aria-label="$t('common.edit')"
                                 :title="$t('common.edit')"
                             ><Pencil class="size-[15px]" /></Link>
-                            <Link
-                                v-else
-                                class="text-small tracking-[-0.01em] whitespace-nowrap text-ring no-underline hover:underline"
-                                :href="newQuote"
-                            >{{ $t("quotes.create") }}</Link>
                         </template>
 
                         <QuoteSummary
@@ -682,27 +688,9 @@ const primary = computed(() => {
                                     : null
                             "
                         />
-
-                        <!-- Ohne Angebot die aktiven Pakete: der nächste Zug ist,
-                             eines zu wählen. -->
-                        <div v-else class="flex flex-wrap gap-2">
-                            <Link
-                                v-for="pkg in packages"
-                                :key="pkg.id"
-                                class="cursor-pointer rounded-[var(--r-sm)] border-0 bg-sunk px-[11px] py-[5px] text-small leading-[1.4] font-normal text-ink-2 hover:bg-sunk-2 [&_b]:font-semibold [&_b]:text-foreground"
-                                :href="`/auftraege/${lead.projectId}/angebote`"
-                                method="post"
-                                as="button"
-                                :data="{ package: pkg.id }"
-                            >
-                                <b>{{ pkg.name }}</b>
-                                {{ $t("packages.itemCount", pkg.itemCount) }} ·
-                                {{ formatEurosRounded(pkg.total) }}
-                            </Link>
-                        </div>
                     </Card>
 
-                    <Card :title="$t('lead.tasks')" :summary="taskSummary" :default-open="false">
+                    <Card v-if="tasks.length || tasksAsked" :title="$t('lead.tasks')" :summary="taskSummary" :default-open="tasksAsked">
                         <!-- Eine Box: Titel oben, Fälligkeit und Zielgruppe in der
                              Fußzeile darin, der Knopf unten rechts. -->
                         <form
@@ -739,28 +727,32 @@ const primary = computed(() => {
                             <div
                                 v-for="row in tasks"
                                 :key="row.id"
-                                class="flex items-center gap-3 py-[7px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+                                class="flex items-center gap-3 py-[7px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap max-[640px]:gap-y-0.5"
                             >
                                 <span
                                     class="size-[15px] flex-none rounded-[5px]"
                                     :class="row.isDone ? 'bg-foreground' : 'bg-sunk-2'"
                                 />
-                                <span class="text-ui leading-[1.47]" :class="row.isDone && 'text-ink-2'">{{ row.title }}</span>
-                                <span class="text-small leading-[1.47] text-ink-2">{{ row.audience }}</span>
-                                <span
-                                    class="ml-auto text-small leading-[1.47] tabular-nums"
-                                    :class="row.isOverdue ? 'text-destructive' : 'text-ink-2'"
-                                >{{ row.dueOn ? day(row.dueOn) : "" }}</span>
+                                <span class="min-w-0 flex-1 text-ui leading-[1.47]" :class="row.isDone && 'text-ink-2'">{{ row.title }}</span>
+                                <span class="flex items-baseline gap-3 max-[640px]:basis-full max-[640px]:pl-[27px]">
+                                    <span class="text-small leading-[1.47] text-ink-2">{{ row.audience }}</span>
+                                    <span
+                                        class="text-small leading-[1.47] whitespace-nowrap tabular-nums"
+                                        :class="row.isOverdue ? 'text-destructive' : 'text-ink-2'"
+                                    >{{ row.dueOn ? day(row.dueOn) : "" }}</span>
+                                </span>
                             </div>
                         </div>
                     </Card>
 
-                    <Card :title="$t('lead.notes')" :summary="`${notes.length}`" :default-open="false">
+                    <Card v-if="notes.length || notesAsked" :title="$t('lead.notes')" :summary="`${notes.length}`" :default-open="notesAsked">
                         <NoteThread
                             :entries="notes"
                             :action="`/auftraege/${lead.projectId}/notizen`"
                         />
                     </Card>
+
+                    <CaseAddLinks :items="addLinks" @pick="askFor" />
                 </div>
                 </template>
 

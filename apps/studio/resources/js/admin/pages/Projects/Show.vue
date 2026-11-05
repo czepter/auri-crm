@@ -19,6 +19,7 @@ import ProjectFields from "@/admin/components/crm/ProjectFields.vue";
 import type { ProjectFieldValues } from "@/admin/components/crm/ProjectFields.vue";
 import ProjectShell from "@/admin/components/crm/ProjectShell.vue";
 import TaskCreateDialog from "@/admin/components/crm/TaskCreateDialog.vue";
+import CaseAddLinks from "@/admin/components/crm/CaseAddLinks.vue";
 import Card from "@/ui/page/Card.vue";
 import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
 import Section from "@/ui/page/Section.vue";
@@ -227,6 +228,22 @@ const taskSummary = computed(() =>
 
 const notes = computed(() => props.thread.filter((entry) => !entry.system));
 
+const tasksAsked = ref(false);
+const notesAsked = ref(false);
+
+const addLinks = computed(() => [
+    props.header.canManageTasks && !props.tasks.length && !tasksAsked.value && { key: "task", label: t("lead.taskAdd") },
+    !notes.value.length && !notesAsked.value && { key: "note", label: t("lead.noteAdd") },
+    props.header.canManageQuotes && !props.quote && { key: "quote", label: t("quotes.create"), href: `/angebote/neu?projekt=${props.header.id}` },
+    !detailsSummary.value && !detailsEditing.value && { key: "details", label: t("project.details") },
+].filter((item) => item !== false));
+
+function askFor(key: string) {
+    if (key === "task") tasksAsked.value = true;
+    else if (key === "note") notesAsked.value = true;
+    else detailsEditing.value = true;
+}
+
 function complete(row: App.Crm.Data.TaskRowData) {
     router.post(`/aufgaben/${row.id}/erledigt`, {}, { preserveScroll: true });
 }
@@ -359,7 +376,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         </template>
                     </Card>
 
-                    <Card :title="$t('lead.quote')" :summary="quoteSummary" :default-open="quote !== null">
+                    <Card v-if="quote" :title="$t('lead.quote')" :summary="quoteSummary">
                         <template v-if="quote" #meta>
                             <span v-if="quote.number" class="text-ui leading-[1.2] tracking-[-0.015em] text-ink-2 tabular-nums">{{ quote.number }}</span>
                             <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
@@ -372,11 +389,6 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 :aria-label="$t('common.edit')"
                                 :title="$t('common.edit')"
                             ><Pencil class="size-[15px]" /></Link>
-                            <Link
-                                v-else
-                                class="text-small tracking-[-0.01em] whitespace-nowrap text-ring no-underline hover:underline"
-                                :href="`/angebote/neu?projekt=${header.id}`"
-                            >{{ $t("quotes.create") }}</Link>
                         </template>
                         <QuoteSummary
                             v-if="quote"
@@ -384,24 +396,9 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             :superseded="supersededQuotes"
                             :valid-until-label="quote.validUntil ? $t('lead.validUntil', { date: day(quote.validUntil) }) : null"
                         />
-                        <div v-else class="flex flex-wrap gap-2">
-                            <Link
-                                v-for="pkg in packages"
-                                :key="pkg.id"
-                                class="cursor-pointer rounded-[var(--r-sm)] border-0 bg-sunk px-[11px] py-[5px] text-small leading-[1.4] font-normal text-ink-2 hover:bg-sunk-2"
-                                :href="`/auftraege/${header.id}/angebote`"
-                                method="post"
-                                as="button"
-                                :data="{ package: pkg.id }"
-                            >
-                                <b>{{ pkg.name }}</b>
-                                {{ $t("packages.itemCount", pkg.itemCount) }} ·
-                                {{ formatEurosRounded(pkg.total) }}
-                            </Link>
-                        </div>
                     </Card>
 
-                    <Card :title="$t('project.tasks')" :summary="taskSummary" :default-open="overdue > 0">
+                    <Card v-if="tasks.length || tasksAsked" :title="$t('project.tasks')" :summary="taskSummary" :default-open="overdue > 0 || tasksAsked">
                         <div class="mb-1.5 flex items-center gap-2.5">
                             <span class="inline-flex gap-0.5 rounded-lg bg-sunk p-[3px]">
                                 <button
@@ -434,7 +431,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         <div
                             v-for="row in showDone ? done : open"
                             :key="row.id"
-                            class="flex items-center gap-3 py-[9px]"
+                            class="flex items-center gap-3 py-[9px] max-[640px]:flex-wrap max-[640px]:gap-y-0.5"
                         >
                             <span
                                 v-if="row.isDone"
@@ -453,22 +450,23 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 type="button"
                                 @click="complete(row)"
                             />
-                            <span class="text-ui leading-[1.47]" :class="row.isDone && 'text-ink-2'">{{
+                            <span class="min-w-0 flex-1 text-ui leading-[1.47]" :class="row.isDone && 'text-ink-2'">{{
                                 row.title
                             }}</span>
-                            <span
-                                class="text-small leading-[1.47] text-ink-2"
-                            >{{ row.audienceLabel }}</span>
-                            <span v-if="row.shootLabel" class="text-small leading-[1.47] text-faint">{{
-                                row.shootLabel
-                            }}</span>
-                            <span
-                                class="ml-auto text-small leading-[1.47] tabular-nums"
-                                :class="row.isOverdue && !row.isDone ? 'text-destructive' : 'text-ink-2'"
-                            >{{ row.dueOn ? day(row.dueOn) : "" }}</span>
+                            <span class="flex items-baseline gap-3 max-[640px]:basis-full max-[640px]:pl-[27px]">
+                                <span class="text-small leading-[1.47] text-ink-2">{{ row.audienceLabel }}</span>
+                                <span v-if="row.shootLabel" class="text-small leading-[1.47] text-ink-2">{{
+                                    row.shootLabel
+                                }}</span>
+                                <span
+                                    class="text-small leading-[1.47] whitespace-nowrap tabular-nums"
+                                    :class="row.isOverdue && !row.isDone ? 'text-destructive' : 'text-ink-2'"
+                                >{{ row.dueOn ? day(row.dueOn) : "" }}</span>
+                            </span>
                         </div>
                     </Card>
                     <Card
+                        v-if="detailsSummary || detailsEditing"
                         v-model:editing="detailsEditing"
                         :title="$t('project.details')"
                         :summary="detailsSummary"
@@ -580,16 +578,19 @@ function complete(row: App.Crm.Data.TaskRowData) {
                     </Section>
 
                     <Card
+                        v-if="notes.length || notesAsked"
                         class="mt-3"
                         :title="$t('lead.notes')"
                         :summary="`${notes.length}`"
-                        :default-open="false"
+                        :default-open="notesAsked"
                     >
                         <NoteThread
                             :entries="notes"
                             :action="`/auftraege/${header.id}/notizen`"
                         />
                     </Card>
+
+                    <CaseAddLinks :items="addLinks" @pick="askFor" />
         </ProjectShell>
     </AdminLayout>
 </template>
