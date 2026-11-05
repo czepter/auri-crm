@@ -448,8 +448,9 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             </span>
                             <button
                                 v-else
-                                class="size-[15px] flex-none rounded-[5px] bg-sunk-2"
+                                class="relative size-[15px] flex-none rounded-[5px] bg-sunk-2 max-[640px]:before:absolute max-[640px]:before:-inset-4 max-[640px]:before:content-['']"
                                 type="button"
+                                :aria-label="$t('project.taskComplete')"
                                 @click="complete(row)"
                             />
                             <span class="min-w-0 flex-1 text-ui leading-[1.47]" :class="row.isDone && 'text-ink-2'">{{
