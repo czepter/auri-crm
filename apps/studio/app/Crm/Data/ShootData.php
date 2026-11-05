@@ -3,6 +3,7 @@
 namespace App\Crm\Data;
 
 use App\Crm\Actions\AdvanceShootStatus;
+use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
@@ -23,6 +24,7 @@ class ShootData extends Data
     /**
      * @param  list<CrewMemberData>  $crew
      * @param  list<array{value: string, label: string}>  $forwardStatuses
+     * @param  array{value: string, label: string}|null  $dueStatus
      * @param  list<TimelineEntryData>  $timeline
      * @param  list<DateConflictData>  $crewConflicts
      */
@@ -46,6 +48,8 @@ class ShootData extends Data
         public ?string $cancelledReason,
         public array $crew,
         public array $forwardStatuses,
+        // "Fotografiert" while the day has come and the status still lies before it.
+        public ?array $dueStatus,
         public array $timeline,
         public string $pdfUrl,
         public string $icsUrl,
@@ -62,6 +66,15 @@ class ShootData extends Data
      */
     public static function fromShoot(Shoot $shoot, array $conflicts = []): self
     {
+        $forward = $shoot->isCancelled() ? [] : app(CrmVocabulary::class)
+            ->ordered(StagePipeline::Project)
+            ->filter(fn (Stage $status) => $status->is_active && $shoot->status->canTransitionTo($status))
+            ->reject(fn (Stage $status) => AdvanceShootStatus::beforeTheDay($shoot, $status))
+            ->map(fn (Stage $status) => ['value' => $status->key, 'label' => $status->name])
+            ->values()
+            ->all();
+        $shotKey = app(CrmVocabulary::class)->anchored(StagePipeline::Project, StageAnchor::Shot)?->key;
+
         return new self(
             id: $shoot->public_id,
             kind: $shoot->kind,
@@ -82,13 +95,8 @@ class ShootData extends Data
             crew: $shoot->crew
                 ->map(fn ($assignment) => CrewMemberData::fromAssignment($assignment))
                 ->all(),
-            forwardStatuses: $shoot->isCancelled() ? [] : app(CrmVocabulary::class)
-                ->ordered(StagePipeline::Project)
-                ->filter(fn (Stage $status) => $status->is_active && $shoot->status->canTransitionTo($status))
-                ->reject(fn (Stage $status) => AdvanceShootStatus::beforeTheDay($shoot, $status))
-                ->map(fn (Stage $status) => ['value' => $status->key, 'label' => $status->name])
-                ->values()
-                ->all(),
+            forwardStatuses: $forward,
+            dueStatus: $shoot->date === null ? null : collect($forward)->firstWhere('value', $shotKey),
             timeline: $shoot->timeline->map(TimelineEntryData::fromEntry(...))->all(),
             pdfUrl: "/shootings/{$shoot->public_id}/ablauf.pdf",
             icsUrl: "/shootings/{$shoot->public_id}/ablauf.ics",

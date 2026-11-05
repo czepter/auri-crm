@@ -17,6 +17,7 @@ const engagement: App.Crm.Data.ShootData = {
     statusLabel: 'Übergeben',
     isPrimary: false,
     forwardStatuses: [],
+    dueStatus: null,
 }
 
 const cancelled: App.Crm.Data.ShootData = {
@@ -28,6 +29,7 @@ const cancelled: App.Crm.Data.ShootData = {
     isCancelled: true,
     cancelledReason: 'Termin vom Paar verschoben',
     forwardStatuses: [],
+    dueStatus: null,
 }
 
 const meta = {

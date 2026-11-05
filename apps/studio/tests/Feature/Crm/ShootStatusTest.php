@@ -170,6 +170,18 @@ it('offers Fotografiert only from the shoot date on', function () {
         ->and($keys($today))->toContain('prep', 'shot');
 });
 
+it('names Fotografiert as due only once the day has come', function () {
+    $due = fn (Shoot $shoot) => ShootData::fromShoot($shoot)->dueStatus['value'] ?? null;
+
+    $future = Shoot::factory()->atStatus(ShootStatus::Booked)->create(['date' => now()->addDays(5)]);
+    $today = Shoot::factory()->atStatus(ShootStatus::Booked)->create(['date' => now()->startOfDay()]);
+    $shot = Shoot::factory()->atStatus(ShootStatus::Shot)->create(['date' => now()->subDay()]);
+
+    expect($due($future))->toBeNull()
+        ->and($due($today))->toBe(ShootStatus::Shot->value)
+        ->and($due($shot))->toBeNull();
+});
+
 it('refuses Fotografiert and later before the shoot date, but not archiving', function () {
     $advance = app(AdvanceShootStatus::class);
     $future = Shoot::factory()->atStatus(ShootStatus::Booked)->create(['date' => now()->addDays(5)]);

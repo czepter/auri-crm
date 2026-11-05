@@ -98,6 +98,7 @@ function shootOf(row: Partial<App.Crm.Data.ShootData> & Pick<App.Crm.Data.ShootD
         cancelledReason: null,
         crew: [],
         forwardStatuses: [],
+        dueStatus: null,
         timeline: [],
         pdfUrl: `/shootings/${row.id}/ablauf.pdf`,
         icsUrl: `/shootings/${row.id}.ics`,
@@ -118,6 +119,7 @@ export const shoots: App.Crm.Data.ShootData[] = [
         status: 'booked',
         statusLabel: 'Gebucht',
         forwardStatuses: [{ value: 'shot', label: 'Fotografiert' }],
+        dueStatus: null,
         crew: [
             { id: 'cr-1', userId: 'u1', name: 'Christian Zepter', initials: 'CZ' },
         ],

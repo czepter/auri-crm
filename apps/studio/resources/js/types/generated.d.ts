@@ -385,6 +385,10 @@ forwardStatuses: {
 value: string,
 label: string,
 }[],
+dueStatus: {
+value: string,
+label: string,
+} | null,
 timeline: App.Crm.Data.TimelineEntryData[],
 pdfUrl: string,
 icsUrl: string,

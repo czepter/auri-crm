@@ -2,13 +2,15 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { Link, router, useForm } from "@inertiajs/vue3";
-import { Pencil } from "lucide-vue-next";
+import { ChevronDown, Pencil } from "lucide-vue-next";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/alert";
 import { Button } from "@/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui/dropdown-menu";
 import LineItems from "@/admin/components/quote/LineItems.vue";
 import NoteThread from "@/admin/components/crm/NoteThread.vue";
 import QuoteSummary from "@/admin/components/quote/QuoteSummary.vue";
+import { nextStep, stepRows } from "@/admin/lib/projectNextStep";
 import { grossTotal } from "@/admin/lib/quoteSummary";
 import ShootFields from "@/admin/components/crm/ShootFields.vue";
 import ShootRow from "@/admin/components/crm/ShootRow.vue";
@@ -88,13 +90,12 @@ const { t } = useI18n();
 
 const galleriesHref = computed(() => props.header.tabs.find((tab) => tab.key === "galleries")?.href);
 
-function advanceStalled() {
-    router.post(
-        `/shootings/${props.stalled?.shootId}/status`,
-        { status: props.stalled?.next.key },
-        { preserveScroll: true },
-    );
+function advance(shootId: string, status: string) {
+    router.post(`/shootings/${shootId}/status`, { status }, { preserveScroll: true });
 }
+
+const step = computed(() => (props.header.canManageShoots ? nextStep(props.shoots) : null));
+const stepMenu = computed(() => stepRows(props.shoots));
 
 function euro(minor: string | number | null) {
     return minor === null ? "—" : formatEurosRounded(Number(minor));
@@ -252,6 +253,30 @@ function complete(row: App.Crm.Data.TaskRowData) {
 <template>
     <AdminLayout active="projekte">
         <ProjectShell :header="header" active="overview" :people="false">
+            <template v-if="step" #stage>
+                <div class="flex">
+                    <Button variant="pill" type="button" class="rounded-r-none max-[640px]:min-h-11" @click="advance(step.shootId, step.status.value)">
+                        {{ step.status.label }}
+                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger as-child>
+                            <Button
+                                variant="pill"
+                                type="button"
+                                class="rounded-l-none border-l border-white/30 px-2 max-[640px]:min-h-11 max-[640px]:min-w-11"
+                                :aria-label="$t('board.colStage')"
+                            >
+                                <ChevronDown class="size-3.5" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" class="w-[260px]">
+                            <DropdownMenuItem v-for="row in stepMenu" :key="`${row.shootId}${row.status}`" @select="advance(row.shootId, row.status)">
+                                {{ row.label }}
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            </template>
 
                     <Alert
                         v-if="stalled"
@@ -267,7 +292,6 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             </AlertDescription>
                         </div>
                         <div v-if="header.canManageShoots" class="ml-auto flex flex-none items-center gap-2">
-                            <Button variant="pill" type="button" @click="advanceStalled">{{ stalled.next.label }}</Button>
                             <Button v-if="galleriesHref" variant="outline" as-child>
                                 <Link :href="galleriesHref">{{ $t("galleries.create") }}</Link>
                             </Button>
