@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import LineItems from '@/admin/components/quote/LineItems.vue'
-import { formatEurosRounded } from '@/lib/money'
+import { formatEuros, formatEurosRounded } from '@/lib/money'
 import { topLines } from '@/admin/lib/quoteSummary'
 
 const props = defineProps<{
@@ -11,6 +12,20 @@ const props = defineProps<{
 }>()
 
 const top = computed(() => topLines(props.quote.items))
+
+const { t } = useI18n()
+
+const totals = computed(() => {
+  const { net, vatAmount, vatMode, vatRate } = props.quote
+
+  return vatMode === 'standard'
+    ? [
+        { label: t('quotes.net'), value: net, bold: false },
+        { label: t('quotes.vat', { rate: vatRate }), value: vatAmount, bold: false },
+        { label: t('quotes.total'), value: net + vatAmount, bold: true },
+      ]
+    : [{ label: t('quotes.total'), value: net, bold: true }]
+})
 </script>
 
 <template>
@@ -32,11 +47,19 @@ const top = computed(() => topLines(props.quote.items))
       </div>
     </div>
 
-    <div class="flex items-baseline gap-3.5 pt-2.5 shadow-[inset_0_1px_0_var(--line-hover)]">
-      <span class="min-w-0 flex-1 text-small leading-[1.47] font-semibold">{{ $t('quotes.total') }}</span>
-      <span class="w-28 flex-none text-right text-body leading-[1.47] font-semibold tracking-[-0.018em] tabular-nums">
-        {{ formatEurosRounded(quote.net) }}
-      </span>
+    <div class="pt-2.5 shadow-[inset_0_1px_0_var(--line-hover)]">
+      <div
+        v-for="row in totals"
+        :key="row.label"
+        class="flex items-baseline gap-3.5 py-0.5"
+        :class="row.bold ? 'font-semibold' : 'text-ink-2'"
+      >
+        <span class="min-w-0 flex-1 text-small leading-[1.47]">{{ row.label }}</span>
+        <span
+          class="w-28 flex-none text-right leading-[1.47] tabular-nums"
+          :class="row.bold ? 'text-body tracking-[-0.018em]' : 'text-small'"
+        >{{ formatEuros(row.value) }}</span>
+      </div>
     </div>
 
     <p v-if="validUntilLabel" class="mt-[7px] text-small leading-[1.47] text-ink-2">{{ validUntilLabel }}</p>
