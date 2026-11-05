@@ -12,8 +12,6 @@ export type NavEntry = {
     count?: number
     needs?: Capability | Capability[]
     studio?: boolean
-    /** Bleibt in der Leiste auf dem Telefon. */
-    phone?: true
     children?: NavEntry[]
 }
 
@@ -60,7 +58,6 @@ export function navItems(can: Capability[], counts: NavCounts = {}): NavEntry[] 
     const entries: NavEntry[] = [
         {
             key: 'uebersicht',
-            phone: true,
             label: 'Übersicht',
             href: '/',
             icon: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>',
@@ -110,7 +107,6 @@ export function navItems(can: Capability[], counts: NavCounts = {}): NavEntry[] 
             children: [
                 {
                     key: 'kalender',
-            phone: true,
                     label: 'Termine',
                     href: '/kalender',
                     icon: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/>',
@@ -133,7 +129,6 @@ export function navItems(can: Capability[], counts: NavCounts = {}): NavEntry[] 
         { group: 'Aufträge' },
         {
             key: 'anfragen',
-            phone: true,
             label: 'Anfragen',
             href: '/anfragen',
             count: counts.leads,
@@ -177,7 +172,6 @@ export function navItems(can: Capability[], counts: NavCounts = {}): NavEntry[] 
         },
         {
             key: 'projekte',
-            phone: true,
             label: 'Projekte',
             href: '/projekte',
             count: counts.projects,
@@ -192,7 +186,6 @@ export function navItems(can: Capability[], counts: NavCounts = {}): NavEntry[] 
         },
         {
             key: 'kontakte',
-            phone: true,
             label: 'Kontakte',
             href: '/kontakte',
             needs: 'manage_contacts',
@@ -253,4 +246,20 @@ export function navItems(can: Capability[], counts: NavCounts = {}): NavEntry[] 
 
             return allowed(item)
         })
+}
+
+/** Die Leiste unten auf dem Telefon, in dieser Reihenfolge; alles andere liegt unter "Mehr". */
+const PHONE_BAR = ['uebersicht', 'anfragen', 'kalender', 'projekte']
+
+export function phoneNav(items: NavEntry[]): { bar: NavEntry[]; more: NavEntry[] } {
+    const rows = items
+        .flatMap((item) => item.children ?? [item])
+        .filter((item) => item.href && !item.studio)
+    const bar = PHONE_BAR.flatMap((key) => rows.filter((item) => item.key === key))
+    const rest = rows.filter((item) => !bar.includes(item))
+
+    return {
+        bar,
+        more: [...rest.filter((item) => item.key !== 'auswertungen'), ...rest.filter((item) => item.key === 'auswertungen')],
+    }
 }

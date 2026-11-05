@@ -677,6 +677,9 @@
     "questionnaire": "Fragebogen",
     "gallery": "Galerie"
   },
+  "nav": {
+    "more": "Mehr"
+  },
   "dashboard": {
     "title": "Übersicht",
     "signedInAs": "Angemeldet als {name}",

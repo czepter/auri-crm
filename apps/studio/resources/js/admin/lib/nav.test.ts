@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { navItems } from './nav'
+import { navItems, phoneNav } from './nav'
 
 type Cap = App.Enums.Capability
 
@@ -29,16 +29,24 @@ describe('Sidebar-Navigation', () => {
         ])
     })
 
-    it('hält fünf Zeilen für das Telefon', () => {
-        const flat = navItems(['manage_leads', 'manage_contacts'] as Cap[]).flatMap((item) => item.children ?? [item])
+    it('hält die Telefonleiste kurz und den Rest unter Mehr', () => {
+        const { bar, more } = phoneNav(
+            navItems(['manage_contacts', 'manage_settings', 'view_all_cases'] as Cap[]),
+        )
 
-        expect(flat.filter((item) => item.phone).map((item) => item.key)).toEqual([
-            'uebersicht',
-            'kalender',
-            'anfragen',
-            'projekte',
+        expect(bar.map((item) => item.key)).toEqual(['uebersicht', 'kalender', 'projekte'])
+        expect(more.map((item) => item.key)).toEqual([
+            'benachrichtigungen',
+            'aufgaben',
+            'abwesenheiten',
+            'schliesszeiten',
             'kontakte',
+            'auswertungen',
         ])
+    })
+
+    it('lässt Zeilen ohne Befugnis auch in der Telefonleiste weg', () => {
+        expect(phoneNav(navItems([])).bar.map((item) => item.key)).toEqual(['uebersicht', 'kalender', 'projekte'])
     })
 
     it('lässt Unterlagen ganz weg, wenn keine Art bleibt', () => {
