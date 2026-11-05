@@ -624,8 +624,10 @@
     "lostTitle": "Absagegründe",
     "cashFlowTitle": "Erwarteter Umsatz",
     "cashFlowPastTitle": "Bisheriger Umsatz",
-    "cashFlowSub": "{projects} Projekte · {quotes} offene Angebote",
-    "cashFlowPastSub": "{projects} Projekte",
+    "cashProjects": "1 Projekt | {count} Projekte",
+    "cashQuotes": "1 offenes Angebot | {count} offene Angebote",
+    "cashFlowSub": "{projects} · {quotes}",
+    "openInMonth": "{amount} offen",
     "cashAhead": "Erwartet",
     "cashPast": "Bisher",
     "seriesReceived": "Ist · Zahlungseingang",
@@ -661,7 +663,7 @@
     "medianHours": "Median {hours} Std.",
     "unanswered": "Ohne Antwort: {count}",
     "shootsTitle": "Termine je Monat",
-    "shootsSub": "{count} Termine"
+    "shootsSub": "1 Termin | {count} Termine"
   },
   "create": {
     "kicker": "Übersicht · Neu",
