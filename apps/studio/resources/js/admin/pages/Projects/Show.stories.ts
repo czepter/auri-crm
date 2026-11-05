@@ -52,7 +52,6 @@ const meta = {
         anchors: [],
         quote,
         supersededQuotes: [],
-        packages: [],
         scope: { items: scopeItems, delta: 0, hasDraft: false },
         people,
         fields,
