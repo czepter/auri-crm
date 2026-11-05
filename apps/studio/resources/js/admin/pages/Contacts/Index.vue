@@ -47,8 +47,8 @@ function day(iso: string) {
             <tr>
               <TableHead>{{ $t('contacts.colName') }}</TableHead>
               <TableHead>{{ $t('contacts.colReach') }}</TableHead>
-              <TableHead>{{ $t('contacts.colProjects') }}</TableHead>
-              <TableHead align="right">{{ $t('contacts.colNext') }}</TableHead>
+              <TableHead class="max-[640px]:hidden">{{ $t('contacts.colProjects') }}</TableHead>
+              <TableHead align="right" class="max-[640px]:hidden">{{ $t('contacts.colNext') }}</TableHead>
             </tr>
           </thead>
           <tbody>
@@ -57,11 +57,11 @@ function day(iso: string) {
               <TableRow v-for="contact in group.rows" :key="contact.id">
                 <TableCell tone="name"><Link :href="`/kontakte/${contact.id}`">{{ contact.name }}</Link></TableCell>
                 <TableCell tone="muted">{{ [contact.email, contact.phone].filter(Boolean).join(' · ') || '—' }}</TableCell>
-                <TableCell tone="muted">
+                <TableCell tone="muted" class="max-[640px]:hidden">
                   {{ contact.latestProject ?? '—' }}
                   <template v-if="contact.projectCount > 1"> · {{ $t('contacts.projectCount', contact.projectCount) }}</template>
                 </TableCell>
-                <TableCell align="right">{{ contact.nextDate ? day(contact.nextDate) : '—' }}</TableCell>
+                <TableCell align="right" class="max-[640px]:hidden">{{ contact.nextDate ? day(contact.nextDate) : '—' }}</TableCell>
               </TableRow>
             </template>
           </tbody>

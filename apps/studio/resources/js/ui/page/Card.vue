@@ -43,7 +43,7 @@ function cancel() {
 <template>
     <section class="rounded-[var(--r)] bg-paper shadow-card">
         <header
-            class="flex h-[52px] cursor-pointer items-center gap-3 pr-5 pl-6"
+            class="flex h-[52px] cursor-pointer items-center gap-3 pr-5 pl-6 max-[640px]:h-auto max-[640px]:min-h-[52px] max-[640px]:flex-wrap max-[640px]:gap-y-2 max-[640px]:py-2.5 max-[640px]:pr-3 max-[640px]:pl-4"
             @click="open = !open"
         >
             <h2 class="m-0 text-[15px] leading-[1.2] font-semibold tracking-[-0.015em]">
@@ -52,7 +52,7 @@ function cancel() {
             <slot name="meta" />
             <span v-if="summary && !open" class="min-w-0 truncate text-ink-2">{{ summary }}</span>
 
-            <div class="ml-auto flex flex-none items-center gap-3.5">
+            <div class="ml-auto flex flex-none items-center gap-3.5 max-[640px]:flex-initial max-[640px]:flex-wrap max-[640px]:justify-end max-[640px]:gap-2">
                 <slot name="action" />
 
                 <!-- Ohne .stop klappt jeder dieser Klicks die Karte zu: sie
@@ -85,7 +85,7 @@ function cancel() {
             </div>
         </header>
 
-        <div v-if="open" class="px-6 pb-6">
+        <div v-if="open" class="px-6 pb-6 max-[640px]:px-4">
             <slot v-if="editing" name="edit" />
             <slot v-else />
         </div>

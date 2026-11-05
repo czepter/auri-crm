@@ -39,7 +39,7 @@ const shown = computed(() => {
             <Input v-model="query" class="h-8 w-64" type="search" :placeholder="$t('creditNotesOverview.searchPlaceholder')" />
           </div>
 
-          <Table>
+          <Table class="max-[640px]:block max-[640px]:overflow-x-auto">
             <thead>
               <tr>
                 <TableHead>{{ $t('creditNotesOverview.number') }}</TableHead>

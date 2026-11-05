@@ -314,13 +314,13 @@ const workflowAllowed = computed(() =>
                         @dragover="onDragOver($event, index, null)"
                         @drop.prevent="onDrop(index)"
                     >
-                        <header class="flex items-center gap-1.5 px-1 pt-1 pb-0.5">
+                        <header class="flex items-baseline gap-1.5 px-1 pt-1 pb-0.5">
                             <b
-                                class="text-[13.5px] leading-none font-semibold text-foreground"
+                                class="text-[13.5px] leading-[1.2] font-semibold text-foreground"
                                 >{{ column.label }}</b
                             >
                             <span
-                                class="ml-auto font-mono text-[12.5px] tabular-nums text-ink-2"
+                                class="ml-auto font-mono text-[12.5px] whitespace-nowrap tabular-nums text-ink-2"
                             >
                                 {{ column.cards.length
                                 }}<template v-if="column.total">

@@ -525,7 +525,7 @@ const nextStage = computed(
                                 {{ roleLabel(person.role) }}
                             </span>
                             <a v-if="person.email" class="text-small text-ring no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
-                            <a v-if="person.phone" class="ml-auto text-small tabular-nums text-ring no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
+                            <a v-if="person.phone" class="ml-auto whitespace-nowrap text-small tabular-nums text-ring no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
                             <span v-if="!person.email && !person.phone" class="ml-auto text-small text-mark">{{ $t("lead.noReach") }}</span>
                         </div>
 

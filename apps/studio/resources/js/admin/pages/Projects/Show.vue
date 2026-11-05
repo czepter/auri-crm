@@ -292,7 +292,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         <div
                             v-for="person in people"
                             :key="person.id"
-                            class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+                            class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
                         >
                             <Link
                                 class="w-[168px] flex-none text-small leading-[1.35] font-semibold tracking-[-0.012em] text-foreground no-underline underline-offset-[3px] hover:underline"

@@ -130,14 +130,14 @@ function destroy() {
       </div>
 
       <div class="sticky top-0 z-[5] -mx-[26px] mt-0.5 bg-background px-[26px] pb-4 max-[640px]:-mx-5 max-[640px]:px-5">
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
           <slot name="title">
             <h1 class="m-0 text-[20px] leading-7 font-semibold tracking-[-0.02em]">
               {{ header.name }}
             </h1>
           </slot>
 
-          <div class="ml-auto flex items-center gap-2">
+          <div class="ml-auto flex flex-wrap items-center justify-end gap-2">
             <slot name="actions" />
             <slot name="stage" />
 

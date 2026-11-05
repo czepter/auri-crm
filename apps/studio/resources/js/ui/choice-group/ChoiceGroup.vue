@@ -46,7 +46,7 @@ const name = useId()
 
 const CONTAINER = {
   default: "flex flex-wrap gap-1.5",
-  segmented: "flex rounded-lg bg-sunk p-[3px]",
+  segmented: "flex max-w-full overflow-x-auto whitespace-nowrap rounded-lg bg-sunk p-[3px]",
 }
 
 const ITEM = {

@@ -68,13 +68,13 @@ const shown = computed(() => {
             <ChoiceGroup v-model="filter" variant="segmented" :options="filters" />
           </div>
 
-          <Table>
+          <Table class="max-[640px]:block max-[640px]:overflow-x-auto">
             <thead>
               <tr>
                 <TableHead>{{ $t('invoicesOverview.number') }}</TableHead>
                 <TableHead>{{ $t('invoicesOverview.recipient') }}</TableHead>
-                <TableHead>{{ $t('invoicesOverview.issuedOn') }}</TableHead>
-                <TableHead>{{ $t('invoicesOverview.dueOn') }}</TableHead>
+                <TableHead class="max-[640px]:hidden">{{ $t('invoicesOverview.issuedOn') }}</TableHead>
+                <TableHead class="max-[640px]:hidden">{{ $t('invoicesOverview.dueOn') }}</TableHead>
                 <TableHead align="right">{{ $t('invoicesOverview.amount') }}</TableHead>
                 <TableHead>{{ $t('invoicesOverview.status') }}</TableHead>
                 <TableHead />
@@ -93,8 +93,8 @@ const shown = computed(() => {
                       {{ invoice.projectName }}
                     </Link>
                   </TableCell>
-                  <TableCell class="whitespace-nowrap">{{ dayWithWeekday(invoice.issuedOn) }}</TableCell>
-                  <TableCell class="whitespace-nowrap">{{ invoice.dueOn ? dayWithWeekday(invoice.dueOn) : '' }}</TableCell>
+                  <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ dayWithWeekday(invoice.issuedOn) }}</TableCell>
+                  <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ invoice.dueOn ? dayWithWeekday(invoice.dueOn) : '' }}</TableCell>
                   <TableCell align="right" class="whitespace-nowrap">
                     {{ formatEuros(invoice.amount) }}
                     <span v-if="invoice.status === 'partial' || (invoice.status === 'overdue' && invoice.paidAmount)" class="block text-small text-ink-2">

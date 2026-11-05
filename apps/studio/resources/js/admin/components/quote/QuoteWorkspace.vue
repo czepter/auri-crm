@@ -192,7 +192,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
          wrong or bypassed. Ein Entwurf ist das Werkzeug selbst und steht
          offen da; erst ab Versendet wird er zur zuklappbaren Karte. -->
     <section v-if="canManageQuotes && quote.status === 'draft' && drafts[quote.id]" class="mt-3 first:mt-0">
-      <header v-if="showHeader" class="mb-3 flex items-center gap-3">
+      <header v-if="showHeader" class="mb-3 flex flex-wrap items-center gap-3">
         <h2 class="m-0 text-body leading-[1.2] font-semibold tracking-[-0.015em]">{{ quoteTitle(quote, t) }}</h2>
         <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
         <QuoteActions :project-id="projectId" :quote="quote" :can-manage-quotes="canManageQuotes" />
