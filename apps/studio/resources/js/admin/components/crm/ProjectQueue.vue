@@ -39,7 +39,7 @@ const shown = computed(() => {
 </script>
 
 <template>
-    <Queue>
+    <Queue class="max-[640px]:hidden">
         <div class="flex flex-col gap-2 px-3 pb-3">
             <div class="flex items-center gap-2">
                 <span

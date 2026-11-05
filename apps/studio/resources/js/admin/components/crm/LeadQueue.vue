@@ -40,7 +40,7 @@ watch(shown, (groups) => emit("update:rows", groups.flatMap((group) => group.row
 </script>
 
 <template>
-    <Queue>
+    <Queue class="max-[640px]:hidden">
         <div class="flex flex-col gap-2 px-3.5 pb-3">
             <div class="flex items-center gap-2">
                 <span

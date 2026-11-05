@@ -463,7 +463,7 @@ const primary = computed(() => {
                         v-if="primary"
                         variant="pill"
                         type="button"
-                        class="rounded-r-none"
+                        class="rounded-r-none max-[640px]:min-h-11"
                         @click="primary.run"
                         >{{ primary.label }}</Button
                     >
@@ -472,7 +472,7 @@ const primary = computed(() => {
                             <Button
                                 variant="pill"
                                 type="button"
-                                :class="primary ? 'rounded-l-none border-l border-white/30 px-2' : ''"
+                                :class="[primary ? 'rounded-l-none border-l border-white/30 px-2' : '', 'max-[640px]:min-h-11 max-[640px]:min-w-11']"
                                 :aria-label="$t('board.colStage')"
                             >
                                 <ChevronDown class="size-3.5" />
@@ -671,7 +671,7 @@ const primary = computed(() => {
                         <template v-if="header.canManageQuotes" #action>
                             <Link
                                 v-if="quote"
-                                class="grid size-7 place-items-center rounded-[var(--r-sm)] text-ink-2 hover:bg-sunk hover:text-foreground"
+                                class="grid size-7 place-items-center rounded-[var(--r-sm)] text-ink-2 max-[640px]:size-11 hover:bg-sunk hover:text-foreground"
                                 :href="`/angebote/${quote.id}`"
                                 :aria-label="$t('common.edit')"
                                 :title="$t('common.edit')"

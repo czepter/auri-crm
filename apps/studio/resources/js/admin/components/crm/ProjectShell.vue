@@ -164,7 +164,7 @@ function destroy() {
 
             <DropdownMenu v-if="(header.canComplete && !header.isCompleted) || (header.canClose && !header.outcomeLabel) || header.canDelete">
               <DropdownMenuTrigger
-                class="flex size-8 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2"
+                class="flex size-8 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2 max-[640px]:size-11"
                 :aria-label="$t('project.more')"
               >
                 <svg class="size-4 fill-current" viewBox="0 0 24 24">
