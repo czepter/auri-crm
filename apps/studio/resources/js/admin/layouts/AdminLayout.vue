@@ -198,7 +198,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                                     child.key === props.active &&
                                         'font-semibold text-foreground',
                                     child.phone
-                                        ? 'max-[640px]:size-11 max-[640px]:justify-center max-[640px]:p-0'
+                                        ? 'max-[640px]:min-h-11 max-[640px]:min-w-0 max-[640px]:flex-1 max-[640px]:flex-col max-[640px]:justify-center max-[640px]:gap-0.5 max-[640px]:p-0 max-[640px]:text-[11px] max-[640px]:leading-none'
                                         : 'max-[640px]:hidden',
                                 ]"
                                 :href="child.href!"
@@ -210,7 +210,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                                     viewBox="0 0 24 24"
                                     v-html="child.icon"
                                 />
-                                <span class="max-[1080px]:sr-only">{{
+                                <span class="max-[1080px]:sr-only max-[640px]:not-sr-only">{{
                                     child.label
                                 }}</span>
                             </Link>
@@ -227,7 +227,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                         :class="[
                             item.key === props.active && 'font-semibold',
                             item.phone
-                                ? 'max-[640px]:relative max-[640px]:size-11 max-[640px]:justify-center max-[640px]:p-0'
+                                ? 'max-[640px]:relative max-[640px]:min-h-11 max-[640px]:min-w-0 max-[640px]:flex-1 max-[640px]:flex-col max-[640px]:justify-center max-[640px]:gap-0.5 max-[640px]:p-0 max-[640px]:text-[11px] max-[640px]:leading-none'
                                 : 'max-[640px]:hidden',
                             item.studio &&
                                 !studioOpen &&
@@ -248,7 +248,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                             viewBox="0 0 24 24"
                             v-html="item.icon"
                         />
-                        <span class="max-[1080px]:sr-only">{{
+                        <span class="max-[1080px]:sr-only max-[640px]:not-sr-only">{{
                             item.label
                         }}</span>
                         <span
