@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import LineItems from '@/admin/components/quote/LineItems.vue'
-import { formatEuros, formatEurosRounded } from '@/lib/money'
+import { formatEuros, formatEurosRounded, formatPercent } from '@/lib/money'
 import { topLines } from '@/admin/lib/quoteSummary'
 
 const props = defineProps<{
@@ -21,7 +21,7 @@ const totals = computed(() => {
   return vatMode === 'standard'
     ? [
         { label: t('quotes.net'), value: net, bold: false },
-        { label: t('quotes.vat', { rate: vatRate }), value: vatAmount, bold: false },
+        { label: t('quotes.vat', { rate: formatPercent(vatRate) }), value: vatAmount, bold: false },
         { label: t('quotes.total'), value: net + vatAmount, bold: true },
       ]
     : [{ label: t('quotes.total'), value: net, bold: true }]
