@@ -304,7 +304,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 {{ roleLabel(person.role) }}
                             </span>
                             <a v-if="person.email" class="text-small text-ring no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
-                            <a v-if="person.phone" class="ml-auto text-small tabular-nums text-ring no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
+                            <a v-if="person.phone" class="ml-auto whitespace-nowrap text-small tabular-nums text-ring no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
                         </div>
 
                         <template #edit>
@@ -545,7 +545,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                          locked: the order changes in conversation and the document lags
                          behind. Forbid the change and the scope is simply wrong while the
                          work happens anyway. -->
-                    <Section v-if="scope.items.length" :title="$t('project.scope')">
+                    <Section v-if="scope.items.length && (!quote || scope.delta || scope.items.some((item) => item.state))" :title="$t('project.scope')">
                         <LineItems
                             class="[&>div]:py-[9px] [&>div]:shadow-none"
                             :items="scope.items"

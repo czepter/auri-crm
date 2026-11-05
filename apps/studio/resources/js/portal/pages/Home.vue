@@ -93,6 +93,11 @@ function shortDate(iso: string) {
   return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
+// The year already heads the group, so the tile names the day.
+function dayMonth(iso: string) {
+  return new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })
+}
+
 function phaseState(phase: Phase) {
   return phase === 'delivered' ? 'done' : phase === 'open' ? 'open' : 'neutral'
 }
@@ -215,7 +220,7 @@ function phaseState(phase: Phase) {
                   <span
                     v-else
                     class="grid h-[78px] w-[116px] place-items-center rounded-[10px] border border-border bg-sunk font-serif text-[26px] leading-none tracking-[-0.02em] text-muted-foreground max-[700px]:h-[62px] max-[700px]:w-[86px] max-[700px]:text-[19px]"
-                  >{{ booking.year ?? '—' }}</span>
+                  >{{ booking.date ? dayMonth(booking.date) : '—' }}</span>
 
                   <span class="min-w-0">
                     <span class="mb-1.5 block text-[10.5px] leading-none font-semibold tracking-[0.15em] uppercase text-muted-foreground">{{ booking.type }}</span>

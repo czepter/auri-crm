@@ -347,7 +347,7 @@ function megabytes(bytes: number) {
                  gating the preview link, presets.length gating "Vorlage
                  anwenden") stay pinned by a test that can fail. -->
             <DropdownMenuContent force-mount class="data-[state=closed]:hidden">
-              <DropdownMenuItem @select="sharing = true">{{ $t('galleryRecord.share') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="showPublish || !showWithdraw" @select="sharing = true">{{ $t('galleryRecord.share') }}</DropdownMenuItem>
               <DropdownMenuItem @select="copyLink">{{ $t('galleryRecord.copyLink') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="gallery.canPublish" @select="createPreviewLink">{{ $t('galleryRecord.createPreviewLink') }}</DropdownMenuItem>
               <DropdownMenuItem @select="savingPreset = true">{{ $t('galleryRecord.saveAsPreset') }}</DropdownMenuItem>
@@ -369,6 +369,7 @@ function megabytes(bytes: number) {
           <Button v-if="showWithdraw" type="button" variant="pill-muted" @click="withdraw">{{ $t('galleryRecord.withdraw') }}</Button>
           <Button v-if="showPublish && gallery.canMail" type="button" variant="pill-muted" @click="publishSilently">{{ $t('galleryRecord.publishSilently') }}</Button>
           <Button v-if="showPublish" type="button" @click="publish">{{ $t(publishLabel) }}</Button>
+          <Button v-else-if="showWithdraw" type="button" @click="sharing = true">{{ $t('galleryRecord.share') }}</Button>
         </span>
       </PageHead>
 

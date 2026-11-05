@@ -236,6 +236,8 @@ img { max-width: 100%; height: auto; }
 .act.on svg { fill: currentColor; }
 
 .cmts { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: var(--s4); }
+/* No comments yet: the write line moves up under the actions instead of standing at the foot of an empty rail. */
+.cmts:empty { display: none; }
 .cmt .who { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
 .cmt .who b { font: 600 12.5px/1 var(--sans); color: var(--void-ink); }
 .cmt .who span { font: 400 11.5px/1 var(--sans); color: var(--void-ink-2); font-variant-numeric: tabular-nums; }
