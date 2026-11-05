@@ -36,6 +36,10 @@ const seasonLabel = ref('')
 // when one turns up.
 const SHOWN = 3
 
+function entryLabel(entry: App.Crm.Data.CalendarDayData['entries'][number]) {
+  return [entry.time, entry.what, entry.who].filter(Boolean).join(' · ')
+}
+
 function entries(day: App.Crm.Data.CalendarDayData) {
   return day.entries.slice(0, SHOWN)
 }
@@ -145,7 +149,8 @@ function shortDate(date: string | null) {
               :is="entry.projectId ? Link : 'span'"
               v-for="(entry, index) in entries(day)"
               :key="index"
-              class="mt-[5px] block text-small no-underline max-[640px]:inline-block max-[640px]:px-px"
+              class="mt-[5px] block text-small no-underline max-[640px]:mt-0 max-[640px]:inline-block max-[640px]:min-w-4 max-[640px]:py-2 max-[640px]:text-center"
+              :aria-label="entryLabel(entry)"
               :class="{ hold: 'text-ring', away: 'text-ink-2' }[entry.kind ?? ''] ?? 'text-inherit'"
               :href="entry.projectId ? `/auftraege/${entry.projectId}` : undefined"
             >
