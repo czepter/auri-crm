@@ -84,7 +84,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
            does work: the wrapper stretches to the flex row, so the nav pins
            against it while main scrolls. -->
             <nav
-                class="flex w-[214px] flex-col px-3 py-4.5 max-[1080px]:w-14 max-[1080px]:px-2 max-[640px]:sticky max-[640px]:bottom-0 max-[640px]:z-30 max-[640px]:order-2 max-[640px]:w-auto max-[640px]:flex-row max-[640px]:justify-around max-[640px]:bg-paper max-[640px]:px-1 max-[640px]:py-1.5 max-[640px]:shadow-[inset_0_1px_0_var(--rule)] sticky top-0 h-screen overflow-y-auto max-[640px]:top-auto max-[640px]:h-auto max-[640px]:overflow-visible"
+                class="flex w-[214px] flex-col px-3 py-4.5 max-[1080px]:w-14 max-[1080px]:px-2 max-[640px]:sticky max-[640px]:bottom-0 max-[640px]:z-30 max-[640px]:order-2 max-[640px]:w-auto max-[640px]:flex-row max-[640px]:justify-around max-[640px]:bg-paper max-[640px]:min-h-12 max-[640px]:items-center max-[640px]:px-1 max-[640px]:py-1 max-[640px]:shadow-[inset_0_1px_0_var(--rule)] sticky top-0 h-screen overflow-y-auto max-[640px]:top-auto max-[640px]:h-auto max-[640px]:overflow-visible"
             >
                 <div class="mb-px flex items-start gap-1 pb-5.5 max-[1080px]:hidden">
                     <Link
@@ -107,7 +107,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                 <!-- Above the navigation, not in it: it does not change page, it
              opens a tool. The shortcut stands where a count would. -->
                 <button
-                    class="mb-4 flex w-full cursor-pointer items-center gap-2.25 rounded-lg border-0 bg-sunk px-2.5 py-1.5 text-left text-ui leading-[1.47] tracking-[-0.01em] text-ink-2 transition-colors duration-[120ms] ease-out hover:bg-sunk-2 max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2 max-[640px]:hidden"
+                    class="mb-4 flex w-full cursor-pointer items-center gap-2.25 rounded-lg border-0 bg-sunk px-2.5 py-1.5 text-left text-ui leading-[1.47] tracking-[-0.01em] text-ink-2 transition-colors duration-[120ms] ease-out hover:bg-sunk-2 max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2 max-[640px]:order-last max-[640px]:mb-0 max-[640px]:size-11 max-[640px]:justify-center max-[640px]:p-0"
                     type="button"
                     @click="palette?.open()"
                 >
@@ -118,7 +118,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                         <circle cx="11" cy="11" r="6.5" />
                         <path d="m16 16 4.5 4.5" />
                     </svg>
-                    {{ $t("palette.search") }}
+                    <span class="max-[640px]:sr-only">{{ $t("palette.search") }}</span>
                     <!-- font-sans against the browser's monospace default for kbd; the
                shorthand in crm.css carried the family along. -->
                     <kbd
@@ -187,18 +187,23 @@ const collectorsOpen = ref<Record<string, boolean>>(
                             </svg>
                         </button>
                         <div
-                            class="mb-px ml-[19px] pl-1.5 max-[1080px]:ml-0 max-[1080px]:pl-0 max-[640px]:contents max-[640px]:[&>a+a]:hidden"
+                            class="mb-px ml-[19px] pl-1.5 max-[1080px]:ml-0 max-[1080px]:pl-0 max-[640px]:contents"
                             :class="!collectorsOpen[item.key!] && 'hidden max-[1080px]:block'"
                         >
                             <Link
                                 v-for="child in item.children"
                                 :key="child.key"
                                 class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 py-1 text-ui tracking-[-0.01em] text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2"
-                                :class="
+                                :class="[
                                     child.key === props.active &&
-                                    'font-semibold text-foreground'
-                                "
+                                        'font-semibold text-foreground',
+                                    child.phone
+                                        ? 'max-[640px]:size-11 max-[640px]:justify-center max-[640px]:p-0'
+                                        : 'max-[640px]:hidden',
+                                ]"
                                 :href="child.href!"
+                                :aria-label="child.label"
+                                :title="child.label"
                             >
                                 <svg
                                     class="hidden size-4.25 flex-none fill-none stroke-ink-2 stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round] max-[1080px]:block"
@@ -221,12 +226,17 @@ const collectorsOpen = ref<Record<string, boolean>>(
                         class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 py-1.5 text-ui tracking-[-0.01em] text-foreground no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2"
                         :class="[
                             item.key === props.active && 'font-semibold',
+                            item.phone
+                                ? 'max-[640px]:relative max-[640px]:size-11 max-[640px]:justify-center max-[640px]:p-0'
+                                : 'max-[640px]:hidden',
                             item.studio &&
                                 !studioOpen &&
                                 'hidden max-[1080px]:flex',
                             item.studio && 'max-[640px]:hidden',
                         ]"
                         :href="item.href!"
+                        :aria-label="item.label"
+                        :title="item.label"
                     >
                         <svg
                             class="size-4.25 flex-none fill-none stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]"
@@ -243,7 +253,8 @@ const collectorsOpen = ref<Record<string, boolean>>(
                         }}</span>
                         <span
                             v-if="item.count !== undefined"
-                            class="ml-auto text-small tabular-nums text-ink-2 max-[640px]:hidden"
+                            class="ml-auto text-small tabular-nums text-ink-2 max-[640px]:absolute max-[640px]:top-0.5 max-[640px]:right-0 max-[640px]:grid max-[640px]:h-4 max-[640px]:min-w-4 max-[640px]:place-items-center max-[640px]:rounded-full max-[640px]:bg-foreground max-[640px]:px-1 max-[640px]:text-[10px] max-[640px]:leading-none max-[640px]:text-background"
+                            :class="!item.count && 'max-[640px]:hidden'"
                         >
                             {{ item.count }}
                         </span>

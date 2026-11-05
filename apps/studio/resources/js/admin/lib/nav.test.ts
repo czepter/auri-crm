@@ -29,6 +29,18 @@ describe('Sidebar-Navigation', () => {
         ])
     })
 
+    it('hält fünf Zeilen für das Telefon', () => {
+        const flat = navItems(['manage_leads', 'manage_contacts'] as Cap[]).flatMap((item) => item.children ?? [item])
+
+        expect(flat.filter((item) => item.phone).map((item) => item.key)).toEqual([
+            'uebersicht',
+            'kalender',
+            'anfragen',
+            'projekte',
+            'kontakte',
+        ])
+    })
+
     it('lässt Unterlagen ganz weg, wenn keine Art bleibt', () => {
         expect(unterlagen([])).toBeUndefined()
     })
