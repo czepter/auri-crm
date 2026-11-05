@@ -490,7 +490,7 @@ const workflowAllowed = computed(() =>
                             <TableHead>{{ $t("board.colInquiry") }}</TableHead>
                             <TableHead>{{ $t("board.colDate") }}</TableHead>
                             <TableHead class="max-[640px]:hidden">{{ $t("board.colVenue") }}</TableHead>
-                            <TableHead>{{ $t("board.colStage") }}</TableHead>
+                            <TableHead class="max-[640px]:hidden">{{ $t("board.colStage") }}</TableHead>
                             <TableHead align="right" class="max-[640px]:hidden">{{
                                 $t("board.colValue")
                             }}</TableHead>
@@ -532,7 +532,7 @@ const workflowAllowed = computed(() =>
                                 <TableCell tone="muted" class="max-[640px]:hidden">{{
                                     card.venue ?? "—"
                                 }}</TableCell>
-                                <TableCell>
+                                <TableCell class="max-[640px]:hidden">
                                     <span
                                         class="inline-flex items-baseline gap-[7px] text-small"
                                     >
