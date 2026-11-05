@@ -510,126 +510,6 @@ const primary = computed(() => {
                 <template v-if="tab === 'overview'">
                 <div class="flex flex-col gap-3">
                     <Card
-                        v-model:editing="anfrageEditing"
-                        :title="$t('project.lead')"
-                        :summary="anfrageSummary"
-                        editable
-                        @cancel="anfrage.reset()"
-                        @save="saveAnfrage"
-                    >
-                        <!-- Der Anfragetext. Die Personen stehen in ihrer
-                             eigenen Karte: eine Seitenspalte trägt keinen
-                             Zeileneditor. -->
-                        <p class="m-0 max-w-[58ch] text-ui leading-[1.5] tracking-[-0.008em] whitespace-pre-line">
-                            {{ lead.inquiryText ?? $t("lead.noText") }}
-                        </p>
-
-                        <template #edit>
-                            <Field v-slot="{ id }" :label="$t('leads.inquiryText')" :error="anfrage.errors.inquiry_text">
-                                <Textarea :id="id" v-model="anfrage.inquiry_text" rows="6" />
-                            </Field>
-                        </template>
-                    </Card>
-
-                    <Card
-                        v-model:editing="kontakteEditing"
-                        :title="$t('contacts.title')"
-                        :summary="kontakteSummary"
-                        editable
-                        @cancel="kontakte.reset()"
-                        @save="saveKontakte"
-                    >
-                        <div
-                            v-for="person in people"
-                            :key="person.id"
-                            class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
-                        >
-                            <Link
-                                class="w-[168px] flex-none text-small leading-[1.35] font-semibold tracking-[-0.012em] text-foreground no-underline underline-offset-[3px] hover:underline"
-                                :href="`/kontakte/${person.id}`"
-                            >
-                                {{ person.name }}
-                            </Link>
-                            <span class="rounded-[var(--r-sm)] bg-sunk-2 px-2 py-0.5 text-small leading-[1.4] text-ink-2">
-                                {{ roleLabel(person.role) }}
-                            </span>
-                            <a v-if="person.email" class="text-small text-ring no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
-                            <a v-if="person.phone" class="ml-auto whitespace-nowrap text-small tabular-nums text-ring no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
-                            <span v-if="!person.email && !person.phone" class="ml-auto text-small text-ink-2">{{ $t("lead.noReach") }}</span>
-                        </div>
-
-                        <template #edit>
-                            <!-- Die fünf bekannten Rollen als Vorschlag, jede
-                                 andere steht so da, wie sie getippt wurde. -->
-                            <datalist id="rollen">
-                                <option v-for="value in ROLE_SUGGESTIONS" :key="value" :value="value" />
-                            </datalist>
-
-                            <div
-                                v-for="(person, index) in kontakte.people"
-                                :key="person.id"
-                                class="flex items-end gap-3 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
-                            >
-                                <Field v-slot="{ id }" dense class="min-w-[148px] flex-1" :label="$t('leads.name')">
-                                    <Input :id="id" v-model="person.name" type="text" />
-                                </Field>
-                                <Field v-slot="{ id }" dense class="w-[148px] flex-none" :label="$t('leads.role')">
-                                    <Input :id="id" v-model="person.role" type="text" list="rollen" />
-                                </Field>
-                                <Field v-slot="{ id }" dense class="min-w-[148px] flex-1" :label="$t('leads.email')">
-                                    <Input :id="id" v-model="person.email" type="email" inputmode="email" />
-                                </Field>
-                                <Field v-slot="{ id }" dense class="w-[148px] flex-none" :label="$t('leads.phone')">
-                                    <Input :id="id" v-model="person.phone" type="tel" inputmode="tel" />
-                                </Field>
-                                <Button
-                                    v-if="index > 0"
-                                    variant="ghost"
-                                    class="pb-2 text-small"
-                                    type="button"
-                                    @click="removeContact(person.id)"
-                                >
-                                    {{ $t("common.remove") }}
-                                </Button>
-                            </div>
-
-                            <div v-if="adding" class="mt-3 flex flex-col gap-3 pt-3 shadow-[inset_0_1px_0_var(--rule)]">
-                                <ContactTypeahead :model-value="picked" @update:model-value="pick" @create-new="(term) => { pick(null); newContact.name = term }" />
-
-                                <div v-if="newContact.name && !picked" class="flex gap-3 max-[640px]:flex-wrap">
-                                    <Field v-slot="{ id }" dense class="min-w-[148px] flex-1" :label="$t('leads.name')">
-                                        <Input :id="id" v-model="newContact.name" type="text" />
-                                    </Field>
-                                    <Field v-slot="{ id }" dense class="min-w-[148px] flex-1" :label="$t('leads.email')">
-                                        <Input :id="id" v-model="newContact.email" type="email" />
-                                    </Field>
-                                    <Field v-slot="{ id }" dense class="w-[148px] flex-none" :label="$t('leads.phone')">
-                                        <Input :id="id" v-model="newContact.phone" type="tel" />
-                                    </Field>
-                                </div>
-
-                                <div class="flex items-end gap-3">
-                                    <Field v-slot="{ id }" dense class="w-[148px] flex-none" :label="$t('leads.role')">
-                                        <Input :id="id" v-model="newContact.role" type="text" list="rollen" />
-                                    </Field>
-                                    <Button
-                                        variant="pill-muted"
-                                        type="button"
-                                        :disabled="(!newContact.contact_id && !newContact.name) || newContact.processing"
-                                        @click="addContact"
-                                    >
-                                        {{ $t("lead.contactAdd") }}
-                                    </Button>
-                                </div>
-                            </div>
-
-                            <Button v-else class="mt-3" variant="outline" type="button" @click="adding = true">
-                                {{ $t("lead.contactAdd") }}
-                            </Button>
-                        </template>
-                    </Card>
-
-                    <Card
                         v-model:editing="termineEditing"
                         :title="$t('lead.dates')"
                         :summary="termineSummary"
@@ -744,6 +624,126 @@ const primary = computed(() => {
                                 </span>
                             </div>
                         </div>
+                    </Card>
+
+                    <Card
+                        v-model:editing="kontakteEditing"
+                        :title="$t('contacts.title')"
+                        :summary="kontakteSummary"
+                        editable
+                        @cancel="kontakte.reset()"
+                        @save="saveKontakte"
+                    >
+                        <div
+                            v-for="person in people"
+                            :key="person.id"
+                            class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
+                        >
+                            <Link
+                                class="w-[168px] flex-none text-small leading-[1.35] font-semibold tracking-[-0.012em] text-foreground no-underline underline-offset-[3px] hover:underline"
+                                :href="`/kontakte/${person.id}`"
+                            >
+                                {{ person.name }}
+                            </Link>
+                            <span class="rounded-[var(--r-sm)] bg-sunk-2 px-2 py-0.5 text-small leading-[1.4] text-ink-2">
+                                {{ roleLabel(person.role) }}
+                            </span>
+                            <a v-if="person.email" class="text-small text-ring no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
+                            <a v-if="person.phone" class="ml-auto whitespace-nowrap text-small tabular-nums text-ring no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
+                            <span v-if="!person.email && !person.phone" class="ml-auto text-small text-ink-2">{{ $t("lead.noReach") }}</span>
+                        </div>
+
+                        <template #edit>
+                            <!-- Die fünf bekannten Rollen als Vorschlag, jede
+                                 andere steht so da, wie sie getippt wurde. -->
+                            <datalist id="rollen">
+                                <option v-for="value in ROLE_SUGGESTIONS" :key="value" :value="value" />
+                            </datalist>
+
+                            <div
+                                v-for="(person, index) in kontakte.people"
+                                :key="person.id"
+                                class="flex items-end gap-3 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
+                            >
+                                <Field v-slot="{ id }" dense class="min-w-[148px] flex-1" :label="$t('leads.name')">
+                                    <Input :id="id" v-model="person.name" type="text" />
+                                </Field>
+                                <Field v-slot="{ id }" dense class="w-[148px] flex-none" :label="$t('leads.role')">
+                                    <Input :id="id" v-model="person.role" type="text" list="rollen" />
+                                </Field>
+                                <Field v-slot="{ id }" dense class="min-w-[148px] flex-1" :label="$t('leads.email')">
+                                    <Input :id="id" v-model="person.email" type="email" inputmode="email" />
+                                </Field>
+                                <Field v-slot="{ id }" dense class="w-[148px] flex-none" :label="$t('leads.phone')">
+                                    <Input :id="id" v-model="person.phone" type="tel" inputmode="tel" />
+                                </Field>
+                                <Button
+                                    v-if="index > 0"
+                                    variant="ghost"
+                                    class="pb-2 text-small"
+                                    type="button"
+                                    @click="removeContact(person.id)"
+                                >
+                                    {{ $t("common.remove") }}
+                                </Button>
+                            </div>
+
+                            <div v-if="adding" class="mt-3 flex flex-col gap-3 pt-3 shadow-[inset_0_1px_0_var(--rule)]">
+                                <ContactTypeahead :model-value="picked" @update:model-value="pick" @create-new="(term) => { pick(null); newContact.name = term }" />
+
+                                <div v-if="newContact.name && !picked" class="flex gap-3 max-[640px]:flex-wrap">
+                                    <Field v-slot="{ id }" dense class="min-w-[148px] flex-1" :label="$t('leads.name')">
+                                        <Input :id="id" v-model="newContact.name" type="text" />
+                                    </Field>
+                                    <Field v-slot="{ id }" dense class="min-w-[148px] flex-1" :label="$t('leads.email')">
+                                        <Input :id="id" v-model="newContact.email" type="email" />
+                                    </Field>
+                                    <Field v-slot="{ id }" dense class="w-[148px] flex-none" :label="$t('leads.phone')">
+                                        <Input :id="id" v-model="newContact.phone" type="tel" />
+                                    </Field>
+                                </div>
+
+                                <div class="flex items-end gap-3">
+                                    <Field v-slot="{ id }" dense class="w-[148px] flex-none" :label="$t('leads.role')">
+                                        <Input :id="id" v-model="newContact.role" type="text" list="rollen" />
+                                    </Field>
+                                    <Button
+                                        variant="pill-muted"
+                                        type="button"
+                                        :disabled="(!newContact.contact_id && !newContact.name) || newContact.processing"
+                                        @click="addContact"
+                                    >
+                                        {{ $t("lead.contactAdd") }}
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <Button v-else class="mt-3" variant="outline" type="button" @click="adding = true">
+                                {{ $t("lead.contactAdd") }}
+                            </Button>
+                        </template>
+                    </Card>
+
+                    <Card
+                        v-model:editing="anfrageEditing"
+                        :title="$t('project.lead')"
+                        :summary="anfrageSummary"
+                        editable
+                        @cancel="anfrage.reset()"
+                        @save="saveAnfrage"
+                    >
+                        <!-- Der Anfragetext. Die Personen stehen in ihrer
+                             eigenen Karte: eine Seitenspalte trägt keinen
+                             Zeileneditor. -->
+                        <p class="m-0 max-w-[58ch] text-ui leading-[1.5] tracking-[-0.008em] whitespace-pre-line">
+                            {{ lead.inquiryText ?? $t("lead.noText") }}
+                        </p>
+
+                        <template #edit>
+                            <Field v-slot="{ id }" :label="$t('leads.inquiryText')" :error="anfrage.errors.inquiry_text">
+                                <Textarea :id="id" v-model="anfrage.inquiry_text" rows="6" />
+                            </Field>
+                        </template>
                     </Card>
 
                     <Card v-if="notes.length || notesAsked" :title="$t('lead.notes')" :summary="`${notes.length}`" :default-open="notesAsked">

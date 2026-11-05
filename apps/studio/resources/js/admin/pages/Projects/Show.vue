@@ -276,75 +276,6 @@ function complete(row: App.Crm.Data.TaskRowData) {
 
                     <div class="mt-5 flex flex-col gap-3">
                     <Card
-                        v-if="inquiry"
-                        v-model:editing="anfrageEditing"
-                        :title="$t('project.lead')"
-                        :summary="anfrageSummary"
-                        editable
-                        @cancel="anfrage.reset()"
-                        @save="saveAnfrage"
-                    >
-                        <p class="m-0 max-w-[58ch] text-body leading-[1.55] whitespace-pre-line">
-                            {{ inquiry.text ?? $t("lead.noText") }}
-                        </p>
-                        <p class="mt-2 mb-0 text-small text-ink-2">
-                            {{ [inquiry.typeLabel, inquiry.sourceLabel].filter(Boolean).join(" · ") }}
-                        </p>
-
-                        <template #edit>
-                            <Field v-slot="{ id }" :label="$t('leads.inquiryText')" :error="anfrage.errors.inquiry_text">
-                                <Textarea :id="id" v-model="anfrage.inquiry_text" rows="6" />
-                            </Field>
-                        </template>
-                    </Card>
-
-                    <Card
-                        v-model:editing="kontakteEditing"
-                        :title="$t('contacts.title')"
-                        :summary="kontakteSummary"
-                        editable
-                        @cancel="kontakte.reset()"
-                        @save="saveKontakte"
-                    >
-                        <div
-                            v-for="person in people"
-                            :key="person.id"
-                            class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
-                        >
-                            <Link
-                                class="w-[168px] flex-none text-small leading-[1.35] font-semibold tracking-[-0.012em] text-foreground no-underline underline-offset-[3px] hover:underline"
-                                :href="`/kontakte/${person.id}`"
-                            >
-                                {{ person.name }}
-                            </Link>
-                            <span class="rounded-[var(--r-sm)] bg-sunk-2 px-2 py-0.5 text-small leading-[1.4] font-medium text-ink-2">
-                                {{ roleLabel(person.role) }}
-                            </span>
-                            <a v-if="person.email" class="text-small text-ring no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
-                            <a v-if="person.phone" class="ml-auto whitespace-nowrap text-small tabular-nums text-ring no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
-                        </div>
-
-                        <template #edit>
-                            <datalist id="rollen">
-                                <option v-for="value in ROLE_SUGGESTIONS" :key="value" :value="value" />
-                            </datalist>
-
-                            <div
-                                v-for="(person, index) in kontakte.people"
-                                :key="person.id"
-                                class="flex items-center gap-3 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
-                            >
-                                <span class="w-[168px] flex-none text-small leading-[1.35] font-semibold tracking-[-0.012em]">
-                                    {{ people[index].name }}
-                                </span>
-                                <Field v-slot="{ id }" dense class="w-[168px] flex-none" :label="$t('leads.role')">
-                                    <Input :id="id" v-model="person.role" type="text" list="rollen" />
-                                </Field>
-                            </div>
-                        </template>
-                    </Card>
-
-                    <Card
                         v-model:editing="datesEditing"
                         :title="$t('lead.dates')"
                         :summary="datesSummary"
@@ -467,6 +398,76 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             </span>
                         </div>
                     </Card>
+
+                    <Card
+                        v-model:editing="kontakteEditing"
+                        :title="$t('contacts.title')"
+                        :summary="kontakteSummary"
+                        editable
+                        @cancel="kontakte.reset()"
+                        @save="saveKontakte"
+                    >
+                        <div
+                            v-for="person in people"
+                            :key="person.id"
+                            class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
+                        >
+                            <Link
+                                class="w-[168px] flex-none text-small leading-[1.35] font-semibold tracking-[-0.012em] text-foreground no-underline underline-offset-[3px] hover:underline"
+                                :href="`/kontakte/${person.id}`"
+                            >
+                                {{ person.name }}
+                            </Link>
+                            <span class="rounded-[var(--r-sm)] bg-sunk-2 px-2 py-0.5 text-small leading-[1.4] font-medium text-ink-2">
+                                {{ roleLabel(person.role) }}
+                            </span>
+                            <a v-if="person.email" class="text-small text-ring no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
+                            <a v-if="person.phone" class="ml-auto whitespace-nowrap text-small tabular-nums text-ring no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
+                        </div>
+
+                        <template #edit>
+                            <datalist id="rollen">
+                                <option v-for="value in ROLE_SUGGESTIONS" :key="value" :value="value" />
+                            </datalist>
+
+                            <div
+                                v-for="(person, index) in kontakte.people"
+                                :key="person.id"
+                                class="flex items-center gap-3 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+                            >
+                                <span class="w-[168px] flex-none text-small leading-[1.35] font-semibold tracking-[-0.012em]">
+                                    {{ people[index].name }}
+                                </span>
+                                <Field v-slot="{ id }" dense class="w-[168px] flex-none" :label="$t('leads.role')">
+                                    <Input :id="id" v-model="person.role" type="text" list="rollen" />
+                                </Field>
+                            </div>
+                        </template>
+                    </Card>
+
+                    <Card
+                        v-if="inquiry"
+                        v-model:editing="anfrageEditing"
+                        :title="$t('project.lead')"
+                        :summary="anfrageSummary"
+                        editable
+                        @cancel="anfrage.reset()"
+                        @save="saveAnfrage"
+                    >
+                        <p class="m-0 max-w-[58ch] text-body leading-[1.55] whitespace-pre-line">
+                            {{ inquiry.text ?? $t("lead.noText") }}
+                        </p>
+                        <p class="mt-2 mb-0 text-small text-ink-2">
+                            {{ [inquiry.typeLabel, inquiry.sourceLabel].filter(Boolean).join(" · ") }}
+                        </p>
+
+                        <template #edit>
+                            <Field v-slot="{ id }" :label="$t('leads.inquiryText')" :error="anfrage.errors.inquiry_text">
+                                <Textarea :id="id" v-model="anfrage.inquiry_text" rows="6" />
+                            </Field>
+                        </template>
+                    </Card>
+
                     <Card
                         v-if="detailsSummary || detailsEditing"
                         v-model:editing="detailsEditing"
