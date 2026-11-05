@@ -347,7 +347,7 @@ function megabytes(bytes: number) {
                  gating the preview link, presets.length gating "Vorlage
                  anwenden") stay pinned by a test that can fail. -->
             <DropdownMenuContent force-mount class="data-[state=closed]:hidden">
-              <DropdownMenuItem @select="sharing = true">{{ $t('galleryRecord.share') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="showPublish || !showWithdraw" @select="sharing = true">{{ $t('galleryRecord.share') }}</DropdownMenuItem>
               <DropdownMenuItem @select="copyLink">{{ $t('galleryRecord.copyLink') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="gallery.canPublish" @select="createPreviewLink">{{ $t('galleryRecord.createPreviewLink') }}</DropdownMenuItem>
               <DropdownMenuItem @select="savingPreset = true">{{ $t('galleryRecord.saveAsPreset') }}</DropdownMenuItem>
@@ -369,6 +369,7 @@ function megabytes(bytes: number) {
           <Button v-if="showWithdraw" type="button" variant="pill-muted" @click="withdraw">{{ $t('galleryRecord.withdraw') }}</Button>
           <Button v-if="showPublish && gallery.canMail" type="button" variant="pill-muted" @click="publishSilently">{{ $t('galleryRecord.publishSilently') }}</Button>
           <Button v-if="showPublish" type="button" @click="publish">{{ $t(publishLabel) }}</Button>
+          <Button v-else-if="showWithdraw" type="button" @click="sharing = true">{{ $t('galleryRecord.share') }}</Button>
         </span>
       </PageHead>
 
@@ -460,8 +461,8 @@ function megabytes(bytes: number) {
 
         <!-- Gestaltung: choosing without seeing is guessing, so the choice is
              on the left and the result on the right. -->
-        <div v-else-if="tab === 'gestaltung'" class="flex min-w-0 flex-1">
-          <div class="w-80 flex-none pt-5 pr-4 pb-7 pl-8">
+        <div v-else-if="tab === 'gestaltung'" class="flex min-w-0 flex-1 max-[640px]:flex-col">
+          <div class="w-80 flex-none pt-5 pr-4 pb-7 pl-8 max-[640px]:w-auto max-[640px]:pl-4">
             <div class="mb-4 flex flex-col gap-1">
               <span class="pl-0.5 text-small leading-none font-normal text-ink-2">{{ $t('galleryRecord.cover') }}</span>
               <ChoiceGroup
@@ -547,7 +548,7 @@ function megabytes(bytes: number) {
             variant="segmented"
           />
 
-          <table class="mt-4 w-full border-collapse">
+          <table class="mt-4 w-full border-collapse max-[640px]:block max-[640px]:overflow-x-auto">
             <thead>
               <tr>
                 <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.who') }}</th>
@@ -590,7 +591,7 @@ function megabytes(bytes: number) {
           <!-- Fertige ZIP-Archive: Tatsachen über Vergangenes, keine
                Einstellung — verlässt deshalb den ⚙-Reiter. -->
           <h2 class="mt-9">{{ $t('galleryRecord.downloadsHeading') }}</h2>
-          <table v-if="builds.length" class="w-full border-collapse">
+          <table v-if="builds.length" class="w-full border-collapse max-[640px]:block max-[640px]:overflow-x-auto">
             <thead>
               <tr>
                 <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('gallery.sizeLabel') }}</th>

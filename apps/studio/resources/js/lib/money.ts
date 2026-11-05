@@ -43,6 +43,11 @@ export function basisPointsToPercent(bps: number | null): string {
   return bps === null ? '' : (bps / 100).toFixed(2)
 }
 
+/** For reading, not for a form field: `19`, `12,5`. */
+export function formatPercent(bps: number): string {
+  return new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 }).format(bps / 100)
+}
+
 export type DiscountField = { type: '' | 'percentage' | 'amount'; value: number | null }
 
 /**

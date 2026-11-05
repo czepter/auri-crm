@@ -5,7 +5,7 @@ import PortalField from '@/portal/components/PortalField.vue'
 import PortalLabel from '@/portal/components/PortalLabel.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 import { vatAmount } from '@/lib/quoteTotals'
-import { basisPointsToPercent, formatEuros } from '@/lib/money'
+import { formatEuros, formatPercent } from '@/lib/money'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
@@ -90,7 +90,7 @@ const optional = computed(() => props.items.filter((item) => item.selectable && 
           <PortalLabel class="mb-2">{{ $t('portal.totalTitle') }}</PortalLabel>
           <span class="block text-heading leading-none font-semibold tracking-[-0.022em] tabular-nums">{{ price }}</span>
           <span v-if="vatRate && props.price !== null" class="mt-[7px] block text-small text-muted-foreground">
-            {{ $t('portal.vatNote', { rate: basisPointsToPercent(vatRate) }) }}
+            {{ $t('portal.vatNote', { rate: formatPercent(vatRate) }) }}
           </span>
 
           <div class="mt-6 rounded-md border border-line-hover p-6">

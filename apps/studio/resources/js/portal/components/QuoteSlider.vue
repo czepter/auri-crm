@@ -12,6 +12,7 @@ import { useForm, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import { formatEuros } from '@/lib/money'
 import { applyDiscount, quoteDiscount, spread } from '@/lib/quoteTotals'
+import { shortDate } from '@/portal/lib/dates'
 import { splitStages } from '@/portal/lib/paymentStages'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
@@ -303,7 +304,7 @@ function accept() {
             <Checkbox id="slider-terms" v-model="form.terms" required />
             <Label variant="inline" for="slider-terms">
               <a v-if="agbUrl" :href="agbUrl" target="_blank" rel="noopener" class="underline">{{ $t('portal.footerAgb') }}</a>
-              <template v-if="agbUrl && widerrufUrl"> {{ $t('portal.quoteTermsAnd') }} </template>
+              <template v-if="agbUrl && widerrufUrl">{{ ` ${$t('portal.quoteTermsAnd')} ` }}</template>
               <a v-if="widerrufUrl" :href="widerrufUrl" target="_blank" rel="noopener" class="underline">{{ $t('portal.footerWiderruf') }}</a>
               {{ $t('portal.quoteTerms') }}
             </Label>
@@ -321,7 +322,7 @@ function accept() {
         </template>
 
         <p v-if="quote.validUntil" class="mt-4 text-[13px] text-muted-foreground max-lg:hidden">
-          {{ $t('quotes.validUntil') }} {{ quote.validUntil }}
+          {{ $t('quotes.validUntil') }} {{ shortDate(quote.validUntil) }}
         </p>
       </template>
     </aside>

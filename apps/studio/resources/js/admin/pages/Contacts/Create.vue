@@ -57,7 +57,7 @@ function submit() {
               <Input :id="id" v-model="form.name" type="text" autofocus />
             </Field>
 
-            <div class="mt-3 flex gap-3 [&>*]:min-w-[148px] [&>*]:flex-1">
+            <div class="mt-3 flex flex-wrap gap-3 [&>*]:min-w-[148px] [&>*]:flex-1">
               <Field v-slot="{ id }" :label="$t('contacts.email')" :error="form.errors.email">
                 <Input :id="id" v-model="form.email" type="email" autocomplete="email" />
               </Field>

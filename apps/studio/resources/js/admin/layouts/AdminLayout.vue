@@ -187,7 +187,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                             </svg>
                         </button>
                         <div
-                            class="mb-px ml-[19px] pl-1.5 max-[1080px]:ml-0 max-[1080px]:pl-0"
+                            class="mb-px ml-[19px] pl-1.5 max-[1080px]:ml-0 max-[1080px]:pl-0 max-[640px]:contents max-[640px]:[&>a+a]:hidden"
                             :class="!collectorsOpen[item.key!] && 'hidden max-[1080px]:block'"
                         >
                             <Link
@@ -205,7 +205,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                                     viewBox="0 0 24 24"
                                     v-html="child.icon"
                                 />
-                                <span class="max-[1080px]:hidden">{{
+                                <span class="max-[1080px]:sr-only">{{
                                     child.label
                                 }}</span>
                             </Link>
@@ -238,7 +238,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                             viewBox="0 0 24 24"
                             v-html="item.icon"
                         />
-                        <span class="max-[1080px]:hidden">{{
+                        <span class="max-[1080px]:sr-only">{{
                             item.label
                         }}</span>
                         <span
@@ -307,7 +307,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
             <CommandPalette ref="palette" />
         </div>
 
-        <main class="flex min-w-0 flex-1 flex-col pl-12 max-[640px]:order-1">
+        <main class="flex min-w-0 flex-1 flex-col pl-12 max-[640px]:order-1 max-[640px]:pl-0">
             <Alert
                 v-if="page.props.studioDeletion"
                 variant="destructive"

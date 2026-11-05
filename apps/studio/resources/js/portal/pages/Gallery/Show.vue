@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { router, useForm, usePage } from '@inertiajs/vue3'
 import GalleryLightbox from '@/portal/components/GalleryLightbox.vue'
+import { shortDate } from '@/portal/lib/dates'
 import { ALL, countOf, selections, visible } from '@/portal/lib/gallerySelections'
 import { GRID_WIDTHS, srcSet } from '@/portal/lib/images'
 import { Button } from '@/ui/button'
@@ -155,7 +156,7 @@ function submit() {
 }
 
 const subtitle = computed(() => {
-  const parts = [props.gallery.date, props.gallery.venue].filter(Boolean)
+  const parts = [props.gallery.date && shortDate(props.gallery.date), props.gallery.venue].filter(Boolean)
 
   if (props.assets?.length) {
     parts.push(`${props.assets.length} Bilder`)
@@ -172,7 +173,8 @@ const ROW_HEIGHT = 260
 function tileStyle(asset: { width: number | null; height: number | null }) {
   const ratio = asset.width && asset.height ? asset.width / asset.height : 1.5
 
-  return { aspectRatio: String(ratio), flex: `${ratio * 100} 1 ${ratio * ROW_HEIGHT}px` }
+  // 34vw caps the row on a phone, where one full-height row would fit a single landscape frame.
+  return { aspectRatio: String(ratio), flex: `${ratio * 100} 1 calc(${ratio} * min(${ROW_HEIGHT}px, 34vw))` }
 }
 
 // The first published asset carries the cover. Nothing in the schema names
@@ -279,7 +281,7 @@ const COVER_INPUT = [
 
     <template v-if="unlocked">
       <div
-        class="sticky top-0 z-10 mx-auto flex max-w-[1240px] items-center justify-between gap-8 border-b border-border bg-[rgba(14,12,11,.72)] px-8 py-5 backdrop-blur-[14px] backdrop-saturate-[1.4] max-[760px]:flex-wrap"
+        class="sticky top-0 z-10 mx-auto flex max-w-[1240px] items-center justify-between gap-8 border-b border-border bg-[rgba(14,12,11,.72)] px-8 py-5 backdrop-blur-[14px] backdrop-saturate-[1.4] max-[760px]:flex-wrap max-[760px]:gap-4 max-[760px]:px-4"
       >
         <!-- tokens.css .who decides everything but the size and the colour -->
         <span
@@ -314,7 +316,7 @@ const COVER_INPUT = [
       <main
         v-if="shown.length"
         id="raster"
-        class="mx-auto flex max-w-[1240px] flex-wrap gap-3.5 px-8 pt-11 pb-16"
+        class="mx-auto flex max-w-[1240px] flex-wrap gap-3.5 px-8 pt-11 pb-16 max-[760px]:gap-2 max-[760px]:px-4"
       >
         <span
           v-for="(asset, index) in shown"
@@ -382,7 +384,7 @@ const COVER_INPUT = [
            guest never receives any of it. -->
       <section
         v-if="offers.lists && lists"
-        class="mx-auto grid max-w-[1240px] gap-16 border-t border-border px-8 py-16 min-[900px]:grid-cols-[minmax(0,1fr)_320px] [&>div:not(:first-child)]:mt-11"
+        class="mx-auto grid max-w-[1240px] grid-cols-[minmax(0,1fr)] gap-16 border-t border-border px-8 py-16 max-[760px]:px-4 min-[900px]:grid-cols-[minmax(0,1fr)_320px] [&>div:not(:first-child)]:mt-11"
       >
         <div>
           <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.listsTitle') }}</p>
@@ -496,7 +498,7 @@ const COVER_INPUT = [
       </section>
 
       <footer
-        class="mx-auto flex max-w-[1240px] flex-wrap justify-between gap-8 border-t border-border px-8 pt-11 pb-16 text-[12.5px] text-muted-foreground"
+        class="mx-auto flex max-w-[1240px] flex-wrap justify-between gap-8 border-t border-border px-8 pt-11 pb-16 max-[760px]:px-4 text-[12.5px] text-muted-foreground"
       >
         <span>{{ studioName }}</span>
         <a href="/impressum">{{ $t('portal.footerImpressum') }}</a>

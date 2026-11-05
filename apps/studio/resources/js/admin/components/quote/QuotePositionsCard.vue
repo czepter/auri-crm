@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import type { PricingMode, QuoteDraft, QuoteRow, VatSettings } from './quotePayload'
 import { quoteRowToLine } from './quotePayload'
 import { applyDiscount, lineAmount, span, subtotal, vatLines } from '@/lib/quoteTotals'
-import { basisPointsToPercent, eurosToCents, formatEuros, parseDiscount } from '@/lib/money'
+import { eurosToCents, formatEuros, formatPercent, parseDiscount } from '@/lib/money'
 import { moveRow } from '@/admin/lib/rows'
 import { Label } from '@/ui/label'
 import { Switch } from '@/ui/switch'
@@ -270,13 +270,13 @@ const vat = computed(() => vatRows.value.reduce((sum, line) => sum + line.vat, 0
         />
       </div>
       <div class="flex justify-between border-t border-rule pt-1.5 text-body font-semibold">
-        <span>{{ $t('quotes.total') }}</span>
+        <span>{{ $t(vatSettings.mode === 'standard' ? 'quotes.net' : 'quotes.total') }}</span>
         <span class="tabular-nums">{{ formatEuros(total) }}</span>
       </div>
 
       <template v-if="vatSettings.mode === 'standard'">
         <div v-for="line in vatRows" :key="line.rate" class="flex justify-between text-small text-ink-2">
-          <span>{{ $t('quotes.vat', { rate: basisPointsToPercent(line.rate) }) }}</span>
+          <span>{{ $t('quotes.vat', { rate: formatPercent(line.rate) }) }}</span>
           <span class="tabular-nums">{{ formatEuros(line.vat) }}</span>
         </div>
         <div class="flex justify-between border-t border-rule pt-1.5 text-body font-semibold">

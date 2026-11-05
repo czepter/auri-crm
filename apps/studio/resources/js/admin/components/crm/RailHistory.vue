@@ -36,15 +36,19 @@ const byline = (author: string | null) =>
             class="flex gap-2.5 py-1 text-small leading-[1.47]"
         >
             <span class="w-[74px] flex-none text-ink-2">{{ entry.at ? day(entry.at) : "" }}</span>
-            <span class="min-w-0 flex-1">{{ entry.body }}</span>
-            <span v-if="byline(entry.author)" class="text-ink-2">{{ entry.author }}</span>
+            <span class="min-w-0 flex-1">
+                {{ entry.body }}
+                <span v-if="byline(entry.author)" class="block text-ink-2">{{ entry.author }}</span>
+            </span>
         </div>
         <template v-if="origin">
             <div class="py-0.5 text-small leading-[1.47] text-faint">⋯</div>
             <div class="flex gap-2.5 py-1 text-small leading-[1.47]">
                 <span class="w-[74px] flex-none text-ink-2">{{ origin.at ? day(origin.at) : "" }}</span>
-                <span class="min-w-0 flex-1">{{ origin.body }}</span>
-                <span v-if="byline(origin.author)" class="text-ink-2">{{ origin.author }}</span>
+                <span class="min-w-0 flex-1">
+                    {{ origin.body }}
+                    <span v-if="byline(origin.author)" class="block text-ink-2">{{ origin.author }}</span>
+                </span>
             </div>
         </template>
     </div>

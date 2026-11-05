@@ -152,7 +152,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
               type="text"
               :placeholder="$t('lead.taskTitle')"
             >
-            <div class="flex items-center gap-4 px-3 pt-1 pb-2.5">
+            <div class="flex flex-wrap items-center gap-4 px-3 pt-1 pb-2.5 max-[640px]:gap-x-2">
               <DatePicker v-model="form.due_on" class="w-[150px] [&_input]:h-8 [&_input]:border-0 [&_input]:bg-transparent [&_input]:px-0" />
               <Select v-model="form.audience">
                 <SelectTrigger class="h-8 w-[110px] border-0 bg-transparent px-0 text-ink-2"><SelectValue /></SelectTrigger>
@@ -170,7 +170,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
                 :shoot-options="shootOptions"
                 :staff-options="staffOptions"
               />
-              <Button class="ml-1" variant="pill" type="submit" :disabled="!form.title || form.processing">
+              <Button class="ml-1 max-[640px]:ml-auto" variant="pill" type="submit" :disabled="!form.title || form.processing">
                 {{ $t('lead.addTask') }}
               </Button>
             </div>
@@ -181,7 +181,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
               {{ $t(group.key) }}
             </div>
 
-            <div v-for="row in group.rows" :key="row.id" class="flex items-center gap-3.5 py-[9px]">
+            <div v-for="row in group.rows" :key="row.id" class="flex items-center gap-3.5 py-[9px] max-[640px]:flex-wrap max-[640px]:gap-x-2.5 max-[640px]:gap-y-1">
               <button
                 class="size-[15px] flex-none rounded-[5px] bg-sunk-2"
                 type="button"

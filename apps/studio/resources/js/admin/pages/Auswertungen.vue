@@ -167,6 +167,7 @@ const windowLabel = computed(() => {
 })
 
 const stepPeak = computed(() => Math.max(1, ...props.steps.map((s) => s.leads)))
+const decimal = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 1 })
 const dwellPeak = computed(() => Math.max(1, ...props.dwell.map((d) => d.days)))
 const replyPeak = computed(() => Math.max(1, ...props.responseTimes.buckets.map((b) => b.leads)))
 const leadTimePeak = computed(() => Math.max(1, ...props.leadTimes.buckets.map((b) => b.projects)))
@@ -187,10 +188,10 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
   <AdminLayout active="auswertungen">
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
-        <div class="flex items-end justify-between gap-6 pr-8">
+        <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 pr-8 max-[640px]:pr-0">
           <PageHead :kicker="$t('reports.title')" :title="windowLabel" />
 
-          <div class="flex items-center gap-2.5 pb-1">
+          <div class="flex min-w-0 flex-wrap items-center gap-2.5 pb-1">
             <Select
               :model-value="filters.type ?? 'all'"
               @update:model-value="(value) => filter({ typ: String(value) === 'all' ? null : String(value) })"
@@ -226,7 +227,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
           <!-- Same rule as the Übersicht's tiles: a figure with nothing behind it
                is absent, never a zero. A studio with no history reads as empty,
                which is true, rather than as failing. -->
-          <div v-if="!bare" class="mb-6 grid grid-cols-4 gap-4">
+          <div v-if="!bare" class="mb-6 grid grid-cols-4 gap-4 max-[1080px]:grid-cols-2">
             <ReportKpi
               v-if="bookingRate !== null"
               :label="$t('reports.bookingRate')"
@@ -258,7 +259,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
           <!-- Die beiden Diagramme teilen sich die Breite zur Hälfte. Multi-Column
                kennt bei column-span nur ganz oder gar nicht, also steht die erste
                Reihe im Grid und der Rest darunter im Masonry. -->
-          <div v-if="!bare" class="mb-6 grid grid-cols-2 gap-6">
+          <div v-if="!bare" class="mb-6 grid grid-cols-2 gap-6 max-[640px]:grid-cols-1">
             <ReportCard
               v-if="capturedTotal"
               :title="$t('reports.funnelTitle')"
@@ -303,21 +304,21 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                   />
                 </svg>
                 <div class="absolute inset-0 flex items-end">
-                  <div v-for="row in funnelByMonth" :key="row.month" class="flex flex-1 items-end justify-center gap-1.5">
+                  <div v-for="row in funnelByMonth" :key="row.month" class="flex min-w-0 flex-1 items-end justify-center gap-1.5 max-[640px]:gap-0.5">
                     <div class="flex flex-col items-center gap-1">
                       <span class="text-small leading-none font-semibold tabular-nums text-faint">{{ row.captured || '' }}</span>
-                      <div class="w-4 rounded-t-[4px] bg-[var(--accent-bg)]" :style="{ height: barHeight(row.captured, funnelPeak, 188) }" />
+                      <div class="w-4 rounded-t-[4px] bg-[var(--accent-bg)] max-[640px]:w-2" :style="{ height: barHeight(row.captured, funnelPeak, 188) }" />
                     </div>
                     <div class="flex flex-col items-center gap-1">
                       <span class="text-small leading-none font-semibold tabular-nums text-action">{{ row.booked || '' }}</span>
-                      <div class="w-4 rounded-t-[4px] bg-action" :style="{ height: barHeight(row.booked, funnelPeak, 188) }" />
+                      <div class="w-4 rounded-t-[4px] bg-action max-[640px]:w-2" :style="{ height: barHeight(row.booked, funnelPeak, 188) }" />
                     </div>
                   </div>
                 </div>
               </div>
 
               <div class="flex">
-                <div v-for="(row, index) in funnelByMonth" :key="row.month" class="flex flex-1 flex-col items-center text-small leading-tight text-faint">
+                <div v-for="(row, index) in funnelByMonth" :key="row.month" class="flex min-w-0 flex-1 flex-col items-center text-small leading-tight text-faint">
                   <span>{{ monthShort(row.month) }}</span>
                   <span class="h-[13px]">{{ yearTick(row.month, index) }}</span>
                 </div>
@@ -345,7 +346,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                 />
               </template>
 
-              <div class="flex items-center gap-4 text-small text-muted-foreground">
+              <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-small text-muted-foreground">
                 <span class="inline-flex items-center gap-1.5">
                   <span class="size-2.5 rounded-[3px] bg-action" />
                   {{ cashAhead ? $t('reports.seriesDue') : $t('reports.seriesReceived') }}
@@ -373,16 +374,16 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                 <!-- IBCS: die Prognose steht neben dem Ist, nicht darauf, und
                      schmaler als es. Gestapelt läse sich beides als eine Summe,
                      die so niemand erwarten darf. -->
-                <div class="absolute inset-0 flex items-end justify-center gap-2.5">
+                <div class="absolute inset-0 flex items-end justify-center gap-2.5 max-[640px]:gap-1">
                   <div v-for="row in cashMonths" :key="row.month" class="flex h-full max-w-[64px] flex-1 items-end gap-[3px]">
                     <div class="flex h-full min-w-0 flex-[3] flex-col justify-end gap-1">
-                      <span class="text-center text-small leading-none font-semibold tabular-nums whitespace-nowrap text-action">
+                      <span class="text-center text-small leading-none font-semibold tabular-nums whitespace-nowrap text-action max-[640px]:hidden">
                         {{ row.value ? formatEurosRounded(row.value) : '' }}
                       </span>
                       <div class="w-full rounded-t-[4px] bg-action" :style="{ height: barHeight(row.value, cashPeak, 194) }" />
                     </div>
                     <div v-if="cashAhead" class="flex h-full min-w-0 flex-[2] flex-col justify-end gap-1">
-                      <span class="text-center text-small leading-none font-semibold tabular-nums whitespace-nowrap text-faint">
+                      <span class="text-center text-small leading-none font-semibold tabular-nums whitespace-nowrap text-faint max-[640px]:hidden">
                         {{ row.forecast ? formatEurosRounded(row.forecast) : '' }}
                       </span>
                       <div v-if="row.forecast" class="w-full rounded-t-[4px]" :style="{ background: forecastFill, height: barHeight(row.forecast, cashPeak, 194) }" />
@@ -400,7 +401,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
             </ReportCard>
           </div>
 
-          <div v-if="!bare" class="columns-3 gap-6">
+          <div v-if="!bare" class="columns-3 gap-6 max-[1080px]:columns-2 max-[640px]:columns-1">
             <ReportCard class="mb-6 break-inside-avoid" v-if="sources.length || referrers.length" :title="$t('reports.sourcesTitle')">
               <div v-if="sources.length" class="flex flex-col gap-3.5">
                 <div v-for="row in sources" :key="row.source" class="flex flex-col gap-1.5">
@@ -488,7 +489,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                   <div class="h-2 overflow-hidden rounded-[4px] bg-muted">
                     <div class="h-2 rounded-[4px] bg-action" :style="{ width: barWidth(step.leads, stepPeak) }" />
                   </div>
-                  <span class="text-small tabular-nums" :class="step.lost ? 'text-destructive' : 'text-faint'">
+                  <span v-if="step.drop === null || step.lost" class="text-small tabular-nums" :class="step.lost ? 'text-destructive' : 'text-faint'">
                     {{ step.drop === null ? $t('reports.stepEntry') : $t('reports.stepDrop', { lost: step.lost, percent: step.drop }) }}
                   </span>
                 </div>
@@ -528,7 +529,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                     />
                   </div>
                   <span class="w-12 shrink-0 text-right text-small font-semibold tabular-nums">
-                    {{ $t('reports.days', { days: row.days }) }}
+                    {{ $t('reports.days', { days: decimal.format(row.days) }) }}
                   </span>
                 </div>
               </div>
@@ -559,7 +560,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
             <ReportCard class="mb-6 break-inside-avoid" v-if="steps.length" :title="$t('reports.responseTitle')" :sub="$t('reports.responseSub')">
               <template #head>
                 <span v-if="responseTimes.medianHours !== null" class="rounded-[var(--r-sm)] bg-[var(--accent-bg)] px-2.5 py-1 text-small leading-none font-semibold text-ring">
-                  {{ $t('reports.medianHours', { hours: responseTimes.medianHours }) }}
+                  {{ $t('reports.medianHours', { hours: decimal.format(responseTimes.medianHours) }) }}
                 </span>
               </template>
 
