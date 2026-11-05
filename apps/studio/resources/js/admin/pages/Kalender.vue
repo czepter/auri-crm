@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import CalendarSeason from '@/admin/components/crm/CalendarSeason.vue'
@@ -9,6 +9,7 @@ import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
 import PageHead from '@/ui/page/PageHead.vue'
 import Empty from '@/ui/page/Empty.vue'
+import { QueueGroup, QueueItem } from '@/ui/queue'
 import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
@@ -57,6 +58,13 @@ function dayNumber(date: string) {
 function go(month: string, view: string = props.view) {
   router.get('/kalender', { monat: month, ansicht: view }, { preserveScroll: true, preserveState: true })
 }
+
+// A phone opens on the list unless the URL names a view.
+onMounted(() => {
+  if (window.matchMedia('(max-width: 640px)').matches && !new URLSearchParams(location.search).has('ansicht')) {
+    router.get('/kalender', { monat: props.month, ansicht: 'liste' }, { replace: true, preserveState: true })
+  }
+})
 
 // The list answers "what is next", so it groups by nearness rather than by
 // the month the grid is showing.
@@ -116,6 +124,7 @@ function shortDate(date: string | null) {
             :key="step[0]"
             type="button"
             variant="pill-muted"
+            class="max-[640px]:min-h-11 max-[640px]:min-w-11"
             @click="go(step[1])"
           >
             {{ step[0] }}
@@ -180,13 +189,35 @@ function shortDate(date: string | null) {
           <CalendarSeason v-if="season" :season="season" @range="seasonLabel = $event" />
         </template>
 
-        <Table v-else>
+        <div v-if="view !== 'saison'" class="hidden px-3 pt-2 max-[640px]:block">
+          <Empty v-if="!groups.length" :text="$t('dashboard.weekEmpty')">
+            <div class="flex items-center gap-2">
+              <Button :as="Link" variant="pill" href="/anfragen/neu">{{ $t('leads.createKicker') }}</Button>
+              <Button :as="Link" variant="pill-muted" href="/projekte">{{ $t('calendar.toProjects') }}</Button>
+            </div>
+          </Empty>
+
+          <template v-for="[key, rows] in groups" :key="key">
+            <QueueGroup :title="$t(`calendar.group.${key}`)" :count="rows.length" />
+            <QueueItem
+              v-for="shoot in rows"
+              :key="shoot.id"
+              class="min-h-14"
+              :href="`/auftraege/${projects[shoot.id].id}`"
+              :name="projects[shoot.id].name"
+              :meta="shoot.statusLabel"
+              :title="[shortDate(shoot.date) + (shoot.callTime ? ` ${shoot.callTime}` : ''), shoot.venue].filter(Boolean).join(' · ')"
+            />
+          </template>
+        </div>
+
+        <Table v-if="view === 'liste'" class="max-[640px]:hidden">
           <thead>
             <tr>
               <TableHead>{{ $t('calendar.colDate') }}</TableHead>
               <TableHead>{{ $t('calendar.colWhat') }}</TableHead>
-              <TableHead class="max-[640px]:hidden">{{ $t('calendar.colVenue') }}</TableHead>
-              <TableHead v-if="!$page.props.soloStudio" class="max-[640px]:hidden">{{ $t('calendar.colCrew') }}</TableHead>
+              <TableHead>{{ $t('calendar.colVenue') }}</TableHead>
+              <TableHead v-if="!$page.props.soloStudio">{{ $t('calendar.colCrew') }}</TableHead>
               <TableHead>{{ $t('calendar.colStatus') }}</TableHead>
             </tr>
           </thead>
@@ -211,8 +242,8 @@ function shortDate(date: string | null) {
                 <TableCell tone="name">
                   <Link :href="`/auftraege/${projects[shoot.id].id}`">{{ projects[shoot.id].name }}</Link>
                 </TableCell>
-                <TableCell tone="muted" class="max-[640px]:hidden">{{ shoot.venue ?? '—' }}</TableCell>
-                <TableCell v-if="!$page.props.soloStudio" tone="muted" class="max-[640px]:hidden">{{ shoot.crew.map((member) => member.name).join(', ') || '—' }}</TableCell>
+                <TableCell tone="muted">{{ shoot.venue ?? '—' }}</TableCell>
+                <TableCell v-if="!$page.props.soloStudio" tone="muted">{{ shoot.crew.map((member) => member.name).join(', ') || '—' }}</TableCell>
                 <TableCell :class="mine.includes(shoot.id) && 'text-ring'">{{ shoot.statusLabel }}</TableCell>
               </TableRow>
             </template>
