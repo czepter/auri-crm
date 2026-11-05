@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { Link, router, useForm } from "@inertiajs/vue3";
+import { useI18n } from "vue-i18n";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import Card from "@/ui/page/Card.vue";
 import ContactTypeahead from "@/admin/components/crm/ContactTypeahead.vue";
@@ -26,6 +27,7 @@ import { ChevronDown, Pencil } from "lucide-vue-next";
 import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/lib/money";
 import { quoteChipClass } from "@/admin/lib/quoteDisplay";
+import { sendQuoteHref } from "@/admin/lib/leadPrimary";
 import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
 import { dayWithWeekday as day } from "@/admin/lib/dates";
 import { useLiveProps } from "@/admin/lib/liveReload";
@@ -321,6 +323,18 @@ function addTask() {
 const nextStage = computed(
     () => props.stages[props.stages.findIndex((stage) => stage.value === props.lead.stage) + 1] ?? null,
 );
+
+const { t } = useI18n();
+
+const primary = computed(() => {
+    const sendHref = sendQuoteHref(props.quote, props.header.canManageQuotes);
+
+    if (sendHref) {
+        return { label: t("lead.sendQuote"), run: () => router.visit(sendHref) };
+    }
+
+    return nextStage.value && { label: nextStage.value.label, run: () => move(nextStage.value!.value) };
+});
 </script>
 
 <template>
@@ -431,19 +445,19 @@ const nextStage = computed(
             <template v-if="!lead.outcomeLabel" #stage>
                 <div class="flex">
                     <Button
-                        v-if="nextStage"
+                        v-if="primary"
                         variant="pill"
                         type="button"
                         class="rounded-r-none"
-                        @click="move(nextStage.value)"
-                        >{{ nextStage.label }}</Button
+                        @click="primary.run"
+                        >{{ primary.label }}</Button
                     >
                     <DropdownMenu>
                         <DropdownMenuTrigger as-child>
                             <Button
                                 variant="pill"
                                 type="button"
-                                :class="nextStage ? 'rounded-l-none border-l border-white/30 px-2' : ''"
+                                :class="primary ? 'rounded-l-none border-l border-white/30 px-2' : ''"
                                 :aria-label="$t('board.colStage')"
                             >
                                 <ChevronDown class="size-3.5" />
