@@ -110,7 +110,7 @@ function destroy() {
             </h1>
           </slot>
 
-          <div class="ml-auto flex flex-wrap items-center justify-end gap-2">
+          <div class="ml-auto flex flex-wrap items-center justify-end gap-2 max-[640px]:w-full max-[640px]:justify-between">
             <slot name="actions" />
             <slot name="stage" />
 
@@ -130,12 +130,12 @@ function destroy() {
               </AlertDialogContent>
             </AlertDialog>
 
-            <div v-if="header.canManagePortalVisibility" class="flex items-center gap-2">
+            <div v-if="header.canManagePortalVisibility" class="flex items-center gap-2 max-[640px]:hidden">
               <Label for="portal-visible" variant="inline">{{ $t('project.portal') }}</Label>
               <Switch id="portal-visible" :model-value="header.portalVisible" @update:model-value="togglePortal" />
             </div>
 
-            <DropdownMenu v-if="(header.canComplete && !header.isCompleted) || (header.canClose && !header.outcomeLabel) || header.canDelete">
+            <DropdownMenu v-if="(header.canComplete && !header.isCompleted) || (header.canClose && !header.outcomeLabel) || header.canDelete || header.canManagePortalVisibility">
               <DropdownMenuTrigger
                 class="flex size-8 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2 max-[640px]:size-11"
                 :aria-label="$t('project.more')"
@@ -145,6 +145,9 @@ function destroy() {
                 </svg>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" class="w-[208px]">
+                <DropdownMenuItem v-if="header.canManagePortalVisibility" class="min-[641px]:hidden" @select="togglePortal">
+                  {{ $t(header.portalVisible ? 'project.portalHide' : 'project.portalShow') }}
+                </DropdownMenuItem>
                 <DropdownMenuItem v-if="header.canComplete && !header.isCompleted" @select="complete">
                   {{ $t('project.completeMenu') }}
                 </DropdownMenuItem>
