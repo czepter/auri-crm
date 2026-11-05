@@ -14,3 +14,12 @@ export function stepRows(shoots: Shoot[]): { shootId: string; label: string; sta
             .map((status) => ({ shootId: shoot.id, label: `${shoot.label ?? shoot.kind} · ${status.label}`, status: status.value })),
     );
 }
+
+export function paymentCall(
+    plan: { installments: { isLate: boolean }[] } | null,
+    people: { role: string; phone: string | null }[],
+): string | null {
+    const phone = people.find((person) => person.role === "primary")?.phone?.trim();
+
+    return plan?.installments.some((installment) => installment.isLate) && phone ? `tel:${phone.replace(/[^\d+]/g, "")}` : null;
+}

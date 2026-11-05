@@ -10,7 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import LineItems from "@/admin/components/quote/LineItems.vue";
 import NoteThread from "@/admin/components/crm/NoteThread.vue";
 import QuoteSummary from "@/admin/components/quote/QuoteSummary.vue";
-import { nextStep, stepRows } from "@/admin/lib/projectNextStep";
+import { nextStep, paymentCall, stepRows } from "@/admin/lib/projectNextStep";
 import { grossTotal } from "@/admin/lib/quoteSummary";
 import ShootFields from "@/admin/components/crm/ShootFields.vue";
 import ShootRow from "@/admin/components/crm/ShootRow.vue";
@@ -96,6 +96,7 @@ function advance(shootId: string, status: string) {
 
 const step = computed(() => (props.header.canManageShoots ? nextStep(props.shoots) : null));
 const stepMenu = computed(() => stepRows(props.shoots));
+const callHref = computed(() => paymentCall(props.header.paymentPlan, props.people));
 
 function euro(minor: string | number | null) {
     return minor === null ? "—" : formatEurosRounded(Number(minor));
@@ -253,8 +254,11 @@ function complete(row: App.Crm.Data.TaskRowData) {
 <template>
     <AdminLayout active="projekte">
         <ProjectShell :header="header" active="overview" :people="false">
-            <template v-if="step" #stage>
-                <div class="flex">
+            <template v-if="step || callHref" #stage>
+                <Button v-if="!step && callHref" variant="pill" as-child class="max-[640px]:min-h-11">
+                    <a :href="callHref">{{ $t("contacts.call") }}</a>
+                </Button>
+                <div v-else-if="step" class="flex">
                     <Button variant="pill" type="button" class="rounded-r-none max-[640px]:min-h-11" @click="advance(step.shootId, step.status.value)">
                         {{ step.status.label }}
                     </Button>

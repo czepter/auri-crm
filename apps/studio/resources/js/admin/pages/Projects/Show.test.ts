@@ -42,6 +42,14 @@ describe('Projektübersicht', () => {
         expect(html).toMatch(/<button[^>]*>(<!--[^>]*-->)*Fotografiert(<!--[^>]*-->)*<\/button>/)
     })
 
+    it('calls the primary contact from the head when a payment is late', async () => {
+        const header = meta.args!.header!
+        const plan = { installments: [{ id: 'i1', amount: 100, dueOn: '2026-10-01', isLate: true }] }
+        const html = await render({ header: { ...header, paymentPlan: plan } })
+
+        expect(html).toMatch(/<a [^>]*href="tel:\d+"[^>]*>(<!--[^>]*-->)*Anrufen/)
+    })
+
     it('carries the portal switch in the head', async () => {
         expect(await render()).toContain('id="portal-visible"')
     })
