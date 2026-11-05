@@ -122,7 +122,7 @@ class OpenLeads
         return $this->leads ??= Lead::query()
             ->open()
             ->unbooked()
-            ->with(['case.contacts', 'case.shoots', 'case.primaryShoot', 'case.latestQuote'])
+            ->with(['case.contacts', 'case.shoots', 'case.primaryShoot', 'case.currentQuote'])
             ->orderByDesc('stage_entered_at')
             ->get();
     }

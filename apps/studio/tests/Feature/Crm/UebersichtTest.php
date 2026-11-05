@@ -1,6 +1,8 @@
 <?php
 
+use App\Crm\Enums\BookedVia;
 use App\Crm\Enums\CaseContactRole;
+use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\TaskAudience;
@@ -192,9 +194,29 @@ it('carries the Galerien field', function () {
 it('sums the pipeline from quotes still in play', function () {
     $project = ClientCase::factory()->create();
     Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Sent, 'total' => 4875000]);
-    Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Accepted, 'total' => 900000]);
+    $won = ClientCase::factory()->create();
+    Quote::factory()->for($won, 'case')->create(['status' => QuoteStatus::Accepted, 'total' => 900000]);
 
     expect(props('/')['pipeline'])->toBe(['total' => 4875000, 'priorYear' => null]);
+});
+
+it('counts one quote per case in the pipeline', function () {
+    $case = ClientCase::factory()->create();
+    Quote::factory()->for($case, 'case')->create(['status' => QuoteStatus::Sent, 'total' => 100000]);
+    Quote::factory()->for($case, 'case')->create(['status' => QuoteStatus::Draft, 'total' => 100000]);
+
+    expect(props('/')['pipeline']['total'])->toBe(100000);
+});
+
+it('leaves booked and closed cases out of the pipeline', function () {
+    $open = ClientCase::factory()->create();
+    Quote::factory()->for($open, 'case')->create(['status' => QuoteStatus::Draft, 'total' => 59000]);
+    $booked = ClientCase::factory()->create(['booked_at' => now(), 'booked_via' => BookedVia::Manual]);
+    Quote::factory()->for($booked, 'case')->create(['status' => QuoteStatus::Sent, 'total' => 120000]);
+    $closed = ClientCase::factory()->create(['closed_at' => now(), 'close_reason' => 'Budget', 'close_outcome' => LeadOutcome::Lost]);
+    Quote::factory()->for($closed, 'case')->create(['status' => QuoteStatus::Sent, 'total' => 146000]);
+
+    expect(props('/')['pipeline']['total'])->toBe(59000);
 });
 
 it('shows the running balance and the next instalment when nothing is late', function () {

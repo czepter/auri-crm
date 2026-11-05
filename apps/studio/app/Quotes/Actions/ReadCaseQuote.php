@@ -20,8 +20,7 @@ class ReadCaseQuote
      */
     public function __invoke(ClientCase $project): array
     {
-        // The studio works on drafts too; latestQuote() is the portal's, sent only.
-        $quote = $project->quotes()->where('status', '!=', QuoteStatus::Superseded)->with(['items', 'predecessor', 'paymentStages'])->latest('id')->first();
+        $quote = $project->currentQuote()->with(['items', 'predecessor', 'paymentStages'])->first();
 
         return [
             'quote' => $quote === null ? null : QuoteData::fromModel($quote),

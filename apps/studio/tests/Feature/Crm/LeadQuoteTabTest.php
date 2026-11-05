@@ -78,3 +78,11 @@ it('shows the draft quote on the overview', function () {
 
     expect(props("/anfragen/{$lead->case->public_id}")['quote']['id'])->toBe($draft->public_id);
 });
+
+it('falls back to an older live quote when the newest is superseded', function () {
+    $project = ClientCase::factory()->create();
+    $live = Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Sent]);
+    Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Superseded]);
+
+    expect($project->currentQuote->is($live))->toBeTrue();
+});

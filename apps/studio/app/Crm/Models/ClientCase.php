@@ -16,6 +16,7 @@ use App\Enums\Capability;
 use App\Gallery\Models\Gallery;
 use App\Models\User;
 use App\Payments\Models\PaymentPlan;
+use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use BackedEnum;
 use Database\Factories\Crm\ClientCaseFactory;
@@ -269,6 +270,12 @@ class ClientCase extends Model
     public function latestThread(): HasOne
     {
         return $this->hasOne(Thread::class)->latestOfMany();
+    }
+
+    /** The one the studio works on: the newest version not yet replaced, drafts included. */
+    public function currentQuote(): HasOne
+    {
+        return $this->hasOne(Quote::class)->ofMany(['id' => 'max'], fn ($query) => $query->where('status', '!=', QuoteStatus::Superseded));
     }
 
     /**

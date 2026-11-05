@@ -17,7 +17,6 @@ use App\Payments\Actions\ReadPaymentColumn;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Quotes\Enums\QuoteStatus;
-use App\Quotes\Models\Quote;
 use App\Quotes\Screens\ReadInquiryColumn;
 use App\Quotes\Support\QuoteAcceptanceRate;
 use App\Quotes\Support\QuotePipeline;
@@ -68,7 +67,7 @@ class DashboardController extends Controller
             'entries' => $this->upcoming($viewer),
             'pipeline' => [
                 'total' => $this->pipeline($viewer),
-                'priorYear' => QuotePipeline::asOf($yearAgo, $this->visible($viewer)) ?: null,
+                'priorYear' => QuotePipeline::asOf($yearAgo, $this->inPlay($viewer)) ?: null,
             ],
             'payments' => $this->payments($viewer),
             'quotes' => [
@@ -167,13 +166,19 @@ class DashboardController extends Controller
         );
     }
 
-    /** Draft and sent only: accepted is won, superseded and expired are gone. */
+    private function inPlay(User $viewer)
+    {
+        return $this->visible($viewer)->whereNull('cases.closed_at')->whereNull('cases.booked_at');
+    }
+
+    /** One quote per open, unbooked case: its current one, if still draft or sent. */
     private function pipeline(User $viewer): int
     {
-        return (int) Quote::query()
-            ->whereIn('status', [QuoteStatus::Draft, QuoteStatus::Sent])
-            ->whereIn('case_id', $this->visible($viewer))
-            ->sum('total');
+        return (int) ClientCase::query()
+            ->whereIn('cases.id', $this->inPlay($viewer))
+            ->with('currentQuote')
+            ->get()
+            ->sum(fn (ClientCase $case) => in_array($case->currentQuote?->status, [QuoteStatus::Draft, QuoteStatus::Sent], true) ? $case->currentQuote->total : 0);
     }
 
     /**
