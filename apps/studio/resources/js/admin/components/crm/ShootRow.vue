@@ -48,7 +48,7 @@ function advance(status: string) {
                     <Button
                         variant="outline"
                         type="button"
-                        class="rounded-l-none border-l-0 px-2 max-[640px]:min-h-11"
+                        class="rounded-l-none border-l-0 px-2 max-[640px]:min-h-11 max-[640px]:min-w-11"
                         :aria-label="$t('board.colStage')"
                     >
                         <ChevronDown class="size-3.5" />
@@ -64,7 +64,7 @@ function advance(status: string) {
         </div>
         <DropdownMenu v-else-if="manageable && archive">
             <DropdownMenuTrigger as-child>
-                <Button variant="ghost" type="button" class="px-2" :aria-label="$t('project.more')">
+                <Button variant="ghost" type="button" class="px-2 max-[640px]:min-h-11 max-[640px]:min-w-11" :aria-label="$t('project.more')">
                     <Ellipsis class="size-4" />
                 </Button>
             </DropdownMenuTrigger>

@@ -674,6 +674,7 @@ const primary = computed(() => {
                                 v-if="quote"
                                 class="grid size-7 place-items-center rounded-[var(--r-sm)] text-ink-2 max-[640px]:size-11 hover:bg-sunk hover:text-foreground"
                                 :href="`/angebote/${quote.id}`"
+                                @click.stop
                                 :aria-label="$t('common.edit')"
                                 :title="$t('common.edit')"
                             ><Pencil class="size-[15px]" /></Link>

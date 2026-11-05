@@ -354,8 +354,8 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         @save="saveDates"
                     >
                         <template v-if="header.canManageShoots" #action>
-                            <Button variant="outline" as-child>
-                                <Link :href="`/auftraege/${header.id}/shootings`">
+                            <Button variant="outline" as-child class="max-[640px]:min-h-11">
+                                <Link :href="`/auftraege/${header.id}/shootings`" @click.stop>
                                     <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
                                     {{ $t("project.shootAdd") }}
                                 </Link>
@@ -385,8 +385,9 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         <template v-if="header.canManageQuotes" #action>
                             <Link
                                 v-if="quote"
-                                class="grid size-7 place-items-center rounded-[var(--r-sm)] text-ink-2 hover:bg-sunk hover:text-foreground"
+                                class="grid size-7 place-items-center rounded-[var(--r-sm)] text-ink-2 hover:bg-sunk hover:text-foreground max-[640px]:size-11"
                                 :href="`/angebote/${quote.id}`"
+                                @click.stop
                                 :aria-label="$t('common.edit')"
                                 :title="$t('common.edit')"
                             ><Pencil class="size-[15px]" /></Link>
