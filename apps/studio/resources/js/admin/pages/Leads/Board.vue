@@ -304,12 +304,12 @@ const workflowAllowed = computed(() =>
              sichtbar wurde sie erst an ihrer Trennlinie. -->
                 <div
                     v-if="view === 'board'"
-                    class="flex items-stretch gap-6 overflow-x-auto px-6 pt-4 pb-6"
+                    class="flex snap-x snap-mandatory items-stretch gap-6 overflow-x-auto px-6 pt-4 pb-6 max-[640px]:pr-12"
                 >
                     <section
                         v-for="(column, index) in columns"
                         :key="column.stage"
-                        class="flex min-w-0 shrink-0 grow basis-[200px] flex-col gap-2.5 rounded-[var(--r)]"
+                        class="flex min-w-0 shrink-0 grow basis-[200px] snap-start flex-col gap-2.5 rounded-[var(--r)]"
                         :class="target === index && 'bg-[var(--accent-bg)]'"
                         @dragover="onDragOver($event, index, null)"
                         @drop.prevent="onDrop(index)"
@@ -489,9 +489,9 @@ const workflowAllowed = computed(() =>
                         <tr>
                             <TableHead>{{ $t("board.colInquiry") }}</TableHead>
                             <TableHead>{{ $t("board.colDate") }}</TableHead>
-                            <TableHead>{{ $t("board.colVenue") }}</TableHead>
+                            <TableHead class="max-[640px]:hidden">{{ $t("board.colVenue") }}</TableHead>
                             <TableHead>{{ $t("board.colStage") }}</TableHead>
-                            <TableHead align="right">{{
+                            <TableHead align="right" class="max-[640px]:hidden">{{
                                 $t("board.colValue")
                             }}</TableHead>
                             <TableHead align="right">{{
@@ -529,7 +529,7 @@ const workflowAllowed = computed(() =>
                                         · {{ $t("board.dateDoubled") }}</span
                                     >
                                 </TableCell>
-                                <TableCell tone="muted">{{
+                                <TableCell tone="muted" class="max-[640px]:hidden">{{
                                     card.venue ?? "—"
                                 }}</TableCell>
                                 <TableCell>
@@ -555,7 +555,7 @@ const workflowAllowed = computed(() =>
                                         }}
                                     </span>
                                 </TableCell>
-                                <TableCell align="right">
+                                <TableCell align="right" class="max-[640px]:hidden">
                                     {{
                                         card.value === null
                                             ? "—"
