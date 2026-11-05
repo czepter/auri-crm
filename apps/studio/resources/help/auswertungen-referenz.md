@@ -6,10 +6,7 @@ screens: [reports.index]
 faehigkeit: view_all_cases
 ---
 
-## Das Fenster
-
-Überall dieselben zwölf Monate bis heute, und der Vorjahresvergleich sind die
-zwölf davor. Kein Kalenderjahr und keine einstellbare Spanne.
+## Umfang
 
 Die Zahlen umfassen das ganze Studio. Wer nicht alle Aufträge einsehen darf,
 erreicht diesen Bildschirm nicht — ein je Rolle gefilterter Umsatz wäre eine
