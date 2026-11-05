@@ -85,6 +85,13 @@ const week = computed(() =>
     }),
 );
 
+const freeDays = computed(() =>
+    week.value
+        .filter((day) => !day.entries.length)
+        .map((day) => `${day.name} ${day.num}`)
+        .join(" · "),
+);
+
 // Die Termine kommen ohne Wochenfenster: was nach der Woche liegt, steht
 // unter der Leiste, damit eine ruhige Woche den nächsten Termin trotzdem zeigt.
 const later = computed(() => props.entries.filter((entry) => entry.date > week.value[6].date));
@@ -273,10 +280,10 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                     </div>
                 </PageHead>
 
-                <div v-if="measured" class="mx-6 mt-5 grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4">
-                    <div v-for="figure in figures" :key="figure.key" class="flex flex-col gap-1.5 rounded-[var(--r)] bg-paper px-6 py-5 shadow-card">
+                <div v-if="measured" class="mx-6 mt-5 grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4 max-[640px]:grid-cols-2 max-[640px]:gap-3">
+                    <div v-for="figure in figures" :key="figure.key" class="flex flex-col gap-1.5 rounded-[var(--r)] bg-paper px-6 py-5 shadow-card max-[640px]:px-4">
                         <div class="text-small font-medium text-ink-2">{{ figure.label }}</div>
-                        <div class="flex items-baseline gap-1 text-[34px] leading-10 font-semibold tracking-[-0.03em] tabular-nums" :class="figure.warn && 'text-due'">
+                        <div class="flex items-baseline gap-1 text-[34px] leading-10 max-[640px]:text-[26px] max-[640px]:leading-8 font-semibold tracking-[-0.03em] tabular-nums" :class="figure.warn && 'text-due'">
                             {{ figure.value }}<span v-if="figure.unit" class="text-[14px] font-medium tracking-normal text-ink-2">{{ figure.unit }}</span>
                         </div>
                         <div v-if="figure.note || figure.delta" class="flex flex-wrap items-center gap-x-2 gap-y-1 text-small tabular-nums text-ink-2">
@@ -300,8 +307,10 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                     </template>
 
                     <div class="overflow-x-auto">
-                        <div class="grid min-w-[840px] grid-cols-7 gap-1.5">
-                            <div v-for="(day, index) in week" :key="day.date" class="flex min-h-[120px] flex-col gap-1.5 rounded-[var(--r-sm)] bg-sunk p-3">
+                        <div class="grid min-w-[840px] grid-cols-7 gap-1.5 max-[640px]:min-w-0 max-[640px]:grid-cols-1">
+                            <div v-for="(day, index) in week" :key="day.date" class="flex min-h-[120px] flex-col gap-1.5 rounded-[var(--r-sm)] bg-sunk p-3 max-[640px]:min-h-0"
+                                :class="!day.entries.length && 'max-[640px]:hidden'"
+                            >
                                 <div class="flex items-baseline gap-1.5" :class="index === 0 && 'text-ring'">
                                     <span class="text-small" :class="index === 0 ? 'font-semibold' : 'text-ink-2'">{{ day.name }}</span>
                                     <span class="text-[20px] leading-none font-semibold tracking-[-0.03em] tabular-nums">{{ day.num }}</span>
@@ -326,6 +335,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                                     +
                                 </Link>
                             </div>
+                            <div v-if="freeDays" class="hidden px-3 py-2 text-small text-ink-2 max-[640px]:block">{{ freeDays }}</div>
                         </div>
                     </div>
 
