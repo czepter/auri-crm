@@ -27,6 +27,7 @@ import { formatEurosRounded } from "@/lib/money";
 import { relative, TYPE_DOT } from "@/admin/lib/boardCard";
 import { useLiveProps } from "@/admin/lib/liveReload";
 import { Button } from "@/ui/button";
+import { QueueGroup, QueueItem } from "@/ui/queue";
 import { ChoiceGroup } from "@/ui/choice-group";
 import { Field } from "@/ui/field";
 import { Input } from "@/ui/input";
@@ -282,7 +283,7 @@ const workflowAllowed = computed(() =>
                     <Button
                         v-if="stageSettings"
                         :as="Link"
-                        class="ml-auto"
+                        class="ml-auto max-[640px]:hidden"
                         variant="pill-muted"
                         href="/anfragen/einstellungen/stufen"
                     >
@@ -291,7 +292,7 @@ const workflowAllowed = computed(() =>
 
                     <Button
                         :as="Link"
-                        :class="!stageSettings && 'ml-auto'"
+                        :class="[!stageSettings && 'ml-auto', 'max-[640px]:ml-auto']"
                         variant="pill"
                         href="/anfragen/neu"
                     >
@@ -309,7 +310,7 @@ const workflowAllowed = computed(() =>
                     <section
                         v-for="(column, index) in columns"
                         :key="column.stage"
-                        class="flex min-w-0 shrink-0 grow basis-[200px] snap-start flex-col gap-2.5 rounded-[var(--r)]"
+                        class="flex min-w-0 shrink-0 grow basis-[200px] snap-start max-[640px]:basis-[85vw] flex-col gap-2.5 rounded-[var(--r)]"
                         :class="target === index && 'bg-[var(--accent-bg)]'"
                         @dragover="onDragOver($event, index, null)"
                         @drop.prevent="onDrop(index)"
@@ -446,11 +447,11 @@ const workflowAllowed = computed(() =>
              shows where something stands, a table shows what is next. -->
                 <template v-else>
                 <div class="flex flex-wrap items-center gap-4 px-6 pt-4.5">
-                    <div class="flex flex-wrap gap-1.5">
+                    <div class="flex flex-wrap gap-1.5 max-[640px]:w-full max-[640px]:snap-x max-[640px]:flex-nowrap max-[640px]:overflow-x-auto">
                         <button
                             v-for="option in pills"
                             :key="option.key"
-                            class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] px-3 py-1.5 text-small"
+                            class="flex shrink-0 cursor-pointer snap-start items-center gap-1.5 rounded-[var(--r-sm)] px-3 py-1.5 text-small max-[640px]:min-h-11"
                             :class="stage === option.key ? 'bg-foreground text-paper' : 'bg-sunk text-foreground'"
                             type="button"
                             :aria-pressed="stage === option.key"
@@ -466,7 +467,7 @@ const workflowAllowed = computed(() =>
                             <span class="mx-1 self-center h-[18px] w-px bg-rule" />
 
                             <button
-                                class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] bg-no-repeat bg-[length:12px_12px] bg-[position:12px_center] py-1.5 pr-3 pl-[28px] text-small"
+                                class="flex shrink-0 cursor-pointer snap-start items-center gap-1.5 rounded-[var(--r-sm)] bg-no-repeat max-[640px]:min-h-11 bg-[length:12px_12px] bg-[position:12px_center] py-1.5 pr-3 pl-[28px] text-small"
                                 :class="
                                     onlyStale
                                         ? 'bg-due-bg bg-icon-clock-due font-medium text-due'
@@ -481,17 +482,37 @@ const workflowAllowed = computed(() =>
                             </button>
                         </template>
                     </div>
-                    <Input v-model="query" class="ml-auto h-8 w-60" type="search" :placeholder="$t('board.searchPlaceholder')" />
+                    <Input v-model="query" class="ml-auto h-8 w-60 max-[640px]:ml-0 max-[640px]:h-11 max-[640px]:w-full" type="search" :placeholder="$t('board.searchPlaceholder')" />
                 </div>
 
-                <Table>
+                <div class="hidden px-3 pt-2 max-[640px]:block">
+                    <template v-for="group in groupRows" :key="group.key">
+                        <QueueGroup :title="$t(`lead.group.${group.key}`)" :count="group.rows.length" />
+                        <QueueItem
+                            v-for="card in group.rows"
+                            :key="card.id"
+                            class="min-h-14"
+                            :href="`/anfragen/${card.id}`"
+                            :name="card.names"
+                            :meta="relative(card.lastAt)"
+                            :alert="card.stale"
+                            :title="[
+                                shortDate(card.date) ?? $t('board.openDate'),
+                                columns.find((c) => c.stage === card.stage)?.label,
+                                card.value === null ? null : formatEurosRounded(card.value),
+                            ].filter(Boolean).join(' · ')"
+                        />
+                    </template>
+                </div>
+
+                <Table class="max-[640px]:hidden">
                     <thead>
                         <tr>
                             <TableHead>{{ $t("board.colInquiry") }}</TableHead>
                             <TableHead>{{ $t("board.colDate") }}</TableHead>
-                            <TableHead class="max-[640px]:hidden">{{ $t("board.colVenue") }}</TableHead>
-                            <TableHead class="max-[640px]:hidden">{{ $t("board.colStage") }}</TableHead>
-                            <TableHead align="right" class="max-[640px]:hidden">{{
+                            <TableHead>{{ $t("board.colVenue") }}</TableHead>
+                            <TableHead>{{ $t("board.colStage") }}</TableHead>
+                            <TableHead align="right">{{
                                 $t("board.colValue")
                             }}</TableHead>
                             <TableHead align="right">{{
@@ -529,10 +550,10 @@ const workflowAllowed = computed(() =>
                                         · {{ $t("board.dateDoubled") }}</span
                                     >
                                 </TableCell>
-                                <TableCell tone="muted" class="max-[640px]:hidden">{{
+                                <TableCell tone="muted">{{
                                     card.venue ?? "—"
                                 }}</TableCell>
-                                <TableCell class="max-[640px]:hidden">
+                                <TableCell>
                                     <span
                                         class="inline-flex items-baseline gap-[7px] text-small"
                                     >
@@ -555,7 +576,7 @@ const workflowAllowed = computed(() =>
                                         }}
                                     </span>
                                 </TableCell>
-                                <TableCell align="right" class="max-[640px]:hidden">
+                                <TableCell align="right">
                                     {{
                                         card.value === null
                                             ? "—"
