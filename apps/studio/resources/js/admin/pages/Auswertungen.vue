@@ -145,6 +145,7 @@ const cashMonths = computed(() =>
 )
 
 const funnelSparse = computed(() => sparse(props.funnelByMonth.map((m) => m.captured)))
+const cashRows = computed(() => cashMonths.value.filter((m) => m.value || m.forecast))
 const cashSparse = computed(() => sparse(cashMonths.value.map((m) => m.value + m.forecast)))
 const shootsSparse = computed(() => sparse(props.shootsByMonth.map((m) => m.shoots)))
 const hasSteps = computed(() => props.steps.slice(1).some((s) => s.leads > 0))
@@ -384,7 +385,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                   <span class="size-2.5 rounded-[3px]" :style="{ background: forecastFill }" />{{ $t('reports.seriesOpen') }}
                 </span>
                 <span
-                  v-if="cashAhead && cashFlow.overdue"
+                  v-if="cashAhead && cashFlow.overdue && cashRows.length"
                   class="ml-auto inline-flex items-center gap-1.5 rounded-[var(--r-sm)] bg-late-bg px-2.5 py-1 text-small leading-none font-semibold text-destructive"
                 >
                   {{ $t('reports.overdue', { amount: formatEurosRounded(cashFlow.overdue) }) }}
@@ -392,7 +393,10 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               </div>
 
               <ul v-if="cashSparse" class="m-0 flex list-none flex-col gap-1.5 p-0">
-                <li v-for="row in cashMonths.filter((m) => m.value || m.forecast)" :key="row.month" class="flex items-baseline justify-between gap-3 text-ui">
+                <li v-if="cashAhead && cashFlow.overdue && !cashRows.length" class="text-ui font-semibold text-destructive">
+                  {{ $t('reports.overdue', { amount: formatEurosRounded(cashFlow.overdue) }) }}
+                </li>
+                <li v-for="row in cashRows" :key="row.month" class="flex items-baseline justify-between gap-3 text-ui">
                   <span>{{ monthLong(row.month) }}</span>
                   <span class="tabular-nums">
                     <template v-if="row.value">{{ formatEurosRounded(row.value) }}</template>
