@@ -76,8 +76,7 @@ it('carries the quote block the inquiry overview carries', function () {
 
     $props = props("/auftraege/{$this->case->public_id}");
 
-    expect($props['quote']['total'])->toBe(590000)
-        ->and($props['packages'])->toBe([]);
+    expect($props['quote']['total'])->toBe(590000);
 });
 
 it('counts the threads waiting for an answer', function () {

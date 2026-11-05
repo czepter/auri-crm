@@ -83,8 +83,7 @@ it('offers the active packages until a quote exists, then the quote', function (
 
     $props = props("/anfragen/{$lead->case->public_id}");
 
-    expect($props['quote']['total'])->toBe(590000)
-        ->and($props['packages'])->toBe([]);
+    expect($props['quote']['total'])->toBe(590000);
 });
 
 // A date is answered by what is already on it, not by a rule.

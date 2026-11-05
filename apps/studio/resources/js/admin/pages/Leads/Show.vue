@@ -58,7 +58,6 @@ const props = defineProps<{
     shoots: App.Crm.Data.ShootData[];
     quote: App.Quotes.Data.QuoteData | null;
     supersededQuotes: { id: string; number: string | null; net: number }[];
-    packages: { id: string; name: string; itemCount: number; total: number }[];
     tasks: App.Crm.Data.TaskRowData[];
     thread: App.Crm.Data.ThreadEntryData[];
     types: { value: string; label: string }[];
@@ -73,7 +72,7 @@ const props = defineProps<{
     quotes: App.Quotes.Data.QuoteData[];
     payments: { number: string | null; rows: { label: string; amount: number }[] } | null;
 }>();
-useLiveProps(["header", "conversation", "quotes", "payments", "queue", "lead", "people", "shoots", "quote", "supersededQuotes", "packages", "tasks", "thread", "week", "conflicts", "stages", "types"]);
+useLiveProps(["header", "conversation", "quotes", "payments", "queue", "lead", "people", "shoots", "quote", "supersededQuotes", "tasks", "thread", "week", "conflicts", "stages", "types"]);
 
 const quoteTab = computed(() => `/anfragen/${props.lead.id}/angebot`);
 const newQuote = computed(() => `/angebote/neu?projekt=${props.lead.projectId}`);

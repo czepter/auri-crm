@@ -42,7 +42,6 @@ const props = defineProps<{
     anchors?: { value: string; label: string; group: string; on: string | null }[];
     quote: App.Quotes.Data.QuoteData | null;
     supersededQuotes: { id: string; number: string | null; net: number }[];
-    packages: { id: string; name: string; itemCount: number; total: number }[];
     scope: {
         items: {
             id: string;
@@ -83,7 +82,7 @@ const props = defineProps<{
         next: { key: string; label: string };
     } | null;
 }>();
-useLiveProps(["header", "shoots", "shootKinds", "tasks", "shootOptions", "staffOptions", "anchors", "thread", "scope", "quote", "supersededQuotes", "packages", "people", "fields", "fieldValues", "stages", "presets", "stage", "source", "sourceOther", "sourceLabel", "inquiry", "stalled"]);
+useLiveProps(["header", "shoots", "shootKinds", "tasks", "shootOptions", "staffOptions", "anchors", "thread", "scope", "quote", "supersededQuotes", "people", "fields", "fieldValues", "stages", "presets", "stage", "source", "sourceOther", "sourceLabel", "inquiry", "stalled"]);
 
 const { t } = useI18n();
 
