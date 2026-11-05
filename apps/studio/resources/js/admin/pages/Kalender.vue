@@ -145,17 +145,17 @@ function shortDate(date: string | null) {
               :is="entry.projectId ? Link : 'span'"
               v-for="(entry, index) in entries(day)"
               :key="index"
-              class="mt-[5px] block text-small no-underline"
+              class="mt-[5px] block text-small no-underline max-[640px]:inline-block max-[640px]:px-px"
               :class="{ hold: 'text-ring', away: 'text-ink-2' }[entry.kind ?? ''] ?? 'text-inherit'"
               :href="entry.projectId ? `/auftraege/${entry.projectId}` : undefined"
             >
               <span
                 v-if="entry.time"
-                class="tabular-nums"
+                class="tabular-nums max-[640px]:hidden"
                 :class="entry.kind === 'away' ? 'font-normal' : 'font-semibold'"
               >{{ entry.time }} </span>
-              <!-- A phone cell is 50px wide: the time alone, or a dot; the entry still links to its project. -->
-              <span v-if="!entry.time" class="hidden max-[640px]:inline">•</span>
+              <!-- A phone cell is 50px wide: one dot per entry, still a link to its project. -->
+              <span class="hidden max-[640px]:inline">•</span>
               <span class="max-[640px]:hidden">{{ entry.what }}</span>
               <!-- The measured values, not the ones crm.css .cal .e .who alone would
                    suggest: a second .who rule reaches this span as well. -->
@@ -180,8 +180,8 @@ function shortDate(date: string | null) {
             <tr>
               <TableHead>{{ $t('calendar.colDate') }}</TableHead>
               <TableHead>{{ $t('calendar.colWhat') }}</TableHead>
-              <TableHead>{{ $t('calendar.colVenue') }}</TableHead>
-              <TableHead v-if="!$page.props.soloStudio">{{ $t('calendar.colCrew') }}</TableHead>
+              <TableHead class="max-[640px]:hidden">{{ $t('calendar.colVenue') }}</TableHead>
+              <TableHead v-if="!$page.props.soloStudio" class="max-[640px]:hidden">{{ $t('calendar.colCrew') }}</TableHead>
               <TableHead>{{ $t('calendar.colStatus') }}</TableHead>
             </tr>
           </thead>
@@ -206,8 +206,8 @@ function shortDate(date: string | null) {
                 <TableCell tone="name">
                   <Link :href="`/auftraege/${projects[shoot.id].id}`">{{ projects[shoot.id].name }}</Link>
                 </TableCell>
-                <TableCell tone="muted">{{ shoot.venue ?? '—' }}</TableCell>
-                <TableCell v-if="!$page.props.soloStudio" tone="muted">{{ shoot.crew.map((member) => member.name).join(', ') || '—' }}</TableCell>
+                <TableCell tone="muted" class="max-[640px]:hidden">{{ shoot.venue ?? '—' }}</TableCell>
+                <TableCell v-if="!$page.props.soloStudio" tone="muted" class="max-[640px]:hidden">{{ shoot.crew.map((member) => member.name).join(', ') || '—' }}</TableCell>
                 <TableCell :class="mine.includes(shoot.id) && 'text-ring'">{{ shoot.statusLabel }}</TableCell>
               </TableRow>
             </template>
