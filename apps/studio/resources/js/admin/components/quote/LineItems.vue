@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="T extends LineItemRow">
-import { formatEurosRounded } from '@/admin/lib/money'
+import { formatEurosRounded } from '@/lib/money'
 
 export type LineItemRow = {
   id: string

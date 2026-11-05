@@ -4,9 +4,9 @@ import { computed, ref, watch } from 'vue'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import Card from '@/ui/page/Card.vue'
-import ContactTypeahead from '@/admin/components/ContactTypeahead.vue'
-import ConflictNote from '@/admin/components/ConflictNote.vue'
-import ProjectFields from '@/admin/components/ProjectFields.vue'
+import ContactTypeahead from '@/admin/components/crm/ContactTypeahead.vue'
+import ConflictNote from '@/admin/components/crm/ConflictNote.vue'
+import ProjectFields from '@/admin/components/crm/ProjectFields.vue'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
 import { TimePicker } from '@/ui/time-picker'
@@ -178,7 +178,7 @@ function submit() {
             </Field>
 
             <div v-if="creating" class="mt-3">
-              <div class="flex gap-3 [&+&]:mt-3 [&>*]:min-w-[148px] [&>*]:flex-1">
+              <div class="flex flex-wrap gap-3 [&+&]:mt-3 [&>*]:min-w-[148px] [&>*]:flex-1">
                 <Field v-slot="{ id }" :label="$t('leads.name')">
                   <Input
                     :id="id"
@@ -195,7 +195,7 @@ function submit() {
                 </Field>
               </div>
 
-              <div v-for="(person, index) in form.people" :key="index" class="flex gap-3 [&+&]:mt-3 [&>*]:min-w-[148px] [&>*]:flex-1">
+              <div v-for="(person, index) in form.people" :key="index" class="flex flex-wrap gap-3 [&+&]:mt-3 [&>*]:min-w-[148px] [&>*]:flex-1">
                 <Field v-slot="{ id }" :label="$t('leads.name')">
                   <Input :id="id" v-model="person.name" type="text" />
                 </Field>
@@ -282,7 +282,7 @@ function submit() {
             />
 
             <div class="mt-4 flex items-end gap-3 max-[640px]:flex-wrap">
-              <Field v-slot="{ id }" class="w-[280px] flex-none" :label="$t('leads.mainDate')">
+              <Field v-slot="{ id }" class="w-[280px] flex-none max-[640px]:w-full" :label="$t('leads.mainDate')">
                 <DatePicker :id="id" v-model="form.date" />
               </Field>
               <div class="min-w-0 flex-1">
@@ -299,7 +299,7 @@ function submit() {
               </Field>
             </div>
 
-            <div class="mt-3 flex gap-3 [&>*]:min-w-[148px] [&>*]:flex-1">
+            <div class="mt-3 flex flex-wrap gap-3 [&>*]:min-w-[148px] [&>*]:flex-1">
               <Field v-slot="{ id }" :label="$t('project.venueName')" :error="form.errors.venue_name">
                 <Input :id="id" v-model="form.venue_name" type="text" />
               </Field>
@@ -356,7 +356,7 @@ function submit() {
             </Field>
           </Card>
 
-          <div class="mt-2 flex items-center gap-3 pt-4 shadow-[inset_0_1px_0_var(--rule)] [&>button:last-child]:ml-auto">
+          <div class="mt-2 flex flex-wrap items-center gap-3 pt-4 shadow-[inset_0_1px_0_var(--rule)] [&>button:last-child]:ml-auto">
             <a
               class="text-small tracking-[-0.01em] whitespace-nowrap text-ring no-underline hover:underline"
               href="/anfragen"

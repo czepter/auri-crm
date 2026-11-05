@@ -5,13 +5,13 @@ import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import Empty from '@/ui/page/Empty.vue'
-import ProjectSettings from '@/admin/components/ProjectSettings.vue'
+import ProjectSettings from '@/admin/components/crm/ProjectSettings.vue'
 import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
 import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Input } from '@/ui/input'
 import { isoDate } from '@/admin/lib/dates'
-import { formatEurosRounded } from '@/admin/lib/money'
+import { formatEurosRounded } from '@/lib/money'
 import { relative, TYPE_DOT } from '@/admin/lib/boardCard'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
@@ -216,10 +216,10 @@ function reset() {
               <tr>
                 <TableHead>{{ $t('projects.name') }}</TableHead>
                 <TableHead>{{ $t('project.mainDateLabel') }}</TableHead>
-                <TableHead>{{ $t('project.venueName') }}</TableHead>
+                <TableHead class="max-[640px]:hidden">{{ $t('project.venueName') }}</TableHead>
                 <TableHead>{{ $t('project.position') }}</TableHead>
-                <TableHead>{{ $t('projects.contact') }}</TableHead>
-                <TableHead align="right">{{ $t('projects.openTasks') }}</TableHead>
+                <TableHead class="max-[640px]:hidden">{{ $t('projects.contact') }}</TableHead>
+                <TableHead align="right" class="max-[640px]:hidden">{{ $t('projects.openTasks') }}</TableHead>
               </tr>
             </thead>
             <tbody>
@@ -233,17 +233,17 @@ function reset() {
                     <Link :href="`/auftraege/${project.id}`">{{ project.name }}</Link>
                   </TableCell>
                   <TableCell align="right" :class="late(project) && 'text-destructive'">{{ project.date ? day(project.date) : '—' }}</TableCell>
-                  <TableCell tone="muted">{{ project.venue ?? '—' }}</TableCell>
+                  <TableCell tone="muted" class="max-[640px]:hidden">{{ project.venue ?? '—' }}</TableCell>
                   <TableCell>
                     <span class="flex items-center gap-2.5">
-                      <span class="flex gap-[3px]">
+                      <span class="flex gap-[3px] max-[640px]:hidden">
                         <i v-for="(tone, index) in dots(project)" :key="index" class="size-1.5 rounded-full" :class="tone" />
                       </span>
                       {{ project.position }}
                     </span>
                   </TableCell>
-                  <TableCell tone="muted">{{ project.contact ?? '—' }}</TableCell>
-                  <TableCell align="right" tone="muted">
+                  <TableCell tone="muted" class="max-[640px]:hidden">{{ project.contact ?? '—' }}</TableCell>
+                  <TableCell align="right" tone="muted" class="max-[640px]:hidden">
                     {{ project.taskCount ? $t('projects.openTasksOf', { open: project.openTasks, total: project.taskCount }) : '—' }}
                   </TableCell>
                 </TableRow>

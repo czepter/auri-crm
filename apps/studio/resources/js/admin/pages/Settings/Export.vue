@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
-import SettingsNav from '@/admin/components/SettingsNav.vue'
+import SettingsNav from '@/admin/components/settings/SettingsNav.vue'
 import { Button } from '@/ui/button'
 import { useLiveProps } from '@/admin/lib/liveReload'
 

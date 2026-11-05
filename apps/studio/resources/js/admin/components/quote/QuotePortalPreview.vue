@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { basisPointsToPercent, formatEuros } from '@/admin/lib/money'
+import { formatEuros, formatPercent } from '@/lib/money'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 import QuoteSlider from '@/portal/components/QuoteSlider.vue'
+import { shortDate } from '@/portal/lib/dates'
 import { splitStages } from '@/portal/lib/paymentStages'
 import type { QuoteDraft, VatSettings } from './quotePayload'
 import { buildPreviewQuote } from './quotePayload'
@@ -62,7 +63,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-ui [&>td]:leading-[1.5] [&
           </tr>
 
           <tr :class="[ROW, '[&>td]:border-t [&>td]:border-border [&>td]:pt-3! [&>td]:font-semibold']">
-            <td>{{ $t('quotes.total') }}</td>
+            <td>{{ $t(quote.discountAmount ? 'quotes.subtotal' : quote.vatMode === 'standard' ? 'quotes.net' : 'quotes.total') }}</td>
             <td>{{ formatEuros(quote.total) }}</td>
           </tr>
           <template v-if="quote.discountAmount">
@@ -81,7 +82,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-ui [&>td]:leading-[1.5] [&
           </tr>
           <template v-else-if="quote.vatMode === 'standard'">
             <tr :class="[ROW, '[&>td]:py-1! [&>td]:text-muted-foreground']">
-              <td>{{ $t('quotes.vat', { rate: basisPointsToPercent(quote.vatRate) }) }}</td>
+              <td>{{ $t('quotes.vat', { rate: formatPercent(quote.vatRate) }) }}</td>
               <td>{{ formatEuros(quote.vatAmount) }}</td>
             </tr>
             <tr :class="[ROW, '[&>td]:pt-2! [&>td]:font-serif [&>td]:text-heading!']">
@@ -92,11 +93,9 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-ui [&>td]:leading-[1.5] [&
         </table>
 
         <table v-if="stages.length" class="mt-8 w-full max-w-[420px] border-collapse">
-          <tr :class="[ROW, '[&>td]:border-b-0']">
-            <td colspan="2" class="text-small leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">
-              {{ $t('quotes.payment') }}
-            </td>
-          </tr>
+          <caption class="pb-2 text-left text-small leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">
+            {{ $t('quotes.payment') }}
+          </caption>
           <tr v-for="stage in stages" :key="stage.label" :class="[ROW, '[&>td]:text-muted-foreground']">
             <td>{{ stage.label }}</td>
             <td>{{ formatEuros(stage.amount) }}</td>
@@ -106,7 +105,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-ui [&>td]:leading-[1.5] [&
         <div v-if="quote.outro" class="mt-8 max-w-[62ch] text-body leading-[1.6] [&_p+*]:mt-3 [&_*+p]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5" v-html="quote.outro" />
 
         <p v-if="quote.validUntil" class="mt-8 text-small text-muted-foreground">
-          {{ $t('quotes.validUntil') }} {{ quote.validUntil }}
+          {{ $t('quotes.validUntil') }} {{ shortDate(quote.validUntil) }}
         </p>
       </div>
     </PortalWrap>

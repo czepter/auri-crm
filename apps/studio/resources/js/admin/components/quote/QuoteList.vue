@@ -4,7 +4,7 @@ import { Link } from '@inertiajs/vue3'
 import { ChevronRight } from 'lucide-vue-next'
 import Card from '@/ui/page/Card.vue'
 import { Button } from '@/ui/button'
-import { formatEuros } from '@/admin/lib/money'
+import { formatEuros } from '@/lib/money'
 import { dayWithWeekday as day } from '@/admin/lib/dates'
 import { quoteChipClass } from '@/admin/lib/quoteDisplay'
 
@@ -34,9 +34,9 @@ const total = computed(() => props.payments?.rows.reduce((sum, row) => sum + row
         v-for="quote in quotes"
         :key="quote.id"
         :href="`/angebote/${quote.id}`"
-        class="flex items-center gap-3 px-[18px] py-3 text-small text-foreground no-underline shadow-[inset_0_1px_0_var(--rule)] first:shadow-none hover:bg-sunk"
+        class="flex items-center gap-3 px-[18px] py-3 max-[640px]:gap-2 max-[640px]:px-3 text-small text-foreground no-underline shadow-[inset_0_1px_0_var(--rule)] first:shadow-none hover:bg-sunk"
       >
-        <span class="w-24 flex-none font-semibold">{{ quote.number ?? $t('quotes.draft') }}</span>
+        <span class="w-24 flex-none font-semibold max-[640px]:w-auto">{{ quote.number ?? $t('quotes.draft') }}</span>
         <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
         <span class="min-w-0 flex-1 truncate text-ink-2">
           <template v-if="quote.sentAt">
@@ -46,7 +46,7 @@ const total = computed(() => props.payments?.rows.reduce((sum, row) => sum + row
             {{ $t('lead.validUntil', { date: day(quote.validUntil) }) }}
           </template>
         </span>
-        <span class="w-24 flex-none text-right font-semibold tabular-nums">{{ formatEuros(gross(quote)) }}</span>
+        <span class="w-24 flex-none text-right font-semibold tabular-nums max-[640px]:w-auto">{{ formatEuros(gross(quote)) }}</span>
         <ChevronRight class="size-[15px] shrink-0 text-ink-2" />
       </Link>
     </section>

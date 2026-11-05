@@ -13,10 +13,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/ui/popover'
 import DocumentViews from '@/admin/components/DocumentViews.vue'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
-import InstallmentPaidDialog from '@/admin/components/InstallmentPaidDialog.vue'
-import InstallmentStornoDialog from '@/admin/components/InstallmentStornoDialog.vue'
-import CreditNoteDialog from '@/admin/components/CreditNoteDialog.vue'
-import { formatEuros } from '@/admin/lib/money'
+import InstallmentPaidDialog from '@/admin/components/payments/InstallmentPaidDialog.vue'
+import InstallmentStornoDialog from '@/admin/components/payments/InstallmentStornoDialog.vue'
+import CreditNoteDialog from '@/admin/components/payments/CreditNoteDialog.vue'
+import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
@@ -68,13 +68,13 @@ const shown = computed(() => {
             <ChoiceGroup v-model="filter" variant="segmented" :options="filters" />
           </div>
 
-          <Table>
+          <Table class="max-[640px]:block max-[640px]:overflow-x-auto">
             <thead>
               <tr>
                 <TableHead>{{ $t('invoicesOverview.number') }}</TableHead>
                 <TableHead>{{ $t('invoicesOverview.recipient') }}</TableHead>
-                <TableHead>{{ $t('invoicesOverview.issuedOn') }}</TableHead>
-                <TableHead>{{ $t('invoicesOverview.dueOn') }}</TableHead>
+                <TableHead class="max-[640px]:hidden">{{ $t('invoicesOverview.issuedOn') }}</TableHead>
+                <TableHead class="max-[640px]:hidden">{{ $t('invoicesOverview.dueOn') }}</TableHead>
                 <TableHead align="right">{{ $t('invoicesOverview.amount') }}</TableHead>
                 <TableHead>{{ $t('invoicesOverview.status') }}</TableHead>
                 <TableHead />
@@ -93,8 +93,8 @@ const shown = computed(() => {
                       {{ invoice.projectName }}
                     </Link>
                   </TableCell>
-                  <TableCell class="whitespace-nowrap">{{ dayWithWeekday(invoice.issuedOn) }}</TableCell>
-                  <TableCell class="whitespace-nowrap">{{ invoice.dueOn ? dayWithWeekday(invoice.dueOn) : '' }}</TableCell>
+                  <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ dayWithWeekday(invoice.issuedOn) }}</TableCell>
+                  <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ invoice.dueOn ? dayWithWeekday(invoice.dueOn) : '' }}</TableCell>
                   <TableCell align="right" class="whitespace-nowrap">
                     {{ formatEuros(invoice.amount) }}
                     <span v-if="invoice.status === 'partial' || (invoice.status === 'overdue' && invoice.paidAmount)" class="block text-small text-ink-2">

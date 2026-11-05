@@ -2,14 +2,14 @@
 import { computed, ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import Page from '@/ui/page/Page.vue'
-import ProjectQueue from '@/admin/components/ProjectQueue.vue'
-import StageTrack from '@/admin/components/StageTrack.vue'
-import RailHistory from '@/admin/components/RailHistory.vue'
-import SettlePlanDialog from '@/admin/components/SettlePlanDialog.vue'
+import ProjectQueue from '@/admin/components/crm/ProjectQueue.vue'
+import StageTrack from '@/admin/components/crm/StageTrack.vue'
+import RailHistory from '@/admin/components/crm/RailHistory.vue'
+import SettlePlanDialog from '@/admin/components/payments/SettlePlanDialog.vue'
 import Rail from '@/ui/page/Rail.vue'
 import RailItem from '@/ui/page/RailItem.vue'
 import RailSection from '@/ui/page/RailSection.vue'
-import { formatEurosRounded } from '@/admin/lib/money'
+import { formatEurosRounded } from '@/lib/money'
 import { dayWithWeekday as day } from '@/admin/lib/dates'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
@@ -130,14 +130,14 @@ function destroy() {
       </div>
 
       <div class="sticky top-0 z-[5] -mx-[26px] mt-0.5 bg-background px-[26px] pb-4 max-[640px]:-mx-5 max-[640px]:px-5">
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
           <slot name="title">
             <h1 class="m-0 text-[20px] leading-7 font-semibold tracking-[-0.02em]">
               {{ header.name }}
             </h1>
           </slot>
 
-          <div class="ml-auto flex items-center gap-2">
+          <div class="ml-auto flex flex-wrap items-center justify-end gap-2">
             <slot name="actions" />
             <slot name="stage" />
 

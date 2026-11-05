@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useForm, usePage } from '@inertiajs/vue3'
-import { basisPointsToPercent, formatEuros } from '@/admin/lib/money'
+import { formatEuros, formatPercent } from '@/lib/money'
 import PortalDot from '@/portal/components/PortalDot.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 import QuoteSlider from '@/portal/components/QuoteSlider.vue'
+import { shortDate } from '@/portal/lib/dates'
 import { splitStages } from '@/portal/lib/paymentStages'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
@@ -157,7 +158,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
           <span class="ml-auto inline-flex items-center gap-2 text-[13px] text-muted-foreground">
             <PortalDot :state="state" />{{ quote.statusLabel }}
             <template v-if="quote.validUntil && quote.status === 'sent'">
-              · {{ $t('quotes.validUntil') }} {{ quote.validUntil }}
+              · {{ $t('quotes.validUntil') }} {{ shortDate(quote.validUntil) }}
             </template>
           </span>
         </div>
@@ -174,7 +175,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
           </tr>
 
           <tr :class="[ROW, '[&>td]:border-t [&>td]:border-border [&>td]:pt-3! [&>td]:font-semibold']">
-            <td>{{ $t('quotes.total') }}</td>
+            <td>{{ $t(quote.discountAmount ? 'quotes.subtotal' : quote.vatMode === 'standard' ? 'quotes.net' : 'quotes.total') }}</td>
             <td>{{ formatEuros(quote.total) }}</td>
           </tr>
           <template v-if="quote.discountAmount">
@@ -194,7 +195,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
           <template v-else-if="quote.vatMode === 'standard'">
             <!-- #412: eine Zeile je Steuersatz (§ 14 Abs. 4 Nr. 7 UStG). -->
             <tr v-for="line in quote.vatLines" :key="line.rate" :class="[ROW, '[&>td]:py-1! [&>td]:text-muted-foreground']">
-              <td>{{ $t('quotes.vat', { rate: basisPointsToPercent(line.rate) }) }}</td>
+              <td>{{ $t('quotes.vat', { rate: formatPercent(line.rate) }) }}</td>
               <td>{{ formatEuros(line.vat) }}</td>
             </tr>
             <tr :class="[ROW, '[&>td]:pt-2! [&>td]:font-serif [&>td]:text-[22px]!']">
@@ -205,11 +206,9 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
         </table>
 
         <table v-if="stages.length" class="mt-8 w-full max-w-[420px] border-collapse">
-          <tr :class="[ROW, '[&>td]:border-b-0']">
-            <td colspan="2" class="text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">
-              {{ $t('quotes.payment') }}
-            </td>
-          </tr>
+          <caption class="pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">
+            {{ $t('quotes.payment') }}
+          </caption>
           <tr v-for="stage in stages" :key="stage.label" :class="[ROW, '[&>td]:text-muted-foreground']">
             <td>{{ stage.label }}</td>
             <td>{{ formatEuros(stage.amount) }}</td>
@@ -236,7 +235,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
               <Checkbox id="quote-terms" v-model="form.terms" required />
               <Label variant="inline" for="quote-terms">
                 <a v-if="agbUrl" :href="agbUrl" target="_blank" rel="noopener" class="underline">{{ $t('portal.footerAgb') }}</a>
-                <template v-if="agbUrl && widerrufUrl"> {{ $t('portal.quoteTermsAnd') }} </template>
+                <template v-if="agbUrl && widerrufUrl">{{ ` ${$t('portal.quoteTermsAnd')} ` }}</template>
                 <a v-if="widerrufUrl" :href="widerrufUrl" target="_blank" rel="noopener" class="underline">{{ $t('portal.footerWiderruf') }}</a>
                 {{ $t('portal.quoteTerms') }}
               </Label>

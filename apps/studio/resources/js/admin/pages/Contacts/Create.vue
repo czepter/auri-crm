@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import ContactPortalFields from '@/admin/components/ContactPortalFields.vue'
+import ContactPortalFields from '@/admin/components/crm/ContactPortalFields.vue'
 import Page from '@/ui/page/Page.vue'
 import Card from '@/ui/page/Card.vue'
 import { Button } from '@/ui/button'
@@ -57,7 +57,7 @@ function submit() {
               <Input :id="id" v-model="form.name" type="text" autofocus />
             </Field>
 
-            <div class="mt-3 flex gap-3 [&>*]:min-w-[148px] [&>*]:flex-1">
+            <div class="mt-3 flex flex-wrap gap-3 [&>*]:min-w-[148px] [&>*]:flex-1">
               <Field v-slot="{ id }" :label="$t('contacts.email')" :error="form.errors.email">
                 <Input :id="id" v-model="form.email" type="email" autocomplete="email" />
               </Field>

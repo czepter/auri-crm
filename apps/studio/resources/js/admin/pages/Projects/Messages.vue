@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import MessageThread from '@/admin/components/MessageThread.vue'
-import ProjectShell from '@/admin/components/ProjectShell.vue'
+import MessageThread from '@/admin/components/crm/MessageThread.vue'
+import ProjectShell from '@/admin/components/crm/ProjectShell.vue'
 import Card from '@/ui/page/Card.vue'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'

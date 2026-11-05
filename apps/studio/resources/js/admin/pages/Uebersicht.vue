@@ -5,9 +5,9 @@ import { useI18n } from "vue-i18n";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import Page from "@/ui/page/Page.vue";
 import PageHead from "@/ui/page/PageHead.vue";
-import Panel from "@/admin/components/Panel.vue";
+import Panel from "@/admin/components/crm/Panel.vue";
 import { Button } from "@/ui/button";
-import { formatEurosRounded } from "@/admin/lib/money";
+import { formatEurosRounded } from "@/lib/money";
 import { weekFrom } from "@/admin/lib/dates";
 import { NOTICEABLE_DAYS, since } from "@/admin/lib/leadQueue";
 import { useLiveProps } from "@/admin/lib/liveReload";
@@ -153,6 +153,14 @@ const figures = computed(() => {
     ];
 });
 
+// Day one has nothing to measure: four tiles reading 0 say nothing a new studio does not know.
+const measured = computed(() => {
+    const { payments, pipeline, quotes, shoots } = props;
+
+    return props.range !== "year" || pipeline.total > 0 || payments.open > 0 || payments.overdue > 0 || quotes.sent > 0 || shoots.count > 0
+        || pipeline.priorYear !== null || quotes.priorSent !== null || shoots.priorYear !== null;
+});
+
 const PAST = { "30": "dashboard.range30Past", "90": "dashboard.range90Past", year: "dashboard.lastTwelveMonths" } as const;
 
 type Row = {
@@ -249,7 +257,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
         <Page data-tokens wide>
             <div class="flex min-w-0 flex-1 flex-col">
                 <PageHead :kicker="heading" :title="$t('dashboard.title')">
-                    <div class="ml-auto flex flex-wrap items-center gap-1.5">
+                    <div v-if="measured" class="ml-auto flex flex-wrap items-center gap-1.5">
                         <Link
                             v-for="option in RANGES"
                             :key="option.key"
@@ -265,7 +273,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                     </div>
                 </PageHead>
 
-                <div class="mx-6 mt-5 grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4">
+                <div v-if="measured" class="mx-6 mt-5 grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4">
                     <div v-for="figure in figures" :key="figure.key" class="flex flex-col gap-1.5 rounded-[var(--r)] bg-paper px-6 py-5 shadow-card">
                         <div class="text-small font-medium text-ink-2">{{ figure.label }}</div>
                         <div class="flex items-baseline gap-1 text-[34px] leading-10 font-semibold tracking-[-0.03em] tabular-nums" :class="figure.warn && 'text-due'">
@@ -383,7 +391,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                         </div>
                     </Panel>
 
-                    <Panel class="mb-5 break-inside-avoid" :title="$t('dashboard.activity')">
+                    <Panel v-if="activity.length" class="mb-5 break-inside-avoid" :title="$t('dashboard.activity')">
                         <Link
                             v-for="entry in activity"
                             :key="`${entry.when}${entry.text}`"

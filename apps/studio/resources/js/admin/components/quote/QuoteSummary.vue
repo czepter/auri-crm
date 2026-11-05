@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import LineItems from '@/admin/components/LineItems.vue'
-import { formatEurosRounded } from '@/admin/lib/money'
+import LineItems from '@/admin/components/quote/LineItems.vue'
+import { formatEurosRounded } from '@/lib/money'
 import { topLines } from '@/admin/lib/quoteSummary'
 
 const props = defineProps<{

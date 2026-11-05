@@ -2,10 +2,10 @@
 import { computed, ref } from "vue";
 import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
-import LeadQueue from "@/admin/components/LeadQueue.vue";
+import LeadQueue from "@/admin/components/crm/LeadQueue.vue";
 import Page from "@/ui/page/Page.vue";
 import PageHead from "@/ui/page/PageHead.vue";
-import ProjectSettings from "@/admin/components/ProjectSettings.vue";
+import ProjectSettings from "@/admin/components/crm/ProjectSettings.vue";
 import {
     Table,
     TableCell,
@@ -23,7 +23,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/ui/alert-dialog";
-import { formatEurosRounded } from "@/admin/lib/money";
+import { formatEurosRounded } from "@/lib/money";
 import { relative, TYPE_DOT } from "@/admin/lib/boardCard";
 import { useLiveProps } from "@/admin/lib/liveReload";
 import { Button } from "@/ui/button";
@@ -314,13 +314,13 @@ const workflowAllowed = computed(() =>
                         @dragover="onDragOver($event, index, null)"
                         @drop.prevent="onDrop(index)"
                     >
-                        <header class="flex items-center gap-1.5 px-1 pt-1 pb-0.5">
+                        <header class="flex items-baseline gap-1.5 px-1 pt-1 pb-0.5">
                             <b
-                                class="text-[13.5px] leading-none font-semibold text-foreground"
+                                class="text-[13.5px] leading-[1.2] font-semibold text-foreground"
                                 >{{ column.label }}</b
                             >
                             <span
-                                class="ml-auto font-mono text-[12.5px] tabular-nums text-ink-2"
+                                class="ml-auto font-mono text-[12.5px] whitespace-nowrap tabular-nums text-ink-2"
                             >
                                 {{ column.cards.length
                                 }}<template v-if="column.total">

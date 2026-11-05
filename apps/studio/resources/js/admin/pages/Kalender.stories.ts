@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
-import CalendarSeason from '@/admin/components/CalendarSeason.vue'
+import CalendarSeason from '@/admin/components/crm/CalendarSeason.vue'
 import { addDays, weekMondays } from '@/admin/lib/season'
 import Kalender from './Kalender.vue'
 

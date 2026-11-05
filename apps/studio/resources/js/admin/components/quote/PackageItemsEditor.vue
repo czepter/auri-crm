@@ -3,8 +3,8 @@ import { computed, ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import type { PackageItemRow } from '@/admin/lib/packageItem'
 import { moveRow } from '@/admin/lib/rows'
-import PackageItemInsertRow from '@/admin/components/PackageItemInsertRow.vue'
-import PackageItemRowComponent from '@/admin/components/PackageItemRow.vue'
+import PackageItemInsertRow from '@/admin/components/quote/PackageItemInsertRow.vue'
+import PackageItemRowComponent from '@/admin/components/quote/PackageItemRow.vue'
 
 const props = defineProps<{ packageId?: string; catalogItems: App.Catalog.Data.CatalogItemData[] }>()
 

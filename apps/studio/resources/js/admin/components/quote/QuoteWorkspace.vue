@@ -7,7 +7,7 @@ import Card from '@/ui/page/Card.vue'
 import { PreviewOverlay } from '@/ui/preview-overlay'
 import { debounced } from '@/admin/lib/autosave'
 import { buildQuotePayload, type QuoteContact, type QuoteDraft, type VatSettings } from '@/admin/components/quote/quotePayload'
-import { basisPointsToPercent, centsToEuros, eurosToCents, formatDiscount, formatEuros } from '@/admin/lib/money'
+import { centsToEuros, eurosToCents, formatDiscount, formatEuros, formatPercent } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { quoteChipClass, quoteTitle } from '@/admin/lib/quoteDisplay'
 import { Button } from '@/ui/button'
@@ -16,10 +16,10 @@ import { DatePicker } from '@/ui/date-picker'
 import { Label } from '@/ui/label'
 import { useI18n } from 'vue-i18n'
 import QuoteActions from '@/admin/components/quote/QuoteActions.vue'
-import InstallmentPaidDialog from '@/admin/components/InstallmentPaidDialog.vue'
-import InstallmentStornoDialog from '@/admin/components/InstallmentStornoDialog.vue'
-import CreditNoteDialog from '@/admin/components/CreditNoteDialog.vue'
-import PaymentPlanDialog from '@/admin/components/PaymentPlanDialog.vue'
+import InstallmentPaidDialog from '@/admin/components/payments/InstallmentPaidDialog.vue'
+import InstallmentStornoDialog from '@/admin/components/payments/InstallmentStornoDialog.vue'
+import CreditNoteDialog from '@/admin/components/payments/CreditNoteDialog.vue'
+import PaymentPlanDialog from '@/admin/components/payments/PaymentPlanDialog.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -154,11 +154,11 @@ function createPlan() {
 function summaryRows(quote: App.Quotes.Data.QuoteData) {
   const rows: { label: string; value: string; rate?: number }[] = quote.discountAmount
     ? [
-        { label: 'quotes.total', value: formatEuros(quote.total) },
+        { label: 'quotes.subtotal', value: formatEuros(quote.total) },
         { label: 'quotes.discount', value: `−${formatEuros(quote.discountAmount)}` },
         { label: 'quotes.net', value: formatEuros(quote.net) },
       ]
-    : [{ label: 'quotes.total', value: formatEuros(quote.total) }]
+    : [{ label: quote.vatMode === 'standard' ? 'quotes.net' : 'quotes.total', value: formatEuros(quote.total) }]
 
   if (quote.vatMode === 'standard') {
     // #412: eine Zeile je Steuersatz, bei einem Satz genau die eine.
@@ -192,7 +192,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
          wrong or bypassed. Ein Entwurf ist das Werkzeug selbst und steht
          offen da; erst ab Versendet wird er zur zuklappbaren Karte. -->
     <section v-if="canManageQuotes && quote.status === 'draft' && drafts[quote.id]" class="mt-3 first:mt-0">
-      <header v-if="showHeader" class="mb-3 flex items-center gap-3">
+      <header v-if="showHeader" class="mb-3 flex flex-wrap items-center gap-3">
         <h2 class="m-0 text-body leading-[1.2] font-semibold tracking-[-0.015em]">{{ quoteTitle(quote, t) }}</h2>
         <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
         <QuoteActions :project-id="projectId" :quote="quote" :can-manage-quotes="canManageQuotes" />
@@ -255,7 +255,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
           :class="row.last ? 'mt-1.5 pt-2.5 font-semibold shadow-[inset_0_1px_0_var(--line)]' : 'text-small'"
         >
           <span class="flex-1" :class="{ 'text-ui': row.last }">
-            {{ row.rate === undefined ? $t(row.label) : $t('quotes.vat', { rate: basisPointsToPercent(row.rate) }) }}
+            {{ row.rate === undefined ? $t(row.label) : $t('quotes.vat', { rate: formatPercent(row.rate) }) }}
           </span>
           <span class="w-[110px] flex-none text-right tabular-nums" :class="{ 'text-ui': row.last }">{{ row.value }}</span>
         </div>

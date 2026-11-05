@@ -2,8 +2,8 @@
 import { computed, ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import CalendarSeason from '@/admin/components/CalendarSeason.vue'
-import CalendarSettings from '@/admin/components/CalendarSettings.vue'
+import CalendarSeason from '@/admin/components/crm/CalendarSeason.vue'
+import CalendarSettings from '@/admin/components/crm/CalendarSettings.vue'
 import Page from '@/ui/page/Page.vue'
 import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
@@ -118,7 +118,7 @@ function shortDate(date: string | null) {
           </Button>
         </PageHead>
 
-        <div v-if="view === 'monat'" class="grid grid-cols-7 px-6 py-5">
+        <div v-if="view === 'monat'" class="grid grid-cols-7 px-6 py-5 max-[640px]:px-2">
           <div
             v-for="weekday in WEEKDAYS"
             :key="weekday"
@@ -130,7 +130,7 @@ function shortDate(date: string | null) {
           <div
             v-for="day in days"
             :key="day.date"
-            class="min-h-[104px] px-2 pt-2 pb-2.5 shadow-[inset_0_1px_0_var(--rule),inset_1px_0_0_var(--rule)] [&:nth-child(7n+1)]:shadow-[inset_0_1px_0_var(--rule)]"
+            class="min-h-[104px] overflow-hidden px-2 pt-2 pb-2.5 max-[640px]:px-1 shadow-[inset_0_1px_0_var(--rule),inset_1px_0_0_var(--rule)] [&:nth-child(7n+1)]:shadow-[inset_0_1px_0_var(--rule)]"
           >
             <span
               class="text-small tabular-nums"
@@ -154,12 +154,14 @@ function shortDate(date: string | null) {
                 class="tabular-nums"
                 :class="entry.kind === 'away' ? 'font-normal' : 'font-semibold'"
               >{{ entry.time }} </span>
-              {{ entry.what }}
+              <!-- A phone cell is 50px wide: the time alone, or a dot; the entry still links to its project. -->
+              <span v-if="!entry.time" class="hidden max-[640px]:inline">•</span>
+              <span class="max-[640px]:hidden">{{ entry.what }}</span>
               <!-- The measured values, not the ones crm.css .cal .e .who alone would
                    suggest: a second .who rule reaches this span as well. -->
               <span
                 v-if="entry.who"
-                class="pr-[18px] text-ui leading-[1.35] font-semibold tracking-[-0.015em] text-ink-2"
+                class="pr-[18px] text-ui leading-[1.35] font-semibold tracking-[-0.015em] text-ink-2 max-[640px]:hidden"
               > · {{ entry.who }}</span>
             </component>
 

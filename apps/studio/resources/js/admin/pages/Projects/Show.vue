@@ -6,23 +6,23 @@ import { Pencil } from "lucide-vue-next";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/alert";
 import { Button } from "@/ui/button";
-import LineItems from "@/admin/components/LineItems.vue";
-import NoteThread from "@/admin/components/NoteThread.vue";
-import QuoteSummary from "@/admin/components/QuoteSummary.vue";
-import ShootFields from "@/admin/components/ShootFields.vue";
-import ShootRow from "@/admin/components/ShootRow.vue";
+import LineItems from "@/admin/components/quote/LineItems.vue";
+import NoteThread from "@/admin/components/crm/NoteThread.vue";
+import QuoteSummary from "@/admin/components/quote/QuoteSummary.vue";
+import ShootFields from "@/admin/components/crm/ShootFields.vue";
+import ShootRow from "@/admin/components/crm/ShootRow.vue";
 import { Field } from "@/ui/field";
 import { Input } from "@/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
 import { Textarea } from "@/ui/textarea";
-import ProjectFields from "@/admin/components/ProjectFields.vue";
-import type { ProjectFieldValues } from "@/admin/components/ProjectFields.vue";
-import ProjectShell from "@/admin/components/ProjectShell.vue";
-import TaskCreateDialog from "@/admin/components/TaskCreateDialog.vue";
+import ProjectFields from "@/admin/components/crm/ProjectFields.vue";
+import type { ProjectFieldValues } from "@/admin/components/crm/ProjectFields.vue";
+import ProjectShell from "@/admin/components/crm/ProjectShell.vue";
+import TaskCreateDialog from "@/admin/components/crm/TaskCreateDialog.vue";
 import Card from "@/ui/page/Card.vue";
 import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
 import Section from "@/ui/page/Section.vue";
-import { formatEurosRounded } from "@/admin/lib/money";
+import { formatEurosRounded } from "@/lib/money";
 import { quoteChipClass } from "@/admin/lib/quoteDisplay";
 import { dayWithWeekday as day } from "@/admin/lib/dates";
 import { useLiveProps } from "@/admin/lib/liveReload";
@@ -292,7 +292,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         <div
                             v-for="person in people"
                             :key="person.id"
-                            class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+                            class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
                         >
                             <Link
                                 class="w-[168px] flex-none text-small leading-[1.35] font-semibold tracking-[-0.012em] text-foreground no-underline underline-offset-[3px] hover:underline"
@@ -304,7 +304,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 {{ roleLabel(person.role) }}
                             </span>
                             <a v-if="person.email" class="text-small text-ring no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
-                            <a v-if="person.phone" class="ml-auto text-small tabular-nums text-ring no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
+                            <a v-if="person.phone" class="ml-auto whitespace-nowrap text-small tabular-nums text-ring no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
                         </div>
 
                         <template #edit>
@@ -545,7 +545,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                          locked: the order changes in conversation and the document lags
                          behind. Forbid the change and the scope is simply wrong while the
                          work happens anyway. -->
-                    <Section v-if="scope.items.length" :title="$t('project.scope')">
+                    <Section v-if="scope.items.length && (!quote || scope.delta || scope.items.some((item) => item.state))" :title="$t('project.scope')">
                         <LineItems
                             class="[&>div]:py-[9px] [&>div]:shadow-none"
                             :items="scope.items"

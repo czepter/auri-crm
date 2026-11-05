@@ -122,7 +122,7 @@ function run(key: ActionKey) {
 
 <template>
   <!-- .stop: in einer Card liegen die Knöpfe in der Kopfzeile, die selbst umschaltet. -->
-  <div class="ml-auto flex items-center gap-1.5">
+  <div class="ml-auto flex flex-wrap items-center justify-end gap-1.5">
     <Button v-if="canManageQuotes && quote.status === 'accepted'" type="button" variant="outline" @click.stop="addendum">
       {{ $t('quotes.addendum') }}
     </Button>

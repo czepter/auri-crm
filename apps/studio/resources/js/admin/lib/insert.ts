@@ -1,5 +1,5 @@
 import type { QuoteRow } from '@/admin/components/quote/quotePayload'
-import { centsToEuros, formatEurosRounded } from '@/admin/lib/money'
+import { centsToEuros, formatEurosRounded } from '@/lib/money'
 
 export type InsertOption = {
   kind: 'package' | 'item' | 'new'

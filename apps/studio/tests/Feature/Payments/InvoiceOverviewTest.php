@@ -79,6 +79,21 @@ it('offers the open rates of each plan on the new-invoice screen', function () {
         ->and($rates[$installment->plan->case->public_id][0]['label'])->toBe('Restbetrag');
 });
 
+it('offers the projects with an open rate before anyone types', function () {
+    $open = invoiceablePlan();
+
+    $billable = $this->actingAs(staffMember(), 'staff')->get('/rechnungen/neu')
+        ->assertOk()->viewData('page')['props']['billable'];
+
+    expect(collect($billable)->pluck('id')->all())->toContain($open->plan->case->public_id);
+});
+
+it('previews a draft that has a recipient but no positions', function () {
+    $this->actingAs(staffMember(), 'staff')
+        ->post('/rechnungen/vorschau', ['contact' => ['name' => 'Jonas Gast']])
+        ->assertOk();
+});
+
 it('previews an invoice without a project as it will print, drawing no number', function () {
     $html = $this->actingAs(staffMember(), 'staff')
         ->post('/rechnungen/vorschau', [

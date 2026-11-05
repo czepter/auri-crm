@@ -8,7 +8,7 @@ import Empty from '@/ui/page/Empty.vue'
 import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
 import { Input } from '@/ui/input'
 import { Button } from '@/ui/button'
-import { formatEuros } from '@/admin/lib/money'
+import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
@@ -39,7 +39,7 @@ const shown = computed(() => {
             <Input v-model="query" class="h-8 w-64" type="search" :placeholder="$t('creditNotesOverview.searchPlaceholder')" />
           </div>
 
-          <Table>
+          <Table class="max-[640px]:block max-[640px]:overflow-x-auto">
             <thead>
               <tr>
                 <TableHead>{{ $t('creditNotesOverview.number') }}</TableHead>

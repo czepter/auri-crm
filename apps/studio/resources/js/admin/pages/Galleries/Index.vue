@@ -5,7 +5,7 @@ import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import Empty from '@/ui/page/Empty.vue'
-import GallerySettings from '@/admin/components/GallerySettings.vue'
+import GallerySettings from '@/admin/components/gallery/GallerySettings.vue'
 import { Button } from '@/ui/button'
 import { useLiveProps } from '@/admin/lib/liveReload'
 

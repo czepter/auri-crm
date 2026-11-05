@@ -11,7 +11,7 @@ import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
 import { Switch } from '@/ui/switch'
 import { Textarea } from '@/ui/textarea'
-import WorkflowPanel from '@/admin/components/WorkflowPanel.vue'
+import WorkflowPanel from '@/admin/components/crm/WorkflowPanel.vue'
 
 type Stage = {
   id: string
