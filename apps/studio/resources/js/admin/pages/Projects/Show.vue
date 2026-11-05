@@ -9,6 +9,7 @@ import { Button } from "@/ui/button";
 import LineItems from "@/admin/components/quote/LineItems.vue";
 import NoteThread from "@/admin/components/crm/NoteThread.vue";
 import QuoteSummary from "@/admin/components/quote/QuoteSummary.vue";
+import { grossTotal } from "@/admin/lib/quoteSummary";
 import ShootFields from "@/admin/components/crm/ShootFields.vue";
 import ShootRow from "@/admin/components/crm/ShootRow.vue";
 import { Field } from "@/ui/field";
@@ -142,7 +143,7 @@ const anfrageSummary = computed(() =>
     [props.inquiry?.capturedVia, props.inquiry ? day(props.inquiry.capturedAt) : null].filter(Boolean).join(" · "),
 );
 
-const quoteSummary = computed(() => (props.quote === null ? "" : euro(props.quote.net)));
+const quoteSummary = computed(() => (props.quote === null ? "" : euro(grossTotal(props.quote))));
 
 // Die Rolle hing am Bearbeiten-Modus der rechten Leiste. Der ist weg, also
 // steht sie hier — Freitext wie am Fall, die bekannten als Vorschlag.

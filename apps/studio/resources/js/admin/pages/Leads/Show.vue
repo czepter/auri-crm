@@ -9,6 +9,7 @@ import ContactTypeahead from "@/admin/components/crm/ContactTypeahead.vue";
 import LeadQueue from "@/admin/components/crm/LeadQueue.vue";
 import NoteThread from "@/admin/components/crm/NoteThread.vue";
 import QuoteSummary from "@/admin/components/quote/QuoteSummary.vue";
+import { grossTotal } from "@/admin/lib/quoteSummary";
 import QuoteList from "@/admin/components/quote/QuoteList.vue";
 import MessageThread from "@/admin/components/crm/MessageThread.vue";
 import ProjectShell from "@/admin/components/crm/ProjectShell.vue";
@@ -280,7 +281,7 @@ const termineSummary = computed(() =>
 );
 
 const quoteSummary = computed(() =>
-    props.quote === null ? "" : formatEurosRounded(Number(props.quote.net)),
+    props.quote === null ? "" : formatEurosRounded(grossTotal(props.quote)),
 );
 
 const taskSummary = computed(() => {
