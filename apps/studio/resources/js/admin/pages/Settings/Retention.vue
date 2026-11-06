@@ -138,7 +138,7 @@ function submit() {
 
 <template>
   <AdminLayout active="einstellungen">
-    <FormShell :kicker="$t('settings.kicker')" :title="$t('settings.navRetention')" wide>
+    <FormShell :kicker="$t('settings.kicker')" :title="$t('settings.navRetention')">
       <template #nav><SettingsNav active="retention" /></template>
 
       <form class="min-w-0" @submit.prevent="submit">
@@ -164,7 +164,7 @@ function submit() {
             </div>
           </div>
 
-          <div class="mt-7 grid grid-cols-[400px_minmax(0,1fr)] items-start gap-10 max-[1100px]:grid-cols-1">
+          <div class="mt-7 grid gap-8">
             <div>
               <ChoiceGroup
                 :label="$t('settings.retentionTemplate')"
@@ -198,22 +198,6 @@ function submit() {
                   ]"
                   @update:model-value="(value) => (chosen[part] = value === 'off')"
                 />
-              </div>
-            </div>
-
-            <div v-if="expiring.length" class="min-w-0 order-last col-span-full">
-              <div class="flex justify-between text-small font-semibold text-ink-2">
-                <span>{{ $t('settings.retentionExpiring') }}</span>
-                <span>{{ expiring.length }}</span>
-              </div>
-              <div
-                v-for="row in expiring"
-                :key="row.candidate.id"
-                class="flex items-center gap-4 py-2 shadow-[inset_0_-1px_0_var(--rule)]"
-              >
-                <span class="min-w-0 flex-1 truncate text-ui font-semibold">{{ row.candidate.name }}</span>
-                <span class="text-small text-ink-2">{{ row.candidate.type }}</span>
-                <span class="w-24 text-right text-small tabular-nums">{{ row.on.toLocaleDateString('de-DE') }}</span>
               </div>
             </div>
 
@@ -301,6 +285,24 @@ function submit() {
           </form>
         </AlertDialogContent>
       </AlertDialog>
+
+      <template #preview>
+        <aside v-if="expiring.length" class="sticky top-6 w-[352px] flex-none max-[1100px]:hidden">
+          <div class="flex justify-between text-small font-semibold text-ink-2">
+            <span>{{ $t('settings.retentionExpiring') }}</span>
+            <span>{{ expiring.length }}</span>
+          </div>
+          <div
+            v-for="row in expiring"
+            :key="row.candidate.id"
+            class="flex items-center gap-4 py-2 shadow-[inset_0_-1px_0_var(--rule)]"
+          >
+            <span class="min-w-0 flex-1 truncate text-ui font-semibold">{{ row.candidate.name }}</span>
+            <span class="text-small text-ink-2">{{ row.candidate.type }}</span>
+            <span class="w-24 text-right text-small tabular-nums">{{ row.on.toLocaleDateString('de-DE') }}</span>
+          </div>
+        </aside>
+      </template>
     </FormShell>
   </AdminLayout>
 </template>
