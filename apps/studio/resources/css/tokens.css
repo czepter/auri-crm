@@ -74,6 +74,7 @@
    --page is the measure every screen picks. Nothing on this surface sets a
    width of its own. */
 [data-theme="portal"] {
+  scroll-padding-top: 6rem;
   --hover:#F0F3F5;
   --sunk:#F0F3F5;
   --muted:#626B78;
