@@ -128,9 +128,9 @@ function summary(instance: App.Crm.Data.FormInstanceData): string {
     <ProjectShell :header="header" active="documents" child="forms">
       <template v-if="header.canManageForms" #actions>
         <Button
-          v-for="template in formTemplates"
+          v-for="(template, index) in formTemplates"
           :key="template.value"
-          variant="pill"
+          :variant="index === 0 ? 'pill' : 'outline'"
           type="button"
           @click="createFrom(template.value)"
         >

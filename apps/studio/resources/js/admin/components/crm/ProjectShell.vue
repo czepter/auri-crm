@@ -117,7 +117,7 @@ function destroy() {
             <!-- A page with a stage menu books through it. -->
             <AlertDialog v-if="!header.isBooked && header.canBook && !$slots.stage">
               <AlertDialogTrigger as-child>
-                <Button variant="pill" type="button">{{ $t('project.book') }}</Button>
+                <Button :variant="$slots.actions ? 'outline' : 'pill'" type="button">{{ $t('project.book') }}</Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
