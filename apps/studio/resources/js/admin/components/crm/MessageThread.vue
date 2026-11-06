@@ -125,12 +125,11 @@ function cancelScheduled(messageId: string) {
         <p v-if="thread?.recipients.length" class="m-0 mb-1.5 text-small leading-[1.47] text-ink-2">
           {{ $t('project.messagesTo', { names: thread.recipients.join(', ') }) }}
         </p>
-        <Field v-slot="{ id }" dense :error="reply.errors.body">
+        <Field v-slot="{ id }" dense :label="$t('project.messagesReplyLabel')" :error="reply.errors.body">
           <Textarea
             :id="id"
             v-model="reply.body"
-            rows="4"
-            :placeholder="$t('project.messagesReplyPlaceholder')" />
+            rows="4" />
         </Field>
         <div class="mt-2.5 flex items-center gap-2.5">
           <!-- Native datetime-local: a picker library for one optional field

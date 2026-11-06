@@ -46,12 +46,12 @@ defineExpose({ form, submit })
       <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.mailSenderFromEnv') }}</div>
       <div class="mb-6 flex flex-col gap-1.5">
         <div class="flex items-center gap-3 rounded-[var(--r-sm)] bg-sunk px-3 py-2.5">
-          <span class="text-small font-medium">{{ settings.mailFromName }}</span>
-          <span v-if="senderFromEnv.name" class="ml-auto font-mono text-small text-ink-2">MAIL_FROM_NAME</span>
+          <span class="text-small text-ink-2">{{ $t('settings.mailFromNameLabel') }}</span>
+          <span class="ml-auto text-small font-medium">{{ settings.mailFromName }}</span>
         </div>
         <div class="flex items-center gap-3 rounded-[var(--r-sm)] bg-sunk px-3 py-2.5">
-          <span class="text-small font-medium">{{ settings.mailFromAddress }}</span>
-          <span v-if="senderFromEnv.address" class="ml-auto font-mono text-small text-ink-2">MAIL_FROM_ADDRESS</span>
+          <span class="text-small text-ink-2">{{ $t('settings.mailFromAddressLabel') }}</span>
+          <span class="ml-auto text-small font-medium">{{ settings.mailFromAddress }}</span>
         </div>
         <Button
           v-if="!senderFromEnv.name || !senderFromEnv.address"

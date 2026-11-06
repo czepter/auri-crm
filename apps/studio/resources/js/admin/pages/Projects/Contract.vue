@@ -284,7 +284,7 @@ function day(value: string | null): string {
           </Button>
         </form>
         <Button v-else-if="header.canManageContracts" :as="Link" href="/dokumentvorlagen/neu">
-          {{ $t('documentTemplates.create') }}
+          {{ $t('project.contractTemplateCreate') }}
         </Button>
       </Section>
     </ProjectShell>
