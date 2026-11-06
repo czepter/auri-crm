@@ -451,20 +451,42 @@ function megabytes(bytes: number) {
           @reorder="reorderSets"
         />
 
-        <!-- Bilder: the pane owns the grid and selection. Fassungen moved to
-             Einstellungen — the count sits beside the set name and Stand is
-             the header's own chip, so nothing here repeats them. -->
-        <div v-if="tab === 'bilder'" class="min-w-0 flex-1">
-          <Images
-            :gallery="gallery"
-            :sets="sets"
-            :assets="assets"
-            :active-set-id="activeSetId"
-            :failed-assets="failedAssets"
-            :pending-uploads="pendingUploads"
-          />
+        <div v-if="tab === 'bilder'" class="flex min-w-0 flex-1 flex-col min-[1280px]:flex-row">
+          <div class="min-w-0 flex-1">
+            <Images
+              :gallery="gallery"
+              :sets="sets"
+              :assets="assets"
+              :active-set-id="activeSetId"
+              :failed-assets="failedAssets"
+              :pending-uploads="pendingUploads"
+            />
+          </div>
+          <aside class="flex-none px-6 pt-5 pb-7 min-[1280px]:sticky min-[1280px]:top-0 min-[1280px]:w-[280px] min-[1280px]:self-start min-[1280px]:pl-0">
+            <dl class="m-0 flex flex-col gap-2.5 text-small">
+              <div>
+                <dt class="text-ink-2">{{ $t('galleryRecord.published') }}</dt>
+                <dd class="m-0 mt-1 font-semibold" :class="stateTone">{{ stateWord }}</dd>
+                <dd v-if="figures.published !== null" class="m-0 mt-0.5 text-ink-2">{{ $t('galleryRecord.version', { version: figures.published }) }}</dd>
+              </div>
+              <div class="flex justify-between gap-3">
+                <dt class="text-ink-2">{{ $t('galleryRecord.viewed') }}</dt>
+                <dd class="m-0 tabular-nums">{{ figures.viewed }}</dd>
+              </div>
+              <div class="flex justify-between gap-3">
+                <dt class="text-ink-2">{{ $t('galleryRecord.marked') }}</dt>
+                <dd class="m-0 tabular-nums">{{ figures.marked }}</dd>
+              </div>
+              <div class="flex justify-between gap-3">
+                <dt class="text-ink-2">{{ $t('galleryRecord.downloaded') }}</dt>
+                <dd class="m-0 tabular-nums">{{ figures.downloaded }}</dd>
+              </div>
+            </dl>
+            <button type="button" class="mt-4 cursor-pointer border-0 bg-transparent p-0 text-small text-ring hover:underline" @click="sharing = true">
+              {{ $t('galleryRecord.share') }}
+            </button>
+          </aside>
         </div>
-
         <!-- Gestaltung: choosing without seeing is guessing, so the choice is
              on the left and the result on the right. -->
         <div v-else-if="tab === 'gestaltung'" class="flex min-w-0 flex-1 max-[640px]:flex-col">
