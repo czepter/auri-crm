@@ -63,3 +63,13 @@ it('escaped einen Wert, der aus einer Eingabe des Inhabers stammt', function () 
     expect($html)->not->toContain('<script>')
         ->and($html)->toContain('&lt;script&gt;');
 });
+
+it('lässt einen Abschnitt mit leerem Platzhalter ganz weg', function () {
+    StudioSettings::current()->forceFill(['inbound_secret' => null])->save();
+
+    $entry = app(HelpIndex::class)->find('mail-weiterleitung', []);
+
+    expect(app(RenderHelpArticle::class)($entry)->html)
+        ->not->toContain('genau eine eigene Adresse')
+        ->and(app(RenderHelpArticle::class)($entry)->html)->not->toContain('<pre>');
+});

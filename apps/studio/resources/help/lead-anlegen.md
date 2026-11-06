@@ -1,5 +1,5 @@
 ---
-titel: Lead anlegen
+titel: Anfrage anlegen
 beschreibung: Eine Anfrage von Hand erfassen und durch die Stufen führen.
 art: aufgabe
 reihenfolge: 20

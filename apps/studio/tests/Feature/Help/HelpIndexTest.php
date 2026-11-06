@@ -13,7 +13,7 @@ it('stellt die Aufgabe vor die Referenz', function () {
 
     expect($treffer[0]->slug)->toBe('lead-anlegen')
         ->and($treffer[0]->art)->toBe('aufgabe')
-        ->and($treffer[0]->titel)->toBe('Lead anlegen')
+        ->and($treffer[0]->titel)->toBe('Anfrage anlegen')
         ->and($treffer[1]->art)->toBe('referenz');
 });
 

@@ -6,11 +6,15 @@ reihenfolge: 60
 screens: [inbox.index]
 ---
 
+<!--wenn:inbound_address-->
+
 Dein Studio hat genau eine eigene Adresse:
 
 ```
 %inbound_address%
 ```
+
+<!--/wenn-->
 
 Damit Post an deine gewohnte Adresse hier ankommt, richtest du bei deinem
 Mailanbieter eine Weiterleitung dorthin ein. Das Weiterleiten macht dein

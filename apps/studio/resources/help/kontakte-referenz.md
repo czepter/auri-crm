@@ -8,9 +8,8 @@ faehigkeit: manage_contacts
 
 ## Eine Person, ein Kontakt
 
-Ein Paar sind zwei Kontakte, nie eine Zeile mit zwei Namen. Jeder hat seine
-eigene Adresse und seinen eigenen Portalzugang, und aus *Meier & Kowalski*
-lässt sich hinterher kein Vorname mehr herausschneiden.
+Ein Paar sind zwei Kontakte. Jeder hat seine eigene Adresse und seinen
+eigenen Portalzugang.
 
 ## Laufend, früher, ohne Auftrag
 
@@ -21,7 +20,7 @@ Termin ist der nächste dieser Art, nicht der des jüngsten Auftrags.
 
 ## Rollen am Auftrag
 
-Hauptkontakt, Partner/in, Zahlt, Planung, Dienstleister. Die Rolle ist keine
+Hauptkontakt, Partner, Zahlt, Planung, Dienstleister. Die Rolle ist keine
 Beschriftung: ein versendetes Angebot geht an den Hauptkontakt, und die
 Auswertung *Umsatz je Kunde* zählt einen Auftrag nur bei ihm. Sonst zählte
 eine Hochzeit doppelt.
