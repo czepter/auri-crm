@@ -9,6 +9,8 @@ use App\Models\StudioSettings;
 use App\Notifications\Support\MailPreview;
 use App\Notifications\Support\StudioMailFooter;
 use App\Portal\Notifications\PortalAccessInvitation;
+use App\Payments\Actions\RenderInvoicePdf;
+use App\Payments\Support\SampleInvoiceData;
 use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Enums\QuoteLayout;
 use App\Quotes\Support\SampleQuoteData;
@@ -301,6 +303,40 @@ class StudioSettingsController extends Controller
         $sample = SampleQuoteData::build();
 
         return response($render->html($sample, $layout))->header('Content-Type', 'text/html; charset=utf-8');
+    }
+
+    /** The Zahlung pane's sheet: an Anzahlungsrechnung carrying the bank data and terms as typed, unsaved. */
+    public function previewInvoice(Request $request, RenderInvoicePdf $render): HttpResponse|Response
+    {
+        $this->authorizeSettings();
+
+        if ($page = $this->framed($request, 'settings.previewDocument', '/einstellungen/zahlung')) {
+            return $page;
+        }
+
+        $validated = $request->validate([
+            'holder' => ['nullable', 'string', 'max:255'],
+            'iban' => ['nullable', 'string', 'max:64'],
+            'bic' => ['nullable', 'string', 'max:32'],
+            'days' => ['nullable', 'integer', 'min:0', 'max:365'],
+            'deposit' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'layout' => ['nullable', Rule::enum(QuoteLayout::class)],
+        ]);
+
+        $settings = StudioSettings::current();
+        $days = (int) ($validated['days'] ?? $settings->payment_term_days);
+        $deposit = (float) ($validated['deposit'] ?? $settings->deposit_percentage / 100);
+
+        $html = StudioSettings::withUnsaved([
+            'bank_account_holder' => $validated['holder'] ?? $settings->bank_account_holder,
+            'bank_iban' => preg_replace('/\s+/', '', $validated['iban'] ?? $settings->bank_iban ?? ''),
+            'bank_bic' => $validated['bic'] ?? $settings->bank_bic,
+        ], fn () => $render->forInvoice(
+            SampleInvoiceData::build($days, $deposit),
+            isset($validated['layout']) ? QuoteLayout::from($validated['layout']) : null,
+        ));
+
+        return response($html)->header('Content-Type', 'text/html; charset=utf-8');
     }
 
     /**

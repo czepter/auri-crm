@@ -26,18 +26,20 @@ useLiveProps(['invoices', 'exportYears'])
 const { t } = useI18n()
 
 const query = ref('')
-const filter = ref('open')
+
+const OPEN = ['open', 'partial', 'overdue']
+const matches = (value: string, status: string) => value === 'all' || (value === 'open' ? OPEN.includes(status) : status === value)
+const filter = ref(['open', 'paid', 'cancelled'].find((value) => props.invoices.some((invoice) => matches(value, invoice.status))) ?? 'all')
 
 const filters = computed(() => ['open', 'paid', 'cancelled', 'all'].map((value) => ({ value, label: t(`invoicesOverview.${value}`) })))
 
-const OPEN = ['open', 'partial', 'overdue']
 const CHIP: Record<string, string> = { open: 'now', partial: 'now', overdue: 'fail', paid: 'done', cancelled: 'off' }
 
 const shown = computed(() => {
   const needle = query.value.trim().toLocaleLowerCase('de')
 
   return props.invoices.filter((invoice) =>
-    (filter.value === 'all' || (filter.value === 'open' ? OPEN.includes(invoice.status) : invoice.status === filter.value))
+    matches(filter.value, invoice.status)
     && (!needle || `${invoice.number} ${invoice.projectName ?? ''} ${invoice.contact ?? ''}`.toLocaleLowerCase('de').includes(needle)))
 })
 </script>

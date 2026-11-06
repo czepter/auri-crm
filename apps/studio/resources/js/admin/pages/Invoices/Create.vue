@@ -40,7 +40,9 @@ const gateOpen = ref(props.missingInvoiceData.length > 0)
 const project = ref(props.project)
 const contact = ref<App.Crm.Data.ContactSuggestionData | null>(null)
 const newContact = ref<{ name: string; email: string; street: string; postcode: string; city: string } | null>(null)
-const dueOn = ref('')
+const due = new Date()
+due.setDate(due.getDate() + props.studioSettings.paymentTermDays)
+const dueOn = ref(`${due.getFullYear()}-${String(due.getMonth() + 1).padStart(2, '0')}-${String(due.getDate()).padStart(2, '0')}`)
 const texts = ref({ intro: props.intro, outro: '' })
 
 // The quote's own draft shape, so the quote's builder writes the positions;
@@ -167,7 +169,7 @@ function submit() {
           </Field>
 
           <Field :label="$t('quotes.intro')">
-            <LetterField v-model="texts.intro" />
+            <LetterField v-model="texts.intro" bare />
           </Field>
           <Field :label="$t('quotes.outro')">
             <LetterField v-model="texts.outro" />

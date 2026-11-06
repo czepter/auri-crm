@@ -16,6 +16,7 @@ import { Button } from '@/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 import { useLiveProps } from '@/admin/lib/liveReload'
 import { saveState } from '@/admin/lib/autosave'
+import { basisPointsToPercent } from '@/lib/money'
 
 const props = defineProps<{
   pane: 'payment' | 'receipts' | 'email' | 'general'
@@ -89,9 +90,23 @@ const paneTitle = computed(() => {
 // whatever the mounted form holds on top.
 const DOCUMENT_PANES = ['payment', 'receipts']
 
-const documentPreview = computed(() => ({
-  documentLayout: receiptsRef.value?.form.document_layout ?? props.settings.documentLayout,
-}))
+const documentPreview = computed(() => {
+  const bank = profileRef.value?.form
+  const terms = paymentRef.value?.form
+
+  return {
+    documentLayout: receiptsRef.value?.form.document_layout ?? props.settings.documentLayout,
+    invoice: props.pane === 'payment'
+      ? {
+          holder: bank?.bank_account_holder ?? props.settings.bankAccountHolder ?? '',
+          iban: bank?.bank_iban ?? props.settings.bankIban ?? '',
+          bic: bank?.bank_bic ?? props.settings.bankBic ?? '',
+          days: String(terms?.payment_term_days ?? props.settings.paymentTermDays),
+          deposit: String(terms?.deposit_percentage ?? basisPointsToPercent(props.settings.depositPercentage)).replace(',', '.'),
+        }
+      : undefined,
+  }
+})
 
 // Was das Portal an Marke zeigt, wie es im Formular steht.
 const logoPicked = useObjectUrl(computed(() => profileRef.value?.form.logo ?? undefined))

@@ -4,6 +4,7 @@ namespace App\Documents\Support;
 
 use App\Documents\Enums\DocumentTemplateType;
 use App\Models\StudioSettings;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * The shared PDF shell — T-12's "letterhead and footer are shared, not
@@ -22,10 +23,25 @@ class DocumentRenderer
             return $resolvedBody;
         }
 
-        $letterhead = StudioSettings::current()->document_letterhead_html ?? '';
+        $letterhead = StudioSettings::current()->document_letterhead_html ?: $this->logo();
         $footer = StudioSettings::current()->document_footer_html ?? '';
 
         return $this->wrapDocument($letterhead.$resolvedBody.$footer);
+    }
+
+    /** Without a letterhead of its own the sheet opens with the studio's logo, embedded since Gotenberg cannot reach the app. */
+    private function logo(): string
+    {
+        $path = StudioSettings::current()->logo_path;
+        $disk = Storage::disk('local');
+
+        if ($path === null || ! $disk->exists($path)) {
+            return '';
+        }
+
+        $source = 'data:'.$disk->mimeType($path).';base64,'.base64_encode($disk->get($path));
+
+        return '<img src="'.$source.'" alt="" style="display:block;max-width:200px;max-height:56px;margin:0 0 24px">';
     }
 
     /** Gotenberg's chromium route wants a full document, not a fragment. */

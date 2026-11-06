@@ -32,8 +32,8 @@ useLiveProps(['tasks', 'staffOptions'])
 const solo = usePage().props.soloStudio
 const TABS = solo ? (['all', 'done'] as const) : (['mine', 'all', 'done'] as const)
 
-const tab = ref<'mine' | 'all' | 'done'>(solo ? 'all' : 'mine')
 const me = computed(() => (usePage().props.auth as { user: { id: string } | null }).user?.id ?? '')
+const tab = ref<'mine' | 'all' | 'done'>(!solo && props.tasks.some((task) => !task.isDone && task.assigneeId === me.value) ? 'mine' : 'all')
 
 const shown = computed(() =>
   props.tasks.filter((task) =>
