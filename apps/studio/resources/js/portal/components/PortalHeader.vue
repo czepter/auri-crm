@@ -78,7 +78,7 @@ watch(branding, applyAccent)
     <div
       :class="
         over
-          ? 'text-white'
+          ? 'bg-[linear-gradient(to_bottom,rgba(12,10,9,.78),rgba(12,10,9,.5))] text-white'
           : 'border-b border-border bg-[var(--bg)]'
       "
     >

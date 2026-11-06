@@ -317,7 +317,7 @@ const COVER_INPUT = [
         </span>
         <span
           v-if="bar.length > 1"
-          class="mx-auto flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          class="mx-auto flex min-w-0 items-center gap-1.5 overflow-x-auto [scrollbar-width:none] max-[760px]:order-last max-[760px]:mx-0 max-[760px]:w-full [&::-webkit-scrollbar]:hidden"
         >
           <Button
             v-for="selection in bar"
@@ -333,7 +333,7 @@ const COVER_INPUT = [
           </Button>
         </span>
 
-        <Button v-if="offers.downloads" class="max-[760px]:ml-auto" as="a" variant="portal" :href="`/galerien/${gallery.id}/download`">
+        <Button v-if="offers.downloads" class="max-[760px]:ml-auto max-[760px]:shrink-0" as="a" variant="portal" :href="`/galerien/${gallery.id}/download`">
           <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
           {{ $t('gallery.download') }}
         </Button>
@@ -345,12 +345,12 @@ const COVER_INPUT = [
       <main
         v-if="shown.length"
         id="raster"
-        class="mx-auto flex max-w-[1240px] flex-wrap justify-center gap-3.5 px-8 pt-11 pb-16 max-[760px]:grid max-[760px]:grid-cols-2 max-[760px]:gap-0.5 max-[760px]:px-0 max-[760px]:pt-0 max-[760px]:pb-8"
+        class="mx-auto flex max-w-[1240px] flex-wrap justify-center gap-3.5 px-8 pt-11 pb-16 max-[760px]:grid max-[760px]:grid-cols-2 max-[760px]:gap-1 max-[760px]:px-4 max-[760px]:pt-4 max-[760px]:pb-8"
       >
         <span
           v-for="(asset, index) in shown"
           :key="asset.key"
-          class="group relative block cursor-zoom-in overflow-hidden rounded-[10px] bg-muted max-[760px]:rounded-none max-[760px]:[aspect-ratio:1!important] max-[760px]:[flex:none!important] max-[760px]:[max-width:none!important] [&_img]:block [&_img]:size-full [&_img]:object-cover [&_img]:transition-transform [&_img]:duration-[1.2s] [&_img]:ease-[cubic-bezier(.22,.61,.36,1)] hover:[&_img]:scale-[1.03]"
+          class="group relative block cursor-zoom-in overflow-hidden rounded-[10px] bg-muted max-[760px]:rounded-md max-[760px]:[aspect-ratio:1!important] max-[760px]:[flex:none!important] max-[760px]:[max-width:none!important] [&_img]:block [&_img]:size-full [&_img]:object-cover [&_img]:transition-transform [&_img]:duration-[1.2s] [&_img]:ease-[cubic-bezier(.22,.61,.36,1)] hover:[&_img]:scale-[1.03]"
           :style="tileStyle(asset)"
           @click="openAt = index"
         >
@@ -358,7 +358,7 @@ const COVER_INPUT = [
                signed in; a guest never sees it. -->
           <button
             v-if="offers.lists && lists?.length"
-            class="absolute top-2.5 right-2.5 z-4 grid size-11 scale-90 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(12,10,9,.5)] text-white opacity-0 backdrop-blur-[8px] transition-[opacity,transform] max-[760px]:scale-100 max-[760px]:opacity-100 [@media(hover:none)]:scale-100 [@media(hover:none)]:opacity-100 duration-[.22s] ease-out group-hover:scale-100 group-hover:opacity-100 aria-expanded:scale-100 aria-expanded:opacity-100 [&_svg]:size-4 [&_svg]:stroke-current [&_svg]:stroke-[1.5]"
+            class="absolute top-2.5 right-2.5 z-4 grid size-11 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(12,10,9,.55)] text-white backdrop-blur-[8px] [&_svg]:size-5 [&_svg]:stroke-current [&_svg]:stroke-[1.5]"
             :class="isHeart(asset.key) ? '[&_svg]:fill-current' : '[&_svg]:fill-none'"
             type="button"
             :aria-label="$t('gallery.favorite')"
@@ -370,7 +370,7 @@ const COVER_INPUT = [
 
           <button
             v-else-if="offers.lists && lists === null"
-            class="absolute top-2.5 right-2.5 z-4 grid size-11 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-white [&_svg]:size-5 [&_svg]:stroke-current [&_svg]:stroke-[1.5]"
+            class="absolute top-2.5 right-2.5 z-4 grid size-11 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(12,10,9,.55)] text-white backdrop-blur-[8px] [&_svg]:size-5 [&_svg]:stroke-current [&_svg]:stroke-[1.5]"
             :class="isHeart(asset.key) ? '[&_svg]:fill-current' : '[&_svg]:fill-none'"
             type="button"
             :aria-label="isHeart(asset.key) ? $t('gallery.unfavorite') : $t('gallery.favorite')"
@@ -462,9 +462,12 @@ const COVER_INPUT = [
             <p v-else class="text-[12.5px] leading-[1.55] font-normal text-muted-foreground mt-[9px]">{{ $t('gallery.listEmpty') }}</p>
           </div>
 
-          <form class="mt-8 flex items-center gap-3.5" @submit.prevent="addList">
-            <Input v-model="listForm.name" class="flex-1" type="text" :placeholder="$t('gallery.newListName')" />
-            <Button type="submit" variant="ghost" :disabled="!listForm.name">{{ $t('gallery.newList') }}</Button>
+          <form class="mt-8 flex items-end gap-3.5" @submit.prevent="addList">
+            <Label class="block flex-1">
+              <span class="mb-2 block text-[12.5px] leading-none text-muted-foreground">{{ $t('gallery.newListName') }}</span>
+              <Input v-model="listForm.name" type="text" />
+            </Label>
+            <Button class="min-h-11 border border-muted-foreground disabled:opacity-60" type="submit" variant="ghost" :disabled="!listForm.name">{{ $t('gallery.newList') }}</Button>
           </form>
         </div>
 
