@@ -272,7 +272,7 @@ function regenerateFeedUrl() {
               </Field>
             </div>
           </div>
-        </div>
+        </FormSection>
 
         <FormSection :title="$t('profile.eventsSection')">
           <div>
