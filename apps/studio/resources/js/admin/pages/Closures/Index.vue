@@ -2,8 +2,7 @@
 import { ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import Page from '@/ui/page/Page.vue'
-import PageHead from '@/ui/page/PageHead.vue'
+import FormShell from '@/ui/page/FormShell.vue'
 import Empty from '@/ui/page/Empty.vue'
 import { Button } from '@/ui/button'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
@@ -49,9 +48,8 @@ function add() {
 
 <template>
   <AdminLayout active="schliesszeiten">
-    <Page data-tokens wide>
-      <div class="min-w-0 flex-1">
-        <PageHead :title="$t('settings.closuresLabel')">
+    <FormShell :title="$t('settings.closuresLabel')">
+        <template #head>
           <Dialog v-model:open="adding">
             <DialogTrigger v-if="closures.length" as-child>
               <Button class="ml-auto" variant="pill" type="button">{{ $t('settings.closureAdd') }}</Button>
@@ -97,13 +95,13 @@ function add() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-        </PageHead>
+        </template>
 
-        <Empty v-if="!closures.length" class="mx-8 mt-7">
+        <Empty v-if="!closures.length">
           <Button variant="pill" type="button" @click="adding = true">{{ $t('settings.closureAdd') }}</Button>
         </Empty>
 
-        <div v-else class="max-w-[900px] px-6 pt-7 pb-8">
+        <div v-else>
           <form
             v-for="closure in closures"
             :key="closure.id"
@@ -146,7 +144,6 @@ function add() {
             </p>
           </form>
         </div>
-      </div>
-    </Page>
+    </FormShell>
   </AdminLayout>
 </template>
