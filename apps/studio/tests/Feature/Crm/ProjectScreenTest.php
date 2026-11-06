@@ -54,7 +54,14 @@ it('shows only the tabs whose feature exists', function () {
     // Fragebögen is E-02.
     $tabs = props("/auftraege/{$this->case->public_id}")['header']['tabs'];
 
-    expect(array_column($tabs, 'key'))->toBe(['overview', 'shoots', 'messages', 'galleries', 'documents']);
+    expect(array_column($tabs, 'key'))->toBe(['overview', 'shoots', 'messages', 'galleries', 'documents', 'info']);
+});
+
+it('serves the rail as the Info tab of a project', function () {
+    markBooked($this->case);
+
+    $this->get("/auftraege/{$this->case->public_id}/info")
+        ->assertInertia(fn ($page) => $page->component('Projects/Info')->where('header.id', $this->case->public_id));
 });
 
 it('names its tabs with keys the catalogue answers', function () {

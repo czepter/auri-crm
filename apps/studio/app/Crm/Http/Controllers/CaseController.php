@@ -349,6 +349,13 @@ class CaseController extends Controller
             ->each(fn (Shoot $shoot) => app(AdvanceShootStatus::class)($shoot, $status, auth('staff')->user()));
     }
 
+    public function info(ClientCase $case): Response
+    {
+        $this->authorize('view', $case);
+
+        return Inertia::render('Projects/Info', ['header' => $this->header($case)]);
+    }
+
     public function shoots(ClientCase $case, CrewAvailability $crew): Response
     {
         $this->authorize('view', $case);

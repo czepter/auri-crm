@@ -45,6 +45,15 @@ it('groups the queue by working state, not by funnel stage', function () {
         ->and($groups['unbeantwortet']['rows'][0]['open'])->toBeTrue();
 });
 
+it('serves the rail as the Info tab of an inquiry', function () {
+    $lead = caseFor();
+
+    $page = props("/anfragen/{$lead->case->public_id}/info");
+
+    expect($page['tab'])->toBe('info')
+        ->and(array_column($page['header']['tabs'], 'key'))->toBe(['overview', 'quotes', 'messages', 'info']);
+});
+
 it('offers the stages to move to and lands back on the case', function () {
     $lead = caseFor();
 

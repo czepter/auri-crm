@@ -589,6 +589,10 @@ Route::middleware('audience:staff')->group(function () {
             ->defaults('tab', 'messages')
             ->missing(fn (Request $request) => LeadCaseController::legacyRedirect($request))
             ->name('leads.messages');
+        Route::get('/anfragen/{case}/info', [LeadCaseController::class, 'show'])
+            ->defaults('tab', 'info')
+            ->missing(fn (Request $request) => LeadCaseController::legacyRedirect($request))
+            ->name('leads.info');
         Route::get('/anfragen/{case}/angebot', [LeadCaseController::class, 'show'])
             ->defaults('tab', 'quotes')
             ->missing(fn (Request $request) => LeadCaseController::legacyRedirect($request))
@@ -628,6 +632,8 @@ Route::middleware('audience:staff')->group(function () {
             ->name('projects.update');
         Route::post('/auftraege/{case}/stufe', [CaseController::class, 'stage'])
             ->name('projects.stage');
+        Route::get('/auftraege/{case}/info', [CaseController::class, 'info'])
+            ->name('projects.info');
         Route::get('/auftraege/{case}/shootings', [CaseController::class, 'shoots'])
             ->name('projects.shoots');
         Route::get('/auftraege/{case}/aufgaben', [CaseController::class, 'tasks'])

@@ -118,6 +118,7 @@ class CaseHeaderData extends Data
                 ['key' => 'messages', 'label' => 'project.messages', 'href' => "/auftraege/{$project->public_id}/nachrichten", 'count' => self::waitingThreads($project), 'countTo' => null, 'children' => []],
                 ['key' => 'galleries', 'label' => 'contacts.galleries', 'href' => "/auftraege/{$project->public_id}/galerien", 'count' => $project->galleries()->count(), 'countTo' => null, 'children' => []],
                 self::documentsTab($project),
+                self::infoTab("/auftraege/{$project->public_id}"),
             ],
             track: app(ReadStageTrack::class)($position),
             queue: $user === null || ! $queue ? [] : app(OpenCases::class)->queue($user, $project),
@@ -170,7 +171,14 @@ class CaseHeaderData extends Data
             ['key' => 'overview', 'label' => 'project.overview', 'href' => $case, 'count' => null, 'countTo' => null, 'children' => []],
             ['key' => 'quotes', 'label' => 'project.quotes', 'href' => "{$case}/angebot", 'count' => $project->quotes()->where('status', QuoteStatus::Sent)->count(), 'countTo' => null, 'children' => []],
             ['key' => 'messages', 'label' => 'project.messages', 'href' => "{$case}/nachrichten", 'count' => self::waitingThreads($project), 'countTo' => null, 'children' => []],
+            self::infoTab($case),
         ];
+    }
+
+    /** The rail, for the widths that have no room for it. */
+    private static function infoTab(string $base): array
+    {
+        return ['key' => 'info', 'label' => 'lead.info', 'href' => "{$base}/info", 'count' => null, 'countTo' => null, 'children' => []];
     }
 
     /**

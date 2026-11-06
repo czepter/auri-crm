@@ -63,7 +63,7 @@ it('shows the inquiry tabs until the booking and sends the booked inquiry to its
 
     $header = props("/anfragen/{$lead->case->public_id}")['header'];
 
-    expect(collect($header['tabs'])->pluck('key')->all())->toBe(['overview', 'quotes', 'messages'])
+    expect(collect($header['tabs'])->pluck('key')->all())->toBe(['overview', 'quotes', 'messages', 'info'])
         ->and($header['queue'])->toBe([]);
 
     app(BookCase::class)($project, auth('staff')->user());
