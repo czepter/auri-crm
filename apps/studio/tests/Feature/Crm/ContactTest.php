@@ -48,7 +48,7 @@ it('allows the same email under a different tenant', function () {
         ->and(DB::table('contacts')->count())->toBe(2);
 });
 
-it('files a contact with only an inquiry under Ohne Auftrag', function () {
+it('files a contact with only an inquiry under Nur Anfragen', function () {
     $contact = Contact::factory()->create();
     $inquiry = \App\Crm\Models\ClientCase::factory()->wedding()->create(['booked_at' => null]);
     $inquiry->attachContact($contact, \App\Crm\Enums\CaseContactRole::Primary);
