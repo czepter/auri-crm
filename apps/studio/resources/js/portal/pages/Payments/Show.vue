@@ -250,9 +250,12 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
         </section>
       </template>
 
-      <Button v-else-if="quote" as-child variant="portal" class="mt-10 min-h-12 w-full justify-center min-[700px]:w-auto">
-        <Link :href="quote.href">{{ $t('portal.quoteView') }}</Link>
-      </Button>
+      <template v-else-if="quote">
+        <p class="mt-8 text-[17px] leading-[1.5] text-muted-foreground">{{ $t('portal.paymentsAfterAcceptance') }}</p>
+        <Button as-child variant="portal" class="mt-8 min-h-12 w-full justify-center min-[700px]:w-auto">
+          <Link :href="quote.href">{{ $t('portal.quoteView') }}</Link>
+        </Button>
+      </template>
     </PortalWrap>
 
     <PortalFooter />
