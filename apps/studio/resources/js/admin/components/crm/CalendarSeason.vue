@@ -37,7 +37,7 @@ const TONE: Record<Phase, string> = { upcoming: 'bg-foreground', editing: 'bg-du
 const HATCH = 'repeating-linear-gradient(135deg, var(--mark) 0 2px, var(--bg) 2px 5px)'
 
 function day(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
+  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 function cell(start: string, end: string) {

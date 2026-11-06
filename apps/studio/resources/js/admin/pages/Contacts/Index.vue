@@ -18,7 +18,7 @@ useLiveProps(['contacts'])
 const groups = computed(() => groupContacts(props.contacts))
 
 function day(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
+  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 /* crm.css's own table, written out. The sheet styled td and th directly, and

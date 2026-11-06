@@ -150,7 +150,7 @@ function savePortal() {
 }
 
 function day(iso: string | null) {
-  return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'
+  return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
 }
 
 function time(iso: string) {

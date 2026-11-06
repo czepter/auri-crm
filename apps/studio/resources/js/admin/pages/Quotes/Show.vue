@@ -37,7 +37,7 @@ const { t } = useI18n()
 const quote = computed(() => props.quotes[0])
 
 function day(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
+  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 const address = computed(() => {

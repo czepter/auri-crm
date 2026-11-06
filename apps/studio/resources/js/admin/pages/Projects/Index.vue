@@ -133,7 +133,7 @@ function openMenu(event: MouseEvent, project: App.Crm.Data.CaseRowData) {
 }
 
 function day(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
+  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 // The date passed and nobody has shot it: the one row on this screen that
