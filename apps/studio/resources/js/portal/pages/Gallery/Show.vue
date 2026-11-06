@@ -5,7 +5,7 @@ import { router, useForm, usePage } from '@inertiajs/vue3'
 import GalleryLightbox from '@/portal/components/GalleryLightbox.vue'
 import PortalBack from '@/portal/components/PortalBack.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
-import { dayDate } from '@/portal/lib/dates'
+import { dayDate, daysUntil } from '@/portal/lib/dates'
 import { ALL, countOf, selections, visible } from '@/portal/lib/gallerySelections'
 import { GRID_WIDTHS, srcSet } from '@/portal/lib/images'
 import { tileStyle } from '@/portal/lib/tile'
@@ -154,6 +154,8 @@ function toggle(list: Pick<List, 'id'>, key: string) {
 // guest sees the studio's name, never the internal project it belongs to.
 const studioName = computed(() => (usePage().props.portalBranding as Branding | undefined)?.displayName)
 
+const expiring = computed(() => (props.gallery.expiresAt ? daysUntil(props.gallery.expiresAt) <= 14 : false))
+
 const form = useForm({ password: '' })
 
 function submit() {
@@ -257,11 +259,11 @@ const COVER_INPUT = [
       <!-- data-tokens: the gate's title is a bare h1, and tokens.css sets one
            unlayered — 24px in the app's own sans, which beats any utility. -->
       <div data-tokens class="relative z-3 w-[min(560px,100%)] px-8 py-11 text-center">
-        <span class="inline-block text-[13px] leading-none font-bold tracking-[0.18em] whitespace-nowrap uppercase text-inherit no-underline" :class="cover && 'rounded-full bg-[rgba(12,10,9,.72)] px-3.5 py-2'">
+        <span v-if="!project" class="mb-5 inline-block text-[13px] leading-none font-bold tracking-[0.18em] whitespace-nowrap uppercase text-inherit no-underline" :class="cover && 'rounded-full bg-[rgba(12,10,9,.72)] px-3.5 py-2'">
           {{ studioName }}
         </span>
         <h1
-          class="mt-5 font-[family-name:var(--font-display)] text-[clamp(34px,6vw,56px)] leading-[1.2] font-semibold tracking-[var(--display-tracking)] text-inherit"
+          class="font-[family-name:var(--font-display)] text-[clamp(34px,6vw,56px)] leading-[1.2] font-semibold tracking-[var(--display-tracking)] text-inherit"
         >
           {{ gallery.title }}
         </h1>
@@ -269,7 +271,7 @@ const COVER_INPUT = [
           {{ subtitle }}
         </p>
         <br v-if="subtitle && gallery.expiresAt && cover" />
-        <p v-if="gallery.expiresAt" class="mt-2 text-[14px] leading-[1.6] font-normal text-inherit" :class="cover ? 'inline-block rounded-full bg-[rgba(12,10,9,.72)] px-3.5 py-1.5' : 'opacity-80'">
+        <p v-if="gallery.expiresAt" class="mt-2 text-[14px] leading-[1.6] font-normal text-inherit" :class="[cover || expiring ? 'inline-block rounded-full px-3.5 py-1.5' : '', expiring ? 'bg-due-bg font-semibold text-due' : cover ? 'bg-[rgba(12,10,9,.72)]' : 'opacity-80']">
           {{ $t('gallery.onlineUntil', { date: dayDate(gallery.expiresAt) }) }}
         </p>
 
