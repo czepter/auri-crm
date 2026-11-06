@@ -540,6 +540,8 @@
     "settingsTitle": "Kalender-Einstellungen",
     "subscribe": "Kalender abonnieren",
     "revoke": "Adresse zurückziehen",
+    "previousMonth": "Vorheriger Monat",
+    "nextMonth": "Nächster Monat",
     "viewMonth": "Monat",
     "viewList": "Liste",
     "viewSeason": "Saison",

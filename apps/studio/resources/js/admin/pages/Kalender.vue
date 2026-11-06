@@ -127,6 +127,8 @@ function shortDate(date: string | null) {
             variant="pill-muted"
             class="min-[641px]:order-1 max-[640px]:min-h-11 max-[640px]:min-w-11"
             :class="step[0] === '←' && 'max-[640px]:ml-auto'"
+            :aria-label="step[0] === '←' ? $t('calendar.previousMonth') : $t('calendar.nextMonth')"
+            :title="step[0] === '←' ? $t('calendar.previousMonth') : $t('calendar.nextMonth')"
             @click="go(step[1])"
           >
             {{ step[0] }}
