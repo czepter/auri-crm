@@ -97,6 +97,10 @@ class DemoFillSeeder extends Seeder
         foreach ([
             'postcode' => '22765',
             'city' => 'Hamburg',
+            'timezone' => 'Europe/Berlin',
+            'accent_color' => '#1C6870',
+            'mail_from_name' => 'Nordlicht Fotografie',
+            'mail_from_address' => 'hallo@nordlicht-fotografie.test',
             'portal_contact_email' => 'hallo@nordlicht-fotografie.test',
             'portal_contact_phone' => '+49 40 5550100',
             'bank_account_holder' => 'Nordlicht Fotografie GmbH',
