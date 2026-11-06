@@ -252,6 +252,7 @@ class CaseController extends Controller
                 'dueOn' => $next?->dueOn,
                 'overdue' => $next?->isLate ?? false,
                 'amount' => $next?->remaining,
+                'openTotal' => $plan->openTotal,
                 'settled' => $next === null,
             ];
         }

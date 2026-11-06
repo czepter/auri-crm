@@ -34,6 +34,7 @@ type Document = {
   signedOn?: string | null
   acceptedOn?: string | null
   amount: number | null
+  openTotal?: number
   settled: boolean
 }
 
@@ -203,49 +204,6 @@ function documentNote(document: Document) {
         {{ statement === 'countdown' ? $t('portal.daysUntil', { days: daysLeft }) : $t(`portal.${statement}`) }}
       </p>
 
-      <!-- State in the row, not behind a click. -->
-      <section v-if="project.documents.length" :class="BAND">
-        <PortalLabel class="mb-2">{{ $t('portal.documentsTitle') }}</PortalLabel>
-        <PortalRow
-          v-for="document in project.documents"
-          :key="document.kind"
-          :href="document.href"
-          :title="$t(`portal.document.${document.kind}`)"
-          :state="document.settled ? 'done' : document.overdue ? 'late' : 'open'"
-          :note="{
-            settled: $t('portal.allSettled'),
-            due: document.dueOn ? $t(document.overdue ? 'portal.overdueSince' : 'portal.dueOn', { date: dayDate(document.dueOn) }) : null,
-            signed: document.signedOn ? $t('portal.signedOn', { date: dayDate(document.signedOn) }) : null,
-            unsigned: $t('portal.notSignedYet'),
-            accepted: document.acceptedOn ? $t('portal.quoteAccepted', { date: dayDate(document.acceptedOn) }) : null,
-            open: $t('portal.quoteOpen'),
-            messages: `${$t('portal.messagesAbout')} ${project.name}`,
-          }[documentNote(document)]"
-          :aside="document.amount ? formatEuros(document.amount) : null"
-          :aside-open="!document.settled"
-        />
-      </section>
-
-      <section v-if="project.shoots.length" :class="BAND">
-        <PortalLabel>{{ $t('portal.shootsTitle') }}</PortalLabel>
-        <div
-          v-for="shoot in project.shoots"
-          :key="shoot.id"
-          class="grid grid-cols-[132px_1fr_auto] items-baseline gap-6 border-b border-border py-5 last:border-b-0 max-[820px]:grid-cols-1 max-[820px]:gap-1.5"
-        >
-          <b class="text-[15px] leading-[1.45] font-semibold tabular-nums">
-            {{ shoot.date ? [dayDate(shoot.date), shoot.callTime].filter(Boolean).join(' · ') : $t('portal.dateOpen') }}
-          </b>
-          <div>
-            <div class="font-serif text-[19px] leading-[1.4]">{{ shoot.title }}</div>
-            <div v-if="shoot.venue" class="mt-[3px] text-[13.5px] text-muted-foreground">{{ shoot.venue }}</div>
-          </div>
-          <div class="inline-flex items-center gap-2 text-[12.5px] whitespace-nowrap text-muted-foreground">
-            <PortalDot :state="shoot.state" />{{ shoot.status }}
-          </div>
-        </div>
-      </section>
-
       <section v-if="project.gallery" :class="BAND">
         <div class="mb-6 grid grid-cols-[1.5fr_1fr_1fr_1.3fr] gap-0.5 max-[820px]:grid-cols-2">
           <a
@@ -277,6 +235,49 @@ function documentNote(document: Document) {
             {{ $t('portal.viewAllImages', { count: project.gallery.count }) }}
             <svg viewBox="0 0 24 24" class="fill-none stroke-current"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </Button>
+        </div>
+      </section>
+
+      <!-- State in the row, not behind a click. -->
+      <section v-if="project.documents.length" :class="BAND">
+        <PortalLabel class="mb-2">{{ $t('portal.documentsTitle') }}</PortalLabel>
+        <PortalRow
+          v-for="document in project.documents"
+          :key="document.kind"
+          :href="document.href"
+          :title="$t(`portal.document.${document.kind}`)"
+          :state="document.settled ? 'done' : document.overdue ? 'late' : 'open'"
+          :note="{
+            settled: $t('portal.allSettled'),
+            due: $t('portal.quoteOpen'),
+            signed: document.signedOn ? $t('portal.signedOn', { date: dayDate(document.signedOn) }) : null,
+            unsigned: $t('portal.notSignedYet'),
+            accepted: document.acceptedOn ? $t('portal.quoteAccepted', { date: dayDate(document.acceptedOn) }) : null,
+            open: $t('portal.quoteOpen'),
+            messages: `${$t('portal.messagesAbout')} ${project.name}`,
+          }[documentNote(document)]"
+          :aside="document.kind === 'payments' ? (document.openTotal ? formatEuros(document.openTotal) : null) : document.amount ? formatEuros(document.amount) : null"
+          :aside-open="!document.settled"
+        />
+      </section>
+
+      <section v-if="project.shoots.length" :class="BAND">
+        <PortalLabel>{{ $t('portal.shootsTitle') }}</PortalLabel>
+        <div
+          v-for="shoot in project.shoots"
+          :key="shoot.id"
+          class="grid grid-cols-[132px_1fr_auto] items-baseline gap-6 border-b border-border py-5 last:border-b-0 max-[820px]:grid-cols-1 max-[820px]:gap-1.5"
+        >
+          <b class="text-[15px] leading-[1.45] font-semibold tabular-nums">
+            {{ shoot.date ? [dayDate(shoot.date), shoot.callTime].filter(Boolean).join(' · ') : $t('portal.dateOpen') }}
+          </b>
+          <div>
+            <div class="font-serif text-[19px] leading-[1.4]">{{ shoot.title }}</div>
+            <div v-if="shoot.venue" class="mt-[3px] text-[13.5px] text-muted-foreground">{{ shoot.venue }}</div>
+          </div>
+          <div class="inline-flex items-center gap-2 text-[12.5px] whitespace-nowrap text-muted-foreground">
+            <PortalDot :state="shoot.state" />{{ shoot.status }}
+          </div>
         </div>
       </section>
 
