@@ -110,7 +110,7 @@ watch(sizeOptions, (options) => {
 /* gallery.css, inlined. Its own .field / .hint / .err are not the portal's of
    the same name — the sheet scopes every rule under [data-theme="gallery"]. */
 const INPUT = [
-  '[&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-line-hover',
+  '[&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-input',
   '[&_input]:bg-muted [&_input]:px-3.5 [&_input]:py-[13px]',
   '[&_input]:text-[15px] [&_input]:leading-[1.2] [&_input]:font-normal [&_input]:text-foreground',
   '[&_input::placeholder]:text-faint',

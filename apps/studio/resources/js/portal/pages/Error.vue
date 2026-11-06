@@ -22,9 +22,11 @@ const title = computed(() => {
     : path.includes('/zahlungen') ? 'Payments'
       : path.includes('/vertrag') ? 'Contract'
         : path.includes('/angebot') ? 'Quote'
-          : path.startsWith('/galerien') ? 'Gallery'
-            : path.startsWith('/projekte') ? 'Booking'
-              : null
+          : path.includes('/fragebogen') ? 'Questionnaire'
+            : path.startsWith('/leistungen') ? 'Service'
+              : path.startsWith('/galerien') ? 'Gallery'
+                : path.startsWith('/projekte') ? 'Booking'
+                  : null
 
   return key ? `portal.notFound${key}` : 'portal.notFoundTitle'
 })

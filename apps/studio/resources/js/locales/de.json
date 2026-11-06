@@ -1804,6 +1804,8 @@
     "notFoundQuote": "Angebot nicht gefunden",
     "notFoundGallery": "Galerie nicht gefunden",
     "notFoundBooking": "Buchung nicht gefunden",
+    "notFoundQuestionnaire": "Fragebogen nicht gefunden",
+    "notFoundService": "Leistung nicht gefunden",
     "nextStep": "Nächster Schritt",
     "payButton": "Bezahlen",
     "signButton": "Unterschreiben",

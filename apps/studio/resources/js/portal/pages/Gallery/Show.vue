@@ -207,7 +207,7 @@ async function heart(key: string) {
    scopes every rule under [data-theme="gallery"], so nothing here can be
    shared with the portal's own .field / .hint / .err of the same name. */
 const INPUT = [
-  '[&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-line-hover',
+  '[&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-input',
   '[&_input]:bg-muted [&_input]:px-3.5 [&_input]:py-[13px]',
   '[&_input]:text-[15px] [&_input]:leading-[1.2] [&_input]:font-normal [&_input]:text-foreground',
   '[&_input::placeholder]:text-faint',
