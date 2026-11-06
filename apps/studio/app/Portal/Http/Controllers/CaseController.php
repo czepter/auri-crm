@@ -134,6 +134,7 @@ class CaseController extends Controller
     private function inquiry(ClientCase $found): array
     {
         $shoot = $found->primaryShoot ?? $found->shoots()->orderBy('sort_order')->first();
+        $quote = $found->latestQuote;
 
         return [
             'id' => $found->public_id,
@@ -143,6 +144,12 @@ class CaseController extends Controller
             'venueName' => $shoot?->venue_name,
             'venueCity' => $shoot?->venue_city,
             'inquiryText' => $found->lead?->inquiry_text,
+            'quote' => $quote !== null && in_array($quote->status, [QuoteStatus::Sent, QuoteStatus::Accepted], true) ? [
+                'href' => "/projekte/{$found->public_id}/angebot",
+                'total' => (int) $quote->total,
+                'validUntil' => $quote->valid_until?->format('Y-m-d'),
+                'acceptedOn' => $quote->accepted_at?->format('Y-m-d'),
+            ] : null,
             'questionnaires' => $this->questionnaires($found),
             'contact' => [
                 'email' => auth('portal')->user()->email,
