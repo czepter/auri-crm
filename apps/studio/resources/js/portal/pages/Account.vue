@@ -69,16 +69,15 @@ const ROW = 'flex items-center gap-6 border-b border-border py-6'
            1100px wide is a form field nobody can scan. Under 900px the rail
            lies down over the block instead of eating half the column. -->
       <div class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 grid gap-8 min-[900px]:grid-cols-[168px_minmax(0,1fr)] min-[900px]:gap-16">
-        <nav class="grid grid-cols-2 gap-2 min-[900px]:sticky min-[900px]:top-24 min-[900px]:grid-cols-1 min-[900px]:self-start">
-          <Button
+        <nav class="flex gap-6 overflow-x-auto border-b border-border min-[900px]:sticky min-[900px]:top-24 min-[900px]:flex-col min-[900px]:gap-0 min-[900px]:self-start min-[900px]:overflow-visible min-[900px]:border-b-0">
+          <button
             v-for="item in NAV"
             :key="item.key"
-            :data-active="pane === item.key"
-            class="min-h-11 justify-center data-[active=true]:border-foreground! data-[active=true]:bg-sunk! data-[active=true]:text-foreground!"
+            :aria-current="pane === item.key"
+            class="-mb-px min-h-11 shrink-0 cursor-pointer border-b-2 border-transparent bg-transparent px-0 text-[14px] leading-none font-medium whitespace-nowrap text-muted-foreground hover:text-foreground aria-[current=true]:border-foreground aria-[current=true]:font-semibold aria-[current=true]:text-foreground min-[900px]:text-left"
             type="button"
-            variant="portal-filter"
             @click="pane = item.key"
-          >{{ $t(item.label) }}</Button>
+          >{{ $t(item.label) }}</button>
         </nav>
 
         <div class="min-w-0 max-w-[680px]">
@@ -127,7 +126,7 @@ const ROW = 'flex items-center gap-6 border-b border-border py-6'
               </Button>
             </div>
 
-            <Button class="min-h-12 justify-center disabled:bg-sunk-2 disabled:text-foreground disabled:opacity-100 disabled:shadow-[inset_0_0_0_1px_var(--muted)] justify-self-start max-[640px]:w-full" variant="portal" type="submit" :disabled="!form.isDirty || form.processing">
+            <Button class="min-h-12 justify-center justify-self-start max-[640px]:w-full" variant="portal" type="submit" :disabled="!form.isDirty || form.processing">
               {{ $t('common.save') }}
             </Button>
           </form>
