@@ -11,6 +11,7 @@ import TaskTemplatePreview from '@/admin/components/templates/TaskTemplatePrevie
 import { Input } from '@/ui/input'
 import { useLiveProps } from '@/admin/lib/liveReload'
 import Chip from '@/ui/page/Chip.vue'
+import Empty from '@/ui/page/Empty.vue'
 
 type Kind = 'aufgaben' | 'fragebogen' | 'dokumente' | 'galerien'
 
@@ -220,7 +221,7 @@ function open(row: Row) {
                 <Chip v-if="!row.active">{{ $t('formTemplates.paused') }}</Chip>
               </component>
 
-              <p v-if="!matching(rows[kind]).length" class="m-0 text-small leading-[1.45] text-faint">{{ $t('templates.empty') }}</p>
+              <Empty v-if="!matching(rows[kind]).length" :text="$t('templates.empty')" />
             </div>
 
             <div v-if="editable && current" class="min-w-0 max-w-[600px] flex-1">

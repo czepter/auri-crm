@@ -17,6 +17,7 @@ import { Label } from '@/ui/label'
 import { Switch } from '@/ui/switch'
 import { Textarea } from '@/ui/textarea'
 import Chip from '@/ui/page/Chip.vue'
+import Empty from '@/ui/page/Empty.vue'
 
 const props = defineProps<{
   header: App.Crm.Screens.CaseHeaderData
@@ -262,7 +263,7 @@ function summary(instance: App.Crm.Data.FormInstanceData): string {
         </Card>
       </div>
 
-      <p v-if="!formInstances.length && !header.canManageForms" class="text-small leading-[1.45] text-faint">{{ $t('formInstances.empty') }}</p>
+      <Empty v-if="!formInstances.length && !header.canManageForms" :text="$t('formInstances.empty')" />
     </ProjectShell>
   </AdminLayout>
 </template>

@@ -21,6 +21,7 @@ import InstallmentPaidDialog from '@/admin/components/payments/InstallmentPaidDi
 import InstallmentStornoDialog from '@/admin/components/payments/InstallmentStornoDialog.vue'
 import CreditNoteDialog from '@/admin/components/payments/CreditNoteDialog.vue'
 import PaymentPlanDialog from '@/admin/components/payments/PaymentPlanDialog.vue'
+import Empty from '@/ui/page/Empty.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -372,7 +373,5 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
     </form>
   </Card>
 
-  <p v-if="!quotes.length && !canManageQuotes" class="mt-3 text-small leading-[1.45] text-faint">
-    {{ $t('quotes.empty') }}
-  </p>
+  <Empty v-if="!quotes.length && !canManageQuotes" :text="$t('quotes.empty')" />
 </template>
