@@ -63,7 +63,7 @@ function add() {
                else's holiday to book your own. As a dialog it moves to where the
                other list screens keep their create action: the header. -->
           <Dialog v-model:open="adding">
-            <DialogTrigger as-child>
+            <DialogTrigger v-if="absences.length" as-child>
               <Button class="ml-auto" variant="pill" type="button">{{ $t('absences.add') }}</Button>
             </DialogTrigger>
 
@@ -110,7 +110,9 @@ function add() {
           </Dialog>
         </PageHead>
 
-        <Empty v-if="!absences.length" class="mx-8 mt-7" :text="$t('absences.empty')" />
+        <Empty v-if="!absences.length" class="mx-8 mt-7">
+          <Button variant="pill" type="button" @click="adding = true">{{ $t('absences.add') }}</Button>
+        </Empty>
 
         <div v-else class="max-w-[900px] px-6 pt-7 pb-8">
           <div

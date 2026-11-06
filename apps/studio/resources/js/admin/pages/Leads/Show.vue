@@ -468,7 +468,7 @@ const primary = computed(() => {
                                 </Select>
                                 <Button
                                     class="ml-auto"
-                                    variant="pill"
+                                    variant="outline"
                                     type="submit"
                                     :disabled="!task.title || task.processing"
                                 >

@@ -362,7 +362,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
         <Button type="button" variant="outline" @click="planForm.installments.push({ due_on: '' })">
           {{ $t('payments.addInstallment') }}
         </Button>
-        <Button type="submit" variant="pill" :disabled="planForm.processing">{{ $t('payments.create') }}</Button>
+        <Button type="submit" variant="outline" :disabled="planForm.processing">{{ $t('payments.create') }}</Button>
       </div>
 
       <p v-if="planForm.errors.installments" class="col-span-2 text-small text-destructive">

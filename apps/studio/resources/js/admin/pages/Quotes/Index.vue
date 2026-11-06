@@ -35,7 +35,7 @@ function day(iso: string) {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('quotesOverview.title')">
-          <Button :as="Link" variant="pill" class="ml-auto" href="/angebote/neu">{{ $t('quotesOverview.create') }}</Button>
+          <Button v-if="quotes.length" :as="Link" variant="pill" class="ml-auto" href="/angebote/neu">{{ $t('quotesOverview.create') }}</Button>
         </PageHead>
 
         <template v-if="quotes.length">
@@ -67,7 +67,9 @@ function day(iso: string) {
           </Table>
         </template>
 
-        <Empty v-else class="mx-8 mt-7" :text="$t('quotesOverview.empty')" />
+        <Empty v-else class="mx-8 mt-7">
+          <Button :as="Link" variant="pill" href="/angebote/neu">{{ $t('quotesOverview.create') }}</Button>
+        </Empty>
       </div>
     </Page>
   </AdminLayout>

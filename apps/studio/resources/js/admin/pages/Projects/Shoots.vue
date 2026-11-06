@@ -354,14 +354,14 @@ const TONE: Record<string, string> = {
               <div v-if="!shoot.isCancelled && header.canManageShoots" class="flex items-center gap-2">
                 <div v-if="onward(shoot).length" class="flex">
                   <Button
-                    variant="pill"
+                    variant="pill-muted"
                     type="button"
                     class="rounded-r-none max-[640px]:min-h-11"
                     @click="advance(shoot, onward(shoot)[0].value)"
                   >{{ onward(shoot)[0].label }}</Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger as-child>
-                      <Button variant="pill" type="button" class="rounded-l-none border-l border-white/30 px-2 max-[640px]:min-h-11 max-[640px]:min-w-11" :aria-label="$t('project.advance')">
+                      <Button variant="pill-muted" type="button" class="rounded-l-none border-l border-line-hover px-2 max-[640px]:min-h-11 max-[640px]:min-w-11" :aria-label="$t('project.advance')">
                         <ChevronDown class="size-3.5" />
                       </Button>
                     </DropdownMenuTrigger>

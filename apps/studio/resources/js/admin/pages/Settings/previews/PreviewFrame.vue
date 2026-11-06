@@ -25,7 +25,7 @@ const open = ref(false)
   <aside
     v-if="beside"
     class="sticky top-6"
-    :class="wide ? 'min-w-[352px] max-w-[1100px] flex-1' : 'w-[352px] flex-none'"
+    :class="wide ? 'min-w-[352px] max-w-[560px] flex-1' : 'w-[352px] flex-none'"
   >
     <div class="mb-2.5 text-small leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ label }}</div>
     <p v-if="hint" class="mb-2.5 text-small leading-[1.45] text-faint">{{ hint }}</p>

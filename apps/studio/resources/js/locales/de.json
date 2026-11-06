@@ -1,5 +1,10 @@
 {
   "common": {
+    "back": "Zurück",
+    "saved": "Gespeichert",
+    "saving": "Speichert …",
+    "savingError": "Nicht gespeichert",
+    "saveDirty": "Ungespeichert",
     "preview": "Vorschau",
     "invalid": {
       "valueMissing": "Pflichtfeld",
@@ -1337,6 +1342,7 @@
   "releases": {
     "kicker": "Studio",
     "title": "Neuigkeiten",
+    "reload": "Neu laden",
     "installed": "Installiert",
     "available": "Verfügbar",
     "filterAll": "Alles",
