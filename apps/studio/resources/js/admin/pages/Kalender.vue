@@ -99,7 +99,7 @@ function shortDate(date: string | null) {
         <PageHead :kicker="$t('calendar.title')" :title="view === 'saison' ? seasonLabel : label">
           <ChoiceGroup
             :model-value="view"
-            class="ml-auto max-[640px]:ml-0 max-[640px]:[&_span]:inline-flex max-[640px]:[&_span]:min-h-11 max-[640px]:[&_span]:items-center"
+            class="ml-auto min-[641px]:order-2 max-[640px]:ml-0 max-[640px]:[&_span]:inline-flex max-[640px]:[&_span]:min-h-11 max-[640px]:[&_span]:items-center"
             :options="[
               { value: 'monat', label: $t('calendar.viewMonth') },
               { value: 'liste', label: $t('calendar.viewList') },
@@ -113,7 +113,7 @@ function shortDate(date: string | null) {
             v-if="workingDays"
             :as="Link"
             variant="pill-muted"
-            class="max-[640px]:hidden"
+            class="max-[640px]:hidden min-[641px]:order-3"
             :href="`/kalender/einstellungen?monat=${month}&ansicht=${view}`"
           >
             {{ $t('stages.entry') }}
@@ -125,11 +125,21 @@ function shortDate(date: string | null) {
             :key="step[0]"
             type="button"
             variant="pill-muted"
-            class="max-[640px]:min-h-11 max-[640px]:min-w-11"
+            class="min-[641px]:order-1 max-[640px]:min-h-11 max-[640px]:min-w-11"
             :class="step[0] === '←' && 'max-[640px]:ml-auto'"
             @click="go(step[1])"
           >
             {{ step[0] }}
+          </Button>
+
+          <Button
+            v-show="view !== 'saison'"
+            :as="Link"
+            variant="pill-muted"
+            class="min-[641px]:order-1 max-[640px]:min-h-11"
+            :href="`/kalender?ansicht=${view}`"
+          >
+            {{ $t('calendar.today') }}
           </Button>
         </PageHead>
 
@@ -167,9 +177,9 @@ function shortDate(date: string | null) {
             >
               <span
                 v-if="entry.time"
-                class="tabular-nums max-[640px]:hidden"
+                class="mr-1 tabular-nums max-[640px]:hidden"
                 :class="entry.kind === 'away' ? 'font-normal' : 'font-semibold'"
-              >{{ entry.time }} </span>
+              >{{ entry.time }}</span>
               <!-- A phone cell is 50px wide: one dot per entry, still a link to its project. -->
               <span class="hidden max-[640px]:inline">•</span>
               <span class="max-[640px]:hidden">{{ entry.what }}</span>
