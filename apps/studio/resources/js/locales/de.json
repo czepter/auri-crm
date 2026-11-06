@@ -1239,6 +1239,7 @@
     "exportFailed": "Fehlgeschlagen",
     "exportUntil": "bis {date}",
     "exportDownload": "Laden",
+    "numberingNext": "Nächste Nummern",
     "exportRecent": "Letzte Exporte",
     "deletionRemoved": "Wird gelöscht",
     "deletionFiles": "Dateien",
