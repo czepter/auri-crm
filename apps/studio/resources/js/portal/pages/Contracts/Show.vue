@@ -128,13 +128,13 @@ function sign() {
 
           <!-- not a <Label> wrapper any more: Checkbox renders a button,
                and a button inside a label is not clickable through it -->
-          <div class="flex cursor-pointer items-start gap-3.5 text-[13.5px] leading-[1.5] [&_[data-slot=checkbox]]:mt-0.5 [&_[data-slot=checkbox]]:size-[17px] [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action">
+          <div class="flex cursor-pointer items-start gap-3.5 text-[13.5px] leading-[1.5] [&_[data-slot=checkbox]]:size-6 [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action">
             <Checkbox id="sign-consent" v-model="form.consent" required />
             <Label variant="inline" for="sign-consent">{{ $t('portal.signConsent') }}</Label>
           </div>
 
           <Button
-            class="w-full justify-center"
+            class="w-full justify-center disabled:bg-sunk-2 disabled:text-foreground disabled:opacity-100"
             variant="portal"
             type="submit"
             :disabled="form.processing || !form.consent || !form.typedName"

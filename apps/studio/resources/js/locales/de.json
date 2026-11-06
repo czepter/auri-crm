@@ -1751,7 +1751,7 @@
     "signUnavailable": "Online-Unterschrift nicht freigeschaltet. Unterschrift beim Studio.",
     "signTitle": "Unterschreiben",
     "signName": "Ihr vollständiger Name",
-    "signNameHint": "Genau wie im Vertrag.",
+    "signNameHint": "Wie im Vertrag",
     "signConsent": "Ich habe den Vertrag gelesen und unterzeichne ihn hiermit rechtsverbindlich.",
     "signSubmit": "Vertrag unterschreiben",
     "signedConfirmation": "Unterschrieben von {name}.",

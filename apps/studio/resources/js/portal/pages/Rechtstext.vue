@@ -49,6 +49,6 @@ const html = computed(() => {
       />
     </PortalWrap>
 
-    <PortalFooter />
+    <PortalFooter class="pb-[calc(6rem+env(safe-area-inset-bottom))]" />
   </PortalShell>
 </template>

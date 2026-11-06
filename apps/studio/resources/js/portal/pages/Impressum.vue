@@ -80,6 +80,6 @@ const role = computed(() => /gmbh|ug\b/i.test(props.legalForm ?? '') ? 'portal.i
       </dl>
     </main>
 
-    <PortalFooter />
+    <PortalFooter class="pb-[calc(6rem+env(safe-area-inset-bottom))]" />
   </PortalShell>
 </template>
