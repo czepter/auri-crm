@@ -675,6 +675,9 @@
   },
   "create": {
     "kicker": "Übersicht · Neu",
+    "kickerQuotes": "Angebote · Neu",
+    "kickerShoots": "Shootings · Neu",
+    "kickerForms": "Fragebögen · Neu",
     "pick": "Projekt oder Anfrage",
     "pickPlaceholder": "Projekt oder Anfrage suchen",
     "project": "Projekt",

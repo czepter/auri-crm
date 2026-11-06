@@ -65,10 +65,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <AdminLayout active="uebersicht">
+  <AdminLayout active="angebote">
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
-        <PageHead :kicker="$t('create.kicker')" :title="$t('quotes.create')" />
+        <PageHead :kicker="$t('create.kickerQuotes')" :title="$t('quotes.create')" />
 
         <div class="px-6 pt-5 pb-8">
           <Field v-slot="{ id }" class="max-w-[720px]" :label="$t('create.pick')">

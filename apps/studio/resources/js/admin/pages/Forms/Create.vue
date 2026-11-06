@@ -65,10 +65,10 @@ const LONG = ['text', 'name_list', 'group_photos']
 </script>
 
 <template>
-  <AdminLayout active="uebersicht">
+  <AdminLayout active="projekte">
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
-        <PageHead :kicker="$t('create.kicker')" :title="$t('formInstances.create')">
+        <PageHead :kicker="$t('create.kickerForms')" :title="$t('formInstances.create')">
           <span v-if="instance" :class="['chip', instance.sharedAt ? 'done' : 'off']">
             {{ instance.sharedAt ? $t('formInstances.shared') : $t('formInstances.notShared') }}
           </span>
