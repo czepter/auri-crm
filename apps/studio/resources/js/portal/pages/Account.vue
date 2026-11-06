@@ -74,7 +74,7 @@ const ROW = 'flex items-center gap-6 border-b border-border py-6'
             v-for="item in NAV"
             :key="item.key"
             :data-active="pane === item.key"
-            class="min-h-11 justify-center data-[active=true]:border-line-hover! data-[active=true]:bg-background! data-[active=true]:text-foreground!"
+            class="min-h-11 justify-center data-[active=true]:border-foreground! data-[active=true]:bg-sunk! data-[active=true]:text-foreground!"
             type="button"
             variant="portal-filter"
             @click="pane = item.key"
