@@ -1343,6 +1343,8 @@
     "kicker": "Studio",
     "title": "Neuigkeiten",
     "reload": "Neu laden",
+    "checked": "geprüft {time}",
+    "empty": "Keine Einträge",
     "installed": "Installiert",
     "available": "Verfügbar",
     "filterAll": "Alles",
