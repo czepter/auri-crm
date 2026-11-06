@@ -263,7 +263,7 @@ const COVER_INPUT = [
 
       <a
         v-if="assets?.length"
-        class="absolute bottom-8 left-1/2 z-2 flex -translate-x-1/2 flex-col items-center gap-2.5 text-[10.5px] leading-none font-semibold tracking-[0.2em] uppercase text-muted-foreground no-underline [&_svg]:size-4 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.4]"
+        class="absolute bottom-8 left-1/2 z-2 flex -translate-x-1/2 flex-col items-center gap-2.5 text-[14px] leading-none font-semibold tracking-[0.12em] uppercase text-foreground/80 no-underline [&_svg]:size-4 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.4]"
         href="#raster"
       >
         {{ $t('gallery.scrollCue') }}
@@ -277,7 +277,7 @@ const COVER_INPUT = [
       >
         <!-- tokens.css .who decides everything but the size and the colour -->
         <span
-          class="m-0 pr-[18px] text-[13.5px] leading-[1.35] font-semibold tracking-[-0.015em] text-muted-foreground max-[760px]:hidden [&_b]:font-semibold [&_b]:text-foreground"
+          class="m-0 pr-[18px] text-[14px] leading-[1.35] font-semibold tracking-[-0.015em] text-muted-foreground max-[760px]:hidden [&_b]:font-semibold [&_b]:text-foreground"
         >
           <b>{{ gallery.title }}</b>
           <template v-if="gallery.expiresAt"> · {{ $t('gallery.onlineUntil', { date: expiry(gallery.expiresAt) }) }}</template>

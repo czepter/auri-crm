@@ -82,7 +82,7 @@ img { max-width: 100%; height: auto; }
   content: ''; position: absolute; inset: 0;
   background:
     linear-gradient(180deg, rgba(12,10,9,.45) 0%, rgba(12,10,9,0) 26%),
-    linear-gradient(0deg, var(--void) 0%, rgba(12,10,9,.35) 30%, rgba(12,10,9,0) 62%);
+    linear-gradient(0deg, var(--void) 0%, rgba(12,10,9,.62) 30%, rgba(12,10,9,0) 62%);
 }
 .covertext {
   position: absolute; z-index: 2; left: 0; right: 0; bottom: var(--s9);
@@ -95,8 +95,8 @@ img { max-width: 100%; height: auto; }
 .scrollcue {
   position: absolute; z-index: 2; left: 50%; bottom: var(--s5); transform: translateX(-50%);
   display: flex; flex-direction: column; align-items: center; gap: 10px;
-  font: 600 10.5px/1 var(--sans); letter-spacing: .2em; text-transform: uppercase;
-  color: rgba(246,241,235,.5); text-decoration: none;
+  font: 600 14px/1 var(--sans); letter-spacing: .12em; text-transform: uppercase;
+  color: rgba(246,241,235,.8); text-decoration: none;
 }
 .scrollcue svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.4; animation: nudge 2.6s var(--ease) infinite; }
 @keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
@@ -109,13 +109,13 @@ img { max-width: 100%; height: auto; }
   background: rgba(12,10,9,.72); backdrop-filter: blur(14px) saturate(140%);
   border-bottom: 1px solid var(--void-line);
 }
-.bar .who { font-size: 13.5px; color: var(--void-ink-2); }
+.bar .who { font-size: 14px; color: var(--void-ink-2); }
 .bar .who b { color: var(--void-ink); font-weight: 600; }
 .barbtn {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 9px 16px; border-radius: var(--r-pill);
   border: 1px solid var(--void-line); background: transparent;
-  color: var(--void-ink); font: 500 13px/1 var(--sans); text-decoration: none; cursor: pointer;
+  color: var(--void-ink); font: 500 14px/1 var(--sans); text-decoration: none; cursor: pointer;
   transition: background .2s var(--ease), border-color .2s var(--ease);
 }
 .barbtn:hover { background: var(--void-2); border-color: #3A3128; }
