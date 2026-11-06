@@ -153,7 +153,7 @@ const figures = computed(() => {
             key: "shoots",
             label: t("dashboard.shoots"),
             value: String(shoots.count),
-            unit: shoots.count ? t(PAST[props.range]) : null,
+            unit: t(PAST[props.range]),
             warn: false,
             ...trend(shoots.count, shoots.priorYear, String),
             note: shoots.priorYear === null ? null : t("dashboard.priorYear", { value: shoots.priorYear }),
@@ -310,7 +310,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                     </Link>
                 </div>
 
-                <div v-if="measured" class="mx-6 mt-5 grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4 max-[640px]:order-7 max-[640px]:mt-3 max-[640px]:flex max-[640px]:flex-col max-[640px]:gap-0 max-[640px]:rounded-[var(--r)] max-[640px]:bg-paper max-[640px]:px-4 max-[640px]:shadow-card">
+                <div v-if="measured" class="mx-6 mt-5 grid grid-cols-2 gap-4 min-[1100px]:grid-cols-4 max-[640px]:order-7 max-[640px]:mt-3 max-[640px]:flex max-[640px]:flex-col max-[640px]:gap-0 max-[640px]:rounded-[var(--r)] max-[640px]:bg-paper max-[640px]:px-4 max-[640px]:shadow-card">
                     <div v-for="figure in figures" :key="figure.key" class="flex flex-col gap-1.5 rounded-[var(--r)] bg-paper px-6 py-5 shadow-card max-[640px]:flex-row max-[640px]:items-baseline max-[640px]:justify-between max-[640px]:rounded-none max-[640px]:px-0 max-[640px]:py-3 max-[640px]:shadow-[inset_0_1px_0_var(--rule)] max-[640px]:first:shadow-none">
                         <div class="text-small font-medium text-ink-2">{{ figure.label }}</div>
                         <div class="flex items-baseline gap-1 text-[34px] leading-10 font-semibold tracking-[-0.03em] tabular-nums max-[640px]:text-[18px] max-[640px]:leading-6" :class="figure.warn && 'text-due'">
