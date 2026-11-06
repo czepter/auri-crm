@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import Page from '@/ui/page/Page.vue'
-import PageHead from '@/ui/page/PageHead.vue'
+import FormShell from '@/ui/page/FormShell.vue'
 import SettingsNav from '@/admin/components/settings/SettingsNav.vue'
 import PortalForm from './panes/PortalForm.vue'
 import { Button } from '@/ui/button'
@@ -11,6 +10,7 @@ import { useI18n } from 'vue-i18n'
 import { onKeyStroke, refDebounced } from '@vueuse/core'
 import { Eye, Maximize2, Monitor, Smartphone, X } from 'lucide-vue-next'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import { saveState } from '@/admin/lib/autosave'
 
 defineProps<{
   settings: App.Settings.Data.PortalSettingsData
@@ -82,31 +82,25 @@ const width = computed(() => {
 
 <template>
   <AdminLayout active="einstellungen">
-    <Page data-tokens wide>
-      <div class="min-w-0 flex-1">
-        <PageHead :kicker="$t('settings.kicker')" :title="$t('portalSettings.title')">
-          <span v-if="formRef?.form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
-          <Button
-            v-if="formRef?.form.isDirty"
-            class="ml-auto"
-            variant="pill"
-            type="submit"
-            form="portal-settings-form"
-            :disabled="formRef?.form.processing"
-          >
-            {{ $t('common.save') }}
-          </Button>
-        </PageHead>
+    <FormShell :kicker="$t('settings.kicker')" :title="$t('portalSettings.title')" :state="saveState([formRef?.form])">
+      <template #head>
+        <Button
+          v-if="formRef?.form.isDirty"
+          variant="pill"
+          type="submit"
+          form="portal-settings-form"
+          :disabled="formRef?.form.processing"
+        >
+          {{ $t('common.save') }}
+        </Button>
+      </template>
 
-        <div class="px-6 pt-7 pb-8">
-          <div class="flex flex-wrap items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
-            <SettingsNav active="portal" />
+      <template #nav><SettingsNav active="portal" /></template>
 
-            <div class="w-[620px] max-w-full min-w-0 flex-none">
-              <PortalForm ref="formRef" :settings="settings" />
-            </div>
+      <PortalForm ref="formRef" :settings="settings" />
 
-            <aside class="sticky top-6 min-w-[360px] flex-1 max-[1440px]:hidden">
+      <template #preview>
+            <aside class="sticky top-6 w-[420px] flex-none max-[1440px]:hidden">
               <div class="mb-2.5 flex flex-wrap items-center gap-2">
                 <span class="mr-auto text-small leading-none font-semibold text-faint">{{ $t('settings.previewPortal') }}</span>
                 <ChoiceGroup v-model="state" variant="segmented" :options="stateOptions" />
@@ -173,9 +167,7 @@ const width = computed(() => {
                 title=""
               />
             </div>
-          </div>
-        </div>
-      </div>
-    </Page>
+      </template>
+    </FormShell>
   </AdminLayout>
 </template>
