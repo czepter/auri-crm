@@ -29,10 +29,10 @@ const slots = useSlots()
                     <slot name="head" />
                 </PageHead>
 
-                <div class="flex items-start gap-10 px-6 pt-6 pb-10 max-[640px]:flex-col max-[640px]:gap-4 max-[640px]:px-5">
+                <div class="flex items-start gap-12 px-6 pt-6 pb-10 max-[640px]:flex-col max-[640px]:gap-4 max-[640px]:px-5">
                     <slot name="nav" />
 
-                    <div class="w-full min-w-0" :class="wide && !slots.aside ? 'max-w-[1160px] flex-1' : 'max-w-[720px] flex-none min-[1100px]:w-[720px]'">
+                    <div class="w-full min-w-0" :class="wide && !slots.aside ? 'max-w-[1160px] flex-1' : slots.preview ? 'max-w-[560px] flex-none min-[1100px]:w-[560px]' : 'max-w-[720px] flex-none min-[1100px]:w-[720px]'">
                         <slot />
                     </div>
 
