@@ -113,15 +113,14 @@ function metrics(shoot: App.Crm.Data.ShootData) {
   ]
 }
 
-// Ort und Stand stehen schon in der Kennzahlenreihe und im Chip daneben;
-// zugeklappt fehlt nur, wann und mit wem.
+function when(shoot: App.Crm.Data.ShootData) {
+  const time = [shoot.callTime, shoot.endTime].filter(Boolean).join('–')
+
+  return [dayWithWeekday(shoot.date, null) ?? t('board.openDate'), time || null].filter(Boolean).join(' · ')
+}
+
 function summary(shoot: App.Crm.Data.ShootData) {
-  return [
-    dayWithWeekday(shoot.date, null) ?? t('board.openDate'),
-    shoot.crew.map((member) => member.name).join(', ') || null,
-  ]
-    .filter(Boolean)
-    .join(' · ')
+  return shoot.crew.map((member) => member.name).join(', ') || null
 }
 
 const filter = ref<'all' | 'upcoming' | 'cancelled'>('all')
@@ -343,6 +342,9 @@ const TONE: Record<string, string> = {
             :summary="summary(shoot)"
             :default-open="shoot.date === null || shoot.date >= today"
           >
+            <template #meta>
+              <span class="text-ink-2">{{ when(shoot) }}</span>
+            </template>
             <template #action>
               <span v-if="shoot.isPrimary" class="text-small leading-[1.5] font-semibold text-foreground">
                 {{ $t('project.primary') }}
