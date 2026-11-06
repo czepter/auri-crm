@@ -364,6 +364,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
             !gallery.draft && (
               <div class="bar">
                 <span class="who"><b>{gallery.title}</b></span>
+                {guestPass === null && <button class="txtbtn" type="button" data-signin-open aria-controls="anmelden">Anmelden</button>}
                 <a class="barbtn solid" href={downloadUrl}>
                   <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
                   Herunterladen
@@ -495,7 +496,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
             // Markierung ohne Absender wäre auf dem nächsten Gerät verloren,
             // und unter jedem Kommentar stünde wieder „Gast".
             !gallery.draft && guestPass === null && (
-              <section class="signin" id="anmelden">
+              <section class="signin" id="anmelden" hidden={!codeSent && !tooManyCodes}>
                 {
                   codeSent ? (
                     <form method="POST">
@@ -613,6 +614,17 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
                   .join(' ')
               })
             }
+
+            const signin = document.getElementById('anmelden')
+
+            document.querySelector('[data-signin-open]')?.addEventListener('click', () => {
+              signin.hidden = !signin.hidden
+              if (!signin.hidden) signin.querySelector('input:not([type=hidden])')?.focus()
+            })
+
+            document.addEventListener('keydown', (event) => {
+              if (event.key === 'Escape' && signin) signin.hidden = true
+            })
 
             document.addEventListener('submit', (event) => {
               if (event.target.querySelector('[name="absicht"]')?.value !== 'abmelden') return
