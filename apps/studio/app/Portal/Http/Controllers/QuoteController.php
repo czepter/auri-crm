@@ -8,6 +8,7 @@ use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
+use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Portal\Support\LegalTexts;
 use App\Quotes\Actions\AcceptQuote;
 use App\Quotes\Data\QuoteData;
@@ -37,7 +38,7 @@ class QuoteController extends Controller
         $contact = auth('portal')->user();
 
         $found = $contact->visibleProjects()->where('cases.public_id', $case)
-            ->with(['latestQuote.items', 'latestQuote.predecessor', 'latestQuote.paymentStages', 'primaryShoot'])
+            ->with(['latestQuote.items', 'latestQuote.predecessor', 'latestQuote.paymentStages', 'primaryShoot', 'paymentPlan.installments'])
             ->firstOrFail();
         $quote = $found->latestQuote;
 
@@ -60,6 +61,11 @@ class QuoteController extends Controller
             // half via `portal.capability:accept_quotes`. Never hides an
             // already-accepted quote — only the button that would accept one.
             'canAccept' => (bool) StudioSettings::current()->portal_accept_quotes_enabled && ! $found->isBooked(),
+            // Per stage, in plan order: the accepted quote shows which are settled.
+            'stagePaid' => ($found->paymentPlan?->installments ?? collect())
+                ->reject->isCancelled()->sortBy('sort_order')
+                ->map(fn ($installment) => $installment->status === PaymentInstallmentStatus::Paid)
+                ->values()->all(),
             'quote' => $quote === null ? null : [
                 ...QuoteData::fromModel($quote->asSeenByClient())->toArray(),
                 // #480: the letter as the client reads it — fields filled, escaped.

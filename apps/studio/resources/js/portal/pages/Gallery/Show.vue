@@ -142,7 +142,7 @@ function onList(list: List, key: string) {
   return list.keys.includes(key)
 }
 
-function toggle(list: List, key: string) {
+function toggle(list: Pick<List, 'id'>, key: string) {
   router.post(
     `${actions.value}/listen/${list.id}/bild`,
     { key },
@@ -179,6 +179,10 @@ const cover = computed(() => props.assets?.[0] ?? null)
 
 // A guest's hearts are this session's; a client's are the lists.
 const hearts = ref(new Set(props.favorited ?? []))
+
+// The menu only earns its place once there is a second list to choose.
+const hasNamedLists = computed(() => !!props.lists?.some((l) => l.name !== null))
+const hasFavourites = computed(() => !!props.lists?.some((l) => l.keys.length))
 
 function isHeart(key: string) {
   return props.lists ? props.lists.some((l) => l.keys.includes(key)) : hearts.value.has(key)
@@ -357,7 +361,7 @@ const COVER_INPUT = [
           <!-- The list menu replaces the single heart as soon as a client is
                signed in; a guest never sees it. -->
           <button
-            v-if="offers.lists && lists?.length"
+            v-if="offers.lists && hasNamedLists"
             class="absolute top-2.5 right-2.5 z-4 grid size-11 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(12,10,9,.55)] text-white backdrop-blur-[8px] [&_svg]:size-5 [&_svg]:stroke-current [&_svg]:stroke-[1.5]"
             :class="isHeart(asset.key) ? '[&_svg]:fill-current' : '[&_svg]:fill-none'"
             type="button"
@@ -369,12 +373,12 @@ const COVER_INPUT = [
           </button>
 
           <button
-            v-else-if="offers.lists && lists === null"
+            v-else-if="offers.lists"
             class="absolute top-2.5 right-2.5 z-4 grid size-11 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(12,10,9,.55)] text-white backdrop-blur-[8px] [&_svg]:size-5 [&_svg]:stroke-current [&_svg]:stroke-[1.5]"
             :class="isHeart(asset.key) ? '[&_svg]:fill-current' : '[&_svg]:fill-none'"
             type="button"
             :aria-label="isHeart(asset.key) ? $t('gallery.unfavorite') : $t('gallery.favorite')"
-            @click.stop="heart(asset.key)"
+            @click.stop="lists ? toggle({ id: 'herz' }, asset.key) : heart(asset.key)"
           >
             <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
           </button>
@@ -427,7 +431,7 @@ const COVER_INPUT = [
         v-if="offers.lists && lists"
         class="mx-auto grid max-w-[1240px] grid-cols-[minmax(0,1fr)] gap-16 border-t border-border px-8 py-16 max-[760px]:px-4 min-[1100px]:grid-cols-[minmax(0,1fr)_320px] [&>div:not(:first-child)]:mt-11"
       >
-        <div>
+        <div v-if="hasFavourites">
           <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.listsTitle') }}</p>
 
           <div v-for="(list, index) in lists" :key="list.listId" :class="index > 0 && 'mt-8'">

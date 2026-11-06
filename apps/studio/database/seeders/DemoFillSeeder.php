@@ -169,12 +169,18 @@ class DemoFillSeeder extends Seeder
 
     private function seedContractTemplate(): DocumentTemplate
     {
-        return $this->template(DocumentTemplateType::Contract, 'Hochzeitsvertrag',
+        $template = $this->template(DocumentTemplateType::Contract, 'Hochzeitsvertrag',
             '<h2>Fotografievertrag</h2>'
             .'<p>Zwischen {{ studio.name }} und {{ contact.name }} wird für das Projekt {{ project.name }} folgender Vertrag geschlossen.</p>'
             .'<h2>Leistung</h2><p>Fotografische Begleitung des Hochzeitstages laut Angebot, Bildbearbeitung und Lieferung in einer Online-Galerie.</p>'
-            .'<h2>Vergütung</h2><p>Die Vergütung richtet sich nach dem angenommenen Angebot. Die Anzahlung ist fällig mit Vertragsschluss.</p>'
+            .'<h2>Vergütung</h2><p>Die Vergütung richtet sich nach dem angenommenen Angebot. Die Anzahlung richtet sich nach dem Zahlungsplan.</p>'
             .'<h2>Ausfall</h2><p>Fällt der Fotograf krankheitsbedingt aus, stellt das Studio nach Möglichkeit einen gleichwertigen Ersatz.</p>');
+
+        if (str_contains($template->body, 'fällig mit Vertragsschluss')) {
+            $template->update(['body' => str_replace('Die Anzahlung ist fällig mit Vertragsschluss.', 'Die Anzahlung richtet sich nach dem Zahlungsplan.', $template->body)]);
+        }
+
+        return $template;
     }
 
     private function template(DocumentTemplateType $type, string $name, string $body): DocumentTemplate
