@@ -99,9 +99,7 @@ function add() {
           </Dialog>
         </PageHead>
 
-        <Empty v-if="!closures.length" class="mx-8 mt-7" :text="$t('settings.closuresEmpty')">
-          <Button variant="pill" type="button" @click="adding = true">{{ $t('settings.closureAdd') }}</Button>
-        </Empty>
+        <Empty v-if="!closures.length" class="mx-8 mt-7" :text="$t('settings.closuresEmpty')" />
 
         <div v-else class="max-w-[900px] px-6 pt-7 pb-8">
           <form

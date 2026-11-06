@@ -67,9 +67,7 @@ function day(iso: string) {
           </Table>
         </template>
 
-        <Empty v-else class="mx-8 mt-7" :text="$t('quotesOverview.empty')">
-          <Button :as="Link" variant="pill" href="/angebote/neu">{{ $t('quotesOverview.create') }}</Button>
-        </Empty>
+        <Empty v-else class="mx-8 mt-7" :text="$t('quotesOverview.empty')" />
       </div>
     </Page>
   </AdminLayout>

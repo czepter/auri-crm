@@ -155,9 +155,7 @@ const shown = computed(() => {
           </Table>
         </template>
 
-        <Empty v-else class="mx-8 mt-7" :text="$t('invoicesOverview.empty')">
-          <Button :as="Link" variant="pill" href="/rechnungen/neu">{{ $t('invoicesOverview.create') }}</Button>
-        </Empty>
+        <Empty v-else class="mx-8 mt-7" :text="$t('invoicesOverview.empty')" />
       </div>
     </Page>
   </AdminLayout>

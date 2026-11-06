@@ -110,9 +110,7 @@ function add() {
           </Dialog>
         </PageHead>
 
-        <Empty v-if="!absences.length" class="mx-8 mt-7" :text="$t('absences.empty')">
-          <Button variant="pill" type="button" @click="adding = true">{{ $t('absences.add') }}</Button>
-        </Empty>
+        <Empty v-if="!absences.length" class="mx-8 mt-7" :text="$t('absences.empty')" />
 
         <div v-else class="max-w-[900px] px-6 pt-7 pb-8">
           <div

@@ -35,9 +35,7 @@ const inPortal = computed(() => props.packages.filter((pkg) => pkg.portalOffered
           <Button :as="Link" variant="pill" class="ml-auto" href="/pakete/neu">{{ $t('packages.create') }}</Button>
         </PageHead>
 
-        <Empty v-if="!packages.length" class="mx-8 mt-7" :text="$t('packages.empty')">
-          <Button :as="Link" variant="pill" href="/pakete/neu">{{ $t('packages.create') }}</Button>
-        </Empty>
+        <Empty v-if="!packages.length" class="mx-8 mt-7" :text="$t('packages.empty')" />
 
         <Table v-else>
           <thead>
