@@ -63,6 +63,7 @@ class PaymentController extends Controller
                 'showSwitcher' => $contact->visibleProjects()->count() > 1,
                 'project' => ['id' => $found->public_id, 'name' => $found->name],
                 'kind' => 'payments',
+                'quote' => $found->latestQuote === null ? null : ['accepted' => $found->latestQuote->accepted_at !== null || $found->isBooked()],
             ]);
         }
 

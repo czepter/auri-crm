@@ -149,7 +149,7 @@ function sign() {
             type="submit"
             :disabled="form.processing || !form.consent || !form.typedName"
           >
-            {{ form.consent ? $t('portal.signButton') : $t('portal.signAgree') }}
+            {{ $t('portal.signButton') }}
           </Button>
         </form>
       </div>

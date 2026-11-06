@@ -264,7 +264,7 @@ function accept() {
     >
       <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
         <div class="text-[34px] leading-none tracking-[-0.03em] tabular-nums lg:text-[46px] lg:leading-[0.94]">{{ formatEuros(total) }}</div>
-        <PortalChip v-if="expiring !== null">{{ $t('portal.validDays', expiring) }}</PortalChip>
+        <PortalChip v-if="expiring !== null" tone="warn">{{ $t('portal.validDays', expiring) }}</PortalChip>
       </div>
 
       <div v-if="!accepted" class="mt-6 border-t border-border pt-5 max-lg:hidden">

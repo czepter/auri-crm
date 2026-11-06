@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Link } from '@inertiajs/vue3'
+import PortalChip from '@/portal/components/PortalChip.vue'
 import PortalDot from '@/portal/components/PortalDot.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
@@ -11,7 +12,7 @@ import PortalPerson from '@/portal/components/PortalPerson.vue'
 import PortalRow from '@/portal/components/PortalRow.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
-import { dayDate } from '@/portal/lib/dates'
+import { dayDate, daysUntil } from '@/portal/lib/dates'
 import { reachable, type Studio } from '@/portal/lib/studio'
 import { formatEuros } from '@/lib/money'
 import { Button } from '@/ui/button'
@@ -134,7 +135,7 @@ function phaseState(phase: Phase) {
                 :key="index"
                 :href="row.href"
                 :title="row.kind === 'message' ? (row.subject ?? $t('portal.pending.message')) : $t(`portal.pending.${row.kind}`)"
-                :state="row.overdue ? 'late' : row.dueOn ? 'due' : 'open'"
+                :state="row.overdue ? 'late' : row.dueOn && daysUntil(row.dueOn) <= 14 ? 'due' : 'open'"
                 :note="row.dueOn
                   ? $t(row.overdue ? 'portal.overdueSince' : row.kind === 'quote' ? 'portal.validUntil' : 'portal.dueOn', { date: dayDate(row.dueOn) })
                   : row.kind === 'message' ? $t('portal.pending.message') : null"
@@ -231,9 +232,7 @@ function phaseState(phase: Phase) {
                   <span class="inline-flex items-center gap-2 text-[12.5px] whitespace-nowrap text-muted-foreground max-[700px]:col-start-2 max-[700px]:mt-1.5">
                     <PortalDot :state="phaseState(booking.phase)" />
                     {{ $t(`portal.phase.${booking.phase}`) }}
-                    <template v-if="booking.openAmount">
-                      · {{ $t('portal.paymentsOpen', { amount: formatEuros(booking.openAmount) }) }}
-                    </template>
+                    <PortalChip v-if="booking.openAmount">{{ $t('portal.paymentsOpen', { amount: formatEuros(booking.openAmount) }) }}</PortalChip>
                   </span>
 
                   <!-- A pointer affordance. On a phone the whole row is the

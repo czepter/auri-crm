@@ -189,11 +189,12 @@ function documentNote(document: Document) {
 
     <PortalWrap class="pb-[calc(80px+env(safe-area-inset-bottom))]">
       <section class="pt-6">
+        <p class="animate-rise motion-reduce:animate-none mb-3 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">{{ project.type }}</p>
         <h1 class="animate-rise motion-reduce:animate-none font-serif text-[clamp(26px,5vw,40px)] leading-[1.2] font-normal tracking-[var(--display-tracking)]">
           {{ project.name }}
         </h1>
-        <p v-if="project.date || project.venue" class="mt-1.5 text-[14px] leading-[1.5] tabular-nums text-muted-foreground">
-          {{ [project.date ? dayDate(project.date) : null, project.venue].filter(Boolean).join(' · ') }}
+        <p class="mt-1.5 text-[14px] leading-[1.5] tabular-nums text-muted-foreground">
+          {{ [project.date ? dayDate(project.date) : $t('portal.dateOpen'), project.venue].filter(Boolean).join(' · ') }}
         </p>
       </section>
 
@@ -201,7 +202,7 @@ function documentNote(document: Document) {
         <PortalLabel>{{ $t('portal.nextStep') }}</PortalLabel>
         <div class="mt-3 flex items-baseline justify-between gap-4">
           <h2 class="font-serif text-[22px] leading-[1.25] font-normal tracking-[-0.01em]">{{ step.title }}</h2>
-          <span v-if="step.amount" class="text-[17px] leading-none font-semibold tabular-nums text-action">{{ step.amount }}</span>
+          <span v-if="step.amount" class="text-[17px] leading-none font-semibold tabular-nums">{{ step.amount }}</span>
         </div>
         <p v-if="step.note || step.detail" class="mt-1.5 flex items-center gap-2 text-[13.5px] text-muted-foreground">
           <PortalDot :state="step.state" />
@@ -262,7 +263,7 @@ function documentNote(document: Document) {
             </p>
             <p v-if="galleryExpiring !== null" class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13.5px] tabular-nums text-muted-foreground">
               {{ $t('gallery.onlineUntil', { date: dayDate(project.gallery.expiresAt!) }) }}
-              <PortalChip :state="galleryExpiring <= 3 ? 'late' : 'due'">{{ $t('gallery.onlineDays', galleryExpiring) }}</PortalChip>
+              <PortalChip :tone="galleryExpiring <= 3 ? 'danger' : 'warn'">{{ $t('gallery.onlineDays', galleryExpiring) }}</PortalChip>
             </p>
           </div>
           <Button as="a" variant="portal-ghost" class="max-[820px]:w-full max-[820px]:justify-center" :href="`/galerien/${project.gallery.id}`">
