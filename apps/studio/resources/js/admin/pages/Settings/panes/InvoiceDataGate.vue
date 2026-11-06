@@ -4,9 +4,10 @@ import ProfileForm from './ProfileForm.vue'
 import { Button } from '@/ui/button'
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 
-defineProps<{
+const props = defineProps<{
   open: boolean
   first?: boolean
+  missing?: string[]
   settings: App.Settings.Data.StudioSettingsData
 }>()
 
@@ -21,7 +22,9 @@ const profileRef = ref<InstanceType<typeof ProfileForm>>()
       <DialogHeader>
         <span v-if="first" class="text-small leading-none font-semibold text-muted-foreground">{{ $t('gates.beforeInvoice') }}</span>
         <DialogTitle :class="first && 'mt-3'">{{ $t('gates.invoiceDataTitle') }}</DialogTitle>
-        <DialogDescription>{{ $t('gates.invoiceDataHint') }}</DialogDescription>
+        <DialogDescription>
+          {{ props.missing?.length ? $t('gates.missing', { fields: props.missing.map((key) => $t(`gates.field.${key}`)).join(', ') }) : $t('gates.invoiceDataHint') }}
+        </DialogDescription>
       </DialogHeader>
 
       <DialogBody>

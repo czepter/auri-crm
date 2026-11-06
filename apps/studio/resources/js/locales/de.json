@@ -1430,6 +1430,14 @@
     "beforeInvoice": "Vor der ersten Rechnung",
     "invoiceDataTitle": "Steuer und Bank",
     "invoiceDataHint": "Pflichtangaben auf jedem Beleg.",
+    "missing": "Es fehlt: {fields}",
+    "field": {
+      "bank_account_holder": "Kontoinhaber",
+      "bank_iban": "IBAN",
+      "tax_number": "Steuernummer",
+      "register_number": "Registernummer",
+      "register_court": "Registergericht"
+    },
     "saveAndContinue": "Speichern und weiter"
   },
   "onboarding": {
