@@ -24,7 +24,10 @@ const TONE: Record<string, string> = {
   withdrawn: 'bg-muted text-faint',
 }
 
+// Eine Galerie ohne Shooting gehört dem ganzen Auftrag und deckt jedes Shooting ab.
 const withoutGallery = computed(() => {
+  if (props.galleries.some((gallery) => gallery.shootId === null)) return []
+
   const taken = new Set(props.galleries.map((gallery) => gallery.shootId))
 
   return props.shoots.filter((shoot) => !shoot.isCancelled && !taken.has(shoot.id))
