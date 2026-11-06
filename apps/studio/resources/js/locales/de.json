@@ -1738,6 +1738,7 @@
     "quoteTermsAnd": "und",
     "quoteTerms": "akzeptiert",
     "quoteAccepted": "Angenommen am {date}.",
+    "quoteExpiredOn": "Abgelaufen am {date}",
     "messagesLinkTitle": "Nachrichten",
     "messagesKicker": "Nachrichten",
     "messagesTitle": "Nachrichten",

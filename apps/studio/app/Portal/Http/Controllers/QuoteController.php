@@ -37,7 +37,7 @@ class QuoteController extends Controller
         $contact = auth('portal')->user();
 
         $found = $contact->visibleProjects()->where('cases.public_id', $case)
-            ->with(['latestQuote.items', 'latestQuote.predecessor', 'latestQuote.paymentStages'])
+            ->with(['latestQuote.items', 'latestQuote.predecessor', 'latestQuote.paymentStages', 'primaryShoot'])
             ->firstOrFail();
         $quote = $found->latestQuote;
 
@@ -48,7 +48,13 @@ class QuoteController extends Controller
         return Inertia::render('Quotes/Show', [
             'contact' => ['name' => $contact->name],
             'showSwitcher' => $contact->visibleProjects()->count() > 1,
-            'project' => ['id' => $found->public_id, 'name' => $found->name],
+            'project' => [
+                'id' => $found->public_id,
+                'name' => $found->name,
+                'date' => $found->primaryShoot?->date?->format('Y-m-d'),
+                'venue' => $found->primaryShoot?->venue(),
+                'href' => "/projekte/{$found->public_id}",
+            ],
             // T-08's own switch (default off): the affordance half of "accept
             // quotes online", the accept() route below is the authorisation
             // half via `portal.capability:accept_quotes`. Never hides an

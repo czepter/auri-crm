@@ -2,3 +2,8 @@
 export function shortDate(iso: string): string {
   return new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
+
+/** "Samstag, 30. Mai 2026". */
+export function longDate(iso: string): string {
+  return new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+}
