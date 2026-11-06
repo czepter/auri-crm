@@ -126,7 +126,7 @@ function day(value: string | null): string {
 </script>
 
 <template>
-  <AdminLayout active="anfragen">
+  <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
     <ProjectShell :header="header" active="documents" child="contract">
       <template #rail>
         <Rail v-if="contract">
@@ -223,20 +223,18 @@ function day(value: string | null): string {
           {{ $t('project.contractHoldsUntilSent', { version: signed.version }) }}
         </p>
 
-        <div class="mt-4 grid min-h-0 grid-cols-[minmax(0,1fr)_7px_minmax(0,1fr)] gap-0 max-[1100px]:grid-cols-[minmax(0,1fr)]">
+        <div class="mt-4 grid min-h-0 grid-cols-[minmax(0,1fr)] gap-8">
           <section class="flex min-w-0 flex-col">
             <div class="flex items-center gap-2.5 border-b border-border pb-2.5">
               <span class="mb-[5px] text-small leading-none font-semibold text-faint">{{ $t('documentTemplates.body') }}</span>
               <span class="ml-auto text-small leading-[1.45] text-faint">{{ $t('documentTemplates.bodyHint') }}</span>
             </div>
-            <div class="mx-auto mt-6 w-full max-w-[520px] rounded-[2px] border border-border bg-white px-10 pb-10">
+            <div class="mx-auto mt-6 w-full max-w-[794px] rounded-[2px] border border-border bg-white px-10 pb-10">
               <div class="-mx-10 mb-6 border-b border-dashed border-line-hover bg-sunk px-3 py-[9px] text-small leading-[1.4] font-medium text-faint">{{ $t('documentTemplates.letterhead') }}</div>
               <DocumentEditor :key="contract.id" v-model="doc" :palette="palette" :merge-fields="mergeFields" />
               <div class="-mx-10 -mb-10 mt-6 border-t border-dashed border-line-hover bg-sunk px-3 py-[9px] text-small leading-[1.4] font-medium text-faint">{{ $t('documentTemplates.footer') }}</div>
             </div>
           </section>
-
-          <div class="flex items-center justify-center before:block before:h-full before:w-px before:bg-border before:content-[''] max-[1100px]:hidden" />
 
           <PreviewOverlay :min="1101" :label="$t('common.preview')" wrapper-class="contents">
             <DocumentPreviewPane type="contract" :doc="doc" :samples="samples" :project="previewProject">

@@ -103,8 +103,8 @@ function reopen(row: App.Crm.Data.TaskRowData) {
 </script>
 
 <template>
-  <AdminLayout active="anfragen">
-    <ProjectShell :header="header" active="tasks">
+  <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
+    <ProjectShell :header="header" active="overview">
       <div class="flex flex-col gap-3">
         <Card :title="$t('project.tasks')" :summary="openSummary">
           <div class="mb-3 flex flex-wrap items-center gap-2.5">

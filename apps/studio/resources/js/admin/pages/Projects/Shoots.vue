@@ -231,7 +231,7 @@ const TONE: Record<string, string> = {
 </script>
 
 <template>
-  <AdminLayout active="anfragen">
+  <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
     <ProjectShell :header="header" active="shoots">
         <!-- Adding an occasion is a discrete act against a list you are reading:
              inline, the form pushed every existing shoot down the page and the

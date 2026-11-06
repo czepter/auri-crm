@@ -19,7 +19,7 @@ const hasStep = computed(
 </script>
 
 <template>
-  <AdminLayout active="projekte">
+  <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
     <ProjectShell :header="header" active="info">
       <template v-if="hasStep" #stage>
         <ProjectStep :header="header" :shoots="shoots" />

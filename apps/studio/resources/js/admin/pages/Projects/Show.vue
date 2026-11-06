@@ -240,7 +240,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
 </script>
 
 <template>
-    <AdminLayout active="projekte">
+    <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
         <ProjectShell :header="header" active="overview">
             <template #left>
                 <ProjectQueue :groups="header.queue" @update:rows="reachable = $event" />
