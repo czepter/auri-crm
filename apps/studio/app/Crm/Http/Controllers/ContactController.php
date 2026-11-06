@@ -59,6 +59,7 @@ class ContactController extends Controller
     {
         return [
             'accept_quotes' => (bool) StudioSettings::current()->portal_accept_quotes_enabled,
+            'sign_contracts' => (bool) StudioSettings::current()->portal_sign_contracts_enabled,
             'payment_status' => (bool) StudioSettings::current()->portal_payment_status_enabled,
             'messaging_mode' => (string) StudioSettings::current()->portal_messaging_mode,
             'gallery_downloads' => (bool) StudioSettings::current()->gallery_default_downloads_enabled,
