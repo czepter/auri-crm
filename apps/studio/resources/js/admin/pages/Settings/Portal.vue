@@ -25,6 +25,7 @@ const formRef = ref<InstanceType<typeof PortalForm>>()
 // Welcher der drei Begrüßungstexte in der Vorschau steht — dieselben
 // Zustände, die HomeController aus den Buchungen ableitet.
 const state = ref<'inquiry' | 'active' | 'done'>('inquiry')
+const register = ref<'formal' | 'informal'>('formal')
 
 // Die Vorschau ist die Portal-Startseite selbst, in einem iframe: dieselben
 // Bauteile, die der Kunde sieht. Was getippt wird, reist als Query mit, damit
@@ -32,7 +33,7 @@ const state = ref<'inquiry' | 'active' | 'done'>('inquiry')
 // Änderung den Rahmen neu lädt.
 const source = computed(() => {
   const form = formRef.value?.form
-  const query = new URLSearchParams({ zustand: state.value })
+  const query = new URLSearchParams({ zustand: state.value, anrede: register.value })
 
   if (form) {
     query.set('text', form[`portal_welcome_${state.value}`])
@@ -60,7 +61,12 @@ const DEVICES = {
   mobile: { width: 390, expanded: 390, icon: Smartphone },
 }
 
-const device = ref<keyof typeof DEVICES>('desktop')
+const device = ref<keyof typeof DEVICES>('mobile')
+
+const registerOptions = (['formal', 'informal'] as const).map((value) => ({
+  value,
+  label: t(value === 'formal' ? 'settings.clientRegisterFormal' : 'settings.clientRegisterInformal'),
+}))
 
 const deviceOptions = (Object.keys(DEVICES) as (keyof typeof DEVICES)[]).map((value) => ({
   value,
@@ -82,7 +88,7 @@ const width = computed(() => {
 
 <template>
   <AdminLayout active="einstellungen">
-    <FormShell :kicker="$t('settings.kicker')" :title="$t('portalSettings.title')" :state="saveState([formRef?.form])">
+    <FormShell :kicker="$t('settings.kicker')" kicker-href="/einstellungen/allgemein" :title="$t('portalSettings.title')" :state="saveState([formRef?.form])">
       <template #head>
         <Button
           v-if="formRef?.form.isDirty"
@@ -103,6 +109,7 @@ const width = computed(() => {
             <aside class="sticky top-6 w-[420px] flex-none max-[1440px]:hidden">
               <div class="mb-2.5 flex flex-wrap items-center gap-2">
                 <span class="mr-auto text-small leading-none font-semibold text-faint">{{ $t('settings.previewPortal') }}</span>
+                <ChoiceGroup v-model="register" :label="$t('settings.clientRegister')" variant="segmented" :options="registerOptions" />
                 <ChoiceGroup v-model="state" variant="segmented" :options="stateOptions" />
                 <ChoiceGroup v-model="device" icon variant="segmented" :options="deviceOptions">
                   <template #option="{ option }">

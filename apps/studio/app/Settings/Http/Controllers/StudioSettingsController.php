@@ -154,11 +154,11 @@ class StudioSettingsController extends Controller
      * Anschrift im Fuß. Die Signatur kommt getippt statt gespeichert, damit
      * die Vorschau mitläuft.
      */
-    public function previewMail(Request $request): HttpResponse|Response
+    public function previewMail(Request $request): HttpResponse|RedirectResponse
     {
         $this->authorizeSettings();
 
-        if ($page = $this->framed($request, 'settings.previewMail', '/einstellungen/email')) {
+        if ($page = $this->framed($request, '/einstellungen/email')) {
             return $page;
         }
 
@@ -287,11 +287,11 @@ class StudioSettingsController extends Controller
      * pane's DocumentPreview.vue shows. App\Quotes\Support\SampleQuoteData
      * never touches the database, so this route needs no project or quote.
      */
-    public function previewQuoteLayout(Request $request, RenderQuotePdf $render): HttpResponse|Response
+    public function previewQuoteLayout(Request $request, RenderQuotePdf $render): HttpResponse|RedirectResponse
     {
         $this->authorizeSettings();
 
-        if ($page = $this->framed($request, 'settings.previewDocument', '/einstellungen/belege')) {
+        if ($page = $this->framed($request, '/einstellungen/belege')) {
             return $page;
         }
 
@@ -306,11 +306,11 @@ class StudioSettingsController extends Controller
     }
 
     /** The Zahlung pane's sheet: an Anzahlungsrechnung carrying the bank data and terms as typed, unsaved. */
-    public function previewInvoice(Request $request, RenderInvoicePdf $render): HttpResponse|Response
+    public function previewInvoice(Request $request, RenderInvoicePdf $render): HttpResponse|RedirectResponse
     {
         $this->authorizeSettings();
 
-        if ($page = $this->framed($request, 'settings.previewDocument', '/einstellungen/zahlung')) {
+        if ($page = $this->framed($request, '/einstellungen/zahlung')) {
             return $page;
         }
 

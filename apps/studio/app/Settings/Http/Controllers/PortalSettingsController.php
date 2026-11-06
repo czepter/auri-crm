@@ -67,11 +67,11 @@ class PortalSettingsController extends Controller
      * geteilten Props herein, die HandleInertiaRequests der Portal-Oberfläche
      * gibt — die Bauteile des Portals lesen sie dort.
      */
-    public function preview(Request $request): Response
+    public function preview(Request $request): Response|RedirectResponse
     {
         $this->authorizeSettings();
 
-        if ($page = $this->framed($request, 'settings.previewPortal', '/einstellungen/portal', phone: true)) {
+        if ($page = $this->framed($request, '/einstellungen/portal')) {
             return $page;
         }
 
