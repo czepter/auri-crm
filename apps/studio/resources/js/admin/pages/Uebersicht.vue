@@ -90,10 +90,12 @@ const week = computed(() =>
 // unter der Leiste, damit eine ruhige Woche den nächsten Termin trotzdem zeigt.
 const later = computed(() => props.entries.filter((entry) => entry.date > week.value[6].date));
 
-const phoneDays = computed(() => [
-    { label: "dashboard.today", rows: props.entries.filter((entry) => entry.date === props.today) },
-    { label: "dashboard.later", rows: props.entries.filter((entry) => entry.date > props.today).slice(0, 1) },
-]);
+function dayStamp(date: string) {
+    return new Date(`${date}T12:00:00`).toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" });
+}
+
+const phoneToday = computed(() => props.entries.filter((entry) => entry.date === props.today));
+const phoneLater = computed(() => props.entries.filter((entry) => entry.date > props.today).slice(0, 1));
 
 // Verglichen wird mit demselben Fenster ein Jahr davor, nicht mit dem davor:
 // das Geschäft ist saisonal, Oktober gegen September zeigte nur den Herbst.
@@ -335,11 +337,11 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                     </template>
 
                     <div class="hidden max-[640px]:block">
-                        <template v-for="group in phoneDays" :key="group.label">
-                            <div class="pt-2 pb-1 text-small font-medium text-ink-2">{{ $t(group.label) }}</div>
-                            <div v-if="!group.rows.length && group.label === 'dashboard.today'" class="flex min-h-14 items-center text-ui text-ink-2">
-                                {{ $t("dashboard.todayFree") }}
-                            </div>
+                        <div v-if="!phoneToday.length" class="flex min-h-14 items-center text-ui text-ink-2">
+                            {{ $t("dashboard.todayFree") }}
+                        </div>
+                        <template v-for="group in [{ label: 'dashboard.today', rows: phoneToday }, { label: 'dashboard.later', rows: phoneLater }]" :key="group.label">
+                            <div v-if="group.rows.length" class="pt-2 pb-1 text-small font-medium text-ink-2">{{ $t(group.label) }}</div>
                             <component
                                 :is="entry.href ? Link : 'div'"
                                 v-for="entry in group.rows"
@@ -348,10 +350,10 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                                 class="flex min-h-14 items-center gap-3 text-ui text-foreground no-underline"
                                 :class="ROW"
                             >
-                                <span class="w-12 flex-none font-semibold tabular-nums">{{ entry.time || dayOf(entry.date) }}</span>
+                                <span class="flex-none font-semibold tabular-nums" :class="entry.date === today ? 'w-12' : 'w-[88px]'">{{ entry.date === today ? entry.time || dayOf(entry.date) : dayStamp(entry.date) }}</span>
                                 <span class="min-w-0 flex-1">
                                     <span class="block truncate" :class="entry.away ? 'text-ink-2' : 'font-medium'">{{ entry.away ? $t("dashboard.away", { name: entry.what }) : entry.what }}</span>
-                                    <span v-if="entry.where" class="block truncate text-small text-ink-2">{{ entry.where }}</span>
+                                    <span v-if="entry.time && entry.date !== today || entry.where" class="block truncate text-small text-ink-2">{{ [entry.date !== today ? entry.time : null, entry.where].filter(Boolean).join(" · ") }}</span>
                                 </span>
                             </component>
                         </template>
