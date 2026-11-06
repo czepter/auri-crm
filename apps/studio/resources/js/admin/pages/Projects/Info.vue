@@ -14,7 +14,7 @@ const props = defineProps<{
 useLiveProps(['header', 'shoots'])
 
 const hasStep = computed(
-  () => (props.header.canManageShoots && nextStep(props.shoots)) || paymentCall(props.header.paymentPlan, props.header.people),
+  () => (props.header.canManageShoots && (nextStep(props.shoots) || (props.header.isBooked && !props.shoots.length))) || paymentCall(props.header.paymentPlan, props.header.people),
 )
 </script>
 

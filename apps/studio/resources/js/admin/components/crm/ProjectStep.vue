@@ -22,8 +22,8 @@ const callHref = computed(() => paymentCall(props.header.paymentPlan, props.head
 </script>
 
 <template>
-    <template v-if="!step && callHref">
-        <Button variant="outline" as-child class="max-[640px]:min-h-11">
+    <template v-if="!step && (callHref || addShoot)">
+        <Button v-if="callHref" variant="outline" as-child class="max-[640px]:min-h-11">
             <a :href="callHref">{{ $t("contacts.call") }}</a>
         </Button>
         <Button v-if="addShoot" variant="pill" as-child class="max-[640px]:min-h-11">

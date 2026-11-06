@@ -10,6 +10,7 @@ import LineItems from "@/admin/components/quote/LineItems.vue";
 import NoteThread from "@/admin/components/crm/NoteThread.vue";
 import QuoteSummary from "@/admin/components/quote/QuoteSummary.vue";
 import { nextStep, paymentCall } from "@/admin/lib/projectNextStep";
+import { sendQuoteHref } from "@/admin/lib/leadPrimary";
 import { stepOnArrow } from "@/admin/lib/queueStep";
 import { grossTotal } from "@/admin/lib/quoteSummary";
 import ShootFields from "@/admin/components/crm/ShootFields.vue";
@@ -101,6 +102,11 @@ const galleriesHref = computed(() => props.header.tabs.find((tab) => tab.key ===
 
 const step = computed(() => (props.header.canManageShoots ? nextStep(props.shoots) : null));
 const callHref = computed(() => paymentCall(props.header.paymentPlan, props.header.people));
+const sendHref = computed(() => sendQuoteHref(props.quote, props.header.canManageQuotes));
+const addShoot = computed(() => props.header.isBooked && props.header.canManageShoots && !props.shoots.length);
+const addGallery = computed(
+    () => props.header.isBooked && props.header.canManageShoots && !step.value && !addShoot.value && !props.header.galleries.length && !!galleriesHref.value,
+);
 
 function euro(minor: string | number | null) {
     return minor === null ? "—" : formatEurosRounded(Number(minor));
@@ -246,8 +252,14 @@ function complete(row: App.Crm.Data.TaskRowData) {
                 <ProjectQueue :groups="header.queue" @update:rows="reachable = $event" />
             </template>
 
-            <template v-if="step || callHref" #stage>
-                <ProjectStep :header="header" :shoots="shoots" />
+            <template v-if="sendHref || step || callHref || addShoot || addGallery" #stage>
+                <Button v-if="sendHref" variant="pill" as-child class="max-[640px]:min-h-11">
+                    <Link :href="sendHref">{{ $t("lead.sendQuote") }}</Link>
+                </Button>
+                <Button v-else-if="addGallery" variant="pill" as-child class="max-[640px]:min-h-11">
+                    <Link :href="galleriesHref!">{{ $t("galleries.create") }}</Link>
+                </Button>
+                <ProjectStep v-else :header="header" :shoots="shoots" />
             </template>
 
                     <Alert
