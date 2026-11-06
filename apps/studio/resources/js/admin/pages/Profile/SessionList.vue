@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
+import FormSection from '@/ui/page/FormSection.vue'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
@@ -30,8 +31,7 @@ function endOthers() {
 </script>
 
 <template>
-  <div class="mt-8">
-    <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('profile.sessionsSection') }}</div>
+  <FormSection :title="$t('profile.sessionsSection')">
     <div
       v-for="session in sessions"
       :key="session.id"
@@ -51,5 +51,5 @@ function endOthers() {
       </Field>
       <Button type="submit" variant="outline" tone="accent" :disabled="form.processing">{{ $t('profile.sessionsEndOthers') }}</Button>
     </form>
-  </div>
+  </FormSection>
 </template>

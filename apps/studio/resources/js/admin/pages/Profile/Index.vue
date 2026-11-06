@@ -3,6 +3,7 @@ import { saveState } from '@/admin/lib/autosave'
 import { computed, ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import FormSection from '@/ui/page/FormSection.vue'
 import FormShell from '@/ui/page/FormShell.vue'
 import { Button } from '@/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
@@ -140,10 +141,10 @@ function regenerateFeedUrl() {
 
 <template>
   <AdminLayout active="profil">
-    <FormShell :kicker="$t('profile.kicker')" :title="$t(paneTitle)" :state="saveState([activeForm])">
+    <FormShell :kicker="$t('profile.kicker')" :title="$t(paneTitle)" :state="pane === 'sicherheit' ? undefined : saveState([activeForm])">
       <template #head>
         <Button
-          v-if="activeForm?.isDirty"
+          v-if="activeForm?.isDirty && pane !== 'sicherheit'"
           variant="pill"
           type="submit"
           :form="formId"
@@ -205,8 +206,7 @@ function regenerateFeedUrl() {
       </form>
 
       <form v-else-if="pane === 'sicherheit'" id="profile-sicherheit-form" @submit.prevent="submitPassword">
-        <div class="mt-8 first:mt-0">
-          <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('profile.passwordSection') }}</div>
+        <FormSection :title="$t('profile.passwordSection')">
           <div class="mb-6">
             <Field
               :label="$t('profile.currentPassword')"
@@ -227,10 +227,10 @@ function regenerateFeedUrl() {
               </Field>
             </div>
           </div>
-        </div>
+          <Button type="submit" :disabled="passwordForm.processing || !passwordForm.isDirty">{{ $t('profile.changePassword') }}</Button>
+        </FormSection>
 
-        <div class="mt-8">
-          <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('profile.mfaSection') }}</div>
+        <FormSection :title="$t('profile.mfaSection')">
           <div class="flex items-center gap-3 text-small leading-none">
             <span>{{ mfaConfirmed ? $t('profile.mfaOn') : $t('profile.mfaOff') }}</span>
             <Button v-if="!mfaConfirmed" as-child variant="ghost" type="button">
@@ -245,13 +245,12 @@ function regenerateFeedUrl() {
               {{ $t('profile.regenerate') }}
             </Button>
           </div>
-        </div>
+        </FormSection>
       </form>
 
       <form v-else-if="pane === 'benachrichtigungen'" id="profile-benachrichtigungen-form" @submit.prevent="submitEvents">
-        <div class="mt-8 first:mt-0">
-          <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('profile.backlogSection') }}</div>
-          <div class="mb-6">
+        <FormSection :title="$t('profile.backlogSection')">
+          <div>
             <div class="grid grid-cols-2 gap-4">
               <Field
                 v-for="key in BACKLOG_KEYS"
@@ -275,9 +274,8 @@ function regenerateFeedUrl() {
           </div>
         </div>
 
-        <div class="mt-8 first:mt-0">
-          <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('profile.eventsSection') }}</div>
-          <div class="mb-6">
+        <FormSection :title="$t('profile.eventsSection')">
+          <div>
             <div class="grid grid-cols-2 gap-4">
               <Field
                 v-for="key in EVENT_KEYS"
@@ -299,10 +297,9 @@ function regenerateFeedUrl() {
               </Field>
             </div>
           </div>
-        </div>
+        </FormSection>
 
-        <div class="mt-8">
-          <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('profile.digestSection') }}</div>
+        <FormSection :title="$t('profile.digestSection')">
           <Field
             :label="$t('profile.digestFrequency')"
             id="digest-rhythmus"
@@ -324,13 +321,12 @@ function regenerateFeedUrl() {
               </SelectContent>
             </Select>
           </Field>
-        </div>
+        </FormSection>
       </form>
 
       <!-- C-13 (#249): die Abo-Adresse ist ein Geheimnis pro Person,
            also steht sie neben dem Weg, sie zurückzuziehen. -->
-      <div v-else>
-        <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('calendar.feedUrl') }}</div>
+      <FormSection v-else :title="$t('calendar.feedUrl')">
         <code class="block text-small leading-[1.5] break-all">{{ calendarFeedUrl }}</code>
         <div class="mt-4 flex items-center gap-2">
           <Button type="button" variant="pill-muted" @click="copyFeedUrl(calendarFeedUrl!)">
@@ -340,7 +336,7 @@ function regenerateFeedUrl() {
             {{ $t('calendar.revoke') }}
           </Button>
         </div>
-      </div>
+      </FormSection>
 
       <SessionList v-if="pane === 'sicherheit'" :sessions="sessions" />
     </FormShell>

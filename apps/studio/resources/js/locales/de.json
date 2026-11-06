@@ -1372,6 +1372,7 @@
     "newPassword": "Neues Passwort",
     "repeatPassword": "Wiederholen",
     "passwordSection": "Passwort",
+    "changePassword": "Passwort ändern",
     "mfaSection": "Bestätigung in zwei Schritten",
     "mfaOn": "Eingerichtet",
     "mfaOff": "Nicht eingerichtet",
