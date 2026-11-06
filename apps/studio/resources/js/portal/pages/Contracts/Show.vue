@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { Link, router, useForm } from '@inertiajs/vue3'
+import { router, useForm } from '@inertiajs/vue3'
 import PortalField from '@/portal/components/PortalField.vue'
 import PortalBack from '@/portal/components/PortalBack.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
@@ -36,8 +36,7 @@ const props = defineProps<{
   // Never hides an already-recorded signature, only the form that would
   // create a new one.
   canSign: boolean
-  quoteHref: string
-  contract: Contract | null
+  contract: Contract
 }>()
 
 // Mirrors Projects/Contract.vue on the admin side: the render already
@@ -104,7 +103,7 @@ function sign() {
         </h1>
       </section>
 
-      <div v-if="contract" class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-8 max-w-[720px]">
+      <div class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-8 max-w-[720px]">
         <div class="flex flex-wrap items-center gap-x-4 gap-y-3 border-y border-border py-4">
           <span class="inline-flex items-center gap-2 text-[14.5px]">
             <PortalDot :state="contract.signature ? 'done' : 'open'" />
@@ -155,17 +154,11 @@ function sign() {
         </form>
       </div>
       <div
-        v-if="contract && canSign && !contract.signature && !formVisible"
+        v-if="canSign && !contract.signature && !formVisible"
         class="fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] z-30 border-t border-border bg-[var(--bg)] p-3 min-[761px]:bottom-0"
       >
         <Button as="a" variant="portal" href="#unterschreiben" class="min-h-12 w-full justify-center">{{ $t('portal.signButton') }}</Button>
       </div>
-      <template v-else-if="!contract">
-        <p class="mt-8 text-[17px] leading-[1.5] text-muted-foreground">{{ $t('portal.contractAfterAcceptance') }}</p>
-        <Button as-child variant="portal" class="mt-8 min-h-12 w-full justify-center min-[700px]:w-auto">
-          <Link :href="quoteHref">{{ $t('portal.quoteView') }}</Link>
-        </Button>
-      </template>
     </PortalWrap>
 
     <PortalFooter />

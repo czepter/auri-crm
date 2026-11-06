@@ -58,8 +58,12 @@ class PaymentController extends Controller
 
         $plan = $found->paymentPlan;
 
+        if ($plan === null) {
+            return redirect()->route('portal.projects.show', $found->public_id);
+        }
+
         $sessionId = $request->query('session_id');
-        if ($plan !== null && is_string($sessionId) && (bool) StudioSettings::current()->payments_stripe_enabled) {
+        if (is_string($sessionId) && (bool) StudioSettings::current()->payments_stripe_enabled) {
             $installment = $plan->installments->firstWhere('stripe_checkout_session_id', $sessionId);
 
             if ($installment !== null) {
@@ -76,10 +80,7 @@ class PaymentController extends Controller
             'showSwitcher' => $contact->visibleProjects()->count() > 1,
             'project' => ['id' => $found->public_id, 'name' => $found->name],
             'plan' => PaymentPlanData::forCase($found),
-            'quote' => $found->latestQuote === null ? null : [
-                'number' => $found->latestQuote->number,
-                'href' => "/projekte/{$found->public_id}/angebot",
-            ],
+            'quote' => $found->latestQuote === null ? null : ['number' => $found->latestQuote->number],
             'stripeEnabled' => (bool) StudioSettings::current()->payments_stripe_enabled,
             'paymentStatus' => in_array($status, ['success', 'cancelled'], true) ? $status : null,
             'bankDetails' => [
