@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { watch } from 'vue'
 import FormSection from '@/ui/page/FormSection.vue'
+import { debounced } from '@/admin/lib/autosave'
 import { useForm } from '@inertiajs/vue3'
 import { Textarea } from '@/ui/textarea'
 import { Checkbox } from '@/ui/checkbox'
@@ -50,11 +52,30 @@ function submit() {
     .patch('/einstellungen/portal', { preserveScroll: true, onSuccess: () => emit('saved') })
 }
 
+// Die Begrüßungstexte speichern beim Tippen mit Denkpause; die übrigen
+// Schalter bleiben beim Speichern-Knopf.
+const autosave = debounced(() => form.isDirty && !form.processing && submit(), 800)
+
+watch(() => STATES.map((state) => form[`portal_welcome_${state}`]), autosave)
+
 defineExpose({ form, submit })
 </script>
 
 <template>
   <form id="portal-settings-form" @submit.prevent="submit">
+    <FormSection :title="$t('portalSettings.welcomeSection')">
+      <div class="mb-2 overflow-hidden rounded-[var(--r)] border border-border">
+        <div v-for="state in STATES" :key="state" class="px-4 py-3 not-first:border-t not-first:border-border">
+          <div class="mb-2 flex flex-wrap items-center gap-2.5">
+            <span class="rounded-[var(--r-sm)] bg-sunk px-2 py-[3px] text-small leading-[1.5] font-semibold text-muted-foreground">{{ $t(`portalSettings.welcomeState.${state}`) }}</span>
+            <Label variant="inline" :for="`ta-welcome-${state}`">{{ $t(`portalSettings.welcomeWhen.${state}`) }}</Label>
+          </div>
+          <Textarea :id="`ta-welcome-${state}`" v-model="form[`portal_welcome_${state}`]" rows="2" />
+        </div>
+      </div>
+      <span class="text-small leading-[1.45] text-faint">{{ $t('portalSettings.perContactHint') }}</span>
+    </FormSection>
+
     <!-- T-08: a temporary closure, worded and switched separately from
          A-04's hide-project/revoke-contact forms — never a third
          catch-all access control. -->
@@ -103,19 +124,6 @@ defineExpose({ form, submit })
           </div>
         </RadioGroup>
       </div>
-    </FormSection>
-
-    <FormSection :title="$t('portalSettings.welcomeSection')">
-      <div class="mb-2 overflow-hidden rounded-[var(--r)] border border-border">
-        <div v-for="state in STATES" :key="state" class="px-4 py-3 not-first:border-t not-first:border-border">
-          <div class="mb-2 flex flex-wrap items-center gap-2.5">
-            <span class="rounded-[var(--r-sm)] bg-sunk px-2 py-[3px] text-small leading-[1.5] font-semibold text-muted-foreground">{{ $t(`portalSettings.welcomeState.${state}`) }}</span>
-            <Label variant="inline" :for="`ta-welcome-${state}`">{{ $t(`portalSettings.welcomeWhen.${state}`) }}</Label>
-          </div>
-          <Textarea :id="`ta-welcome-${state}`" v-model="form[`portal_welcome_${state}`]" rows="2" />
-        </div>
-      </div>
-      <span class="text-small leading-[1.45] text-faint">{{ $t('portalSettings.perContactHint') }}</span>
     </FormSection>
   </form>
 </template>
