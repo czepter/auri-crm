@@ -3,7 +3,7 @@ titel: Lead anlegen
 beschreibung: Eine Anfrage von Hand erfassen und durch die Stufen führen.
 art: aufgabe
 reihenfolge: 20
-screens: [leads.index, leads.show]
+screens: [leads.index]
 faehigkeit: manage_leads
 ---
 

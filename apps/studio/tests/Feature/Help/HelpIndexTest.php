@@ -4,6 +4,10 @@ use App\Help\Support\HelpIndex;
 use Illuminate\Support\Facades\Cache;
 use Symfony\Component\Finder\Finder;
 
+it('zeigt auf der Anfrage-Detailseite keine Listenhilfe', function () {
+    expect(app(HelpIndex::class)->forRoute('leads.show', ['manage_leads']))->toBeEmpty();
+});
+
 it('stellt die Aufgabe vor die Referenz', function () {
     $treffer = app(HelpIndex::class)->forRoute('leads.index', ['manage_leads']);
 
