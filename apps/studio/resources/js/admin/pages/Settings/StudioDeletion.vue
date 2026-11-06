@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { router, useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormShell from '@/ui/page/FormShell.vue'
+import CreateSummary from '@/admin/components/CreateSummary.vue'
 import SettingsNav from '@/admin/components/settings/SettingsNav.vue'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
@@ -85,20 +86,15 @@ function cancel() {
       </div>
 
       <template #aside>
-        <h2 class="mb-2 text-ui font-semibold">{{ $t('settings.deletionRemoved') }}</h2>
-        <table class="w-full text-ui">
-          <tbody>
-            <tr v-for="[label, value] in [
-              [$t('projects.title'), counts.projects],
-              [$t('contacts.title'), counts.contacts],
-              [$t('galleries.title'), counts.galleries],
-              [$t('settings.deletionFiles'), counts.files],
-            ]" :key="label" class="shadow-[inset_0_1px_0_var(--rule)] first:shadow-none">
-              <th class="py-2.5 text-left font-normal">{{ label }}</th>
-              <td class="py-2.5 text-right tabular-nums">{{ value.toLocaleString('de-DE') }}</td>
-            </tr>
-          </tbody>
-        </table>
+        <CreateSummary
+          :title="$t('settings.deletionRemoved')"
+          :rows="[
+            { label: $t('projects.title'), value: counts.projects.toLocaleString('de-DE') },
+            { label: $t('contacts.title'), value: counts.contacts.toLocaleString('de-DE') },
+            { label: $t('galleries.title'), value: counts.galleries.toLocaleString('de-DE') },
+            { label: $t('settings.deletionFiles'), value: counts.files.toLocaleString('de-DE') },
+          ]"
+        />
       </template>
     </FormShell>
   </AdminLayout>

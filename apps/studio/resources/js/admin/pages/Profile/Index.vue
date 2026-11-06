@@ -5,6 +5,7 @@ import { Link, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormSection from '@/ui/page/FormSection.vue'
 import FormShell from '@/ui/page/FormShell.vue'
+import CreateSummary from '@/admin/components/CreateSummary.vue'
 import { Button } from '@/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Field } from '@/ui/field'
@@ -28,6 +29,8 @@ const props = defineProps<{
   briefable: Record<string, boolean>
 }>()
 useLiveProps(['user', 'pendingEmail', 'mfaConfirmed', 'sessions', 'recoveryCodesLeft', 'digestFrequency', 'calendarFeedUrl', 'events'])
+
+const DAY_KEYS = ['settings.dayMon', 'settings.dayTue', 'settings.dayWed', 'settings.dayThu', 'settings.dayFri', 'settings.daySat', 'settings.daySun']
 
 type Mode = 'immediate' | 'briefing' | 'digest' | 'off'
 
@@ -329,6 +332,16 @@ function regenerateFeedUrl() {
       </template>
 
       <SessionList v-if="pane === 'sicherheit'" :sessions="sessions" />
+
+      <template v-if="pane === 'kalender' && workingDays" #aside>
+        <CreateSummary
+          :title="$t('common.summary')"
+          :rows="[
+            { label: $t('settings.workingDaysLabel'), value: workingDays.map((day) => $t(DAY_KEYS[day - 1])).join(', ') },
+            { label: $t('calendar.feedUrl'), value: calendarFeedUrl },
+          ]"
+        />
+      </template>
     </FormShell>
   </AdminLayout>
 </template>
