@@ -29,9 +29,13 @@ class StudioOnboardingController extends Controller
 {
     use AuthorizesStaffSettings;
 
-    public function show(): Response
+    public function show(): Response|RedirectResponse
     {
         $this->authorizeSettings();
+
+        if (StudioSettings::current()->onboardingCompleted()) {
+            return redirect('/einstellungen/allgemein');
+        }
 
         return Inertia::render('Auth/Onboarding', [
             'settings' => StudioSettingsData::current(),
