@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
+import PortalChip from '@/portal/components/PortalChip.vue'
 import PortalField from '@/portal/components/PortalField.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
@@ -90,9 +91,7 @@ const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
             <Link :href="project.quote.href">{{ $t('portal.quoteView') }}</Link>
           </Button>
         </div>
-        <span v-else class="mt-8 inline-flex w-fit items-center rounded-[var(--r-pill)] bg-[var(--accent-bg)] px-[11px] py-[5px] text-[11.5px] leading-none font-semibold tracking-[0.02em] text-action">
-          {{ $t('portal.notReserved') }}
-        </span>
+        <PortalChip v-else class="mt-8">{{ $t('portal.notReserved') }}</PortalChip>
 
         <div class="animate-rise [animation-delay:320ms] motion-reduce:animate-none">
           <div v-if="!project.quote" class="my-18 h-px bg-border" />
@@ -122,12 +121,6 @@ const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
 
             <template v-if="!editing">
               <dl class="m-0 mt-4 grid grid-cols-[132px_1fr] gap-x-6 gap-y-3 max-[700px]:grid-cols-1 max-[700px]:gap-y-0">
-                <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.occasion') }}</dt>
-                <dd class="m-0 text-[14.5px]">{{ project.type }}</dd>
-                <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.preferredDate') }}</dt>
-                <dd class="m-0 text-[14.5px] tabular-nums">{{ project.date ? dayDate(project.date) : $t('portal.dateOpen') }}</dd>
-                <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.place') }}</dt>
-                <dd class="m-0 text-[14.5px]">{{ venue || '—' }}</dd>
                 <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.reachUs') }}</dt>
                 <dd class="m-0 text-[14.5px]">{{ [project.contact.email, project.contact.phone].filter(Boolean).join(' · ') }}</dd>
               </dl>
