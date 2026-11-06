@@ -167,7 +167,7 @@ function submit() {
           </Field>
 
           <Field :label="$t('quotes.intro')">
-            <LetterField v-model="texts.intro" />
+            <LetterField v-model="texts.intro" bare />
           </Field>
           <Field :label="$t('quotes.outro')">
             <LetterField v-model="texts.outro" />
