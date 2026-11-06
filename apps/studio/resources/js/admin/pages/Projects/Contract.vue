@@ -72,6 +72,7 @@ const documentSummary = computed(() =>
       ].join(' · '),
 )
 
+const editing = ref(false)
 const saving = ref(false)
 
 function save() {
@@ -210,12 +211,18 @@ function day(value: string | null): string {
           </Button>
 
           <template v-if="header.canManageContracts">
-            <Button variant="pill" type="button" :disabled="saving" @click.stop="save">
+            <Button v-if="editing" variant="pill" type="button" :disabled="saving" @click.stop="save">
               {{ $t('project.contractSave') }}
             </Button>
-            <Button v-if="contract.state === 'draft'" variant="outline" type="button" @click.stop="send">
+            <Button variant="outline" type="button" @click.stop="editing = !editing">
+              {{ $t(editing ? 'project.contractEditDone' : 'project.contractEdit') }}
+            </Button>
+            <Button v-if="contract.state === 'draft'" :variant="editing ? 'outline' : 'pill'" type="button" @click.stop="send">
               {{ $t('project.contractSend') }}
             </Button>
+            <span v-else-if="contract.sentAt" class="text-small text-faint">
+              {{ $t('project.contractSentOn', { date: day(contract.sentAt) }) }}
+            </span>
           </template>
         </template>
 
@@ -223,8 +230,8 @@ function day(value: string | null): string {
           {{ $t('project.contractHoldsUntilSent', { version: signed.version }) }}
         </p>
 
-        <div class="mt-4 grid min-h-0 grid-cols-[minmax(0,1fr)] items-start gap-8 min-[1400px]:grid-cols-2">
-          <section class="flex min-w-0 flex-col">
+        <div class="mt-4 grid min-h-0 grid-cols-[minmax(0,1fr)] items-start gap-8" :class="editing && 'min-[1400px]:grid-cols-2'">
+          <section v-if="editing" class="flex min-w-0 flex-col">
             <div class="flex items-center gap-2.5 border-b border-border pb-2.5">
               <span class="mb-[5px] text-small leading-none font-semibold text-faint">{{ $t('documentTemplates.body') }}</span>
               <span class="ml-auto text-small leading-[1.45] text-faint">{{ $t('documentTemplates.bodyHint') }}</span>
@@ -236,7 +243,7 @@ function day(value: string | null): string {
             </div>
           </section>
 
-          <PreviewOverlay :min="1400" :label="$t('common.preview')" wrapper-class="sticky top-4 min-w-0">
+          <component :is="editing ? PreviewOverlay : 'div'" v-bind="editing ? { min: 1400, label: $t('project.contractPreview'), wrapperClass: 'sticky top-4 min-w-0' } : { class: 'mx-auto w-full max-w-[794px]' }">
             <DocumentPreviewPane type="contract" :doc="doc" :samples="samples" :project="previewProject">
               <Select
                 :model-value="toOption(previewProject)"
@@ -249,7 +256,7 @@ function day(value: string | null): string {
                 </SelectContent>
               </Select>
             </DocumentPreviewPane>
-          </PreviewOverlay>
+          </component>
         </div>
       </Card>
 
