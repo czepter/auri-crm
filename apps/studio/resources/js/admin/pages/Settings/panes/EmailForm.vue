@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@/ui/button'
+import FormSection from '@/ui/page/FormSection.vue'
 import { router, useForm } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
 import { Textarea } from '@/ui/textarea'
@@ -42,9 +43,8 @@ defineExpose({ form, submit })
 
 <template>
   <form id="mail-form" @submit.prevent="submit">
-    <div class="mt-0">
-      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.mailSenderFromEnv') }}</div>
-      <div class="mb-6 flex flex-col gap-1.5">
+    <FormSection :title="$t('settings.mailSenderFromEnv')">
+      <div class="flex flex-col gap-1.5">
         <div class="flex items-center gap-3 rounded-[var(--r-sm)] bg-sunk px-3 py-2.5">
           <span class="text-small text-ink-2">{{ $t('settings.mailFromNameLabel') }}</span>
           <span class="ml-auto text-small font-medium">{{ settings.mailFromName }}</span>
@@ -63,11 +63,10 @@ defineExpose({ form, submit })
           {{ $t('settings.mailSenderReset') }}
         </Button>
       </div>
-    </div>
+    </FormSection>
 
-    <div class="mt-8 first-of-type:mt-6">
-      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.mailReplyLabel') }}</div>
-      <div class="mb-6">
+    <FormSection :title="$t('settings.mailReplyLabel')">
+      <div>
         <div class="grid grid-cols-2 gap-4">
           <Field :error="form.errors.mail_reply_to" v-slot="{ id }">
             <Label :for="id">{{ $t('settings.mailReplyToLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
@@ -79,24 +78,22 @@ defineExpose({ form, submit })
           </Field>
         </div>
       </div>
-    </div>
+    </FormSection>
 
-    <div class="mt-8 first-of-type:mt-6">
-      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.mailSignatureLabel') }}</div>
-      <div class="mb-6">
+    <FormSection :title="$t('settings.mailSignatureLabel')">
+      <div>
         <Field :error="form.errors.mail_signature" v-slot="{ id }">
           <Label :for="id">{{ $t('settings.mailSignatureFieldLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
           <Textarea :id v-model="form.mail_signature" rows="4" />
         </Field>
       </div>
-    </div>
+    </FormSection>
 
-    <div class="mt-8 first-of-type:mt-6">
-      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.mailDeliveryLabel') }}</div>
-      <div class="mb-6 flex items-center gap-2.5">
+    <FormSection :title="$t('settings.mailDeliveryLabel')">
+      <div class="flex items-center gap-2.5">
         <Checkbox id="cb-mail-clients-enabled" v-model="form.mail_clients_enabled" />
         <Label variant="inline" for="cb-mail-clients-enabled">{{ $t('settings.mailClientsEnabledLabel') }}</Label>
       </div>
-    </div>
+    </FormSection>
   </form>
 </template>
