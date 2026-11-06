@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Link } from '@inertiajs/vue3'
+import PortalChip from '@/portal/components/PortalChip.vue'
 import PortalDot from '@/portal/components/PortalDot.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
@@ -12,7 +13,7 @@ import PortalPerson from '@/portal/components/PortalPerson.vue'
 import PortalRow from '@/portal/components/PortalRow.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
-import { dayDate } from '@/portal/lib/dates'
+import { dayDate, daysUntil } from '@/portal/lib/dates'
 import { reachable, type Studio } from '@/portal/lib/studio'
 import { Button } from '@/ui/button'
 import { formatEuros } from '@/lib/money'
@@ -145,6 +146,15 @@ const shoots = computed(() => [...props.project.shoots].sort((a, b) => (a.date ?
 
 const delivered = (shoot: Shoot) => shoot.state === 'done' && props.project.gallery !== null
 
+const galleryExpiring = computed(() => {
+  const expiresAt = props.project.gallery?.expiresAt
+
+  if (!expiresAt) return null
+  const days = daysUntil(expiresAt)
+
+  return days >= 0 && days <= 14 ? days : null
+})
+
 const step = computed(() => steps.value[0] ?? null)
 
 const documents = computed(() => props.project.documents.filter(document => document.kind !== 'messages' || document.settled))
@@ -239,9 +249,13 @@ function documentNote(document: Document) {
             <h2 class="font-serif text-[22px] leading-[1.25] font-normal tracking-[-0.01em]">{{ project.gallery.title }}</h2>
             <p class="mt-1.5 text-[13.5px] tabular-nums text-muted-foreground">
               {{ $t('portal.imageCount', project.gallery.count) }}
-              <template v-if="project.gallery.expiresAt">
+              <template v-if="project.gallery.expiresAt && galleryExpiring === null">
                 · {{ $t('gallery.onlineUntil', { date: dayDate(project.gallery.expiresAt) }) }}
               </template>
+            </p>
+            <p v-if="galleryExpiring !== null" class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13.5px] tabular-nums text-muted-foreground">
+              {{ $t('gallery.onlineUntil', { date: dayDate(project.gallery.expiresAt!) }) }}
+              <PortalChip :state="galleryExpiring <= 3 ? 'late' : 'due'">{{ $t('gallery.onlineDays', galleryExpiring) }}</PortalChip>
             </p>
           </div>
           <Button as="a" variant="portal-ghost" class="max-[820px]:w-full max-[820px]:justify-center" :href="`/galerien/${project.gallery.id}`">

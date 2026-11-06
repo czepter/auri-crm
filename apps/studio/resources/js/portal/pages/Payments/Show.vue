@@ -202,7 +202,7 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
                    Nummer — vorher gibt es keine Rechnung zu zeigen. -->
               <Link
                 v-if="installment.invoiceNumber !== null"
-                class="mt-2 inline-flex min-h-11 items-center text-[13px] whitespace-nowrap text-muted-foreground hover:text-foreground"
+                class="mt-2 inline-flex min-h-11 items-center text-[13.5px] whitespace-nowrap text-foreground underline underline-offset-4 decoration-border hover:decoration-foreground"
                 :href="`/projekte/${project.id}/zahlungen/${installment.invoiceId}`"
               >{{ $t('portal.invoiceDownload', { number: installment.invoiceNumber }) }}</Link>
             </div>
