@@ -83,7 +83,7 @@ function day(iso: string | null) {
             :key="shoot.id"
             class="flex items-center gap-2.5 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
           >
-            <div class="w-[54px] flex-none text-small leading-[1.2] font-semibold tabular-nums">
+            <div class="w-[88px] flex-none text-small leading-[1.2] font-semibold tabular-nums">
               {{ dayAndMonth(shoot.date) ?? '—' }}
               <em class="mt-0.5 block text-small leading-[1.3] font-normal not-italic text-faint">
                 {{ weekday(shoot.date) ?? $t('board.openDate') }}
