@@ -164,6 +164,7 @@ class PortalSettings
         return StudioClosure::query()
             ->whereNotNull('message')
             ->whereDate('ends_on', '>=', today())
+            ->whereDate('starts_on', '<=', today()->addDays(7))
             ->orderBy('starts_on')
             ->first();
     }

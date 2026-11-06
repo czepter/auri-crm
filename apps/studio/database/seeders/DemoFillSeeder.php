@@ -544,11 +544,11 @@ class DemoFillSeeder extends Seeder
             ['starts_on' => now()->addDays(40)->toDateString(), 'ends_on' => now()->addDays(54)->toDateString()],
         );
 
-        StudioClosure::query()->firstOrCreate(
+        StudioClosure::query()->updateOrCreate(
             ['label' => 'Betriebsferien'],
             [
-                'starts_on' => now()->addDays(90)->toDateString(),
-                'ends_on' => now()->addDays(104)->toDateString(),
+                'starts_on' => now()->addDays(10)->toDateString(),
+                'ends_on' => now()->addDays(24)->toDateString(),
                 'message' => 'Wir sind im Urlaub, Antworten kommen ab dem Ende der Betriebsferien.',
             ],
         );
