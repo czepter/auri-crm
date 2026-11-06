@@ -223,12 +223,13 @@ const collectorsOpen = ref<Record<string, boolean>>(
                         v-else
                         class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 py-1.5 text-ui tracking-[-0.01em] text-foreground no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2"
                         :class="[
-                            item.key === props.active && 'font-semibold',
+                            item.key === props.active && 'bg-sunk font-semibold',
                             item.studio &&
                                 !studioOpen &&
                                 'hidden max-[1080px]:flex',
                         ]"
                         :href="item.href!"
+                        :aria-current="item.key === props.active ? 'page' : undefined"
                         :aria-label="item.label"
                         :title="item.label"
                     >

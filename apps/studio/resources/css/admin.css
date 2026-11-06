@@ -51,7 +51,10 @@
 }
 .skip-link:focus { transform: none; }
 
+[data-slot="table-cell"] > a:not([data-slot="button"]) { display: inline-flex; align-items: center; min-height: 32px; }
+
 @media (pointer: coarse) {
+  [data-slot="table-cell"] > a, .blkfoot, .stage .adv { min-height: 44px; }
   footer a { min-height: 44px; display: inline-flex; align-items: center; }
   [data-slot="button"] { min-height: 44px; }
 }

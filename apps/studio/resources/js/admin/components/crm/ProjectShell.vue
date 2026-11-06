@@ -178,7 +178,7 @@ function destroy() {
             class="flex-none rounded-[var(--r-sm)] px-2.5 py-1 whitespace-nowrap no-underline"
             :class="[
               tab.key === active
-                ? 'bg-paper text-foreground shadow-[0_1px_2px_rgba(24,24,27,.08)]'
+                ? 'bg-paper font-semibold text-foreground shadow-[0_1px_2px_rgba(24,24,27,.08),inset_0_-2px_0_var(--ink)]'
                 : 'text-ink-2 hover:text-foreground',
               tab.key === 'info' && 'min-[1081px]:hidden',
             ]"
@@ -198,7 +198,7 @@ function destroy() {
             :key="entry.key"
             :href="entry.href"
             class="whitespace-nowrap no-underline"
-            :class="entry.key === child ? 'font-semibold text-foreground' : 'text-ink-2 hover:text-foreground'"
+            :class="entry.key === child ? 'font-semibold text-foreground underline underline-offset-4' : 'text-ink-2 hover:text-foreground'"
             :aria-current="entry.key === child ? 'page' : undefined"
           >
             {{ $t(entry.label) }}<span v-if="entry.count" class="ml-1 text-small">{{ entry.count }}</span>

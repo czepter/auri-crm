@@ -581,9 +581,9 @@ function megabytes(bytes: number) {
           <table class="mt-4 w-full border-collapse max-[640px]:block max-[640px]:overflow-x-auto">
             <thead>
               <tr>
-                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.who') }}</th>
-                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.what') }}</th>
-                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2 text-right">{{ $t('galleryRecord.when') }}</th>
+                <th scope="col" class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.who') }}</th>
+                <th scope="col" class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.what') }}</th>
+                <th scope="col" class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2 text-right">{{ $t('galleryRecord.when') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -624,10 +624,10 @@ function megabytes(bytes: number) {
           <table v-if="builds.length" class="w-full border-collapse max-[640px]:block max-[640px]:overflow-x-auto">
             <thead>
               <tr>
-                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('gallery.sizeLabel') }}</th>
-                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.parts') }}</th>
-                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2 text-right">{{ $t('galleryRecord.size') }}</th>
-                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.state') }}</th>
+                <th scope="col" class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('gallery.sizeLabel') }}</th>
+                <th scope="col" class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.parts') }}</th>
+                <th scope="col" class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2 text-right">{{ $t('galleryRecord.size') }}</th>
+                <th scope="col" class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.state') }}</th>
               </tr>
             </thead>
             <tbody>
