@@ -305,7 +305,7 @@ const COVER_INPUT = [
 
     <template v-if="unlocked">
       <div
-        class="sticky top-0 z-10 mx-auto flex max-w-[1240px] max-[760px]:static items-center justify-between gap-8 border-b border-border bg-[color-mix(in_srgb,var(--bg)_97%,transparent)] px-8 py-5 backdrop-blur-[14px] backdrop-saturate-[1.4] max-[760px]:flex-wrap max-[760px]:gap-4 max-[760px]:px-4"
+        class="sticky top-0 z-10 mx-auto flex max-w-[1240px] max-[760px]:static items-center justify-between gap-8 border-b border-border bg-[var(--bg)] px-8 py-5 max-[760px]:flex-wrap max-[760px]:gap-4 max-[760px]:px-4"
       >
         <PortalBack v-if="project" class="min-[761px]:hidden" :href="`/projekte/${project.id}`" />
         <!-- tokens.css .who decides everything but the size and the colour -->
@@ -333,7 +333,7 @@ const COVER_INPUT = [
           </Button>
         </span>
 
-        <Button v-if="offers.downloads" class="max-[760px]:hidden" as="a" variant="portal" :href="`/galerien/${gallery.id}/download`">
+        <Button v-if="offers.downloads" class="max-[760px]:ml-auto" as="a" variant="portal" :href="`/galerien/${gallery.id}/download`">
           <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
           {{ $t('gallery.download') }}
         </Button>
@@ -345,7 +345,7 @@ const COVER_INPUT = [
       <main
         v-if="shown.length"
         id="raster"
-        class="mx-auto flex max-w-[1240px] flex-wrap justify-center gap-3.5 px-8 pt-11 pb-16 max-[760px]:grid max-[760px]:grid-cols-2 max-[760px]:gap-0.5 max-[760px]:px-0 max-[760px]:pt-0 max-[760px]:pb-28"
+        class="mx-auto flex max-w-[1240px] flex-wrap justify-center gap-3.5 px-8 pt-11 pb-16 max-[760px]:grid max-[760px]:grid-cols-2 max-[760px]:gap-0.5 max-[760px]:px-0 max-[760px]:pt-0 max-[760px]:pb-8"
       >
         <span
           v-for="(asset, index) in shown"
@@ -406,20 +406,9 @@ const COVER_INPUT = [
         </span>
       </main>
 
-      <div
-        v-if="offers.downloads && shown.length"
-        class="fixed inset-x-0 z-20 border-t border-border bg-[color-mix(in_srgb,var(--bg)_97%,transparent)] p-3 backdrop-blur-[12px] min-[761px]:hidden"
-        :class="project ? 'bottom-[calc(56px+env(safe-area-inset-bottom))]' : 'bottom-0 pb-[calc(12px+env(safe-area-inset-bottom))]'"
-      >
-        <Button class="w-full justify-center" as="a" variant="portal" :href="`/galerien/${gallery.id}/download`">
-          <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
-          {{ $t('gallery.download') }}
-        </Button>
-      </div>
-
       <!-- Unlocked over a gallery nobody has published yet: a real state,
            and the studio's link is already out there, so it says so. -->
-      <p v-else class="text-[12.5px] leading-[1.55] font-normal text-muted-foreground mt-[9px] px-8 py-16">
+      <p v-if="!shown.length" class="text-[12.5px] leading-[1.55] font-normal text-muted-foreground mt-[9px] px-8 py-16">
         {{ assets?.length ? $t('gallery.listEmpty') : $t('gallery.notPublished') }}
       </p>
 
