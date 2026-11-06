@@ -353,7 +353,11 @@ class CaseController extends Controller
     {
         $this->authorize('view', $case);
 
-        return Inertia::render('Projects/Info', ['header' => $this->header($case)]);
+        return Inertia::render('Projects/Info', [
+            'header' => $this->header($case),
+            'shoots' => ShootData::collect($this->shootsOf($case)),
+            'people' => CasePersonData::collect($case->contacts->map(CasePersonData::fromContact(...))),
+        ]);
     }
 
     public function shoots(ClientCase $case, CrewAvailability $crew): Response

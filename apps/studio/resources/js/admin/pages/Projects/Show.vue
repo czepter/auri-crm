@@ -2,15 +2,14 @@
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { Link, router, useForm } from "@inertiajs/vue3";
-import { ChevronDown, Pencil } from "lucide-vue-next";
+import { Pencil } from "lucide-vue-next";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/alert";
 import { Button } from "@/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui/dropdown-menu";
 import LineItems from "@/admin/components/quote/LineItems.vue";
 import NoteThread from "@/admin/components/crm/NoteThread.vue";
 import QuoteSummary from "@/admin/components/quote/QuoteSummary.vue";
-import { nextStep, paymentCall, stepRows } from "@/admin/lib/projectNextStep";
+import { nextStep, paymentCall } from "@/admin/lib/projectNextStep";
 import { stepOnArrow } from "@/admin/lib/queueStep";
 import { grossTotal } from "@/admin/lib/quoteSummary";
 import ShootFields from "@/admin/components/crm/ShootFields.vue";
@@ -22,6 +21,7 @@ import { Textarea } from "@/ui/textarea";
 import ProjectFields from "@/admin/components/crm/ProjectFields.vue";
 import type { ProjectFieldValues } from "@/admin/components/crm/ProjectFields.vue";
 import ProjectQueue from "@/admin/components/crm/ProjectQueue.vue";
+import ProjectStep from "@/admin/components/crm/ProjectStep.vue";
 import ProjectShell from "@/admin/components/crm/ProjectShell.vue";
 import TaskCreateDialog from "@/admin/components/crm/TaskCreateDialog.vue";
 import CaseAddLinks from "@/admin/components/crm/CaseAddLinks.vue";
@@ -100,12 +100,7 @@ const { t } = useI18n();
 
 const galleriesHref = computed(() => props.header.tabs.find((tab) => tab.key === "galleries")?.href);
 
-function advance(shootId: string, status: string) {
-    router.post(`/shootings/${shootId}/status`, { status }, { preserveScroll: true });
-}
-
 const step = computed(() => (props.header.canManageShoots ? nextStep(props.shoots) : null));
-const stepMenu = computed(() => stepRows(props.shoots));
 const callHref = computed(() => paymentCall(props.header.paymentPlan, props.people));
 
 function euro(minor: string | number | null) {
@@ -252,31 +247,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
             </template>
 
             <template v-if="step || callHref" #stage>
-                <Button v-if="!step && callHref" variant="pill" as-child class="max-[640px]:min-h-11">
-                    <a :href="callHref">{{ $t("contacts.call") }}</a>
-                </Button>
-                <div v-else-if="step" class="flex">
-                    <Button variant="pill" type="button" class="rounded-r-none max-[640px]:min-h-11" @click="advance(step.shootId, step.status.value)">
-                        {{ step.status.label }}
-                    </Button>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger as-child>
-                            <Button
-                                variant="pill"
-                                type="button"
-                                class="rounded-l-none border-l border-white/30 px-2 max-[640px]:min-h-11 max-[640px]:min-w-11"
-                                :aria-label="$t('board.colStage')"
-                            >
-                                <ChevronDown class="size-3.5" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" class="w-[260px]">
-                            <DropdownMenuItem v-for="row in stepMenu" :key="`${row.shootId}${row.status}`" @select="advance(row.shootId, row.status)">
-                                {{ row.label }}
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
+                <ProjectStep :header="header" :shoots="shoots" :people="people" />
             </template>
 
                     <Alert
