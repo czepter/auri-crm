@@ -241,7 +241,7 @@ const COVER_INPUT = [
         cover ? 'text-white' : 'text-foreground',
         unlocked ? 'min-h-[34svh]' : 'min-h-[100svh] max-[760px]:min-h-[82svh]',
         cover
-          ? 'before:bg-[radial-gradient(115%_85%_at_50%_46%,rgba(12,10,9,.58)_0%,rgba(12,10,9,.80)_62%,rgba(12,10,9,.93)_100%)]'
+          ? 'before:bg-[linear-gradient(rgba(12,10,9,.55),rgba(12,10,9,.55)),radial-gradient(115%_85%_at_50%_46%,rgba(12,10,9,.58)_0%,rgba(12,10,9,.80)_62%,rgba(12,10,9,.93)_100%)]'
           : 'before:bg-none',
       ]"
     >
@@ -271,7 +271,7 @@ const COVER_INPUT = [
           {{ subtitle }}
         </p>
         <br v-if="subtitle && gallery.expiresAt && cover" />
-        <p v-if="gallery.expiresAt" class="mt-2 text-[14px] leading-[1.6] font-normal text-inherit" :class="[cover || expiring ? 'inline-block rounded-full px-3.5 py-1.5' : '', expiring ? 'bg-due-bg font-semibold text-due' : cover ? 'bg-[rgba(12,10,9,.72)]' : 'opacity-80']">
+        <p v-if="gallery.expiresAt" class="mt-2 text-[14px] leading-[1.6] font-normal" :class="[cover || expiring ? 'inline-block rounded-full px-3.5 py-1.5' : '', expiring ? 'bg-due-bg font-semibold text-due' : cover ? 'bg-[rgba(12,10,9,.72)] text-inherit' : 'text-inherit opacity-80']">
           {{ $t('gallery.onlineUntil', { date: dayDate(gallery.expiresAt) }) }}
         </p>
 
