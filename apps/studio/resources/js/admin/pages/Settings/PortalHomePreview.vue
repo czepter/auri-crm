@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import de from '@/locales/de.json'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalOffers from '@/portal/components/PortalOffers.vue'
@@ -33,7 +35,11 @@ const props = defineProps<{
   bookings: Booking[]
   pending: { title: string; note: string; aside: string }[]
   shelf: App.Catalog.Data.PortalServiceData[]
+  clientRegister: string
 }>()
+// Wie portal/main.ts: ein Studio mit Sie bekommt die Sie-Texte.
+if (props.clientRegister === 'formal') useI18n().mergeLocaleMessage('de', { portal: de.portalFormal })
+
 useLiveProps(['welcomeText', 'maintenanceMessage', 'shelf', 'fontPair', 'portalBranding', 'portalLegal'])
 
 // Nach Jahr, wie die Startseite selbst: eine Liste ohne die Jahreszeile

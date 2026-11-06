@@ -109,6 +109,7 @@ class PortalSettingsController extends Controller
                 ->mapWithKeys(fn (string $text) => [$text.'Url' => LegalTexts::url($text)])
                 ->all(),
             'portalNav' => null,
+            'clientRegister' => StudioSettings::current()->client_register,
         ]);
     }
 
