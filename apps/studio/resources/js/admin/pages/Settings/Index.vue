@@ -2,8 +2,7 @@
 import { computed, ref } from 'vue'
 import { useObjectUrl } from '@vueuse/core'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import Page from '@/ui/page/Page.vue'
-import PageHead from '@/ui/page/PageHead.vue'
+import FormShell from '@/ui/page/FormShell.vue'
 import SettingsNav from '@/admin/components/settings/SettingsNav.vue'
 import ProfileForm from './panes/ProfileForm.vue'
 import VatForm from './panes/VatForm.vue'
@@ -16,6 +15,7 @@ import MailPreview from './previews/MailPreview.vue'
 import { Button } from '@/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import { saveState } from '@/admin/lib/autosave'
 
 const props = defineProps<{
   pane: 'payment' | 'receipts' | 'email' | 'general'
@@ -122,52 +122,41 @@ const mailPreview = computed(() => {
 
 <template>
   <AdminLayout active="einstellungen">
-    <Page data-tokens wide>
-      <div class="min-w-0 flex-1">
-        <PageHead :kicker="$t('settings.kicker')" :title="$t(paneTitle)">
-          <span v-if="dirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold text-due">{{ $t('settings.unsaved') }}</span>
-          <Button
-            v-if="dirty"
-            class="ml-auto"
-            variant="pill"
-            type="button"
-            :disabled="processing"
-            @click="save"
-          >
-            {{ $t('common.save') }}
-          </Button>
-        </PageHead>
+    <FormShell
+      :kicker="$t('settings.kicker')"
+      :title="$t(paneTitle)"
+      :state="saveState(activePanes.map((entry) => entry?.form))"
+    >
+      <template #head>
+        <Button v-if="dirty" variant="pill" type="button" :disabled="processing" @click="save">
+          {{ $t('common.save') }}
+        </Button>
+      </template>
 
-        <div class="px-6 pt-7 pb-8">
-          <div class="flex flex-wrap items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
-            <SettingsNav :active="pane" />
+      <template #nav><SettingsNav :active="pane" /></template>
 
-            <div class="max-w-[620px] min-w-0 flex-1">
-              <template v-if="pane === 'general'">
-                <ProfileForm ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="['brand', 'legal', 'general', 'tax']" />
-                <VatForm ref="vatRef" :settings="settings" />
-              </template>
+      <template v-if="pane === 'general'">
+        <ProfileForm ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="['brand', 'legal', 'general', 'tax']" />
+        <VatForm ref="vatRef" :settings="settings" />
+      </template>
 
-              <template v-else-if="pane === 'payment'">
-                <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.bank') }}</div>
-                <ProfileForm ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="['bank']" />
-                <div class="mt-8">
-                  <PaymentForm ref="paymentRef" :settings="settings" />
-                </div>
-              </template>
-
-              <ReceiptsForm v-else-if="pane === 'receipts'" ref="receiptsRef" :settings="settings" />
-              <EmailForm v-else-if="pane === 'email'" ref="emailRef" :settings="settings" :sender-from-env="mailSenderFromEnv" />
-
-            </div>
-
-            <PortalFrame v-if="pane === 'general' && profileRef" :query="brandQuery" />
-            <DocumentPreview v-else-if="DOCUMENT_PANES.includes(pane)" :doc="documentPreview" />
-            <MailPreview v-else-if="pane === 'email'" :mail="mailPreview" />
-          </div>
+      <template v-else-if="pane === 'payment'">
+        <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.bank') }}</div>
+        <ProfileForm ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="['bank']" />
+        <div class="mt-8">
+          <PaymentForm ref="paymentRef" :settings="settings" />
         </div>
-      </div>
-    </Page>
+      </template>
+
+      <ReceiptsForm v-else-if="pane === 'receipts'" ref="receiptsRef" :settings="settings" />
+      <EmailForm v-else-if="pane === 'email'" ref="emailRef" :settings="settings" :sender-from-env="mailSenderFromEnv" />
+
+      <template #preview>
+        <PortalFrame v-if="pane === 'general' && profileRef" :query="brandQuery" />
+        <DocumentPreview v-else-if="DOCUMENT_PANES.includes(pane)" :doc="documentPreview" />
+        <MailPreview v-else-if="pane === 'email'" :mail="mailPreview" />
+      </template>
+    </FormShell>
 
     <Dialog :open="register !== null" @update:open="(value) => value || (register = null)">
       <DialogContent class="max-w-[440px]">

@@ -1,5 +1,9 @@
 {
   "common": {
+    "saved": "Gespeichert",
+    "saving": "Speichert …",
+    "savingError": "Nicht gespeichert",
+    "saveDirty": "Ungespeichert",
     "preview": "Vorschau",
     "invalid": {
       "valueMissing": "Pflichtfeld",
