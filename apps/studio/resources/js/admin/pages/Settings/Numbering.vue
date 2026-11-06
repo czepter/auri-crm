@@ -40,11 +40,13 @@ function save(rangeId: string) {
       <template #nav><SettingsNav active="numbering" /></template>
 
       <div class="min-w-0">
-        <div v-for="range in ranges" :key="range.id" class="mt-8 first-of-type:mt-6">
+        <p class="text-small leading-[1.45] text-faint">{{ $t('settings.numberingChangeWarning') }}</p>
+
+        <div v-for="range in ranges" :key="range.id" class="mt-8">
           <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ range.documentTypeLabel }}</div>
 
           <form :id="`number-range-form-${range.id}`" @submit.prevent="save(range.id)">
-            <div class="mb-6 grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-6 gap-y-4">
+            <div class="mb-6 grid grid-cols-[repeat(3,minmax(0,1fr))] gap-x-6 gap-y-4 max-[640px]:grid-cols-1">
               <div class="flex min-w-0 flex-col gap-1.5">
                 <Label :for="`prefix-${range.id}`">{{ $t('settings.numberingPrefix') }}</Label>
                 <Input
@@ -72,10 +74,6 @@ function save(rangeId: string) {
                 <p v-if="forms[range.id].errors.reset_rule" class="text-small leading-[1.45] text-destructive">{{ forms[range.id].errors.reset_rule }}</p>
               </div>
 
-              <div class="col-span-full flex min-w-0 flex-col gap-1.5">
-                <p class="text-small leading-[1.45] font-normal text-faint">{{ $t('settings.numberingChangeWarning') }}</p>
-              </div>
-
               <div class="flex min-w-0 flex-col gap-1.5">
                 <Label :for="`starting-counter-${range.id}`">{{ $t('settings.numberingStartingCounter') }}</Label>
                 <Input
@@ -88,15 +86,6 @@ function save(rangeId: string) {
                 <p v-if="forms[range.id].errors.starting_counter" class="text-small leading-[1.45] text-destructive">
                   {{ forms[range.id].errors.starting_counter }}
                 </p>
-              </div>
-
-              <div class="flex min-w-0 flex-col gap-1.5">
-                <Label>{{ $t('settings.numberingPreview') }}</Label>
-                <Input
-                  :model-value="range.nextNumberPreview"
-                  class="pointer-events-none bg-muted tabular-nums"
-                  readonly
-                />
               </div>
             </div>
 

@@ -1276,7 +1276,6 @@
     "numberingStartingCounter": "Startwert",
     "numberingLockedHint": "Gesperrt: in diesem Zeitraum wurde schon eine Nummer vergeben.",
     "numberingChangeWarning": "Gilt nur für noch nicht ausgestellte Dokumente.",
-    "numberingPreview": "Nächste Nummer",
     "numberingSave": "Speichern",
     "documentsTitle": "Belege",
     "documentsLayoutLabel": "Layout",
