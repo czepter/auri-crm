@@ -161,7 +161,7 @@ class InvoiceController extends Controller
         $contact = match (true) {
             isset($validated['contact_id']) => Contact::query()->where('public_id', $validated['contact_id'])->firstOrFail(),
             isset($validated['contact']['name']) => $createContact(array_filter($validated['contact'], fn ($value) => $value !== null)),
-            default => $project?->primaryContact(),
+            default => $project?->primaryContact() ?? new Contact(['name' => __('payments.previewRecipient')]),
         };
 
         $invoice = $issue->positions(

@@ -22,7 +22,7 @@ const samples = Object.fromEntries(mergeFields.map((field) => [field.path, field
 
 function chips(html: string): string {
   return html.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_match, path: string) =>
-    `<span class="doc-mf" data-mf="${path}">${props.bare ? path : (samples[path] ?? path)}</span>`)
+    `<span class="doc-mf" data-mf="${path}">${props.bare && path === 'contact.name' ? 'Empfänger' : (samples[path] ?? path)}</span>`)
 }
 
 function toBlocks(html: string): EditorDocument {
