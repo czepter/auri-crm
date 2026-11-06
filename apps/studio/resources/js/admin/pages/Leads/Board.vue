@@ -496,7 +496,7 @@ const workflowAllowed = computed(() =>
                             </button>
                         </template>
                     </div>
-                    <Input v-model="query" class="ml-auto h-8 w-60 max-[640px]:ml-0 max-[640px]:h-11 max-[640px]:w-full" type="search" :placeholder="$t('board.searchPlaceholder')" />
+                    <Input :aria-label="$t('board.searchPlaceholder')" v-model="query" class="ml-auto h-8 w-60 max-[640px]:ml-0 max-[640px]:h-11 max-[640px]:w-full" type="search" :placeholder="$t('board.searchPlaceholder')" />
                 </div>
 
                 <div class="hidden px-3 pt-2 max-[640px]:block">

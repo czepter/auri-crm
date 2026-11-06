@@ -40,7 +40,7 @@ function day(iso: string) {
 
         <template v-if="quotes.length">
           <div class="flex px-6 pt-4.5">
-            <Input v-model="query" class="h-8 min-w-60 w-64 shrink-0" type="search" :placeholder="$t('quotesOverview.searchPlaceholder')" />
+            <Input :aria-label="$t('quotesOverview.searchPlaceholder')" v-model="query" class="h-8 min-w-60 w-64 shrink-0" type="search" :placeholder="$t('quotesOverview.searchPlaceholder')" />
           </div>
 
           <Table>

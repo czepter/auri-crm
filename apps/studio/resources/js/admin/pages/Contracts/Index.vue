@@ -37,7 +37,7 @@ const signed = computed(() => shown.value.filter((contract) => contract.signedOn
           <div class="flex flex-wrap items-center gap-3 px-6 pt-4.5">
             <span class="inline-flex items-center gap-1.5 rounded-full bg-sunk px-3 py-1 text-small text-ink-2">{{ $t('contractsOverview.signedOn') }} <b class="font-semibold tabular-nums text-foreground">{{ signed }}</b></span>
             <span class="inline-flex items-center gap-1.5 rounded-full bg-sunk px-3 py-1 text-small text-ink-2">{{ $t('contractsOverview.open') }} <b class="font-semibold tabular-nums text-foreground">{{ shown.length - signed }}</b></span>
-            <Input v-model="query" class="h-8 min-w-60 w-64 shrink-0" type="search" :placeholder="$t('contractsOverview.searchPlaceholder')" />
+            <Input :aria-label="$t('contractsOverview.searchPlaceholder')" v-model="query" class="h-8 min-w-60 w-64 shrink-0" type="search" :placeholder="$t('contractsOverview.searchPlaceholder')" />
           </div>
 
           <Table>

@@ -40,7 +40,7 @@ const total = computed(() => shown.value.reduce((sum, note) => sum + note.amount
           <div class="flex flex-wrap items-center gap-3 px-6 pt-4.5">
             <span class="inline-flex items-center gap-1.5 rounded-full bg-sunk px-3 py-1 text-small text-ink-2">{{ $t('creditNotesOverview.title') }} <b class="font-semibold tabular-nums text-foreground">{{ shown.length }}</b></span>
             <span class="inline-flex items-center gap-1.5 rounded-full bg-sunk px-3 py-1 text-small text-ink-2">{{ $t('creditNotesOverview.amount') }} <b class="font-semibold tabular-nums text-foreground">−{{ formatEuros(total) }}</b></span>
-            <Input v-model="query" class="h-8 min-w-60 w-64 shrink-0" type="search" :placeholder="$t('creditNotesOverview.searchPlaceholder')" />
+            <Input :aria-label="$t('creditNotesOverview.searchPlaceholder')" v-model="query" class="h-8 min-w-60 w-64 shrink-0" type="search" :placeholder="$t('creditNotesOverview.searchPlaceholder')" />
           </div>
 
           <Table class="max-[640px]:block max-[640px]:overflow-x-auto">

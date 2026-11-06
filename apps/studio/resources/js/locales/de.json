@@ -37,7 +37,10 @@
     "unitMinutes": "Min.",
     "unitDays": "Tage",
     "drop": "Ablegen oder auswählen",
-    "rename": "Umbenennen"
+    "rename": "Umbenennen",
+    "skipToContent": "Zum Inhalt",
+    "previousMonth": "Voriger Monat",
+    "nextMonth": "Nächster Monat"
   },
   "auth": {
     "signIn": "Anmelden",

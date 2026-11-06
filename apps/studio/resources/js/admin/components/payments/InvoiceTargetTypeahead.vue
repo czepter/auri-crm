@@ -120,7 +120,7 @@ const ROW = [
   </div>
 
   <div v-else>
-    <Input v-model="term" type="search" :placeholder="$t('invoicesCreate.forPlaceholder')" />
+    <Input :aria-label="$t('invoicesCreate.forPlaceholder')" v-model="term" type="search" :placeholder="$t('invoicesCreate.forPlaceholder')" />
 
     <template v-if="!typing">
       <p v-if="billable.length" :class="GROUP">{{ $t('invoicesCreate.groupBillable') }}</p>

@@ -500,9 +500,9 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               <table class="w-full border-collapse text-ui">
                 <thead>
                   <tr>
-                    <th class="pb-2 text-left text-small leading-none font-semibold text-muted-foreground">{{ $t('reports.contact') }}</th>
-                    <th class="pb-2 pl-4 text-right text-small leading-none font-semibold text-muted-foreground">{{ $t('reports.projects') }}</th>
-                    <th class="pb-2 pl-4 text-right text-small leading-none font-semibold text-muted-foreground">{{ $t('reports.revenue') }}</th>
+                    <th scope="col" class="pb-2 text-left text-small leading-none font-semibold text-muted-foreground">{{ $t('reports.contact') }}</th>
+                    <th scope="col" class="pb-2 pl-4 text-right text-small leading-none font-semibold text-muted-foreground">{{ $t('reports.projects') }}</th>
+                    <th scope="col" class="pb-2 pl-4 text-right text-small leading-none font-semibold text-muted-foreground">{{ $t('reports.revenue') }}</th>
                   </tr>
                 </thead>
                 <tbody>

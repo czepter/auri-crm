@@ -82,6 +82,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
 
 <template>
     <div class="flex min-h-screen max-[640px]:flex-col">
+        <a class="skip-link" href="#inhalt">{{ $t("common.skipToContent") }}</a>
         <!-- The marker alone, no value: the palette is on :root since crm.css
          stopped scoping it. What is left for the attribute to do is take the
          nav out of tokens.css's unlayered svg reset, which no utility can
@@ -222,12 +223,13 @@ const collectorsOpen = ref<Record<string, boolean>>(
                         v-else
                         class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 py-1.5 text-ui tracking-[-0.01em] text-foreground no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2"
                         :class="[
-                            item.key === props.active && 'font-semibold',
+                            item.key === props.active && 'bg-sunk font-semibold',
                             item.studio &&
                                 !studioOpen &&
                                 'hidden max-[1080px]:flex',
                         ]"
                         :href="item.href!"
+                        :aria-current="item.key === props.active ? 'page' : undefined"
                         :aria-label="item.label"
                         :title="item.label"
                     >
@@ -324,7 +326,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
             </Link>
         </header>
 
-        <main class="flex min-w-0 flex-1 flex-col pl-12 max-[640px]:pb-[72px] max-[640px]:pl-0">
+        <main id="inhalt" tabindex="-1" class="flex min-w-0 flex-1 flex-col outline-none pl-12 max-[640px]:pb-[72px] max-[640px]:pl-0">
             <Alert
                 v-if="page.props.studioDeletion"
                 variant="destructive"

@@ -135,7 +135,7 @@ function open(row: Row) {
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('templates.title')">
           <div class="ml-auto flex items-center gap-2.5">
-            <Input v-model="query" class="min-w-60 w-60" type="search" :placeholder="$t('templates.search')" />
+            <Input :aria-label="$t('templates.search')" v-model="query" class="min-w-60 w-60" type="search" :placeholder="$t('templates.search')" />
             <TemplateCreateDialog
               :kinds="kinds"
               :kind="kind"

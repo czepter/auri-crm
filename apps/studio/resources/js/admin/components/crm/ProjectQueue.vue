@@ -58,7 +58,7 @@ watch(shown, (groups) => emit("update:rows", groups.flatMap((group) => group.row
                 <Switch v-model="due" aria-labelledby="queue-due" class="ml-auto" />
             </div>
 
-            <Input v-model="term" size="sm" type="search" :placeholder="$t('common.search')" />
+            <Input :aria-label="$t('common.search')" v-model="term" size="sm" type="search" :placeholder="$t('common.search')" />
         </div>
 
         <template v-for="group in shown" :key="group.key">

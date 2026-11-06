@@ -34,3 +34,34 @@
   background: var(--sunk);
 }
 .help-prose pre code { padding: 0; background: none; }
+
+/* ---------- Zugänglichkeit ---------- */
+
+/* Unlayered, so it beats the `outline-none` utilities on buttons and fields. */
+:where(a, button, input, select, textarea, summary, [role="tab"], [role="switch"], [role="checkbox"], [role="radio"], [tabindex]):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute; left: var(--s4); top: var(--s4); z-index: 100;
+  padding: 10px 14px; border-radius: var(--r-sm);
+  background: var(--ink); color: var(--bg); font: 600 var(--text-ui)/1 var(--font); text-decoration: none;
+  transform: translateY(-200%);
+}
+.skip-link:focus { transform: none; }
+
+[data-slot="table-cell"] > a:not([data-slot="button"]) { display: inline-flex; align-items: center; min-height: 32px; }
+
+@media (pointer: coarse) {
+  [data-slot="table-cell"] > a, .blkfoot, .stage .adv { min-height: 44px; }
+  footer a { min-height: 44px; display: inline-flex; align-items: center; }
+  [data-slot="button"] { min-height: 44px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important; scroll-behavior: auto !important;
+  }
+}
