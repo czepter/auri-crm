@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import PortalField from '@/portal/components/PortalField.vue'
 import PortalBack from '@/portal/components/PortalBack.vue'
@@ -61,7 +61,22 @@ watch(
   { immediate: true },
 )
 
-onBeforeUnmount(clearPoll)
+// The sticky jump button hands over to the form's own submit once the form
+// is on screen, so only one primary is ever visible.
+const formEl = ref<HTMLFormElement | null>(null)
+const formVisible = ref(false)
+let observer: IntersectionObserver | undefined
+
+onMounted(() => {
+  if (!formEl.value) return
+  observer = new IntersectionObserver(([entry]) => (formVisible.value = entry.isIntersecting))
+  observer.observe(formEl.value)
+})
+
+onBeforeUnmount(() => {
+  clearPoll()
+  observer?.disconnect()
+})
 
 // consent starts unchecked and stays that way until the person ticks it
 // themselves — never pre-ticked, never implied by pressing submit. The
@@ -98,11 +113,9 @@ function sign() {
               : $t('portal.notSignedYet') }}
           </span>
           <p v-if="!canSign && !contract.signature" class="w-full text-[13.5px] text-muted-foreground">{{ $t('portal.signUnavailable') }}</p>
-          <Button v-if="canSign && !contract.signature" as="a" variant="portal-chip" href="#unterschreiben">{{ $t('portal.signJump') }}</Button>
-          <Button v-if="contract.downloadUrl" class="ml-auto" as="a" variant="portal-chip" :href="contract.downloadUrl" download>
-            <svg class="fill-none stroke-current" viewBox="0 0 24 24"><path d="M12 3v12" /><path d="M7.5 10.5L12 15l4.5-4.5" /><path d="M4 19h16" /></svg>
+          <a v-if="contract.downloadUrl" class="ml-auto inline-flex min-h-11 items-center text-[13.5px] text-muted-foreground underline underline-offset-4 hover:text-foreground" :href="contract.downloadUrl" download>
             {{ $t('portal.contractDownload') }}
-          </Button>
+          </a>
         </div>
 
         <article
@@ -118,7 +131,7 @@ function sign() {
         <!-- T-08: signing is offered only while the switch is on and nothing
              is recorded yet; a recorded signature is a fact and shows above
              regardless of the switch. -->
-        <form v-if="canSign && !contract.signature" id="unterschreiben" class="grid scroll-mt-24 gap-5 border-t border-border py-8" @submit.prevent="sign">
+        <form v-if="canSign && !contract.signature" id="unterschreiben" ref="formEl" class="grid scroll-mt-24 gap-5 border-t border-border py-8" @submit.prevent="sign">
           <PortalLabel>{{ $t('portal.signTitle') }}</PortalLabel>
           <PortalField :label="$t('portal.signName')" :hint="$t('portal.signNameHint')">
             <Input v-model="form.typedName" type="text" required maxlength="255" />
@@ -141,7 +154,13 @@ function sign() {
           </Button>
         </form>
       </div>
-      <template v-else>
+      <div
+        v-if="contract && canSign && !contract.signature && !formVisible"
+        class="fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] z-30 border-t border-border bg-[var(--bg)] p-3 min-[761px]:bottom-0"
+      >
+        <Button as="a" variant="portal" href="#unterschreiben" class="min-h-12 w-full justify-center">{{ $t('portal.signButton') }}</Button>
+      </div>
+      <template v-else-if="!contract">
         <p class="mt-8 text-[17px] leading-[1.5] text-muted-foreground">{{ $t('portal.contractAfterAcceptance') }}</p>
         <Button as-child variant="portal" class="mt-8 min-h-12 w-full justify-center min-[700px]:w-auto">
           <Link :href="quoteHref">{{ $t('portal.quoteView') }}</Link>
