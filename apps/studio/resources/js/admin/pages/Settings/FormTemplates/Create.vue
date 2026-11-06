@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import Page from '@/ui/page/Page.vue'
-import PageHead from '@/ui/page/PageHead.vue'
+import FormShell from '@/ui/page/FormShell.vue'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Field } from '@/ui/field'
@@ -26,11 +25,8 @@ function submit() {
 
 <template>
   <AdminLayout active="vorlagen">
-    <Page data-tokens wide>
-      <div class="min-w-0 flex-1">
-        <PageHead :kicker="$t('settings.kicker')" :title="$t('formTemplates.createTitle')" />
-
-        <form class="max-w-[480px] px-6 pt-7 pb-8" @submit.prevent="submit">
+    <FormShell :kicker="$t('settings.kicker')" :title="$t('formTemplates.createTitle')">
+        <form @submit.prevent="submit">
           <Field id="name" class="mb-6" :label="$t('formTemplates.nameField')" :error="form.errors.name">
             <Input id="name" v-model="form.name" type="text" required maxlength="255" />
           </Field>
@@ -54,7 +50,6 @@ function submit() {
             <Button as="a" href="/vorlagen?typ=fragebogen" variant="ghost">{{ $t('common.cancel') }}</Button>
           </div>
         </form>
-      </div>
-    </Page>
+    </FormShell>
   </AdminLayout>
 </template>
