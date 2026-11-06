@@ -103,6 +103,7 @@ const galleriesHref = computed(() => props.header.tabs.find((tab) => tab.key ===
 const step = computed(() => (props.header.canManageShoots ? nextStep(props.shoots) : null));
 const callHref = computed(() => paymentCall(props.header.paymentPlan, props.header.people));
 const sendHref = computed(() => sendQuoteHref(props.quote, props.header.canManageQuotes));
+const createQuote = computed(() => !props.header.isBooked && props.header.canManageQuotes && !props.quote);
 const addShoot = computed(() => props.header.isBooked && props.header.canManageShoots && !props.shoots.length);
 const addGallery = computed(
     () => props.header.isBooked && props.header.canManageShoots && !step.value && !addShoot.value && !props.header.galleries.length && !!galleriesHref.value,
@@ -272,9 +273,12 @@ function complete(row: App.Crm.Data.TaskRowData) {
                 <ProjectQueue :groups="header.queue" @update:rows="reachable = $event" />
             </template>
 
-            <template v-if="sendHref || step || callHref || addShoot || addGallery || completeNow" #stage>
+            <template v-if="sendHref || createQuote || step || callHref || addShoot || addGallery || completeNow" #stage>
                 <Button v-if="sendHref" variant="pill" as-child class="max-[640px]:min-h-11">
                     <Link :href="sendHref">{{ $t("lead.sendQuote") }}</Link>
+                </Button>
+                <Button v-else-if="createQuote" variant="pill" as-child class="max-[640px]:min-h-11">
+                    <Link :href="`/angebote/neu?projekt=${header.id}`">{{ $t("quotes.create") }}</Link>
                 </Button>
                 <Button v-else-if="addGallery" variant="pill" as-child class="max-[640px]:min-h-11">
                     <Link :href="galleriesHref!">{{ $t("galleries.create") }}</Link>
