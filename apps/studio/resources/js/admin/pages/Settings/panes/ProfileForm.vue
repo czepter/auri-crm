@@ -343,14 +343,14 @@ defineExpose({ form, submit, adaptExisting })
         </Field>
       </div>
       <div class="mt-4 first:mt-0">
-        <div class="grid grid-cols-2 gap-4">
-          <Field :label="$t('settings.bankIban')" id="p-iban" :error="form.errors.bank_iban">
-            <Input id="p-iban" v-model="form.bank_iban" class="tabular-nums" rule="iban" type="text" @input="groupIbanInPlace" />
-          </Field>
-          <Field :label="$t('settings.bankBic')" id="p-bic" :error="form.errors.bank_bic">
-            <Input id="p-bic" v-model="form.bank_bic" class="tabular-nums" rule="bic" type="text" />
-          </Field>
-        </div>
+        <Field :label="$t('settings.bankIban')" id="p-iban" wide :error="form.errors.bank_iban">
+          <Input id="p-iban" v-model="form.bank_iban" class="font-mono tabular-nums" rule="iban" type="text" @input="groupIbanInPlace" />
+        </Field>
+      </div>
+      <div class="mt-4">
+        <Field :label="$t('settings.bankBic')" id="p-bic" wide :error="form.errors.bank_bic">
+          <Input id="p-bic" v-model="form.bank_bic" class="font-mono tabular-nums" rule="bic" type="text" />
+        </Field>
       </div>
     </FormSection>
   </form>
