@@ -31,8 +31,10 @@ const link = "block truncate text-small leading-[1.47] text-ring no-underline ho
 
     <RailSection v-if="header.paymentPlan" :title="$t('dashboard.payments')">
         <div v-for="instalment in header.paymentPlan.installments" :key="instalment.id" class="flex gap-2.5 py-[5px] text-small leading-[1.47]">
-            <span class="w-24 flex-none text-ink-2">{{ day(instalment.dueOn) }}</span>
-            <span>{{ formatEurosRounded(Number(instalment.amount)) }}</span>
+            <span class="w-24 flex-none text-ink-2">{{ instalment.status === 'paid' && instalment.paidOn ? day(instalment.paidOn) : day(instalment.dueOn) }}</span>
+            <span :class="instalment.status === 'paid' ? 'text-ink-2' : ''">{{ formatEurosRounded(Number(instalment.amount)) }}</span>
+            <span v-if="instalment.status === 'paid'" class="ml-auto text-ink-2">{{ instalment.statusLabel }}</span>
+            <span v-else-if="instalment.isLate" class="ml-auto text-destructive">{{ $t('dashboard.overdue') }}</span>
         </div>
 
         <SettlePlanDialog

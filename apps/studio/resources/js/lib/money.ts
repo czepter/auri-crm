@@ -21,9 +21,9 @@ export function formatEuros(cents: number): string {
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(cents / 100)
 }
 
-/** The same money as a headline figure — tiles, column sums, report rows, where cents are noise. */
+/** The same money as a headline figure — tiles, column sums, report rows: whole euros lose the cents, anything else keeps them. */
 export function formatEurosRounded(cents: number): string {
-  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
+  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 2 })
     .format(cents / 100)
 }
 
