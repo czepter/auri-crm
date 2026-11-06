@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import FormSection from '@/ui/page/FormSection.vue'
 import { computed, ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import { useObjectUrl } from '@vueuse/core'
@@ -147,9 +148,8 @@ defineExpose({ form, submit, adaptExisting })
 
 <template>
   <form id="settings-form" @submit.prevent="submit">
-    <div v-if="shows('brand')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.brand') }}</div>
-      <div class="mb-6">
+    <FormSection v-if="shows('brand')" :title="$t('settings.brand')">
+      <div class="mt-4 first:mt-0">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.displayName')" id="p-anzeigename" :error="form.errors.display_name">
             <Input id="p-anzeigename" v-model="form.display_name" type="text" />
@@ -162,7 +162,7 @@ defineExpose({ form, submit, adaptExisting })
           </Field>
         </div>
       </div>
-      <div class="mb-6">
+      <div class="mt-4 first:mt-0">
         <ChoiceGroup
           v-model="form.client_register"
           class="mb-6"
@@ -208,16 +208,15 @@ defineExpose({ form, submit, adaptExisting })
           </RadioGroup>
         </Field>
       </div>
-    </div>
+    </FormSection>
 
-    <div v-if="shows('legal')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.legalEntity') }}</div>
-      <div class="mb-6">
+    <FormSection v-if="shows('legal')" :title="$t('settings.legalEntity')">
+      <div class="mt-4 first:mt-0">
         <Field :label="$t('settings.legalName')" id="p-firma" wide :error="form.errors.legal_name">
           <Input id="p-firma" v-model="form.legal_name" type="text" />
         </Field>
       </div>
-      <div class="mb-6">
+      <div class="mt-4 first:mt-0">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.legalForm')" id="p-rechtsform" :error="form.errors.legal_form">
             <Select
@@ -240,12 +239,12 @@ defineExpose({ form, submit, adaptExisting })
           </Field>
         </div>
       </div>
-      <div class="mb-6">
+      <div class="mt-4 first:mt-0">
         <Field :label="$t('settings.street')" id="p-strasse" wide :error="form.errors.street">
           <Input id="p-strasse" v-model="form.street" type="text" />
         </Field>
       </div>
-      <div class="mb-6">
+      <div class="mt-4 first:mt-0">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.postcode')" id="p-plz" :error="form.errors.postcode">
             <Input id="p-plz" v-model="form.postcode" class="tabular-nums" type="text" />
@@ -255,7 +254,7 @@ defineExpose({ form, submit, adaptExisting })
           </Field>
         </div>
       </div>
-      <div class="mb-6">
+      <div class="mt-4 first:mt-0">
         <Field :label="$t('settings.country')" id="p-land" class="max-w-[260px]" :error="form.errors.country">
           <Select :model-value="form.country" @update:model-value="(value) => (form.country = String(value))">
             <SelectTrigger id="p-land">
@@ -269,11 +268,10 @@ defineExpose({ form, submit, adaptExisting })
           </Select>
         </Field>
       </div>
-    </div>
+    </FormSection>
 
-    <div v-if="shows('general')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.timezoneLabel') }}</div>
-      <div class="mb-6">
+    <FormSection v-if="shows('general')" :title="$t('settings.timezoneLabel')">
+      <div class="mt-4 first:mt-0">
         <div class="grid grid-cols-2 gap-4">
           <Field :error="form.errors.timezone" v-slot="{ id }">
             <Label :for="id" class="sr-only">{{ $t('settings.timezoneLabel') }}</Label>
@@ -309,11 +307,10 @@ defineExpose({ form, submit, adaptExisting })
           </Field>
         </div>
       </div>
-    </div>
+    </FormSection>
 
-    <div v-if="shows('tax')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.taxSection') }}</div>
-      <div class="mb-6">
+    <FormSection v-if="shows('tax')" :title="$t('settings.taxSection')">
+      <div class="mt-4 first:mt-0">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.taxNumber')" id="p-steuernr" :error="form.errors.tax_number">
             <Input id="p-steuernr" v-model="form.tax_number" class="tabular-nums" rule="taxNumber" type="text" />
@@ -337,16 +334,15 @@ defineExpose({ form, submit, adaptExisting })
           </Field>
         </div>
       </div>
-    </div>
+    </FormSection>
 
-    <div v-if="shows('bank')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.bank') }}</div>
-      <div class="mb-6">
+    <FormSection v-if="shows('bank')" :title="$t('settings.bank')">
+      <div class="mt-4 first:mt-0">
         <Field :label="$t('settings.bankAccountHolder')" id="p-kontoinhaber" wide :error="form.errors.bank_account_holder">
           <Input id="p-kontoinhaber" v-model="form.bank_account_holder" type="text" />
         </Field>
       </div>
-      <div class="mb-6">
+      <div class="mt-4 first:mt-0">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.bankIban')" id="p-iban" :error="form.errors.bank_iban">
             <Input id="p-iban" v-model="form.bank_iban" class="tabular-nums" rule="iban" type="text" @input="groupIbanInPlace" />
@@ -356,6 +352,6 @@ defineExpose({ form, submit, adaptExisting })
           </Field>
         </div>
       </div>
-    </div>
+    </FormSection>
   </form>
 </template>

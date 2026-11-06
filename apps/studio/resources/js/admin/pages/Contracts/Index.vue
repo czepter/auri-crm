@@ -33,7 +33,7 @@ const shown = computed(() => {
 
         <template v-if="contracts.length">
           <div class="flex flex-wrap items-center gap-3 px-6 pt-4.5">
-            <Input v-model="query" class="h-8 w-64 shrink-0" type="search" :placeholder="$t('contractsOverview.searchPlaceholder')" />
+            <Input v-model="query" class="h-8 min-w-60 w-64 shrink-0" type="search" :placeholder="$t('contractsOverview.searchPlaceholder')" />
           </div>
 
           <Table>
@@ -70,7 +70,7 @@ const shown = computed(() => {
           </Table>
         </template>
 
-        <Empty v-else class="mx-8 mt-7">
+        <Empty v-else :text="$t('contractsOverview.empty')">
           <Button :as="Link" variant="pill" href="/projekte">{{ $t('contractsOverview.toProjects') }}</Button>
         </Empty>
       </div>

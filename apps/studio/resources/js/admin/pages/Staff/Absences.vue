@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { router, useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormShell from '@/ui/page/FormShell.vue'
+import ProfileNav from '@/admin/components/settings/ProfileNav.vue'
 import Empty from '@/ui/page/Empty.vue'
 import { Button } from '@/ui/button'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
@@ -54,7 +55,8 @@ function add() {
 
 <template>
   <AdminLayout active="abwesenheiten">
-    <FormShell :title="$t('absences.title')">
+    <FormShell :kicker="$t('profile.kicker')" :title="$t('absences.title')">
+      <template #nav><ProfileNav active="abwesenheiten" /></template>
         <template #head>
           <!-- The add form used to sit permanently at the foot of the page, below
                however many absences the list held — you scrolled past everyone
@@ -108,7 +110,7 @@ function add() {
           </Dialog>
         </template>
 
-        <Empty v-if="!absences.length">
+        <Empty v-if="!absences.length" :text="$t('absences.empty')">
           <Button variant="pill" type="button" @click="adding = true">{{ $t('absences.add') }}</Button>
         </Empty>
 

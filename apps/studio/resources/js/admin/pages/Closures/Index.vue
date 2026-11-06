@@ -97,7 +97,7 @@ function add() {
           </Dialog>
         </template>
 
-        <Empty v-if="!closures.length">
+        <Empty v-if="!closures.length" :text="$t('settings.closureEmpty')">
           <Button variant="pill" type="button" @click="adding = true">{{ $t('settings.closureAdd') }}</Button>
         </Empty>
 

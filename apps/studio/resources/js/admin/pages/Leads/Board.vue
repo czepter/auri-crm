@@ -466,7 +466,7 @@ const workflowAllowed = computed(() =>
                             v-for="option in pills"
                             :key="option.key"
                             class="flex shrink-0 cursor-pointer snap-start items-center gap-1.5 rounded-[var(--r-sm)] px-3 py-1.5 text-small max-[640px]:min-h-11"
-                            :class="stage === option.key ? 'bg-foreground text-paper' : 'bg-sunk text-foreground'"
+                            :class="stage === option.key ? 'bg-paper font-medium text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'bg-sunk text-foreground'"
                             type="button"
                             :aria-pressed="stage === option.key"
                             @click="pick(option.key)"

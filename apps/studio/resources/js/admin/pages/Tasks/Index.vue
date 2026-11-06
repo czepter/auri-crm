@@ -109,7 +109,7 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
               v-for="key in TABS"
               :key="key"
               class="cursor-pointer rounded-[var(--r-sm)] border-0 bg-transparent px-2.5 py-1 leading-[1.4]"
-              :class="tab === key ? 'bg-paper text-foreground shadow-[0_1px_2px_rgba(24,24,27,.08)]' : 'text-ink-2 hover:text-foreground'"
+              :class="tab === key ? 'bg-paper text-foreground shadow-[0_1px_2px_rgba(24,24,27,.08),inset_0_0_0_1px_var(--faint)]' : 'text-ink-2 hover:text-foreground'"
               type="button"
               @click="tab = key"
             >

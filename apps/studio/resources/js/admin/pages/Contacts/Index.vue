@@ -38,7 +38,7 @@ function day(iso: string) {
           <Button :as="Link" class="ml-auto" variant="pill" href="/kontakte/neu">{{ $t('contacts.create') }}</Button>
         </PageHead>
 
-        <Empty v-if="!contacts.length" class="mx-8 mt-7" :text="$t('contacts.empty')">
+        <Empty v-if="!contacts.length" :text="$t('contacts.empty')">
           <Button :as="Link" variant="pill" href="/kontakte/neu">{{ $t('contacts.create') }}</Button>
         </Empty>
 

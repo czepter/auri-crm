@@ -156,11 +156,8 @@ const mailPreview = computed(() => {
       </template>
 
       <template v-else-if="pane === 'payment'">
-        <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.bank') }}</div>
         <ProfileForm ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="['bank']" />
-        <div class="mt-8">
-          <PaymentForm ref="paymentRef" :settings="settings" />
-        </div>
+        <PaymentForm ref="paymentRef" :settings="settings" />
       </template>
 
       <ReceiptsForm v-else-if="pane === 'receipts'" ref="receiptsRef" :settings="settings" />

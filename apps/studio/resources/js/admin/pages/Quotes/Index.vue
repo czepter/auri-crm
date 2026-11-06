@@ -9,6 +9,7 @@ import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
 import { Input } from '@/ui/input'
 import { Button } from '@/ui/button'
 import { formatEuros } from '@/lib/money'
+import { quoteChipClass } from '@/admin/lib/quoteDisplay'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{ quotes: App.Quotes.Data.QuoteRowData[] }>()
@@ -16,7 +17,6 @@ useLiveProps(['quotes'])
 
 const query = ref('')
 
-const CHIP: Record<string, string> = { draft: 'next', sent: 'now', accepted: 'done', superseded: 'off', expired: 'fail' }
 
 const shown = computed(() => {
   const needle = query.value.trim().toLocaleLowerCase('de')
@@ -40,7 +40,7 @@ function day(iso: string) {
 
         <template v-if="quotes.length">
           <div class="flex px-6 pt-4.5">
-            <Input v-model="query" class="h-8 w-64 shrink-0" type="search" :placeholder="$t('quotesOverview.searchPlaceholder')" />
+            <Input v-model="query" class="h-8 min-w-60 w-64 shrink-0" type="search" :placeholder="$t('quotesOverview.searchPlaceholder')" />
           </div>
 
           <Table>
@@ -60,14 +60,14 @@ function day(iso: string) {
                 </TableCell>
                 <TableCell tone="muted">{{ quote.number ?? '—' }}</TableCell>
                 <TableCell align="right">{{ formatEuros(quote.total) }}</TableCell>
-                <TableCell><span class="chip" :class="CHIP[quote.status]">{{ quote.statusLabel }}</span></TableCell>
+                <TableCell><span class="chip" :class="quoteChipClass(quote.status)">{{ quote.statusLabel }}</span></TableCell>
                 <TableCell align="right" tone="muted">{{ quote.createdAt ? day(quote.createdAt) : '—' }}</TableCell>
               </TableRow>
             </tbody>
           </Table>
         </template>
 
-        <Empty v-else class="mx-8 mt-7">
+        <Empty v-else :text="$t('quotesOverview.empty')">
           <Button :as="Link" variant="pill" href="/angebote/neu">{{ $t('quotesOverview.create') }}</Button>
         </Empty>
       </div>

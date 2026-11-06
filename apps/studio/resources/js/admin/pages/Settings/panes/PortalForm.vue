@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import FormSection from '@/ui/page/FormSection.vue'
 import { useForm } from '@inertiajs/vue3'
 import { Textarea } from '@/ui/textarea'
 import { Checkbox } from '@/ui/checkbox'
@@ -57,27 +58,25 @@ defineExpose({ form, submit })
     <!-- T-08: a temporary closure, worded and switched separately from
          A-04's hide-project/revoke-contact forms — never a third
          catch-all access control. -->
-    <div class="mt-0">
-      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('portalSettings.maintenanceSection') }}</div>
-      <div class="mb-6">
+    <FormSection :title="$t('portalSettings.maintenanceSection')">
+      <div>
         <div class="flex items-center gap-2.5">
           <Checkbox id="cb-portal-maintenance-enabled" v-model="form.portal_maintenance_enabled" />
           <Label variant="inline" for="cb-portal-maintenance-enabled">{{ $t('portalSettings.maintenanceEnabledLabel') }}</Label>
         </div>
       </div>
-      <div v-if="form.portal_maintenance_enabled" class="mb-6">
+      <div v-if="form.portal_maintenance_enabled" class="mt-4">
         <Field :error="form.errors.portal_maintenance_message" v-slot="{ id }">
           <Label :for="id">{{ $t('portalSettings.maintenanceMessageLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
           <Textarea :id v-model="form.portal_maintenance_message" rows="3" />
         </Field>
       </div>
-    </div>
+    </FormSection>
 
     <!-- T-08: every switch below defaults to off — a studio opts the
          portal into each capability, whether or not the feature behind
          it already ships elsewhere. -->
-    <div class="mt-8">
-      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('portalSettings.capabilitiesSection') }}</div>
+    <FormSection :title="$t('portalSettings.capabilitiesSection')">
       <div class="mb-2 overflow-hidden rounded-[var(--r)] border border-border">
         <div
           v-for="capability in CAPABILITIES"
@@ -89,13 +88,12 @@ defineExpose({ form, submit })
         </div>
       </div>
       <span class="text-small leading-[1.45] text-faint">{{ $t('portalSettings.perContactHint') }}</span>
-    </div>
+    </FormSection>
 
     <!-- P-04 (#223) made a thread without a booking possible, which is a
          third state rather than a second position of one switch. -->
-    <div class="mt-8">
-      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('portalSettings.messagingLabel') }}</div>
-      <div class="mb-6">
+    <FormSection :title="$t('portalSettings.messagingLabel')">
+      <div>
         <RadioGroup v-model="form.portal_messaging_mode">
           <div v-for="mode in ['off', 'booking', 'any']" :key="mode" class="flex items-center gap-2.5">
             <RadioGroupItem :id="`rb-messaging-${mode}`" :value="mode" />
@@ -105,10 +103,9 @@ defineExpose({ form, submit })
           </div>
         </RadioGroup>
       </div>
-    </div>
+    </FormSection>
 
-    <div class="mt-8">
-      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('portalSettings.welcomeSection') }}</div>
+    <FormSection :title="$t('portalSettings.welcomeSection')">
       <div class="mb-2 overflow-hidden rounded-[var(--r)] border border-border">
         <div v-for="state in STATES" :key="state" class="px-4 py-3 not-first:border-t not-first:border-border">
           <div class="mb-2 flex flex-wrap items-center gap-2.5">
@@ -119,6 +116,6 @@ defineExpose({ form, submit })
         </div>
       </div>
       <span class="text-small leading-[1.45] text-faint">{{ $t('portalSettings.perContactHint') }}</span>
-    </div>
+    </FormSection>
   </form>
 </template>
