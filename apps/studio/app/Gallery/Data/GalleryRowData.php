@@ -28,7 +28,7 @@ class GalleryRowData extends Data
             assetCount: $gallery->asset_count,
             version: $gallery->currentVersion?->version,
             expiresAt: $gallery->expires_at?->format('Y-m-d'),
-            cover: $gallery->coverAsset === null ? null : "/galerien/{$gallery->public_id}/bilder/{$gallery->coverAsset->public_id}/vorschau",
+            cover: $gallery->coverAsset === null ? null : "/galerien/{$gallery->public_id}/bilder/{$gallery->coverAsset->public_id}/vorschau?w=400&fmt=jpeg",
         );
     }
 }

@@ -61,7 +61,7 @@ function day(iso: string | null) {
             :key="gallery.id"
             class="flex items-center gap-3.5 py-3 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none max-[640px]:flex-wrap max-[640px]:gap-x-3 max-[640px]:gap-y-1"
           >
-            <img v-if="gallery.cover" :src="gallery.cover" alt="" class="h-12 w-16 flex-none rounded-[var(--r-sm)] bg-sunk object-cover max-[640px]:hidden" loading="lazy">
+            <img v-if="gallery.cover" :src="gallery.cover" alt="" class="h-12 w-16 flex-none rounded-[var(--r-sm)] bg-sunk object-cover max-[640px]:hidden" loading="lazy" @error="(event: Event) => (event.target as HTMLElement).classList.add('invisible')">
             <span v-else class="h-12 w-16 flex-none rounded-[var(--r-sm)] bg-sunk max-[640px]:hidden" />
             <!-- Unter 640px bleiben vom Titel sonst 110px: drei feste Spalten
                  und der Rand nehmen den Rest. Der Name bekommt die Zeile, die
