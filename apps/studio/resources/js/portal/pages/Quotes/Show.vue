@@ -207,6 +207,27 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
             </template>
           </table>
 
+          <dl v-if="project.date || project.venue" class="m-0 mt-8 grid max-w-[420px] grid-cols-[88px_1fr] gap-x-4 gap-y-2 text-[14.5px] leading-[1.5]">
+            <template v-if="project.date">
+              <dt class="text-muted-foreground">{{ $t('portal.appointment') }}</dt>
+              <dd class="m-0 tabular-nums">{{ dayDate(project.date) }}</dd>
+            </template>
+            <template v-if="project.venue">
+              <dt class="text-muted-foreground">{{ $t('portal.place') }}</dt>
+              <dd class="m-0">{{ project.venue }}</dd>
+            </template>
+          </dl>
+
+          <table v-if="stages.length" class="mt-8 w-full max-w-[420px] border-collapse">
+            <caption class="pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">
+              {{ $t('quotes.payment') }}
+            </caption>
+            <tr v-for="stage in stages" :key="stage.label" :class="[ROW, '[&>td]:text-muted-foreground']">
+              <td>{{ stage.label }}</td>
+              <td>{{ formatEuros(stage.amount) }}</td>
+            </tr>
+          </table>
+
           <div v-if="quote.hourlyRate === null" class="mt-6 grid gap-4">
             <p v-if="rejection" class="text-[14.5px] text-destructive">{{ rejection }}</p>
 
@@ -239,16 +260,6 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
               <Link :href="`/nachrichten?betrifft=${project.id}`">{{ $t('portal.personWrite') }}</Link>
             </Button>
           </div>
-
-          <table v-if="stages.length" class="mt-8 w-full max-w-[420px] border-collapse">
-            <caption class="pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">
-              {{ $t('quotes.payment') }}
-            </caption>
-            <tr v-for="stage in stages" :key="stage.label" :class="[ROW, '[&>td]:text-muted-foreground']">
-              <td>{{ stage.label }}</td>
-              <td>{{ formatEuros(stage.amount) }}</td>
-            </tr>
-          </table>
 
           <div v-if="quote.outro" class="mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] [&_p+*]:mt-3 [&_*+p]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5" v-html="quote.outro" />
         </div>

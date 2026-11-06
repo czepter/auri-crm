@@ -109,6 +109,14 @@ Staff login passwords and `client_accesses.token_hash` are not covered by this
 and stay hashes: they are never shown, so nothing is bought by making them
 readable.
 
+### Shoots and payment
+
+| Path                 | Value                                          |
+|----------------------|-------------------------------------------------|
+| `shoot.list`         | Every uncancelled shoot by date, `dd.mm.yyyy (Ort)`, separated by `;`. |
+| `payment.plan`       | The payment plan's installments, `Titel Betrag bis dd.mm.yyyy`. Empty before booking. |
+| `payment.depositDue` | Due date of the first installment. Empty before booking. |
+
 ### The invoice block
 
 `invoice.*` is the one part of the vocabulary that is not derivable from the

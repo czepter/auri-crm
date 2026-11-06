@@ -101,7 +101,7 @@ const daysLeft = computed(() => {
 // Everything waiting on the client, most pressing first: the contract, an
 // overdue rate, the quote, a rate not yet due, then the questionnaires.
 const steps = computed(() => {
-  const rank = (document: Document) => document.kind === 'contract' ? 0 : document.kind === 'payments' ? (document.overdue ? 1 : 3) : 2
+  const rank = (document: Document) => document.kind === 'contract' ? 0 : document.kind === 'messages' ? 1 : document.kind === 'payments' ? (document.overdue ? 1 : 3) : 2
 
   const documents = props.project.documents
     .filter(document => !document.settled)
@@ -135,6 +135,8 @@ const steps = computed(() => {
 
   return [...documents, ...sheets].sort((a, b) => a.rank - b.rank)
 })
+
+const shoots = computed(() => [...props.project.shoots].sort((a, b) => (a.date ?? '9999').localeCompare(b.date ?? '9999')))
 
 const step = computed(() => steps.value[0] ?? null)
 
@@ -261,10 +263,10 @@ function documentNote(document: Document) {
         />
       </section>
 
-      <section v-if="project.shoots.length" :class="BAND">
+      <section v-if="shoots.length" :class="BAND">
         <PortalLabel>{{ $t('portal.shootsTitle') }}</PortalLabel>
         <div
-          v-for="shoot in project.shoots"
+          v-for="shoot in shoots"
           :key="shoot.id"
           class="grid grid-cols-[132px_1fr_auto] items-baseline gap-6 border-b border-border py-5 last:border-b-0 max-[820px]:grid-cols-1 max-[820px]:gap-1.5"
         >
@@ -312,18 +314,10 @@ function documentNote(document: Document) {
         />
       </section>
 
-      <!-- The details the inquiry let them edit, read-only now: from
-           `gebucht` the date and the place are contract content. -->
+      <!-- Date and place already stand in the header and the shoot list. -->
       <section :class="BAND">
         <PortalLabel class="mb-4">{{ $t('portal.notedTitle') }}</PortalLabel>
         <dl class="m-0 grid grid-cols-[148px_1fr] gap-x-6 gap-y-3 max-[700px]:grid-cols-1 max-[700px]:gap-y-0">
-          <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.appointment') }}</dt>
-          <dd class="m-0 text-[14.5px] tabular-nums">
-            {{ project.details.date ? dayDate(project.details.date) : $t('portal.dateOpen') }}
-            <template v-if="project.details.callTime"> · {{ project.details.callTime }}</template>
-          </dd>
-          <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.place') }}</dt>
-          <dd class="m-0 text-[14.5px]">{{ project.details.venue ?? '—' }}</dd>
           <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.reachUs') }}</dt>
           <dd class="m-0 text-[14.5px]">
             {{ [project.details.email, project.details.phone].filter(Boolean).join(' · ') }}

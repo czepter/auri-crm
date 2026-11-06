@@ -5,6 +5,7 @@ import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
+import { bookingKey } from '@/portal/lib/booking'
 import { Button } from '@/ui/button'
 
 /*
@@ -28,7 +29,7 @@ const title = computed(() => {
                 : path.startsWith('/projekte') ? 'Booking'
                   : null
 
-  return key ? `portal.notFound${key}` : 'portal.notFoundTitle'
+  return key === 'Booking' ? bookingKey('notFoundBooking') : key ? `portal.notFound${key}` : 'portal.notFoundTitle'
 })
 </script>
 
@@ -44,7 +45,7 @@ const title = computed(() => {
         </h1>
 
         <Button class="mt-10" as="a" variant="portal" href="/">
-          {{ $t('portal.toBooking') }}
+          {{ $t(bookingKey('toBooking')) }}
           <svg class="fill-none stroke-current" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </Button>
       </div>

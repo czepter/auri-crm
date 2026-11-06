@@ -285,7 +285,12 @@ class CaseController extends Controller
                 'href' => "/nachrichten?betrifft={$found->public_id}",
                 'dueOn' => null,
                 'amount' => null,
-                'settled' => true,
+                // The studio wrote last: the same rule the mailbox badge counts.
+                'settled' => ! auth('portal')->user()->threads()
+                    ->where('threads.case_id', $found->id)
+                    ->with('latestMessage')
+                    ->get()
+                    ->contains(fn ($thread) => $thread->latestMessage !== null && $thread->latestMessage->contact_id === null),
             ];
         }
 

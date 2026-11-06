@@ -25,8 +25,8 @@ class ClauseCatalog
         return [
             self::clause('parties', 'auftrag', 'Parteien', '{{ studio.name }}, {{ studio.street }}, {{ studio.postcode }} {{ studio.city }} — nachfolgend Fotograf. {{ contact.name }}, {{ contact.street }}, {{ contact.postcode }} {{ contact.city }} — nachfolgend Auftraggeber.'),
             self::clause('scope', 'auftrag', 'Leistung', 'Der Fotograf erstellt Aufnahmen im Rahmen von {{ project.name }}. Umfang und Ablauf ergeben sich aus dem angenommenen Angebot.'),
-            self::clause('dates', 'auftrag', 'Termine', 'Termin und Zeitrahmen sind im Angebot festgehalten. Verschiebungen bedürfen der Abstimmung beider Seiten in Textform.'),
-            self::clause('fee', 'auftrag', 'Vergütung und Zahlung', 'Es gilt die im Angebot vereinbarte Vergütung. Die Anzahlung wird mit Vertragsschluss fällig, der Restbetrag nach dem im Zahlungsplan genannten Termin.'),
+            self::clause('dates', 'auftrag', 'Termine', 'Gebucht sind folgende Termine: {{ shoot.list }}. Zeitrahmen und Ablauf sind im Angebot festgehalten. Verschiebungen bedürfen der Abstimmung beider Seiten in Textform.'),
+            self::clause('fee', 'auftrag', 'Vergütung und Zahlung', 'Es gilt die im Angebot vereinbarte Vergütung. Zahlungsplan: {{ payment.plan }}. Die Anzahlung ist bis {{ payment.depositDue }} fällig.'),
 
             self::clause('usage', 'nutzung', 'Nutzungsrechte', 'Der Auftraggeber erhält ein einfaches, räumlich und zeitlich unbeschränktes Nutzungsrecht an den gelieferten Bildern für private Zwecke.'),
             self::clause('commercial', 'nutzung', 'Gewerbliche Nutzung', 'Eine gewerbliche Nutzung, die Weitergabe an Dritte zur Veröffentlichung sowie der Weiterverkauf bedürfen einer gesonderten Vereinbarung.', on: false),

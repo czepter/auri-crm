@@ -55,7 +55,7 @@ const role = computed(() => /gmbh|ug\b/i.test(props.legalForm ?? '') ? 'portal.i
     <main class="mx-auto w-full max-w-[668px] grow px-6 pt-[var(--band)] pb-28">
       <PortalBack />
       <p class="animate-rise motion-reduce:animate-none mb-4 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">{{ $t('portal.impressumTitle') }}</p>
-      <h1 v-if="title" class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
+      <h1 v-if="title" class="scroll-mt-24 animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
         {{ title }}
       </h1>
 

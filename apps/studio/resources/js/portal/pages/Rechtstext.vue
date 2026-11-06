@@ -38,13 +38,13 @@ const html = computed(() => {
     <PortalWrap class="pb-40">
       <section class="pt-[var(--band)]">
         <PortalBack />
-        <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
+        <h1 class="scroll-mt-24 animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
           {{ title }}
         </h1>
       </section>
 
       <article
-        class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 max-w-[62ch] text-[15.5px] leading-[1.6] [&_h2]:mt-8 [&_h2]:mb-2 [&_h2]:text-[17px] [&_h2]:leading-[1.35] [&_h2]:font-semibold [&_h2:first-child]:mt-0 [&_p+*]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
+        class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 max-w-[62ch] text-[15.5px] leading-[1.6] [&_h2]:scroll-mt-24 [&_h2]:mt-8 [&_h2]:mb-2 [&_h2]:text-[17px] [&_h2]:leading-[1.35] [&_h2]:font-semibold [&_h2:first-child]:mt-0 [&_p+*]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
         v-html="html"
       />
     </PortalWrap>

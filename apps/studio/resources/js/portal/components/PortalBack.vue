@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
+import { bookingKey } from '@/portal/lib/booking'
 
 withDefaults(defineProps<{ href?: string; label?: string }>(), { href: '/', label: undefined })
 </script>
@@ -10,6 +11,6 @@ withDefaults(defineProps<{ href?: string; label?: string }>(), { href: '/', labe
     :href="href"
   >
     <svg class="size-4 fill-none stroke-current stroke-[1.7] [stroke-linecap:round] [stroke-linejoin:round]" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" /></svg>
-    {{ label ?? $t('portal.navBooking') }}
+    {{ label ?? $t(bookingKey('navBooking')) }}
   </Link>
 </template>

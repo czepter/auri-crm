@@ -2,6 +2,7 @@
 import { computed, onMounted, watch } from 'vue'
 import { Link, router, usePage } from '@inertiajs/vue3'
 import PortalTabbar from '@/portal/components/PortalTabbar.vue'
+import { bookingKey } from '@/portal/lib/booking'
 import { Button } from '@/ui/button'
 
 /*
@@ -36,7 +37,7 @@ withDefaults(defineProps<{
 })
 
 type Branding = { displayName: string | null; logoUrl: string | null; accentColor: string | null }
-type Nav = { messaging: boolean; unread: number; oneBooking: boolean }
+type Nav = { messaging: boolean; unread: number; oneBooking: boolean; booked: boolean }
 
 const branding = computed(() => usePage().props.portalBranding as Branding | undefined)
 const nav = computed(() => usePage().props.portalNav as Nav | null | undefined)
@@ -77,7 +78,7 @@ watch(branding, applyAccent)
     <div
       :class="
         over
-          ? 'text-white'
+          ? 'bg-[linear-gradient(to_bottom,rgba(12,10,9,.78),rgba(12,10,9,.5))] text-white'
           : 'border-b border-border bg-[var(--bg)]'
       "
     >
@@ -115,7 +116,7 @@ watch(branding, applyAccent)
           class="ml-auto flex items-center gap-6 text-[13.5px] leading-none max-[760px]:hidden [&_a]:no-underline"
         >
           <Link :class="bookings ? 'font-semibold' : 'opacity-72 hover:opacity-100'" href="/">
-            {{ nav.oneBooking ? $t('portal.navBooking') : $t('portal.navBookings') }}
+            {{ $t(bookingKey(nav.oneBooking ? 'navBooking' : 'navBookings')) }}
           </Link>
           <Link
             v-if="nav.messaging"

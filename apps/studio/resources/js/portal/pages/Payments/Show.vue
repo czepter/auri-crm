@@ -69,6 +69,9 @@ function payNow(installmentId: string) {
   })
 }
 
+// DIN 5008: groups of four.
+const iban = computed(() => (props.bankDetails.iban ?? '').replace(/\s+/g, '').replace(/(.{4})(?=.)/g, '$1 '))
+
 const hasPayment = computed(() => props.stripeEnabled || !!props.bankDetails.iban)
 const copied = ref<string | null>(null)
 
@@ -161,14 +164,22 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
                     {{ $t('portal.payButton') }}
                   </Button>
                   <dl class="m-0 mt-4 grid gap-y-4 rounded-md bg-sunk p-4">
+                    <div v-if="bankDetails.accountHolder">
+                      <dt class="text-[13px] text-muted-foreground">{{ $t('portal.transferAccountHolder') }}</dt>
+                      <dd class="m-0 text-[15px]">{{ bankDetails.accountHolder }}</dd>
+                    </div>
                     <div>
                       <dt class="text-[13px] text-muted-foreground">{{ $t('portal.transferIban') }}</dt>
                       <dd class="m-0 flex items-center justify-between gap-3 text-[15px] tabular-nums">
-                        {{ bankDetails.iban }}
-                        <Button type="button" variant="portal-chip" @click="copy(`iban-${installment.id}`, bankDetails.iban!)">
+                        {{ iban }}
+                        <Button type="button" variant="portal-chip" @click="copy(`iban-${installment.id}`, iban)">
                           {{ copied === `iban-${installment.id}` ? $t('gallery.copied') : $t('gallery.copy') }}
                         </Button>
                       </dd>
+                    </div>
+                    <div v-if="bankDetails.bic">
+                      <dt class="text-[13px] text-muted-foreground">{{ $t('portal.transferBic') }}</dt>
+                      <dd class="m-0 text-[15px] tabular-nums">{{ bankDetails.bic }}</dd>
                     </div>
                     <div>
                       <dt class="text-[13px] text-muted-foreground">{{ $t('portal.transferReference') }}</dt>
@@ -214,8 +225,8 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
               <div>
                 <dt class="text-[13px] text-muted-foreground">{{ $t('portal.transferIban') }}</dt>
                 <dd class="m-0 flex items-center justify-between gap-4 text-[15px] tabular-nums">
-                  {{ bankDetails.iban }}
-                  <Button type="button" variant="portal-chip" @click="copy('iban', bankDetails.iban!)">
+                  {{ iban }}
+                  <Button type="button" variant="portal-chip" @click="copy('iban', iban)">
                     {{ copied === 'iban' ? $t('gallery.copied') : $t('gallery.copy') }}
                   </Button>
                 </dd>
