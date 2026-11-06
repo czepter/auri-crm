@@ -1,5 +1,7 @@
 {
   "common": {
+    "dateFormat": "TT.MM.JJJJ",
+    "time": "Uhrzeit",
     "summary": "Zusammenfassung",
     "back": "Zurück",
     "saved": "Gespeichert",

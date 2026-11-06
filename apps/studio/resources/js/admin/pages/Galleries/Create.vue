@@ -159,7 +159,7 @@ function submit() {
 
             <div class="flex flex-col gap-1.5">
               <Label for="gallery-expiry">{{ $t('galleries.expiryField') }}</Label>
-              <Input id="gallery-expiry" v-model="form.expires_at" type="date" lang="de" />
+              <Input id="gallery-expiry" v-model="form.expires_at" type="date" lang="de" :title="$t('common.dateFormat')" :aria-label="$t('galleries.expiryField') + ' (' + $t('common.dateFormat') + ')'" />
             </div>
 
             <div class="flex items-center gap-2.5">

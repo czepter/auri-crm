@@ -4,7 +4,7 @@ import { router, useForm } from '@inertiajs/vue3'
 import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Field } from '@/ui/field'
-import { Input } from '@/ui/input'
+import DateTimeField from '@/admin/components/crm/DateTimeField.vue'
 import { Textarea } from '@/ui/textarea'
 import { useI18n } from 'vue-i18n'
 
@@ -132,14 +132,7 @@ function cancelScheduled(messageId: string) {
             rows="4" />
         </Field>
         <div class="mt-2.5 flex items-center gap-2.5">
-          <!-- Native datetime-local: a picker library for one optional field
-               is a dependency this screen does not need. -->
-          <Input
-            v-model="reply.scheduled_for"
-            class="w-auto"
-            lang="de" type="datetime-local"
-            :aria-label="$t('project.messagesScheduleLabel')"
-          />
+          <DateTimeField v-model="reply.scheduled_for" :label="$t('project.messagesScheduleLabel')" />
           <Button variant="pill" class="ml-auto" type="submit" :disabled="reply.processing">
             {{ reply.scheduled_for ? $t('project.messagesSchedule') : $t('project.messagesSend') }}
           </Button>
@@ -152,12 +145,7 @@ function cancelScheduled(messageId: string) {
           <Textarea :id="id" v-model="record.body" rows="4" />
         </Field>
         <div class="mt-2.5 flex items-center gap-2.5">
-          <Input
-            v-model="record.sent_at"
-            class="w-auto"
-            lang="de" type="datetime-local"
-            :aria-label="$t('project.messagesSentAt')"
-          />
+          <DateTimeField v-model="record.sent_at" :label="$t('project.messagesSentAt')" />
           <Button variant="pill" class="ml-auto" type="submit" :disabled="!record.body.trim() || record.processing">
             {{ $t('project.messagesRecordSave') }}
           </Button>
