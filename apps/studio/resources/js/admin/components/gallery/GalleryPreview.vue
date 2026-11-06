@@ -148,7 +148,7 @@ const filters = computed(() => [
           <svg class="size-[9px] fill-none stroke-current stroke-[2.2] [stroke-linecap:round] [stroke-linejoin:round]" viewBox="0 0 24 24">
             <path d="M12 4v12M7 12l5 5 5-5M5 20h14" />
           </svg>
-          {{ $t('gallery.downloadLink') }}
+          {{ $t('gallery.download') }}
         </span>
       </div>
 

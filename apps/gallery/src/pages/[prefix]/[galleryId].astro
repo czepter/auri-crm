@@ -514,7 +514,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
                           required
                           data-code-input
                         />
-                        <button class="btn" type="submit">Bestätigen</button>
+                        <button class="barbtn" type="submit">Bestätigen</button>
                       </div>
                       {codeWrong && <p class="err">Der Code stimmt nicht oder ist abgelaufen.</p>}
                     </form>
@@ -525,7 +525,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
                       <div class="row">
                         <input type="email" name="gast_email" placeholder="E-Mail" required data-email-source />
                         <input type="text" name="gast_name" placeholder="Name" required data-name-target />
-                        <button class="btn" type="submit">Weiter</button>
+                        <button class="barbtn" type="submit">Weiter</button>
                       </div>
                       {tooManyCodes && <p class="err">Zu viele Anfragen. Versuch es später noch einmal.</p>}
                     </form>

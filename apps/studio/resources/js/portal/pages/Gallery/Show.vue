@@ -299,7 +299,10 @@ const COVER_INPUT = [
           </Button>
         </span>
 
-        <Button v-if="offers.downloads" as="a" :href="`/galerien/${gallery.id}/download`">{{ $t('gallery.downloadLink') }}</Button>
+        <Button v-if="offers.downloads" as="a" variant="portal" :href="`/galerien/${gallery.id}/download`">
+          <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
+          {{ $t('gallery.download') }}
+        </Button>
       </div>
 
       <!-- Justified rows: basis and grow follow the aspect ratio, so every row
