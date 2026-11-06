@@ -8,7 +8,7 @@ import SettingsNav from '@/admin/components/settings/SettingsNav.vue'
 import { Button } from '@/ui/button'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
-type Archive = { id: string; status: 'building' | 'ready' | 'failed'; size: number | null; expiresAt: string | null; url: string | null }
+type Archive = { id: string; status: 'building' | 'ready' | 'failed'; size: number | null; createdAt: string; expiresAt: string | null; url: string | null }
 
 const props = defineProps<{
   contacts: number
@@ -23,6 +23,8 @@ const rows = computed(() => [
   { gallery: null, title: t('settings.exportData'), size: props.archives?.daten?.size ?? null, archive: props.archives?.daten ?? null },
   ...(props.archives?.galleries ?? []).map((gallery) => ({ gallery: gallery.id, title: gallery.title, size: gallery.size, archive: gallery.archive })),
 ])
+
+const recent = computed(() => rows.value.filter((row) => row.archive?.url))
 
 function size(bytes: number) {
   const [value, unit] = bytes >= 1e9 ? [bytes / 1e9, 'GB'] : [bytes / 1e6, 'MB']
@@ -78,6 +80,22 @@ function create(gallery: string | null) {
           </div>
         </div>
       </div>
+
+      <template #aside>
+        <h2 class="mb-2 text-ui font-semibold">{{ $t('settings.exportRecent') }}</h2>
+        <div
+          v-for="row in recent"
+          :key="row.gallery ?? 'daten'"
+          class="flex items-center gap-3 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+        >
+          <span class="min-w-0 flex-1">
+            <span class="block truncate text-ui">{{ row.title }}</span>
+            <span class="block text-small tabular-nums text-ink-2">{{ day(row.archive!.createdAt) }}<template v-if="row.archive!.size !== null"> · {{ size(row.archive!.size) }}</template></span>
+          </span>
+          <Button as="a" variant="outline" :href="row.archive!.url!">{{ $t('settings.exportDownload') }}</Button>
+        </div>
+        <Button v-if="archives && !recent.length" variant="outline" @click="create(null)">{{ $t('settings.exportCreate') }}</Button>
+      </template>
     </FormShell>
   </AdminLayout>
 </template>

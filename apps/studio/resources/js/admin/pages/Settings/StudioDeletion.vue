@@ -9,7 +9,11 @@ import { Field } from '@/ui/field'
 import { PinInput, PinInputGroup, PinInputSlot } from '@/ui/pin-input'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
-defineProps<{ codeSent: boolean; graceDays: number }>()
+defineProps<{
+  codeSent: boolean
+  graceDays: number
+  counts: { projects: number; contacts: number; galleries: number; files: number }
+}>()
 useLiveProps(['codeSent', 'studioDeletion'])
 
 const page = usePage()
@@ -79,6 +83,23 @@ function cancel() {
           <Button as="a" variant="outline" href="/einstellungen/export">{{ $t('settings.navExport') }}</Button>
         </div>
       </div>
+
+      <template #aside>
+        <h2 class="mb-2 text-ui font-semibold">{{ $t('settings.deletionRemoved') }}</h2>
+        <table class="w-full text-ui">
+          <tbody>
+            <tr v-for="[label, value] in [
+              [$t('projects.title'), counts.projects],
+              [$t('contacts.title'), counts.contacts],
+              [$t('galleries.title'), counts.galleries],
+              [$t('settings.deletionFiles'), counts.files],
+            ]" :key="label" class="shadow-[inset_0_1px_0_var(--rule)] first:shadow-none">
+              <th class="py-2.5 text-left font-normal">{{ label }}</th>
+              <td class="py-2.5 text-right tabular-nums">{{ value.toLocaleString('de-DE') }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </template>
     </FormShell>
   </AdminLayout>
 </template>
