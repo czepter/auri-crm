@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Storage;
  */
 class SignContract
 {
-    public function __invoke(Contract $contract, Contact $contact, string $typedName, string $ip, ?string $userAgent): ContractSignature
+    public function __invoke(Contract $contract, Contact $contact, string $typedName, string $ip, ?string $userAgent, ?string $shown = null): ContractSignature
     {
         // Idempotency guards the row, not the trigger — a doubled request
         // (a retried POST, two tabs) finds the signature already there
@@ -34,9 +34,13 @@ class SignContract
             return $existing;
         }
 
-        abort_unless($contract->status === ContractStatus::Rendered && $contract->hasArtifact(), 422);
+        $stored = $contract->status === ContractStatus::Rendered && $contract->hasArtifact();
 
-        $hash = hash('sha256', Storage::disk('local')->get($contract->artifact_path));
+        // $shown is the text on the page when no PDF exists: the hash then
+        // pins the signature to what the client read instead.
+        abort_unless($stored || $shown !== null, 422);
+
+        $hash = hash('sha256', $stored ? Storage::disk('local')->get($contract->artifact_path) : $shown);
         $templateVersion = $contract->template->version;
 
         $signature = DB::transaction(function () use ($contract, $contact, $typedName, $hash, $templateVersion, $ip, $userAgent) {
