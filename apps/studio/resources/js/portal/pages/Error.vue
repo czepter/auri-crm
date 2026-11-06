@@ -25,7 +25,6 @@ defineProps<{ status: number }>()
         <h1 class="font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
           {{ $t('portal.notFoundTitle') }}
         </h1>
-        <p class="mt-6 max-w-[52ch] text-[17px] leading-[1.55] text-muted-foreground">{{ $t('portal.notFoundHint') }}</p>
 
         <Button class="mt-10" as="a" variant="portal" href="/">
           {{ $t('portal.backHome') }}

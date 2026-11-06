@@ -180,6 +180,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // so the root view this surface uses has to be named again here
             // rather than assumed to have been set.
             Inertia::setRootView('app-'.Surface::PORTAL);
+            Inertia::share(app(HandleInertiaRequests::class)->share($request));
 
             return Inertia::render('Error', ['status' => $response->getStatusCode()])
                 ->toResponse($request)
