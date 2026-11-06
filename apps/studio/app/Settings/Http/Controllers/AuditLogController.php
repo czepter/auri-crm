@@ -138,7 +138,10 @@ class AuditLogController extends Controller
             $value === null || $value === '' => '—',
             is_bool($value) => $value ? 'Ja' : 'Nein',
             is_string($value) && trans()->has("audit.values.{$value}") => __("audit.values.{$value}"),
-            is_array($value) => implode(', ', $value),
+            $value === [] => '—',
+            is_array($value) && $key === 'retention_policy' => implode(', ', array_map(fn ($part) => __("audit.parts.{$part}"), $value)),
+            is_array($value) && $key === 'working_days' => implode(', ', array_map(fn ($day) => ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'][$day - 1], $value)),
+            is_array($value) => implode(', ', array_map(fn ($item) => self::value($item), $value)),
             default => Str::limit(strip_tags((string) $value), 60),
         };
     }
