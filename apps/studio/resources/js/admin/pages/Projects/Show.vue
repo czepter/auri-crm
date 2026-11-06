@@ -108,6 +108,14 @@ const addGallery = computed(
     () => props.header.isBooked && props.header.canManageShoots && !step.value && !addShoot.value && !props.header.galleries.length && !!galleriesHref.value,
 );
 
+const completeNow = computed(
+    () => props.header.isBooked && props.header.canComplete && !props.header.isCompleted && !!props.header.galleries.length && !step.value && !callHref.value && !addShoot.value,
+);
+
+function completeProject() {
+    router.post(`/auftraege/${props.header.id}/abschluss`, {}, { preserveScroll: true });
+}
+
 function euro(minor: string | number | null) {
     return minor === null ? "—" : formatEurosRounded(Number(minor));
 }
@@ -252,12 +260,15 @@ function complete(row: App.Crm.Data.TaskRowData) {
                 <ProjectQueue :groups="header.queue" @update:rows="reachable = $event" />
             </template>
 
-            <template v-if="sendHref || step || callHref || addShoot || addGallery" #stage>
+            <template v-if="sendHref || step || callHref || addShoot || addGallery || completeNow" #stage>
                 <Button v-if="sendHref" variant="pill" as-child class="max-[640px]:min-h-11">
                     <Link :href="sendHref">{{ $t("lead.sendQuote") }}</Link>
                 </Button>
                 <Button v-else-if="addGallery" variant="pill" as-child class="max-[640px]:min-h-11">
                     <Link :href="galleriesHref!">{{ $t("galleries.create") }}</Link>
+                </Button>
+                <Button v-else-if="completeNow" variant="pill" type="button" class="max-[640px]:min-h-11" @click="completeProject">
+                    {{ $t("project.completeMenu") }}
                 </Button>
                 <ProjectStep v-else :header="header" :shoots="shoots" />
             </template>
