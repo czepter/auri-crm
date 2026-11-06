@@ -77,3 +77,38 @@ Every click on a link, button, option or field counts; typing is an input. Start
 | Galerie anlegen | 3 / 1 | 4 / 1 |
 
 Galerie anlegen is one click over the document before any change in this loop: the dashboard tile does not prefill the project, so the project row is a click of its own.
+
+## Rounds 1 to 8
+
+Three-model blind council (Opus, Gemini 4 Argon, Gemini 3.8 Flash); the lowest score stands when the three are within 1, the median otherwise. Scores are out of 10 at 1440 / 1920 / 390. "Released" is v0.15.0 on the same data. Branch: `ux/r12-pg-final`.
+
+### Admin
+
+| Screen | Released | Now |
+|---|---|---|
+| Übersicht | 5.9 / 6.0 / 5.0 | 8.4 / 8.3 / 8.1 |
+| Anfragen | 7.4 / 7.3 / 5.0 | 8.1 / 8.1 / 8.1 |
+| Anfrage-Detail | 6.0 / 6.0 / 4.0 | 8.3 / 8.3 / 8.3 |
+| Projekt-Detail | 5.7 / 6.0 / 4.1 | 8.1 / 8.1 / 8.3 |
+| Kalender | 7.3 / 7.1 / 4.6 | 8.6 / 8.7 / 8.7 |
+| Auswertungen | 5.0 / 5.0 / 4.3 | 8.4 / 8.4 / 8.4 |
+| Angebot-Editor | 7.3 / 7.1 / 5.0 | 8.1 / 8.1 / 8.6 |
+| Admin am Handy (5 viewport shots, 390) | 3.9 to 5.0 | 8.0 to 8.7 |
+
+### Portal and gallery
+
+| Screen | Released | Now |
+|---|---|---|
+| Portal Projekt | 4.0 / 4.0 / 4.0 | 7.6 / 7.6 / 7.6 |
+| Portal Angebot | 6.0 / 5.0 / 7.0 | 8.6 / 8.4 / 8.6 |
+| Portal-Galerie | 5.6 / 5.6 / 5.1 | 7.3 / 7.3 / 6.9 |
+| Gast-Galerie | 6.0 / 6.0 / 5.7 | 7.9 / 7.9 / 7.6 |
+| Admin-Galerie | 5.4 / 5.3 / 5.3 | 7.7 / 7.7 / 7.4 |
+
+### Open
+
+- Portal Projekt: rail shows the net amount where the quote page shows gross (seeded sent quote has no frozen VAT).
+- Galleries: hero differs between portal and guest, hearts only on hover at desktop, low contrast on "Neue Liste" and "Anmelden", phone tiles leave a gap on the right.
+- Admin: 1920 px blank bands on sparse data, dashboard and calendar help panels still narrate.
+- Not re-rated after the last round: nothing; every row above is from the latest capture of its branch state.
+- Issues to file: one gallery design for portal and guests; date and venue in the guest gallery header (API); phone nav gaps (Galerien in admin, Abmelden in portal); gallery strings outside the Anrede switch; quote number absent in the seed.
