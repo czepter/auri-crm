@@ -376,7 +376,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                 @click="moreOpen = true"
             >
                 <svg class="size-4.25 flex-none fill-none stroke-current stroke-[1.6] [stroke-linecap:round]" viewBox="0 0 24 24">
-                    <path d="M5 12h.01M12 12h.01M19 12h.01" />
+                    <path d="M4 7h16M4 12h16M4 17h16" />
                 </svg>
                 {{ $t("nav.more") }}
             </button>
