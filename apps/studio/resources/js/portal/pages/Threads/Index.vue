@@ -152,10 +152,10 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
             >
               <span class="flex items-baseline gap-3">
                 <!-- Nothing records a read; the open conversation counts as read. -->
-                <i v-if="row.waiting && openThread?.id !== row.id" class="size-[7px] flex-none translate-y-[-1px] self-center rounded-full bg-action" />
+                <i v-if="row.waiting" class="size-[7px] flex-none translate-y-[-1px] self-center rounded-full bg-action" />
                 <b
                   class="flex-1 text-[14.5px] leading-[1.35] tracking-[-0.008em]"
-                  :class="row.waiting && openThread?.id !== row.id ? 'font-semibold' : 'font-medium text-muted-foreground'"
+                  :class="row.waiting ? 'font-semibold' : 'font-medium text-muted-foreground'"
                 >{{ row.subject }}</b>
                 <span class="text-[12px] whitespace-nowrap tabular-nums text-muted-foreground">{{ dayDate(row.lastAt) }}</span>
               </span>
