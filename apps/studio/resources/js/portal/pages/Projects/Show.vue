@@ -30,6 +30,7 @@ type Shoot = {
 type Document = {
   kind: 'payments' | 'contract' | 'quote' | 'messages'
   href: string
+  label?: string
   dueOn: string | null
   overdue?: boolean
   signedOn?: string | null
@@ -111,7 +112,7 @@ const steps = computed(() => {
     .filter(document => !document.settled)
     .map(document => ({
       rank: rank(document),
-      title: document.kind === 'payments' ? 'portal.payment' : `portal.document.${document.kind}`,
+      title: document.kind === 'payments' ? (document.label ?? t('portal.payment')) : t(`portal.document.${document.kind}`),
       note: document.kind === 'payments' && document.dueOn
         ? { key: document.overdue ? 'portal.overdueSince' : 'portal.dueOn', date: document.dueOn }
         : document.kind === 'contract'
@@ -128,7 +129,7 @@ const steps = computed(() => {
     .filter(one => one.openCount > 0)
     .map(sheet => ({
       rank: 4,
-      title: 'portal.questionnairesTitle',
+      title: t('portal.questionnairesTitle'),
       note: null,
       amount: null,
       late: false,
@@ -186,7 +187,7 @@ function documentNote(document: Document) {
       <section v-if="step" class="-mx-2 mt-6 rounded-md border border-line-hover p-6">
         <PortalLabel>{{ $t('portal.nextStep') }}</PortalLabel>
         <div class="mt-3 flex items-baseline justify-between gap-4">
-          <h2 class="font-serif text-[22px] leading-[1.25] font-normal tracking-[-0.01em]">{{ $t(step.title) }}</h2>
+          <h2 class="font-serif text-[22px] leading-[1.25] font-normal tracking-[-0.01em]">{{ step.title }}</h2>
           <span v-if="step.amount" class="text-[17px] leading-none font-semibold tabular-nums text-action">{{ step.amount }}</span>
         </div>
         <p v-if="step.note || step.detail" class="mt-1.5 flex items-center gap-2 text-[13.5px] text-muted-foreground">
@@ -208,7 +209,7 @@ function documentNote(document: Document) {
           v-for="other in steps.slice(1)"
           :key="other.href"
           :href="other.href"
-          :title="$t(other.title)"
+          :title="other.title"
           :state="other.late ? 'late' : 'open'"
           :note="other.detail ?? (other.note ? $t(other.note.key, { date: other.note.date ? dayDate(other.note.date) : '' }) : null)"
           :aside="other.amount"

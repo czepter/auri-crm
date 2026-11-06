@@ -249,6 +249,7 @@ class CaseController extends Controller
             $rows[] = [
                 'kind' => 'payments',
                 'href' => "/projekte/{$found->public_id}/zahlungen",
+                'label' => $next?->label,
                 'dueOn' => $next?->dueOn,
                 'overdue' => $next?->isLate ?? false,
                 'amount' => $next?->remaining,
@@ -275,7 +276,7 @@ class CaseController extends Controller
                 'dueOn' => $found->latestQuote->valid_until?->format('Y-m-d'),
                 'acceptedOn' => ($found->latestQuote->accepted_at ?? $found->booked_at)?->format('Y-m-d'),
                 'amount' => $found->latestQuote->gross(),
-                'settled' => $found->latestQuote->status === QuoteStatus::Accepted || $found->isBooked(),
+                'settled' => $found->latestQuote->status === QuoteStatus::Accepted || $found->latestQuote->accepted_at !== null || $found->isBooked(),
             ];
         }
 
