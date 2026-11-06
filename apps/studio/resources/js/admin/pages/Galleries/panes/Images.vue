@@ -3,7 +3,8 @@ import { Button } from '@/ui/button'
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
-import { useMediaQuery, useVirtualList } from '@vueuse/core'
+import { useElementSize, useMediaQuery, useVirtualList } from '@vueuse/core'
+import { Upload } from 'lucide-vue-next'
 import { applyClick, uploadTarget, type SelectionState } from '@/admin/lib/gallerySelection'
 import { checkDuplicates, uploadFile } from '@/admin/lib/multipartUpload'
 import AssetLightbox from '@/admin/components/gallery/AssetLightbox.vue'
@@ -49,9 +50,11 @@ const props = defineProps<{
 const { t } = useI18n()
 
 const COLUMNS: Record<string, number> = { small: 10, medium: 7, large: 4 }
-// Auf 390px sind vier Kacheln 85px breit — das ist kein Bild mehr, das ist
-// ein Punkt. Unter 640px die Haelfte, mindestens zwei.
+const TILE: Record<string, number> = { small: 100, medium: 160, large: 240 }
+const GAP = 6
 const narrow = useMediaQuery('(max-width: 640px)')
+const gridEl = ref<HTMLElement | null>(null)
+const { width } = useElementSize(gridEl)
 
 // gallery_grid_prefs is keyed per set, and Alle is not a set — the combined
 // view renders at the default density rather than writing to a row that
@@ -87,7 +90,9 @@ const rows = computed(() => {
   return chunks
 })
 
-const { list, containerProps, wrapperProps } = useVirtualList(rows, { itemHeight: 132 })
+const { list, containerProps, wrapperProps } = useVirtualList(rows, {
+  itemHeight: () => (width.value === 0 ? 132 : (width.value - GAP * (columns.value - 1)) / columns.value + GAP),
+})
 
 const selection = ref<SelectionState>({ selected: new Set(), anchor: null })
 const lightbox = ref<AssetRow | null>(null)
@@ -281,7 +286,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="relative px-6 pt-5 pb-7" @dragover.prevent="dragging = true">
+  <div ref="gridEl" class="relative px-6 pt-5 pb-7" @dragover.prevent="dragging = true">
     <!-- Die ganze Flaeche nimmt Bilder an, nicht nur der Kasten am Ende —
          das Overlay faengt dragleave einmal ab statt bei jeder Kachel. -->
     <div
@@ -311,10 +316,13 @@ onUnmounted(() => {
             </SelectContent>
           </Select>
         </template>
-        <label class="cursor-pointer">
-          {{ $t('media.upload') }}
-          <Input type="file" multiple class="hidden" @change="picked(Array.from(($event.target as HTMLInputElement).files ?? []))" />
-        </label>
+        <Button as-child variant="outline">
+          <label class="cursor-pointer">
+            <Upload class="size-4" />
+            {{ $t('media.upload') }}
+            <Input type="file" multiple class="hidden" @change="picked(Array.from(($event.target as HTMLInputElement).files ?? []))" />
+          </label>
+        </Button>
       </div>
     </div>
 
