@@ -28,13 +28,13 @@ const callHref = computed(() => paymentCall(props.header.paymentPlan, props.head
         <Button variant="pill" type="button" class="rounded-r-none max-[640px]:min-h-11" @click="advance(step.shootId, step.status.value)">
             {{ step.status.label }}
         </Button>
-        <DropdownMenu>
+        <DropdownMenu v-if="stepMenu.length">
             <DropdownMenuTrigger as-child>
                 <Button
                     variant="pill"
                     type="button"
                     class="rounded-l-none border-l border-white/30 px-2 max-[640px]:min-h-11 max-[640px]:min-w-11"
-                    :aria-label="$t('board.colStage')"
+                    :aria-label="$t('project.advance')"
                 >
                     <ChevronDown class="size-3.5" />
                 </Button>
