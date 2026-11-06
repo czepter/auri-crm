@@ -19,6 +19,7 @@ type Row = { id: string; subject: string; reference: string | null; snippet: str
 
 const props = defineProps<{
   contact: { name: string }
+  studioName: string | null
   showSwitcher: boolean
   threads: Row[]
   openThread: Thread | null
@@ -193,7 +194,7 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
                   class="max-w-[78%] max-[979px]:max-w-[85%]"
                   :class="!message.fromStaff && 'justify-self-end text-right'"
                 >
-                  <div class="mb-1.5 text-[12px] tabular-nums text-muted-foreground">{{ message.author }} · {{ longDateTime(message.sentAt) }}</div>
+                  <div class="mb-1.5 text-[12px] tabular-nums text-muted-foreground">{{ message.fromStaff ? (studioName ?? message.author) : message.author }} · {{ longDateTime(message.sentAt) }}</div>
                   <div
                     class="rounded-md px-6 py-4 text-left text-[14.5px] leading-[1.6] whitespace-pre-wrap"
                     :class="message.fromStaff ? 'rounded-tl-[4px] bg-sunk' : 'rounded-tr-[4px] bg-foreground text-background'"
