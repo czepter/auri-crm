@@ -121,7 +121,7 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
 
     <PortalWrap class="flex min-h-0 flex-col pb-12 min-[980px]:pb-8" :class="subscreen && 'max-[979px]:pb-0'">
       <section class="flex-none pt-10 pb-8" :class="subscreen && 'max-[979px]:hidden'">
-        <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(30px,3.4vw,38px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
+        <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
           {{ $t('portal.messagesTitle') }}
         </h1>
       </section>
@@ -177,7 +177,7 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
         >
           <template v-if="openThread && !composing">
             <div class="flex-none border-b border-border px-6 py-5 max-[979px]:hidden">
-              <h2 class="m-0 font-serif text-[26px] leading-[1.2] font-normal tracking-[-0.012em]">{{ openThread.subject }}</h2>
+              <h2 class="m-0 font-serif text-[22px] leading-[1.25] font-normal tracking-[-0.01em]">{{ openThread.subject }}</h2>
               <span :class="REF">{{ openReference ?? $t('portal.messagesNoBooking') }}</span>
             </div>
 

@@ -136,7 +136,7 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
               class="border-b border-border py-5"
             >
               <div class="flex items-baseline justify-between gap-4">
-                <span class="font-serif text-[20px] leading-[1.25] tracking-[-0.01em]">{{ installment.label }}</span>
+                <span class="font-serif text-[22px] leading-[1.25] tracking-[-0.01em]">{{ installment.label }}</span>
                 <span
                   class="text-[15px] leading-none font-semibold tabular-nums whitespace-nowrap"
                   :class="['paid', 'cancelled'].includes(installment.status) && 'text-muted-foreground'"

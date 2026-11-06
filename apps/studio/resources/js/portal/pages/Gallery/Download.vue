@@ -131,7 +131,7 @@ const OPT = [
     <!-- mockup 11: the whole page centers on the pin step -->
     <div v-if="step === 'pin'" class="mx-auto max-w-[560px] text-center">
       <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.pinKicker') }}</div>
-      <h1 class="m-0 font-[family-name:var(--font-display)] text-[27px] leading-[1.2] font-semibold tracking-[var(--display-tracking)]">{{ $t('gallery.pinTitle') }}</h1>
+      <h1 class="m-0 font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">{{ $t('gallery.pinTitle') }}</h1>
 
       <form @submit.prevent="submitPin">
         <Label class="mt-8 text-left [display:block]" :class="[INPUT, '[&_input]:text-center [&_input]:indent-[0.55em] [&_input]:text-[21px] [&_input]:tracking-[0.55em] [&_input]:tabular-nums']">
@@ -155,7 +155,7 @@ const OPT = [
     <div v-else-if="step === 'email'" class="mx-auto max-w-[560px]">
       <div class="text-center">
         <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.emailKicker') }}</div>
-        <h1 class="m-0 font-[family-name:var(--font-display)] text-[27px] leading-[1.2] font-semibold tracking-[var(--display-tracking)]">{{ $t('gallery.emailTitle') }}</h1>
+        <h1 class="m-0 font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">{{ $t('gallery.emailTitle') }}</h1>
         <p v-if="gallery.title" class="mt-1.5 text-[14px] leading-[1.6] font-normal text-muted-foreground">{{ gallery.title }}</p>
       </div>
 
@@ -185,7 +185,7 @@ const OPT = [
     <div v-else class="mx-auto max-w-[620px]">
       <PortalBack :href="`/galerien/${gallery.id}`" :label="$t('gallery.backToGallery')" />
 
-      <h1 class="m-0 font-[family-name:var(--font-display)] text-[27px] leading-[1.2] font-semibold tracking-[var(--display-tracking)] mt-8">{{ $t('gallery.downloadTitle') }}</h1>
+      <h1 class="m-0 font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)] mt-8">{{ $t('gallery.downloadTitle') }}</h1>
       <p class="mt-1.5 text-[14px] leading-[1.6] font-normal text-muted-foreground">
         {{ [gallery.title, $t('portal.imageCount', gallery.count)].filter(Boolean).join(' · ') }}
         <template v-if="gallery.expiresAt">
