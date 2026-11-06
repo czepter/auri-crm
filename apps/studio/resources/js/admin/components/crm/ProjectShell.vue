@@ -1,16 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import Page from '@/ui/page/Page.vue'
 import ProjectQueue from '@/admin/components/crm/ProjectQueue.vue'
 import StageTrack from '@/admin/components/crm/StageTrack.vue'
-import RailHistory from '@/admin/components/crm/RailHistory.vue'
-import SettlePlanDialog from '@/admin/components/payments/SettlePlanDialog.vue'
+import CaseRail from '@/admin/components/crm/CaseRail.vue'
 import Rail from '@/ui/page/Rail.vue'
-import RailItem from '@/ui/page/RailItem.vue'
-import RailSection from '@/ui/page/RailSection.vue'
-import { formatEurosRounded } from '@/lib/money'
-import { dayWithWeekday as day } from '@/admin/lib/dates'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
@@ -29,10 +25,15 @@ import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, Ale
  * stand still while the tabs change. Which tool is open is the tab that is
  * lit, so the heading never has to say it twice.
  */
-const props = withDefaults(
-  defineProps<{ header: App.Crm.Screens.CaseHeaderData; active: string; child?: string; people?: boolean }>(),
-  { people: true },
+const props = defineProps<{ header: App.Crm.Screens.CaseHeaderData; active: string; child?: string }>()
+
+const hasRail = computed(
+  () => props.header.people.length > 0 || props.header.paymentPlan !== null || props.header.galleries.length > 0 || props.header.history.some((entry) => entry.system),
 )
+
+// Info is the rail where there is no room for the rail.
+const wide = useMediaQuery('(min-width: 1080px)')
+watch(wide, (is) => is && props.active === 'info' && router.visit(props.header.tabs[0].href, { replace: true }), { immediate: true })
 
 const subTabs = computed(() => props.header.tabs.find((tab) => tab.key === props.active)?.children ?? [])
 
@@ -85,40 +86,8 @@ function destroy() {
 
     <template #right>
       <slot name="rail">
-        <Rail>
-          <slot name="people">
-            <RailSection v-if="people" :title="$t('lead.people')">
-              <div v-for="person in header.people" :key="person.id" class="flex items-center gap-2 py-[5px] text-small leading-[1.47]">
-                <Link :href="`/kontakte/${person.id}`">{{ person.name }}</Link>
-                <span class="ml-auto text-small leading-[1.47] text-ok">{{ $t(`contacts.role.${person.role}`) }}</span>
-              </div>
-            </RailSection>
-          </slot>
-
-          <RailSection v-if="header.paymentPlan" :title="$t('dashboard.payments')">
-            <div v-for="instalment in header.paymentPlan.installments" :key="instalment.id" class="flex gap-2.5 py-[5px] text-small leading-[1.47]">
-              <span class="w-[74px] flex-none text-ink-2">{{ day(instalment.dueOn) }}</span>
-              <span>{{ formatEurosRounded(Number(instalment.amount)) }}</span>
-            </div>
-
-            <SettlePlanDialog
-              v-if="header.canManagePaymentPlan && header.primaryShootCancelled && !header.paymentPlan.settledOn"
-              class="mt-2"
-              :plan="header.paymentPlan"
-            />
-          </RailSection>
-
-          <RailSection v-if="header.galleries.length" :title="$t('contacts.galleries')">
-            <RailItem
-              v-for="gallery in header.galleries"
-              :key="gallery.id"
-              :title="gallery.title ?? '—'"
-              :href="`/galerien/${gallery.id}`"
-              :meta="gallery.expiresAt ? $t('contacts.expiresOn', { date: day(gallery.expiresAt) }) : null"
-            />
-          </RailSection>
-
-          <RailHistory :entries="header.history" />
+        <Rail v-if="hasRail">
+          <CaseRail :header="header" />
         </Rail>
       </slot>
     </template>
@@ -199,9 +168,12 @@ function destroy() {
             :key="tab.key"
             :href="tab.href"
             class="rounded-[var(--r-sm)] px-2.5 py-1 whitespace-nowrap no-underline"
-            :class="tab.key === active
-              ? 'bg-paper text-foreground shadow-[0_1px_2px_rgba(24,24,27,.08)]'
-              : 'text-ink-2 hover:text-foreground'"
+            :class="[
+              tab.key === active
+                ? 'bg-paper text-foreground shadow-[0_1px_2px_rgba(24,24,27,.08)]'
+                : 'text-ink-2 hover:text-foreground',
+              tab.key === 'info' && 'min-[1080px]:hidden',
+            ]"
             :aria-current="tab.key === active ? 'page' : undefined"
           >
             {{ $t(tab.label) }}<span v-if="tab.count" class="ml-1 text-small">{{ tab.count }}</span>

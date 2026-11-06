@@ -37,7 +37,7 @@ describe('Projektübersicht', () => {
         const shoots = meta.args!.shoots!.map((shoot, i) => (i ? shoot : { ...shoot, dueStatus: { value: 'shot', label: 'Fotografiert' } }))
         const html = await render({ shoots })
 
-        for (const title of ['Anfrage', 'Kontakte', 'Termine', 'Angebot', 'Aufgaben']) {
+        for (const title of ['Anfrage', 'Termine', 'Angebot', 'Aufgaben']) {
             expect(html).toContain(`>${title}<`)
         }
         expect(html).toMatch(/<button[^>]*>(<!--[^>]*-->)*Fotografiert(<!--[^>]*-->)*<\/button>/)
@@ -49,6 +49,20 @@ describe('Projektübersicht', () => {
         const html = await render({ header: { ...header, paymentPlan: plan } })
 
         expect(html).toMatch(/<a [^>]*href="tel:\d+"[^>]*>(<!--[^>]*-->)*Anrufen/)
+    })
+
+    it('lists the contacts in the rail with tel and mailto links', async () => {
+        const html = await render()
+
+        expect(html).toContain('href="tel:0176 2841 9930"')
+        expect(html).toContain('href="mailto:jana.rahn@posteo.de"')
+    })
+
+    it('draws no rail when nothing is left to show', async () => {
+        const header = meta.args!.header!
+        const html = await render({ header: { ...header, people: [], paymentPlan: null, galleries: [], history: [] } })
+
+        expect(html).not.toContain('<aside')
     })
 
     it('carries the portal switch in the head', async () => {

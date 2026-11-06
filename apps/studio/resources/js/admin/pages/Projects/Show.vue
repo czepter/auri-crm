@@ -24,7 +24,6 @@ import ProjectShell from "@/admin/components/crm/ProjectShell.vue";
 import TaskCreateDialog from "@/admin/components/crm/TaskCreateDialog.vue";
 import CaseAddLinks from "@/admin/components/crm/CaseAddLinks.vue";
 import Card from "@/ui/page/Card.vue";
-import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
 import Section from "@/ui/page/Section.vue";
 import { formatEurosRounded } from "@/lib/money";
 import { quoteChipClass } from "@/admin/lib/quoteDisplay";
@@ -146,23 +145,6 @@ const anfrageSummary = computed(() =>
 
 const quoteSummary = computed(() => (props.quote === null ? "" : euro(grossTotal(props.quote))));
 
-// Die Rolle hing am Bearbeiten-Modus der rechten Leiste. Der ist weg, also
-// steht sie hier — Freitext wie am Fall, die bekannten als Vorschlag.
-const kontakteEditing = ref(false);
-
-const kontakte = useForm({
-    people: props.people.map((person) => ({ id: person.id, role: person.role })),
-});
-
-function saveKontakte() {
-    kontakte.patch(`/auftraege/${props.header.id}`, {
-        preserveScroll: true,
-        onSuccess: () => (kontakteEditing.value = false),
-    });
-}
-
-const kontakteSummary = computed(() => props.people.map((person) => person.name).join(", "));
-
 const dates = useForm({
     shoots: props.shoots.map((shoot) => ({
         id: shoot.id,
@@ -253,7 +235,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
 
 <template>
     <AdminLayout active="projekte">
-        <ProjectShell :header="header" active="overview" :people="false">
+        <ProjectShell :header="header" active="overview">
             <template v-if="step || callHref" #stage>
                 <Button v-if="!step && callHref" variant="pill" as-child class="max-[640px]:min-h-11">
                     <a :href="callHref">{{ $t("contacts.call") }}</a>
@@ -425,52 +407,6 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 >{{ row.dueOn ? day(row.dueOn) : "" }}</span>
                             </span>
                         </div>
-                    </Card>
-
-                    <Card
-                        v-model:editing="kontakteEditing"
-                        :title="$t('contacts.title')"
-                        :summary="kontakteSummary"
-                        editable
-                        @cancel="kontakte.reset()"
-                        @save="saveKontakte"
-                    >
-                        <div
-                            v-for="person in people"
-                            :key="person.id"
-                            class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
-                        >
-                            <Link
-                                class="w-[168px] flex-none text-small leading-[1.35] font-semibold tracking-[-0.012em] text-foreground no-underline underline-offset-[3px] hover:underline"
-                                :href="`/kontakte/${person.id}`"
-                            >
-                                {{ person.name }}
-                            </Link>
-                            <span class="rounded-[var(--r-sm)] bg-sunk-2 px-2 py-0.5 text-small leading-[1.4] font-medium text-ink-2">
-                                {{ roleLabel(person.role) }}
-                            </span>
-                            <a v-if="person.email" class="text-small text-ring no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
-                            <a v-if="person.phone" class="ml-auto whitespace-nowrap text-small tabular-nums text-ring no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
-                        </div>
-
-                        <template #edit>
-                            <datalist id="rollen">
-                                <option v-for="value in ROLE_SUGGESTIONS" :key="value" :value="value" />
-                            </datalist>
-
-                            <div
-                                v-for="(person, index) in kontakte.people"
-                                :key="person.id"
-                                class="flex items-center gap-3 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
-                            >
-                                <span class="w-[168px] flex-none text-small leading-[1.35] font-semibold tracking-[-0.012em]">
-                                    {{ people[index].name }}
-                                </span>
-                                <Field v-slot="{ id }" dense class="w-[168px] flex-none" :label="$t('leads.role')">
-                                    <Input :id="id" v-model="person.role" type="text" list="rollen" />
-                                </Field>
-                            </div>
-                        </template>
                     </Card>
 
                     <Card

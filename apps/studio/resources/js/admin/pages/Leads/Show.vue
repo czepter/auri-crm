@@ -13,7 +13,7 @@ import { grossTotal } from "@/admin/lib/quoteSummary";
 import QuoteList from "@/admin/components/quote/QuoteList.vue";
 import MessageThread from "@/admin/components/crm/MessageThread.vue";
 import ProjectShell from "@/admin/components/crm/ProjectShell.vue";
-import RailHistory from "@/admin/components/crm/RailHistory.vue";
+import LeadRail from "@/admin/components/crm/LeadRail.vue";
 import ShootFields from "@/admin/components/crm/ShootFields.vue";
 import ShootRow from "@/admin/components/crm/ShootRow.vue";
 import { Button } from "@/ui/button";
@@ -21,7 +21,6 @@ import { DatePicker } from "@/ui/date-picker";
 import { Field } from "@/ui/field";
 import { Input } from "@/ui/input";
 import Rail from "@/ui/page/Rail.vue";
-import RailSection from "@/ui/page/RailSection.vue";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
 import { Textarea } from "@/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui/dropdown-menu";
@@ -66,7 +65,7 @@ const props = defineProps<{
     week: { date: string; what: string; projectId: string }[];
     conflicts: App.Crm.Data.DateConflictData[];
     stages: { value: string; label: string; anchor: string | null }[];
-    tab: "overview" | "quotes" | "messages";
+    tab: "overview" | "quotes" | "messages" | "info";
     header: App.Crm.Screens.CaseHeaderData;
     conversation: App.Engagement.Data.ThreadData | null;
     quotes: App.Quotes.Data.QuoteData[];
@@ -144,25 +143,11 @@ const termineEditing = ref(false);
 
 const anfrage = useForm({
     inquiry_text: props.lead.inquiryText ?? "",
-});
-
-// Typ und Quelle stehen in der Seitenspalte und speichern bei jeder Änderung:
-// zwei Auswahlen brauchen keinen Bearbeiten-Modus.
-const details = useForm({
     type: props.lead.type,
     type_other: props.lead.typeOther ?? "",
     source: props.lead.source,
     source_other: props.lead.sourceOther ?? "",
 });
-
-function saveDetail(field: "type" | "source") {
-    details
-        .transform((data) => ({
-            [field]: data[field],
-            [`${field}_other`]: data[field] === "other" ? blank(data[`${field}_other`]) : null,
-        }))
-        .patch(`/anfragen/${props.lead.id}`, { preserveScroll: true });
-}
 
 const kontakte = useForm({
     people: props.people.map((person) => ({
@@ -189,7 +174,12 @@ const blank = (value: string) => (value === "" ? null : value);
 
 function saveAnfrage() {
     anfrage
-        .transform((data) => ({ ...data, inquiry_text: blank(data.inquiry_text) }))
+        .transform((data) => ({
+            ...data,
+            inquiry_text: blank(data.inquiry_text),
+            type_other: data.type === "other" ? blank(data.type_other) : null,
+            source_other: data.source === "other" ? blank(data.source_other) : null,
+        }))
         .patch(`/anfragen/${props.lead.id}`, {
             preserveScroll: true,
             onSuccess: () => (anfrageEditing.value = false),
@@ -361,99 +351,16 @@ const primary = computed(() => {
                 <LeadQueue :groups="queue" @update:rows="reachable = $event" />
             </template>
 
-            <!-- The trace: what lies around the requested day. A date is answered
-                 by what is already on it. -->
             <template #rail>
                 <Rail>
-                    <RailSection :title="$t('project.lead')">
-                        <div class="flex flex-col gap-3">
-                            <Field v-slot="{ id }" :label="$t('leads.type')" :error="details.errors.type">
-                                <Select
-                                    v-model="details.type"
-                                    :disabled="!header.canManageShoots"
-                                    @update:model-value="saveDetail('type')"
-                                >
-                                    <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem v-for="option in types" :key="option.value" :value="option.value">{{ option.label }}</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <Input
-                                    v-if="details.type === 'other'"
-                                    v-model="details.type_other"
-                                    class="mt-2"
-                                    type="text"
-                                    list="type-presets"
-                                    :disabled="!header.canManageShoots"
-                                    @change="saveDetail('type')"
-                                />
-                                <datalist id="type-presets">
-                                    <option v-for="value in presets.type" :key="value" :value="value" />
-                                </datalist>
-                            </Field>
-
-                            <Field v-slot="{ id }" :label="$t('leads.source')" :error="details.errors.source">
-                                <Select
-                                    v-model="details.source"
-                                    :disabled="!header.canManageShoots"
-                                    @update:model-value="saveDetail('source')"
-                                >
-                                    <SelectTrigger :id="id"><SelectValue placeholder="—" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem v-for="option in sources" :key="option.value" :value="option.value">{{ option.label }}</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <Input
-                                    v-if="details.source === 'other'"
-                                    v-model="details.source_other"
-                                    class="mt-2"
-                                    type="text"
-                                    list="source-presets"
-                                    :disabled="!header.canManageShoots"
-                                    @change="saveDetail('source')"
-                                />
-                                <datalist id="source-presets">
-                                    <option v-for="value in presets.source" :key="value" :value="value" />
-                                </datalist>
-                            </Field>
-                        </div>
-                    </RailSection>
-
-                    <RailSection :title="$t('lead.week')">
-                        <template v-if="week.length">
-                            <Link
-                                v-for="entry in week"
-                                :key="`${entry.date}${entry.what}`"
-                                :href="`/auftraege/${entry.projectId}`"
-                                class="group -mx-2 flex gap-2.5 rounded-lg px-2 py-1.5 text-small leading-[1.47] shadow-[inset_0_1px_0_var(--rule)] transition-colors first:shadow-none hover:bg-paper"
-                            >
-                                <span class="w-[62px] flex-none font-semibold tabular-nums">{{ day(entry.date) }}</span>
-                                <span class="text-ink-2 transition-colors group-hover:text-foreground">{{
-                                    entry.what
-                                }}</span>
-                            </Link>
-                        </template>
-                        <div
-                            v-else
-                            class="-mx-2 flex gap-2.5 rounded-lg bg-paper px-2 py-1.5 text-small leading-[1.47]"
-                        >
-                            <span class="font-medium text-ok">{{ $t("lead.weekFree") }}</span>
-                        </div>
-                    </RailSection>
-
-                    <RailSection v-if="conflicts.length" :title="$t('lead.conflicts')">
-                        <div
-                            v-for="(conflict, index) in conflicts"
-                            :key="index"
-                            class="-mx-2 flex gap-2.5 rounded-lg bg-paper px-2 py-1.5 text-small leading-[1.47]"
-                        >
-                            <span class="font-medium text-due">{{
-                                conflict.label ?? conflict.projectName
-                            }}</span>
-                        </div>
-                    </RailSection>
-
-                    <RailHistory :entries="thread" />
+                    <LeadRail
+                        :type-label="lead.typeLabel"
+                        :source-label="lead.sourceLabel"
+                        :dated="header.primaryDate !== null"
+                        :week="week"
+                        :conflicts="conflicts"
+                        :thread="thread"
+                    />
                 </Rail>
             </template>
 
@@ -743,6 +650,46 @@ const primary = computed(() => {
                             <Field v-slot="{ id }" :label="$t('leads.inquiryText')" :error="anfrage.errors.inquiry_text">
                                 <Textarea :id="id" v-model="anfrage.inquiry_text" rows="6" />
                             </Field>
+
+                            <div class="mt-3 flex gap-3 max-[640px]:flex-wrap">
+                                <Field v-slot="{ id }" class="min-w-[148px] flex-1" :label="$t('leads.type')" :error="anfrage.errors.type">
+                                    <Select v-model="anfrage.type" :disabled="!header.canManageShoots">
+                                        <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem v-for="option in types" :key="option.value" :value="option.value">{{ option.label }}</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <Input
+                                        v-if="anfrage.type === 'other'"
+                                        v-model="anfrage.type_other"
+                                        class="mt-2"
+                                        type="text"
+                                        list="type-presets"
+                                    />
+                                    <datalist id="type-presets">
+                                        <option v-for="value in presets.type" :key="value" :value="value" />
+                                    </datalist>
+                                </Field>
+
+                                <Field v-slot="{ id }" class="min-w-[148px] flex-1" :label="$t('leads.source')" :error="anfrage.errors.source">
+                                    <Select v-model="anfrage.source" :disabled="!header.canManageShoots">
+                                        <SelectTrigger :id="id"><SelectValue placeholder="—" /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem v-for="option in sources" :key="option.value" :value="option.value">{{ option.label }}</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <Input
+                                        v-if="anfrage.source === 'other'"
+                                        v-model="anfrage.source_other"
+                                        class="mt-2"
+                                        type="text"
+                                        list="source-presets"
+                                    />
+                                    <datalist id="source-presets">
+                                        <option v-for="value in presets.source" :key="value" :value="value" />
+                                    </datalist>
+                                </Field>
+                            </div>
                         </template>
                     </Card>
 
@@ -764,6 +711,17 @@ const primary = computed(() => {
                     :quotes="quotes"
                     :payments="payments"
                 />
+
+                <div v-else-if="tab === 'info'" class="min-[1080px]:hidden">
+                    <LeadRail
+                        :type-label="lead.typeLabel"
+                        :source-label="lead.sourceLabel"
+                        :dated="header.primaryDate !== null"
+                        :week="week"
+                        :conflicts="conflicts"
+                        :thread="thread"
+                    />
+                </div>
 
                 <Card v-else :title="$t('project.history')">
                     <MessageThread
