@@ -196,7 +196,7 @@ function fromTask(task: App.Crm.Data.TaskRowData): Row {
 }
 
 function fromRow(row: App.Crm.Data.DomainRowData): Row {
-    return { key: `row:${row.projectId}:${row.what}`, who: row.who, href: `/auftraege/${row.projectId}`, what: row.what, emphasis: row.emphasis, whatTail: row.whatTail, action: row.action, task: null };
+    return { key: `row:${row.projectId}:${row.what}`, who: row.who, href: `/auftraege/${row.projectId}`, what: row.what, emphasis: row.emphasis, whatTail: row.whatTail && ` ${row.whatTail}`, action: row.action, task: null };
 }
 
 // Wie im Queue-Pane: erst ab NOTICEABLE_DAYS wird das Warten zur Betonung.
@@ -476,7 +476,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                             :href="`/auftraege/${row.projectId}`"
                         >
                             <span class="block text-small font-semibold tracking-[-0.015em]">{{ row.who }}</span>
-                            <span class="block text-small text-ink-2">{{ row.what }}<template v-if="row.emphasis"> {{ row.emphasis }}</template><template v-if="row.whatTail">{{ row.whatTail }}</template></span>
+                            <span class="block text-small text-ink-2">{{ row.what }}{{ row.emphasis ? ` ${row.emphasis}` : '' }}<template v-if="row.whatTail">{{ row.whatTail }}</template></span>
                         </Link>
                     </Panel>
                 </div>
