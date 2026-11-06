@@ -69,7 +69,7 @@ const ROW = 'flex items-center gap-6 border-b border-border py-6'
            1100px wide is a form field nobody can scan. Under 900px the rail
            lies down over the block instead of eating half the column. -->
       <div class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 grid gap-8 min-[900px]:grid-cols-[168px_minmax(0,1fr)] min-[900px]:gap-16">
-        <nav class="flex gap-x-6 gap-y-2 border-b border-border pb-5 text-[13.5px] leading-none max-[899px]:flex-wrap min-[900px]:sticky min-[900px]:top-24 min-[900px]:flex-col min-[900px]:gap-3.5 min-[900px]:self-start min-[900px]:border-0 min-[900px]:pb-0">
+        <nav class="flex gap-x-6 gap-y-2 border-b border-border pb-5 text-[13.5px] leading-none max-[899px]:overflow-x-auto max-[899px]:[&>*]:shrink-0 max-[899px]:[&>*]:whitespace-nowrap min-[900px]:sticky min-[900px]:top-24 min-[900px]:flex-col min-[900px]:gap-3.5 min-[900px]:self-start min-[900px]:border-0 min-[900px]:pb-0">
           <Button
             v-for="item in NAV"
             :key="item.key"
@@ -117,7 +117,7 @@ const ROW = 'flex items-center gap-6 border-b border-border py-6'
               </PortalField>
             </div>
 
-            <div class="mt-2 max-[760px]:sticky max-[760px]:bottom-[68px] max-[760px]:z-10 max-[760px]:-mx-6 max-[760px]:border-t max-[760px]:border-border max-[760px]:bg-background max-[760px]:px-6 max-[760px]:py-3">
+            <div class="mt-2">
               <Button variant="portal" type="submit" :disabled="form.processing">
                 {{ $t('common.save') }}
               </Button>

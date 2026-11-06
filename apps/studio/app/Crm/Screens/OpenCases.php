@@ -10,7 +10,6 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
 use App\Models\User;
-use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 
 /**
@@ -88,8 +87,7 @@ class OpenCases
 
         $stalled = $this->position->stalled($project->shoots);
         $late = $project->paymentPlan?->installments
-            ->filter(fn (PaymentInstallment $rate) => in_array($rate->status, [PaymentInstallmentStatus::Scheduled, PaymentInstallmentStatus::Invoiced], true)
-                && $rate->due_on->lt(today()))
+            ->filter(fn (PaymentInstallment $rate) => $rate->isLate())
             ->sortBy('due_on')
             ->first();
         $next = $project->shoots

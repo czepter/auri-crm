@@ -28,7 +28,8 @@ it('shows the contact their own project\'s rendered contract', function () {
         ->viewData('page')['props'];
 
     expect($props['contract']['status'])->toBe('rendered')
-        ->and($props['contract']['downloadUrl'])->toBe("/projekte/{$project->public_id}/vertrag/pdf");
+        ->and($props['contract']['downloadUrl'])->toBe("/projekte/{$project->public_id}/vertrag/pdf")
+        ->and($props['contract']['html'])->toBeString()->not->toBeEmpty();
 });
 
 it('shows an empty state when the project has no contract yet', function () {

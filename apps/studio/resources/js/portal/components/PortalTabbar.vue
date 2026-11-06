@@ -15,6 +15,9 @@ const nav = computed(() => usePage().props.portalNav as { messaging: boolean; un
 
 const path = computed(() => usePage().url.split('?')[0])
 
+// An error page has no place of its own; the bookings are where its button leads.
+const bookings = computed(() => path.value === '/' || path.value.startsWith('/projekte') || usePage().component === 'Error')
+
 function on(active: boolean) {
   return active ? 'font-semibold text-foreground' : 'text-muted-foreground'
 }
@@ -28,7 +31,7 @@ const LINK
     v-if="nav"
     class="fixed inset-x-0 bottom-0 z-40 grid auto-cols-fr grid-flow-col border-t border-border bg-[color-mix(in_srgb,var(--bg)_97%,transparent)] pb-[env(safe-area-inset-bottom)] backdrop-blur-[16px] min-[761px]:hidden"
   >
-    <Link :class="[LINK, on(path === '/' || path.startsWith('/projekte'))]" href="/">
+    <Link :class="[LINK, on(bookings)]" href="/">
       <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10" /></svg>
       {{ nav.oneBooking ? $t('portal.navBooking') : $t('portal.navBookings') }}
     </Link>

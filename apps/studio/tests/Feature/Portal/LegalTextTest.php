@@ -98,3 +98,15 @@ it('resolves the studio fields a Widerrufsbelehrung names', function () {
             ->component('Rechtstext', false)
             ->where('body', '<p>Atelier Nordlicht Fotografie GmbH, Hamburg</p>'));
 });
+
+it('names where a Widerruf goes, after the text', function () {
+    $template = legalTemplate();
+    pointAt('widerruf', $template->family_id);
+    app(UpdateStudioSetting::class)('street', 'Hafenstr. 12', null);
+    app(UpdateStudioSetting::class)('portal_contact_email', 'hallo@nordlicht.test', null);
+    Cache::store('redis')->flush();
+
+    $this->get('/rechtstexte/widerruf')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('addressee', ['Hafenstr. 12', 'hallo@nordlicht.test']));
+});

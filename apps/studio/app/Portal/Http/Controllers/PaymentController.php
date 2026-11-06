@@ -74,7 +74,7 @@ class PaymentController extends Controller
             'contact' => ['name' => $contact->name],
             'showSwitcher' => $contact->visibleProjects()->count() > 1,
             'project' => ['id' => $found->public_id, 'name' => $found->name],
-            'plan' => $plan === null ? null : PaymentPlanData::fromModel($plan->load('installments.invoice.creditNotes')),
+            'plan' => PaymentPlanData::forCase($found),
             'stripeEnabled' => (bool) StudioSettings::current()->payments_stripe_enabled,
             'paymentStatus' => in_array($status, ['success', 'cancelled'], true) ? $status : null,
             'bankDetails' => [

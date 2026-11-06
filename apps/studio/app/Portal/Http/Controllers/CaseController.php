@@ -12,8 +12,9 @@ use App\Crm\Support\CrmVocabulary;
 use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
 use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Payments\Data\PaymentInstallmentData;
+use App\Payments\Data\PaymentPlanData;
 use App\Payments\Models\Invoice;
-use App\Payments\Models\PaymentInstallment;
 use App\Portal\Actions\UpdateCaseDetails;
 use App\Portal\Support\PortalOffers;
 use App\Portal\Support\PortalSettings;
@@ -239,19 +240,18 @@ class CaseController extends Controller
     private function documents(ClientCase $found, PortalSettings $settings): array
     {
         $rows = [];
-        $plan = $found->paymentPlan;
+        $plan = PaymentPlanData::forCase($found);
 
         if ($plan !== null && $settings->paymentStatusEnabled(auth('portal')->user())) {
-            $next = $plan->installments
-                ->reject(fn (PaymentInstallment $one) => $one->status === PaymentInstallmentStatus::Paid)
-                ->sortBy('due_on')
-                ->first();
+            $next = collect($plan->installments)
+                ->first(fn (PaymentInstallmentData $one) => in_array($one->status, array_column(PaymentInstallmentStatus::open(), 'value'), true));
 
             $rows[] = [
                 'kind' => 'payments',
                 'href' => "/projekte/{$found->public_id}/zahlungen",
-                'dueOn' => $next?->due_on?->format('Y-m-d'),
-                'amount' => $next === null ? null : (int) $next->amount,
+                'dueOn' => $next?->dueOn,
+                'overdue' => $next?->isLate ?? false,
+                'amount' => $next?->remaining,
                 'settled' => $next === null,
             ];
         }
@@ -272,9 +272,9 @@ class CaseController extends Controller
                 'kind' => 'quote',
                 'href' => "/projekte/{$found->public_id}/angebot",
                 'dueOn' => $found->latestQuote->valid_until?->format('Y-m-d'),
-                'acceptedOn' => $found->latestQuote->accepted_at?->format('Y-m-d'),
+                'acceptedOn' => ($found->latestQuote->accepted_at ?? $found->booked_at)?->format('Y-m-d'),
                 'amount' => (int) $found->latestQuote->total,
-                'settled' => $found->latestQuote->status === QuoteStatus::Accepted,
+                'settled' => $found->latestQuote->status === QuoteStatus::Accepted || $found->isBooked(),
             ];
         }
 

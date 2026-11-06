@@ -5,6 +5,8 @@ namespace App\Portal\Http\Controllers;
 use App\Contracts\Actions\SignContract;
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Jobs\RenderContractJob;
+use App\Documents\Support\DocumentMergeData;
+use App\Documents\Support\MergeFieldResolver;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
 use Illuminate\Http\RedirectResponse;
@@ -31,12 +33,12 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class ContractController extends Controller
 {
-    public function show(string $case): Response
+    public function show(string $case, DocumentMergeData $merge): Response
     {
         $contact = auth('portal')->user();
 
         $found = $contact->visibleProjects()->where('cases.public_id', $case)->firstOrFail();
-        $contract = $found->latestContract()->with('signature')->first();
+        $contract = $found->latestContract()->with('signature', 'template')->first();
 
         // rescue(), not a bare call: on a sync queue the render runs here,
         // and Gotenberg being down is a contract the client cannot read yet,
@@ -63,6 +65,12 @@ class ContractController extends Controller
                 // Null until SignContract has written the one row a Contract
                 // will ever have — the rail shows the form or the confirmation
                 // off this alone, never off a separate "can sign" flag.
+                // The text the PDF is made from, readable on a phone where an
+                // embedded PDF is a blank frame. A signed contract keeps its
+                // stored bytes: the live text may have moved on since.
+                'html' => $contract->signature === null
+                    ? MergeFieldResolver::resolve($contract->resolvedBody(), $merge->forCase($found), escape: true)
+                    : null,
                 'signature' => $contract->signature === null ? null : [
                     'typedName' => $contract->signature->typed_name,
                     'consentedAt' => $contract->signature->consented_at->toIso8601String(),

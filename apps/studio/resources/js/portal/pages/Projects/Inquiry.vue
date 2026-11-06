@@ -109,16 +109,16 @@ const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
           <div class="animate-rise [animation-delay:320ms] motion-reduce:animate-none">
             <div class="my-18 h-px bg-border" />
 
-            <!-- The only piece of news there is at this point, in a sentence. The
-                 same place the countdown stands once it is booked. -->
-            <section>
+            <!-- The only piece of news there is at this point, in a sentence. A
+                 sent quote is its own news: the rail card above says it. -->
+            <section v-if="!project.quote">
               <h2 class="font-serif text-[clamp(24px,3vw,32px)] leading-[1.15] font-normal tracking-[-0.015em]">
-                {{ project.quote ? $t('portal.quoteWaitingTitle') : $t('portal.inquiryReceivedTitle') }}
+                {{ $t('portal.inquiryReceivedTitle') }}
               </h2>
-              <p v-if="!project.quote" class="mt-4 max-w-[48ch] text-[17px] leading-[1.55] text-muted-foreground">{{ $t('portal.inquiryReceived') }}</p>
+              <p class="mt-4 max-w-[48ch] text-[17px] leading-[1.55] text-muted-foreground">{{ $t('portal.inquiryReceived') }}</p>
             </section>
 
-            <section class="mt-18">
+            <section :class="!project.quote && 'mt-18'">
               <div class="flex items-baseline gap-4">
                 <PortalLabel>{{ $t('portal.notedTitle') }}</PortalLabel>
                 <Button

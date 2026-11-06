@@ -270,7 +270,7 @@ const COVER_INPUT = [
 
       <a
         v-if="assets?.length"
-        class="absolute bottom-8 left-1/2 z-2 flex -translate-x-1/2 flex-col items-center gap-2.5 text-[14px] leading-none font-semibold tracking-[0.12em] uppercase text-foreground/80 no-underline [&_svg]:size-4 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.4]"
+        class="absolute bottom-8 left-1/2 z-2 flex -translate-x-1/2 flex-col items-center gap-2.5 text-[14px] leading-none font-semibold tracking-[0.12em] uppercase text-foreground [text-shadow:0_1px_12px_rgba(0,0,0,.7)] no-underline [&_svg]:size-4 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.4]"
         href="#raster"
       >
         {{ $t('gallery.scrollCue') }}
