@@ -5,8 +5,10 @@ namespace App\Crm\Support;
 use App\Crm\Enums\ProjectFieldType;
 use App\Crm\Enums\StageColor;
 use App\Crm\Enums\StagePipeline;
+use App\Crm\Models\Lead;
 use App\Crm\Models\ProjectField;
 use App\Crm\Models\ProjectType;
+use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
 use App\Support\LocalPath;
 use Illuminate\Http\Request;
@@ -32,11 +34,18 @@ class StageSettingsPayload
             return null;
         }
 
+        // toBase() keeps the global scopes and skips the stage accessor, so the raw key comes back.
+        $counts = [
+            StagePipeline::Lead->value => Lead::query()->toBase()->selectRaw('stage as k, count(*) as n')->groupBy('stage')->pluck('n', 'k'),
+            StagePipeline::Project->value => Shoot::query()->toBase()->selectRaw('status as k, count(*) as n')->groupBy('status')->pluck('n', 'k'),
+        ];
+
         return [
             'pipelines' => collect(StagePipeline::cases())->map(fn (StagePipeline $pipeline) => [
                 'value' => $pipeline->value,
                 'label' => $pipeline->label(),
                 'stages' => $this->vocabulary->ordered($pipeline)->map(fn (Stage $stage) => [
+                    'count' => (int) ($counts[$pipeline->value][$stage->key] ?? 0),
                     'id' => $stage->public_id,
                     'key' => $stage->key,
                     'name' => $stage->name,

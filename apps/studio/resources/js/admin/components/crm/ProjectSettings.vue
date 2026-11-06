@@ -23,6 +23,7 @@ type Stage = {
   anchor: string | null
   anchorLabel: string | null
   isActive: boolean
+  count?: number
 }
 
 type Pipeline = {
@@ -355,11 +356,12 @@ function release(row: Stage | Field) {
             {{ $t('stages.stagesSection', { pipeline: pipeline.label }) }}
           </h2>
 
-          <div class="mt-4 flex flex-wrap gap-2 rounded-xl bg-sunk p-3">
+          <div class="mt-4 grid grid-cols-[minmax(0,420px)_minmax(0,1fr)] items-start gap-8 max-[1100px]:grid-cols-1">
+          <div class="flex flex-col gap-2 rounded-xl bg-sunk p-3">
             <button
               v-for="stage in stageRows"
               :key="stage.id"
-              class="inline-flex touch-none cursor-grab items-center gap-[7px] rounded-[var(--r-sm)] border border-border bg-background px-3 py-1.5 text-small leading-[1.4] font-semibold transition-[border-color,opacity] select-none hover:border-line-hover active:cursor-grabbing"
+              class="flex touch-none cursor-grab items-center gap-3 rounded-[var(--r-sm)] border border-border bg-background px-3 py-2 text-left text-small leading-[1.4] font-semibold transition-[border-color,opacity] select-none hover:border-line-hover active:cursor-grabbing"
               :class="[
                 stage.isActive ? 'text-foreground' : 'text-ink-2',
                 held?.id === stage.id && held?.moved ? 'opacity-40' : '',
@@ -371,9 +373,26 @@ function release(row: Stage | Field) {
               @pointermove="move"
               @pointerup="release(stage)"
             >
-              <span class="size-1.5 flex-none rounded-full" :style="{ background: stage.css }"></span>
-              {{ stage.name }}
+              <svg class="size-3.5 flex-none fill-ink-2" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="9" cy="6" r="1.6" /><circle cx="15" cy="6" r="1.6" /><circle cx="9" cy="12" r="1.6" /><circle cx="15" cy="12" r="1.6" /><circle cx="9" cy="18" r="1.6" /><circle cx="15" cy="18" r="1.6" />
+              </svg>
+              <span class="size-2 flex-none rounded-full" :style="{ background: stage.css }"></span>
+              <span class="min-w-0 flex-1 truncate">{{ stage.name }}</span>
+              <span class="flex-none font-normal tabular-nums text-ink-2">{{ stage.count ?? 0 }}</span>
             </button>
+          </div>
+
+          <div class="flex gap-2 overflow-x-auto rounded-xl bg-sunk p-3">
+            <div
+              v-for="stage in stageRows.filter((one) => one.isActive)"
+              :key="stage.id"
+              class="flex min-w-[120px] flex-1 items-center gap-2 border-b-2 bg-background px-3 py-2 text-small font-semibold"
+              :style="{ borderBottomColor: stage.css }"
+            >
+              <span class="min-w-0 flex-1 truncate">{{ stage.name }}</span>
+              <span class="flex-none font-normal tabular-nums text-ink-2">{{ stage.count ?? 0 }}</span>
+            </div>
+          </div>
           </div>
 
           <Button class="mt-3.5 ml-0" type="button" variant="ghost" @click="addStage">
