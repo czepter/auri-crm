@@ -2,7 +2,9 @@
 
 namespace App\Staff\Http\Controllers;
 
+use App\Enums\Capability;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Models\User;
 use App\Models\UserEmailChange;
 use App\Notifications\Enums\NotificationMode;
@@ -61,6 +63,9 @@ class ProfileController extends Controller
             // beim ersten Aufruf, und /profil ruft jeder auf.
             'calendarFeedUrl' => $pane === 'kalender'
                 ? url('/kalender/'.$user->calendarToken().'/shootings.ics')
+                : null,
+            'workingDays' => $pane === 'kalender' && $user->can(Capability::ManageSettings->value)
+                ? StudioSettings::current()->workingDays()
                 : null,
             'sessions' => $pane === 'sicherheit' ? $this->sessionGroups($user, $request->session()->getId()) : [],
             'recoveryCodesLeft' => count($user->mfa_recovery_codes ?? []),

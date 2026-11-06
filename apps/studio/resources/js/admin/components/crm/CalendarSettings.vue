@@ -1,16 +1,11 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
 import FormSection from '@/ui/page/FormSection.vue'
-import FormShell from '@/ui/page/FormShell.vue'
-import { saveState } from '@/admin/lib/autosave'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
 
-const props = defineProps<{
-  workingDays: number[]
-  month: string
-}>()
+const props = defineProps<{ workingDays: number[] }>()
 
 // Mo..So, ISO weekday order — the integers TaskTemplate::dueFor() rolls over.
 const weekdays = [
@@ -36,27 +31,22 @@ function saveWorkingDays() {
 </script>
 
 <template>
-  <FormShell :kicker="$t('calendar.title')" :kicker-href="`/kalender?monat=${month}`" :title="$t('calendar.settingsTitle')" :state="saveState([workingDaysForm])">
-    <template #head>
-      <Button v-if="workingDaysForm.isDirty" variant="pill" type="submit" form="working-days-form" :disabled="workingDaysForm.processing">
+  <form @submit.prevent="saveWorkingDays">
+    <FormSection :title="$t('settings.workingDaysLabel')" :note="$t('settings.workingDaysHint')">
+      <div class="flex flex-wrap gap-x-5 gap-y-3">
+        <div v-for="day in weekdays" :key="day.value" class="flex items-center gap-2">
+          <Checkbox
+            :id="`wd-${day.value}`"
+            :model-value="workingDaysForm.working_days.includes(day.value)"
+            @update:model-value="toggleWorkingDay(day.value)"
+          />
+          <Label :for="`wd-${day.value}`">{{ $t(day.key) }}</Label>
+        </div>
+      </div>
+      <p v-if="workingDaysForm.errors.working_days" class="mt-2 text-small leading-[1.45] text-destructive">{{ workingDaysForm.errors.working_days }}</p>
+      <Button v-if="workingDaysForm.isDirty" class="mt-4" variant="pill" type="submit" :disabled="workingDaysForm.processing">
         {{ $t('settings.numberingSave') }}
       </Button>
-    </template>
-
-    <form id="working-days-form" @submit.prevent="saveWorkingDays">
-      <FormSection :title="$t('settings.workingDaysLabel')" :note="$t('settings.workingDaysHint')">
-        <div class="flex flex-wrap gap-x-5 gap-y-3">
-          <div v-for="day in weekdays" :key="day.value" class="flex items-center gap-2">
-            <Checkbox
-              :id="`wd-${day.value}`"
-              :model-value="workingDaysForm.working_days.includes(day.value)"
-              @update:model-value="toggleWorkingDay(day.value)"
-            />
-            <Label :for="`wd-${day.value}`">{{ $t(day.key) }}</Label>
-          </div>
-        </div>
-        <p v-if="workingDaysForm.errors.working_days" class="mt-2 text-small leading-[1.45] text-destructive">{{ workingDaysForm.errors.working_days }}</p>
-      </FormSection>
-    </form>
-  </FormShell>
+    </FormSection>
+  </form>
 </template>

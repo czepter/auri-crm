@@ -120,7 +120,6 @@ const meta = {
     },
     mine: ['s-rahn-feier'],
     workingDays: [1, 2, 3, 4, 5],
-    settingsOpen: false,
     season: {
       shoots: [
         ...samstage(2026, 18, 36, 'delivered', 'Ausgeliefert'),
@@ -163,4 +162,3 @@ export const SaisonFastLeer: Story = {
 export const ListeLeer: Story = { args: { view: 'liste', shoots: [] } }
 
 /** Arbeitstage über dem Monat. */
-export const Einstellungen: Story = { args: { settingsOpen: true } }

@@ -46,7 +46,6 @@ class CalendarController extends Controller
         $user = auth('staff')->user();
         $manages = $user->can(Capability::ManageSettings->value);
 
-        abort_if($request->route('settings') === true && ! $manages, 404);
         $month = $this->month($request);
         $view = in_array($request->query('ansicht'), ['monat', 'liste', 'saison'], true) ? $request->query('ansicht') : 'monat';
 
@@ -137,7 +136,6 @@ class CalendarController extends Controller
                 ->values(),
             'season' => $view === 'saison' ? $this->season($user, $vocabulary) : null,
             'workingDays' => $manages ? StudioSettings::current()->workingDays() : null,
-            'settingsOpen' => $request->route('settings') === true,
         ]);
     }
 

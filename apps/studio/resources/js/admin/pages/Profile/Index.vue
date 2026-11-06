@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import SessionList from './SessionList.vue'
+import CalendarSettings from '@/admin/components/crm/CalendarSettings.vue'
 import ProfileNav from '@/admin/components/settings/ProfileNav.vue'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
@@ -22,6 +23,7 @@ const props = defineProps<{
   recoveryCodesLeft: number
   digestFrequency: string | null
   calendarFeedUrl: string | null
+  workingDays: number[] | null
   events: Record<string, Mode>
   briefable: Record<string, boolean>
 }>()
@@ -310,7 +312,8 @@ function regenerateFeedUrl() {
 
       <!-- C-13 (#249): die Abo-Adresse ist ein Geheimnis pro Person,
            also steht sie neben dem Weg, sie zurückzuziehen. -->
-      <FormSection v-else :title="$t('calendar.feedUrl')">
+      <template v-else>
+      <FormSection :title="$t('calendar.feedUrl')">
         <code class="block text-small leading-[1.5] break-all">{{ calendarFeedUrl }}</code>
         <div class="mt-4 flex items-center gap-2">
           <Button type="button" variant="pill-muted" @click="copyFeedUrl(calendarFeedUrl!)">
@@ -321,6 +324,9 @@ function regenerateFeedUrl() {
           </Button>
         </div>
       </FormSection>
+
+      <CalendarSettings v-if="workingDays" :working-days="workingDays" />
+      </template>
 
       <SessionList v-if="pane === 'sicherheit'" :sessions="sessions" />
     </FormShell>

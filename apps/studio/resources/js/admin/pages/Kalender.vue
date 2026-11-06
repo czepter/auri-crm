@@ -3,7 +3,6 @@ import { computed, onMounted, ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import CalendarSeason from '@/admin/components/crm/CalendarSeason.vue'
-import CalendarSettings from '@/admin/components/crm/CalendarSettings.vue'
 import Page from '@/ui/page/Page.vue'
 import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
@@ -25,7 +24,6 @@ const props = defineProps<{
   mine: string[]
   season: InstanceType<typeof CalendarSeason>['$props']['season'] | null
   workingDays: number[] | null
-  settingsOpen: boolean
 }>()
 useLiveProps(['days', 'shoots', 'projects', 'mine', 'season', 'workingDays'])
 
@@ -94,8 +92,7 @@ function shortDate(date: string | null) {
 
 <template>
   <AdminLayout active="kalender">
-    <CalendarSettings v-if="settingsOpen && workingDays" :working-days="workingDays" :month="month" />
-    <Page v-else data-tokens wide>
+    <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('calendar.title')" :title="view === 'saison' ? seasonLabel : label">
           <ChoiceGroup
@@ -115,7 +112,7 @@ function shortDate(date: string | null) {
             :as="Link"
             variant="pill-muted"
             class="max-[640px]:hidden min-[641px]:order-3"
-            :href="`/kalender/einstellungen?monat=${month}&ansicht=${view}`"
+            :href="'/profil/kalender'"
           >
             {{ $t('stages.entry') }}
           </Button>
@@ -270,7 +267,7 @@ function shortDate(date: string | null) {
           :as="Link"
           variant="pill-muted"
           class="mx-4 mt-4 hidden min-h-11 max-[640px]:inline-flex"
-          :href="`/kalender/einstellungen?monat=${month}&ansicht=${view}`"
+          :href="'/profil/kalender'"
         >
           {{ $t('stages.entry') }}
         </Button>

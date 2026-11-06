@@ -367,9 +367,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/auswertungen', ReportController::class)->name('reports.index');
 
         Route::get('/kalender', [CalendarController::class, 'index'])->name('calendar.index');
-        Route::get('/kalender/einstellungen', [CalendarController::class, 'index'])
-            ->defaults('settings', true)
-            ->name('calendar.settings');
+        Route::redirect('/kalender/einstellungen', '/profil/kalender')->name('calendar.settings');
         Route::post('/kalender/abo', [CalendarController::class, 'regenerate'])
             ->name('calendar.regenerate');
 
