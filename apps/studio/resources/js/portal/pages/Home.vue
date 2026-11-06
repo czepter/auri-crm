@@ -133,7 +133,7 @@ function phaseState(phase: Phase) {
                 :key="index"
                 :href="row.href"
                 :title="row.kind === 'message' ? (row.subject ?? $t('portal.pending.message')) : $t(`portal.pending.${row.kind}`)"
-                :state="row.overdue ? 'late' : 'open'"
+                :state="row.overdue ? 'late' : row.dueOn ? 'due' : 'open'"
                 :note="row.dueOn
                   ? $t(row.overdue ? 'portal.overdueSince' : row.kind === 'quote' ? 'portal.validUntil' : 'portal.dueOn', { date: dayDate(row.dueOn) })
                   : row.kind === 'message' ? $t('portal.pending.message') : null"

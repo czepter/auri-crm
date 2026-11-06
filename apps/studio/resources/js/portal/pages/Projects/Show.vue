@@ -259,7 +259,7 @@ function documentNote(document: Document) {
           :key="document.kind"
           :href="document.href"
           :title="$t(`portal.document.${document.kind}`)"
-          :state="document.settled ? 'done' : document.overdue ? 'late' : 'open'"
+          :state="document.settled ? 'done' : document.overdue ? 'late' : document.dueOn ? 'due' : 'open'"
           :note="{
             settled: $t('portal.allSettled'),
             due: $t('portal.quoteOpen'),

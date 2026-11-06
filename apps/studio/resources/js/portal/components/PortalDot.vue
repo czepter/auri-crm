@@ -7,12 +7,12 @@
  * The grey is measured against --sunk rather than against white, because the
  * rows it stands in sink on hover.
  */
-withDefaults(defineProps<{ state?: 'open' | 'done' | 'neutral' | 'late' }>(), { state: 'neutral' })
+withDefaults(defineProps<{ state?: 'open' | 'due' | 'done' | 'neutral' | 'late' }>(), { state: 'neutral' })
 </script>
 
 <template>
   <span
     class="size-1.5 flex-none rounded-full"
-    :class="{ open: 'bg-action', done: 'bg-ok', neutral: 'bg-mark', late: 'bg-destructive' }[state]"
+    :class="{ open: 'bg-mark', due: 'bg-due', done: 'bg-ok', neutral: 'bg-mark', late: 'bg-destructive' }[state]"
   />
 </template>

@@ -16,7 +16,7 @@ withDefaults(defineProps<{
   href?: string | null
   /** Inertia visit for portal-internal paths; a plain <a> for downloads and files. */
   inertia?: boolean
-  state?: 'open' | 'done' | 'neutral' | 'late'
+  state?: 'open' | 'due' | 'done' | 'neutral' | 'late'
   /** The line under the title. Carries the dot. */
   note?: string | null
   /** A second, quieter line — which booking a row came from. */

@@ -138,7 +138,7 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
                 >{{ formatEuros(installment.amount) }}</span>
               </div>
               <p class="mt-1.5 flex items-center gap-2 text-[13.5px] text-muted-foreground">
-                <PortalDot :state="['paid', 'cancelled'].includes(installment.status) ? 'done' : installment.isLate ? 'late' : 'open'" />
+                <PortalDot :state="['paid', 'cancelled'].includes(installment.status) ? 'done' : installment.isLate ? 'late' : 'due'" />
                 {{ ['paid', 'cancelled'].includes(installment.status)
                   ? installment.statusLabel
                   : $t(installment.isLate ? 'portal.overdueSince' : 'portal.dueOn', { date: dayDate(installment.dueOn) }) }}

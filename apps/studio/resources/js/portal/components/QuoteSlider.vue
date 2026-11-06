@@ -299,7 +299,7 @@ function accept() {
         <template v-if="canAccept">
           <div
             v-if="agbUrl || widerrufUrl"
-            class="mt-3.5 flex items-start gap-3 text-[13.5px] leading-[1.5] [&_[data-slot=checkbox]]:mt-0.5 [&_[data-slot=checkbox]]:size-[17px] [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action"
+            class="mt-3.5 flex items-start gap-3 text-[13.5px] leading-[1.5] [&_[data-slot=checkbox]]:mt-0.5 [&_[data-slot=checkbox]]:size-6 [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action"
           >
             <Checkbox id="slider-terms" v-model="form.terms" required />
             <Label variant="inline" for="slider-terms">

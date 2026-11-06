@@ -268,6 +268,9 @@ const COVER_INPUT = [
         <p v-if="subtitle" class="mt-5 text-[14px] leading-[1.6] font-normal text-inherit opacity-80">
           {{ subtitle }}
         </p>
+        <p v-if="gallery.expiresAt" class="mt-2 text-[14px] leading-[1.6] font-normal text-inherit opacity-80">
+          {{ $t('gallery.onlineUntil', { date: dayDate(gallery.expiresAt) }) }}
+        </p>
 
         <template v-if="!unlocked">
           <div class="mx-auto mt-11 mb-8 h-px w-12 bg-[rgba(242,237,233,.45)]" />
