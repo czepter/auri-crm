@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { router, useForm, usePage } from '@inertiajs/vue3'
+import { Link, router, useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormShell from '@/ui/page/FormShell.vue'
 import CreateSummary from '@/admin/components/CreateSummary.vue'
@@ -19,6 +19,8 @@ import { useLiveProps } from '@/admin/lib/liveReload'
 const props = defineProps<{
   mode: 'internal' | 'external'
   project: App.Crm.Data.CaseSuggestionData | null
+  siblings: App.Gallery.Data.GalleryRowData[]
+  address: string
   shootId: string | null
   presets: App.Gallery.Data.GalleryPresetData[]
   studioDefaults: {
@@ -31,6 +33,11 @@ const props = defineProps<{
 }>()
 
 useLiveProps([])
+
+// Die Liste und das Präfix gehören zum gewählten Projekt, das nur der Server kennt.
+function loadSiblings(id: string | undefined) {
+  router.get(page.url.split('?')[0], { projekt: id, art: props.mode === 'external' ? 'extern' : undefined }, { only: ['siblings', 'address'], preserveState: true, preserveScroll: true, replace: true })
+}
 
 const MODES = ['internal', 'external']
 
@@ -61,6 +68,8 @@ const form = useForm({
   comments_enabled: props.studioDefaults.comments,
   design: { ...props.studioDefaults.design } as Record<string, string> | null,
 })
+
+watch(project, (next, previous) => next?.id !== previous?.id && loadSiblings(next?.id))
 
 watch([preset, project], () => {
   const born = birthValues(preset.value, project.value, props.studioDefaults)
@@ -183,8 +192,22 @@ function submit() {
             { label: $t('projects.title'), value: project?.name },
             { label: $t('galleryPresets.title'), value: mode === 'internal' ? preset?.name : null },
             { label: $t('galleries.expiryField'), value: mode === 'internal' && form.expires_at ? new Date(form.expires_at).toLocaleDateString('de-DE') : null },
+            { label: $t('galleries.linkField'), value: mode === 'internal' ? address : null },
           ]"
         />
+
+        <section v-if="siblings.length" class="mt-4 rounded-[var(--r)] bg-paper p-5 shadow-card">
+          <h2 class="m-0 mb-2 text-ui font-semibold">{{ $t('galleries.title') }}</h2>
+          <Link
+            v-for="row in siblings"
+            :key="row.id"
+            :href="`/galerien/${row.id}`"
+            class="flex justify-between gap-4 py-2 text-ui text-foreground no-underline shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+          >
+            <span class="min-w-0 truncate">{{ row.title }}</span>
+            <span class="flex-none text-ink-2">{{ row.assetCount }}</span>
+          </Link>
+        </section>
       </template>
     </FormShell>
   </AdminLayout>

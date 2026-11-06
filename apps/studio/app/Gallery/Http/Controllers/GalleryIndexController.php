@@ -74,7 +74,21 @@ class GalleryIndexController extends Controller
                 ->first()
             : null;
 
+        $siblings = $project
+            ? Gallery::query()
+                ->with(['case', 'currentVersion'])
+                ->withCount(['assets as asset_count' => fn ($query) => $query->inDraft()])
+                ->where('case_id', $project->id)
+                ->latest()
+                ->get()
+            : collect();
+
+        $host = preg_replace('#^https?://#', '', rtrim((string) config('services.gallery.url'), '/'));
+
         return Inertia::render('Galleries/Create', [
+            'siblings' => GalleryRowData::collect($siblings),
+            // Das Präfix teilen sich alle Galerien eines Projekts; den Slug vergibt erst das Anlegen.
+            'address' => $siblings->isEmpty() ? $host : $host.'/'.$siblings->first()->prefix,
             'mode' => $request->query('art') === 'extern' ? 'external' : 'internal',
             'project' => $project ? CaseSuggestionData::fromModel($project) : null,
             'shootId' => $project?->shoots()->where('public_id', $request->query('shooting'))->value('public_id'),

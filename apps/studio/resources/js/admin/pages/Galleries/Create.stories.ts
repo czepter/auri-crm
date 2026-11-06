@@ -42,6 +42,8 @@ const meta = {
     mode: 'internal',
     project,
     shootId: 's-rahn',
+    siblings: [{ id: 'g-rahn', title: 'Getting Ready', projectName: 'Hochzeit Rahn', assetCount: 48, version: 1, expiresAt: '2027-02-01' }],
+    address: 'galerie.example/hochzeit-rahn',
     presets,
     studioDefaults: {
       downloads: true,
@@ -60,7 +62,7 @@ type Story = StoryObj<typeof meta>
 export const AusShooting: Story = {}
 
 /** Ohne Projekt und ohne Vorlagen bleiben nur die Studio-Standardwerte. */
-export const OhneProjekt: Story = { args: { project: null, shootId: null, presets: [] } }
+export const OhneProjekt: Story = { args: { project: null, shootId: null, siblings: [], address: 'galerie.example', presets: [] } }
 
 /** Eine Galerie, die anderswo liegt: nur Projekt, Titel und Adresse. */
 export const Extern: Story = { args: { mode: 'external' } }

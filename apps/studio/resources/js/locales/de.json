@@ -1885,6 +1885,7 @@
     "passwordField": "Passwort",
     "infoField": "Info",
     "expiryField": "Gültig bis",
+    "linkField": "Link",
     "imagesField": "Bilder",
     "versionField": "Fassung",
     "mode_internal": "Eigene Galerie",
