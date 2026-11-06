@@ -148,10 +148,10 @@ function receivedAt(iso: string) {
               v-for="row in group.rows"
               :key="row.id"
               :name="row.who"
-              :meta="row.waitingDays !== null && row.waitingDays >= NOTICEABLE_DAYS
+              :meta="group.key === 'unbeantwortet' && row.waitingDays !== null && row.waitingDays >= NOTICEABLE_DAYS
                 ? $t('inbox.waiting', row.waitingDays)
                 : null"
-              :alert="true"
+              :alert="group.key === 'unbeantwortet'"
               :title="row.project ?? $t('inbox.general')"
               :snippet="row.snippet"
               :active="open?.id === row.id"
