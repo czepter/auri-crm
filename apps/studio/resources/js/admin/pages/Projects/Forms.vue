@@ -124,7 +124,7 @@ function summary(instance: App.Crm.Data.FormInstanceData): string {
 </script>
 
 <template>
-  <AdminLayout active="anfragen">
+  <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
     <ProjectShell :header="header" active="documents" child="forms">
       <template v-if="header.canManageForms" #actions>
         <Button
@@ -136,7 +136,7 @@ function summary(instance: App.Crm.Data.FormInstanceData): string {
         >
           {{ template.label }}
         </Button>
-        <Button variant="pill" type="button" @click="createFrom('')">
+        <Button variant="outline" type="button" @click="createFrom('')">
           {{ $t('formInstances.startBlank') }}
         </Button>
       </template>

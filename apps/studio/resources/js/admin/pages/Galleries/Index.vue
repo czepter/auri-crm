@@ -49,6 +49,12 @@ function day(iso: string | null) {
         </Empty>
 
         <div v-else class="max-w-[900px] px-6 pt-7 pb-8 max-[640px]:px-5">
+          <div class="flex gap-3.5 pb-2 text-small font-semibold text-ink-2 max-[640px]:hidden">
+            <span class="min-w-0 flex-1">{{ $t('galleries.titleField') }}</span>
+            <span class="w-14 flex-none text-right">{{ $t('galleries.imagesField') }}</span>
+            <span class="w-20 flex-none text-right">{{ $t('galleries.versionField') }}</span>
+            <span class="w-20 flex-none text-right">{{ $t('galleries.expiryField') }}</span>
+          </div>
           <div
             v-for="gallery in galleries"
             :key="gallery.id"

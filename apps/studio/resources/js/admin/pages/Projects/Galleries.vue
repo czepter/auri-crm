@@ -5,6 +5,7 @@ import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/crm/ProjectShell.vue'
 import Card from '@/ui/page/Card.vue'
 import { Button } from '@/ui/button'
+import { dayWithWeekday as day } from '@/admin/lib/dates'
 import { dayAndMonth, weekday } from '@/admin/lib/shoots'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
@@ -35,13 +36,10 @@ const missingSummary = computed(() =>
   withoutGallery.value.map((shoot) => shoot.label ?? shoot.kind).join(', ')
 )
 
-function day(iso: string | null) {
-  return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : null
-}
 </script>
 
 <template>
-  <AdminLayout active="anfragen">
+  <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
     <ProjectShell :header="header" active="galleries">
       <template #actions>
         <Button :as="Link" variant="pill" :href="`/galerien/neu?projekt=${header.id}`">{{ $t('galleries.create') }}</Button>
