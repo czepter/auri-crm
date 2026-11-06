@@ -195,10 +195,10 @@ class DashboardController extends Controller
         );
 
         $scheduled = PaymentInstallment::query()
-            ->where('status', PaymentInstallmentStatus::Scheduled)
+            ->whereIn('status', PaymentInstallmentStatus::open())
             ->tap($mine);
 
-        $late = (clone $scheduled)->whereDate('due_on', '<', now()->toDateString());
+        $late = (clone $scheduled)->whereDate('due_on', '<', today()->toDateString());
         $oldest = (clone $late)->orderBy('due_on')->value('due_on');
         $next = (clone $scheduled)->whereDate('due_on', '>=', now()->toDateString())->orderBy('due_on')->first();
 
@@ -207,7 +207,7 @@ class DashboardController extends Controller
             'overdue' => (int) (clone $late)->sum('amount'),
             'overdueInstalments' => (clone $late)->count(),
             'instalments' => PaymentInstallment::query()->tap($mine)->count(),
-            'overdueSinceDays' => $oldest === null ? null : (int) Carbon::parse($oldest)->diffInDays(now()),
+            'overdueSinceDays' => $oldest === null ? null : (int) Carbon::parse($oldest)->startOfDay()->diffInDays(today()),
             'nextDueOn' => $next === null ? null : Carbon::parse($next->due_on)->format('Y-m-d'),
             'nextAmount' => $next?->amount,
         ];
