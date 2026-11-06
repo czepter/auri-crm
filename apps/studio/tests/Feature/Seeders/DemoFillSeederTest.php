@@ -43,7 +43,7 @@ it('seeds no sent quote without a number or a frozen total, and one accepted quo
     $this->seed(DemoFillSeeder::class);
 
     $sent = Quote::whereNotNull('sent_at')->get();
-    $counts = App\Quotes\Support\QuoteAcceptanceRate::counts(now()->subYear(), now());
+    $counts = App\Reporting\Support\QuoteAcceptanceRate::counts(now()->subYear(), now());
 
     expect($sent->whereNull('number'))->toBeEmpty()
         ->and($sent->whereNull('vat_amount'))->toBeEmpty()

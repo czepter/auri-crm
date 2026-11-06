@@ -18,7 +18,7 @@ use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Screens\ReadInquiryColumn;
-use App\Quotes\Support\QuoteAcceptanceRate;
+use App\Reporting\Support\QuoteAcceptanceRate;
 use App\Quotes\Support\QuotePipeline;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;

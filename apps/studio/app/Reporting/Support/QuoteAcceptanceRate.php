@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Quotes\Support;
+namespace App\Reporting\Support;
 
 use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Support\CrmVocabulary;
-use App\Reporting\Support\FunnelTimes;
 use Carbon\CarbonInterface;
 
 /**
