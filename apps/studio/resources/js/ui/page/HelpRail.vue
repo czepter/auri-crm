@@ -56,7 +56,7 @@ function aufLink(event: MouseEvent) {
 </script>
 
 <template>
-  <Rail v-if="sichtbar">
+  <Rail v-if="sichtbar" class="pb-12">
     <div class="mb-3 flex items-center gap-2">
       <button
         v-for="eintrag in eintraege"

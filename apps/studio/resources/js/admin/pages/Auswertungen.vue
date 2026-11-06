@@ -212,7 +212,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
         <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 pr-8 max-[640px]:pr-0">
           <PageHead :kicker="$t('reports.title')" :title="windowLabel" />
 
-          <div class="flex min-w-0 flex-wrap items-center gap-2.5 pb-1">
+          <div class="flex min-w-0 flex-wrap items-center gap-2.5 pb-1 max-[640px]:px-5">
             <Select
               :model-value="filters.type ?? 'all'"
               @update:model-value="(value) => filter({ typ: String(value) === 'all' ? null : String(value) })"
@@ -638,14 +638,14 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               </ul>
               <template v-else>
               <div class="flex h-[120px] items-end justify-center gap-1.5">
-                <div v-for="row in shootsByMonth" :key="row.month" class="flex h-full max-w-[40px] flex-1 flex-col justify-end gap-1">
+                <div v-for="row in shootsByMonth" :key="row.month" class="flex h-full max-w-[40px] min-w-0 flex-1 flex-col justify-end gap-1">
                   <span class="text-center text-small leading-none font-semibold tabular-nums text-muted-foreground">{{ row.shoots || '' }}</span>
                   <div class="w-full rounded-t-[4px] bg-action" :style="{ height: barHeight(row.shoots, shootPeak, 92) }" />
                 </div>
               </div>
               <div class="flex justify-center gap-1.5">
-                <div v-for="(row, index) in shootsByMonth" :key="row.month" class="flex max-w-[40px] flex-1 flex-col items-center text-small leading-tight text-muted-foreground">
-                  <span :class="!monthShown(row.month, index) && 'max-[640px]:invisible'">{{ monthShort(row.month) }}</span>
+                <div v-for="(row, index) in shootsByMonth" :key="row.month" class="flex max-w-[40px] min-w-0 flex-1 flex-col items-center text-small leading-tight text-muted-foreground">
+                  <span :class="!monthShown(row.month, index) && 'invisible'">{{ monthShort(row.month) }}</span>
                   <span class="h-[13px]">{{ yearTick(row.month, index) }}</span>
                 </div>
               </div>
