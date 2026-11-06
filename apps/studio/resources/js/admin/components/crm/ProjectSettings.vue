@@ -382,11 +382,11 @@ function release(row: Stage | Field) {
             </button>
           </div>
 
-          <div class="flex gap-2 overflow-x-auto rounded-xl bg-sunk p-3">
+          <div class="flex flex-wrap gap-2 rounded-xl bg-sunk p-3">
             <div
               v-for="stage in stageRows.filter((one) => one.isActive)"
               :key="stage.id"
-              class="flex flex-1 items-center gap-2 border-b-2 bg-background px-3 py-2 text-small font-semibold"
+              class="flex min-w-[140px] flex-1 items-center gap-2 border-b-2 bg-background px-3 py-2 text-small font-semibold"
               :style="{ borderBottomColor: stage.css }"
             >
               <span class="flex-1">{{ stage.name }}</span>
