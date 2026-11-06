@@ -36,7 +36,7 @@ const signed = computed(() => shown.value.filter((contract) => contract.signedOn
         <div v-if="contracts.length" class="flex items-start gap-10 max-[900px]:flex-col max-[900px]:gap-0">
           <div class="min-w-0 flex-1">
           <div class="flex flex-wrap items-center gap-3 px-6 pt-4.5">
-            <Input v-model="query" class="h-8 min-w-60 w-64 shrink-0" type="search" :placeholder="$t('contractsOverview.searchPlaceholder')" />
+            <Input :aria-label="$t('contractsOverview.searchPlaceholder')" v-model="query" class="h-8 min-w-60 w-64 shrink-0" type="search" :placeholder="$t('contractsOverview.searchPlaceholder')" />
           </div>
 
           <Table>

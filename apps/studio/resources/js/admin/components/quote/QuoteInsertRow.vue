@@ -69,7 +69,7 @@ function choose(kind: string, id: string) {
   <!-- :model-value="null": die Auswahl ist ein Befehl, kein Wert — sonst schreibt Reka "new:new" ins Suchfeld. -->
   <Combobox ignore-filter :model-value="null">
     <ComboboxAnchor>
-      <ComboboxInput v-model="term" :placeholder="$t('quotes.insert')" />
+      <ComboboxInput v-model="term" :aria-label="$t('quotes.insert')" :placeholder="$t('quotes.insert')" />
     </ComboboxAnchor>
     <ComboboxContent v-if="options.length">
       <ComboboxGroup v-for="group in groups" :key="group.key">

@@ -58,7 +58,7 @@ watch(shown, (groups) => emit("update:rows", groups.flatMap((group) => group.row
                 />
             </div>
 
-            <Input
+            <Input :aria-label="$t('common.search')"
                 v-model="term"
                 size="sm"
                 type="search"

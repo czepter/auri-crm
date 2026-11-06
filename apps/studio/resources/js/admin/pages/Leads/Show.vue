@@ -451,7 +451,7 @@ const primary = computed(() => {
                             class="flex flex-col rounded-md border border-rule focus-within:border-ring"
                             @submit.prevent="addTask"
                         >
-                            <input
+                            <input :aria-label="$t('lead.taskTitle')"
                                 v-model="task.title"
                                 class="border-0 bg-transparent px-3.5 pt-3 pb-1.5 text-small outline-none"
                                 type="text"

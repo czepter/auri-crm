@@ -201,7 +201,7 @@ function choose(field: Field, option: string) {
                 @click="removeTag(field, tag)"
               >×</button>
             </span>
-            <input
+            <input :aria-label="$t('project.fieldTagAdd')"
               class="min-w-[120px] flex-1 border-0 bg-transparent text-small leading-[1.35] outline-none placeholder:text-faint"
               :list="`tags-${field.id}`"
               :placeholder="$t('project.fieldTagAdd')"
