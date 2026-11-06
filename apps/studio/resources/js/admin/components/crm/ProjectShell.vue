@@ -96,13 +96,13 @@ function destroy() {
       </slot>
     </template>
 
-    <div class="min-w-0 flex-1 px-[26px] pt-5 pb-7 max-[640px]:px-5">
+    <div class="min-w-0 flex-1 px-[26px] pt-5 pb-7 max-[640px]:px-4">
       <div class="text-small font-medium text-ink-2">
         <Link v-if="header.isBooked" href="/projekte">{{ $t('projects.title') }}</Link>
         <Link v-else href="/anfragen">{{ $t('board.title') }}</Link>
       </div>
 
-      <div class="sticky top-0 z-[5] -mx-[26px] mt-0.5 bg-background px-[26px] pb-4 max-[640px]:-mx-5 max-[640px]:px-5">
+      <div class="sticky top-0 z-[5] -mx-[26px] mt-0.5 bg-background px-[26px] pb-4 max-[640px]:-mx-4 max-[640px]:px-4">
         <div class="flex flex-wrap items-center gap-3">
           <slot name="title">
             <h1 class="m-0 text-[20px] leading-7 font-semibold tracking-[-0.02em]">
