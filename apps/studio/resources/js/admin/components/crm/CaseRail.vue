@@ -14,7 +14,7 @@ const link = "block truncate text-small leading-[1.47] text-ring no-underline ho
 </script>
 
 <template>
-    <RailSection :title="$t('lead.people')">
+    <RailSection v-if="header.people.length" :title="$t('lead.people')">
         <div v-for="person in header.people" :key="person.id" class="py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none">
             <div class="flex items-center gap-2">
                 <Link :href="`/kontakte/${person.id}`" class="min-w-0 truncate text-small leading-[1.47] font-semibold tracking-[-0.012em]">
