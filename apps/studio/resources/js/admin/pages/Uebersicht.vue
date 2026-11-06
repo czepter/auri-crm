@@ -68,8 +68,13 @@ const RANGES = [
     { key: "year", label: "dashboard.rangeYear" },
 ];
 
+// Das Jahr steht nur, wo es nicht das laufende ist: "12.06." im Juni 2027 liest sich als dieses Jahr.
+function yearIfOther(date: string) {
+    return date.slice(0, 4) === props.today.slice(0, 4) ? {} : { year: "numeric" as const };
+}
+
 function dayOf(date: string) {
-    return new Date(date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
+    return new Date(date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", ...yearIfOther(date) });
 }
 
 const week = computed(() =>
@@ -94,7 +99,7 @@ const shownDays = computed(() => week.value.filter((day, index) => index === 0 |
 const later = computed(() => props.entries.filter((entry) => entry.date > week.value[6].date));
 
 function dayStamp(date: string) {
-    return new Date(`${date}T12:00:00`).toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" });
+    return new Date(`${date}T12:00:00`).toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit", ...yearIfOther(date) });
 }
 
 const phoneToday = computed(() => props.entries.filter((entry) => entry.date === props.today));
@@ -362,7 +367,24 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                         </template>
                     </div>
 
-                    <div class="overflow-x-auto max-[640px]:hidden">
+                    <div v-if="!week[0].entries.length && entries.length" class="max-[640px]:hidden">
+                        <component
+                            :is="entry.href ? Link : 'div'"
+                            v-for="entry in entries"
+                            :key="`${entry.date}${entry.time}${entry.what}`"
+                            :href="entry.href"
+                            class="flex min-h-11 items-center gap-3 text-ui text-foreground no-underline"
+                            :class="ROW"
+                        >
+                            <span class="w-[120px] flex-none font-semibold tabular-nums">{{ dayStamp(entry.date) }}</span>
+                            <span class="min-w-0 flex-1 truncate" :class="entry.away ? 'text-ink-2' : 'font-medium'">
+                                {{ entry.away ? $t("dashboard.away", { name: entry.what }) : entry.what }}
+                            </span>
+                            <span v-if="entry.time || entry.where" class="flex-none text-small text-ink-2">{{ [entry.time, entry.where].filter(Boolean).join(" · ") }}</span>
+                        </component>
+                    </div>
+
+                    <div v-else class="overflow-x-auto max-[640px]:hidden">
                         <div class="grid gap-1.5" :style="{ gridTemplateColumns: `repeat(${shownDays.length}, minmax(140px, 1fr))` }">
                             <div v-for="day in shownDays" :key="day.date" class="flex min-h-[120px] flex-col gap-1.5 rounded-[var(--r-sm)] bg-sunk p-3">
                                 <div class="flex items-baseline gap-1.5" :class="day.date === today && 'text-ring'">
@@ -392,7 +414,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                         </div>
                     </div>
 
-                    <div v-if="later.length" class="flex flex-wrap items-baseline gap-x-5 gap-y-1 pt-3 text-small max-[640px]:hidden">
+                    <div v-if="later.length && week[0].entries.length" class="flex flex-wrap items-baseline gap-x-5 gap-y-1 pt-3 text-small max-[640px]:hidden">
                         <span class="text-ink-2">{{ $t("dashboard.later") }}</span>
                         <component
                             :is="entry.href ? Link : 'span'"
