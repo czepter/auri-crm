@@ -399,6 +399,8 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/einstellungen/belege', [StudioSettingsController::class, 'updateReceipts'])->name('settings.receipts.update');
         Route::get('/einstellungen/belege/angebot-vorschau', [StudioSettingsController::class, 'previewQuoteLayout'])
             ->name('settings.receipts.quote-layout-preview');
+        Route::get('/einstellungen/zahlung/rechnung-vorschau', [StudioSettingsController::class, 'previewInvoice'])
+            ->name('settings.payment.invoice-preview');
         Route::get('/einstellungen/email/vorschau', [StudioSettingsController::class, 'previewMail'])->name('settings.mail.preview');
         Route::patch('/einstellungen/email', [StudioSettingsController::class, 'updateMail'])->name('settings.mail.update');
 
