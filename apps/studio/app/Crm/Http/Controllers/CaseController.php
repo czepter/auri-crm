@@ -12,7 +12,6 @@ use App\Crm\Actions\CrewAvailability;
 use App\Crm\Actions\DeriveCasePosition;
 use App\Crm\Actions\WorkflowColumns;
 use App\Crm\Actions\WriteProjectFieldValues;
-use App\Crm\Data\CasePersonData;
 use App\Crm\Data\CaseRowData;
 use App\Crm\Data\FormInstanceData;
 use App\Crm\Data\ShootData;
@@ -173,9 +172,6 @@ class CaseController extends Controller
             // anyway.
             'scope' => $this->screen->scope($case),
             ...app(ReadCaseQuote::class)($case),
-            'people' => CasePersonData::collect(
-                $case->contacts->map(CasePersonData::fromContact(...))
-            ),
             // C-25: what this type asks of a project, and what this project
             // answers. Definitions and values apart, because a value under a
             // key the type no longer defines is kept but not shown.
@@ -362,7 +358,6 @@ class CaseController extends Controller
         return Inertia::render('Projects/Info', [
             'header' => $this->header($case),
             'shoots' => ShootData::collect($this->shootsOf($case)),
-            'people' => CasePersonData::collect($case->contacts->map(CasePersonData::fromContact(...))),
         ]);
     }
 

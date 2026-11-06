@@ -10,12 +10,11 @@ import { useLiveProps } from '@/admin/lib/liveReload'
 const props = defineProps<{
   header: App.Crm.Screens.CaseHeaderData
   shoots: App.Crm.Data.ShootData[]
-  people: App.Crm.Data.CasePersonData[]
 }>()
-useLiveProps(['header', 'shoots', 'people'])
+useLiveProps(['header', 'shoots'])
 
 const hasStep = computed(
-  () => (props.header.canManageShoots && nextStep(props.shoots)) || paymentCall(props.header.paymentPlan, props.people),
+  () => (props.header.canManageShoots && nextStep(props.shoots)) || paymentCall(props.header.paymentPlan, props.header.people),
 )
 </script>
 
@@ -23,7 +22,7 @@ const hasStep = computed(
   <AdminLayout active="projekte">
     <ProjectShell :header="header" active="info">
       <template v-if="hasStep" #stage>
-        <ProjectStep :header="header" :shoots="shoots" :people="people" />
+        <ProjectStep :header="header" :shoots="shoots" />
       </template>
 
       <div class="min-[1080px]:hidden">

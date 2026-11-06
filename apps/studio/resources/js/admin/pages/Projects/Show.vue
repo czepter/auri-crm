@@ -58,7 +58,6 @@ const props = defineProps<{
         delta: number;
         hasDraft: boolean;
     };
-    people: App.Crm.Data.CasePersonData[];
     fields: ProjectFieldDefinition[];
     fieldValues: ProjectFieldValues;
     stages: { value: string; label: string }[];
@@ -95,14 +94,14 @@ function onKey(event: KeyboardEvent) {
 onMounted(() => addEventListener("keydown", onKey));
 onUnmounted(() => removeEventListener("keydown", onKey));
 
-useLiveProps(["header", "shoots", "shootKinds", "tasks", "shootOptions", "staffOptions", "anchors", "thread", "scope", "quote", "supersededQuotes", "people", "fields", "fieldValues", "stages", "presets", "stage", "source", "sourceOther", "sourceLabel", "inquiry", "stalled"]);
+useLiveProps(["header", "shoots", "shootKinds", "tasks", "shootOptions", "staffOptions", "anchors", "thread", "scope", "quote", "supersededQuotes", "fields", "fieldValues", "stages", "presets", "stage", "source", "sourceOther", "sourceLabel", "inquiry", "stalled"]);
 
 const { t } = useI18n();
 
 const galleriesHref = computed(() => props.header.tabs.find((tab) => tab.key === "galleries")?.href);
 
 const step = computed(() => (props.header.canManageShoots ? nextStep(props.shoots) : null));
-const callHref = computed(() => paymentCall(props.header.paymentPlan, props.people));
+const callHref = computed(() => paymentCall(props.header.paymentPlan, props.header.people));
 
 function euro(minor: string | number | null) {
     return minor === null ? "—" : formatEurosRounded(Number(minor));
@@ -249,7 +248,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
             </template>
 
             <template v-if="step || callHref" #stage>
-                <ProjectStep :header="header" :shoots="shoots" :people="people" />
+                <ProjectStep :header="header" :shoots="shoots" />
             </template>
 
                     <Alert

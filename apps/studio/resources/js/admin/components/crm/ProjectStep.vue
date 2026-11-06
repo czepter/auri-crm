@@ -9,7 +9,6 @@ import { nextStep, paymentCall, stepRows } from "@/admin/lib/projectNextStep";
 const props = defineProps<{
     header: App.Crm.Screens.CaseHeaderData;
     shoots: App.Crm.Data.ShootData[];
-    people: App.Crm.Data.CasePersonData[];
 }>();
 
 function advance(shootId: string, status: string) {
@@ -18,7 +17,7 @@ function advance(shootId: string, status: string) {
 
 const step = computed(() => (props.header.canManageShoots ? nextStep(props.shoots) : null));
 const stepMenu = computed(() => stepRows(props.shoots));
-const callHref = computed(() => paymentCall(props.header.paymentPlan, props.people));
+const callHref = computed(() => paymentCall(props.header.paymentPlan, props.header.people));
 </script>
 
 <template>
