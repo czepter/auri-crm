@@ -45,6 +45,10 @@ describe('Sidebar-Navigation', () => {
         ])
     })
 
+    it('nennt die Termine auf dem Telefon Kalender', () => {
+        expect(phoneNav(navItems([])).bar.find((item) => item.key === 'kalender')?.label).toBe('Kalender')
+    })
+
     it('lässt Zeilen ohne Befugnis auch in der Telefonleiste weg', () => {
         expect(phoneNav(navItems([])).bar.map((item) => item.key)).toEqual(['uebersicht', 'kalender', 'projekte'])
     })
