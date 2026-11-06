@@ -55,8 +55,8 @@ function offset(days: number): string {
   if (days === 0) return t('templates.offsetSame')
 
   return days < 0
-    ? t('templates.offsetBefore', { count: Math.abs(days) })
-    : t('templates.offsetAfter', { count: days })
+    ? t('templates.offsetBefore', Math.abs(days))
+    : t('templates.offsetAfter', days)
 }
 
 const rows = computed<Record<Kind, Row[]>>(() => ({
@@ -170,12 +170,12 @@ function open(row: Row) {
         <div class="px-6 pt-6 pb-8">
           <!-- Übersicht: jede Art als eigene Karte, in der Reihenfolge der Chips. -->
           <div v-if="kind === null" class="max-w-[980px]">
-            <section v-for="entry in kinds" :key="entry" class="mt-7 first:mt-0">
+            <section v-for="entry in kinds.filter((each) => matching(rows[each]).length)" :key="entry" class="mt-7 first:mt-0">
               <div class="mb-2.5 text-small leading-none font-semibold text-faint">
                 {{ $t(KIND_LABEL[entry]) }}
               </div>
 
-              <div v-if="matching(rows[entry]).length" class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
+              <div class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
                 <component
                   :is="row.href ? Link : 'button'"
                   v-for="row in matching(rows[entry]).slice(0, 4)"
@@ -200,8 +200,6 @@ function open(row: Row) {
                   :href="`/vorlagen?typ=${entry}`"
                 >{{ $t('templates.more', { count: matching(rows[entry]).length - 4 }) }}</Link>
               </div>
-
-              <p v-else class="m-0 text-small leading-[1.45] text-faint">{{ $t('templates.empty') }}</p>
             </section>
           </div>
 
