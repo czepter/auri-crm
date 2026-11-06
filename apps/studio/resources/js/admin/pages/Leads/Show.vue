@@ -331,6 +331,7 @@ const primary = computed(() => {
             </template>
 
             <template v-if="!lead.outcomeLabel" #stage>
+                <span class="chip">{{ lead.stageLabel }}</span>
                 <div class="flex">
                     <Button
                         v-if="primary"
@@ -419,7 +420,7 @@ const primary = computed(() => {
                     <Card v-if="quote" :title="$t('lead.quote')" :summary="quoteSummary">
                         <template v-if="quote" #meta>
                             <span v-if="quote.number" class="text-ui leading-[1.2] tracking-[-0.015em] text-ink-2 tabular-nums">{{ quote.number }}</span>
-                            <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
+                            <span v-if="quote.status !== 'sent'" :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
                         </template>
                         <template v-if="header.canManageQuotes" #action>
                             <Link
