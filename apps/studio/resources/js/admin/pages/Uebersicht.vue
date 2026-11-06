@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { Link, router } from "@inertiajs/vue3";
-import { useMediaQuery } from "@vueuse/core";
 import { useI18n } from "vue-i18n";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import Page from "@/ui/page/Page.vue";
@@ -264,15 +263,8 @@ const CARD_ORDER: Record<string, string> = {
     projects: "max-[640px]:order-5",
 };
 
-const phoneViewport = useMediaQuery("(max-width: 640px)");
-
-// Auf dem Telefon steht höchstens ein primärer Knopf auf der Seite: die erste Zeile mit Aktion.
-const primaryKey = computed(() => {
-    const order = ["todo", "leads", "dunning", "projects"];
-    const sorted = [...cards.value].sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
-
-    return sorted.flatMap((card) => card.rows).find((row) => row.action)?.key;
-});
+// Höchstens ein primärer Knopf auf der Seite, auf jeder Breite derselbe: die erste Mahnung.
+const primaryKey = computed(() => cards.value.find((card) => card.key === "dunning")?.rows.find((row) => row.action)?.key);
 
 const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
 </script>
@@ -411,7 +403,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                             <Link class="ml-auto text-small text-ink-2 no-underline" :href="card.href">{{ card.link }}</Link>
                         </template>
 
-                        <div v-for="(row, index) in card.rows" :key="row.key" class="flex items-center gap-3 py-2" :class="ROW">
+                        <div v-for="row in card.rows" :key="row.key" class="flex items-center gap-3 py-2" :class="ROW">
                             <div class="min-w-0 flex-1">
                                 <Link class="block truncate text-ui font-semibold tracking-[-0.015em] text-foreground no-underline" :href="row.href">
                                     {{ row.who }}
@@ -421,7 +413,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                                     <template v-if="row.whatTail">{{ row.whatTail }}</template>
                                 </span>
                             </div>
-                            <Button v-if="row.action" :as="Link" class="max-[640px]:min-h-11" :variant="(phoneViewport ? row.key === primaryKey : index === 0) ? 'pill' : 'pill-muted'" :href="row.action.target">
+                            <Button v-if="row.action" :as="Link" class="max-[640px]:min-h-11" :variant="row.key === primaryKey ? 'pill' : 'pill-muted'" :href="row.action.target">
                                 {{ row.action.label }}
                             </Button>
                             <Button v-else-if="row.task" type="button" class="max-[640px]:min-h-11" variant="pill-muted" @click="complete(row.task)">
