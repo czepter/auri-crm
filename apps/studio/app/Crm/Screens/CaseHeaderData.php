@@ -108,13 +108,14 @@ class CaseHeaderData extends Data
             isCompleted: $project->isCompleted(),
             canComplete: $project->isBooked() && ($user?->can('manageShoots', $project) ?? false),
             canDelete: ($user?->can('delete', $project) ?? false) && $project->deletionBlockers()->isEmpty(),
-            // Anfrage and Aufgaben are no tabs of a project: the overview is the
-            // inquiry's own page carried on, and holds the task list. Angebot,
+            // Anfrage is no tab of a project: the overview is the inquiry's own
+            // page carried on. Aufgaben has its own screen and tab. Angebot,
             // Vertrag and Fragebögen are one tab, Dokumente, with the three as
             // its children.
             tabs: ! $project->isBooked() && $project->lead !== null ? self::leadTabs($project) : [
                 ['key' => 'overview', 'label' => 'project.overview', 'href' => "/auftraege/{$project->public_id}", 'count' => null, 'countTo' => null, 'children' => []],
                 ['key' => 'shoots', 'label' => 'project.shoots', 'href' => "/auftraege/{$project->public_id}/shootings", 'count' => null, 'countTo' => null, 'children' => []],
+                ['key' => 'tasks', 'label' => 'project.tasks', 'href' => "/auftraege/{$project->public_id}/aufgaben", 'count' => $project->tasks()->whereNull('completed_at')->count() ?: null, 'countTo' => null, 'children' => []],
                 ['key' => 'messages', 'label' => 'project.messages', 'href' => "/auftraege/{$project->public_id}/nachrichten", 'count' => self::waitingThreads($project), 'countTo' => null, 'children' => []],
                 ['key' => 'galleries', 'label' => 'contacts.galleries', 'href' => "/auftraege/{$project->public_id}/galerien", 'count' => $project->galleries()->count(), 'countTo' => null, 'children' => []],
                 self::documentsTab($project),
