@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import FormShell from '@/ui/page/FormShell.vue'
 import { computed, ref, watchEffect } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import { useEventListener } from '@vueuse/core'
@@ -304,29 +305,12 @@ function release(row: Stage | Field) {
 </script>
 
 <template>
-  <!-- Over the lists it configures, not a room of its own: the stages and the
-       types are read on the board, so they are edited on top of it. Fixed
-       rather than inline so the list keeps its scroll position underneath. -->
-  <div data-tokens class="fixed inset-0 z-40 overflow-y-auto bg-background">
-    <div class="mx-auto w-full max-w-[1000px] px-6 pb-16">
-      <!-- Bleibt stehen: die Liste ist so lang wie das Studio Felder hat, und
-           der Weg hier heraus darf nicht nach oben scrollen. -->
-      <div class="sticky top-0 z-10 flex items-center gap-4 bg-background py-[18px]">
-        <button
-          :aria-label="$t('stages.done')"
-          class="inline-flex cursor-pointer border-0 bg-transparent p-1 text-ink-2"
-          type="button"
-          @click="emit('close')"
-        >
-          <svg class="size-[18px] fill-none stroke-current stroke-[1.75] [stroke-linecap:round]" viewBox="0 0 24 24">
-            <path d="M6 6l12 12M18 6L6 18" />
-          </svg>
-        </button>
-        <span class="text-body leading-[1.3] font-semibold tracking-[-0.015em]">{{ $t('stages.title') }}</span>
-        <Button class="ml-auto" type="button" @click="emit('close')">{{ $t('stages.done') }}</Button>
-      </div>
+  <FormShell wide :title="$t('stages.title')">
+    <template #head>
+      <Button class="ml-auto" type="button" @click="emit('close')">{{ $t('stages.done') }}</Button>
+    </template>
 
-      <div class="flex gap-10 pt-6 max-[720px]:flex-col max-[720px]:gap-6">
+    <template #nav>
         <nav class="w-[168px] flex-none">
           <h3 class="m-0 mb-[7px] text-small leading-none font-semibold text-ink-2">
             {{ $t('stages.stagesNav') }}
@@ -364,6 +348,7 @@ function release(row: Stage | Field) {
             {{ $t('stages.typeShort') }}
           </Button>
         </nav>
+    </template>
 
         <section v-if="pipeline" class="min-w-0 flex-1">
           <h2 class="m-0 text-title leading-[1.2] font-semibold tracking-[-0.02em]">
@@ -506,8 +491,7 @@ function release(row: Stage | Field) {
 
           <WorkflowPanel v-else :workflow="workflow as never" />
         </section>
-      </div>
-    </div>
+  </FormShell>
 
     <Dialog :open="open === 'stage'" @update:open="open = null">
       <DialogContent>
@@ -740,5 +724,4 @@ function release(row: Stage | Field) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  </div>
 </template>

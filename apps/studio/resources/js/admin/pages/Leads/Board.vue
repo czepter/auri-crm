@@ -271,7 +271,16 @@ const workflowAllowed = computed(() =>
 
 <template>
     <AdminLayout active="anfragen">
-        <Page wide @click="menu = null">
+        <ProjectSettings
+            v-if="settingsSelection && stageSettings"
+            v-bind="stageSettings"
+            :selection="settingsSelection"
+            :return-to="returnTo"
+            :can-manage-tasks="workflowAllowed"
+            :workflow="workflow"
+            @close="router.visit(returnTo ?? '/anfragen', { preserveState: true, preserveScroll: true })"
+        />
+        <Page v-else wide @click="menu = null">
             <div data-tokens class="min-w-0 flex-1">
                 <PageHead :title="$t('board.title')">
                     <ChoiceGroup
@@ -699,16 +708,6 @@ const workflowAllowed = computed(() =>
                     </AlertDialogContent>
                 </AlertDialog>
             </div>
-
-            <ProjectSettings
-                v-if="settingsSelection && stageSettings"
-                v-bind="stageSettings"
-                :selection="settingsSelection"
-                :return-to="returnTo"
-                :can-manage-tasks="workflowAllowed"
-                :workflow="workflow"
-                @close="router.visit(returnTo ?? '/anfragen', { preserveState: true, preserveScroll: true })"
-            />
         </Page>
     </AdminLayout>
 </template>
