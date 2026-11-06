@@ -26,7 +26,7 @@ defineProps<{
       class="order-first mb-12 min-[1100px]:order-none min-[1100px]:sticky min-[1100px]:top-[88px] min-[1100px]:mb-0 min-[1100px]:self-start"
       :class="railClass"
     >
-      <div v-if="kicker" class="rounded-md border border-border p-6">
+      <div v-if="kicker" class="-mx-2 rounded-md border border-border p-6">
         <PortalLabel>{{ kicker }}</PortalLabel>
         <p v-if="amount" class="mt-4 font-serif text-[34px] leading-[1.1] tracking-[-0.015em] tabular-nums">{{ amount }}</p>
         <p v-if="note" class="mt-2 text-[13.5px] text-muted-foreground">{{ note }}</p>

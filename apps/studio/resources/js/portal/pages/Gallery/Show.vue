@@ -462,12 +462,12 @@ const COVER_INPUT = [
             <p v-else class="text-[12.5px] leading-[1.55] font-normal text-muted-foreground mt-[9px]">{{ $t('gallery.listEmpty') }}</p>
           </div>
 
-          <form class="mt-8 flex items-end gap-3.5" @submit.prevent="addList">
+          <form class="mt-8 grid gap-3.5 min-[761px]:flex min-[761px]:items-end" @submit.prevent="addList">
             <Label class="block flex-1">
-              <span class="mb-2 block text-[12.5px] leading-none text-muted-foreground">{{ $t('gallery.newListName') }}</span>
+              <span class="mb-2 block text-[13px] leading-none text-foreground">{{ $t('gallery.newListName') }}</span>
               <Input v-model="listForm.name" type="text" />
             </Label>
-            <Button class="min-h-11 border border-muted-foreground disabled:opacity-60" type="submit" variant="ghost" :disabled="!listForm.name">{{ $t('gallery.newList') }}</Button>
+            <Button class="min-h-11 w-full justify-center disabled:opacity-60 min-[761px]:w-auto" type="submit" variant="portal-ghost" :disabled="!listForm.name">{{ $t('gallery.newList') }}</Button>
           </form>
         </div>
 

@@ -280,17 +280,21 @@ class CaseController extends Controller
         }
 
         if ($settings->messagingEnabled(auth('portal')->user())) {
+            // The studio wrote last: the same rule the mailbox badge counts.
+            $unread = auth('portal')->user()->threads()
+                ->where('threads.case_id', $found->id)
+                ->with('latestMessage')
+                ->get()
+                ->filter(fn ($thread) => $thread->latestMessage !== null && $thread->latestMessage->contact_id === null)
+                ->count();
+
             $rows[] = [
                 'kind' => 'messages',
                 'href' => "/nachrichten?betrifft={$found->public_id}",
                 'dueOn' => null,
                 'amount' => null,
-                // The studio wrote last: the same rule the mailbox badge counts.
-                'settled' => ! auth('portal')->user()->threads()
-                    ->where('threads.case_id', $found->id)
-                    ->with('latestMessage')
-                    ->get()
-                    ->contains(fn ($thread) => $thread->latestMessage !== null && $thread->latestMessage->contact_id === null),
+                'unread' => $unread,
+                'settled' => $unread === 0,
             ];
         }
 
