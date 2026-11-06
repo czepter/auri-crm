@@ -51,6 +51,14 @@ use Illuminate\Support\Facades\DB;
  */
 class DemoFillSeeder extends Seeder
 {
+    private const MEIER_SENT = '2026-05-10 10:00';
+
+    private const MEIER_ACCEPTED = '2026-05-12 14:00';
+
+    private const MEIER_DEPOSIT_DUE = '2026-05-19';
+
+    private const MEIER_DEPOSIT_PAID = '2026-05-18';
+
     public function run(): void
     {
         $actor = User::query()->where('email', 'christian@nordlicht.test')->first() ?? User::query()->firstOrFail();
@@ -73,6 +81,8 @@ class DemoFillSeeder extends Seeder
         $this->seedAbsenceAndClosure($actor);
         $this->seedThreads($meier, $actor);
         $this->repairDemoDates($meier);
+        $this->repairMeierTimeline($meier);
+        $this->repairEngagementGallery($meier);
     }
 
     private function repairDemoDates(ClientCase $meier): void
@@ -88,6 +98,66 @@ class DemoFillSeeder extends Seeder
             $primary->update(['name' => 'Lena Meier']);
             $meier->attachContact(Contact::create(['name' => 'Jonas Kowalski']), CaseContactRole::Partner);
         }
+    }
+
+    /** Quote, booking, deposit and both deliveries in the order they happened. */
+    private function repairMeierTimeline(ClientCase $meier): void
+    {
+        $accepted = Carbon::parse(self::MEIER_ACCEPTED);
+
+        $installment = $meier->paymentPlan?->installments()->orderBy('sort_order')->first();
+
+        if ($installment !== null) {
+            DB::table('payment_installments')->where('id', $installment->id)->update(['due_on' => self::MEIER_DEPOSIT_DUE]);
+
+            if ($installment->paid_on !== null) {
+                DB::table('payment_installments')->where('id', $installment->id)->update(['paid_on' => self::MEIER_DEPOSIT_PAID]);
+            }
+        }
+
+        Invoice::query()->where('case_id', $meier->id)->orderBy('id')->limit(1)->update(['issued_at' => $accepted->copy()->addMinutes(30)]);
+
+        $delivered = [];
+
+        foreach ($meier->shoots()->whereIn('label', ['Verlobungsshooting', 'Standesamt'])->get() as $shoot) {
+            $delivered[$shoot->public_id] = $shoot->date->copy()->addDays($shoot->label === 'Standesamt' ? 10 : 14)->setTime(10, 0);
+
+            $shoot->forceFill(['status_entered_at' => $delivered[$shoot->public_id]])->saveQuietly();
+        }
+
+        foreach (DB::table('audit_logs')->where('case_id', $meier->id)->get() as $log) {
+            $context = json_decode($log->context, true) ?: [];
+
+            $at = match (true) {
+                $log->event === 'quote.sent' => Carbon::parse(self::MEIER_SENT),
+                in_array($log->event, ['quote.accepted', 'project.booked'], true) => $accepted,
+                $log->event === 'payment_plan.created' => $accepted->copy()->addHour(),
+                $log->event === 'payment_installment.paid' => Carbon::parse(self::MEIER_DEPOSIT_PAID.' 09:00'),
+                $log->event === 'shoot.status_changed' && ($context['to'] ?? null) === 'delivered' => $delivered[$log->subject] ?? null,
+                default => null,
+            };
+
+            if ($at !== null) {
+                $context['occurred_at'] = $at->toIso8601String();
+                DB::table('audit_logs')->where('id', $log->id)->update(['context' => json_encode($context)]);
+            }
+        }
+    }
+
+    /** The engagement session shows engagement categories, not the wedding day's. */
+    private function repairEngagementGallery(ClientCase $meier): void
+    {
+        $gallery = $meier->galleries()->where('title', 'Verlobungsshooting')->first();
+
+        if ($gallery === null) {
+            return;
+        }
+
+        foreach (['Trauung' => 'Porträt', 'Tanz' => 'Spaziergang', 'Ringe' => 'Detail'] as $from => $to) {
+            $gallery->sets()->where('name', $from)->update(['name' => $to]);
+        }
+
+        $gallery->sets()->whereIn('name', ['Torte', 'Rede'])->whereDoesntHave('assets')->delete();
     }
 
     private function seedStudioContact(User $actor): void
@@ -268,6 +338,7 @@ class DemoFillSeeder extends Seeder
             $quote = app(CreateQuote::class)($project, $actor);
             $quote->items()->create(['title' => 'Hochzeitsreportage Ganztag', 'description' => 'bis 10 Std. am Hochzeitstag, Bearbeitung, Online-Galerie', 'quantity' => 1, 'unit_price' => 350000, 'sort_order' => 0]);
             $quote->items()->create(['title' => 'Verlobungsshooting', 'description' => '2 Std., Ort nach Wahl', 'quantity' => 1, 'unit_price' => 45000, 'sort_order' => 1]);
+            $quote->items()->create(['title' => 'Standesamt', 'description' => '1,5 Std., im Paket enthalten', 'quantity' => 1, 'unit_price' => 0, 'sort_order' => 2]);
             $quote->recalculateTotal();
         }
 
@@ -278,7 +349,7 @@ class DemoFillSeeder extends Seeder
         $quote->refresh();
 
         if ($quote->status === QuoteStatus::Sent && $project->booked_at !== null) {
-            app(\App\Quotes\Actions\AcceptQuote::class)($quote, $project->primaryContact(), null, at: Carbon::parse('2026-11-05 14:00'));
+            app(\App\Quotes\Actions\AcceptQuote::class)($quote, $project->primaryContact(), null, at: Carbon::parse(self::MEIER_ACCEPTED));
             $quote->refresh();
         }
 
@@ -287,7 +358,7 @@ class DemoFillSeeder extends Seeder
 
     /**
      * Meier & Kowalski's quote is both lines (3.950 € net, 4.700,50 € gross),
-     * sent 03.11. and accepted 05.11.2026, with its 30/70 stages. A sent or
+     * sent 10.05. and accepted 12.05.2026, with its 30/70 stages. A sent or
      * accepted quote is immutable at model level, so totals and dates are
      * repaired with plain queries.
      */
@@ -297,6 +368,10 @@ class DemoFillSeeder extends Seeder
             ['title' => 'Verlobungsshooting'],
             ['description' => '2 Std., Ort nach Wahl', 'quantity' => 1, 'unit_price' => 45000, 'sort_order' => 1],
         );
+        $quote->items()->firstOrCreate(
+            ['title' => 'Standesamt'],
+            ['description' => '1,5 Std., im Paket enthalten', 'quantity' => 1, 'unit_price' => 0, 'sort_order' => 2],
+        );
 
         $items = $quote->items()->get();
         $totals = Quote::computeTotals($items, null, null);
@@ -305,13 +380,13 @@ class DemoFillSeeder extends Seeder
             ...$totals,
             ...Quote::computeVat($totals['net'], $items),
             ...($quote->status === QuoteStatus::Accepted ? [
-                'sent_at' => Carbon::parse('2026-11-03 10:00'),
-                'accepted_at' => Carbon::parse('2026-11-05 14:00'),
+                'sent_at' => Carbon::parse(self::MEIER_SENT),
+                'accepted_at' => Carbon::parse(self::MEIER_ACCEPTED),
             ] : []),
         ]);
 
         if ($quote->status === QuoteStatus::Accepted) {
-            $stamp = Carbon::parse('2026-11-05 14:00');
+            $stamp = Carbon::parse(self::MEIER_ACCEPTED);
 
             $project->lead()->update(['stage_entered_at' => $stamp]);
             ClientCase::query()->whereKey($project->id)->whereNotNull('booked_at')->update(['booked_at' => $stamp]);
@@ -334,13 +409,13 @@ class DemoFillSeeder extends Seeder
             return;
         }
 
-        $plan = app(CreatePaymentPlan::class)($project, $quote->gross(), ['2026-11-12', '2027-06-05']);
+        $plan = app(CreatePaymentPlan::class)($project, $quote->gross(), [self::MEIER_DEPOSIT_DUE, '2027-06-05']);
 
         $issue = app(IssueInvoice::class);
         $deposit = $issue($plan->installments()->orderBy('sort_order')->firstOrFail(), $actor);
 
         app(MarkInstallmentPaid::class)(
-            $deposit->installments()->firstOrFail(), SettledVia::Transfer, '2026-11-06', 'Überweisung Anzahlung', $actor,
+            $deposit->installments()->firstOrFail(), SettledVia::Transfer, self::MEIER_DEPOSIT_PAID, 'Überweisung Anzahlung', $actor,
         );
 
         // The client's thread about it reads as written today.
