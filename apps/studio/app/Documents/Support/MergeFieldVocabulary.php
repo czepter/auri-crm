@@ -2,6 +2,8 @@
 
 namespace App\Documents\Support;
 
+use App\Models\StudioSettings;
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 
 /**
@@ -144,7 +146,7 @@ class MergeFieldVocabulary
             }
         }
 
-        return [...self::SAMPLE, ...$studio];
+        return [...self::SAMPLE, ...self::terms(), ...$studio];
     }
 
     /**
@@ -159,10 +161,28 @@ class MergeFieldVocabulary
     {
         $data = [];
 
-        foreach (self::SAMPLE as $path => $value) {
+        foreach ([...self::SAMPLE, ...self::terms()] as $path => $value) {
             Arr::set($data, $path, $value);
         }
 
         return $data;
+    }
+
+    /**
+     * The dates a studio sets by days, reckoned from the studio's own
+     * settings so a preview never shows 30 days next to a Zahlungsziel of 14.
+     *
+     * @return array<string, string>
+     */
+    private static function terms(): array
+    {
+        $settings = StudioSettings::current();
+        $due = Carbon::createFromFormat('d.m.Y', self::SAMPLE['invoice.date'])->addDays($settings->payment_term_days)->format('d.m.Y');
+
+        return [
+            'quote.validUntil' => now()->addDays($settings->quote_validity_days)->format('d.m.Y'),
+            'invoice.dueOn' => $due,
+            'invoice.paymentTerm' => "Zahlbar bis {$due} ohne Abzug.",
+        ];
     }
 }

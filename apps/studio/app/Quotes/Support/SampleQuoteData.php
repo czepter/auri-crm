@@ -5,6 +5,7 @@ namespace App\Quotes\Support;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Models\StudioSettings;
 use App\Quotes\Enums\DiscountType;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
@@ -41,7 +42,7 @@ class SampleQuoteData
         $quote = new Quote([
             'number' => 'AN-'.now()->year.'-14',
             'sent_at' => now(),
-            'valid_until' => now()->addDays(30)->toDateString(),
+            'valid_until' => now()->addDays(StudioSettings::current()->quote_validity_days)->toDateString(),
             'discount_type' => DiscountType::Percentage,
             'discount_value' => 1000,
         ]);
