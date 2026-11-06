@@ -26,6 +26,11 @@ function inquiryWithQuote(?QuoteStatus $status): array
             'status' => $status,
             'sent_at' => now(),
             'valid_until' => '2026-11-10',
+            'net' => 350000,
+            'vat_mode' => 'standard',
+            'vat_rate' => 1900,
+            'vat_amount' => 66500,
+            'total' => 350000,
         ]);
     }
 
@@ -40,6 +45,7 @@ it('hands the inquiry screen the sent quote to link to', function () {
     expect($page['component'])->toBe('Projects/Inquiry')
         ->and($page['props']['project']['quote'])->toMatchArray([
             'href' => "/projekte/{$project->public_id}/angebot",
+            'total' => 416500,
             'validUntil' => '2026-11-10',
             'acceptedOn' => null,
         ]);

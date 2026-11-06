@@ -159,9 +159,12 @@ class Quote extends Model
      */
     public function paymentSplit(): array
     {
-        $base = $this->net + ($this->vat_mode === 'standard' ? ($this->vat_amount ?? 0) : 0);
+        return PaymentStageSplitter::split($this->gross(), $this->paymentStages);
+    }
 
-        return PaymentStageSplitter::split($base, $this->paymentStages);
+    public function gross(): int
+    {
+        return $this->net + ($this->vat_mode === 'standard' ? ($this->vat_amount ?? 0) : 0);
     }
 
     /** The quote this one revises, if any — App\Quotes\Actions\ReviseQuote's own new row. */

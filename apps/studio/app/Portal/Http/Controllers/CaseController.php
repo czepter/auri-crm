@@ -146,7 +146,7 @@ class CaseController extends Controller
             'inquiryText' => $found->lead?->inquiry_text,
             'quote' => $quote !== null && in_array($quote->status, [QuoteStatus::Sent, QuoteStatus::Accepted], true) ? [
                 'href' => "/projekte/{$found->public_id}/angebot",
-                'total' => (int) $quote->total,
+                'total' => $quote->gross(),
                 'validUntil' => $quote->valid_until?->format('Y-m-d'),
                 'acceptedOn' => $quote->accepted_at?->format('Y-m-d'),
             ] : null,
