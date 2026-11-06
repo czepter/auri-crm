@@ -20,7 +20,7 @@ import { Label } from '@/ui/label'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
-  tokens: { id: string; name: string; scopes: string[]; createdAt: string }[]
+  tokens: { id: string; name: string; scopes: string[]; createdAt: string; lastUsedAt: string | null }[]
   capabilities: { value: string; label: string }[]
   mcpUrl: string
 }>()
@@ -90,29 +90,6 @@ function revoke() {
           </div>
         </div>
 
-        <div v-if="tokens.length" class="mb-8">
-          <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('apiTokens.active') }}</div>
-          <div
-            v-for="token in tokens"
-            :key="token.id"
-            class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]"
-          >
-            <div class="min-w-0 flex-1">
-              <div class="text-ui font-semibold">{{ token.name }}</div>
-              <div class="text-small leading-[1.45] text-faint">
-                {{ token.scopes.map((s) => labels[s] ?? s).join(', ') }} · {{ $d(new Date(token.createdAt)) }}
-              </div>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              @click="revoking = token.id; confirmingRevoke = true"
-            >
-              {{ $t('apiTokens.revoke') }}
-            </Button>
-          </div>
-        </div>
-
         <div class="mb-8">
           <div class="mb-2.5 text-small leading-none font-semibold text-faint">MCP</div>
           <div
@@ -155,6 +132,26 @@ function revoke() {
           <Button type="submit" :disabled="form.processing">{{ $t('apiTokens.create') }}</Button>
         </form>
       </div>
+
+      <template #aside>
+        <h2 class="mb-2 text-ui font-semibold">{{ $t('apiTokens.clients') }}</h2>
+        <div
+          v-for="token in tokens"
+          :key="token.id"
+          class="flex items-center gap-3 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+        >
+          <div class="min-w-0 flex-1">
+            <div class="truncate text-ui font-semibold">{{ token.name }}</div>
+            <div class="text-small leading-[1.45] text-ink-2">
+              {{ $t('apiTokens.lastUsed') }}: {{ token.lastUsedAt ? $d(new Date(token.lastUsedAt)) : $t('apiTokens.never') }}
+            </div>
+            <div class="text-small leading-[1.45] text-faint">{{ token.scopes.map((s) => labels[s] ?? s).join(', ') }}</div>
+          </div>
+          <Button type="button" variant="outline" @click="revoking = token.id; confirmingRevoke = true">
+            {{ $t('apiTokens.revoke') }}
+          </Button>
+        </div>
+      </template>
     </FormShell>
 
     <AlertDialog v-model:open="confirmingRevoke">
