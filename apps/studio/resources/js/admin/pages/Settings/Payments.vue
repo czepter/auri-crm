@@ -84,8 +84,8 @@ function submit() {
                 </SelectContent>
               </Select>
             </div>
-            <span class="text-small leading-[1.45] font-normal text-faint">
-              {{ hasActiveKeys ? $t('paymentSettings.stripeKeyConfigured') : $t('paymentSettings.stripeKeyMissing') }}
+            <span v-if="!hasActiveKeys" class="text-small leading-[1.45] font-normal text-faint">
+              {{ $t('paymentSettings.stripeKeyMissing', { keys: $t(form.payments_stripe_mode === 'live' ? 'paymentSettings.stripeLiveKeys' : 'paymentSettings.stripeTestKeys') }) }}
             </span>
           </div>
 

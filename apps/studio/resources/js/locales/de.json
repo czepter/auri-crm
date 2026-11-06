@@ -1133,6 +1133,7 @@
     "country": "Land",
     "taxNumber": "Steuernummer",
     "vatId": "USt-IdNr.",
+    "taxNumberOrVatId": "Steuernummer oder USt-IdNr.",
     "taxHint": "Mindestens eins von beiden, sonst ist ein Beleg nicht rechnungsfähig.",
     "registerNumber": "Handelsregister-Nummer",
     "registerCourt": "Registergericht",
@@ -1425,7 +1426,6 @@
     "businessDataHint": "Impressum im Kundenportal, Umsatzsteuer im Angebot.",
     "beforeInvoice": "Vor der ersten Rechnung",
     "invoiceDataTitle": "Steuer und Bank",
-    "invoiceDataHint": "Pflichtangaben auf jedem Beleg.",
     "saveAndContinue": "Speichern und weiter"
   },
   "onboarding": {
@@ -1448,8 +1448,7 @@
     "stripeLiveKeys": "Live-Schlüssel",
     "stripePublishableKey": "Öffentlicher Schlüssel",
     "stripeSecretKey": "Geheimer Schlüssel",
-    "stripeKeyConfigured": "Gesetzt. Ein neuer Wert überschreibt ihn.",
-    "stripeKeyMissing": "Nicht gesetzt.",
+    "stripeKeyMissing": "Fehlt: {keys}",
     "stripeKeyHint": "Verschlüsselt gespeichert, danach nicht mehr lesbar.",
     "defaultsSection": "Standardwerte",
     "depositPercent": "Anzahlung (%)",

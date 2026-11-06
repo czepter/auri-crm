@@ -192,6 +192,7 @@ function submit() {
       :open="gateOpen"
       :first="firstInvoice"
       :settings="studioSettings"
+      :missing="missingInvoiceData"
       @done="gateOpen = false"
       @cancel="router.visit('/rechnungen')"
     />
