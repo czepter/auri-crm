@@ -47,13 +47,15 @@ const toggle = (version: string) => {
             <div class="min-w-0 flex-1">
               <div class="mx-auto w-full max-w-[1140px]">
                 <PageHead :kicker="$t('releases.kicker')" :title="$t('releases.title')">
-                    <Button class="ml-auto" variant="pill" type="button" @click="router.reload()">{{ $t('releases.reload') }}</Button>
+                    <Button class="ml-auto" variant="outline" type="button" @click="router.reload()">{{ $t('releases.reload') }}</Button>
                 </PageHead>
 
                 <div class="flex items-start gap-12 px-6 pt-6 pb-11 max-[900px]:flex-col max-[900px]:gap-6 max-[640px]:px-5">
                     <div class="w-full min-w-0 max-w-[720px] flex-1">
                         <Empty v-if="!releases.length" :text="$t('releases.empty')">
-                            <Button variant="pill" type="button" @click="router.reload()">{{ $t('releases.reload') }}</Button>
+                            <span v-if="source || checked" class="text-small text-ink-2">
+                                {{ [source, checked && $t('releases.checked', { time: checked })].filter(Boolean).join(' · ') }}
+                            </span>
                         </Empty>
 
                         <article
