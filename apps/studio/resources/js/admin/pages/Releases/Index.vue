@@ -36,6 +36,7 @@ useLiveProps([])
     <AdminLayout active="neuigkeiten">
         <Page data-tokens wide>
             <div class="min-w-0 flex-1">
+              <div class="mx-auto w-full max-w-[780px]">
                 <PageHead
                     :kicker="$t('releases.kicker')"
                     :title="$t('releases.title')"
@@ -135,6 +136,7 @@ useLiveProps([])
                         </svg>
                     </Link>
                 </div>
+              </div>
             </div>
         </Page>
     </AdminLayout>
