@@ -12,7 +12,7 @@ import { useForm, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import { formatEuros } from '@/lib/money'
 import { applyDiscount, quoteDiscount, spread } from '@/lib/quoteTotals'
-import { shortDate } from '@/portal/lib/dates'
+import { dayDate } from '@/portal/lib/dates'
 import { splitStages } from '@/portal/lib/paymentStages'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
@@ -322,7 +322,7 @@ function accept() {
         </template>
 
         <p v-if="quote.validUntil" class="mt-4 text-[13px] text-muted-foreground max-lg:hidden">
-          {{ $t('quotes.validUntil') }} {{ shortDate(quote.validUntil) }}
+          {{ $t('quotes.validUntil') }} {{ dayDate(quote.validUntil) }}
         </p>
       </template>
     </aside>

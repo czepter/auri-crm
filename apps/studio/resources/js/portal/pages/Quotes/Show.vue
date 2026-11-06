@@ -10,7 +10,7 @@ import PortalRail from '@/portal/components/PortalRail.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 import QuoteSlider from '@/portal/components/QuoteSlider.vue'
-import { dayDate, shortDate } from '@/portal/lib/dates'
+import { dayDate } from '@/portal/lib/dates'
 import { splitStages } from '@/portal/lib/paymentStages'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
@@ -118,9 +118,9 @@ const stages = computed(() => (props.quote ? splitStages(gross.value, props.quot
 const railNote = computed(() => {
   const quote = props.quote
 
-  if (quote?.acceptedAt) return t('portal.quoteAccepted', { date: shortDate(quote.acceptedAt) })
-  if (quote?.expired && quote.validUntil) return t('portal.quoteExpiredOn', { date: shortDate(quote.validUntil) })
-  if (quote?.validUntil) return `${t('quotes.validUntil')} ${shortDate(quote.validUntil)}`
+  if (quote?.acceptedAt) return t('portal.quoteAccepted', { date: dayDate(quote.acceptedAt) })
+  if (quote?.expired && quote.validUntil) return t('portal.quoteExpiredOn', { date: dayDate(quote.validUntil) })
+  if (quote?.validUntil) return `${t('quotes.validUntil')} ${dayDate(quote.validUntil)}`
 
   return undefined
 })
