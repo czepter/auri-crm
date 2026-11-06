@@ -123,7 +123,7 @@ function run(key: ActionKey) {
 
 <template>
   <!-- .stop: in einer Card liegen die Knöpfe in der Kopfzeile, die selbst umschaltet. -->
-  <div class="ml-auto flex flex-wrap items-center justify-end gap-1.5">
+  <div class="ml-auto flex flex-wrap items-center justify-end gap-1.5 max-[640px]:flex-nowrap">
     <Button v-if="canManageQuotes && quote.status === 'accepted'" type="button" variant="outline" class="max-[640px]:hidden" @click.stop="addendum">
       {{ $t('quotes.addendum') }}
     </Button>
@@ -180,6 +180,7 @@ function run(key: ActionKey) {
         <DropdownMenuTrigger
           class="flex items-center rounded-r-[var(--r-sm)] border-l border-white/20 bg-action px-2 text-action-foreground"
           :aria-label="$t('quotes.moreActions')"
+          :title="$t('quotes.moreActions')"
           @click.stop
         >
           <svg class="size-3.5 fill-current" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
@@ -203,7 +204,7 @@ function run(key: ActionKey) {
 
     <DropdownMenu v-if="canManageQuotes">
       <DropdownMenuTrigger as-child>
-        <Button variant="ghost" type="button" class="rounded-[6px] px-2 hover:bg-sunk-2" :aria-label="$t('project.more')" @click.stop>
+        <Button variant="ghost" type="button" class="rounded-[6px] px-2 hover:bg-sunk-2" :aria-label="$t('project.more')" :title="$t('project.more')" @click.stop>
           <EllipsisVertical />
         </Button>
       </DropdownMenuTrigger>
