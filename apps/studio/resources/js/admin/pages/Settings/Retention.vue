@@ -167,6 +167,7 @@ function submit() {
           <div class="mt-7 grid gap-8">
             <div>
               <ChoiceGroup
+                variant="segmented"
                 :label="$t('settings.retentionTemplate')"
                 :model-value="template"
                 :options="TEMPLATES.map((t) => ({ value: t.id, label: $t(`settings.retentionTpl${t.id}`) }))"
@@ -202,11 +203,7 @@ function submit() {
             </div>
 
             <div v-if="due.length" class="min-w-0">
-              <div class="flex justify-between text-small font-semibold text-ink-2">
-                <span>{{ $t('settings.retentionDue') }}</span>
-                <span>{{ due.length }}</span>
-              </div>
-              <div class="mt-2 grid grid-cols-[150px_minmax(0,1fr)_100px_76px] gap-3 py-2 text-small font-semibold text-ink-2 shadow-[inset_0_-1px_0_var(--rule)]">
+              <div class="grid grid-cols-[150px_minmax(0,1fr)_100px_76px] gap-3 py-2 text-small font-semibold text-ink-2 shadow-[inset_0_-1px_0_var(--rule)]">
                 <span>{{ $t('settings.retentionColContact') }}</span>
                 <span>{{ $t('settings.retentionColRequest') }}</span>
                 <span>{{ $t('settings.retentionColOutcome') }}</span>
@@ -287,8 +284,8 @@ function submit() {
       </AlertDialog>
 
       <template #preview>
-        <aside v-if="expiring.length" class="sticky top-6 w-[352px] flex-none max-[1100px]:hidden">
-          <div class="flex justify-between text-small font-semibold text-ink-2">
+        <aside v-if="expiring.length" class="sticky top-6 w-[352px] flex-none rounded-[var(--r)] bg-paper px-5 py-4 shadow-card max-[1100px]:hidden">
+          <div class="flex justify-between pb-1 text-small font-semibold text-ink-2">
             <span>{{ $t('settings.retentionExpiring') }}</span>
             <span>{{ expiring.length }}</span>
           </div>
