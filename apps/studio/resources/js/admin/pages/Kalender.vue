@@ -94,7 +94,8 @@ function shortDate(date: string | null) {
 
 <template>
   <AdminLayout active="kalender">
-    <Page data-tokens wide>
+    <CalendarSettings v-if="settingsOpen && workingDays" :working-days="workingDays" :month="month" />
+    <Page v-else data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('calendar.title')" :title="view === 'saison' ? seasonLabel : label">
           <ChoiceGroup
@@ -274,11 +275,6 @@ function shortDate(date: string | null) {
           {{ $t('stages.entry') }}
         </Button>
 
-        <CalendarSettings
-          v-if="settingsOpen && workingDays"
-          :working-days="workingDays"
-          @close="go(month)"
-        />
       </div>
     </Page>
   </AdminLayout>
