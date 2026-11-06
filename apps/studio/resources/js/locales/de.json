@@ -1797,6 +1797,8 @@
     "maintenanceTitle": "Portal vorübergehend geschlossen",
     "maintenanceDefaultMessage": "Das Portal ist vorübergehend nicht erreichbar.",
     "impressumTitle": "Impressum",
+    "impressumManager": "Geschäftsführer",
+    "impressumOwner": "Inhaber",
     "notFoundTitle": "Diese Seite gibt es nicht",
     "notFoundInvoice": "Rechnung nicht gefunden",
     "notFoundPayments": "Zahlungen nicht gefunden",
