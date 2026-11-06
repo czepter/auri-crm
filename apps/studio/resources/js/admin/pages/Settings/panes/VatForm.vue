@@ -48,7 +48,6 @@ defineExpose({ form, submit })
             <Label variant="inline" for="vat-small-business">{{ $t('settings.vatModeSmallBusiness') }}</Label>
           </div>
         </RadioGroup>
-        <p class="mt-2.5 text-small leading-[1.45] text-destructive">{{ $t('settings.vatModeWarning') }}</p>
       </div>
       <div v-if="form.vat_mode === 'standard'" class="mb-6">
         <Field

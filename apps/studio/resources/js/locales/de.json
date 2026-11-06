@@ -1243,7 +1243,6 @@
     "vatModeLabel": "Modus",
     "vatModeStandard": "Standard — USt. wird auf jedem Beleg ausgewiesen",
     "vatModeSmallBusiness": "§19 UStG — Kleinunternehmer, keine USt. ausgewiesen",
-    "vatModeWarning": "Versendete Angebote behalten ihre Werte.",
     "vatRateLabel": "Steuersatz",
     "vatRateHint": "Prozent, netto.",
     "vatNoteLabel": "Rechnungshinweis",
