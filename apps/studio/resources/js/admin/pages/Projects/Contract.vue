@@ -39,22 +39,22 @@ const { t } = useI18n()
 const generate = useForm({ template: props.templates[0]?.value ?? '' })
 const signer = useForm({ contact: '' })
 
+const samples = computed(() =>
+  Object.fromEntries(props.mergeFields.map((field) => [field.path, field.sample])),
+)
+
 const doc = ref<EditorDocument>(blocksOf(props.contract))
 
 function blocksOf(contract: App.Contracts.Data.ContractData | null): EditorDocument {
   if (contract === null) return { blocks: [] }
 
-  return (contract.blocks as EditorDocument | null) ?? htmlToBlocks(contract.body)
+  return (contract.blocks as EditorDocument | null) ?? htmlToBlocks(contract.body, samples.value)
 }
 
 // Saving against a sent Fassung answers with a new one — a different id, a
 // different wording of record. The editor follows that row rather than
 // keeping the document it was opened with.
 watch(() => props.contract?.id, () => (doc.value = blocksOf(props.contract)))
-
-const samples = computed(() =>
-  Object.fromEntries(props.mergeFields.map((field) => [field.path, field.sample])),
-)
 
 // The preview reckons against this project by default; the sample values are
 // the fallback for judging a placeholder that has nothing behind it yet.
