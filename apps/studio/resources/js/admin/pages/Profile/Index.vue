@@ -16,7 +16,7 @@ const props = defineProps<{
   user: { name: string; email: string; phone: string | null; role: string }
   pendingEmail: string | null
   mfaConfirmed: boolean
-  sessions: { id: string; device: string; ip: string | null; lastActiveAt: string; current: boolean }[]
+  sessions: { id: string; ids: string[]; count: number; device: string; ip: string | null; lastActiveAt: string; current: boolean }[]
   recoveryCodesLeft: number
   digestFrequency: string | null
   calendarFeedUrl: string | null
