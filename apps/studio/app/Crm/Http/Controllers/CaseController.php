@@ -575,16 +575,14 @@ class CaseController extends Controller
     private function stalled(ClientCase $case): ?array
     {
         $shoot = $case->isBooked() ? $this->position->stalled($case->shoots()->get()) : null;
-        $shot = app(CrmVocabulary::class)->anchored(StagePipeline::Project, StageAnchor::Shot);
 
-        return $shoot === null || $shot === null ? null : [
+        return $shoot === null ? null : [
             'shootId' => $shoot->public_id,
             'label' => $shoot->label ?? $case->name,
             'date' => $shoot->date->format('Y-m-d'),
             'days' => (int) $shoot->date->copy()->startOfDay()->diffInDays(today()),
             'status' => $shoot->status->name,
             'since' => $shoot->status_entered_at?->format('Y-m-d'),
-            'next' => ['key' => $shot->key, 'label' => $shot->name],
         ];
     }
 

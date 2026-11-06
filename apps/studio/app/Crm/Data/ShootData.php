@@ -48,7 +48,7 @@ class ShootData extends Data
         public ?string $cancelledReason,
         public array $crew,
         public array $forwardStatuses,
-        // "Fotografiert" while the day has come and the status still lies before it.
+        // The Shot-anchored status while the day has come and the status still lies before it.
         public ?array $dueStatus,
         public array $timeline,
         public string $pdfUrl,

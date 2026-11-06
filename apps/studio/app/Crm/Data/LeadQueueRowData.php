@@ -23,7 +23,7 @@ class LeadQueueRowData extends Data
         public string $step,
     ) {}
 
-    public static function fromLead(Lead $lead, ?Lead $open = null, string $step = 'reply'): self
+    public static function fromLead(Lead $lead, ?Lead $open, string $step): self
     {
         return new self(
             id: $lead->case->public_id,

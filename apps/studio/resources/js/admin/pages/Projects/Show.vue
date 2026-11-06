@@ -82,7 +82,6 @@ const props = defineProps<{
         days: number;
         status: string;
         since: string | null;
-        next: { key: string; label: string };
     } | null;
 }>();
 const reachable = ref<App.Crm.Data.CaseQueueRowData[]>([]);

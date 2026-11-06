@@ -94,7 +94,6 @@ export const Stillstand: Story = {
             days: 11,
             status: 'Fotografiert',
             since: '2026-09-14',
-            next: { key: 'culling', label: 'Auswahl' },
         },
     },
 }

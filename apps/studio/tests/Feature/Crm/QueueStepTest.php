@@ -1,11 +1,11 @@
 <?php
 
+use App\Crm\Actions\OpenLeads;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
-use App\Crm\Actions\OpenLeads;
 use App\Crm\Screens\OpenCases;
 use App\Models\User;
 use App\Payments\Models\PaymentInstallment;
