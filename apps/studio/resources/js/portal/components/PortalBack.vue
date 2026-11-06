@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
 
-withDefaults(defineProps<{ href?: string }>(), { href: '/' })
+withDefaults(defineProps<{ href?: string; label?: string }>(), { href: '/', label: undefined })
 </script>
 
 <template>
@@ -10,6 +10,6 @@ withDefaults(defineProps<{ href?: string }>(), { href: '/' })
     :href="href"
   >
     <svg class="size-4 fill-none stroke-current stroke-[1.7] [stroke-linecap:round] [stroke-linejoin:round]" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" /></svg>
-    {{ $t('portal.navBooking') }}
+    {{ label ?? $t('portal.navBooking') }}
   </Link>
 </template>
