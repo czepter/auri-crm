@@ -15,6 +15,7 @@ type Installment = {
   remaining: number
   dueOn: string
   status: string
+  isLate: boolean
   statusLabel: string
   label: string
   invoiceId: string | null
@@ -89,13 +90,29 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
 
     <PortalWrap class="pb-40">
       <section class="pt-[var(--band)]">
-        <p class="animate-rise motion-reduce:animate-none mb-4 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">{{ project.name }}</p>
+        <div class="animate-rise motion-reduce:animate-none mb-4 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+          <p class="text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">{{ project.name }}</p>
+          <Link class="text-[13.5px] text-muted-foreground hover:text-foreground max-[700px]:inline-flex max-[700px]:min-h-11 max-[700px]:items-center" :href="`/projekte/${project.id}`">
+            {{ $t('portal.toBooking') }}
+          </Link>
+        </div>
         <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
           {{ $t('portal.paymentsTitle') }}
         </h1>
-        <p v-if="plan && plan.openTotal" class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-4 text-[17px] tabular-nums text-action">
-          {{ $t('portal.paymentsOpen', { amount: formatEuros(plan.openTotal) }) }}
-        </p>
+        <dl v-if="plan" class="animate-rise [animation-delay:230ms] motion-reduce:animate-none m-0 mt-6 grid max-w-[480px] grid-cols-3 gap-x-6 tabular-nums">
+          <div>
+            <dt class="text-[13px] text-muted-foreground">{{ $t('portal.paymentsTotal') }}</dt>
+            <dd class="m-0 text-[17px]">{{ formatEuros(plan.total) }}</dd>
+          </div>
+          <div>
+            <dt class="text-[13px] text-muted-foreground">{{ $t('portal.paymentsPaid') }}</dt>
+            <dd class="m-0 text-[17px]">{{ formatEuros(plan.total - plan.openTotal) }}</dd>
+          </div>
+          <div>
+            <dt class="text-[13px] text-muted-foreground">{{ $t('portal.paymentsOpenLabel') }}</dt>
+            <dd class="m-0 text-[17px]" :class="plan.openTotal > 0 && 'text-action'">{{ formatEuros(plan.openTotal) }}</dd>
+          </div>
+        </dl>
       </section>
 
       <template v-if="plan">
@@ -112,10 +129,10 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
               v-for="installment in plan.installments"
               :key="installment.id"
               :title="installment.label"
-              :state="installment.status === 'paid' || installment.status === 'cancelled' ? 'done' : 'open'"
+              :state="installment.status === 'paid' || installment.status === 'cancelled' ? 'done' : installment.isLate ? 'late' : 'open'"
               :note="installment.status === 'paid' || installment.status === 'cancelled'
                 ? installment.statusLabel
-                : $t('portal.dueOn', { date: longDate(installment.dueOn) })"
+                : $t(installment.isLate ? 'portal.overdueSince' : 'portal.dueOn', { date: longDate(installment.dueOn) })"
               :aside="formatEuros(installment.amount)"
               :aside-open="!['paid', 'cancelled'].includes(installment.status)"
             >
