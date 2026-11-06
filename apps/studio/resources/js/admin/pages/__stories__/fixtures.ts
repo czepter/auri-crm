@@ -191,20 +191,20 @@ export const queue: { key: string; rows: App.Crm.Data.LeadQueueRowData[] }[] = [
     {
         key: 'unbeantwortet',
         rows: [
-            { id: 'p-osterhoff', name: 'Familie Osterhoff', date: '2027-04-24', text: 'Standesamt und Feier im Garten', open: false, waitingDays: 6 },
+            { id: 'p-osterhoff', name: 'Familie Osterhoff', date: '2027-04-24', text: 'Standesamt und Feier im Garten', open: false, waitingDays: 6, step: 'reply' },
         ],
     },
     {
         key: 'angebot',
         rows: [
-            { id: BRANDT, name: 'Familie Brandt', date: '2027-06-12', text: 'Gut Basthorst, freie Trauung', open: true, waitingDays: 4 },
-            { id: 'p-ahrens', name: 'Marie Ahrens & David Kroll', date: '2026-07-25', text: 'Kaispeicher Hamburg', open: false, waitingDays: 11 },
+            { id: BRANDT, name: 'Familie Brandt', date: '2027-06-12', text: 'Gut Basthorst, freie Trauung', open: true, waitingDays: 4, step: 'reply' },
+            { id: 'p-ahrens', name: 'Marie Ahrens & David Kroll', date: '2026-07-25', text: 'Kaispeicher Hamburg', open: false, waitingDays: 11, step: 'reply' },
         ],
     },
     {
         key: 'angenommen',
         rows: [
-            { id: 'p-rahn', name: 'Hochzeit Rahn', date: '2026-09-13', text: 'Gut Basthorst', open: false, waitingDays: 2 },
+            { id: 'p-rahn', name: 'Hochzeit Rahn', date: '2026-09-13', text: 'Gut Basthorst', open: false, waitingDays: 2, step: 'reply' },
         ],
     },
 ]

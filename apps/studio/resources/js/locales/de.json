@@ -226,7 +226,6 @@
       "spaeter": "Später"
     },
     "reason": {
-      "status": "Noch {stage}",
       "payment": "Rate überfällig"
     }
   },
@@ -1941,6 +1940,13 @@
       "unbeantwortet": "Unbeantwortet",
       "angebot": "Angebot draußen",
       "angenommen": "Angenommen"
+    },
+    "step": {
+      "reply": "Antworten",
+      "sendQuote": "Angebot senden",
+      "followUp": "Nachfassen",
+      "book": "Buchen",
+      "date": "Termin klären"
     },
     "reopen": "Wieder öffnen",
     "noText": "Kein Text",

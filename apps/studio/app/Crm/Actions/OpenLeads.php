@@ -10,6 +10,7 @@ use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Stage;
 use App\Crm\Support\CrmVocabulary;
+use App\Quotes\Enums\QuoteStatus;
 use Illuminate\Support\Collection;
 
 /**
@@ -68,7 +69,18 @@ class OpenLeads
     /** @return list<array{key: string, rows: list<LeadQueueRowData>}> */
     public function queue(?Lead $open = null): array
     {
-        return $this->grouped(fn (Lead $lead) => LeadQueueRowData::fromLead($lead, $open));
+        return $this->grouped(fn (Lead $lead) => LeadQueueRowData::fromLead($lead, $open, $this->step($lead)));
+    }
+
+    private function step(Lead $lead): string
+    {
+        return match (true) {
+            $lead->case->primaryShoot?->date === null => 'date',
+            $this->group($lead->stage) === 'angenommen' => 'book',
+            $this->group($lead->stage) === 'angebot' => 'followUp',
+            $lead->case->currentQuote?->status === QuoteStatus::Draft => 'sendQuote',
+            default => 'reply',
+        };
     }
 
     /** The sidebar's badge, which needs the number and none of the rows. */

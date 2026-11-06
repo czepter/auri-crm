@@ -24,8 +24,8 @@ vi.mock('@inertiajs/vue3', async (importOriginal) => {
 
 vi.stubGlobal('window', { location: new URL('http://localhost/') })
 
-async function render() {
-    const app = createSSRApp(Show, meta.args as never)
+async function render(over: Record<string, unknown> = {}) {
+    const app = createSSRApp(Show, { ...meta.args, ...over } as never)
     app.config.globalProperties.$page = { props: { brand: 'Atelier Nordlicht' } } as typeof app.config.globalProperties.$page
     app.use(createI18n({ legacy: false, locale: 'de', messages: { de } }))
 
@@ -34,7 +34,8 @@ async function render() {
 
 describe('Projektübersicht', () => {
     it('holds the cards of the inquiry, with the shoot status one click away', async () => {
-        const html = await render()
+        const shoots = meta.args!.shoots!.map((shoot, i) => (i ? shoot : { ...shoot, dueStatus: { value: 'shot', label: 'Fotografiert' } }))
+        const html = await render({ shoots })
 
         for (const title of ['Anfrage', 'Kontakte', 'Termine', 'Angebot', 'Aufgaben']) {
             expect(html).toContain(`>${title}<`)

@@ -78,6 +78,7 @@ watch(shown, (groups) => emit("update:rows", groups.flatMap((group) => group.row
                 :name="row.name"
                 :meta="since(row.waitingDays)"
                 :alert="row.waitingDays >= NOTICEABLE_DAYS"
+                :step="$t(`lead.step.${row.step}`)"
                 :title="dayWithWeekday(row.date, null) ?? $t('board.openDate')"
                 :snippet="row.text"
                 :active="row.open"

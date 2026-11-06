@@ -2,13 +2,14 @@
 import { Link } from "@inertiajs/vue3"
 
 /*
- * One row: who it is and how old it is on the first line, what it is about on
- * the second, their own words on the third. A row without an href asks the
+ * One row: who it is and how old it is on the first line, what it needs next
+ * on the second, the day and their own words on the third. A row without an href asks the
  * page instead of navigating — the inbox opens a thread in place.
  */
 const props = defineProps<{
     name: string
     meta?: string | null
+    step?: string | null
     title?: string | null
     snippet?: string | null
     alert?: boolean
@@ -49,18 +50,31 @@ function click(event: MouseEvent) {
             </span>
         </span>
 
-        <span
-            v-if="title"
-            class="mt-px block text-small leading-[1.47] text-ink-2"
-        >
-            {{ title }}
+        <span v-if="step" class="mt-px block truncate text-small leading-[1.47]">
+            {{ step }}
         </span>
 
         <span
-            v-if="snippet"
-            class="mt-0.5 line-clamp-2 text-small leading-[1.47] text-ink-2"
+            v-if="step && (title || snippet)"
+            class="mt-px line-clamp-2 text-small leading-[1.47] text-ink-2"
         >
-            {{ snippet }}
+            {{ [title, snippet].filter(Boolean).join(" · ") }}
         </span>
+
+        <template v-else>
+            <span
+                v-if="title"
+                class="mt-px block text-small leading-[1.47] text-ink-2"
+            >
+                {{ title }}
+            </span>
+
+            <span
+                v-if="snippet"
+                class="mt-0.5 line-clamp-2 text-small leading-[1.47] text-ink-2"
+            >
+                {{ snippet }}
+            </span>
+        </template>
     </component>
 </template>

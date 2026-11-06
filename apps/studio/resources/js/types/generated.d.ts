@@ -188,6 +188,7 @@ stage: string,
 reason: string | null,
 days: number | null,
 open: boolean,
+step: string,
 };
 export type CaseRowData = {
 id: string,
@@ -344,6 +345,7 @@ date: string | null,
 text: string | null,
 open: boolean,
 waitingDays: number,
+step: string,
 };
 export type NextShootData = {
 projectId: string,

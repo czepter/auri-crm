@@ -105,15 +105,31 @@ class OpenCases
             default => ['spaeter', null, null],
         };
 
+        $stage = $shoot?->status->name ?? ($this->position)($project)->label;
+
         return ['group' => $group, 'row' => new CaseQueueRowData(
             id: $project->public_id,
             name: $project->contactNames(),
             date: ($stalled ?? $next ?? $project->primaryShoot)?->date?->format('Y-m-d'),
-            stage: $shoot?->status->name ?? ($this->position)($project)->label,
+            stage: $stage,
             reason: $reason,
             days: $since === null ? null : (int) $since->copy()->startOfDay()->diffInDays(today()),
             open: $open !== null && $project->is($open),
+            step: match (true) {
+                $stalled !== null => $this->stages->anchored(StagePipeline::Project, StageAnchor::Shot)?->name ?? $stage,
+                $late !== null => $stage,
+                $group === 'woche' => $next->label ?: $stage,
+                $group === 'bearbeitung' => $this->forward($shoot) ?? $stage,
+                default => $stage,
+            },
         )];
+    }
+
+    private function forward(Shoot $shoot): ?string
+    {
+        return $this->stages->ordered(StagePipeline::Project)
+            ->first(fn ($status) => $status->is_active && $status->key !== 'archived' && $shoot->status->canTransitionTo($status))
+            ?->name;
     }
 
     private function sortOf(StageAnchor $anchor): int

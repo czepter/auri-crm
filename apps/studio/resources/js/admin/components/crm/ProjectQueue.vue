@@ -68,8 +68,8 @@ const shown = computed(() => {
                 :name="row.name"
                 :meta="row.days === null ? undefined : $t('projectQueue.days', row.days)"
                 :alert="row.days !== null"
+                :step="row.reason === 'payment' ? $t('projectQueue.reason.payment') : row.step"
                 :title="dayWithWeekday(row.date, null) ?? undefined"
-                :snippet="row.reason ? $t(`projectQueue.reason.${row.reason}`, { stage: row.stage }) : row.stage"
                 :active="row.open"
                 :href="`/auftraege/${row.id}${query}`"
             />
