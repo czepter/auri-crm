@@ -6,6 +6,7 @@ import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, Dia
 
 defineProps<{
   open: boolean
+  first?: boolean
   settings: App.Settings.Data.StudioSettingsData
 }>()
 
@@ -18,8 +19,8 @@ const profileRef = ref<InstanceType<typeof ProfileForm>>()
   <Dialog :open="open" @update:open="(value) => value || emit('cancel')">
     <DialogContent hide-close class="max-w-[560px]">
       <DialogHeader>
-        <span class="text-small leading-none font-semibold text-muted-foreground">{{ $t('gates.beforeInvoice') }}</span>
-        <DialogTitle class="mt-3">{{ $t('gates.invoiceDataTitle') }}</DialogTitle>
+        <span v-if="first" class="text-small leading-none font-semibold text-muted-foreground">{{ $t('gates.beforeInvoice') }}</span>
+        <DialogTitle :class="first && 'mt-3'">{{ $t('gates.invoiceDataTitle') }}</DialogTitle>
         <DialogDescription>{{ $t('gates.invoiceDataHint') }}</DialogDescription>
       </DialogHeader>
 

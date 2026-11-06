@@ -30,6 +30,7 @@ const props = defineProps<{
   intro: string
   studioSettings: App.Settings.Data.StudioSettingsData
   missingInvoiceData: string[]
+  firstInvoice: boolean
 }>()
 useLiveProps([])
 
@@ -192,6 +193,7 @@ function submit() {
 
     <InvoiceDataGate
       :open="gateOpen"
+      :first="firstInvoice"
       :settings="studioSettings"
       @done="gateOpen = false"
       @cancel="router.visit('/rechnungen')"

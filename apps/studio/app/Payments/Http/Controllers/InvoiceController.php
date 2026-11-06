@@ -142,6 +142,7 @@ class InvoiceController extends Controller
             // Was IssueInvoice beim Ausstellen ohnehin verlangt, steht hier
             // vor dem Formular statt hinter dem Absenden.
             'missingInvoiceData' => $readiness->missingForInvoice(),
+            'firstInvoice' => ! Invoice::query()->exists(),
         ]);
     }
 
