@@ -58,7 +58,7 @@ const shown = computed(() => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button :as="Link" variant="pill" href="/rechnungen/neu">{{ $t('invoicesOverview.create') }}</Button>
+            <Button v-if="invoices.length" :as="Link" variant="pill" href="/rechnungen/neu">{{ $t('invoicesOverview.create') }}</Button>
           </div>
         </PageHead>
 
@@ -155,7 +155,9 @@ const shown = computed(() => {
           </Table>
         </template>
 
-        <Empty v-else class="mx-8 mt-7" :text="$t('invoicesOverview.empty')" />
+        <Empty v-else class="mx-8 mt-7">
+          <Button :as="Link" variant="pill" href="/rechnungen/neu">{{ $t('invoicesOverview.create') }}</Button>
+        </Empty>
       </div>
     </Page>
   </AdminLayout>

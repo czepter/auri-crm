@@ -94,7 +94,7 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('tasks.kicker')" :title="$t('tasks.title')">
-          <StudioTaskCreateDialog :staff-options="staffOptions" />
+          <StudioTaskCreateDialog v-if="shown.length" :staff-options="staffOptions" />
         </PageHead>
 
         <div class="px-6 pt-4 pb-8">
@@ -111,7 +111,9 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
             </button>
           </div>
 
-          <Empty v-if="shown.length === 0" :text="$t('tasks.empty')" />
+          <Empty v-if="shown.length === 0">
+            <StudioTaskCreateDialog :staff-options="staffOptions" />
+          </Empty>
 
           <div v-else class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
             <div

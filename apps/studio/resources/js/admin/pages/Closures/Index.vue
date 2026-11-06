@@ -53,7 +53,7 @@ function add() {
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('settings.closuresLabel')">
           <Dialog v-model:open="adding">
-            <DialogTrigger as-child>
+            <DialogTrigger v-if="closures.length" as-child>
               <Button class="ml-auto" variant="pill" type="button">{{ $t('settings.closureAdd') }}</Button>
             </DialogTrigger>
 
@@ -99,7 +99,9 @@ function add() {
           </Dialog>
         </PageHead>
 
-        <Empty v-if="!closures.length" class="mx-8 mt-7" :text="$t('settings.closuresEmpty')" />
+        <Empty v-if="!closures.length" class="mx-8 mt-7">
+          <Button variant="pill" type="button" @click="adding = true">{{ $t('settings.closureAdd') }}</Button>
+        </Empty>
 
         <div v-else class="max-w-[900px] px-6 pt-7 pb-8">
           <form

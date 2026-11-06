@@ -70,7 +70,7 @@ const shown = computed(() => {
           </Table>
         </template>
 
-        <Empty v-else class="mx-8 mt-7" :text="$t('contractsOverview.empty')">
+        <Empty v-else class="mx-8 mt-7">
           <Button :as="Link" variant="pill" href="/projekte">{{ $t('contractsOverview.toProjects') }}</Button>
         </Empty>
       </div>
