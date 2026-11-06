@@ -6,6 +6,7 @@ import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormShell from '@/ui/page/FormShell.vue'
 import SettingsNav from '@/admin/components/settings/SettingsNav.vue'
 import { Button } from '@/ui/button'
+import Empty from '@/ui/page/Empty.vue'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Archive = { id: string; status: 'building' | 'ready' | 'failed'; size: number | null; createdAt: string; expiresAt: string | null; url: string | null }
@@ -94,7 +95,9 @@ function create(gallery: string | null) {
           </span>
           <Button as="a" variant="outline" :href="row.archive!.url!">{{ $t('settings.exportDownload') }}</Button>
         </div>
-        <Button v-if="archives && !recent.length" variant="outline" @click="create(null)">{{ $t('settings.exportCreate') }}</Button>
+        <Empty v-if="archives && !recent.length">
+          <Button variant="outline" @click="create(null)">{{ $t('settings.exportCreate') }}</Button>
+        </Empty>
       </template>
     </FormShell>
   </AdminLayout>

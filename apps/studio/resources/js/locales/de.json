@@ -1207,6 +1207,7 @@
     "retentionAnonymize": "Anonymisieren",
     "retentionDelete": "Löschen",
     "retentionDue": "Fällig",
+    "retentionExpiring": "Läuft in 30 Tagen ab",
     "retentionDueSub": "{lost} verloren · {declined} abgelehnt",
     "retentionExempt": "Ausgenommen",
     "retentionExemptSub": "Rechnung vorhanden",

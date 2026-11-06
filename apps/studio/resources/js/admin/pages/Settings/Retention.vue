@@ -58,6 +58,24 @@ const ended = computed(() => props.candidates.filter((c) => c.idleMonths >= Numb
 const due = computed(() => (enabled.value ? ended.value.filter((c) => !c.invoiced) : []))
 const exempt = computed(() => (enabled.value ? ended.value.length - due.value.length : 0))
 
+// Wer innerhalb von 30 Tagen die Frist erreicht, ohne sie schon erreicht zu haben.
+const expiring = computed(() => {
+  if (!enabled.value) return []
+  const limit = new Date()
+  limit.setDate(limit.getDate() + 30)
+
+  return props.candidates
+    .filter((c) => !c.invoiced && c.idleMonths < Number(months.value))
+    .map((c) => {
+      const on = new Date(`${c.idleSince}T12:00:00`)
+      on.setMonth(on.getMonth() + Number(months.value))
+
+      return { candidate: c, on }
+    })
+    .filter((row) => row.on <= limit)
+    .sort((a, b) => a.on.getTime() - b.on.getTime())
+})
+
 const sum = (key: 'leads' | 'messages' | 'offers' | 'galleries') => due.value.reduce((total, c) => total + c[key], 0)
 const counts = computed<Record<Part, number>>(() => ({
   name: due.value.length,
@@ -180,6 +198,22 @@ function submit() {
                   ]"
                   @update:model-value="(value) => (chosen[part] = value === 'off')"
                 />
+              </div>
+            </div>
+
+            <div v-if="expiring.length" class="min-w-0 order-last col-span-full">
+              <div class="flex justify-between text-small font-semibold text-ink-2">
+                <span>{{ $t('settings.retentionExpiring') }}</span>
+                <span>{{ expiring.length }}</span>
+              </div>
+              <div
+                v-for="row in expiring"
+                :key="row.candidate.id"
+                class="flex items-center gap-4 py-2 shadow-[inset_0_-1px_0_var(--rule)]"
+              >
+                <span class="min-w-0 flex-1 truncate text-ui font-semibold">{{ row.candidate.name }}</span>
+                <span class="text-small text-ink-2">{{ row.candidate.type }}</span>
+                <span class="w-24 text-right text-small tabular-nums">{{ row.on.toLocaleDateString('de-DE') }}</span>
               </div>
             </div>
 

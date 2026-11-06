@@ -17,6 +17,7 @@ class RetentionCandidateData extends Data
         public string $outcome,
         public string $outcomeLabel,
         public int $idleMonths,
+        public string $idleSince,
         public bool $invoiced,
         public int $leads,
         public int $messages,
