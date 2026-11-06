@@ -165,7 +165,16 @@ function reset() {
     <!-- The first screen on the CRM sheet (C-01, #235). Its own theme root
          rather than the layout's, so the screens that have not been ported
          keep the stylesheet they were built on. -->
-    <Page data-tokens wide @click="menu = null">
+    <ProjectSettings
+      v-if="settingsSelection && stageSettings"
+      v-bind="stageSettings"
+      :selection="settingsSelection"
+      :return-to="returnTo"
+      :can-manage-tasks="workflowAllowed"
+      :workflow="workflow"
+      @close="router.visit(returnTo ?? '/projekte', { preserveState: true, preserveScroll: true })"
+    />
+    <Page v-else data-tokens wide @click="menu = null">
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('projects.title')">
           <ChoiceGroup
@@ -208,7 +217,7 @@ function reset() {
                 {{ option.name }}<span class="text-small tabular-nums opacity-60">{{ option.count }}</span>
               </button>
             </div>
-            <Input v-model="query" class="ml-auto h-8 w-60" type="search" :placeholder="$t('projects.searchPlaceholder')" />
+            <Input v-model="query" class="ml-auto h-8 w-64 shrink-0" type="search" :placeholder="$t('projects.searchPlaceholder')" />
           </div>
 
           <Table>
@@ -339,15 +348,6 @@ function reset() {
         <Empty v-else class="mx-8 mt-7" :text="$t('projects.empty')">
           <Button :as="Link" variant="pill" href="/anfragen/neu">{{ $t('leads.createKicker') }}</Button>
         </Empty>
-        <ProjectSettings
-          v-if="settingsSelection && stageSettings"
-          v-bind="stageSettings"
-          :selection="settingsSelection"
-          :return-to="returnTo"
-          :can-manage-tasks="workflowAllowed"
-          :workflow="workflow"
-          @close="router.visit(returnTo ?? '/projekte', { preserveState: true, preserveScroll: true })"
-        />
       </div>
     </Page>
   </AdminLayout>

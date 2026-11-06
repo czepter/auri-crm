@@ -19,11 +19,16 @@ import { useLiveProps } from "@/admin/lib/liveReload"
  * hier nur die Zähler je Gruppe. Was die Zeile trägt, ist deshalb das, was
  * von Hand geschrieben wurde: Überschrift, Beschreibung, Bild.
  */
-defineProps<{
+const props = defineProps<{
     releases: FeedItem[]
     installed: string
     mediaBase: string | null
+    checkedAt: string | null
 }>()
+const source = props.mediaBase ? new URL(props.mediaBase).host : null
+const checked = props.checkedAt
+    ? new Date(props.checkedAt).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })
+    : null
 useLiveProps([])
 </script>
 
@@ -36,9 +41,14 @@ useLiveProps([])
                     :title="$t('releases.title')"
                 />
 
-                <Empty v-if="!releases.length" class="mx-8 mt-7">
-                    <Button variant="pill" type="button" @click="router.reload()">{{ $t('releases.reload') }}</Button>
-                </Empty>
+                <div class="flex items-center gap-4 px-6 pt-4 max-[640px]:px-5">
+                    <span class="text-small text-ink-2">
+                        {{ [source, checked && $t('releases.checked', { time: checked })].filter(Boolean).join(' · ') }}
+                    </span>
+                    <Button class="ml-auto" variant="pill" type="button" @click="router.reload()">{{ $t('releases.reload') }}</Button>
+                </div>
+
+                <Empty v-if="!releases.length" class="mx-6 mt-4 max-[640px]:mx-5" :text="$t('releases.empty')" />
 
                 <div v-else class="px-6 pt-5 pb-11 max-[640px]:px-5">
                     <Link

@@ -147,6 +147,12 @@ return [
     'task_template.deleted' => 'Aufgabenvorlage gelöscht',
     'task_template.updated' => 'Aufgabenvorlage geändert',
 
+    'values' => [
+        'off' => 'Aus',
+        'booking' => 'Nur Buchungen',
+        'any' => 'Alle',
+    ],
+
     'fields' => [
         'display_name' => 'Studioname',
         'legal_name' => 'Firmenname',

@@ -32,6 +32,7 @@ class ReleaseController extends Controller
             'releases' => $log->feed(),
             'installed' => $log->installed(),
             'mediaBase' => $log->base(),
+            'checkedAt' => $log->checkedAt(),
         ]);
     }
 

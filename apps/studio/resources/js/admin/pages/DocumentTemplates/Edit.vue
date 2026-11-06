@@ -22,14 +22,14 @@ const props = defineProps<{
 }>()
 useLiveProps(['template', 'projects'])
 
-// A template written before the block editor has blocks = null; its body
-// becomes one rawHtml block the author can keep or replace. The import is
-// only persisted if they save.
-const doc = ref<EditorDocument>((props.template.blocks as EditorDocument | null) ?? htmlToBlocks(props.template.body))
-
 const samples = computed(() =>
   Object.fromEntries(props.mergeFields.map((field) => [field.path, field.sample])),
 )
+
+// A template written before the block editor has blocks = null; its body
+// becomes one rawHtml block the author can keep or replace. The import is
+// only persisted if they save.
+const doc = ref<EditorDocument>((props.template.blocks as EditorDocument | null) ?? htmlToBlocks(props.template.body, samples.value))
 
 const form = useForm({ name: props.template.name, body: props.template.body, blocks: doc.value })
 

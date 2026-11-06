@@ -65,10 +65,10 @@ function at(iso: string) {
             </Select>
           </Field>
           <Field :label="$t('audit.from')" id="log-von">
-            <Input id="log-von" v-model="query.von" type="date" @change="apply()" />
+            <Input id="log-von" v-model="query.von" lang="de" type="date" @change="apply()" />
           </Field>
           <Field :label="$t('audit.to')" id="log-bis">
-            <Input id="log-bis" v-model="query.bis" type="date" @change="apply()" />
+            <Input id="log-bis" v-model="query.bis" lang="de" type="date" @change="apply()" />
           </Field>
         </div>
 

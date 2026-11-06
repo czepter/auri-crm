@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { router } from "@inertiajs/vue3";
+import { Link, router } from "@inertiajs/vue3";
 import { ChevronDown } from "lucide-vue-next";
 import { Button } from "@/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui/dropdown-menu";
@@ -17,13 +17,19 @@ function advance(shootId: string, status: string) {
 
 const step = computed(() => (props.header.canManageShoots ? nextStep(props.shoots) : null));
 const stepMenu = computed(() => stepRows(props.shoots));
+const addShoot = computed(() => props.header.isBooked && props.header.canManageShoots && !props.shoots.length);
 const callHref = computed(() => paymentCall(props.header.paymentPlan, props.header.people));
 </script>
 
 <template>
-    <Button v-if="!step && callHref" variant="pill" as-child class="max-[640px]:min-h-11">
-        <a :href="callHref">{{ $t("contacts.call") }}</a>
-    </Button>
+    <template v-if="!step && callHref">
+        <Button variant="outline" as-child class="max-[640px]:min-h-11">
+            <a :href="callHref">{{ $t("contacts.call") }}</a>
+        </Button>
+        <Button v-if="addShoot" variant="pill" as-child class="max-[640px]:min-h-11">
+            <Link :href="`/auftraege/${header.id}/shootings`">{{ $t("project.shootCreate") }}</Link>
+        </Button>
+    </template>
     <div v-else-if="step" class="flex">
         <Button variant="pill" type="button" class="rounded-r-none max-[640px]:min-h-11" @click="advance(step.shootId, step.status.value)">
             {{ step.status.label }}

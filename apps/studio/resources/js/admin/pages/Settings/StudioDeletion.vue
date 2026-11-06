@@ -47,7 +47,7 @@ function cancel() {
     >
       <template #nav><SettingsNav active="deletion" /></template>
 
-      <div class="min-w-0">
+      <div class="min-w-0 rounded-[var(--r)] border border-destructive/40 p-5">
         <div v-if="page.props.studioDeletion" class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]">
           <span class="flex-1 text-ui font-semibold">{{ $t('settings.deletionOn', { date: page.props.studioDeletion }) }}</span>
           <Button variant="outline" @click="cancel">{{ $t('common.cancel') }}</Button>
@@ -75,7 +75,7 @@ function cancel() {
           </form>
         </template>
 
-        <div class="mt-8">
+        <div class="mt-6">
           <Button as="a" variant="outline" href="/einstellungen/export">{{ $t('settings.navExport') }}</Button>
         </div>
       </div>

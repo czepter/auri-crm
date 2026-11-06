@@ -191,6 +191,7 @@ function submit() {
     <InvoiceDataGate
       :open="gateOpen"
       :first="firstInvoice"
+      :missing="missingInvoiceData"
       :settings="studioSettings"
       :missing="missingInvoiceData"
       @done="gateOpen = false"
