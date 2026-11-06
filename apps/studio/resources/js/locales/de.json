@@ -1744,6 +1744,7 @@
     "contractDownload": "PDF herunterladen",
     "contractPending": "Der Vertrag wird erstellt.",
     "contractNone": "Kein Vertrag vorhanden.",
+    "signUnavailable": "Online-Unterschrift nicht freigeschaltet. Unterschrift beim Studio.",
     "signTitle": "Unterschreiben",
     "signName": "Ihr vollständiger Name",
     "signNameHint": "Genau wie im Vertrag.",
