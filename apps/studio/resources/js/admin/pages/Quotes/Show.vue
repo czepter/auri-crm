@@ -11,6 +11,7 @@ import DocumentViews from '@/admin/components/DocumentViews.vue'
 import QuoteActions from '@/admin/components/quote/QuoteActions.vue'
 import QuoteWorkspace from '@/admin/components/quote/QuoteWorkspace.vue'
 import { useI18n } from 'vue-i18n'
+import { shortDate } from '@/portal/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
@@ -54,7 +55,7 @@ const facts = computed(() => {
   return [
     { label: t('quotes.recipient'), value: [props.recipientName, address.value].filter(Boolean).join(' · ') },
     { label: t('quotesOverview.number'), value: quote.number },
-    { label: t('quotes.validUntil'), value: quote.validUntil },
+    { label: t('quotes.validUntil'), value: quote.validUntil ? shortDate(quote.validUntil) : null },
     {
       label: t('quotesOverview.createdAt'),
       value: quote.sentAt ? `${day(quote.sentAt)} (${quote.sentChannel === 'mail' ? t('quotes.sentByMail') : t('quotes.sentBySelf')})` : null,

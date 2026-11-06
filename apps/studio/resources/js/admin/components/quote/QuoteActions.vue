@@ -7,7 +7,7 @@ import { EllipsisVertical } from 'lucide-vue-next'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
-import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
+import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/ui/alert-dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 
@@ -53,6 +53,7 @@ function duplicate() {
 }
 
 const deleting = ref(false)
+const packaging = ref(false)
 
 function destroy() {
   router.delete(`/angebote/${props.quote.id}`)
@@ -123,14 +124,13 @@ function run(key: ActionKey) {
 <template>
   <!-- .stop: in einer Card liegen die Knöpfe in der Kopfzeile, die selbst umschaltet. -->
   <div class="ml-auto flex flex-wrap items-center justify-end gap-1.5">
-    <Button v-if="canManageQuotes && quote.status === 'accepted'" type="button" variant="outline" @click.stop="addendum">
+    <Button v-if="canManageQuotes && quote.status === 'accepted'" type="button" variant="outline" class="max-[640px]:hidden" @click.stop="addendum">
       {{ $t('quotes.addendum') }}
     </Button>
 
-    <Dialog v-if="canManageQuotes">
-      <DialogTrigger as-child>
-        <Button variant="outline" type="button" @click.stop>{{ $t('quotes.saveAsPackage') }}</Button>
-      </DialogTrigger>
+    <Button v-if="canManageQuotes" variant="outline" type="button" class="max-[640px]:hidden" @click.stop="packaging = true">{{ $t('quotes.saveAsPackage') }}</Button>
+
+    <Dialog v-if="canManageQuotes" v-model:open="packaging">
 
       <DialogContent class="max-w-[420px]">
         <DialogHeader>
@@ -208,6 +208,8 @@ function run(key: ActionKey) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem v-if="quote.status === 'accepted'" class="min-[641px]:hidden" @select="addendum">{{ $t('quotes.addendum') }}</DropdownMenuItem>
+        <DropdownMenuItem class="min-[641px]:hidden" @select="packaging = true">{{ $t('quotes.saveAsPackage') }}</DropdownMenuItem>
         <DropdownMenuItem v-if="quote.status === 'sent'" @select="markAccepted">{{ $t('quotes.markAccepted') }}</DropdownMenuItem>
         <DropdownMenuItem @select="duplicate">{{ $t('quotes.duplicate') }}</DropdownMenuItem>
         <DropdownMenuItem v-if="quote.status === 'draft'" class="text-destructive" @select="deleting = true">

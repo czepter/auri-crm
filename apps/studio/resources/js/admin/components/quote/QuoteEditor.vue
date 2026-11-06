@@ -6,7 +6,7 @@ import type { PricingMode, QuoteContact, QuoteDraft, VatSettings } from './quote
 import { quoteRowToLine } from './quotePayload'
 import { subtotal } from '@/lib/quoteTotals'
 import { eurosToCents, formatEuros } from '@/lib/money'
-import { monthDate } from '@/admin/lib/dates'
+import { shortDate } from '@/portal/lib/dates'
 import { ChoiceGroup } from '@/ui/choice-group'
 import LetterField from '@/admin/components/quote/LetterField.vue'
 import { Label } from '@/ui/label'
@@ -91,7 +91,7 @@ const termsSummary = computed(() => {
   const parts = draft.value.slider.stages.map((stage) => `${stage.percent} % ${stage.label}`.trim())
 
   if (draft.value.validUntil) {
-    parts.push(t('quotes.validUntilInline', { date: monthDate(draft.value.validUntil) }))
+    parts.push(t('quotes.validUntilInline', { date: shortDate(draft.value.validUntil) }))
   }
 
   return parts.join(' · ')

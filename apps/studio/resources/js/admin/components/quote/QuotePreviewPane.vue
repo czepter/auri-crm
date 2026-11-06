@@ -91,7 +91,7 @@ if (props.draft) {
 <template>
   <section class="flex min-w-0 flex-col">
     <div class="flex items-center gap-2.5 border-b border-border pb-2.5">
-      <span class="mb-[5px] text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('quotes.preview') }}</span>
+      <span class="mb-[5px] text-small leading-none font-semibold text-faint">{{ $t('quotes.preview') }}</span>
 
       <ChoiceGroup
         :model-value="mode"
