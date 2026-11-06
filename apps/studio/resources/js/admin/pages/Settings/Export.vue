@@ -82,7 +82,8 @@ function create(gallery: string | null) {
         </div>
       </div>
 
-      <template #aside>
+      <template v-if="archives" #aside>
+        <div class="rounded-[var(--r)] bg-paper px-5 py-4 shadow-card">
         <h2 class="mb-2 text-ui font-semibold">{{ $t('settings.exportRecent') }}</h2>
         <div
           v-for="row in recent"
@@ -95,9 +96,10 @@ function create(gallery: string | null) {
           </span>
           <Button as="a" variant="outline" :href="row.archive!.url!">{{ $t('settings.exportDownload') }}</Button>
         </div>
-        <Empty v-if="archives && !recent.length">
+        <Empty v-if="!recent.length">
           <Button variant="outline" @click="create(null)">{{ $t('settings.exportCreate') }}</Button>
         </Empty>
+        </div>
       </template>
     </FormShell>
   </AdminLayout>
