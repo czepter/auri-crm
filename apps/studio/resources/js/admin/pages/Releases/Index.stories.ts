@@ -40,7 +40,7 @@ const meta = {
   title: 'Bildschirme/Neuigkeiten',
   component: Index,
   parameters: { layout: 'fullscreen', url: '/neuigkeiten' },
-  args: { releases, installed: '2026.9.1', mediaBase: null },
+  args: { releases, installed: '2026.9.1', mediaBase: null, checkedAt: '2026-09-10T08:00:00+02:00' },
 } satisfies Meta<typeof Index>
 
 export default meta

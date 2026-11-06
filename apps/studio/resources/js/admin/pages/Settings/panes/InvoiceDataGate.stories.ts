@@ -6,7 +6,7 @@ const meta = {
   title: 'Bildschirme/Einstellungen/Gate Rechnungsdaten',
   component: InvoiceDataGate,
   parameters: { layout: 'fullscreen', url: '/rechnungen/neu' },
-  args: { open: true, settings },
+  args: { open: true, settings, missing: ['street', 'postcode', 'city'] },
 } satisfies Meta<typeof InvoiceDataGate>
 
 export default meta
