@@ -28,6 +28,7 @@ use App\Models\User;
 use App\Payments\Actions\DetectOverdueInstallments;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
+use App\Quotes\Actions\CreateQuote;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Settings\Actions\UpdateStudioSetting;
@@ -146,6 +147,10 @@ class DemoCrmSeeder extends Seeder
             Carbon::setTestNow();
 
             $projects[$name] = $project;
+
+            if (in_array($stage, ['quote_accepted', 'booked'], true)) {
+                $this->seedAcceptedQuote($project, $lead);
+            }
 
             // The one booked project gets mockup 04's full shape, so the
             // project screen has something to be held next to the screen it
@@ -356,6 +361,17 @@ class DemoCrmSeeder extends Seeder
         $this->seedUnansweredThread($projects['Annika Reuter']);
     }
 
+    /** The quote behind a lead already at Angebot angenommen, so the acceptance KPI has the same cohort as the funnel. */
+    private function seedAcceptedQuote(ClientCase $project, Lead $lead): void
+    {
+        $quote = app(CreateQuote::class)($project);
+        $quote->items()->create(['title' => 'Hochzeitsreportage Ganztag', 'description' => 'bis 10 Std. am Hochzeitstag, Bearbeitung, Online-Galerie', 'quantity' => 1, 'unit_price' => 350000]);
+        $quote->recalculateTotal();
+        $quote->snapshotVat();
+        $quote->update(['status' => QuoteStatus::Sent, 'sent_at' => $lead->stage_entered_at->copy()->subDay(), 'sent_channel' => 'mail']);
+        $quote->update(['status' => QuoteStatus::Accepted, 'accepted_at' => $lead->stage_entered_at]);
+    }
+
     /**
      * A sent quote running out with the reminders spent: valid_until sits
      * inside ReadInquiryColumn::EXPIRY_WINDOW_DAYS, and the two AutomationRun
@@ -370,9 +386,10 @@ class DemoCrmSeeder extends Seeder
         // Items first, on the still-mutable draft row: Quote::booted()'s guard
         // refuses total/discount_amount/net once status reads sent, and
         // recalculateTotal() writes all three.
-        $quote = Quote::factory()->for($project, 'case')->create();
+        $quote = app(CreateQuote::class)($project);
         $quote->items()->create(['title' => 'Hochzeitsreportage Ganztag', 'description' => 'bis 10 Std. am Hochzeitstag, Bearbeitung, Online-Galerie', 'quantity' => 1, 'unit_price' => 350000]);
         $quote->recalculateTotal();
+        $quote->snapshotVat();
         $quote->update(['status' => QuoteStatus::Sent, 'sent_at' => now()->subDays(9), 'valid_until' => now()->addDays(5)]);
 
         $rule = AutomationRule::query()->where('key', 'quote-follow-up')->firstOrFail();

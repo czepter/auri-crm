@@ -37,3 +37,15 @@ it('adds demo content once and changes nothing on a second run', function () {
 
     expect($counts())->toBe($first);
 });
+
+it('seeds no sent quote without a number or a frozen total, and one accepted quote per accepted lead', function () {
+    $this->seed(DemoCrmSeeder::class);
+    $this->seed(DemoFillSeeder::class);
+
+    $sent = Quote::whereNotNull('sent_at')->get();
+    $counts = App\Quotes\Support\QuoteAcceptanceRate::counts(now()->subYear(), now());
+
+    expect($sent->whereNull('number'))->toBeEmpty()
+        ->and($sent->whereNull('vat_amount'))->toBeEmpty()
+        ->and($counts['accepted'])->toBe(3);
+});
