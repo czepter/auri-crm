@@ -71,7 +71,7 @@ class PortalSettingsController extends Controller
     {
         $this->authorizeSettings();
 
-        if ($page = $this->framed($request, 'settings.previewPortal', '/einstellungen/portal')) {
+        if ($page = $this->framed($request, 'settings.previewPortal', '/einstellungen/portal', phone: true)) {
             return $page;
         }
 
@@ -115,7 +115,7 @@ class PortalSettingsController extends Controller
                 ->mapWithKeys(fn (string $text) => [$text.'Url' => LegalTexts::url($text)])
                 ->all(),
             'portalNav' => null,
-            'clientRegister' => StudioSettings::current()->client_register,
+            'clientRegister' => in_array($request->query('anrede'), ['formal', 'informal'], true) ? $request->query('anrede') : StudioSettings::current()->client_register,
         ]);
     }
 
