@@ -7,6 +7,7 @@ import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Label } from '@/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import Chip from '@/ui/page/Chip.vue'
 
 const props = defineProps<{
   template: App.Crm.Data.TaskTemplateData
@@ -113,7 +114,7 @@ function remove() {
         <Button type="submit" :disabled="form.processing">
           {{ $t('taskTemplates.save') }}
         </Button>
-        <span class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold text-due">{{ $t('settings.unsaved') }}</span>
+        <Chip tone="warn">{{ $t('settings.unsaved') }}</Chip>
       </template>
       <Button class="ml-auto" type="button" variant="outline" @click="remove">{{ $t('taskTemplates.delete') }}</Button>
     </div>

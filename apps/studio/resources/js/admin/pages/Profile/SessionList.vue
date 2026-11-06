@@ -5,6 +5,7 @@ import FormSection from '@/ui/page/FormSection.vue'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
+import Chip from '@/ui/page/Chip.vue'
 
 type Session = { id: string; ids: string[]; count: number; device: string; ip: string | null; lastActiveAt: string; current: boolean }
 
@@ -41,7 +42,7 @@ function endOthers() {
         <span class="block truncate text-ui leading-[1.35] font-semibold tracking-[-0.015em]">{{ session.count > 1 ? `${session.device} (${session.count}×)` : session.device }}</span>
         <span class="mt-px block text-small leading-[1.35] text-ink-2">{{ [session.ip, lastActive(session.lastActiveAt)].filter(Boolean).join(' · ') }}</span>
       </span>
-      <span v-if="session.current" class="flex-none rounded-[var(--r-sm)] bg-ok-bg px-2 py-[3px] text-small leading-[1.5] font-semibold text-ok">{{ $t('profile.sessionCurrent') }}</span>
+      <Chip v-if="session.current" tone="success">{{ $t('profile.sessionCurrent') }}</Chip>
       <Button v-else type="button" variant="outline" tone="accent" @click="end(session)">{{ $t('profile.sessionEnd') }}</Button>
     </div>
 

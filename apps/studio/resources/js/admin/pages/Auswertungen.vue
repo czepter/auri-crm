@@ -13,6 +13,7 @@ import { ChoiceGroup } from '@/ui/choice-group'
 import { formatEurosRounded } from '@/lib/money'
 import { barHeight, ratePoints as ratePointsFor } from '@/admin/lib/chart'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import Chip from '@/ui/page/Chip.vue'
 
 const props = defineProps<{
   window: { from: string; to: string }
@@ -384,12 +385,9 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                 <span v-if="cashAhead && !cashSparse" class="inline-flex items-center gap-1.5">
                   <span class="size-2.5 rounded-[3px]" :style="{ background: forecastFill }" />{{ $t('reports.seriesOpen') }}
                 </span>
-                <span
-                  v-if="cashAhead && cashFlow.overdue && cashRows.length"
-                  class="ml-auto inline-flex items-center gap-1.5 rounded-[var(--r-sm)] bg-late-bg px-2.5 py-1 text-small leading-none font-semibold text-destructive"
-                >
+                <Chip v-if="cashAhead && cashFlow.overdue && cashRows.length" tone="danger" class="ml-auto">
                   {{ $t('reports.overdue', { amount: formatEurosRounded(cashFlow.overdue) }) }}
-                </span>
+                </Chip>
               </div>
 
               <ul v-if="cashSparse" class="m-0 flex list-none flex-col gap-1.5 p-0">

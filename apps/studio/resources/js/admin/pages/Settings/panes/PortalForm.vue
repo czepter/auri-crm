@@ -8,6 +8,7 @@ import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group'
+import Chip from '@/ui/page/Chip.vue'
 
 const props = defineProps<{ settings: App.Settings.Data.PortalSettingsData }>()
 const emit = defineEmits<{ saved: [] }>()
@@ -67,7 +68,7 @@ defineExpose({ form, submit })
       <div class="mb-2 overflow-hidden rounded-[var(--r)] border border-border">
         <div v-for="state in STATES" :key="state" class="px-4 py-3 not-first:border-t not-first:border-border">
           <div class="mb-2 flex flex-wrap items-center gap-2.5">
-            <span class="rounded-[var(--r-sm)] bg-sunk px-2 py-[3px] text-small leading-[1.5] font-semibold text-muted-foreground">{{ $t(`portalSettings.welcomeState.${state}`) }}</span>
+            <Chip>{{ $t(`portalSettings.welcomeState.${state}`) }}</Chip>
             <Label variant="inline" :for="`ta-welcome-${state}`">{{ $t(`portalSettings.welcomeWhen.${state}`) }}</Label>
           </div>
           <Textarea :id="`ta-welcome-${state}`" v-model="form[`portal_welcome_${state}`]" rows="2" />

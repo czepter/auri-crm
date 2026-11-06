@@ -10,6 +10,7 @@ import TemplateCreateDialog from '@/admin/components/templates/TemplateCreateDia
 import TaskTemplatePreview from '@/admin/components/templates/TaskTemplatePreview.vue'
 import { Input } from '@/ui/input'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import Chip from '@/ui/page/Chip.vue'
 
 type Kind = 'aufgaben' | 'fragebogen' | 'dokumente' | 'galerien'
 
@@ -188,10 +189,7 @@ function open(row: Row) {
                     <span class="mt-px block text-small leading-[1.3] text-muted-foreground">{{ row.meta }}</span>
                   </span>
                   <span v-if="row.note" class="flex-none text-small tabular-nums text-faint">{{ row.note }}</span>
-                  <span
-                    v-if="!row.active"
-                    class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-small leading-[1.5] font-semibold text-faint"
-                  >{{ $t('formTemplates.paused') }}</span>
+                  <Chip v-if="!row.active">{{ $t('formTemplates.paused') }}</Chip>
                 </component>
 
                 <Link
@@ -219,10 +217,7 @@ function open(row: Row) {
                   <span class="mt-px block text-small leading-[1.3] text-muted-foreground">{{ row.meta }}</span>
                 </span>
                 <span v-if="row.note" class="flex-none text-small tabular-nums text-faint">{{ row.note }}</span>
-                <span
-                  v-if="!row.active"
-                  class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-small leading-[1.5] font-semibold text-faint"
-                >{{ $t('formTemplates.paused') }}</span>
+                <Chip v-if="!row.active">{{ $t('formTemplates.paused') }}</Chip>
               </component>
 
               <p v-if="!matching(rows[kind]).length" class="m-0 text-small leading-[1.45] text-faint">{{ $t('templates.empty') }}</p>

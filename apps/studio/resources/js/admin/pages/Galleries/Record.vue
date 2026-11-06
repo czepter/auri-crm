@@ -19,6 +19,7 @@ import { xsrfHeader } from '@/admin/lib/multipartUpload'
 import Images from '@/admin/pages/Galleries/panes/Images.vue'
 import Settings from '@/admin/pages/Galleries/panes/Settings.vue'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import Chip from '@/ui/page/Chip.vue'
 
 const { t } = useI18n()
 
@@ -319,10 +320,7 @@ function megabytes(bytes: number) {
         <span class="flex flex-none items-center gap-1.5 text-small font-semibold" :class="stateTone">
           <span class="size-1.5 rounded-full bg-current" />{{ stateWord }}
         </span>
-        <span
-          v-if="gallery.prerelease"
-          class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold text-due"
-        >{{ $t('galleryRecord.prerelease') }}</span>
+        <Chip v-if="gallery.prerelease" tone="warn">{{ $t('galleryRecord.prerelease') }}</Chip>
         <span v-if="actionStatus" class="ml-auto flex items-center gap-1.5">
           <span class="text-small" :class="actionStatus.ok ? 'text-ink-2' : 'text-destructive'">{{ actionStatus.message }}</span>
           <Input
