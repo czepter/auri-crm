@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, watch } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import PortalField from '@/portal/components/PortalField.vue'
 import PortalBack from '@/portal/components/PortalBack.vue'
@@ -60,22 +60,7 @@ watch(
   { immediate: true },
 )
 
-// The sticky jump button hands over to the form's own submit once the form
-// is on screen, so only one primary is ever visible.
-const formEl = ref<HTMLFormElement | null>(null)
-const formVisible = ref(false)
-let observer: IntersectionObserver | undefined
-
-onMounted(() => {
-  if (!formEl.value) return
-  observer = new IntersectionObserver(([entry]) => (formVisible.value = entry.isIntersecting))
-  observer.observe(formEl.value)
-})
-
-onBeforeUnmount(() => {
-  clearPoll()
-  observer?.disconnect()
-})
+onBeforeUnmount(clearPoll)
 
 // consent starts unchecked and stays that way until the person ticks it
 // themselves — never pre-ticked, never implied by pressing submit. The
@@ -94,7 +79,7 @@ function sign() {
   <PortalShell>
     <PortalHeader :switcher="{ label: project.name, toAll: showSwitcher }" />
 
-    <PortalWrap class="pb-40">
+    <PortalWrap class="pb-28">
       <section class="pt-[var(--band)]">
         <PortalBack :href="`/projekte/${project.id}`" />
         <p class="animate-rise motion-reduce:animate-none mb-4 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">{{ project.name }}</p>
@@ -116,6 +101,7 @@ function sign() {
             {{ $t('portal.contractDownload') }}
           </a>
         </div>
+        <Button v-if="canSign && !contract.signature" as="a" variant="portal" href="#unterschreiben" class="mt-5 min-h-12 w-full justify-center">{{ $t('portal.signButton') }}</Button>
 
         <article
           v-if="contract.html"
@@ -130,7 +116,7 @@ function sign() {
         <!-- T-08: signing is offered only while the switch is on and nothing
              is recorded yet; a recorded signature is a fact and shows above
              regardless of the switch. -->
-        <form v-if="canSign && !contract.signature" id="unterschreiben" ref="formEl" class="grid scroll-mt-24 gap-5 border-t border-border py-8" @submit.prevent="sign">
+        <form v-if="canSign && !contract.signature" id="unterschreiben" class="grid scroll-mt-24 gap-5 border-t border-border py-8" @submit.prevent="sign">
           <PortalLabel>{{ $t('portal.signTitle') }}</PortalLabel>
           <PortalField :label="$t('portal.signName')" :hint="$t('portal.signNameHint')">
             <Input v-model="form.typedName" type="text" required maxlength="255" />
@@ -139,12 +125,12 @@ function sign() {
           <!-- not a <Label> wrapper any more: Checkbox renders a button,
                and a button inside a label is not clickable through it -->
           <div class="flex cursor-pointer items-start gap-3.5 text-[13.5px] leading-[1.5] [&_[data-slot=checkbox]]:size-6 [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action">
-            <Checkbox id="sign-consent" v-model="form.consent" required />
+            <Checkbox id="sign-consent" v-model="form.consent" class="relative after:absolute after:-inset-2.5 after:content-['']" required />
             <Label variant="inline" for="sign-consent">{{ $t('portal.signConsent') }}</Label>
           </div>
 
           <Button
-            class="min-h-12 w-full justify-center disabled:bg-sunk-2 disabled:text-foreground disabled:opacity-100 disabled:shadow-[inset_0_0_0_1px_var(--muted)]"
+            class="min-h-12 w-full justify-center"
             variant="portal"
             type="submit"
             :disabled="form.processing || !form.consent || !form.typedName"
@@ -152,12 +138,6 @@ function sign() {
             {{ $t('portal.signButton') }}
           </Button>
         </form>
-      </div>
-      <div
-        v-if="canSign && !contract.signature && !formVisible"
-        class="fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] z-30 border-t border-border bg-[var(--bg)] p-3 min-[761px]:bottom-0"
-      >
-        <Button as="a" variant="portal" href="#unterschreiben" class="min-h-12 w-full justify-center">{{ $t('portal.signButton') }}</Button>
       </div>
     </PortalWrap>
 

@@ -223,7 +223,7 @@ function phaseState(phase: Phase) {
 
                   <span class="min-w-0">
                     <span class="mb-1.5 block text-[10.5px] leading-none font-semibold tracking-[0.15em] uppercase text-muted-foreground">{{ booking.type }}</span>
-                    <span class="block font-serif text-[23px] leading-[1.2] tracking-[-0.012em] max-[700px]:text-[20px]">{{ booking.name }}</span>
+                    <span class="block font-serif text-[22px] leading-[1.25] tracking-[-0.01em]">{{ booking.name }}</span>
                     <span class="mt-[5px] block text-[13.5px] tabular-nums text-muted-foreground">
                       {{ [booking.date ? dayDate(booking.date) : $t('portal.dateOpen'), booking.venue].filter(Boolean).join(' · ') }}
                     </span>

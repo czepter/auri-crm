@@ -27,7 +27,7 @@ defineProps<{
           {{ $t(`portal.missing.${kind}.title`) }}
         </h1>
         <p class="mt-4 text-[15px] text-muted-foreground">{{ $t(`portal.missing.${kind}.line`) }}</p>
-        <Button v-if="quote" as-child :variant="quote.accepted ? 'portal-ghost' : 'portal'" class="mt-8 min-h-12">
+        <Button v-if="quote" as-child variant="portal" class="mt-8 min-h-12">
           <Link :href="`/projekte/${project.id}/angebot`">{{ quote.accepted ? $t('portal.quoteView') : $t('portal.quoteAccept') }}</Link>
         </Button>
       </section>
