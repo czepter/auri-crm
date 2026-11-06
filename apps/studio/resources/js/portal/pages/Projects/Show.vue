@@ -107,10 +107,10 @@ const daysLeft = computed(() => {
 // Everything waiting on the client, most pressing first: the contract, an
 // overdue rate, the quote, a rate not yet due, then the questionnaires.
 const steps = computed(() => {
-  const rank = (document: Document) => document.kind === 'contract' ? 0 : document.kind === 'messages' ? 5 : document.kind === 'payments' ? (document.overdue ? 1 : 3) : 2
+  const rank = (document: Document) => document.kind === 'contract' ? 0 : document.kind === 'payments' ? (document.overdue ? 1 : 3) : 2
 
   const documents = props.project.documents
-    .filter(document => !document.settled)
+    .filter(document => !document.settled && document.kind !== 'messages')
     .map(document => ({
       rank: rank(document),
       title: document.kind === 'payments' ? (document.label ?? t('portal.payment')) : t(`portal.document.${document.kind}`),
@@ -120,9 +120,9 @@ const steps = computed(() => {
           ? { key: 'portal.notSignedYet', date: null }
           : document.kind === 'quote' && document.dueOn ? { key: 'portal.validUntil', date: document.dueOn } : null,
       amount: document.amount ? formatEuros(document.amount) : null,
-      detail: document.kind === 'messages' ? t('portal.unreadCount', { count: document.unread ?? 0 }) : null as string | null,
+      detail: null as string | null,
       state: (document.overdue ? 'late' : document.dueOn ? 'due' : 'open') as 'late' | 'due' | 'open',
-      label: { payments: 'portal.payButton', contract: 'portal.signButton', quote: 'portal.quoteAccept', messages: 'portal.replyButton' }[document.kind],
+      label: { payments: 'portal.payButton', contract: 'portal.signButton', quote: 'portal.quoteAccept' }[document.kind],
       href: document.href,
     }))
 
@@ -157,7 +157,10 @@ const galleryExpiring = computed(() => {
 
 const step = computed(() => steps.value[0] ?? null)
 
-const documents = computed(() => props.project.documents.filter(document => document.kind !== 'messages' || document.settled))
+// Open items already stand in the card and the list above.
+const documents = computed(() => props.project.documents.filter(document => document.kind === 'messages' || document.settled))
+
+const sheets = computed(() => props.project.questionnaires.filter(sheet => sheet.openCount === 0))
 
 const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
 
@@ -273,7 +276,7 @@ function documentNote(document: Document) {
           :key="document.kind"
           :href="document.href"
           :title="$t(`portal.document.${document.kind}`)"
-          :state="document.settled ? 'done' : document.overdue ? 'late' : document.dueOn ? 'due' : 'open'"
+          :state="document.kind === 'messages' ? (document.unread ? 'open' : 'neutral') : 'done'"
           :note="{
             settled: $t('portal.allSettled'),
             due: $t('portal.quoteOpen'),
@@ -281,7 +284,7 @@ function documentNote(document: Document) {
             unsigned: $t('portal.notSignedYet'),
             accepted: document.acceptedOn ? $t('portal.quoteAccepted', { date: dayDate(document.acceptedOn) }) : null,
             open: $t('portal.quoteOpen'),
-            messages: `${$t('portal.messagesAbout')} ${project.name}`,
+            messages: document.unread ? $t('portal.unreadCount', { count: document.unread }) : null,
           }[documentNote(document)]"
           :aside="document.kind === 'payments' ? (document.openTotal ? formatEuros(document.openTotal) : null) : document.amount ? formatEuros(document.amount) : null"
           :aside-open="!document.settled"
@@ -331,17 +334,15 @@ function documentNote(document: Document) {
       </section>
 
       <!-- P-03 (#222): absent until the studio shares a questionnaire. -->
-      <section v-if="project.questionnaires.length" :class="BAND">
+      <section v-if="sheets.length" :class="BAND">
         <PortalLabel class="mb-2">{{ $t('portal.questionnairesTitle') }}</PortalLabel>
         <PortalRow
-          v-for="sheet in project.questionnaires"
+          v-for="sheet in sheets"
           :key="sheet.id"
           :href="`/projekte/${project.id}/fragebogen/${sheet.id}`"
           :title="sheet.name"
-          :state="sheet.openCount ? 'open' : 'done'"
-          :note="sheet.openCount
-            ? $t('portal.questionsOpen', { open: sheet.openCount, total: sheet.count })
-            : $t('portal.questionsDone')"
+          state="done"
+          :note="$t('portal.questionsDone')"
         />
       </section>
 

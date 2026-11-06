@@ -122,12 +122,6 @@ const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
 
             <template v-if="!editing">
               <dl class="m-0 mt-4 grid grid-cols-[132px_1fr] gap-x-6 gap-y-3 max-[700px]:grid-cols-1 max-[700px]:gap-y-0">
-                <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.occasion') }}</dt>
-                <dd class="m-0 text-[14.5px]">{{ project.type }}</dd>
-                <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.preferredDate') }}</dt>
-                <dd class="m-0 text-[14.5px] tabular-nums">{{ project.date ? dayDate(project.date) : $t('portal.dateOpen') }}</dd>
-                <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.place') }}</dt>
-                <dd class="m-0 text-[14.5px]">{{ venue || '—' }}</dd>
                 <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.reachUs') }}</dt>
                 <dd class="m-0 text-[14.5px]">{{ [project.contact.email, project.contact.phone].filter(Boolean).join(' · ') }}</dd>
               </dl>
