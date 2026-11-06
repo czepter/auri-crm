@@ -16,13 +16,17 @@ const props = defineProps<{ quotes: App.Quotes.Data.QuoteRowData[] }>()
 useLiveProps(['quotes'])
 
 const query = ref('')
+const newestFirst = ref(true)
 
+const dateOf = (quote: App.Quotes.Data.QuoteRowData) => quote.sentAt ?? quote.createdAt ?? ''
 
 const shown = computed(() => {
   const needle = query.value.trim().toLocaleLowerCase('de')
 
-  return props.quotes.filter((quote) => !needle
-    || `${quote.projectName} ${quote.contact ?? ''} ${quote.number ?? ''}`.toLocaleLowerCase('de').includes(needle))
+  return props.quotes
+    .filter((quote) => !needle
+      || `${quote.projectName} ${quote.contact ?? ''} ${quote.number ?? ''}`.toLocaleLowerCase('de').includes(needle))
+    .sort((a, b) => dateOf(a).localeCompare(dateOf(b)) * (newestFirst.value ? -1 : 1))
 })
 
 function day(iso: string) {
@@ -50,7 +54,11 @@ function day(iso: string) {
                 <TableHead>{{ $t('quotesOverview.number') }}</TableHead>
                 <TableHead align="right">{{ $t('quotesOverview.amount') }}</TableHead>
                 <TableHead>{{ $t('quotesOverview.status') }}</TableHead>
-                <TableHead align="right">{{ $t('quotesOverview.createdAt') }}</TableHead>
+                <TableHead align="right" :aria-sort="newestFirst ? 'descending' : 'ascending'">
+                  <button type="button" @click="newestFirst = !newestFirst">
+                    {{ $t('quotesOverview.createdAt') }} {{ newestFirst ? '↓' : '↑' }}
+                  </button>
+                </TableHead>
               </tr>
             </thead>
             <tbody>
