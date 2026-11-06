@@ -41,14 +41,21 @@ useLiveProps([])
                     :title="$t('releases.title')"
                 />
 
-                <div class="flex items-center gap-4 px-6 pt-4 max-[640px]:px-5">
+                <div v-if="releases.length" class="flex items-center gap-4 px-6 pt-4 max-[640px]:px-5">
                     <span class="text-small text-ink-2">
                         {{ [source, checked && $t('releases.checked', { time: checked })].filter(Boolean).join(' · ') }}
                     </span>
                     <Button class="ml-auto" variant="pill" type="button" @click="router.reload()">{{ $t('releases.reload') }}</Button>
                 </div>
 
-                <Empty v-if="!releases.length" :text="$t('releases.empty')" />
+                <div v-if="!releases.length" class="flex min-h-[60vh] items-center">
+                    <Empty :text="$t('releases.empty')">
+                        <span class="text-small text-ink-2">
+                            {{ [source, checked && $t('releases.checked', { time: checked })].filter(Boolean).join(' · ') }}
+                        </span>
+                        <Button variant="pill" type="button" @click="router.reload()">{{ $t('releases.reload') }}</Button>
+                    </Empty>
+                </div>
 
                 <div v-else class="px-6 pt-5 pb-11 max-[640px]:px-5">
                     <Link
