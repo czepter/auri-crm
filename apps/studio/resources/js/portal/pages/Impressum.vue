@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { Link } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
@@ -53,6 +54,11 @@ const facts = computed(() => [
     <PortalHeader />
 
     <main class="mx-auto w-full max-w-[668px] grow px-6 pt-[var(--band)] pb-28">
+      <div class="animate-rise motion-reduce:animate-none mb-4 flex justify-end">
+        <Link class="text-[13.5px] text-muted-foreground hover:text-foreground max-[700px]:inline-flex max-[700px]:min-h-11 max-[700px]:items-center" href="/">
+          {{ $t('portal.toBooking') }}
+        </Link>
+      </div>
       <p class="animate-rise motion-reduce:animate-none mb-4 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">{{ $t('portal.impressumTitle') }}</p>
       <h1 v-if="name" class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
         {{ name }}
