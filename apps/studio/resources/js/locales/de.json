@@ -100,7 +100,7 @@
     "viewList": "Liste",
     "searchPlaceholder": "Anfrage suchen",
     "dateDoubled": "Termin doppelt",
-    "stale": "Liegt",
+    "stale": "3+ Tage unverändert",
     "book": "Buchen",
     "close": "Schließen",
     "closeTitle": "Anfrage schließen",

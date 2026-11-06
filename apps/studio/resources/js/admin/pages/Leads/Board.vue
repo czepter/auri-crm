@@ -24,7 +24,7 @@ import {
     AlertDialogTitle,
 } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/lib/money";
-import { relative, TYPE_DOT } from "@/admin/lib/boardCard";
+import { daysAgo, TYPE_DOT } from "@/admin/lib/boardCard";
 import { useLiveProps } from "@/admin/lib/liveReload";
 import { Button } from "@/ui/button";
 import { QueueGroup, QueueItem } from "@/ui/queue";
@@ -437,7 +437,7 @@ const workflowAllowed = computed(() =>
                                                 : 'pl-4 bg-[position:left_center] bg-icon-clock text-ink-2'
                                         "
                                     >
-                                        {{ relative(card.lastAt) }}
+                                        {{ daysAgo(card.daysInStage) }}
                                     </span>
                                 </span>
                             </Link>
@@ -499,7 +499,7 @@ const workflowAllowed = computed(() =>
                             class="min-h-14"
                             :href="`/anfragen/${card.id}`"
                             :name="card.names"
-                            :meta="relative(card.lastAt)"
+                            :meta="daysAgo(card.daysInStage)"
                             :alert="card.stale"
                             :title="[
                                 shortDate(card.date) ?? $t('board.openDate'),
@@ -593,10 +593,10 @@ const workflowAllowed = computed(() =>
                                         v-if="card.stale"
                                         class="inline-flex items-center h-[19px] rounded-md whitespace-nowrap bg-due-bg bg-no-repeat bg-[length:11px_11px] bg-[position:7px_center] bg-icon-clock-due pr-[7px] pl-[22px] text-small font-medium tabular-nums text-due"
                                     >
-                                        {{ relative(card.lastAt) }}
+                                        {{ daysAgo(card.daysInStage) }}
                                     </span>
                                     <template v-else>{{
-                                        relative(card.lastAt)
+                                        daysAgo(card.daysInStage)
                                     }}</template>
                                 </TableCell>
                             </TableRow>
