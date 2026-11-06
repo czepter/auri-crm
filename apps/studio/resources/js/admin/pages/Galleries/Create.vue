@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { Link, router, useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import FormSection from '@/ui/page/FormSection.vue'
 import FormShell from '@/ui/page/FormShell.vue'
 import CreateSummary from '@/admin/components/CreateSummary.vue'
 import { ChoiceGroup } from '@/ui/choice-group'
@@ -107,9 +108,10 @@ function submit() {
 <template>
   <AdminLayout active="galerien">
     <FormShell
-      :title="$t('galleries.create')" wide
+      :kicker="$t('galleries.title')" kicker-href="/galerien" :title="$t('galleries.create')" wide
     >
-      <form class="max-w-[620px]" @submit.prevent="submit">
+      <form class="min-w-0" @submit.prevent="submit">
+        <FormSection :title="$t('galleries.title')">
         <ChoiceGroup
           :model-value="mode"
           :options="MODES.map((option) => ({ value: option, label: $t(`galleries.mode_${option}`) }))"
@@ -142,7 +144,11 @@ function submit() {
             <Textarea id="gallery-info" v-model="form.info" rows="3" />
           </div>
 
-          <template v-else>
+        </div>
+        </FormSection>
+
+        <FormSection v-if="mode !== 'external'" :title="$t('galleryPresets.title')">
+          <div class="flex flex-col gap-4">
             <div class="flex flex-col gap-1.5">
               <Label for="gallery-preset">{{ $t('galleryPresets.title') }}</Label>
               <Select
@@ -176,8 +182,8 @@ function submit() {
               <Checkbox id="cb-new-comments" v-model="form.comments_enabled" />
               <Label variant="inline" for="cb-new-comments">{{ $t('gallerySettings.commentsLabel') }}</Label>
             </div>
-          </template>
-        </div>
+          </div>
+        </FormSection>
 
         <Button class="mt-6" type="submit" :disabled="form.processing || form.title === ''">
           {{ $t('galleries.create') }}
