@@ -2,6 +2,7 @@
 import { computed, reactive, ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import FormSection from '@/ui/page/FormSection.vue'
 import FormShell from '@/ui/page/FormShell.vue'
 import SettingsNav from '@/admin/components/settings/SettingsNav.vue'
 import { AlertDialog, AlertDialogBody, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/ui/alert-dialog'
@@ -142,15 +143,15 @@ function submit() {
       <template #nav><SettingsNav active="retention" /></template>
 
       <form class="min-w-0" @submit.prevent="submit">
-        <div class="flex flex-wrap items-center gap-3">
-          <Switch id="retention-on" v-model="enabled" />
-          <Label for="retention-on">{{ $t('settings.retentionOn') }}</Label>
-          <ChoiceGroup v-model="months" variant="segmented" :options="monthOptions" :class="enabled ? '' : 'pointer-events-none'" />
-          <span class="text-small text-ink-2">{{ $t('settings.retentionMonths') }}</span>
-        </div>
+        <FormSection :title="$t('settings.retentionOn')">
+          <div class="flex flex-wrap items-center gap-3">
+            <Switch id="retention-on" v-model="enabled" />
+            <Label for="retention-on">{{ $t('settings.retentionOn') }}</Label>
+            <ChoiceGroup v-model="months" variant="segmented" :options="monthOptions" :class="enabled ? '' : 'pointer-events-none'" />
+            <span class="text-small text-ink-2">{{ $t('settings.retentionMonths') }}</span>
+          </div>
 
-        <div :class="enabled ? '' : 'pointer-events-none'" :inert="!enabled">
-          <div class="mt-6 grid grid-cols-4 gap-3 max-[900px]:grid-cols-2">
+          <div class="mt-6 grid grid-cols-2 gap-3" :class="enabled ? '' : 'pointer-events-none'" :inert="!enabled">
             <div v-for="tile in tiles" :key="tile.key" class="rounded-[var(--r)] bg-paper shadow-card px-5 py-4">
               <div class="text-small font-semibold text-ink-2">{{ $t(`settings.retention${tile.key}`) }}</div>
               <div class="mt-1 text-heading leading-[1.1] font-semibold tabular-nums" :class="tile.hot && 'text-destructive'">{{ tile.value }}</div>
@@ -163,8 +164,10 @@ function submit() {
               </div>
             </div>
           </div>
+        </FormSection>
 
-          <div class="mt-7 grid gap-8">
+        <FormSection :title="$t('settings.retentionParts')" :class="enabled ? '' : 'pointer-events-none'" :inert="!enabled">
+          <div>
             <div>
               <ChoiceGroup
                 variant="segmented"
@@ -174,8 +177,7 @@ function submit() {
                 @update:model-value="pickTemplate"
               />
 
-              <div class="mt-6 flex justify-between text-small font-semibold text-ink-2">
-                <span>{{ $t('settings.retentionParts') }}</span>
+              <div class="mt-6 flex justify-end text-small font-semibold text-ink-2">
                 <span>{{ $t('settings.retentionAffected') }}</span>
               </div>
               <div
@@ -201,8 +203,12 @@ function submit() {
                 />
               </div>
             </div>
+          </div>
+        </FormSection>
 
-            <div v-if="due.length" class="min-w-0">
+        <FormSection v-if="due.length" :title="$t('settings.retentionDue')" :class="enabled ? '' : 'pointer-events-none'" :inert="!enabled">
+          <div class="min-w-0">
+            <div>
               <div class="grid grid-cols-[150px_minmax(0,1fr)_100px_76px] gap-3 py-2 text-small font-semibold text-ink-2 shadow-[inset_0_-1px_0_var(--rule)]">
                 <span>{{ $t('settings.retentionColContact') }}</span>
                 <span>{{ $t('settings.retentionColRequest') }}</span>
@@ -236,7 +242,7 @@ function submit() {
               </div>
             </div>
           </div>
-        </div>
+        </FormSection>
 
         <div class="mt-6">
           <Button type="submit" :disabled="save.processing">
