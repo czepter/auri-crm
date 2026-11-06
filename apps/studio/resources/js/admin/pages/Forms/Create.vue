@@ -15,6 +15,7 @@ import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 import { Switch } from '@/ui/switch'
+import Chip from '@/ui/page/Chip.vue'
 
 const props = defineProps<{
   project: App.Crm.Data.CaseSuggestionData | null
@@ -70,9 +71,9 @@ const LONG = ['text', 'name_list', 'group_photos']
       :kicker="$t('create.kickerForms')" :title="$t('formInstances.create')" wide
     >
       <template #head>
-        <span v-if="instance" :class="['chip', instance.sharedAt ? 'done' : 'off']">
+        <Chip v-if="instance" :tone="instance.sharedAt ? 'success' : 'neutral'">
           {{ instance.sharedAt ? $t('formInstances.shared') : $t('formInstances.notShared') }}
-        </span>
+        </Chip>
       </template>
 
       <div>

@@ -9,7 +9,8 @@ import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
 import { Input } from '@/ui/input'
 import { Button } from '@/ui/button'
 import { formatEuros } from '@/lib/money'
-import { quoteChipClass } from '@/admin/lib/quoteDisplay'
+import { quoteTone } from '@/admin/lib/quoteDisplay'
+import Chip from '@/ui/page/Chip.vue'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{ quotes: App.Quotes.Data.QuoteRowData[] }>()
@@ -68,7 +69,7 @@ function day(iso: string) {
                 </TableCell>
                 <TableCell tone="muted">{{ quote.number ?? '—' }}</TableCell>
                 <TableCell align="right">{{ formatEuros(quote.total) }}</TableCell>
-                <TableCell><span class="chip" :class="quoteChipClass(quote.status)">{{ quote.statusLabel }}</span></TableCell>
+                <TableCell><Chip :tone="quoteTone(quote.status)">{{ quote.statusLabel }}</Chip></TableCell>
                 <TableCell align="right" tone="muted">{{ quote.sentAt ?? quote.createdAt ? day((quote.sentAt ?? quote.createdAt)!) : '—' }}</TableCell>
               </TableRow>
             </tbody>

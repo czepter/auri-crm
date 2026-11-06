@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/ui/label'
 import { saveState } from '@/admin/lib/autosave'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import Chip from '@/ui/page/Chip.vue'
 
 const props = defineProps<{ ranges: App.Settings.Data.NumberRangeData[] }>()
 useLiveProps(['ranges'])
@@ -97,7 +98,7 @@ function save(rangeId: string) {
                 <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" /></svg>
                 {{ $t('settings.numberingSave') }}
               </Button>
-              <span class="chip now">{{ $t('settings.unsaved') }}</span>
+              <Chip tone="warn">{{ $t('settings.unsaved') }}</Chip>
             </div>
           </form>
         </div>

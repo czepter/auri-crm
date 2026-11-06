@@ -16,6 +16,7 @@ import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 import { Switch } from '@/ui/switch'
 import { Textarea } from '@/ui/textarea'
+import Chip from '@/ui/page/Chip.vue'
 
 const props = defineProps<{
   header: App.Crm.Screens.CaseHeaderData
@@ -158,9 +159,9 @@ function summary(instance: App.Crm.Data.FormInstanceData): string {
           @save="save(instance.id)"
         >
           <template #action>
-            <span :class="['chip', instance.sharedAt ? 'done' : 'off']">
+            <Chip :tone="instance.sharedAt ? 'success' : 'neutral'">
               {{ instance.sharedAt ? $t('formInstances.shared') : $t('formInstances.notShared') }}
-            </span>
+            </Chip>
           </template>
 
           <!-- E-03 gilt auch am Telefon: ein unbeantwortetes Feld steht hier

@@ -8,6 +8,7 @@ import { Button } from '@/ui/button'
 import { dayWithWeekday as day } from '@/admin/lib/dates'
 import { dayAndMonth, weekday } from '@/admin/lib/shoots'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
 
 const props = defineProps<{
   header: App.Crm.Screens.CaseHeaderData
@@ -16,13 +17,7 @@ const props = defineProps<{
 }>()
 useLiveProps(['header', 'galleries', 'shoots'])
 
-/* tokens.css .chip's four tones. */
-const TONE: Record<string, string> = {
-  draft: 'bg-muted text-muted-foreground',
-  prerelease: 'bg-due-bg text-due',
-  published: 'bg-ok-bg text-ok',
-  withdrawn: 'bg-muted text-faint',
-}
+const TONE: Record<string, ChipTone> = { draft: 'neutral', prerelease: 'warn', published: 'success', withdrawn: 'neutral' }
 
 // Eine Galerie ohne Shooting gehört dem ganzen Auftrag und deckt jedes Shooting ab.
 const withoutGallery = computed(() => {
@@ -70,9 +65,9 @@ const missingSummary = computed(() =>
                 }}
               </span>
             </div>
-            <span :class="['flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold', TONE[gallery.state]]">
+            <Chip :tone="TONE[gallery.state]">
               {{ $t(`project.galleryState.${gallery.state}`) }}
-            </span>
+            </Chip>
           </div>
         </Card>
 

@@ -11,6 +11,7 @@ import Empty from '@/ui/page/Empty.vue'
 import SettingsNav from '@/admin/components/settings/SettingsNav.vue'
 import { Button } from '@/ui/button'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import Chip from '@/ui/page/Chip.vue'
 
 defineProps<{ rules: App.Automation.Data.AutomationRuleData[]; timezone: string }>()
 useLiveProps(['rules', 'timezone'])
@@ -68,10 +69,10 @@ function create() {
               {{ rule.lastRunLabel ?? '—' }}
             </span>
 
-            <span
-              class="chip w-[84px] flex-none text-center"
-              :class="rule.lastRunFailed ? 'fail' : rule.isActive ? 'done' : 'off'"
-            >{{ rule.lastRunFailed ? $t('automations.error') : rule.isActive ? $t('automations.active') : $t('automations.paused') }}</span>
+            <Chip
+              class="w-[84px] justify-center"
+              :tone="rule.lastRunFailed ? 'danger' : rule.isActive ? 'success' : 'neutral'"
+            >{{ rule.lastRunFailed ? $t('automations.error') : rule.isActive ? $t('automations.active') : $t('automations.paused') }}</Chip>
           </Link>
         </div>
 

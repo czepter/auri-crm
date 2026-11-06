@@ -19,6 +19,7 @@ import { Label } from '@/ui/label'
 import { Textarea } from '@/ui/textarea'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
 
 const { t } = useI18n()
 
@@ -227,6 +228,7 @@ const TONE: Record<string, string> = {
   next: 'bg-muted text-muted-foreground',
   off: 'bg-muted text-faint',
 }
+const STATIC_TONE: Record<string, ChipTone> = { done: 'success', now: 'warn', next: 'neutral', off: 'neutral' }
 </script>
 
 <template>
@@ -363,9 +365,9 @@ const TONE: Record<string, string> = {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <span v-else :class="['rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold', TONE[chipClass(shoot, header.position.value)]]">
+              <Chip v-else :tone="STATIC_TONE[chipClass(shoot, header.position.value)]">
                 {{ shoot.statusLabel }}
-              </span>
+              </Chip>
 
               <div v-if="!shoot.isCancelled && header.canManageShoots" class="flex items-center gap-2">
                 <DropdownMenu>

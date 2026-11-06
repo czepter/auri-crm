@@ -18,6 +18,7 @@ import { useLiveProps } from '@/admin/lib/liveReload'
 import { htmlToBlocks } from '@/admin/documents/blocks/importHtml'
 import { serialize } from '@/admin/documents/blocks/serialize'
 import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/types'
+import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
 
 const props = defineProps<{
   header: App.Crm.Screens.CaseHeaderData
@@ -66,7 +67,7 @@ const status = computed<'draft' | 'sent' | 'signed'>(() => {
   return props.contract?.signers.length && !unsigned.value.length ? 'signed' : 'sent'
 })
 
-const statusChip = { draft: 'off', sent: 'now', signed: 'done' } as const
+const statusChip = { draft: 'neutral', sent: 'warn', signed: 'success' } as const
 
 const editing = ref(false)
 const saving = ref(false)
@@ -119,9 +120,8 @@ function remindAll(ids = unsigned.value.map((entry) => entry.id)) {
   router.post(`/unterzeichner/${id}/erinnerung`, {}, { preserveScroll: true, onSuccess: () => rest.length && remindAll(rest) })
 }
 
-/** entwurf/gültig/ersetzt -> die drei Zustände, die tokens.css als Chip kennt. */
-function chipClass(state: string): string {
-  return ({ valid: 'done', superseded: 'off' } as Record<string, string>)[state] ?? 'now'
+function chipTone(state: string): ChipTone {
+  return ({ valid: 'success', superseded: 'neutral' } as Record<string, ChipTone>)[state] ?? 'warn'
 }
 
 function day(value: string | null): string {
@@ -138,7 +138,7 @@ function day(value: string | null): string {
           <section class="rounded-[var(--r)] bg-paper p-6 shadow-card max-[640px]:p-4">
             <div class="flex flex-wrap items-center gap-3">
               <h2 class="m-0 text-[15px] leading-[1.2] font-semibold tracking-[-0.015em]">{{ $t('project.contract') }}</h2>
-              <span :class="['chip', statusChip[status]]">{{ $t(`project.contractState.${status}`) }}</span>
+              <Chip :tone="statusChip[status]">{{ $t(`project.contractState.${status}`) }}</Chip>
               <span v-if="contract.sentAt" class="text-small text-faint">{{ $t('project.contractSentOn', { date: day(contract.sentAt) }) }}</span>
 
               <div v-if="header.canManageContracts" class="ml-auto flex items-center gap-2">
@@ -221,7 +221,7 @@ function day(value: string | null): string {
             <ul class="mt-3 flex list-none flex-col gap-2.5 p-0">
               <li v-for="version in versions" :key="version.id" class="flex items-baseline gap-3">
                 <span class="text-small">{{ $t('project.contractVersionLabel', { version: version.version }) }}</span>
-                <span :class="['chip', chipClass(version.state)]">{{ version.stateLabel }}</span>
+                <Chip :tone="chipTone(version.state)">{{ version.stateLabel }}</Chip>
                 <span class="text-small text-faint">{{ day(version.sentAt ?? version.renderedAt) }}</span>
                 <a v-if="version.downloadUrl" class="ml-auto text-small text-ink-2 underline" :href="version.downloadUrl" download>
                   {{ $t('project.contractDownload') }}

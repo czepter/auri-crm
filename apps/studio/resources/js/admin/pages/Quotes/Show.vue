@@ -2,7 +2,8 @@
 import { computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import type { QuoteContact, VatSettings } from '@/admin/components/quote/quotePayload'
-import { quoteChipClass, quoteTitle } from '@/admin/lib/quoteDisplay'
+import { quoteTone, quoteTitle } from '@/admin/lib/quoteDisplay'
+import Chip from '@/ui/page/Chip.vue'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
@@ -70,7 +71,7 @@ const facts = computed(() => {
       <div class="min-w-0 flex-1">
         <PageHead :title="quoteTitle(quote, t)" :kicker="recipientName ?? projectName">
           <div class="ml-auto flex items-center gap-3.5 max-[640px]:ml-0 max-[640px]:w-full max-[640px]:flex-wrap max-[640px]:gap-y-2">
-            <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
+            <Chip :tone="quoteTone(quote.status)">{{ quote.statusLabel }}</Chip>
             <span v-if="quote.sentChannel" class="text-small text-ink-2">
               {{ quote.sentChannel === 'mail' ? $t('quotes.sentByMail') : $t('quotes.sentBySelf') }}
             </span>

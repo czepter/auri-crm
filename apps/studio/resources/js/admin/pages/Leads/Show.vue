@@ -27,7 +27,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ChevronDown, Pencil } from "lucide-vue-next";
 import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/lib/money";
-import { quoteChipClass } from "@/admin/lib/quoteDisplay";
+import { quoteTone } from "@/admin/lib/quoteDisplay";
+import Chip from "@/ui/page/Chip.vue";
 import { sendQuoteHref } from "@/admin/lib/leadPrimary";
 import { stepOnArrow } from "@/admin/lib/queueStep";
 import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
@@ -331,7 +332,7 @@ const primary = computed(() => {
             </template>
 
             <template v-if="!lead.outcomeLabel" #stage>
-                <span class="chip">{{ lead.stageLabel }}</span>
+                <Chip>{{ lead.stageLabel }}</Chip>
                 <div class="flex">
                     <Button
                         v-if="primary"
@@ -420,7 +421,7 @@ const primary = computed(() => {
                     <Card v-if="quote" :title="$t('lead.quote')" :summary="quoteSummary">
                         <template v-if="quote" #meta>
                             <span v-if="quote.number" class="text-ui leading-[1.2] tracking-[-0.015em] text-ink-2 tabular-nums">{{ quote.number }}</span>
-                            <span v-if="quote.status !== 'sent'" :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
+                            <Chip v-if="quote.status !== 'sent'" :tone="quoteTone(quote.status)">{{ quote.statusLabel }}</Chip>
                         </template>
                         <template v-if="header.canManageQuotes" #action>
                             <Link
@@ -519,9 +520,9 @@ const primary = computed(() => {
                             >
                                 {{ person.name }}
                             </Link>
-                            <span class="rounded-[var(--r-sm)] bg-sunk-2 px-2 py-0.5 text-small leading-[1.4] text-ink-2">
+                            <Chip>
                                 {{ roleLabel(person.role) }}
-                            </span>
+                            </Chip>
                             <a v-if="person.email" class="text-small text-ring no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
                             <a v-if="person.phone" class="ml-auto whitespace-nowrap text-small tabular-nums text-ring no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
                             <span v-if="!person.email && !person.phone" class="ml-auto text-small text-ink-2">{{ $t("lead.noReach") }}</span>

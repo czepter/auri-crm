@@ -22,6 +22,7 @@ import PageHead from '@/ui/page/PageHead.vue'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { daysUntil, dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import Chip from '@/ui/page/Chip.vue'
 
 const props = defineProps<{
   tasks: App.Crm.Data.TaskRowData[]
@@ -167,11 +168,12 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
 
               <span class="w-28 flex-none text-small text-ink-2">{{ due(task) }}</span>
 
-              <span v-if="task.isOverdue" class="chip fail w-[92px] text-center">{{ $t('tasks.overdue') }}</span>
-              <span
+              <Chip v-if="task.isOverdue" tone="danger" class="w-[92px] justify-center">{{ $t('tasks.overdue') }}</Chip>
+              <Chip
                 v-else-if="!task.isDone && task.dueOn !== null && daysUntil(task.dueOn) === 0"
-                class="chip now w-[92px] text-center"
-              >{{ $t('tasks.today') }}</span>
+                tone="warn"
+                class="w-[92px] justify-center"
+              >{{ $t('tasks.today') }}</Chip>
               <span v-else class="w-[92px] flex-none"></span>
             </div>
           </div>

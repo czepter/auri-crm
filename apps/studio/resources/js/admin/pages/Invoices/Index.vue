@@ -19,6 +19,7 @@ import CreditNoteDialog from '@/admin/components/payments/CreditNoteDialog.vue'
 import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
 
 const props = defineProps<{ invoices: App.Payments.Data.InvoiceRowData[], exportYears: number[] }>()
 useLiveProps(['invoices', 'exportYears'])
@@ -33,7 +34,7 @@ const filter = ref('all')
 
 const filters = computed(() => ['all', 'open', 'paid', 'cancelled'].map((value) => ({ value, label: t(`invoicesOverview.${value}`) })))
 
-const CHIP: Record<string, string> = { open: 'now', partial: 'now', overdue: 'fail', paid: 'done', cancelled: 'off' }
+const CHIP: Record<string, ChipTone> = { open: 'warn', partial: 'warn', overdue: 'danger', paid: 'success', cancelled: 'neutral' }
 
 const shown = computed(() => {
   const needle = query.value.trim().toLocaleLowerCase('de')
@@ -104,7 +105,7 @@ const shown = computed(() => {
                     </span>
                   </TableCell>
                   <TableCell class="whitespace-nowrap">
-                    <span class="chip" :class="CHIP[invoice.status]">{{ invoice.statusLabel }}</span>
+                    <Chip :tone="CHIP[invoice.status]">{{ invoice.statusLabel }}</Chip>
                     <Popover v-if="invoice.views.length">
                       <PopoverTrigger class="ml-2 cursor-pointer border-0 bg-transparent p-0 text-small text-ink-2 underline decoration-dotted">
                         {{ $t(invoice.viewedOn ? 'invoicesOverview.viewed' : 'documentViews.title') }}

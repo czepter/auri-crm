@@ -6,7 +6,8 @@ import Card from '@/ui/page/Card.vue'
 import { Button } from '@/ui/button'
 import { formatEuros } from '@/lib/money'
 import { dayWithWeekday as day } from '@/admin/lib/dates'
-import { quoteChipClass } from '@/admin/lib/quoteDisplay'
+import { quoteTone } from '@/admin/lib/quoteDisplay'
+import Chip from '@/ui/page/Chip.vue'
 
 const props = defineProps<{
   projectId: string
@@ -39,7 +40,7 @@ const total = computed(() => props.payments?.rows.reduce((sum, row) => sum + row
         class="flex items-center gap-3 px-[18px] py-3 max-[640px]:gap-2 max-[640px]:px-3 text-small text-foreground no-underline shadow-[inset_0_1px_0_var(--rule)] first:shadow-none hover:bg-sunk"
       >
         <span class="w-24 flex-none font-semibold max-[640px]:w-auto">{{ quote.number ?? $t('quotes.draft') }}</span>
-        <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
+        <Chip :tone="quoteTone(quote.status)">{{ quote.statusLabel }}</Chip>
         <span class="min-w-0 flex-1 truncate text-ink-2">
           <template v-if="quote.sentAt">
             {{ day(quote.sentAt) }} · {{ quote.sentChannel === 'mail' ? $t('quotes.sentByMail') : $t('quotes.sentBySelf') }}

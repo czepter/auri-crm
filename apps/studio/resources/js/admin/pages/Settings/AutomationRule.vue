@@ -19,6 +19,7 @@ import { Switch } from '@/ui/switch'
 import { Textarea } from '@/ui/textarea'
 import { saveState } from '@/admin/lib/autosave'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
 
 type Option = { value: string; label: string }
 
@@ -73,8 +74,8 @@ function insert(path: string) {
   form.notification_body = `${form.notification_body}{{ ${path} }}`
 }
 
-function chipClass(status: string): string {
-  return ({ sent: 'done', failed: 'fail', skipped: 'off' } as Record<string, string>)[status] ?? 'now'
+function chipTone(status: string): ChipTone {
+  return ({ sent: 'success', failed: 'danger', skipped: 'neutral' } as Record<string, ChipTone>)[status] ?? 'warn'
 }
 </script>
 
@@ -261,10 +262,10 @@ function chipClass(status: string): string {
             >
               <span class="w-24 flex-none text-ink-2 tabular-nums">{{ run.firedAt }}</span>
               <span class="min-w-0 flex-1 truncate">{{ run.anchorLabel }}</span>
-              <span :class="['chip inline-flex items-center gap-1.5', chipClass(run.status)]">
+              <Chip :tone="chipTone(run.status)">
                 <span v-if="run.status === 'failed'" class="size-1.5 rounded-full bg-destructive" />
                 {{ run.statusLabel }}
-              </span>
+              </Chip>
             </div>
           </div>
         </aside>

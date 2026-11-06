@@ -29,7 +29,8 @@ import CaseAddLinks from "@/admin/components/crm/CaseAddLinks.vue";
 import Card from "@/ui/page/Card.vue";
 import Section from "@/ui/page/Section.vue";
 import { formatEurosRounded } from "@/lib/money";
-import { quoteChipClass } from "@/admin/lib/quoteDisplay";
+import { quoteTone } from "@/admin/lib/quoteDisplay";
+import Chip from "@/ui/page/Chip.vue";
 import { dayWithWeekday as day } from "@/admin/lib/dates";
 import { useLiveProps } from "@/admin/lib/liveReload";
 import { ROLE_SUGGESTIONS } from "@/admin/lib/roles";
@@ -345,7 +346,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                     <Card v-if="quote" :title="$t('lead.quote')" :summary="quoteSummary">
                         <template v-if="quote" #meta>
                             <span v-if="quote.number" class="text-ui leading-[1.2] tracking-[-0.015em] text-ink-2 tabular-nums">{{ quote.number }}</span>
-                            <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
+                            <Chip :tone="quoteTone(quote.status)">{{ quote.statusLabel }}</Chip>
                         </template>
                         <template v-if="header.canManageQuotes" #action>
                             <Link

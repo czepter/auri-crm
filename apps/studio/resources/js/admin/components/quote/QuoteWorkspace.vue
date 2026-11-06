@@ -9,7 +9,8 @@ import { debounced } from '@/admin/lib/autosave'
 import { buildQuotePayload, type QuoteContact, type QuoteDraft, type VatSettings } from '@/admin/components/quote/quotePayload'
 import { centsToEuros, eurosToCents, formatDiscount, formatEuros, formatPercent } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
-import { quoteChipClass, quoteTitle } from '@/admin/lib/quoteDisplay'
+import { quoteTone, quoteTitle } from '@/admin/lib/quoteDisplay'
+import Chip from '@/ui/page/Chip.vue'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { DatePicker } from '@/ui/date-picker'
@@ -194,7 +195,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
     <section v-if="canManageQuotes && quote.status === 'draft' && drafts[quote.id]" class="mt-3 first:mt-0">
       <header v-if="showHeader" class="mb-3 flex flex-wrap items-center gap-3">
         <h2 class="m-0 text-body leading-[1.2] font-semibold tracking-[-0.015em]">{{ quoteTitle(quote, t) }}</h2>
-        <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
+        <Chip :tone="quoteTone(quote.status)">{{ quote.statusLabel }}</Chip>
         <QuoteActions :project-id="projectId" :quote="quote" :can-manage-quotes="canManageQuotes" />
       </header>
 
@@ -221,7 +222,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
       :title="quoteTitle(quote, t)"
     >
       <template v-if="showHeader" #action>
-        <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
+        <Chip :tone="quoteTone(quote.status)">{{ quote.statusLabel }}</Chip>
         <span v-if="quote.sentChannel" class="text-small text-ink-2">
           {{ quote.sentChannel === 'mail' ? $t('quotes.sentByMail') : $t('quotes.sentBySelf') }}
         </span>

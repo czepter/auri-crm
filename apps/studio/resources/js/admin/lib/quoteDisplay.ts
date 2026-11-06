@@ -1,3 +1,4 @@
+import type { ChipTone } from '@/ui/page/Chip.vue'
 import type { ComposerTranslation } from 'vue-i18n'
 
 type TitleSource = Pick<App.Quotes.Data.QuoteData, 'isAddendum' | 'predecessorNumber' | 'number'>
@@ -11,6 +12,6 @@ export function quoteTitle(quote: TitleSource, t: ComposerTranslation): string {
 }
 
 /** The one status colour map for quotes; `sent` is blue so it never shares booked's amber. */
-export function quoteChipClass(status: string): string {
-  return ({ sent: 'sent', accepted: 'done', superseded: 'off', expired: 'fail' } as Record<string, string>)[status] ?? 'next'
+export function quoteTone(status: string): ChipTone {
+  return ({ sent: 'info', accepted: 'success', superseded: 'neutral', expired: 'danger' } as Record<string, ChipTone>)[status] ?? 'neutral'
 }
