@@ -95,7 +95,7 @@ const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
         </span>
 
         <div class="animate-rise [animation-delay:320ms] motion-reduce:animate-none">
-          <div class="my-18 h-px bg-border" />
+          <div v-if="!project.quote" class="my-18 h-px bg-border" />
 
           <!-- The only piece of news there is at this point, in a sentence. A
                sent quote is its own news: the card above says it. -->
@@ -106,7 +106,7 @@ const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
             <p class="mt-4 max-w-[48ch] text-[17px] leading-[1.55] text-muted-foreground">{{ $t('portal.inquiryReceived') }}</p>
           </section>
 
-          <section :class="!project.quote && 'mt-18'">
+          <section :class="project.quote ? 'mt-12' : 'mt-18'">
             <div class="flex items-baseline gap-4">
               <PortalLabel>{{ $t('portal.notedTitle') }}</PortalLabel>
               <Button
