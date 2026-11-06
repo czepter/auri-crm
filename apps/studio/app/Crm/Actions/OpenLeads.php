@@ -111,10 +111,11 @@ class OpenLeads
      * telling. A stage before the offer anchor is unanswered, one at or past
      * acceptance is accepted, the span between them is the offer.
      */
-    private function group(?Stage $stage): ?string
+    private function group(?Stage $stage): string
     {
+        // An inquiry no stage claims is still one the badge counts.
         if ($stage === null) {
-            return null;
+            return 'unbeantwortet';
         }
 
         $sent = $this->stages->anchored(StagePipeline::Lead, StageAnchor::QuoteSent)?->sort_order;

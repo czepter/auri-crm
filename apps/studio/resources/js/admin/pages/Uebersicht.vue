@@ -235,7 +235,7 @@ const cards = computed(() =>
         {
             key: "todo",
             title: t("dashboard.todo"),
-            count: props.openTasks + props.todo.length,
+            count: props.openTasks,
             href: "/aufgaben",
             link: t("dashboard.allTasks"),
             rows: [...props.tasks.map(fromTask), ...props.todo.map(fromRow)],
