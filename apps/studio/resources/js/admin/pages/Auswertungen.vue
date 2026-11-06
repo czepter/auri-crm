@@ -89,7 +89,7 @@ function monthShown(month: string, index: number) {
 
 function monthLong(month: string) {
   const [year, index] = month.split('-')
-  return new Date(Number(year), Number(index) - 1, 1).toLocaleDateString('de-DE', { month: 'short', year: '2-digit' })
+  return new Date(Number(year), Number(index) - 1, 1).toLocaleDateString('de-DE', { month: 'short', year: 'numeric' })
 }
 
 // Trägt eine Reihe in weniger als drei Monaten einen Wert, sind zwölf
@@ -182,7 +182,7 @@ function barWidth(value: number, peak: number) {
 
 const windowLabel = computed(() => {
   const format = (date: string) =>
-    new Date(date).toLocaleDateString('de-DE', { month: 'short', year: '2-digit' })
+    new Date(date).toLocaleDateString('de-DE', { month: 'short', year: 'numeric' })
 
   return `${format(props.window.from)} – ${format(props.window.to)}`
 })
