@@ -338,8 +338,8 @@ onUnmounted(() => {
           :key="upload.id"
           class="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-md bg-muted p-1 text-center"
         >
-          <span class="text-[8.5px] text-muted-foreground">{{ $t(`media.${upload.stage}`) }}</span>
-          <span class="line-clamp-2 text-[8.5px] text-faint">{{ upload.filename }}</span>
+          <span class="text-[11px] text-muted-foreground">{{ $t(`media.${upload.stage}`) }}</span>
+          <span class="line-clamp-2 text-[11px] text-faint">{{ upload.filename }}</span>
         </div>
       </div>
 
@@ -362,18 +362,18 @@ onUnmounted(() => {
               @dblclick="lightbox = asset"
             >
               <img
-                class="block aspect-square w-full rounded-md object-cover"
+                class="block aspect-square w-full rounded-md bg-muted object-contain"
                 :class="selection.selected.has(asset.id) && 'outline-2 -outline-offset-2 outline-foreground'"
                 :src="`${asset.src}?w=400&fmt=jpeg`"
                 alt=""
                 loading="lazy"
               />
-              <span v-if="asset.isCover" class="absolute bottom-1.5 left-1.5 rounded bg-[rgba(25,25,25,0.7)] px-1.5 py-0.5 text-[8.5px] text-paper">
+              <span v-if="asset.isCover" class="absolute bottom-1.5 left-1.5 rounded bg-[rgba(25,25,25,0.7)] px-1.5 py-0.5 text-[11px] text-paper">
                 {{ $t('galleryRecord.cover') }}
               </span>
               <span
                 v-if="activeSetId === null"
-                class="absolute top-1.5 left-1.5 rounded-full bg-[rgba(25,25,25,0.7)] px-1.5 py-0.5 text-[8.5px] text-paper"
+                class="absolute top-1.5 left-1.5 rounded-full bg-[rgba(25,25,25,0.7)] px-1.5 py-0.5 text-[11px] text-paper"
               >
                 {{ setNames.get(asset.setId) }}
               </span>
