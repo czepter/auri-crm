@@ -102,7 +102,7 @@ function destroy() {
         <Link v-else href="/anfragen">{{ $t('board.title') }}</Link>
       </div>
 
-      <div class="sticky top-0 z-[5] -mx-[26px] mt-0.5 bg-background px-[26px] pb-4 max-[640px]:-mx-4 max-[640px]:px-4">
+      <div class="sticky top-0 z-[5] -mx-[26px] mt-0.5 bg-background px-[26px] pb-4 max-[640px]:contents">
         <div class="flex flex-wrap items-center gap-3">
           <slot name="title">
             <h1 class="m-0 text-[20px] leading-7 font-semibold tracking-[-0.02em]">
@@ -169,7 +169,8 @@ function destroy() {
 
         <!-- The track scrolls once the tabs outgrow the column; a local
              background paints its whole scroll width, not only what shows. -->
-        <nav ref="tabNav" class="mt-4 inline-flex max-w-full gap-0.5 overflow-x-auto rounded-lg p-[3px] text-small font-medium [background:linear-gradient(var(--sunk),var(--sunk))_local] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[640px]:[mask-image:linear-gradient(to_right,#000_calc(100%-28px),transparent)] max-[640px]:after:w-6 max-[640px]:after:flex-none max-[640px]:after:content-['']">
+        <div class="mt-4 max-[640px]:sticky max-[640px]:top-0 max-[640px]:z-[5] max-[640px]:-mx-4 max-[640px]:mt-2 max-[640px]:bg-background max-[640px]:px-4 max-[640px]:py-2">
+        <nav ref="tabNav" class="inline-flex max-w-full gap-0.5 overflow-x-auto rounded-lg p-[3px] text-small font-medium [background:linear-gradient(var(--sunk),var(--sunk))_local] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[640px]:[mask-image:linear-gradient(to_right,#000_calc(100%-28px),transparent)] max-[640px]:after:w-6 max-[640px]:after:flex-none max-[640px]:after:content-['']">
           <Link
             v-for="tab in header.tabs"
             :key="tab.key"
@@ -186,6 +187,7 @@ function destroy() {
             {{ $t(tab.label) }}<span v-if="tab.count" class="ml-1 text-small">{{ tab.count }}</span>
           </Link>
         </nav>
+        </div>
 
         <nav
           v-if="subTabs.length"
