@@ -189,11 +189,12 @@ function documentNote(document: Document) {
 
     <PortalWrap class="pb-[calc(80px+env(safe-area-inset-bottom))]">
       <section class="pt-6">
+        <p class="animate-rise motion-reduce:animate-none mb-3 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">{{ project.type }}</p>
         <h1 class="animate-rise motion-reduce:animate-none font-serif text-[clamp(26px,5vw,40px)] leading-[1.2] font-normal tracking-[var(--display-tracking)]">
           {{ project.name }}
         </h1>
-        <p v-if="project.date || project.venue" class="mt-1.5 text-[14px] leading-[1.5] tabular-nums text-muted-foreground">
-          {{ [project.date ? dayDate(project.date) : null, project.venue].filter(Boolean).join(' · ') }}
+        <p class="mt-1.5 text-[14px] leading-[1.5] tabular-nums text-muted-foreground">
+          {{ [project.date ? dayDate(project.date) : $t('portal.dateOpen'), project.venue].filter(Boolean).join(' · ') }}
         </p>
       </section>
 
