@@ -31,18 +31,18 @@ const frameSrc = refDebounced(framed, 300)
 
 <template>
   <AdminLayout active="einstellungen">
-    <FormShell v-if="phone" :title="$t(label)" :kicker="$t('settings.kicker')" :kicker-href="back">
+    <FormShell v-if="phone" :title="`${$t(label)} · ${$t('settings.clientRegister')}`" :kicker="$t('settings.kicker')" :kicker-href="back">
       <template #head>
         <BackButton class="ml-auto" :href="back" />
       </template>
 
       <div class="flex flex-col gap-6">
         <ChoiceGroup v-model="register" :label="$t('settings.clientRegister')" variant="segmented" :options="registerOptions" />
-        <ChoiceGroup v-model="state" :label="$t('portalSettings.welcomeSection')" variant="segmented" :options="stateOptions" />
       </div>
 
       <template #preview>
-        <aside class="sticky top-6 w-[430px] flex-none">
+        <aside class="sticky top-6 flex w-[430px] flex-none flex-col gap-3">
+          <ChoiceGroup v-model="state" :label="$t('portalSettings.welcomeSection')" variant="segmented" :options="stateOptions" />
           <div class="rounded-lg bg-muted p-5">
             <iframe :src="frameSrc" class="mx-auto block h-[calc(100dvh-200px)] w-[390px] rounded-md border-0 bg-background" title="" />
           </div>

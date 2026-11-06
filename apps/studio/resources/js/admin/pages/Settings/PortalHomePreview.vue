@@ -36,6 +36,7 @@ const props = defineProps<{
   pending: { title: string; note: string; aside: string }[]
   shelf: App.Catalog.Data.PortalServiceData[]
   clientRegister: string
+  state: 'inquiry' | 'active' | 'done'
 }>()
 // Wie portal/main.ts: ein Studio mit Sie bekommt die Sie-Texte.
 if (props.clientRegister === 'formal') useI18n().mergeLocaleMessage('de', { portal: de.portalFormal })
@@ -64,8 +65,8 @@ const years = computed(() => [...new Set(props.bookings.map((row) => row.year))]
             <h1 class="font-serif text-[clamp(38px,14.3px+6.08vw,86px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
               {{ client }}
             </h1>
-            <p v-if="welcomeText" class="mt-6 max-w-[52ch] text-title leading-[1.55] text-muted-foreground">
-              {{ welcomeText }}
+            <p class="mt-6 max-w-[52ch] text-title leading-[1.55] text-muted-foreground">
+              {{ welcomeText || $t(`portal.welcome.${state}`) }}
             </p>
           </section>
 

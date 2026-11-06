@@ -62,6 +62,7 @@ class HomeController extends Controller
         return Inertia::render('Home', [
             'contact' => ['name' => $contact->name],
             'welcomeText' => $settings->welcomeText($contact, $this->welcomeState($bookings->all())),
+            'welcomeState' => $this->welcomeState($bookings->all()),
             'pending' => $this->pending($contact, $projects, $settings),
             'bookings' => $bookings->all(),
             'phaseCounts' => $bookings->countBy('phase')->all(),

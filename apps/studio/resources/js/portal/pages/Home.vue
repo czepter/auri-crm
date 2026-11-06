@@ -50,6 +50,7 @@ const props = defineProps<{
   // T-08: the portal home's own welcome text (studio_settings.portal_welcome_text) —
   // null until a studio sets one, shown nowhere else.
   welcomeText: string | null
+  welcomeState: 'inquiry' | 'active' | 'done'
   pending: Pending[]
   bookings: Booking[]
   phaseCounts: Partial<Record<Phase, number>>
@@ -110,8 +111,8 @@ function phaseState(phase: Phase) {
         <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(38px,14.3px+6.08vw,86px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
           {{ contact.name }}
         </h1>
-        <p v-if="welcomeText" class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-6 max-w-[52ch] text-[17px] leading-[1.55] text-muted-foreground">
-          {{ welcomeText }}
+        <p class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-6 max-w-[52ch] text-[17px] leading-[1.55] text-muted-foreground">
+          {{ welcomeText || $t(`portal.welcome.${welcomeState}`) }}
         </p>
       </section>
 

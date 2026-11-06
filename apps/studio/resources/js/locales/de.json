@@ -1682,6 +1682,11 @@
     "previewBanner": "Vorschau als Kunde — nur ansehen, nichts ändern.",
     "previewLeave": "Vorschau beenden",
     "greeting": "Hallo {name}",
+    "welcome": {
+      "inquiry": "Schön, dass ihr da seid.",
+      "active": "Hier findet ihr alles zu eurem Termin.",
+      "done": "Danke, dass wir dabei sein durften."
+    },
     "allProjects": "Alle Projekte",
     "shootsTitle": "Shootings",
     "shootCount": "ein Termin | {count} Termine",
@@ -1874,6 +1879,10 @@
     "unsubscribeDone": "Abgemeldet."
   },
   "portalFormal": {
+    "welcome": {
+      "inquiry": "Schön, dass Sie da sind.",
+      "active": "Hier finden Sie alles zu Ihrem Termin."
+    },
     "yourData": "Ihre Daten",
     "emailIsLogin": "Damit melden Sie sich an.",
     "dataCopyHint": "Alles, was zu Ihnen gespeichert ist, als Datei.",
