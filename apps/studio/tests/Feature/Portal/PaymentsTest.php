@@ -142,3 +142,27 @@ it('lists payments among the booking\'s documents once a plan exists', function 
 
     expect(collect($props['project']['documents'])->pluck('kind')->all())->toContain('payments');
 });
+
+it('counts a rate invoiced outside the plan, and calls only a past due date overdue', function () {
+    StudioSettings::query()->update(['tax_number' => '22/123/45678']);
+    [$project, $contact] = t07PortalProjectWithPlan();
+    $project->paymentPlan->installments()->update(['due_on' => today()->toDateString()]);
+
+    $invoice = app(App\Payments\Actions\IssueInvoice::class)->positions($contact, $project, [
+        ['title' => 'Anzahlung', 'quantity' => 1, 'unit_price' => 50000],
+    ], today()->subDay()->toDateString(), [], null);
+    $invoice->installments()->update(['status' => PaymentInstallmentStatus::Paid, 'paid_amount' => $invoice->amount()]);
+
+    $plan = $this->actingAs($contact, 'portal')
+        ->get("/projekte/{$project->public_id}/zahlungen")
+        ->assertOk()
+        ->viewData('page')['props']['plan'];
+
+    expect($plan['total'])->toBe(100000 + $invoice->amount())
+        ->and($plan['openTotal'])->toBe(100000)
+        ->and(collect($plan['installments'])->pluck('isLate')->all())->toBe([false, false]);
+
+    PaymentInstallment::query()->whereNull('invoice_id')->update(['due_on' => today()->subDay()->toDateString()]);
+
+    expect(PaymentInstallment::query()->whereNull('invoice_id')->first()->isLate())->toBeTrue();
+});

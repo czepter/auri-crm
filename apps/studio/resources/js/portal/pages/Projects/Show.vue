@@ -31,6 +31,7 @@ type Document = {
   kind: 'payments' | 'contract' | 'quote' | 'messages'
   href: string
   dueOn: string | null
+  overdue?: boolean
   signedOn?: string | null
   acceptedOn?: string | null
   amount: number | null
@@ -175,7 +176,7 @@ function documentNote(document: Document) {
         :kicker="waiting ? $t(waiting.kind === 'payments' ? 'portal.payment' : `portal.document.${waiting.kind}`) : undefined"
         :amount="waiting?.amount ? formatEuros(waiting.amount) : undefined"
         :note="waiting?.kind === 'payments' && waiting.dueOn
-          ? $t('portal.dueOn', { date: shortDate(waiting.dueOn) })
+          ? $t(waiting.overdue ? 'portal.overdueSince' : 'portal.dueOn', { date: shortDate(waiting.dueOn) })
           : waiting?.kind === 'contract'
             ? $t('portal.notSignedYet')
             : waiting?.kind === 'quote' && waiting.dueOn ? `${$t('quotes.validUntil')} ${shortDate(waiting.dueOn)}` : undefined"
@@ -183,7 +184,7 @@ function documentNote(document: Document) {
         <template v-if="waiting || statement" #rail>
           <Button v-if="waiting" as-child variant="portal">
             <Link :href="waiting.href">
-              {{ $t({ payments: 'portal.document.payments', contract: 'portal.contractView', quote: 'portal.quoteView', messages: 'portal.document.messages' }[waiting.kind]) }}
+              {{ $t({ payments: 'portal.paymentsView', contract: 'portal.contractView', quote: 'portal.quoteView', messages: 'portal.document.messages' }[waiting.kind]) }}
             </Link>
           </Button>
           <h2 v-else class="font-serif text-[clamp(24px,3vw,32px)] leading-[1.15] font-normal tracking-[-0.015em]">
@@ -284,10 +285,10 @@ function documentNote(document: Document) {
               :key="document.kind"
               :href="document.href"
               :title="$t(`portal.document.${document.kind}`)"
-              :state="document.settled ? 'done' : 'open'"
+              :state="document.settled ? 'done' : document.overdue ? 'late' : 'open'"
               :note="{
                 settled: $t('portal.allSettled'),
-                due: document.dueOn ? $t('portal.dueOn', { date: shortDate(document.dueOn) }) : null,
+                due: document.dueOn ? $t(document.overdue ? 'portal.overdueSince' : 'portal.dueOn', { date: shortDate(document.dueOn) }) : null,
                 signed: document.signedOn ? $t('portal.signedOn', { date: shortDate(document.signedOn) }) : null,
                 unsigned: $t('portal.notSignedYet'),
                 accepted: document.acceptedOn ? $t('portal.quoteAccepted', { date: shortDate(document.acceptedOn) }) : null,

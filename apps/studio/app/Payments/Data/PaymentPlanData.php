@@ -2,6 +2,8 @@
 
 namespace App\Payments\Data;
 
+use App\Crm\Models\ClientCase;
+use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use Spatie\LaravelData\Data;
@@ -57,6 +59,43 @@ class PaymentPlanData extends Data
             reference: $plan->reference,
             settledOn: $plan->settled_at?->format('Y-m-d'),
             installments: $items,
+        );
+    }
+
+    /**
+     * What a client owes on a whole project: the plan's rates and every rate
+     * of an invoice written outside the plan, each counted once. A cancelled
+     * rate stays in the list and drops out of the sums.
+     */
+    public static function forCase(ClientCase $case): ?self
+    {
+        $case->load('paymentPlan.installments.invoice.items', 'paymentPlan.installments.invoice.creditNotes');
+
+        $rows = ($case->paymentPlan?->installments ?? collect())
+            ->concat(Invoice::query()->where('case_id', $case->id)->with('installments.invoice.items', 'installments.invoice.creditNotes')->get()->flatMap->installments)
+            ->unique('id')
+            ->sortBy('due_on')
+            ->values();
+
+        if ($rows->isEmpty()) {
+            return null;
+        }
+
+        $live = $rows->reject->isCancelled();
+        $total = (int) $live->sum('amount');
+
+        return new self(
+            id: $case->paymentPlan?->public_id ?? '',
+            total: $total,
+            openTotal: $total - (int) $live->sum('paid_amount'),
+            reference: $case->paymentPlan?->reference,
+            settledOn: $case->paymentPlan?->settled_at?->format('Y-m-d'),
+            installments: $rows->map(fn (PaymentInstallment $row) => PaymentInstallmentData::fromModel(
+                $row,
+                $row->title ?? ($row->payment_plan_id !== null
+                    ? self::labelForInstallment($row)
+                    : ($row->invoice?->items->first()?->title ?? (string) $row->invoice?->number)),
+            ))->all(),
         );
     }
 
