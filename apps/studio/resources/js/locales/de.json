@@ -310,6 +310,7 @@
     "timelineIcs": "ICS",
     "tasks": "Aufgaben",
     "taskAdd": "Aufgabe",
+    "taskCreate": "Anlegen",
     "taskTitle": "Aufgabe",
     "taskDue": "Fällig",
     "taskAudience": "Betrifft",

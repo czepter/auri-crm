@@ -9,7 +9,6 @@ import { Button } from '@/ui/button'
  */
 import { computed, ref } from 'vue'
 import { router, useForm, usePage } from '@inertiajs/vue3'
-import TaskCreateDialog from '@/admin/components/crm/TaskCreateDialog.vue'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/crm/ProjectShell.vue'
@@ -75,10 +74,10 @@ const openSummary = computed(() => {
 
 const doneSummary = computed(() => done.value.map((task) => task.title).join(', '))
 
-const form = useForm({ title: '', audience: 'internal', due_on: '' })
+const form = useForm({ title: '', audience: 'internal', due_on: '', assignee: 'none' })
 
 function add() {
-  form.post(`/auftraege/${props.header.id}/aufgaben`, {
+  form.transform((data) => ({ ...data, assignee: data.assignee === 'none' ? null : data.assignee })).post(`/auftraege/${props.header.id}/aufgaben`, {
     preserveScroll: true,
     onSuccess: () => form.reset(),
   })
@@ -139,41 +138,27 @@ function reopen(row: App.Crm.Data.TaskRowData) {
             </Select>
           </div>
 
-          <!-- Eine Box: Titel oben, Fälligkeit und Zielgruppe in der Fußzeile
-               darin, der Knopf unten rechts. -->
-          <form
-            v-if="header.canManageTasks"
-            class="flex flex-col rounded-md border border-rule focus-within:border-ring"
-            @submit.prevent="add"
-          >
-            <input :aria-label="$t('lead.taskTitle')"
+          <form v-if="header.canManageTasks" class="flex flex-wrap items-center gap-2.5" @submit.prevent="add">
+            <input
               v-model="form.title"
-              class="border-0 bg-transparent px-3.5 pt-3 pb-1.5 text-small outline-none"
-              type="text"
+              :aria-label="$t('lead.taskTitle')"
               :placeholder="$t('lead.taskTitle')"
+              class="h-9 min-w-[220px] flex-1 rounded-md border border-rule bg-transparent px-3 text-small outline-none focus:border-ring"
+              type="text"
             >
-            <div class="flex flex-wrap items-center gap-4 px-3 pt-1 pb-2.5 max-[640px]:gap-x-2">
-              <DatePicker v-model="form.due_on" class="w-[150px] [&_input]:h-8 [&_input]:border-0 [&_input]:bg-transparent [&_input]:px-0" />
-              <Select v-model="form.audience">
-                <SelectTrigger class="h-8 w-[110px] border-0 bg-transparent px-0 text-ink-2"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="internal">{{ $t('lead.audienceInternal') }}</SelectItem>
-                  <SelectItem value="client">{{ $t('lead.audienceClient') }}</SelectItem>
-                </SelectContent>
-              </Select>
-              <!-- Anker, Shooting und Zuständigkeit passen nicht in die
-                   Fußzeile und sind der seltenere Fall: sie bleiben im Dialog,
-                   der sie schon kann. -->
-              <TaskCreateDialog
-                :project-id="header.id"
-                :anchors="anchors"
-                :shoot-options="shootOptions"
-                :staff-options="staffOptions"
-              />
-              <Button class="ml-1 max-[640px]:ml-auto" variant="pill" type="submit" :disabled="!form.title || form.processing">
-                {{ $t('lead.addTask') }}
-              </Button>
-            </div>
+            <DatePicker v-model="form.due_on" class="w-[150px]" />
+            <Select v-if="!$page.props.soloStudio" v-model="form.assignee">
+              <SelectTrigger class="w-44" :aria-label="$t('project.taskAssignee')"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">{{ $t('project.taskUnassigned') }}</SelectItem>
+                <SelectItem v-for="option in staffOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="pill" type="submit" :disabled="!form.title || form.processing">
+              {{ $t('project.taskCreate') }}
+            </Button>
           </form>
 
           <template v-for="group in groups" :key="group.key">
