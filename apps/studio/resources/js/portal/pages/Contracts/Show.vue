@@ -144,12 +144,12 @@ function sign() {
           </div>
 
           <Button
-            class="min-h-12 w-full justify-center disabled:bg-sunk-2 disabled:text-muted-foreground disabled:opacity-100 disabled:shadow-[inset_0_0_0_1px_var(--muted)]"
+            class="min-h-12 w-full justify-center disabled:bg-sunk-2 disabled:text-foreground disabled:opacity-100 disabled:shadow-[inset_0_0_0_1px_var(--muted)]"
             variant="portal"
             type="submit"
             :disabled="form.processing || !form.consent || !form.typedName"
           >
-            {{ $t('portal.signButton') }}
+            {{ form.consent ? $t('portal.signButton') : $t('portal.signAgree') }}
           </Button>
         </form>
       </div>
