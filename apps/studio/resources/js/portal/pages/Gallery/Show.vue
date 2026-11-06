@@ -253,7 +253,7 @@ const COVER_INPUT = [
       <!-- data-tokens: the gate's title is a bare h1, and tokens.css sets one
            unlayered — 24px in the app's own sans, which beats any utility. -->
       <div data-tokens class="relative z-3 w-[min(560px,100%)] px-8 py-11 text-center">
-        <span class="text-[13px] leading-none font-bold tracking-[0.18em] whitespace-nowrap uppercase text-inherit no-underline">
+        <span class="inline-block text-[13px] leading-none font-bold tracking-[0.18em] whitespace-nowrap uppercase text-inherit no-underline" :class="cover && 'rounded-full bg-[rgba(12,10,9,.72)] px-3.5 py-2'">
           {{ studioName }}
         </span>
         <h1
@@ -295,7 +295,7 @@ const COVER_INPUT = [
 
       <a
         v-if="assets?.length && !unlocked"
-        class="absolute bottom-8 left-1/2 z-2 flex -translate-x-1/2 flex-col items-center gap-2.5 text-[14px] leading-none font-semibold tracking-[0.12em] uppercase text-white [text-shadow:0_1px_12px_rgba(0,0,0,.7)] no-underline [&_svg]:size-4 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.4]"
+        class="absolute bottom-8 left-1/2 z-2 flex -translate-x-1/2 flex-col items-center gap-2.5 rounded-full bg-[rgba(12,10,9,.72)] px-4 py-3 text-[14px] leading-none font-semibold tracking-[0.12em] uppercase text-white [text-shadow:0_1px_12px_rgba(0,0,0,.7)] no-underline [&_svg]:size-4 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.4]"
         href="#raster"
       >
         {{ $t('gallery.scrollCue') }}
