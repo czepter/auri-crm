@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { router, useForm, usePage } from '@inertiajs/vue3'
 import GalleryLightbox from '@/portal/components/GalleryLightbox.vue'
+import PortalHeader from '@/portal/components/PortalHeader.vue'
 import { shortDate } from '@/portal/lib/dates'
 import { ALL, countOf, selections, visible } from '@/portal/lib/gallerySelections'
 import { GRID_WIDTHS, srcSet } from '@/portal/lib/images'
@@ -32,6 +33,8 @@ const props = defineProps<{
     expiresAt: string | null
     url: string
   }
+  // Set for the couple only; it is what mounts the portal shell.
+  project: { id: string; name: string } | null
   unlocked: boolean
   offers: { downloads: boolean; lists: boolean; comments: boolean }
   assets: Asset[] | null
@@ -202,7 +205,7 @@ const COVER_INPUT = [
   <!-- data-theme stays: tokens.css declares the gallery palette under it,
        and this element is the theme root that has to paint its own
        background — the portal's <html> is themed "portal" (gallery.css). -->
-  <div data-theme="gallery" class="block min-h-screen bg-background text-foreground">
+  <div data-theme="gallery" class="block min-h-screen bg-background text-foreground" :class="project && 'max-[760px]:pb-[68px]'">
     <header
       class="relative grid min-h-[100svh] place-items-center overflow-hidden max-[760px]:min-h-[82svh] before:absolute before:inset-0 before:z-1 before:content-['']"
       :class="
@@ -217,6 +220,10 @@ const COVER_INPUT = [
         alt=""
         class="absolute inset-0 size-full object-cover object-[50%_38%]"
       />
+
+      <div v-if="project" data-tokens>
+        <PortalHeader over />
+      </div>
 
       <!-- data-tokens: the gate's title is a bare h1, and tokens.css sets one
            unlayered — 24px in the app's own sans, which beats any utility. -->
@@ -380,7 +387,7 @@ const COVER_INPUT = [
            guest never receives any of it. -->
       <section
         v-if="offers.lists && lists"
-        class="mx-auto grid max-w-[1240px] grid-cols-[minmax(0,1fr)] gap-16 border-t border-border px-8 py-16 max-[760px]:px-4 min-[900px]:grid-cols-[minmax(0,1fr)_320px] [&>div:not(:first-child)]:mt-11"
+        class="mx-auto grid max-w-[1240px] grid-cols-[minmax(0,1fr)] gap-16 border-t border-border px-8 py-16 max-[760px]:px-4 min-[1100px]:grid-cols-[minmax(0,1fr)_320px] [&>div:not(:first-child)]:mt-11"
       >
         <div>
           <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.listsTitle') }}</p>
@@ -479,17 +486,10 @@ const COVER_INPUT = [
           </form>
 
           <p v-if="freshSecret" class="text-[12.5px] leading-[1.55] font-normal text-muted-foreground mt-[9px]"><b>{{ freshSecret }}</b> — {{ $t('gallery.secretOnce') }}</p>
-        </div>
 
-        <div v-if="guests">
-          <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.guestsTitle') }}</p>
-          <dl
-            class="m-0 grid grid-cols-[1fr_auto] gap-x-5 gap-y-3.5 text-[13.5px] leading-none font-normal [&_dd]:m-0 [&_dd]:tabular-nums [&_dd]:text-foreground [&_dt]:text-muted-foreground"
-          >
-            <dt>{{ $t('gallery.views') }}</dt><dd>{{ guests.views }}</dd>
-            <dt>{{ $t('gallery.marks') }}</dt><dd>{{ guests.marks }}</dd>
-            <dt>{{ $t('gallery.comments') }}</dt><dd>{{ guests.comments }}</dd>
-          </dl>
+          <p v-if="guests" class="mt-5 text-[13.5px] leading-none tabular-nums text-muted-foreground">
+            {{ $t('gallery.guestsLine', { views: $t('gallery.views', guests.views), marks: $t('gallery.marks', guests.marks), comments: $t('gallery.comments', guests.comments) }) }}
+          </p>
         </div>
       </section>
 
