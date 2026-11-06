@@ -140,7 +140,7 @@ watch(
           v-for="option in [{ key: 'fit', on: true }, { key: 'full', on: false }]"
           :key="option.key"
           class="cursor-pointer rounded-lg border-0 px-2.5 py-[5px] text-small leading-[1.3]"
-          :class="fit === option.on ? 'bg-foreground text-background' : 'bg-sunk-2 text-foreground'"
+          :class="fit === option.on ? 'bg-paper font-medium text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'bg-sunk-2 text-foreground'"
           type="button"
           @click="fit = option.on"
         >{{ $t(`documentTemplates.zoom_${option.key}`) }}</button>

@@ -285,7 +285,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                             :key="option.key"
                             :href="`/?zeitraum=${option.key}`"
                             class="rounded-[var(--r-sm)] px-3.5 py-[5px] text-small font-medium tracking-[-0.01em] no-underline"
-                            :class="range === option.key ? 'bg-foreground font-semibold text-background' : 'text-ink-2 shadow-[inset_0_0_0_1px_var(--line-hover)]'"
+                            :class="range === option.key ? 'bg-paper font-semibold text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'text-ink-2 shadow-[inset_0_0_0_1px_var(--line-hover)]'"
                         >
                             {{ $t(option.label) }}
                         </Link>
@@ -301,7 +301,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                         :key="option.key"
                         :href="`/?zeitraum=${option.key}`"
                         class="rounded-[var(--r-sm)] px-3.5 py-[5px] text-small font-medium tracking-[-0.01em] no-underline"
-                        :class="range === option.key ? 'bg-foreground font-semibold text-background' : 'text-ink-2 shadow-[inset_0_0_0_1px_var(--line-hover)]'"
+                        :class="range === option.key ? 'bg-paper font-semibold text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'text-ink-2 shadow-[inset_0_0_0_1px_var(--line-hover)]'"
                     >
                         {{ $t(option.label) }}
                     </Link>

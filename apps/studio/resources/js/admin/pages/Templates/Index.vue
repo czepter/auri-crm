@@ -135,7 +135,7 @@ function open(row: Row) {
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('templates.title')">
           <div class="ml-auto flex items-center gap-2.5">
-            <Input v-model="query" class="w-[220px]" type="search" :placeholder="$t('templates.search')" />
+            <Input v-model="query" class="min-w-60 w-60" type="search" :placeholder="$t('templates.search')" />
             <TemplateCreateDialog
               :kinds="kinds"
               :kind="kind"
@@ -149,7 +149,7 @@ function open(row: Row) {
         <div class="flex flex-wrap items-center gap-2 px-6 pt-5">
           <Link
             class="rounded-lg px-2.5 py-[5px] text-small leading-[1.3] no-underline"
-            :class="kind === null ? 'bg-foreground text-background' : 'bg-sunk-2 text-foreground'"
+            :class="kind === null ? 'bg-paper font-medium text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'bg-sunk-2 text-foreground'"
             href="/vorlagen"
           >
             {{ $t('templates.all') }}
@@ -159,7 +159,7 @@ function open(row: Row) {
             v-for="entry in kinds"
             :key="entry"
             class="rounded-lg px-2.5 py-[5px] text-small leading-[1.3] no-underline"
-            :class="kind === entry ? 'bg-foreground text-background' : 'bg-sunk-2 text-foreground'"
+            :class="kind === entry ? 'bg-paper font-medium text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'bg-sunk-2 text-foreground'"
             :href="`/vorlagen?typ=${entry}`"
           >
             {{ $t(KIND_LABEL[entry]) }}
