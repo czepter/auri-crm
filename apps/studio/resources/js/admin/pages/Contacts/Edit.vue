@@ -6,6 +6,8 @@ import ContactQueue from '@/admin/components/crm/ContactQueue.vue'
 import ContactPortalFields from '@/admin/components/crm/ContactPortalFields.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
+import SaveState from '@/ui/page/SaveState.vue'
+import { saveState } from '@/admin/lib/autosave'
 import Panel from '@/admin/components/crm/Panel.vue'
 import Metric from '@/admin/components/crm/Metric.vue'
 import { Button } from '@/ui/button'
@@ -236,7 +238,7 @@ function eraseDsgvoData() {
         <PageHead :kicker="$t('contacts.title')" kicker-href="/kontakte" :title="contact.name">
           <div class="ml-auto flex items-center gap-2">
             <template v-if="editing">
-              <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
+              <SaveState :state="saveState([form])" />
               <Button variant="pill-muted" type="button" @click="cancelEdit">{{ $t('common.cancel') }}</Button>
               <Button v-if="form.isDirty" variant="pill" type="submit" form="contact-form" :disabled="form.processing">
                 {{ $t('common.save') }}
