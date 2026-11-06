@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import Page from '@/ui/page/Page.vue'
@@ -34,6 +34,9 @@ const hasRail = computed(
 // Info is the rail where there is no room for the rail.
 const wide = useMediaQuery('(min-width: 1080px)')
 watch(wide, (is) => is && props.active === 'info' && router.visit(props.header.tabs[0].href, { replace: true }), { immediate: true })
+
+const tabNav = useTemplateRef<HTMLElement>('tabNav')
+onMounted(() => tabNav.value?.querySelector('[aria-current]')?.scrollIntoView({ inline: 'center', block: 'nearest' }))
 
 const subTabs = computed(() => props.header.tabs.find((tab) => tab.key === props.active)?.children ?? [])
 
@@ -162,12 +165,12 @@ function destroy() {
 
         <!-- The track scrolls once the tabs outgrow the column; a local
              background paints its whole scroll width, not only what shows. -->
-        <nav class="mt-4 inline-flex max-w-full gap-0.5 overflow-x-auto rounded-lg p-[3px] text-small font-medium [background:linear-gradient(var(--sunk),var(--sunk))_local] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <nav ref="tabNav" class="mt-4 inline-flex max-w-full gap-0.5 overflow-x-auto rounded-lg p-[3px] text-small font-medium [background:linear-gradient(var(--sunk),var(--sunk))_local] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Link
             v-for="tab in header.tabs"
             :key="tab.key"
             :href="tab.href"
-            class="rounded-[var(--r-sm)] px-2.5 py-1 whitespace-nowrap no-underline"
+            class="flex-none rounded-[var(--r-sm)] px-2.5 py-1 whitespace-nowrap no-underline"
             :class="[
               tab.key === active
                 ? 'bg-paper text-foreground shadow-[0_1px_2px_rgba(24,24,27,.08)]'
