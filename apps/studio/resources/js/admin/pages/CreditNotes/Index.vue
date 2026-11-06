@@ -36,7 +36,7 @@ const shown = computed(() => {
 
         <template v-if="creditNotes.length">
           <div class="flex flex-wrap items-center gap-3 px-6 pt-4.5">
-            <Input v-model="query" class="h-8 w-64" type="search" :placeholder="$t('creditNotesOverview.searchPlaceholder')" />
+            <Input v-model="query" class="h-8 w-64 shrink-0" type="search" :placeholder="$t('creditNotesOverview.searchPlaceholder')" />
           </div>
 
           <Table class="max-[640px]:block max-[640px]:overflow-x-auto">

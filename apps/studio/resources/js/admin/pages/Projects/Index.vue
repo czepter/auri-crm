@@ -208,7 +208,7 @@ function reset() {
                 {{ option.name }}<span class="text-small tabular-nums opacity-60">{{ option.count }}</span>
               </button>
             </div>
-            <Input v-model="query" class="ml-auto h-8 w-60" type="search" :placeholder="$t('projects.searchPlaceholder')" />
+            <Input v-model="query" class="ml-auto h-8 w-64 shrink-0" type="search" :placeholder="$t('projects.searchPlaceholder')" />
           </div>
 
           <Table>
