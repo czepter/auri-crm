@@ -145,3 +145,16 @@ Capture artefacts that cost four rounds: a full-page screenshot leaves the contr
 - Admin weakest criteria: layout (6.7) and accessibility (6.9). Pages with little content leave most of 1920 px empty; Flash scores that, Opus does not.
 - Admin: setup wizard route, contract editor shows the text twice, Neuigkeiten empty.
 - Tests not run since round 15: full Pest and Vitest need a pass before any PR.
+
+### Goal run, last rounds: Opus only
+
+Flash dropped as reviewer on request (it rated populated tables as empty and swung 0.5 points between runs); Argon out of quota since round 14. Opus is the single strict reviewer.
+
+| Round | Admin 1920 | Portal 390 |
+|---|---|---|
+| 17 | 7.0 | 8.0 |
+| 18 | 7.3 | 8.2 |
+| 19 | 7.2 | 8.3 |
+| 20 | 7.2 (3 of 71 at 8) | 8.4 (25 of 30 at 8) |
+
+Round to round the change stays inside ±0.15. Open: contract editor and preview (6.0), setting previews for greeting and portal (6.1), Neuigkeiten (6.3), project overview without a primary action, report count 11 vs sidebar 10.
