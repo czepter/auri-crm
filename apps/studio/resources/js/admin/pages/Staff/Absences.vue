@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { router, useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormShell from '@/ui/page/FormShell.vue'
 import ProfileNav from '@/admin/components/settings/ProfileNav.vue'
-import Empty from '@/ui/page/Empty.vue'
 import { Button } from '@/ui/button'
-import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
 import { DatePicker } from '@/ui/date-picker'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Label } from '@/ui/label'
@@ -40,15 +37,11 @@ function destroy(id: string) {
 // first, and the studio's ruling for the second: away is away.
 const me = (usePage().props.auth as { user: { id: string } | null }).user?.id ?? ''
 const newForm = useForm({ user: me, starts_on: '', ends_on: '' })
-const adding = ref(false)
 
 function add() {
   newForm.post('/abwesenheiten', {
     preserveScroll: true,
-    onSuccess: () => {
-      newForm.reset()
-      adding.value = false
-    },
+    onSuccess: () => newForm.reset(),
   })
 }
 </script>
@@ -57,64 +50,13 @@ function add() {
   <AdminLayout active="abwesenheiten">
     <FormShell :kicker="$t('profile.kicker')" :title="$t('absences.title')">
       <template #nav><ProfileNav active="abwesenheiten" /></template>
-        <template #head>
-          <!-- The add form used to sit permanently at the foot of the page, below
-               however many absences the list held — you scrolled past everyone
-               else's holiday to book your own. As a dialog it moves to where the
-               other list screens keep their create action: the header. -->
-          <Dialog v-model:open="adding">
-            <DialogTrigger v-if="absences.length" as-child>
-              <Button class="ml-auto" variant="pill" type="button">{{ $t('absences.add') }}</Button>
-            </DialogTrigger>
 
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{{ $t('absences.add') }}</DialogTitle>
-              </DialogHeader>
-
-              <DialogBody>
-                <form id="absence-create-form" class="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-6 gap-y-4" @submit.prevent="add">
-                  <div v-if="canManageCrew && staff.length > 1" class="col-span-full flex min-w-0 flex-col gap-1.5">
-                    <Label for="new-user">{{ $t('absences.person') }}</Label>
-                    <Select :model-value="newForm.user" @update:model-value="(value) => (newForm.user = String(value))">
-                      <SelectTrigger id="new-user">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem v-for="member in staff" :key="member.id" :value="member.id">{{ member.name }}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div class="flex min-w-0 flex-col gap-1.5">
-                    <Label for="new-starts">{{ $t('absences.startsOn') }}</Label>
-                    <DatePicker id="new-starts" v-model="newForm.starts_on" />
-                    <p v-if="newForm.errors.starts_on" class="text-small leading-[1.45] text-destructive">{{ newForm.errors.starts_on }}</p>
-                  </div>
-                  <div class="flex min-w-0 flex-col gap-1.5">
-                    <Label for="new-ends">{{ $t('absences.endsOn') }}</Label>
-                    <DatePicker id="new-ends" v-model="newForm.ends_on" />
-                    <p v-if="newForm.errors.ends_on" class="text-small leading-[1.45] text-destructive">{{ newForm.errors.ends_on }}</p>
-                  </div>
-                </form>
-              </DialogBody>
-
-              <DialogFooter>
-                <Button type="submit" form="absence-create-form" :disabled="newForm.processing">
-                  {{ $t('absences.add') }}
-                </Button>
-                <DialogClose as-child>
-                  <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
-                </DialogClose>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </template>
-
-        <Empty v-if="!absences.length" :text="$t('absences.empty')">
-          <Button variant="pill" type="button" @click="adding = true">{{ $t('absences.add') }}</Button>
-        </Empty>
-
-        <div v-else>
+        <div v-if="absences.length">
+          <div class="flex items-center gap-3 pb-2 text-small text-ink-2">
+            <span v-if="!$page.props.soloStudio" class="w-44 flex-none">{{ $t('absences.person') }}</span>
+            <span class="w-36">{{ $t('absences.startsOn') }}</span>
+            <span class="w-36">{{ $t('absences.endsOn') }}</span>
+          </div>
           <div
             v-for="absence in absences"
             :key="absence.id"
@@ -165,6 +107,36 @@ function add() {
             </form>
           </div>
         </div>
+
+        <template #aside>
+          <form class="grid gap-4" @submit.prevent="add">
+            <h2 class="text-ui font-semibold">{{ $t('absences.add') }}</h2>
+            <div v-if="canManageCrew && staff.length > 1" class="flex min-w-0 flex-col gap-1.5">
+              <Label for="new-user">{{ $t('absences.person') }}</Label>
+              <Select :model-value="newForm.user" @update:model-value="(value) => (newForm.user = String(value))">
+                <SelectTrigger id="new-user">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="member in staff" :key="member.id" :value="member.id">{{ member.name }}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div class="flex min-w-0 flex-col gap-1.5">
+              <Label for="new-starts">{{ $t('absences.startsOn') }}</Label>
+              <DatePicker id="new-starts" v-model="newForm.starts_on" />
+              <p v-if="newForm.errors.starts_on" class="text-small leading-[1.45] text-destructive">{{ newForm.errors.starts_on }}</p>
+            </div>
+            <div class="flex min-w-0 flex-col gap-1.5">
+              <Label for="new-ends">{{ $t('absences.endsOn') }}</Label>
+              <DatePicker id="new-ends" v-model="newForm.ends_on" />
+              <p v-if="newForm.errors.ends_on" class="text-small leading-[1.45] text-destructive">{{ newForm.errors.ends_on }}</p>
+            </div>
+            <div>
+              <Button type="submit" :disabled="newForm.processing">{{ $t('absences.add') }}</Button>
+            </div>
+          </form>
+        </template>
     </FormShell>
   </AdminLayout>
 </template>
