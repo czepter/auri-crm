@@ -207,7 +207,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
                 </SelectContent>
               </Select>
               <span
-                class="ml-auto text-small whitespace-nowrap tabular-nums"
+                class="text-small max-[640px]:ml-auto whitespace-nowrap tabular-nums"
                 :class="row.isOverdue ? 'text-destructive' : 'text-ink-2'"
               >{{ row.dueOn ? dayWithWeekday(row.dueOn) : row.dueAnchorLabel }}</span>
             </div>
