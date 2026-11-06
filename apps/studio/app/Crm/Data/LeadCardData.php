@@ -69,7 +69,7 @@ class LeadCardData extends Data
             daysInStage: $daysInStage,
             stale: $lead->stage->anchor !== StageAnchor::Won
                 && $daysInStage >= FibonacciReminderSchedule::FIRST_RUNG,
-            value: $project->currentQuote?->total,
+            value: $project->currentQuote?->gross(),
             lastAt: $lead->stage_entered_at->toIso8601String(),
             conflicts: $conflicts,
         );

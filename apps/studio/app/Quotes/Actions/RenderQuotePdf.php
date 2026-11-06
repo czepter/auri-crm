@@ -52,6 +52,12 @@ class RenderQuotePdf
     public function html(Quote $quote, ?QuoteLayout $layoutOverride = null): string
     {
         $quote = $quote->asSeenByClient();
+
+        if ($quote->vat_mode === null) {
+            $quote = clone $quote;
+            $quote->forceFill(Quote::computeVat($quote->net, $quote->items));
+        }
+
         $project = $quote->case;
         $data = $this->mergeData->forCase($project);
 

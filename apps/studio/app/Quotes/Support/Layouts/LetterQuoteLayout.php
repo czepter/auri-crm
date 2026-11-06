@@ -22,7 +22,7 @@ class LetterQuoteLayout implements QuoteLayoutRenderer
         return '<div class="doc-layout-letter">'
             .'<div class="dll-top">'
             .'<span>'.e($studioLine).'</span>'
-            .'<span>'.($quote->created_at?->format('d.m.Y') ?? '').'</span>'
+            .'<span>'.(($quote->sent_at ?? $quote->created_at)?->format('d.m.Y') ?? '').'</span>'
             .'</div>'
             .'<div class="dll-title">Angebot</div>'
             .'<div class="dll-sub">'.($quote->number === null ? '' : 'Nr. '.e($quote->number)).($quote->valid_until === null ? '' : ' · gültig bis '.e($quote->valid_until->format('d.m.Y'))).'</div>'

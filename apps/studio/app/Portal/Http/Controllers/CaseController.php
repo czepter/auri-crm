@@ -273,7 +273,7 @@ class CaseController extends Controller
                 'href' => "/projekte/{$found->public_id}/angebot",
                 'dueOn' => $found->latestQuote->valid_until?->format('Y-m-d'),
                 'acceptedOn' => ($found->latestQuote->accepted_at ?? $found->booked_at)?->format('Y-m-d'),
-                'amount' => (int) $found->latestQuote->total,
+                'amount' => $found->latestQuote->gross(),
                 'settled' => $found->latestQuote->status === QuoteStatus::Accepted || $found->isBooked(),
             ];
         }

@@ -182,7 +182,7 @@ class HomeController extends Controller
             if ($quote?->status === QuoteStatus::Sent) {
                 $rows[] = [
                     'kind' => 'quote',
-                    'amount' => (int) $quote->total,
+                    'amount' => $quote->gross(),
                     'dueOn' => $quote->valid_until?->format('Y-m-d'),
                     'overdue' => false,
                     'booking' => $project->name,

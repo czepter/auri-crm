@@ -167,10 +167,10 @@ class ContactController extends Controller
                     'name' => $project->name,
                     'role' => $project->pivot->role,
                     'date' => $project->primaryShoot?->date?->format('Y-m-d'),
-                    'value' => $project->latestQuote?->total,
+                    'value' => $project->latestQuote?->gross(),
                     'booked' => $project->isBooked(),
                     'open' => ! $project->isBooked() && ! $project->isClosed(),
-                    'quote' => $project->currentQuote === null ? null : ['status' => $project->currentQuote->status->value, 'total' => $project->currentQuote->total],
+                    'quote' => $project->currentQuote === null ? null : ['status' => $project->currentQuote->status->value, 'total' => $project->currentQuote->gross()],
                 ])->all(),
             'galleries' => Gallery::query()
                 ->whereIn('case_id', $contact->cases()->select('cases.id'))

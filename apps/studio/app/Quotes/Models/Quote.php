@@ -164,7 +164,12 @@ class Quote extends Model
 
     public function gross(): int
     {
-        return $this->net + ($this->vat_mode === 'standard' ? ($this->vat_amount ?? 0) : 0);
+        // A draft has no frozen VAT yet; the tenant's current setting stands in, as QuoteData does.
+        $vat = $this->vat_mode !== null
+            ? ['vat_mode' => $this->vat_mode, 'vat_amount' => $this->vat_amount]
+            : self::computeVat($this->net, $this->items);
+
+        return $this->net + ($vat['vat_mode'] === 'standard' ? ($vat['vat_amount'] ?? 0) : 0);
     }
 
     /** The quote this one revises, if any — App\Quotes\Actions\ReviseQuote's own new row. */

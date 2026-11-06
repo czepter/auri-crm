@@ -62,7 +62,7 @@ class ClassicQuoteLayout implements QuoteLayoutRenderer
     {
         $rows = [
             ['Angebotsnr.', $quote->number ?? ''],
-            ['Datum', $quote->created_at?->format('d.m.Y') ?? ''],
+            ['Datum', ($quote->sent_at ?? $quote->created_at)?->format('d.m.Y') ?? ''],
         ];
 
         if ($quote->valid_until !== null) {

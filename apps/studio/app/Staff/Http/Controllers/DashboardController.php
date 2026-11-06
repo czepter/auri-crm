@@ -178,7 +178,7 @@ class DashboardController extends Controller
             ->whereIn('cases.id', $this->inPlay($viewer))
             ->with('currentQuote')
             ->get()
-            ->sum(fn (ClientCase $case) => in_array($case->currentQuote?->status, [QuoteStatus::Draft, QuoteStatus::Sent], true) ? $case->currentQuote->total : 0);
+            ->sum(fn (ClientCase $case) => in_array($case->currentQuote?->status, [QuoteStatus::Draft, QuoteStatus::Sent], true) ? $case->currentQuote->gross() : 0);
     }
 
     /**
