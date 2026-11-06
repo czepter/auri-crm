@@ -4,13 +4,15 @@ import { useI18n } from 'vue-i18n'
 import { Link, useForm, usePage } from '@inertiajs/vue3'
 import { formatEuros, formatPercent } from '@/lib/money'
 import PortalBack from '@/portal/components/PortalBack.vue'
+import PortalDot from '@/portal/components/PortalDot.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalRail from '@/portal/components/PortalRail.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 import QuoteSlider from '@/portal/components/QuoteSlider.vue'
-import { dayDate } from '@/portal/lib/dates'
+import PortalChip from '@/portal/components/PortalChip.vue'
+import { dayDate, daysUntil } from '@/portal/lib/dates'
 import { splitStages } from '@/portal/lib/paymentStages'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
@@ -117,6 +119,15 @@ const gross = computed(() => {
 const stages = computed(() => (props.quote ? splitStages(gross.value, props.quote.paymentStages) : []))
 const stagePaid = (index: number) => !!props.quote?.acceptedAt && props.stagePaid?.[index] === true
 
+const expiring = computed(() => {
+  const quote = props.quote
+
+  if (!quote || quote.expired || quote.acceptedAt || !quote.validUntil) return null
+  const days = daysUntil(quote.validUntil)
+
+  return days >= 0 && days <= 7 ? days : null
+})
+
 const railNote = computed(() => {
   const quote = props.quote
 
@@ -209,6 +220,8 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
             </template>
           </table>
 
+          <PortalChip v-if="expiring !== null" class="mt-4">{{ $t('portal.validDays', expiring) }}</PortalChip>
+
           <dl v-if="project.date || project.venue" class="m-0 mt-8 grid max-w-[420px] grid-cols-[88px_1fr] gap-x-4 gap-y-2 text-[14.5px] leading-[1.5]">
             <template v-if="project.date">
               <dt class="text-muted-foreground">{{ $t('portal.appointment') }}</dt>
@@ -225,7 +238,10 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
               {{ $t('quotes.payment') }}
             </caption>
             <tr v-for="(stage, index) in stages" :key="stage.label" :class="[ROW, '[&>td]:text-muted-foreground']">
-              <td>{{ stage.label }}<span v-if="stagePaid(index)" class="ml-2 text-foreground">{{ $t('portal.paymentsPaid') }}</span></td>
+              <td>
+                {{ stage.label }}
+                <span v-if="stagePaid(index)" class="ml-2 inline-flex items-center gap-1.5 text-foreground"><PortalDot state="done" />{{ $t('portal.paymentsPaid') }}</span>
+              </td>
               <td>{{ formatEuros(stage.amount) }}</td>
             </tr>
           </table>

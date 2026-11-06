@@ -120,7 +120,7 @@ const steps = computed(() => {
           : document.kind === 'quote' && document.dueOn ? { key: 'portal.validUntil', date: document.dueOn } : null,
       amount: document.amount ? formatEuros(document.amount) : null,
       detail: document.kind === 'messages' ? t('portal.unreadCount', { count: document.unread ?? 0 }) : null as string | null,
-      late: document.overdue === true,
+      state: (document.overdue ? 'late' : document.dueOn ? 'due' : 'open') as 'late' | 'due' | 'open',
       label: { payments: 'portal.payButton', contract: 'portal.signButton', quote: 'portal.quoteAccept', messages: 'portal.replyButton' }[document.kind],
       href: document.href,
     }))
@@ -132,7 +132,7 @@ const steps = computed(() => {
       title: t('portal.questionnairesTitle'),
       note: null,
       amount: null,
-      late: false,
+      state: 'open' as 'late' | 'due' | 'open',
       label: 'portal.answerButton',
       href: `/projekte/${props.project.id}/fragebogen/${sheet.id}`,
       detail: `${sheet.name} · ${sheet.openCount}/${sheet.count}`,
@@ -191,7 +191,7 @@ function documentNote(document: Document) {
           <span v-if="step.amount" class="text-[17px] leading-none font-semibold tabular-nums text-action">{{ step.amount }}</span>
         </div>
         <p v-if="step.note || step.detail" class="mt-1.5 flex items-center gap-2 text-[13.5px] text-muted-foreground">
-          <PortalDot :state="step.late ? 'late' : 'open'" />
+          <PortalDot :state="step.state" />
           {{ step.detail ?? $t(step.note!.key, { date: step.note!.date ? dayDate(step.note!.date) : '' }) }}
         </p>
         <Button as-child variant="portal" class="mt-5 min-h-12 w-full justify-center text-[15px]">
@@ -210,7 +210,7 @@ function documentNote(document: Document) {
           :key="other.href"
           :href="other.href"
           :title="other.title"
-          :state="other.late ? 'late' : 'open'"
+          :state="other.state"
           :note="other.detail ?? (other.note ? $t(other.note.key, { date: other.note.date ? dayDate(other.note.date) : '' }) : null)"
           :aside="other.amount"
           aside-open
