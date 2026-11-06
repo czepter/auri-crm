@@ -135,7 +135,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
     <PortalWrap class="pb-24">
       <section class="pt-6">
         <PortalBack v-if="project.href" :href="project.href" />
-        <p class="animate-rise motion-reduce:animate-none mb-4 truncate text-[11px] leading-none font-semibold tracking-[0.17em] whitespace-nowrap uppercase text-muted-foreground">
+        <p class="animate-rise motion-reduce:animate-none mb-4 text-[12px] leading-snug font-semibold tracking-[0.04em] break-words text-muted-foreground">
           {{ [project.name, railNote].filter(Boolean).join(' · ') }}
         </p>
         <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">

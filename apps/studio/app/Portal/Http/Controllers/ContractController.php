@@ -33,16 +33,12 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class ContractController extends Controller
 {
-    public function show(string $case, DocumentMergeData $merge): Response|RedirectResponse
+    public function show(string $case, DocumentMergeData $merge): Response
     {
         $contact = auth('portal')->user();
 
         $found = $contact->visibleProjects()->where('cases.public_id', $case)->firstOrFail();
         $contract = $found->latestContract()->with('signature', 'template')->first();
-
-        if ($contract === null) {
-            return redirect("/projekte/{$found->public_id}");
-        }
 
         // rescue(), not a bare call: on a sync queue the render runs here,
         // and Gotenberg being down is a contract the client cannot read yet,
@@ -60,6 +56,7 @@ class ContractController extends Controller
             // contracts", the sign() route below is the authorisation half
             // via `portal.capability:sign_contracts`. Never hides an
             // existing signature — this only gates the form, not the record.
+            'quoteHref' => "/projekte/{$found->public_id}/angebot",
             'canSign' => (bool) StudioSettings::current()->portal_sign_contracts_enabled,
             'contract' => $contract === null ? null : [
                 'status' => $contract->status->value,

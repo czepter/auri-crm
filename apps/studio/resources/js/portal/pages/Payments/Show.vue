@@ -40,6 +40,7 @@ const props = defineProps<{
   showSwitcher: boolean
   project: { id: string; name: string }
   plan: Plan | null
+  quote: { number: string | null; href: string } | null
   stripeEnabled: boolean
   paymentStatus: 'success' | 'cancelled' | null
   bankDetails: { accountHolder: string | null; iban: string | null; bic: string | null }
@@ -56,12 +57,10 @@ const openInstallments = computed(
 )
 const payingId = ref<string | null>(null)
 
-// M-06: what a still-open installment should be transferred under. Only
-// issued ones have a number to name, which is why an unissued plan says the
-// invoice is coming rather than printing an empty reference line.
-const referencedInstallments = computed(
-  () => openInstallments.value.filter((installment) => installment.invoiceNumber !== null),
-)
+// Before the invoice exists the transfer runs under quote number and rate.
+function referenceFor(installment: Installment): string {
+  return installment.invoiceNumber ?? [props.quote?.number, installment.label].filter(Boolean).join(' ')
+}
 
 function payNow(installmentId: string) {
   payingId.value = installmentId
@@ -174,12 +173,11 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
                     <div>
                       <dt class="text-[13px] text-muted-foreground">{{ $t('portal.transferReference') }}</dt>
                       <dd class="m-0 flex items-center justify-between gap-3 text-[15px] tabular-nums">
-                        {{ installment.invoiceNumber ?? plan.reference ?? $t('portal.transferReferencePending') }}
+                        {{ referenceFor(installment) }}
                         <Button
-                          v-if="installment.invoiceNumber ?? plan.reference"
                           type="button"
                           variant="portal-chip"
-                          @click="copy(installment.id, (installment.invoiceNumber ?? plan.reference)!)"
+                          @click="copy(installment.id, referenceFor(installment))"
                         >
                           {{ copied === installment.id ? $t('gallery.copied') : $t('gallery.copy') }}
                         </Button>
@@ -227,24 +225,12 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
                 <dd class="m-0 text-[15px] tabular-nums">{{ bankDetails.bic }}</dd>
               </div>
 
-              <!-- M-06: each open installment transfers under its own invoice
-                   number. `plan.reference` is the pre-M-06 fallback and is null
-                   for every plan created since. -->
-              <div v-for="installment in referencedInstallments" :key="installment.id">
+              <div v-for="installment in openInstallments" :key="installment.id">
                 <dt class="text-[13px] text-muted-foreground">{{ $t('portal.transferReference') }}</dt>
                 <dd class="m-0 flex items-center justify-between gap-4 text-[15px] tabular-nums">
-                  {{ installment.invoiceNumber }} ({{ installment.label }})
-                  <Button type="button" variant="portal-chip" @click="copy(installment.id, installment.invoiceNumber!)">
+                  {{ referenceFor(installment) }}
+                  <Button type="button" variant="portal-chip" @click="copy(installment.id, referenceFor(installment))">
                     {{ copied === installment.id ? $t('gallery.copied') : $t('gallery.copy') }}
-                  </Button>
-                </dd>
-              </div>
-              <div v-if="!referencedInstallments.length">
-                <dt class="text-[13px] text-muted-foreground">{{ $t('portal.transferReference') }}</dt>
-                <dd class="m-0 flex items-center justify-between gap-4 text-[15px] tabular-nums">
-                  {{ plan.reference ?? $t('portal.transferReferencePending') }}
-                  <Button v-if="plan.reference" type="button" variant="portal-chip" @click="copy('ref', plan.reference)">
-                    {{ copied === 'ref' ? $t('gallery.copied') : $t('gallery.copy') }}
                   </Button>
                 </dd>
               </div>
@@ -253,7 +239,9 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
         </section>
       </template>
 
-      <p v-else class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 text-[15px] text-muted-foreground">{{ $t('portal.paymentsNone') }}</p>
+      <Button v-else-if="quote" as-child variant="portal" class="mt-10 min-h-12 w-full justify-center min-[700px]:w-auto">
+        <Link :href="quote.href">{{ $t('portal.quoteView') }}</Link>
+      </Button>
     </PortalWrap>
 
     <PortalFooter />

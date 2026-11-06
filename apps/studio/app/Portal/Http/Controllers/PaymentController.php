@@ -53,14 +53,10 @@ class PaymentController extends Controller
 
         $found = $contact->visibleProjects()
             ->where('cases.public_id', $case)
-            ->with('paymentPlan.installments.invoice.creditNotes')
+            ->with('paymentPlan.installments.invoice.creditNotes', 'latestQuote')
             ->firstOrFail();
 
         $plan = $found->paymentPlan;
-
-        if ($plan === null) {
-            return redirect("/projekte/{$found->public_id}");
-        }
 
         $sessionId = $request->query('session_id');
         if ($plan !== null && is_string($sessionId) && (bool) StudioSettings::current()->payments_stripe_enabled) {
@@ -80,6 +76,10 @@ class PaymentController extends Controller
             'showSwitcher' => $contact->visibleProjects()->count() > 1,
             'project' => ['id' => $found->public_id, 'name' => $found->name],
             'plan' => PaymentPlanData::forCase($found),
+            'quote' => $found->latestQuote === null ? null : [
+                'number' => $found->latestQuote->number,
+                'href' => "/projekte/{$found->public_id}/angebot",
+            ],
             'stripeEnabled' => (bool) StudioSettings::current()->payments_stripe_enabled,
             'paymentStatus' => in_array($status, ['success', 'cancelled'], true) ? $status : null,
             'bankDetails' => [

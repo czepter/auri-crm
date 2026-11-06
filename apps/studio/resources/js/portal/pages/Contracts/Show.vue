@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, watch } from 'vue'
-import { router, useForm } from '@inertiajs/vue3'
+import { Link, router, useForm } from '@inertiajs/vue3'
 import PortalField from '@/portal/components/PortalField.vue'
 import PortalBack from '@/portal/components/PortalBack.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
@@ -36,6 +36,7 @@ const props = defineProps<{
   // Never hides an already-recorded signature, only the form that would
   // create a new one.
   canSign: boolean
+  quoteHref: string
   contract: Contract | null
 }>()
 
@@ -142,6 +143,9 @@ function sign() {
           </Button>
         </form>
       </div>
+      <Button v-else as-child variant="portal" class="mt-10 min-h-12 w-full justify-center min-[700px]:w-auto">
+        <Link :href="quoteHref">{{ $t('portal.quoteView') }}</Link>
+      </Button>
     </PortalWrap>
 
     <PortalFooter />
