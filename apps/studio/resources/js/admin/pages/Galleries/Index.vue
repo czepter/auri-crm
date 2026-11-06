@@ -44,7 +44,7 @@ function day(iso: string | null) {
           <Button :as="Link" variant="pill" :class="settings ? undefined : 'ml-auto'" href="/galerien/neu">{{ $t('galleries.create') }}</Button>
         </PageHead>
 
-        <Empty v-if="!galleries.length" class="mx-8 mt-7 max-[640px]:mx-5" :text="$t('galleries.empty')">
+        <Empty v-if="!galleries.length" :text="$t('galleries.empty')">
           <Button :as="Link" variant="pill" href="/galerien/neu">{{ $t('galleries.create') }}</Button>
         </Empty>
 

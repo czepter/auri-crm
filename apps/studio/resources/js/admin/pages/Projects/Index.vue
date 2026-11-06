@@ -345,7 +345,7 @@ function reset() {
           </div>
         </div>
 
-        <Empty v-else class="mx-8 mt-7" :text="$t('projects.empty')">
+        <Empty v-else :text="$t('projects.empty')">
           <Button :as="Link" variant="pill" href="/anfragen/neu">{{ $t('leads.createKicker') }}</Button>
         </Empty>
       </div>

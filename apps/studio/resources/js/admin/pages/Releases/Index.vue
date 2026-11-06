@@ -48,7 +48,7 @@ useLiveProps([])
                     <Button class="ml-auto" variant="pill" type="button" @click="router.reload()">{{ $t('releases.reload') }}</Button>
                 </div>
 
-                <Empty v-if="!releases.length" class="mx-6 mt-4 max-[640px]:mx-5" :text="$t('releases.empty')" />
+                <Empty v-if="!releases.length" :text="$t('releases.empty')" />
 
                 <div v-else class="px-6 pt-5 pb-11 max-[640px]:px-5">
                     <Link

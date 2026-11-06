@@ -1289,6 +1289,7 @@
     "mailDeliveryLabel": "Versand",
     "mailClientsEnabledLabel": "E-Mails an Kunden",
     "closuresLabel": "Schließzeiten",
+    "closureEmpty": "Keine Schließzeiten.",
     "closureLabelField": "Bezeichnung",
     "closureMessageField": "Hinweis im Portal",
     "closureStartsOn": "Von",

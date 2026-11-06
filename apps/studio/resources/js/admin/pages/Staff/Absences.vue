@@ -108,7 +108,7 @@ function add() {
           </Dialog>
         </template>
 
-        <Empty v-if="!absences.length">
+        <Empty v-if="!absences.length" :text="$t('absences.empty')">
           <Button variant="pill" type="button" @click="adding = true">{{ $t('absences.add') }}</Button>
         </Empty>
 
