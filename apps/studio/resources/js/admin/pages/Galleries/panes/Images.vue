@@ -302,16 +302,14 @@ onUnmounted(() => {
       <span v-if="pendingShown.length > 0" class="text-small text-ink-2">{{ $t('media.pendingCount', pendingShown.length) }}</span>
       <div class="ml-auto flex items-center gap-3 text-small text-ink-2">
         <template v-if="activeSet !== null">
-          <button
-            v-for="option in ['small', 'medium', 'large']"
-            :key="option"
-            class="cursor-pointer border-0 bg-transparent text-small"
-            :class="density === option ? 'font-semibold text-foreground' : 'text-ink-2'"
-            type="button"
-            @click="setDensity(option)"
-          >
-            {{ $t(`galleryRecord.density.${option}`) }}
-          </button>
+          <Select :model-value="density" @update:model-value="(value) => setDensity(String(value))">
+            <SelectTrigger class="h-7 w-auto"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="option in ['small', 'medium', 'large']" :key="option" :value="option">
+                {{ $t(`galleryRecord.density.${option}`) }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </template>
         <label class="cursor-pointer">
           {{ $t('media.upload') }}

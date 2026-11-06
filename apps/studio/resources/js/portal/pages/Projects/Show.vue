@@ -328,7 +328,7 @@ function documentNote(document: Document) {
             <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.reachUs') }}</dt>
             <dd class="m-0 text-[14.5px]">
               {{ [project.details.email, project.details.phone].filter(Boolean).join(' · ') }}
-              <Link class="ml-2 text-[13px] text-muted-foreground hover:text-foreground" href="/einstellungen">
+              <Link class="ml-2 text-[13px] text-muted-foreground hover:text-foreground max-[700px]:inline-flex max-[700px]:min-h-11 max-[700px]:items-center" href="/einstellungen">
                 {{ $t('common.edit').toLowerCase() }}
               </Link>
             </dd>

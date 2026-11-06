@@ -99,7 +99,7 @@ const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
             <PortalLabel>{{ $t('portal.notedTitle') }}</PortalLabel>
             <Button
               v-if="!editing"
-              class="ml-auto py-0 underline decoration-line-hover underline-offset-[3px] hover:decoration-current"
+              class="ml-auto py-0 max-[700px]:min-h-11 underline decoration-line-hover underline-offset-[3px] hover:decoration-current"
               type="button"
               variant="ghost"
               @click="editing = true"

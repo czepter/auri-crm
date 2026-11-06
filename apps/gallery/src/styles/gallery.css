@@ -113,7 +113,7 @@ img { max-width: 100%; height: auto; }
 .bar .who b { color: var(--void-ink); font-weight: 600; }
 .barbtn {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 9px 16px; border-radius: var(--r-pill);
+  min-height: 44px; padding: 9px 16px; border-radius: var(--r-pill);
   border: 1px solid var(--void-line); background: transparent;
   color: var(--void-ink); font: 500 14px/1 var(--sans); text-decoration: none; cursor: pointer;
   transition: background .2s var(--ease), border-color .2s var(--ease);

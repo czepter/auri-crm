@@ -290,6 +290,7 @@ const COVER_INPUT = [
             v-for="selection in bar"
             :key="selection.id"
             :data-active="active === selection.id"
+            class="min-h-11"
             type="button"
             variant="portal-filter"
             @click="active = selection.id"
