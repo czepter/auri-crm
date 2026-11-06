@@ -58,7 +58,7 @@ const facts = computed(() => {
     { label: t('quotes.validUntil'), value: quote.validUntil ? shortDate(quote.validUntil) : null },
     {
       label: t('quotesOverview.createdAt'),
-      value: quote.sentAt ? `${day(quote.sentAt)} (${quote.sentChannel === 'mail' ? t('quotes.sentByMail') : t('quotes.sentBySelf')})` : null,
+      value: quote.createdAt ? day(quote.createdAt) : null,
     },
   ].filter((fact) => fact.value)
 })
