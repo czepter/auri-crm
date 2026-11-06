@@ -41,6 +41,12 @@ const shown = computed(() =>
   )
 )
 
+function count(key: 'mine' | 'all' | 'done') {
+  return props.tasks.filter((task) =>
+    key === 'done' ? task.isDone : !task.isDone && (key === 'all' || task.assigneeId === me.value)
+  ).length
+}
+
 const selectedId = ref<string | null>(null)
 const selected = computed(() => props.tasks.find((task) => task.id === selectedId.value) ?? null)
 
@@ -94,7 +100,7 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('tasks.kicker')" :title="$t('tasks.title')">
-          <StudioTaskCreateDialog v-if="shown.length" :staff-options="staffOptions" />
+          <StudioTaskCreateDialog :staff-options="staffOptions" :label="$t('tasks.create')" />
         </PageHead>
 
         <div class="px-6 pt-4 pb-8">
@@ -108,12 +114,11 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
               @click="tab = key"
             >
               {{ $t(`tasks.tab.${key}`) }}
+              <span class="tabular-nums text-ink-2">{{ count(key) }}</span>
             </button>
           </div>
 
-          <Empty v-if="shown.length === 0">
-            <StudioTaskCreateDialog :staff-options="staffOptions" />
-          </Empty>
+          <Empty v-if="shown.length === 0" :text="$t('tasks.empty')" />
 
           <div v-else class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
             <div
