@@ -318,6 +318,9 @@ class DemoFillSeeder extends Seeder
             ]);
         }
 
+        $project->contacts()->wherePivot('role', 'primary')->get()
+            ->each(fn ($contact) => $contract->signers()->firstOrCreate(['contact_id' => $contact->id]));
+
         if ($contract->state === ContractState::Valid && $contract->sent_at !== null) {
             return;
         }

@@ -34,7 +34,6 @@ useLiveProps(['header', 'templates', 'contract', 'versions', 'contacts', 'clause
 const { t } = useI18n()
 
 const generate = useForm({ template: props.templates[0]?.value ?? '' })
-const signer = useForm({ contact: '' })
 
 const samples = computed(() =>
   Object.fromEntries(props.mergeFields.map((field) => [field.path, field.sample])),
@@ -98,11 +97,12 @@ function send() {
   router.post(`/vertraege/${props.contract!.id}/versenden`, {}, { preserveScroll: true })
 }
 
-function addSigner() {
-  signer.post(`/vertraege/${props.contract!.id}/unterzeichner`, {
-    preserveScroll: true,
-    onSuccess: () => signer.reset(),
-  })
+function addSigner(contact: string) {
+  router.post(`/vertraege/${props.contract!.id}/unterzeichner`, { contact }, { preserveScroll: true })
+}
+
+function pickSigners() {
+  document.getElementById('contract-signers')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 function removeSigner(id: string) {
@@ -142,8 +142,16 @@ function day(value: string | null): string {
               <span v-if="contract.sentAt" class="text-small text-faint">{{ $t('project.contractSentOn', { date: day(contract.sentAt) }) }}</span>
 
               <div v-if="header.canManageContracts" class="ml-auto flex items-center gap-2">
-                <Button v-if="status === 'draft'" variant="pill" type="button" @click="send">
-                  {{ $t('project.contractSend') }}
+                <template v-if="status === 'draft'">
+                  <Button v-if="!contract.signers.length" variant="pill" type="button" @click="pickSigners">
+                    {{ $t('project.contractSignersPick') }}
+                  </Button>
+                  <Button :variant="contract.signers.length ? 'pill' : 'outline'" type="button" :disabled="!contract.signers.length" @click="send">
+                    {{ $t('project.contractSend') }}
+                  </Button>
+                </template>
+                <Button v-else-if="status === 'sent' && !contract.signers.length" variant="pill" type="button" @click="pickSigners">
+                  {{ $t('project.contractSignersPick') }}
                 </Button>
                 <Button v-else-if="status === 'sent' && unsigned.length" variant="pill" type="button" @click="remindAll()">
                   {{ $t('project.contractRemind') }}
@@ -158,7 +166,7 @@ function day(value: string | null): string {
               {{ $t('project.contractHoldsUntilSent', { version: signed.version }) }}
             </p>
 
-            <h3 class="mt-6 mb-0 text-small leading-none font-semibold text-faint">{{ $t('project.contractSigners') }}</h3>
+            <h3 id="contract-signers" class="mt-6 mb-0 text-small leading-none font-semibold text-faint">{{ $t('project.contractSigners') }}</h3>
 
             <ul class="mt-3 flex list-none flex-col gap-3 p-0">
               <li v-for="entry in contract.signers" :key="entry.id" class="flex items-center gap-3">
@@ -187,19 +195,14 @@ function day(value: string | null): string {
               </li>
             </ul>
 
-            <form v-if="header.canManageContracts && contacts.length" class="mt-3 flex gap-2" @submit.prevent="addSigner">
-              <Select :model-value="signer.contact" @update:model-value="(value) => (signer.contact = String(value))">
-                <SelectTrigger class="min-w-0 flex-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem v-for="option in contacts" :key="option.value" :value="option.value">
-                    {{ option.label }}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <Button type="submit" variant="outline" :disabled="!signer.contact || signer.processing">
-                {{ $t('project.contractSignerAdd') }}
-              </Button>
-            </form>
+            <ul v-if="header.canManageContracts && contacts.length" class="mt-3 flex list-none flex-col gap-3 p-0">
+              <li v-for="option in contacts" :key="option.value" class="flex items-center gap-3">
+                <span class="min-w-0 text-small font-medium">{{ option.label }}</span>
+                <Button class="ml-auto" variant="outline" type="button" @click="addSigner(option.value)">
+                  {{ $t('project.contractSignerAdd') }}
+                </Button>
+              </li>
+            </ul>
 
             <h3 class="mt-6 mb-0 text-small leading-none font-semibold text-faint">{{ $t('project.contractDeadline') }}</h3>
 

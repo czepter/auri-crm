@@ -430,6 +430,7 @@
     "contractPreview": "Vorschau · Projektdaten",
     "contractHoldsUntilSent": "Fassung {version} unterschrieben · gültig bis zum Versand",
     "contractSigners": "Unterzeichner",
+    "contractSignersPick": "Unterzeichner wählen",
     "contractSignerAdd": "Hinzufügen",
     "contractSignerPending": "Ausstehend",
     "contractSigned": "Unterschrieben · {date}",
