@@ -40,26 +40,15 @@ function stageMove(Lead $lead, LeadStage $from, LeadStage $to, $at): void
 
 // --- S-13: the acceptance rate has ONE definition -----------------------
 
-it('gives the Übersicht tile and the Auswertungen screen the same acceptance rate', function () {
-    Quote::factory()->count(4)->create(['sent_at' => now()->subMonths(2), 'status' => QuoteStatus::Sent]);
-    Quote::factory()->create(['sent_at' => now()->subMonths(2), 'status' => QuoteStatus::Accepted]);
+it('counts the acceptance rate off the same leads as the funnel steps', function () {
+    Lead::factory()->count(3)->create(['captured_at' => now()->subMonths(2), 'stage' => LeadStage::QuoteSent]);
+    Lead::factory()->create(['captured_at' => now()->subMonths(2), 'stage' => LeadStage::QuoteAccepted]);
 
-    $tile = QuoteAcceptanceRate::trailingTwelveMonths();
-    $screen = QuoteAcceptanceRate::between(now()->subYear(), now());
+    $steps = collect(FunnelTimes::steps(now()->subYear(), now()))->keyBy('key');
 
-    expect($tile)->toBe(20)->and($screen)->toBe($tile);
-});
-
-it('keys the acceptance rate on when the quote was SENT, so it can never exceed 100%', function () {
-    // Sent thirteen months ago, accepted last week: outside the window on
-    // both sides, never inside on the numerator alone.
-    Quote::factory()->create([
-        'sent_at' => now()->subMonths(13),
-        'accepted_at' => now()->subWeek(),
-        'status' => QuoteStatus::Accepted,
-    ]);
-
-    expect(QuoteAcceptanceRate::trailingTwelveMonths())->toBeNull();
+    expect(QuoteAcceptanceRate::counts(now()->subYear(), now()))
+        ->toBe(['sent' => $steps['quote_sent']['leads'], 'accepted' => $steps['quote_accepted']['leads']])
+        ->and(QuoteAcceptanceRate::trailingTwelveMonths())->toBe(25);
 });
 
 it('reports null rather than zero when nothing went out', function () {
