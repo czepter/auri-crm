@@ -122,7 +122,7 @@ const steps = computed(() => {
       amount: document.amount ? formatEuros(document.amount) : null,
       detail: null as string | null,
       state: (document.overdue ? 'late' : document.dueOn ? 'due' : 'open') as 'late' | 'due' | 'open',
-      label: { payments: 'portal.payButton', contract: 'portal.signButton', quote: 'portal.quoteAccept' }[document.kind],
+      label: ({ payments: 'portal.payButton', contract: 'portal.signButton', quote: 'portal.quoteAccept' } as Record<string, string>)[document.kind],
       href: document.href,
     }))
 
@@ -206,7 +206,7 @@ function documentNote(document: Document) {
         </div>
         <p v-if="step.note || step.detail" class="mt-1.5 flex items-center gap-2 text-[13.5px] text-muted-foreground">
           <PortalDot :state="step.state" />
-          {{ step.detail ?? $t(step.note!.key, { date: step.note!.date ? dayDate(step.note!.date) : '' }) }}
+          {{ step.detail ?? $t(step.note!.key, { date: step.note?.date ? dayDate(step.note.date) : '' }) }}
         </p>
         <Button as-child variant="portal" class="mt-5 min-h-12 w-full justify-center text-[15px]">
           <Link :href="step.href">{{ $t(step.label) }}</Link>

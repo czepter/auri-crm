@@ -262,6 +262,7 @@ export function quoteOf(
     row: Partial<App.Quotes.Data.QuoteData> & Pick<App.Quotes.Data.QuoteData, 'id' | 'number' | 'net' | 'items'>,
 ): App.Quotes.Data.QuoteData {
     return {
+        createdAt: null,
         showcaseCount: 0,
         predecessorId: null,
         isAddendum: false,
