@@ -18,10 +18,10 @@ afterEach(function () {
 });
 
 it('rendert Markdown zu HTML', function () {
-    $entry = app(HelpIndex::class)->find('erste-schritte', []);
+    $entry = app(HelpIndex::class)->find('lead-anlegen', []);
 
     expect(app(RenderHelpArticle::class)($entry)->html)
-        ->toContain('<h2>Projekttypen zuerst</h2>');
+        ->toContain('<strong>Anfrage anlegen</strong>');
 });
 
 it('setzt die API-Domain ein', function () {
@@ -70,6 +70,6 @@ it('lässt einen Abschnitt mit leerem Platzhalter ganz weg', function () {
     $entry = app(HelpIndex::class)->find('mail-weiterleitung', []);
 
     expect(app(RenderHelpArticle::class)($entry)->html)
-        ->not->toContain('genau eine eigene Adresse')
+        ->not->toContain('Adresse dieses Studios')
         ->and(app(RenderHelpArticle::class)($entry)->html)->not->toContain('<pre>');
 });
