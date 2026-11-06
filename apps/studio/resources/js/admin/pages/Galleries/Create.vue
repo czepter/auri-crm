@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { router, useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormShell from '@/ui/page/FormShell.vue'
+import CreateSummary from '@/admin/components/CreateSummary.vue'
 import { ChoiceGroup } from '@/ui/choice-group'
 import ProjectTypeahead from '@/admin/components/crm/ProjectTypeahead.vue'
 import { birthValues, expiryOn } from '@/admin/lib/galleryBirth'
@@ -97,7 +98,7 @@ function submit() {
 <template>
   <AdminLayout active="galerien">
     <FormShell
-      :title="$t('galleries.create')"
+      :title="$t('galleries.create')" wide
     >
       <form class="max-w-[620px]" @submit.prevent="submit">
         <ChoiceGroup
@@ -173,6 +174,18 @@ function submit() {
           {{ $t('galleries.create') }}
         </Button>
       </form>
+
+      <template #aside>
+        <CreateSummary
+          :title="$t('common.summary')"
+          :rows="[
+            { label: $t('galleries.titleField'), value: form.title },
+            { label: $t('projects.title'), value: project?.name },
+            { label: $t('galleryPresets.title'), value: mode === 'internal' ? preset?.name : null },
+            { label: $t('galleries.expiryField'), value: mode === 'internal' && form.expires_at ? new Date(form.expires_at).toLocaleDateString('de-DE') : null },
+          ]"
+        />
+      </template>
     </FormShell>
   </AdminLayout>
 </template>

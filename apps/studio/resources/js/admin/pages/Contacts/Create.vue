@@ -3,6 +3,7 @@ import { Link, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ContactPortalFields from '@/admin/components/crm/ContactPortalFields.vue'
 import FormShell from '@/ui/page/FormShell.vue'
+import CreateSummary from '@/admin/components/CreateSummary.vue'
 import Card from '@/ui/page/Card.vue'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
@@ -40,8 +41,8 @@ function submit() {
 
 <template>
   <AdminLayout active="kontakte">
-    <FormShell :kicker="$t('contacts.title')" kicker-href="/kontakte" :title="$t('contacts.create')">
-      <form class="flex flex-col gap-3" @submit.prevent="submit">
+    <FormShell :kicker="$t('contacts.title')" kicker-href="/kontakte" :title="$t('contacts.create')" wide>
+      <form class="flex max-w-[720px] flex-col gap-3" @submit.prevent="submit">
         <Card :title="$t('contacts.reach')">
           <Field v-slot="{ id }" :label="$t('contacts.name')" :error="form.errors.name">
             <Input :id="id" v-model="form.name" type="text" autofocus />
@@ -84,6 +85,18 @@ function submit() {
           <Button variant="pill" type="submit" :disabled="form.processing">{{ $t('contacts.submit') }}</Button>
         </div>
       </form>
+
+      <template #aside>
+        <CreateSummary
+          :title="$t('common.summary')"
+          :rows="[
+            { label: $t('contacts.name'), value: form.name },
+            { label: $t('contacts.email'), value: form.email },
+            { label: $t('contacts.phone'), value: form.phone },
+            { label: $t('contacts.city'), value: [form.postcode, form.city].filter(Boolean).join(' ') },
+          ]"
+        />
+      </template>
     </FormShell>
   </AdminLayout>
 </template>
