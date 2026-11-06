@@ -10,7 +10,7 @@ export function quoteTitle(quote: TitleSource, t: ComposerTranslation): string {
   return quote.number ? `${t('quotes.title')} ${quote.number}` : t('quotes.title')
 }
 
-/** draft/sent/accepted/superseded/expired -> the mockup's own three chip states (tokens.css). */
+/** The one status colour map for quotes; `sent` is blue so it never shares booked's amber. */
 export function quoteChipClass(status: string): string {
-  return ({ sent: 'now', accepted: 'done' } as Record<string, string>)[status] ?? 'next'
+  return ({ sent: 'sent', accepted: 'done', superseded: 'off', expired: 'fail' } as Record<string, string>)[status] ?? 'next'
 }

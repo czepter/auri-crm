@@ -335,7 +335,7 @@ function release(row: Stage | Field) {
             class="block w-full cursor-pointer rounded-lg border-0 bg-transparent px-2.5 py-[7px] text-left text-small leading-[1.3]"
             :class="[
               selected.kind === 'type' && selected.key === one.key ? 'bg-sunk-2 font-semibold' : 'text-ink-2',
-              one.isActive ? '' : 'text-faint',
+              one.isActive ? '' : 'text-ink-2',
             ]"
             type="button"
             @click="chooseType(one)"
@@ -361,7 +361,7 @@ function release(row: Stage | Field) {
               :key="stage.id"
               class="inline-flex touch-none cursor-grab items-center gap-[7px] rounded-[var(--r-sm)] border border-border bg-background px-3 py-1.5 text-small leading-[1.4] font-semibold transition-[border-color,opacity] select-none hover:border-line-hover active:cursor-grabbing"
               :class="[
-                stage.isActive ? 'text-ink-2' : 'text-faint',
+                stage.isActive ? 'text-foreground' : 'text-ink-2',
                 held?.id === stage.id && held?.moved ? 'opacity-40' : '',
               ]"
               :data-drag="stage.id"
