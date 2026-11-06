@@ -138,7 +138,7 @@ function choose(field: Field, option: string) {
             v-else-if="field.type === 'date'"
             class="max-w-[280px]"
             :model-value="(values[field.key] as string) ?? ''"
-            type="date"
+            lang="de" type="date"
             @update:model-value="values[field.key] = $event"
           />
 

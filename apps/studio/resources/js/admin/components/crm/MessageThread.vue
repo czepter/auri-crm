@@ -137,7 +137,7 @@ function cancelScheduled(messageId: string) {
           <Input
             v-model="reply.scheduled_for"
             class="w-auto"
-            type="datetime-local"
+            lang="de" type="datetime-local"
             :aria-label="$t('project.messagesScheduleLabel')"
           />
           <Button variant="pill" class="ml-auto" type="submit" :disabled="reply.processing">
@@ -155,7 +155,7 @@ function cancelScheduled(messageId: string) {
           <Input
             v-model="record.sent_at"
             class="w-auto"
-            type="datetime-local"
+            lang="de" type="datetime-local"
             :aria-label="$t('project.messagesSentAt')"
           />
           <Button variant="pill" class="ml-auto" type="submit" :disabled="!record.body.trim() || record.processing">
