@@ -8,7 +8,7 @@ import PortalLabel from '@/portal/components/PortalLabel.vue'
 import PortalDot from '@/portal/components/PortalDot.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
-import { dayDate } from '@/portal/lib/dates'
+import { dayDate, daysUntil } from '@/portal/lib/dates'
 import { formatEuros } from '@/lib/money'
 import { Button } from '@/ui/button'
 
@@ -73,6 +73,10 @@ function payNow(installmentId: string) {
 const iban = computed(() => (props.bankDetails.iban ?? '').replace(/\s+/g, '').replace(/(.{4})(?=.)/g, '$1 '))
 
 const hasPayment = computed(() => props.stripeEnabled || !!props.bankDetails.iban)
+
+// Seven months before the due date "Bezahlen" is a question, not a task.
+const soon = (installment: Installment) => installment.isLate || daysUntil(installment.dueOn) <= 14
+const payable = (installment: Installment) => hasPayment.value && (soon(installment) || (!props.stripeEnabled && !!props.bankDetails.iban))
 const copied = ref<string | null>(null)
 
 async function copy(key: string, text: string) {
@@ -143,7 +147,7 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
                   : $t(installment.isLate ? 'portal.overdueSince' : 'portal.dueOn', { date: dayDate(installment.dueOn) }) }}
               </p>
 
-              <div v-if="!['paid', 'cancelled'].includes(installment.status) && hasPayment" class="mt-4">
+              <div v-if="!['paid', 'cancelled'].includes(installment.status) && payable(installment)" class="mt-4">
                 <!-- #414: der Knopf nennt, was er abbucht — nach einer
                      Teilzahlung ist das der Rest und nicht die Rate. -->
                 <Button
@@ -158,11 +162,12 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
                     ? $t('portal.payButton')
                     : `${$t('portal.payButton')} · ${formatEuros(installment.remaining)}` }}
                 </Button>
-                <details v-else-if="bankDetails.iban" class="group" :open="installment.id === openInstallments[0]?.id">
-                  <Button as="summary" variant="portal" class="w-full cursor-pointer justify-center list-none min-[700px]:w-auto [&::-webkit-details-marker]:hidden">
+                <component :is="soon(installment) ? 'details' : 'div'" v-else-if="bankDetails.iban" class="group" :open="soon(installment) && installment.id === openInstallments[0]?.id">
+                  <Button v-if="soon(installment)" as="summary" variant="portal" class="w-full cursor-pointer justify-center list-none min-[700px]:w-auto [&::-webkit-details-marker]:hidden">
                     {{ $t('portal.payButton') }}
                   </Button>
-                  <dl class="m-0 mt-4 grid gap-y-4 rounded-md bg-sunk p-4">
+                  <p v-if="!soon(installment)" class="mb-2 text-[13px] text-muted-foreground first-letter:uppercase">{{ $t('portal.dueOn', { date: dayDate(installment.dueOn) }) }}</p>
+                  <dl class="m-0 grid gap-y-4 rounded-md bg-sunk p-4" :class="soon(installment) && 'mt-4'">
                     <div v-if="bankDetails.accountHolder">
                       <dt class="text-[13px] text-muted-foreground">{{ $t('portal.transferAccountHolder') }}</dt>
                       <dd class="m-0 text-[15px]">{{ bankDetails.accountHolder }}</dd>
@@ -178,7 +183,12 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
                     </div>
                     <div v-if="bankDetails.bic">
                       <dt class="text-[13px] text-muted-foreground">{{ $t('portal.transferBic') }}</dt>
-                      <dd class="m-0 text-[15px] tabular-nums">{{ bankDetails.bic }}</dd>
+                      <dd class="m-0 flex items-center justify-between gap-3 text-[15px] tabular-nums">
+                        {{ bankDetails.bic }}
+                        <Button type="button" variant="portal-chip" @click="copy('bic', bankDetails.bic)">
+                          {{ copied === 'bic' ? $t('gallery.copied') : $t('gallery.copy') }}
+                        </Button>
+                      </dd>
                     </div>
                     <div>
                       <dt class="text-[13px] text-muted-foreground">{{ $t('portal.transferReference') }}</dt>
@@ -194,7 +204,7 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
                       </dd>
                     </div>
                   </dl>
-                </details>
+                </component>
               </div>
 
               <!-- #419: auf die Seite, nicht aufs PDF. Erst ab der
@@ -232,7 +242,12 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
               </div>
               <div v-if="bankDetails.bic">
                 <dt class="text-[13px] text-muted-foreground">{{ $t('portal.transferBic') }}</dt>
-                <dd class="m-0 text-[15px] tabular-nums">{{ bankDetails.bic }}</dd>
+                <dd class="m-0 flex items-center justify-between gap-4 text-[15px] tabular-nums">
+                  {{ bankDetails.bic }}
+                  <Button type="button" variant="portal-chip" @click="copy('bic', bankDetails.bic)">
+                    {{ copied === 'bic' ? $t('gallery.copied') : $t('gallery.copy') }}
+                  </Button>
+                </dd>
               </div>
 
               <div v-for="installment in openInstallments" :key="installment.id">
