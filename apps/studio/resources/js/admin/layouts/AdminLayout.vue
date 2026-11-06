@@ -82,6 +82,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
 
 <template>
     <div class="flex min-h-screen max-[640px]:flex-col">
+        <a class="skip-link" href="#inhalt">{{ $t("common.skipToContent") }}</a>
         <!-- The marker alone, no value: the palette is on :root since crm.css
          stopped scoping it. What is left for the attribute to do is take the
          nav out of tokens.css's unlayered svg reset, which no utility can
@@ -324,7 +325,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
             </Link>
         </header>
 
-        <main class="flex min-w-0 flex-1 flex-col pl-12 max-[640px]:pb-[72px] max-[640px]:pl-0">
+        <main id="inhalt" tabindex="-1" class="flex min-w-0 flex-1 flex-col outline-none pl-12 max-[640px]:pb-[72px] max-[640px]:pl-0">
             <Alert
                 v-if="page.props.studioDeletion"
                 variant="destructive"
