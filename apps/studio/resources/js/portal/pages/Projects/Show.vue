@@ -174,7 +174,7 @@ function documentNote(document: Document) {
   <PortalShell>
     <PortalHeader :switcher="{ label: project.name, toAll: showSwitcher }" />
 
-    <PortalWrap class="pb-24">
+    <PortalWrap class="pb-[calc(80px+env(safe-area-inset-bottom))]">
       <section class="pt-6">
         <h1 class="animate-rise motion-reduce:animate-none font-serif text-[clamp(26px,5vw,40px)] leading-[1.2] font-normal tracking-[var(--display-tracking)]">
           {{ project.name }}
