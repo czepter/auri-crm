@@ -20,11 +20,16 @@ use App\Models\Absence;
 use App\Models\StudioClosure;
 use App\Models\StudioSettings;
 use App\Models\User;
+use App\Numbering\Actions\AllocateDocumentNumber;
+use App\Numbering\Enums\DocumentType;
+use App\Payments\Actions\CreatePaymentPlan;
 use App\Payments\Actions\IssueCreditNote;
 use App\Payments\Actions\IssueInvoice;
 use App\Payments\Actions\MarkInstallmentPaid;
 use App\Payments\Enums\SettledVia;
 use App\Payments\Models\Invoice;
+use App\Payments\Models\PaymentPlan;
+use Carbon\Carbon;
 use App\Quotes\Actions\CreateQuote;
 use App\Quotes\Actions\MarkQuoteSent;
 use App\Quotes\Enums\QuoteStatus;
@@ -57,7 +62,8 @@ class DemoFillSeeder extends Seeder
         $this->seedContract($meier, $contract, $actor);
         $this->seedQuote($meier, $actor);
         $this->seedQuestionnaire($meier, $questionnaire, $actor);
-        $this->seedInvoices($meier, $actor);
+        $this->seedPaymentPlan($meier, $actor);
+        $this->seedSentQuoteNumber();
         $this->seedCreditNote($actor);
         $this->seedAbsenceAndClosure($actor);
         $this->seedThreads($meier, $actor);
@@ -72,6 +78,10 @@ class DemoFillSeeder extends Seeder
             'city' => 'Hamburg',
             'portal_contact_email' => 'hallo@nordlicht-fotografie.test',
             'portal_contact_phone' => '+49 40 5550100',
+            'bank_account_holder' => 'Nordlicht Fotografie GmbH',
+            'bank_iban' => 'DE89370400440532013000',
+            'bank_bic' => 'COBADEFFXXX',
+            'portal_sign_contracts_enabled' => true,
         ] as $key => $value) {
             if (StudioSettings::current()->{$key} !== $value) {
                 $settings($key, $value, $actor);
@@ -192,17 +202,21 @@ class DemoFillSeeder extends Seeder
 
     private function seedContract(ClientCase $project, DocumentTemplate $template, User $actor): void
     {
-        if (Contract::query()->where('case_id', $project->id)->exists()) {
-            return;
+        $contract = Contract::query()->where('case_id', $project->id)->latest('id')->first();
+
+        if ($contract === null) {
+            $contract = Contract::create([
+                'case_id' => $project->id,
+                'contract_template_id' => $template->id,
+                'requested_by_id' => $actor->id,
+                'state' => ContractState::Draft,
+                'version' => 1,
+            ]);
         }
 
-        $contract = Contract::create([
-            'case_id' => $project->id,
-            'contract_template_id' => $template->id,
-            'requested_by_id' => $actor->id,
-            'state' => ContractState::Draft,
-            'version' => 1,
-        ]);
+        if ($contract->state === ContractState::Valid && $contract->sent_at !== null) {
+            return;
+        }
 
         $contract->markSent();
 
@@ -228,14 +242,104 @@ class DemoFillSeeder extends Seeder
 
         if ($quote->status === QuoteStatus::Draft) {
             app(MarkQuoteSent::class)($quote->refresh(), 'mail', $actor);
+        }
 
+        $this->alignQuote($project, $quote->refresh());
+    }
+
+    /**
+     * Meier & Kowalski's quote is both lines (3.950 € net, 4.700,50 € gross),
+     * sent 03.11. and accepted 05.11.2026, with its 30/70 stages. A sent or
+     * accepted quote is immutable at model level, so totals and dates are
+     * repaired with plain queries.
+     */
+    private function alignQuote(ClientCase $project, Quote $quote): void
+    {
+        $quote->items()->firstOrCreate(
+            ['title' => 'Verlobungsshooting'],
+            ['description' => '2 Std., Ort nach Wahl', 'quantity' => 1, 'unit_price' => 45000, 'sort_order' => 1],
+        );
+
+        $items = $quote->items()->get();
+        $totals = Quote::computeTotals($items, null, null);
+
+        Quote::query()->whereKey($quote->id)->update([
+            ...$totals,
+            ...Quote::computeVat($totals['net'], $items),
+            ...($quote->status === QuoteStatus::Accepted ? [
+                'sent_at' => Carbon::parse('2026-11-03 10:00'),
+                'accepted_at' => Carbon::parse('2026-11-05 14:00'),
+            ] : []),
+        ]);
+
+        if ($quote->status === QuoteStatus::Accepted) {
+            $stamp = Carbon::parse('2026-11-05 14:00');
+
+            $project->lead()->update(['stage_entered_at' => $stamp]);
+            ClientCase::query()->whereKey($project->id)->whereNotNull('booked_at')->update(['booked_at' => $stamp]);
+            $project->shoots()->where('is_primary', true)->where('date', '<', '2027-01-01')->update(['date' => '2027-06-12']);
+        }
+
+        if ($quote->paymentStages()->doesntExist()) {
+            $quote->paymentStages()->create(['percent' => 30, 'label' => 'Anzahlung', 'sort_order' => 0]);
+            $quote->paymentStages()->create(['percent' => 70, 'label' => 'Restzahlung', 'sort_order' => 1]);
+        }
+    }
+
+    /** Anzahlung 30 % due a week after the acceptance, the rest a week before the wedding. */
+    private function seedPaymentPlan(ClientCase $project, User $actor): void
+    {
+        $quote = Quote::query()->where('case_id', $project->id)->latest('id')->firstOrFail()->refresh();
+        $plan = PaymentPlan::query()->where('case_id', $project->id)->first();
+
+        if ($plan !== null && $plan->total === $quote->gross() && $plan->installments()->orderBy('sort_order')->first()?->due_on->toDateString() === '2026-11-12') {
             return;
         }
 
-        // A sent quote is immutable at model level, so a seed row that never
-        // went through snapshotVat() is repaired with a plain query.
-        if ($quote->vat_amount === null && $quote->status === QuoteStatus::Sent) {
-            Quote::query()->whereKey($quote->id)->update(Quote::computeVat($quote->net, $quote->items()->get()));
+        DB::transaction(function () use ($project) {
+            Invoice::query()->where('case_id', $project->id)->delete();
+            PaymentPlan::query()->where('case_id', $project->id)->delete();
+        });
+
+        $plan = app(CreatePaymentPlan::class)($project, $quote->gross(), ['2026-11-12', '2027-06-05']);
+
+        $issue = app(IssueInvoice::class);
+        $deposit = $issue($plan->installments()->orderBy('sort_order')->firstOrFail(), $actor);
+
+        app(MarkInstallmentPaid::class)(
+            $deposit->installments()->firstOrFail(), SettledVia::Transfer, '2026-11-06', 'Überweisung Anzahlung', $actor,
+        );
+
+        // The client's thread about it reads as written today.
+        $thread = Thread::query()->where('case_id', $project->id)->where('subject', 'Rechnung Anzahlung')->first();
+
+        foreach ($thread?->messages()->orderBy('id')->get() ?? [] as $index => $message) {
+            $message->forceFill(['created_at' => now()->subHours(3 - $index)])->save();
+        }
+    }
+
+    /** Annika's sent quote carries a number and a frozen VAT snapshot, whatever path created it. */
+    private function seedSentQuoteNumber(): void
+    {
+        $project = ClientCase::query()->where('name', 'like', 'Annika Reuter%')->first();
+        $quote = $project === null ? null : Quote::query()->where('case_id', $project->id)->latest('id')->first();
+
+        if ($quote === null || $quote->status !== QuoteStatus::Sent) {
+            return;
+        }
+
+        $patch = [];
+
+        if ($quote->number === null) {
+            $patch['number'] = (app(AllocateDocumentNumber::class)(documentType: DocumentType::Quote))['number'];
+        }
+
+        if ($quote->vat_amount === null) {
+            $patch += Quote::computeVat($quote->net, $quote->items()->get());
+        }
+
+        if ($patch !== []) {
+            Quote::query()->whereKey($quote->id)->update($patch);
         }
     }
 
@@ -254,29 +358,6 @@ class DemoFillSeeder extends Seeder
 
         $fields[0]->answer('Eltern beider Seiten, zwei Geschwister, die Großmutter', $contact);
         $fields[2]->answer('14:30', $contact);
-    }
-
-    private function seedInvoices(ClientCase $project, User $actor): void
-    {
-        if (Invoice::query()->where('case_id', $project->id)->exists()) {
-            return;
-        }
-
-        $issue = app(IssueInvoice::class);
-        $contact = $project->primaryContact();
-
-        $deposit = $issue->positions($contact, $project, [
-            ['title' => 'Anzahlung Hochzeitsreportage', 'quantity' => 1, 'unit_price' => 100000],
-        ], now()->subDays(30)->toDateString(), [], $actor);
-
-        app(MarkInstallmentPaid::class)(
-            $deposit->installments()->firstOrFail(), SettledVia::Transfer, now()->subDays(25)->toDateString(), 'Überweisung Anzahlung', $actor,
-        );
-
-        $issue->positions($contact, $project, [
-            ['title' => 'Verlobungsshooting', 'quantity' => 1, 'unit_price' => 45000],
-            ['title' => 'Fotobuch 30 x 30 cm', 'quantity' => 1, 'unit_price' => 38000],
-        ], now()->addDays(14)->toDateString(), [], $actor);
     }
 
     private function seedCreditNote(User $actor): void
@@ -332,8 +413,8 @@ class DemoFillSeeder extends Seeder
                 [$actor, 'Wunderbar, dann notiere ich das so.', 4],
             ]],
             [$meier, $client, 'Rechnung Anzahlung', [
-                [$client, 'Die Anzahlung ist heute überwiesen, könnt ihr den Eingang bestätigen?', 25],
-                [$actor, 'Eingang ist verbucht, vielen Dank.', 24],
+                [$client, 'Die Anzahlung ist heute überwiesen, könnt ihr den Eingang bestätigen?', 0],
+                [$actor, 'Eingang ist verbucht, vielen Dank.', 0],
             ]],
             [$meier, $client, 'Fotobuch', [
                 [$actor, 'Beim Fotobuch gibt es Leinen in Sand und in Anthrazit. Welche Farbe darf es sein?', 3],

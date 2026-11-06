@@ -25,9 +25,6 @@ use App\Engagement\Actions\StartThread;
 use App\Enums\StaffRole;
 use App\Gallery\Models\Gallery;
 use App\Models\User;
-use App\Payments\Actions\DetectOverdueInstallments;
-use App\Payments\Models\PaymentInstallment;
-use App\Payments\Models\PaymentPlan;
 use App\Quotes\Actions\CreateQuote;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
@@ -36,7 +33,6 @@ use App\Support\AuditLogger;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -65,7 +61,7 @@ class DemoCrmSeeder extends Seeder
         ['Lea Hoffmann', 'Jonas Behr', 'wedding', '2026-10-03', 'quote_sent', 6, 'instagram', 'Gut Wulksfelde', 'Tangstedt'],
         ['Marie Ahrens', 'David Kroll', 'wedding', '2026-07-25', 'quote_accepted', 1, 'referral', 'Kaispeicher', 'Hamburg'],
         ['Sophie Lang', 'Erik Voss', 'wedding', '2026-09-19', 'quote_accepted', 2, 'website', 'Gut Basthorst', 'Basthorst'],
-        ['Meier & Kowalski', null, 'wedding', '2026-06-14', 'booked', 12, 'referral', 'Gut Basthorst', 'Basthorst'],
+        ['Meier & Kowalski', null, 'wedding', '2027-06-12', 'booked', 12, 'referral', 'Gut Basthorst', 'Basthorst'],
     ];
 
     public function run(): void
@@ -356,7 +352,7 @@ class DemoCrmSeeder extends Seeder
         Artisan::call('automation:seed-default-rules');
 
         $this->seedChasedQuote($projects['Annika Reuter']);
-        $this->seedOverdueInstallment($projects['Meier & Kowalski']);
+        $projects['Meier & Kowalski']->primaryContact()?->update(['phone' => '+49 40 5550103']);
         $this->seedReferralAndExpiringGallery($projects['Meier & Kowalski'], $projects['Familie Osterhoff']);
         $this->seedUnansweredThread($projects['Annika Reuter']);
     }
@@ -400,35 +396,6 @@ class DemoCrmSeeder extends Seeder
         // separate weeks, which is exactly what "2×" means on the row.
         $fire($rule, $project, now()->subDays(9)->toDateString());
         $fire($rule, $project, now()->subDays(2)->toDateString());
-    }
-
-    /**
-     * The plan and its one overdue installment share a transaction: the
-     * sum-matches-total trigger is deferred to commit, but each Eloquent
-     * create() is its own transaction unless one is opened explicitly, and a
-     * plan committed alone with no installments yet would trip it.
-     *
-     * DetectOverdueInstallments always stamps overdue_notified_at with
-     * `now()`, so running it here would read "seit 0 Tagen" — the opposite of
-     * what this row demonstrates. It runs anyway, for the real guard and the
-     * InstallmentOverdue dispatch, and the timestamp is then moved back by
-     * hand to the nine days ReadPaymentColumn::DUNNING_EXHAUSTED_DAYS needs.
-     */
-    private function seedOverdueInstallment(ClientCase $project): void
-    {
-        $project->primaryContact()?->update(['phone' => '+49 40 5550103']);
-
-        $installment = DB::transaction(function () use ($project) {
-            $plan = PaymentPlan::factory()->for($project, 'case')->create(['total' => 150000]);
-
-            return PaymentInstallment::factory()->for($plan, 'plan')->create([
-                'amount' => 150000,
-                'due_on' => now()->subDays(20)->toDateString(),
-            ]);
-        });
-
-        app(DetectOverdueInstallments::class)->markOverdue($installment);
-        $installment->update(['overdue_notified_at' => now()->subDays(9)]);
     }
 
     /**
