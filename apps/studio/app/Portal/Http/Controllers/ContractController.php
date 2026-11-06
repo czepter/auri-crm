@@ -33,12 +33,16 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class ContractController extends Controller
 {
-    public function show(string $case, DocumentMergeData $merge): Response
+    public function show(string $case, DocumentMergeData $merge): Response|RedirectResponse
     {
         $contact = auth('portal')->user();
 
         $found = $contact->visibleProjects()->where('cases.public_id', $case)->firstOrFail();
         $contract = $found->latestContract()->with('signature', 'template')->first();
+
+        if ($contract === null) {
+            return redirect("/projekte/{$found->public_id}");
+        }
 
         // rescue(), not a bare call: on a sync queue the render runs here,
         // and Gotenberg being down is a contract the client cannot read yet,

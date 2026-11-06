@@ -132,60 +132,23 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
   <PortalShell>
     <PortalHeader :switcher="{ label: project.name, toAll: showSwitcher }" />
 
-    <PortalWrap class="pb-40">
-      <section class="pt-[var(--band)]">
+    <PortalWrap class="pb-24">
+      <section class="pt-6">
         <PortalBack v-if="project.href" :href="project.href" />
         <p class="animate-rise motion-reduce:animate-none mb-4 truncate text-[11px] leading-none font-semibold tracking-[0.17em] whitespace-nowrap uppercase text-muted-foreground">
-          {{ [project.name, project.date ? dayDate(project.date) : null].filter(Boolean).join(' · ') }}
+          {{ [project.name, railNote].filter(Boolean).join(' · ') }}
         </p>
         <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
           {{ $t('portal.quoteTitle') }}
         </h1>
-        <p v-if="quote?.number" class="mt-3 text-[13px] tabular-nums text-muted-foreground">{{ quote.number }}</p>
+        <p v-if="quote?.number" class="mt-2 text-[13px] tabular-nums text-muted-foreground">{{ quote.number }}</p>
       </section>
 
-      <PortalRail
-        class="mt-8"
-        :kicker="quote && quote.hourlyRate === null ? $t('quotes.total') : undefined"
-        :amount="quote ? formatEuros(gross) : undefined"
-        :note="railNote"
-      >
-        <template v-if="quote && quote.hourlyRate === null" #rail>
-          <p v-if="rejection" class="text-[14.5px] text-destructive">{{ rejection }}</p>
-
-          <template v-if="quote.status === 'sent' && !quote.expired && canAccept">
-            <div
-              v-if="agbUrl || widerrufUrl"
-              class="flex items-start gap-3.5 text-[13.5px] leading-[1.5] [&_[data-slot=checkbox]]:mt-0.5 [&_[data-slot=checkbox]]:size-[17px] [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action"
-            >
-              <Checkbox id="quote-terms" v-model="form.terms" required />
-              <Label variant="inline" for="quote-terms">
-                <a v-if="agbUrl" :href="agbUrl" target="_blank" rel="noopener" class="underline">{{ $t('portal.footerAgb') }}</a>
-                <template v-if="agbUrl && widerrufUrl">{{ ` ${$t('portal.quoteTermsAnd')} ` }}</template>
-                <a v-if="widerrufUrl" :href="widerrufUrl" target="_blank" rel="noopener" class="underline">{{ $t('portal.footerWiderruf') }}</a>
-                {{ $t('portal.quoteTerms') }}
-              </Label>
-            </div>
-
-            <Button
-              variant="portal"
-              type="button"
-              :disabled="form.processing || ((agbUrl !== null || widerrufUrl !== null) && !form.terms)"
-              @click="accept"
-            >
-              {{ $t('portal.quoteAccept') }}
-            </Button>
-          </template>
-
-          <Button v-else-if="quote.expired && messaging" as-child variant="portal-ghost">
-            <Link :href="`/nachrichten?betrifft=${project.id}`">{{ $t('portal.personWrite') }}</Link>
-          </Button>
-        </template>
-
+      <PortalRail>
         <!-- #480: Editor.js-HTML, beim Speichern bereinigt, Felder escaped (QuoteController). -->
         <div
           v-if="quote?.intro"
-          class="animate-rise [animation-delay:190ms] motion-reduce:animate-none mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] [&_p+*]:mt-3 [&_*+p]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
+          class="animate-rise [animation-delay:190ms] motion-reduce:animate-none mt-6 max-w-[62ch] text-[15.5px] leading-[1.6] [&_p+*]:mt-3 [&_*+p]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
           v-html="quote.intro"
         />
 
@@ -201,7 +164,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
           :accepted-at="quote.acceptedAt"
         />
 
-        <div v-else-if="quote" class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 max-w-[680px] border-t border-border pt-8">
+        <div v-else-if="quote" class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-6 max-w-[680px] border-t border-border pt-6">
           <table class="w-full border-collapse">
             <tr v-for="item in quote.items" :key="item.id" :class="[ROW, (item.isIncluded || (item.selectable && !item.selected)) && '[&>td]:text-muted-foreground']">
               <td>
@@ -244,6 +207,39 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
             </template>
           </table>
 
+          <div v-if="quote.hourlyRate === null" class="mt-6 grid gap-4">
+            <p v-if="rejection" class="text-[14.5px] text-destructive">{{ rejection }}</p>
+
+            <div v-if="quote.status === 'sent' && !quote.expired && canAccept" class="flex flex-wrap items-center gap-x-6 gap-y-4">
+              <div
+                v-if="agbUrl || widerrufUrl"
+                class="flex min-w-0 flex-1 basis-60 items-start gap-3.5 text-[13.5px] leading-[1.5] [&_[data-slot=checkbox]]:mt-0.5 [&_[data-slot=checkbox]]:size-[17px] [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action"
+              >
+                <Checkbox id="quote-terms" v-model="form.terms" required />
+                <Label variant="inline" for="quote-terms">
+                  <a v-if="agbUrl" :href="agbUrl" target="_blank" rel="noopener" class="underline">{{ $t('portal.footerAgb') }}</a>
+                  <template v-if="agbUrl && widerrufUrl">{{ ` ${$t('portal.quoteTermsAnd')} ` }}</template>
+                  <a v-if="widerrufUrl" :href="widerrufUrl" target="_blank" rel="noopener" class="underline">{{ $t('portal.footerWiderruf') }}</a>
+                  {{ $t('portal.quoteTerms') }}
+                </Label>
+              </div>
+
+              <Button
+                class="max-[700px]:w-full max-[700px]:justify-center"
+                variant="portal"
+                type="button"
+                :disabled="form.processing || ((agbUrl !== null || widerrufUrl !== null) && !form.terms)"
+                @click="accept"
+              >
+                {{ $t('portal.quoteAccept') }}
+              </Button>
+            </div>
+
+            <Button v-else-if="quote.expired && messaging" as-child variant="portal-ghost">
+              <Link :href="`/nachrichten?betrifft=${project.id}`">{{ $t('portal.personWrite') }}</Link>
+            </Button>
+          </div>
+
           <table v-if="stages.length" class="mt-8 w-full max-w-[420px] border-collapse">
             <caption class="pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">
               {{ $t('quotes.payment') }}
@@ -257,7 +253,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
           <div v-if="quote.outro" class="mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] [&_p+*]:mt-3 [&_*+p]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5" v-html="quote.outro" />
         </div>
 
-        <p v-else class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 text-[15px] text-muted-foreground">{{ $t('portal.quoteNone') }}</p>
+        <p v-else class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-6 text-[15px] text-muted-foreground">{{ $t('portal.quoteNone') }}</p>
       </PortalRail>
     </PortalWrap>
 

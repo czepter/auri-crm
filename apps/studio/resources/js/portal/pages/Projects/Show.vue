@@ -12,7 +12,6 @@ import PortalRow from '@/portal/components/PortalRow.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 import { dayDate } from '@/portal/lib/dates'
-import { openDocument } from '@/portal/lib/rail'
 import { reachable, type Studio } from '@/portal/lib/studio'
 import { Button } from '@/ui/button'
 import { formatEuros } from '@/lib/money'
@@ -98,14 +97,15 @@ const daysLeft = computed(() => {
   return Math.round((new Date(props.project.date!).getTime() - midnight.getTime()) / 86_400_000)
 })
 
-const waiting = computed(() => openDocument(props.project.documents))
+// Everything waiting on the client, most pressing first: the contract, an
+// overdue rate, the quote, a rate not yet due, then the questionnaires.
+const steps = computed(() => {
+  const rank = (document: Document) => document.kind === 'contract' ? 0 : document.kind === 'payments' ? (document.overdue ? 1 : 3) : 2
 
-// What the client is asked to do next, in the order the paperwork piles up.
-const step = computed(() => {
-  const document = waiting.value
-
-  if (document) {
-    return {
+  const documents = props.project.documents
+    .filter(document => !document.settled)
+    .map(document => ({
+      rank: rank(document),
       title: document.kind === 'payments' ? 'portal.payment' : `portal.document.${document.kind}`,
       note: document.kind === 'payments' && document.dueOn
         ? { key: document.overdue ? 'portal.overdueSince' : 'portal.dueOn', date: document.dueOn }
@@ -113,27 +113,29 @@ const step = computed(() => {
           ? { key: 'portal.notSignedYet', date: null }
           : document.kind === 'quote' && document.dueOn ? { key: 'portal.validUntil', date: document.dueOn } : null,
       amount: document.amount ? formatEuros(document.amount) : null,
-      detail: null,
+      detail: null as string | null,
       late: document.overdue === true,
       label: { payments: 'portal.payButton', contract: 'portal.signButton', quote: 'portal.quoteAccept', messages: 'portal.replyButton' }[document.kind],
       href: document.href,
-    }
-  }
+    }))
 
-  const sheet = props.project.questionnaires.find(one => one.openCount > 0)
+  const sheets = props.project.questionnaires
+    .filter(one => one.openCount > 0)
+    .map(sheet => ({
+      rank: 4,
+      title: 'portal.questionnairesTitle',
+      note: null,
+      amount: null,
+      late: false,
+      label: 'portal.answerButton',
+      href: `/projekte/${props.project.id}/fragebogen/${sheet.id}`,
+      detail: `${sheet.name} · ${sheet.openCount}/${sheet.count}`,
+    }))
 
-  return sheet
-    ? {
-        title: 'portal.questionnairesTitle',
-        note: null,
-        amount: null,
-        late: false,
-        label: 'portal.answerButton',
-        href: `/projekte/${props.project.id}/fragebogen/${sheet.id}`,
-        detail: `${sheet.name} · ${sheet.openCount}/${sheet.count}`,
-      }
-    : null
+  return [...documents, ...sheets].sort((a, b) => a.rank - b.rank)
 })
+
+const step = computed(() => steps.value[0] ?? null)
 
 const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
 
@@ -183,6 +185,18 @@ function documentNote(document: Document) {
         <Button as-child variant="portal" class="mt-5 min-h-12 w-full justify-center text-[15px]">
           <Link :href="step.href">{{ $t(step.label) }}</Link>
         </Button>
+
+        <PortalRow
+          v-for="other in steps.slice(1)"
+          :key="other.href"
+          :href="other.href"
+          :title="$t(other.title)"
+          :state="other.late ? 'late' : 'open'"
+          :note="other.detail ?? (other.note ? $t(other.note.key, { date: other.note.date ? dayDate(other.note.date) : '' }) : null)"
+          :aside="other.amount"
+          aside-open
+          class="last:border-b-0"
+        />
       </section>
 
       <p v-else-if="statement" class="mt-6 font-serif text-[22px] leading-[1.25]">
@@ -259,7 +273,7 @@ function documentNote(document: Document) {
               </template>
             </p>
           </div>
-          <Button as="a" variant="portal" class="max-[820px]:w-full max-[820px]:justify-center" :href="`/galerien/${project.gallery.id}`">
+          <Button as="a" variant="portal-ghost" class="max-[820px]:w-full max-[820px]:justify-center" :href="`/galerien/${project.gallery.id}`">
             {{ $t('portal.viewAllImages', { count: project.gallery.count }) }}
             <svg viewBox="0 0 24 24" class="fill-none stroke-current"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </Button>

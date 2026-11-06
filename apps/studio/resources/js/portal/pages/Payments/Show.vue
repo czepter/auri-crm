@@ -157,9 +157,36 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
                     ? $t('portal.payButton')
                     : `${$t('portal.payButton')} · ${formatEuros(installment.remaining)}` }}
                 </Button>
-                <Button v-else class="w-full justify-center min-[700px]:w-auto" as="a" variant="portal" href="#ueberweisen">
-                  {{ $t('portal.payButton') }}
-                </Button>
+                <details v-else-if="bankDetails.iban" class="group" :open="installment.id === openInstallments[0]?.id">
+                  <Button as="summary" variant="portal" class="w-full cursor-pointer justify-center list-none min-[700px]:w-auto [&::-webkit-details-marker]:hidden">
+                    {{ $t('portal.payButton') }}
+                  </Button>
+                  <dl class="m-0 mt-4 grid gap-y-4 rounded-md bg-sunk p-4">
+                    <div>
+                      <dt class="text-[13px] text-muted-foreground">{{ $t('portal.transferIban') }}</dt>
+                      <dd class="m-0 flex items-center justify-between gap-3 text-[15px] tabular-nums">
+                        {{ bankDetails.iban }}
+                        <Button type="button" variant="portal-chip" @click="copy(`iban-${installment.id}`, bankDetails.iban!)">
+                          {{ copied === `iban-${installment.id}` ? $t('gallery.copied') : $t('gallery.copy') }}
+                        </Button>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt class="text-[13px] text-muted-foreground">{{ $t('portal.transferReference') }}</dt>
+                      <dd class="m-0 flex items-center justify-between gap-3 text-[15px] tabular-nums">
+                        {{ installment.invoiceNumber ?? plan.reference ?? $t('portal.transferReferencePending') }}
+                        <Button
+                          v-if="installment.invoiceNumber ?? plan.reference"
+                          type="button"
+                          variant="portal-chip"
+                          @click="copy(installment.id, (installment.invoiceNumber ?? plan.reference)!)"
+                        >
+                          {{ copied === installment.id ? $t('gallery.copied') : $t('gallery.copy') }}
+                        </Button>
+                      </dd>
+                    </div>
+                  </dl>
+                </details>
               </div>
 
               <!-- #419: auf die Seite, nicht aufs PDF. Erst ab der
@@ -178,7 +205,7 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
              to which account and under which reference). Bank details are
              optional in settings, and half a transfer block — labels with
              nothing behind them — is worse than none. -->
-        <section v-if="bankDetails.iban" id="ueberweisen" class="scroll-mt-24 animate-rise [animation-delay:320ms] motion-reduce:animate-none mt-12">
+        <section v-if="bankDetails.iban && stripeEnabled" id="ueberweisen" class="scroll-mt-24 animate-rise [animation-delay:320ms] motion-reduce:animate-none mt-12">
           <div :class="BAND">
             <PortalLabel class="mb-6">{{ $t('portal.transferTitle') }}</PortalLabel>
             <dl class="m-0 grid max-w-[560px] gap-y-5">

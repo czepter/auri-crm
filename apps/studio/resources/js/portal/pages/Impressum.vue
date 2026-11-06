@@ -35,6 +35,17 @@ const registry = computed(() => [
   { key: 'settings.registerNumber', value: props.registerNumber },
   { key: 'settings.registerCourt', value: props.registerCourt },
 ].filter(fact => fact.value))
+
+// legal_name is stored without the form; a name that already carries it stays as is.
+const title = computed(() => {
+  if (!props.name) {
+    return null
+  }
+
+  return props.legalForm && !props.name.includes(props.legalForm) ? `${props.name} ${props.legalForm}` : props.name
+})
+
+const role = computed(() => /gmbh|ug\b/i.test(props.legalForm ?? '') ? 'portal.impressumManager' : 'portal.impressumOwner')
 </script>
 
 <template>
@@ -44,13 +55,12 @@ const registry = computed(() => [
     <main class="mx-auto w-full max-w-[668px] grow px-6 pt-[var(--band)] pb-28">
       <PortalBack />
       <p class="animate-rise motion-reduce:animate-none mb-4 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">{{ $t('portal.impressumTitle') }}</p>
-      <h1 v-if="name" class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
-        {{ name }}
+      <h1 v-if="title" class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
+        {{ title }}
       </h1>
 
       <address class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 border-t border-border pt-8 text-[15.5px] leading-[1.6] not-italic">
-        <p v-if="legalForm">{{ legalForm }}</p>
-        <p v-if="representative">{{ representative }}</p>
+        <p v-if="representative">{{ $t(role) }}: {{ representative }}</p>
         <p v-if="street">{{ street }}</p>
         <p v-if="postcode || city">{{ [postcode, city].filter(Boolean).join(' ') }}</p>
         <p v-if="country">{{ country }}</p>

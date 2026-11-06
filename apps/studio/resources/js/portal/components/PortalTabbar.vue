@@ -28,7 +28,7 @@ const LINK
 <template>
   <nav
     v-if="nav"
-    class="fixed inset-x-0 bottom-0 z-40 grid auto-cols-fr grid-flow-col border-t border-border bg-[color-mix(in_srgb,var(--bg)_97%,transparent)] pb-[env(safe-area-inset-bottom)] backdrop-blur-[16px] min-[761px]:hidden"
+    class="fixed inset-x-0 bottom-0 z-40 grid auto-cols-fr grid-flow-col border-t border-border bg-[var(--bg)] pb-[env(safe-area-inset-bottom)] min-[761px]:hidden"
   >
     <Link :class="[LINK, on(bookings)]" href="/">
       <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10" /></svg>

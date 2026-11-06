@@ -217,7 +217,7 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
             <template v-if="!openThread || composing">
               <Input
                 v-model="started.subject"
-                class="mb-3.5 rounded-[var(--r-sm)] border-line-hover px-[13px] py-[11px] text-[14.5px] leading-[1.5]"
+                class="mb-3.5 rounded-[var(--r-sm)] border-input px-[13px] py-[11px] text-[14.5px] leading-[1.5]"
                 type="text"
                 :placeholder="$t('portal.messagesSubjectPlaceholder')"
               />
@@ -243,7 +243,7 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
             <div class="relative">
               <Textarea
                 v-model="form.body"
-                class="max-h-[40vh] min-h-12 resize-none rounded-[20px] border-line-hover py-[13px] pr-14 pl-4 text-[14.5px] leading-[1.5] field-sizing-content"
+                class="max-h-[40vh] min-h-12 resize-none rounded-[20px] border-input py-[13px] pr-14 pl-4 text-[14.5px] leading-[1.5] field-sizing-content"
                 :placeholder="$t('portal.messagesBodyPlaceholder')"
               />
               <!-- The mark carries the whole button, so it carries the name

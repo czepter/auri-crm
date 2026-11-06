@@ -96,6 +96,7 @@ function sign() {
               ? $t('portal.signedOn', { date: dayDate(contract.signature.consentedAt) })
               : $t('portal.notSignedYet') }}
           </span>
+          <p v-if="!canSign && !contract.signature" class="w-full text-[13.5px] text-muted-foreground">{{ $t('portal.signUnavailable') }}</p>
           <Button v-if="canSign && !contract.signature" class="ml-auto" as="a" variant="portal" href="#unterschreiben">
             {{ $t('portal.signButton') }}
           </Button>
@@ -141,8 +142,6 @@ function sign() {
           </Button>
         </form>
       </div>
-
-      <p v-else class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 text-[15px] text-muted-foreground">{{ $t('portal.contractNone') }}</p>
     </PortalWrap>
 
     <PortalFooter />

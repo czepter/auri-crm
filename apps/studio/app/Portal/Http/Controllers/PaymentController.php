@@ -13,6 +13,7 @@ use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Support\InvoiceDocument;
 use App\Payments\Support\InvoiceMergeData;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -47,7 +48,7 @@ class PaymentController extends Controller
         Request $request,
         string $case,
         ConfirmInstallmentCheckoutSession $confirm,
-    ): Response {
+    ): Response|RedirectResponse {
         $contact = auth('portal')->user();
 
         $found = $contact->visibleProjects()
@@ -56,6 +57,10 @@ class PaymentController extends Controller
             ->firstOrFail();
 
         $plan = $found->paymentPlan;
+
+        if ($plan === null) {
+            return redirect("/projekte/{$found->public_id}");
+        }
 
         $sessionId = $request->query('session_id');
         if ($plan !== null && is_string($sessionId) && (bool) StudioSettings::current()->payments_stripe_enabled) {
