@@ -244,7 +244,14 @@ class DemoFillSeeder extends Seeder
             app(MarkQuoteSent::class)($quote->refresh(), 'mail', $actor);
         }
 
-        $this->alignQuote($project, $quote->refresh());
+        $quote->refresh();
+
+        if ($quote->status === QuoteStatus::Sent && $project->booked_at !== null) {
+            app(\App\Quotes\Actions\AcceptQuote::class)($quote, $project->primaryContact(), null, at: Carbon::parse('2026-11-05 14:00'));
+            $quote->refresh();
+        }
+
+        $this->alignQuote($project, $quote);
     }
 
     /**
@@ -289,7 +296,7 @@ class DemoFillSeeder extends Seeder
     /** Anzahlung 30 % due a week after the acceptance, the rest a week before the wedding. */
     private function seedPaymentPlan(ClientCase $project, User $actor): void
     {
-        $quote = Quote::query()->where('case_id', $project->id)->latest('id')->firstOrFail()->refresh();
+        $quote = Quote::query()->where('case_id', $project->id)->where('status', QuoteStatus::Accepted)->latest('id')->firstOrFail()->refresh();
         $plan = PaymentPlan::query()->where('case_id', $project->id)->first();
 
         if ($plan !== null && $plan->total === $quote->gross() && $plan->installments()->orderBy('sort_order')->first()?->due_on->toDateString() === '2026-11-12') {
