@@ -42,7 +42,8 @@ function add() {
 <template>
   <AdminLayout active="schliesszeiten">
     <FormShell :title="$t('settings.closuresLabel')" wide>
-      <div v-if="closures.length">
+      <div class="flex items-start gap-10 max-[900px]:flex-col">
+      <div v-if="closures.length" class="min-w-0 max-w-[780px] flex-1">
         <div class="flex items-center gap-2 pb-2 text-small text-ink-2">
           <span class="min-w-0 flex-1">{{ $t('settings.closureLabelField') }}</span>
           <span class="w-36">{{ $t('settings.closureStartsOn') }}</span>
@@ -92,8 +93,7 @@ function add() {
         </form>
       </div>
 
-      <template #aside>
-        <form class="grid gap-4" @submit.prevent="add">
+        <form class="sticky top-6 grid w-[320px] flex-none gap-4 max-[900px]:w-full" @submit.prevent="add">
           <h2 class="text-ui font-semibold">{{ $t('settings.closureAdd') }}</h2>
           <div class="flex min-w-0 flex-col gap-1.5">
             <Label for="new-label">{{ $t('settings.closureLabelField') }}</Label>
@@ -119,7 +119,7 @@ function add() {
             <Button type="submit" :disabled="newForm.processing">{{ $t('settings.closureAdd') }}</Button>
           </div>
         </form>
-      </template>
+      </div>
     </FormShell>
   </AdminLayout>
 </template>
