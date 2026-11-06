@@ -274,10 +274,10 @@ it('puts no integer identifier on the board', function () {
 // staff otherwise go to Auswertungen for.
 it('sums each stage from the current quotes', function () {
     $lead = leadOn('2026-06-14', LeadStage::QuoteSent);
-    Quote::factory()->for($lead->case, 'case')->create(['total' => 590000, 'sent_at' => now()->subDay()]);
+    Quote::factory()->for($lead->case, 'case')->create(['net' => 590000, 'vat_mode' => 'small_business', 'sent_at' => now()->subDay()]);
 
     $other = leadOn('2026-07-11', LeadStage::QuoteSent, name: 'Petersen');
-    Quote::factory()->for($other->case, 'case')->create(['total' => 310000, 'sent_at' => now()->subDay()]);
+    Quote::factory()->for($other->case, 'case')->create(['net' => 310000, 'vat_mode' => 'small_business', 'sent_at' => now()->subDay()]);
 
     // No quote: not a zero in the sum, and a dash in the value column.
     leadOn('2026-08-02', LeadStage::New, name: 'Sundermann');
@@ -291,7 +291,7 @@ it('sums each stage from the current quotes', function () {
 
 it('carries the value of a draft quote', function () {
     $lead = leadOn('2026-06-14', LeadStage::Contacted);
-    Quote::factory()->for($lead->case, 'case')->create(['total' => 59000]);
+    Quote::factory()->for($lead->case, 'case')->create(['net' => 59000, 'vat_mode' => 'small_business']);
 
     expect(boardProps()['columns'][1]['cards'][0]['value'])->toBe(59000);
 });

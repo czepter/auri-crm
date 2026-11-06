@@ -186,35 +186,37 @@ it('puts the open inquiries and projects on the Übersicht', function () {
 });
 
 it('carries the Galerien field', function () {
-    Gallery::factory()->for(ClientCase::factory()->create(), 'case')->create(['expires_at' => now()->addDays(12)]);
+    $project = bookedForDashboard();
+    Shoot::factory()->for($project, 'case')->atStatus(ShootStatus::Delivered)->create();
+    Gallery::factory()->for($project, 'case')->create(['expires_at' => now()->addDays(12)]);
 
     expect(props('/')['galleries'])->toHaveCount(1);
 });
 
 it('sums the pipeline from quotes still in play', function () {
     $project = ClientCase::factory()->create();
-    Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Sent, 'total' => 4875000]);
+    Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Sent, 'net' => 4875000, 'vat_mode' => 'small_business']);
     $won = ClientCase::factory()->create();
-    Quote::factory()->for($won, 'case')->create(['status' => QuoteStatus::Accepted, 'total' => 900000]);
+    Quote::factory()->for($won, 'case')->create(['status' => QuoteStatus::Accepted, 'net' => 900000, 'vat_mode' => 'small_business']);
 
     expect(props('/')['pipeline'])->toBe(['total' => 4875000, 'priorYear' => null]);
 });
 
 it('counts one quote per case in the pipeline', function () {
     $case = ClientCase::factory()->create();
-    Quote::factory()->for($case, 'case')->create(['status' => QuoteStatus::Sent, 'total' => 100000]);
-    Quote::factory()->for($case, 'case')->create(['status' => QuoteStatus::Draft, 'total' => 100000]);
+    Quote::factory()->for($case, 'case')->create(['status' => QuoteStatus::Sent, 'net' => 100000, 'vat_mode' => 'small_business']);
+    Quote::factory()->for($case, 'case')->create(['status' => QuoteStatus::Draft, 'net' => 100000, 'vat_mode' => 'small_business']);
 
     expect(props('/')['pipeline']['total'])->toBe(100000);
 });
 
 it('leaves booked and closed cases out of the pipeline', function () {
     $open = ClientCase::factory()->create();
-    Quote::factory()->for($open, 'case')->create(['status' => QuoteStatus::Draft, 'total' => 59000]);
+    Quote::factory()->for($open, 'case')->create(['status' => QuoteStatus::Draft, 'net' => 59000, 'vat_mode' => 'small_business']);
     $booked = ClientCase::factory()->create(['booked_at' => now(), 'booked_via' => BookedVia::Manual]);
-    Quote::factory()->for($booked, 'case')->create(['status' => QuoteStatus::Sent, 'total' => 120000]);
+    Quote::factory()->for($booked, 'case')->create(['status' => QuoteStatus::Sent, 'net' => 120000, 'vat_mode' => 'small_business']);
     $closed = ClientCase::factory()->create(['closed_at' => now(), 'close_reason' => 'Budget', 'close_outcome' => LeadOutcome::Lost]);
-    Quote::factory()->for($closed, 'case')->create(['status' => QuoteStatus::Sent, 'total' => 146000]);
+    Quote::factory()->for($closed, 'case')->create(['status' => QuoteStatus::Sent, 'net' => 146000, 'vat_mode' => 'small_business']);
 
     expect(props('/')['pipeline']['total'])->toBe(59000);
 });
@@ -260,10 +262,9 @@ it('reports nothing owed when there is no plan', function () {
 });
 
 it('counts quotes over the chosen range, with the same range a year earlier beside them', function () {
-    $project = ClientCase::factory()->create();
-    Quote::factory()->for($project, 'case')->count(5)->create(['status' => QuoteStatus::Sent, 'sent_at' => now()->subMonths(3)]);
-    Quote::factory()->for($project, 'case')->count(3)->create(['status' => QuoteStatus::Accepted, 'sent_at' => now()->subMonths(3), 'accepted_at' => now()->subMonths(2)]);
-    Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Accepted, 'sent_at' => now()->subMonths(18), 'accepted_at' => now()->subMonths(17)]);
+    Lead::factory()->count(5)->create(['captured_at' => now()->subMonths(3), 'stage' => LeadStage::QuoteSent]);
+    Lead::factory()->count(3)->create(['captured_at' => now()->subMonths(3), 'stage' => LeadStage::QuoteAccepted]);
+    Lead::factory()->create(['captured_at' => now()->subMonths(18), 'stage' => LeadStage::QuoteAccepted]);
 
     expect(props('/?zeitraum=year')['quotes'])->toBe(['sent' => 8, 'accepted' => 3, 'priorSent' => 1, 'priorAccepted' => 1])
         ->and(props('/?zeitraum=30')['quotes'])->toBe(['sent' => 0, 'accepted' => 0, 'priorSent' => null, 'priorAccepted' => null]);
