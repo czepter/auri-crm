@@ -42,7 +42,7 @@ const meta = {
     mode: 'internal',
     project,
     shootId: 's-rahn',
-    siblings: [{ id: 'g-rahn', title: 'Getting Ready', projectName: 'Hochzeit Rahn', assetCount: 48, version: 1, expiresAt: '2027-02-01' }],
+    siblings: [{ id: 'g-rahn', title: 'Getting Ready', projectName: 'Hochzeit Rahn', assetCount: 48, version: 1, expiresAt: '2027-02-01', cover: null }],
     address: 'galerie.example/hochzeit-rahn',
     presets,
     studioDefaults: {

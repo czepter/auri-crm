@@ -28,6 +28,7 @@ const meta = {
       phone: '+49 40 4321987',
       role: 'Inhaber',
     },
+    workingDays: [1, 2, 3, 4, 5],
     pendingEmail: null,
     mfaConfirmed: true,
     sessions: [
