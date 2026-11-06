@@ -379,12 +379,12 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 :aria-label="$t('project.taskComplete')"
                                 @click="complete(row)"
                             />
-                            <span class="min-w-0 flex-1 text-ui leading-[1.47]" :class="row.isDone && 'text-ink-2'">{{
+                            <span class="min-w-0 flex-1 text-ui leading-[1.47] max-[640px]:truncate" :class="row.isDone && 'text-ink-2'">{{
                                 row.title
                             }}</span>
-                            <span class="flex items-baseline gap-3 max-[640px]:basis-full max-[640px]:pl-[27px]">
-                                <span class="text-small leading-[1.47] text-ink-2">{{ row.audienceLabel }}</span>
-                                <span v-if="row.shootLabel" class="text-small leading-[1.47] text-ink-2">{{
+                            <span class="flex items-baseline gap-3 max-[640px]:min-w-0 max-[640px]:basis-full max-[640px]:pl-[27px]">
+                                <span class="text-small leading-[1.47] whitespace-nowrap text-ink-2">{{ row.audienceLabel }}</span>
+                                <span v-if="row.shootLabel" class="min-w-0 text-small leading-[1.47] text-ink-2 max-[640px]:truncate">{{
                                     row.shootLabel
                                 }}</span>
                                 <span
