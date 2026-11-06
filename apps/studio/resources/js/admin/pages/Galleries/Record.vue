@@ -313,7 +313,8 @@ function megabytes(bytes: number) {
 
 <template>
   <AdminLayout active="galerien">
-    <Page data-tokens wide>
+    <Page wide>
+    <div data-tokens class="min-w-0 flex-1">
       <PageHead :title="gallery.title ?? '—'">
         <span class="flex flex-none items-center gap-1.5 text-small font-semibold" :class="stateTone">
           <span class="size-1.5 rounded-full bg-current" />{{ stateWord }}
@@ -641,6 +642,7 @@ function megabytes(bytes: number) {
           <p v-else class="text-small leading-[1.45] text-faint">{{ $t('galleryRecord.noBuilds') }}</p>
         </div>
       </div>
+    </div>
     </Page>
   </AdminLayout>
 </template>
