@@ -275,6 +275,9 @@ function complete(row: App.Crm.Data.TaskRowData) {
             </template>
 
             <template v-if="sendHref || createQuote || step || callHref || addShoot || addGallery || completeNow" #stage>
+                <Button v-if="callHref" variant="outline" as-child class="max-[640px]:min-h-11">
+                    <a :href="callHref">{{ $t("contacts.call") }}</a>
+                </Button>
                 <Button v-if="sendHref" variant="pill" as-child class="max-[640px]:min-h-11">
                     <Link :href="sendHref">{{ $t("lead.sendQuote") }}</Link>
                 </Button>

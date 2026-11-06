@@ -9,7 +9,7 @@ describe('htmlToBlocks', () => {
 
     expect(doc.blocks.map((block) => block.type)).toEqual(['header', 'paragraph', 'list'])
     expect(doc.blocks[1].data.text).toContain('data-mf="contact.name"')
-    expect(serialize(doc, 'print')).toBe('<h2>Vertrag</h2><p>Mit {{ contact.name }}</p><ul><li>x</li></ul>')
+    expect(serialize(doc, 'print')).toBe('<h2>Vertrag</h2>\n<p>Mit {{ contact.name }}</p>\n<ul><li>x</li></ul>')
   })
 
   it('keeps a body with a table as one raw-html block', () => {

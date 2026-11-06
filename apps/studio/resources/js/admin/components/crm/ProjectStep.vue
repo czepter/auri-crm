@@ -4,7 +4,7 @@ import { Link, router } from "@inertiajs/vue3";
 import { ChevronDown } from "lucide-vue-next";
 import { Button } from "@/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui/dropdown-menu";
-import { nextStep, paymentCall, stepRows } from "@/admin/lib/projectNextStep";
+import { nextStep, stepRows } from "@/admin/lib/projectNextStep";
 
 const props = defineProps<{
     header: App.Crm.Screens.CaseHeaderData;
@@ -18,15 +18,11 @@ function advance(shootId: string, status: string) {
 const step = computed(() => (props.header.canManageShoots ? nextStep(props.shoots) : null));
 const stepMenu = computed(() => stepRows(props.shoots));
 const addShoot = computed(() => props.header.isBooked && props.header.canManageShoots && !props.shoots.length);
-const callHref = computed(() => paymentCall(props.header.paymentPlan, props.header.people));
 </script>
 
 <template>
-    <template v-if="!step && (callHref || addShoot)">
-        <Button v-if="callHref" variant="outline" as-child class="max-[640px]:min-h-11">
-            <a :href="callHref">{{ $t("contacts.call") }}</a>
-        </Button>
-        <Button v-if="addShoot" variant="pill" as-child class="max-[640px]:min-h-11">
+    <template v-if="!step && addShoot">
+        <Button variant="pill" as-child class="max-[640px]:min-h-11">
             <Link :href="`/auftraege/${header.id}/shootings`">{{ $t("project.shootCreate") }}</Link>
         </Button>
     </template>
