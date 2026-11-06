@@ -51,10 +51,10 @@ it('filters by event, person and period', function () {
     $this->actingAs($owner, 'staff');
 
     expect(array_column(auditEntries(['ereignis' => 'staff.logout']), 'label'))->toBe(['Abgemeldet', 'Abgemeldet'])
-        ->and(auditEntries(['person' => $other->public_id]))->toHaveCount(2)
+        ->and(auditEntries(['person' => $other->public_id, 'anmeldungen' => 1]))->toHaveCount(2)
         ->and(auditEntries(['person' => $owner->public_id, 'ereignis' => 'staff.logout']))->toHaveCount(1)
         ->and(auditEntries(['bis' => now()->subDays(5)->format('Y-m-d')]))->toHaveCount(1)
-        ->and(auditEntries(['von' => now()->subDays(5)->format('Y-m-d')]))->toHaveCount(3);
+        ->and(auditEntries(['von' => now()->subDays(5)->format('Y-m-d'), 'anmeldungen' => 1]))->toHaveCount(3);
 });
 
 // A name that is missing here shows up raw in the log.
@@ -112,7 +112,7 @@ it('shows old and new value of a settings change', function () {
     $this->actingAs($owner, 'staff');
 
     expect(array_column(auditEntries(), 'detail'))->toBe([
-        ['Stripe-Modus: test → live', 'Stripe Testschlüssel (geheim)'],
+        ['Stripe-Modus: Test → Live', 'Stripe Testschlüssel (geheim)'],
         ['Aufbewahrung (Monate): 24 → 36'],
     ]);
 });

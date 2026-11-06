@@ -2,12 +2,10 @@
 
 namespace App\Crm\Actions;
 
-use App\Contracts\Enums\ContractState;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\ClientCase;
 use App\Crm\Support\CrmVocabulary;
-use App\Quotes\Enums\QuoteStatus;
 
 /**
  * The one thing a project asks for next, for the head every tab carries.
@@ -27,19 +25,19 @@ class ReadNextAction
         $id = $project->public_id;
 
         if (! $project->isBooked()) {
-            $quote = $project->quotes()->whereNotIn('status', [QuoteStatus::Superseded, QuoteStatus::Expired])->latest('id')->first();
+            $quote = $project->quotes()->whereNotIn('status', ['superseded', 'expired'])->latest('id')->first();
 
             return match (true) {
                 $quote === null => ['label' => 'quotes.create', 'href' => "/angebote/neu?projekt={$id}", 'post' => null],
-                $quote->status === QuoteStatus::Draft => ['label' => 'lead.sendQuote', 'href' => "/angebote/{$quote->public_id}/senden", 'post' => null],
-                $quote->status === QuoteStatus::Sent => ['label' => 'lead.step.followUp', 'href' => "/anfragen/{$id}/nachrichten", 'post' => null],
+                $quote->status->value === 'draft' => ['label' => 'lead.sendQuote', 'href' => "/angebote/{$quote->public_id}/senden", 'post' => null],
+                $quote->status->value === 'sent' => ['label' => 'lead.step.followUp', 'href' => "/anfragen/{$id}/nachrichten", 'post' => null],
                 default => null,
             };
         }
 
         $base = "/auftraege/{$id}";
 
-        if (! $project->contracts()->where('state', '!=', ContractState::Superseded)->exists()) {
+        if (! $project->contracts()->where('state', '!=', 'superseded')->exists()) {
             return ['label' => 'project.contractSendStep', 'href' => "{$base}/vertrag", 'post' => null];
         }
 

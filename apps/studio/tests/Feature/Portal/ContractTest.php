@@ -32,17 +32,18 @@ it('shows the contact their own project\'s rendered contract', function () {
         ->and($props['contract']['html'])->toBeString()->not->toBeEmpty();
 });
 
-it('shows an empty state when the project has no contract yet', function () {
+it('renders the missing page when the project has no contract yet', function () {
     $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
     $project->attachContact($contact, CaseContactRole::Primary);
 
-    $props = $this->actingAs($contact, 'portal')
+    $page = $this->actingAs($contact, 'portal')
         ->get("/projekte/{$project->public_id}/vertrag")
         ->assertOk()
-        ->viewData('page')['props'];
+        ->viewData('page');
 
-    expect($props['contract'])->toBeNull();
+    expect($page['component'])->toBe('Projects/Missing')
+        ->and($page['props']['kind'])->toBe('contract');
 });
 
 it('404s a contract page for a project the contact is not on', function () {

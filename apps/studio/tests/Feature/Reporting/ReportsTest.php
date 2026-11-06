@@ -14,7 +14,7 @@ use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
-use App\Quotes\Support\QuoteAcceptanceRate;
+use App\Reporting\Support\QuoteAcceptanceRate;
 use App\Reporting\Enums\ReportPeriod;
 use App\Reporting\Support\BookingFunnel;
 use App\Reporting\Support\CashFlowForecast;

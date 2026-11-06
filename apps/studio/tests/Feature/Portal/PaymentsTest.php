@@ -78,17 +78,18 @@ it('exposes stripeEnabled true only once the studio has switched it on', functio
     expect($props['stripeEnabled'])->toBeTrue();
 });
 
-it('shows an empty plan when the job has no payment plan yet', function () {
+it('renders the missing page when the job has no payment plan yet', function () {
     $project = ClientCase::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
     $project->attachContact($contact, CaseContactRole::Primary);
 
-    $props = $this->actingAs($contact, 'portal')
+    $page = $this->actingAs($contact, 'portal')
         ->get("/projekte/{$project->public_id}/zahlungen")
         ->assertOk()
-        ->viewData('page')['props'];
+        ->viewData('page');
 
-    expect($props['plan'])->toBeNull();
+    expect($page['component'])->toBe('Projects/Missing')
+        ->and($page['props']['kind'])->toBe('payments');
 });
 
 it('404s the payments screen for a project the contact is not on', function () {
