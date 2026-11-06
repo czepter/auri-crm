@@ -247,4 +247,11 @@ describe('Record', () => {
     expect(html).toContain('Online bis 17.11.2026')
     expect(html).not.toContain('Fassung 1')
   })
+
+  it('keeps Zurücknehmen in the More menu, not among the head buttons', async () => {
+    const html = await render({ ...base, figures: { ...base.figures, published: 1, assets: 2 } })
+
+    expect(html).toContain(de.galleryRecord.withdraw)
+    expect(html).not.toMatch(new RegExp(`<button[^>]*>\\s*${de.galleryRecord.withdraw}`))
+  })
 })

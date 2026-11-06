@@ -132,6 +132,7 @@ function publish() {
 }
 
 const sharing = ref(false)
+const previewForm = ref<HTMLFormElement | null>(null)
 
 function publishSilently() {
   router.post(`/galerien/${props.gallery.id}/veroeffentlichen`, {}, { preserveScroll: true, onSuccess: () => (sharing.value = true) })
@@ -355,22 +356,24 @@ function megabytes(bytes: number) {
               <DropdownMenuItem v-if="gallery.canPublish" @select="createPreviewLink">{{ $t('galleryRecord.createPreviewLink') }}</DropdownMenuItem>
               <DropdownMenuItem @select="savingPreset = true">{{ $t('galleryRecord.saveAsPreset') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="presets.length" @select="applyingPreset = true">{{ $t('galleryRecord.applyPreset') }}</DropdownMenuItem>
+              <DropdownMenuItem class="min-[641px]:hidden" @select="previewForm?.submit()">{{ $t('galleryRecord.preview') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="showPublish && gallery.canMail" @select="publishSilently">{{ $t('galleryRecord.publishSilently') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="showWithdraw" @select="withdraw">{{ $t('galleryRecord.withdraw') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="showStartPrerelease" @select="startPrerelease">{{ $t('galleryRecord.prerelease') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="showStopPrerelease" @select="stopPrerelease">{{ $t('galleryRecord.prereleaseStop') }}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
           <form
+            ref="previewForm"
             :action="`/galerien/${gallery.id}/vorschau`"
             method="post"
             target="_blank"
-            class="inline-flex"
+            class="inline-flex max-[640px]:hidden"
           >
             <input type="hidden" name="_token" :value="csrf">
             <Button type="submit" variant="pill-muted">{{ $t('galleryRecord.preview') }}</Button>
           </form>
-          <Button v-if="showWithdraw" type="button" variant="pill-muted" @click="withdraw">{{ $t('galleryRecord.withdraw') }}</Button>
-          <Button v-if="showPublish && gallery.canMail" type="button" variant="pill-muted" @click="publishSilently">{{ $t('galleryRecord.publishSilently') }}</Button>
           <Button v-if="showPublish" type="button" @click="publish">{{ $t(publishLabel) }}</Button>
           <Button v-else-if="showWithdraw" type="button" @click="sharing = true">{{ $t('galleryRecord.share') }}</Button>
         </span>
