@@ -1453,6 +1453,8 @@
     "stripeEnabled": "Online-Zahlung per Karte (Stripe)",
     "stripeEnabledHint": "Kunden wählen dann je Zahlung zwischen Überweisung und Karte.",
     "stripeMode": "Modus",
+    "statusWebhook": "Webhook",
+    "statusLastPayment": "Letzte Zahlung",
     "stripeModeTest": "Test",
     "stripeModeLive": "Live",
     "stripeTestKeys": "Test-Schlüssel",

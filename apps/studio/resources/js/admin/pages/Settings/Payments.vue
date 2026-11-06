@@ -12,8 +12,13 @@ import { Label } from '@/ui/label'
 import { saveState } from '@/admin/lib/autosave'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
-const props = defineProps<{ settings: App.Settings.Data.PaymentSettingsData }>()
-useLiveProps(['settings'])
+const props = defineProps<{
+  settings: App.Settings.Data.PaymentSettingsData
+  status: { lastWebhookAt: string | null; lastPaidOn: string | null }
+}>()
+useLiveProps(['settings', 'status'])
+
+const day = (value: string | null) => (value ? new Date(value.replace(' ', 'T')).toLocaleDateString('de-DE') : '–')
 
 // Keys are write-only (T-07): the server never echoes a stored value back,
 // so this form always starts with them blank. Submitting blank leaves the
@@ -153,6 +158,23 @@ function submit() {
         </div>
 
       </form>
+
+      <template #aside>
+        <dl class="m-0 grid gap-3 rounded-[var(--r)] bg-paper p-5 shadow-card text-ui">
+          <div class="flex justify-between gap-4">
+            <dt class="text-ink-2">{{ $t('paymentSettings.stripeMode') }}</dt>
+            <dd class="m-0 font-semibold">{{ $t(form.payments_stripe_mode === 'live' ? 'paymentSettings.stripeModeLive' : 'paymentSettings.stripeModeTest') }}</dd>
+          </div>
+          <div class="flex justify-between gap-4">
+            <dt class="text-ink-2">{{ $t('paymentSettings.statusWebhook') }}</dt>
+            <dd class="m-0 tabular-nums">{{ day(status.lastWebhookAt) }}</dd>
+          </div>
+          <div class="flex justify-between gap-4">
+            <dt class="text-ink-2">{{ $t('paymentSettings.statusLastPayment') }}</dt>
+            <dd class="m-0 tabular-nums">{{ day(status.lastPaidOn) }}</dd>
+          </div>
+        </dl>
+      </template>
     </FormShell>
   </AdminLayout>
 </template>
