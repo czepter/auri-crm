@@ -442,7 +442,7 @@
     "number": "Nummer",
     "amount": "Betrag",
     "status": "Status",
-    "createdAt": "Erstellt",
+    "createdAt": "Datum",
     "searchPlaceholder": "Suchen",
     "empty": "Keine Angebote.",
     "create": "Neues Angebot"

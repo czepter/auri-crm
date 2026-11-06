@@ -42,7 +42,7 @@ class StructuredQuoteLayout implements QuoteLayoutRenderer
 
     private function metaCard(Quote $quote): string
     {
-        $rows = ['<span>Datum</span><span>'.(($quote->sent_at ?? $quote->created_at)?->format('d.m.Y') ?? '').'</span>'];
+        $rows = ['<span>Datum</span><span>'.($quote->issuedAt()?->format('d.m.Y') ?? '').'</span>'];
 
         if ($quote->valid_until !== null) {
             $rows[] = '<span>Gültig bis</span><span>'.e($quote->valid_until->format('d.m.Y')).'</span>';

@@ -22,7 +22,7 @@ class HeaderBandQuoteLayout implements QuoteLayoutRenderer
             .'<div class="dhb-band"><span>'.e($studio['name'] ?? '').'</span><span class="dhb-band-title">Angebot'.($quote->number === null ? '' : '<br><small>Nr. '.e($quote->number).'</small>').'</span></div>'
             .'<div class="dhb-body">'
             .'<div class="dhb-meta-row">'
-            .'<span>Datum <strong>'.(($quote->sent_at ?? $quote->created_at)?->format('d.m.Y') ?? '').'</strong></span>'
+            .'<span>Datum <strong>'.($quote->issuedAt()?->format('d.m.Y') ?? '').'</strong></span>'
             .($quote->valid_until === null ? '' : '<span>Gültig bis <strong>'.e($quote->valid_until->format('d.m.Y')).'</strong></span>')
             .'</div>'
             .$this->recipient($quote)

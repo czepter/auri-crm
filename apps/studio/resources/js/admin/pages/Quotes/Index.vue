@@ -61,7 +61,7 @@ function day(iso: string) {
                 <TableCell tone="muted">{{ quote.number ?? '—' }}</TableCell>
                 <TableCell align="right">{{ formatEuros(quote.total) }}</TableCell>
                 <TableCell><span class="chip" :class="quoteChipClass(quote.status)">{{ quote.statusLabel }}</span></TableCell>
-                <TableCell align="right" tone="muted">{{ quote.createdAt ? day(quote.createdAt) : '—' }}</TableCell>
+                <TableCell align="right" tone="muted">{{ quote.sentAt ?? quote.createdAt ? day((quote.sentAt ?? quote.createdAt)!) : '—' }}</TableCell>
               </TableRow>
             </tbody>
           </Table>

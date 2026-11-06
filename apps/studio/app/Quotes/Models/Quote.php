@@ -130,6 +130,12 @@ class Quote extends Model
         });
     }
 
+    /** The one date a quote document and the admin list print. */
+    public function issuedAt(): ?\Carbon\CarbonInterface
+    {
+        return $this->sent_at ?? $this->created_at;
+    }
+
     public function case(): BelongsTo
     {
         return $this->belongsTo(ClientCase::class);
