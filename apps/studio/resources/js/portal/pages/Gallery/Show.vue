@@ -6,6 +6,7 @@ import GalleryLightbox from '@/portal/components/GalleryLightbox.vue'
 import { shortDate } from '@/portal/lib/dates'
 import { ALL, countOf, selections, visible } from '@/portal/lib/gallerySelections'
 import { GRID_WIDTHS, srcSet } from '@/portal/lib/images'
+import { tileStyle } from '@/portal/lib/tile'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
@@ -168,15 +169,6 @@ const subtitle = computed(() => {
 // The grid deliberately stays under the proxy's allow-list.
 const SIZES = '(max-width: 760px) 50vw, (max-width: 1080px) 33vw, 25vw'
 
-const ROW_HEIGHT = 260
-
-function tileStyle(asset: { width: number | null; height: number | null }) {
-  const ratio = asset.width && asset.height ? asset.width / asset.height : 1.5
-
-  // 34vw caps the row on a phone, where one full-height row would fit a single landscape frame.
-  return { aspectRatio: String(ratio), flex: `${ratio * 100} 1 calc(${ratio} * min(${ROW_HEIGHT}px, 34vw))` }
-}
-
 // The first published asset carries the cover. Nothing in the schema names
 // one, so "the first" is the studio's own ordering rather than a guess.
 const cover = computed(() => props.assets?.[0] ?? null)
@@ -312,7 +304,7 @@ const COVER_INPUT = [
 
       <!-- Justified rows: basis and grow follow the aspect ratio, so every row
            fills the width at one height. `columns` left ragged holes at the
-           column ends. The trailing spacer keeps the last row from stretching. -->
+           column ends. tileStyle caps how far the last row may stretch. -->
       <main
         v-if="shown.length"
         id="raster"
@@ -362,7 +354,6 @@ const COVER_INPUT = [
             />
           </picture>
         </span>
-        <span class="grow-[999]" />
       </main>
 
       <!-- Unlocked over a gallery nobody has published yet: a real state,

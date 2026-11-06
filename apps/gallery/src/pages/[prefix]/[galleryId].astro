@@ -5,6 +5,7 @@ import { callApi } from '../../lib/apiClient'
 import { buyPass, passCookieName, PASS_MAX_AGE_SECONDS } from '../../lib/viewPass'
 import { isPrerelease, signUpForPrerelease, type PrereleaseSignupResult } from '../../lib/prerelease'
 import { confirm as confirmGuest, guestCookieName, GUEST_MAX_AGE_SECONDS, nameFromEmail, requestCode } from '../../lib/guest'
+import { tileStyle } from '../../lib/tile'
 import '../../styles/app.css'
 
 // G-08: never cached. Which GalleryVersion counts as "current" can change
@@ -241,9 +242,6 @@ if (gallery === null && !locked && !prerelease) {
   Astro.response.status = 502
 }
 
-// (SIZES matches .wall's four fixed columns in gallery.css — a masonry, no
-// responsive breakpoints exist in the mockup this screen matches, so none
-// are invented here either.)
 const SIZES = '(max-width: 760px) 50vw, (max-width: 1080px) 33vw, 25vw'
 const FALLBACK_WIDTH = 800
 const cover = gallery?.version.assets[0] ?? null
@@ -376,7 +374,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
 
           <main class="wall" id="raster">
             {gallery.version.assets.map((asset, i) => (
-              <a class="tile" href="#" data-lb-open data-index={i}>
+              <a class="tile" href="#" data-lb-open data-index={i} style={tileStyle(asset)}>
                 <picture>
                   {FORMATS.filter((f) => f !== 'jpeg').map((format) => (
                     <source
