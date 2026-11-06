@@ -13,7 +13,6 @@ import { Toaster } from "@/ui/sonner";
 import CommandPalette from "@/admin/layouts/CommandPalette.vue";
 import { Alert } from "@/ui/alert";
 import { Button } from "@/ui/button";
-import HelpButton from "@/ui/page/HelpButton.vue";
 import { navItems, phoneNav, studioKeys } from "@/admin/lib/nav";
 import { Dialog, DialogContent, DialogTitle } from "@/ui/dialog";
 
@@ -274,7 +273,6 @@ const collectorsOpen = ref<Record<string, boolean>>(
                             :title="$t('releases.available')"
                         />
                     </Link>
-                    <HelpButton class="ml-auto" />
                 </div>
 
                 <!-- The effective style here is the cascade of both sheets: crm.css

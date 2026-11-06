@@ -56,12 +56,10 @@ async function open() {
   index.value = await holeIndex()
 }
 
-// Dieselbe Schwelle wie der Hilfe-Knopf: helpPanel.dockt sagt bereits, ob die
-// Spalte offen ist, statt die Breakpoints hier ein zweites Mal zu kennen.
 function waehlen(slug: string) {
   dialog.value?.close()
 
-  if (helpPanel.dockt.value) {
+  if (((usePage().props.help as unknown[] | null) ?? []).length > 0) {
     helpPanel.oeffnen(slug)
     return
   }
