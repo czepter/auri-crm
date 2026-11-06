@@ -12,7 +12,7 @@ const meta = {
       { id: 'a3', at: '2026-09-19T09:40:00+02:00', actor: null, label: 'Anmeldung fehlgeschlagen', detail: [], target: null },
     ],
     nextCursor: null,
-    filters: { ereignis: '', person: '', von: '', bis: '' },
+    filters: { ereignis: '', person: '', von: '', bis: '', anmeldungen: false },
     events: [
       { value: 'quote.sent', label: 'Angebot gesendet' },
       { value: 'contact.created', label: 'Kontakt angelegt' },

@@ -16,7 +16,7 @@ type Option = { value: string; label: string }
 type Props = {
   entries: { id: string; at: string; event: string; actor: string | null; label: string; detail: string[]; target: { name: string; href: string } | null }[]
   nextCursor: string | null
-  filters: { ereignis: string; person: string; von: string; bis: string }
+  filters: { ereignis: string; person: string; von: string; bis: string; anmeldungen: boolean }
   events: Option[]
   people: Option[]
 }
@@ -28,7 +28,7 @@ const query = reactive({ ...props.filters })
 
 function apply(cursor?: string) {
   const params = Object.fromEntries(
-    Object.entries({ ...query, cursor }).filter(([, value]) => value),
+    Object.entries({ ...query, anmeldungen: query.anmeldungen ? 1 : 0, cursor }).filter(([, value]) => value),
   )
 
   router.get('/einstellungen/protokoll', params, { preserveScroll: true })
@@ -95,6 +95,14 @@ function at(iso: string) {
             <Input id="log-bis" v-model="query.bis" lang="de" type="date" @change="apply()" />
           </Field>
         </div>
+
+        <button
+          type="button"
+          class="mb-2 cursor-pointer rounded-full border-0 px-3 py-1 text-small leading-[1.3]"
+          :class="query.anmeldungen ? 'bg-foreground text-background' : 'bg-sunk-2 text-foreground'"
+          :aria-pressed="query.anmeldungen"
+          @click="query.anmeldungen = !query.anmeldungen; apply()"
+        >{{ $t('audit.logins') }}</button>
 
         <div
           v-for="entry in rows"
