@@ -265,10 +265,11 @@ const COVER_INPUT = [
         >
           {{ gallery.title }}
         </h1>
-        <p v-if="subtitle" class="mt-5 text-[14px] leading-[1.6] font-normal text-inherit opacity-80">
+        <p v-if="subtitle" class="mt-5 text-[14px] leading-[1.6] font-normal text-inherit" :class="cover ? 'inline-block rounded-full bg-[rgba(12,10,9,.72)] px-3.5 py-1.5' : 'opacity-80'">
           {{ subtitle }}
         </p>
-        <p v-if="gallery.expiresAt" class="mt-2 text-[14px] leading-[1.6] font-normal text-inherit opacity-80">
+        <br v-if="subtitle && gallery.expiresAt && cover" />
+        <p v-if="gallery.expiresAt" class="mt-2 text-[14px] leading-[1.6] font-normal text-inherit" :class="cover ? 'inline-block rounded-full bg-[rgba(12,10,9,.72)] px-3.5 py-1.5' : 'opacity-80'">
           {{ $t('gallery.onlineUntil', { date: dayDate(gallery.expiresAt) }) }}
         </p>
 
