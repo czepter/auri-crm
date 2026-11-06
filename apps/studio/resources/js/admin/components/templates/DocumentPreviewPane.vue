@@ -54,7 +54,7 @@ const sheet = computed(() => {
     @page { size: A4; margin: ${SHEET_MARGIN}px; }
     html { background: #fff; }
     body {
-      width: ${SHEET_WIDTH}px; min-height: ${SHEET_HEIGHT}px; margin: 0; padding: ${SHEET_MARGIN}px;
+      box-sizing: border-box; width: ${SHEET_WIDTH}px; min-height: ${SHEET_HEIGHT}px; margin: 0; padding: ${SHEET_MARGIN}px;
       background-image: repeating-linear-gradient(to bottom, transparent 0 ${SHEET_HEIGHT - 1}px, #E9E9E7 ${SHEET_HEIGHT - 1}px ${SHEET_HEIGHT}px);
     }
   </style>`
