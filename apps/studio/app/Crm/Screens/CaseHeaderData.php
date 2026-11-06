@@ -2,6 +2,7 @@
 
 namespace App\Crm\Screens;
 
+use App\Contracts\Enums\ContractState;
 use App\Contracts\Enums\ContractStatus;
 use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\ReadStageTrack;
@@ -137,8 +138,8 @@ class CaseHeaderData extends Data
     }
 
     /**
-     * Angebot, Vertrag and Fragebögen under one tab. The tab opens on the
-     * quotes and carries what each of the three still owes as one number.
+     * Angebot, Vertrag and Fragebögen under one tab. The tab carries how many
+     * documents the project holds; each child carries what it still owes.
      */
     private static function documentsTab(ClientCase $project): array
     {
@@ -153,7 +154,9 @@ class CaseHeaderData extends Data
             'key' => 'documents',
             'label' => 'project.documents',
             'href' => $children[0]['href'],
-            'count' => array_sum(array_column($children, 'count')) ?: null,
+            'count' => ($project->quotes()->count()
+                + $project->contracts()->where('state', '!=', ContractState::Superseded)->count()
+                + $project->formInstances()->count()) ?: null,
             'countTo' => null,
             'children' => $children,
         ];
