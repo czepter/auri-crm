@@ -6,6 +6,7 @@ import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalSubhead from '@/portal/components/PortalSubhead.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
+import { dayDate } from '@/portal/lib/dates'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
@@ -92,10 +93,6 @@ function longDateTime(iso: string) {
   })
 }
 
-function shortDate(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
-}
-
 const form = computed(() => (props.openThread === null || composing.value ? started : reply))
 
 /* The line that names the booking a thread is about. Twice on the screen,
@@ -147,21 +144,20 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
             <Link
               v-for="row in threads"
               :key="row.id"
-              class="-mx-3 block rounded-[var(--r-sm)] border-b border-border p-4 text-inherit no-underline transition-colors duration-200 hover:bg-sunk"
+              class="-mx-3 block rounded-[var(--r-sm)] border-b border-border px-3 py-4 text-inherit no-underline transition-colors duration-200 hover:bg-sunk"
               :class="openThread?.id === row.id && !composing && (chosen ? 'bg-sunk' : 'min-[980px]:bg-sunk')"
               :href="`/nachrichten?unterhaltung=${row.id}`"
               preserve-scroll
               @click="composing = false"
             >
               <span class="flex items-baseline gap-3">
-                <!-- Not read state, which nothing records — the studio wrote
-                     last, so the answer is owed here. -->
-                <i v-if="row.waiting" class="size-[7px] flex-none translate-y-[-1px] self-center rounded-full bg-action" />
+                <!-- Nothing records a read; the open conversation counts as read. -->
+                <i v-if="row.waiting && openThread?.id !== row.id" class="size-[7px] flex-none translate-y-[-1px] self-center rounded-full bg-action" />
                 <b
                   class="flex-1 text-[14.5px] leading-[1.35] tracking-[-0.008em]"
-                  :class="row.waiting ? 'font-semibold' : 'font-medium text-muted-foreground'"
+                  :class="row.waiting && openThread?.id !== row.id ? 'font-semibold' : 'font-medium text-muted-foreground'"
                 >{{ row.subject }}</b>
-                <span class="text-[12px] whitespace-nowrap tabular-nums text-muted-foreground">{{ shortDate(row.lastAt) }}</span>
+                <span class="text-[12px] whitespace-nowrap tabular-nums text-muted-foreground">{{ dayDate(row.lastAt) }}</span>
               </span>
               <span v-if="row.snippet" class="mt-[5px] line-clamp-1 block text-[13px] text-muted-foreground">{{ row.snippet }}</span>
               <span :class="[REF, openThread?.id === row.id && !composing && 'bg-background']">
