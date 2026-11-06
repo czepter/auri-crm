@@ -43,6 +43,26 @@ it('lists the own staff sessions and nobody else\'s', function () {
         ->and($sessions[0]['current'])->toBeFalse();
 });
 
+it('groups other sessions by device and ends the group at once', function () {
+    $user = staffMember();
+
+    foreach (['a', 'b', 'c'] as $id) {
+        sessionRow($user->id, $id);
+    }
+
+    $sessions = $this->actingAs($user, 'staff')
+        ->get('/profil/sicherheit')
+        ->viewData('page')['props']['sessions'];
+
+    expect($sessions)->toHaveCount(1)
+        ->and($sessions[0]['device'])->toBe('Firefox')
+        ->and($sessions[0]['count'])->toBe(3);
+
+    $this->delete('/profil/sitzungen/a', ['ids' => $sessions[0]['ids']])->assertRedirect();
+
+    expect(sessionIds())->toBe([]);
+});
+
 it('fills sessions.user_id for the staff guard', function () {
     config(['session.driver' => 'database']);
 
