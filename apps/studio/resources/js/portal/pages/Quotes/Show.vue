@@ -64,6 +64,7 @@ const props = defineProps<{
   // would accept a new one.
   canAccept: boolean
   quote: Quote | null
+  stagePaid?: boolean[]
   // Q-10: wie viele Schaufensterbilder es gibt. Null heisst kein Raster.
   // QuoteShareController's own accept/image routes, for a quote opened
   // through its share link rather than a portal session — same screen,
@@ -114,6 +115,7 @@ const gross = computed(() => {
 })
 
 const stages = computed(() => (props.quote ? splitStages(gross.value, props.quote.paymentStages) : []))
+const stagePaid = (index: number) => !!props.quote?.acceptedAt && props.stagePaid?.[index] === true
 
 const railNote = computed(() => {
   const quote = props.quote
@@ -222,8 +224,8 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
             <caption class="pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">
               {{ $t('quotes.payment') }}
             </caption>
-            <tr v-for="stage in stages" :key="stage.label" :class="[ROW, '[&>td]:text-muted-foreground']">
-              <td>{{ stage.label }}</td>
+            <tr v-for="(stage, index) in stages" :key="stage.label" :class="[ROW, '[&>td]:text-muted-foreground']">
+              <td>{{ stage.label }}<span v-if="stagePaid(index)" class="ml-2 text-foreground">{{ $t('portal.paymentsPaid') }}</span></td>
               <td>{{ formatEuros(stage.amount) }}</td>
             </tr>
           </table>
