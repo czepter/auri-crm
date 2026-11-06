@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { Link } from "@inertiajs/vue3"
+import { Link, router } from "@inertiajs/vue3"
 import AdminLayout from "@/admin/layouts/AdminLayout.vue"
 import Page from "@/ui/page/Page.vue"
 import PageHead from "@/ui/page/PageHead.vue"
+import Empty from "@/ui/page/Empty.vue"
+import { Button } from "@/ui/button"
 import { monthDate } from "@/admin/lib/dates"
 import {
     mediaUrl,
@@ -34,7 +36,11 @@ useLiveProps([])
                     :title="$t('releases.title')"
                 />
 
-                <div class="px-6 pt-5 pb-11 max-[640px]:px-5">
+                <Empty v-if="!releases.length" class="mx-8 mt-7">
+                    <Button variant="pill" type="button" @click="router.reload()">{{ $t('releases.reload') }}</Button>
+                </Empty>
+
+                <div v-else class="px-6 pt-5 pb-11 max-[640px]:px-5">
                     <Link
                         v-for="release in releases"
                         :key="release.version"

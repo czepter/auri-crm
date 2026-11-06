@@ -105,7 +105,7 @@ class HandleInertiaRequests extends Middleware
             // über der Profilzeile. Nur dort — der Portal-Surface hat keine
             // Seitenleiste, in die sie gehörte.
             ...($user !== null && Surface::current() === Surface::ADMIN ? [
-                'release' => fn () => [
+                'release' => fn () => app(ReleaseLog::class)->base() === null ? null : [
                     'installed' => app(ReleaseLog::class)->installed(),
                     'updateAvailable' => app(ReleaseLog::class)->updateAvailable(),
                 ],

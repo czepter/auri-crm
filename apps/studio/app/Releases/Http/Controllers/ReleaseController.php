@@ -19,6 +19,15 @@ class ReleaseController extends Controller
 {
     public function index(ReleaseLog $log): Response
     {
+        // The scheduled fetch may not have run yet; an empty feed with a
+        // configured service is filled once here instead of shown blank.
+        if ($log->feed() === [] && $log->base() !== null) {
+            try {
+                $log->refresh();
+            } catch (\Throwable) {
+            }
+        }
+
         return Inertia::render('Releases/Index', [
             'releases' => $log->feed(),
             'installed' => $log->installed(),

@@ -1342,6 +1342,7 @@
   "releases": {
     "kicker": "Studio",
     "title": "Neuigkeiten",
+    "reload": "Neu laden",
     "installed": "Installiert",
     "available": "Verfügbar",
     "filterAll": "Alles",
