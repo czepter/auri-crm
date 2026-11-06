@@ -57,7 +57,7 @@ function stepOfCase(ShootStatus $status, string $date, ?string $label = null, bo
 
 it('names the next step of a project by its group', function () {
     expect(stepOfCase(ShootStatus::Booked, now()->subDays(5)->toDateString()))->toBe('Fotografiert')
-        ->and(stepOfCase(ShootStatus::Prep, now()->addDays(3)->toDateString(), 'Hochzeitstag'))->toBe('Hochzeitstag')
+        ->and(stepOfCase(ShootStatus::Prep, now()->addDays(3)->toDateString(), 'Hochzeitstag'))->toBe('Fotografiert')
         ->and(stepOfCase(ShootStatus::Shot, now()->subDays(20)->toDateString()))->not->toBe('Fotografiert')
         ->and(stepOfCase(ShootStatus::Booked, now()->addMonths(4)->toDateString()))->toBe('Gebucht');
 });

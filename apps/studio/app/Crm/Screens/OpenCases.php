@@ -117,8 +117,7 @@ class OpenCases
             open: $open !== null && $project->is($open),
             step: match (true) {
                 $stalled !== null => $this->stages->anchored(StagePipeline::Project, StageAnchor::Shot)?->name ?? $stage,
-                $late !== null => $stage,
-                $group === 'woche' => $next->label ?: $stage,
+                $group === 'woche' => ($shoot ? $this->forward($shoot) : null) ?? ($next->label ?: $stage),
                 $group === 'bearbeitung' => $this->forward($shoot) ?? $stage,
                 default => $stage,
             },
@@ -128,7 +127,7 @@ class OpenCases
     private function forward(Shoot $shoot): ?string
     {
         return $this->stages->ordered(StagePipeline::Project)
-            ->first(fn ($status) => $status->is_active && $status->key !== 'archived' && $shoot->status->canTransitionTo($status))
+            ->first(fn ($status) => $status->is_active && $status->anchor !== StageAnchor::Archived && $shoot->status->canTransitionTo($status))
             ?->name;
     }
 
