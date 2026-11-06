@@ -36,7 +36,8 @@ const wide = useMediaQuery('(min-width: 1080px)')
 watch(wide, (is) => is && props.active === 'info' && router.visit(props.header.tabs[0].href, { replace: true }), { immediate: true })
 
 const tabNav = useTemplateRef<HTMLElement>('tabNav')
-onMounted(() => tabNav.value?.querySelector('[aria-current]')?.scrollIntoView({ inline: 'center', block: 'nearest' }))
+// Fonts change the tab widths; centering before they load clips the last tab.
+onMounted(() => document.fonts.ready.then(() => tabNav.value?.querySelector('[aria-current]')?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'instant' })))
 
 const subTabs = computed(() => props.header.tabs.find((tab) => tab.key === props.active)?.children ?? [])
 
