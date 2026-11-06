@@ -63,12 +63,15 @@ function create() {
 
             <span class="w-24 flex-none text-small text-ink-2">{{ rule.recipientLabel }}</span>
             <span class="w-44 flex-none text-small text-ink-2">{{ rule.conditionLabel ?? '—' }}</span>
-            <span class="w-48 flex-none text-small text-faint">{{ rule.lastRunLabel ?? '—' }}</span>
+            <span class="flex w-48 flex-none items-center gap-1.5 text-small" :class="rule.lastRunFailed ? 'text-destructive' : 'text-faint'">
+              <span v-if="rule.lastRunFailed" class="size-1.5 flex-none rounded-full bg-destructive" />
+              {{ rule.lastRunLabel ?? '—' }}
+            </span>
 
             <span
               class="chip w-[84px] flex-none text-center"
-              :class="rule.isActive ? 'done' : 'off'"
-            >{{ rule.isActive ? $t('automations.active') : $t('automations.paused') }}</span>
+              :class="rule.lastRunFailed ? 'fail' : rule.isActive ? 'done' : 'off'"
+            >{{ rule.lastRunFailed ? $t('automations.error') : rule.isActive ? $t('automations.active') : $t('automations.paused') }}</span>
           </Link>
         </div>
 

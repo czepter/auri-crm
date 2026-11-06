@@ -1004,6 +1004,7 @@
     "empty": "Keine Regeln.",
     "add": "Regel anlegen",
     "paused": "Pausiert",
+    "error": "Fehler",
     "nextRun": "Nächster Lauf morgen {time}",
     "timezone": "Zeitzone {zone}",
     "name": "Name",

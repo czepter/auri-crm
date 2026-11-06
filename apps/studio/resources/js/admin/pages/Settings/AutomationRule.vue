@@ -261,7 +261,10 @@ function chipClass(status: string): string {
             >
               <span class="w-24 flex-none text-ink-2 tabular-nums">{{ run.firedAt }}</span>
               <span class="min-w-0 flex-1 truncate">{{ run.anchorLabel }}</span>
-              <span :class="['chip', chipClass(run.status)]">{{ run.statusLabel }}</span>
+              <span :class="['chip inline-flex items-center gap-1.5', chipClass(run.status)]">
+                <span v-if="run.status === 'failed'" class="size-1.5 rounded-full bg-destructive" />
+                {{ run.statusLabel }}
+              </span>
             </div>
           </div>
         </aside>
