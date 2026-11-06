@@ -4,6 +4,7 @@ namespace App\Settings\Http\Controllers;
 
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Documents\Models\DocumentTemplate;
 use App\Enums\StaffRole;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
@@ -24,6 +25,9 @@ class AuditLogController extends Controller
 {
     private const PER_PAGE = 50;
 
+    /** One pair per client visit; reachable through the event filter. */
+    private const NOISE = ['portal.link_issued', 'portal.link_consumed'];
+
     public function index(Request $request): Response
     {
         abort_unless(auth('staff')->user()?->role === StaffRole::Admin, 404);
@@ -39,7 +43,11 @@ class AuditLogController extends Controller
 
         $logs = AuditLog::query()
             ->with('actor:id,name')
-            ->when($filters['ereignis'] ?? null, fn ($query, $event) => $query->where('event', $event))
+            ->when(
+                $filters['ereignis'] ?? null,
+                fn ($query, $event) => $query->where('event', $event),
+                fn ($query) => $query->whereNotIn('event', self::NOISE),
+            )
             ->when($filters['person'] ?? null, fn ($query, $person) => $query
                 ->whereIn('actor_id', User::query()->where('public_id', $person)->select('id')))
             ->when($filters['von'] ?? null, fn ($query, $day) => $query
@@ -109,15 +117,19 @@ class AuditLogController extends Controller
             $label = trans()->has("audit.fields.{$key}") ? __("audit.fields.{$key}") : $key;
 
             $lines[] = isset($changes[$key])
-                ? "{$label}: ".self::value($changes[$key][0]).' → '.self::value($changes[$key][1])
+                ? "{$label}: ".self::value($changes[$key][0], $key).' → '.self::value($changes[$key][1], $key)
                 : $label;
         }
 
         return $lines;
     }
 
-    private static function value(mixed $value): string
+    private static function value(mixed $value, string $key = ''): string
     {
+        if (is_string($value) && str_ends_with($key, '_family') && $value !== '') {
+            $value = DocumentTemplate::query()->where('family_id', $value)->orderByDesc('version')->value('name') ?? $value;
+        }
+
         return match (true) {
             $value === null || $value === '' => '—',
             is_bool($value) => $value ? 'Ja' : 'Nein',

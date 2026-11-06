@@ -116,3 +116,23 @@ it('shows old and new value of a settings change', function () {
         ['Aufbewahrung (Monate): 24 → 36'],
     ]);
 });
+
+it('leaves portal link events out unless asked for, and names a legal text instead of its id', function () {
+    $owner = staffMember(StaffRole::Admin);
+    $template = App\Documents\Models\DocumentTemplate::factory()->create(['name' => 'Widerrufsbelehrung']);
+
+    AuditLogger::record('portal.link_issued', null);
+    AuditLogger::record('portal.link_consumed', null);
+    AuditLogger::record('studio_settings.updated', $owner, [
+        'key' => 'portal_legal_widerruf_family',
+        'old' => null,
+        'new' => $template->family_id,
+    ]);
+
+    $this->actingAs($owner, 'staff');
+    $entries = auditEntries();
+
+    expect($entries)->toHaveCount(1)
+        ->and($entries[0]['detail'])->toBe(['Widerruf: — → Widerrufsbelehrung'])
+        ->and(auditEntries(['ereignis' => 'portal.link_issued']))->toHaveCount(1);
+});
