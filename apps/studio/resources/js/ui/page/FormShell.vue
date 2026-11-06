@@ -22,7 +22,7 @@ const slots = useSlots()
         <div class="min-w-0 flex-1">
             <div
                 class="mx-auto w-full"
-                :class="wide ? 'max-w-[1480px]' : slots.nav ? 'max-w-[1540px]' : slots.preview ? 'max-w-[1540px]' : 'max-w-[780px]'"
+                :class="wide && !slots.aside ? 'max-w-[1480px]' : slots.nav || slots.preview ? 'max-w-[1540px]' : slots.aside ? 'max-w-[1140px]' : 'max-w-[780px]'"
             >
                 <PageHead :kicker="kicker" :kickerHref="kickerHref" :title="title">
                     <SaveState v-if="state" class="ml-auto" :state="state" />
@@ -32,7 +32,7 @@ const slots = useSlots()
                 <div class="flex items-start gap-10 px-6 pt-6 pb-10 max-[640px]:flex-col max-[640px]:gap-4 max-[640px]:px-5">
                     <slot name="nav" />
 
-                    <div class="w-full min-w-0" :class="wide ? 'max-w-[1160px] flex-1' : 'max-w-[720px] flex-none min-[1100px]:w-[720px]'">
+                    <div class="w-full min-w-0" :class="wide && !slots.aside ? 'max-w-[1160px] flex-1' : 'max-w-[720px] flex-none min-[1100px]:w-[720px]'">
                         <slot />
                     </div>
 
