@@ -169,7 +169,7 @@ function destroy() {
 
         <!-- The track scrolls once the tabs outgrow the column; a local
              background paints its whole scroll width, not only what shows. -->
-        <nav ref="tabNav" class="mt-4 inline-flex max-w-full gap-0.5 overflow-x-auto rounded-lg p-[3px] text-small font-medium [background:linear-gradient(var(--sunk),var(--sunk))_local] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <nav ref="tabNav" class="mt-4 inline-flex max-w-full gap-0.5 overflow-x-auto rounded-lg p-[3px] text-small font-medium [background:linear-gradient(var(--sunk),var(--sunk))_local] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[640px]:[mask-image:linear-gradient(to_right,#000_calc(100%-28px),transparent)] max-[640px]:after:w-6 max-[640px]:after:flex-none max-[640px]:after:content-['']">
           <Link
             v-for="tab in header.tabs"
             :key="tab.key"
