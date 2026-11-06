@@ -3,6 +3,7 @@
 namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
+use App\Concerns\FramesPreview;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
 use App\Notifications\Support\MailPreview;
@@ -43,6 +44,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class StudioSettingsController extends Controller
 {
     use AuthorizesStaffSettings;
+    use FramesPreview;
 
     public function edit(string $pane): Response
     {
@@ -150,9 +152,13 @@ class StudioSettingsController extends Controller
      * Anschrift im Fuß. Die Signatur kommt getippt statt gespeichert, damit
      * die Vorschau mitläuft.
      */
-    public function previewMail(Request $request): HttpResponse
+    public function previewMail(Request $request): HttpResponse|Response
     {
         $this->authorizeSettings();
+
+        if ($page = $this->framed($request, 'settings.previewMail', '/einstellungen/email')) {
+            return $page;
+        }
 
         if ($request->has('signatur')) {
             app()->instance(StudioMailFooter::class, new StudioMailFooter(Str::limit((string) $request->query('signatur'), 1000, '')));
@@ -279,9 +285,13 @@ class StudioSettingsController extends Controller
      * pane's DocumentPreview.vue shows. App\Quotes\Support\SampleQuoteData
      * never touches the database, so this route needs no project or quote.
      */
-    public function previewQuoteLayout(Request $request, RenderQuotePdf $render): HttpResponse
+    public function previewQuoteLayout(Request $request, RenderQuotePdf $render): HttpResponse|Response
     {
         $this->authorizeSettings();
+
+        if ($page = $this->framed($request, 'settings.previewDocument', '/einstellungen/belege')) {
+            return $page;
+        }
 
         $validated = $request->validate([
             'layout' => ['nullable', Rule::enum(QuoteLayout::class)],

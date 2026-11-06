@@ -5,6 +5,7 @@ namespace App\Settings\Http\Controllers;
 use App\Catalog\Data\PortalServiceData;
 use App\Catalog\Models\Package;
 use App\Concerns\AuthorizesStaffSettings;
+use App\Concerns\FramesPreview;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Http\Controllers\Controller;
@@ -40,6 +41,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class PortalSettingsController extends Controller
 {
     use AuthorizesStaffSettings;
+    use FramesPreview;
 
     public function edit(): Response
     {
@@ -68,6 +70,10 @@ class PortalSettingsController extends Controller
     public function preview(Request $request): Response
     {
         $this->authorizeSettings();
+
+        if ($page = $this->framed($request, 'settings.previewPortal', '/einstellungen/portal')) {
+            return $page;
+        }
 
         $state = in_array($request->query('zustand'), ['inquiry', 'active', 'done'], true)
             ? $request->query('zustand')
