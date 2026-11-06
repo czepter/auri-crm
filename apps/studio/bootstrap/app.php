@@ -123,7 +123,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['__Secure-mercure_access_token', 'mercure_access_token']);
 
         $middleware->redirectGuestsTo('/login');
-        $middleware->redirectUsersTo(fn (\Illuminate\Http\Request $request) => $request->is('einrichtung') && ! \App\Models\StudioSettings::current()->onboardingCompleted() ? '/einrichtung/studio' : '/');
+        $middleware->redirectUsersTo(fn (\Illuminate\Http\Request $request) => match (true) {
+            ! $request->is('einrichtung') => '/',
+            ! \App\Models\StudioSettings::current()->onboardingCompleted() => '/einrichtung/studio',
+            default => '/einstellungen/allgemein',
+        });
 
         // N-04: the MCP client calls this directly, off-browser — it holds
         // no session and so no CSRF token to present. The authorization code
