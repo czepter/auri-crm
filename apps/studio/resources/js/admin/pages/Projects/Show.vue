@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { Link, router, useForm } from "@inertiajs/vue3";
 import { ChevronDown, Pencil } from "lucide-vue-next";
@@ -11,6 +11,7 @@ import LineItems from "@/admin/components/quote/LineItems.vue";
 import NoteThread from "@/admin/components/crm/NoteThread.vue";
 import QuoteSummary from "@/admin/components/quote/QuoteSummary.vue";
 import { nextStep, paymentCall, stepRows } from "@/admin/lib/projectNextStep";
+import { stepOnArrow } from "@/admin/lib/queueStep";
 import { grossTotal } from "@/admin/lib/quoteSummary";
 import ShootFields from "@/admin/components/crm/ShootFields.vue";
 import ShootRow from "@/admin/components/crm/ShootRow.vue";
@@ -20,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/ui/textarea";
 import ProjectFields from "@/admin/components/crm/ProjectFields.vue";
 import type { ProjectFieldValues } from "@/admin/components/crm/ProjectFields.vue";
+import ProjectQueue from "@/admin/components/crm/ProjectQueue.vue";
 import ProjectShell from "@/admin/components/crm/ProjectShell.vue";
 import TaskCreateDialog from "@/admin/components/crm/TaskCreateDialog.vue";
 import CaseAddLinks from "@/admin/components/crm/CaseAddLinks.vue";
@@ -83,6 +85,15 @@ const props = defineProps<{
         next: { key: string; label: string };
     } | null;
 }>();
+const reachable = ref<App.Crm.Data.CaseQueueRowData[]>([]);
+
+function onKey(event: KeyboardEvent) {
+    stepOnArrow(event, reachable.value, "/auftraege");
+}
+
+onMounted(() => addEventListener("keydown", onKey));
+onUnmounted(() => removeEventListener("keydown", onKey));
+
 useLiveProps(["header", "shoots", "shootKinds", "tasks", "shootOptions", "staffOptions", "anchors", "thread", "scope", "quote", "supersededQuotes", "people", "fields", "fieldValues", "stages", "presets", "stage", "source", "sourceOther", "sourceLabel", "inquiry", "stalled"]);
 
 const { t } = useI18n();
@@ -236,6 +247,10 @@ function complete(row: App.Crm.Data.TaskRowData) {
 <template>
     <AdminLayout active="projekte">
         <ProjectShell :header="header" active="overview">
+            <template #left>
+                <ProjectQueue :groups="header.queue" @update:rows="reachable = $event" />
+            </template>
+
             <template v-if="step || callHref" #stage>
                 <Button v-if="!step && callHref" variant="pill" as-child class="max-[640px]:min-h-11">
                     <a :href="callHref">{{ $t("contacts.call") }}</a>

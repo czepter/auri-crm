@@ -29,6 +29,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, Ale
 import { formatEurosRounded } from "@/lib/money";
 import { quoteChipClass } from "@/admin/lib/quoteDisplay";
 import { sendQuoteHref } from "@/admin/lib/leadPrimary";
+import { stepOnArrow } from "@/admin/lib/queueStep";
 import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
 import { dayWithWeekday as day } from "@/admin/lib/dates";
 import { useLiveProps } from "@/admin/lib/liveReload";
@@ -88,45 +89,10 @@ const inquiry = computed(() =>
           },
 );
 
-// ↑↓ walks the queue without leaving the screen. Response time is the lever:
-// eight days of silence happen when every step costs a page load. The pane
-// hands over what its filter left standing, so the arrows reach what is on
-// screen and nothing else.
 const reachable = ref<App.Crm.Data.LeadQueueRowData[]>([]);
 
-function step(by: number) {
-    const at = reachable.value.findIndex((row) => row.open);
-    const next = reachable.value[at + by];
-
-    if (next) {
-        router.get(
-            // The pane keeps q and wartet in the URL; carrying them means a
-            // step does not land on an unfiltered pane.
-            `/anfragen/${next.id}${window.location.search}`,
-            {},
-            { preserveScroll: true, preserveState: true },
-        );
-    }
-}
-
 function onKey(event: KeyboardEvent) {
-    if (event.key !== "ArrowUp" && event.key !== "ArrowDown") {
-        return;
-    }
-
-    // Not every keydown target is an element — one dispatched on the window
-    // has no matches() — and an arrow key inside a field belongs to the field.
-    const target = event.target as Element | null;
-
-    if (
-        typeof target?.matches === "function" &&
-        target.matches("input, textarea, select")
-    ) {
-        return;
-    }
-
-    event.preventDefault();
-    step(event.key === "ArrowDown" ? 1 : -1);
+    stepOnArrow(event, reachable.value, "/anfragen");
 }
 
 onMounted(() => addEventListener("keydown", onKey));

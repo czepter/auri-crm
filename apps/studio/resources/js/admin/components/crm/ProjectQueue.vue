@@ -4,7 +4,7 @@
  * production side. OpenCases decides the groups; this only narrows them,
  * in the URL, so the pane a link opens is the pane the sender was looking at.
  */
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
 import { dayWithWeekday } from "@/admin/lib/dates"
 import { useQueueQuery } from "@/admin/lib/queueQuery"
 import { fold } from "@/admin/lib/search"
@@ -15,6 +15,8 @@ import { Switch } from "@/ui/switch"
 const props = defineProps<{
     groups: { key: string; rows: App.Crm.Data.CaseQueueRowData[] }[]
 }>()
+
+const emit = defineEmits<{ "update:rows": [App.Crm.Data.CaseQueueRowData[]] }>()
 
 const initial = new URLSearchParams(window.location.search)
 const term = ref(initial.get("q") ?? "")
@@ -36,6 +38,9 @@ const shown = computed(() => {
             rows: group.rows.filter((row) => !needle || fold(row.name).includes(needle)),
         }))
 })
+
+// What ↑↓ beside the pane may reach — the rows still standing, not all of them.
+watch(shown, (groups) => emit("update:rows", groups.flatMap((group) => group.rows)), { immediate: true })
 </script>
 
 <template>
