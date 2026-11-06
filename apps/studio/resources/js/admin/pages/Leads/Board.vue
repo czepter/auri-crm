@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref, useTemplateRef, watch } from "vue";
 import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import LeadQueue from "@/admin/components/crm/LeadQueue.vue";
@@ -218,6 +218,11 @@ const pills = computed(() =>
         .filter((option) => option.count > 0),
 );
 
+const pillRow = useTemplateRef<HTMLElement>("pillRow");
+const showActivePill = () => pillRow.value?.querySelector("[aria-pressed=true]")?.scrollIntoView({ inline: "center", block: "nearest" });
+onMounted(showActivePill);
+watch(stage, showActivePill, { flush: "post" });
+
 function pick(key: string) {
     stage.value = stage.value === key ? null : key;
 }
@@ -305,7 +310,7 @@ const workflowAllowed = computed(() =>
              sichtbar wurde sie erst an ihrer Trennlinie. -->
                 <div
                     v-if="view === 'board'"
-                    class="flex snap-x snap-mandatory items-stretch gap-6 overflow-x-auto px-6 pt-4 pb-6 max-[640px]:pr-12"
+                    class="flex snap-x snap-mandatory items-stretch gap-6 overflow-x-auto px-6 pt-4 pb-6 max-[640px]:scroll-px-4 max-[640px]:px-4 max-[640px]:pr-12"
                 >
                     <section
                         v-for="(column, index) in columns"
@@ -447,7 +452,7 @@ const workflowAllowed = computed(() =>
              shows where something stands, a table shows what is next. -->
                 <template v-else>
                 <div class="flex flex-wrap items-center gap-4 px-6 pt-4.5">
-                    <div class="flex flex-wrap gap-1.5 max-[640px]:w-full max-[640px]:snap-x max-[640px]:flex-nowrap max-[640px]:overflow-x-auto">
+                    <div ref="pillRow" class="flex flex-wrap gap-1.5 max-[640px]:w-full max-[640px]:snap-x max-[640px]:scroll-px-4 max-[640px]:flex-nowrap max-[640px]:overflow-x-auto max-[640px]:pr-8 max-[640px]:[mask-image:linear-gradient(to_right,#000_calc(100%-32px),transparent)] max-[640px]:[scrollbar-width:none]">
                         <button
                             v-for="option in pills"
                             :key="option.key"
