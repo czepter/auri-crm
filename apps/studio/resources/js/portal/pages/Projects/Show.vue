@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Link } from '@inertiajs/vue3'
 import PortalDot from '@/portal/components/PortalDot.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
@@ -35,6 +36,7 @@ type Document = {
   acceptedOn?: string | null
   amount: number | null
   openTotal?: number
+  unread?: number
   settled: boolean
 }
 
@@ -51,6 +53,8 @@ type Offers = {
   suggestion: { service: App.Catalog.Data.PortalServiceData; note: string | null; author: string | null } | null
   shelf: App.Catalog.Data.PortalServiceData[]
 }
+
+const { t } = useI18n()
 
 const props = defineProps<{
   contact: { name: string }
@@ -101,7 +105,7 @@ const daysLeft = computed(() => {
 // Everything waiting on the client, most pressing first: the contract, an
 // overdue rate, the quote, a rate not yet due, then the questionnaires.
 const steps = computed(() => {
-  const rank = (document: Document) => document.kind === 'contract' ? 0 : document.kind === 'messages' ? 1 : document.kind === 'payments' ? (document.overdue ? 1 : 3) : 2
+  const rank = (document: Document) => document.kind === 'contract' ? 0 : document.kind === 'messages' ? 5 : document.kind === 'payments' ? (document.overdue ? 1 : 3) : 2
 
   const documents = props.project.documents
     .filter(document => !document.settled)
@@ -114,7 +118,7 @@ const steps = computed(() => {
           ? { key: 'portal.notSignedYet', date: null }
           : document.kind === 'quote' && document.dueOn ? { key: 'portal.validUntil', date: document.dueOn } : null,
       amount: document.amount ? formatEuros(document.amount) : null,
-      detail: null as string | null,
+      detail: document.kind === 'messages' ? t('portal.unreadCount', { count: document.unread ?? 0 }) : null as string | null,
       late: document.overdue === true,
       label: { payments: 'portal.payButton', contract: 'portal.signButton', quote: 'portal.quoteAccept', messages: 'portal.replyButton' }[document.kind],
       href: document.href,
@@ -138,7 +142,11 @@ const steps = computed(() => {
 
 const shoots = computed(() => [...props.project.shoots].sort((a, b) => (a.date ?? '9999').localeCompare(b.date ?? '9999')))
 
+const delivered = (shoot: Shoot) => shoot.state === 'done' && props.project.gallery !== null
+
 const step = computed(() => steps.value[0] ?? null)
+
+const documents = computed(() => props.project.documents.filter(document => document.kind !== 'messages' || document.settled))
 
 const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
 
@@ -175,7 +183,7 @@ function documentNote(document: Document) {
         </p>
       </section>
 
-      <section v-if="step" class="mt-6 rounded-md border border-line-hover p-5">
+      <section v-if="step" class="-mx-2 mt-6 rounded-md border border-line-hover p-6">
         <PortalLabel>{{ $t('portal.nextStep') }}</PortalLabel>
         <div class="mt-3 flex items-baseline justify-between gap-4">
           <h2 class="font-serif text-[22px] leading-[1.25] font-normal tracking-[-0.01em]">{{ $t(step.title) }}</h2>
@@ -188,7 +196,14 @@ function documentNote(document: Document) {
         <Button as-child variant="portal" class="mt-5 min-h-12 w-full justify-center text-[15px]">
           <Link :href="step.href">{{ $t(step.label) }}</Link>
         </Button>
+      </section>
 
+      <p v-else-if="statement" class="mt-6 font-serif text-[22px] leading-[1.25]">
+        {{ statement === 'countdown' ? $t('portal.daysUntil', { days: daysLeft }) : $t(`portal.${statement}`) }}
+      </p>
+
+      <section v-if="steps.length > 1" class="mt-8">
+        <PortalLabel class="mb-2">{{ $t('portal.openTitle') }}</PortalLabel>
         <PortalRow
           v-for="other in steps.slice(1)"
           :key="other.href"
@@ -198,13 +213,8 @@ function documentNote(document: Document) {
           :note="other.detail ?? (other.note ? $t(other.note.key, { date: other.note.date ? dayDate(other.note.date) : '' }) : null)"
           :aside="other.amount"
           aside-open
-          class="last:border-b-0"
         />
       </section>
-
-      <p v-else-if="statement" class="mt-6 font-serif text-[22px] leading-[1.25]">
-        {{ statement === 'countdown' ? $t('portal.daysUntil', { days: daysLeft }) : $t(`portal.${statement}`) }}
-      </p>
 
       <section v-if="project.gallery" :class="BAND">
         <div class="mb-6 grid grid-cols-[1.5fr_1fr_1fr_1.3fr] gap-0.5 max-[820px]:grid-cols-2">
@@ -241,10 +251,10 @@ function documentNote(document: Document) {
       </section>
 
       <!-- State in the row, not behind a click. -->
-      <section v-if="project.documents.length" :class="BAND">
+      <section v-if="documents.length" :class="BAND">
         <PortalLabel class="mb-2">{{ $t('portal.documentsTitle') }}</PortalLabel>
         <PortalRow
-          v-for="document in project.documents"
+          v-for="document in documents"
           :key="document.kind"
           :href="document.href"
           :title="$t(`portal.document.${document.kind}`)"
@@ -265,10 +275,12 @@ function documentNote(document: Document) {
 
       <section v-if="shoots.length" :class="BAND">
         <PortalLabel>{{ $t('portal.shootsTitle') }}</PortalLabel>
-        <div
+        <component
+          :is="delivered(shoot) ? 'a' : 'div'"
           v-for="shoot in shoots"
           :key="shoot.id"
-          class="grid grid-cols-[132px_1fr_auto] items-baseline gap-6 border-b border-border py-5 last:border-b-0 max-[820px]:grid-cols-1 max-[820px]:gap-1.5"
+          :href="delivered(shoot) ? `/galerien/${project.gallery!.id}` : undefined"
+          class="group grid grid-cols-[132px_1fr_auto] items-baseline gap-6 border-b border-border py-5 text-inherit no-underline last:border-b-0 max-[820px]:grid-cols-1 max-[820px]:gap-1.5"
         >
           <b class="text-[15px] leading-[1.45] font-semibold tabular-nums">
             {{ shoot.date ? [dayDate(shoot.date), shoot.callTime].filter(Boolean).join(' · ') : $t('portal.dateOpen') }}
@@ -280,7 +292,11 @@ function documentNote(document: Document) {
           <div class="inline-flex items-center gap-2 text-[12.5px] whitespace-nowrap text-muted-foreground">
             <PortalDot :state="shoot.state" />{{ shoot.status }}
           </div>
-        </div>
+          <span v-if="delivered(shoot)" class="col-span-full inline-flex min-h-11 items-center gap-1 text-[13.5px] text-foreground max-[820px]:justify-between">
+            {{ $t('portal.viewImages') }}
+            <svg class="size-[18px] fill-none stroke-current stroke-[1.4] text-mark" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" /></svg>
+          </span>
+        </component>
       </section>
 
       <!-- #415: die eigene Kopie der Rechnungsfolge, eine Zeile je
