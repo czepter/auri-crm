@@ -18,10 +18,10 @@ afterEach(function () {
 });
 
 it('rendert Markdown zu HTML', function () {
-    $entry = app(HelpIndex::class)->find('lead-anlegen', ['manage_leads']);
+    $entry = app(HelpIndex::class)->find('erste-schritte', []);
 
     expect(app(RenderHelpArticle::class)($entry)->html)
-        ->toContain('<h2>Von Hand erfassen</h2>');
+        ->toContain('<h2>Projekttypen zuerst</h2>');
 });
 
 it('setzt die API-Domain ein', function () {

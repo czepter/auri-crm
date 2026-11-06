@@ -8,23 +8,13 @@ screens: [dashboard]
 
 ## Projekttypen zuerst
 
-Jede Anfrage bekommt beim Erfassen einen Projekttyp, und die Felder hängen am
-Typ. Ein Feld, das du später ergänzt, steht auf allem leer, was vorher erfasst
-wurde, und sein Datentyp ist festgeschrieben, sobald Werte darauf stehen. Deshalb
-lohnt eine Runde durch die Projekttypen, bevor die erste Anfrage hereinkommt.
+Jede Anfrage bekommt beim Erfassen einen Projekttyp, die Felder hängen am
+Typ. Ein später ergänztes Feld ist auf allem leer, was vorher erfasst wurde,
+und sein Datentyp steht fest, sobald Werte darauf stehen.
 
 ## Woher Anfragen hereinkommen
 
-Von Hand erfasst brauchst du nichts weiter. Die beiden anderen Wege verlangen
-je einen Handgriff außerhalb des Studios:
-
-- Über ein Formular auf deiner eigenen Website.
-- Über E-Mail: dein Studio hat eine eigene Adresse, sie steht im Posteingang.
+- Von Hand über **Anfrage anlegen**.
+- Über ein Formular auf deiner Website.
+- Über E-Mail an die Adresse deines Studios, die im Posteingang steht.
   Bestehende Adressen leitest du bei deinem Mailanbieter dorthin weiter.
-
-## Claude
-
-Das Studio spricht MCP. Claude kann damit Anfragen anlegen, den Trichter lesen
-und Projektfelder setzen.
-
-Viel Erfolg mit dem ersten Auftrag.
