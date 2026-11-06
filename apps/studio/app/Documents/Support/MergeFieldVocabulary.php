@@ -41,6 +41,9 @@ class MergeFieldVocabulary
         // quote states about itself. Resolved from the project's primary
         // shoot and its latest sent quote — see CaseMergeData and QuoteMergeData.
         'shoot.date' => '14.06.2026',
+        'shoot.list' => '14.06.2026 (Gut Basthorst); 15.06.2026',
+        'payment.depositDue' => '01.03.2026',
+        'payment.plan' => 'Anzahlung 1.000,00 € bis 01.03.2026; Restzahlung 1.500,00 € bis 07.06.2026',
         'quote.validUntil' => '30.09.2026',
         'quote.vatNote' => 'Alle Preise verstehen sich zzgl. 19 % Umsatzsteuer.',
         // C-17 (#253): the "Galerie online" letter carries link, password and

@@ -118,7 +118,7 @@ it('counts the questionnaires the client has not answered', function () {
     $documents = collect($tabs)->firstWhere('key', 'documents');
 
     expect(collect($documents['children'])->firstWhere('key', 'forms')['count'])->toBe(1)
-        ->and($documents['count'])->toBe(1);
+        ->and($documents['count'])->toBe(3);
 });
 
 it('counts the quotes the client has not answered', function () {
