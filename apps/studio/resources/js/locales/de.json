@@ -1790,7 +1790,7 @@
     "quoteAccept": "Angebot annehmen",
     "quoteTermsAnd": "und",
     "quoteTerms": "akzeptiert",
-    "quoteAccepted": "Angenommen am {date}.",
+    "quoteAccepted": "Angenommen am {date}",
     "quoteExpiredOn": "Abgelaufen am {date}",
     "messagesLinkTitle": "Nachrichten",
     "messagesKicker": "Nachrichten",
