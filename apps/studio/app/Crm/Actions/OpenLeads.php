@@ -10,7 +10,6 @@ use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Stage;
 use App\Crm\Support\CrmVocabulary;
-use App\Quotes\Enums\QuoteStatus;
 use Illuminate\Support\Collection;
 
 /**
@@ -78,7 +77,7 @@ class OpenLeads
             $lead->case->primaryShoot?->date === null => 'date',
             $this->group($lead->stage) === 'angenommen' => 'book',
             $this->group($lead->stage) === 'angebot' => 'followUp',
-            $lead->case->currentQuote?->status === QuoteStatus::Draft => 'sendQuote',
+            $lead->case->currentQuote?->status->value === 'draft' => 'sendQuote',
             default => 'reply',
         };
     }
