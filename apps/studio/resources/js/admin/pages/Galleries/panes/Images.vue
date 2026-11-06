@@ -376,14 +376,11 @@ onUnmounted(() => {
                 alt=""
                 loading="lazy"
               />
-              <span v-if="asset.isCover" class="absolute bottom-1.5 left-1.5 rounded bg-[rgba(25,25,25,0.7)] px-1.5 py-0.5 text-[8.5px] text-paper">
-                {{ $t('galleryRecord.cover') }}
-              </span>
               <span
-                v-if="activeSetId === null"
-                class="absolute top-1.5 left-1.5 rounded-full bg-[rgba(25,25,25,0.7)] px-1.5 py-0.5 text-[8.5px] text-paper"
+                v-if="asset.isCover || activeSetId === null"
+                class="absolute inset-x-0 bottom-0 block truncate rounded-b-md bg-[rgba(25,25,25,0.7)] p-2 text-[12px] leading-none text-paper"
               >
-                {{ setNames.get(asset.setId) }}
+                {{ [asset.isCover ? $t('galleryRecord.cover') : null, activeSetId === null ? setNames.get(asset.setId) : null].filter(Boolean).join(' · ') }}
               </span>
             </figure>
           </div>

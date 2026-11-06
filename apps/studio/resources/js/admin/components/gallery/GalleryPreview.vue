@@ -83,7 +83,7 @@ const filters = computed(() => [
            macht, und nicht eine Farbentscheidung. -->
       <div
         v-if="design.cover === 'full'"
-        class="relative grid h-[140px] place-items-center overflow-hidden"
+        class="relative grid min-h-[140px] place-items-center overflow-hidden py-4"
         :style="{ background: scheme.hero }"
       >
         <div class="absolute inset-0 bg-[radial-gradient(115%_85%_at_50%_46%,rgba(12,10,9,.48)_0%,rgba(12,10,9,.76)_62%,rgba(12,10,9,.92)_100%)]" />
@@ -91,32 +91,32 @@ const filters = computed(() => [
           <div class="text-[8px] font-bold tracking-[0.18em] uppercase text-[rgba(242,237,233,.9)]">
             {{ $page.props.brand }}
           </div>
-          <div class="mt-2.5 font-[family-name:var(--font-display)] text-[27px] leading-[1.1] font-semibold tracking-[var(--display-tracking)] text-white">
+          <div class="mt-2.5 font-[family-name:var(--font-display)] text-[27px] leading-[1.1] font-semibold break-words tracking-[var(--display-tracking)] text-white">
             {{ title }}
           </div>
           <div class="mx-auto mt-3.5 h-px w-[34px] bg-[rgba(242,237,233,.45)]" />
         </div>
       </div>
 
-      <div v-else-if="design.cover === 'split'" class="flex h-[140px] items-stretch">
+      <div v-else-if="design.cover === 'split'" class="flex min-h-[140px] items-stretch">
         <div class="w-[48%] flex-none" :style="{ background: scheme.hero }" />
         <div class="flex min-w-0 flex-1 flex-col justify-center px-6">
           <div class="text-[8px] font-bold tracking-[0.18em] uppercase" :style="{ color: scheme.muted }">
             {{ $page.props.brand }}
           </div>
-          <div class="mt-2.5 font-[family-name:var(--font-display)] text-heading leading-[1.1] font-semibold tracking-[var(--display-tracking)]">
+          <div class="mt-2.5 font-[family-name:var(--font-display)] text-heading leading-[1.1] font-semibold break-words tracking-[var(--display-tracking)]">
             {{ title }}
           </div>
           <div class="mt-3 h-px w-[34px]" :style="{ background: scheme.line }" />
         </div>
       </div>
 
-      <div v-else class="grid h-[140px] place-items-center px-5 text-center">
+      <div v-else class="grid min-h-[140px] place-items-center px-5 text-center">
         <div>
           <div class="text-[8px] font-bold tracking-[0.18em] uppercase" :style="{ color: scheme.muted }">
             {{ $page.props.brand }}
           </div>
-          <div class="mt-2.5 font-[family-name:var(--font-display)] text-[27px] leading-[1.1] font-semibold tracking-[var(--display-tracking)]">
+          <div class="mt-2.5 font-[family-name:var(--font-display)] text-[27px] leading-[1.1] font-semibold break-words tracking-[var(--display-tracking)]">
             {{ title }}
           </div>
           <div class="mx-auto mt-3.5 h-px w-[34px]" :style="{ background: scheme.line }" />
