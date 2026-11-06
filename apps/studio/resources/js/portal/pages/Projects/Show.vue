@@ -231,6 +231,10 @@ function documentNote(document: Document) {
       </section>
 
       <section v-if="project.gallery" :class="BAND">
+        <div class="mb-6 flex items-baseline justify-between gap-4">
+          <PortalLabel>{{ $t('portal.imagesTitle') }}</PortalLabel>
+          <a class="text-[13.5px] text-action" :href="`/galerien/${project.gallery.id}`">{{ $t('portal.viewAll') }}</a>
+        </div>
         <div class="mb-6 grid grid-cols-[1.5fr_1fr_1fr_1.3fr] gap-0.5 max-[820px]:grid-cols-2">
           <a
             v-for="src in project.gallery.strip"

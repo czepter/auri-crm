@@ -127,7 +127,7 @@ const ROW = 'flex items-center gap-6 border-b border-border py-6'
               </Button>
             </div>
 
-            <Button class="min-h-12 justify-center justify-self-start max-[640px]:w-full" variant="portal" type="submit" :disabled="!form.isDirty || form.processing">
+            <Button class="min-h-12 justify-center disabled:bg-sunk-2 disabled:text-foreground disabled:opacity-100 disabled:shadow-[inset_0_0_0_1px_var(--muted)] justify-self-start max-[640px]:w-full" variant="portal" type="submit" :disabled="!form.isDirty || form.processing">
               {{ $t('common.save') }}
             </Button>
           </form>
