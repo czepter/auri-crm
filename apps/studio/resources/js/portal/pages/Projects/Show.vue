@@ -201,7 +201,7 @@ function documentNote(document: Document) {
         <PortalLabel>{{ $t('portal.nextStep') }}</PortalLabel>
         <div class="mt-3 flex items-baseline justify-between gap-4">
           <h2 class="font-serif text-[22px] leading-[1.25] font-normal tracking-[-0.01em]">{{ step.title }}</h2>
-          <span v-if="step.amount" class="text-[17px] leading-none font-semibold tabular-nums text-action">{{ step.amount }}</span>
+          <span v-if="step.amount" class="text-[17px] leading-none font-semibold tabular-nums">{{ step.amount }}</span>
         </div>
         <p v-if="step.note || step.detail" class="mt-1.5 flex items-center gap-2 text-[13.5px] text-muted-foreground">
           <PortalDot :state="step.state" />
@@ -262,7 +262,7 @@ function documentNote(document: Document) {
             </p>
             <p v-if="galleryExpiring !== null" class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13.5px] tabular-nums text-muted-foreground">
               {{ $t('gallery.onlineUntil', { date: dayDate(project.gallery.expiresAt!) }) }}
-              <PortalChip :state="galleryExpiring <= 3 ? 'late' : 'due'">{{ $t('gallery.onlineDays', galleryExpiring) }}</PortalChip>
+              <PortalChip :tone="galleryExpiring <= 3 ? 'danger' : 'warn'">{{ $t('gallery.onlineDays', galleryExpiring) }}</PortalChip>
             </p>
           </div>
           <Button as="a" variant="portal-ghost" class="max-[820px]:w-full max-[820px]:justify-center" :href="`/galerien/${project.gallery.id}`">

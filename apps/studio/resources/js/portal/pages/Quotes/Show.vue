@@ -155,7 +155,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
           {{ $t('portal.quoteTitle') }}
         </h1>
         <p v-if="quote?.number" class="mt-2 text-[13px] tabular-nums text-muted-foreground">{{ quote.number }}</p>
-        <PortalChip v-if="expiring !== null || railNote" :state="quote?.expired ? 'late' : 'due'" class="mt-4">{{ expiring !== null ? $t('portal.validDays', expiring) : railNote }}</PortalChip>
+        <PortalChip v-if="expiring !== null || railNote" :tone="quote?.acceptedAt ? 'success' : quote?.expired ? 'danger' : expiring !== null ? 'warn' : 'neutral'" class="mt-4">{{ quote?.acceptedAt ? $t('portal.accepted') : expiring !== null ? $t('portal.validDays', expiring) : railNote }}</PortalChip>
       </section>
 
       <PortalRail>

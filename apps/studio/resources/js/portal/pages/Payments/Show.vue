@@ -5,6 +5,7 @@ import PortalBack from '@/portal/components/PortalBack.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalLabel from '@/portal/components/PortalLabel.vue'
+import PortalChip from '@/portal/components/PortalChip.vue'
 import PortalDot from '@/portal/components/PortalDot.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
@@ -103,6 +104,7 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
         <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
           {{ $t('portal.paymentsTitle') }}
         </h1>
+        <PortalChip v-if="plan.openTotal <= 0" tone="success" class="mt-4">{{ $t('portal.paymentsPaid') }}</PortalChip>
         <dl class="animate-rise [animation-delay:230ms] motion-reduce:animate-none m-0 mt-6 grid max-w-[480px] grid-cols-3 gap-x-6 tabular-nums">
           <div>
             <dt class="text-[13px] text-muted-foreground">{{ $t('portal.paymentsTotal') }}</dt>
@@ -114,7 +116,7 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
           </div>
           <div>
             <dt class="text-[13px] text-muted-foreground">{{ $t('portal.paymentsOpenLabel') }}</dt>
-            <dd class="m-0 text-[17px]" :class="plan.openTotal > 0 && 'text-action'">{{ formatEuros(plan.openTotal) }}</dd>
+            <dd class="m-0 text-[17px]">{{ formatEuros(plan.openTotal) }}</dd>
           </div>
         </dl>
       </section>
@@ -137,11 +139,11 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
                 <span class="font-serif text-[20px] leading-[1.25] tracking-[-0.01em]">{{ installment.label }}</span>
                 <span
                   class="text-[15px] leading-none font-semibold tabular-nums whitespace-nowrap"
-                  :class="['paid', 'cancelled'].includes(installment.status) ? 'text-muted-foreground' : 'text-action'"
+                  :class="['paid', 'cancelled'].includes(installment.status) && 'text-muted-foreground'"
                 >{{ formatEuros(installment.amount) }}</span>
               </div>
               <p class="mt-1.5 flex items-center gap-2 text-[13.5px] text-muted-foreground">
-                <PortalDot :state="['paid', 'cancelled'].includes(installment.status) ? 'done' : installment.isLate ? 'late' : 'due'" />
+                <PortalDot :state="['paid', 'cancelled'].includes(installment.status) ? 'done' : installment.isLate ? 'late' : soon(installment) ? 'due' : 'open'" />
                 {{ ['paid', 'cancelled'].includes(installment.status)
                   ? installment.statusLabel
                   : $t(installment.isLate ? 'portal.overdueSince' : 'portal.dueOn', { date: dayDate(installment.dueOn) }) }}
