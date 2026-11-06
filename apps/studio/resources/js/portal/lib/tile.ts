@@ -1,4 +1,4 @@
-export const ROW_HEIGHT = 260
+export const ROW_HEIGHT = 180
 
 // A last row may grow to 1.5 times the row height; beyond that the tile stops
 // instead of filling the width.
