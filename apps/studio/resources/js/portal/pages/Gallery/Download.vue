@@ -217,7 +217,7 @@ const OPT = [
         </div>
         <RadioGroup v-else v-model="chosenList" class="gap-0">
           <label v-for="option in selections" :key="option.id" :class="OPT">
-            <RadioGroupItem class="relative after:absolute after:-inset-3 after:content-['']" :value="option.id" />
+            <RadioGroupItem class="relative border-muted-foreground after:absolute after:-inset-3 after:content-['']" :value="option.id" />
             <span>
               <b>{{ option.name ?? (option.id ? $t('gallery.heart') : $t('gallery.everything')) }}</b>
               <span>{{ $t('portal.imageCount', option.count) }}</span>
@@ -244,7 +244,7 @@ const OPT = [
             :key="option"
             :class="[OPT, !available(option) && 'cursor-default [&_b+span]:text-faint! [&_b]:text-faint!']"
           >
-            <RadioGroupItem class="relative after:absolute after:-inset-3 after:content-['']" :value="option" :disabled="!available(option)" />
+            <RadioGroupItem class="relative border-muted-foreground after:absolute after:-inset-3 after:content-['']" :value="option" :disabled="!available(option)" />
             <span>
               <b>{{ $t(`gallery.size.${option}`) }}</b>
               <span>{{ $t(`gallery.sizeHint.${option}`) }}</span>

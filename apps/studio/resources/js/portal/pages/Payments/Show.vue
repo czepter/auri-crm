@@ -39,8 +39,8 @@ const props = defineProps<{
   contact: { name: string }
   showSwitcher: boolean
   project: { id: string; name: string }
-  plan: Plan | null
-  quote: { number: string | null; href: string } | null
+  plan: Plan
+  quote: { number: string | null } | null
   stripeEnabled: boolean
   paymentStatus: 'success' | 'cancelled' | null
   bankDetails: { accountHolder: string | null; iban: string | null; bic: string | null }
@@ -99,7 +99,7 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
         <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
           {{ $t('portal.paymentsTitle') }}
         </h1>
-        <dl v-if="plan" class="animate-rise [animation-delay:230ms] motion-reduce:animate-none m-0 mt-6 grid max-w-[480px] grid-cols-3 gap-x-6 tabular-nums">
+        <dl class="animate-rise [animation-delay:230ms] motion-reduce:animate-none m-0 mt-6 grid max-w-[480px] grid-cols-3 gap-x-6 tabular-nums">
           <div>
             <dt class="text-[13px] text-muted-foreground">{{ $t('portal.paymentsTotal') }}</dt>
             <dd class="m-0 text-[17px]">{{ formatEuros(plan.total) }}</dd>
@@ -115,7 +115,6 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
         </dl>
       </section>
 
-      <template v-if="plan">
         <p v-if="paymentStatus" class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-8 max-w-[880px] rounded-md bg-sunk p-6 text-[15px]">
           {{ paymentStatus === 'success' ? $t('portal.payNowSuccess') : $t('portal.payNowCancelled') }}
         </p>
@@ -202,7 +201,7 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
                    Nummer — vorher gibt es keine Rechnung zu zeigen. -->
               <Link
                 v-if="installment.invoiceNumber !== null"
-                class="mt-2 inline-flex min-h-11 items-center text-[13px] whitespace-nowrap text-muted-foreground hover:text-foreground"
+                class="mt-2 inline-flex min-h-11 items-center text-[13.5px] whitespace-nowrap text-foreground underline underline-offset-4 decoration-border hover:decoration-foreground"
                 :href="`/projekte/${project.id}/zahlungen/${installment.invoiceId}`"
               >{{ $t('portal.invoiceDownload', { number: installment.invoiceNumber }) }}</Link>
             </div>
@@ -248,14 +247,7 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
             </dl>
           </div>
         </section>
-      </template>
 
-      <template v-else-if="quote">
-        <p class="mt-8 text-[17px] leading-[1.5] text-muted-foreground">{{ $t('portal.paymentsAfterAcceptance') }}</p>
-        <Button as-child variant="portal" class="mt-8 min-h-12 w-full justify-center min-[700px]:w-auto">
-          <Link :href="quote.href">{{ $t('portal.quoteView') }}</Link>
-        </Button>
-      </template>
     </PortalWrap>
 
     <PortalFooter />

@@ -118,8 +118,11 @@ const ROW = 'flex items-center gap-6 border-b border-border py-6'
               </PortalField>
             </div>
 
-            <div class="mt-2">
-              <Button class="w-full justify-center min-[640px]:w-auto" variant="portal" type="submit" :disabled="form.processing">
+            <div
+              v-if="form.isDirty"
+              class="fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] z-30 border-t border-border bg-[var(--bg)] p-3 min-[761px]:bottom-0"
+            >
+              <Button class="min-h-12 w-full justify-center min-[761px]:mx-auto min-[761px]:flex min-[761px]:max-w-[680px]" variant="portal" type="submit" :disabled="form.processing">
                 {{ $t('common.save') }}
               </Button>
             </div>
@@ -128,7 +131,7 @@ const ROW = 'flex items-center gap-6 border-b border-border py-6'
 
         <section v-else-if="pane === 'post'">
           <label class="flex cursor-pointer items-start gap-4">
-            <Switch class="mt-0.5" :model-value="subscribed" @update:model-value="setSubscription(!subscribed)" />
+            <Switch class="mt-0.5" :aria-label="$t('portal.postConsent')" :model-value="subscribed" @update:model-value="setSubscription(!subscribed)" />
             <span>
               <b class="block text-[14.5px] leading-[1.35] font-semibold tracking-[-0.008em]">{{ $t('portal.postConsent') }}</b>
               <span class="text-[13px] text-muted-foreground">{{ $t('portal.postConsentScope') }}</span>
