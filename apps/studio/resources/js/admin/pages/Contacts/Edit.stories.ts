@@ -30,8 +30,8 @@ const meta = {
       { id: 'm2', author: 'Christian Zepter', fromStaff: true, body: 'Ja, ich lege den Zweitfotografen ins Angebot und schicke es heute.', sentAt: '2026-08-28T11:40:00+02:00', deliveryState: 'delivered', projectName: 'Hochzeit Brandt', projectId: 'p1', scheduledFor: null },
     ],
     projects: [
-      { id: 'p1', name: 'Hochzeit Brandt · Gut Basthorst', role: 'primary', date: '2027-06-11', value: 426000, booked: true },
-      { id: 'p2', name: 'Standesamt Hamburg', role: 'primary', date: '2027-06-11', value: 348000, booked: false },
+      { id: 'p1', name: 'Hochzeit Brandt · Gut Basthorst', role: 'primary', date: '2027-06-11', value: 426000, booked: true, open: false, quote: null },
+      { id: 'p2', name: 'Standesamt Hamburg', role: 'primary', date: '2027-06-11', value: 348000, booked: false, open: true, quote: { status: 'draft', total: 348000 } },
     ],
     galleries: [
       { id: 'g1', title: 'Verlobungsshooting', expiresAt: '2027-01-31', assetCount: 84, openedOn: '2026-08-30' },

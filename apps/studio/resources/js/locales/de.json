@@ -133,6 +133,14 @@
     "correspondence": "Nachrichten",
     "deliveryFailed": "nicht zugestellt",
     "projects": "Projekte",
+    "openInquiries": "Offene Anfragen",
+    "quoteStatus": {
+      "draft": "Angebot Entwurf",
+      "sent": "Angebot versendet",
+      "accepted": "Angebot angenommen",
+      "expired": "Angebot abgelaufen",
+      "superseded": "Angebot ersetzt"
+    },
     "projectCount": "kein Projekt | 1 Projekt | {count} Projekte",
     "none": "—",
     "editTitle": "Kontakt bearbeiten",
