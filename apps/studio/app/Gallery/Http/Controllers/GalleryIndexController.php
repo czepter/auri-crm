@@ -41,7 +41,7 @@ class GalleryIndexController extends Controller
         $mayManage = auth('staff')->user()?->can(Capability::ManageSettings->value) ?? false;
 
         $galleries = Gallery::query()
-            ->with(['case', 'currentVersion'])
+            ->with(['case', 'currentVersion', 'coverAsset'])
             ->withCount(['assets as asset_count' => fn ($query) => $query->inDraft()])
             // Die eine Ausnahme von der Projektsichtbarkeit: eine Galerie ohne
             // Buchung hat nichts, woran ein Filter greifen könnte.
@@ -76,7 +76,7 @@ class GalleryIndexController extends Controller
 
         $siblings = $project
             ? Gallery::query()
-                ->with(['case', 'currentVersion'])
+                ->with(['case', 'currentVersion', 'coverAsset'])
                 ->withCount(['assets as asset_count' => fn ($query) => $query->inDraft()])
                 ->where('case_id', $project->id)
                 ->latest()

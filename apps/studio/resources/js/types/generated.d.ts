@@ -659,6 +659,7 @@ projectName: string | null,
 assetCount: number,
 version: number | null,
 expiresAt: string | null,
+cover: string | null,
 };
 }
 }

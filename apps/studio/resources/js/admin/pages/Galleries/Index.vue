@@ -48,8 +48,9 @@ function day(iso: string | null) {
           <Button :as="Link" variant="pill" href="/galerien/neu">{{ $t('galleries.create') }}</Button>
         </Empty>
 
-        <div v-else class="max-w-[900px] px-6 pt-7 pb-8 max-[640px]:px-5">
+        <div v-else class="px-6 pt-7 pb-8 max-[640px]:px-5">
           <div class="flex gap-3.5 pb-2 text-small font-semibold text-ink-2 max-[640px]:hidden">
+            <span class="w-16 flex-none" />
             <span class="min-w-0 flex-1">{{ $t('galleries.titleField') }}</span>
             <span class="w-14 flex-none text-right">{{ $t('galleries.imagesField') }}</span>
             <span class="w-20 flex-none text-right">{{ $t('galleries.versionField') }}</span>
@@ -58,8 +59,10 @@ function day(iso: string | null) {
           <div
             v-for="gallery in galleries"
             :key="gallery.id"
-            class="flex items-baseline gap-3.5 py-3 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none max-[640px]:flex-wrap max-[640px]:gap-x-3 max-[640px]:gap-y-1"
+            class="flex items-center gap-3.5 py-3 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none max-[640px]:flex-wrap max-[640px]:gap-x-3 max-[640px]:gap-y-1"
           >
+            <img v-if="gallery.cover" :src="gallery.cover" alt="" class="h-12 w-16 flex-none rounded-[var(--r-sm)] bg-sunk object-cover max-[640px]:hidden" loading="lazy">
+            <span v-else class="h-12 w-16 flex-none rounded-[var(--r-sm)] bg-sunk max-[640px]:hidden" />
             <!-- Unter 640px bleiben vom Titel sonst 110px: drei feste Spalten
                  und der Rand nehmen den Rest. Der Name bekommt die Zeile, die
                  drei Angaben rücken darunter nach links. -->
