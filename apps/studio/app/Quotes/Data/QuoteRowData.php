@@ -31,7 +31,7 @@ class QuoteRowData extends Data
             number: $quote->number,
             status: $quote->status->value,
             statusLabel: $quote->status->label(),
-            total: $quote->total,
+            total: $quote->gross(),
             sentAt: $quote->sent_at?->toIso8601String(),
             createdAt: $quote->created_at?->toIso8601String(),
         );
