@@ -220,7 +220,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
       :summary="totalOf(quote)"
       :title="quoteTitle(quote, t)"
     >
-      <template #action>
+      <template v-if="showHeader" #action>
         <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
         <span v-if="quote.sentChannel" class="text-small text-ink-2">
           {{ quote.sentChannel === 'mail' ? $t('quotes.sentByMail') : $t('quotes.sentBySelf') }}

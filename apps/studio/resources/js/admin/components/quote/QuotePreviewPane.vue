@@ -25,7 +25,8 @@ const props = defineProps<{
   vatSettings?: VatSettings
 }>()
 
-const mode = ref<'pdf' | 'portal'>('portal')
+// A stored quote has no draft for the portal view to render.
+const mode = ref<'pdf' | 'portal'>(props.draft ? 'portal' : 'pdf')
 
 const html = ref('')
 const stale = ref(true)
@@ -94,6 +95,7 @@ if (props.draft) {
       <span class="mb-[5px] text-small leading-none font-semibold text-faint">{{ $t('quotes.preview') }}</span>
 
       <ChoiceGroup
+        v-if="draft"
         :model-value="mode"
         :options="[{ value: 'pdf', label: $t('quotes.previewPdf') }, { value: 'portal', label: $t('quotes.previewPortal') }]"
         variant="segmented"
