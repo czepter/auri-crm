@@ -40,7 +40,7 @@ const total = computed(() => props.payments?.rows.reduce((sum, row) => sum + row
         <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
         <span class="min-w-0 flex-1 truncate text-ink-2">
           <template v-if="quote.sentAt">
-            {{ day(quote.createdAt ?? quote.sentAt) }} · {{ quote.sentChannel === 'mail' ? $t('quotes.sentByMail') : $t('quotes.sentBySelf') }}
+            {{ day(quote.sentAt) }} · {{ quote.sentChannel === 'mail' ? $t('quotes.sentByMail') : $t('quotes.sentBySelf') }}
           </template>
           <template v-else-if="quote.validUntil">
             {{ $t('lead.validUntil', { date: day(quote.validUntil) }) }}
