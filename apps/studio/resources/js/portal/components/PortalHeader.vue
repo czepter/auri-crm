@@ -77,7 +77,7 @@ watch(branding, applyAccent)
       :class="
         over
           ? 'text-white'
-          : 'border-b border-border bg-[color-mix(in_srgb,var(--bg)_88%,transparent)] backdrop-blur-[12px]'
+          : 'border-b border-border bg-[color-mix(in_srgb,var(--bg)_97%,transparent)] backdrop-blur-[12px]'
       "
     >
       <div class="mx-auto flex max-w-[var(--page)] items-center gap-6 px-6 py-4">
