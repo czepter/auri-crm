@@ -112,3 +112,19 @@ Three-model blind council (Opus, Gemini 4 Argon, Gemini 3.8 Flash); the lowest s
 - Admin: 1920 px blank bands on sparse data, dashboard and calendar help panels still narrate.
 - Not re-rated after the last round: nothing; every row above is from the latest capture of its branch state.
 - Issues to file: one gallery design for portal and guests; date and venue in the guest gallery header (API); phone nav gaps (Galerien in admin, Abmelden in portal); gallery strings outside the Anrede switch; quote number absent in the seed.
+
+## Coverage rounds, admin 1920 and portal 390
+
+Scope since round 9: admin at 1920 px, portal at 390 px, every reachable screen, demo data filled (`DemoFillSeeder`). Two reviewers (Opus, Gemini 4 Argon) in the last round; Flash dropped after it rated populated tables as empty. Two reviewers: the lower value stands, a spread above 1 is averaged.
+
+| Set | Screens | Average | Below 6 | 8 or more |
+|---|---|---|---|---|
+| Admin 1920 | 73 | 5.2 | 65 | 0 |
+| Portal 390 | 30 | 6.8 | 6 | 2 |
+
+Opus alone, 24 admin screens, round 2 to round 3: 6.0 to 6.3.
+
+### Open (confirmed by both reviewers)
+
+- Admin: reference panel on most screens explains the system; forms hug the left third at 1920; two primaries per screen (project tabs, quote detail); contract editor is raw HTML; Neuigkeiten empty.
+- Portal: payment total does not match the accepted quote (seed plan); no sign action on the contract; hero takes 62 % of the project page; settings tabs clip at 390 px; back link placed four ways; gallery has no favourites.
