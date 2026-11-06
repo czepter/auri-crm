@@ -226,6 +226,7 @@
       "spaeter": "Später"
     },
     "reason": {
+      "status": "Noch {stage}",
       "payment": "Rate überfällig"
     }
   },
