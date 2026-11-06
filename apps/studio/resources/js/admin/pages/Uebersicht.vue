@@ -413,7 +413,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                                 <Link class="block truncate text-ui font-semibold tracking-[-0.015em] text-foreground no-underline" :href="row.href">
                                     {{ row.who }}
                                 </Link>
-                                <span class="block truncate text-small text-ink-2 [&_em]:text-ring [&_em]:not-italic">
+                                <span class="block truncate text-small min-[1280px]:whitespace-normal text-ink-2 [&_em]:text-ring [&_em]:not-italic">
                                     {{ row.what }} <em v-if="row.emphasis">{{ row.emphasis }}</em>
                                     <template v-if="row.whatTail">{{ row.whatTail }}</template>
                                 </span>
