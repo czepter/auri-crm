@@ -377,7 +377,7 @@ function release(row: Stage | Field) {
                 <circle cx="9" cy="6" r="1.6" /><circle cx="15" cy="6" r="1.6" /><circle cx="9" cy="12" r="1.6" /><circle cx="15" cy="12" r="1.6" /><circle cx="9" cy="18" r="1.6" /><circle cx="15" cy="18" r="1.6" />
               </svg>
               <span class="size-2 flex-none rounded-full" :style="{ background: stage.css }"></span>
-              <span class="min-w-0 flex-1 truncate">{{ stage.name }}</span>
+              <span class="flex-1">{{ stage.name }}</span>
               <span class="flex-none font-normal tabular-nums text-ink-2">{{ stage.count ?? 0 }}</span>
             </button>
           </div>
@@ -386,10 +386,10 @@ function release(row: Stage | Field) {
             <div
               v-for="stage in stageRows.filter((one) => one.isActive)"
               :key="stage.id"
-              class="flex min-w-[120px] flex-1 items-center gap-2 border-b-2 bg-background px-3 py-2 text-small font-semibold"
+              class="flex flex-1 items-center gap-2 border-b-2 bg-background px-3 py-2 text-small font-semibold"
               :style="{ borderBottomColor: stage.css }"
             >
-              <span class="min-w-0 flex-1 truncate">{{ stage.name }}</span>
+              <span class="flex-1">{{ stage.name }}</span>
               <span class="flex-none font-normal tabular-nums text-ink-2">{{ stage.count ?? 0 }}</span>
             </div>
           </div>
