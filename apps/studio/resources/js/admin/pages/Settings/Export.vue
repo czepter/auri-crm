@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import FormSection from '@/ui/page/FormSection.vue'
 import FormShell from '@/ui/page/FormShell.vue'
 import SettingsNav from '@/admin/components/settings/SettingsNav.vue'
 import { Button } from '@/ui/button'
@@ -50,6 +51,7 @@ function create(gallery: string | null) {
       <template #nav><SettingsNav active="export" /></template>
 
       <div class="min-w-0">
+        <FormSection title="CSV">
         <div class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]">
           <span class="flex-1 text-ui font-semibold">{{ $t('contacts.title') }}</span>
           <span class="text-small tabular-nums text-ink-2">{{ contacts }}</span>
@@ -61,7 +63,10 @@ function create(gallery: string | null) {
           <Button as="a" variant="outline" href="/einstellungen/export/projekte">CSV</Button>
         </div>
 
-        <div v-if="archives" class="mt-8">
+        </FormSection>
+
+        <FormSection v-if="archives" :title="$t('settings.exportArchives')">
+        <div>
           <div
             v-for="row in rows"
             :key="row.gallery ?? 'daten'"
@@ -80,6 +85,7 @@ function create(gallery: string | null) {
             </template>
           </div>
         </div>
+        </FormSection>
       </div>
 
       <template v-if="archives" #aside>

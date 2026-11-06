@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { Link, router, useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import FormSection from '@/ui/page/FormSection.vue'
 import FormShell from '@/ui/page/FormShell.vue'
 import SettingsNav from '@/admin/components/settings/SettingsNav.vue'
 import {
@@ -79,8 +80,7 @@ function revoke() {
       <template #nav><SettingsNav active="api-tokens" /></template>
 
       <div class="min-w-0">
-        <div v-if="secret" class="mb-8">
-          <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('apiTokens.secret') }}</div>
+        <FormSection v-if="secret" :title="$t('apiTokens.secret')">
           <code class="block break-all text-ui tabular-nums">{{ secret }}</code>
           <span class="text-small leading-[1.45] font-normal text-faint">{{ $t('apiTokens.secretHint') }}</span>
           <div class="mt-2">
@@ -88,10 +88,9 @@ function revoke() {
               {{ copied === secret ? $t('gallery.copied') : $t('gallery.copy') }}
             </Button>
           </div>
-        </div>
+        </FormSection>
 
-        <div class="mb-8">
-          <div class="mb-2.5 text-small leading-none font-semibold text-faint">MCP</div>
+        <FormSection title="MCP">
           <div
             v-for="client in clients"
             :key="client.name"
@@ -106,10 +105,10 @@ function revoke() {
             </Button>
           </div>
           <Link class="mt-2.5 inline-block text-small" href="/hilfe/mcp-claude-verbinden">{{ $t('apiTokens.mcpHelp') }}</Link>
-        </div>
+        </FormSection>
 
+        <FormSection :title="$t('apiTokens.new')">
         <form id="api-token-form" @submit.prevent="create">
-          <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('apiTokens.new') }}</div>
           <div class="mb-6 flex min-w-0 flex-col gap-1.5">
             <Label for="api-token-name">{{ $t('apiTokens.name') }}</Label>
             <Input id="api-token-name" v-model="form.name" type="text" maxlength="255" />
@@ -131,9 +130,11 @@ function revoke() {
           </div>
           <Button type="submit" :disabled="form.processing">{{ $t('apiTokens.create') }}</Button>
         </form>
+        </FormSection>
       </div>
 
       <template #aside>
+        <div class="rounded-[var(--r)] bg-paper px-5 py-4 shadow-card">
         <Button v-if="!tokens.length" variant="outline" as-child>
           <Link href="/hilfe/mcp-claude-verbinden">{{ $t('apiTokens.mcpHelp') }}</Link>
         </Button>
@@ -153,6 +154,7 @@ function revoke() {
           <Button type="button" variant="outline" @click="revoking = token.id; confirmingRevoke = true">
             {{ $t('apiTokens.revoke') }}
           </Button>
+        </div>
         </div>
       </template>
     </FormShell>
