@@ -24,7 +24,7 @@ enum StaffRole: string
         return match ($this) {
             self::Admin => 'Admin',
             self::Manager => 'Manager',
-            self::Contributor => 'Mitwirkende',
+            self::Contributor => 'Mitwirkender',
             self::Reader => 'Leser',
         };
     }

@@ -12,17 +12,15 @@ faehigkeit: manage_staff
 Sie bestimmt, was der Eingeladene im Studio erreicht, und ändern lässt sie
 sich danach nicht.
 
-- **Inhaber** — alles, und als Einziger das Buchen: aus einer Anfrage einen
+- **Admin** — alles, und als Einziger das Buchen: aus einer Anfrage einen
   Auftrag machen. Team, Einstellungen und Datenschutzauskünfte hängen
   ebenfalls hier.
-- **Fotograf** — der ganze Auftrag außer dem Buchen: Kontakte, Shootings,
-  Crew-Einteilung, Angebote, Verträge, Portalzugang.
-- **Bildbearbeitung** — sieht alle Aufträge und arbeitet sie durch, ohne
-  Kontakte, Crew-Einteilung und Portalzugang.
-- **Zweitfotograf** und **Assistenz** — keine Auftragsübersicht. Sie erreichen
-  die Aufträge, auf deren Shooting sie eingeteilt sind, und sonst keine.
-
-Anfragen, Aufgaben, Notizen und Angebote stehen jeder Rolle offen.
+- **Manager** — sieht alle Aufträge und arbeitet sie durch: Kontakte,
+  Shootings, Crew-Einteilung, Angebote, Verträge, Portalzugang.
+- **Mitwirkender** — Anfragen, Shootings, Aufgaben, Notizen, Nachrichten,
+  Pakete und Angebote, aber nur in Aufträgen, auf deren Shooting er
+  eingeteilt ist.
+- **Leser** — sieht alle Aufträge und ändert nichts.
 
 ## Nach dem Versenden
 
