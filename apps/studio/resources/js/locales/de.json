@@ -1768,6 +1768,11 @@
       "message": "Antwort vom Studio"
     },
     "contractTitle": "Vertrag",
+    "missing": {
+      "payments": { "title": "Zahlungen", "line": "Kein Zahlungsplan" },
+      "contract": { "title": "Vertrag", "line": "Kein Vertrag" },
+      "back": "Zurück zur Anfrage"
+    },
     "contractDownload": "PDF herunterladen",
     "contractPending": "Der Vertrag wird erstellt.",
     "contractNone": "Kein Vertrag vorhanden.",

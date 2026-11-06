@@ -59,7 +59,11 @@ class PaymentController extends Controller
         $plan = $found->paymentPlan;
 
         if ($plan === null) {
-            return redirect()->route('portal.projects.show', $found->public_id);
+            return Inertia::render('Projects/Missing', [
+                'showSwitcher' => $contact->visibleProjects()->count() > 1,
+                'project' => ['id' => $found->public_id, 'name' => $found->name],
+                'kind' => 'payments',
+            ]);
         }
 
         $sessionId = $request->query('session_id');

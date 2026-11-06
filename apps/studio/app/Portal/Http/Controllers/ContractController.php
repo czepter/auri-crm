@@ -41,7 +41,11 @@ class ContractController extends Controller
         $contract = $found->latestContract()->with('signature', 'template')->first();
 
         if ($contract === null) {
-            return redirect()->route('portal.projects.show', $found->public_id);
+            return Inertia::render('Projects/Missing', [
+                'showSwitcher' => $contact->visibleProjects()->count() > 1,
+                'project' => ['id' => $found->public_id, 'name' => $found->name],
+                'kind' => 'contract',
+            ]);
         }
 
         // rescue(), not a bare call: on a sync queue the render runs here,
