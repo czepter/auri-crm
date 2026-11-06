@@ -156,9 +156,12 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
             {{ quote.number }}
           </span>
           <span class="ml-auto inline-flex items-center gap-2 text-[13px] text-muted-foreground">
-            <PortalDot :state="state" />{{ quote.statusLabel }}
-            <template v-if="quote.validUntil && quote.status === 'sent'">
-              · {{ $t('quotes.validUntil') }} {{ shortDate(quote.validUntil) }}
+            <PortalDot :state="state" />
+            <template v-if="quote.status === 'accepted' && quote.acceptedAt">
+              {{ $t('portal.quoteAccepted', { date: shortDate(quote.acceptedAt) }) }}
+            </template>
+            <template v-else-if="quote.validUntil && quote.status === 'sent'">
+              {{ $t('quotes.validUntil') }} {{ shortDate(quote.validUntil) }}
             </template>
           </span>
         </div>
@@ -217,11 +220,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
 
         <div v-if="quote.outro" class="mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] [&_p+*]:mt-3 [&_*+p]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5" v-html="quote.outro" />
 
-        <p v-if="quote.status === 'accepted'" class="mt-8 text-[14.5px] text-muted-foreground">
-          {{ $t('portal.quoteAccepted', { date: quote.acceptedAt }) }}
-        </p>
-
-        <template v-else-if="quote.status === 'sent'">
+        <template v-if="quote.status === 'sent'">
           <p v-if="quote.expired" class="mt-8 text-[14.5px] text-destructive">{{ $t('portal.quoteExpired') }}</p>
           <p v-if="rejection" class="mt-8 text-[14.5px] text-destructive">{{ rejection }}</p>
 
