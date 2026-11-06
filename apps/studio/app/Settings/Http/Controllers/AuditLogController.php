@@ -130,6 +130,10 @@ class AuditLogController extends Controller
             $value = DocumentTemplate::query()->where('family_id', $value)->orderByDesc('version')->value('name') ?? $value;
         }
 
+        if (is_string($value) && strlen($value) > 4 && (preg_match('/iban|token|secret|_key$|password/i', $key) || preg_match('/^[A-Z]{2}\d{2}(\s?[A-Z0-9]{4}){2,7}\s?[A-Z0-9]{1,4}$/', $value))) {
+            return '… '.substr($value, -4);
+        }
+
         return match (true) {
             $value === null || $value === '' => '—',
             is_bool($value) => $value ? 'Ja' : 'Nein',
