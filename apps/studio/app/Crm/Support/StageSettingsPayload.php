@@ -2,13 +2,14 @@
 
 namespace App\Crm\Support;
 
+use App\Crm\Actions\DeriveCasePosition;
 use App\Crm\Enums\ProjectFieldType;
 use App\Crm\Enums\StageColor;
 use App\Crm\Enums\StagePipeline;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
 use App\Crm\Models\ProjectField;
 use App\Crm\Models\ProjectType;
-use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
 use App\Support\LocalPath;
 use Illuminate\Http\Request;
@@ -34,10 +35,15 @@ class StageSettingsPayload
             return null;
         }
 
-        // toBase() keeps the global scopes and skips the stage accessor, so the raw key comes back.
+        // Counted where the lists read them: open inquiries by funnel stage,
+        // booked projects by the position DeriveCasePosition gives them.
+        $position = app(DeriveCasePosition::class);
         $counts = [
-            StagePipeline::Lead->value => Lead::query()->toBase()->selectRaw('stage as k, count(*) as n')->groupBy('stage')->pluck('n', 'k'),
-            StagePipeline::Project->value => Shoot::query()->toBase()->selectRaw('status as k, count(*) as n')->groupBy('status')->pluck('n', 'k'),
+            StagePipeline::Lead->value => Lead::query()->open()->unbooked()->toBase()->selectRaw('stage as k, count(*) as n')->groupBy('stage')->pluck('n', 'k'),
+            StagePipeline::Project->value => ClientCase::query()->booked()->with(['lead', 'shoots'])->get()
+                ->map(fn (ClientCase $case) => $position($case))
+                ->filter(fn ($at) => $at->source === 'shoot')
+                ->countBy(fn ($at) => $at->value),
         ];
 
         return [
