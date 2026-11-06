@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, watch } from 'vue'
+import { computed, onBeforeUnmount, watch } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import PortalField from '@/portal/components/PortalField.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
@@ -20,6 +20,7 @@ type Signature = {
 type Contract = {
   status: string
   downloadUrl: string | null
+  html: string | null
   signature: Signature | null
 }
 
@@ -63,6 +64,9 @@ onBeforeUnmount(clearPoll)
 // server enforces the same rule with the `accepted` rule on `consent`, so a
 // request built by hand without it is rejected exactly like an unchecked
 // box would be.
+// The form needs the stored PDF: signing hashes exactly those bytes.
+const railShown = computed(() => props.contract?.downloadUrl != null && (props.contract.signature != null || props.canSign))
+
 const form = useForm({ typedName: props.contact.name, consent: false })
 
 function sign() {
@@ -107,15 +111,19 @@ function sign() {
             </Button>
           </div>
 
-          <div class="h-[74vh] min-h-[520px] bg-sunk">
-            <iframe
-              v-if="contract.downloadUrl"
-              class="block size-full border-0"
-              :src="contract.downloadUrl"
-              :title="$t('portal.contractTitle')"
-            />
-            <p v-else class="px-6 py-24 text-center text-[15px] text-muted-foreground">{{ $t('portal.contractPending') }}</p>
+          <p v-if="!railShown" class="border-b border-border py-4 text-[14.5px] text-muted-foreground max-[1023px]:px-0 min-[1024px]:px-6">
+            {{ contract.signature ? $t('portal.signedConfirmation', { name: contract.signature.typedName }) : $t('portal.notSignedYet') }}
+          </p>
+
+          <article
+            v-if="contract.html"
+            class="py-8 text-[15.5px] leading-[1.6] min-[1024px]:px-6 [&_h2]:mt-8 [&_h2]:mb-2 [&_h2]:text-[17px] [&_h2]:leading-[1.35] [&_h2]:font-semibold [&_h2:first-child]:mt-0 [&_p+*]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
+            v-html="contract.html"
+          />
+          <div v-else-if="contract.downloadUrl" class="h-[74vh] min-h-[520px] bg-sunk">
+            <iframe class="block size-full border-0" :src="contract.downloadUrl" :title="$t('portal.contractTitle')" />
           </div>
+          <p v-else class="px-6 py-24 text-center text-[15px] text-muted-foreground">{{ $t('portal.contractPending') }}</p>
         </div>
 
         <!-- T-08: the rail itself is the affordance — it never renders at all
@@ -126,7 +134,7 @@ function sign() {
 
              stretch, not start: the cell has to be as tall as the document
              column, or position:sticky below has no range to travel in. -->
-        <div v-if="contract.downloadUrl && (contract.signature || canSign)">
+        <div v-if="railShown">
           <div class="sticky top-[88px] rounded-md border border-line-hover p-6">
             <PortalLabel class="mb-4">{{ $t('portal.signTitle') }}</PortalLabel>
 
