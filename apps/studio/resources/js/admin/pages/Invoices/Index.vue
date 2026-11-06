@@ -29,9 +29,9 @@ const query = ref('')
 
 const OPEN = ['open', 'partial', 'overdue']
 const matches = (value: string, status: string) => value === 'all' || (value === 'open' ? OPEN.includes(status) : status === value)
-const filter = ref(['open', 'paid', 'cancelled'].find((value) => props.invoices.some((invoice) => matches(value, invoice.status))) ?? 'all')
+const filter = ref('all')
 
-const filters = computed(() => ['open', 'paid', 'cancelled', 'all'].map((value) => ({ value, label: t(`invoicesOverview.${value}`) })))
+const filters = computed(() => ['all', 'open', 'paid', 'cancelled'].map((value) => ({ value, label: t(`invoicesOverview.${value}`) })))
 
 const CHIP: Record<string, string> = { open: 'now', partial: 'now', overdue: 'fail', paid: 'done', cancelled: 'off' }
 
@@ -139,18 +139,6 @@ const shown = computed(() => {
                       />
                     </div>
                   </TableCell>
-                </TableRow>
-
-                <TableRow v-for="note in invoice.creditNotes" :key="note.id">
-                  <TableCell tone="muted" class="whitespace-nowrap">
-                    <a v-if="note.hasDocument" :href="`/rechnungen/${invoice.id}/gutschrift/${note.id}`" target="_blank">{{ note.number }}</a>
-                    <template v-else>{{ note.number }}</template>
-                  </TableCell>
-                  <TableCell tone="muted">{{ $t('payments.creditNote') }}</TableCell>
-                  <TableCell tone="muted" class="whitespace-nowrap">{{ dayWithWeekday(note.issuedOn) }}</TableCell>
-                  <TableCell />
-                  <TableCell align="right" tone="muted" class="whitespace-nowrap">−{{ formatEuros(note.amount) }}</TableCell>
-                  <TableCell colspan="2" />
                 </TableRow>
               </template>
             </tbody>
