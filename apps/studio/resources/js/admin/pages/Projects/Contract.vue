@@ -7,9 +7,6 @@ import ProjectShell from '@/admin/components/crm/ProjectShell.vue'
 import ContractWizard from '@/admin/components/templates/ContractWizard.vue'
 import DocumentEditor from '@/admin/components/templates/DocumentEditor.vue'
 import DocumentPreviewPane from '@/admin/components/templates/DocumentPreviewPane.vue'
-import { PreviewOverlay } from '@/ui/preview-overlay'
-import Card from '@/ui/page/Card.vue'
-import Rail from '@/ui/page/Rail.vue'
 import Section from '@/ui/page/Section.vue'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
@@ -62,15 +59,15 @@ const previewProject = ref<string | null>(props.header.id)
 
 const signed = computed(() => props.versions.find((version) => version.state === 'valid' && version.signers.some((s) => s.signedAt)))
 
-const documentSummary = computed(() =>
-  props.contract === null
-    ? null
-    : [
-        `${props.contract.templateName} · v${props.contract.templateVersion}`,
-        t('project.contractVersionLabel', { version: props.contract.version }),
-        props.contract.stateLabel,
-      ].join(' · '),
-)
+const unsigned = computed(() => props.contract?.signers.filter((entry) => !entry.signedAt) ?? [])
+
+const status = computed<'draft' | 'sent' | 'signed'>(() => {
+  if (props.contract?.state === 'draft') return 'draft'
+
+  return props.contract?.signers.length && !unsigned.value.length ? 'signed' : 'sent'
+})
+
+const statusChip = { draft: 'off', sent: 'now', signed: 'done' } as const
 
 const editing = ref(false)
 const saving = ref(false)
@@ -116,6 +113,12 @@ function remind(id: string) {
   router.post(`/unterzeichner/${id}/erinnerung`, {}, { preserveScroll: true })
 }
 
+function remindAll(ids = unsigned.value.map((entry) => entry.id)) {
+  const [id, ...rest] = ids
+
+  router.post(`/unterzeichner/${id}/erinnerung`, {}, { preserveScroll: true, onSuccess: () => rest.length && remindAll(rest) })
+}
+
 /** entwurf/gültig/ersetzt -> die drei Zustände, die tokens.css als Chip kennt. */
 function chipClass(state: string): string {
   return ({ valid: 'done', superseded: 'off' } as Record<string, string>)[state] ?? 'now'
@@ -129,108 +132,111 @@ function day(value: string | null): string {
 <template>
   <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
     <ProjectShell :header="header" active="documents" child="contract">
-      <template #rail>
-        <Rail v-if="contract">
-          <h3 class="m-0 text-small leading-none font-semibold text-faint">
-            {{ $t('project.contractSigners') }}
-          </h3>
+      <div v-if="contract" class="grid items-start gap-6 min-[1280px]:grid-cols-[560px_minmax(0,1fr)]">
+        <div class="flex min-w-0 flex-col gap-3">
+          <section class="rounded-[var(--r)] bg-paper p-6 shadow-card max-[640px]:p-4">
+            <div class="flex flex-wrap items-center gap-3">
+              <h2 class="m-0 text-[15px] leading-[1.2] font-semibold tracking-[-0.015em]">{{ $t('project.contract') }}</h2>
+              <span :class="['chip', statusChip[status]]">{{ $t(`project.contractState.${status}`) }}</span>
+              <span v-if="contract.sentAt" class="text-small text-faint">{{ $t('project.contractSentOn', { date: day(contract.sentAt) }) }}</span>
 
-          <ul class="mt-3 flex list-none flex-col gap-2.5 p-0">
-            <li v-for="entry in contract.signers" :key="entry.id" class="flex flex-col gap-0.5">
-              <div class="flex items-baseline gap-2">
-                <span class="text-small font-medium">{{ entry.name }}</span>
-                <span v-if="entry.role" class="text-small text-faint">{{ entry.role }}</span>
-              </div>
-              <span v-if="entry.signedAt" class="text-small text-ok">
-                {{ $t('project.contractSigned', { date: day(entry.signedAt) }) }}
-              </span>
-              <span v-else-if="entry.remindedAt" class="text-small text-ink-2">
-                {{ $t('project.contractReminded', { date: day(entry.remindedAt) }) }}
-              </span>
-              <span v-else class="text-small text-faint">{{ $t('project.contractSignerPending') }}</span>
-
-              <div v-if="header.canManageContracts && !entry.signedAt" class="flex gap-2">
-                <Button variant="outline" type="button" @click="remind(entry.id)">
+              <div v-if="header.canManageContracts" class="ml-auto flex items-center gap-2">
+                <Button v-if="status === 'draft'" variant="pill" type="button" @click="send">
+                  {{ $t('project.contractSend') }}
+                </Button>
+                <Button v-else-if="status === 'sent' && unsigned.length" variant="pill" type="button" @click="remindAll()">
                   {{ $t('project.contractRemind') }}
                 </Button>
-                <Button variant="outline" type="button" @click="removeSigner(entry.id)">
-                  {{ $t('common.remove') }}
+                <Button v-else-if="contract.downloadUrl" as="a" variant="pill" :href="contract.downloadUrl" download>
+                  {{ $t('project.contractDownload') }}
                 </Button>
               </div>
-            </li>
-          </ul>
+            </div>
 
-          <form v-if="header.canManageContracts && contacts.length" class="mt-3 flex flex-col gap-1.5" @submit.prevent="addSigner">
-            <Select :model-value="signer.contact" @update:model-value="(value) => (signer.contact = String(value))">
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem v-for="option in contacts" :key="option.value" :value="option.value">
-                  {{ option.label }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            <Button type="submit" variant="outline" :disabled="!signer.contact || signer.processing">
-              {{ $t('project.contractSignerAdd') }}
-            </Button>
-          </form>
+            <p v-if="signed && contract.state === 'draft'" class="mt-3 mb-0 text-small leading-[1.45] text-faint">
+              {{ $t('project.contractHoldsUntilSent', { version: signed.version }) }}
+            </p>
 
-          <h3 class="mt-7 m-0 text-small leading-none font-semibold text-faint">
-            {{ $t('project.contractDeadline') }}
-          </h3>
+            <h3 class="mt-6 mb-0 text-small leading-none font-semibold text-faint">{{ $t('project.contractSigners') }}</h3>
 
-          <DatePicker
-            v-if="header.canManageContracts"
-            class="mt-2"
-            :model-value="contract.signDeadlineOn ?? ''"
-            @update:model-value="setDeadline"
-          />
+            <ul class="mt-3 flex list-none flex-col gap-3 p-0">
+              <li v-for="entry in contract.signers" :key="entry.id" class="flex items-center gap-3">
+                <div class="flex min-w-0 flex-col gap-0.5">
+                  <div class="flex items-baseline gap-2">
+                    <span class="text-small font-medium">{{ entry.name }}</span>
+                    <span v-if="entry.role" class="text-small text-faint">{{ entry.role }}</span>
+                  </div>
+                  <span v-if="entry.signedAt" class="text-small text-ok">
+                    {{ $t('project.contractSigned', { date: day(entry.signedAt) }) }}
+                  </span>
+                  <span v-else-if="entry.remindedAt" class="text-small text-ink-2">
+                    {{ $t('project.contractReminded', { date: day(entry.remindedAt) }) }}
+                  </span>
+                  <span v-else class="text-small text-faint">{{ $t('project.contractSignerPending') }}</span>
+                </div>
 
-          <h3 class="mt-7 m-0 text-small leading-none font-semibold text-faint">
-            {{ $t('project.contractVersions') }}
-          </h3>
+                <div v-if="header.canManageContracts && !entry.signedAt" class="ml-auto flex gap-2">
+                  <Button variant="outline" type="button" @click="remind(entry.id)">
+                    {{ $t('project.contractRemind') }}
+                  </Button>
+                  <Button variant="outline" type="button" @click="removeSigner(entry.id)">
+                    {{ $t('common.remove') }}
+                  </Button>
+                </div>
+              </li>
+            </ul>
 
-          <ul class="mt-3 flex list-none flex-col gap-2.5 p-0">
-            <li v-for="version in versions" :key="version.id" class="flex flex-col gap-0.5">
-              <span class="text-small text-faint">{{ day(version.sentAt ?? version.renderedAt) }}</span>
-              <div class="flex items-baseline gap-2">
+            <form v-if="header.canManageContracts && contacts.length" class="mt-3 flex gap-2" @submit.prevent="addSigner">
+              <Select :model-value="signer.contact" @update:model-value="(value) => (signer.contact = String(value))">
+                <SelectTrigger class="min-w-0 flex-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="option in contacts" :key="option.value" :value="option.value">
+                    {{ option.label }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <Button type="submit" variant="outline" :disabled="!signer.contact || signer.processing">
+                {{ $t('project.contractSignerAdd') }}
+              </Button>
+            </form>
+
+            <h3 class="mt-6 mb-0 text-small leading-none font-semibold text-faint">{{ $t('project.contractDeadline') }}</h3>
+
+            <DatePicker
+              v-if="header.canManageContracts"
+              class="mt-2"
+              :model-value="contract.signDeadlineOn ?? ''"
+              @update:model-value="setDeadline"
+            />
+            <p v-else class="mt-2 mb-0 text-small">{{ day(contract.signDeadlineOn) }}</p>
+          </section>
+
+          <section class="rounded-[var(--r)] bg-paper p-6 shadow-card max-[640px]:p-4">
+            <h3 class="m-0 text-small leading-none font-semibold text-faint">{{ $t('project.contractVersions') }}</h3>
+
+            <ul class="mt-3 flex list-none flex-col gap-2.5 p-0">
+              <li v-for="version in versions" :key="version.id" class="flex items-baseline gap-3">
                 <span class="text-small">{{ $t('project.contractVersionLabel', { version: version.version }) }}</span>
                 <span :class="['chip', chipClass(version.state)]">{{ version.stateLabel }}</span>
-              </div>
-              <a v-if="version.downloadUrl" class="text-small text-ink-2 underline" :href="version.downloadUrl" download>
-                {{ $t('project.contractDownload') }}
-              </a>
-            </li>
-          </ul>
-        </Rail>
-      </template>
+                <span class="text-small text-faint">{{ day(version.sentAt ?? version.renderedAt) }}</span>
+                <a v-if="version.downloadUrl" class="ml-auto text-small text-ink-2 underline" :href="version.downloadUrl" download>
+                  {{ $t('project.contractDownload') }}
+                </a>
+              </li>
+            </ul>
+          </section>
+        </div>
 
-      <Card v-if="contract" :title="$t('project.contract')" :summary="documentSummary">
-        <template #action>
-          <Button v-if="contract.downloadUrl" as="a" variant="outline" :href="contract.downloadUrl" download @click.stop>
-            {{ $t('project.contractDownload') }}
-          </Button>
-
-          <template v-if="header.canManageContracts">
-            <Button v-if="editing" variant="pill" type="button" :disabled="saving" @click.stop="save">
+        <div class="flex min-w-0 flex-col gap-3">
+          <div v-if="header.canManageContracts" class="flex items-center justify-end gap-2">
+            <Button v-if="editing" variant="pill" type="button" :disabled="saving" @click="save">
               {{ $t('project.contractSave') }}
             </Button>
-            <Button variant="outline" type="button" @click.stop="editing = !editing">
+            <Button variant="outline" type="button" @click="editing = !editing">
               {{ $t(editing ? 'project.contractEditDone' : 'project.contractEdit') }}
             </Button>
-            <Button v-if="contract.state === 'draft'" :variant="editing ? 'outline' : 'pill'" type="button" @click.stop="send">
-              {{ $t('project.contractSend') }}
-            </Button>
-            <span v-else-if="contract.sentAt" class="text-small text-faint">
-              {{ $t('project.contractSentOn', { date: day(contract.sentAt) }) }}
-            </span>
-          </template>
-        </template>
+          </div>
 
-        <p v-if="signed && contract.state === 'draft'" class="text-small leading-[1.45] text-faint">
-          {{ $t('project.contractHoldsUntilSent', { version: signed.version }) }}
-        </p>
-
-        <div class="mt-4 grid min-h-0 grid-cols-[minmax(0,1fr)] items-start gap-8" :class="editing && 'min-[1400px]:grid-cols-2'">
           <section v-if="editing" class="flex min-w-0 flex-col">
             <div class="flex items-center gap-2.5 border-b border-border pb-2.5">
               <span class="mb-[5px] text-small leading-none font-semibold text-faint">{{ $t('documentTemplates.body') }}</span>
@@ -243,22 +249,20 @@ function day(value: string | null): string {
             </div>
           </section>
 
-          <component :is="editing ? PreviewOverlay : 'div'" v-bind="editing ? { min: 1400, label: $t('project.contractPreview'), wrapperClass: 'sticky top-4 min-w-0' } : { class: 'mx-auto w-full max-w-[794px]' }">
-            <DocumentPreviewPane type="contract" :doc="doc" :samples="samples" :project="previewProject">
-              <Select
-                :model-value="toOption(previewProject)"
-                @update:model-value="(value) => (previewProject = fromOption(value) || null)"
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem :value="header.id">{{ $t('project.contractProjectData') }}</SelectItem>
-                  <SelectItem :value="NONE">{{ $t('documentTemplates.previewSamples') }}</SelectItem>
-                </SelectContent>
-              </Select>
-            </DocumentPreviewPane>
-          </component>
+          <DocumentPreviewPane v-else type="contract" :doc="doc" :samples="samples" :project="previewProject">
+            <Select
+              :model-value="toOption(previewProject)"
+              @update:model-value="(value) => (previewProject = fromOption(value) || null)"
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="header.id">{{ $t('project.contractProjectData') }}</SelectItem>
+                <SelectItem :value="NONE">{{ $t('documentTemplates.previewSamples') }}</SelectItem>
+              </SelectContent>
+            </Select>
+          </DocumentPreviewPane>
         </div>
-      </Card>
+      </div>
 
       <Section v-else :title="$t('project.contract')">
         <p

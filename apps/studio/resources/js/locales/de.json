@@ -435,6 +435,11 @@
     "contractReminded": "Erinnert · {date}",
     "contractDeadline": "Frist",
     "contractVersions": "Fassungen",
+    "contractState": {
+      "draft": "Entwurf",
+      "sent": "Gesendet",
+      "signed": "Unterschrieben"
+    },
     "contractProjectData": "Projektdaten",
     "galleryState": {
       "draft": "Entwurf",
