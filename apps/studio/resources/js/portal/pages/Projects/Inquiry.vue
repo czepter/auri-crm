@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
+import PortalChip from '@/portal/components/PortalChip.vue'
 import PortalField from '@/portal/components/PortalField.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
@@ -90,9 +91,7 @@ const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
             <Link :href="project.quote.href">{{ $t('portal.quoteView') }}</Link>
           </Button>
         </div>
-        <span v-else class="mt-8 inline-flex w-fit items-center rounded-[var(--r-pill)] bg-[var(--accent-bg)] px-[11px] py-[5px] text-[11.5px] leading-none font-semibold tracking-[0.02em] text-action">
-          {{ $t('portal.notReserved') }}
-        </span>
+        <PortalChip v-else class="mt-8">{{ $t('portal.notReserved') }}</PortalChip>
 
         <div class="animate-rise [animation-delay:320ms] motion-reduce:animate-none">
           <div v-if="!project.quote" class="my-18 h-px bg-border" />
