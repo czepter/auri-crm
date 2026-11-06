@@ -210,10 +210,10 @@ function day(value: string | null): string {
           </Button>
 
           <template v-if="header.canManageContracts">
-            <Button variant="outline" type="button" :disabled="saving" @click.stop="save">
+            <Button variant="pill" type="button" :disabled="saving" @click.stop="save">
               {{ $t('project.contractSave') }}
             </Button>
-            <Button v-if="contract.state === 'draft'" variant="pill" type="button" @click.stop="send">
+            <Button v-if="contract.state === 'draft'" variant="outline" type="button" @click.stop="send">
               {{ $t('project.contractSend') }}
             </Button>
           </template>
@@ -223,7 +223,7 @@ function day(value: string | null): string {
           {{ $t('project.contractHoldsUntilSent', { version: signed.version }) }}
         </p>
 
-        <div class="mt-4 grid min-h-0 grid-cols-[minmax(0,1fr)] gap-8">
+        <div class="mt-4 grid min-h-0 grid-cols-[minmax(0,1fr)] items-start gap-8 min-[1400px]:grid-cols-2">
           <section class="flex min-w-0 flex-col">
             <div class="flex items-center gap-2.5 border-b border-border pb-2.5">
               <span class="mb-[5px] text-small leading-none font-semibold text-faint">{{ $t('documentTemplates.body') }}</span>
@@ -236,7 +236,7 @@ function day(value: string | null): string {
             </div>
           </section>
 
-          <PreviewOverlay :min="1101" :label="$t('common.preview')" wrapper-class="contents">
+          <PreviewOverlay :min="1400" :label="$t('common.preview')" wrapper-class="sticky top-4 min-w-0">
             <DocumentPreviewPane type="contract" :doc="doc" :samples="samples" :project="previewProject">
               <Select
                 :model-value="toOption(previewProject)"

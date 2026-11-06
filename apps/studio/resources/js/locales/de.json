@@ -1107,6 +1107,7 @@
     "allTypes": "Alle",
     "empty": "Keine Dokumentvorlagen.",
     "previewLabel": "Vorschau · Beispieldaten",
+    "previewLabelProject": "Vorschau · Projektdaten",
     "previewFresh": "aktuell",
     "previewStale": "wird geprüft",
     "letterhead": "Briefkopf · aus Einstellungen",
