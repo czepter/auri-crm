@@ -1669,8 +1669,8 @@
     "requested": "Angefragt",
     "inquiryReceived": "Wir schauen uns den Termin an und melden uns mit einem Angebot.",
     "inquiryReceivedTitle": "Wir haben eure Anfrage.",
-    "quoteWaitingTitle": "Ein Angebot liegt vor.",
     "quoteView": "Angebot ansehen",
+    "paymentsView": "Zahlungsplan ansehen",
     "contractView": "Vertrag ansehen",
     "payment": "Zahlung",
     "toBooking": "Zur Buchung",
@@ -1784,7 +1784,6 @@
     "maintenanceDefaultMessage": "Das Portal ist vorübergehend nicht erreichbar.",
     "impressumTitle": "Impressum",
     "notFoundTitle": "Diese Seite gibt es nicht",
-    "backHome": "Zu euren Buchungen",
     "backMessages": "Zu euren Nachrichten",
     "footerImpressum": "Impressum",
     "footerWiderruf": "Widerrufsbelehrung",
@@ -1818,7 +1817,6 @@
     "pendingTitle": "Das wartet auf Sie",
     "contactTitle": "Ihr Kontakt",
     "messagesBodyPlaceholder": "Ihre Nachricht …",
-    "backHome": "Zu Ihren Buchungen",
     "backMessages": "Zu Ihren Nachrichten"
   },
   "galleries": {

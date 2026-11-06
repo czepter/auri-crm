@@ -113,8 +113,7 @@
   --hover:#1A1614;
   --line:#241F1C;
   --line-hover:#332C28;
-  --accent:#D4713F;
-  --accent-bg:#26170F;
+  --accent-bg:color-mix(in srgb, var(--accent) 18%, var(--bg));
 
   /* the semantic three, re-lit for a dark ground. Inheriting :root's here
      would put a near-white panel on a near-black page — already wrong for

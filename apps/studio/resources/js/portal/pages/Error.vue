@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { usePage } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
@@ -13,6 +15,8 @@ import { Button } from '@/ui/button'
  * same answer, because the difference is not this surface's to give away.
  */
 defineProps<{ status: number }>()
+
+const oneBooking = computed(() => (usePage().props.portalNav as { oneBooking: boolean } | null | undefined)?.oneBooking)
 </script>
 
 <template>
@@ -27,7 +31,7 @@ defineProps<{ status: number }>()
         </h1>
 
         <Button class="mt-10" as="a" variant="portal" href="/">
-          {{ $t('portal.backHome') }}
+          {{ $t(oneBooking ? 'portal.navBooking' : 'portal.navBookings') }}
           <svg class="fill-none stroke-current" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </Button>
       </div>
