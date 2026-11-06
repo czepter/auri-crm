@@ -565,6 +565,7 @@
     "viewList": "Liste",
     "viewSeason": "Saison",
     "today": "Heute",
+    "kind": { "task": "Aufgabe", "quote": "Angebot", "gallery": "Galerie" },
     "earlier": "Früher",
     "later": "Später",
     "weekdays": "Wochentage",

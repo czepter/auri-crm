@@ -34,6 +34,7 @@ const seasonLabel = ref('')
 // the month down a screen. The draft has no such day; this is the ruling for
 // when one turns up.
 const SHOWN = 3
+const chipKinds = ['task', 'quote', 'gallery']
 
 function entryLabel(entry: App.Crm.Data.CalendarDayData['entries'][number]) {
   return [entry.time, entry.what, entry.who].filter(Boolean).join(' · ')
@@ -182,6 +183,10 @@ function shortDate(date: string | null) {
               >{{ entry.time }}</span>
               <!-- A phone cell is 50px wide: one dot per entry, still a link to its project. -->
               <span class="hidden max-[640px]:inline">•</span>
+              <span
+                v-if="chipKinds.includes(entry.kind)"
+                class="mr-1 rounded-sm bg-rule px-1 text-small font-semibold text-ink-2 max-[640px]:hidden"
+              >{{ $t(`calendar.kind.${entry.kind}`) }}</span>
               <span class="max-[640px]:hidden">{{ entry.what }}</span>
               <!-- The measured values, not the ones crm.css .cal .e .who alone would
                    suggest: a second .who rule reaches this span as well. -->
