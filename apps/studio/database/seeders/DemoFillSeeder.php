@@ -123,6 +123,9 @@ class DemoFillSeeder extends Seeder
             $delivered[$shoot->public_id] = $shoot->date->copy()->addDays($shoot->label === 'Standesamt' ? 10 : 14)->setTime(10, 0);
 
             $shoot->forceFill(['status_entered_at' => $delivered[$shoot->public_id]])->saveQuietly();
+
+            DB::table('tasks')->where('shoot_id', $shoot->id)->whereNull('completed_at')
+                ->update(['completed_at' => $delivered[$shoot->public_id]]);
         }
 
         foreach (DB::table('audit_logs')->where('case_id', $meier->id)->get() as $log) {

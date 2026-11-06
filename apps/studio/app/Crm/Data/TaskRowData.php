@@ -2,6 +2,7 @@
 
 namespace App\Crm\Data;
 
+use App\Crm\Enums\StageAnchor;
 use App\Crm\Models\Task;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -57,6 +58,7 @@ class TaskRowData extends Data
             // colouring it as overdue is how a worklist stops being read.
             isOverdue: $task->due_on !== null
                 && ! $task->isDone()
+                && ! in_array($task->shoot?->status?->anchor, [StageAnchor::Delivered, StageAnchor::Archived], true)
                 && $task->due_on->isBefore(now()->startOfDay()),
             isDone: $task->isDone(),
             isBlocked: $task->isBlocked(),
