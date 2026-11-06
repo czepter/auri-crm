@@ -349,9 +349,15 @@ class CaseController extends Controller
             ->each(fn (Shoot $shoot) => app(AdvanceShootStatus::class)($shoot, $status, auth('staff')->user()));
     }
 
-    public function info(ClientCase $case): Response
+    public function info(ClientCase $case): Response|RedirectResponse
     {
         $this->authorize('view', $case);
+
+        if ($case->lead !== null && ! $case->isBooked()) {
+            return redirect("/anfragen/{$case->public_id}/info");
+        }
+
+        RecordVisit::record($case->isBooked() ? 'projekt' : 'anfrage', $case->public_id, $case->name);
 
         return Inertia::render('Projects/Info', [
             'header' => $this->header($case),

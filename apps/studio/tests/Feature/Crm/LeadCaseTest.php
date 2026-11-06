@@ -118,6 +118,13 @@ it('sends an unbooked project to its inquiry', function () {
         ->assertRedirect("/anfragen/{$lead->case->public_id}");
 });
 
+it('sends an unbooked project\'s info tab to its inquiry', function () {
+    $lead = caseFor();
+
+    $this->get("/auftraege/{$lead->case->public_id}/info")
+        ->assertRedirect("/anfragen/{$lead->case->public_id}/info");
+});
+
 // #520: /anfragen took the lead's own id before the case's, and notifications
 // already sent still carry it.
 it('redirects an old lead link to its case', function () {
