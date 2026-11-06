@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Button } from '@/ui/button'
@@ -312,7 +313,7 @@ function megabytes(bytes: number) {
 
 <template>
   <AdminLayout active="galerien">
-    <div data-tokens>
+    <Page data-tokens wide>
       <PageHead :title="gallery.title ?? '—'">
         <span class="flex flex-none items-center gap-1.5 text-small font-semibold" :class="stateTone">
           <span class="size-1.5 rounded-full bg-current" />{{ stateWord }}
@@ -640,6 +641,6 @@ function megabytes(bytes: number) {
           <p v-else class="text-small leading-[1.45] text-faint">{{ $t('galleryRecord.noBuilds') }}</p>
         </div>
       </div>
-    </div>
+    </Page>
   </AdminLayout>
 </template>
