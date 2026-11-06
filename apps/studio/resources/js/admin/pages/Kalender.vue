@@ -99,7 +99,7 @@ function shortDate(date: string | null) {
         <PageHead :kicker="$t('calendar.title')" :title="view === 'saison' ? seasonLabel : label">
           <ChoiceGroup
             :model-value="view"
-            class="ml-auto"
+            class="ml-auto max-[640px]:ml-0 max-[640px]:[&_span]:inline-flex max-[640px]:[&_span]:min-h-11 max-[640px]:[&_span]:items-center"
             :options="[
               { value: 'monat', label: $t('calendar.viewMonth') },
               { value: 'liste', label: $t('calendar.viewList') },
@@ -113,6 +113,7 @@ function shortDate(date: string | null) {
             v-if="workingDays"
             :as="Link"
             variant="pill-muted"
+            class="max-[640px]:hidden"
             :href="`/kalender/einstellungen?monat=${month}&ansicht=${view}`"
           >
             {{ $t('stages.entry') }}
@@ -125,6 +126,7 @@ function shortDate(date: string | null) {
             type="button"
             variant="pill-muted"
             class="max-[640px]:min-h-11 max-[640px]:min-w-11"
+            :class="step[0] === '←' && 'max-[640px]:ml-auto'"
             @click="go(step[1])"
           >
             {{ step[0] }}
@@ -249,6 +251,16 @@ function shortDate(date: string | null) {
             </template>
           </tbody>
         </Table>
+
+        <Button
+          v-if="workingDays"
+          :as="Link"
+          variant="pill-muted"
+          class="mx-4 mt-4 hidden min-h-11 max-[640px]:inline-flex"
+          :href="`/kalender/einstellungen?monat=${month}&ansicht=${view}`"
+        >
+          {{ $t('stages.entry') }}
+        </Button>
 
         <CalendarSettings
           v-if="settingsOpen && workingDays"
