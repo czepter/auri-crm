@@ -349,32 +349,25 @@ const TONE: Record<string, string> = {
               <span v-if="shoot.isPrimary" class="text-small leading-[1.5] font-semibold text-foreground">
                 {{ $t('project.primary') }}
               </span>
-              <span :class="['rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold', TONE[chipClass(shoot, header.position.value)]]">
+              <DropdownMenu v-if="!shoot.isCancelled && header.canManageShoots && onward(shoot).length">
+                <DropdownMenuTrigger
+                  :class="['inline-flex cursor-pointer items-center gap-1 rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold max-[640px]:min-h-11', TONE[chipClass(shoot, header.position.value)]]"
+                  :aria-label="$t('project.advance')"
+                >
+                  {{ shoot.statusLabel }}
+                  <ChevronDown class="size-3.5" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" class="w-[208px]">
+                  <DropdownMenuItem v-for="status in onward(shoot)" :key="status.value" @select="advance(shoot, status.value)">
+                    {{ status.label }}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <span v-else :class="['rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold', TONE[chipClass(shoot, header.position.value)]]">
                 {{ shoot.statusLabel }}
               </span>
 
               <div v-if="!shoot.isCancelled && header.canManageShoots" class="flex items-center gap-2">
-                <div v-if="onward(shoot).length" class="flex">
-                  <Button
-                    variant="pill-muted"
-                    type="button"
-                    class="rounded-r-none max-[640px]:min-h-11"
-                    @click="advance(shoot, onward(shoot)[0].value)"
-                  >{{ onward(shoot)[0].label }}</Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger as-child>
-                      <Button variant="pill-muted" type="button" class="rounded-l-none border-l border-line-hover px-2 max-[640px]:min-h-11 max-[640px]:min-w-11" :aria-label="$t('project.advance')">
-                        <ChevronDown class="size-3.5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" class="w-[208px]">
-                      <DropdownMenuItem v-for="status in onward(shoot)" :key="status.value" @select="advance(shoot, status.value)">
-                        {{ status.label }}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
                 <DropdownMenu>
                   <DropdownMenuTrigger
                     class="flex size-8 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2 max-[640px]:size-11"
