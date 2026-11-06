@@ -8,10 +8,13 @@ use App\Catalog\Models\Package;
 use App\Contracts\Enums\ContractState;
 use App\Contracts\Models\Contract;
 use App\Crm\Actions\SeedFormInstanceFromTemplate;
+use App\Crm\Enums\StageAnchor;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\ClientCase;
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\FormTemplate;
+use App\Crm\Support\CrmVocabulary;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Engagement\Models\Thread;
@@ -64,6 +67,7 @@ class DemoFillSeeder extends Seeder
         $this->seedQuote($meier, $actor);
         $this->seedQuestionnaire($meier, $questionnaire, $actor);
         $this->seedPaymentPlan($meier, $actor);
+        $this->seedStageQuotes($actor);
         $this->seedSentQuoteNumber();
         $this->seedCreditNote($actor);
         $this->seedAbsenceAndClosure($actor);
@@ -322,14 +326,9 @@ class DemoFillSeeder extends Seeder
         $quote = Quote::query()->where('case_id', $project->id)->where('status', QuoteStatus::Accepted)->latest('id')->firstOrFail()->refresh();
         $plan = PaymentPlan::query()->where('case_id', $project->id)->first();
 
-        if ($plan !== null && $plan->total === $quote->gross() && $plan->installments()->orderBy('sort_order')->first()?->due_on->toDateString() === '2026-11-12') {
+        if ($plan !== null) {
             return;
         }
-
-        DB::transaction(function () use ($project) {
-            Invoice::query()->where('case_id', $project->id)->delete();
-            PaymentPlan::query()->where('case_id', $project->id)->delete();
-        });
 
         $plan = app(CreatePaymentPlan::class)($project, $quote->gross(), ['2026-11-12', '2027-06-05']);
 
@@ -345,6 +344,51 @@ class DemoFillSeeder extends Seeder
 
         foreach ($thread?->messages()->orderBy('id')->get() ?? [] as $index => $message) {
             $message->forceFill(['created_at' => now()->subHours(3 - $index)])->save();
+        }
+    }
+
+    /** Every project at or beyond Angebot raus holds the quote the funnel counts it for. */
+    private function seedStageQuotes(User $actor): void
+    {
+        $vocabulary = app(CrmVocabulary::class);
+        $sentAt = $vocabulary->anchored(StagePipeline::Lead, StageAnchor::QuoteSent)?->sort_order;
+        $acceptedAt = $vocabulary->anchored(StagePipeline::Lead, StageAnchor::QuoteAccepted)?->sort_order;
+
+        if ($sentAt === null || $acceptedAt === null) {
+            return;
+        }
+
+        foreach (ClientCase::query()->with('lead')->get() as $project) {
+            $lead = $project->lead;
+
+            if ($lead?->isLost()) {
+                continue;
+            }
+
+            $order = $lead?->stage->sort_order ?? 0;
+            $accepted = $project->booked_at !== null || $order >= $acceptedAt;
+
+            if (! $accepted && $order < $sentAt) {
+                continue;
+            }
+
+            $stamp = $lead?->stage_entered_at ?? $project->booked_at;
+            $quote = $project->quotes()->latest('id')->first();
+
+            if ($quote === null) {
+                $quote = app(CreateQuote::class)($project, $actor);
+                $quote->items()->create(['title' => 'Hochzeitsreportage Ganztag', 'description' => 'bis 10 Std. am Hochzeitstag, Bearbeitung, Online-Galerie', 'quantity' => 1, 'unit_price' => 350000, 'sort_order' => 0]);
+                $quote->recalculateTotal();
+            }
+
+            if ($quote->status === QuoteStatus::Draft) {
+                app(MarkQuoteSent::class)($quote->refresh(), 'mail', $actor, $accepted ? $stamp->copy()->subDay() : $stamp);
+                $quote->refresh();
+            }
+
+            if ($accepted && $quote->status === QuoteStatus::Sent) {
+                app(\App\Quotes\Actions\AcceptQuote::class)($quote, $project->primaryContact(), null, at: $stamp);
+            }
         }
     }
 
