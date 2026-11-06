@@ -133,7 +133,7 @@ const railNote = computed(() => {
 
   if (quote?.acceptedAt) return t('portal.quoteAccepted', { date: dayDate(quote.acceptedAt) })
   if (quote?.expired && quote.validUntil) return t('portal.quoteExpiredOn', { date: dayDate(quote.validUntil) })
-  if (quote?.validUntil) return `${t('quotes.validUntil')} ${dayDate(quote.validUntil)}`
+  if (quote?.validUntil && expiring.value === null) return `${t('quotes.validUntil')} ${dayDate(quote.validUntil)}`
 
   return undefined
 })
@@ -146,15 +146,16 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
     <PortalHeader :switcher="{ label: project.name, toAll: showSwitcher }" />
 
     <PortalWrap class="pb-24">
-      <section class="pt-6">
+      <section class="pt-[var(--band)]">
         <PortalBack v-if="project.href" :href="project.href" />
-        <p class="animate-rise motion-reduce:animate-none mb-4 text-[12px] leading-snug font-semibold tracking-[0.04em] break-words text-muted-foreground">
+        <p class="animate-rise motion-reduce:animate-none mb-4 text-[11px] leading-snug font-semibold tracking-[0.17em] uppercase break-words text-muted-foreground">
           {{ [project.name, railNote].filter(Boolean).join(' · ') }}
         </p>
         <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
           {{ $t('portal.quoteTitle') }}
         </h1>
         <p v-if="quote?.number" class="mt-2 text-[13px] tabular-nums text-muted-foreground">{{ quote.number }}</p>
+        <PortalChip v-if="expiring !== null" class="mt-4">{{ $t('portal.validDays', expiring) }}</PortalChip>
       </section>
 
       <PortalRail>
@@ -219,8 +220,6 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
               </tr>
             </template>
           </table>
-
-          <PortalChip v-if="expiring !== null" class="mt-4">{{ $t('portal.validDays', expiring) }}</PortalChip>
 
           <dl v-if="project.date || project.venue" class="m-0 mt-8 grid max-w-[420px] grid-cols-[88px_1fr] gap-x-4 gap-y-2 text-[14.5px] leading-[1.5]">
             <template v-if="project.date">
