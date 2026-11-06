@@ -47,3 +47,18 @@ it('allows the same email under a different tenant', function () {
     expect(Contact::count())->toBe(1)
         ->and(DB::table('contacts')->count())->toBe(2);
 });
+
+it('files a contact with only an inquiry under Ohne Auftrag', function () {
+    $contact = Contact::factory()->create();
+    $inquiry = \App\Crm\Models\ClientCase::factory()->wedding()->create(['booked_at' => null]);
+    $inquiry->attachContact($contact, \App\Crm\Enums\CaseContactRole::Primary);
+
+    $row = \App\Crm\Data\ContactRowData::fromContact($contact->load('cases.primaryShoot'));
+
+    expect($row->standing)->toBe('none');
+
+    \App\Crm\Models\ClientCase::factory()->wedding()->booked()->create()
+        ->attachContact($contact, \App\Crm\Enums\CaseContactRole::Primary);
+
+    expect(\App\Crm\Data\ContactRowData::fromContact($contact->fresh()->load('cases.primaryShoot'))->standing)->toBe('past');
+});
