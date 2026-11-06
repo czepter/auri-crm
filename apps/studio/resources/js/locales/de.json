@@ -376,6 +376,7 @@
     "history": "Verlauf",
     "historyCount": "{body} · {count}",
     "shootAdd": "Shooting",
+    "shootCreate": "Shooting anlegen",
     "tasksOf": "von {all}",
     "tasksOpen": "Offen {count}",
     "tasksDone": "Erledigt {count}",
