@@ -60,10 +60,7 @@ class ReadAfterDeliveryColumn
             ->where('source', LeadSource::Referral)
             ->whereNotNull('referred_by_contact_id')
             ->when($visible !== null, fn ($query) => $query->whereIn('case_id', $visible))
-            ->whereHas('case', fn ($project) => $project->booked()->whereHas(
-                'shoots',
-                fn ($shoots) => $shoots->where('status', app(CrmVocabulary::class)->anchored(StagePipeline::Project, StageAnchor::Delivered)?->key),
-            ))
+            ->whereHas('case', fn ($project) => $this->delivered($project->booked()))
             ->with(['case', 'referredBy'])
             ->get()
             ->map(fn (Lead $lead) => new DomainRowData(
@@ -74,6 +71,16 @@ class ReadAfterDeliveryColumn
                 whatTail: null,
                 action: RowActionData::tel('Bedanken', $lead->referredBy->phone),
             ));
+    }
+
+    /** Every uncancelled shoot is delivered; an open inquiry has not reached this column. */
+    private function delivered(Builder $project): Builder
+    {
+        $key = app(CrmVocabulary::class)->anchored(StagePipeline::Project, StageAnchor::Delivered)?->key;
+
+        return $project
+            ->whereHas('shoots', fn ($shoots) => $shoots->uncancelled())
+            ->whereDoesntHave('shoots', fn ($shoots) => $shoots->uncancelled()->where('status', '!=', $key));
     }
 
     /**
@@ -88,6 +95,7 @@ class ReadAfterDeliveryColumn
             ->whereNotNull('expires_at')
             ->where('expires_at', '<=', now()->addDays(self::EXPIRY_WINDOW_DAYS))
             ->when($visible !== null, fn ($query) => $query->whereIn('case_id', $visible))
+            ->whereHas('case', fn ($project) => $this->delivered($project->booked()))
             ->with('case')
             ->orderBy('expires_at')
             ->get()
