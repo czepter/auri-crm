@@ -134,7 +134,10 @@ function revoke() {
       </div>
 
       <template #aside>
-        <h2 class="mb-2 text-ui font-semibold">{{ $t('apiTokens.clients') }}</h2>
+        <Button v-if="!tokens.length" variant="outline" as-child>
+          <Link href="/hilfe/mcp-claude-verbinden">{{ $t('apiTokens.mcpHelp') }}</Link>
+        </Button>
+        <h2 v-else class="mb-2 text-ui font-semibold">{{ $t('apiTokens.clients') }}</h2>
         <div
           v-for="token in tokens"
           :key="token.id"
