@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import SessionList from './SessionList.vue'
+import ProfileNav from '@/admin/components/settings/ProfileNav.vue'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
@@ -57,15 +58,6 @@ function modesFor(key: string): Mode[] {
 // sentinel pairing Settings/TaskTemplates.vue uses for its own empty option.
 const NO_DIGEST = 'none'
 
-const NAV = [
-  { key: 'konto', href: '/profil', label: 'profile.navAccount' },
-  { key: 'sicherheit', href: '/profil/sicherheit', label: 'profile.navSecurity' },
-  { key: 'benachrichtigungen', href: '/profil/benachrichtigungen', label: 'profile.navNotifications' },
-  { key: 'kalender', href: '/profil/kalender', label: 'calendar.subscribe' },
-  // The own-absences screen already exists and is open to every role; this is
-  // the way to it from here, not a second copy of it.
-  { key: 'abwesenheiten', href: '/abwesenheiten', label: 'profile.navAbsences' },
-]
 
 const accountForm = useForm({
   name: props.user.name,
@@ -154,19 +146,10 @@ function regenerateFeedUrl() {
         </Button>
       </template>
 
-      <template #nav>
-        <nav class="flex w-[196px] flex-none flex-col gap-0.5">
-          <Link
-            v-for="item in NAV"
-            :key="item.key"
-            class="flex items-center gap-2.5 rounded-[7px] px-2.5 py-[9px] text-ui leading-none no-underline transition-[background-color] duration-[.12s] ease-out hover:bg-muted [&_svg]:size-[17px]"
-            :class="item.key === pane ? 'font-semibold text-foreground [&_svg]:opacity-100' : 'font-normal text-muted-foreground [&_svg]:opacity-75'"
-            :href="item.href"
-          >{{ $t(item.label) }}</Link>
-        </nav>
-      </template>
+      <template #nav><ProfileNav :active="pane" /></template>
 
       <form v-if="pane === 'konto'" id="profile-konto-form" @submit.prevent="submitAccount">
+        <FormSection :title="$t('profile.accountTitle')">
         <div class="mb-6">
           <Field :label="$t('profile.name')" id="pr-name" wide :error="accountForm.errors.name">
             <Input id="pr-name" v-model="accountForm.name" type="text" />
@@ -203,6 +186,7 @@ function regenerateFeedUrl() {
             <Input id="pr-rolle" :model-value="user.role" type="text" disabled />
           </Field>
         </div>
+        </FormSection>
       </form>
 
       <form v-else-if="pane === 'sicherheit'" id="profile-sicherheit-form" @submit.prevent="submitPassword">
