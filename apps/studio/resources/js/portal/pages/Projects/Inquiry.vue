@@ -11,7 +11,7 @@ import PortalRow from '@/portal/components/PortalRow.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 import { formatEuros } from '@/lib/money'
-import { shortDate } from '@/portal/lib/dates'
+import { dayDate } from '@/portal/lib/dates'
 import { reachable, type Studio } from '@/portal/lib/studio'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
@@ -55,12 +55,6 @@ function save() {
   })
 }
 
-function longDate(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  })
-}
-
 const venue = [props.project.venueName, props.project.venueCity].filter(Boolean).join(', ')
 
 
@@ -81,8 +75,8 @@ const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
         :amount="project.quote ? formatEuros(project.quote.total) : undefined"
         :note="project.quote
           ? project.quote.acceptedOn
-            ? $t('portal.quoteAccepted', { date: shortDate(project.quote.acceptedOn) })
-            : project.quote.validUntil ? `${$t('quotes.validUntil')} ${shortDate(project.quote.validUntil)}` : undefined
+            ? $t('portal.quoteAccepted', { date: dayDate(project.quote.acceptedOn) })
+            : project.quote.validUntil ? `${$t('quotes.validUntil')} ${dayDate(project.quote.validUntil)}` : undefined
           : undefined"
       >
         <template #rail>
@@ -103,7 +97,7 @@ const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
             {{ project.name }}
           </h1>
           <p class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-6 flex flex-wrap items-center gap-2.5 text-[15px] tabular-nums text-muted-foreground">
-            {{ [project.date ? longDate(project.date) : $t('portal.dateOpen'), venue].filter(Boolean).join(' · ') }}
+            {{ [project.date ? dayDate(project.date) : $t('portal.dateOpen'), venue].filter(Boolean).join(' · ') }}
           </p>
 
           <div class="animate-rise [animation-delay:320ms] motion-reduce:animate-none">
@@ -137,7 +131,7 @@ const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
                   <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.occasion') }}</dt>
                   <dd class="m-0 text-[14.5px]">{{ project.type }}</dd>
                   <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.preferredDate') }}</dt>
-                  <dd class="m-0 text-[14.5px] tabular-nums">{{ project.date ? longDate(project.date) : $t('portal.dateOpen') }}</dd>
+                  <dd class="m-0 text-[14.5px] tabular-nums">{{ project.date ? dayDate(project.date) : $t('portal.dateOpen') }}</dd>
                   <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.place') }}</dt>
                   <dd class="m-0 text-[14.5px]">{{ venue || '—' }}</dd>
                   <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.reachUs') }}</dt>

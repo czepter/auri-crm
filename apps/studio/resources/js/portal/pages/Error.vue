@@ -16,7 +16,18 @@ import { Button } from '@/ui/button'
  */
 defineProps<{ status: number }>()
 
-const oneBooking = computed(() => (usePage().props.portalNav as { oneBooking: boolean } | null | undefined)?.oneBooking)
+const title = computed(() => {
+  const path = usePage().url.split('?')[0]
+  const key = /\/zahlungen\/[^/]+/.test(path) ? 'Invoice'
+    : path.includes('/zahlungen') ? 'Payments'
+      : path.includes('/vertrag') ? 'Contract'
+        : path.includes('/angebot') ? 'Quote'
+          : path.startsWith('/galerien') ? 'Gallery'
+            : path.startsWith('/projekte') ? 'Booking'
+              : null
+
+  return key ? `portal.notFound${key}` : 'portal.notFoundTitle'
+})
 </script>
 
 <template>
@@ -27,11 +38,11 @@ const oneBooking = computed(() => (usePage().props.portalNav as { oneBooking: bo
       <div class="animate-rise motion-reduce:animate-none w-full max-w-[620px]">
         <p class="mb-4 font-serif text-[26px] leading-none text-muted-foreground tabular-nums">{{ status }}</p>
         <h1 class="font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
-          {{ $t('portal.notFoundTitle') }}
+          {{ $t(title) }}
         </h1>
 
         <Button class="mt-10" as="a" variant="portal" href="/">
-          {{ $t(oneBooking ? 'portal.navBooking' : 'portal.navBookings') }}
+          {{ $t('portal.toBooking') }}
           <svg class="fill-none stroke-current" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </Button>
       </div>

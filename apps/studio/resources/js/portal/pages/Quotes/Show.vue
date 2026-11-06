@@ -3,13 +3,14 @@ import { computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Link, useForm, usePage } from '@inertiajs/vue3'
 import { formatEuros, formatPercent } from '@/lib/money'
+import PortalBack from '@/portal/components/PortalBack.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalRail from '@/portal/components/PortalRail.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 import QuoteSlider from '@/portal/components/QuoteSlider.vue'
-import { longDate, shortDate } from '@/portal/lib/dates'
+import { dayDate } from '@/portal/lib/dates'
 import { splitStages } from '@/portal/lib/paymentStages'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
@@ -117,9 +118,9 @@ const stages = computed(() => (props.quote ? splitStages(gross.value, props.quot
 const railNote = computed(() => {
   const quote = props.quote
 
-  if (quote?.acceptedAt) return t('portal.quoteAccepted', { date: shortDate(quote.acceptedAt) })
-  if (quote?.expired && quote.validUntil) return t('portal.quoteExpiredOn', { date: shortDate(quote.validUntil) })
-  if (quote?.validUntil) return `${t('quotes.validUntil')} ${shortDate(quote.validUntil)}`
+  if (quote?.acceptedAt) return t('portal.quoteAccepted', { date: dayDate(quote.acceptedAt) })
+  if (quote?.expired && quote.validUntil) return t('portal.quoteExpiredOn', { date: dayDate(quote.validUntil) })
+  if (quote?.validUntil) return `${t('quotes.validUntil')} ${dayDate(quote.validUntil)}`
 
   return undefined
 })
@@ -133,14 +134,10 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
 
     <PortalWrap class="pb-40">
       <section class="pt-[var(--band)]">
-        <div class="animate-rise motion-reduce:animate-none mb-4 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-          <p class="text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">
-            {{ [project.name, project.date ? longDate(project.date) : null, project.venue].filter(Boolean).join(' · ') }}
-          </p>
-          <Link v-if="project.href" class="text-[13.5px] text-muted-foreground hover:text-foreground max-[700px]:inline-flex max-[700px]:min-h-11 max-[700px]:items-center" :href="project.href">
-            {{ $t('portal.toBooking') }}
-          </Link>
-        </div>
+        <PortalBack v-if="project.href" :href="project.href" />
+        <p class="animate-rise motion-reduce:animate-none mb-4 truncate text-[11px] leading-none font-semibold tracking-[0.17em] whitespace-nowrap uppercase text-muted-foreground">
+          {{ [project.name, project.date ? dayDate(project.date) : null].filter(Boolean).join(' · ') }}
+        </p>
         <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
           {{ $t('portal.quoteTitle') }}
         </h1>

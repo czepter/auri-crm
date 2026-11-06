@@ -9,6 +9,7 @@ import { router } from '@inertiajs/vue3'
 import { ref } from 'vue'
 import InvoiceSheet, { type InvoicePage } from '@/portal/components/InvoiceSheet.vue'
 import PortalDot from '@/portal/components/PortalDot.vue'
+import PortalBack from '@/portal/components/PortalBack.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
@@ -46,6 +47,7 @@ function payNow() {
 
     <PortalWrap class="pb-40">
       <section class="pt-[var(--band)]">
+        <PortalBack :href="`/projekte/${project.id}/zahlungen`" />
         <p class="animate-rise motion-reduce:animate-none mb-4 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">{{ project.name }}</p>
         <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
           {{ $t('portal.invoiceTitle', { number: invoice.number }) }}

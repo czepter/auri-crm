@@ -85,7 +85,7 @@ class ContractController extends Controller
      * explicit true, so a request built by hand without it fails exactly
      * like an unchecked box would.
      */
-    public function sign(Request $request, string $case, SignContract $sign): RedirectResponse
+    public function sign(Request $request, string $case, SignContract $sign, DocumentMergeData $merge): RedirectResponse
     {
         $contact = auth('portal')->user();
 
@@ -99,7 +99,11 @@ class ContractController extends Controller
             'consent' => ['accepted'],
         ]);
 
-        $sign($contract, $contact, $validated['typedName'], (string) $request->ip(), $request->userAgent());
+        $shown = $contract->status === ContractStatus::Rendered && $contract->hasArtifact()
+            ? null
+            : MergeFieldResolver::resolve($contract->resolvedBody(), $merge->forCase($found), escape: true);
+
+        $sign($contract, $contact, $validated['typedName'], (string) $request->ip(), $request->userAgent(), $shown);
 
         return back();
     }

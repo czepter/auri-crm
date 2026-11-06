@@ -3,8 +3,9 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { router, useForm, usePage } from '@inertiajs/vue3'
 import GalleryLightbox from '@/portal/components/GalleryLightbox.vue'
+import PortalBack from '@/portal/components/PortalBack.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
-import { shortDate } from '@/portal/lib/dates'
+import { dayDate } from '@/portal/lib/dates'
 import { ALL, countOf, selections, visible } from '@/portal/lib/gallerySelections'
 import { GRID_WIDTHS, srcSet } from '@/portal/lib/images'
 import { tileStyle } from '@/portal/lib/tile'
@@ -160,7 +161,7 @@ function submit() {
 }
 
 const subtitle = computed(() => {
-  const parts = [props.gallery.date && shortDate(props.gallery.date), props.gallery.venue].filter(Boolean)
+  const parts = [props.gallery.date && dayDate(props.gallery.date), props.gallery.venue].filter(Boolean)
 
   if (props.assets?.length) {
     parts.push(`${props.assets.length} Bilder`)
@@ -176,8 +177,30 @@ const SIZES = '(max-width: 760px) 50vw, (max-width: 1080px) 33vw, 25vw'
 // one, so "the first" is the studio's own ordering rather than a guess.
 const cover = computed(() => props.assets?.[0] ?? null)
 
-function expiry(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+// A guest's hearts are this session's; a client's are the lists.
+const hearts = ref(new Set(props.favorited ?? []))
+
+function isHeart(key: string) {
+  return props.lists ? props.lists.some((l) => l.keys.includes(key)) : hearts.value.has(key)
+}
+
+async function heart(key: string) {
+  const response = await fetch(`${base.value}/favorit`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
+    },
+    body: JSON.stringify({ key }),
+  })
+
+  if (!response.ok) return
+
+  const { favorited: on } = await response.json()
+  const next = new Set(hearts.value)
+  on ? next.add(key) : next.delete(key)
+  hearts.value = next
 }
 
 /* gallery.css, inlined where the same shape recurs on this screen. The sheet
@@ -205,14 +228,16 @@ const COVER_INPUT = [
   <!-- data-theme stays: tokens.css declares the gallery palette under it,
        and this element is the theme root that has to paint its own
        background — the portal's <html> is themed "portal" (gallery.css). -->
-  <div data-theme="gallery" class="block min-h-screen bg-background text-foreground" :class="project && 'max-[760px]:pb-[68px]'">
+  <div class="block min-h-screen bg-background text-foreground" :class="project && 'max-[760px]:pb-[calc(56px+env(safe-area-inset-bottom))]'">
     <header
-      class="relative grid min-h-[100svh] place-items-center overflow-hidden max-[760px]:min-h-[82svh] before:absolute before:inset-0 before:z-1 before:content-['']"
-      :class="
+      class="relative grid place-items-center overflow-hidden before:absolute before:inset-0 before:z-1 before:content-['']"
+      :class="[
+        cover ? 'text-white' : 'text-foreground',
+        unlocked ? 'min-h-[34svh]' : 'min-h-[100svh] max-[760px]:min-h-[82svh]',
         cover
           ? 'before:bg-[radial-gradient(115%_85%_at_50%_46%,rgba(12,10,9,.58)_0%,rgba(12,10,9,.80)_62%,rgba(12,10,9,.93)_100%)]'
-          : 'before:bg-none'
-      "
+          : 'before:bg-none',
+      ]"
     >
       <img
         v-if="cover"
@@ -228,15 +253,15 @@ const COVER_INPUT = [
       <!-- data-tokens: the gate's title is a bare h1, and tokens.css sets one
            unlayered — 24px in the app's own sans, which beats any utility. -->
       <div data-tokens class="relative z-3 w-[min(560px,100%)] px-8 py-11 text-center">
-        <span class="text-[13px] leading-none font-bold tracking-[0.18em] whitespace-nowrap uppercase text-foreground no-underline">
+        <span class="text-[13px] leading-none font-bold tracking-[0.18em] whitespace-nowrap uppercase text-inherit no-underline">
           {{ studioName }}
         </span>
         <h1
-          class="mt-5 font-[family-name:var(--font-display)] text-[clamp(34px,6vw,56px)] leading-[1.2] font-semibold tracking-[var(--display-tracking)] text-white"
+          class="mt-5 font-[family-name:var(--font-display)] text-[clamp(34px,6vw,56px)] leading-[1.2] font-semibold tracking-[var(--display-tracking)] text-inherit"
         >
           {{ gallery.title }}
         </h1>
-        <p v-if="subtitle" class="mt-5 text-[14px] leading-[1.6] font-normal text-foreground opacity-80">
+        <p v-if="subtitle" class="mt-5 text-[14px] leading-[1.6] font-normal text-inherit opacity-80">
           {{ subtitle }}
         </p>
 
@@ -269,8 +294,8 @@ const COVER_INPUT = [
       </div>
 
       <a
-        v-if="assets?.length"
-        class="absolute bottom-8 left-1/2 z-2 flex -translate-x-1/2 flex-col items-center gap-2.5 text-[14px] leading-none font-semibold tracking-[0.12em] uppercase text-foreground [text-shadow:0_1px_12px_rgba(0,0,0,.7)] no-underline [&_svg]:size-4 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.4]"
+        v-if="assets?.length && !unlocked"
+        class="absolute bottom-8 left-1/2 z-2 flex -translate-x-1/2 flex-col items-center gap-2.5 text-[14px] leading-none font-semibold tracking-[0.12em] uppercase text-white [text-shadow:0_1px_12px_rgba(0,0,0,.7)] no-underline [&_svg]:size-4 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.4]"
         href="#raster"
       >
         {{ $t('gallery.scrollCue') }}
@@ -280,14 +305,15 @@ const COVER_INPUT = [
 
     <template v-if="unlocked">
       <div
-        class="sticky top-0 z-10 mx-auto flex max-w-[1240px] max-[760px]:static items-center justify-between gap-8 border-b border-border bg-[rgba(14,12,11,.95)] px-8 py-5 backdrop-blur-[14px] backdrop-saturate-[1.4] max-[760px]:flex-wrap max-[760px]:gap-4 max-[760px]:px-4"
+        class="sticky top-0 z-10 mx-auto flex max-w-[1240px] max-[760px]:static items-center justify-between gap-8 border-b border-border bg-[color-mix(in_srgb,var(--bg)_97%,transparent)] px-8 py-5 backdrop-blur-[14px] backdrop-saturate-[1.4] max-[760px]:flex-wrap max-[760px]:gap-4 max-[760px]:px-4"
       >
+        <PortalBack v-if="project" class="min-[761px]:hidden" :href="`/projekte/${project.id}`" />
         <!-- tokens.css .who decides everything but the size and the colour -->
         <span
           class="m-0 pr-[18px] text-[14px] leading-[1.35] font-semibold tracking-[-0.015em] text-muted-foreground max-[760px]:hidden [&_b]:font-semibold [&_b]:text-foreground"
         >
           <b>{{ gallery.title }}</b>
-          <template v-if="gallery.expiresAt"> · {{ $t('gallery.onlineUntil', { date: expiry(gallery.expiresAt) }) }}</template>
+          <template v-if="gallery.expiresAt"> · {{ $t('gallery.onlineUntil', { date: dayDate(gallery.expiresAt) }) }}</template>
         </span>
         <span
           v-if="bar.length > 1"
@@ -307,7 +333,7 @@ const COVER_INPUT = [
           </Button>
         </span>
 
-        <Button v-if="offers.downloads" as="a" variant="portal" :href="`/galerien/${gallery.id}/download`">
+        <Button v-if="offers.downloads" class="max-[760px]:hidden" as="a" variant="portal" :href="`/galerien/${gallery.id}/download`">
           <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
           {{ $t('gallery.download') }}
         </Button>
@@ -319,12 +345,12 @@ const COVER_INPUT = [
       <main
         v-if="shown.length"
         id="raster"
-        class="mx-auto flex max-w-[1240px] flex-wrap justify-center gap-3.5 px-8 pt-11 pb-16 max-[760px]:gap-2 max-[760px]:px-4"
+        class="mx-auto flex max-w-[1240px] flex-wrap justify-center gap-3.5 px-8 pt-11 pb-16 max-[760px]:grid max-[760px]:grid-cols-2 max-[760px]:gap-0.5 max-[760px]:px-0 max-[760px]:pt-0 max-[760px]:pb-28"
       >
         <span
           v-for="(asset, index) in shown"
           :key="asset.key"
-          class="group relative block cursor-zoom-in overflow-hidden rounded-[10px] bg-muted [&_img]:block [&_img]:size-full [&_img]:object-cover [&_img]:transition-transform [&_img]:duration-[1.2s] [&_img]:ease-[cubic-bezier(.22,.61,.36,1)] hover:[&_img]:scale-[1.03]"
+          class="group relative block cursor-zoom-in overflow-hidden rounded-[10px] bg-muted max-[760px]:rounded-none max-[760px]:[aspect-ratio:1!important] max-[760px]:[flex:none!important] max-[760px]:[max-width:none!important] [&_img]:block [&_img]:size-full [&_img]:object-cover [&_img]:transition-transform [&_img]:duration-[1.2s] [&_img]:ease-[cubic-bezier(.22,.61,.36,1)] hover:[&_img]:scale-[1.03]"
           :style="tileStyle(asset)"
           @click="openAt = index"
         >
@@ -332,11 +358,23 @@ const COVER_INPUT = [
                signed in; a guest never sees it. -->
           <button
             v-if="offers.lists && lists?.length"
-            class="absolute top-2.5 right-2.5 z-4 grid size-8 scale-90 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(12,10,9,.5)] text-white opacity-0 backdrop-blur-[8px] transition-[opacity,transform] max-[760px]:scale-100 max-[760px]:opacity-100 [@media(hover:none)]:scale-100 [@media(hover:none)]:opacity-100 duration-[.22s] ease-out group-hover:scale-100 group-hover:opacity-100 aria-expanded:scale-100 aria-expanded:opacity-100 [&_svg]:size-4 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.5]"
+            class="absolute top-2.5 right-2.5 z-4 grid size-11 scale-90 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(12,10,9,.5)] text-white opacity-0 backdrop-blur-[8px] transition-[opacity,transform] max-[760px]:scale-100 max-[760px]:opacity-100 [@media(hover:none)]:scale-100 [@media(hover:none)]:opacity-100 duration-[.22s] ease-out group-hover:scale-100 group-hover:opacity-100 aria-expanded:scale-100 aria-expanded:opacity-100 [&_svg]:size-4 [&_svg]:stroke-current [&_svg]:stroke-[1.5]"
+            :class="isHeart(asset.key) ? '[&_svg]:fill-current' : '[&_svg]:fill-none'"
             type="button"
             :aria-label="$t('gallery.favorite')"
             :aria-expanded="menu === asset.key"
             @click.stop="menu = menu === asset.key ? null : asset.key"
+          >
+            <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
+          </button>
+
+          <button
+            v-else-if="offers.lists && lists === null"
+            class="absolute top-2.5 right-2.5 z-4 grid size-11 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-white [&_svg]:size-5 [&_svg]:stroke-current [&_svg]:stroke-[1.5]"
+            :class="isHeart(asset.key) ? '[&_svg]:fill-current' : '[&_svg]:fill-none'"
+            type="button"
+            :aria-label="isHeart(asset.key) ? $t('gallery.unfavorite') : $t('gallery.favorite')"
+            @click.stop="heart(asset.key)"
           >
             <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
           </button>
@@ -367,6 +405,17 @@ const COVER_INPUT = [
           </picture>
         </span>
       </main>
+
+      <div
+        v-if="offers.downloads && shown.length"
+        class="fixed inset-x-0 z-20 border-t border-border bg-[color-mix(in_srgb,var(--bg)_97%,transparent)] p-3 backdrop-blur-[12px] min-[761px]:hidden"
+        :class="project ? 'bottom-[calc(56px+env(safe-area-inset-bottom))]' : 'bottom-0 pb-[calc(12px+env(safe-area-inset-bottom))]'"
+      >
+        <Button class="w-full justify-center" as="a" variant="portal" :href="`/galerien/${gallery.id}/download`">
+          <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
+          {{ $t('gallery.download') }}
+        </Button>
+      </div>
 
       <!-- Unlocked over a gallery nobody has published yet: a real state,
            and the studio's link is already out there, so it says so. -->

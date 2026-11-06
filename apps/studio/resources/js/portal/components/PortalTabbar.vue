@@ -15,8 +15,7 @@ const nav = computed(() => usePage().props.portalNav as { messaging: boolean; un
 
 const path = computed(() => usePage().url.split('?')[0])
 
-// An error page has no place of its own; the bookings are where its button leads.
-const bookings = computed(() => path.value === '/' || path.value.startsWith('/projekte') || usePage().component === 'Error')
+const bookings = computed(() => usePage().component !== 'Error' && (path.value === '/' || path.value.startsWith('/projekte')))
 
 function on(active: boolean) {
   return active ? 'font-semibold text-foreground' : 'text-muted-foreground'

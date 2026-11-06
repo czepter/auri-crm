@@ -7,3 +7,8 @@ export function shortDate(iso: string): string {
 export function longDate(iso: string): string {
   return new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 }
+
+/** "Sa., 30.05.2026": the one date format on every portal screen. */
+export function dayDate(iso: string): string {
+  return new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' })
+}

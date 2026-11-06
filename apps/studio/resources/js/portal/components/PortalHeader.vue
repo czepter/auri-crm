@@ -47,7 +47,7 @@ const nav = computed(() => usePage().props.portalNav as Nav | null | undefined)
 const preview = computed(() => usePage().props.portalPreview === true)
 
 const path = computed(() => usePage().url.split('?')[0])
-const bookings = computed(() => path.value === '/' || path.value.startsWith('/projekte') || usePage().component === 'Error')
+const bookings = computed(() => usePage().component !== 'Error' && (path.value === '/' || path.value.startsWith('/projekte')))
 
 // Every portal screen mounts this component once, so applying the accent
 // colour here — rather than in each page — is enough to cover the whole
