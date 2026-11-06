@@ -572,9 +572,9 @@
   "inbox": {
     "title": "Posteingang",
     "kicker": "Eingehende E-Mails",
-    "addressTitle": "Ihre Eingangsadresse",
+    "addressTitle": "Deine Eingangsadresse",
     "notConfigured": "Für diese Installation ist keine Eingangsdomain eingerichtet.",
-    "noSecret": "Noch keine Adresse erzeugt.",
+    "generate": "Adresse erzeugen",
     "rotate": "Adresse erneuern",
     "rotateConfirm": "Adresse erneuern?",
     "rotateConsequence": "Alle bisher ausgegebenen Adressen hören auf zu funktionieren. Antworten darauf landen dann hier statt am Auftrag.",
