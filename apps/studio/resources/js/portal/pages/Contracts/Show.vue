@@ -98,16 +98,27 @@ function sign() {
               : $t('portal.notSignedYet') }}
           </span>
           <p v-if="!canSign && !contract.signature" class="w-full text-[13.5px] text-muted-foreground">{{ $t('portal.signUnavailable') }}</p>
+          <Button v-if="canSign && !contract.signature" as="a" variant="portal-chip" href="#unterschreiben">{{ $t('portal.signJump') }}</Button>
           <Button v-if="contract.downloadUrl" class="ml-auto" as="a" variant="portal-chip" :href="contract.downloadUrl" download>
             <svg class="fill-none stroke-current" viewBox="0 0 24 24"><path d="M12 3v12" /><path d="M7.5 10.5L12 15l4.5-4.5" /><path d="M4 19h16" /></svg>
             {{ $t('portal.contractDownload') }}
           </Button>
         </div>
 
+        <article
+          v-if="contract.html"
+          class="py-8 text-[15.5px] leading-[1.6] [&_h2]:scroll-mt-24 [&_h2]:mt-8 [&_h2]:mb-2 [&_h2]:text-[17px] [&_h2]:leading-[1.35] [&_h2]:font-semibold [&_h2:first-child]:mt-0 [&_p+*]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
+          v-html="contract.html"
+        />
+        <div v-else-if="contract.downloadUrl" class="h-[74vh] min-h-[520px] bg-sunk">
+          <iframe class="block size-full border-0" :src="contract.downloadUrl" :title="$t('portal.contractTitle')" />
+        </div>
+        <p v-else class="py-24 text-center text-[15px] text-muted-foreground">{{ $t('portal.contractPending') }}</p>
+
         <!-- T-08: signing is offered only while the switch is on and nothing
              is recorded yet; a recorded signature is a fact and shows above
              regardless of the switch. -->
-        <form v-if="canSign && !contract.signature" id="unterschreiben" class="grid scroll-mt-24 gap-5 border-b border-border py-8" @submit.prevent="sign">
+        <form v-if="canSign && !contract.signature" id="unterschreiben" class="grid scroll-mt-24 gap-5 border-t border-border py-8" @submit.prevent="sign">
           <PortalLabel>{{ $t('portal.signTitle') }}</PortalLabel>
           <PortalField :label="$t('portal.signName')" :hint="$t('portal.signNameHint')">
             <Input v-model="form.typedName" type="text" required maxlength="255" />
@@ -129,16 +140,6 @@ function sign() {
             {{ $t('portal.signButton') }}
           </Button>
         </form>
-
-        <article
-          v-if="contract.html"
-          class="py-8 text-[15.5px] leading-[1.6] [&_h2]:scroll-mt-24 [&_h2]:mt-8 [&_h2]:mb-2 [&_h2]:text-[17px] [&_h2]:leading-[1.35] [&_h2]:font-semibold [&_h2:first-child]:mt-0 [&_p+*]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
-          v-html="contract.html"
-        />
-        <div v-else-if="contract.downloadUrl" class="h-[74vh] min-h-[520px] bg-sunk">
-          <iframe class="block size-full border-0" :src="contract.downloadUrl" :title="$t('portal.contractTitle')" />
-        </div>
-        <p v-else class="py-24 text-center text-[15px] text-muted-foreground">{{ $t('portal.contractPending') }}</p>
       </div>
       <template v-else>
         <p class="mt-8 text-[17px] leading-[1.5] text-muted-foreground">{{ $t('portal.contractAfterAcceptance') }}</p>
