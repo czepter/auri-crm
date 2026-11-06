@@ -31,6 +31,7 @@ import { formatEurosRounded } from "@/lib/money";
 import { quoteChipClass } from "@/admin/lib/quoteDisplay";
 import { dayWithWeekday as day } from "@/admin/lib/dates";
 import { useLiveProps } from "@/admin/lib/liveReload";
+import { ROLE_SUGGESTIONS } from "@/admin/lib/roles";
 
 type ProjectFieldDefinition = InstanceType<typeof ProjectFields>["$props"]["fields"][number];
 
@@ -132,6 +133,7 @@ const details = useForm({
     source: props.source,
     source_other: props.sourceOther ?? "",
     fields: { ...props.fieldValues },
+    people: props.header.people.map((person) => ({ id: person.id, role: person.role })),
 });
 
 const anfrage = useForm({ inquiry_text: props.inquiry?.text ?? "" });
@@ -488,6 +490,24 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 :errors="details.errors"
                                 :fields="fields"
                             />
+
+                            <datalist id="rollen">
+                                <option v-for="value in ROLE_SUGGESTIONS" :key="value" :value="value" />
+                            </datalist>
+
+                            <template v-for="(person, index) in details.people" :key="person.id">
+                                <div
+                                    v-if="header.people[index].role !== 'primary'"
+                                    class="mt-3 flex items-center gap-3"
+                                >
+                                    <span class="w-[168px] flex-none text-small leading-[1.35] font-semibold tracking-[-0.012em]">
+                                        {{ header.people[index].name }}
+                                    </span>
+                                    <Field v-slot="{ id }" dense class="w-[168px] flex-none" :label="$t('leads.role')">
+                                        <Input :id="id" v-model="person.role" type="text" list="rollen" />
+                                    </Field>
+                                </div>
+                            </template>
                         </template>
                     </Card>
                     </div>
