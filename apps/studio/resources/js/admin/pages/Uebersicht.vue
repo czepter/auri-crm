@@ -183,6 +183,7 @@ type Row = {
     whatTail: string | null;
     action: App.Crm.Data.RowActionData | null;
     task: App.Crm.Data.TaskRowData | null;
+    late?: boolean;
 };
 
 function fromTask(task: App.Crm.Data.TaskRowData): Row {
@@ -191,7 +192,8 @@ function fromTask(task: App.Crm.Data.TaskRowData): Row {
         who: task.projectName ?? task.contactName ?? '',
         href: task.projectId ? `/auftraege/${task.projectId}` : task.contactId ? `/kontakte/${task.contactId}` : '/aufgaben',
         what: task.title,
-        emphasis: task.isOverdue && task.dueOn ? dayOf(task.dueOn) : null,
+        emphasis: task.isOverdue && task.dueOn ? t("dashboard.overdueSince", { date: dayOf(task.dueOn) }) : null,
+        late: task.isOverdue,
         whatTail: !task.isOverdue && task.dueOn ? ` · ${dayOf(task.dueOn)}` : null,
         action: null,
         task,
@@ -418,7 +420,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                                     {{ row.who }}
                                 </Link>
                                 <span class="block truncate text-small min-[1280px]:whitespace-normal text-ink-2 [&_em]:text-ring [&_em]:not-italic">
-                                    {{ row.what }} <em v-if="row.emphasis">{{ row.emphasis }}</em>
+                                    {{ row.what }} <em v-if="row.emphasis" :class="{ '!text-destructive': row.late }">{{ row.emphasis }}</em>
                                     <template v-if="row.whatTail">{{ row.whatTail }}</template>
                                 </span>
                             </div>

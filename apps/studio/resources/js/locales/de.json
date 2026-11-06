@@ -708,6 +708,7 @@
     "signedInAs": "Angemeldet als {name}",
     "pipeline": "Pipeline",
     "overdueTotal": "überfällig",
+    "overdueSince": "überfällig seit {date}",
     "acceptance": "Angebote angenommen",
     "lastTwelveMonths": "letzte 12 Monate",
     "unanswered": "{count} unbeantwortet",
