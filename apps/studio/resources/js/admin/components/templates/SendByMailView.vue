@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Button } from '@/ui/button'
+import BackButton from '@/ui/page/BackButton.vue'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import DocumentEditor from '@/admin/components/templates/DocumentEditor.vue'
@@ -55,9 +56,7 @@ function send() {
 <template>
   <div class="flex h-screen flex-col">
     <header class="flex h-16 flex-none items-center gap-3.5 px-7">
-      <Button variant="ghost" class="size-8 p-0" type="button" :aria-label="$t('common.back')" @click="emit('cancel')">
-        <svg class="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
-      </Button>
+      <BackButton @click="emit('cancel')" />
 
       <h1 class="m-0 text-title leading-[1.2] font-bold tracking-[-0.02em]">{{ $t('sendMail.title') }}</h1>
     </header>

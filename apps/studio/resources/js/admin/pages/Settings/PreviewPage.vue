@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { refDebounced } from '@vueuse/core'
-import { ArrowLeft } from 'lucide-vue-next'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormShell from '@/ui/page/FormShell.vue'
-import { Button } from '@/ui/button'
+import BackButton from '@/ui/page/BackButton.vue'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { useI18n } from 'vue-i18n'
 
@@ -34,10 +33,7 @@ const frameSrc = refDebounced(framed, 300)
   <AdminLayout active="einstellungen">
     <FormShell v-if="phone" :title="$t(label)" :kicker="$t('settings.kicker')" :kicker-href="back">
       <template #head>
-        <Button as="a" class="ml-auto" variant="outline" :href="back">
-          <ArrowLeft />
-          {{ $t('common.back') }}
-        </Button>
+        <BackButton class="ml-auto" :href="back" />
       </template>
 
       <div class="flex flex-col gap-6">
@@ -56,10 +52,7 @@ const frameSrc = refDebounced(framed, 300)
 
     <FormShell v-else :title="$t(label)" :kicker="$t('settings.kicker')" :kicker-href="back" wide>
       <template #head>
-        <Button as="a" class="ml-auto" variant="outline" :href="back">
-          <ArrowLeft />
-          {{ $t('common.back') }}
-        </Button>
+        <BackButton class="ml-auto" :href="back" />
       </template>
 
       <iframe :src class="block h-[calc(100dvh-220px)] w-full rounded-[var(--r)] border-0 bg-paper shadow-card" title="" />
