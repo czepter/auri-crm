@@ -136,7 +136,15 @@ class MergeFieldVocabulary
      */
     public static function samples(): array
     {
-        return self::SAMPLE;
+        $studio = [];
+
+        foreach (app(DocumentMergeData::class)->forStudio()['studio'] as $key => $value) {
+            if ($value !== '' && ! in_array($key, ['logoPath'], true)) {
+                $studio['studio.'.$key] = $value;
+            }
+        }
+
+        return [...self::SAMPLE, ...$studio];
     }
 
     /**
