@@ -24,6 +24,8 @@ const props = defineProps<{
   registerCourt: string | null
   representative: string | null
   website: string | null
+  email: string | null
+  phone: string | null
 }>()
 
 // A legal notice is a list of particulars, not nine cards. Empty ones are
@@ -32,7 +34,8 @@ const props = defineProps<{
 const facts = computed(() => [
   { key: 'settings.legalForm', value: props.legalForm },
   { key: 'settings.street', value: props.street },
-  { key: 'settings.city', value: [props.postcode, props.city].filter(Boolean).join(' ') || null },
+  { key: 'settings.postcode', value: props.postcode },
+  { key: 'settings.city', value: props.city },
   { key: 'settings.country', value: props.country },
   { key: 'settings.representative', value: props.representative },
   { key: 'settings.taxNumber', value: props.taxNumber },
@@ -40,6 +43,8 @@ const facts = computed(() => [
   { key: 'settings.registerNumber', value: props.registerNumber },
   { key: 'settings.registerCourt', value: props.registerCourt },
   { key: 'settings.website', value: props.website },
+  { key: 'portal.emailLabel', value: props.email },
+  { key: 'portal.phone', value: props.phone },
 ].filter((fact) => fact.value))
 </script>
 

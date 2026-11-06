@@ -117,9 +117,11 @@ const ROW = 'flex items-center gap-6 border-b border-border py-6'
               </PortalField>
             </div>
 
-            <Button class="mt-2 justify-self-start" variant="portal" type="submit" :disabled="form.processing">
-              {{ $t('common.save') }}
-            </Button>
+            <div class="mt-2 max-[760px]:sticky max-[760px]:bottom-[68px] max-[760px]:z-10 max-[760px]:-mx-6 max-[760px]:border-t max-[760px]:border-border max-[760px]:bg-background max-[760px]:px-6 max-[760px]:py-3">
+              <Button variant="portal" type="submit" :disabled="form.processing">
+                {{ $t('common.save') }}
+              </Button>
+            </div>
           </form>
         </section>
 

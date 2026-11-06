@@ -215,7 +215,7 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
                reads as a step still to come. -->
           <form
             class="mt-auto flex-none border-t border-border bg-background first:border-t-0"
-            :class="[openThread && !composing ? 'px-6 py-5' : 'p-6', 'max-[979px]:px-0']"
+            :class="[openThread && !composing ? 'px-6 py-5' : 'p-6 max-[979px]:mt-0', 'max-[979px]:px-0']"
             @submit.prevent="send"
           >
             <template v-if="!openThread || composing">

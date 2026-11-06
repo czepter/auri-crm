@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { router, useForm, usePage } from '@inertiajs/vue3'
+import PortalFooter from '@/portal/components/PortalFooter.vue'
+import PortalHeader from '@/portal/components/PortalHeader.vue'
+import PortalShell from '@/portal/components/PortalShell.vue'
+import PortalWrap from '@/portal/components/PortalWrap.vue'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group'
-
-type Branding = { displayName: string | null }
 
 type Selection = { id: string; name: string | null; count: number; sizes: Record<string, number> }
 type Part = { number: number; bytes: number; url: string }
@@ -28,7 +30,6 @@ const props = defineProps<{
   builds: Build[]
 }>()
 
-const studioName = computed(() => (usePage().props.portalBranding as Branding | undefined)?.displayName)
 const status = computed(() => usePage().props.flash.status)
 
 const pinForm = useForm({ pin: '' })
@@ -119,14 +120,13 @@ const OPT = [
 </script>
 
 <template>
-  <!-- data-theme lives on an ancestor, never on .gpage itself — gallery.css's
-       rules are all `[data-theme="gallery"] .foo` descendant selectors,
-       matching the mockup's own <html data-theme="gallery"> root. -->
-  <div data-theme="gallery" class="min-h-screen bg-background text-foreground">
+  <PortalShell>
+    <PortalHeader />
+
+    <PortalWrap class="pt-[var(--band)] pb-28">
     <!-- mockup 11: the whole page centers on the pin step -->
-    <div v-if="step === 'pin'" data-tokens class="mx-auto max-w-[560px] px-8 pt-14 pb-11 text-center">
-      <span class="text-[13px] leading-none font-bold tracking-[0.18em] whitespace-nowrap uppercase text-foreground no-underline">{{ studioName }}</span>
-      <div class="mt-14 mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.pinKicker') }}</div>
+    <div v-if="step === 'pin'" class="mx-auto max-w-[560px] text-center">
+      <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.pinKicker') }}</div>
       <h1 class="m-0 font-[family-name:var(--font-display)] text-[27px] leading-[1.2] font-semibold tracking-[var(--display-tracking)]">{{ $t('gallery.pinTitle') }}</h1>
 
       <form @submit.prevent="submitPin">
@@ -135,23 +135,22 @@ const OPT = [
           <Input v-model="pinForm.pin" type="text" inputmode="numeric" autocomplete="off" required />
         </Label>
 
-        <Button class="mt-5 ml-0 w-full justify-center px-3.5 py-[13px] text-[14px]" type="submit" :disabled="pinForm.processing">
+        <Button class="mt-5 ml-0 w-full justify-center" variant="portal" type="submit" :disabled="pinForm.processing">
           {{ $t('gallery.pinContinue') }}
         </Button>
       </form>
 
-      <div v-if="pinForm.errors.pin" class="mt-5 rounded-md border border-[#40251A] bg-late-bg px-3.5 py-3 text-left text-[13px] leading-[1.55] font-normal text-[#E7B190]"><b>{{ pinForm.errors.pin }}</b></div>
+      <div v-if="pinForm.errors.pin" class="mt-5 rounded-md border border-destructive/30 bg-due-bg px-3.5 py-3 text-left text-[13px] leading-[1.55] font-normal text-destructive"><b>{{ pinForm.errors.pin }}</b></div>
 
-      <Button as="a" variant="ghost" class="w-full justify-center" :href="`/galerien/${gallery.id}`">
+      <Button as="a" variant="portal-ghost" class="mt-3 w-full justify-center" :href="`/galerien/${gallery.id}`">
         {{ $t('gallery.backToGallery') }}
       </Button>
     </div>
 
     <!-- mockup 12: only the header centers, the field and actions stay left -->
-    <div v-else-if="step === 'email'" data-tokens class="mx-auto max-w-[560px] px-8 pt-14 pb-11">
+    <div v-else-if="step === 'email'" class="mx-auto max-w-[560px]">
       <div class="text-center">
-        <span class="text-[13px] leading-none font-bold tracking-[0.18em] whitespace-nowrap uppercase text-foreground no-underline">{{ studioName }}</span>
-        <div class="mt-14 mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.emailKicker') }}</div>
+        <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.emailKicker') }}</div>
         <h1 class="m-0 font-[family-name:var(--font-display)] text-[27px] leading-[1.2] font-semibold tracking-[var(--display-tracking)]">{{ $t('gallery.emailTitle') }}</h1>
         <p v-if="gallery.title" class="mt-1.5 text-[14px] leading-[1.6] font-normal text-muted-foreground">{{ gallery.title }}</p>
       </div>
@@ -164,12 +163,12 @@ const OPT = [
           <Input v-model="emailForm.email" type="email" autocomplete="email" required />
         </Label>
 
-        <Button class="mt-5 ml-0 w-full justify-center px-3.5 py-[13px] text-[14px]" type="submit" :disabled="emailForm.processing">
+        <Button class="mt-5 ml-0 w-full justify-center" variant="portal" type="submit" :disabled="emailForm.processing">
           {{ $t('gallery.emailRequest') }}
         </Button>
       </form>
 
-      <Button as="a" variant="ghost" class="w-full justify-center" :href="`/galerien/${gallery.id}`">
+      <Button as="a" variant="portal-ghost" class="mt-3 w-full justify-center" :href="`/galerien/${gallery.id}`">
         {{ $t('gallery.backToGallery') }}
       </Button>
     </div>
@@ -179,7 +178,7 @@ const OPT = [
          and stopping there. -->
     <!-- .dlcol asked for var(--s8) at the bottom, which is declared nowhere:
          the whole shorthand was invalid, so the column has never had padding. -->
-    <div v-else data-tokens class="mx-auto max-w-[620px]">
+    <div v-else class="mx-auto max-w-[620px]">
       <a
         class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-3.5 [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.6] [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
         :href="`/galerien/${gallery.id}`"
@@ -244,6 +243,7 @@ const OPT = [
 
         <Button
           type="button"
+          variant="portal"
           class="mt-8"
           :disabled="prepareForm.processing || build?.status === 'building' || !available(chosenSize)"
           @click="prepare"
@@ -257,7 +257,7 @@ const OPT = [
       <section v-if="build" class="mt-16">
         <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.yourFiles') }}</p>
 
-        <p v-if="build.status === 'failed'" class="mt-5 rounded-md border border-[#40251A] bg-late-bg px-3.5 py-3 text-left text-[13px] leading-[1.55] font-normal text-[#E7B190]"><b>{{ $t('gallery.buildFailed') }}</b></p>
+        <p v-if="build.status === 'failed'" class="mt-5 rounded-md border border-destructive/30 bg-due-bg px-3.5 py-3 text-left text-[13px] leading-[1.55] font-normal text-destructive"><b>{{ $t('gallery.buildFailed') }}</b></p>
 
         <p v-else-if="build.status === 'building'" class="mt-[9px] text-[12.5px] leading-[1.55] font-normal text-muted-foreground">{{ $t('gallery.preparing') }}</p>
 
@@ -271,12 +271,15 @@ const OPT = [
               <b>{{ $t('gallery.partOf', { at: part.number, of: build.partCount }) }}</b>
             </span>
             <span class="text-[12.5px] leading-none font-normal whitespace-nowrap tabular-nums text-muted-foreground">{{ size(part.bytes) }}</span>
-            <Button as="a" variant="outline" :href="part.url">{{ $t('gallery.download') }}</Button>
+            <Button as="a" variant="portal-chip" :href="part.url">{{ $t('gallery.download') }}</Button>
           </div>
         </div>
 
         <p class="mt-[9px] text-[12.5px] leading-[1.55] font-normal text-muted-foreground">{{ $t('gallery.partsLive') }}</p>
       </section>
     </div>
-  </div>
+    </PortalWrap>
+
+    <PortalFooter />
+  </PortalShell>
 </template>

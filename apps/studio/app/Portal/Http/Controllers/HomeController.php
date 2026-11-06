@@ -56,7 +56,7 @@ class HomeController extends Controller
         }
 
         $bookings = $projects->map(fn (ClientCase $project) => $this->booking($project))
-            ->sortByDesc(fn (array $booking) => [$booking['year'] ?? 0, $booking['date'] ?? ''])
+            ->sortBy(fn (array $booking) => [$booking['year'] ?? PHP_INT_MAX, $booking['date'] ?? ''])
             ->values();
 
         return Inertia::render('Home', [

@@ -367,3 +367,6 @@ Route::prefix('galerien/{gallery}')->group(function () {
 // credential, same as every other token-in-the-path route this file names.
 Route::get('/abmelden/{contact}', [UnsubscribeController::class, 'show'])->name('portal.unsubscribe.show');
 Route::post('/abmelden/{contact}', [UnsubscribeController::class, 'store'])->name('portal.unsubscribe.store');
+
+// Unmatched paths meet the web group too, so the error page knows the session.
+Route::fallback(fn () => abort(404));

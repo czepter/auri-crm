@@ -4,6 +4,7 @@ namespace App\Portal\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
+use App\Portal\Support\PortalSettings;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -22,6 +23,7 @@ class ImpressumController extends Controller
     public function __invoke(): Response
     {
         $attrs = StudioSettings::current()->profile();
+        $contact = app(PortalSettings::class)->contactLine();
 
         return Inertia::render('Impressum', [
             // Same fallback RenderContractJob's `studio.name` merge field
@@ -39,6 +41,8 @@ class ImpressumController extends Controller
             'registerCourt' => $attrs['register_court'],
             'representative' => $attrs['representative'],
             'website' => $attrs['website'],
+            'email' => $contact['email'],
+            'phone' => $contact['phone'],
         ]);
     }
 }

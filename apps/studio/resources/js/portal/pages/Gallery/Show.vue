@@ -280,7 +280,7 @@ const COVER_INPUT = [
 
     <template v-if="unlocked">
       <div
-        class="sticky top-0 z-10 mx-auto flex max-w-[1240px] items-center justify-between gap-8 border-b border-border bg-[rgba(14,12,11,.72)] px-8 py-5 backdrop-blur-[14px] backdrop-saturate-[1.4] max-[760px]:flex-wrap max-[760px]:gap-4 max-[760px]:px-4"
+        class="sticky top-0 z-10 mx-auto flex max-w-[1240px] max-[760px]:static items-center justify-between gap-8 border-b border-border bg-[rgba(14,12,11,.95)] px-8 py-5 backdrop-blur-[14px] backdrop-saturate-[1.4] max-[760px]:flex-wrap max-[760px]:gap-4 max-[760px]:px-4"
       >
         <!-- tokens.css .who decides everything but the size and the colour -->
         <span
@@ -319,7 +319,7 @@ const COVER_INPUT = [
       <main
         v-if="shown.length"
         id="raster"
-        class="mx-auto flex max-w-[1240px] flex-wrap gap-3.5 px-8 pt-11 pb-16 max-[760px]:gap-2 max-[760px]:px-4"
+        class="mx-auto flex max-w-[1240px] flex-wrap justify-center gap-3.5 px-8 pt-11 pb-16 max-[760px]:gap-2 max-[760px]:px-4"
       >
         <span
           v-for="(asset, index) in shown"

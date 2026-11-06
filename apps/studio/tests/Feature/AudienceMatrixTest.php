@@ -134,7 +134,7 @@ const PUBLIC_ROUTES = [
     // delivered, with the contact's own public_id as the whole credential,
     // same shape as zugang/{token}.
     'portal' => [
-        'anmelden', 'zugang/{token}', 'branding/logo', 'branding/kontakt', 'impressum', 'rechtstexte/{text}', 'abmelden/{contact}',
+        'anmelden', '{fallbackPlaceholder}', 'zugang/{token}', 'branding/logo', 'branding/kontakt', 'impressum', 'rechtstexte/{text}', 'abmelden/{contact}',
         // The quote share link — reusable, unlike zugang/{token} above, but
         // the same shape otherwise: share_token in the path is the whole
         // credential, checked by QuoteShareController's own lookup rather
