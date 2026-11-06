@@ -276,7 +276,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
               <form method="POST">
                 <div class="field">
                   <label for="pw">Galerie-Passwort</label>
-                  <input id="pw" name="password" type="password" placeholder="••••••••" autocomplete="off" required />
+                  <input id="pw" name="password" type="password" autocomplete="off" required />
                 </div>
 
                 {wrongPassword && <p class="err">Dieser Link und dieses Passwort gehören nicht zusammen.</p>}
@@ -521,10 +521,10 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
                   ) : (
                     <form method="POST">
                       <input type="hidden" name="absicht" value="anmelden" />
-                      <p>Zum Markieren und Kommentieren trag deine Adresse ein.</p>
+                      <div class="eyebrow">Markieren und kommentieren</div>
                       <div class="row">
-                        <input type="email" name="gast_email" placeholder="E-Mail" required data-email-source />
-                        <input type="text" name="gast_name" placeholder="Name" required data-name-target />
+                        <label>E-Mail <input type="email" name="gast_email" autocomplete="email" required data-email-source /></label>
+                        <label>Name <input type="text" name="gast_name" autocomplete="name" required data-name-target /></label>
                         <button class="barbtn" type="submit">Weiter</button>
                       </div>
                       {tooManyCodes && <p class="err">Zu viele Anfragen. Versuch es später noch einmal.</p>}

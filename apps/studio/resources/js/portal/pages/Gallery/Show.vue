@@ -189,7 +189,7 @@ const INPUT = [
 /* On a photograph a box is a foreign object, so the gate's own field is a line. */
 const COVER_INPUT = [
   '[&_input]:rounded-none [&_input]:border-0 [&_input]:border-b',
-  '[&_input]:border-[rgba(242,237,233,.5)] [&_input]:bg-transparent [&_input]:px-0.5 [&_input]:py-2.5',
+  '[&_input]:border-[rgba(242,237,233,.65)] [&_input]:bg-transparent [&_input]:px-0.5 [&_input]:py-2.5',
   '[&_input]:text-center [&_input]:text-[20px] [&_input]:tracking-[0.22em] [&_input]:text-white',
   '[&_input:focus]:border-action [&_input:focus]:outline-none',
 ].join(' ')
