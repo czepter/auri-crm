@@ -86,6 +86,9 @@ const week = computed(() =>
     }),
 );
 
+// Nur heute und Tage mit Terminen; ein leerer Tag trägt nichts außer dem Plus.
+const shownDays = computed(() => week.value.filter((day, index) => index === 0 || day.entries.length));
+
 // Die Termine kommen ohne Wochenfenster: was nach der Woche liegt, steht
 // unter der Leiste, damit eine ruhige Woche den nächsten Termin trotzdem zeigt.
 const later = computed(() => props.entries.filter((entry) => entry.date > week.value[6].date));
@@ -293,6 +296,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                             {{ $t("dashboard.reports") }}
                         </Link>
                     </div>
+                    <Button :as="Link" variant="pill" href="/anfragen/neu" :class="measured ? 'ml-3' : 'ml-auto'">{{ $t("leads.createTitle") }}</Button>
                 </PageHead>
 
                 <div v-if="measured" class="hidden items-center gap-1.5 px-6 pt-5 max-[640px]:order-7 max-[640px]:flex">
@@ -357,10 +361,10 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                     </div>
 
                     <div class="overflow-x-auto max-[640px]:hidden">
-                        <div class="grid min-w-[840px] grid-cols-7 gap-1.5">
-                            <div v-for="(day, index) in week" :key="day.date" class="flex min-h-[120px] flex-col gap-1.5 rounded-[var(--r-sm)] bg-sunk p-3">
-                                <div class="flex items-baseline gap-1.5" :class="index === 0 && 'text-ring'">
-                                    <span class="text-small" :class="index === 0 ? 'font-semibold' : 'text-ink-2'">{{ day.name }}</span>
+                        <div class="grid gap-1.5" :style="{ gridTemplateColumns: `repeat(${shownDays.length}, minmax(140px, 1fr))` }">
+                            <div v-for="day in shownDays" :key="day.date" class="flex min-h-[120px] flex-col gap-1.5 rounded-[var(--r-sm)] bg-sunk p-3">
+                                <div class="flex items-baseline gap-1.5" :class="day.date === today && 'text-ring'">
+                                    <span class="text-small" :class="day.date === today ? 'font-semibold' : 'text-ink-2'">{{ day.name }}</span>
                                     <span class="text-[20px] leading-none font-semibold tracking-[-0.03em] tabular-nums">{{ day.num }}</span>
                                 </div>
                                 <component
