@@ -95,7 +95,7 @@ function dayStamp(date: string) {
 }
 
 const phoneToday = computed(() => props.entries.filter((entry) => entry.date === props.today));
-const phoneLater = computed(() => props.entries.filter((entry) => entry.date > props.today).slice(0, 1));
+const phoneLater = computed(() => props.entries.filter((entry) => entry.date > props.today));
 
 // Verglichen wird mit demselben Fenster ein Jahr davor, nicht mit dem davor:
 // das Geschäft ist saisonal, Oktober gegen September zeigte nur den Herbst.
