@@ -172,7 +172,7 @@ defineExpose({ form, submit, adaptExisting })
             { value: 'informal', label: $t('settings.clientRegisterInformal') },
           ]"
         />
-        <div :class="firstRun ? 'flex flex-col gap-6' : 'grid grid-cols-2 gap-4'">
+        <div :class="firstRun ? 'flex flex-col gap-6' : 'grid grid-cols-[minmax(320px,1.3fr)_minmax(220px,1fr)] gap-4'">
           <Field :label="$t('settings.logo')" id="p-logo" :error="form.errors.logo" :hint="$t('settings.logoHint')">
             <DropArea id="p-logo" accept="image/png,image/jpeg,image/webp,image/svg+xml" @files="(files) => (form.logo = files[0])">
               <img v-if="logoPreview" :src="logoPreview" :alt="$t('settings.logo')" class="size-20 flex-none rounded-[6px] bg-muted object-contain p-1.5" />
@@ -272,7 +272,7 @@ defineExpose({ form, submit, adaptExisting })
 
     <FormSection v-if="shows('general')" :title="$t('settings.timezoneLabel')">
       <div class="mt-4 first:mt-0">
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid max-w-[420px] gap-4">
           <Field :error="form.errors.timezone" v-slot="{ id }">
             <Label :for="id" class="sr-only">{{ $t('settings.timezoneLabel') }}</Label>
             <Combobox

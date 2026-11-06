@@ -202,6 +202,7 @@ class DemoCrmSeeder extends Seeder
             'postcode' => '22765',
             'city' => 'Hamburg',
             'country' => 'Deutschland',
+            'timezone' => 'Europe/Berlin',
             'vat_id' => 'DE123456789',
             'register_number' => 'HRB 123456',
             'register_court' => 'Amtsgericht Hamburg',
