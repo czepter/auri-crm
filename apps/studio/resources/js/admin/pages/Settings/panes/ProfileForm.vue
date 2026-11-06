@@ -150,14 +150,14 @@ defineExpose({ form, submit, adaptExisting })
   <form id="settings-form" @submit.prevent="submit">
     <FormSection v-if="shows('brand')" :title="$t('settings.brand')">
       <div class="mt-4 first:mt-0">
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 gap-4">
           <Field :label="$t('settings.displayName')" id="p-anzeigename" :error="form.errors.display_name">
-            <Input id="p-anzeigename" v-model="form.display_name" type="text" />
+            <Input id="p-anzeigename" v-model="form.display_name" class="w-full min-w-0" type="text" />
           </Field>
           <Field :label="$t('settings.website')" id="p-web" :error="form.errors.website">
             <InputGroup>
               <InputGroupAddon>https://</InputGroupAddon>
-              <InputGroupInput id="p-web" v-model="websiteHost" type="text" />
+              <InputGroupInput id="p-web" v-model="websiteHost" class="w-full min-w-0" type="text" />
             </InputGroup>
           </Field>
         </div>
@@ -172,7 +172,7 @@ defineExpose({ form, submit, adaptExisting })
             { value: 'informal', label: $t('settings.clientRegisterInformal') },
           ]"
         />
-        <div :class="firstRun ? 'flex flex-col gap-6' : 'grid grid-cols-[minmax(320px,1.3fr)_minmax(220px,1fr)] gap-4'">
+        <div :class="firstRun ? 'flex flex-col gap-6' : 'grid grid-cols-1 gap-6'">
           <Field :label="$t('settings.logo')" id="p-logo" :error="form.errors.logo" :hint="$t('settings.logoHint')">
             <DropArea id="p-logo" accept="image/png,image/jpeg,image/webp,image/svg+xml" @files="(files) => (form.logo = files[0])">
               <img v-if="logoPreview" :src="logoPreview" :alt="$t('settings.logo')" class="size-20 flex-none rounded-[6px] bg-muted object-contain p-1.5" />
@@ -182,7 +182,7 @@ defineExpose({ form, submit, adaptExisting })
           </Field>
 
           <Field :label="$t('settings.accentColor')" id="p-akzent" :error="form.errors.accent_color">
-            <ColorPicker id="p-akzent" v-model="form.accent_color" rule="color" placeholder="#1C6870" :aria-label="$t('settings.accentColor')" />
+            <ColorPicker id="p-akzent" v-model="form.accent_color" class="w-full min-w-0" rule="color" placeholder="#1C6870" :aria-label="$t('settings.accentColor')" />
           </Field>
         </div>
 

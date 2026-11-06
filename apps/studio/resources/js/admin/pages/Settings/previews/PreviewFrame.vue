@@ -7,10 +7,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 
 defineProps<{ label: string; hint?: string; wide?: boolean }>()
 
-// Neben dem Formular ist erst ab 1441px Platz: der Rahmen steht dort mit
+// Neben dem Formular ist erst ab 1500px Platz: der Rahmen steht dort mit
 // der Seitenleiste und den 620px des Formulars in einer Zeile. Darunter
 // öffnet ihn ein Knopf als Überlagerung.
-const beside = useMediaQuery('(min-width: 1441px)')
+const beside = useMediaQuery('(min-width: 1500px)')
 const open = ref(false)
 </script>
 
