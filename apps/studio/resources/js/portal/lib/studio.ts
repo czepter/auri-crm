@@ -6,6 +6,7 @@ export type Studio = {
   phone: string | null
   email: string | null
   responseTime: string | null
+  absence: { range: string; message: string } | null
 }
 
 /*

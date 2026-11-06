@@ -39,6 +39,7 @@ const studio = computed(() => ({
   phone: form.portal_contact_phone || null,
   email: form.portal_contact_email || null,
   responseTime: form.portal_contact_response_time || null,
+  absence: null,
 }))
 
 function removeAvatar() {
