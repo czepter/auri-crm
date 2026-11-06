@@ -356,12 +356,12 @@ const TONE: Record<string, string> = {
                   <Button
                     variant="pill"
                     type="button"
-                    class="rounded-r-none"
+                    class="rounded-r-none max-[640px]:min-h-11"
                     @click="advance(shoot, onward(shoot)[0].value)"
                   >{{ onward(shoot)[0].label }}</Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger as-child>
-                      <Button variant="pill" type="button" class="rounded-l-none border-l border-white/30 px-2" :aria-label="$t('project.advance')">
+                      <Button variant="pill" type="button" class="rounded-l-none border-l border-white/30 px-2 max-[640px]:min-h-11 max-[640px]:min-w-11" :aria-label="$t('project.advance')">
                         <ChevronDown class="size-3.5" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -375,7 +375,7 @@ const TONE: Record<string, string> = {
 
                 <DropdownMenu>
                   <DropdownMenuTrigger
-                    class="flex size-8 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2"
+                    class="flex size-8 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2 max-[640px]:size-11"
                     :aria-label="$t('project.more')"
                   >
                     <svg class="size-4 fill-current" viewBox="0 0 24 24">
@@ -505,7 +505,7 @@ const TONE: Record<string, string> = {
                     <TimePicker :id="`tl-time-${shoot.id}`" v-model="timelineForm.time" class="w-[104px]" required />
                     <Label :for="`tl-title-${shoot.id}`" class="sr-only">{{ $t('project.timelineTitle') }}</Label>
                     <Input :id="`tl-title-${shoot.id}`" v-model="timelineForm.title" class="min-w-0 flex-1" type="text" :placeholder="$t('project.timelineTitle')" required />
-                    <Button type="submit" variant="outline" class="px-2.5" :disabled="timelineForm.processing" :aria-label="$t('common.save')">
+                    <Button type="submit" variant="outline" class="px-2.5 max-[640px]:min-h-11 max-[640px]:min-w-11" :disabled="timelineForm.processing" :aria-label="$t('common.save')">
                       <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
                     </Button>
                   </div>
