@@ -34,7 +34,7 @@ class StudioOnboardingController extends Controller
         $this->authorizeSettings();
 
         if (StudioSettings::current()->onboardingCompleted()) {
-            return redirect('/einstellungen/allgemein');
+            return redirect('/');
         }
 
         return Inertia::render('Auth/Onboarding', [
