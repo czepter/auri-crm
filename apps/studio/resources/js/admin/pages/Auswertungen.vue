@@ -298,7 +298,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                 <span class="inline-flex items-center gap-1.5">
                   <span class="size-2.5 rounded-[3px] bg-[var(--accent-bg)]" />{{ $t('reports.captured') }}
                 </span>
-                <span class="inline-flex items-center gap-1.5">
+                <span v-if="!cashSparse" class="inline-flex items-center gap-1.5">
                   <span class="size-2.5 rounded-[3px] bg-action" />{{ $t('reports.booked') }}
                 </span>
                 <span class="inline-flex items-center gap-1.5">
@@ -381,7 +381,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                   <span class="size-2.5 rounded-[3px] bg-action" />
                   {{ cashAhead ? $t('reports.seriesDue') : $t('reports.seriesReceived') }}
                 </span>
-                <span v-if="cashAhead" class="inline-flex items-center gap-1.5">
+                <span v-if="cashAhead && !cashSparse" class="inline-flex items-center gap-1.5">
                   <span class="size-2.5 rounded-[3px]" :style="{ background: forecastFill }" />{{ $t('reports.seriesOpen') }}
                 </span>
                 <span
