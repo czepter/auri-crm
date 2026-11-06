@@ -1577,6 +1577,7 @@
     "fromTemplate": "Aus Vorlage",
     "orBlank": "Oder ohne Vorlage",
     "startBlank": "Leer beginnen",
+    "send": "Fragebogen senden",
     "saveAnswer": "Antwort speichern",
     "answeredAt": "Beantwortet am {date}",
     "share": "Für Kunden freigeben",

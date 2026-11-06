@@ -10,6 +10,7 @@ import { useLiveProps } from '@/admin/lib/liveReload'
 import GroupPhotoField from '@/portal/components/GroupPhotoField.vue'
 import Card from '@/ui/page/Card.vue'
 import { Button } from '@/ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
@@ -127,15 +128,19 @@ function summary(instance: App.Crm.Data.FormInstanceData): string {
   <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
     <ProjectShell :header="header" active="documents" child="forms">
       <template v-if="header.canManageForms" #actions>
-        <Button
-          v-for="(template, index) in formTemplates"
-          :key="template.value"
-          :variant="index === 0 ? 'pill' : 'outline'"
-          type="button"
-          @click="createFrom(template.value)"
-        >
-          {{ template.label }}
+        <Button v-if="formTemplates.length === 1" variant="pill" type="button" @click="createFrom(formTemplates[0].value)">
+          {{ $t('formInstances.send') }}
         </Button>
+        <DropdownMenu v-else-if="formTemplates.length">
+          <DropdownMenuTrigger as-child>
+            <Button variant="pill" type="button">{{ $t('formInstances.send') }}</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem v-for="template in formTemplates" :key="template.value" @select="createFrom(template.value)">
+              {{ template.label }}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Button variant="outline" type="button" @click="createFrom('')">
           {{ $t('formInstances.startBlank') }}
         </Button>
