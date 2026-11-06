@@ -36,9 +36,10 @@ const total = computed(() => shown.value.reduce((sum, note) => sum + note.amount
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('creditNotesOverview.title')" />
 
-        <div v-if="creditNotes.length" class="flex items-start gap-10 max-[900px]:flex-col max-[900px]:gap-0">
-          <div class="min-w-0 flex-1">
+        <div v-if="creditNotes.length" class="max-w-[1280px]">
           <div class="flex flex-wrap items-center gap-3 px-6 pt-4.5">
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-sunk px-3 py-1 text-small text-ink-2">{{ $t('creditNotesOverview.title') }} <b class="font-semibold tabular-nums text-foreground">{{ shown.length }}</b></span>
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-sunk px-3 py-1 text-small text-ink-2">{{ $t('creditNotesOverview.amount') }} <b class="font-semibold tabular-nums text-foreground">−{{ formatEuros(total) }}</b></span>
             <Input v-model="query" class="h-8 min-w-60 w-64 shrink-0" type="search" :placeholder="$t('creditNotesOverview.searchPlaceholder')" />
           </div>
 
@@ -76,12 +77,6 @@ const total = computed(() => shown.value.reduce((sum, note) => sum + note.amount
           </Table>
           </div>
 
-          <aside class="sticky top-6 mt-4.5 mr-6 w-[320px] flex-none max-[900px]:mx-6 max-[900px]:w-auto">
-            <dl class="grid gap-3 text-small">
-              <div class="flex justify-between gap-4"><dt class="text-ink-2">{{ $t('creditNotesOverview.title') }}</dt><dd class="tabular-nums">{{ shown.length }}</dd></div>
-              <div class="flex justify-between gap-4"><dt class="text-ink-2">{{ $t('creditNotesOverview.amount') }}</dt><dd class="font-semibold tabular-nums">−{{ formatEuros(total) }}</dd></div>
-            </dl>
-          </aside>
         </div>
 
         <Empty v-else :text="$t('creditNotesOverview.empty')">
