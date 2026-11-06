@@ -3,6 +3,7 @@ import { useForm } from '@inertiajs/vue3'
 import { computed, ref, watch } from 'vue'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormShell from '@/ui/page/FormShell.vue'
+import CreateSummary from '@/admin/components/CreateSummary.vue'
 import Card from '@/ui/page/Card.vue'
 import ContactTypeahead from '@/admin/components/crm/ContactTypeahead.vue'
 import ConflictNote from '@/admin/components/crm/ConflictNote.vue'
@@ -160,7 +161,7 @@ function submit() {
 
 <template>
   <AdminLayout active="anfragen">
-    <FormShell :kicker="$t('board.title')" kicker-href="/anfragen" :title="$t('leads.createTitle')">
+    <FormShell :kicker="$t('board.title')" kicker-href="/anfragen" :title="$t('leads.createTitle')" wide>
       <form class="flex flex-col gap-3" @submit.prevent="submit">
         <Card :title="$t('leads.contact')">
           <Field :error="form.errors.contact_name">
@@ -359,6 +360,19 @@ function submit() {
           </Button>
         </div>
       </form>
+
+      <template #aside>
+        <CreateSummary
+          :title="$t('common.summary')"
+          :rows="[
+            { label: $t('leads.contact'), value: contact?.name ?? form.contact_name },
+            { label: $t('projects.title'), value: form.project_name },
+            { label: $t('leads.type'), value: types.find((t) => t.value === form.type)?.label },
+            { label: $t('project.shootDate'), value: form.date ? new Date(form.date).toLocaleDateString('de-DE') : null },
+            { label: $t('project.venueName'), value: [form.venue_name, form.venue_city].filter(Boolean).join(', ') },
+          ]"
+        />
+      </template>
     </FormShell>
   </AdminLayout>
 </template>

@@ -3,6 +3,7 @@ import { ref, watch } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormShell from '@/ui/page/FormShell.vue'
+import CreateSummary from '@/admin/components/CreateSummary.vue'
 import Card from '@/ui/page/Card.vue'
 import ProjectTypeahead from '@/admin/components/crm/ProjectTypeahead.vue'
 import FormFieldsEditor from '@/admin/components/templates/FormFieldsEditor.vue'
@@ -151,6 +152,16 @@ const LONG = ['text', 'name_list', 'group_photos']
           </section>
         </div>
       </div>
+
+      <template v-if="!instance" #aside>
+        <CreateSummary
+          :title="$t('common.summary')"
+          :rows="[
+            { label: $t('create.pick'), value: project?.name },
+            { label: $t('leads.contact'), value: project?.contactName },
+          ]"
+        />
+      </template>
     </FormShell>
   </AdminLayout>
 </template>

@@ -4,6 +4,7 @@ import { router } from '@inertiajs/vue3'
 import type { QuoteContact, VatSettings } from '@/admin/components/quote/quotePayload'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormShell from '@/ui/page/FormShell.vue'
+import CreateSummary from '@/admin/components/CreateSummary.vue'
 import ProjectTypeahead from '@/admin/components/crm/ProjectTypeahead.vue'
 import QuoteWorkspace from '@/admin/components/quote/QuoteWorkspace.vue'
 import BusinessDataGate from '@/admin/pages/Settings/panes/BusinessDataGate.vue'
@@ -92,6 +93,16 @@ onMounted(() => {
           />
         </div>
       </div>
+
+      <template v-if="!(project && drafts.length)" #aside>
+        <CreateSummary
+          :title="$t('common.summary')"
+          :rows="[
+            { label: $t('create.pick'), value: project?.name },
+            { label: $t('leads.contact'), value: project?.contactName },
+          ]"
+        />
+      </template>
     </FormShell>
 
     <BusinessDataGate

@@ -3,6 +3,7 @@ import { ref, watch } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormShell from '@/ui/page/FormShell.vue'
+import CreateSummary from '@/admin/components/CreateSummary.vue'
 import ConflictNote from '@/admin/components/crm/ConflictNote.vue'
 import ProjectTypeahead from '@/admin/components/crm/ProjectTypeahead.vue'
 import { Button } from '@/ui/button'
@@ -58,7 +59,7 @@ function submit() {
 <template>
   <AdminLayout active="kalender">
     <FormShell
-      :kicker="$t('create.kickerShoots')" :title="$t('project.addShoot')"
+      :kicker="$t('create.kickerShoots')" :title="$t('project.addShoot')" wide
     >
       <form class="flex flex-col gap-4" @submit.prevent="submit">
         <Field v-slot="{ id }" :label="$t('create.pick')">
@@ -105,6 +106,21 @@ function submit() {
           {{ $t('project.addShoot') }}
         </Button>
       </form>
+
+      <template #aside>
+        <CreateSummary
+          :title="$t('common.summary')"
+          :rows="[
+            { label: $t('create.pick'), value: project?.name },
+            { label: $t('project.shootKind'), value: form.kind },
+            { label: $t('project.shootLabel'), value: form.label },
+            { label: $t('project.shootDate'), value: form.date ? new Date(form.date).toLocaleDateString('de-DE') : null },
+            { label: $t('project.callTime'), value: form.call_time },
+            { label: $t('project.endTime'), value: form.end_time },
+            { label: $t('project.venueName'), value: [form.venue_name, form.venue_city].filter(Boolean).join(', ') },
+          ]"
+        />
+      </template>
     </FormShell>
   </AdminLayout>
 </template>
