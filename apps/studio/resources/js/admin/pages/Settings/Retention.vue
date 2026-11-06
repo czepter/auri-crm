@@ -133,11 +133,11 @@ function submit() {
               <div class="flex flex-wrap items-center gap-3">
                 <Switch id="retention-on" v-model="enabled" />
                 <Label for="retention-on">{{ $t('settings.retentionOn') }}</Label>
-                <ChoiceGroup v-model="months" variant="segmented" :options="monthOptions" :class="enabled ? '' : 'pointer-events-none opacity-50'" />
+                <ChoiceGroup v-model="months" variant="segmented" :options="monthOptions" :class="enabled ? '' : 'pointer-events-none'" />
                 <span class="text-small text-ink-2">{{ $t('settings.retentionMonths') }}</span>
               </div>
 
-              <div :class="enabled ? '' : 'pointer-events-none opacity-45'" :inert="!enabled">
+              <div :class="enabled ? '' : 'pointer-events-none'" :inert="!enabled">
                 <div class="mt-6 grid grid-cols-4 gap-3 max-[900px]:grid-cols-2">
                   <div v-for="tile in tiles" :key="tile.key" class="rounded-[var(--r)] bg-paper shadow-card px-5 py-4">
                     <div class="text-small font-semibold text-ink-2">{{ $t(`settings.retention${tile.key}`) }}</div>
@@ -189,7 +189,7 @@ function submit() {
                     </div>
                   </div>
 
-                  <div class="min-w-0">
+                  <div v-if="due.length" class="min-w-0">
                     <div class="flex justify-between text-small font-semibold text-ink-2">
                       <span>{{ $t('settings.retentionDue') }}</span>
                       <span>{{ due.length }}</span>
