@@ -30,7 +30,7 @@ defineProps<{
         <PortalLabel>{{ kicker }}</PortalLabel>
         <p v-if="amount" class="mt-4 font-serif text-[34px] leading-[1.1] tracking-[-0.015em] tabular-nums">{{ amount }}</p>
         <p v-if="note" class="mt-2 text-[13.5px] text-muted-foreground">{{ note }}</p>
-        <div class="mt-6 grid gap-4">
+        <div class="mt-6 grid gap-4 empty:hidden">
           <slot name="rail" />
         </div>
       </div>
