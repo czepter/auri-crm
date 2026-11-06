@@ -75,8 +75,6 @@ const total = computed(() => shown.value.reduce((sum, note) => sum + note.amount
               </TableRow>
             </tbody>
           </Table>
-          </div>
-
         </div>
 
         <Empty v-else :text="$t('creditNotesOverview.empty')">

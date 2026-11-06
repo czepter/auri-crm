@@ -72,8 +72,6 @@ const signed = computed(() => shown.value.filter((contract) => contract.signedOn
               </TableRow>
             </tbody>
           </Table>
-          </div>
-
         </div>
 
         <Empty v-else :text="$t('contractsOverview.empty')">
