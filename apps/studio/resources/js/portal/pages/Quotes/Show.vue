@@ -117,7 +117,7 @@ const stages = computed(() => (props.quote ? splitStages(gross.value, props.quot
 const railNote = computed(() => {
   const quote = props.quote
 
-  if (quote?.status === 'accepted' && quote.acceptedAt) return t('portal.quoteAccepted', { date: shortDate(quote.acceptedAt) })
+  if (quote?.acceptedAt) return t('portal.quoteAccepted', { date: shortDate(quote.acceptedAt) })
   if (quote?.expired && quote.validUntil) return t('portal.quoteExpiredOn', { date: shortDate(quote.validUntil) })
   if (quote?.validUntil) return `${t('quotes.validUntil')} ${shortDate(quote.validUntil)}`
 
