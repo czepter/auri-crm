@@ -33,7 +33,7 @@ defineProps<{ fill?: boolean }>()
 <template>
   <div
     data-tokens
-    class="flex min-h-dvh flex-col text-[15px] leading-[1.6] max-[760px]:pb-[68px]"
+    class="flex min-h-dvh flex-col text-[15px] leading-[1.6] max-[760px]:pb-[calc(56px+env(safe-area-inset-bottom))]"
     :class="fill && 'min-[980px]:h-dvh min-[980px]:overflow-hidden'"
   >
     <slot />
