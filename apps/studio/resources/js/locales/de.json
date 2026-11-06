@@ -775,6 +775,7 @@
     "submit": "Passwort speichern"
   },
   "audit": {
+    "portalViews": "Portal: {n} Aufrufe",
     "event": "Ereignis",
     "person": "Person",
     "from": "Von",

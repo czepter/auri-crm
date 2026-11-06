@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { computed, reactive } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormShell from '@/ui/page/FormShell.vue'
@@ -13,13 +13,15 @@ import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Option = { value: string; label: string }
 
-const props = defineProps<{
-  entries: { id: string; at: string; actor: string | null; label: string; detail: string[]; target: { name: string; href: string } | null }[]
+type Props = {
+  entries: { id: string; at: string; event: string; actor: string | null; label: string; detail: string[]; target: { name: string; href: string } | null }[]
   nextCursor: string | null
   filters: { ereignis: string; person: string; von: string; bis: string }
   events: Option[]
   people: Option[]
-}>()
+}
+
+const props = defineProps<Props>()
 useLiveProps(['entries', 'nextCursor', 'events', 'people'])
 
 const query = reactive({ ...props.filters })
@@ -31,6 +33,28 @@ function apply(cursor?: string) {
 
   router.get('/einstellungen/protokoll', params, { preserveScroll: true })
 }
+
+type Row = Props['entries'][number] & { count: number }
+
+// Ein Kunde, der das Portal öffnet, erzeugt je Besuch zwei Zeilen; hintereinander sind sie ein Eintrag.
+const PORTAL = ['portal.link_issued', 'portal.link_consumed']
+
+const rows = computed(() =>
+  props.entries.reduce<Row[]>((all, entry) => {
+    const last = all.at(-1)
+
+    if (last && PORTAL.includes(entry.event) && PORTAL.includes(last.event)) {
+      last.count += 1
+      if (last.target?.href !== entry.target?.href) last.target = null
+
+      return all
+    }
+
+    all.push({ ...entry, count: 1 })
+
+    return all
+  }, []),
+)
 
 function at(iso: string) {
   return new Date(iso).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -44,8 +68,8 @@ function at(iso: string) {
     >
       <template #nav><SettingsNav active="audit" /></template>
 
-      <div class="min-w-0">
-        <div class="mb-5 grid grid-cols-4 gap-3 max-[640px]:grid-cols-2">
+      <div class="min-w-0 max-w-[1280px]">
+        <div class="sticky top-0 z-10 mb-2 grid grid-cols-4 gap-3 bg-background py-3 max-[640px]:grid-cols-2">
           <Field :label="$t('audit.event')" id="log-ereignis">
             <Select :model-value="toOption(query.ereignis)" @update:model-value="(value) => { query.ereignis = fromOption(value); apply() }">
               <SelectTrigger id="log-ereignis"><SelectValue /></SelectTrigger>
@@ -73,14 +97,14 @@ function at(iso: string) {
         </div>
 
         <div
-          v-for="entry in entries"
+          v-for="entry in rows"
           :key="entry.id"
           class="flex items-start gap-4 py-2.5 shadow-[inset_0_-1px_0_var(--rule)]"
         >
           <span class="w-36 flex-none text-small tabular-nums text-ink-2">{{ at(entry.at) }}</span>
           <span class="w-36 flex-none truncate text-small">{{ entry.actor ?? '—' }}</span>
           <div class="min-w-0 flex-1">
-            <div class="truncate text-ui font-semibold">{{ entry.label }}</div>
+            <div class="truncate text-ui font-semibold">{{ entry.count > 1 ? $t('audit.portalViews', { n: entry.count }) : entry.label }}</div>
             <div v-for="line in entry.detail" :key="line" class="mt-0.5 text-small break-words text-ink-2">{{ line }}</div>
           </div>
           <Link v-if="entry.target" class="max-w-48 flex-none truncate text-small text-inherit" :href="entry.target.href">{{ entry.target.name }}</Link>

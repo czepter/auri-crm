@@ -66,6 +66,7 @@ class AuditLogController extends Controller
                 'id' => $log->public_id,
                 'at' => $log->created_at->toIso8601String(),
                 'actor' => $log->actor?->name,
+                'event' => $log->event,
                 'label' => self::label($log->event),
                 'detail' => $log->event === 'studio_settings.updated' ? self::settingsDetail($log->context ?? []) : [],
                 'target' => match (true) {
