@@ -133,6 +133,7 @@ class AuditLogController extends Controller
         return match (true) {
             $value === null || $value === '' => '—',
             is_bool($value) => $value ? 'Ja' : 'Nein',
+            is_string($value) && trans()->has("audit.values.{$value}") => __("audit.values.{$value}"),
             is_array($value) => implode(', ', $value),
             default => Str::limit(strip_tags((string) $value), 60),
         };
