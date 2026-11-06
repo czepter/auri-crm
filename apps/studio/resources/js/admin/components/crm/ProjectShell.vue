@@ -32,7 +32,7 @@ const hasRail = computed(
 )
 
 // Info is the rail where there is no room for the rail.
-const wide = useMediaQuery('(min-width: 1080px)')
+const wide = useMediaQuery('(min-width: 1081px)')
 watch(wide, (is) => is && props.active === 'info' && router.visit(props.header.tabs[0].href, { replace: true }), { immediate: true })
 
 const tabNav = useTemplateRef<HTMLElement>('tabNav')
@@ -176,7 +176,7 @@ function destroy() {
               tab.key === active
                 ? 'bg-paper text-foreground shadow-[0_1px_2px_rgba(24,24,27,.08)]'
                 : 'text-ink-2 hover:text-foreground',
-              tab.key === 'info' && 'min-[1080px]:hidden',
+              tab.key === 'info' && 'min-[1081px]:hidden',
             ]"
             :aria-current="tab.key === active ? 'page' : undefined"
           >

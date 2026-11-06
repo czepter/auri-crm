@@ -25,7 +25,7 @@ const hasStep = computed(
         <ProjectStep :header="header" :shoots="shoots" />
       </template>
 
-      <div class="min-[1080px]:hidden">
+      <div class="min-[1081px]:hidden">
         <CaseRail :header="header" />
       </div>
     </ProjectShell>

@@ -678,7 +678,7 @@ const primary = computed(() => {
                     :payments="payments"
                 />
 
-                <div v-else-if="tab === 'info'" class="min-[1080px]:hidden">
+                <div v-else-if="tab === 'info'" class="min-[1081px]:hidden">
                     <LeadRail
                         :type-label="lead.typeLabel"
                         :source-label="lead.sourceLabel"
