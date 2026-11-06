@@ -213,7 +213,7 @@
     "group": {
       "running": "Laufender Auftrag",
       "past": "Bestandskunden",
-      "none": "Ohne Auftrag"
+      "none": "Nur Anfragen"
     },
     "call": "Anrufen",
     "reach": "Kontakt",
@@ -638,7 +638,7 @@
     "title": "Auswertungen",
     "window": "Letzte 12 Monate",
     "bookingRate": "Buchungsquote",
-    "ofCaptured": "von 1 Anfrage | von {count} Anfragen",
+    "ofCaptured": "von 1 eingegangenen Anfrage | von {count} eingegangenen Anfragen",
     "acceptanceRate": "Angebote angenommen",
     "vsPrior": "{delta} % zum Vorjahr",
     "vsPriorPoints": "{delta} Punkte zum Vorjahr",
@@ -667,7 +667,7 @@
     "projects": "Aufträge",
     "empty": "Keine Daten.",
     "funnelSub": "{captured} · {booked} gebucht",
-    "capturedCount": "1 Anfrage | {count} Anfragen",
+    "capturedCount": "1 Anfrage eingegangen | {count} Anfragen eingegangen",
     "seriesDue": "Ist · fällige Raten",
     "seriesOpen": "Prognose · offene Angebote",
     "total": "Gesamt",
