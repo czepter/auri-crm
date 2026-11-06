@@ -128,3 +128,20 @@ Opus alone, 24 admin screens, round 2 to round 3: 6.0 to 6.3.
 
 - Admin: reference panel on most screens explains the system; forms hug the left third at 1920; two primaries per screen (project tabs, quote detail); contract editor is raw HTML; Neuigkeiten empty.
 - Portal: payment total does not match the accepted quote (seed plan); no sign action on the contract; hero takes 62 % of the project page; settings tabs clip at 390 px; back link placed four ways; gallery has no favourites.
+
+### Goal run: design rounds against the council (admin 1920, portal 390)
+
+Rounds 16 to 22 changed structure (help drawer, form shell, next-step card, payments, contract, gallery) and data consistency, tests held back until the council rates. Two reviewers in the last rounds (Opus, Flash); Gemini 4 Argon failed three runs in a row.
+
+| Round | Admin 1920 | Portal 390 |
+|---|---|---|
+| Before the run | 6.5 (three reviewers) | 7.8 |
+| After round 22 | 7.1, none at 8 | 8.4, 29 of 30 at 8 |
+
+Capture artefacts that cost four rounds: a full-page screenshot leaves the contract preview iframe blank (tall viewport instead), the headless browser prints `mm/dd/yyyy` in date fields, and the sticky header cuts headings in mid-scroll shots.
+
+### Open
+
+- Admin weakest criteria: layout (6.7) and accessibility (6.9). Pages with little content leave most of 1920 px empty; Flash scores that, Opus does not.
+- Admin: setup wizard route, contract editor shows the text twice, Neuigkeiten empty.
+- Tests not run since round 15: full Pest and Vitest need a pass before any PR.
