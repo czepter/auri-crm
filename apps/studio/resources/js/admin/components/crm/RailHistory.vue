@@ -2,13 +2,14 @@
 import { computed } from "vue";
 import { usePage } from "@inertiajs/vue3";
 import { dayWithWeekday as day } from "@/admin/lib/dates";
+import { groupEntries } from "@/admin/lib/groupEntries";
 
 const props = defineProps<{
     entries: App.Crm.Data.ThreadEntryData[];
 }>();
 
 // Notes have their own thread on the page; the rail is what the system recorded.
-const events = computed(() => props.entries.filter((entry) => entry.system));
+const events = computed(() => groupEntries(props.entries.filter((entry) => entry.system)));
 
 // The trace runs oldest first (BuildThread); the rail reads it the other way
 // and keeps the first entry, because where the project came from stays the
@@ -37,7 +38,7 @@ const byline = (author: string | null) =>
         >
             <span class="w-24 flex-none text-ink-2">{{ entry.at ? day(entry.at) : "" }}</span>
             <span class="min-w-0 flex-1">
-                {{ entry.body }}
+                {{ entry.count > 1 ? $t("project.historyCount", { body: entry.body, count: entry.count }) : entry.body }}
                 <span v-if="byline(entry.author)" class="block text-ink-2">{{ entry.author }}</span>
             </span>
         </div>
@@ -46,7 +47,7 @@ const byline = (author: string | null) =>
             <div class="flex gap-2.5 py-1 text-small leading-[1.47]">
                 <span class="w-24 flex-none text-ink-2">{{ origin.at ? day(origin.at) : "" }}</span>
                 <span class="min-w-0 flex-1">
-                    {{ origin.body }}
+                    {{ origin.count > 1 ? $t("project.historyCount", { body: origin.body, count: origin.count }) : origin.body }}
                     <span v-if="byline(origin.author)" class="block text-ink-2">{{ origin.author }}</span>
                 </span>
             </div>

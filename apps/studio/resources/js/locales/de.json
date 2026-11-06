@@ -357,6 +357,7 @@
     "quotes": "Angebot",
     "portalToggle": "Portal-Sichtbarkeit umschalten",
     "history": "Verlauf",
+    "historyCount": "{body} · {count}",
     "shootAdd": "Shooting",
     "tasksOf": "von {all}",
     "tasksOpen": "Offen {count}",
