@@ -93,7 +93,7 @@ function hint(entry: App.Crm.Data.CaseSuggestionData) {
 
   return rates.length === 1
     ? `${rates[0].label} · ${formatEuros(rates[0].amount)}`
-    : `${t('invoicesCreate.ratesOpen', { count: rates.length })} · ${formatEuros(rates.reduce((sum, rate) => sum + rate.amount, 0))}`
+    : `${t('invoicesCreate.ratesOpen', rates.length)} · ${formatEuros(rates.reduce((sum, rate) => sum + rate.amount, 0))}`
 }
 
 const GROUP = 'mt-4 mb-1 px-0.5 text-small leading-none font-semibold text-muted-foreground'

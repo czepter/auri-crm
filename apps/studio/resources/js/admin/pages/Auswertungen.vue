@@ -253,7 +253,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               v-if="bookingRate !== null"
               :label="$t('reports.bookingRate')"
               :value="`${bookingRate} %`"
-              :sub="$t('reports.ofCaptured', { count: capturedTotal })"
+              :sub="$t('reports.ofCaptured', capturedTotal)"
             />
             <ReportKpi
               v-if="acceptanceRate !== null"
@@ -284,12 +284,12 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
             <ReportCard
               v-if="capturedTotal"
               :title="$t('reports.funnelTitle')"
-              :sub="$t('reports.funnelSub', { captured: capturedTotal, booked: bookedTotal })"
+              :sub="$t('reports.funnelSub', { captured: $t('reports.capturedCount', capturedTotal), booked: bookedTotal })"
             >
               <ul v-if="funnelSparse" class="m-0 flex list-none flex-col gap-1.5 p-0">
                 <li v-for="row in funnelByMonth.filter((m) => m.captured)" :key="row.month" class="flex items-baseline justify-between gap-3 text-ui">
                   <span>{{ monthLong(row.month) }}</span>
-                  <span class="tabular-nums">{{ $t('reports.funnelSub', { captured: row.captured, booked: row.booked }) }}</span>
+                  <span class="tabular-nums">{{ $t('reports.funnelSub', { captured: $t('reports.capturedCount', row.captured), booked: row.booked }) }}</span>
                 </li>
               </ul>
 
@@ -459,7 +459,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                     <div class="h-1.5 rounded-[3px] bg-action" :style="{ width: `${Math.round((row.revenue / sourcePeak) * 100)}%` }" />
                   </div>
                   <span class="text-small tabular-nums text-muted-foreground">
-                    {{ $t('reports.funnelSub', { captured: row.captured, booked: row.booked }) }}
+                    {{ $t('reports.funnelSub', { captured: $t('reports.capturedCount', row.captured), booked: row.booked }) }}
                   </span>
                 </div>
               </div>
@@ -542,7 +542,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               </div>
 
               <div v-if="biggestDrop" class="mt-auto border-t border-border pt-3 text-small text-muted-foreground">
-                {{ $t('reports.biggestDrop', { step: biggestDrop.label, count: biggestDrop.lost }) }}
+                {{ $t('reports.biggestDrop', { step: biggestDrop.label, lost: $t('reports.capturedCount', biggestDrop.lost) }) }}
               </div>
             </ReportCard>
 

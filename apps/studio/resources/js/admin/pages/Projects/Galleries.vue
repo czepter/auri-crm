@@ -61,7 +61,7 @@ function day(iso: string | null) {
               <span class="mt-0.5 block text-small leading-[1.35] text-muted-foreground">
                 {{
                   [
-                    $t('project.galleryImages', { count: gallery.assetCount }),
+                    $t('project.galleryImages', gallery.assetCount),
                     gallery.version ? $t('galleryRecord.version', { version: gallery.version }) : null,
                     gallery.expiresAt ? $t('project.galleryExpires', { date: day(gallery.expiresAt) }) : $t('project.galleryNoExpiry'),
                     gallery.inPortal ? $t('project.galleryInPortal') : $t('project.galleryNotInPortal'),

@@ -243,7 +243,7 @@ function submit() {
         <AlertDialogContent>
           <form class="contents" @submit.prevent="run">
             <AlertDialogHeader>
-              <AlertDialogTitle>{{ $t(`settings.retentionTitle${verb}`, { count: requests }) }}</AlertDialogTitle>
+              <AlertDialogTitle>{{ $t(`settings.retentionTitle${verb}`, requests) }}</AlertDialogTitle>
             </AlertDialogHeader>
             <AlertDialogBody>
               <div>
