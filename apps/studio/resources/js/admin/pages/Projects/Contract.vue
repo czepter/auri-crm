@@ -132,7 +132,8 @@ function day(value: string | null): string {
 <template>
   <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
     <ProjectShell :header="header" active="documents" child="contract">
-      <div v-if="contract" class="grid items-start gap-6 min-[1280px]:grid-cols-[560px_minmax(0,1fr)]">
+      <div v-if="contract" class="@container">
+      <div class="grid items-start gap-6 @[1280px]:grid-cols-[560px_minmax(0,1fr)]">
         <div class="flex min-w-0 flex-col gap-3">
           <section class="rounded-[var(--r)] bg-paper p-6 shadow-card max-[640px]:p-4">
             <div class="flex flex-wrap items-center gap-3">
@@ -262,6 +263,7 @@ function day(value: string | null): string {
             </Select>
           </DocumentPreviewPane>
         </div>
+      </div>
       </div>
 
       <Section v-else :title="$t('project.contract')">
