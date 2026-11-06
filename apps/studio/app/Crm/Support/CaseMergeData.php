@@ -5,6 +5,7 @@ namespace App\Crm\Support;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Documents\Contracts\MergeDataProvider;
+use App\Documents\Support\DocumentMergeData;
 use Illuminate\Database\Eloquent\Model;
 
 class CaseMergeData implements MergeDataProvider
@@ -28,7 +29,30 @@ class CaseMergeData implements MergeDataProvider
             // a service period.
             'shoot' => [
                 'date' => $case?->primaryShoot?->date?->format('d.m.Y') ?? '',
+                // Every uncancelled shoot by date, so a contract names the days it books.
+                'list' => $case === null ? '' : $case->shoots
+                    ->whereNull('cancelled_at')
+                    ->sortBy(fn ($shoot) => $shoot->date?->format('Y-m-d') ?? '9999')
+                    ->map(fn ($shoot) => trim(($shoot->date?->format('d.m.Y') ?? '').' '.($shoot->venue() ? '('.$shoot->venue().')' : '')))
+                    ->filter()
+                    ->implode('; '),
             ],
+            // From the payment plan, so a contract cannot name a date the
+            // plan does not carry. Empty until the project is booked.
+            'payment' => self::payment($case),
+        ];
+    }
+
+    /** @return array<string, string> */
+    private static function payment(?ClientCase $case): array
+    {
+        $installments = $case?->paymentPlan?->installments->sortBy('sort_order') ?? collect();
+
+        return [
+            'depositDue' => $installments->first()?->due_on?->format('d.m.Y') ?? '',
+            'plan' => $installments
+                ->map(fn ($i) => ($i->title ?: 'Zahlung').' '.DocumentMergeData::money($i->amount).' bis '.$i->due_on->format('d.m.Y'))
+                ->implode('; '),
         ];
     }
 

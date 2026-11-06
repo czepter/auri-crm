@@ -228,10 +228,10 @@ class StarterTemplateCatalog
                 self::paragraph('Der Fotograf erstellt Aufnahmen im Rahmen von {{ project.name }}. Umfang und Ablauf ergeben sich aus dem angenommenen Angebot.'),
 
                 self::header('3. Termine', 3),
-                self::paragraph('Termin und Zeitrahmen sind im Angebot festgehalten. Verschiebungen bedürfen der Abstimmung beider Seiten in Textform.'),
+                self::paragraph('Gebucht sind folgende Termine: {{ shoot.list }}. Zeitrahmen und Ablauf sind im Angebot festgehalten. Verschiebungen bedürfen der Abstimmung beider Seiten in Textform.'),
 
                 self::header('4. Vergütung und Zahlung', 3),
-                self::paragraph('Es gilt die im Angebot vereinbarte Vergütung. Die Anzahlung wird mit Vertragsschluss fällig, der Restbetrag nach dem im Zahlungsplan genannten Termin.'),
+                self::paragraph('Es gilt die im Angebot vereinbarte Vergütung. Zahlungsplan: {{ payment.plan }}. Die Anzahlung ist bis {{ payment.depositDue }} fällig.'),
 
                 self::header('5. Nutzungsrechte', 3),
                 self::paragraph('Der Auftraggeber erhält ein einfaches, räumlich und zeitlich unbeschränktes Nutzungsrecht an den gelieferten Bildern für private Zwecke.'),
