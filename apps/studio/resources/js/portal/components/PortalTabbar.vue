@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
+import { bookingKey } from '@/portal/lib/booking'
 
 /*
  * mockups/redesign/tokens.css `.tabbar`. Four text links do not fit in 390px
@@ -32,7 +33,7 @@ const LINK
   >
     <Link :class="[LINK, on(bookings)]" href="/">
       <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10" /></svg>
-      {{ nav.oneBooking ? $t('portal.navBooking') : $t('portal.navBookings') }}
+      {{ $t(bookingKey(nav.oneBooking ? 'navBooking' : 'navBookings')) }}
     </Link>
 
     <Link v-if="nav.messaging" :class="[LINK, on(path.startsWith('/nachrichten'))]" href="/nachrichten">
