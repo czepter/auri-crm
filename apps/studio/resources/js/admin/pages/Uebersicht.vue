@@ -9,6 +9,7 @@ import Panel from "@/admin/components/crm/Panel.vue";
 import { Button } from "@/ui/button";
 import { formatEurosRounded } from "@/lib/money";
 import { weekFrom } from "@/admin/lib/dates";
+import { groupEntries } from "@/admin/lib/groupEntries";
 import { NOTICEABLE_DAYS, since } from "@/admin/lib/leadQueue";
 import { useLiveProps } from "@/admin/lib/liveReload";
 
@@ -266,6 +267,10 @@ const CARD_ORDER: Record<string, string> = {
 // Höchstens ein primärer Knopf auf der Seite, auf jeder Breite derselbe: die erste Mahnung.
 const primaryKey = computed(() => cards.value.find((card) => card.key === "dunning")?.rows.find((row) => row.action)?.key);
 
+const activityGroups = computed(() =>
+    groupEntries(props.activity.map((entry) => ({ ...entry, body: entry.text, author: null, at: null }))),
+);
+
 const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
 </script>
 
@@ -445,7 +450,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
 
                     <Panel v-if="activity.length" class="mb-5 break-inside-avoid max-[640px]:order-8 max-[640px]:mx-6 max-[640px]:mt-5 max-[640px]:mb-0" :title="$t('dashboard.activity')">
                         <Link
-                            v-for="entry in activity"
+                            v-for="entry in activityGroups"
                             :key="`${entry.when}${entry.text}`"
                             :href="entry.href"
                             class="flex gap-2.5 py-[9px] text-foreground no-underline hover:text-ring"
@@ -453,7 +458,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                         >
                             <i class="mt-[5px] size-[7px] flex-none rounded-full" :class="entry.fresh ? 'bg-ring' : 'bg-mark'" />
                             <div class="text-small leading-[1.4]">
-                                {{ entry.text }}
+                                {{ entry.count > 1 ? $t("project.historyCount", { body: entry.text, count: entry.count }) : entry.text }}
                                 <span class="mt-0.5 block text-small text-faint">{{ entry.when }}</span>
                             </div>
                         </Link>
