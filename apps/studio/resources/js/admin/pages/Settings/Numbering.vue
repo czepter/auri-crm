@@ -7,6 +7,7 @@ import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Label } from '@/ui/label'
+import { saveState } from '@/admin/lib/autosave'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{ ranges: App.Settings.Data.NumberRangeData[] }>()
@@ -34,6 +35,7 @@ function save(rangeId: string) {
   <AdminLayout active="einstellungen">
     <FormShell
       :kicker="$t('settings.kicker')" :title="$t('settings.numberingTitle')"
+      :state="saveState(Object.values(forms))"
     >
       <template #nav><SettingsNav active="numbering" /></template>
 
