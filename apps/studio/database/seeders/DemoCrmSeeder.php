@@ -57,7 +57,7 @@ class DemoCrmSeeder extends Seeder
         ['Charlotte Vehse', 'Paul Rieck', 'wedding', '2026-08-22', 'contacted', 8, 'website', 'Schloss Reinbek', 'Reinbek'],
         ['Mira Sundermann', null, 'portrait', null, 'contacted', 4, 'referral', null, null],
         ['Jasmin Petersen', 'Kolja Petersen', 'wedding', '2026-07-11', 'contacted', 2, 'referral', 'Landhaus Scherrer', 'Hamburg'],
-        ['Annika Reuter', 'Finn Sölter', 'wedding', '2026-05-30', 'quote_sent', 3, 'wedding_fair', 'Elbspeicher', 'Hamburg'],
+        ['Annika Reuter', 'Finn Sölter', 'wedding', '2027-05-29', 'quote_sent', 3, 'wedding_fair', 'Elbspeicher', 'Hamburg'],
         ['Lea Hoffmann', 'Jonas Behr', 'wedding', '2026-10-03', 'quote_sent', 6, 'instagram', 'Gut Wulksfelde', 'Tangstedt'],
         ['Marie Ahrens', 'David Kroll', 'wedding', '2026-07-25', 'quote_accepted', 1, 'referral', 'Kaispeicher', 'Hamburg'],
         ['Sophie Lang', 'Erik Voss', 'wedding', '2026-09-19', 'quote_accepted', 2, 'website', 'Gut Basthorst', 'Basthorst'],
@@ -297,7 +297,7 @@ class DemoCrmSeeder extends Seeder
             'case_id' => $project->id,
             'kind' => 'Portrait',
             'label' => 'After-Wedding-Shooting',
-            'date' => now()->addDays(26)->format('Y-m-d'),
+            'date' => '2027-06-26',
             'sort_order' => 3,
         ]);
 
@@ -419,7 +419,7 @@ class DemoCrmSeeder extends Seeder
         $referrerProject->primaryContact()?->update(['phone' => '+49 40 5550104']);
 
         Gallery::factory()->for($project, 'case')->create([
-            'title' => 'Meier & Kowalski — Hochzeit',
+            'title' => 'Verlobungsshooting',
             'expires_at' => now()->addDays(12),
         ]);
     }

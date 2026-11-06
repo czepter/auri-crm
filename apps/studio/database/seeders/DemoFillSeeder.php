@@ -9,6 +9,7 @@ use App\Contracts\Enums\ContractState;
 use App\Contracts\Models\Contract;
 use App\Crm\Actions\SeedFormInstanceFromTemplate;
 use App\Crm\Models\ClientCase;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\FormTemplate;
 use App\Documents\Enums\DocumentTemplateType;
@@ -67,6 +68,22 @@ class DemoFillSeeder extends Seeder
         $this->seedCreditNote($actor);
         $this->seedAbsenceAndClosure($actor);
         $this->seedThreads($meier, $actor);
+        $this->repairDemoDates($meier);
+    }
+
+    private function repairDemoDates(ClientCase $meier): void
+    {
+        $meier->galleries()->where('title', 'like', 'Meier & Kowalski%Hochzeit')->update(['title' => 'Verlobungsshooting']);
+        $meier->shoots()->where('label', 'After-Wedding-Shooting')->update(['date' => '2027-06-26']);
+
+        $anni = ClientCase::query()->where('name', 'like', 'Annika Reuter%')->first();
+        $anni?->shoots()->where('is_primary', true)->where('date', '<', '2027-01-01')->update(['date' => '2027-05-29']);
+
+        $primary = $meier->primaryContact();
+        if ($primary !== null && $primary->name === 'Meier & Kowalski') {
+            $primary->update(['name' => 'Lena Meier']);
+            $meier->attachContact(Contact::create(['name' => 'Jonas Kowalski']), CaseContactRole::Partner);
+        }
     }
 
     private function seedStudioContact(User $actor): void
