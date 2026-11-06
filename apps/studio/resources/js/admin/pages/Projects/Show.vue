@@ -9,7 +9,7 @@ import { Button } from "@/ui/button";
 import LineItems from "@/admin/components/quote/LineItems.vue";
 import NoteThread from "@/admin/components/crm/NoteThread.vue";
 import QuoteSummary from "@/admin/components/quote/QuoteSummary.vue";
-import { nextStep, paymentCall } from "@/admin/lib/projectNextStep";
+import { nextStep, paymentCall, stepRows } from "@/admin/lib/projectNextStep";
 import { sendQuoteHref } from "@/admin/lib/leadPrimary";
 import { stepOnArrow } from "@/admin/lib/queueStep";
 import { grossTotal } from "@/admin/lib/quoteSummary";
@@ -108,8 +108,20 @@ const addGallery = computed(
     () => props.header.isBooked && props.header.canManageShoots && !step.value && !addShoot.value && !props.header.galleries.length && !!galleriesHref.value,
 );
 
+const delivered = computed(() => props.shoots.every((shoot) => shoot.isCancelled || !stepRows([shoot]).length));
+const paid = computed(() => !props.header.paymentPlan || props.header.paymentPlan.openTotal === 0);
+
 const completeNow = computed(
-    () => props.header.isBooked && props.header.canComplete && !props.header.isCompleted && !!props.header.galleries.length && !step.value && !callHref.value && !addShoot.value,
+    () =>
+        props.header.isBooked &&
+        props.header.canComplete &&
+        !props.header.isCompleted &&
+        !!props.header.galleries.length &&
+        !step.value &&
+        !callHref.value &&
+        !addShoot.value &&
+        delivered.value &&
+        paid.value,
 );
 
 function completeProject() {

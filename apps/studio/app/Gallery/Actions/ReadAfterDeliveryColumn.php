@@ -5,8 +5,11 @@ namespace App\Gallery\Actions;
 use App\Crm\Data\DomainRowData;
 use App\Crm\Data\RowActionData;
 use App\Crm\Enums\LeadSource;
+use App\Crm\Enums\StageAnchor;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Lead;
+use App\Crm\Support\CrmVocabulary;
 use App\Gallery\Models\Gallery;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -44,9 +47,9 @@ class ReadAfterDeliveryColumn
     }
 
     /**
-     * A referral whose project actually became work. Gated on the project
-     * being booked via whereHas — an EXISTS subquery, not a join: before the
-     * booking the project is a pursuit, and thanking someone for a pursuit is
+     * A referral whose project actually became work. Gated on a delivered
+     * shoot via whereHas — an EXISTS subquery, not a join: before the delivery
+     * the project is still being worked, and thanking someone for it is
      * premature.
      *
      * @return Collection<int, DomainRowData>
@@ -57,7 +60,10 @@ class ReadAfterDeliveryColumn
             ->where('source', LeadSource::Referral)
             ->whereNotNull('referred_by_contact_id')
             ->when($visible !== null, fn ($query) => $query->whereIn('case_id', $visible))
-            ->whereHas('case', fn ($project) => $project->booked())
+            ->whereHas('case', fn ($project) => $project->booked()->whereHas(
+                'shoots',
+                fn ($shoots) => $shoots->where('status', app(CrmVocabulary::class)->anchored(StagePipeline::Project, StageAnchor::Delivered)?->key),
+            ))
             ->with(['case', 'referredBy'])
             ->get()
             ->map(fn (Lead $lead) => new DomainRowData(
