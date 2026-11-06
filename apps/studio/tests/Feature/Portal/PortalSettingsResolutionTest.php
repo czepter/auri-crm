@@ -230,6 +230,7 @@ it('shows the notice of a closure that is running or ahead in place of the respo
     expect(settings()->contactLine()['responseTime'])->toBeNull()
         ->and(settings()->contactLine()['absence'])->toBe(['range' => '24.12. bis 31.12.', 'message' => 'Zurück am 2. Januar.']);
 
+    $this->travelTo('2027-02-03 10:00:00');
     StudioClosure::query()->delete();
     StudioClosure::factory()->spanning('2027-02-08', '2027-02-22')->create(['message' => 'Lofoten.']);
     expect(settings()->contactLine()['absence'])->toBe(['range' => '08.02. bis 22.02.', 'message' => 'Lofoten.']);
@@ -246,7 +247,7 @@ it('keeps the response time for a closure that is over or has no notice', functi
 });
 
 it('takes the closure that starts first when several carry a notice', function () {
-    $this->travelTo('2026-12-01 10:00:00');
+    $this->travelTo('2026-12-20 10:00:00');
 
     StudioClosure::factory()->spanning('2027-02-08', '2027-02-22')->create(['message' => 'Später.']);
     StudioClosure::factory()->spanning('2026-12-24', '2026-12-31')->create(['message' => 'Zuerst.']);
