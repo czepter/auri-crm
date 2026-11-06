@@ -420,6 +420,8 @@
     "contractVersionLabel": "Fassung {version}",
     "contractSave": "Fassung sichern",
     "contractSend": "Zum Unterschreiben senden",
+    "contractSendStep": "Vertrag senden",
+    "formSendStep": "Fragebogen senden",
     "contractEdit": "Bearbeiten",
     "contractEditDone": "Fertig",
     "contractSentOn": "Gesendet am {date}",

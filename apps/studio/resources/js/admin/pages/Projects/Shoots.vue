@@ -238,7 +238,7 @@ const TONE: Record<string, string> = {
         <template v-if="header.canManageShoots" #actions>
           <Dialog v-model:open="adding">
             <DialogTrigger as-child>
-              <Button variant="pill" type="button">
+              <Button variant="outline" type="button">
                 {{ $t('project.addShoot') }}
               </Button>
             </DialogTrigger>
