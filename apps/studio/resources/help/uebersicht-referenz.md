@@ -5,81 +5,56 @@ art: referenz
 screens: [dashboard]
 ---
 
+## Zeitraum
+
+*30 Tage*, *90 Tage* und *Jahr* gelten für Angebote, Shootings und den
+Verlauf. Pipeline und Zahlungen sind der Stand von heute. *Vorjahr* ist
+derselbe Zeitraum ein Jahr früher, bei der Pipeline der Stand vor einem Jahr.
+
 ## Pipeline
 
-Die Summe aller Angebote, die Entwurf sind oder versendet. Ein angenommenes
-fehlt darin, weil es gewonnen ist; abgelöste und abgelaufene ebenso.
+Die Summe der Angebote, die Entwurf sind oder versendet, je Anfrage ohne
+Ausgang das aktuelle. Angenommene fehlen, sie sind gewonnen.
 
-Die Punkte darunter zählen etwas anderes: eine offene Anfrage je Punkt, in
-der Reihenfolge deiner Stufen eingefärbt. Offen heißt ohne Ausgang — weder
-verloren noch abgelehnt noch geschlossen.
+## Zahlungen
 
-## Überfällig
-
-Alle Raten im Stand *Geplant*, deren Fälligkeitstag vor heute liegt,
-aufsummiert. *1
-von 4 Raten offen* setzt sie ins Verhältnis zu allen Raten, die im Studio je
-angelegt wurden, nicht zu denen dieses Monats. Die Tagesangabe kommt von der
-ältesten überfälligen Rate.
+Raten im Stand *Geplant*. Überfällig sind die mit Fälligkeitstag vor heute;
+gibt es keine, steht die Summe aller offenen mit der nächsten Fälligkeit.
+Die Gesamtzahl der Raten umfasst alle je angelegten, nicht nur die des
+Zeitraums.
 
 ## Angebote angenommen
 
-Angenommene durch versendete, über die letzten zwölf Monate. Beide Seiten
-hängen am Versanddatum: ein im elften Monat verschicktes und im dreizehnten
-angenommenes Angebot zählt in dem Fenster, in dem es hinausging. Wurde in den
-zwölf Monaten nichts versendet, steht hier keine Null, sondern nichts.
+Angenommene von versendeten, beide nach Versanddatum. Ein Angebot zählt
+deshalb in dem Zeitraum, in dem es hinausging, nicht in dem der Zusage.
+Zählt das ganze Studio.
 
-## Nächstes Shooting
+## Shootings
 
-Der nächste Shooting-Tag ab heute, auf einem gebuchten Auftrag, nicht
-abgesagt. Ein Wunschtermin aus einer Anfrage steht nicht darin — er ist noch
-kein Auftrag.
+Shooting-Tage gebuchter, nicht abgesagter Aufträge im Zeitraum.
 
-## Heute zu entscheiden
+## Termine
 
-Drei Quellen in einer Liste, Dringendes zuerst, fünf Zeilen:
+Die nächsten acht Shooting-Tage gebuchter Aufträge. Abwesenheiten stehen
+bis zum letzten dieser Tage dazwischen, ohne Shooting drei Monate voraus.
 
-- offene Aufgaben, nach Fälligkeit, undatierte zuletzt,
-- Angebote und Verträge, die auf eine Antwort warten,
-- Raten, bei denen die Mahnung erfolglos blieb.
+## Zu erledigen
 
-Die zweite Quelle nimmt drei Fälle auf: ein versendetes Angebot, das
-innerhalb von vierzehn Tagen abläuft und auf das schon mindestens einmal
-erinnert wurde; ein angenommenes Angebot ohne Vertrag; ein erstellter Vertrag,
-der seit mehr als vier Tagen ohne Unterschrift ist. Ein Angebot, dessen
-Erinnerung noch aussteht, fehlt hier — solange arbeitet die Automatik daran.
+Offene Aufgaben nach Fälligkeit, undatierte zuletzt, dazu versendete
+Angebote, die innerhalb von vierzehn Tagen ablaufen und auf die schon
+erinnert wurde. Die Liste zeigt fünf Zeilen, die Zahl daneben alle.
 
-Die dritte nimmt Raten auf, deren Mahnung mindestens drei Tage zurückliegt
-und die weiter offen sind.
+## Zahlungen in der Liste
 
-Das *+n* zählt, was in die fünf Zeilen nicht passte: alle weiteren offenen
-Aufgaben und die übrigen Zeilen der beiden anderen Quellen.
-
-## Diese Woche
-
-Die kommenden sieben Tage: Shooting-Tage und Abwesenheiten in einer Liste.
-Abwesenheiten des ganzen Teams stehen darin, auch die von Leuten, deren
-Aufträge du nicht siehst.
-
-## Neue Anfragen
-
-Die drei jüngsten Anfragen ohne Ausgang. *Doppelt* daneben heißt,
-dass an diesem Tag noch ein anderes Shooting steht.
+Raten, bei denen die Mahnung mindestens drei Tage zurückliegt und die noch
+offen sind.
 
 ## Nach der Lieferung
 
-Zwei Fälle: jemand aus der Kartei hat einen Auftrag empfohlen, der auch
-gebucht wurde — und Galerien, die innerhalb von dreißig Tagen ablaufen.
+Empfehlungen, die zu einem gebuchten Auftrag wurden, und Galerien, die
+innerhalb von dreißig Tagen ablaufen.
 
-## Unbeantwortet
+## Rolle
 
-Verläufe, deren letzte Nachricht vom Kunden kam und die nicht auf genau
-dieser Nachricht geschlossen wurden. Wer die Nachricht gelesen hat, spielt
-keine Rolle.
-
-## Was deine Rolle einschränkt
-
-Nächstes Shooting, Diese Woche, Heute zu entscheiden und die Galerien lesen
-nur Aufträge, die du erreichst — für Zweitfotograf und Assistenz sind das
-die, auf deren Shooting sie eingeteilt sind. Pipeline, Überfällig, Angebote
-angenommen und Unbeantwortet zählen das ganze Studio.
+Außer *Angebote angenommen* zählt alles nur Aufträge, die du siehst. Für
+Zweitfotograf und Assistenz sind das die, auf denen sie eingeteilt sind.
