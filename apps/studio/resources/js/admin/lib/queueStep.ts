@@ -6,6 +6,8 @@ export function neighbour<T extends Row>(rows: T[], by: number): T | undefined {
     return rows[rows.findIndex((row) => row.open) + by]
 }
 
+const OWNS_ARROWS = 'input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="menu"], [role="listbox"], [role="dialog"]'
+
 // ↑↓ walks the queue without leaving the screen. Response time is the lever:
 // eight days of silence happen when every step costs a page load. `rows` is
 // what the pane's filter left standing, so the arrows reach what is on screen.
@@ -14,11 +16,16 @@ export function stepOnArrow(event: KeyboardEvent, rows: Row[], path: string) {
         return
     }
 
+    if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+        return
+    }
+
     // Not every keydown target is an element — one dispatched on the window
-    // has no matches() — and an arrow key inside a field belongs to the field.
+    // has no closest() — and an arrow key inside a field or an open menu
+    // belongs to it.
     const target = event.target as Element | null
 
-    if (typeof target?.matches === "function" && target.matches("input, textarea, select")) {
+    if (typeof target?.closest === "function" && target.closest(OWNS_ARROWS)) {
         return
     }
 

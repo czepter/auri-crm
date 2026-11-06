@@ -11,7 +11,8 @@ const rows = [
     { id: "c", open: false },
 ]
 
-const key = (name: string, target: unknown = null) => ({ key: name, target, preventDefault: vi.fn() }) as unknown as KeyboardEvent
+const key = (name: string, extra: object = {}, target: unknown = null) =>
+    ({ key: name, target, defaultPrevented: false, preventDefault: vi.fn(), ...extra }) as unknown as KeyboardEvent
 
 describe("queueStep", () => {
     beforeEach(() => vi.mocked(router.get).mockClear())
@@ -29,8 +30,25 @@ describe("queueStep", () => {
         expect(router.get).toHaveBeenCalledWith("/auftraege/c?q=ma", {}, { preserveScroll: true, preserveState: true })
     })
 
-    it("leaves arrows inside a field alone", () => {
-        stepOnArrow(key("ArrowDown", { matches: () => true }), rows, "/anfragen")
+    it("leaves arrows inside a field, an editable or an open menu alone", () => {
+        const inside = { closest: vi.fn((_selector: string) => ({})) }
+        const event = key("ArrowDown", {}, inside)
+
+        stepOnArrow(event, rows, "/anfragen")
+
+        expect(inside.closest.mock.calls[0][0]).toMatch(/contenteditable.*role="menu".*role="listbox".*role="dialog"/)
+        expect(router.get).not.toHaveBeenCalled()
+        expect(event.preventDefault).not.toHaveBeenCalled()
+    })
+
+    it("leaves a handled or modified arrow alone", () => {
+        for (const extra of [{ defaultPrevented: true }, { altKey: true }, { ctrlKey: true }, { metaKey: true }, { shiftKey: true }]) {
+            const event = key("ArrowDown", extra)
+
+            stepOnArrow(event, rows, "/anfragen")
+
+            expect(event.preventDefault).not.toHaveBeenCalled()
+        }
 
         expect(router.get).not.toHaveBeenCalled()
     })
