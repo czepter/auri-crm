@@ -13,7 +13,7 @@ import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHea
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 import GalleryShareDialog from '@/admin/components/gallery/GalleryShareDialog.vue'
 import GalleryNav from '@/admin/components/gallery/GalleryNav.vue'
-import { publishLabelKey, showPublish as showPublishRule, showWithdraw as showWithdrawRule } from '@/admin/lib/galleryPublish'
+import { publishLabelKey, showPublish as showPublishRule, showWithdraw as showWithdrawRule, stateKey } from '@/admin/lib/galleryPublish'
 import { xsrfHeader } from '@/admin/lib/multipartUpload'
 import Images from '@/admin/pages/Galleries/panes/Images.vue'
 import Settings from '@/admin/pages/Galleries/panes/Settings.vue'
@@ -110,6 +110,14 @@ const publishState = computed(() => ({
   published: props.figures.published,
   assets: props.figures.assets,
 }))
+const stateWord = computed(() => {
+  const key = stateKey(publishState.value)
+  if (key !== 'online') return t(key === 'draft' ? 'galleryRecord.stateDraft' : 'galleryRecord.stateWithdrawn')
+  return props.figures.expiresAt === null
+    ? t('galleryRecord.stateOnline')
+    : t('galleryRecord.stateOnlineUntil', { date: new Date(props.figures.expiresAt).toLocaleDateString('de-DE') })
+})
+const stateTone = computed(() => ({ online: 'text-ok', withdrawn: 'text-ink-2', draft: 'text-ink-2' })[stateKey(publishState.value)])
 const publishLabel = computed(() => publishLabelKey(publishState.value))
 const showPublish = computed(() => props.gallery.canPublish && showPublishRule(publishState.value))
 const showWithdraw = computed(() => props.gallery.canPublish && showWithdrawRule(publishState.value))
@@ -305,18 +313,13 @@ function megabytes(bytes: number) {
   <AdminLayout active="galerien">
     <div data-tokens>
       <PageHead :title="gallery.title ?? '—'">
-        <!-- Stand, chip-styled: the same fact the old counter band spent a
-             whole column on, and the only one of the six worth a glance at
-             every tab (ProjectShell's isBooked chip is the pattern). -->
+        <span class="flex flex-none items-center gap-1.5 text-small font-semibold" :class="stateTone">
+          <span class="size-1.5 rounded-full bg-current" />{{ stateWord }}
+        </span>
         <span
-          v-if="figures.published !== null"
-          class="flex-none rounded-[var(--r-sm)] bg-ok-bg px-2 py-[3px] text-small leading-[1.5] font-semibold text-ok"
-        >{{ $t('galleryRecord.version', { version: figures.published }) }}</span>
-        <span
-          v-else-if="gallery.prerelease"
+          v-if="gallery.prerelease"
           class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold text-due"
         >{{ $t('galleryRecord.prerelease') }}</span>
-
         <span v-if="actionStatus" class="ml-auto flex items-center gap-1.5">
           <span class="text-small" :class="actionStatus.ok ? 'text-ink-2' : 'text-destructive'">{{ actionStatus.message }}</span>
           <Input

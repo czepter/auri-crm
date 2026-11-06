@@ -240,4 +240,11 @@ describe('Record', () => {
     expect(html).toContain('bg-due-bg')
     expect(html).toContain(de.galleryRecord.prereleaseStop)
   })
+
+  it('shows the state word with the expiry date instead of the version chip', async () => {
+    const html = await render({ ...base, figures: { ...base.figures, published: 1, assets: 2, expiresAt: '2026-11-17' } })
+
+    expect(html).toContain('Online bis 17.11.2026')
+    expect(html).not.toContain('Fassung 1')
+  })
 })
