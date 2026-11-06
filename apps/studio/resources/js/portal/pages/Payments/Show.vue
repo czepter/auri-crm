@@ -166,7 +166,6 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
                   <Button v-if="soon(installment)" as="summary" variant="portal" class="w-full cursor-pointer justify-center list-none min-[700px]:w-auto [&::-webkit-details-marker]:hidden">
                     {{ $t('portal.payButton') }}
                   </Button>
-                  <p v-if="!soon(installment)" class="mb-2 text-[13px] text-muted-foreground first-letter:uppercase">{{ $t('portal.dueOn', { date: dayDate(installment.dueOn) }) }}</p>
                   <dl class="m-0 grid gap-y-4 rounded-md bg-sunk p-4" :class="soon(installment) && 'mt-4'">
                     <div v-if="bankDetails.accountHolder">
                       <dt class="text-[13px] text-muted-foreground">{{ $t('portal.transferAccountHolder') }}</dt>
