@@ -45,7 +45,7 @@ const missingSummary = computed(() =>
   <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
     <ProjectShell :header="header" active="galleries">
       <template #actions>
-        <Button :as="Link" variant="pill" :href="`/galerien/neu?projekt=${header.id}`">{{ $t('galleries.create') }}</Button>
+        <Button :as="Link" variant="outline" :href="`/galerien/neu?projekt=${header.id}`">{{ $t('galleries.create') }}</Button>
       </template>
 
       <div class="flex flex-col gap-3">

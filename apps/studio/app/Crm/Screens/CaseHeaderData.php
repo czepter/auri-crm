@@ -5,6 +5,7 @@ namespace App\Crm\Screens;
 use App\Contracts\Enums\ContractState;
 use App\Contracts\Enums\ContractStatus;
 use App\Crm\Actions\BuildThread;
+use App\Crm\Actions\ReadNextAction;
 use App\Crm\Actions\ReadStageTrack;
 use App\Crm\Data\CasePersonData;
 use App\Crm\Data\CasePositionData;
@@ -34,6 +35,7 @@ class CaseHeaderData extends Data
      * @param  list<CasePersonData>  $people
      * @param  list<array{id: string, title: string|null, expiresAt: string|null}>  $galleries
      * @param  list<ThreadEntryData>  $history
+     * @param  array{label: string, href: string|null, post: string|null}|null  $nextAction
      */
     public function __construct(
         public string $id,
@@ -74,6 +76,7 @@ class CaseHeaderData extends Data
         public ?PaymentPlanData $paymentPlan,
         public array $galleries,
         public array $history,
+        public ?array $nextAction,
     ) {}
 
     /** @param  bool  $queue  false where the page brings its own left pane */
@@ -134,6 +137,7 @@ class CaseHeaderData extends Data
                 'expiresAt' => $gallery->expires_at?->format('Y-m-d'),
             ])->all(),
             history: app(BuildThread::class)($project),
+            nextAction: app(ReadNextAction::class)($project),
         );
     }
 

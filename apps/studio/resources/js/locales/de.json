@@ -420,6 +420,8 @@
     "contractVersionLabel": "Fassung {version}",
     "contractSave": "Fassung sichern",
     "contractSend": "Zum Unterschreiben senden",
+    "contractSendStep": "Vertrag senden",
+    "formSendStep": "Fragebogen senden",
     "contractEdit": "Bearbeiten",
     "contractEditDone": "Fertig",
     "contractSentOn": "Gesendet am {date}",
@@ -433,6 +435,11 @@
     "contractReminded": "Erinnert · {date}",
     "contractDeadline": "Frist",
     "contractVersions": "Fassungen",
+    "contractState": {
+      "draft": "Entwurf",
+      "sent": "Gesendet",
+      "signed": "Unterschrieben"
+    },
     "contractProjectData": "Projektdaten",
     "galleryState": {
       "draft": "Entwurf",
@@ -790,6 +797,7 @@
     "from": "Von",
     "to": "Bis",
     "all": "Alle",
+    "logins": "Anmeldungen anzeigen",
     "older": "Ältere"
   },
   "team": {

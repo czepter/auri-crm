@@ -28,6 +28,9 @@ class AuditLogController extends Controller
     /** One pair per client visit; reachable through the event filter. */
     private const NOISE = ['portal.link_issued', 'portal.link_consumed'];
 
+    /** Hidden until asked for: every sign-in of every staff member. */
+    private const LOGINS = ['staff.login.succeeded', 'staff.login.mfa_required'];
+
     public function index(Request $request): Response
     {
         abort_unless(auth('staff')->user()?->role === StaffRole::Admin, 404);
@@ -37,6 +40,7 @@ class AuditLogController extends Controller
             'person' => ['nullable', 'string'],
             'von' => ['nullable', 'date_format:Y-m-d'],
             'bis' => ['nullable', 'date_format:Y-m-d'],
+            'anmeldungen' => ['nullable', 'boolean'],
         ]);
 
         $zone = StudioSettings::current()->localTimezone();
@@ -46,7 +50,7 @@ class AuditLogController extends Controller
             ->when(
                 $filters['ereignis'] ?? null,
                 fn ($query, $event) => $query->where('event', $event),
-                fn ($query) => $query->whereNotIn('event', self::NOISE),
+                fn ($query) => $query->whereNotIn('event', $request->boolean('anmeldungen') ? self::NOISE : [...self::NOISE, ...self::LOGINS]),
             )
             ->when($filters['person'] ?? null, fn ($query, $person) => $query
                 ->whereIn('actor_id', User::query()->where('public_id', $person)->select('id')))
@@ -87,6 +91,7 @@ class AuditLogController extends Controller
                 'person' => $filters['person'] ?? '',
                 'von' => $filters['von'] ?? '',
                 'bis' => $filters['bis'] ?? '',
+                'anmeldungen' => $request->boolean('anmeldungen'),
             ],
             'events' => AuditLog::query()->distinct()->pluck('event')
                 ->map(fn (string $event) => ['value' => $event, 'label' => self::label($event)])

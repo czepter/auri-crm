@@ -306,20 +306,20 @@ function release(row: Stage | Field) {
 </script>
 
 <template>
-  <FormShell wide :title="$t('stages.title')">
+  <FormShell :title="$t('stages.title')">
     <template #head>
       <Button class="ml-auto" type="button" @click="emit('close')">{{ $t('stages.done') }}</Button>
     </template>
 
     <template #nav>
-        <nav class="w-[168px] flex-none">
+        <nav class="w-[196px] flex-none max-[640px]:w-full">
           <h3 class="m-0 mb-[7px] text-small leading-none font-semibold text-ink-2">
             {{ $t('stages.stagesNav') }}
           </h3>
           <button
             v-for="one in pipelines"
             :key="one.value"
-            class="block w-full cursor-pointer rounded-lg border-0 bg-transparent px-2.5 py-[7px] text-left text-small leading-[1.3]"
+            class="block w-full cursor-pointer rounded-[7px] border-0 bg-transparent px-2.5 py-[9px] text-left text-ui leading-none"
             :class="selected.kind === 'pipeline' && selected.key === one.value ? 'bg-sunk-2 font-semibold' : 'text-ink-2'"
             type="button"
             @click="choose({ kind: 'pipeline', key: one.value })"
@@ -333,7 +333,7 @@ function release(row: Stage | Field) {
           <button
             v-for="one in types"
             :key="one.id"
-            class="block w-full cursor-pointer rounded-lg border-0 bg-transparent px-2.5 py-[7px] text-left text-small leading-[1.3]"
+            class="block w-full cursor-pointer rounded-[7px] border-0 bg-transparent px-2.5 py-[9px] text-left text-ui leading-none"
             :class="[
               selected.kind === 'type' && selected.key === one.key ? 'bg-sunk-2 font-semibold' : 'text-ink-2',
               one.isActive ? '' : 'text-ink-2',
@@ -351,13 +351,28 @@ function release(row: Stage | Field) {
         </nav>
     </template>
 
+    <template v-if="pipeline" #preview>
+      <aside class="sticky top-6 w-[352px] flex-none max-[1100px]:hidden">
+          <div class="flex flex-col gap-2 rounded-xl bg-sunk p-3">
+            <div
+              v-for="stage in stageRows.filter((one) => one.isActive)"
+              :key="stage.id"
+              class="flex min-w-[140px] flex-1 items-center gap-2 border-b-2 bg-background px-3 py-2 text-small font-semibold"
+              :style="{ borderBottomColor: stage.css }"
+            >
+              <span class="flex-1">{{ stage.name }}</span>
+              <span class="flex-none font-normal tabular-nums text-ink-2">{{ stage.count ?? 0 }}</span>
+            </div>
+          </div>
+      </aside>
+    </template>
+
         <section v-if="pipeline" class="min-w-0 flex-1">
           <h2 class="m-0 text-title leading-[1.2] font-semibold tracking-[-0.02em]">
             {{ $t('stages.stagesSection', { pipeline: pipeline.label }) }}
           </h2>
 
-          <div class="mt-4 grid grid-cols-[minmax(0,420px)_minmax(0,1fr)] items-start gap-8 max-[1100px]:grid-cols-1">
-          <div class="flex flex-col gap-2 rounded-xl bg-sunk p-3">
+          <div class="mt-4 flex flex-col gap-2 rounded-xl bg-sunk p-3">
             <button
               v-for="stage in stageRows"
               :key="stage.id"
@@ -380,19 +395,6 @@ function release(row: Stage | Field) {
               <span class="flex-1">{{ stage.name }}</span>
               <span class="flex-none font-normal tabular-nums text-ink-2">{{ stage.count ?? 0 }}</span>
             </button>
-          </div>
-
-          <div class="flex flex-wrap gap-2 rounded-xl bg-sunk p-3">
-            <div
-              v-for="stage in stageRows.filter((one) => one.isActive)"
-              :key="stage.id"
-              class="flex min-w-[140px] flex-1 items-center gap-2 border-b-2 bg-background px-3 py-2 text-small font-semibold"
-              :style="{ borderBottomColor: stage.css }"
-            >
-              <span class="flex-1">{{ stage.name }}</span>
-              <span class="flex-none font-normal tabular-nums text-ink-2">{{ stage.count ?? 0 }}</span>
-            </div>
-          </div>
           </div>
 
           <Button class="mt-3.5 ml-0" type="button" variant="ghost" @click="addStage">

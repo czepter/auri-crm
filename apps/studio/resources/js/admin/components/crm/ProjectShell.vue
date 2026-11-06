@@ -114,10 +114,19 @@ function destroy() {
             <slot name="actions" />
             <slot name="stage" />
 
+            <template v-if="!$slots.stage && header.nextAction">
+              <Button v-if="header.nextAction.href" variant="pill" as-child class="max-[640px]:min-h-11">
+                <Link :href="header.nextAction.href">{{ $t(header.nextAction.label) }}</Link>
+              </Button>
+              <Button v-else variant="pill" type="button" class="max-[640px]:min-h-11" @click="router.post(header.nextAction.post!, {}, { preserveScroll: true })">
+                {{ $t(header.nextAction.label) }}
+              </Button>
+            </template>
+
             <!-- A page with a stage menu books through it. -->
             <AlertDialog v-if="!header.isBooked && header.canBook && !$slots.stage">
               <AlertDialogTrigger as-child>
-                <Button :variant="$slots.actions ? 'outline' : 'pill'" type="button">{{ $t('project.book') }}</Button>
+                <Button :variant="$slots.actions || header.nextAction ? 'outline' : 'pill'" type="button">{{ $t('project.book') }}</Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>

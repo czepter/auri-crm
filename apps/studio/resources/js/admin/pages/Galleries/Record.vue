@@ -526,7 +526,7 @@ function megabytes(bytes: number) {
               <div class="relative">
                 <img v-if="cover?.src" class="block aspect-video w-full object-cover" :src="`${cover.src}?w=1200&fmt=jpeg`" alt="" />
                 <div class="absolute inset-x-0 bottom-0 bg-[linear-gradient(transparent,rgba(20,16,14,0.55))] px-5 py-[22px] text-center text-paper">
-                  <b class="block text-title leading-[1.2] font-semibold">{{ gallery.title }}</b>
+                  <b class="block text-title leading-[1.2] font-semibold break-words">{{ gallery.title }}</b>
                   <span class="text-small opacity-85">{{ $t('contacts.assetCount', figures.assets) }}</span>
                 </div>
               </div>

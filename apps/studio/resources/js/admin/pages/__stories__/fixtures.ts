@@ -457,6 +457,7 @@ export const header: App.Crm.Screens.CaseHeaderData = {
     paymentPlan: null,
     galleries: [],
     history: thread,
+    nextAction: null,
 }
 
 /** Dieselbe Kopfzeile vor der Buchung: drei Reiter, Stufenbalken in der Anfragepipeline. */
@@ -488,6 +489,7 @@ export const leadHeader: App.Crm.Screens.CaseHeaderData = {
     paymentPlan: null,
     galleries: [],
     history: leadThread,
+    nextAction: null,
 }
 
 /** Die `lead`-Prop des Anfragebildschirms — kein eigener Data-Typ, deshalb hier ausgeschrieben. */

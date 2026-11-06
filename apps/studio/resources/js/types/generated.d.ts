@@ -539,6 +539,11 @@ title: string | null,
 expiresAt: string | null,
 }[],
 history: App.Crm.Data.ThreadEntryData[],
+nextAction: {
+label: string,
+href: string | null,
+post: string | null,
+} | null,
 };
 }
 }

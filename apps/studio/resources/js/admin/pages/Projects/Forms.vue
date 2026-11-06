@@ -128,12 +128,12 @@ function summary(instance: App.Crm.Data.FormInstanceData): string {
   <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
     <ProjectShell :header="header" active="documents" child="forms">
       <template v-if="header.canManageForms" #actions>
-        <Button v-if="formTemplates.length === 1" variant="pill" type="button" @click="createFrom(formTemplates[0].value)">
+        <Button v-if="formTemplates.length === 1" variant="outline" type="button" @click="createFrom(formTemplates[0].value)">
           {{ $t('formInstances.send') }}
         </Button>
         <DropdownMenu v-else-if="formTemplates.length">
           <DropdownMenuTrigger as-child>
-            <Button variant="pill" type="button">{{ $t('formInstances.send') }}</Button>
+            <Button variant="outline" type="button">{{ $t('formInstances.send') }}</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem v-for="template in formTemplates" :key="template.value" @select="createFrom(template.value)">
