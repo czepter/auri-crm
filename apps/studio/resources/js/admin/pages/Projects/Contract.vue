@@ -70,6 +70,8 @@ const status = computed<'draft' | 'sent' | 'signed'>(() => {
 const statusChip = { draft: 'neutral', sent: 'warn', signed: 'success' } as const
 
 const editing = ref(false)
+// The editor's save is the one dark button while it is open.
+const lead = computed(() => (editing.value ? 'outline' : 'pill'))
 const saving = ref(false)
 
 function save() {
@@ -143,20 +145,20 @@ function day(value: string | null): string {
 
               <div v-if="header.canManageContracts" class="ml-auto flex items-center gap-2">
                 <template v-if="status === 'draft'">
-                  <Button v-if="!contract.signers.length" variant="pill" type="button" @click="pickSigners">
+                  <Button v-if="!contract.signers.length" :variant="lead" type="button" @click="pickSigners">
                     {{ $t('project.contractSignersPick') }}
                   </Button>
-                  <Button :variant="contract.signers.length ? 'pill' : 'outline'" type="button" :disabled="!contract.signers.length" @click="send">
+                  <Button :variant="contract.signers.length ? lead : 'outline'" type="button" :disabled="!contract.signers.length" @click="send">
                     {{ $t('project.contractSend') }}
                   </Button>
                 </template>
-                <Button v-else-if="status === 'sent' && !contract.signers.length" variant="pill" type="button" @click="pickSigners">
+                <Button v-else-if="status === 'sent' && !contract.signers.length" :variant="lead" type="button" @click="pickSigners">
                   {{ $t('project.contractSignersPick') }}
                 </Button>
-                <Button v-else-if="status === 'sent' && unsigned.length" variant="pill" type="button" @click="remindAll()">
+                <Button v-else-if="status === 'sent' && unsigned.length" :variant="lead" type="button" @click="remindAll()">
                   {{ $t('project.contractRemind') }}
                 </Button>
-                <Button v-else-if="contract.downloadUrl" as="a" variant="pill" :href="contract.downloadUrl" download>
+                <Button v-else-if="contract.downloadUrl" as="a" :variant="lead" :href="contract.downloadUrl" download>
                   {{ $t('project.contractDownload') }}
                 </Button>
               </div>
