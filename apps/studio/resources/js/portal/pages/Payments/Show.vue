@@ -5,9 +5,11 @@ import PortalBack from '@/portal/components/PortalBack.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalLabel from '@/portal/components/PortalLabel.vue'
-import PortalRow from '@/portal/components/PortalRow.vue'
+import PortalDot from '@/portal/components/PortalDot.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
+import { dayDate } from '@/portal/lib/dates'
+import { formatEuros } from '@/lib/money'
 import { Button } from '@/ui/button'
 
 type Installment = {
@@ -68,19 +70,18 @@ function payNow(installmentId: string) {
   })
 }
 
-// The one euro/cent boundary this page crosses — see resources/js/admin/lib/
-// money.ts for the admin-side twin of this. Inlined rather than imported: no
-// portal page has needed a shared money helper yet, and importing across the
-// admin/portal bundle split would blur the surface-isolation the two
-// entrypoints otherwise keep (see resources/js/portal/main.ts's own note).
-function formatEuros(cents: number) {
-  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(cents / 100)
-}
+const hasPayment = computed(() => props.stripeEnabled || !!props.bankDetails.iban)
+const copied = ref<string | null>(null)
 
-function longDate(date: string) {
-  return new Date(date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+async function copy(key: string, text: string) {
+  try {
+    await navigator.clipboard.writeText(text)
+    copied.value = key
+    setTimeout(() => (copied.value = null), 1800)
+  } catch {
+    copied.value = null
+  }
 }
-
 
 const BAND = 'max-w-[880px] border-t border-border pt-12'
 </script>
@@ -122,42 +123,53 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
         <section class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12">
           <div :class="BAND">
             <PortalLabel class="mb-6">{{ $t('portal.installmentsTitle') }}</PortalLabel>
-            <PortalRow
+            <div
               v-for="installment in plan.installments"
               :key="installment.id"
-              :title="installment.label"
-              :state="installment.status === 'paid' || installment.status === 'cancelled' ? 'done' : installment.isLate ? 'late' : 'open'"
-              :note="installment.status === 'paid' || installment.status === 'cancelled'
-                ? installment.statusLabel
-                : $t(installment.isLate ? 'portal.overdueSince' : 'portal.dueOn', { date: longDate(installment.dueOn) })"
-              :aside="formatEuros(installment.amount)"
-              :aside-open="!['paid', 'cancelled'].includes(installment.status)"
+              class="border-b border-border py-5"
             >
-              <template #action>
-                <span class="flex flex-wrap items-center gap-4">
-                  <!-- #419: auf die Seite, nicht aufs PDF. Erst ab der
-                       Nummer — vorher gibt es keine Rechnung zu zeigen. -->
-                  <Link
-                    v-if="installment.invoiceNumber !== null"
-                    class="text-[13px] whitespace-nowrap text-muted-foreground hover:text-foreground"
-                    :href="`/projekte/${project.id}/zahlungen/${installment.invoiceId}`"
-                  >{{ $t('portal.invoiceDownload', { number: installment.invoiceNumber }) }}</Link>
-                  <Button
-                    v-if="stripeEnabled && !['paid', 'cancelled'].includes(installment.status)"
-                    variant="portal-chip"
-                    type="button"
-                    :disabled="payingId === installment.id"
-                    @click="payNow(installment.id)"
-                  >
-                    <!-- #414: der Knopf nennt, was er abbucht — nach einer
-                         Teilzahlung ist das der Rest und nicht die Rate. -->
-                    {{ installment.remaining === installment.amount
-                      ? $t('portal.payNowButton')
-                      : $t('portal.payNowRemaining', { amount: formatEuros(installment.remaining) }) }}
-                  </Button>
-                </span>
-              </template>
-            </PortalRow>
+              <div class="flex items-baseline justify-between gap-4">
+                <span class="font-serif text-[20px] leading-[1.25] tracking-[-0.01em]">{{ installment.label }}</span>
+                <span
+                  class="text-[15px] leading-none font-semibold tabular-nums whitespace-nowrap"
+                  :class="['paid', 'cancelled'].includes(installment.status) ? 'text-muted-foreground' : 'text-action'"
+                >{{ formatEuros(installment.amount) }}</span>
+              </div>
+              <p class="mt-1.5 flex items-center gap-2 text-[13.5px] text-muted-foreground">
+                <PortalDot :state="['paid', 'cancelled'].includes(installment.status) ? 'done' : installment.isLate ? 'late' : 'open'" />
+                {{ ['paid', 'cancelled'].includes(installment.status)
+                  ? installment.statusLabel
+                  : $t(installment.isLate ? 'portal.overdueSince' : 'portal.dueOn', { date: dayDate(installment.dueOn) }) }}
+              </p>
+
+              <div v-if="!['paid', 'cancelled'].includes(installment.status) && hasPayment" class="mt-4">
+                <!-- #414: der Knopf nennt, was er abbucht — nach einer
+                     Teilzahlung ist das der Rest und nicht die Rate. -->
+                <Button
+                  v-if="stripeEnabled"
+                  class="w-full justify-center min-[700px]:w-auto"
+                  variant="portal"
+                  type="button"
+                  :disabled="payingId === installment.id"
+                  @click="payNow(installment.id)"
+                >
+                  {{ installment.remaining === installment.amount
+                    ? $t('portal.payButton')
+                    : `${$t('portal.payButton')} · ${formatEuros(installment.remaining)}` }}
+                </Button>
+                <Button v-else class="w-full justify-center min-[700px]:w-auto" as="a" variant="portal" href="#ueberweisen">
+                  {{ $t('portal.payButton') }}
+                </Button>
+              </div>
+
+              <!-- #419: auf die Seite, nicht aufs PDF. Erst ab der
+                   Nummer — vorher gibt es keine Rechnung zu zeigen. -->
+              <Link
+                v-if="installment.invoiceNumber !== null"
+                class="mt-2 inline-flex min-h-11 items-center text-[13px] whitespace-nowrap text-muted-foreground hover:text-foreground"
+                :href="`/projekte/${project.id}/zahlungen/${installment.invoiceId}`"
+              >{{ $t('portal.invoiceDownload', { number: installment.invoiceNumber }) }}</Link>
+            </div>
           </div>
         </section>
 
@@ -166,30 +178,49 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
              to which account and under which reference). Bank details are
              optional in settings, and half a transfer block — labels with
              nothing behind them — is worse than none. -->
-        <section v-if="bankDetails.iban" class="animate-rise [animation-delay:320ms] motion-reduce:animate-none mt-12">
+        <section v-if="bankDetails.iban" id="ueberweisen" class="scroll-mt-24 animate-rise [animation-delay:320ms] motion-reduce:animate-none mt-12">
           <div :class="BAND">
             <PortalLabel class="mb-6">{{ $t('portal.transferTitle') }}</PortalLabel>
-            <dl class="m-0 grid max-w-[560px] grid-cols-[148px_1fr] gap-x-6 gap-y-3 max-[700px]:grid-cols-1 max-[700px]:gap-y-0">
-              <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.transferAccountHolder') }}</dt>
-              <dd class="m-0 text-[14.5px]">{{ bankDetails.accountHolder }}</dd>
-              <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.transferIban') }}</dt>
-              <dd class="m-0 text-[14.5px] tabular-nums">{{ bankDetails.iban }}</dd>
-              <dt v-if="bankDetails.bic" class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.transferBic') }}</dt>
-              <dd v-if="bankDetails.bic" class="m-0 text-[14.5px] tabular-nums">{{ bankDetails.bic }}</dd>
+            <dl class="m-0 grid max-w-[560px] gap-y-5">
+              <div v-if="bankDetails.accountHolder">
+                <dt class="text-[13px] text-muted-foreground">{{ $t('portal.transferAccountHolder') }}</dt>
+                <dd class="m-0 text-[15px]">{{ bankDetails.accountHolder }}</dd>
+              </div>
+              <div>
+                <dt class="text-[13px] text-muted-foreground">{{ $t('portal.transferIban') }}</dt>
+                <dd class="m-0 flex items-center justify-between gap-4 text-[15px] tabular-nums">
+                  {{ bankDetails.iban }}
+                  <Button type="button" variant="portal-chip" @click="copy('iban', bankDetails.iban!)">
+                    {{ copied === 'iban' ? $t('gallery.copied') : $t('gallery.copy') }}
+                  </Button>
+                </dd>
+              </div>
+              <div v-if="bankDetails.bic">
+                <dt class="text-[13px] text-muted-foreground">{{ $t('portal.transferBic') }}</dt>
+                <dd class="m-0 text-[15px] tabular-nums">{{ bankDetails.bic }}</dd>
+              </div>
 
               <!-- M-06: each open installment transfers under its own invoice
                    number. `plan.reference` is the pre-M-06 fallback and is null
                    for every plan created since. -->
-              <template v-for="installment in referencedInstallments" :key="installment.id">
-                <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.transferReference') }}</dt>
-                <dd class="m-0 text-[14.5px] tabular-nums">{{ installment.invoiceNumber }} ({{ installment.label }})</dd>
-              </template>
-              <template v-if="!referencedInstallments.length">
-                <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.transferReference') }}</dt>
-                <dd class="m-0 text-[14.5px] tabular-nums">
-                  {{ plan.reference ?? $t('portal.transferReferencePending') }}
+              <div v-for="installment in referencedInstallments" :key="installment.id">
+                <dt class="text-[13px] text-muted-foreground">{{ $t('portal.transferReference') }}</dt>
+                <dd class="m-0 flex items-center justify-between gap-4 text-[15px] tabular-nums">
+                  {{ installment.invoiceNumber }} ({{ installment.label }})
+                  <Button type="button" variant="portal-chip" @click="copy(installment.id, installment.invoiceNumber!)">
+                    {{ copied === installment.id ? $t('gallery.copied') : $t('gallery.copy') }}
+                  </Button>
                 </dd>
-              </template>
+              </div>
+              <div v-if="!referencedInstallments.length">
+                <dt class="text-[13px] text-muted-foreground">{{ $t('portal.transferReference') }}</dt>
+                <dd class="m-0 flex items-center justify-between gap-4 text-[15px] tabular-nums">
+                  {{ plan.reference ?? $t('portal.transferReferencePending') }}
+                  <Button v-if="plan.reference" type="button" variant="portal-chip" @click="copy('ref', plan.reference)">
+                    {{ copied === 'ref' ? $t('gallery.copied') : $t('gallery.copy') }}
+                  </Button>
+                </dd>
+              </div>
             </dl>
           </div>
         </section>
