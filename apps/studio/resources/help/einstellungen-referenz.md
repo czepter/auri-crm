@@ -2,7 +2,7 @@
 titel: Studio-Profil — Begriffe und Regeln
 beschreibung: Wo Firmierung, Anzeigename und Bankverbindung außerhalb dieses Bildschirms auftauchen.
 art: referenz
-screens: [settings.general, settings.payment]
+screens: [settings.general]
 faehigkeit: manage_settings
 ---
 

@@ -40,7 +40,7 @@ export function percentToBasisPoints(value: string): number | null {
 }
 
 export function basisPointsToPercent(bps: number | null): string {
-  return bps === null ? '' : (bps / 100).toFixed(2)
+  return bps === null ? '' : (bps / 100).toFixed(2).replace('.', ',')
 }
 
 /** For reading, not for a form field: `19`, `12,5`. */
