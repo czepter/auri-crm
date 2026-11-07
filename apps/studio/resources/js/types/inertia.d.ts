@@ -5,7 +5,7 @@ declare module '@inertiajs/core' {
     flashDataType: { status: string | null; secret: string | null }
     sharedPageProps: {
       auth: { user: App.Data.StaffProfileData | null; can: App.Enums.Capability[] }
-      nav: { leads: number; projects: number; unread: number } | null
+      nav: { leads: number; projects: number; unread: number; drafts: number } | null
       release?: { installed: string; updateAvailable: boolean }
       live: string | null
       flash: { status: string | null; secret: string | null }

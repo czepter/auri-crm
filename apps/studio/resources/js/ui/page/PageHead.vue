@@ -23,7 +23,7 @@ defineProps<{ title: string; kicker?: string; kickerHref?: string }>()
             <h1
                 class="m-0 text-[20px] leading-7 font-semibold tracking-[-0.02em] max-[640px]:w-full"
             >
-                {{ title }}
+                <slot name="title">{{ title }}</slot>
             </h1>
             <slot />
             <HelpButton :class="$slots.default ? undefined : 'ml-auto'" />

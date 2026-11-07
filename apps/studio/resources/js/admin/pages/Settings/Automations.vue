@@ -1,9 +1,10 @@
 <script setup lang="ts">
 /*
- * Alle Regeln in einer Karte: der Auslöser im Klartext unter dem Namen, wer
+ * Alle Regeln nach Projektverlauf gruppiert: der Auslöser im Klartext unter dem Namen, wer
  * sie hört, die Bedingung und der letzte Lauf. Bearbeitet wird eine Regel
  * auf ihrer eigenen Seite — hier steht nur, was man vergleicht.
  */
+import { computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormShell from '@/ui/page/FormShell.vue'
@@ -13,22 +14,17 @@ import { Button } from '@/ui/button'
 import { useLiveProps } from '@/admin/lib/liveReload'
 import Chip from '@/ui/page/Chip.vue'
 
-defineProps<{ rules: App.Automation.Data.AutomationRuleData[]; timezone: string }>()
+const props = defineProps<{ rules: App.Automation.Data.AutomationRuleData[]; timezone: string }>()
 useLiveProps(['rules', 'timezone'])
 
-function create() {
-  router.post('/einstellungen/automationen', {
-    name: 'Neue Regel',
-    anchor: 'per_shoot',
-    offset_days: 7,
-    direction: 'before',
-    recipient_type: 'client',
-    condition: null,
-    notification_subject: 'Erinnerung',
-    notification_body: 'Zu {{ project.name }}.',
-    is_active: false,
-  })
-}
+const groups = computed(() => {
+  const byGroup = new Map<string, App.Automation.Data.AutomationRuleData[]>()
+  for (const rule of [...props.rules].sort((a, b) => a.order - b.order)) byGroup.set(rule.group, [...(byGroup.get(rule.group) ?? []), rule])
+
+  return [...byGroup]
+})
+
+const create = () => router.post('/einstellungen/automationen')
 </script>
 
 <template>
@@ -50,36 +46,40 @@ function create() {
           <Button variant="pill" type="button" @click="create">{{ $t('automations.add') }}</Button>
         </Empty>
 
-        <div v-else class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
-          <Link
-            v-for="rule in rules"
-            :key="rule.id"
-            class="flex items-center gap-4 border-b border-rule px-5 py-3.5 no-underline last:border-b-0 hover:bg-sunk"
-            :href="`/einstellungen/automationen/${rule.id}`"
-          >
-            <span class="min-w-0 flex-1">
-              <span class="block truncate text-ui font-medium">{{ rule.name }}</span>
-              <span class="block truncate text-small text-ink-2">{{ rule.triggerLabel }}</span>
-            </span>
+        <template v-else>
+          <section v-for="[group, list] in groups" :key="group" class="mb-6 last:mb-0">
+            <h2 class="m-0 mb-2 text-small leading-none font-semibold text-foreground">{{ group }}</h2>
+            <div class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
+              <div
+                v-for="rule in list"
+                :key="rule.id"
+                class="relative flex items-center gap-4 border-b border-rule px-5 py-1 last:border-b-0 hover:bg-sunk"
+              >
+                <Link class="min-h-11 min-w-0 flex-1 content-center text-foreground no-underline after:absolute after:inset-0" :href="`/einstellungen/automationen/${rule.id}`">
+                  <span class="block truncate text-ui font-medium">{{ rule.name }}</span>
+                  <span class="block truncate text-small text-ink-2">{{ rule.triggerLabel }}</span>
+                </Link>
 
-            <span class="w-24 flex-none text-small text-ink-2">{{ rule.recipientLabel }}</span>
-            <span class="w-44 flex-none text-small text-ink-2">{{ rule.conditionLabel ?? '—' }}</span>
-            <span class="flex w-48 flex-none items-center gap-1.5 text-small" :class="rule.lastRunFailed ? 'text-destructive' : 'text-faint'">
-              <span v-if="rule.lastRunFailed" class="size-1.5 flex-none rounded-full bg-destructive" />
-              {{ rule.lastRunLabel ?? '—' }}
-            </span>
+                <span class="w-24 flex-none text-small text-ink-2">{{ rule.recipientLabel }}</span>
+                <span class="w-44 flex-none text-small text-ink-2">{{ rule.conditionLabel }}</span>
+                <span class="flex w-48 flex-none items-center gap-1.5 text-small" :class="rule.lastRunFailed ? 'text-destructive' : 'text-faint'">
+                  <span v-if="rule.lastRunFailed" class="size-1.5 flex-none rounded-full bg-destructive" />
+                  {{ rule.lastRunLabel }}
+                </span>
+                <span class="w-24 flex-none text-small">
+                  <Link v-if="rule.drafts > 0" class="relative z-10 inline-flex min-h-11 items-center text-foreground underline underline-offset-2" href="/posteingang">{{ $t('automations.draftsOpen', rule.drafts) }}</Link>
+                </span>
 
-            <Chip
-              class="w-[84px] justify-center"
-              :tone="rule.lastRunFailed ? 'danger' : rule.isActive ? 'success' : 'neutral'"
-            >{{ rule.lastRunFailed ? $t('automations.error') : rule.isActive ? $t('automations.active') : $t('automations.paused') }}</Chip>
-          </Link>
-        </div>
+                <Chip
+                  class="w-[84px] justify-center"
+                  :tone="rule.lastRunFailed ? 'danger' : rule.isActive ? 'success' : 'neutral'"
+                >{{ rule.lastRunFailed ? $t('automations.error') : rule.isActive ? $t('automations.active') : $t('automations.paused') }}</Chip>
+              </div>
+            </div>
+          </section>
 
-        <div v-if="rules.length" class="mt-3 flex gap-8 text-small text-faint">
-          <span>{{ $t('automations.nextRun', { time: '06:30' }) }}</span>
-          <span>{{ $t('automations.timezone', { zone: timezone }) }}</span>
-        </div>
+          <div class="mt-3 text-small text-faint">{{ $t('automations.timezone', { zone: timezone }) }}</div>
+        </template>
       </div>
     </FormShell>
   </AdminLayout>

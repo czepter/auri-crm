@@ -154,10 +154,11 @@ it('resolves every conflict on the board in a bounded number of queries', functi
     $count = count(DB::getRawQueryLog());
     DB::disableQueryLog();
 
-    // A per-card conflict lookup would put this well above 25. The +2 over
+    // A per-card conflict lookup would put this well above 26. The +2 over
     // the old ceiling is the fixed, non-scaling cost of a permission check
-    // through spatie/laravel-permission (loading the user's roles once).
-    expect($count)->toBeLessThan(25);
+    // through spatie/laravel-permission (loading the user's roles once), the
+    // +1 the nav's draft count.
+    expect($count)->toBeLessThan(26);
 });
 
 it('flags a card whose date falls inside a studio closure, naming it', function () {

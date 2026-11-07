@@ -1,0 +1,11 @@
+import {chromium,adminPage,settle} from './round-verify-lib.mjs'
+const errs=[]; const b=await chromium.launch(); const p=await adminPage(b,errs)
+p.on('console',m=>console.log('C',m.text())); p.on('pageerror',e=>console.log('ERR',e.message))
+await p.setViewportSize({width:1920,height:1080}); await p.goto('http://localhost:8000/einstellungen/automationen/roarwucsos7u4wh6hat0x1s4'); await settle(p,1500)
+const S=p.locator('[role=textbox]').nth(0)
+await S.click(); await p.keyboard.press('End'); await p.keyboard.type(' {{shoot.date}}'); await p.waitForTimeout(400); await p.keyboard.type(' x')
+await S.click(); await p.keyboard.press('Control+End')
+await p.getByRole('button',{name:'Feld einfügen'}).click(); await p.waitForTimeout(300)
+await p.getByRole('button',{name:/Projektname/}).first().click(); await p.waitForTimeout(500)
+console.log(await S.evaluate(e=>[...e.childNodes].map(n=>n.nodeType===3?n.textContent:'<'+n.dataset.mf+'>').join('|')))
+await b.close()

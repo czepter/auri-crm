@@ -448,6 +448,10 @@ Route::middleware('audience:staff')->group(function () {
             ->name('automations.store');
         Route::get('/einstellungen/automationen/{automationRule}', [AutomationRuleController::class, 'edit'])
             ->name('automations.edit');
+        Route::get('/einstellungen/automationen/{automationRule}/vorschau', [AutomationRuleController::class, 'preview'])
+            ->name('automations.preview');
+        Route::post('/einstellungen/automationen/{automationRule}/testmail', [AutomationRuleController::class, 'testMail'])
+            ->name('automations.test-mail');
         Route::patch('/einstellungen/automationen/{automationRule}', [AutomationRuleController::class, 'update'])
             ->name('automations.update');
         Route::delete('/einstellungen/automationen/{automationRule}', [AutomationRuleController::class, 'destroy'])

@@ -2,9 +2,11 @@
 
 namespace App\Automation\Data;
 
+use App\Automation\Enums\AutomationAnchor;
 use App\Automation\Enums\AutomationRunStatus;
 use App\Automation\Models\AutomationRule;
 use App\Automation\Models\AutomationRun;
+use Illuminate\Support\Facades\Lang;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -35,6 +37,9 @@ class AutomationRuleData extends Data
         public ?string $direction,
         public ?string $projectType,
         public string $action,
+        public int $drafts,
+        public string $group,
+        public int $order,
     ) {}
 
     public static function fromModel(AutomationRule $rule): self
@@ -59,6 +64,9 @@ class AutomationRuleData extends Data
             direction: $rule->direction?->value,
             projectType: $rule->project_type,
             action: $rule->action->value,
+            drafts: $rule->drafts_count ?? 0,
+            group: self::placement($rule)['group'],
+            order: self::placement($rule)['order'],
         );
     }
 
@@ -66,31 +74,49 @@ class AutomationRuleData extends Data
     {
         $name = class_basename($class);
 
-        return [
-            'CaseBooked' => 'Projekt gebucht',
-            'LeadCaptured' => 'Anfrage eingegangen',
-            'LeadLost' => 'Anfrage verloren',
-            'LeadStageChanged' => 'Anfrage verschoben',
-            'ShootStatusChanged' => 'Shooting-Status geändert',
-            'ShootCancelled' => 'Shooting abgesagt',
-            'ContractSigned' => 'Vertrag unterschrieben',
-            'InstallmentPaid' => 'Rate bezahlt',
-            'InstallmentOverdue' => 'Rate überfällig',
-            'QuoteRevised' => 'Angebot überarbeitet',
-        ][$name] ?? $name;
+        return Lang::has("settings.events.{$name}") ? __("settings.events.{$name}") : $name;
     }
 
     /** The trigger as a sentence, because "per_shoot / 7 / before" is three columns of nothing. */
     private static function trigger(AutomationRule $rule): string
     {
         if ($rule->anchor === null) {
-            return self::event((string) $rule->event_class);
+            $name = class_basename((string) $rule->event_class);
+
+            return Lang::has("settings.event_clauses.{$name}") ? rtrim(__("settings.event_clauses.{$name}"), ',') : $name;
+        }
+
+        if ($rule->offset_days === 0) {
+            return "Am {$rule->anchor->at()}";
         }
 
         $side = $rule->direction?->value === 'before' ? 'vor' : 'nach';
         $unit = $rule->offset_days === 1 ? 'Tag' : 'Tage';
 
-        return "{$rule->offset_days} {$unit} {$side}: {$rule->anchor->label()}";
+        return "{$rule->offset_days} {$unit} {$side} {$rule->anchor->noun()}";
+    }
+
+    /**
+     * Where the rule sits along the project. Within an anchor, a countdown
+     * sorts before the date and a wait after it.
+     *
+     * @return array{group: string, order: int}
+     */
+    private static function placement(AutomationRule $rule): array
+    {
+        if ($rule->anchor === null) {
+            $event = __('settings.event_groups.'.class_basename((string) $rule->event_class));
+
+            return ['group' => $event['group'], 'order' => $event['order'] * 1000 + 500];
+        }
+
+        $days = $rule->offset_days * ($rule->direction?->value === 'before' ? -1 : 1);
+
+        if (in_array($rule->anchor, [AutomationAnchor::PerShoot, AutomationAnchor::PrimaryShoot], true) && $days > 0) {
+            return ['group' => 'Nachher', 'order' => 90_000 + 500 + $days];
+        }
+
+        return ['group' => $rule->anchor->group(), 'order' => $rule->anchor->order() * 1000 + 500 + $days];
     }
 
     /**
