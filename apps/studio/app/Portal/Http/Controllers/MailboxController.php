@@ -58,7 +58,7 @@ class MailboxController extends Controller
 
         return Inertia::render('Threads/Index', [
             'contact' => ['name' => $contact->name],
-            'live' => LiveUpdate::subscribePortal($contact),
+            'live' => LiveUpdate::subscribePortal($contact->public_id),
             'studioName' => StudioSettings::current()->display_name,
             'showSwitcher' => $contact->visibleProjects()->count() > 1,
             'threads' => $threads->map(fn (Thread $thread) => [

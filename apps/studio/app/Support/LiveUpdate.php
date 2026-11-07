@@ -2,8 +2,6 @@
 
 namespace App\Support;
 
-use App\Crm\Models\Contact;
-use App\Engagement\Models\Thread;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -35,18 +33,16 @@ class LiveUpdate
      * mailbox. The portal has its own hub (it is another host, so the
      * subscriber cookie could not reach the admin's), reached over
      * MERCURE_PORTAL_URL.
+     *
+     * @param  iterable<string>  $contactIds  public ids
      */
-    public static function publishThread(Thread $thread): void
+    public static function publishToContacts(iterable $contactIds): void
     {
         if (config('services.mercure.portal_url') === null) {
             return;
         }
 
-        $contacts = Contact::query()
-            ->whereIn('id', $thread->participants()->whereNotNull('contact_id')->select('contact_id'))
-            ->pluck('public_id');
-
-        foreach ($contacts as $contactId) {
+        foreach ($contactIds as $contactId) {
             self::post(config('services.mercure.portal_url'), self::contactTopic($contactId));
         }
     }
@@ -101,7 +97,7 @@ class LiveUpdate
     }
 
     /** The signed-in portal contact's cookie, valid for their own topic only. */
-    public static function subscribePortal(Contact $contact): ?string
+    public static function subscribePortal(string $contactId): ?string
     {
         $key = config('services.mercure.subscriber_key');
 
@@ -110,7 +106,7 @@ class LiveUpdate
         }
 
         $minutes = (int) config('session.lifetime');
-        $topic = self::contactTopic($contact->public_id);
+        $topic = self::contactTopic($contactId);
 
         // The bare name is a local hub on plain HTTP; it must not collide with
         // the admin hub's cookie there (docker-compose.yml, mercure-portal).
