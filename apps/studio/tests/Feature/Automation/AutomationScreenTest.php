@@ -1,5 +1,6 @@
 <?php
 
+use Closure;
 use App\Automation\Data\AutomationRuleData;
 use App\Automation\Enums\AutomationAction;
 use App\Automation\Enums\AutomationAnchor;
@@ -256,7 +257,7 @@ it('previews the sample with the real studio data', function () {
         ->assertJsonPath('subject', 'Foto Kern GmbH / Hochzeit Meier & Kowalski');
 });
 
-it('keeps invoice fields as written in the preview unless the anchor is an instalment', function (?string $anchor, string $expected) {
+it('keeps invoice fields as written in the preview unless the anchor is an instalment', function (?string $anchor, string|Closure $expected) {
     $rule = AutomationRule::factory()->create();
 
     $this->actingAs(staffMember(StaffRole::Admin), 'staff')
@@ -264,11 +265,11 @@ it('keeps invoice fields as written in the preview unless the anchor is an insta
             'subject' => 'Rechnung {{ invoice.gross }}',
             'anchor' => $anchor,
         ])))
-        ->assertJsonPath('subject', $expected);
-})->with(fn () => [
+        ->assertJsonPath('subject', value($expected));
+})->with([
     'no anchor' => [null, 'Rechnung {{ invoice.gross }}'],
     'per shoot' => ['per_shoot', 'Rechnung {{ invoice.gross }}'],
-    'instalment' => ['installment_due', 'Rechnung '.MergeFieldVocabulary::sample()['invoice']['gross']],
+    'instalment' => ['installment_due', fn () => 'Rechnung '.MergeFieldVocabulary::sample()['invoice']['gross']],
 ]);
 
 it('previews the invoice of the next open instalment on a real project', function () {
