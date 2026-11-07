@@ -150,7 +150,7 @@ const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
               </PortalField>
 
               <div class="mt-2 flex flex-wrap items-center gap-4">
-                <Button variant="portal" type="submit" :disabled="form.processing">{{ $t('common.save') }}</Button>
+                <Button variant="portal" type="submit" :state="form.processing ? 'loading' : 'idle'" :disabled="form.processing">{{ $t('common.save') }}</Button>
                 <Button
                   class="py-0 text-[14px]"
                   type="button"

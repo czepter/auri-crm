@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import SendByMailView from '@/admin/components/templates/SendByMailView.vue'
 import { toast } from 'vue-sonner'
@@ -36,11 +37,15 @@ function cancel() {
   router.visit(`/auftraege/${props.projectId}`)
 }
 
+const processing = ref(false)
+
 function send({ subject, message }: { subject: string; message: EditorDocument }) {
   router.post(
     `/angebote/${props.quote.id}/versenden`,
     { subject, message: toPlainText(message) },
     {
+      onStart: () => (processing.value = true),
+      onFinish: () => (processing.value = false),
       onSuccess: () => router.visit(`/auftraege/${props.projectId}`),
       onError: (errors) => toast.error(errors.quote),
     },
@@ -54,6 +59,7 @@ function send({ subject, message }: { subject: string; message: EditorDocument }
     :subject="$t('quotes.title')"
     :message="message"
     :mail-html="mailHtml"
+    :processing="processing"
     @cancel="cancel"
     @send="send"
   />

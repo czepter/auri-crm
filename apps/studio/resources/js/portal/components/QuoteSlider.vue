@@ -13,6 +13,7 @@ import { useI18n } from 'vue-i18n'
 import { formatEuros } from '@/lib/money'
 import { applyDiscount, quoteDiscount, spread } from '@/lib/quoteTotals'
 import PortalChip from '@/portal/components/PortalChip.vue'
+import ValueFlash from '@/portal/components/ValueFlash.vue'
 import { dayDate, daysUntil } from '@/portal/lib/dates'
 import { splitStages } from '@/portal/lib/paymentStages'
 import { Button } from '@/ui/button'
@@ -152,7 +153,7 @@ function accept() {
         <span class="text-[46px] leading-[0.94] tracking-[-0.035em] tabular-nums">{{ hours }}</span>
         <span class="text-[16px] leading-[1.2] text-muted-foreground">{{ $t('quotes.hours') }}</span>
         <span class="ml-auto text-[16px] leading-[1.2] font-semibold text-[var(--accent)] tabular-nums">
-          {{ $t('quotes.imageCount', { count: images }) }}
+          <ValueFlash :value="images">{{ $t('quotes.imageCount', { count: images }) }}</ValueFlash>
         </span>
       </div>
 
@@ -194,7 +195,7 @@ function accept() {
           {{ $t('quotes.perHour', { amount: formatEuros(price(quote.hourlyRate ?? 0)) }) }}
         </span>
         <span class="hidden text-[16px] leading-[1.2] font-semibold text-[var(--accent)] tabular-nums lg:inline">
-          {{ $t('quotes.imageCount', { count: images }) }}
+          <ValueFlash :value="images">{{ $t('quotes.imageCount', { count: images }) }}</ValueFlash>
         </span>
       </div>
 
@@ -252,7 +253,7 @@ function accept() {
             <span
               class="mt-2.5 block text-[13px] leading-none font-semibold tabular-nums"
               :class="chosen.has(item.id) ? 'text-[var(--accent)]' : 'text-muted-foreground'"
-            >+ {{ formatEuros(price(item.netTotal)) }}</span>
+            >+ <ValueFlash :value="price(item.netTotal)">{{ formatEuros(price(item.netTotal)) }}</ValueFlash></span>
           </span>
         </button>
       </div>
@@ -260,24 +261,27 @@ function accept() {
 
     <!-- Desktop: klebendes Rail. Handy: klebende Leiste am Fuß. -->
     <aside
-      class="w-[340px] flex-none lg:sticky lg:top-8 lg:rounded-[24px] lg:border lg:border-border lg:p-8 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-10 max-lg:w-full max-lg:border-t max-lg:border-border max-lg:bg-background max-lg:px-[var(--gut)] max-lg:py-4"
+      class="w-[340px] flex-none lg:sticky lg:top-8 lg:rounded-[24px] lg:border lg:border-border lg:p-8 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-[calc(56px+env(safe-area-inset-bottom))] min-[761px]:max-lg:bottom-0 max-lg:z-10 max-lg:w-full max-lg:border-t max-lg:border-border max-lg:bg-background max-lg:px-6 max-lg:py-4"
     >
       <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <div class="text-[34px] leading-none tracking-[-0.03em] tabular-nums lg:text-[46px] lg:leading-[0.94]">{{ formatEuros(total) }}</div>
+        <div class="text-[34px] leading-none tracking-[-0.03em] tabular-nums lg:text-[46px] lg:leading-[0.94]">
+          <ValueFlash :value="total">{{ formatEuros(total) }}</ValueFlash>
+        </div>
         <PortalChip v-if="expiring !== null" tone="warn">{{ $t('portal.validDays', expiring) }}</PortalChip>
       </div>
 
       <div v-if="!accepted" class="mt-6 border-t border-border pt-5 max-lg:hidden">
         <div
           v-for="row in breakdown"
-          :key="row.label"
+          :key="row.lead ? 'lead' : row.label"
           class="flex justify-between gap-4 py-1 text-[13px]"
           :class="row.lead ? 'font-semibold' : 'text-muted-foreground'"
         >
           <span class="min-w-0 truncate">{{ row.label }}</span>
-          <span class="whitespace-nowrap tabular-nums">{{
-            row.amount === null ? $t('quotes.includedPrice') : formatEuros(row.amount)
-          }}</span>
+          <span class="whitespace-nowrap tabular-nums">
+            <ValueFlash v-if="row.amount !== null" :value="row.amount">{{ formatEuros(row.amount) }}</ValueFlash>
+            <template v-else>{{ $t('quotes.includedPrice') }}</template>
+          </span>
         </div>
       </div>
 
@@ -292,7 +296,7 @@ function accept() {
           <div
             class="mt-1.5 text-[15px] leading-[1.2] font-semibold tabular-nums lg:text-[22px] lg:tracking-[-0.02em]"
             :class="index === 0 ? 'text-[var(--accent)]' : ''"
-          >{{ formatEuros(stage.amount) }}</div>
+          ><ValueFlash :value="stage.amount">{{ formatEuros(stage.amount) }}</ValueFlash></div>
         </div>
       </div>
 
@@ -325,6 +329,7 @@ function accept() {
             class="mt-3.5 w-full rounded-[var(--r-pill)] py-[17px] text-[15px] font-semibold"
             variant="portal"
             type="button"
+            :state="form.processing ? 'loading' : 'idle'"
             :disabled="form.processing || ((agbUrl !== null || widerrufUrl !== null) && !form.terms)"
             @click="accept"
           >

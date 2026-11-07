@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { saveState } from '@/admin/lib/autosave'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormSection from '@/ui/page/FormSection.vue'
 import FormShell from '@/ui/page/FormShell.vue'
 import CreateSummary from '@/admin/components/CreateSummary.vue'
 import { Button } from '@/ui/button'
+import { CopyButton } from '@/ui/copy-button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
@@ -120,15 +121,6 @@ function submitPassword() {
 
 function submitEvents() {
   eventsForm.patch('/profil/benachrichtigungen', { preserveScroll: true })
-}
-
-const copied = ref(false)
-
-function copyFeedUrl(url: string) {
-  navigator.clipboard
-    ?.writeText(url)
-    .then(() => (copied.value = true))
-    .catch(() => (copied.value = false))
 }
 
 function regenerateFeedUrl() {
@@ -319,9 +311,7 @@ function regenerateFeedUrl() {
       <FormSection :title="$t('calendar.feedUrl')">
         <code class="block text-small leading-[1.5] break-all">{{ calendarFeedUrl }}</code>
         <div class="mt-4 flex items-center gap-2">
-          <Button type="button" variant="pill-muted" @click="copyFeedUrl(calendarFeedUrl!)">
-            {{ copied ? $t('gallery.copied') : $t('gallery.copy') }}
-          </Button>
+          <CopyButton :value="calendarFeedUrl!" />
           <Button type="button" variant="pill-muted" @click="regenerateFeedUrl()">
             {{ $t('calendar.revoke') }}
           </Button>

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
-import { Check, Copy } from 'lucide-vue-next'
+import { CopyButton } from '@/ui/copy-button'
 import { DatePicker } from '@/ui/date-picker'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
@@ -83,32 +83,7 @@ function saveExpiryOnBlur(text: string) {
 
 const addressPrefixText = computed(() => addressPrefix(props.gallery.url))
 
-// Was auf dem Schirm steht, nicht was gespeichert ist: der Knopf nimmt dem
-// Feld den Fokus, blur speichert, danach sind beide dasselbe.
-const copied = ref(false)
-// Über die id, nicht über einen Template-Ref: InputGroupInput ist eine
-// Komponente, ein Ref darauf gibt die Instanz und select() liefe ins Leere.
 const SLUG_FIELD = 'gallery-slug'
-
-// Verweigert der Browser die Zwischenablage, bleibt der Knopf sonst stumm
-// stehen und niemand merkt, dass nichts kopiert wurde. Dann markiert er
-// stattdessen das Feld — von Hand kopieren geht immer.
-function copyAddress() {
-  copied.value = false
-
-  const fallback = () => document.querySelector<HTMLInputElement>(`#${SLUG_FIELD}`)?.select()
-
-  if (!navigator.clipboard) {
-    fallback()
-
-    return
-  }
-
-  navigator.clipboard
-    .writeText(addressPrefixText.value + general.slug)
-    .then(() => (copied.value = true))
-    .catch(fallback)
-}
 
 // Download: the PIN belongs beside the switch that offers it, not in Zugang.
 const downloadPin = useForm({ download_pin: props.gallery.downloadPin ?? '' })
@@ -183,16 +158,7 @@ function day(iso: string | null) {
       <InputGroup class="max-w-[440px]">
         <InputGroupAddon>{{ addressPrefixText }}</InputGroupAddon>
         <InputGroupInput :id="SLUG_FIELD" v-model="general.slug" type="text" maxlength="60" :aria-label="$t('galleryRecord.slugLabel')" @blur="saveGeneral" />
-        <button
-          class="flex cursor-pointer items-center border-0 bg-transparent pr-[11px] pl-1.5 text-ink-2 hover:text-foreground [&_svg]:size-[15px]"
-          type="button"
-          :aria-label="$t('gallery.copy')"
-          :title="$t('gallery.copy')"
-          @click="copyAddress"
-        >
-          <Check v-if="copied" class="text-ok" />
-          <Copy v-else />
-        </button>
+        <CopyButton :value="addressPrefixText + general.slug" variant="ghost" class="flex-none px-3" />
       </InputGroup>
       <p v-if="general.errors.slug" class="text-small leading-[1.45] text-destructive">{{ general.errors.slug }}</p>
       <!-- The one fact nobody could derive from a text field: there is no

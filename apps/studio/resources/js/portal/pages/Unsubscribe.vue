@@ -38,7 +38,7 @@ function submit() {
         </p>
 
         <form v-if="!unsubscribed" class="mt-10" @submit.prevent="submit">
-          <Button variant="portal" type="submit" :disabled="form.processing">
+          <Button variant="portal" type="submit" :state="form.processing ? 'loading' : 'idle'" :disabled="form.processing">
             {{ $t('portal.unsubscribeConfirm') }}
           </Button>
         </form>

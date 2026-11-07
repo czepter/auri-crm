@@ -133,6 +133,7 @@ function sign() {
             class="min-h-12 w-full justify-center"
             variant="portal"
             type="submit"
+            :state="form.processing ? 'loading' : 'idle'"
             :disabled="form.processing || !form.consent || !form.typedName"
           >
             {{ $t('portal.signButton') }}

@@ -9,6 +9,7 @@ use App\Engagement\Data\ThreadData;
 use App\Engagement\Models\Thread;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
+use App\Support\LiveUpdate;
 use App\Portal\Support\PortalSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -57,6 +58,7 @@ class MailboxController extends Controller
 
         return Inertia::render('Threads/Index', [
             'contact' => ['name' => $contact->name],
+            'live' => LiveUpdate::subscribePortal($contact),
             'studioName' => StudioSettings::current()->display_name,
             'showSwitcher' => $contact->visibleProjects()->count() > 1,
             'threads' => $threads->map(fn (Thread $thread) => [

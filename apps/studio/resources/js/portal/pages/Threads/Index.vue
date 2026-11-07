@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, toRef, watch } from 'vue'
 import { Link, useForm, usePage } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
@@ -7,6 +7,7 @@ import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalSubhead from '@/portal/components/PortalSubhead.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 import { dayDate } from '@/portal/lib/dates'
+import { useLiveMessages } from '@/portal/lib/liveMessages'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
@@ -28,7 +29,10 @@ const props = defineProps<{
   preselected: string | null
   // P-09: with messaging limited to bookings, "Allgemein" is not on offer.
   generalAllowed: boolean
+  live: string | null
 }>()
+
+useLiveMessages(toRef(props, 'live'))
 
 // The compose form doubles as "new conversation" — the mailbox is empty on a
 // contact's first visit, so it opens in that state rather than behind a
@@ -75,17 +79,44 @@ function send() {
    document would — at the top, on the oldest line. Both openings need it:
    switching threads, and a reply arriving in the one already open. */
 const stream = ref<HTMLElement | null>(null)
+const unseen = ref(0)
+let atBottom = true
+
+function toBottom(behavior: ScrollBehavior = 'auto') {
+  stream.value?.scrollTo({ top: stream.value.scrollHeight, behavior })
+  unseen.value = 0
+}
+
+function onScroll() {
+  const el = stream.value
+  if (!el) return
+
+  atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 48
+  if (atBottom) unseen.value = 0
+}
+
+// A focus() after a smooth scrollTo cancels it.
+function jump() {
+  stream.value?.focus({ preventScroll: true })
+  toBottom(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth')
+}
 
 watch(
-  () => `${props.openThread?.id}:${props.openThread?.messages.length}`,
-  async () => {
-    await nextTick()
+  () => [props.openThread?.id, props.openThread?.messages.length] as const,
+  async ([id, count], previous) => {
+    const added = previous && id === previous[0] ? (count ?? 0) - (previous[1] ?? 0) : 0
+    const mine = props.openThread?.messages.at(-1)?.fromStaff === false
 
-    if (stream.value) {
-      stream.value.scrollTop = stream.value.scrollHeight
+    if (added > 0 && !atBottom && !mine) {
+      unseen.value += added
+
+      return
     }
+
+    await nextTick()
+    toBottom()
   },
-  { immediate: true },
+  { immediate: true, flush: 'post' },
 )
 
 function longDateTime(iso: string) {
@@ -183,7 +214,7 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
 
             <!-- One voice answering the other. Which is which is the side and
                  the ground, not a label on every line. -->
-            <div ref="stream" class="flex min-h-0 flex-1 flex-col overflow-y-auto">
+            <div ref="stream" tabindex="-1" class="relative flex min-h-0 flex-1 flex-col overflow-y-auto outline-none" @scroll.passive="onScroll">
               <!-- mt-auto, not justify-end: a short exchange sits down by the
                    composer where it was written, and a long one still scrolls
                    from its first line instead of being clipped at the top. -->
@@ -202,6 +233,17 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
                     {{ message.body }}
                   </div>
                 </div>
+              </div>
+
+              <div v-if="unseen > 0" class="sticky bottom-4 z-10 h-0 flex-none text-center">
+                <button
+                  type="button"
+                  class="-translate-y-full cursor-pointer rounded-[var(--r-pill)] border border-border bg-background px-4 py-2 text-[13px] font-medium shadow-md motion-reduce:transition-none"
+                  @click="jump"
+                >
+                  {{ $t('portal.messagesUnseen', unseen) }} ↓
+                </button>
+                <span class="sr-only" role="status">{{ $t('portal.messagesUnseen', unseen) }}</span>
               </div>
             </div>
           </template>
@@ -252,6 +294,7 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
                 class="absolute right-1.5 bottom-1.5 size-9 justify-center p-0"
                 variant="portal"
                 type="submit"
+                :state="form.processing ? 'loading' : 'idle'"
                 :disabled="form.processing || form.body.trim() === ''"
                 :aria-label="$t('portal.messagesSend')"
               >

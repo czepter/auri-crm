@@ -98,7 +98,7 @@ function submit() {
       </DialogBody>
 
       <DialogFooter>
-        <Button type="submit" form="installment-paid-form" :disabled="form.processing">
+        <Button type="submit" form="installment-paid-form" :disabled="form.processing" :state="form.processing ? 'loading' : 'idle'">
           {{ $t('payments.markPaidSubmit') }}
         </Button>
         <DialogClose as-child>

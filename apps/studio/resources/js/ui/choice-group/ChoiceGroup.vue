@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from "vue"
 import { useVModel } from "@vueuse/core"
-import { useId } from "vue"
+import { computed, useId, useTemplateRef } from "vue"
 import { cn } from "@/lib/utils"
 import { labelVariants } from "@/ui/label"
+import { SlidingIndicator, useSlidingIndicator } from "@/ui/sliding-indicator"
 
 /*
  * crm.css .choice — a handful of fixed values as buttons instead of a menu:
@@ -46,18 +47,25 @@ const name = useId()
 
 const CONTAINER = {
   default: "flex flex-wrap gap-1.5",
-  segmented: "flex max-w-full overflow-x-auto whitespace-nowrap rounded-lg bg-sunk p-[3px]",
+  segmented: "relative flex max-w-full overflow-x-auto whitespace-nowrap rounded-lg bg-sunk p-[3px]",
 }
 
 const ITEM = {
   default:
     "inline-block cursor-pointer rounded-[var(--r-sm)] bg-sunk px-3 py-1.5 text-small text-foreground peer-checked:bg-paper peer-checked:font-medium peer-checked:shadow-[inset_0_0_0_1px_var(--faint)]",
   segmented:
-    "inline-block cursor-pointer rounded-[6px] px-3.5 py-1 text-small leading-[1.4] font-normal text-foreground transition-colors duration-[120ms] ease-out peer-checked:bg-paper peer-checked:font-medium peer-checked:shadow-[0_1px_2px_rgba(24,24,27,.08),inset_0_0_0_1px_var(--faint)]",
+    "inline-block cursor-pointer rounded-[6px] px-3.5 py-1 text-small leading-[1.4] font-normal text-foreground transition-colors duration-[120ms] ease-out peer-checked:font-medium",
 }
 
 /* Ein Zeichen füllt keine Textzeile: es steht mittig in einem Feld, das so
    hoch ist wie breit, sonst liegt es in einer flachen Pille. */
+const SEGMENT_THUMB = "peer-checked:bg-paper peer-checked:shadow-[0_1px_2px_rgba(24,24,27,.08),inset_0_0_0_1px_var(--faint)]"
+
+const root = useTemplateRef<HTMLElement>("root")
+const rail = useTemplateRef<HTMLElement>("rail")
+const track = computed(() => (props.variant === "segmented" ? (props.label ? rail.value : root.value) : null))
+const { rect, animate } = useSlidingIndicator(track, () => model.value, { selector: "label:has(:checked)" })
+
 const ICON_ITEM
   = "flex size-[26px] cursor-pointer items-center justify-center rounded-[6px] text-foreground transition-colors duration-[120ms] ease-out peer-checked:bg-paper peer-checked:shadow-[inset_0_0_0_1px_var(--faint)] [&_svg]:size-[15px] [&_svg]:stroke-[1.75]"
 </script>
@@ -65,6 +73,7 @@ const ICON_ITEM
 <template>
   <component
     :is="label ? 'fieldset' : 'div'"
+    ref="root"
     data-slot="choice-group"
     :class="cn(label ? 'flex min-w-0 flex-col' : CONTAINER[variant], props.class)"
   >
@@ -76,7 +85,13 @@ const ICON_ITEM
          fieldset selbst und die Optionen fallen per `contents` hindurch. Der
          Rail des `segmented` stand vorher nie, wenn eine Beschriftung dabei
          war — die Optionen kamen dann als Spalte. -->
-    <div :class="label ? cn(CONTAINER[variant], variant === 'segmented' && 'self-start') : 'contents'">
+    <div ref="rail" :class="label ? cn(CONTAINER[variant], variant === 'segmented' && 'self-start') : 'contents'">
+      <SlidingIndicator
+        v-if="variant === 'segmented'"
+        :rect="rect"
+        :animate="animate"
+        class="rounded-[6px] bg-paper shadow-[0_1px_2px_rgba(24,24,27,.08),inset_0_0_0_1px_var(--faint)]"
+      />
       <label v-for="option in options" :key="option.value" class="relative">
         <input
           v-model="model"
@@ -89,7 +104,7 @@ const ICON_ITEM
         <!-- Der Slot ist für die Fälle, in denen ein Zeichen kürzer ist als
              sein Wort — die Beschriftung bleibt am Eingabefeld und damit für
              den Screenreader stehen. -->
-        <span :class="[icon ? ICON_ITEM : ITEM[variant], 'peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring']"><slot name="option" :option="option">{{ option.label }}</slot></span>
+        <span :class="[icon ? ICON_ITEM : ITEM[variant], variant === 'segmented' && !icon && !rect && SEGMENT_THUMB, 'peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring']"><slot name="option" :option="option">{{ option.label }}</slot></span>
       </label>
     </div>
   </component>

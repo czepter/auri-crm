@@ -133,7 +133,7 @@
  * that moves while it is being read is a second thing to attend to.
  */
 @theme {
-  --animate-rise: portal-rise .9s var(--ease) both;
+  --animate-rise: portal-rise .9s var(--ease) backwards;
 
   @keyframes portal-rise {
     from { opacity: 0; transform: translateY(14px); }
@@ -161,7 +161,15 @@
 [data-slot="alert-dialog-panel"][data-state="open"],
 [data-slot="popover-panel"][data-state="open"] { animation: nl-panel-in .12s ease-out; }
 
+@keyframes nl-menu-in { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes nl-menu-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(.98); } }
+
+[data-slot="context-menu-panel"] { transform-origin: var(--reka-context-menu-content-transform-origin); }
+[data-slot="context-menu-panel"][data-state="open"] { animation: nl-menu-in .2s cubic-bezier(.23, 1, .32, 1); }
+[data-slot="context-menu-panel"][data-state="closed"] { animation: nl-menu-out .14s cubic-bezier(.4, 0, 1, 1) forwards; }
+
 @media (prefers-reduced-motion: reduce) {
+  [data-slot="context-menu-panel"] { animation: none !important; }
   [data-slot="dialog-overlay"][data-state="open"],
   [data-slot="alert-dialog-overlay"][data-state="open"],
   [data-slot="dialog-panel"][data-state="open"],

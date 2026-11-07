@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
 } from '@/ui/alert-dialog'
 import { Button } from '@/ui/button'
+import { CopyButton } from '@/ui/copy-button'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
@@ -28,15 +29,6 @@ const props = defineProps<{
 useLiveProps(['tokens'])
 
 const secret = computed(() => usePage().props.flash?.secret as string | undefined)
-const copied = ref<string | null>(null)
-
-function copy(value: string) {
-  navigator.clipboard
-    ?.writeText(value)
-    .then(() => (copied.value = value))
-    .catch(() => (copied.value = null))
-}
-
 // The connection signs in through the studio's own OAuth approval
 // (mcp-claude-verbinden.md), so each client needs the address and nothing else.
 const clients = computed(() => [
@@ -54,10 +46,7 @@ function toggleScope(value: string, on: boolean | 'indeterminate') {
 function create() {
   form.post('/einstellungen/api-token', {
     preserveScroll: true,
-    onSuccess: () => {
-      form.reset()
-      copied.value = null
-    },
+    onSuccess: () => form.reset(),
   })
 }
 
@@ -84,9 +73,7 @@ function revoke() {
           <code class="block break-all text-ui tabular-nums">{{ secret }}</code>
           <span class="text-small leading-[1.45] font-normal text-faint">{{ $t('apiTokens.secretHint') }}</span>
           <div class="mt-2">
-            <Button type="button" variant="pill-muted" @click="copy(secret)">
-              {{ copied === secret ? $t('gallery.copied') : $t('gallery.copy') }}
-            </Button>
+            <CopyButton :value="secret" />
           </div>
         </FormSection>
 
@@ -100,9 +87,7 @@ function revoke() {
               <div class="text-ui font-semibold">{{ client.name }}</div>
               <pre class="m-0 mt-1 text-small leading-[1.5] break-all whitespace-pre-wrap text-ink-2"><code>{{ client.setup }}</code></pre>
             </div>
-            <Button type="button" variant="pill-muted" @click="copy(client.setup)">
-              {{ copied === client.setup ? $t('gallery.copied') : $t('gallery.copy') }}
-            </Button>
+            <CopyButton :value="client.setup" />
           </div>
           <Link class="mt-2.5 inline-block text-small" href="/hilfe/mcp-claude-verbinden">{{ $t('apiTokens.mcpHelp') }}</Link>
         </FormSection>

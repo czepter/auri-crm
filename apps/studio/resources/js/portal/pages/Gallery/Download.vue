@@ -257,6 +257,7 @@ const OPT = [
           type="button"
           variant="portal"
           class="mt-8"
+          :state="prepareForm.processing ? 'loading' : undefined"
           :disabled="prepareForm.processing || build?.status === 'building' || !available(chosenSize)"
           @click="prepare"
         >

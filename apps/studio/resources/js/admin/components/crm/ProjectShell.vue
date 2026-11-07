@@ -14,6 +14,8 @@ import { Label } from '@/ui/label'
 import { Switch } from '@/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
+import { HoldToConfirm } from '@/ui/hold-to-confirm'
+import { SlidingIndicator, useSlidingIndicator } from '@/ui/sliding-indicator'
 import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
 
 /*
@@ -38,6 +40,8 @@ watch(wide, (is) => is && props.active === 'info' && router.visit(props.header.t
 const tabNav = useTemplateRef<HTMLElement>('tabNav')
 // Fonts change the tab widths; centering before they load clips the last tab.
 onMounted(() => document.fonts.ready.then(() => tabNav.value?.querySelector('[aria-current]')?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'instant' })))
+
+const { rect: tabRect, animate: tabAnimate } = useSlidingIndicator(tabNav, () => props.active, { selector: '[aria-current]', key: 'project-tabs' })
 
 const subTabs = computed(() => props.header.tabs.find((tab) => tab.key === props.active)?.children ?? [])
 
@@ -179,15 +183,20 @@ function destroy() {
         <!-- The track scrolls once the tabs outgrow the column; a local
              background paints its whole scroll width, not only what shows. -->
         <div class="mt-4 max-[640px]:sticky max-[640px]:top-0 max-[640px]:z-[5] max-[640px]:-mx-4 max-[640px]:mt-2 max-[640px]:bg-background max-[640px]:px-4 max-[640px]:py-2">
-        <nav ref="tabNav" class="inline-flex max-w-full gap-0.5 overflow-x-auto rounded-lg p-[3px] text-small font-medium [background:linear-gradient(var(--sunk),var(--sunk))_local] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[640px]:[mask-image:linear-gradient(to_right,#000_calc(100%-28px),transparent)] max-[640px]:after:w-6 max-[640px]:after:flex-none max-[640px]:after:content-['']">
+        <nav ref="tabNav" class="relative inline-flex max-w-full gap-0.5 overflow-x-auto rounded-lg p-[3px] text-small font-medium [background:linear-gradient(var(--sunk),var(--sunk))_local] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[640px]:[mask-image:linear-gradient(to_right,#000_calc(100%-28px),transparent)] max-[640px]:after:w-6 max-[640px]:after:flex-none max-[640px]:after:content-['']">
+          <SlidingIndicator
+            :rect="tabRect"
+            :animate="tabAnimate"
+            class="rounded-[var(--r-sm)] bg-paper shadow-[0_1px_2px_rgba(24,24,27,.08),inset_0_-2px_0_var(--ink)]"
+          />
           <Link
             v-for="tab in header.tabs"
             :key="tab.key"
             :href="tab.href"
-            class="flex-none rounded-[var(--r-sm)] px-2.5 py-1 whitespace-nowrap no-underline"
+            class="relative flex-none rounded-[var(--r-sm)] px-2.5 py-1 whitespace-nowrap no-underline"
             :class="[
               tab.key === active
-                ? 'bg-paper font-semibold text-foreground shadow-[0_1px_2px_rgba(24,24,27,.08),inset_0_-2px_0_var(--ink)]'
+                ? ['font-semibold text-foreground', !tabRect && 'bg-paper shadow-[0_1px_2px_rgba(24,24,27,.08),inset_0_-2px_0_var(--ink)]']
                 : 'text-ink-2 hover:text-foreground',
               tab.key === 'info' && 'min-[1081px]:hidden',
             ]"
@@ -270,7 +279,7 @@ function destroy() {
             <AlertDialogTitle>{{ $t('project.deleteTitle') }}</AlertDialogTitle>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction tone="destructive" @click="destroy">{{ $t('common.delete') }}</AlertDialogAction>
+            <HoldToConfirm tone="destructive" @confirm="deleting = false; destroy()">{{ $t('common.delete') }}</HoldToConfirm>
             <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>

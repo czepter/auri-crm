@@ -120,7 +120,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // #357: the Mercure hub reads these, not Laravel (LiveUpdate::subscribe()).
-        $middleware->encryptCookies(except: ['__Secure-mercure_access_token', 'mercure_access_token']);
+        $middleware->encryptCookies(except: ['__Secure-mercure_access_token', 'mercure_access_token', 'mercure_portal_access_token']);
 
         $middleware->redirectGuestsTo('/login');
         $middleware->redirectUsersTo(fn (\Illuminate\Http\Request $request) => match (true) {
