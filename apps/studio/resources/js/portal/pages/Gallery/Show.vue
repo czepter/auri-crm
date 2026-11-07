@@ -532,7 +532,7 @@ const COVER_INPUT = [
           @pointercancel="press.cancel"
           @contextmenu="offers.lists && hasNamedLists && $event.preventDefault()"
         >
-          <span aria-hidden="true" class="pointer-events-none absolute inset-0 animate-pulse bg-foreground/5 transition-opacity duration-300 group-data-[loaded=true]:opacity-0 motion-reduce:animate-none" />
+          <span aria-hidden="true" class="pointer-events-none absolute inset-0 animate-pulse bg-foreground/5 transition-opacity duration-300 group-data-[loaded=true]:animate-none group-data-[loaded=true]:opacity-0 motion-reduce:animate-none" />
 
           <!-- The list menu replaces the single heart as soon as a client is
                signed in; a guest never sees it. -->

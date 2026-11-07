@@ -70,7 +70,7 @@ onBeforeUnmount(cancel)
     <span
       v-if="!reduced"
       aria-hidden="true"
-      class="pointer-events-none absolute inset-0 origin-left bg-black/20"
+      class="pointer-events-none absolute inset-0 origin-left bg-black/20 in-data-[tone=destructive]:bg-black/45"
       :style="{
         transform: holding ? 'scaleX(1)' : 'scaleX(0)',
         transition: holding ? `transform ${holdMs}ms linear` : 'transform 300ms ease-out',
