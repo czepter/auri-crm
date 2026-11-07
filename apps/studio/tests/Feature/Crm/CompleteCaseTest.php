@@ -35,8 +35,8 @@ it('completes a project whatever its shoots say, and reopens it', function () {
 });
 
 it('moves every open shoot when the stand of a booked project is set', function () {
-    $wedding = Shoot::factory()->for($this->case, 'case')->primary()->atStatus(ShootStatus::Booked)->create();
-    $engagement = Shoot::factory()->for($this->case, 'case')->atStatus(ShootStatus::Shot)->create();
+    $wedding = Shoot::factory()->for($this->case, 'case')->primary()->atStatus(ShootStatus::Booked)->on(now()->subDay()->toDateString())->create();
+    $engagement = Shoot::factory()->for($this->case, 'case')->atStatus(ShootStatus::Shot)->on(now()->subDay()->toDateString())->create();
 
     $this->patch("/auftraege/{$this->case->public_id}", ['stage' => ShootStatus::Delivered->value])
         ->assertSessionHasNoErrors();

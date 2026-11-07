@@ -220,7 +220,7 @@ function destroy() {
             <div
                 class="flex items-end gap-2 rounded-[16px] bg-sunk py-1.5 pr-1.5 pl-3.5 transition-[background-color,box-shadow] duration-[120ms] ease-out focus-within:bg-sunk-2 focus-within:shadow-[inset_0_0_0_2px_var(--accent)]"
             >
-                <Textarea
+                <Textarea :aria-label="$t('project.notePlaceholder')"
                     v-model="note.body"
                     rows="1"
                     class="field-sizing-content max-h-40 min-h-0 resize-none rounded-none border-0 bg-transparent p-0 py-[5px] text-ui leading-[1.45] tracking-[-0.01em] placeholder:text-faint hover:border-transparent focus:border-transparent"

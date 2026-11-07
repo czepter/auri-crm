@@ -64,7 +64,7 @@ class CaseRowData extends Data
             contact: $project->primaryContact()?->name,
             openTasks: (int) ($project->open_tasks_count ?? 0),
             taskCount: (int) ($project->tasks_count ?? 0),
-            value: $project->latestQuote?->total,
+            value: $project->latestQuote?->gross(),
             lastAt: $at->source === 'shoot'
                 ? $position->leastAdvanced($project->shoots)?->status_entered_at?->toIso8601String()
                 : null,

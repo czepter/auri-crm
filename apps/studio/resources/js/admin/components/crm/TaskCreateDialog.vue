@@ -11,6 +11,7 @@
 import { computed, ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { Button } from '@/ui/button'
+import { ChoiceGroup } from '@/ui/choice-group'
 import { DatePicker } from '@/ui/date-picker'
 import {
   Dialog,
@@ -37,7 +38,7 @@ const props = defineProps<{
 }>()
 
 const open = ref(false)
-const mode = ref<'anchor' | 'fixed'>('fixed')
+const mode = ref('fixed')
 const direction = ref('after')
 const days = ref('0')
 
@@ -144,18 +145,12 @@ function submit() {
           </Field>
 
           <Field wide :label="$t('project.taskDue')" :error="form.errors.anchor ?? form.errors.due_on">
-            <span class="inline-flex w-fit gap-0.5 rounded-lg bg-sunk p-[3px]">
-              <button
-                v-for="option in (['fixed', 'anchor'] as const)"
-                :key="option"
-                class="cursor-pointer rounded-[var(--r-sm)] px-[11px] py-1 text-small leading-none"
-                :class="mode === option ? 'bg-paper font-semibold' : 'text-ink-2'"
-                type="button"
-                @click="mode = option"
-              >
-                {{ option === 'fixed' ? $t('project.taskDueFixed') : $t('project.taskDueAnchored') }}
-              </button>
-            </span>
+            <ChoiceGroup
+              v-model="mode"
+              variant="segmented"
+              class="w-fit"
+              :options="[{ value: 'fixed', label: $t('project.taskDueFixed') }, { value: 'anchor', label: $t('project.taskDueAnchored') }]"
+            />
 
             <DatePicker v-if="mode === 'fixed'" v-model="form.due_on" class="mt-2" />
 

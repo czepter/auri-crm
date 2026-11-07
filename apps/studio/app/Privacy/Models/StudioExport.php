@@ -64,6 +64,7 @@ class StudioExport extends Model
             'id' => $this->public_id,
             'status' => $this->status->value,
             'size' => $this->size,
+            'createdAt' => $this->created_at?->toIso8601String(),
             'expiresAt' => $this->expires_at?->toIso8601String(),
             'url' => $this->isDownloadable()
                 ? URL::temporarySignedRoute('settings.export.archive.download', $this->expires_at, ['studioExport' => $this->public_id])

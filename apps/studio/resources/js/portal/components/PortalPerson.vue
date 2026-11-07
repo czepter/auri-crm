@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
+import PortalDot from '@/portal/components/PortalDot.vue'
 import { initials } from '@/portal/lib/initials'
 import type { Studio } from '@/portal/lib/studio'
 
@@ -46,9 +47,13 @@ const CHIP
       {{ initials(studio.name) }}
     </span>
 
-    <span v-if="named || studio.responseTime">
+    <span v-if="named || studio.responseTime || studio.absence">
       <b v-if="named" class="block text-[15px] leading-[1.3] font-semibold tracking-[-0.01em]">{{ studio.name }}</b>
       <span v-if="studio.responseTime" class="text-[13.5px] text-muted-foreground">{{ studio.responseTime }}</span>
+      <span v-if="studio.absence" class="mt-1 flex items-start gap-2 text-[13.5px] text-muted-foreground">
+        <PortalDot state="due" class="mt-[7px]" />
+        <span><span class="tabular-nums">{{ studio.absence.range }}</span> · {{ studio.absence.message }}</span>
+      </span>
     </span>
 
     <span class="ml-auto flex flex-wrap gap-3 max-[700px]:ml-0 max-[700px]:w-full">

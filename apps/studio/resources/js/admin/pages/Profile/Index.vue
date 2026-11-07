@@ -1,14 +1,18 @@
 <script setup lang="ts">
+import { saveState } from '@/admin/lib/autosave'
 import { computed, ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import Page from '@/ui/page/Page.vue'
-import PageHead from '@/ui/page/PageHead.vue'
+import FormSection from '@/ui/page/FormSection.vue'
+import FormShell from '@/ui/page/FormShell.vue'
+import CreateSummary from '@/admin/components/CreateSummary.vue'
 import { Button } from '@/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import SessionList from './SessionList.vue'
+import CalendarSettings from '@/admin/components/crm/CalendarSettings.vue'
+import ProfileNav from '@/admin/components/settings/ProfileNav.vue'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
@@ -16,14 +20,17 @@ const props = defineProps<{
   user: { name: string; email: string; phone: string | null; role: string }
   pendingEmail: string | null
   mfaConfirmed: boolean
-  sessions: { id: string; device: string; ip: string | null; lastActiveAt: string; current: boolean }[]
+  sessions: { id: string; ids: string[]; count: number; device: string; ip: string | null; lastActiveAt: string; current: boolean }[]
   recoveryCodesLeft: number
   digestFrequency: string | null
   calendarFeedUrl: string | null
+  workingDays: number[] | null
   events: Record<string, Mode>
   briefable: Record<string, boolean>
 }>()
 useLiveProps(['user', 'pendingEmail', 'mfaConfirmed', 'sessions', 'recoveryCodesLeft', 'digestFrequency', 'calendarFeedUrl', 'events'])
+
+const DAY_KEYS = ['settings.dayMon', 'settings.dayTue', 'settings.dayWed', 'settings.dayThu', 'settings.dayFri', 'settings.daySat', 'settings.daySun']
 
 type Mode = 'immediate' | 'briefing' | 'digest' | 'off'
 
@@ -56,15 +63,6 @@ function modesFor(key: string): Mode[] {
 // sentinel pairing Settings/TaskTemplates.vue uses for its own empty option.
 const NO_DIGEST = 'none'
 
-const NAV = [
-  { key: 'konto', href: '/profil', label: 'profile.navAccount' },
-  { key: 'sicherheit', href: '/profil/sicherheit', label: 'profile.navSecurity' },
-  { key: 'benachrichtigungen', href: '/profil/benachrichtigungen', label: 'profile.navNotifications' },
-  { key: 'kalender', href: '/profil/kalender', label: 'calendar.subscribe' },
-  // The own-absences screen already exists and is open to every role; this is
-  // the way to it from here, not a second copy of it.
-  { key: 'abwesenheiten', href: '/abwesenheiten', label: 'profile.navAbsences' },
-]
 
 const accountForm = useForm({
   name: props.user.name,
@@ -140,217 +138,210 @@ function regenerateFeedUrl() {
 
 <template>
   <AdminLayout active="profil">
-    <Page data-tokens wide>
-      <div class="min-w-0 flex-1">
-        <PageHead :kicker="$t('profile.kicker')" :title="$t(paneTitle)">
-          <span v-if="activeForm?.isDirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold text-due">{{ $t('settings.unsaved') }}</span>
-          <Button
-            v-if="activeForm?.isDirty"
-            class="ml-auto"
-            variant="pill"
-            type="submit"
-            :form="formId"
-            :disabled="activeForm?.processing"
+    <FormShell :kicker="$t('profile.kicker')" :title="$t(paneTitle)" :state="pane === 'sicherheit' ? undefined : saveState([activeForm])">
+      <template #head>
+        <Button
+          v-if="activeForm?.isDirty && pane !== 'sicherheit'"
+          variant="pill"
+          type="submit"
+          :form="formId"
+          :disabled="activeForm?.processing"
+        >
+          {{ $t('common.save') }}
+        </Button>
+      </template>
+
+      <template #nav><ProfileNav :active="pane" /></template>
+
+      <form v-if="pane === 'konto'" id="profile-konto-form" @submit.prevent="submitAccount">
+        <FormSection :title="$t('profile.accountTitle')">
+        <div class="mb-6">
+          <Field :label="$t('profile.name')" id="pr-name" wide :error="accountForm.errors.name">
+            <Input id="pr-name" v-model="accountForm.name" type="text" />
+          </Field>
+        </div>
+        <div class="mb-6">
+          <Field
+            :label="$t('profile.email')"
+            id="pr-mail"
+            wide
+            :hint="pendingEmail ? $t('profile.pendingEmail', { email: pendingEmail }) : undefined"
+            :error="accountForm.errors.email"
           >
-            {{ $t('common.save') }}
-          </Button>
-        </PageHead>
+            <Input id="pr-mail" v-model="accountForm.email" type="email" />
+          </Field>
+        </div>
+        <div class="mb-6">
+          <Field :label="$t('profile.phone')" id="pr-telefon" class="max-w-[300px]" :error="accountForm.errors.phone">
+            <Input id="pr-telefon" v-model="accountForm.phone" type="tel" />
+          </Field>
+        </div>
+        <div v-if="emailMoved" class="mb-6">
+          <Field
+            :label="$t('profile.currentPassword')"
+            id="pr-passwort"
+            class="max-w-[300px]"
+            :error="accountForm.errors.current_password"
+          >
+            <Input id="pr-passwort" v-model="accountForm.current_password" type="password" autocomplete="current-password" />
+          </Field>
+        </div>
+        <div class="mb-6">
+          <Field :label="$t('profile.role')" id="pr-rolle" class="max-w-[300px]">
+            <Input id="pr-rolle" :model-value="user.role" type="text" disabled />
+          </Field>
+        </div>
+        </FormSection>
+      </form>
 
-        <div class="px-6 pt-7 pb-8">
-          <div class="flex items-start gap-8">
-            <nav class="flex w-[196px] flex-none flex-col gap-0.5">
-              <Link
-                v-for="item in NAV"
-                :key="item.key"
-                class="flex items-center gap-2.5 rounded-[7px] px-2.5 py-[9px] text-ui leading-none no-underline transition-[background-color] duration-[.12s] ease-out hover:bg-muted [&_svg]:size-[17px]"
-                :class="item.key === pane ? 'font-semibold text-foreground [&_svg]:opacity-100' : 'font-normal text-muted-foreground [&_svg]:opacity-75'"
-                :href="item.href"
-              >{{ $t(item.label) }}</Link>
-            </nav>
-
-            <div class="max-w-[620px] min-w-0 flex-1">
-              <form v-if="pane === 'konto'" id="profile-konto-form" @submit.prevent="submitAccount">
-                <div class="mb-6">
-                  <Field :label="$t('profile.name')" id="pr-name" wide :error="accountForm.errors.name">
-                    <Input id="pr-name" v-model="accountForm.name" type="text" />
-                  </Field>
-                </div>
-                <div class="mb-6">
-                  <Field
-                    :label="$t('profile.email')"
-                    id="pr-mail"
-                    wide
-                    :hint="pendingEmail ? $t('profile.pendingEmail', { email: pendingEmail }) : undefined"
-                    :error="accountForm.errors.email"
-                  >
-                    <Input id="pr-mail" v-model="accountForm.email" type="email" />
-                  </Field>
-                </div>
-                <div class="mb-6">
-                  <Field :label="$t('profile.phone')" id="pr-telefon" class="max-w-[300px]" :error="accountForm.errors.phone">
-                    <Input id="pr-telefon" v-model="accountForm.phone" type="tel" />
-                  </Field>
-                </div>
-                <div v-if="emailMoved" class="mb-6">
-                  <Field
-                    :label="$t('profile.currentPassword')"
-                    id="pr-passwort"
-                    class="max-w-[300px]"
-                    :error="accountForm.errors.current_password"
-                  >
-                    <Input id="pr-passwort" v-model="accountForm.current_password" type="password" autocomplete="current-password" />
-                  </Field>
-                </div>
-                <div class="mb-6">
-                  <Field :label="$t('profile.role')" id="pr-rolle" class="max-w-[300px]">
-                    <Input id="pr-rolle" :model-value="user.role" type="text" disabled />
-                  </Field>
-                </div>
-              </form>
-
-              <form v-else-if="pane === 'sicherheit'" id="profile-sicherheit-form" @submit.prevent="submitPassword">
-                <div class="mt-8 first:mt-0">
-                  <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('profile.passwordSection') }}</div>
-                  <div class="mb-6">
-                    <Field
-                      :label="$t('profile.currentPassword')"
-                      id="pw-alt"
-                      class="max-w-[300px]"
-                      :error="passwordForm.errors.current_password"
-                    >
-                      <Input id="pw-alt" v-model="passwordForm.current_password" type="password" autocomplete="current-password" />
-                    </Field>
-                  </div>
-                  <div class="mb-6">
-                    <div class="grid grid-cols-2 gap-4">
-                      <Field :label="$t('profile.newPassword')" id="pw-neu" :error="passwordForm.errors.password">
-                        <Input id="pw-neu" v-model="passwordForm.password" type="password" autocomplete="new-password" />
-                      </Field>
-                      <Field :label="$t('profile.repeatPassword')" id="pw-neu2">
-                        <Input id="pw-neu2" v-model="passwordForm.password_confirmation" type="password" autocomplete="new-password" />
-                      </Field>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="mt-8">
-                  <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('profile.mfaSection') }}</div>
-                  <div class="flex items-center gap-3 text-small leading-none">
-                    <span>{{ mfaConfirmed ? $t('profile.mfaOn') : $t('profile.mfaOff') }}</span>
-                    <Button v-if="!mfaConfirmed" as-child variant="ghost" type="button">
-                      <Link href="/auth/mfa/enroll">{{ $t('profile.mfaEnroll') }}</Link>
-                    </Button>
-                  </div>
-                  <div v-if="mfaConfirmed" class="mt-4 flex items-center gap-3 text-small leading-none">
-                    <span>{{ $t('profile.recoveryCodesLeft', { count: recoveryCodesLeft }) }}</span>
-                    <!-- Its own POST, not part of the password form: it hands back
-                         eight codes on the screen that shows them once. -->
-                    <Button variant="ghost" type="button" @click="router.post('/profil/wiederherstellungscodes')">
-                      {{ $t('profile.regenerate') }}
-                    </Button>
-                  </div>
-                </div>
-              </form>
-
-              <form v-else-if="pane === 'benachrichtigungen'" id="profile-benachrichtigungen-form" @submit.prevent="submitEvents">
-                <div class="mt-8 first:mt-0">
-                  <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('profile.backlogSection') }}</div>
-                  <div class="mb-6">
-                    <div class="grid grid-cols-2 gap-4">
-                      <Field
-                        v-for="key in BACKLOG_KEYS"
-                        :key="key"
-                        :label="$t(`profile.event.${key}`)"
-                        :id="`ev-${key}`"
-                      >
-                        <Select
-                          :model-value="eventsForm.events[key]"
-                          @update:model-value="(value) => (eventsForm.events[key] = String(value) as Mode)"
-                        >
-                          <SelectTrigger :id="`ev-${key}`">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem v-for="mode in modesFor(key)" :key="mode" :value="mode">{{ $t(`profile.mode.${mode}`) }}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </Field>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="mt-8 first:mt-0">
-                  <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('profile.eventsSection') }}</div>
-                  <div class="mb-6">
-                    <div class="grid grid-cols-2 gap-4">
-                      <Field
-                        v-for="key in EVENT_KEYS"
-                        :key="key"
-                        :label="$t(`profile.event.${key}`)"
-                        :id="`ev-${key}`"
-                      >
-                        <Select
-                          :model-value="eventsForm.events[key]"
-                          @update:model-value="(value) => (eventsForm.events[key] = String(value) as Mode)"
-                        >
-                          <SelectTrigger :id="`ev-${key}`">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem v-for="mode in modesFor(key)" :key="mode" :value="mode">{{ $t(`profile.mode.${mode}`) }}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </Field>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="mt-8">
-                  <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('profile.digestSection') }}</div>
-                  <Field
-                    :label="$t('profile.digestFrequency')"
-                    id="digest-rhythmus"
-                    class="max-w-[300px]"
-                    :hint="$t('profile.digestHint')"
-                  >
-                    <Select
-                      :model-value="eventsForm.digest_frequency ?? NO_DIGEST"
-                      @update:model-value="(value) => (eventsForm.digest_frequency = value === NO_DIGEST ? null : String(value))"
-                    >
-                      <SelectTrigger id="digest-rhythmus">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem :value="NO_DIGEST">{{ $t('profile.digestOff') }}</SelectItem>
-                        <SelectItem value="daily">{{ $t('profile.digestDaily') }}</SelectItem>
-                        <SelectItem value="weekly">{{ $t('profile.digestWeekly') }}</SelectItem>
-                        <SelectItem value="monthly">{{ $t('profile.digestMonthly') }}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                </div>
-              </form>
-
-              <!-- C-13 (#249): die Abo-Adresse ist ein Geheimnis pro Person,
-                   also steht sie neben dem Weg, sie zurückzuziehen. -->
-              <div v-else>
-                <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('calendar.feedUrl') }}</div>
-                <code class="block text-small leading-[1.5] break-all">{{ calendarFeedUrl }}</code>
-                <div class="mt-4 flex items-center gap-2">
-                  <Button type="button" variant="pill-muted" @click="copyFeedUrl(calendarFeedUrl!)">
-                    {{ copied ? $t('gallery.copied') : $t('gallery.copy') }}
-                  </Button>
-                  <Button type="button" variant="pill-muted" @click="regenerateFeedUrl()">
-                    {{ $t('calendar.revoke') }}
-                  </Button>
-                </div>
-              </div>
-
-              <SessionList v-if="pane === 'sicherheit'" :sessions="sessions" />
+      <form v-else-if="pane === 'sicherheit'" id="profile-sicherheit-form" @submit.prevent="submitPassword">
+        <FormSection :title="$t('profile.passwordSection')">
+          <div class="mb-6">
+            <Field
+              :label="$t('profile.currentPassword')"
+              id="pw-alt"
+              class="max-w-[300px]"
+              :error="passwordForm.errors.current_password"
+            >
+              <Input id="pw-alt" v-model="passwordForm.current_password" type="password" autocomplete="current-password" />
+            </Field>
+          </div>
+          <div class="mb-6">
+            <div class="grid grid-cols-2 gap-4">
+              <Field :label="$t('profile.newPassword')" id="pw-neu" :error="passwordForm.errors.password">
+                <Input id="pw-neu" v-model="passwordForm.password" type="password" autocomplete="new-password" />
+              </Field>
+              <Field :label="$t('profile.repeatPassword')" id="pw-neu2">
+                <Input id="pw-neu2" v-model="passwordForm.password_confirmation" type="password" autocomplete="new-password" />
+              </Field>
             </div>
           </div>
+          <Button type="submit" :disabled="passwordForm.processing || !passwordForm.isDirty">{{ $t('profile.changePassword') }}</Button>
+        </FormSection>
+
+        <FormSection :title="$t('profile.mfaSection')">
+          <div class="flex items-center gap-3 text-small leading-none">
+            <span>{{ mfaConfirmed ? $t('profile.mfaOn') : $t('profile.mfaOff') }}</span>
+            <Button v-if="!mfaConfirmed" as-child variant="ghost" type="button">
+              <Link href="/auth/mfa/enroll">{{ $t('profile.mfaEnroll') }}</Link>
+            </Button>
+          </div>
+          <div v-if="mfaConfirmed" class="mt-4 flex items-center gap-3 text-small leading-none">
+            <span>{{ $t('profile.recoveryCodesLeft', { count: recoveryCodesLeft }) }}</span>
+            <!-- Its own POST, not part of the password form: it hands back
+                 eight codes on the screen that shows them once. -->
+            <Button variant="ghost" type="button" @click="router.post('/profil/wiederherstellungscodes')">
+              {{ $t('profile.regenerate') }}
+            </Button>
+          </div>
+        </FormSection>
+      </form>
+
+      <form v-else-if="pane === 'benachrichtigungen'" id="profile-benachrichtigungen-form" @submit.prevent="submitEvents">
+        <FormSection :title="$t('profile.backlogSection')">
+          <div>
+            <div class="grid grid-cols-2 gap-4">
+              <Field
+                v-for="key in BACKLOG_KEYS"
+                :key="key"
+                :label="$t(`profile.event.${key}`)"
+                :id="`ev-${key}`"
+              >
+                <Select
+                  :model-value="eventsForm.events[key]"
+                  @update:model-value="(value) => (eventsForm.events[key] = String(value) as Mode)"
+                >
+                  <SelectTrigger :id="`ev-${key}`">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="mode in modesFor(key)" :key="mode" :value="mode">{{ $t(`profile.mode.${mode}`) }}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
+          </div>
+        </FormSection>
+
+        <FormSection :title="$t('profile.eventsSection')">
+          <div>
+            <div class="grid grid-cols-2 gap-4">
+              <Field
+                v-for="key in EVENT_KEYS"
+                :key="key"
+                :label="$t(`profile.event.${key}`)"
+                :id="`ev-${key}`"
+              >
+                <Select
+                  :model-value="eventsForm.events[key]"
+                  @update:model-value="(value) => (eventsForm.events[key] = String(value) as Mode)"
+                >
+                  <SelectTrigger :id="`ev-${key}`">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="mode in modesFor(key)" :key="mode" :value="mode">{{ $t(`profile.mode.${mode}`) }}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
+          </div>
+        </FormSection>
+
+        <FormSection :title="$t('profile.digestSection')">
+          <Field
+            :label="$t('profile.digestFrequency')"
+            id="digest-rhythmus"
+            class="max-w-[300px]"
+            :hint="$t('profile.digestHint')"
+          >
+            <Select
+              :model-value="eventsForm.digest_frequency ?? NO_DIGEST"
+              @update:model-value="(value) => (eventsForm.digest_frequency = value === NO_DIGEST ? null : String(value))"
+            >
+              <SelectTrigger id="digest-rhythmus">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="NO_DIGEST">{{ $t('profile.digestOff') }}</SelectItem>
+                <SelectItem value="daily">{{ $t('profile.digestDaily') }}</SelectItem>
+                <SelectItem value="weekly">{{ $t('profile.digestWeekly') }}</SelectItem>
+                <SelectItem value="monthly">{{ $t('profile.digestMonthly') }}</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+        </FormSection>
+      </form>
+
+      <!-- C-13 (#249): die Abo-Adresse ist ein Geheimnis pro Person,
+           also steht sie neben dem Weg, sie zurückzuziehen. -->
+      <template v-else>
+      <FormSection :title="$t('calendar.feedUrl')">
+        <code class="block text-small leading-[1.5] break-all">{{ calendarFeedUrl }}</code>
+        <div class="mt-4 flex items-center gap-2">
+          <Button type="button" variant="pill-muted" @click="copyFeedUrl(calendarFeedUrl!)">
+            {{ copied ? $t('gallery.copied') : $t('gallery.copy') }}
+          </Button>
+          <Button type="button" variant="pill-muted" @click="regenerateFeedUrl()">
+            {{ $t('calendar.revoke') }}
+          </Button>
         </div>
-      </div>
-    </Page>
+      </FormSection>
+
+      <CalendarSettings v-if="workingDays" :working-days="workingDays" />
+      </template>
+
+      <SessionList v-if="pane === 'sicherheit'" :sessions="sessions" />
+
+      <template v-if="pane === 'kalender' && workingDays" #aside>
+        <CreateSummary
+          :title="$t('common.summary')"
+          :rows="[
+            { label: $t('settings.workingDaysLabel'), value: workingDays.map((day) => $t(DAY_KEYS[day - 1])).join(', ') },
+            { label: $t('calendar.feedUrl'), value: calendarFeedUrl },
+          ]"
+        />
+      </template>
+    </FormShell>
   </AdminLayout>
 </template>

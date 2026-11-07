@@ -17,9 +17,8 @@ use App\Payments\Actions\ReadPaymentColumn;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Quotes\Enums\QuoteStatus;
-use App\Quotes\Models\Quote;
 use App\Quotes\Screens\ReadInquiryColumn;
-use App\Quotes\Support\QuoteAcceptanceRate;
+use App\Reporting\Support\QuoteAcceptanceRate;
 use App\Quotes\Support\QuotePipeline;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -68,7 +67,7 @@ class DashboardController extends Controller
             'entries' => $this->upcoming($viewer),
             'pipeline' => [
                 'total' => $this->pipeline($viewer),
-                'priorYear' => QuotePipeline::asOf($yearAgo, $this->visible($viewer)) ?: null,
+                'priorYear' => QuotePipeline::asOf($yearAgo, $this->inPlay($viewer)) ?: null,
             ],
             'payments' => $this->payments($viewer),
             'quotes' => [
@@ -167,13 +166,19 @@ class DashboardController extends Controller
         );
     }
 
-    /** Draft and sent only: accepted is won, superseded and expired are gone. */
+    private function inPlay(User $viewer)
+    {
+        return $this->visible($viewer)->whereNull('cases.closed_at')->whereNull('cases.booked_at');
+    }
+
+    /** One quote per open, unbooked case: its current one, if still draft or sent. */
     private function pipeline(User $viewer): int
     {
-        return (int) Quote::query()
-            ->whereIn('status', [QuoteStatus::Draft, QuoteStatus::Sent])
-            ->whereIn('case_id', $this->visible($viewer))
-            ->sum('total');
+        return (int) ClientCase::query()
+            ->whereIn('cases.id', $this->inPlay($viewer))
+            ->with('currentQuote')
+            ->get()
+            ->sum(fn (ClientCase $case) => in_array($case->currentQuote?->status, [QuoteStatus::Draft, QuoteStatus::Sent], true) ? $case->currentQuote->gross() : 0);
     }
 
     /**
@@ -190,10 +195,10 @@ class DashboardController extends Controller
         );
 
         $scheduled = PaymentInstallment::query()
-            ->where('status', PaymentInstallmentStatus::Scheduled)
+            ->whereIn('status', PaymentInstallmentStatus::open())
             ->tap($mine);
 
-        $late = (clone $scheduled)->whereDate('due_on', '<', now()->toDateString());
+        $late = (clone $scheduled)->whereDate('due_on', '<', today()->toDateString());
         $oldest = (clone $late)->orderBy('due_on')->value('due_on');
         $next = (clone $scheduled)->whereDate('due_on', '>=', now()->toDateString())->orderBy('due_on')->first();
 
@@ -202,7 +207,7 @@ class DashboardController extends Controller
             'overdue' => (int) (clone $late)->sum('amount'),
             'overdueInstalments' => (clone $late)->count(),
             'instalments' => PaymentInstallment::query()->tap($mine)->count(),
-            'overdueSinceDays' => $oldest === null ? null : (int) Carbon::parse($oldest)->diffInDays(now()),
+            'overdueSinceDays' => $oldest === null ? null : (int) Carbon::parse($oldest)->startOfDay()->diffInDays(today()),
             'nextDueOn' => $next === null ? null : Carbon::parse($next->due_on)->format('Y-m-d'),
             'nextAmount' => $next?->amount,
         ];

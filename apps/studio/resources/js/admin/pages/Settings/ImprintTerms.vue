@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import Page from '@/ui/page/Page.vue'
-import PageHead from '@/ui/page/PageHead.vue'
+import FormShell from '@/ui/page/FormShell.vue'
 import SettingsNav from '@/admin/components/settings/SettingsNav.vue'
 import LegalTextFields from './panes/LegalTextFields.vue'
 import { Button } from '@/ui/button'
+import { saveState } from '@/admin/lib/autosave'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
@@ -46,32 +46,27 @@ function submit() {
 
 <template>
   <AdminLayout active="einstellungen">
-    <Page data-tokens wide>
-      <div class="min-w-0 flex-1">
-        <PageHead :kicker="$t('settings.kicker')" :title="$t('settings.navImprintTerms')">
-          <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
-          <Button
-            v-if="form.isDirty"
-            class="ml-auto"
-            variant="pill"
-            type="submit"
-            form="imprint-terms-form"
-            :disabled="form.processing"
-          >
-            {{ $t('common.save') }}
-          </Button>
-        </PageHead>
+    <FormShell
+      :kicker="$t('settings.kicker')" :title="$t('settings.navImprintTerms')"
+      :state="saveState([form])"
+    >
+      <template #head>
+        <Button
+          v-if="form.isDirty"
+          variant="pill"
+          type="submit"
+          form="imprint-terms-form"
+          :disabled="form.processing"
+        >
+          {{ $t('common.save') }}
+        </Button>
+      </template>
 
-        <div class="px-6 pt-7 pb-8">
-          <div class="flex flex-wrap items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
-            <SettingsNav active="imprint-terms" />
+      <template #nav><SettingsNav active="imprint-terms" /></template>
 
-            <form id="imprint-terms-form" class="w-[620px] max-w-full min-w-0 flex-none" novalidate @submit.prevent="submit">
-              <LegalTextFields :form="form" :families="settings.legalFamilies" :legal-templates="legalTemplates" />
-            </form>
-          </div>
-        </div>
-      </div>
-    </Page>
+      <form id="imprint-terms-form" class="min-w-0" novalidate @submit.prevent="submit">
+        <LegalTextFields :form="form" :families="settings.legalFamilies" :legal-templates="legalTemplates" />
+      </form>
+    </FormShell>
   </AdminLayout>
 </template>

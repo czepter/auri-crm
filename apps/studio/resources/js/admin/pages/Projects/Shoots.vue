@@ -19,6 +19,7 @@ import { Label } from '@/ui/label'
 import { Textarea } from '@/ui/textarea'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
 
 const { t } = useI18n()
 
@@ -113,15 +114,14 @@ function metrics(shoot: App.Crm.Data.ShootData) {
   ]
 }
 
-// Ort und Stand stehen schon in der Kennzahlenreihe und im Chip daneben;
-// zugeklappt fehlt nur, wann und mit wem.
+function when(shoot: App.Crm.Data.ShootData) {
+  const time = [shoot.callTime, shoot.endTime].filter(Boolean).join('–')
+
+  return [dayWithWeekday(shoot.date, null) ?? t('board.openDate'), time || null].filter(Boolean).join(' · ')
+}
+
 function summary(shoot: App.Crm.Data.ShootData) {
-  return [
-    dayWithWeekday(shoot.date, null) ?? t('board.openDate'),
-    shoot.crew.map((member) => member.name).join(', ') || null,
-  ]
-    .filter(Boolean)
-    .join(' · ')
+  return shoot.crew.map((member) => member.name).join(', ') || null
 }
 
 const filter = ref<'all' | 'upcoming' | 'cancelled'>('all')
@@ -228,10 +228,11 @@ const TONE: Record<string, string> = {
   next: 'bg-muted text-muted-foreground',
   off: 'bg-muted text-faint',
 }
+const STATIC_TONE: Record<string, ChipTone> = { done: 'success', now: 'warn', next: 'neutral', off: 'neutral' }
 </script>
 
 <template>
-  <AdminLayout active="anfragen">
+  <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
     <ProjectShell :header="header" active="shoots">
         <!-- Adding an occasion is a discrete act against a list you are reading:
              inline, the form pushed every existing shoot down the page and the
@@ -239,7 +240,7 @@ const TONE: Record<string, string> = {
         <template v-if="header.canManageShoots" #actions>
           <Dialog v-model:open="adding">
             <DialogTrigger as-child>
-              <Button variant="pill" type="button">
+              <Button variant="outline" type="button">
                 {{ $t('project.addShoot') }}
               </Button>
             </DialogTrigger>
@@ -343,39 +344,35 @@ const TONE: Record<string, string> = {
             :summary="summary(shoot)"
             :default-open="shoot.date === null || shoot.date >= today"
           >
+            <template #meta>
+              <span class="text-ink-2">{{ when(shoot) }}</span>
+            </template>
             <template #action>
               <span v-if="shoot.isPrimary" class="text-small leading-[1.5] font-semibold text-foreground">
                 {{ $t('project.primary') }}
               </span>
-              <span :class="['rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold', TONE[chipClass(shoot, header.position.value)]]">
+              <DropdownMenu v-if="!shoot.isCancelled && header.canManageShoots && onward(shoot).length">
+                <DropdownMenuTrigger
+                  :class="['inline-flex cursor-pointer items-center gap-1 rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold max-[640px]:min-h-11', TONE[chipClass(shoot, header.position.value)]]"
+                  :aria-label="$t('project.advance')"
+                >
+                  {{ shoot.statusLabel }}
+                  <ChevronDown class="size-3.5" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" class="w-[208px]">
+                  <DropdownMenuItem v-for="status in onward(shoot)" :key="status.value" @select="advance(shoot, status.value)">
+                    {{ status.label }}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Chip v-else :tone="STATIC_TONE[chipClass(shoot, header.position.value)]">
                 {{ shoot.statusLabel }}
-              </span>
+              </Chip>
 
               <div v-if="!shoot.isCancelled && header.canManageShoots" class="flex items-center gap-2">
-                <div v-if="onward(shoot).length" class="flex">
-                  <Button
-                    variant="pill"
-                    type="button"
-                    class="rounded-r-none"
-                    @click="advance(shoot, onward(shoot)[0].value)"
-                  >{{ onward(shoot)[0].label }}</Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger as-child>
-                      <Button variant="pill" type="button" class="rounded-l-none border-l border-white/30 px-2" :aria-label="$t('project.advance')">
-                        <ChevronDown class="size-3.5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" class="w-[208px]">
-                      <DropdownMenuItem v-for="status in onward(shoot)" :key="status.value" @select="advance(shoot, status.value)">
-                        {{ status.label }}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
                 <DropdownMenu>
                   <DropdownMenuTrigger
-                    class="flex size-8 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2"
+                    class="flex size-8 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2 max-[640px]:size-11"
                     :aria-label="$t('project.more')"
                   >
                     <svg class="size-4 fill-current" viewBox="0 0 24 24">
@@ -505,7 +502,7 @@ const TONE: Record<string, string> = {
                     <TimePicker :id="`tl-time-${shoot.id}`" v-model="timelineForm.time" class="w-[104px]" required />
                     <Label :for="`tl-title-${shoot.id}`" class="sr-only">{{ $t('project.timelineTitle') }}</Label>
                     <Input :id="`tl-title-${shoot.id}`" v-model="timelineForm.title" class="min-w-0 flex-1" type="text" :placeholder="$t('project.timelineTitle')" required />
-                    <Button type="submit" variant="outline" class="px-2.5" :disabled="timelineForm.processing" :aria-label="$t('common.save')">
+                    <Button type="submit" variant="outline" class="px-2.5 max-[640px]:min-h-11 max-[640px]:min-w-11" :disabled="timelineForm.processing" :aria-label="$t('common.save')">
                       <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
                     </Button>
                   </div>

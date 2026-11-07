@@ -9,6 +9,7 @@ import Panel from "@/admin/components/crm/Panel.vue";
 import { Button } from "@/ui/button";
 import { formatEurosRounded } from "@/lib/money";
 import { weekFrom } from "@/admin/lib/dates";
+import { groupEntries } from "@/admin/lib/groupEntries";
 import { NOTICEABLE_DAYS, since } from "@/admin/lib/leadQueue";
 import { useLiveProps } from "@/admin/lib/liveReload";
 
@@ -67,8 +68,13 @@ const RANGES = [
     { key: "year", label: "dashboard.rangeYear" },
 ];
 
+// Das Jahr steht nur, wo es nicht das laufende ist: "12.06." im Juni 2027 liest sich als dieses Jahr.
+function yearIfOther(date: string) {
+    return date.slice(0, 4) === props.today.slice(0, 4) ? {} : { year: "numeric" as const };
+}
+
 function dayOf(date: string) {
-    return new Date(date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
+    return new Date(date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", ...yearIfOther(date) });
 }
 
 const week = computed(() =>
@@ -85,9 +91,19 @@ const week = computed(() =>
     }),
 );
 
+// Nur heute und Tage mit Terminen; ein leerer Tag trägt nichts außer dem Plus.
+const shownDays = computed(() => week.value.filter((day, index) => index === 0 || day.entries.length));
+
 // Die Termine kommen ohne Wochenfenster: was nach der Woche liegt, steht
 // unter der Leiste, damit eine ruhige Woche den nächsten Termin trotzdem zeigt.
 const later = computed(() => props.entries.filter((entry) => entry.date > week.value[6].date));
+
+function dayStamp(date: string) {
+    return new Date(`${date}T12:00:00`).toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit", ...yearIfOther(date) });
+}
+
+const phoneToday = computed(() => props.entries.filter((entry) => entry.date === props.today));
+const phoneLater = computed(() => props.entries.filter((entry) => entry.date > props.today));
 
 // Verglichen wird mit demselben Fenster ein Jahr davor, nicht mit dem davor:
 // das Geschäft ist saisonal, Oktober gegen September zeigte nur den Herbst.
@@ -145,7 +161,7 @@ const figures = computed(() => {
             key: "shoots",
             label: t("dashboard.shoots"),
             value: String(shoots.count),
-            unit: shoots.count ? t(PAST[props.range]) : null,
+            unit: t(PAST[props.range]),
             warn: false,
             ...trend(shoots.count, shoots.priorYear, String),
             note: shoots.priorYear === null ? null : t("dashboard.priorYear", { value: shoots.priorYear }),
@@ -172,6 +188,7 @@ type Row = {
     whatTail: string | null;
     action: App.Crm.Data.RowActionData | null;
     task: App.Crm.Data.TaskRowData | null;
+    late?: boolean;
 };
 
 function fromTask(task: App.Crm.Data.TaskRowData): Row {
@@ -180,7 +197,8 @@ function fromTask(task: App.Crm.Data.TaskRowData): Row {
         who: task.projectName ?? task.contactName ?? '',
         href: task.projectId ? `/auftraege/${task.projectId}` : task.contactId ? `/kontakte/${task.contactId}` : '/aufgaben',
         what: task.title,
-        emphasis: task.isOverdue && task.dueOn ? dayOf(task.dueOn) : null,
+        emphasis: task.isOverdue && task.dueOn ? t("dashboard.overdueSince", { date: dayOf(task.dueOn) }) : null,
+        late: task.isOverdue,
         whatTail: !task.isOverdue && task.dueOn ? ` · ${dayOf(task.dueOn)}` : null,
         action: null,
         task,
@@ -188,7 +206,7 @@ function fromTask(task: App.Crm.Data.TaskRowData): Row {
 }
 
 function fromRow(row: App.Crm.Data.DomainRowData): Row {
-    return { key: `row:${row.projectId}:${row.what}`, who: row.who, href: `/auftraege/${row.projectId}`, what: row.what, emphasis: row.emphasis, whatTail: row.whatTail, action: row.action, task: null };
+    return { key: `row:${row.projectId}:${row.what}`, who: row.who, href: `/auftraege/${row.projectId}`, what: row.what, emphasis: row.emphasis, whatTail: row.whatTail && ` ${row.whatTail}`, action: row.action, task: null };
 }
 
 // Wie im Queue-Pane: erst ab NOTICEABLE_DAYS wird das Warten zur Betonung.
@@ -227,7 +245,7 @@ const cards = computed(() =>
         {
             key: "todo",
             title: t("dashboard.todo"),
-            count: props.openTasks + props.todo.length,
+            count: props.openTasks,
             href: "/aufgaben",
             link: t("dashboard.allTasks"),
             rows: [...props.tasks.map(fromTask), ...props.todo.map(fromRow)],
@@ -249,6 +267,20 @@ const CREATE = [
     { label: "create.gallery", href: "/galerien/neu", icon: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="m21 16-5-5-8 8"/>' },
 ];
 
+const CARD_ORDER: Record<string, string> = {
+    todo: "max-[640px]:order-2",
+    leads: "max-[640px]:order-3",
+    dunning: "max-[640px]:order-4",
+    projects: "max-[640px]:order-5",
+};
+
+// Höchstens ein primärer Knopf auf der Seite, auf jeder Breite derselbe: die erste Mahnung.
+const primaryKey = computed(() => cards.value.find((card) => card.key === "dunning")?.rows.find((row) => row.action)?.key);
+
+const activityGroups = computed(() =>
+    groupEntries(props.activity.map((entry) => ({ ...entry, body: entry.text, author: null, at: null }))),
+);
+
 const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
 </script>
 
@@ -257,13 +289,13 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
         <Page data-tokens wide>
             <div class="flex min-w-0 flex-1 flex-col">
                 <PageHead :kicker="heading" :title="$t('dashboard.title')">
-                    <div v-if="measured" class="ml-auto flex flex-wrap items-center gap-1.5">
+                    <div v-if="measured" class="ml-auto flex flex-wrap items-center gap-1.5 max-[640px]:hidden">
                         <Link
                             v-for="option in RANGES"
                             :key="option.key"
                             :href="`/?zeitraum=${option.key}`"
                             class="rounded-[var(--r-sm)] px-3.5 py-[5px] text-small font-medium tracking-[-0.01em] no-underline"
-                            :class="range === option.key ? 'bg-foreground font-semibold text-background' : 'text-ink-2 shadow-[inset_0_0_0_1px_var(--line-hover)]'"
+                            :class="range === option.key ? 'bg-paper font-semibold text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'text-ink-2 shadow-[inset_0_0_0_1px_var(--line-hover)]'"
                         >
                             {{ $t(option.label) }}
                         </Link>
@@ -271,15 +303,28 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                             {{ $t("dashboard.reports") }}
                         </Link>
                     </div>
+                    <Button :as="Link" variant="pill" href="/anfragen/neu" :class="measured ? 'ml-3' : 'ml-auto'">{{ $t("leads.createTitle") }}</Button>
                 </PageHead>
 
-                <div v-if="measured" class="mx-6 mt-5 grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4">
-                    <div v-for="figure in figures" :key="figure.key" class="flex flex-col gap-1.5 rounded-[var(--r)] bg-paper px-6 py-5 shadow-card">
+                <div v-if="measured" class="hidden items-center gap-1.5 px-6 pt-5 max-[640px]:order-7 max-[640px]:flex">
+                    <Link
+                        v-for="option in RANGES"
+                        :key="option.key"
+                        :href="`/?zeitraum=${option.key}`"
+                        class="rounded-[var(--r-sm)] px-3.5 py-[5px] text-small font-medium tracking-[-0.01em] no-underline"
+                        :class="range === option.key ? 'bg-paper font-semibold text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'text-ink-2 shadow-[inset_0_0_0_1px_var(--line-hover)]'"
+                    >
+                        {{ $t(option.label) }}
+                    </Link>
+                </div>
+
+                <div v-if="measured" class="mx-6 mt-5 grid grid-cols-2 gap-4 min-[1100px]:grid-cols-4 max-[640px]:order-7 max-[640px]:mt-3 max-[640px]:flex max-[640px]:flex-col max-[640px]:gap-0 max-[640px]:rounded-[var(--r)] max-[640px]:bg-paper max-[640px]:px-4 max-[640px]:shadow-card">
+                    <div v-for="figure in figures" :key="figure.key" class="flex flex-col gap-1.5 rounded-[var(--r)] bg-paper px-6 py-5 shadow-card max-[640px]:flex-row max-[640px]:items-baseline max-[640px]:justify-between max-[640px]:rounded-none max-[640px]:px-0 max-[640px]:py-3 max-[640px]:shadow-[inset_0_1px_0_var(--rule)] max-[640px]:first:shadow-none">
                         <div class="text-small font-medium text-ink-2">{{ figure.label }}</div>
-                        <div class="flex items-baseline gap-1 text-[34px] leading-10 font-semibold tracking-[-0.03em] tabular-nums" :class="figure.warn && 'text-due'">
+                        <div class="flex items-baseline gap-1 text-[34px] leading-10 font-semibold tracking-[-0.03em] tabular-nums max-[640px]:text-[18px] max-[640px]:leading-6" :class="figure.warn && 'text-due'">
                             {{ figure.value }}<span v-if="figure.unit" class="text-[14px] font-medium tracking-normal text-ink-2">{{ figure.unit }}</span>
                         </div>
-                        <div v-if="figure.note || figure.delta" class="flex flex-wrap items-center gap-x-2 gap-y-1 text-small tabular-nums text-ink-2">
+                        <div v-if="figure.note || figure.delta" class="flex flex-wrap max-[640px]:hidden items-center gap-x-2 gap-y-1 text-small tabular-nums text-ink-2">
                             <span
                                 v-if="figure.delta"
                                 class="rounded-[var(--r-sm)] px-1.5 py-px font-medium"
@@ -292,18 +337,58 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                     </div>
                 </div>
 
-                <Panel class="mx-6 mt-5" :title="$t('dashboard.upcoming')" :count="entries.length || null">
+                <Panel class="mx-6 mt-5 max-[640px]:order-1" :title="$t('dashboard.upcoming')" :count="entries.length || null">
                     <template #action>
                         <Link class="ml-auto text-small tracking-[-0.01em] text-ring no-underline hover:underline" href="/kalender">
                             {{ $t("dashboard.calendar") }}
                         </Link>
                     </template>
 
-                    <div class="overflow-x-auto">
-                        <div class="grid min-w-[840px] grid-cols-7 gap-1.5">
-                            <div v-for="(day, index) in week" :key="day.date" class="flex min-h-[120px] flex-col gap-1.5 rounded-[var(--r-sm)] bg-sunk p-3">
-                                <div class="flex items-baseline gap-1.5" :class="index === 0 && 'text-ring'">
-                                    <span class="text-small" :class="index === 0 ? 'font-semibold' : 'text-ink-2'">{{ day.name }}</span>
+                    <div class="hidden max-[640px]:block">
+                        <div v-if="!phoneToday.length" class="flex min-h-14 items-center text-ui text-ink-2">
+                            {{ $t("dashboard.todayFree") }}
+                        </div>
+                        <template v-for="group in [{ label: 'dashboard.today', rows: phoneToday }, { label: 'dashboard.later', rows: phoneLater }]" :key="group.label">
+                            <div v-if="group.rows.length" class="pt-2 pb-1 text-small font-medium text-ink-2">{{ $t(group.label) }}</div>
+                            <component
+                                :is="entry.href ? Link : 'div'"
+                                v-for="entry in group.rows"
+                                :key="`${entry.date}${entry.time}${entry.what}`"
+                                :href="entry.href"
+                                class="flex min-h-14 items-center gap-3 text-ui text-foreground no-underline"
+                                :class="ROW"
+                            >
+                                <span class="flex-none font-semibold tabular-nums" :class="entry.date === today ? 'w-12' : 'w-[88px]'">{{ entry.date === today ? entry.time || dayOf(entry.date) : dayStamp(entry.date) }}</span>
+                                <span class="min-w-0 flex-1">
+                                    <span class="block truncate" :class="entry.away ? 'text-ink-2' : 'font-medium'">{{ entry.away ? $t("dashboard.away", { name: entry.what }) : entry.what }}</span>
+                                    <span v-if="entry.time && entry.date !== today || entry.where" class="block truncate text-small text-ink-2">{{ [entry.date !== today ? entry.time : null, entry.where].filter(Boolean).join(" · ") }}</span>
+                                </span>
+                            </component>
+                        </template>
+                    </div>
+
+                    <div v-if="!week[0].entries.length && entries.length" class="max-[640px]:hidden">
+                        <component
+                            :is="entry.href ? Link : 'div'"
+                            v-for="entry in entries"
+                            :key="`${entry.date}${entry.time}${entry.what}`"
+                            :href="entry.href"
+                            class="flex min-h-11 items-center gap-3 text-ui text-foreground no-underline"
+                            :class="ROW"
+                        >
+                            <span class="w-[120px] flex-none font-semibold tabular-nums">{{ dayStamp(entry.date) }}</span>
+                            <span class="min-w-0 flex-1 truncate" :class="entry.away ? 'text-ink-2' : 'font-medium'">
+                                {{ entry.away ? $t("dashboard.away", { name: entry.what }) : entry.what }}
+                            </span>
+                            <span v-if="entry.time || entry.where" class="flex-none text-small text-ink-2">{{ [entry.time, entry.where].filter(Boolean).join(" · ") }}</span>
+                        </component>
+                    </div>
+
+                    <div v-else class="overflow-x-auto max-[640px]:hidden">
+                        <div class="grid gap-1.5" :style="{ gridTemplateColumns: `repeat(${shownDays.length}, minmax(140px, 1fr))` }">
+                            <div v-for="day in shownDays" :key="day.date" class="flex min-h-[120px] flex-col gap-1.5 rounded-[var(--r-sm)] bg-sunk p-3">
+                                <div class="flex items-baseline gap-1.5" :class="day.date === today && 'text-ring'">
+                                    <span class="text-small" :class="day.date === today ? 'font-semibold' : 'text-ink-2'">{{ day.name }}</span>
                                     <span class="text-[20px] leading-none font-semibold tracking-[-0.03em] tabular-nums">{{ day.num }}</span>
                                 </div>
                                 <component
@@ -329,7 +414,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                         </div>
                     </div>
 
-                    <div v-if="later.length" class="flex flex-wrap items-baseline gap-x-5 gap-y-1 pt-3 text-small">
+                    <div v-if="later.length && week[0].entries.length" class="flex flex-wrap items-baseline gap-x-5 gap-y-1 pt-3 text-small max-[640px]:hidden">
                         <span class="text-ink-2">{{ $t("dashboard.later") }}</span>
                         <component
                             :is="entry.href ? Link : 'span'"
@@ -345,34 +430,34 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                     </div>
                 </Panel>
 
-                <div v-if="cards.length" class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] items-start gap-4 px-6 pt-5">
-                    <Panel v-for="card in cards" :key="card.key" :title="card.title" :count="card.count">
+                <div v-if="cards.length" class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] items-start gap-4 px-6 pt-5 max-[640px]:contents">
+                    <Panel v-for="card in cards" :key="card.key" class="max-[640px]:mx-6 max-[640px]:mt-5" :class="CARD_ORDER[card.key]" :title="card.title" :count="card.count">
                         <template v-if="card.href" #action>
                             <Link class="ml-auto text-small text-ink-2 no-underline" :href="card.href">{{ card.link }}</Link>
                         </template>
 
-                        <div v-for="(row, index) in card.rows" :key="row.key" class="flex items-center gap-3 py-2" :class="ROW">
+                        <div v-for="row in card.rows" :key="row.key" class="flex items-center gap-3 py-2" :class="ROW">
                             <div class="min-w-0 flex-1">
                                 <Link class="block truncate text-ui font-semibold tracking-[-0.015em] text-foreground no-underline" :href="row.href">
                                     {{ row.who }}
                                 </Link>
-                                <span class="block truncate text-small text-ink-2 [&_em]:text-ring [&_em]:not-italic">
-                                    {{ row.what }} <em v-if="row.emphasis">{{ row.emphasis }}</em>
+                                <span class="block truncate text-small min-[1280px]:whitespace-normal text-ink-2 [&_em]:text-ring [&_em]:not-italic">
+                                    {{ row.what }} <em v-if="row.emphasis" :class="{ '!text-destructive': row.late }">{{ row.emphasis }}</em>
                                     <template v-if="row.whatTail">{{ row.whatTail }}</template>
                                 </span>
                             </div>
-                            <Button v-if="row.action" :as="Link" :variant="index === 0 ? 'pill' : 'pill-muted'" :href="row.action.target">
+                            <Button v-if="row.action" :as="Link" class="max-[640px]:min-h-11" :variant="row.key === primaryKey ? 'pill' : 'pill-muted'" :href="row.action.target">
                                 {{ row.action.label }}
                             </Button>
-                            <Button v-else-if="row.task" type="button" :variant="index === 0 ? 'pill' : 'pill-muted'" @click="complete(row.task)">
+                            <Button v-else-if="row.task" type="button" class="max-[640px]:min-h-11" variant="pill-muted" @click="complete(row.task)">
                                 {{ $t("dashboard.done") }}
                             </Button>
                         </div>
                     </Panel>
                 </div>
 
-                <div class="columns-[300px] gap-4 px-6 pt-5 pb-8">
-                    <Panel class="mb-5 break-inside-avoid" :title="$t('dashboard.create')">
+                <div class="columns-[300px] gap-4 px-6 pt-5 pb-8 max-[640px]:contents">
+                    <Panel class="mb-5 break-inside-avoid max-[640px]:order-6 max-[640px]:mx-6 max-[640px]:mt-5 max-[640px]:mb-0" :title="$t('dashboard.create')">
                         <div class="grid grid-cols-2 gap-1.5">
                             <Link
                                 v-for="action in CREATE"
@@ -391,9 +476,9 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                         </div>
                     </Panel>
 
-                    <Panel v-if="activity.length" class="mb-5 break-inside-avoid" :title="$t('dashboard.activity')">
+                    <Panel v-if="activity.length" class="mb-5 break-inside-avoid max-[640px]:order-8 max-[640px]:mx-6 max-[640px]:mt-5 max-[640px]:mb-0" :title="$t('dashboard.activity')">
                         <Link
-                            v-for="entry in activity"
+                            v-for="entry in activityGroups"
                             :key="`${entry.when}${entry.text}`"
                             :href="entry.href"
                             class="flex gap-2.5 py-[9px] text-foreground no-underline hover:text-ring"
@@ -401,13 +486,13 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                         >
                             <i class="mt-[5px] size-[7px] flex-none rounded-full" :class="entry.fresh ? 'bg-ring' : 'bg-mark'" />
                             <div class="text-small leading-[1.4]">
-                                {{ entry.text }}
+                                {{ entry.count > 1 ? $t("project.historyCount", { body: entry.text, count: entry.count }) : entry.text }}
                                 <span class="mt-0.5 block text-small text-faint">{{ entry.when }}</span>
                             </div>
                         </Link>
                     </Panel>
 
-                    <Panel v-if="galleries.length" class="mb-5 break-inside-avoid" :title="$t('dashboard.galleries')" :count="galleries.length">
+                    <Panel v-if="galleries.length" class="mb-5 break-inside-avoid max-[640px]:order-9 max-[640px]:mx-6 max-[640px]:mt-5 max-[640px]:mb-8" :title="$t('dashboard.galleries')" :count="galleries.length">
                         <Link
                             v-for="row in galleries"
                             :key="`${row.projectId}${row.what}`"
@@ -416,7 +501,7 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                             :href="`/auftraege/${row.projectId}`"
                         >
                             <span class="block text-small font-semibold tracking-[-0.015em]">{{ row.who }}</span>
-                            <span class="block text-small text-ink-2">{{ row.what }}<template v-if="row.emphasis"> {{ row.emphasis }}</template><template v-if="row.whatTail">{{ row.whatTail }}</template></span>
+                            <span class="block text-small text-ink-2">{{ row.what }}{{ row.emphasis ? ` ${row.emphasis}` : '' }}<template v-if="row.whatTail">{{ row.whatTail }}</template></span>
                         </Link>
                     </Panel>
                 </div>

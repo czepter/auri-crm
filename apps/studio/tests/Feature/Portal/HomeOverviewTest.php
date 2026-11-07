@@ -137,7 +137,7 @@ it('derives a phase per booking and counts them for the filter', function () {
 
     $props = test()->actingAs($contact, 'portal')->get('/')->assertOk()->viewData('page')['props'];
 
-    expect($props['phaseCounts'])->toBe(['upcoming' => 1, 'delivered' => 1, 'open' => 1]);
+    expect($props['phaseCounts'])->toEqual(['upcoming' => 1, 'delivered' => 1, 'open' => 1]);
 });
 
 // The gallery entry point that did not exist at all before P-01.

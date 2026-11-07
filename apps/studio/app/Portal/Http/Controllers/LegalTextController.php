@@ -7,6 +7,7 @@ use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentMergeData;
 use App\Documents\Support\MergeFieldResolver;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Portal\Support\LegalTexts;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -40,6 +41,10 @@ class LegalTextController extends Controller
         return Inertia::render('Rechtstext', [
             'title' => $template->name,
             'body' => MergeFieldResolver::resolve($template->body, $merge->forStudio()),
+            'addressee' => $text === 'widerruf' ? array_values(array_filter([
+                StudioSettings::current()->postalLine(),
+                StudioSettings::current()->portal_contact_email,
+            ])) : [],
         ]);
     }
 }

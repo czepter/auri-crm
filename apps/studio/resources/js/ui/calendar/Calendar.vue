@@ -32,10 +32,10 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
   >
     <CalendarHeader class="pt-0">
       <nav class="flex items-center gap-1 absolute top-0 inset-x-0 justify-between">
-        <CalendarPrevButton>
+        <CalendarPrevButton :aria-label="$t('common.previousMonth')">
           <slot name="calendar-prev-icon" />
         </CalendarPrevButton>
-        <CalendarNextButton>
+        <CalendarNextButton :aria-label="$t('common.nextMonth')">
           <slot name="calendar-next-icon" />
         </CalendarNextButton>
       </nav>

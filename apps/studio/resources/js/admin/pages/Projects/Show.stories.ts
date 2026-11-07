@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import Show from './Show.vue'
-import { header, people, presets, quote, shoots, sources, stages, tasks, thread } from '../__stories__/fixtures'
+import { header, presets, quote, shoots, sources, stages, tasks, thread } from '../__stories__/fixtures'
 
 const scopeItems = quote.items.map((item) => ({
     id: item.id,
@@ -52,9 +52,7 @@ const meta = {
         anchors: [],
         quote,
         supersededQuotes: [],
-        packages: [],
         scope: { items: scopeItems, delta: 0, hasDraft: false },
-        people,
         fields,
         fieldValues: { guests: 85, ceremony: 'Frei' },
         stages,
@@ -96,7 +94,6 @@ export const Stillstand: Story = {
             days: 11,
             status: 'Fotografiert',
             since: '2026-09-14',
-            next: { key: 'culling', label: 'Auswahl' },
         },
     },
 }

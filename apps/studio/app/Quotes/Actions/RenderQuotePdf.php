@@ -52,6 +52,23 @@ class RenderQuotePdf
     public function html(Quote $quote, ?QuoteLayout $layoutOverride = null): string
     {
         $quote = $quote->asSeenByClient();
+
+        if ($quote->vat_mode === null) {
+            $quote = clone $quote;
+            $quote->forceFill(Quote::computeVat($quote->net, $quote->items));
+        }
+
+        if ($quote->recipient_street === null && $quote->recipient_postcode === null && $quote->recipient_city === null) {
+            $quote = clone $quote;
+            $contact = $quote->recipientContact ?? $quote->case->primaryContact();
+            $quote->setRelation('recipientContact', $contact);
+            $quote->forceFill([
+                'recipient_street' => $contact?->street,
+                'recipient_postcode' => $contact?->postcode,
+                'recipient_city' => $contact?->city,
+            ]);
+        }
+
         $project = $quote->case;
         $data = $this->mergeData->forCase($project);
 

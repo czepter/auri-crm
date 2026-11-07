@@ -18,7 +18,7 @@ import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
-defineProps<{ staffOptions: { value: string; label: string }[] }>()
+defineProps<{ staffOptions: { value: string; label: string }[]; label?: string }>()
 
 const open = ref(false)
 const contact = ref<App.Crm.Data.ContactSuggestionData | null>(null)
@@ -47,9 +47,9 @@ function submit() {
 <template>
   <Dialog v-model:open="open">
     <DialogTrigger as-child>
-      <Button class="ml-auto" variant="pill-muted" type="button">
+      <Button class="ml-auto" variant="pill" type="button">
         <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
-        {{ $t('project.taskAdd') }}
+        {{ label ?? $t('project.taskAdd') }}
       </Button>
     </DialogTrigger>
 

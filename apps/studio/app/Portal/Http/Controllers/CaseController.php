@@ -12,8 +12,9 @@ use App\Crm\Support\CrmVocabulary;
 use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
 use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Payments\Data\PaymentInstallmentData;
+use App\Payments\Data\PaymentPlanData;
 use App\Payments\Models\Invoice;
-use App\Payments\Models\PaymentInstallment;
 use App\Portal\Actions\UpdateCaseDetails;
 use App\Portal\Support\PortalOffers;
 use App\Portal\Support\PortalSettings;
@@ -134,6 +135,7 @@ class CaseController extends Controller
     private function inquiry(ClientCase $found): array
     {
         $shoot = $found->primaryShoot ?? $found->shoots()->orderBy('sort_order')->first();
+        $quote = $found->latestQuote;
 
         return [
             'id' => $found->public_id,
@@ -143,6 +145,12 @@ class CaseController extends Controller
             'venueName' => $shoot?->venue_name,
             'venueCity' => $shoot?->venue_city,
             'inquiryText' => $found->lead?->inquiry_text,
+            'quote' => $quote !== null && in_array($quote->status, [QuoteStatus::Sent, QuoteStatus::Accepted], true) ? [
+                'href' => "/projekte/{$found->public_id}/angebot",
+                'total' => $quote->gross(),
+                'validUntil' => $quote->valid_until?->format('Y-m-d'),
+                'acceptedOn' => $quote->accepted_at?->format('Y-m-d'),
+            ] : null,
             'questionnaires' => $this->questionnaires($found),
             'contact' => [
                 'email' => auth('portal')->user()->email,
@@ -232,19 +240,20 @@ class CaseController extends Controller
     private function documents(ClientCase $found, PortalSettings $settings): array
     {
         $rows = [];
-        $plan = $found->paymentPlan;
+        $plan = PaymentPlanData::forCase($found);
 
         if ($plan !== null && $settings->paymentStatusEnabled(auth('portal')->user())) {
-            $next = $plan->installments
-                ->reject(fn (PaymentInstallment $one) => $one->status === PaymentInstallmentStatus::Paid)
-                ->sortBy('due_on')
-                ->first();
+            $next = collect($plan->installments)
+                ->first(fn (PaymentInstallmentData $one) => in_array($one->status, array_column(PaymentInstallmentStatus::open(), 'value'), true));
 
             $rows[] = [
                 'kind' => 'payments',
                 'href' => "/projekte/{$found->public_id}/zahlungen",
-                'dueOn' => $next?->due_on?->format('Y-m-d'),
-                'amount' => $next === null ? null : (int) $next->amount,
+                'label' => $next?->label,
+                'dueOn' => $next?->dueOn,
+                'overdue' => $next?->isLate ?? false,
+                'amount' => $next?->remaining,
+                'openTotal' => $plan->openTotal,
                 'settled' => $next === null,
             ];
         }
@@ -265,19 +274,28 @@ class CaseController extends Controller
                 'kind' => 'quote',
                 'href' => "/projekte/{$found->public_id}/angebot",
                 'dueOn' => $found->latestQuote->valid_until?->format('Y-m-d'),
-                'acceptedOn' => $found->latestQuote->accepted_at?->format('Y-m-d'),
-                'amount' => (int) $found->latestQuote->total,
-                'settled' => $found->latestQuote->status === QuoteStatus::Accepted,
+                'acceptedOn' => ($found->latestQuote->accepted_at ?? $found->booked_at)?->format('Y-m-d'),
+                'amount' => $found->latestQuote->gross(),
+                'settled' => $found->latestQuote->status === QuoteStatus::Accepted || $found->latestQuote->accepted_at !== null || $found->isBooked(),
             ];
         }
 
         if ($settings->messagingEnabled(auth('portal')->user())) {
+            // The studio wrote last: the same rule the mailbox badge counts.
+            $unread = auth('portal')->user()->threads()
+                ->where('threads.case_id', $found->id)
+                ->with('latestMessage')
+                ->get()
+                ->filter(fn ($thread) => $thread->latestMessage !== null && $thread->latestMessage->contact_id === null)
+                ->count();
+
             $rows[] = [
                 'kind' => 'messages',
                 'href' => "/nachrichten?betrifft={$found->public_id}",
                 'dueOn' => null,
                 'amount' => null,
-                'settled' => true,
+                'unread' => $unread,
+                'settled' => $unread === 0,
             ];
         }
 

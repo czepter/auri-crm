@@ -10,11 +10,14 @@ import { useLiveProps } from '@/admin/lib/liveReload'
 import GroupPhotoField from '@/portal/components/GroupPhotoField.vue'
 import Card from '@/ui/page/Card.vue'
 import { Button } from '@/ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 import { Switch } from '@/ui/switch'
 import { Textarea } from '@/ui/textarea'
+import Chip from '@/ui/page/Chip.vue'
+import Empty from '@/ui/page/Empty.vue'
 
 const props = defineProps<{
   header: App.Crm.Screens.CaseHeaderData
@@ -124,19 +127,23 @@ function summary(instance: App.Crm.Data.FormInstanceData): string {
 </script>
 
 <template>
-  <AdminLayout active="anfragen">
+  <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
     <ProjectShell :header="header" active="documents" child="forms">
       <template v-if="header.canManageForms" #actions>
-        <Button
-          v-for="template in formTemplates"
-          :key="template.value"
-          variant="pill"
-          type="button"
-          @click="createFrom(template.value)"
-        >
-          {{ template.label }}
+        <Button v-if="formTemplates.length === 1" variant="outline" type="button" @click="createFrom(formTemplates[0].value)">
+          {{ $t('formInstances.send') }}
         </Button>
-        <Button variant="pill" type="button" @click="createFrom('')">
+        <DropdownMenu v-else-if="formTemplates.length">
+          <DropdownMenuTrigger as-child>
+            <Button variant="outline" type="button">{{ $t('formInstances.send') }}</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem v-for="template in formTemplates" :key="template.value" @select="createFrom(template.value)">
+              {{ template.label }}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Button variant="outline" type="button" @click="createFrom('')">
           {{ $t('formInstances.startBlank') }}
         </Button>
       </template>
@@ -153,9 +160,9 @@ function summary(instance: App.Crm.Data.FormInstanceData): string {
           @save="save(instance.id)"
         >
           <template #action>
-            <span :class="['chip', instance.sharedAt ? 'done' : 'off']">
+            <Chip :tone="instance.sharedAt ? 'success' : 'neutral'">
               {{ instance.sharedAt ? $t('formInstances.shared') : $t('formInstances.notShared') }}
-            </span>
+            </Chip>
           </template>
 
           <!-- E-03 gilt auch am Telefon: ein unbeantwortetes Feld steht hier
@@ -256,7 +263,7 @@ function summary(instance: App.Crm.Data.FormInstanceData): string {
         </Card>
       </div>
 
-      <p v-if="!formInstances.length && !header.canManageForms" class="text-small leading-[1.45] text-faint">{{ $t('formInstances.empty') }}</p>
+      <Empty v-if="!formInstances.length && !header.canManageForms" :text="$t('formInstances.empty')" />
     </ProjectShell>
   </AdminLayout>
 </template>

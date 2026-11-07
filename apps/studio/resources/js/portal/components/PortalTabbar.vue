@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
+import { bookingKey } from '@/portal/lib/booking'
 
 /*
  * mockups/redesign/tokens.css `.tabbar`. Four text links do not fit in 390px
@@ -15,6 +16,8 @@ const nav = computed(() => usePage().props.portalNav as { messaging: boolean; un
 
 const path = computed(() => usePage().url.split('?')[0])
 
+const bookings = computed(() => usePage().component !== 'Error' && (path.value === '/' || path.value.startsWith('/projekte')))
+
 function on(active: boolean) {
   return active ? 'font-semibold text-foreground' : 'text-muted-foreground'
 }
@@ -26,11 +29,11 @@ const LINK
 <template>
   <nav
     v-if="nav"
-    class="fixed inset-x-0 bottom-0 z-40 grid auto-cols-fr grid-flow-col border-t border-border bg-[color-mix(in_srgb,var(--bg)_92%,transparent)] pb-[env(safe-area-inset-bottom)] backdrop-blur-[16px] min-[761px]:hidden"
+    class="fixed inset-x-0 bottom-0 z-40 grid auto-cols-fr grid-flow-col border-t border-border bg-[var(--bg)] pb-[env(safe-area-inset-bottom)] min-[761px]:hidden"
   >
-    <Link :class="[LINK, on(path === '/' || path.startsWith('/projekte'))]" href="/">
+    <Link :class="[LINK, on(bookings)]" href="/">
       <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10" /></svg>
-      {{ nav.oneBooking ? $t('portal.navBooking') : $t('portal.navBookings') }}
+      {{ $t(bookingKey(nav.oneBooking ? 'navBooking' : 'navBookings')) }}
     </Link>
 
     <Link v-if="nav.messaging" :class="[LINK, on(path.startsWith('/nachrichten'))]" href="/nachrichten">

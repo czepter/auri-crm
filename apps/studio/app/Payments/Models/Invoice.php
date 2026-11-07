@@ -123,7 +123,7 @@ class Invoice extends Model
         return match (true) {
             $this->isCancelled() => 'cancelled',
             $this->isPaid() => 'paid',
-            $this->dueOn()?->lt(now('UTC')->startOfDay()) ?? false => 'overdue',
+            $this->installments->contains(fn (PaymentInstallment $row) => $row->isLate()) => 'overdue',
             $this->paidAmount() > 0 => 'partial',
             default => 'open',
         };

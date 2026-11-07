@@ -45,7 +45,7 @@ class CashFlowForecast
             'overdue' => self::overdue($start, $type),
             'projects' => self::projectsBehind($type, fn ($query) => $query
                 ->where('payment_installments.status', '!=', PaymentInstallmentStatus::Paid)
-                ->whereBetween('payment_installments.due_on', [$start, $end])),
+                ->where('payment_installments.due_on', '<=', $end)),
             'quotes' => self::openQuotes($type)
                 ->where('status', QuoteStatus::Sent)
                 ->whereNotNull('valid_until')
@@ -137,12 +137,14 @@ class CashFlowForecast
 
                 // Still only a possibility: sent, unanswered, and not yet
                 // expired. Deliberately unweighted, and kept in its own
-                // column so it is never mistaken for the first two.
+                // column so it is never mistaken for the first two. Gross,
+                // like the installments beside it.
                 'open' => (int) self::openQuotes($type)
                     ->where('status', QuoteStatus::Sent)
                     ->whereNotNull('valid_until')
                     ->whereBetween('valid_until', [$monthStart, $monthEnd])
-                    ->sum('total'),
+                    ->get()
+                    ->sum(fn (Quote $quote) => $quote->gross()),
             ];
         }
 

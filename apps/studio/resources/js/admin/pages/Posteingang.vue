@@ -148,10 +148,10 @@ function receivedAt(iso: string) {
               v-for="row in group.rows"
               :key="row.id"
               :name="row.who"
-              :meta="row.waitingDays !== null && row.waitingDays >= NOTICEABLE_DAYS
+              :meta="group.key === 'unbeantwortet' && row.waitingDays !== null && row.waitingDays >= NOTICEABLE_DAYS
                 ? $t('inbox.waiting', row.waitingDays)
                 : null"
-              :alert="true"
+              :alert="group.key === 'unbeantwortet'"
               :title="row.project ?? $t('inbox.general')"
               :snippet="row.snippet"
               :active="open?.id === row.id"
@@ -202,12 +202,12 @@ function receivedAt(iso: string) {
           <p v-if="!configured" class="m-0 text-small leading-[1.47] text-ink-2">{{ $t('inbox.notConfigured') }}</p>
           <template v-else>
             <p v-if="catchAll" class="m-0 text-ui leading-[1.47] tabular-nums"><code>{{ catchAll }}</code></p>
-            <p v-else class="m-0 text-small leading-[1.47] text-ink-2">{{ $t('inbox.noSecret') }}</p>
+            <Button v-else-if="canRotate" type="button" variant="pill-muted" @click="rotate">{{ $t('inbox.generate') }}</Button>
 
             <!-- Rotation is the Inhaber's alone, and the dialog says what it
                  costs: every address already handed out stops working, including
                  the Reply-To on mail sitting in clients' inboxes. -->
-            <AlertDialog v-if="canRotate">
+            <AlertDialog v-if="canRotate && catchAll">
               <AlertDialogTrigger as-child>
                 <Button class="mt-2.5" type="button" variant="pill-muted">{{ $t('inbox.rotate') }}</Button>
               </AlertDialogTrigger>

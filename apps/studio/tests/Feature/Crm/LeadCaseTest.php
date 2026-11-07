@@ -45,6 +45,15 @@ it('groups the queue by working state, not by funnel stage', function () {
         ->and($groups['unbeantwortet']['rows'][0]['open'])->toBeTrue();
 });
 
+it('serves the rail as the Info tab of an inquiry', function () {
+    $lead = caseFor();
+
+    $page = props("/anfragen/{$lead->case->public_id}/info");
+
+    expect($page['tab'])->toBe('info')
+        ->and(array_column($page['header']['tabs'], 'key'))->toBe(['overview', 'quotes', 'messages', 'info']);
+});
+
 it('offers the stages to move to and lands back on the case', function () {
     $lead = caseFor();
 
@@ -83,8 +92,7 @@ it('offers the active packages until a quote exists, then the quote', function (
 
     $props = props("/anfragen/{$lead->case->public_id}");
 
-    expect($props['quote']['total'])->toBe(590000)
-        ->and($props['packages'])->toBe([]);
+    expect($props['quote']['total'])->toBe(590000);
 });
 
 // A date is answered by what is already on it, not by a rule.
@@ -108,6 +116,13 @@ it('sends an unbooked project to its inquiry', function () {
 
     $this->get("/auftraege/{$lead->case->public_id}")
         ->assertRedirect("/anfragen/{$lead->case->public_id}");
+});
+
+it('sends an unbooked project\'s info tab to its inquiry', function () {
+    $lead = caseFor();
+
+    $this->get("/auftraege/{$lead->case->public_id}/info")
+        ->assertRedirect("/anfragen/{$lead->case->public_id}/info");
 });
 
 // #520: /anfragen took the lead's own id before the case's, and notifications

@@ -94,7 +94,7 @@ it('does not publish for an mcp read', function () {
 it('hands signed-in staff a subscriber cookie for the topic', function () {
     config(['session.secure' => true]);
 
-    $response = $this->actingAs(User::factory()->create(), 'staff')->get('/einrichtung/studio');
+    $response = $this->actingAs(User::factory()->create(), 'staff')->get('/');
 
     $response->assertOk();
     expect(liveUpdateClaims($response->getCookie('__Secure-mercure_access_token', false)->getValue(), 'subscriber-key'))
@@ -104,7 +104,7 @@ it('hands signed-in staff a subscriber cookie for the topic', function () {
 it('drops the cookie prefix on plain http', function () {
     config(['session.secure' => false]);
 
-    $this->actingAs(User::factory()->create(), 'staff')->get('/einrichtung/studio')
+    $this->actingAs(User::factory()->create(), 'staff')->get('/')
         ->assertCookie('mercure_access_token', encrypted: false)
         ->assertCookieMissing('__Secure-mercure_access_token');
 });

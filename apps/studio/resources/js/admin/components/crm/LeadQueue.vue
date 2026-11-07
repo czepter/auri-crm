@@ -40,7 +40,7 @@ watch(shown, (groups) => emit("update:rows", groups.flatMap((group) => group.row
 </script>
 
 <template>
-    <Queue>
+    <Queue class="max-[640px]:hidden">
         <div class="flex flex-col gap-2 px-3.5 pb-3">
             <div class="flex items-center gap-2">
                 <span
@@ -58,7 +58,7 @@ watch(shown, (groups) => emit("update:rows", groups.flatMap((group) => group.row
                 />
             </div>
 
-            <Input
+            <Input :aria-label="$t('common.search')"
                 v-model="term"
                 size="sm"
                 type="search"
@@ -78,6 +78,7 @@ watch(shown, (groups) => emit("update:rows", groups.flatMap((group) => group.row
                 :name="row.name"
                 :meta="since(row.waitingDays)"
                 :alert="row.waitingDays >= NOTICEABLE_DAYS"
+                :step="$t(`lead.step.${row.step}`)"
                 :title="dayWithWeekday(row.date, null) ?? $t('board.openDate')"
                 :snippet="row.text"
                 :active="row.open"

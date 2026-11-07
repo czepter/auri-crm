@@ -63,7 +63,7 @@ it('shows the inquiry tabs until the booking and sends the booked inquiry to its
 
     $header = props("/anfragen/{$lead->case->public_id}")['header'];
 
-    expect(collect($header['tabs'])->pluck('key')->all())->toBe(['overview', 'quotes', 'messages'])
+    expect(collect($header['tabs'])->pluck('key')->all())->toBe(['overview', 'quotes', 'messages', 'info'])
         ->and($header['queue'])->toBe([]);
 
     app(BookCase::class)($project, auth('staff')->user());
@@ -77,4 +77,12 @@ it('shows the draft quote on the overview', function () {
     $draft = Quote::factory()->create(['case_id' => $project->id, 'status' => QuoteStatus::Draft, 'sent_at' => null]);
 
     expect(props("/anfragen/{$lead->case->public_id}")['quote']['id'])->toBe($draft->public_id);
+});
+
+it('falls back to an older live quote when the newest is superseded', function () {
+    $project = ClientCase::factory()->create();
+    $live = Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Sent]);
+    Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Superseded]);
+
+    expect($project->currentQuote->is($live))->toBeTrue();
 });

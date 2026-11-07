@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import PortalBack from '@/portal/components/PortalBack.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
@@ -24,23 +25,27 @@ const props = defineProps<{
   registerCourt: string | null
   representative: string | null
   website: string | null
+  email: string | null
+  phone: string | null
 }>()
 
-// A legal notice is a list of particulars, not nine cards. Empty ones are
-// absent rather than blank: what a studio has not filed is not a gap on this
-// page, it is simply not one of its particulars.
-const facts = computed(() => [
-  { key: 'settings.legalForm', value: props.legalForm },
-  { key: 'settings.street', value: props.street },
-  { key: 'settings.city', value: [props.postcode, props.city].filter(Boolean).join(' ') || null },
-  { key: 'settings.country', value: props.country },
-  { key: 'settings.representative', value: props.representative },
+const registry = computed(() => [
   { key: 'settings.taxNumber', value: props.taxNumber },
   { key: 'settings.vatId', value: props.vatId },
   { key: 'settings.registerNumber', value: props.registerNumber },
   { key: 'settings.registerCourt', value: props.registerCourt },
-  { key: 'settings.website', value: props.website },
-].filter((fact) => fact.value))
+].filter(fact => fact.value))
+
+// legal_name is stored without the form; a name that already carries it stays as is.
+const title = computed(() => {
+  if (!props.name) {
+    return null
+  }
+
+  return props.legalForm && !props.name.includes(props.legalForm) ? `${props.name} ${props.legalForm}` : props.name
+})
+
+const role = computed(() => /gmbh|ug\b/i.test(props.legalForm ?? '') ? 'portal.impressumManager' : 'portal.impressumOwner')
 </script>
 
 <template>
@@ -48,19 +53,33 @@ const facts = computed(() => [
     <PortalHeader />
 
     <main class="mx-auto w-full max-w-[668px] grow px-6 pt-[var(--band)] pb-28">
+      <PortalBack />
       <p class="animate-rise motion-reduce:animate-none mb-4 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">{{ $t('portal.impressumTitle') }}</p>
-      <h1 v-if="name" class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
-        {{ name }}
+      <h1 v-if="title" class="scroll-mt-24 animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
+        {{ title }}
       </h1>
 
-      <dl class="animate-rise [animation-delay:230ms] motion-reduce:animate-none m-0 mt-12 grid grid-cols-[148px_1fr] gap-x-6 gap-y-3 border-t border-border pt-8 max-[700px]:grid-cols-1 max-[700px]:gap-y-0">
-        <template v-for="fact in facts" :key="fact.key">
+      <address class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 border-t border-border pt-8 text-[15.5px] leading-[1.6] not-italic">
+        <p v-if="representative">{{ $t(role) }}: {{ representative }}</p>
+        <p v-if="street">{{ street }}</p>
+        <p v-if="postcode || city">{{ [postcode, city].filter(Boolean).join(' ') }}</p>
+        <p v-if="country">{{ country }}</p>
+
+        <p v-if="email || phone || website" class="mt-4 grid">
+          <a v-if="email" class="inline-flex min-h-11 items-center underline" :href="`mailto:${email}`">{{ email }}</a>
+          <a v-if="phone" class="inline-flex min-h-11 items-center underline" :href="`tel:${phone.replace(/[^\d+]/g, '')}`">{{ phone }}</a>
+          <a v-if="website" class="inline-flex min-h-11 items-center underline" :href="/^https?:/.test(website) ? website : `https://${website}`" target="_blank" rel="noopener">{{ website }}</a>
+        </p>
+      </address>
+
+      <dl v-if="registry.length" class="animate-rise [animation-delay:230ms] motion-reduce:animate-none m-0 mt-6 grid grid-cols-[148px_1fr] gap-x-6 gap-y-2 text-[14.5px] max-[700px]:grid-cols-1 max-[700px]:gap-y-0">
+        <template v-for="fact in registry" :key="fact.key">
           <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t(fact.key) }}</dt>
-          <dd class="m-0 text-[14.5px] tabular-nums">{{ fact.value }}</dd>
+          <dd class="m-0 tabular-nums">{{ fact.value }}</dd>
         </template>
       </dl>
     </main>
 
-    <PortalFooter />
+    <PortalFooter class="pb-[calc(6rem+env(safe-area-inset-bottom))]" />
   </PortalShell>
 </template>

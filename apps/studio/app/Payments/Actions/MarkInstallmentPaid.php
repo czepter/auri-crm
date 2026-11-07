@@ -60,7 +60,14 @@ class MarkInstallmentPaid
             ? PaymentInstallmentStatus::Paid
             : PaymentInstallmentStatus::Partial;
 
-        DB::transaction(function () use ($installment, $method, $paidOn, $reference, $actor, $booked, $paidAmount, $status) {
+        $recorded = DB::transaction(function () use ($installment, $method, $paidOn, $reference, $actor, $booked, $paidAmount, $status) {
+            // Webhook and success redirect race for the same rate; the loser must not log a second payment.
+            $current = $installment->newQuery()->lockForUpdate()->find($installment->id);
+
+            if ($current === null || $current->status !== $installment->status || (int) $current->paid_amount !== (int) $installment->paid_amount) {
+                return false;
+            }
+
             $installment->update([
                 'status' => $status,
                 'settled_via' => $method,
@@ -82,7 +89,13 @@ class MarkInstallmentPaid
                 subject: $installment->public_id,
                 projectId: $installment->case()?->id,
             );
+
+            return true;
         });
+
+        if (! $recorded) {
+            return $installment->fresh();
+        }
 
         $installment = $installment->fresh();
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { Link, router, usePage } from "@inertiajs/vue3";
+import { useMediaQuery } from "@vueuse/core";
 import { toast } from "vue-sonner";
 import {
     DropdownMenu,
@@ -12,8 +13,8 @@ import { Toaster } from "@/ui/sonner";
 import CommandPalette from "@/admin/layouts/CommandPalette.vue";
 import { Alert } from "@/ui/alert";
 import { Button } from "@/ui/button";
-import HelpButton from "@/ui/page/HelpButton.vue";
-import { navItems, studioKeys } from "@/admin/lib/nav";
+import { navItems, phoneNav, studioKeys } from "@/admin/lib/nav";
+import { Dialog, DialogContent, DialogTitle } from "@/ui/dialog";
 
 const props = defineProps<{ active: string }>();
 
@@ -55,6 +56,15 @@ const can = computed(() => page.props.auth.can ?? []);
 // gemountete Komponente pruefbar ist.
 const items = computed(() => navItems(can.value, nav.value ?? {}));
 
+const phone = computed(() => phoneNav(items.value));
+const moreOpen = ref(false);
+const phoneViewport = useMediaQuery("(max-width: 640px)");
+
+function search() {
+    moreOpen.value = false;
+    nextTick(() => palette.value?.open());
+}
+
 // Die Aufklapper ohne gespeicherten Zustand: wer in einem Zweig steht,
 // sieht ihn offen, und beim Verlassen faellt er wieder zu. Das ist der Zustand,
 // den man ohnehin will, und spart den Speicher dafuer.
@@ -72,19 +82,14 @@ const collectorsOpen = ref<Record<string, boolean>>(
 
 <template>
     <div class="flex min-h-screen max-[640px]:flex-col">
+        <a class="skip-link" href="#inhalt">{{ $t("common.skipToContent") }}</a>
         <!-- The marker alone, no value: the palette is on :root since crm.css
          stopped scoping it. What is left for the attribute to do is take the
          nav out of tokens.css's unlayered svg reset, which no utility can
          outrank. -->
         <div data-tokens class="flex-none">
-            <!-- The phone rules sit on the nav, exactly where crm.css had them.
-           `order` does nothing from here — the nav is a child of this wrapper,
-           not of the flex row — but that is today's behaviour, and no baseline
-           covers 640px to tell a fix from a regression. The desktop `sticky`
-           does work: the wrapper stretches to the flex row, so the nav pins
-           against it while main scrolls. -->
             <nav
-                class="flex w-[214px] flex-col px-3 py-4.5 max-[1080px]:w-14 max-[1080px]:px-2 max-[640px]:sticky max-[640px]:bottom-0 max-[640px]:z-30 max-[640px]:order-2 max-[640px]:w-auto max-[640px]:flex-row max-[640px]:justify-around max-[640px]:bg-paper max-[640px]:px-1 max-[640px]:py-1.5 max-[640px]:shadow-[inset_0_1px_0_var(--rule)] sticky top-0 h-screen overflow-y-auto max-[640px]:top-auto max-[640px]:h-auto max-[640px]:overflow-visible"
+                class="flex w-[214px] flex-col px-3 py-4.5 max-[1080px]:w-14 max-[1080px]:px-2 sticky top-0 h-screen overflow-y-auto max-[640px]:hidden"
             >
                 <div class="mb-px flex items-start gap-1 pb-5.5 max-[1080px]:hidden">
                     <Link
@@ -107,7 +112,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                 <!-- Above the navigation, not in it: it does not change page, it
              opens a tool. The shortcut stands where a count would. -->
                 <button
-                    class="mb-4 flex w-full cursor-pointer items-center gap-2.25 rounded-lg border-0 bg-sunk px-2.5 py-1.5 text-left text-ui leading-[1.47] tracking-[-0.01em] text-ink-2 transition-colors duration-[120ms] ease-out hover:bg-sunk-2 max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2 max-[640px]:hidden"
+                    class="mb-4 flex w-full cursor-pointer items-center gap-2.25 rounded-lg border-0 bg-sunk px-2.5 py-1.5 text-left text-ui leading-[1.47] tracking-[-0.01em] text-ink-2 transition-colors duration-[120ms] ease-out hover:bg-sunk-2 max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2"
                     type="button"
                     @click="palette?.open()"
                 >
@@ -118,7 +123,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                         <circle cx="11" cy="11" r="6.5" />
                         <path d="m16 16 4.5 4.5" />
                     </svg>
-                    {{ $t("palette.search") }}
+                    <span>{{ $t("palette.search") }}</span>
                     <!-- font-sans against the browser's monospace default for kbd; the
                shorthand in crm.css carried the family along. -->
                     <kbd
@@ -129,7 +134,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
 
                 <template v-for="item in items" :key="item.key ?? item.group">
                     <template v-if="item.group">
-                        <div class="h-4.5 max-[640px]:hidden" />
+                        <div class="h-4.5" />
                         <!-- Foldable only where a heading is drawn: the narrow rail
                    has none, and without one there would be no handle to open
                    the rows again. -->
@@ -187,18 +192,16 @@ const collectorsOpen = ref<Record<string, boolean>>(
                             </svg>
                         </button>
                         <div
-                            class="mb-px ml-[19px] pl-1.5 max-[1080px]:ml-0 max-[1080px]:pl-0 max-[640px]:contents max-[640px]:[&>a+a]:hidden"
+                            class="mb-px ml-[19px] pl-1.5 max-[1080px]:ml-0 max-[1080px]:pl-0"
                             :class="!collectorsOpen[item.key!] && 'hidden max-[1080px]:block'"
                         >
                             <Link
                                 v-for="child in item.children"
                                 :key="child.key"
                                 class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 py-1 text-ui tracking-[-0.01em] text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2"
-                                :class="
-                                    child.key === props.active &&
-                                    'font-semibold text-foreground'
-                                "
+                                :class="child.key === props.active && 'font-semibold text-foreground'"
                                 :href="child.href!"
+                                :title="child.label"
                             >
                                 <svg
                                     class="hidden size-4.25 flex-none fill-none stroke-ink-2 stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round] max-[1080px]:block"
@@ -220,13 +223,15 @@ const collectorsOpen = ref<Record<string, boolean>>(
                         v-else
                         class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 py-1.5 text-ui tracking-[-0.01em] text-foreground no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2"
                         :class="[
-                            item.key === props.active && 'font-semibold',
+                            item.key === props.active && 'bg-sunk font-semibold',
                             item.studio &&
                                 !studioOpen &&
                                 'hidden max-[1080px]:flex',
-                            item.studio && 'max-[640px]:hidden',
                         ]"
                         :href="item.href!"
+                        :aria-current="item.key === props.active ? 'page' : undefined"
+                        :aria-label="item.label"
+                        :title="item.label"
                     >
                         <svg
                             class="size-4.25 flex-none fill-none stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]"
@@ -243,7 +248,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                         }}</span>
                         <span
                             v-if="item.count !== undefined"
-                            class="ml-auto text-small tabular-nums text-ink-2 max-[640px]:hidden"
+                            class="ml-auto text-small tabular-nums text-ink-2"
                         >
                             {{ item.count }}
                         </span>
@@ -270,7 +275,6 @@ const collectorsOpen = ref<Record<string, boolean>>(
                             :title="$t('releases.available')"
                         />
                     </Link>
-                    <HelpButton class="ml-auto" />
                 </div>
 
                 <!-- The effective style here is the cascade of both sheets: crm.css
@@ -307,7 +311,22 @@ const collectorsOpen = ref<Record<string, boolean>>(
             <CommandPalette ref="palette" />
         </div>
 
-        <main class="flex min-w-0 flex-1 flex-col pl-12 max-[640px]:order-1 max-[640px]:pl-0">
+        <header class="hidden items-center justify-between pl-6 pr-2 pt-2 max-[640px]:flex">
+            <Link class="text-body leading-none font-semibold tracking-[-0.024em] text-foreground no-underline" href="/">
+                {{ $page.props.brand }}
+            </Link>
+            <Link
+                v-if="can.includes('manage_leads')"
+                class="flex size-11 items-center justify-center rounded-lg text-ink-2 no-underline"
+                href="/anfragen/neu"
+                :title="$t('leads.createKicker')"
+                :aria-label="$t('leads.createKicker')"
+            >
+                <svg class="size-5 fill-none stroke-current stroke-[1.6] [stroke-linecap:round]" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+            </Link>
+        </header>
+
+        <main id="inhalt" tabindex="-1" class="flex min-w-0 flex-1 flex-col outline-none pl-12 max-[640px]:pb-[72px] max-[640px]:pl-0">
             <Alert
                 v-if="page.props.studioDeletion"
                 variant="destructive"
@@ -327,6 +346,96 @@ const collectorsOpen = ref<Record<string, boolean>>(
             <slot />
         </main>
 
-        <Toaster position="bottom-right" rich-colors />
+        <nav
+            class="fixed inset-x-0 bottom-0 z-30 hidden h-[calc(3.5rem+env(safe-area-inset-bottom))] bg-paper pb-[env(safe-area-inset-bottom)] shadow-[inset_0_1px_0_var(--rule)] max-[640px]:flex"
+            data-tokens
+        >
+            <Link
+                v-for="item in phone.bar"
+                :key="item.key"
+                class="relative flex min-h-12 min-w-16 flex-1 flex-col items-center justify-center gap-1 text-[11px] leading-none text-ink-2 no-underline"
+                :class="item.key === props.active && 'font-semibold text-foreground'"
+                :href="item.href!"
+            >
+                <svg
+                    class="size-4.25 flex-none fill-none stroke-current stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]"
+                    viewBox="0 0 24 24"
+                    v-html="item.icon"
+                />
+                {{ item.label }}
+                <span
+                    v-if="item.count"
+                    class="absolute top-1 left-1/2 ml-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-foreground px-1 text-[10px] leading-none text-background"
+                >
+                    {{ item.count }}
+                </span>
+            </Link>
+            <button
+                class="flex min-h-12 min-w-16 flex-1 cursor-pointer flex-col items-center justify-center gap-1 border-0 bg-transparent text-[11px] leading-none text-ink-2"
+                type="button"
+                @click="moreOpen = true"
+            >
+                <svg class="size-4.25 flex-none fill-none stroke-current stroke-[1.6] [stroke-linecap:round]" viewBox="0 0 24 24">
+                    <path d="M4 7h16M4 12h16M4 17h16" />
+                </svg>
+                {{ $t("nav.more") }}
+            </button>
+        </nav>
+
+        <Dialog v-model:open="moreOpen">
+            <DialogContent
+                hide-close
+                class="max-[640px]:top-auto max-[640px]:bottom-0 max-[640px]:left-0 max-[640px]:w-full max-[640px]:max-w-none max-[640px]:translate-x-0 max-[640px]:translate-y-0 max-[640px]:overflow-y-auto max-[640px]:rounded-b-none max-[640px]:pb-[env(safe-area-inset-bottom)]"
+            >
+                <DialogTitle class="sr-only">{{ $t("nav.more") }}</DialogTitle>
+                <Link
+                    v-for="item in phone.more"
+                    :key="item.key"
+                    class="flex min-h-12 flex-none items-center gap-3 px-6 text-ui text-foreground no-underline"
+                    :href="item.href!"
+                    @click="moreOpen = false"
+                >
+                    <svg
+                        class="size-4.25 flex-none fill-none stroke-ink-2 stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]"
+                        viewBox="0 0 24 24"
+                        v-html="item.icon"
+                    />
+                    {{ item.label }}
+                    <span v-if="item.count" class="ml-auto text-small tabular-nums text-ink-2">{{ item.count }}</span>
+                </Link>
+                <div class="my-1 h-px flex-none bg-[var(--rule)]" />
+                <button
+                    class="flex min-h-12 flex-none cursor-pointer items-center gap-3 border-0 bg-transparent px-6 text-left text-ui text-foreground"
+                    type="button"
+                    @click="search"
+                >
+                    <svg class="size-4.25 flex-none fill-none stroke-ink-2 stroke-[1.6] [stroke-linecap:round]" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="6.5" />
+                        <path d="m16 16 4.5 4.5" />
+                    </svg>
+                    {{ $t("palette.search") }}
+                </button>
+                <Link class="flex min-h-12 flex-none items-center gap-3 px-6 text-ui text-foreground no-underline" href="/hilfe" @click="moreOpen = false">
+                    <svg class="size-4.25 flex-none fill-none stroke-ink-2 stroke-[1.6] [stroke-linecap:round]" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="9" />
+                        <path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01" />
+                    </svg>
+                    {{ $t("help.open") }}
+                </Link>
+                <Link class="flex min-h-12 flex-none items-center gap-3 px-6 text-ui font-medium text-foreground no-underline" href="/profil" @click="moreOpen = false">
+                    <span class="flex size-6 flex-none items-center justify-center rounded-full bg-sunk text-small font-semibold text-ink-2">{{ initials }}</span>
+                    {{ user?.name }}
+                </Link>
+                <button
+                    class="flex min-h-12 flex-none cursor-pointer items-center border-0 bg-transparent px-6 text-left text-ui text-foreground"
+                    type="button"
+                    @click="router.post('/logout')"
+                >
+                    {{ $t("common.signOut") }}
+                </button>
+            </DialogContent>
+        </Dialog>
+
+        <Toaster :position="phoneViewport ? 'top-center' : 'bottom-right'" rich-colors />
     </div>
 </template>

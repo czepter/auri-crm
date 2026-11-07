@@ -59,6 +59,7 @@ class ContactController extends Controller
     {
         return [
             'accept_quotes' => (bool) StudioSettings::current()->portal_accept_quotes_enabled,
+            'sign_contracts' => (bool) StudioSettings::current()->portal_sign_contracts_enabled,
             'payment_status' => (bool) StudioSettings::current()->portal_payment_status_enabled,
             'messaging_mode' => (string) StudioSettings::current()->portal_messaging_mode,
             'gallery_downloads' => (bool) StudioSettings::current()->gallery_default_downloads_enabled,
@@ -161,14 +162,16 @@ class ContactController extends Controller
             // C-18 (#254): a project is an order with money and dates, a
             // gallery a delivery with an expiry. Mixed into one list they
             // read as the same thing, so they are two sections.
-            'projects' => $contact->cases()->with(['primaryShoot', 'latestQuote'])->get()
+            'projects' => $contact->cases()->with(['primaryShoot', 'latestQuote', 'currentQuote'])->get()
                 ->map(fn (ClientCase $project) => [
                     'id' => $project->public_id,
                     'name' => $project->name,
                     'role' => $project->pivot->role,
                     'date' => $project->primaryShoot?->date?->format('Y-m-d'),
-                    'value' => $project->latestQuote?->total,
+                    'value' => $project->latestQuote?->gross(),
                     'booked' => $project->isBooked(),
+                    'open' => ! $project->isBooked() && ! $project->isClosed(),
+                    'quote' => $project->currentQuote === null ? null : ['status' => $project->currentQuote->status->value, 'total' => $project->currentQuote->gross()],
                 ])->all(),
             'galleries' => Gallery::query()
                 ->whereIn('case_id', $contact->cases()->select('cases.id'))

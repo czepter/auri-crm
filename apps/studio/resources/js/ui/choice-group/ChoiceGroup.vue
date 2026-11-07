@@ -51,15 +51,15 @@ const CONTAINER = {
 
 const ITEM = {
   default:
-    "inline-block cursor-pointer rounded-[var(--r-sm)] bg-sunk px-3 py-1.5 text-small text-foreground peer-checked:bg-foreground peer-checked:text-paper",
+    "inline-block cursor-pointer rounded-[var(--r-sm)] bg-sunk px-3 py-1.5 text-small text-foreground peer-checked:bg-paper peer-checked:font-medium peer-checked:shadow-[inset_0_0_0_1px_var(--faint)]",
   segmented:
-    "inline-block cursor-pointer rounded-[6px] px-3.5 py-1 text-small leading-[1.4] font-normal text-foreground transition-colors duration-[120ms] ease-out peer-checked:bg-paper peer-checked:font-medium peer-checked:shadow-[0_1px_2px_rgba(24,24,27,.08)]",
+    "inline-block cursor-pointer rounded-[6px] px-3.5 py-1 text-small leading-[1.4] font-normal text-foreground transition-colors duration-[120ms] ease-out peer-checked:bg-paper peer-checked:font-medium peer-checked:shadow-[0_1px_2px_rgba(24,24,27,.08),inset_0_0_0_1px_var(--faint)]",
 }
 
 /* Ein Zeichen füllt keine Textzeile: es steht mittig in einem Feld, das so
    hoch ist wie breit, sonst liegt es in einer flachen Pille. */
 const ICON_ITEM
-  = "flex size-[26px] cursor-pointer items-center justify-center rounded-[6px] text-foreground transition-colors duration-[120ms] ease-out peer-checked:bg-paper [&_svg]:size-[15px] [&_svg]:stroke-[1.75]"
+  = "flex size-[26px] cursor-pointer items-center justify-center rounded-[6px] text-foreground transition-colors duration-[120ms] ease-out peer-checked:bg-paper peer-checked:shadow-[inset_0_0_0_1px_var(--faint)] [&_svg]:size-[15px] [&_svg]:stroke-[1.75]"
 </script>
 
 <template>
@@ -89,7 +89,7 @@ const ICON_ITEM
         <!-- Der Slot ist für die Fälle, in denen ein Zeichen kürzer ist als
              sein Wort — die Beschriftung bleibt am Eingabefeld und damit für
              den Screenreader stehen. -->
-        <span :class="icon ? ICON_ITEM : ITEM[variant]"><slot name="option" :option="option">{{ option.label }}</slot></span>
+        <span :class="[icon ? ICON_ITEM : ITEM[variant], 'peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring']"><slot name="option" :option="option">{{ option.label }}</slot></span>
       </label>
     </div>
   </component>

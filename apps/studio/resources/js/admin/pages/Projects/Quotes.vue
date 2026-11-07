@@ -13,7 +13,7 @@ useLiveProps(['header', 'quotes', 'payments'])
 </script>
 
 <template>
-  <AdminLayout active="anfragen">
+  <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
     <ProjectShell :header="header" active="documents" child="quotes">
       <QuoteList
         :project-id="header.id"

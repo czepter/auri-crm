@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Button } from '@/ui/button'
@@ -13,11 +14,12 @@ import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHea
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 import GalleryShareDialog from '@/admin/components/gallery/GalleryShareDialog.vue'
 import GalleryNav from '@/admin/components/gallery/GalleryNav.vue'
-import { publishLabelKey, showPublish as showPublishRule, showWithdraw as showWithdrawRule } from '@/admin/lib/galleryPublish'
+import { publishLabelKey, showPublish as showPublishRule, showWithdraw as showWithdrawRule, stateKey } from '@/admin/lib/galleryPublish'
 import { xsrfHeader } from '@/admin/lib/multipartUpload'
 import Images from '@/admin/pages/Galleries/panes/Images.vue'
 import Settings from '@/admin/pages/Galleries/panes/Settings.vue'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import Chip from '@/ui/page/Chip.vue'
 
 const { t } = useI18n()
 
@@ -110,6 +112,14 @@ const publishState = computed(() => ({
   published: props.figures.published,
   assets: props.figures.assets,
 }))
+const stateWord = computed(() => {
+  const key = stateKey(publishState.value)
+  if (key !== 'online') return t(key === 'draft' ? 'galleryRecord.stateDraft' : 'galleryRecord.stateWithdrawn')
+  return props.figures.expiresAt === null
+    ? t('galleryRecord.stateOnline')
+    : t('galleryRecord.stateOnlineUntil', { date: new Date(props.figures.expiresAt).toLocaleDateString('de-DE') })
+})
+const stateTone = computed(() => ({ online: 'text-ok', withdrawn: 'text-ink-2', draft: 'text-ink-2' })[stateKey(publishState.value)])
 const publishLabel = computed(() => publishLabelKey(publishState.value))
 const showPublish = computed(() => props.gallery.canPublish && showPublishRule(publishState.value))
 const showWithdraw = computed(() => props.gallery.canPublish && showWithdrawRule(publishState.value))
@@ -124,6 +134,7 @@ function publish() {
 }
 
 const sharing = ref(false)
+const previewForm = ref<HTMLFormElement | null>(null)
 
 function publishSilently() {
   router.post(`/galerien/${props.gallery.id}/veroeffentlichen`, {}, { preserveScroll: true, onSuccess: () => (sharing.value = true) })
@@ -293,7 +304,7 @@ const COLOURS = ['light', 'dark', 'warm']
 const GRIDS = ['wide', 'dense', 'single']
 
 function day(iso: string | null) {
-  return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'
+  return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
 }
 
 function megabytes(bytes: number) {
@@ -303,20 +314,13 @@ function megabytes(bytes: number) {
 
 <template>
   <AdminLayout active="galerien">
-    <div data-tokens>
+    <Page wide>
+    <div data-tokens class="min-w-0 flex-1">
       <PageHead :title="gallery.title ?? '—'">
-        <!-- Stand, chip-styled: the same fact the old counter band spent a
-             whole column on, and the only one of the six worth a glance at
-             every tab (ProjectShell's isBooked chip is the pattern). -->
-        <span
-          v-if="figures.published !== null"
-          class="flex-none rounded-[var(--r-sm)] bg-ok-bg px-2 py-[3px] text-small leading-[1.5] font-semibold text-ok"
-        >{{ $t('galleryRecord.version', { version: figures.published }) }}</span>
-        <span
-          v-else-if="gallery.prerelease"
-          class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold text-due"
-        >{{ $t('galleryRecord.prerelease') }}</span>
-
+        <span class="flex flex-none items-center gap-1.5 text-small font-semibold" :class="stateTone">
+          <span class="size-1.5 rounded-full bg-current" />{{ stateWord }}
+        </span>
+        <Chip v-if="gallery.prerelease" tone="warn">{{ $t('galleryRecord.prerelease') }}</Chip>
         <span v-if="actionStatus" class="ml-auto flex items-center gap-1.5">
           <span class="text-small" :class="actionStatus.ok ? 'text-ink-2' : 'text-destructive'">{{ actionStatus.message }}</span>
           <Input
@@ -352,22 +356,24 @@ function megabytes(bytes: number) {
               <DropdownMenuItem v-if="gallery.canPublish" @select="createPreviewLink">{{ $t('galleryRecord.createPreviewLink') }}</DropdownMenuItem>
               <DropdownMenuItem @select="savingPreset = true">{{ $t('galleryRecord.saveAsPreset') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="presets.length" @select="applyingPreset = true">{{ $t('galleryRecord.applyPreset') }}</DropdownMenuItem>
+              <DropdownMenuItem class="min-[641px]:hidden" @select="previewForm?.submit()">{{ $t('galleryRecord.preview') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="showPublish && gallery.canMail" @select="publishSilently">{{ $t('galleryRecord.publishSilently') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="showWithdraw" @select="withdraw">{{ $t('galleryRecord.withdraw') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="showStartPrerelease" @select="startPrerelease">{{ $t('galleryRecord.prerelease') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="showStopPrerelease" @select="stopPrerelease">{{ $t('galleryRecord.prereleaseStop') }}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
           <form
+            ref="previewForm"
             :action="`/galerien/${gallery.id}/vorschau`"
             method="post"
             target="_blank"
-            class="inline-flex"
+            class="inline-flex max-[640px]:hidden"
           >
             <input type="hidden" name="_token" :value="csrf">
             <Button type="submit" variant="pill-muted">{{ $t('galleryRecord.preview') }}</Button>
           </form>
-          <Button v-if="showWithdraw" type="button" variant="pill-muted" @click="withdraw">{{ $t('galleryRecord.withdraw') }}</Button>
-          <Button v-if="showPublish && gallery.canMail" type="button" variant="pill-muted" @click="publishSilently">{{ $t('galleryRecord.publishSilently') }}</Button>
           <Button v-if="showPublish" type="button" @click="publish">{{ $t(publishLabel) }}</Button>
           <Button v-else-if="showWithdraw" type="button" @click="sharing = true">{{ $t('galleryRecord.share') }}</Button>
         </span>
@@ -445,20 +451,42 @@ function megabytes(bytes: number) {
           @reorder="reorderSets"
         />
 
-        <!-- Bilder: the pane owns the grid and selection. Fassungen moved to
-             Einstellungen — the count sits beside the set name and Stand is
-             the header's own chip, so nothing here repeats them. -->
-        <div v-if="tab === 'bilder'" class="min-w-0 flex-1">
-          <Images
-            :gallery="gallery"
-            :sets="sets"
-            :assets="assets"
-            :active-set-id="activeSetId"
-            :failed-assets="failedAssets"
-            :pending-uploads="pendingUploads"
-          />
+        <div v-if="tab === 'bilder'" class="flex min-w-0 flex-1 flex-col min-[1280px]:flex-row">
+          <div class="min-w-0 flex-1">
+            <Images
+              :gallery="gallery"
+              :sets="sets"
+              :assets="assets"
+              :active-set-id="activeSetId"
+              :failed-assets="failedAssets"
+              :pending-uploads="pendingUploads"
+            />
+          </div>
+          <aside class="flex-none px-6 pt-5 pb-7 min-[1280px]:sticky min-[1280px]:top-0 min-[1280px]:w-[280px] min-[1280px]:self-start min-[1280px]:pl-0">
+            <dl class="m-0 flex flex-col gap-2.5 text-small">
+              <div>
+                <dt class="text-ink-2">{{ $t('galleryRecord.published') }}</dt>
+                <dd class="m-0 mt-1 font-semibold" :class="stateTone">{{ stateWord }}</dd>
+                <dd v-if="figures.published !== null" class="m-0 mt-0.5 text-ink-2">{{ $t('galleryRecord.version', { version: figures.published }) }}</dd>
+              </div>
+              <div class="flex justify-between gap-3">
+                <dt class="text-ink-2">{{ $t('galleryRecord.viewed') }}</dt>
+                <dd class="m-0 tabular-nums">{{ figures.viewed }}</dd>
+              </div>
+              <div class="flex justify-between gap-3">
+                <dt class="text-ink-2">{{ $t('galleryRecord.marked') }}</dt>
+                <dd class="m-0 tabular-nums">{{ figures.marked }}</dd>
+              </div>
+              <div class="flex justify-between gap-3">
+                <dt class="text-ink-2">{{ $t('galleryRecord.downloaded') }}</dt>
+                <dd class="m-0 tabular-nums">{{ figures.downloaded }}</dd>
+              </div>
+            </dl>
+            <button type="button" class="mt-4 cursor-pointer border-0 bg-transparent p-0 text-small text-ring hover:underline" @click="sharing = true">
+              {{ $t('galleryRecord.share') }}
+            </button>
+          </aside>
         </div>
-
         <!-- Gestaltung: choosing without seeing is guessing, so the choice is
              on the left and the result on the right. -->
         <div v-else-if="tab === 'gestaltung'" class="flex min-w-0 flex-1 max-[640px]:flex-col">
@@ -496,7 +524,7 @@ function megabytes(bytes: number) {
               <div class="relative">
                 <img v-if="cover?.src" class="block aspect-video w-full object-cover" :src="`${cover.src}?w=1200&fmt=jpeg`" alt="" />
                 <div class="absolute inset-x-0 bottom-0 bg-[linear-gradient(transparent,rgba(20,16,14,0.55))] px-5 py-[22px] text-center text-paper">
-                  <b class="block text-title leading-[1.2] font-semibold">{{ gallery.title }}</b>
+                  <b class="block text-title leading-[1.2] font-semibold break-words">{{ gallery.title }}</b>
                   <span class="text-small opacity-85">{{ $t('contacts.assetCount', figures.assets) }}</span>
                 </div>
               </div>
@@ -551,9 +579,9 @@ function megabytes(bytes: number) {
           <table class="mt-4 w-full border-collapse max-[640px]:block max-[640px]:overflow-x-auto">
             <thead>
               <tr>
-                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.who') }}</th>
-                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.what') }}</th>
-                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2 text-right">{{ $t('galleryRecord.when') }}</th>
+                <th scope="col" class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.who') }}</th>
+                <th scope="col" class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.what') }}</th>
+                <th scope="col" class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2 text-right">{{ $t('galleryRecord.when') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -594,10 +622,10 @@ function megabytes(bytes: number) {
           <table v-if="builds.length" class="w-full border-collapse max-[640px]:block max-[640px]:overflow-x-auto">
             <thead>
               <tr>
-                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('gallery.sizeLabel') }}</th>
-                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.parts') }}</th>
-                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2 text-right">{{ $t('galleryRecord.size') }}</th>
-                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.state') }}</th>
+                <th scope="col" class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('gallery.sizeLabel') }}</th>
+                <th scope="col" class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.parts') }}</th>
+                <th scope="col" class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2 text-right">{{ $t('galleryRecord.size') }}</th>
+                <th scope="col" class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.state') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -613,5 +641,6 @@ function megabytes(bytes: number) {
         </div>
       </div>
     </div>
+    </Page>
   </AdminLayout>
 </template>

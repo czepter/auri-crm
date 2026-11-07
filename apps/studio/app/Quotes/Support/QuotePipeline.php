@@ -28,6 +28,7 @@ class QuotePipeline
             ->where('created_at', '<=', $at);
 
         return (int) Quote::query()
+            ->with('items')
             ->whereIn('case_id', $projects)
             ->whereIn('public_id', $by('quote.created')->whereNotNull('subject')->select('subject'))
             ->whereNotIn('public_id', $by('quote.accepted')->whereNotNull('subject')->select('subject'))
@@ -35,6 +36,7 @@ class QuotePipeline
             ->whereNotIn('public_id', $by('quote.revised')
                 ->whereRaw("(context::jsonb)->>'predecessor' is not null")
                 ->select(DB::raw("(context::jsonb)->>'predecessor'")))
-            ->sum('total');
+            ->get()
+            ->sum(fn (Quote $quote) => $quote->gross());
     }
 }

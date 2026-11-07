@@ -8,6 +8,7 @@ use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
+use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Portal\Support\LegalTexts;
 use App\Quotes\Actions\AcceptQuote;
 use App\Quotes\Data\QuoteData;
@@ -37,7 +38,7 @@ class QuoteController extends Controller
         $contact = auth('portal')->user();
 
         $found = $contact->visibleProjects()->where('cases.public_id', $case)
-            ->with(['latestQuote.items', 'latestQuote.predecessor', 'latestQuote.paymentStages'])
+            ->with(['latestQuote.items', 'latestQuote.predecessor', 'latestQuote.paymentStages', 'primaryShoot', 'paymentPlan.installments'])
             ->firstOrFail();
         $quote = $found->latestQuote;
 
@@ -48,12 +49,23 @@ class QuoteController extends Controller
         return Inertia::render('Quotes/Show', [
             'contact' => ['name' => $contact->name],
             'showSwitcher' => $contact->visibleProjects()->count() > 1,
-            'project' => ['id' => $found->public_id, 'name' => $found->name],
+            'project' => [
+                'id' => $found->public_id,
+                'name' => $found->name,
+                'date' => $found->primaryShoot?->date?->format('Y-m-d'),
+                'venue' => $found->primaryShoot?->venue(),
+                'href' => "/projekte/{$found->public_id}",
+            ],
             // T-08's own switch (default off): the affordance half of "accept
             // quotes online", the accept() route below is the authorisation
             // half via `portal.capability:accept_quotes`. Never hides an
             // already-accepted quote — only the button that would accept one.
-            'canAccept' => (bool) StudioSettings::current()->portal_accept_quotes_enabled,
+            'canAccept' => (bool) StudioSettings::current()->portal_accept_quotes_enabled && ! $found->isBooked(),
+            // Per stage, in plan order: the accepted quote shows which are settled.
+            'stagePaid' => ($found->paymentPlan?->installments ?? collect())
+                ->reject->isCancelled()->sortBy('sort_order')
+                ->map(fn ($installment) => $installment->status === PaymentInstallmentStatus::Paid)
+                ->values()->all(),
             'quote' => $quote === null ? null : [
                 ...QuoteData::fromModel($quote->asSeenByClient())->toArray(),
                 // #480: the letter as the client reads it — fields filled, escaped.
@@ -66,7 +78,7 @@ class QuoteController extends Controller
                 // flag has no say over. A stale tab keeps reading whatever
                 // it rendered; the server never trusts it back.
                 'expired' => $quote->valid_until !== null && $quote->valid_until->copy()->endOfDay()->isPast(),
-                'acceptedAt' => $quote->accepted_at?->format('Y-m-d'),
+                'acceptedAt' => ($quote->accepted_at ?? ($found->isBooked() ? $found->booked_at : null))?->format('Y-m-d'),
             ],
         ]);
     }

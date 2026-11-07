@@ -4,7 +4,7 @@ import { router, useForm } from '@inertiajs/vue3'
 import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Field } from '@/ui/field'
-import { Input } from '@/ui/input'
+import DateTimeField from '@/admin/components/crm/DateTimeField.vue'
 import { Textarea } from '@/ui/textarea'
 import { useI18n } from 'vue-i18n'
 
@@ -125,22 +125,14 @@ function cancelScheduled(messageId: string) {
         <p v-if="thread?.recipients.length" class="m-0 mb-1.5 text-small leading-[1.47] text-ink-2">
           {{ $t('project.messagesTo', { names: thread.recipients.join(', ') }) }}
         </p>
-        <Field v-slot="{ id }" dense :error="reply.errors.body">
+        <Field v-slot="{ id }" dense :label="$t('project.messagesReplyLabel')" :error="reply.errors.body">
           <Textarea
             :id="id"
             v-model="reply.body"
-            rows="4"
-            :placeholder="$t('project.messagesReplyPlaceholder')" />
+            rows="4" />
         </Field>
         <div class="mt-2.5 flex items-center gap-2.5">
-          <!-- Native datetime-local: a picker library for one optional field
-               is a dependency this screen does not need. -->
-          <Input
-            v-model="reply.scheduled_for"
-            class="w-auto"
-            type="datetime-local"
-            :aria-label="$t('project.messagesScheduleLabel')"
-          />
+          <DateTimeField v-model="reply.scheduled_for" :label="$t('project.messagesScheduleLabel')" />
           <Button variant="pill" class="ml-auto" type="submit" :disabled="reply.processing">
             {{ reply.scheduled_for ? $t('project.messagesSchedule') : $t('project.messagesSend') }}
           </Button>
@@ -153,12 +145,7 @@ function cancelScheduled(messageId: string) {
           <Textarea :id="id" v-model="record.body" rows="4" />
         </Field>
         <div class="mt-2.5 flex items-center gap-2.5">
-          <Input
-            v-model="record.sent_at"
-            class="w-auto"
-            type="datetime-local"
-            :aria-label="$t('project.messagesSentAt')"
-          />
+          <DateTimeField v-model="record.sent_at" :label="$t('project.messagesSentAt')" />
           <Button variant="pill" class="ml-auto" type="submit" :disabled="!record.body.trim() || record.processing">
             {{ $t('project.messagesRecordSave') }}
           </Button>

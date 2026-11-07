@@ -21,9 +21,11 @@ export function formatEuros(cents: number): string {
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(cents / 100)
 }
 
-/** The same money as a headline figure — tiles, column sums, report rows, where cents are noise. */
+/** The same money as a headline figure — tiles, column sums, report rows: whole euros lose the cents, anything else keeps them. */
 export function formatEurosRounded(cents: number): string {
-  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
+  const digits = cents % 100 === 0 ? 0 : 2
+
+  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', minimumFractionDigits: digits, maximumFractionDigits: digits })
     .format(cents / 100)
 }
 
@@ -40,7 +42,7 @@ export function percentToBasisPoints(value: string): number | null {
 }
 
 export function basisPointsToPercent(bps: number | null): string {
-  return bps === null ? '' : (bps / 100).toFixed(2)
+  return bps === null ? '' : (bps / 100).toFixed(2).replace('.', ',')
 }
 
 /** For reading, not for a form field: `19`, `12,5`. */

@@ -12,6 +12,7 @@ function kandidat(id: string, name: string, type: string, outcome: 'lost' | 'dec
     outcome,
     outcomeLabel: outcome === 'lost' ? 'Verloren' : 'Abgelehnt',
     idleMonths,
+    idleSince: new Date(Date.now() - idleMonths * 30.44 * 86_400_000).toISOString().slice(0, 10),
     invoiced: false,
     leads: 1,
     messages: 3,

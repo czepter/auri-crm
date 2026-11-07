@@ -52,15 +52,15 @@ class ReadPaymentColumn
             ->get()
             ->map(function (PaymentInstallment $installment) {
                 $project = $installment->plan->case;
-                $days = (int) $installment->overdue_notified_at->diffInDays();
+                $days = (int) $installment->due_on->copy()->startOfDay()->diffInDays(today());
 
                 return new DomainRowData(
                     projectId: $project->public_id,
                     who: $project->name,
-                    what: 'Stripe mahnt',
+                    what: 'Rate überfällig',
                     emphasis: "seit {$days} Tagen",
                     whatTail: sprintf(
-                        'erfolglos · %s',
+                        '%s',
                         Number::currency($installment->amount / 100, 'EUR', 'de', 0),
                     ),
                     action: RowActionData::tel('Anrufen', $project->primaryContact()?->phone),

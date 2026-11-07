@@ -105,7 +105,7 @@ class HandleInertiaRequests extends Middleware
             // über der Profilzeile. Nur dort — der Portal-Surface hat keine
             // Seitenleiste, in die sie gehörte.
             ...($user !== null && Surface::current() === Surface::ADMIN ? [
-                'release' => fn () => [
+                'release' => fn () => app(ReleaseLog::class)->base() === null ? null : [
                     'installed' => app(ReleaseLog::class)->installed(),
                     'updateAvailable' => app(ReleaseLog::class)->updateAvailable(),
                 ],
@@ -191,7 +191,7 @@ class HandleInertiaRequests extends Middleware
      * thread this contact has. A client has a handful; make it one aggregate
      * query if anybody ever has hundreds.
      *
-     * @return array{messaging: bool, unread: int}|null
+     * @return array{messaging: bool, unread: int, oneBooking: bool, booked: bool}|null
      */
     private function portalNav(Request $request): ?array
     {
@@ -214,6 +214,7 @@ class HandleInertiaRequests extends Middleware
             // The home of a client with one booking is that booking, so the
             // nav naming a list would name something they never see.
             'oneBooking' => $contact->visibleProjects()->count() === 1,
+            'booked' => $contact->visibleProjects()->whereNotNull('cases.booked_at')->exists(),
         ];
     }
 }

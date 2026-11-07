@@ -173,12 +173,12 @@ it('groups contacts by whether the studio is working with them', function () {
     test()->actingAs(test()->staff, 'staff');
 
     $running = Contact::factory()->create(['name' => 'Läuft']);
-    $project = ClientCase::factory()->create();
+    $project = ClientCase::factory()->booked()->create();
     $project->attachContact($running, CaseContactRole::Primary);
     Shoot::factory()->for($project, 'case')->primary()->on(now()->addMonth()->format('Y-m-d'))->create();
 
     $past = Contact::factory()->create(['name' => 'Bestand']);
-    $old = ClientCase::factory()->create();
+    $old = ClientCase::factory()->booked()->create();
     $old->attachContact($past, CaseContactRole::Primary);
     Shoot::factory()->for($old, 'case')->primary()->on(now()->subYear()->format('Y-m-d'))->create();
 
@@ -197,7 +197,7 @@ it('groups contacts by whether the studio is working with them', function () {
 it('lists both halves of a couple as their own rows', function () {
     test()->actingAs(test()->staff, 'staff');
 
-    $project = ClientCase::factory()->create();
+    $project = ClientCase::factory()->booked()->create();
     $project->attachContact(Contact::factory()->create(['name' => 'Lena Meier']), CaseContactRole::Primary);
     $project->attachContact(Contact::factory()->create(['name' => 'Jan Kowalski']), CaseContactRole::Partner);
 

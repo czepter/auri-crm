@@ -2,6 +2,8 @@
 
 namespace App\Documents\Support;
 
+use App\Models\StudioSettings;
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 
 /**
@@ -39,6 +41,9 @@ class MergeFieldVocabulary
         // quote states about itself. Resolved from the project's primary
         // shoot and its latest sent quote — see CaseMergeData and QuoteMergeData.
         'shoot.date' => '14.06.2026',
+        'shoot.list' => '14.06.2026 (Gut Basthorst); 15.06.2026',
+        'payment.depositDue' => '01.03.2026',
+        'payment.plan' => 'Anzahlung 1.000,00 € bis 01.03.2026; Restzahlung 1.500,00 € bis 07.06.2026',
         'quote.validUntil' => '30.09.2026',
         'quote.vatNote' => 'Alle Preise verstehen sich zzgl. 19 % Umsatzsteuer.',
         // C-17 (#253): the "Galerie online" letter carries link, password and
@@ -136,7 +141,15 @@ class MergeFieldVocabulary
      */
     public static function samples(): array
     {
-        return self::SAMPLE;
+        $studio = [];
+
+        foreach (app(DocumentMergeData::class)->forStudio()['studio'] as $key => $value) {
+            if ($value !== '' && ! in_array($key, ['logoPath'], true)) {
+                $studio['studio.'.$key] = $value;
+            }
+        }
+
+        return [...self::SAMPLE, ...self::terms(), ...$studio];
     }
 
     /**
@@ -151,10 +164,28 @@ class MergeFieldVocabulary
     {
         $data = [];
 
-        foreach (self::SAMPLE as $path => $value) {
+        foreach ([...self::SAMPLE, ...self::terms()] as $path => $value) {
             Arr::set($data, $path, $value);
         }
 
         return $data;
+    }
+
+    /**
+     * The dates a studio sets by days, reckoned from the studio's own
+     * settings so a preview never shows 30 days next to a Zahlungsziel of 14.
+     *
+     * @return array<string, string>
+     */
+    private static function terms(): array
+    {
+        $settings = StudioSettings::current();
+        $due = Carbon::createFromFormat('d.m.Y', self::SAMPLE['invoice.date'])->addDays($settings->payment_term_days)->format('d.m.Y');
+
+        return [
+            'quote.validUntil' => now()->addDays($settings->quote_validity_days)->format('d.m.Y'),
+            'invoice.dueOn' => $due,
+            'invoice.paymentTerm' => "Zahlbar bis {$due} ohne Abzug.",
+        ];
     }
 }

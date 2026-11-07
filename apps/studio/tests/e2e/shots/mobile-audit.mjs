@@ -57,7 +57,7 @@ const audit = () => {
 
     // Tippziele unter 44px sind auf Glas nicht zuverlässig zu treffen.
     const tappable = el.matches('a, button, input[type=checkbox], select, [role=button]')
-    if (tappable && (r.width < 40 || r.height < 40)) {
+    if (tappable && (r.width < 44 || r.height < 44)) {
       out.small.push({ el: label(el), size: `${Math.round(r.width)}×${Math.round(r.height)}` })
     }
 
@@ -92,7 +92,7 @@ for (const [w, h, label] of WIDTHS) {
 
     if (r.overflow) found.push(`querscrollt: ${r.overflow.page}px auf ${r.overflow.viewport}px`)
     if (r.wide.length) found.push(`${r.wide.length}× über den Rand: ${r.wide.slice(0, 3).map((x) => x.el).join(' | ')}`)
-    if (r.small.length) found.push(`${r.small.length}× Tippziel < 40px: ${[...new Set(r.small.map((x) => `${x.el} (${x.size})`))].slice(0, 3).join(' | ')}`)
+    if (r.small.length) found.push(`${r.small.length}× Tippziel < 44px: ${[...new Set(r.small.map((x) => `${x.el} (${x.size})`))].slice(0, 3).join(' | ')}`)
     if (r.clipped.length) found.push(`${r.clipped.length}× abgeschnitten: ${r.clipped.slice(0, 3).map((x) => x.el).join(' | ')}`)
 
     console.log(`\n▸ ${name} @ ${w}px`)

@@ -2,8 +2,7 @@
 import { computed, ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import Page from '@/ui/page/Page.vue'
-import PageHead from '@/ui/page/PageHead.vue'
+import FormShell from '@/ui/page/FormShell.vue'
 import InvoiceTargetTypeahead from '@/admin/components/payments/InvoiceTargetTypeahead.vue'
 import InvoicePreviewPane from '@/admin/components/payments/InvoicePreviewPane.vue'
 import LetterField from '@/admin/components/quote/LetterField.vue'
@@ -30,6 +29,7 @@ const props = defineProps<{
   intro: string
   studioSettings: App.Settings.Data.StudioSettingsData
   missingInvoiceData: string[]
+  firstInvoice: boolean
 }>()
 useLiveProps([])
 
@@ -40,7 +40,9 @@ const gateOpen = ref(props.missingInvoiceData.length > 0)
 const project = ref(props.project)
 const contact = ref<App.Crm.Data.ContactSuggestionData | null>(null)
 const newContact = ref<{ name: string; email: string; street: string; postcode: string; city: string } | null>(null)
-const dueOn = ref('')
+const due = new Date()
+due.setDate(due.getDate() + props.studioSettings.paymentTermDays)
+const dueOn = ref(`${due.getFullYear()}-${String(due.getMonth() + 1).padStart(2, '0')}-${String(due.getDate()).padStart(2, '0')}`)
 const texts = ref({ intro: props.intro, outro: '' })
 
 // The quote's own draft shape, so the quote's builder writes the positions;
@@ -116,82 +118,82 @@ function submit() {
 
 <template>
   <AdminLayout active="rechnungen">
-    <Page data-tokens wide>
-      <div class="min-w-0 flex-1">
-        <PageHead :title="$t('invoicesCreate.title')" />
-
-        <div class="flex gap-6 px-6 pt-5 pb-8">
-          <form class="grid w-[720px] max-w-full flex-none content-start gap-4" @submit.prevent="submit">
-            <Field :label="$t('invoicesCreate.recipient')" :error="errors['contact.name'] ?? errors.contact_id">
-              <div v-if="newContact" class="grid grid-cols-2 gap-3">
-                <Input v-model="newContact.name" :placeholder="$t('invoicesCreate.name')" required />
-                <Input v-model="newContact.email" type="email" :placeholder="$t('invoicesCreate.email')" />
-                <Input v-model="newContact.street" class="col-span-2" :placeholder="$t('invoicesCreate.street')" />
-                <Input v-model="newContact.postcode" :placeholder="$t('invoicesCreate.postcode')" />
-                <Input v-model="newContact.city" :placeholder="$t('invoicesCreate.city')" />
-                <Button class="col-span-2 justify-self-start" type="button" variant="pill-muted" @click="newContact = null">
-                  {{ $t('common.edit') }}
-                </Button>
-              </div>
-              <InvoiceTargetTypeahead
-                v-else
-                v-model:project="project"
-                v-model:contact="contact"
-                :rates="rates"
-                :billable="billable"
-                @create-new="(term) => (newContact = { name: term, email: '', street: '', postcode: '', city: '' })"
-              />
-            </Field>
-
-            <Field v-if="openRates.length" :label="$t('invoicesCreate.rates')">
-              <div class="flex flex-wrap gap-1.5">
-                <Button v-for="rate in openRates" :key="rate.id" variant="outline" type="button" @click="pick(rate)">
-                  + {{ rate.label }} · {{ formatEuros(rate.amount) }}
-                </Button>
-              </div>
-            </Field>
-
-            <Field :label="$t('quotes.items')" :error="errors.items">
-              <QuotePositionsCard
-                v-model="draft"
-                mode="classic"
-                quote-id=""
-                :can-manage-catalog="false"
-                :packages="packages"
-                :catalog-items="catalogItems"
-                :vat-settings="vatSettings"
-              />
-            </Field>
-
-            <Field v-if="hasFreeRows" v-slot="{ id }" class="max-w-[220px]" :label="$t('payments.dueOn')" :error="errors.due_on">
-              <DatePicker :id="id" v-model="dueOn" required />
-            </Field>
-
-            <Field :label="$t('quotes.intro')">
-              <LetterField v-model="texts.intro" />
-            </Field>
-            <Field :label="$t('quotes.outro')">
-              <LetterField v-model="texts.outro" />
-            </Field>
-
-            <p v-if="errors.invoice" class="text-small text-destructive">{{ errors.invoice }}</p>
-
-            <div>
-              <Button type="submit" :disabled="!draft.rows.length || (!contact && !newContact && !project) || form.processing">
-                {{ $t('invoicesCreate.submit') }}
+    <FormShell
+      :title="$t('invoicesCreate.title')" wide
+    >
+      <div class="flex gap-6">
+        <form class="grid w-[720px] max-w-full flex-none content-start gap-4" @submit.prevent="submit">
+          <Field :label="$t('invoicesCreate.recipient')" :error="errors['contact.name'] ?? errors.contact_id">
+            <div v-if="newContact" class="grid grid-cols-2 gap-3">
+              <Input :aria-label="$t('invoicesCreate.name')" v-model="newContact.name" :placeholder="$t('invoicesCreate.name')" required />
+              <Input :aria-label="$t('invoicesCreate.email')" v-model="newContact.email" type="email" :placeholder="$t('invoicesCreate.email')" />
+              <Input :aria-label="$t('invoicesCreate.street')" v-model="newContact.street" class="col-span-2" :placeholder="$t('invoicesCreate.street')" />
+              <Input :aria-label="$t('invoicesCreate.postcode')" v-model="newContact.postcode" :placeholder="$t('invoicesCreate.postcode')" />
+              <Input :aria-label="$t('invoicesCreate.city')" v-model="newContact.city" :placeholder="$t('invoicesCreate.city')" />
+              <Button class="col-span-2 justify-self-start" type="button" variant="pill-muted" @click="newContact = null">
+                {{ $t('common.edit') }}
               </Button>
             </div>
-          </form>
+            <InvoiceTargetTypeahead
+              v-else
+              v-model:project="project"
+              v-model:contact="contact"
+              :rates="rates"
+              :billable="billable"
+              @create-new="(term) => (newContact = { name: term, email: '', street: '', postcode: '', city: '' })"
+            />
+          </Field>
 
-          <PreviewOverlay :min="1180" :label="$t('common.preview')" wrapper-class="min-w-[420px] flex-1">
-            <InvoicePreviewPane :payload="payload" />
-          </PreviewOverlay>
-        </div>
+          <Field v-if="openRates.length" :label="$t('invoicesCreate.rates')">
+            <div class="flex flex-wrap gap-1.5">
+              <Button v-for="rate in openRates" :key="rate.id" variant="outline" type="button" @click="pick(rate)">
+                + {{ rate.label }} · {{ formatEuros(rate.amount) }}
+              </Button>
+            </div>
+          </Field>
+
+          <Field :label="$t('quotes.items')" :error="errors.items">
+            <QuotePositionsCard
+              v-model="draft"
+              mode="classic"
+              quote-id=""
+              :can-manage-catalog="false"
+              :packages="packages"
+              :catalog-items="catalogItems"
+              :vat-settings="vatSettings"
+            />
+          </Field>
+
+          <Field v-if="hasFreeRows" v-slot="{ id }" class="max-w-[220px]" :label="$t('payments.dueOn')" :error="errors.due_on">
+            <DatePicker :id="id" v-model="dueOn" required />
+          </Field>
+
+          <Field :label="$t('quotes.intro')">
+            <LetterField v-model="texts.intro" bare />
+          </Field>
+          <Field :label="$t('quotes.outro')">
+            <LetterField v-model="texts.outro" />
+          </Field>
+
+          <p v-if="errors.invoice" class="text-small text-destructive">{{ errors.invoice }}</p>
+
+          <div>
+            <Button type="submit" :disabled="!draft.rows.length || (!contact && !newContact && !project) || form.processing">
+              {{ $t('invoicesCreate.submit') }}
+            </Button>
+          </div>
+        </form>
+
+        <PreviewOverlay :min="1180" :label="$t('common.preview')" wrapper-class="min-w-[420px] flex-1">
+          <InvoicePreviewPane :payload="payload" />
+        </PreviewOverlay>
       </div>
-    </Page>
+    </FormShell>
 
     <InvoiceDataGate
       :open="gateOpen"
+      :first="firstInvoice"
+      :missing="missingInvoiceData"
       :settings="studioSettings"
       @done="gateOpen = false"
       @cancel="router.visit('/rechnungen')"

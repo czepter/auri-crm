@@ -25,6 +25,7 @@ class AutomationRuleData extends Data
         public ?string $conditionLabel,
         public bool $isActive,
         public ?string $lastRunLabel,
+        public bool $lastRunFailed,
         public string $subject,
         public string $body,
         public string $triggerType,
@@ -48,10 +49,11 @@ class AutomationRuleData extends Data
             conditionLabel: $rule->condition?->label(),
             isActive: $rule->is_active,
             lastRunLabel: self::lastRun($rule),
+            lastRunFailed: $rule->runs()->latest('fired_at')->first()?->status === AutomationRunStatus::Failed,
             subject: $rule->notification_subject,
             body: $rule->notification_body,
             triggerType: $rule->trigger_type->value,
-            eventLabel: $rule->event_class === null ? null : class_basename($rule->event_class),
+            eventLabel: $rule->event_class === null ? null : self::event($rule->event_class),
             anchor: $rule->anchor?->value,
             offsetDays: $rule->offset_days,
             direction: $rule->direction?->value,
@@ -60,11 +62,29 @@ class AutomationRuleData extends Data
         );
     }
 
+    private static function event(string $class): string
+    {
+        $name = class_basename($class);
+
+        return [
+            'CaseBooked' => 'Projekt gebucht',
+            'LeadCaptured' => 'Anfrage eingegangen',
+            'LeadLost' => 'Anfrage verloren',
+            'LeadStageChanged' => 'Anfrage verschoben',
+            'ShootStatusChanged' => 'Shooting-Status geändert',
+            'ShootCancelled' => 'Shooting abgesagt',
+            'ContractSigned' => 'Vertrag unterschrieben',
+            'InstallmentPaid' => 'Rate bezahlt',
+            'InstallmentOverdue' => 'Rate überfällig',
+            'QuoteRevised' => 'Angebot überarbeitet',
+        ][$name] ?? $name;
+    }
+
     /** The trigger as a sentence, because "per_shoot / 7 / before" is three columns of nothing. */
     private static function trigger(AutomationRule $rule): string
     {
         if ($rule->anchor === null) {
-            return 'Bei '.class_basename((string) $rule->event_class);
+            return self::event((string) $rule->event_class);
         }
 
         $side = $rule->direction?->value === 'before' ? 'vor' : 'nach';

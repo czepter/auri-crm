@@ -76,6 +76,7 @@ class RetentionCandidates
             $latest = $leads->sortByDesc('updated_at')->first();
             $case = $contact->cases->firstWhere('id', $latest->case_id);
             $sum = fn (Collection $by) => (int) $ids->sum(fn ($id) => $by[$id] ?? 0);
+            $idleSince = max($latest->updated_at, $case->closed_at);
 
             return new RetentionCandidateData(
                 id: $contact->public_id,
@@ -85,7 +86,8 @@ class RetentionCandidates
                 outcome: $case->close_outcome->value,
                 outcomeLabel: $case->close_outcome->label(),
                 // Closing wrote the lead before #521 and so reset its updated_at; the close itself stands in for that now.
-                idleMonths: (int) max($latest->updated_at, $case->closed_at)->diffInMonths(now()),
+                idleMonths: (int) $idleSince->diffInMonths(now()),
+                idleSince: $idleSince->format('Y-m-d'),
                 invoiced: $invoiced->has($contact->id),
                 leads: $leads->count(),
                 messages: $sum($messages) + $sum($notes),

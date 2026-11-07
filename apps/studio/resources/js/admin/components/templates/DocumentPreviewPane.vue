@@ -54,7 +54,7 @@ const sheet = computed(() => {
     @page { size: A4; margin: ${SHEET_MARGIN}px; }
     html { background: #fff; }
     body {
-      width: ${SHEET_WIDTH}px; min-height: ${SHEET_HEIGHT}px; margin: 0; padding: ${SHEET_MARGIN}px;
+      box-sizing: border-box; width: ${SHEET_WIDTH}px; min-height: ${SHEET_HEIGHT}px; margin: 0; padding: ${SHEET_MARGIN}px;
       background-image: repeating-linear-gradient(to bottom, transparent 0 ${SHEET_HEIGHT - 1}px, #E9E9E7 ${SHEET_HEIGHT - 1}px ${SHEET_HEIGHT}px);
     }
   </style>`
@@ -132,20 +132,20 @@ watch(
 
 <template>
   <section class="flex min-w-0 flex-col">
-    <div class="flex items-center gap-2.5 border-b border-border pb-2.5">
-      <span class="mb-[5px] text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('documentTemplates.previewLabel') }}</span>
-      <slot />
-      <div v-if="paper" class="ml-auto flex items-center gap-1.5">
+    <div class="flex flex-nowrap items-center gap-2.5 border-b border-border pb-2.5">
+      <span class="mb-[5px] shrink-0 text-small leading-none font-semibold tracking-[0.09em] whitespace-nowrap uppercase text-faint">{{ $t(project ? 'documentTemplates.previewLabelProject' : 'documentTemplates.previewLabel') }}</span>
+      <div class="w-[200px] min-w-[200px] shrink-0 empty:hidden"><slot /></div>
+      <div v-if="paper" class="ml-auto flex shrink-0 items-center gap-1.5">
         <button
           v-for="option in [{ key: 'fit', on: true }, { key: 'full', on: false }]"
           :key="option.key"
-          class="cursor-pointer rounded-lg border-0 px-2.5 py-[5px] text-small leading-[1.3]"
-          :class="fit === option.on ? 'bg-foreground text-background' : 'bg-sunk-2 text-foreground'"
+          class="cursor-pointer rounded-lg border-0 px-2.5 py-[5px] text-small leading-[1.3] whitespace-nowrap"
+          :class="fit === option.on ? 'bg-paper font-medium text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'bg-sunk-2 text-foreground'"
           type="button"
           @click="fit = option.on"
         >{{ $t(`documentTemplates.zoom_${option.key}`) }}</button>
       </div>
-      <span class="text-small leading-none" :class="[stale ? 'text-due' : 'text-faint', paper ? 'ml-2.5' : 'ml-auto']">{{
+      <span class="shrink-0 text-right text-small leading-none whitespace-nowrap" :class="[stale ? 'text-due' : 'text-faint', paper ? 'ml-2.5' : 'ml-auto']">{{
         stale ? $t('documentTemplates.previewStale') : $t('documentTemplates.previewFresh')
       }}</span>
     </div>

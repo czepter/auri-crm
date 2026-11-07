@@ -133,7 +133,7 @@ function openMenu(event: MouseEvent, project: App.Crm.Data.CaseRowData) {
 }
 
 function day(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
+  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 // The date passed and nobody has shot it: the one row on this screen that
@@ -165,7 +165,16 @@ function reset() {
     <!-- The first screen on the CRM sheet (C-01, #235). Its own theme root
          rather than the layout's, so the screens that have not been ported
          keep the stylesheet they were built on. -->
-    <Page data-tokens wide @click="menu = null">
+    <ProjectSettings
+      v-if="settingsSelection && stageSettings"
+      v-bind="stageSettings"
+      :selection="settingsSelection"
+      :return-to="returnTo"
+      :can-manage-tasks="workflowAllowed"
+      :workflow="workflow"
+      @close="router.visit(returnTo ?? '/projekte', { preserveState: true, preserveScroll: true })"
+    />
+    <Page v-else data-tokens wide @click="menu = null">
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('projects.title')">
           <ChoiceGroup
@@ -200,7 +209,7 @@ function reset() {
                 v-for="option in pills"
                 :key="option.key"
                 class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] px-3 py-1.5 text-small"
-                :class="stage === option.key ? 'bg-foreground text-paper' : 'bg-sunk text-foreground'"
+                :class="stage === option.key ? 'bg-paper font-medium text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'bg-sunk text-foreground'"
                 type="button"
                 :aria-pressed="stage === option.key"
                 @click="pick(option.key)"
@@ -208,7 +217,7 @@ function reset() {
                 {{ option.name }}<span class="text-small tabular-nums opacity-60">{{ option.count }}</span>
               </button>
             </div>
-            <Input v-model="query" class="ml-auto h-8 w-60" type="search" :placeholder="$t('projects.searchPlaceholder')" />
+            <Input :aria-label="$t('projects.searchPlaceholder')" v-model="query" class="ml-auto h-8 w-64 shrink-0" type="search" :placeholder="$t('projects.searchPlaceholder')" />
           </div>
 
           <Table>
@@ -336,18 +345,9 @@ function reset() {
           </div>
         </div>
 
-        <Empty v-else class="mx-8 mt-7" :text="$t('projects.empty')">
+        <Empty v-else :text="$t('projects.empty')">
           <Button :as="Link" variant="pill" href="/anfragen/neu">{{ $t('leads.createKicker') }}</Button>
         </Empty>
-        <ProjectSettings
-          v-if="settingsSelection && stageSettings"
-          v-bind="stageSettings"
-          :selection="settingsSelection"
-          :return-to="returnTo"
-          :can-manage-tasks="workflowAllowed"
-          :workflow="workflow"
-          @close="router.visit(returnTo ?? '/projekte', { preserveState: true, preserveScroll: true })"
-        />
       </div>
     </Page>
   </AdminLayout>

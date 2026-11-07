@@ -3,7 +3,7 @@ import { searchTimezones, timezoneLabel } from './timezones'
 
 describe('timezoneLabel', () => {
   it('names the zone in German', () => {
-    expect(timezoneLabel('Europe/Berlin')).toMatch(/^Europe\/Berlin · Mitteleuropäische .+ \(UTC\+0[12]:00\)$/)
+    expect(timezoneLabel('Europe/Berlin')).toMatch(/^Berlin \(MES?Z\)$/)
   })
 
   it('falls back to the identifier for a zone Intl does not know', () => {

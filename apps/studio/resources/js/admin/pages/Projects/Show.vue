@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { Link, router, useForm } from "@inertiajs/vue3";
 import { Pencil } from "lucide-vue-next";
@@ -9,6 +9,10 @@ import { Button } from "@/ui/button";
 import LineItems from "@/admin/components/quote/LineItems.vue";
 import NoteThread from "@/admin/components/crm/NoteThread.vue";
 import QuoteSummary from "@/admin/components/quote/QuoteSummary.vue";
+import { nextStep, paymentCall, stepRows } from "@/admin/lib/projectNextStep";
+import { sendQuoteHref } from "@/admin/lib/leadPrimary";
+import { stepOnArrow } from "@/admin/lib/queueStep";
+import { grossTotal } from "@/admin/lib/quoteSummary";
 import ShootFields from "@/admin/components/crm/ShootFields.vue";
 import ShootRow from "@/admin/components/crm/ShootRow.vue";
 import { Field } from "@/ui/field";
@@ -17,15 +21,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/ui/textarea";
 import ProjectFields from "@/admin/components/crm/ProjectFields.vue";
 import type { ProjectFieldValues } from "@/admin/components/crm/ProjectFields.vue";
+import ProjectQueue from "@/admin/components/crm/ProjectQueue.vue";
+import ProjectStep from "@/admin/components/crm/ProjectStep.vue";
 import ProjectShell from "@/admin/components/crm/ProjectShell.vue";
 import TaskCreateDialog from "@/admin/components/crm/TaskCreateDialog.vue";
+import CaseAddLinks from "@/admin/components/crm/CaseAddLinks.vue";
 import Card from "@/ui/page/Card.vue";
-import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
 import Section from "@/ui/page/Section.vue";
 import { formatEurosRounded } from "@/lib/money";
-import { quoteChipClass } from "@/admin/lib/quoteDisplay";
+import { quoteTone } from "@/admin/lib/quoteDisplay";
+import Chip from "@/ui/page/Chip.vue";
 import { dayWithWeekday as day } from "@/admin/lib/dates";
 import { useLiveProps } from "@/admin/lib/liveReload";
+import { ROLE_SUGGESTIONS } from "@/admin/lib/roles";
 
 type ProjectFieldDefinition = InstanceType<typeof ProjectFields>["$props"]["fields"][number];
 
@@ -40,7 +48,6 @@ const props = defineProps<{
     anchors?: { value: string; label: string; group: string; on: string | null }[];
     quote: App.Quotes.Data.QuoteData | null;
     supersededQuotes: { id: string; number: string | null; net: number }[];
-    packages: { id: string; name: string; itemCount: number; total: number }[];
     scope: {
         items: {
             id: string;
@@ -53,7 +60,6 @@ const props = defineProps<{
         delta: number;
         hasDraft: boolean;
     };
-    people: App.Crm.Data.CasePersonData[];
     fields: ProjectFieldDefinition[];
     fieldValues: ProjectFieldValues;
     stages: { value: string; label: string }[];
@@ -78,21 +84,50 @@ const props = defineProps<{
         days: number;
         status: string;
         since: string | null;
-        next: { key: string; label: string };
     } | null;
 }>();
-useLiveProps(["header", "shoots", "shootKinds", "tasks", "shootOptions", "staffOptions", "anchors", "thread", "scope", "quote", "supersededQuotes", "packages", "people", "fields", "fieldValues", "stages", "presets", "stage", "source", "sourceOther", "sourceLabel", "inquiry", "stalled"]);
+const reachable = ref<App.Crm.Data.CaseQueueRowData[]>([]);
+
+function onKey(event: KeyboardEvent) {
+    stepOnArrow(event, reachable.value, "/auftraege");
+}
+
+onMounted(() => addEventListener("keydown", onKey));
+onUnmounted(() => removeEventListener("keydown", onKey));
+
+useLiveProps(["header", "shoots", "shootKinds", "tasks", "shootOptions", "staffOptions", "anchors", "thread", "scope", "quote", "supersededQuotes", "fields", "fieldValues", "stages", "presets", "stage", "source", "sourceOther", "sourceLabel", "inquiry", "stalled"]);
 
 const { t } = useI18n();
 
 const galleriesHref = computed(() => props.header.tabs.find((tab) => tab.key === "galleries")?.href);
 
-function advanceStalled() {
-    router.post(
-        `/shootings/${props.stalled?.shootId}/status`,
-        { status: props.stalled?.next.key },
-        { preserveScroll: true },
-    );
+const step = computed(() => (props.header.canManageShoots ? nextStep(props.shoots) : null));
+const callHref = computed(() => paymentCall(props.header.paymentPlan, props.header.people));
+const sendHref = computed(() => sendQuoteHref(props.quote, props.header.canManageQuotes));
+const createQuote = computed(() => !props.header.isBooked && props.header.canManageQuotes && !props.quote);
+const addShoot = computed(() => props.header.isBooked && props.header.canManageShoots && !props.shoots.length);
+const addGallery = computed(
+    () => props.header.isBooked && props.header.canManageShoots && !step.value && !addShoot.value && !props.header.galleries.length && !!galleriesHref.value,
+);
+
+const delivered = computed(() => props.shoots.every((shoot) => shoot.isCancelled || !stepRows([shoot]).length));
+const paid = computed(() => !props.header.paymentPlan || props.header.paymentPlan.openTotal === 0);
+
+const completeNow = computed(
+    () =>
+        props.header.isBooked &&
+        props.header.canComplete &&
+        !props.header.isCompleted &&
+        !!props.header.galleries.length &&
+        !step.value &&
+        !callHref.value &&
+        !addShoot.value &&
+        delivered.value &&
+        paid.value,
+);
+
+function completeProject() {
+    router.post(`/auftraege/${props.header.id}/abschluss`, {}, { preserveScroll: true });
 }
 
 function euro(minor: string | number | null) {
@@ -124,6 +159,7 @@ const details = useForm({
     source: props.source,
     source_other: props.sourceOther ?? "",
     fields: { ...props.fieldValues },
+    people: props.header.people.map((person) => ({ id: person.id, role: person.role })),
 });
 
 const anfrage = useForm({ inquiry_text: props.inquiry?.text ?? "" });
@@ -141,24 +177,7 @@ const anfrageSummary = computed(() =>
     [props.inquiry?.capturedVia, props.inquiry ? day(props.inquiry.capturedAt) : null].filter(Boolean).join(" · "),
 );
 
-const quoteSummary = computed(() => (props.quote === null ? "" : euro(props.quote.net)));
-
-// Die Rolle hing am Bearbeiten-Modus der rechten Leiste. Der ist weg, also
-// steht sie hier — Freitext wie am Fall, die bekannten als Vorschlag.
-const kontakteEditing = ref(false);
-
-const kontakte = useForm({
-    people: props.people.map((person) => ({ id: person.id, role: person.role })),
-});
-
-function saveKontakte() {
-    kontakte.patch(`/auftraege/${props.header.id}`, {
-        preserveScroll: true,
-        onSuccess: () => (kontakteEditing.value = false),
-    });
-}
-
-const kontakteSummary = computed(() => props.people.map((person) => person.name).join(", "));
+const quoteSummary = computed(() => (props.quote === null ? "" : euro(grossTotal(props.quote))));
 
 const dates = useForm({
     shoots: props.shoots.map((shoot) => ({
@@ -227,14 +246,52 @@ const taskSummary = computed(() =>
 
 const notes = computed(() => props.thread.filter((entry) => !entry.system));
 
+const tasksAsked = ref(false);
+const notesAsked = ref(false);
+
+const addLinks = computed(() => [
+    props.header.canManageTasks && !props.tasks.length && !tasksAsked.value && { key: "task", label: t("lead.taskAdd") },
+    !notes.value.length && !notesAsked.value && { key: "note", label: t("lead.noteAdd") },
+    props.header.canManageQuotes && !props.quote && { key: "quote", label: t("quotes.create"), href: `/angebote/neu?projekt=${props.header.id}` },
+    !detailsSummary.value && !detailsEditing.value && { key: "details", label: t("project.details") },
+].filter((item) => item !== false));
+
+function askFor(key: string) {
+    if (key === "task") tasksAsked.value = true;
+    else if (key === "note") notesAsked.value = true;
+    else detailsEditing.value = true;
+}
+
 function complete(row: App.Crm.Data.TaskRowData) {
     router.post(`/aufgaben/${row.id}/erledigt`, {}, { preserveScroll: true });
 }
 </script>
 
 <template>
-    <AdminLayout active="projekte">
-        <ProjectShell :header="header" active="overview" :people="false">
+    <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
+        <ProjectShell :header="header" active="overview">
+            <template #left>
+                <ProjectQueue :groups="header.queue" @update:rows="reachable = $event" />
+            </template>
+
+            <template v-if="sendHref || createQuote || step || callHref || addShoot || addGallery || completeNow" #stage>
+                <Button v-if="callHref" variant="outline" as-child class="max-[640px]:min-h-11">
+                    <a :href="callHref">{{ $t("contacts.call") }}</a>
+                </Button>
+                <Button v-if="sendHref" variant="pill" as-child class="max-[640px]:min-h-11">
+                    <Link :href="sendHref">{{ $t("lead.sendQuote") }}</Link>
+                </Button>
+                <Button v-else-if="createQuote" variant="pill" as-child class="max-[640px]:min-h-11">
+                    <Link :href="`/angebote/neu?projekt=${header.id}`">{{ $t("quotes.create") }}</Link>
+                </Button>
+                <Button v-else-if="addGallery" variant="pill" as-child class="max-[640px]:min-h-11">
+                    <Link :href="galleriesHref!">{{ $t("galleries.create") }}</Link>
+                </Button>
+                <Button v-else-if="completeNow" variant="pill" type="button" class="max-[640px]:min-h-11" @click="completeProject">
+                    {{ $t("project.completeMenu") }}
+                </Button>
+                <ProjectStep v-else :header="header" :shoots="shoots" />
+            </template>
 
                     <Alert
                         v-if="stalled"
@@ -250,7 +307,6 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             </AlertDescription>
                         </div>
                         <div v-if="header.canManageShoots" class="ml-auto flex flex-none items-center gap-2">
-                            <Button variant="pill" type="button" @click="advanceStalled">{{ stalled.next.label }}</Button>
                             <Button v-if="galleriesHref" variant="outline" as-child>
                                 <Link :href="galleriesHref">{{ $t("galleries.create") }}</Link>
                             </Button>
@@ -258,75 +314,6 @@ function complete(row: App.Crm.Data.TaskRowData) {
                     </Alert>
 
                     <div class="mt-5 flex flex-col gap-3">
-                    <Card
-                        v-if="inquiry"
-                        v-model:editing="anfrageEditing"
-                        :title="$t('project.lead')"
-                        :summary="anfrageSummary"
-                        editable
-                        @cancel="anfrage.reset()"
-                        @save="saveAnfrage"
-                    >
-                        <p class="m-0 max-w-[58ch] text-body leading-[1.55] whitespace-pre-line">
-                            {{ inquiry.text ?? $t("lead.noText") }}
-                        </p>
-                        <p class="mt-2 mb-0 text-small text-ink-2">
-                            {{ [inquiry.typeLabel, inquiry.sourceLabel].filter(Boolean).join(" · ") }}
-                        </p>
-
-                        <template #edit>
-                            <Field v-slot="{ id }" :label="$t('leads.inquiryText')" :error="anfrage.errors.inquiry_text">
-                                <Textarea :id="id" v-model="anfrage.inquiry_text" rows="6" />
-                            </Field>
-                        </template>
-                    </Card>
-
-                    <Card
-                        v-model:editing="kontakteEditing"
-                        :title="$t('contacts.title')"
-                        :summary="kontakteSummary"
-                        editable
-                        @cancel="kontakte.reset()"
-                        @save="saveKontakte"
-                    >
-                        <div
-                            v-for="person in people"
-                            :key="person.id"
-                            class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
-                        >
-                            <Link
-                                class="w-[168px] flex-none text-small leading-[1.35] font-semibold tracking-[-0.012em] text-foreground no-underline underline-offset-[3px] hover:underline"
-                                :href="`/kontakte/${person.id}`"
-                            >
-                                {{ person.name }}
-                            </Link>
-                            <span class="rounded-[var(--r-sm)] bg-sunk-2 px-2 py-0.5 text-small leading-[1.4] font-medium text-ink-2">
-                                {{ roleLabel(person.role) }}
-                            </span>
-                            <a v-if="person.email" class="text-small text-ring no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
-                            <a v-if="person.phone" class="ml-auto whitespace-nowrap text-small tabular-nums text-ring no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
-                        </div>
-
-                        <template #edit>
-                            <datalist id="rollen">
-                                <option v-for="value in ROLE_SUGGESTIONS" :key="value" :value="value" />
-                            </datalist>
-
-                            <div
-                                v-for="(person, index) in kontakte.people"
-                                :key="person.id"
-                                class="flex items-center gap-3 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
-                            >
-                                <span class="w-[168px] flex-none text-small leading-[1.35] font-semibold tracking-[-0.012em]">
-                                    {{ people[index].name }}
-                                </span>
-                                <Field v-slot="{ id }" dense class="w-[168px] flex-none" :label="$t('leads.role')">
-                                    <Input :id="id" v-model="person.role" type="text" list="rollen" />
-                                </Field>
-                            </div>
-                        </template>
-                    </Card>
-
                     <Card
                         v-model:editing="datesEditing"
                         :title="$t('lead.dates')"
@@ -336,8 +323,8 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         @save="saveDates"
                     >
                         <template v-if="header.canManageShoots" #action>
-                            <Button variant="outline" as-child>
-                                <Link :href="`/auftraege/${header.id}/shootings`">
+                            <Button variant="outline" as-child class="max-[640px]:min-h-11">
+                                <Link :href="`/auftraege/${header.id}/shootings`" @click.stop>
                                     <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
                                     {{ $t("project.shootAdd") }}
                                 </Link>
@@ -359,24 +346,20 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         </template>
                     </Card>
 
-                    <Card :title="$t('lead.quote')" :summary="quoteSummary" :default-open="quote !== null">
+                    <Card v-if="quote" :title="$t('lead.quote')" :summary="quoteSummary">
                         <template v-if="quote" #meta>
                             <span v-if="quote.number" class="text-ui leading-[1.2] tracking-[-0.015em] text-ink-2 tabular-nums">{{ quote.number }}</span>
-                            <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
+                            <Chip :tone="quoteTone(quote.status)">{{ quote.statusLabel }}</Chip>
                         </template>
                         <template v-if="header.canManageQuotes" #action>
                             <Link
                                 v-if="quote"
-                                class="grid size-7 place-items-center rounded-[var(--r-sm)] text-ink-2 hover:bg-sunk hover:text-foreground"
+                                class="grid size-7 place-items-center rounded-[var(--r-sm)] text-ink-2 hover:bg-sunk hover:text-foreground max-[640px]:size-11"
                                 :href="`/angebote/${quote.id}`"
+                                @click.stop
                                 :aria-label="$t('common.edit')"
                                 :title="$t('common.edit')"
                             ><Pencil class="size-[15px]" /></Link>
-                            <Link
-                                v-else
-                                class="text-small tracking-[-0.01em] whitespace-nowrap text-ring no-underline hover:underline"
-                                :href="`/angebote/neu?projekt=${header.id}`"
-                            >{{ $t("quotes.create") }}</Link>
                         </template>
                         <QuoteSummary
                             v-if="quote"
@@ -384,24 +367,9 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             :superseded="supersededQuotes"
                             :valid-until-label="quote.validUntil ? $t('lead.validUntil', { date: day(quote.validUntil) }) : null"
                         />
-                        <div v-else class="flex flex-wrap gap-2">
-                            <Link
-                                v-for="pkg in packages"
-                                :key="pkg.id"
-                                class="cursor-pointer rounded-[var(--r-sm)] border-0 bg-sunk px-[11px] py-[5px] text-small leading-[1.4] font-normal text-ink-2 hover:bg-sunk-2"
-                                :href="`/auftraege/${header.id}/angebote`"
-                                method="post"
-                                as="button"
-                                :data="{ package: pkg.id }"
-                            >
-                                <b>{{ pkg.name }}</b>
-                                {{ $t("packages.itemCount", pkg.itemCount) }} ·
-                                {{ formatEurosRounded(pkg.total) }}
-                            </Link>
-                        </div>
                     </Card>
 
-                    <Card :title="$t('project.tasks')" :summary="taskSummary" :default-open="overdue > 0">
+                    <Card v-if="tasks.length || tasksAsked" :title="$t('project.tasks')" :summary="taskSummary" :default-open="overdue > 0 || tasksAsked">
                         <div class="mb-1.5 flex items-center gap-2.5">
                             <span class="inline-flex gap-0.5 rounded-lg bg-sunk p-[3px]">
                                 <button
@@ -434,7 +402,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         <div
                             v-for="row in showDone ? done : open"
                             :key="row.id"
-                            class="flex items-center gap-3 py-[9px]"
+                            class="flex items-center gap-3 py-[9px] max-[640px]:flex-wrap max-[640px]:gap-y-0.5"
                         >
                             <span
                                 v-if="row.isDone"
@@ -449,26 +417,52 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             </span>
                             <button
                                 v-else
-                                class="size-[15px] flex-none rounded-[5px] bg-sunk-2"
+                                class="relative size-[15px] flex-none rounded-[5px] bg-sunk-2 max-[640px]:before:absolute max-[640px]:before:-inset-4 max-[640px]:before:content-['']"
                                 type="button"
+                                :aria-label="$t('project.taskComplete')"
                                 @click="complete(row)"
                             />
-                            <span class="text-ui leading-[1.47]" :class="row.isDone && 'text-ink-2'">{{
+                            <span class="min-w-0 flex-1 text-ui leading-[1.47] min-[1280px]:flex-initial max-[640px]:truncate" :class="row.isDone && 'text-ink-2'">{{
                                 row.title
                             }}</span>
-                            <span
-                                class="text-small leading-[1.47] text-ink-2"
-                            >{{ row.audienceLabel }}</span>
-                            <span v-if="row.shootLabel" class="text-small leading-[1.47] text-faint">{{
-                                row.shootLabel
-                            }}</span>
-                            <span
-                                class="ml-auto text-small leading-[1.47] tabular-nums"
-                                :class="row.isOverdue && !row.isDone ? 'text-destructive' : 'text-ink-2'"
-                            >{{ row.dueOn ? day(row.dueOn) : "" }}</span>
+                            <span class="flex items-baseline gap-3 max-[640px]:min-w-0 max-[640px]:basis-full max-[640px]:pl-[27px]">
+                                <span class="text-small leading-[1.47] whitespace-nowrap text-ink-2">{{ row.audienceLabel }}</span>
+                                <span v-if="row.shootLabel" class="min-w-0 text-small leading-[1.47] text-ink-2 max-[640px]:truncate">{{
+                                    row.shootLabel
+                                }}</span>
+                                <span
+                                    class="text-small leading-[1.47] whitespace-nowrap tabular-nums"
+                                    :class="row.isOverdue && !row.isDone ? 'text-destructive' : 'text-ink-2'"
+                                >{{ row.dueOn ? day(row.dueOn) : "" }}</span>
+                            </span>
                         </div>
                     </Card>
+
                     <Card
+                        v-if="inquiry"
+                        v-model:editing="anfrageEditing"
+                        :title="$t('project.lead')"
+                        :summary="anfrageSummary"
+                        editable
+                        @cancel="anfrage.reset()"
+                        @save="saveAnfrage"
+                    >
+                        <p class="m-0 max-w-[58ch] text-body leading-[1.55] whitespace-pre-line">
+                            {{ inquiry.text ?? $t("lead.noText") }}
+                        </p>
+                        <p class="mt-2 mb-0 text-small text-ink-2">
+                            {{ [inquiry.typeLabel, inquiry.sourceLabel].filter(Boolean).join(" · ") }}
+                        </p>
+
+                        <template #edit>
+                            <Field v-slot="{ id }" :label="$t('leads.inquiryText')" :error="anfrage.errors.inquiry_text">
+                                <Textarea :id="id" v-model="anfrage.inquiry_text" rows="6" />
+                            </Field>
+                        </template>
+                    </Card>
+
+                    <Card
+                        v-if="detailsSummary || detailsEditing"
                         v-model:editing="detailsEditing"
                         :title="$t('project.details')"
                         :summary="detailsSummary"
@@ -537,6 +531,24 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 :errors="details.errors"
                                 :fields="fields"
                             />
+
+                            <datalist id="rollen">
+                                <option v-for="value in ROLE_SUGGESTIONS" :key="value" :value="value" />
+                            </datalist>
+
+                            <template v-for="(person, index) in details.people" :key="person.id">
+                                <div
+                                    v-if="header.people[index].role !== 'primary'"
+                                    class="mt-3 flex items-center gap-3"
+                                >
+                                    <span class="w-[168px] flex-none text-small leading-[1.35] font-semibold tracking-[-0.012em]">
+                                        {{ header.people[index].name }}
+                                    </span>
+                                    <Field v-slot="{ id }" dense class="w-[168px] flex-none" :label="$t('leads.role')">
+                                        <Input :id="id" v-model="person.role" type="text" list="rollen" />
+                                    </Field>
+                                </div>
+                            </template>
                         </template>
                     </Card>
                     </div>
@@ -580,16 +592,19 @@ function complete(row: App.Crm.Data.TaskRowData) {
                     </Section>
 
                     <Card
+                        v-if="notes.length || notesAsked"
                         class="mt-3"
                         :title="$t('lead.notes')"
                         :summary="`${notes.length}`"
-                        :default-open="false"
+                        :default-open="notesAsked"
                     >
                         <NoteThread
                             :entries="notes"
                             :action="`/auftraege/${header.id}/notizen`"
                         />
                     </Card>
+
+                    <CaseAddLinks :items="addLinks" @pick="askFor" />
         </ProjectShell>
     </AdminLayout>
 </template>

@@ -38,7 +38,9 @@ class ContactRowData extends Data
     {
         // Ordered by the project's own primary shoot, so "next" is the day
         // this contact is next expected and not the newest row.
-        $dated = $contact->cases
+        $booked = $contact->cases->filter->isBooked();
+
+        $dated = $booked
             ->map(fn (ClientCase $project) => $project->primaryShoot?->date)
             ->filter()
             ->sort()
@@ -54,7 +56,7 @@ class ContactRowData extends Data
             projectCount: $contact->cases->count(),
             standing: match (true) {
                 $next !== null => 'running',
-                $contact->cases->isNotEmpty() => 'past',
+                $booked->isNotEmpty() => 'past',
                 default => 'none',
             },
             nextDate: $next?->format('Y-m-d'),

@@ -14,7 +14,7 @@ it('reads what was in play a year ago from the audit trail', function () {
     $staff = User::factory()->withMfa()->create();
     $project = ClientCase::factory()->create();
 
-    $quote = fn (int $total, QuoteStatus $status) => Quote::factory()->for($project, 'case')->create(['total' => $total, 'status' => $status]);
+    $quote = fn (int $total, QuoteStatus $status) => Quote::factory()->for($project, 'case')->create(['net' => $total, 'vat_mode' => 'small_business', 'status' => $status]);
 
     $this->travelTo(now()->subMonths(14));
     $acceptedLater = $quote(300_000, QuoteStatus::Accepted);

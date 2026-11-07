@@ -11,7 +11,7 @@ const capabilities = [
 const roles = [
   { value: 'admin', label: 'Admin', capabilities: capabilities.map((c) => c.value) },
   { value: 'manager', label: 'Manager', capabilities: ['manage_leads', 'view_all_cases'] },
-  { value: 'contributor', label: 'Mitwirkende', capabilities: ['manage_leads'] },
+  { value: 'contributor', label: 'Mitwirkender', capabilities: ['manage_leads'] },
   { value: 'reader', label: 'Leser', capabilities: ['view_all_cases'] },
 ]
 
@@ -37,7 +37,7 @@ const meta = {
         name: 'Marie Ohlsen',
         email: 'marie@atelier-nordlicht.de',
         role: 'contributor',
-        roleLabel: 'Mitwirkende',
+        roleLabel: 'Mitwirkender',
         mfaConfirmed: false,
         transferable: true,
       },
@@ -47,7 +47,7 @@ const meta = {
         id: 'i1',
         email: 'jonas@atelier-nordlicht.de',
         name: 'Jonas Reincke',
-        roleLabel: 'Mitwirkende',
+        roleLabel: 'Mitwirkender',
         expiresOn: '19.09.2026',
       },
     ],

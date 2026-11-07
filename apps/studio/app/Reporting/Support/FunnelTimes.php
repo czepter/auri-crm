@@ -49,7 +49,11 @@ class FunnelTimes
             return [];
         }
 
-        $captured = self::capturedLeads($from, $to, $type)->count();
+        $current = self::capturedLeads($from, $to, $type)
+            ->join('cases', 'cases.id', '=', 'leads.case_id')
+            ->toBase()
+            ->pluck('leads.stage', 'cases.public_id');
+        $captured = $current->count();
 
         if ($captured === 0) {
             return [];
@@ -64,7 +68,14 @@ class FunnelTimes
                     ->where('stages.pipeline', StagePipeline::Lead->value);
             })
             ->groupBy('audit_logs.subject')
-            ->pluck('furthest');
+            ->pluck('furthest', 'audit_logs.subject');
+
+        // Ohne Trail (vor P-01, Löschfrist) gilt der Schritt, auf dem die
+        // Anfrage heute steht.
+        $furthest = $current->map(fn ($key, $subject) => max(
+            (int) ($reached[$subject] ?? 0),
+            (int) ($order[$key] ?? 0),
+        ));
 
         $steps = [];
         $before = null;
@@ -74,7 +85,7 @@ class FunnelTimes
             // Wechsel, der ihn in den Trail schreibt.
             $leads = $stage->anchor === StageAnchor::Entry
                 ? $captured
-                : $reached->filter(fn ($furthest) => (int) $furthest >= (int) $order[$stage->key])->count();
+                : $furthest->filter(fn ($value) => $value >= (int) $order[$stage->key])->count();
 
             $steps[] = [
                 'key' => $stage->key,

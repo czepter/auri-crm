@@ -5,6 +5,8 @@ namespace App\Portal\Http\Controllers;
 use App\Contracts\Actions\SignContract;
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Jobs\RenderContractJob;
+use App\Documents\Support\DocumentMergeData;
+use App\Documents\Support\MergeFieldResolver;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
 use Illuminate\Http\RedirectResponse;
@@ -31,17 +33,26 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class ContractController extends Controller
 {
-    public function show(string $case): Response
+    public function show(string $case, DocumentMergeData $merge): Response|RedirectResponse
     {
         $contact = auth('portal')->user();
 
         $found = $contact->visibleProjects()->where('cases.public_id', $case)->firstOrFail();
-        $contract = $found->latestContract()->with('signature')->first();
+        $contract = $found->latestContract()->with('signature', 'template')->first();
+
+        if ($contract === null) {
+            return Inertia::render('Projects/Missing', [
+                'showSwitcher' => $contact->visibleProjects()->count() > 1,
+                'project' => ['id' => $found->public_id, 'name' => $found->name],
+                'kind' => 'contract',
+                'quote' => $found->latestQuote === null ? null : ['accepted' => $found->latestQuote->accepted_at !== null || $found->isBooked()],
+            ]);
+        }
 
         // rescue(), not a bare call: on a sync queue the render runs here,
         // and Gotenberg being down is a contract the client cannot read yet,
         // not a screen they cannot open.
-        if ($contract !== null && ! $contract->hasArtifact() && ! $contract->signature()->exists()) {
+        if (! $contract->hasArtifact() && ! $contract->signature()->exists()) {
             rescue(fn () => Bus::dispatch((new RenderContractJob($contract))->onQueue('render')));
             $contract->refresh();
         }
@@ -55,7 +66,7 @@ class ContractController extends Controller
             // via `portal.capability:sign_contracts`. Never hides an
             // existing signature — this only gates the form, not the record.
             'canSign' => (bool) StudioSettings::current()->portal_sign_contracts_enabled,
-            'contract' => $contract === null ? null : [
+            'contract' => [
                 'status' => $contract->status->value,
                 'downloadUrl' => $contract->status === ContractStatus::Rendered && $contract->hasArtifact()
                     ? "/projekte/{$found->public_id}/vertrag/pdf"
@@ -63,6 +74,12 @@ class ContractController extends Controller
                 // Null until SignContract has written the one row a Contract
                 // will ever have — the rail shows the form or the confirmation
                 // off this alone, never off a separate "can sign" flag.
+                // The text the PDF is made from, readable on a phone where an
+                // embedded PDF is a blank frame. A signed contract keeps its
+                // stored bytes: the live text may have moved on since.
+                'html' => $contract->signature === null
+                    ? MergeFieldResolver::resolve($contract->resolvedBody(), $merge->forCase($found), escape: true)
+                    : null,
                 'signature' => $contract->signature === null ? null : [
                     'typedName' => $contract->signature->typed_name,
                     'consentedAt' => $contract->signature->consented_at->toIso8601String(),
@@ -77,7 +94,7 @@ class ContractController extends Controller
      * explicit true, so a request built by hand without it fails exactly
      * like an unchecked box would.
      */
-    public function sign(Request $request, string $case, SignContract $sign): RedirectResponse
+    public function sign(Request $request, string $case, SignContract $sign, DocumentMergeData $merge): RedirectResponse
     {
         $contact = auth('portal')->user();
 
@@ -91,7 +108,11 @@ class ContractController extends Controller
             'consent' => ['accepted'],
         ]);
 
-        $sign($contract, $contact, $validated['typedName'], (string) $request->ip(), $request->userAgent());
+        $shown = $contract->status === ContractStatus::Rendered && $contract->hasArtifact()
+            ? null
+            : MergeFieldResolver::resolve($contract->resolvedBody(), $merge->forCase($found), escape: true);
+
+        $sign($contract, $contact, $validated['typedName'], (string) $request->ip(), $request->userAgent(), $shown);
 
         return back();
     }

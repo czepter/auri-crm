@@ -13,6 +13,7 @@ const meta = {
       hasStripeTestKeys: true,
       hasStripeLiveKeys: true,
     },
+    status: { lastWebhookAt: '2026-09-20T18:12:00+02:00', lastPaidOn: '2026-09-18' },
   },
 } satisfies Meta<typeof Payments>
 

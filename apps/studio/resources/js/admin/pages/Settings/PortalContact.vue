@@ -3,8 +3,7 @@ import { computed } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import { useObjectUrl } from '@vueuse/core'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import Page from '@/ui/page/Page.vue'
-import PageHead from '@/ui/page/PageHead.vue'
+import FormShell from '@/ui/page/FormShell.vue'
 import SettingsNav from '@/admin/components/settings/SettingsNav.vue'
 import ContactPreview from './previews/ContactPreview.vue'
 import { Button } from '@/ui/button'
@@ -12,6 +11,7 @@ import { DropArea } from '@/ui/drop-area'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import { saveState } from '@/admin/lib/autosave'
 
 const props = defineProps<{
   settings: App.Settings.Data.PortalSettingsData
@@ -39,6 +39,7 @@ const studio = computed(() => ({
   phone: form.portal_contact_phone || null,
   email: form.portal_contact_email || null,
   responseTime: form.portal_contact_response_time || null,
+  absence: null,
 }))
 
 function removeAvatar() {
@@ -64,35 +65,25 @@ function submit() {
 
 <template>
   <AdminLayout active="einstellungen">
-    <Page data-tokens wide>
-      <div class="min-w-0 flex-1">
-        <PageHead
-          :kicker="`${$t('settings.kicker')} › ${$t('settings.navPortal')}`"
-          kicker-href="/einstellungen/portal"
-          :title="$t('portalSettings.contactTitle')"
-        >
-          <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
-          <Button
-            v-if="form.isDirty"
-            class="ml-auto"
-            variant="pill"
-            type="submit"
-            form="portal-contact-form"
-            :disabled="form.processing"
-          >
-            {{ $t('common.save') }}
-          </Button>
-        </PageHead>
+    <FormShell
+      :kicker="`${$t('settings.kicker')} › ${$t('settings.navPortal')}`"
+      kicker-href="/einstellungen/portal"
+      :title="$t('portalSettings.contactTitle')"
+      :state="saveState([form])"
+    >
+      <template #head>
+        <Button v-if="form.isDirty" variant="pill" type="submit" form="portal-contact-form" :disabled="form.processing">
+          {{ $t('common.save') }}
+        </Button>
+      </template>
 
-        <div class="px-6 pt-7 pb-8">
-          <div class="flex flex-wrap items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
-            <SettingsNav active="portal-contact" />
+      <template #nav><SettingsNav active="portal-contact" /></template>
 
             <!-- novalidate: die Fehler stehen unter dem Feld, wo sie hingehören,
                  nicht in einer Sprechblase des Browsers. -->
             <form
               id="portal-contact-form"
-              class="w-[620px] max-w-full min-w-0 flex-none"
+              class="min-w-0"
               novalidate
               @submit.prevent="submit"
             >
@@ -154,10 +145,7 @@ function submit() {
               </div>
             </form>
 
-            <ContactPreview :studio="studio" />
-          </div>
-        </div>
-      </div>
-    </Page>
+      <template #preview><ContactPreview :studio="studio" /></template>
+    </FormShell>
   </AdminLayout>
 </template>

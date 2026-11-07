@@ -38,7 +38,7 @@ const sheet = computed(() => {
        running with this session's origin. -->
   <div
     ref="frame"
-    class="mt-6 flex-1 overflow-auto bg-sunk"
+    class="mt-6 max-h-[calc(100dvh-200px)] flex-1 overflow-auto bg-sunk"
     :style="{ height: `${SHEET_HEIGHT * scale + PAD * 2}px`, padding: `${PAD}px` }"
   >
     <iframe

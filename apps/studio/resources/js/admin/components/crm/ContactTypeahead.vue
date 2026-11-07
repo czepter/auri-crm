@@ -93,7 +93,7 @@ const ROW = [
 
   <div v-else>
     <div class="overflow-hidden rounded-[6px] border border-line-hover">
-      <Input v-model="term" class="border-0" type="search" :placeholder="$t('common.search')" />
+      <Input :aria-label="$t('common.search')" v-model="term" class="border-0" type="search" :placeholder="$t('common.search')" />
 
       <div v-if="searched" class="border-t border-border">
         <!-- A list row, not one of the system's three buttons: ghost is here

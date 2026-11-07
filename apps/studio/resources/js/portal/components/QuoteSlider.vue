@@ -12,7 +12,8 @@ import { useForm, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import { formatEuros } from '@/lib/money'
 import { applyDiscount, quoteDiscount, spread } from '@/lib/quoteTotals'
-import { shortDate } from '@/portal/lib/dates'
+import PortalChip from '@/portal/components/PortalChip.vue'
+import { dayDate, daysUntil } from '@/portal/lib/dates'
 import { splitStages } from '@/portal/lib/paymentStages'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
@@ -33,6 +34,13 @@ const props = defineProps<{
   expired: boolean
   acceptedAt: string | null
 }>()
+
+const expiring = computed(() => {
+  if (props.expired || props.acceptedAt || !props.quote.validUntil) return null
+  const days = daysUntil(props.quote.validUntil)
+
+  return days >= 0 && days <= 7 ? days : null
+})
 
 const showcaseCount = computed(() => props.quote.showcaseCount)
 const imageBase = computed(() => props.imageUrlBase ?? `/projekte/${props.project.id}/angebot`)
@@ -254,7 +262,10 @@ function accept() {
     <aside
       class="w-[340px] flex-none lg:sticky lg:top-8 lg:rounded-[24px] lg:border lg:border-border lg:p-8 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-10 max-lg:w-full max-lg:border-t max-lg:border-border max-lg:bg-background max-lg:px-[var(--gut)] max-lg:py-4"
     >
-      <div class="text-[34px] leading-none tracking-[-0.03em] tabular-nums lg:text-[46px] lg:leading-[0.94]">{{ formatEuros(total) }}</div>
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <div class="text-[34px] leading-none tracking-[-0.03em] tabular-nums lg:text-[46px] lg:leading-[0.94]">{{ formatEuros(total) }}</div>
+        <PortalChip v-if="expiring !== null" tone="warn">{{ $t('portal.validDays', expiring) }}</PortalChip>
+      </div>
 
       <div v-if="!accepted" class="mt-6 border-t border-border pt-5 max-lg:hidden">
         <div
@@ -299,7 +310,7 @@ function accept() {
         <template v-if="canAccept">
           <div
             v-if="agbUrl || widerrufUrl"
-            class="mt-3.5 flex items-start gap-3 text-[13.5px] leading-[1.5] [&_[data-slot=checkbox]]:mt-0.5 [&_[data-slot=checkbox]]:size-[17px] [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action"
+            class="mt-3.5 flex items-start gap-3 text-[13.5px] leading-[1.5] [&_[data-slot=checkbox]]:mt-0.5 [&_[data-slot=checkbox]]:size-6 [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action"
           >
             <Checkbox id="slider-terms" v-model="form.terms" required />
             <Label variant="inline" for="slider-terms">
@@ -322,7 +333,7 @@ function accept() {
         </template>
 
         <p v-if="quote.validUntil" class="mt-4 text-[13px] text-muted-foreground max-lg:hidden">
-          {{ $t('quotes.validUntil') }} {{ shortDate(quote.validUntil) }}
+          {{ $t('quotes.validUntil') }} {{ dayDate(quote.validUntil) }}
         </p>
       </template>
     </aside>

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Link } from '@inertiajs/vue3'
+import PortalChip from '@/portal/components/PortalChip.vue'
 import PortalDot from '@/portal/components/PortalDot.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
@@ -11,6 +13,7 @@ import PortalPerson from '@/portal/components/PortalPerson.vue'
 import PortalRow from '@/portal/components/PortalRow.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
+import { dayDate, daysUntil } from '@/portal/lib/dates'
 import { reachable, type Studio } from '@/portal/lib/studio'
 import { Button } from '@/ui/button'
 import { formatEuros } from '@/lib/money'
@@ -28,10 +31,14 @@ type Shoot = {
 type Document = {
   kind: 'payments' | 'contract' | 'quote' | 'messages'
   href: string
+  label?: string
   dueOn: string | null
+  overdue?: boolean
   signedOn?: string | null
   acceptedOn?: string | null
   amount: number | null
+  openTotal?: number
+  unread?: number
   settled: boolean
 }
 
@@ -48,6 +55,8 @@ type Offers = {
   suggestion: { service: App.Catalog.Data.PortalServiceData; note: string | null; author: string | null } | null
   shelf: App.Catalog.Data.PortalServiceData[]
 }
+
+const { t } = useI18n()
 
 const props = defineProps<{
   contact: { name: string }
@@ -68,20 +77,6 @@ const props = defineProps<{
   }
   offers: Offers
 }>()
-
-function longDate(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  })
-}
-
-function shortDate(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
-}
-
-function weekday(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { weekday: 'long' })
-}
 
 // One sentence instead of four tiles that all said the same thing. Counted
 // in whole days from today, so "heute" and "morgen" are their own words
@@ -109,15 +104,67 @@ const daysLeft = computed(() => {
   return Math.round((new Date(props.project.date!).getTime() - midnight.getTime()) / 86_400_000)
 })
 
-const heroImage = computed(() => props.project.gallery?.strip[0] ?? null)
+// Everything waiting on the client, most pressing first: the contract, an
+// overdue rate, the quote, a rate not yet due, then the questionnaires.
+const steps = computed(() => {
+  const rank = (document: Document) => document.kind === 'contract' ? 0 : document.kind === 'payments' ? (document.overdue ? 1 : 3) : 2
 
+  const documents = props.project.documents
+    .filter(document => !document.settled && document.kind !== 'messages')
+    .map(document => ({
+      rank: rank(document),
+      title: document.kind === 'payments' ? (document.label ?? t('portal.payment')) : t(`portal.document.${document.kind}`),
+      note: document.kind === 'payments' && document.dueOn
+        ? { key: document.overdue ? 'portal.overdueSince' : 'portal.dueOn', date: document.dueOn }
+        : document.kind === 'contract'
+          ? { key: 'portal.notSignedYet', date: null }
+          : document.kind === 'quote' && document.dueOn ? { key: 'portal.validUntil', date: document.dueOn } : null,
+      amount: document.amount ? formatEuros(document.amount) : null,
+      detail: null as string | null,
+      state: (document.overdue ? 'late' : document.dueOn ? 'due' : 'open') as 'late' | 'due' | 'open',
+      label: ({ payments: 'portal.payButton', contract: 'portal.signButton', quote: 'portal.quoteAccept' } as Record<string, string>)[document.kind],
+      href: document.href,
+    }))
+
+  const sheets = props.project.questionnaires
+    .filter(one => one.openCount > 0)
+    .map(sheet => ({
+      rank: 4,
+      title: t('portal.questionnairesTitle'),
+      note: null,
+      amount: null,
+      state: 'open' as 'late' | 'due' | 'open',
+      label: 'portal.answerButton',
+      href: `/projekte/${props.project.id}/fragebogen/${sheet.id}`,
+      detail: `${sheet.name} · ${sheet.openCount}/${sheet.count}`,
+    }))
+
+  return [...documents, ...sheets].sort((a, b) => a.rank - b.rank)
+})
+
+const shoots = computed(() => [...props.project.shoots].sort((a, b) => (a.date ?? '9999').localeCompare(b.date ?? '9999')))
+
+const delivered = (shoot: Shoot) => shoot.state === 'done' && props.project.gallery !== null
+
+const galleryExpiring = computed(() => {
+  const expiresAt = props.project.gallery?.expiresAt
+
+  if (!expiresAt) return null
+  const days = daysUntil(expiresAt)
+
+  return days >= 0 && days <= 14 ? days : null
+})
+
+const step = computed(() => steps.value[0] ?? null)
+
+// Open items already stand in the card and the list above.
+const documents = computed(() => props.project.documents.filter(document => document.kind === 'messages' || document.settled))
+
+const sheets = computed(() => props.project.questionnaires.filter(sheet => sheet.openCount === 0))
 
 const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
 
-// The band the reading sections sit in. Wider than the letter and narrower
-// than the page: with a date on the left and a state on the right, the full
-// 1180px leaves 700px between them and the eye loses the row.
-const BAND = 'max-w-[880px] border-t border-border pt-12'
+const BAND = 'mt-10 border-t border-border pt-8'
 
 function documentNote(document: Document) {
   if (document.kind === 'payments') {
@@ -138,65 +185,66 @@ function documentNote(document: Document) {
 
 <template>
   <PortalShell>
-    <!-- The picture first. The old screen opened on the paperwork and read
-         like a file. -->
-    <header v-if="heroImage" class="relative h-[78vh] min-h-[640px] overflow-hidden bg-sunk max-[820px]:h-[62vh] max-[820px]:min-h-[440px]">
-      <PortalHeader over :switcher="{ label: project.name, toAll: showSwitcher }" />
+    <PortalHeader :switcher="{ label: project.name, toAll: showSwitcher }" />
 
-      <img class="size-full object-cover object-[50%_42%]" :src="`${heroImage}?w=2400&fmt=jpeg`" alt="" />
-
-      <!-- Two gradients, not one: enough at the top to carry the bar, enough
-           at the bottom to seat the serif on any photograph. A single gradient
-           over the full height would wash the picture grey. -->
-      <div
-        class="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(12,10,9,.52)_0%,rgba(12,10,9,0)_24%),linear-gradient(0deg,rgba(12,10,9,.86)_0%,rgba(12,10,9,.42)_26%,rgba(12,10,9,0)_56%)]"
-      />
-
-      <div class="absolute inset-x-0 bottom-18 z-2 mx-auto max-w-[var(--page)] px-6 text-white max-[820px]:bottom-8">
-        <p class="animate-rise motion-reduce:animate-none mb-4 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-white/72">{{ project.type }}</p>
-        <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(38px,14.3px+6.08vw,86px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)] [text-shadow:0_1px_40px_rgba(0,0,0,.28)]">
+    <PortalWrap class="pb-[calc(80px+env(safe-area-inset-bottom))]">
+      <section class="pt-6">
+        <p class="animate-rise motion-reduce:animate-none mb-3 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">{{ project.type }}</p>
+        <h1 class="animate-rise motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
           {{ project.name }}
         </h1>
-        <p v-if="project.date || project.venue" class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-4 text-[15px] leading-[1.5] tabular-nums text-white/86">
-          {{ [project.date ? longDate(project.date) : null, project.venue].filter(Boolean).join(' · ') }}
-        </p>
-      </div>
-    </header>
-
-    <PortalHeader v-else :switcher="{ label: project.name, toAll: showSwitcher }" />
-
-    <PortalWrap class="pb-40">
-      <!-- No photograph yet: the head is typographic, the same way the inquiry
-           is, and becomes the picture above once a shoot is delivered. -->
-      <section v-if="!heroImage" class="pt-[var(--band)]">
-        <p class="animate-rise motion-reduce:animate-none mb-4 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">{{ project.type }}</p>
-        <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(42px,6vw,62px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
-          {{ project.name }}
-        </h1>
-        <p v-if="project.date || project.venue" class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-4 text-[15px] leading-[1.5] tabular-nums text-muted-foreground">
-          {{ [project.date ? longDate(project.date) : null, project.venue].filter(Boolean).join(' · ') }}
+        <p class="mt-1.5 text-[14px] leading-[1.5] tabular-nums text-muted-foreground">
+          {{ [project.date ? dayDate(project.date) : $t('portal.dateOpen'), project.venue].filter(Boolean).join(' · ') }}
         </p>
       </section>
 
-      <!-- One state, one sentence. This replaced four cards that all said it. -->
-      <section v-if="statement" class="pt-28 pb-[var(--band)] max-[820px]:pt-[var(--band)] max-[820px]:pb-12">
-        <h2 class="max-w-[20ch] font-serif text-[clamp(28px,3.4vw,40px)] leading-[1.15] font-normal tracking-[-0.015em]">
-          {{ statement === 'countdown' ? $t('portal.daysUntil', { days: daysLeft }) : $t(`portal.${statement}`) }}
-        </h2>
+      <section v-if="step" class="-mx-2 mt-6 rounded-md border border-line-hover p-6">
+        <PortalLabel>{{ $t('portal.nextStep') }}</PortalLabel>
+        <div class="mt-3 flex items-baseline justify-between gap-4">
+          <h2 class="font-serif text-[22px] leading-[1.25] font-normal tracking-[-0.01em]">{{ step.title }}</h2>
+          <span v-if="step.amount" class="text-[17px] leading-none font-semibold tabular-nums">{{ step.amount }}</span>
+        </div>
+        <p v-if="step.note || step.detail" class="mt-1.5 flex items-center gap-2 text-[13.5px] text-muted-foreground">
+          <PortalDot :state="step.state" />
+          {{ step.detail ?? $t(step.note!.key, { date: step.note?.date ? dayDate(step.note.date) : '' }) }}
+        </p>
+        <Button as-child variant="portal" class="mt-5 min-h-12 w-full justify-center text-[15px]">
+          <Link :href="step.href">{{ $t(step.label) }}</Link>
+        </Button>
       </section>
 
-      <!-- The emotional core, and the one thing the old screen had no way in
-           to at all. -->
-      <section v-if="project.gallery" class="pb-28" :class="!statement && 'pt-[var(--band)]'">
-        <div class="mb-8 grid grid-cols-[1.5fr_1fr_1fr_1.3fr] gap-3 max-[820px]:grid-cols-2">
+      <p v-else-if="statement" class="mt-6 font-serif text-[22px] leading-[1.25]">
+        {{ statement === 'countdown' ? $t('portal.daysUntil', { days: daysLeft }) : $t(`portal.${statement}`) }}
+      </p>
+
+      <section v-if="steps.length > 1" class="mt-8">
+        <PortalLabel class="mb-2">{{ $t('portal.openTitle') }}</PortalLabel>
+        <PortalRow
+          v-for="other in steps.slice(1)"
+          :key="other.href"
+          :href="other.href"
+          :title="other.title"
+          :state="other.state"
+          :note="other.detail ?? (other.note ? $t(other.note.key, { date: other.note.date ? dayDate(other.note.date) : '' }) : null)"
+          :aside="other.amount"
+          aside-open
+        />
+      </section>
+
+      <section v-if="project.gallery" :class="BAND">
+        <div class="mb-6 flex items-baseline justify-between gap-4">
+          <PortalLabel>{{ $t('portal.imagesTitle') }}</PortalLabel>
+          <a class="text-[13.5px] text-action" :href="`/galerien/${project.gallery.id}`">{{ $t('portal.viewAll') }}</a>
+        </div>
+        <div class="mb-6 grid grid-cols-[1.5fr_1fr_1fr_1.3fr] gap-0.5 max-[820px]:grid-cols-2">
           <a
             v-for="src in project.gallery.strip"
             :key="src"
-            class="block overflow-hidden rounded-md bg-sunk"
+            class="block overflow-hidden bg-sunk"
             :href="`/galerien/${project.gallery.id}`"
           >
             <img
-              class="h-[290px] w-full object-cover transition-transform duration-[1.1s] ease-[var(--ease)] hover:scale-[1.035] max-[820px]:h-[210px]"
+              class="h-[290px] w-full object-cover max-[820px]:h-[170px]"
               :src="`${src}?w=800&fmt=jpeg`"
               alt=""
               loading="lazy"
@@ -204,152 +252,131 @@ function documentNote(document: Document) {
           </a>
         </div>
 
-        <div class="flex flex-wrap items-center justify-between gap-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 class="font-serif text-[24px] leading-[1.25] font-normal tracking-[-0.01em]">{{ project.gallery.title }}</h2>
+            <h2 class="font-serif text-[22px] leading-[1.25] font-normal tracking-[-0.01em]">{{ project.gallery.title }}</h2>
             <p class="mt-1.5 text-[13.5px] tabular-nums text-muted-foreground">
               {{ $t('portal.imageCount', project.gallery.count) }}
-              <template v-if="project.gallery.expiresAt">
-                · {{ $t('gallery.onlineUntil', { date: shortDate(project.gallery.expiresAt) }) }}
+              <template v-if="project.gallery.expiresAt && galleryExpiring === null">
+                · {{ $t('gallery.onlineUntil', { date: dayDate(project.gallery.expiresAt) }) }}
               </template>
             </p>
+            <p v-if="galleryExpiring !== null" class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13.5px] tabular-nums text-muted-foreground">
+              {{ $t('gallery.onlineUntil', { date: dayDate(project.gallery.expiresAt!) }) }}
+              <PortalChip :tone="galleryExpiring <= 3 ? 'danger' : 'warn'">{{ $t('gallery.onlineDays', galleryExpiring) }}</PortalChip>
+            </p>
           </div>
-          <!-- One gallery for both audiences: the couple's own half — their
-               link, its gates, their lists — sits under the pictures. -->
-          <Button as="a" variant="portal" :href="`/galerien/${project.gallery.id}`">
+          <Button as="a" variant="portal-ghost" class="max-[820px]:w-full max-[820px]:justify-center" :href="`/galerien/${project.gallery.id}`">
             {{ $t('portal.viewAllImages', { count: project.gallery.count }) }}
             <svg viewBox="0 0 24 24" class="fill-none stroke-current"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </Button>
         </div>
       </section>
 
-      <section v-if="project.shoots.length" class="pb-[var(--band)]">
-        <div :class="BAND">
-          <PortalLabel>{{ $t('portal.shootsTitle') }}</PortalLabel>
-          <div class="mt-6">
-            <div
-              v-for="shoot in project.shoots"
-              :key="shoot.id"
-              class="grid grid-cols-[132px_1fr_auto] items-baseline gap-6 border-b border-border py-6 last:border-b-0 max-[820px]:grid-cols-1 max-[820px]:gap-2"
-            >
-              <div class="text-[14px] leading-[1.45] font-medium tracking-[-0.005em] tabular-nums">
-                <b class="block text-[15px] font-semibold">{{ shoot.date ? shortDate(shoot.date) : $t('portal.dateOpen') }}</b>
-                <template v-if="shoot.date">
-                  {{ [weekday(shoot.date), shoot.callTime].filter(Boolean).join(' · ') }}
-                </template>
-              </div>
-              <div>
-                <div class="font-serif text-[19px] leading-[1.4]">{{ shoot.title }}</div>
-                <div v-if="shoot.venue" class="mt-[3px] text-[13.5px] text-muted-foreground">{{ shoot.venue }}</div>
-              </div>
-              <div class="inline-flex items-center gap-2 text-[12.5px] whitespace-nowrap text-muted-foreground">
-                <PortalDot :state="shoot.state" />{{ shoot.status }}
-              </div>
-            </div>
-          </div>
-        </div>
+      <!-- State in the row, not behind a click. -->
+      <section v-if="documents.length" :class="BAND">
+        <PortalLabel class="mb-2">{{ $t('portal.documentsTitle') }}</PortalLabel>
+        <PortalRow
+          v-for="document in documents"
+          :key="document.kind"
+          :href="document.href"
+          :title="$t(`portal.document.${document.kind}`)"
+          :state="document.kind === 'messages' ? (document.unread ? 'open' : 'neutral') : 'done'"
+          :note="{
+            settled: $t('portal.allSettled'),
+            due: $t('portal.quoteOpen'),
+            signed: document.signedOn ? $t('portal.signedOn', { date: dayDate(document.signedOn) }) : null,
+            unsigned: $t('portal.notSignedYet'),
+            accepted: document.acceptedOn ? $t('portal.quoteAccepted', { date: dayDate(document.acceptedOn) }) : null,
+            open: $t('portal.quoteOpen'),
+            messages: document.unread ? $t('portal.unreadCount', { count: document.unread }) : null,
+          }[documentNote(document)]"
+          :aside="document.kind === 'payments' ? (document.openTotal ? formatEuros(document.openTotal) : null) : document.amount ? formatEuros(document.amount) : null"
+          :aside-open="!document.settled"
+        />
       </section>
 
-      <!-- State in the row, not behind a click. Three grey text links before. -->
-      <section v-if="project.documents.length">
-        <div :class="BAND">
-          <PortalLabel class="mb-6">{{ $t('portal.documentsTitle') }}</PortalLabel>
-          <PortalRow
-            v-for="document in project.documents"
-            :key="document.kind"
-            :href="document.href"
-            :title="$t(`portal.document.${document.kind}`)"
-            :state="document.settled ? 'done' : 'open'"
-            :note="{
-              settled: $t('portal.allSettled'),
-              due: document.dueOn ? $t('portal.dueOn', { date: shortDate(document.dueOn) }) : null,
-              signed: document.signedOn ? $t('portal.signedOn', { date: shortDate(document.signedOn) }) : null,
-              unsigned: $t('portal.notSignedYet'),
-              accepted: document.acceptedOn ? $t('portal.quoteAccepted', { date: shortDate(document.acceptedOn) }) : null,
-              open: $t('portal.quoteOpen'),
-              messages: `${$t('portal.messagesAbout')} ${project.name}`,
-            }[documentNote(document)]"
-            :aside="document.amount ? formatEuros(document.amount) : null"
-            :aside-open="!document.settled"
-          />
-        </div>
+      <section v-if="shoots.length" :class="BAND">
+        <PortalLabel>{{ $t('portal.shootsTitle') }}</PortalLabel>
+        <component
+          :is="delivered(shoot) ? 'a' : 'div'"
+          v-for="shoot in shoots"
+          :key="shoot.id"
+          :href="delivered(shoot) ? `/galerien/${project.gallery!.id}` : undefined"
+          class="group grid grid-cols-[132px_1fr_auto] items-baseline gap-6 border-b border-border py-5 text-inherit no-underline last:border-b-0 max-[820px]:grid-cols-1 max-[820px]:gap-1.5"
+        >
+          <b class="text-[15px] leading-[1.45] font-semibold tabular-nums">
+            {{ shoot.date ? [dayDate(shoot.date), shoot.callTime].filter(Boolean).join(' · ') : $t('portal.dateOpen') }}
+          </b>
+          <div>
+            <div class="font-serif text-[19px] leading-[1.4]">{{ shoot.title }}</div>
+            <div v-if="shoot.venue" class="mt-[3px] text-[13.5px] text-muted-foreground">{{ shoot.venue }}</div>
+          </div>
+          <div class="inline-flex items-center gap-2 text-[12.5px] whitespace-nowrap text-muted-foreground">
+            <PortalDot :state="shoot.state" />{{ shoot.status }}
+          </div>
+          <span v-if="delivered(shoot)" class="col-span-full inline-flex min-h-11 items-center gap-1 text-[13.5px] text-foreground max-[820px]:justify-between">
+            {{ $t('portal.viewImages') }}
+            <svg class="size-[18px] fill-none stroke-current stroke-[1.4] text-mark" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" /></svg>
+          </span>
+        </component>
       </section>
 
       <!-- #415: die eigene Kopie der Rechnungsfolge, eine Zeile je
            ausgestellte Rate. -->
-      <section v-if="project.invoices.length" class="pt-12">
-        <div :class="BAND">
-          <PortalLabel class="mb-6">{{ $t('portal.invoicesTitle') }}</PortalLabel>
-          <PortalRow
-            v-for="invoice in project.invoices"
-            :key="invoice.id"
-            :href="`/projekte/${project.id}/zahlungen/${invoice.id}`"
-            :title="invoice.number"
-            :state="invoice.settled ? 'done' : 'open'"
-            :note="invoice.issuedOn ? `${invoice.status} · ${shortDate(invoice.issuedOn)}` : invoice.status"
-            :aside="formatEuros(invoice.amount)"
-            :aside-open="!invoice.settled"
-          />
-        </div>
+      <section v-if="project.invoices.length" :class="BAND">
+        <PortalLabel class="mb-2">{{ $t('portal.invoicesTitle') }}</PortalLabel>
+        <PortalRow
+          v-for="invoice in project.invoices"
+          :key="invoice.id"
+          :href="`/projekte/${project.id}/zahlungen/${invoice.id}`"
+          :title="invoice.number"
+          :state="invoice.settled ? 'done' : 'open'"
+          :note="invoice.issuedOn ? `${invoice.status} · ${dayDate(invoice.issuedOn)}` : invoice.status"
+          :aside="formatEuros(invoice.amount)"
+          :aside-open="!invoice.settled"
+        />
       </section>
 
-      <!-- P-03 (#222): the questionnaire the inquiry screen has always linked
-           to and nobody could fill in. Absent until the studio shares one. -->
-      <section v-if="project.questionnaires.length" class="pt-12">
-        <div :class="BAND">
-          <PortalLabel class="mb-6">{{ $t('portal.questionnairesTitle') }}</PortalLabel>
-          <PortalRow
-            v-for="sheet in project.questionnaires"
-            :key="sheet.id"
-            :href="`/projekte/${project.id}/fragebogen/${sheet.id}`"
-            :title="sheet.name"
-            :state="sheet.openCount ? 'open' : 'done'"
-            :note="sheet.openCount
-              ? $t('portal.questionsOpen', { open: sheet.openCount, total: sheet.count })
-              : $t('portal.questionsDone')"
-          />
-        </div>
+      <!-- P-03 (#222): absent until the studio shares a questionnaire. -->
+      <section v-if="sheets.length" :class="BAND">
+        <PortalLabel class="mb-2">{{ $t('portal.questionnairesTitle') }}</PortalLabel>
+        <PortalRow
+          v-for="sheet in sheets"
+          :key="sheet.id"
+          :href="`/projekte/${project.id}/fragebogen/${sheet.id}`"
+          :title="sheet.name"
+          state="done"
+          :note="$t('portal.questionsDone')"
+        />
       </section>
 
-      <!-- The same details the inquiry let them edit, read-only now: from
-           `gebucht` the date and the place are contract content. In their
-           place stands the way a change gets discussed. -->
-      <section class="pt-12">
-        <div :class="BAND">
-          <PortalLabel class="mb-4">{{ $t('portal.notedTitle') }}</PortalLabel>
-          <dl class="m-0 grid grid-cols-[148px_1fr] gap-x-6 gap-y-3 max-[700px]:grid-cols-1 max-[700px]:gap-y-0">
-            <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.appointment') }}</dt>
-            <dd class="m-0 text-[14.5px] tabular-nums">
-              {{ project.details.date ? longDate(project.details.date) : $t('portal.dateOpen') }}
-              <template v-if="project.details.callTime"> · {{ project.details.callTime }}</template>
-            </dd>
-            <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.place') }}</dt>
-            <dd class="m-0 text-[14.5px]">{{ project.details.venue ?? '—' }}</dd>
-            <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.reachUs') }}</dt>
-            <dd class="m-0 text-[14.5px]">
-              {{ [project.details.email, project.details.phone].filter(Boolean).join(' · ') }}
-              <Link class="ml-2 text-[13px] text-muted-foreground hover:text-foreground" href="/einstellungen">
-                {{ $t('common.edit').toLowerCase() }}
-              </Link>
-            </dd>
-          </dl>
+      <!-- Date and place already stand in the header and the shoot list. -->
+      <section :class="BAND">
+        <PortalLabel class="mb-4">{{ $t('portal.notedTitle') }}</PortalLabel>
+        <dl class="m-0 grid grid-cols-[148px_1fr] gap-x-6 gap-y-3 max-[700px]:grid-cols-1 max-[700px]:gap-y-0">
+          <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.reachUs') }}</dt>
+          <dd class="m-0 text-[14.5px]">
+            {{ [project.details.email, project.details.phone].filter(Boolean).join(' · ') }}
+            <Link class="ml-2 text-[13px] text-muted-foreground hover:text-foreground max-[700px]:inline-flex max-[700px]:min-h-11 max-[700px]:items-center" href="/einstellungen">
+              {{ $t('common.edit').toLowerCase() }}
+            </Link>
+          </dd>
+        </dl>
 
-          <p v-if="studio.messagingEnabled" class="mt-6 flex flex-wrap items-center gap-2 text-[13px] text-muted-foreground">
-            <svg class="size-3.5 flex-none fill-none stroke-current stroke-[1.5]" viewBox="0 0 24 24"><path d="M7 11V8a5 5 0 0110 0v3M5 11h14v9H5z" /></svg>
-            <a class="text-foreground" :href="messageHref">{{ $t('portal.requestChange') }}</a>
-          </p>
-        </div>
+        <p v-if="studio.messagingEnabled" class="mt-4 flex flex-wrap items-center gap-2 text-[13px] text-muted-foreground">
+          <svg class="size-3.5 flex-none fill-none stroke-current stroke-[1.5]" viewBox="0 0 24 24"><path d="M7 11V8a5 5 0 0110 0v3M5 11h14v9H5z" /></svg>
+          <a class="inline-flex min-h-11 items-center text-foreground" :href="messageHref">{{ $t('portal.requestChange') }}</a>
+        </p>
       </section>
 
-      <PortalSuggestion v-if="offers.suggestion" :suggestion="offers.suggestion" class="mt-[var(--band)]" />
+      <PortalSuggestion v-if="offers.suggestion" :suggestion="offers.suggestion" class="mt-10" />
 
-      <PortalOffers :shelf="offers.shelf" class="mt-[var(--band)]" />
+      <PortalOffers :shelf="offers.shelf" class="mt-10" />
 
-      <section v-if="reachable(studio)" class="pt-12">
-        <div :class="BAND">
-          <PortalLabel class="mb-4">{{ $t('portal.contactTitle') }}</PortalLabel>
-          <PortalPerson :studio="studio" :message-href="messageHref" />
-        </div>
+      <section v-if="reachable(studio)" :class="BAND">
+        <PortalLabel class="mb-4">{{ $t('portal.contactTitle') }}</PortalLabel>
+        <PortalPerson :studio="studio" :message-href="messageHref" />
       </section>
     </PortalWrap>
 

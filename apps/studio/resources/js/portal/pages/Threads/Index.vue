@@ -6,6 +6,7 @@ import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalSubhead from '@/portal/components/PortalSubhead.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
+import { dayDate } from '@/portal/lib/dates'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
@@ -18,6 +19,7 @@ type Row = { id: string; subject: string; reference: string | null; snippet: str
 
 const props = defineProps<{
   contact: { name: string }
+  studioName: string | null
   showSwitcher: boolean
   threads: Row[]
   openThread: Thread | null
@@ -92,10 +94,6 @@ function longDateTime(iso: string) {
   })
 }
 
-function shortDate(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
-}
-
 const form = computed(() => (props.openThread === null || composing.value ? started : reply))
 
 /* The line that names the booking a thread is about. Twice on the screen,
@@ -123,7 +121,7 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
 
     <PortalWrap class="flex min-h-0 flex-col pb-12 min-[980px]:pb-8" :class="subscreen && 'max-[979px]:pb-0'">
       <section class="flex-none pt-10 pb-8" :class="subscreen && 'max-[979px]:hidden'">
-        <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(30px,3.4vw,38px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
+        <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
           {{ $t('portal.messagesTitle') }}
         </h1>
       </section>
@@ -147,21 +145,19 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
             <Link
               v-for="row in threads"
               :key="row.id"
-              class="-mx-3 block rounded-[var(--r-sm)] border-b border-border p-4 text-inherit no-underline transition-colors duration-200 hover:bg-sunk"
+              class="-mx-3 block rounded-[var(--r-sm)] border-b border-border px-3 py-4 text-inherit no-underline transition-colors duration-200 hover:bg-sunk"
               :class="openThread?.id === row.id && !composing && (chosen ? 'bg-sunk' : 'min-[980px]:bg-sunk')"
               :href="`/nachrichten?unterhaltung=${row.id}`"
               preserve-scroll
               @click="composing = false"
             >
               <span class="flex items-baseline gap-3">
-                <!-- Not read state, which nothing records — the studio wrote
-                     last, so the answer is owed here. -->
                 <i v-if="row.waiting" class="size-[7px] flex-none translate-y-[-1px] self-center rounded-full bg-action" />
                 <b
                   class="flex-1 text-[14.5px] leading-[1.35] tracking-[-0.008em]"
                   :class="row.waiting ? 'font-semibold' : 'font-medium text-muted-foreground'"
                 >{{ row.subject }}</b>
-                <span class="text-[12px] whitespace-nowrap tabular-nums text-muted-foreground">{{ shortDate(row.lastAt) }}</span>
+                <span class="text-[12px] whitespace-nowrap tabular-nums text-muted-foreground">{{ dayDate(row.lastAt) }}</span>
               </span>
               <span v-if="row.snippet" class="mt-[5px] line-clamp-1 block text-[13px] text-muted-foreground">{{ row.snippet }}</span>
               <span :class="[REF, openThread?.id === row.id && !composing && 'bg-background']">
@@ -181,7 +177,7 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
         >
           <template v-if="openThread && !composing">
             <div class="flex-none border-b border-border px-6 py-5 max-[979px]:hidden">
-              <h2 class="m-0 font-serif text-[26px] leading-[1.2] font-normal tracking-[-0.012em]">{{ openThread.subject }}</h2>
+              <h2 class="m-0 font-serif text-[22px] leading-[1.25] font-normal tracking-[-0.01em]">{{ openThread.subject }}</h2>
               <span :class="REF">{{ openReference ?? $t('portal.messagesNoBooking') }}</span>
             </div>
 
@@ -198,7 +194,7 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
                   class="max-w-[78%] max-[979px]:max-w-[85%]"
                   :class="!message.fromStaff && 'justify-self-end text-right'"
                 >
-                  <div class="mb-1.5 text-[12px] tabular-nums text-muted-foreground">{{ message.author }} · {{ longDateTime(message.sentAt) }}</div>
+                  <div class="mb-1.5 text-[12px] tabular-nums text-muted-foreground">{{ message.fromStaff ? (studioName ?? message.author) : message.author }} · {{ longDateTime(message.sentAt) }}</div>
                   <div
                     class="rounded-md px-6 py-4 text-left text-[14.5px] leading-[1.6] whitespace-pre-wrap"
                     :class="message.fromStaff ? 'rounded-tl-[4px] bg-sunk' : 'rounded-tr-[4px] bg-foreground text-background'"
@@ -215,13 +211,13 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
                reads as a step still to come. -->
           <form
             class="mt-auto flex-none border-t border-border bg-background first:border-t-0"
-            :class="[openThread && !composing ? 'px-6 py-5' : 'p-6', 'max-[979px]:px-0']"
+            :class="[openThread && !composing ? 'px-6 py-5' : 'p-6 max-[979px]:mt-0', 'max-[979px]:px-0']"
             @submit.prevent="send"
           >
             <template v-if="!openThread || composing">
               <Input
                 v-model="started.subject"
-                class="mb-3.5 rounded-[var(--r-sm)] border-line-hover px-[13px] py-[11px] text-[14.5px] leading-[1.5]"
+                class="mb-3.5 rounded-[var(--r-sm)] border-input px-[13px] py-[11px] text-[14.5px] leading-[1.5]"
                 type="text"
                 :placeholder="$t('portal.messagesSubjectPlaceholder')"
               />
@@ -247,7 +243,7 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
             <div class="relative">
               <Textarea
                 v-model="form.body"
-                class="max-h-[40vh] min-h-12 resize-none rounded-[20px] border-line-hover py-[13px] pr-14 pl-4 text-[14.5px] leading-[1.5] field-sizing-content"
+                class="max-h-[40vh] min-h-12 resize-none rounded-[20px] border-input py-[13px] pr-14 pl-4 text-[14.5px] leading-[1.5] field-sizing-content"
                 :placeholder="$t('portal.messagesBodyPlaceholder')"
               />
               <!-- The mark carries the whole button, so it carries the name

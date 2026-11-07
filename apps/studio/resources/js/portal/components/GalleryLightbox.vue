@@ -178,6 +178,7 @@ function time(iso: string) {
           type="button"
           class="absolute top-1/2 grid size-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(255,255,255,.08)] text-foreground hover:bg-[rgba(255,255,255,.16)] max-[860px]:bg-[rgba(255,255,255,.14)] [&_svg]:size-5 [&_svg]:stroke-[1.6] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round] left-0"
           :title="$t('gallery.previous')"
+          :aria-label="$t('gallery.previous')"
           @click="step(-1)"
         >
           <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" /></svg>
@@ -187,6 +188,7 @@ function time(iso: string) {
           type="button"
           class="absolute top-1/2 grid size-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(255,255,255,.08)] text-foreground hover:bg-[rgba(255,255,255,.16)] max-[860px]:bg-[rgba(255,255,255,.14)] [&_svg]:size-5 [&_svg]:stroke-[1.6] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round] right-0"
           :title="$t('gallery.next')"
+          :aria-label="$t('gallery.next')"
           @click="step(1)"
         >
           <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" /></svg>

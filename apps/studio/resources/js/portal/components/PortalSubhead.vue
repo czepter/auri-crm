@@ -27,7 +27,7 @@ defineProps<{
 
 <template>
   <div
-    class="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-[color-mix(in_srgb,var(--bg)_88%,transparent)] py-[9px] pr-4 pl-2 backdrop-blur-[12px] min-[980px]:hidden"
+    class="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-[var(--bg)] py-[9px] pr-4 pl-2 min-[980px]:hidden"
   >
     <Link
       class="grid size-11 flex-none place-items-center text-foreground no-underline"

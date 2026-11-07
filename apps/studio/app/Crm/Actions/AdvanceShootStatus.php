@@ -2,6 +2,8 @@
 
 namespace App\Crm\Actions;
 
+use App\Crm\Enums\StageAnchor;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Events\ShootCancelled;
 use App\Crm\Events\ShootStatusChanged;
 use App\Crm\Models\Shoot;
@@ -45,6 +47,10 @@ class AdvanceShootStatus
             );
         }
 
+        if (! $backwards && self::beforeTheDay($shoot, $next)) {
+            throw new DomainException("Shoot {$shoot->public_id} has not taken place yet.");
+        }
+
         $entered = $enteredAt
             ?? ($backwards ? StageHistory::enteredAt('shoot.status_changed', $shoot->public_id, $next->key) : null)
             ?? now();
@@ -71,6 +77,14 @@ class AdvanceShootStatus
         ShootStatusChanged::dispatch($shoot, $from, $next);
 
         return $shoot;
+    }
+
+    /** Nothing has been shot before the day: from "Fotografiert" on, a future shoot can only be archived. */
+    public static function beforeTheDay(Shoot $shoot, Stage $next): bool
+    {
+        $shot = $shoot->date?->isFuture() ? Stage::anchored(StagePipeline::Project, StageAnchor::Shot) : null;
+
+        return $shot !== null && $next->sort_order >= $shot->sort_order && $next->anchor !== StageAnchor::Archived;
     }
 
     public function cancel(Shoot $shoot, string $reason, ?User $actor = null, ?CarbonInterface $cancelledAt = null): Shoot

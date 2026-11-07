@@ -30,3 +30,9 @@ export function showPublish(state: PublishState): boolean {
 export function showWithdraw(state: PublishState): boolean {
   return state.published !== null && !state.withdrawn
 }
+
+export function stateKey(state: PublishState): 'draft' | 'withdrawn' | 'online' {
+  if (state.published === null) return 'draft'
+
+  return state.withdrawn ? 'withdrawn' : 'online'
+}

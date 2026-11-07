@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import de from '@/locales/de.json'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalOffers from '@/portal/components/PortalOffers.vue'
@@ -33,7 +35,12 @@ const props = defineProps<{
   bookings: Booking[]
   pending: { title: string; note: string; aside: string }[]
   shelf: App.Catalog.Data.PortalServiceData[]
+  clientRegister: string
+  state: 'inquiry' | 'active' | 'done'
 }>()
+// Wie portal/main.ts: ein Studio mit Sie bekommt die Sie-Texte.
+if (props.clientRegister === 'formal') useI18n().mergeLocaleMessage('de', { portal: de.portalFormal })
+
 useLiveProps(['welcomeText', 'maintenanceMessage', 'shelf', 'fontPair', 'portalBranding', 'portalLegal'])
 
 // Nach Jahr, wie die Startseite selbst: eine Liste ohne die Jahreszeile
@@ -58,8 +65,8 @@ const years = computed(() => [...new Set(props.bookings.map((row) => row.year))]
             <h1 class="font-serif text-[clamp(38px,14.3px+6.08vw,86px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
               {{ client }}
             </h1>
-            <p v-if="welcomeText" class="mt-6 max-w-[52ch] text-title leading-[1.55] text-muted-foreground">
-              {{ welcomeText }}
+            <p class="mt-6 max-w-[52ch] text-title leading-[1.55] text-muted-foreground">
+              {{ welcomeText || $t(`portal.welcome.${state}`) }}
             </p>
           </section>
 

@@ -20,5 +20,6 @@ class CaseQueueRowData extends Data
         public ?string $reason,
         public ?int $days,
         public bool $open,
+        public string $step,
     ) {}
 }

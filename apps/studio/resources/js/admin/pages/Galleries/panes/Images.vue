@@ -3,7 +3,8 @@ import { Button } from '@/ui/button'
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
-import { useMediaQuery, useVirtualList } from '@vueuse/core'
+import { useElementSize, useMediaQuery, useVirtualList } from '@vueuse/core'
+import { Upload } from 'lucide-vue-next'
 import { applyClick, uploadTarget, type SelectionState } from '@/admin/lib/gallerySelection'
 import { checkDuplicates, uploadFile } from '@/admin/lib/multipartUpload'
 import AssetLightbox from '@/admin/components/gallery/AssetLightbox.vue'
@@ -49,9 +50,11 @@ const props = defineProps<{
 const { t } = useI18n()
 
 const COLUMNS: Record<string, number> = { small: 10, medium: 7, large: 4 }
-// Auf 390px sind vier Kacheln 85px breit — das ist kein Bild mehr, das ist
-// ein Punkt. Unter 640px die Haelfte, mindestens zwei.
+const TILE: Record<string, number> = { small: 100, medium: 160, large: 240 }
+const GAP = 6
 const narrow = useMediaQuery('(max-width: 640px)')
+const gridEl = ref<HTMLElement | null>(null)
+const { width } = useElementSize(gridEl)
 
 // gallery_grid_prefs is keyed per set, and Alle is not a set — the combined
 // view renders at the default density rather than writing to a row that
@@ -87,7 +90,9 @@ const rows = computed(() => {
   return chunks
 })
 
-const { list, containerProps, wrapperProps } = useVirtualList(rows, { itemHeight: 132 })
+const { list, containerProps, wrapperProps } = useVirtualList(rows, {
+  itemHeight: () => (width.value === 0 ? 132 : (width.value - GAP * (columns.value - 1)) / columns.value + GAP),
+})
 
 const selection = ref<SelectionState>({ selected: new Set(), anchor: null })
 const lightbox = ref<AssetRow | null>(null)
@@ -281,7 +286,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="relative px-6 pt-5 pb-7" @dragover.prevent="dragging = true">
+  <div ref="gridEl" class="relative px-6 pt-5 pb-7" @dragover.prevent="dragging = true">
     <!-- Die ganze Flaeche nimmt Bilder an, nicht nur der Kasten am Ende —
          das Overlay faengt dragleave einmal ab statt bei jeder Kachel. -->
     <div
@@ -302,21 +307,22 @@ onUnmounted(() => {
       <span v-if="pendingShown.length > 0" class="text-small text-ink-2">{{ $t('media.pendingCount', pendingShown.length) }}</span>
       <div class="ml-auto flex items-center gap-3 text-small text-ink-2">
         <template v-if="activeSet !== null">
-          <button
-            v-for="option in ['small', 'medium', 'large']"
-            :key="option"
-            class="cursor-pointer border-0 bg-transparent text-small"
-            :class="density === option ? 'font-semibold text-foreground' : 'text-ink-2'"
-            type="button"
-            @click="setDensity(option)"
-          >
-            {{ $t(`galleryRecord.density.${option}`) }}
-          </button>
+          <Select :model-value="density" @update:model-value="(value) => setDensity(String(value))">
+            <SelectTrigger class="h-7 w-auto"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="option in ['small', 'medium', 'large']" :key="option" :value="option">
+                {{ $t(`galleryRecord.density.${option}`) }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </template>
-        <label class="cursor-pointer">
-          {{ $t('media.upload') }}
-          <Input type="file" multiple class="hidden" @change="picked(Array.from(($event.target as HTMLInputElement).files ?? []))" />
-        </label>
+        <Button as-child variant="outline">
+          <label class="cursor-pointer">
+            <Upload class="size-4" />
+            {{ $t('media.upload') }}
+            <Input type="file" multiple class="hidden" @change="picked(Array.from(($event.target as HTMLInputElement).files ?? []))" />
+          </label>
+        </Button>
       </div>
     </div>
 
@@ -370,14 +376,11 @@ onUnmounted(() => {
                 alt=""
                 loading="lazy"
               />
-              <span v-if="asset.isCover" class="absolute bottom-1.5 left-1.5 rounded bg-[rgba(25,25,25,0.7)] px-1.5 py-0.5 text-[8.5px] text-paper">
-                {{ $t('galleryRecord.cover') }}
-              </span>
               <span
-                v-if="activeSetId === null"
-                class="absolute top-1.5 left-1.5 rounded-full bg-[rgba(25,25,25,0.7)] px-1.5 py-0.5 text-[8.5px] text-paper"
+                v-if="asset.isCover || activeSetId === null"
+                class="absolute inset-x-0 bottom-0 block truncate rounded-b-md bg-[rgba(25,25,25,0.7)] p-2 text-[12px] leading-none text-paper"
               >
-                {{ setNames.get(asset.setId) }}
+                {{ [asset.isCover ? $t('galleryRecord.cover') : null, activeSetId === null ? setNames.get(asset.setId) : null].filter(Boolean).join(' · ') }}
               </span>
             </figure>
           </div>

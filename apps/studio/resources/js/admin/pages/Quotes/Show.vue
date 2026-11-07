@@ -2,7 +2,8 @@
 import { computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import type { QuoteContact, VatSettings } from '@/admin/components/quote/quotePayload'
-import { quoteChipClass, quoteTitle } from '@/admin/lib/quoteDisplay'
+import { quoteTone, quoteTitle } from '@/admin/lib/quoteDisplay'
+import Chip from '@/ui/page/Chip.vue'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
@@ -11,6 +12,7 @@ import DocumentViews from '@/admin/components/DocumentViews.vue'
 import QuoteActions from '@/admin/components/quote/QuoteActions.vue'
 import QuoteWorkspace from '@/admin/components/quote/QuoteWorkspace.vue'
 import { useI18n } from 'vue-i18n'
+import { shortDate } from '@/portal/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
@@ -36,7 +38,7 @@ const { t } = useI18n()
 const quote = computed(() => props.quotes[0])
 
 function day(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
+  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 const address = computed(() => {
@@ -54,10 +56,10 @@ const facts = computed(() => {
   return [
     { label: t('quotes.recipient'), value: [props.recipientName, address.value].filter(Boolean).join(' · ') },
     { label: t('quotesOverview.number'), value: quote.number },
-    { label: t('quotes.validUntil'), value: quote.validUntil },
+    { label: t('quotes.validUntil'), value: quote.validUntil ? shortDate(quote.validUntil) : null },
     {
       label: t('quotesOverview.createdAt'),
-      value: quote.sentAt ? `${day(quote.sentAt)} (${quote.sentChannel === 'mail' ? t('quotes.sentByMail') : t('quotes.sentBySelf')})` : null,
+      value: quote.sentAt ?? quote.createdAt ? day(quote.sentAt ?? quote.createdAt!) : null,
     },
   ].filter((fact) => fact.value)
 })
@@ -68,8 +70,8 @@ const facts = computed(() => {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :title="quoteTitle(quote, t)" :kicker="recipientName ?? projectName">
-          <div class="ml-auto flex items-center gap-3.5">
-            <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
+          <div class="ml-auto flex items-center gap-3.5 max-[640px]:ml-0 max-[640px]:w-full max-[640px]:flex-wrap max-[640px]:gap-y-2">
+            <Chip :tone="quoteTone(quote.status)">{{ quote.statusLabel }}</Chip>
             <span v-if="quote.sentChannel" class="text-small text-ink-2">
               {{ quote.sentChannel === 'mail' ? $t('quotes.sentByMail') : $t('quotes.sentBySelf') }}
             </span>

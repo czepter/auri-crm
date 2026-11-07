@@ -69,6 +69,9 @@ class GalleryPasswordController extends Controller
                 'expiresAt' => $gallery->expires_at?->toIso8601String(),
                 'url' => $gallery->publicUrl(),
             ],
+            // The portal shell (header, tabbar) stands on the couple's view
+            // only; a guest on a forwarded link has no booking to go back to.
+            'project' => $isClient ? ['id' => $gallery->case->public_id, 'name' => $gallery->case->name] : null,
             'unlocked' => $unlocked,
             // A button for something the gallery does not offer is a 403 with
             // extra steps — the routes already refuse it (gallery.feature:),
