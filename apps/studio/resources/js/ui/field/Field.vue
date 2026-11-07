@@ -87,6 +87,7 @@ const id = () => props.id ?? fallback
     >
       <div class="overflow-hidden">
         <p
+          :id="`${id()}-error`"
           class="text-small leading-[1.45] text-destructive transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none"
           :class="[message ? 'translate-y-0 opacity-100' : '-translate-y-0.5 opacity-0', dense ? 'pt-1' : 'pt-1.5']"
         >{{ shown }}</p>

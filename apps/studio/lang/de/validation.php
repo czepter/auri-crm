@@ -101,6 +101,8 @@ return [
         'email' => 'E-Mail',
         'inquiry_text' => 'Anfragetext',
         'name' => 'Name',
+        'notification_body' => 'Text',
+        'notification_subject' => 'Betreff',
         'partner_name' => 'Partner/in',
         'password' => 'Passwort',
         'phone' => 'Telefon',

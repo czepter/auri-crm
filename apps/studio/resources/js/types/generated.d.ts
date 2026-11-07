@@ -21,6 +21,9 @@ offsetDays: number | null,
 direction: string | null,
 projectType: string | null,
 action: string,
+drafts: number,
+group: string,
+order: number,
 };
 export type AutomationRunData = {
 id: string,
@@ -28,6 +31,7 @@ firedAt: string,
 anchorLabel: string,
 status: string,
 statusLabel: string,
+draftUrl: string | null,
 };
 }
 namespace Enums {

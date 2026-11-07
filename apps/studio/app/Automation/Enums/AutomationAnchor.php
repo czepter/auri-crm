@@ -63,4 +63,71 @@ enum AutomationAnchor: string implements HasLabel
             self::InquiryCaptured => 'Anfrage eingegangen',
         };
     }
+
+    /** After "N Tage vor/nach ". */
+    public function noun(): string
+    {
+        return match ($this) {
+            self::PerShoot => 'jedem Shooting',
+            self::PrimaryShoot => 'dem Haupttermin',
+            self::QuoteValidity => 'Ablauf des Angebots',
+            self::InstallmentDue => 'Fälligkeit der Rate',
+            self::GalleryExpiry => 'Ablauf der Galerie',
+            self::QuestionnaireDue => 'Fälligkeit des Fragebogens',
+            self::Delivered => 'der Auslieferung',
+            self::QuoteSent => 'Versand des Angebots',
+            self::InquiryCaptured => 'Eingang der Anfrage',
+        };
+    }
+
+    /** After "am ", for an offset of 0 days. */
+    public function at(): string
+    {
+        return match ($this) {
+            self::PerShoot => 'Tag jedes Shootings',
+            self::PrimaryShoot => 'Tag des Haupttermins',
+            self::QuoteValidity => 'Ablauftag des Angebots',
+            self::InstallmentDue => 'Fälligkeitstag der Rate',
+            self::GalleryExpiry => 'Ablauftag der Galerie',
+            self::QuestionnaireDue => 'Fälligkeitstag des Fragebogens',
+            self::Delivered => 'Tag der Auslieferung',
+            self::QuoteSent => 'Versandtag des Angebots',
+            self::InquiryCaptured => 'Tag des Anfrageeingangs',
+        };
+    }
+
+    /** The project stage the rule sits in on the list. */
+    public function group(): string
+    {
+        return match ($this) {
+            self::InquiryCaptured => 'Anfrage',
+            self::QuoteSent, self::QuoteValidity => 'Angebot',
+            self::QuestionnaireDue, self::InstallmentDue => 'Buchung',
+            self::PerShoot, self::PrimaryShoot => 'Shooting',
+            self::GalleryExpiry => 'Galerie',
+            self::Delivered => 'Nachher',
+        };
+    }
+
+    /** Position along the project; the rule list sorts on it. */
+    public function order(): int
+    {
+        return match ($this) {
+            self::InquiryCaptured => 10,
+            self::QuoteSent => 20,
+            self::QuoteValidity => 30,
+            self::QuestionnaireDue => 40,
+            self::InstallmentDue => 50,
+            self::PerShoot => 60,
+            self::PrimaryShoot => 70,
+            self::GalleryExpiry => 80,
+            self::Delivered => 90,
+        };
+    }
+
+    /** A date already behind the rule's firing can only be waited out, never counted down to. */
+    public function canBefore(): bool
+    {
+        return ! in_array($this, [self::Delivered, self::QuoteSent, self::InquiryCaptured], true);
+    }
 }

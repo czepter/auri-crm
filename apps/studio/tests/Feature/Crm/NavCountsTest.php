@@ -33,5 +33,5 @@ it('counts the inquiries and the projects the way their lists do', function () {
     $nav = test()->actingAs(User::factory()->withMfa()->create(), 'staff')
         ->get('/anfragen')->assertOk()->viewData('page')['props']['nav'];
 
-    expect($nav)->toBe(['leads' => 1, 'unread' => 0, 'projects' => 2]);
+    expect($nav)->toBe(['leads' => 1, 'unread' => 0, 'projects' => 2, 'drafts' => null]);
 });

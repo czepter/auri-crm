@@ -123,13 +123,20 @@ class MergeFieldVocabulary
      * read time: a typo'd field does not shout, it silently deletes a
      * sentence. This is how a caller finds out before that happens.
      *
+     * @param  list<string>|null  $known  Narrower than paths() where a screen offers fewer fields.
      * @return list<string>
      */
-    public static function unknownPathsIn(string $body): array
+    public static function unknownPathsIn(string $body, ?array $known = null): array
+    {
+        return array_values(array_diff(self::pathsIn($body), $known ?? self::paths()));
+    }
+
+    /** @return list<string> Every distinct `{{ path }}` in $body, known or not. */
+    public static function pathsIn(string $body): array
     {
         preg_match_all('/\{\{\s*([a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)*)\s*\}\}/', $body, $matches);
 
-        return array_values(array_unique(array_diff($matches[1] ?? [], self::paths())));
+        return array_values(array_unique($matches[1] ?? []));
     }
 
     /**

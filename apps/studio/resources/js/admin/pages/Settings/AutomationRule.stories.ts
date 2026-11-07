@@ -18,7 +18,7 @@ const meta = {
       lastRunLabel: 'gestern, 09:00',
       lastRunFailed: false,
       subject: 'Anzahlung für euren Termin',
-      body: 'Hallo {{client.firstName}},\n\ndie Anzahlung über {{installment.amount}} steht noch offen.\n\nChristian',
+      body: 'Hallo {{ contact.name }},\n\ndie Anzahlung über {{ invoice.gross }} steht noch offen.\n\nChristian',
       triggerType: 'date_offset',
       eventLabel: null,
       anchor: 'installment_due',
@@ -26,10 +26,15 @@ const meta = {
       direction: 'after',
       projectType: null,
       action: 'mail_draft',
+      drafts: 1,
+      group: 'Zahlung',
+      order: 51503,
     },
+    eventClause: null,
     anchors: [
-      { value: 'primary_shoot', label: 'Haupttermin' },
-      { value: 'installment_due', label: 'Fälligkeit der Rate' },
+      { value: 'primary_shoot', label: 'Haupttermin', noun: 'dem Haupttermin', at: 'am Tag des Haupttermins', canBefore: true },
+      { value: 'delivered', label: 'Auslieferung', noun: 'der Auslieferung', at: 'am Tag der Auslieferung', canBefore: false },
+      { value: 'installment_due', label: 'Fälligkeit der Rate', noun: 'Fälligkeit der Rate', at: 'am Fälligkeitstag der Rate', canBefore: true },
     ],
     recipients: [
       { value: 'client', label: 'Kunde' },
@@ -37,7 +42,7 @@ const meta = {
       { value: 'studio', label: 'Studio' },
     ],
     conditions: [
-      { value: 'payment_open', label: 'Zahlung offen' },
+      { value: 'payment_open', label: 'Zahlung offen', clause: 'die Rate noch offen ist' },
     ],
     projectTypes: [
       { value: 'wedding', label: 'Hochzeit' },
@@ -48,15 +53,20 @@ const meta = {
       { value: 'task', label: 'Aufgabe' },
     ],
     mergeFields: [
-      { path: 'client.firstName', sample: 'Lena' },
-      { path: 'project.title', sample: 'Hochzeit Brinkmann' },
-      { path: 'installment.amount', sample: '750,00 €' },
-      { path: 'studio.name', sample: 'Atelier Nordlicht' },
+      { path: 'contact.name', sample: 'Lena Meier', group: 'Kontakt', label: 'Name', needsPayment: false },
+      { path: 'project.name', sample: 'Hochzeit Brinkmann', group: 'Projekt', label: 'Projektname', needsPayment: false },
+      { path: 'invoice.gross', sample: '750,00 €', group: 'Rechnung', label: 'Brutto', needsPayment: true },
+      { path: 'studio.name', sample: 'Atelier Nordlicht', group: 'Studio', label: 'Name', needsPayment: false },
+    ],
+    testRecipient: 'christian@example.test',
+    previewProjects: [
+      { value: '', label: 'Beispiel' },
+      { value: 'p1', label: 'Hochzeit Brinkmann' },
     ],
     runs: [
-      { id: 'run1', firedAt: '2026-09-11T09:00:00+02:00', anchorLabel: 'Hochzeit Brinkmann', status: 'sent', statusLabel: 'Gesendet' },
-      { id: 'run2', firedAt: '2026-09-04T09:00:00+02:00', anchorLabel: 'Familie Ahlers', status: 'skipped', statusLabel: 'Übersprungen' },
-      { id: 'run3', firedAt: '2026-08-28T09:00:00+02:00', anchorLabel: 'Ohlsen/Petersen', status: 'sent', statusLabel: 'Gesendet' },
+      { id: 'run1', firedAt: '2026-09-11T09:00:00+02:00', anchorLabel: 'Hochzeit Brinkmann', status: 'sent', statusLabel: 'Gesendet', draftUrl: null },
+      { id: 'run2', firedAt: '2026-09-04T09:00:00+02:00', anchorLabel: 'Familie Ahlers', status: 'awaiting_approval', statusLabel: 'Entwurf', draftUrl: '/posteingang/entwuerfe/run2/senden' },
+      { id: 'run3', firedAt: '2026-08-28T09:00:00+02:00', anchorLabel: 'Ohlsen/Petersen', status: 'sent', statusLabel: 'Gesendet', draftUrl: null },
     ],
   },
 } satisfies Meta<typeof AutomationRule>

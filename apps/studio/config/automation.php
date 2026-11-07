@@ -28,7 +28,7 @@ return [
     'rules' => [
         [
             'key' => 'shoot-reminder-7-days-before',
-            'name' => 'Shooting-Erinnerung — 7 Tage vorher',
+            'name' => 'Shooting-Erinnerung',
             'trigger_type' => AutomationTriggerType::DateOffset,
             'anchor' => AutomationAnchor::PerShoot,
             'offset_days' => 7,
@@ -44,7 +44,7 @@ return [
         ],
         [
             'key' => 'quote-follow-up',
-            'name' => 'Angebot — Erinnerung vor Ablauf',
+            'name' => 'Angebot läuft ab',
             'trigger_type' => AutomationTriggerType::DateOffset,
             'anchor' => AutomationAnchor::QuoteValidity,
             'offset_days' => 7,
@@ -60,7 +60,7 @@ return [
         ],
         [
             'key' => 'quote-no-reply',
-            'name' => 'Angebot — ohne Antwort',
+            'name' => 'Angebot ohne Antwort',
             'trigger_type' => AutomationTriggerType::DateOffset,
             'anchor' => AutomationAnchor::QuoteSent,
             'offset_days' => 7,
@@ -76,7 +76,7 @@ return [
         ],
         [
             'key' => 'questionnaire-before-wedding',
-            'name' => 'Ablauf-Fragebogen — vor der Hochzeit',
+            'name' => 'Ablauf-Fragebogen',
             'trigger_type' => AutomationTriggerType::DateOffset,
             'anchor' => AutomationAnchor::PrimaryShoot,
             'offset_days' => 30,
@@ -94,7 +94,7 @@ return [
         ],
         [
             'key' => 'installment-due-soon',
-            'name' => 'Rate — vor Fälligkeit',
+            'name' => 'Ratenerinnerung',
             'trigger_type' => AutomationTriggerType::DateOffset,
             'anchor' => AutomationAnchor::InstallmentDue,
             'offset_days' => 7,
@@ -107,7 +107,7 @@ return [
         ],
         [
             'key' => 'gallery-expiry-soon',
-            'name' => 'Galerie — vor Ablauf',
+            'name' => 'Galerie läuft ab',
             'trigger_type' => AutomationTriggerType::DateOffset,
             'anchor' => AutomationAnchor::GalleryExpiry,
             'offset_days' => 14,
@@ -171,7 +171,7 @@ return [
         // there so it can be found rather than invented.
         [
             'key' => 'crew-briefing-day-before',
-            'name' => 'Crew — Tag vor dem Shooting',
+            'name' => 'Crew-Briefing',
             'trigger_type' => AutomationTriggerType::DateOffset,
             'anchor' => AutomationAnchor::PerShoot,
             'offset_days' => 1,
@@ -183,7 +183,7 @@ return [
         ],
         [
             'key' => 'packing-list',
-            'name' => 'Packliste',
+            'name' => 'Ausrüstung packen',
             'trigger_type' => AutomationTriggerType::DateOffset,
             'anchor' => AutomationAnchor::PerShoot,
             'offset_days' => 3,

@@ -2,12 +2,15 @@
 
 namespace App\Http\Middleware;
 
+use App\Automation\Enums\AutomationRunStatus;
+use App\Automation\Models\AutomationRun;
 use App\Crm\Actions\OpenLeads;
 use App\Crm\Models\Stage;
 use App\Crm\Screens\OpenCases;
 use App\Data\StaffProfileData;
 use App\Documents\Support\DocumentBlockCatalog;
 use App\Documents\Support\MergeFieldVocabulary;
+use App\Enums\Capability;
 use App\Help\Support\HelpIndex;
 use App\Models\StudioSettings;
 use App\Models\User;
@@ -99,6 +102,12 @@ class HandleInertiaRequests extends Middleware
                 // The projects the rail and the list's "Laufend" show: booked,
                 // visible to this role, not delivered, completed or closed.
                 'projects' => fn () => app(OpenCases::class)->count($user),
+                // Client mails an automation drafted; the Posteingang row's badge.
+                'drafts' => fn () => $user->can(Capability::ManageMessages->value)
+                    ? (($user->can(Capability::ViewAllCases->value)
+                        ? AutomationRun::query()->where('status', AutomationRunStatus::AwaitingApproval)->count()
+                        : AutomationRun::awaitingFor($user)->count()) ?: null)
+                    : null,
             ],
             // Die laufende Version und ob release-log eine höhere kennt. Chrome
             // wie die Zähler darüber: die Zeile steht auf jedem Admin-Screen

@@ -17,6 +17,7 @@ export type NavEntry = {
 
 export type NavCounts = {
     unread?: number
+    drafts?: number
     leads?: number
     projects?: number
 }
@@ -81,6 +82,7 @@ export function navItems(can: Capability[], counts: NavCounts = {}): NavEntry[] 
             label: 'Posteingang',
             href: '/posteingang',
             needs: 'manage_messages',
+            count: counts.drafts || undefined,
             icon: '<path d="M3 6.5h18v11H3z"/><path d="m3 7.5 9 6 9-6"/>',
         },
         {

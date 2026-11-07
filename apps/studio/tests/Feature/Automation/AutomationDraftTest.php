@@ -77,3 +77,14 @@ it('discards a draft without sending', function () {
     expect(AutomationRun::sole()->status)->toBe(AutomationRunStatus::Skipped);
     Notification::assertNothingSent();
 });
+
+it('keeps single line breaks in the mail, for a sent draft as for any other', function () {
+    $this->actingAs($this->owner, 'staff')
+        ->post("/posteingang/entwuerfe/{$this->draft->public_id}/versenden", ['subject' => 'Eure Buchung', 'message' => "Hallo\nbis bald\n\nStudio <b>"]);
+
+    Notification::assertSentTo($this->contact, AutomationReminder::class, function (AutomationReminder $mail) {
+        $html = (string) $mail->toMail($this->contact)->render();
+
+        return str_contains($html, "Hallo<br>\nbis bald") && str_contains($html, 'Studio &lt;b&gt;');
+    });
+});
