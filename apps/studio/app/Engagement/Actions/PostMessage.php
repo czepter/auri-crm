@@ -44,7 +44,9 @@ class PostMessage
             ]);
         });
 
-        LiveUpdate::publishThread($thread);
+        LiveUpdate::publishToContacts(Contact::query()
+            ->whereIn('id', $thread->participants()->whereNotNull('contact_id')->select('contact_id'))
+            ->pluck('public_id'));
 
         // E-11 / E-13. Outside the transaction on purpose: a mail that has
         // already left cannot be rolled back, so it must not be sent from
