@@ -265,7 +265,7 @@ it('keeps invoice fields as written in the preview unless the anchor is an insta
             'anchor' => $anchor,
         ])))
         ->assertJsonPath('subject', $expected);
-})->with([
+})->with(fn () => [
     'no anchor' => [null, 'Rechnung {{ invoice.gross }}'],
     'per shoot' => ['per_shoot', 'Rechnung {{ invoice.gross }}'],
     'instalment' => ['installment_due', 'Rechnung '.MergeFieldVocabulary::sample()['invoice']['gross']],
