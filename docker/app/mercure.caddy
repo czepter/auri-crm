@@ -1,4 +1,5 @@
-# #357: imported by the admin service alone, through
+# #357: imported by the admin and the portal service (each runs its own hub:
+# the subscriber cookie only reaches the host that set it), through
 # CADDY_SERVER_EXTRA_DIRECTIVES in docker-compose.coolify.yml. No `anonymous`:
 # a subscriber needs the cookie App\Support\LiveUpdate mints for signed-in staff.
 #

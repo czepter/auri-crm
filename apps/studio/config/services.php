@@ -100,6 +100,9 @@ return [
     'mercure' => [
         'url' => env('MERCURE_URL') ?: null,
         'public_url' => env('MERCURE_PUBLIC_URL') ?: '/.well-known/mercure',
+        // Der Hub im Portal-Container: eigener Host, also eigenes Cookie.
+        'portal_url' => env('MERCURE_PORTAL_URL') ?: null,
+        'portal_public_url' => env('MERCURE_PORTAL_PUBLIC_URL') ?: '/.well-known/mercure',
         'publisher_key' => env('MERCURE_PUBLISHER_JWT_KEY') ?: null,
         'subscriber_key' => env('MERCURE_SUBSCRIBER_JWT_KEY') ?: null,
     ],

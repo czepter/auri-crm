@@ -38,6 +38,7 @@ services:
       RELEASE_LOG_URL: ${RELEASE_LOG_URL:-https://uew53y9iuh4kievlxtcshuyc.coolify3.czpt.de}
       CADDY_SERVER_EXTRA_DIRECTIVES: import /etc/frankenphp/mercure.caddy
       MERCURE_PUBLISHER_JWT_KEY: ${SERVICE_PASSWORD_64_MERCUREPUB}
+      MERCURE_PORTAL_URL: http://portal:8080/.well-known/mercure
       MERCURE_SUBSCRIBER_JWT_KEY: ${SERVICE_PASSWORD_64_MERCURESUB}
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/up"]
@@ -62,6 +63,9 @@ services:
       SERVICE_FQDN_PORTAL_8080:
       APP_SURFACE: portal
       MERCURE_PUBLISHER_JWT_KEY: ${SERVICE_PASSWORD_64_MERCUREPUB}
+      MERCURE_PORTAL_URL: http://portal:8080/.well-known/mercure
+      CADDY_SERVER_EXTRA_DIRECTIVES: import /etc/frankenphp/mercure.caddy
+      MERCURE_SUBSCRIBER_JWT_KEY: ${SERVICE_PASSWORD_64_MERCURESUB}
       APP_URL: ${SERVICE_FQDN_PORTAL}
       APP_KEY: ${SERVICE_REALBASE64_APPKEY}
       SENTRY_LARAVEL_DSN: ${STUDIO_SENTRY_DSN}
@@ -115,6 +119,7 @@ services:
       AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:?}
       MERCURE_PUBLISHER_JWT_KEY: ${SERVICE_PASSWORD_64_MERCUREPUB}
+      MERCURE_PORTAL_URL: http://portal:8080/.well-known/mercure
       ADMIN_URL: ${SERVICE_FQDN_ADMIN}
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
@@ -188,6 +193,7 @@ services:
       GALLERY_URL: ${SERVICE_URL_GALLERY}
       PORTAL_URL: ${SERVICE_FQDN_PORTAL}
       MERCURE_PUBLISHER_JWT_KEY: ${SERVICE_PASSWORD_64_MERCUREPUB}
+      MERCURE_PORTAL_URL: http://portal:8080/.well-known/mercure
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
@@ -256,6 +262,7 @@ services:
       MAIL_INBOUND_SIGNING_SECRET: ${MAIL_INBOUND_SIGNING_SECRET}
       RELEASE_LOG_URL: ${RELEASE_LOG_URL:-https://uew53y9iuh4kievlxtcshuyc.coolify3.czpt.de}
       MERCURE_PUBLISHER_JWT_KEY: ${SERVICE_PASSWORD_64_MERCUREPUB}
+      MERCURE_PORTAL_URL: http://portal:8080/.well-known/mercure
     depends_on:
       postgres:
         condition: service_healthy

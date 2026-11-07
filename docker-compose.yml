@@ -76,6 +76,8 @@ services:
       MERCURE_PUBLIC_URL: http://localhost:${MERCURE_PORT:-3001}/.well-known/mercure
       MERCURE_PUBLISHER_JWT_KEY: local-mercure-publisher-key
       MERCURE_SUBSCRIBER_JWT_KEY: local-mercure-subscriber-key
+      MERCURE_PORTAL_URL: http://mercure-portal/.well-known/mercure
+      MERCURE_PORTAL_PUBLIC_URL: http://localhost:${MERCURE_PORTAL_PORT:-3002}/.well-known/mercure
     ports:
       # Published so the Playwright suite on the host can reach `artisan serve`
       # running inside this container. The host port is a variable because
@@ -152,6 +154,7 @@ services:
       # #357: renders and ingests finish here, and an open tab should see them.
       MERCURE_URL: http://mercure/.well-known/mercure
       MERCURE_PUBLISHER_JWT_KEY: local-mercure-publisher-key
+      MERCURE_PORTAL_URL: http://mercure-portal/.well-known/mercure
     command: php artisan horizon
     depends_on:
       postgres:
@@ -318,6 +321,20 @@ services:
         cookie_name mercure_access_token
     ports:
       - "127.0.0.1:${MERCURE_PORT:-3001}:80"
+
+  mercure-portal:
+    image: dunglas/mercure:v1.1.1
+    environment:
+      SERVER_NAME: ":80"
+      MERCURE_TRUSTED_ISSUERS: https://auri-crm.de
+      MERCURE_PUBLISHER_JWT_KEY: local-mercure-publisher-key
+      MERCURE_SUBSCRIBER_JWT_KEY: local-mercure-subscriber-key
+      MERCURE_EXTRA_DIRECTIVES: |
+        resource_identifier https://auri-crm.de/.well-known/mercure
+        cors_origins http://localhost:${PORTAL_PORT:-8001}
+        cookie_name mercure_portal_access_token
+    ports:
+      - "127.0.0.1:${MERCURE_PORTAL_PORT:-3002}:80"
 
   # F-11: self-hosted GlitchTip — Sentry-protocol-compatible error tracking
   # (sentry/sentry-laravel, config/sentry.php) on our own Postgres rather
