@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { router, useForm, usePage } from '@inertiajs/vue3'
 import GalleryLightbox from '@/portal/components/GalleryLightbox.vue'
@@ -7,10 +7,14 @@ import PortalBack from '@/portal/components/PortalBack.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import { dayDate, daysUntil } from '@/portal/lib/dates'
 import { ALL, countOf, selections, visible } from '@/portal/lib/gallerySelections'
+import { longPress, hideOnScroll } from '@/portal/lib/gestures'
 import { GRID_WIDTHS, srcSet } from '@/portal/lib/images'
+import { favoriteSync } from '@/portal/lib/lightbox'
 import { tileStyle } from '@/portal/lib/tile'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
+import { CopyButton } from '@/ui/copy-button'
+import { HoldToConfirm } from '@/ui/hold-to-confirm'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 
@@ -56,6 +60,84 @@ const actions = computed(() => `${base.value}/eure-auswahl`)
 // One open menu at a time, keyed by asset.
 const menu = ref<string | null>(null)
 
+function closeMenu(event: Event) {
+  if (menu.value && !(event.target as Element).closest('[data-list-menu]')) menu.value = null
+}
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') menu.value = null
+}
+
+// The click that ends a long press would open the lightbox on top of the menu.
+let swallowClick = false
+let pressKey: string | null = null
+
+const press = longPress(() => {
+  menu.value = pressKey
+  swallowClick = true
+})
+
+function pressStart(event: PointerEvent, key: string) {
+  if (event.pointerType !== 'touch' || !(props.offers.lists && hasNamedLists.value)) return
+
+  pressKey = key
+  press.start(event.clientX, event.clientY)
+}
+
+function pressMove(event: PointerEvent) {
+  press.move(event.clientX, event.clientY)
+}
+
+// The menu opens under the finger that is still down; its release must not tick a list.
+function menuClick(event: Event) {
+  if (!swallowClick) return
+
+  swallowClick = false
+  event.preventDefault()
+}
+
+function openTile(index: number) {
+  if (swallowClick) {
+    swallowClick = false
+
+    return
+  }
+
+  openAt.value = index
+}
+
+// Header: on a phone the filter bar leaves on the way down and returns on the way up.
+const barHidden = ref(false)
+const phone = typeof matchMedia === 'function' ? matchMedia('(max-width: 760px)') : null
+const scrolled = hideOnScroll()
+let frame = 0
+
+function onScroll() {
+  if (frame) return
+
+  frame = requestAnimationFrame(() => {
+    frame = 0
+    const hidden = scrolled(window.scrollY)
+    barHidden.value = !!phone?.matches && hidden
+  })
+}
+
+onMounted(() => {
+  document.addEventListener('pointerdown', closeMenu)
+  window.addEventListener('pageshow', resetDownload)
+  document.addEventListener('keydown', onKeydown)
+  window.addEventListener('scroll', onScroll, { passive: true })
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', closeMenu)
+  document.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('scroll', onScroll)
+  window.removeEventListener('pageshow', resetDownload)
+  cancelAnimationFrame(frame)
+  press.cancel()
+})
+
 // The lightbox, by index into `shown`. Null is closed.
 const openAt = ref<number | null>(null)
 
@@ -77,6 +159,45 @@ const shown = computed(() =>
   visible(props.assets ?? [], bar.value.find((s) => s.id === active.value)?.keys ?? null),
 )
 
+const tabs = ref<HTMLElement | null>(null)
+const tabEls = new Map<string, HTMLElement>()
+const indicator = ref<{ x: number; w: number } | null>(null)
+const slide = ref(false)
+
+function tabRef(id: string, el: unknown) {
+  const node = el && '$el' in (el as object) ? (el as { $el: HTMLElement }).$el : (el as HTMLElement | null)
+  node ? tabEls.set(id, node) : tabEls.delete(id)
+}
+
+watch(
+  [active, bar, tabs],
+  () => {
+    const el = tabEls.get(active.value)
+    indicator.value = el ? { x: el.offsetLeft, w: el.offsetWidth } : null
+    requestAnimationFrame(() => (slide.value = true))
+  },
+  { flush: 'post', immediate: true },
+)
+
+const loaded = ref(new Set<string>())
+
+function markLoaded(key: string) {
+  // A function ref runs on every render; re-adding would re-render forever.
+  if (loaded.value.has(key)) return
+
+  loaded.value = new Set(loaded.value).add(key)
+}
+
+function cachedImg(key: string, el: unknown) {
+  if (el instanceof HTMLImageElement && el.complete && el.naturalWidth) markLoaded(key)
+}
+
+const downloading = ref(false)
+
+function resetDownload() {
+  downloading.value = false
+}
+
 function openList(list: List, key: string) {
   active.value = list.listId
   openAt.value = visible(props.assets ?? [], list.keys).findIndex((a) => a.key === key)
@@ -85,7 +206,6 @@ function openList(list: List, key: string) {
 // ---- the couple's own half ----
 
 const openGate = ref<string | null>(null)
-const copied = ref(false)
 const gateForm = useForm({ secret: '' })
 const listForm = useForm({ name: '' })
 
@@ -128,25 +248,15 @@ function remove(list: List) {
   router.delete(`${actions.value}/listen/${list.listId}`, { preserveScroll: true })
 }
 
-// A browser may refuse the clipboard outright (permission, insecure origin).
-// The link is on screen either way; an unhandled rejection would be the only
-// thing that broke.
-function copyLink() {
-  navigator.clipboard
-    ?.writeText(props.gallery.url)
-    .then(() => (copied.value = true))
-    .catch(() => (copied.value = false))
-}
-
 function onList(list: List, key: string) {
   return list.keys.includes(key)
 }
 
-function toggle(list: Pick<List, 'id'>, key: string) {
+function toggle(list: Pick<List, 'id'>, key: string, onFinish?: () => void) {
   router.post(
     `${actions.value}/listen/${list.id}/bild`,
     { key },
-    { preserveScroll: true, preserveState: false },
+    { preserveScroll: true, preserveState: false, onFinish },
   )
 }
 
@@ -182,31 +292,70 @@ const cover = computed(() => props.assets?.[0] ?? null)
 // A guest's hearts are this session's; a client's are the lists.
 const hearts = ref(new Set(props.favorited ?? []))
 
+// A tap shows at once; a client's override is dropped when the visit ends,
+// which is also the rollback when it failed.
+const pending = ref(new Map<string, boolean>())
+const bursting = ref<string | null>(null)
+
 // The menu only earns its place once there is a second list to choose.
 const hasNamedLists = computed(() => !!props.lists?.some((l) => l.name !== null))
 const hasFavourites = computed(() => !!props.lists?.some((l) => l.keys.length))
 
 function isHeart(key: string) {
+  if (pending.value.has(key)) return pending.value.get(key)!
+
   return props.lists ? props.lists.some((l) => l.keys.includes(key)) : hearts.value.has(key)
 }
 
-async function heart(key: string) {
-  const response = await fetch(`${base.value}/favorit`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
-    },
-    body: JSON.stringify({ key }),
-  })
-
-  if (!response.ok) return
-
-  const { favorited: on } = await response.json()
+function setHeart(key: string, on: boolean) {
   const next = new Set(hearts.value)
   on ? next.add(key) : next.delete(key)
   hearts.value = next
+}
+
+const syncHeart = favoriteSync(async (key) => {
+  try {
+    const response = await fetch(`${base.value}/favorit`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
+      },
+      body: JSON.stringify({ key }),
+    })
+
+    return response.ok ? (await response.json()).favorited : null
+  } catch {
+    return null
+  }
+})
+
+async function heart(key: string) {
+  const server = isHeart(key)
+  const want = !server
+
+  if (want) {
+    bursting.value = key
+    setTimeout(() => (bursting.value = null), 180)
+  }
+
+  if (props.lists) {
+    pending.value = new Map(pending.value).set(key, want)
+    toggle({ id: 'herz' }, key, () => {
+      const next = new Map(pending.value)
+      next.delete(key)
+      pending.value = next
+    })
+
+    return
+  }
+
+  setHeart(key, want)
+
+  const settled = await syncHeart(key, want, server)
+
+  if (settled !== null) setHeart(key, settled)
 }
 
 /* gallery.css, inlined where the same shape recurs on this screen. The sheet
@@ -315,7 +464,8 @@ const COVER_INPUT = [
 
     <template v-if="unlocked">
       <div
-        class="sticky top-0 z-10 mx-auto flex max-w-[1240px] max-[760px]:static items-center justify-between gap-8 border-b border-border bg-[var(--bg)] px-8 py-5 max-[760px]:flex-wrap max-[760px]:gap-4 max-[760px]:px-4"
+        class="sticky top-0 z-10 mx-auto flex max-w-[1240px] items-center justify-between gap-8 border-b border-border bg-[var(--bg)] px-8 py-5 max-[760px]:flex-wrap max-[760px]:gap-4 max-[760px]:px-4 transition-transform duration-300 ease-[cubic-bezier(.23,1,.32,1)] motion-reduce:transition-none"
+        :class="barHidden && 'max-[760px]:-translate-y-full'"
       >
         <PortalBack v-if="project" class="min-[761px]:hidden" :href="`/projekte/${project.id}`" />
         <!-- tokens.css .who decides everything but the size and the colour -->
@@ -327,13 +477,22 @@ const COVER_INPUT = [
         </span>
         <span
           v-if="bar.length > 1"
-          class="mx-auto flex min-w-0 items-center gap-1.5 overflow-x-auto [scrollbar-width:none] max-[760px]:order-last max-[760px]:mx-0 max-[760px]:w-full [&::-webkit-scrollbar]:hidden"
+          ref="tabs"
+          class="relative mx-auto flex min-w-0 items-center gap-1.5 overflow-x-auto [scrollbar-width:none] max-[760px]:order-last max-[760px]:mx-0 max-[760px]:w-full [&::-webkit-scrollbar]:hidden"
         >
+          <span
+            v-if="indicator"
+            aria-hidden="true"
+            class="pointer-events-none absolute inset-y-0 left-0 rounded-[var(--r-pill)] bg-foreground motion-reduce:transition-none"
+            :class="slide && 'transition-[transform,width] duration-300 ease-[cubic-bezier(.23,1,.32,1)]'"
+            :style="{ width: `${indicator.w}px`, transform: `translateX(${indicator.x}px)` }"
+          />
           <Button
             v-for="selection in bar"
             :key="selection.id"
+            :ref="(el: unknown) => tabRef(selection.id, el)"
             :data-active="active === selection.id"
-            class="min-h-11"
+            class="relative min-h-11 data-[active=true]:bg-transparent"
             type="button"
             variant="portal-filter"
             @click="active = selection.id"
@@ -343,7 +502,7 @@ const COVER_INPUT = [
           </Button>
         </span>
 
-        <Button v-if="offers.downloads" class="max-[760px]:ml-auto max-[760px]:shrink-0" as="a" variant="portal" :href="`/galerien/${gallery.id}/download`">
+        <Button v-if="offers.downloads" class="max-[760px]:ml-auto max-[760px]:shrink-0" as="a" variant="portal" :state="downloading ? 'loading' : undefined" :href="`/galerien/${gallery.id}/download`" @click="downloading = true">
           <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
           {{ $t('gallery.download') }}
         </Button>
@@ -352,24 +511,36 @@ const COVER_INPUT = [
       <!-- Justified rows: basis and grow follow the aspect ratio, so every row
            fills the width at one height. `columns` left ragged holes at the
            column ends. tileStyle caps how far the last row may stretch. -->
-      <main
+      <TransitionGroup
         v-if="shown.length"
         id="raster"
+        data-tokens
+        tag="main"
+        name="tile"
         class="mx-auto flex max-w-[1240px] flex-wrap justify-center gap-3.5 px-8 pt-11 pb-16 max-[760px]:grid max-[760px]:grid-cols-2 max-[760px]:gap-1 max-[760px]:px-4 max-[760px]:pt-4 max-[760px]:pb-8"
       >
         <span
           v-for="(asset, index) in shown"
           :key="asset.key"
-          class="group relative block cursor-zoom-in overflow-hidden rounded-[10px] bg-muted max-[760px]:rounded-md max-[760px]:[aspect-ratio:1!important] max-[760px]:[flex:none!important] max-[760px]:[max-width:none!important] [&_img]:block [&_img]:size-full [&_img]:object-cover [&_img]:transition-transform [&_img]:duration-[1.2s] [&_img]:ease-[cubic-bezier(.22,.61,.36,1)] hover:[&_img]:scale-[1.03]"
+          :data-loaded="loaded.has(asset.key)"
+          class="group relative block cursor-zoom-in select-none overflow-hidden [-webkit-touch-callout:none] rounded-[10px] bg-muted max-[760px]:rounded-md max-[760px]:[aspect-ratio:1!important] max-[760px]:[flex:none!important] max-[760px]:[max-width:none!important] [&_img]:block [&_img]:size-full [&_img]:object-cover"
           :style="tileStyle(asset)"
-          @click="openAt = index"
+          @click="openTile(index)"
+          @pointerdown="pressStart($event, asset.key)"
+          @pointermove="pressMove"
+          @pointerup="press.cancel"
+          @pointercancel="press.cancel"
+          @contextmenu="offers.lists && hasNamedLists && $event.preventDefault()"
         >
+          <span aria-hidden="true" class="pointer-events-none absolute inset-0 animate-pulse bg-foreground/5 transition-opacity duration-300 group-data-[loaded=true]:opacity-0 motion-reduce:animate-none" />
+
           <!-- The list menu replaces the single heart as soon as a client is
                signed in; a guest never sees it. -->
           <button
             v-if="offers.lists && hasNamedLists"
             class="absolute top-2.5 right-2.5 z-4 grid size-11 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(12,10,9,.55)] text-white backdrop-blur-[8px] [&_svg]:size-5 [&_svg]:stroke-current [&_svg]:stroke-[1.5]"
             :class="isHeart(asset.key) ? '[&_svg]:fill-current' : '[&_svg]:fill-none'"
+            data-list-menu
             type="button"
             :aria-label="$t('gallery.favorite')"
             :aria-expanded="menu === asset.key"
@@ -380,16 +551,16 @@ const COVER_INPUT = [
 
           <button
             v-else-if="offers.lists"
-            class="absolute top-2.5 right-2.5 z-4 grid size-11 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(12,10,9,.55)] text-white backdrop-blur-[8px] [&_svg]:size-5 [&_svg]:stroke-current [&_svg]:stroke-[1.5]"
-            :class="isHeart(asset.key) ? '[&_svg]:fill-current' : '[&_svg]:fill-none'"
+            class="absolute top-2.5 right-2.5 z-4 grid size-11 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(12,10,9,.55)] text-white backdrop-blur-[8px] [&_svg]:size-5 [&_svg]:stroke-current [&_svg]:stroke-[1.5] [&_svg]:transition-transform [&_svg]:duration-150 motion-reduce:[&_svg]:transition-none"
+            :class="[isHeart(asset.key) ? '[&_svg]:fill-current' : '[&_svg]:fill-none', bursting === asset.key && '[&_svg]:scale-125']"
             type="button"
             :aria-label="isHeart(asset.key) ? $t('gallery.unfavorite') : $t('gallery.favorite')"
-            @click.stop="lists ? toggle({ id: 'herz' }, asset.key) : heart(asset.key)"
+            @click.stop="heart(asset.key)"
           >
             <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
           </button>
 
-          <span v-if="menu === asset.key" class="absolute top-12 right-2.5 z-5 w-[216px] rounded-md border border-border bg-muted p-1.5 shadow-[0_20px_48px_-16px_rgba(0,0,0,.6)]" @click.stop>
+          <span v-if="menu === asset.key" data-list-menu class="absolute top-12 right-2.5 z-5 w-[216px] rounded-md border border-border bg-muted p-1.5 shadow-[0_20px_48px_-16px_rgba(0,0,0,.6)]" @click.stop="menuClick">
             <label v-for="list in lists" :key="list.id" class="flex cursor-pointer items-center gap-2.5 rounded-[var(--r-sm)] px-2.5 py-[9px] text-[13px] leading-none font-medium text-foreground hover:bg-[rgba(255,255,255,.06)]">
               <Checkbox
                 :model-value="onList(list, asset.key)"
@@ -411,10 +582,14 @@ const COVER_INPUT = [
               :height="asset.height ?? undefined"
               alt=""
               loading="lazy"
+              class="tile-img opacity-0 group-data-[loaded=true]:opacity-100"
+              :ref="(el: unknown) => cachedImg(asset.key, el)"
+              @load="markLoaded(asset.key)"
+              @error="markLoaded(asset.key)"
             />
           </picture>
         </span>
-      </main>
+      </TransitionGroup>
 
       <!-- Unlocked over a gallery nobody has published yet: a real state,
            and the studio's link is already out there, so it says so. -->
@@ -450,9 +625,9 @@ const COVER_INPUT = [
               </span>
               <template v-if="list.name !== null">
                 <button type="button" @click="rename(list)">{{ $t('gallery.renameList') }}</button>
-                <button type="button" class="hover:text-destructive!" @click="remove(list)">
+                <HoldToConfirm variant="ghost" class="hover:text-destructive!" @confirm="remove(list)">
                   {{ $t('common.remove') }}
-                </button>
+                </HoldToConfirm>
               </template>
             </div>
 
@@ -487,9 +662,7 @@ const COVER_INPUT = [
             class="flex items-center gap-3.5 rounded-md border border-border p-3.5 [&_button]:cursor-pointer [&_button]:border-0 [&_button]:bg-none [&_button]:p-0 [&_button]:text-[12.5px] [&_button]:leading-none [&_button]:font-medium [&_button]:text-action [&_code]:min-w-0 [&_code]:flex-1 [&_code]:overflow-hidden [&_code]:text-[12.5px] [&_code]:text-ellipsis [&_code]:whitespace-nowrap [&_code]:text-muted-foreground"
           >
             <code>{{ gallery.url }}</code>
-            <button type="button" @click="copyLink">
-              {{ copied ? $t('gallery.copied') : $t('gallery.copy') }}
-            </button>
+            <CopyButton :value="gallery.url" variant="ghost" />
           </div>
 
           <!-- What can be done about a link that travelled too far is to
@@ -510,14 +683,14 @@ const COVER_INPUT = [
             <button type="button" @click="openGate = openGate === gate.key ? null : gate.key">
               {{ gates?.[gate.on] ? $t('gallery.gateRotate') : $t('gallery.gateSet') }}
             </button>
-            <button
+            <HoldToConfirm
               v-if="gates?.[gate.on]"
-              type="button"
+              variant="ghost"
               class="hover:text-destructive!"
-              @click="clearGate(gate.key)"
+              @confirm="clearGate(gate.key)"
             >
               {{ $t('gallery.gateClear') }}
-            </button>
+            </HoldToConfirm>
           </div>
 
           <form v-if="openGate" @submit.prevent="rotate(openGate)">
@@ -553,3 +726,51 @@ const COVER_INPUT = [
     </template>
   </div>
 </template>
+
+<style scoped>
+.tile-img {
+  filter: blur(12px);
+  transform: scale(1.04);
+  transition:
+    opacity 650ms cubic-bezier(0.23, 1, 0.32, 1),
+    filter 650ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 1.2s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+[data-loaded='true'] .tile-img {
+  filter: none;
+  transform: none;
+}
+
+[data-loaded='true']:hover .tile-img {
+  transform: scale(1.03);
+}
+
+.tile-move {
+  transition: transform 400ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.tile-enter-active {
+  transition:
+    opacity 200ms cubic-bezier(0.23, 1, 0.32, 1),
+    scale 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.tile-enter-from {
+  opacity: 0;
+  scale: 0.97;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile-img,
+  .tile-move,
+  .tile-enter-active {
+    transition: none;
+  }
+
+  .tile-img {
+    filter: none;
+    transform: none;
+  }
+}
+</style>

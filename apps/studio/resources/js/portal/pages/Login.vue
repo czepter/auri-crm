@@ -39,7 +39,7 @@ function submit() {
             <span v-if="form.errors.email" class="mt-[7px] block text-[12.5px] leading-[1.45] text-destructive">{{ form.errors.email }}</span>
           </PortalField>
 
-          <Button class="justify-self-start" variant="portal" type="submit" :disabled="form.processing">
+          <Button class="justify-self-start" variant="portal" type="submit" :state="form.processing ? 'loading' : 'idle'" :disabled="form.processing">
             {{ $t('portal.sendLink') }}
           </Button>
         </form>

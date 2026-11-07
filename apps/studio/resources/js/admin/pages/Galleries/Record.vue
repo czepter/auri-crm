@@ -7,6 +7,9 @@ import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Button } from '@/ui/button'
+import { copyText } from '@/ui/copy-button'
+import { HoldToConfirm } from '@/ui/hold-to-confirm'
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/ui/alert-dialog'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
@@ -124,9 +127,11 @@ const publishLabel = computed(() => publishLabelKey(publishState.value))
 const showPublish = computed(() => props.gallery.canPublish && showPublishRule(publishState.value))
 const showWithdraw = computed(() => props.gallery.canPublish && showWithdrawRule(publishState.value))
 
+const publishing = ref(false)
+
 function publish() {
   if (props.gallery.canMail) {
-    router.visit(`/galerien/${props.gallery.id}/veroeffentlichen`)
+    router.visit(`/galerien/${props.gallery.id}/veroeffentlichen`, { onStart: () => (publishing.value = true), onFinish: () => (publishing.value = false) })
     return
   }
 
@@ -137,8 +142,15 @@ const sharing = ref(false)
 const previewForm = ref<HTMLFormElement | null>(null)
 
 function publishSilently() {
-  router.post(`/galerien/${props.gallery.id}/veroeffentlichen`, {}, { preserveScroll: true, onSuccess: () => (sharing.value = true) })
+  router.post(`/galerien/${props.gallery.id}/veroeffentlichen`, {}, {
+    preserveScroll: true,
+    onStart: () => (publishing.value = true),
+    onFinish: () => (publishing.value = false),
+    onSuccess: () => (sharing.value = true),
+  })
 }
+
+const withdrawing = ref(false)
 
 function withdraw() {
   router.delete(`/galerien/${props.gallery.id}/veroeffentlichung`, { preserveScroll: true })
@@ -203,25 +215,13 @@ async function createPreviewLink() {
     return
   }
 
-  if (!navigator.clipboard) {
-    flashStatus(false, t('galleryRecord.actionFailed'), url)
-    return
-  }
-
-  try {
-    await navigator.clipboard.writeText(url)
-    flashStatus(true, t('gallery.copied'))
-  } catch {
-    // Permission denied, same as no API at all: the link still exists,
-    // still shown, still nothing lost.
-    flashStatus(false, t('galleryRecord.actionFailed'), url)
-  }
+  if (await copyText(url)) flashStatus(true, t('gallery.copied'))
+  else flashStatus(false, t('galleryRecord.actionFailed'), url)
 }
 
-function copyLink() {
-  navigator.clipboard?.writeText(props.gallery.url)
-    .then(() => flashStatus(true, t('gallery.copied')))
-    .catch(() => flashStatus(false, t('galleryRecord.actionFailed')))
+async function copyLink() {
+  if (await copyText(props.gallery.url)) flashStatus(true, t('gallery.copied'))
+  else flashStatus(false, t('galleryRecord.actionFailed'))
 }
 
 const savingPreset = ref(false)
@@ -358,7 +358,7 @@ function megabytes(bytes: number) {
               <DropdownMenuItem v-if="presets.length" @select="applyingPreset = true">{{ $t('galleryRecord.applyPreset') }}</DropdownMenuItem>
               <DropdownMenuItem class="min-[641px]:hidden" @select="previewForm?.submit()">{{ $t('galleryRecord.preview') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="showPublish && gallery.canMail" @select="publishSilently">{{ $t('galleryRecord.publishSilently') }}</DropdownMenuItem>
-              <DropdownMenuItem v-if="showWithdraw" @select="withdraw">{{ $t('galleryRecord.withdraw') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="showWithdraw" @select="withdrawing = true">{{ $t('galleryRecord.withdraw') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="showStartPrerelease" @select="startPrerelease">{{ $t('galleryRecord.prerelease') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="showStopPrerelease" @select="stopPrerelease">{{ $t('galleryRecord.prereleaseStop') }}</DropdownMenuItem>
             </DropdownMenuContent>
@@ -374,12 +374,24 @@ function megabytes(bytes: number) {
             <input type="hidden" name="_token" :value="csrf">
             <Button type="submit" variant="pill-muted">{{ $t('galleryRecord.preview') }}</Button>
           </form>
-          <Button v-if="showPublish" type="button" @click="publish">{{ $t(publishLabel) }}</Button>
+          <Button v-if="showPublish" type="button" :state="publishing ? 'loading' : 'idle'" @click="publish">{{ $t(publishLabel) }}</Button>
           <Button v-else-if="showWithdraw" type="button" @click="sharing = true">{{ $t('galleryRecord.share') }}</Button>
         </span>
       </PageHead>
 
       <GalleryShareDialog v-model:open="sharing" :gallery="gallery" />
+
+      <AlertDialog v-model:open="withdrawing">
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{{ $t('galleryRecord.withdrawTitle') }}</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <HoldToConfirm tone="destructive" @confirm="withdrawing = false; withdraw()">{{ $t('galleryRecord.withdraw') }}</HoldToConfirm>
+            <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog v-model:open="savingPreset">
         <DialogContent>

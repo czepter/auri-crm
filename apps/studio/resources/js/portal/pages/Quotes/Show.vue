@@ -266,6 +266,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
                 class="max-[700px]:w-full max-[700px]:justify-center"
                 variant="portal"
                 type="button"
+                :state="form.processing ? 'loading' : 'idle'"
                 :disabled="form.processing || ((agbUrl !== null || widerrufUrl !== null) && !form.terms)"
                 @click="accept"
               >

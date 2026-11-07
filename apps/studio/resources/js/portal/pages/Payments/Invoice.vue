@@ -79,7 +79,7 @@ function payNow() {
             target="_blank"
           >{{ $t('portal.creditNoteDownload', { number: note.number }) }}</a>
 
-          <Button v-if="payInstallmentId" variant="portal" type="button" :disabled="paying" @click="payNow">
+          <Button v-if="payInstallmentId" variant="portal" type="button" :state="paying ? 'loading' : 'idle'" :disabled="paying" @click="payNow">
             {{ $t('portal.payNowButton') }}
           </Button>
         </div>

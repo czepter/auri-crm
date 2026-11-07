@@ -121,12 +121,12 @@ const ROW = 'flex items-center gap-6 border-b border-border py-6'
               v-if="form.isDirty"
               class="fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] z-30 border-t border-border bg-[var(--bg)] p-3 min-[761px]:bottom-0"
             >
-              <Button class="min-h-12 w-full justify-center min-[761px]:mx-auto min-[761px]:flex min-[761px]:max-w-[680px]" variant="portal" type="submit" :disabled="form.processing">
+              <Button class="min-h-12 w-full justify-center min-[761px]:mx-auto min-[761px]:flex min-[761px]:max-w-[680px]" variant="portal" type="submit" :state="form.processing ? 'loading' : 'idle'" :disabled="form.processing">
                 {{ $t('common.save') }}
               </Button>
             </div>
 
-            <Button class="min-h-12 justify-center justify-self-start max-[640px]:w-full" variant="portal" type="submit" :disabled="!form.isDirty || form.processing">
+            <Button class="min-h-12 justify-center justify-self-start max-[640px]:w-full" variant="portal" type="submit" :state="form.processing ? 'loading' : 'idle'" :disabled="!form.isDirty || form.processing">
               {{ $t('common.save') }}
             </Button>
           </form>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { Link, router, usePage } from "@inertiajs/vue3";
 import { useMediaQuery } from "@vueuse/core";
 import { toast } from "vue-sonner";
@@ -10,6 +10,7 @@ import {
     DropdownMenuTrigger,
 } from "@/ui/dropdown-menu";
 import { Toaster } from "@/ui/sonner";
+import { SkeletonSwap } from "@/ui/skeleton-swap";
 import CommandPalette from "@/admin/layouts/CommandPalette.vue";
 import { Alert } from "@/ui/alert";
 import { Button } from "@/ui/button";
@@ -19,6 +20,22 @@ import { Dialog, DialogContent, DialogTitle } from "@/ui/dialog";
 const props = defineProps<{ active: string }>();
 
 const palette = ref<InstanceType<typeof CommandPalette> | null>(null);
+
+// Only a full navigation to a list: a form post or a partial reload keeps the
+// page it is on, and a detail screen has no list shape to stand in for.
+const LISTS = /^\/(anfragen|projekte|kontakte|galerien|rechnungen|angebote|aufgaben)\/?$/;
+const loading = ref(false);
+onMounted(() => {
+    const offStart = router.on("start", ({ detail }) => {
+        loading.value = !detail.visit.async && detail.visit.method === "get" && LISTS.test(detail.visit.url.pathname);
+    });
+    const offFinish = router.on("finish", () => (loading.value = false));
+
+    onUnmounted(() => {
+        offStart();
+        offFinish();
+    });
+});
 
 const page = usePage();
 
@@ -326,7 +343,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
             </Link>
         </header>
 
-        <main id="inhalt" tabindex="-1" class="flex min-w-0 flex-1 flex-col outline-none pl-12 max-[640px]:pb-[72px] max-[640px]:pl-0">
+        <main id="inhalt" tabindex="-1" class="relative flex min-w-0 flex-1 flex-col outline-none pl-12 max-[640px]:pb-[72px] max-[640px]:pl-0">
             <Alert
                 v-if="page.props.studioDeletion"
                 variant="destructive"
@@ -344,6 +361,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                 </Button>
             </Alert>
             <slot />
+            <SkeletonSwap :loading="loading" />
         </main>
 
         <nav

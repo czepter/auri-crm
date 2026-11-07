@@ -27,6 +27,7 @@ import { formatEurosRounded } from "@/lib/money";
 import { daysAgo, TYPE_DOT } from "@/admin/lib/boardCard";
 import { useLiveProps } from "@/admin/lib/liveReload";
 import { Button } from "@/ui/button";
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "@/ui/context-menu";
 import { QueueGroup, QueueItem } from "@/ui/queue";
 import { ChoiceGroup } from "@/ui/choice-group";
 import { Field } from "@/ui/field";
@@ -189,15 +190,6 @@ function onKey(event: KeyboardEvent, card: Card, column: number) {
     }
 }
 
-// The same targets the arrows reach, for a pointer that has no keyboard
-// beside it.
-const menu = ref<{ card: Card; x: number; y: number } | null>(null);
-
-function openMenu(event: MouseEvent, card: Card) {
-    event.preventDefault();
-    menu.value = { card, x: event.clientX, y: event.clientY };
-}
-
 const query = ref("");
 const stage = ref<string | null>(null);
 const onlyStale = ref(false);
@@ -280,7 +272,7 @@ const workflowAllowed = computed(() =>
             :workflow="workflow"
             @close="router.visit(returnTo ?? '/anfragen', { preserveState: true, preserveScroll: true })"
         />
-        <Page v-else wide @click="menu = null">
+        <Page v-else wide>
             <div data-tokens class="min-w-0 flex-1">
                 <PageHead :title="$t('board.title')">
                     <ChoiceGroup
@@ -356,6 +348,8 @@ const workflowAllowed = computed(() =>
                                 class="-mx-1.5 h-0.5 rounded-[1px] bg-ring"
                             />
 
+                            <ContextMenu>
+                            <ContextMenuTrigger as-child>
                             <Link
                                 class="relative block cursor-grab rounded-[var(--r)] bg-paper p-3.5 text-inherit no-underline shadow-card transition-[background] duration-[120ms] ease-out hover:bg-accent"
                                 :class="
@@ -367,7 +361,6 @@ const workflowAllowed = computed(() =>
                                 @dragend="reset"
                                 @dragover="onDragOver($event, index, row)"
                                 @keydown="onKey($event, card, index)"
-                                @contextmenu="openMenu($event, card)"
                             >
                                 <span
                                     class="block text-ui leading-[1.3] tracking-[-0.014em]"
@@ -450,6 +443,22 @@ const workflowAllowed = computed(() =>
                                     </span>
                                 </span>
                             </Link>
+                            </ContextMenuTrigger>
+                            <ContextMenuContent class="w-[208px]">
+                                <ContextMenuItem
+                                    v-for="option in columns"
+                                    :key="option.stage"
+                                    :disabled="option.stage === card.stage"
+                                    @select="move(card.id, option.stage)"
+                                >
+                                    {{ option.label }}
+                                </ContextMenuItem>
+                                <ContextMenuSeparator />
+                                <ContextMenuItem @select="closing = card.id; confirmingClose = true">
+                                    {{ $t("board.close") }}
+                                </ContextMenuItem>
+                            </ContextMenuContent>
+                            </ContextMenu>
                         </template>
 
                         <!-- An empty stage keeps its height, or there is no target there. -->
@@ -613,37 +622,6 @@ const workflowAllowed = computed(() =>
                     </tbody>
                 </Table>
                 </template>
-
-                <div
-                    v-if="menu"
-                    class="fixed z-20 w-[208px] rounded-[12px] bg-paper p-[5px] shadow-[0_8px_24px_rgba(0,0,0,0.16)]"
-                    :style="{ left: `${menu.x}px`, top: `${menu.y}px` }"
-                    @click.stop
-                >
-                    <div
-                        v-for="column in columns"
-                        :key="column.stage"
-                        class="rounded-lg px-[9px] py-1.5 text-small"
-                        :class="
-                            column.stage === menu.card.stage
-                                ? 'cursor-default text-mark'
-                                : 'cursor-pointer hover:bg-sunk'
-                        "
-                        @click="
-                            column.stage !== menu.card.stage &&
-                            move(menu.card.id, column.stage)
-                        "
-                    >
-                        {{ column.label }}
-                    </div>
-
-                    <div
-                        class="mt-1 cursor-pointer rounded-lg border-t border-rule px-[9px] py-1.5 text-small hover:bg-sunk"
-                        @click="closing = menu!.card.id; confirmingClose = true; menu = null"
-                    >
-                        {{ $t("board.close") }}
-                    </div>
-                </div>
 
                 <AlertDialog v-model:open="confirmingClose">
                     <AlertDialogContent>

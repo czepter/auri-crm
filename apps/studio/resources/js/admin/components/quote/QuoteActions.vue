@@ -5,9 +5,11 @@ import { toast } from 'vue-sonner'
 import { useI18n } from 'vue-i18n'
 import { EllipsisVertical } from 'lucide-vue-next'
 import { Button } from '@/ui/button'
+import { copyText } from '@/ui/copy-button'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
+import { HoldToConfirm } from '@/ui/hold-to-confirm'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/ui/alert-dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 
@@ -59,16 +61,9 @@ function destroy() {
   router.delete(`/angebote/${props.quote.id}`)
 }
 
-function copyLink() {
-  if (!navigator.clipboard) {
-    toast.error(t('quotes.copyLinkFailed'))
-    return
-  }
-
-  navigator.clipboard.writeText(props.quote.portalUrl!).then(
-    () => toast.success(t('quotes.copied')),
-    () => toast.error(t('quotes.copyLinkFailed')),
-  )
+async function copyLink() {
+  if (await copyText(props.quote.portalUrl!)) toast.success(t('quotes.copied'))
+  else toast.error(t('quotes.copyLinkFailed'))
 }
 
 type ActionKey = 'download' | 'copy_link' | 'send_by_mail'
@@ -225,7 +220,7 @@ function run(key: ActionKey) {
           <AlertDialogTitle>{{ $t('quotes.deleteTitle') }}</AlertDialogTitle>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogAction tone="destructive" @click="destroy">{{ $t('common.delete') }}</AlertDialogAction>
+          <HoldToConfirm tone="destructive" @confirm="deleting = false; destroy()">{{ $t('common.delete') }}</HoldToConfirm>
           <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>

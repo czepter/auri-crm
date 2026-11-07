@@ -157,6 +157,7 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
                   class="w-full justify-center min-[700px]:w-auto"
                   variant="portal"
                   type="button"
+                  :state="payingId === installment.id ? 'loading' : 'idle'"
                   :disabled="payingId === installment.id"
                   @click="payNow(installment.id)"
                 >

@@ -26,6 +26,7 @@ const props = withDefaults(
     mailHtml: string
     palette?: PaletteEntry[]
     mergeFields?: { path: string; sample: string }[]
+    processing?: boolean
   }>(),
   { palette: () => [], mergeFields: () => [] },
 )
@@ -90,7 +91,7 @@ function send() {
         </Field>
 
         <div class="flex justify-end border-t border-border pt-4">
-          <Button variant="pill" type="button" @click="send">{{ $t('sendMail.submit') }}</Button>
+          <Button variant="pill" type="button" :state="processing ? 'loading' : 'idle'" @click="send">{{ $t('sendMail.submit') }}</Button>
         </div>
       </div>
 

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { Button } from '@/ui/button'
+import { HoldToConfirm } from '@/ui/hold-to-confirm'
 import { computed, ref, watch } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogBody,
   AlertDialogCancel,
   AlertDialogContent,
@@ -199,7 +199,7 @@ function confirmRemove() {
       </AlertDialogBody>
 
       <AlertDialogFooter>
-        <AlertDialogAction tone="destructive" :disabled="removeTarget === ''" @click="confirmRemove">{{ $t('galleryRecord.deleteSet') }}</AlertDialogAction>
+        <HoldToConfirm tone="destructive" :disabled="removeTarget === ''" @confirm="confirmingRemove = false; confirmRemove()">{{ $t('galleryRecord.deleteSet') }}</HoldToConfirm>
         <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
       </AlertDialogFooter>
     </AlertDialogContent>
