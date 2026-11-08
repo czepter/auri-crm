@@ -4,6 +4,7 @@ import { renderToString } from 'vue/server-renderer'
 import { createI18n } from 'vue-i18n'
 import de from '@/locales/de.json'
 import Show from './Show.vue'
+import meta, { Leer, Voll } from './Show.stories'
 import {
     conflicts,
     lead,
@@ -41,43 +42,47 @@ vi.mock('@inertiajs/vue3', async (importOriginal) => {
 // hrefs against it.
 vi.stubGlobal('window', { location: new URL('http://localhost/') })
 
-async function headAction(stage: string) {
-    const app = createSSRApp(Show, {
-        tab: 'overview',
-        header: leadHeader,
-        lead: { ...lead, stage },
-        queue,
-        people: leadPeople,
-        shoots: leadShoots,
-        quote: null,
-        supersededQuotes: [],
-        packages,
-        tasks: leadTasks,
-        thread: leadThread,
-        types,
-        sources,
-        presets,
-        week,
-        conflicts,
-        stages,
-        conversation: null,
-        workspace: null,
-    })
+async function render(over: object = {}) {
+    const app = createSSRApp(Show, { ...(meta.args as object), ...over } as never)
     app.config.globalProperties.$page = { props: { brand: 'Atelier Nordlicht' } } as typeof app.config.globalProperties.$page
     app.use(createI18n({ legacy: false, locale: 'de', messages: { de } }))
 
     return renderToString(app)
 }
 
-describe('Anfrage head action', () => {
-    it('moves a fresh inquiry to the next stage before offering a quote', async () => {
-        const html = await headAction('new')
+describe('Anfrageübersicht', () => {
+    it('names the next phase in the head and keeps the quote in its card', async () => {
+        const html = await render({ lead: { ...lead, stage: 'new' } })
 
-        expect(html).toMatch(/<button[^>]*>(<!--[^>]*-->)*Kontaktiert(<!--[^>]*-->)*<\/button>/)
-        expect(html).not.toContain('Angebot schreiben')
+        expect(html).toMatch(/Weiter: Kontaktiert/)
+        expect(html).toContain('/angebote/q-brandt')
+        for (const title of ['Anfrage', 'Aufgaben', 'Notizen', 'Verlauf', 'Termine', 'Kontakte']) {
+            expect(html).toContain(`>${title}<`)
+        }
     })
 
-    it('offers the quote in the Angebot card, whatever the stage', async () => {
-        expect(await headAction('contacted')).toContain('/angebote/neu?projekt=p-brandt')
+    it('caps long lists and links to the full views', async () => {
+        const html = await render(Voll.args)
+
+        expect(html).toContain('Alle 6 ansehen')
+        expect(html).toContain('Alle 5 ansehen')
+        expect(html).toContain('Alle 4 ansehen')
+        expect(html).toContain('href="/auftraege/p-brandt/notizen"')
+    })
+
+    it('lets notes be edited, deleted and dated', async () => {
+        const html = await render(Voll.args)
+
+        expect(html).toContain('>bearbeiten<')
+        expect(html).toContain('>löschen<')
+        expect(html).toContain('>Erweitert<')
+    })
+
+    it('swaps empty cards for the tile row and asks for the inquiry text', async () => {
+        const html = await render(Leer.args)
+
+        expect(html).not.toContain('Nächster Schritt')
+        expect(html).toContain('Notiz</a>')
+        expect(html).toContain('placeholder="Anfragetext"')
     })
 })

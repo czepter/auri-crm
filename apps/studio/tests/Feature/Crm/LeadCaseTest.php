@@ -151,6 +151,14 @@ it('saves occasion, source, text and the people from the case itself', function 
         ->and($contact->fresh()->email)->toBe('s.brandt@example.test');
 });
 
+it('clears the inquiry text', function () {
+    $lead = caseFor();
+
+    test()->patch("/anfragen/{$lead->case->public_id}", ['inquiry_text' => null])->assertRedirect();
+
+    expect($lead->fresh()->inquiry_text)->toBeNull();
+});
+
 it('saves the Sonstige detail from the case and drops it with the case', function () {
     $lead = caseFor();
 

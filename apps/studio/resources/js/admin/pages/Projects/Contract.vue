@@ -9,7 +9,6 @@ import DocumentEditor from '@/admin/components/templates/DocumentEditor.vue'
 import DocumentPreviewPane from '@/admin/components/templates/DocumentPreviewPane.vue'
 import { PreviewOverlay } from '@/ui/preview-overlay'
 import Card from '@/ui/page/Card.vue'
-import Rail from '@/ui/page/Rail.vue'
 import Section from '@/ui/page/Section.vue'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
@@ -128,8 +127,8 @@ function day(value: string | null): string {
 <template>
   <AdminLayout active="anfragen">
     <ProjectShell :header="header" active="documents" child="contract">
-      <template #rail>
-        <Rail v-if="contract">
+      <template v-if="contract">
+        <section class="mb-3 rounded-[var(--r)] bg-paper p-6 shadow-card max-[640px]:p-4">
           <h3 class="m-0 text-small leading-none font-semibold text-faint">
             {{ $t('project.contractSigners') }}
           </h3>
@@ -200,10 +199,9 @@ function day(value: string | null): string {
               </a>
             </li>
           </ul>
-        </Rail>
-      </template>
+        </section>
 
-      <Card v-if="contract" :title="$t('project.contract')" :summary="documentSummary">
+      <Card :title="$t('project.contract')" :summary="documentSummary">
         <template #action>
           <Button v-if="contract.downloadUrl" as="a" variant="outline" :href="contract.downloadUrl" download @click.stop>
             {{ $t('project.contractDownload') }}
@@ -254,6 +252,7 @@ function day(value: string | null): string {
           </PreviewOverlay>
         </div>
       </Card>
+      </template>
 
       <Section v-else :title="$t('project.contract')">
         <p

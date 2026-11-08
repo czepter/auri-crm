@@ -386,6 +386,26 @@ class CaseController extends Controller
         ]);
     }
 
+    public function history(ClientCase $case): Response
+    {
+        $this->authorize('view', $case);
+
+        return Inertia::render('Projects/History', [
+            'header' => $this->header($case),
+            'thread' => ($this->thread)($case),
+        ]);
+    }
+
+    public function notes(ClientCase $case): Response
+    {
+        $this->authorize('view', $case);
+
+        return Inertia::render('Projects/Notes', [
+            'header' => $this->header($case),
+            'thread' => ($this->thread)($case),
+        ]);
+    }
+
     /**
      * Die Galerien am Projekt. /galerien führt die des Studios; hier stehen
      * die dieses Auftrags neben den Shootings, die noch keine haben.

@@ -512,3 +512,21 @@ it('saves the name, the stage and the shoot blocks from the project screen', fun
         ->and($shoot->fresh()->date->format('Y-m-d'))->toBe('2026-06-20')
         ->and($shoot->fresh()->venue_name)->toBe('Gut Basthorst');
 });
+
+it('renders the full trace on its own screen', function () {
+    markBooked($this->case);
+
+    $page = $this->get("/auftraege/{$this->case->public_id}/verlauf")->assertOk()->viewData('page');
+
+    expect($page['component'])->toBe('Projects/History')
+        ->and($page['props']['header']['id'])->toBe($this->case->public_id)
+        ->and($page['props'])->toHaveKey('thread');
+});
+
+it('renders the notes on their own screen', function () {
+    $page = $this->get("/auftraege/{$this->case->public_id}/notizen")->assertOk()->viewData('page');
+
+    expect($page['component'])->toBe('Projects/Notes')
+        ->and($page['props']['header']['id'])->toBe($this->case->public_id)
+        ->and($page['props'])->toHaveKey('thread');
+});

@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DatePicker } from '@/ui/date-picker'
 import { Label } from '@/ui/label'
 import { dayWithWeekday, isoDate } from '@/admin/lib/dates'
+import { taskGroupLabel, taskGroups } from '@/admin/lib/projectOverview'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
 const { t } = useI18n()
@@ -38,7 +39,6 @@ const assignee = ref('all')
 const me = computed(() => (usePage().props.auth as { user: { id: string } | null }).user?.id ?? '')
 
 const today = isoDate(new Date())
-const weekEnd = isoDate(new Date(Date.now() + 7 * 86_400_000))
 
 const shown = computed(() =>
   props.tasks.filter(
@@ -52,15 +52,7 @@ const shown = computed(() =>
 const open = computed(() => shown.value.filter((task) => !task.isDone))
 const done = computed(() => shown.value.filter((task) => task.isDone))
 
-const groups = computed(() => [
-  { key: 'project.tasksLate', rows: open.value.filter((task) => task.dueOn !== null && task.dueOn < today) },
-  {
-    key: 'project.tasksThisWeek',
-    rows: open.value.filter((task) => task.dueOn !== null && task.dueOn >= today && task.dueOn <= weekEnd),
-  },
-  { key: 'project.tasksLater', rows: open.value.filter((task) => task.dueOn !== null && task.dueOn > weekEnd) },
-  { key: 'project.tasksUndated', rows: open.value.filter((task) => task.dueOn === null) },
-])
+const groups = computed(() => taskGroups(open.value, today))
 
 const openSummary = computed(() => {
   const late = open.value.filter((task) => task.isOverdue).length
@@ -177,8 +169,8 @@ function reopen(row: App.Crm.Data.TaskRowData) {
           </form>
 
           <template v-for="group in groups" :key="group.key">
-            <div v-if="group.rows.length" class="mt-[18px] mb-1 text-small font-semibold text-ink-2">
-              {{ $t(group.key) }}
+            <div class="mt-[18px] mb-1 text-small font-semibold text-ink-2">
+              {{ taskGroupLabel(group.key, $t) }}
             </div>
 
             <div v-for="row in group.rows" :key="row.id" class="flex items-center gap-3.5 py-[9px] max-[640px]:flex-wrap max-[640px]:gap-x-2.5 max-[640px]:gap-y-1">
