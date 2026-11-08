@@ -1,0 +1,25 @@
+{
+  "cookies": [
+    {
+      "name": "XSRF-TOKEN",
+      "value": "eyJpdiI6IlY0YktnYXpYeTNYa3lzS1IxUERMY1E9PSIsInZhbHVlIjoiRTlYVTE2M0dWMkV1Q1VScitSeSttUU1sU3Bjam1DTVRCM0RDSGZ1SDdQTFFJam9scDU1WnVHOVlWMTFBd1lDOGMzQ2lkUmdITHhKQzNGZEhqaFFFRUlvcFJhMkx5bnRGdVhLdEs3WjJ4ZDhuV2IxUCtrc0lxMjJaNlV3cW9HWkUiLCJtYWMiOiJjYjcwNmY2YzNhM2U4MWE3YmVkOWRhNDQwNTliNzExYzA2MDkzOGRmN2Q4NmU1NmE2MTNmOGU3NmYxNjYzNTEwIiwidGFnIjoiIn0%3D",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1794081138.119565,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "studio_portal_session",
+      "value": "eyJpdiI6InVQeGdyVDVUdlFwU0Y3clc0VEkrelE9PSIsInZhbHVlIjoidUxkRlNZY1N1bzNDUWN3TEZJWDQxekY3Q3lUR01zY3dCaTlrY3Y4WDlUMXMrRE5OUi9ML2w5QnRpRC9GMDhBc0dLU0d2SmNqTHg1TlRsL0xONDlhcFhoU2NuK3ZmdlRxK0t5SldmbjdoN3J6SUNXYWFmdVZLdG9RcVZiTTJTSGgiLCJtYWMiOiJjMGIwYTc5MGU3OTFjMzVmZjFmMjZmNzFmZmFjMTJkNWRhMzMyMGJiYzJjMmEwY2I0OGY2ZDcwOGRmODBiNmU4IiwidGFnIjoiIn0%3D",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1794081138.119675,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}
