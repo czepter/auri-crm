@@ -139,6 +139,12 @@ class PaymentInstallment extends Model
         return max(0, (int) $this->amount - (int) $this->paid_amount);
     }
 
+    /** The one rule for "überfällig" in admin and portal: still owed, due before today. */
+    public function isLate(): bool
+    {
+        return in_array($this->status, PaymentInstallmentStatus::open(), true) && $this->due_on->lt(today());
+    }
+
     public function isInvoiced(): bool
     {
         return $this->invoice_id !== null;

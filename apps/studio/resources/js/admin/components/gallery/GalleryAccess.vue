@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
-import { Button } from '@/ui/button'
+import { CopyButton } from '@/ui/copy-button'
 
 const props = defineProps<{
   gallery: { id: string; url: string; viewPassword: string | null; requiresVerifiedEmail: boolean }
@@ -24,15 +23,6 @@ const emailGate = useForm({ requires_verified_email: props.gallery.requiresVerif
 function saveEmailGate() {
   emailGate.patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
 }
-
-const copied = ref(false)
-
-function copy() {
-  navigator.clipboard
-    ?.writeText(props.gallery.url)
-    .then(() => (copied.value = true))
-    .catch(() => (copied.value = false))
-}
 </script>
 
 <template>
@@ -43,7 +33,7 @@ function copy() {
       <div class="text-small text-ink-2">{{ $t('galleryRecord.link') }}</div>
       <div class="mt-1.5 flex items-center gap-2.5">
         <a class="text-title tracking-[-0.01em] whitespace-nowrap text-ring no-underline hover:underline" :href="gallery.url">{{ gallery.url }}</a>
-        <Button type="button" variant="pill-muted" @click="copy">{{ copied ? $t('gallery.copied') : $t('gallery.copy') }}</Button>
+        <CopyButton :value="gallery.url" />
       </div>
 
       <div v-if="siblings.length" class="mt-2 flex gap-1.5">
@@ -51,7 +41,7 @@ function copy() {
           v-for="sibling in siblings"
           :key="sibling.id"
           class="inline-flex items-baseline gap-1.5 rounded-[var(--r-sm)] px-3 py-1.5 text-small no-underline"
-          :class="sibling.open ? 'bg-foreground text-paper' : 'bg-sunk text-foreground'"
+          :class="sibling.open ? 'bg-paper font-medium text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'bg-sunk text-foreground'"
           :href="`/galerien/${sibling.id}`"
         >
           {{ sibling.title ?? '—' }}<span

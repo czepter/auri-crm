@@ -5,6 +5,7 @@ import { callApi } from '../../lib/apiClient'
 import { buyPass, passCookieName, PASS_MAX_AGE_SECONDS } from '../../lib/viewPass'
 import { isPrerelease, signUpForPrerelease, type PrereleaseSignupResult } from '../../lib/prerelease'
 import { confirm as confirmGuest, guestCookieName, GUEST_MAX_AGE_SECONDS, nameFromEmail, requestCode } from '../../lib/guest'
+import { tileStyle } from '../../lib/tile'
 import '../../styles/app.css'
 
 // G-08: never cached. Which GalleryVersion counts as "current" can change
@@ -241,9 +242,6 @@ if (gallery === null && !locked && !prerelease) {
   Astro.response.status = 502
 }
 
-// (SIZES matches .wall's four fixed columns in gallery.css — a masonry, no
-// responsive breakpoints exist in the mockup this screen matches, so none
-// are invented here either.)
 const SIZES = '(max-width: 760px) 50vw, (max-width: 1080px) 33vw, 25vw'
 const FALLBACK_WIDTH = 800
 const cover = gallery?.version.assets[0] ?? null
@@ -278,7 +276,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
               <form method="POST">
                 <div class="field">
                   <label for="pw">Galerie-Passwort</label>
-                  <input id="pw" name="password" type="password" placeholder="••••••••" autocomplete="off" required />
+                  <input id="pw" name="password" type="password" autocomplete="off" required />
                 </div>
 
                 {wrongPassword && <p class="err">Dieser Link und dieses Passwort gehören nicht zusammen.</p>}
@@ -366,6 +364,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
             !gallery.draft && (
               <div class="bar">
                 <span class="who"><b>{gallery.title}</b></span>
+                {guestPass === null && <button class="txtbtn" type="button" data-signin-open aria-controls="anmelden">Anmelden</button>}
                 <a class="barbtn solid" href={downloadUrl}>
                   <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
                   Herunterladen
@@ -376,7 +375,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
 
           <main class="wall" id="raster">
             {gallery.version.assets.map((asset, i) => (
-              <a class="tile" href="#" data-lb-open data-index={i}>
+              <a class="tile" href="#" data-lb-open data-index={i} style={tileStyle(asset)}>
                 <picture>
                   {FORMATS.filter((f) => f !== 'jpeg').map((format) => (
                     <source
@@ -497,7 +496,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
             // Markierung ohne Absender wäre auf dem nächsten Gerät verloren,
             // und unter jedem Kommentar stünde wieder „Gast".
             !gallery.draft && guestPass === null && (
-              <section class="signin" id="anmelden">
+              <section class="signin" id="anmelden" hidden={!codeSent && !tooManyCodes}>
                 {
                   codeSent ? (
                     <form method="POST">
@@ -516,18 +515,18 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
                           required
                           data-code-input
                         />
-                        <button class="btn" type="submit">Bestätigen</button>
+                        <button class="barbtn" type="submit">Bestätigen</button>
                       </div>
                       {codeWrong && <p class="err">Der Code stimmt nicht oder ist abgelaufen.</p>}
                     </form>
                   ) : (
                     <form method="POST">
                       <input type="hidden" name="absicht" value="anmelden" />
-                      <p>Zum Markieren und Kommentieren trag deine Adresse ein.</p>
+                      <div class="eyebrow">Markieren und kommentieren</div>
                       <div class="row">
-                        <input type="email" name="gast_email" placeholder="E-Mail" required data-email-source />
-                        <input type="text" name="gast_name" placeholder="Name" required data-name-target />
-                        <button class="btn" type="submit">Weiter</button>
+                        <label>E-Mail <input type="email" name="gast_email" autocomplete="email" required data-email-source /></label>
+                        <label>Name <input type="text" name="gast_name" autocomplete="name" required data-name-target /></label>
+                        <button class="barbtn" type="submit">Weiter</button>
                       </div>
                       {tooManyCodes && <p class="err">Zu viele Anfragen. Versuch es später noch einmal.</p>}
                     </form>
@@ -615,6 +614,17 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
                   .join(' ')
               })
             }
+
+            const signin = document.getElementById('anmelden')
+
+            document.querySelector('[data-signin-open]')?.addEventListener('click', () => {
+              signin.hidden = !signin.hidden
+              if (!signin.hidden) signin.querySelector('input:not([type=hidden])')?.focus()
+            })
+
+            document.addEventListener('keydown', (event) => {
+              if (event.key === 'Escape' && signin) signin.hidden = true
+            })
 
             document.addEventListener('submit', (event) => {
               if (event.target.querySelector('[name="absicht"]')?.value !== 'abmelden') return

@@ -98,6 +98,7 @@ function shootOf(row: Partial<App.Crm.Data.ShootData> & Pick<App.Crm.Data.ShootD
         cancelledReason: null,
         crew: [],
         forwardStatuses: [],
+        dueStatus: null,
         timeline: [],
         pdfUrl: `/shootings/${row.id}/ablauf.pdf`,
         icsUrl: `/shootings/${row.id}.ics`,
@@ -118,6 +119,7 @@ export const shoots: App.Crm.Data.ShootData[] = [
         status: 'booked',
         statusLabel: 'Gebucht',
         forwardStatuses: [{ value: 'shot', label: 'Fotografiert' }],
+        dueStatus: null,
         crew: [
             { id: 'cr-1', userId: 'u1', name: 'Christian Zepter', initials: 'CZ' },
         ],
@@ -189,20 +191,20 @@ export const queue: { key: string; rows: App.Crm.Data.LeadQueueRowData[] }[] = [
     {
         key: 'unbeantwortet',
         rows: [
-            { id: 'p-osterhoff', name: 'Familie Osterhoff', date: '2027-04-24', text: 'Standesamt und Feier im Garten', open: false, waitingDays: 6 },
+            { id: 'p-osterhoff', name: 'Familie Osterhoff', date: '2027-04-24', text: 'Standesamt und Feier im Garten', open: false, waitingDays: 6, step: 'reply' },
         ],
     },
     {
         key: 'angebot',
         rows: [
-            { id: BRANDT, name: 'Familie Brandt', date: '2027-06-12', text: 'Gut Basthorst, freie Trauung', open: true, waitingDays: 4 },
-            { id: 'p-ahrens', name: 'Marie Ahrens & David Kroll', date: '2026-07-25', text: 'Kaispeicher Hamburg', open: false, waitingDays: 11 },
+            { id: BRANDT, name: 'Familie Brandt', date: '2027-06-12', text: 'Gut Basthorst, freie Trauung', open: true, waitingDays: 4, step: 'reply' },
+            { id: 'p-ahrens', name: 'Marie Ahrens & David Kroll', date: '2026-07-25', text: 'Kaispeicher Hamburg', open: false, waitingDays: 11, step: 'reply' },
         ],
     },
     {
         key: 'angenommen',
         rows: [
-            { id: 'p-rahn', name: 'Hochzeit Rahn', date: '2026-09-13', text: 'Gut Basthorst', open: false, waitingDays: 2 },
+            { id: 'p-rahn', name: 'Hochzeit Rahn', date: '2026-09-13', text: 'Gut Basthorst', open: false, waitingDays: 2, step: 'reply' },
         ],
     },
 ]
@@ -260,6 +262,7 @@ export function quoteOf(
     row: Partial<App.Quotes.Data.QuoteData> & Pick<App.Quotes.Data.QuoteData, 'id' | 'number' | 'net' | 'items'>,
 ): App.Quotes.Data.QuoteData {
     return {
+        createdAt: null,
         showcaseCount: 0,
         predecessorId: null,
         isAddendum: false,
@@ -455,6 +458,7 @@ export const header: App.Crm.Screens.CaseHeaderData = {
     paymentPlan: null,
     galleries: [],
     history: thread,
+    nextAction: null,
 }
 
 /** Dieselbe Kopfzeile vor der Buchung: drei Reiter, Stufenbalken in der Anfragepipeline. */
@@ -486,6 +490,7 @@ export const leadHeader: App.Crm.Screens.CaseHeaderData = {
     paymentPlan: null,
     galleries: [],
     history: leadThread,
+    nextAction: null,
 }
 
 /** Die `lead`-Prop des Anfragebildschirms — kein eigener Data-Typ, deshalb hier ausgeschrieben. */

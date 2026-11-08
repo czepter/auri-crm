@@ -15,7 +15,7 @@ defineProps<{
     <span class="text-small leading-none font-medium text-ink-2">{{ label }}</span>
 
     <div class="flex flex-col gap-1.5">
-      <b class="font-mono text-[26px] leading-none font-medium tracking-[-0.02em] tabular-nums text-foreground">{{ value }}</b>
+      <b class="text-[34px] leading-10 font-semibold tracking-[-0.03em] tabular-nums text-foreground">{{ value }}</b>
       <span v-if="sub" class="text-small leading-[1.35] text-muted-foreground">{{ sub }}</span>
     </div>
 

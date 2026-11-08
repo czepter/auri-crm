@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
@@ -16,6 +16,8 @@ import type { BandMetric } from "@/admin/components/crm/MetricBand.vue";
 import NextStepCard from "@/admin/components/crm/NextStepCard.vue";
 import Panel from "@/admin/components/crm/Panel.vue";
 import PhaseButton from "@/admin/components/crm/PhaseButton.vue";
+import ProjectQueue from "@/admin/components/crm/ProjectQueue.vue";
+import ProjectStep from "@/admin/components/crm/ProjectStep.vue";
 import ShootAdvance from "@/admin/components/crm/ShootAdvance.vue";
 import { Field } from "@/ui/field";
 import { Input } from "@/ui/input";
@@ -28,11 +30,16 @@ import Card from "@/ui/page/Card.vue";
 import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
 import Section from "@/ui/page/Section.vue";
 import { formatEurosRounded } from "@/lib/money";
-import { quoteChipClass } from "@/admin/lib/quoteDisplay";
+import Chip from "@/ui/page/Chip.vue";
+import { quoteTone } from "@/admin/lib/quoteDisplay";
 import { dayWithWeekday as day, daysUntil } from "@/admin/lib/dates";
 import { installmentChipClass } from "@/admin/lib/payments";
 import { bandMetrics, isBare, splitNextStep, timelineWindow } from "@/admin/lib/projectOverview";
 import { chipClass, dayAndMonth } from "@/admin/lib/shoots";
+import { groupEntries } from "@/admin/lib/groupEntries";
+import { nextStep, paymentCall, stepRows } from "@/admin/lib/projectNextStep";
+import { sendQuoteHref } from "@/admin/lib/leadPrimary";
+import { stepOnArrow } from "@/admin/lib/queueStep";
 import { useLiveProps } from "@/admin/lib/liveReload";
 
 type ProjectFieldDefinition = InstanceType<typeof ProjectFields>["$props"]["fields"][number];
@@ -48,7 +55,6 @@ const props = defineProps<{
     anchors?: { value: string; label: string; group: string; on: string | null }[];
     quote: App.Quotes.Data.QuoteData | null;
     supersededQuotes: { id: string; number: string | null; net: number }[];
-    packages: { id: string; name: string; itemCount: number; total: number }[];
     scope: {
         items: {
             id: string;
@@ -61,7 +67,6 @@ const props = defineProps<{
         delta: number;
         hasDraft: boolean;
     };
-    people: App.Crm.Data.CasePersonData[];
     fields: ProjectFieldDefinition[];
     fieldValues: ProjectFieldValues;
     stages: { value: string; label: string }[];
@@ -86,10 +91,9 @@ const props = defineProps<{
         days: number;
         status: string;
         since: string | null;
-        next: { key: string; label: string };
     } | null;
 }>();
-useLiveProps(["header", "shoots", "shootKinds", "tasks", "shootOptions", "staffOptions", "anchors", "thread", "scope", "quote", "supersededQuotes", "packages", "people", "fields", "fieldValues", "stages", "presets", "stage", "source", "sourceOther", "sourceLabel", "inquiry", "stalled"]);
+useLiveProps(["header", "shoots", "shootKinds", "tasks", "shootOptions", "staffOptions", "anchors", "thread", "scope", "quote", "supersededQuotes", "fields", "fieldValues", "stages", "presets", "stage", "source", "sourceOther", "sourceLabel", "inquiry", "stalled"]);
 
 const { t } = useI18n();
 const page = usePage();
@@ -97,12 +101,39 @@ const page = usePage();
 const base = computed(() => `/auftraege/${props.header.id}`);
 const galleriesHref = computed(() => props.header.tabs.find((tab) => tab.key === "galleries")?.href);
 
-function advanceStalled() {
-    router.post(
-        `/shootings/${props.stalled?.shootId}/status`,
-        { status: props.stalled?.next.key },
-        { preserveScroll: true },
-    );
+const reachable = ref<App.Crm.Data.CaseQueueRowData[]>([]);
+
+function onKey(event: KeyboardEvent) {
+    stepOnArrow(event, reachable.value, "/auftraege");
+}
+
+onMounted(() => addEventListener("keydown", onKey));
+onUnmounted(() => removeEventListener("keydown", onKey));
+
+const step = computed(() => (props.header.canManageShoots ? nextStep(props.shoots) : null));
+const callHref = computed(() => paymentCall(props.header.paymentPlan, props.header.people));
+const sendHref = computed(() => sendQuoteHref(props.quote, props.header.canManageQuotes));
+const createQuote = computed(() => !props.header.isBooked && props.header.canManageQuotes && !props.quote);
+const addShoot = computed(() => props.header.isBooked && props.header.canManageShoots && !props.shoots.length);
+const addGallery = computed(
+    () => props.header.isBooked && props.header.canManageShoots && !step.value && !addShoot.value && !props.header.galleries.length && !!galleriesHref.value,
+);
+const delivered = computed(() => props.shoots.every((shoot) => shoot.isCancelled || !stepRows([shoot]).length));
+const completeNow = computed(
+    () =>
+        props.header.isBooked &&
+        props.header.canComplete &&
+        !props.header.isCompleted &&
+        !!props.header.galleries.length &&
+        !step.value &&
+        !callHref.value &&
+        !addShoot.value &&
+        delivered.value &&
+        (!plan.value || plan.value.openTotal === 0),
+);
+
+function completeProject() {
+    router.post(`${base.value}/abschluss`, {}, { preserveScroll: true });
 }
 
 function euro(minor: string | number | null) {
@@ -184,11 +215,11 @@ const stateOf = (shoot: App.Crm.Data.ShootData) => STATE[chipClass(shoot, props.
 
 const taskRows = computed(() => (showDone.value ? done.value : next.value.rest));
 
-const events = computed(() => props.thread.filter((entry) => entry.system).reverse());
+const events = computed(() => groupEntries(props.thread.filter((entry) => entry.system).reverse()));
 const byline = (author: string | null) =>
     page.props.soloStudio && author === page.props.auth.user?.name ? null : author;
 
-const chipOf = { paid: "done", late: "fail", due: "now", upcoming: "next" } as const;
+const toneOf = { paid: "success", late: "danger", due: "warn", upcoming: "neutral" } as const;
 
 const textEditing = ref(false);
 const anfrage = useForm({ inquiry_text: props.inquiry?.text ?? "" });
@@ -203,7 +234,7 @@ function saveAnfrage() {
 }
 
 const kontakteEditing = ref(false);
-const kontakte = useForm({ people: props.people.map((person) => ({ id: person.id, role: person.role })) });
+const kontakte = useForm({ people: props.header.people.map((person) => ({ id: person.id, role: person.role })) });
 
 function saveKontakte() {
     kontakte.patch(`/auftraege/${props.header.id}`, {
@@ -258,12 +289,32 @@ function complete(row: App.Crm.Data.TaskRowData) {
 </script>
 
 <template>
-    <AdminLayout active="projekte">
-        <ProjectShell :header="header" active="overview" :people="false">
-            <template #stage>
+    <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
+        <ProjectShell :header="header" active="overview">
+            <template #left>
+                <ProjectQueue :groups="header.queue" @update:rows="reachable = $event" />
+            </template>
+            <template #actions>
                 <PhaseButton :stages="stages" :current="stage" @select="movePhase" />
             </template>
-            <template #rail><div /></template>
+            <template v-if="sendHref || createQuote || step || callHref || addShoot || addGallery || completeNow" #stage>
+                <Button v-if="callHref" variant="outline" as-child class="max-[640px]:min-h-11">
+                    <a :href="callHref">{{ $t("contacts.call") }}</a>
+                </Button>
+                <Button v-if="sendHref" variant="pill" as-child class="max-[640px]:min-h-11">
+                    <Link :href="sendHref">{{ $t("lead.sendQuote") }}</Link>
+                </Button>
+                <Button v-else-if="createQuote" variant="pill" as-child class="max-[640px]:min-h-11">
+                    <Link :href="`/angebote/neu?projekt=${header.id}`">{{ $t("quotes.create") }}</Link>
+                </Button>
+                <Button v-else-if="addGallery" variant="pill" as-child class="max-[640px]:min-h-11">
+                    <Link :href="galleriesHref!">{{ $t("galleries.create") }}</Link>
+                </Button>
+                <Button v-else-if="completeNow" variant="pill" type="button" class="max-[640px]:min-h-11" @click="completeProject">
+                    {{ $t("project.completeMenu") }}
+                </Button>
+                <ProjectStep v-else :header="header" :shoots="shoots" />
+            </template>
 
                     <Alert
                         v-if="stalled"
@@ -279,7 +330,6 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             </AlertDescription>
                         </div>
                         <div v-if="header.canManageShoots" class="ml-auto flex flex-none items-center gap-2">
-                            <Button variant="pill" type="button" @click="advanceStalled">{{ stalled.next.label }}</Button>
                             <Button v-if="galleriesHref" variant="outline" as-child>
                                 <Link :href="galleriesHref">{{ $t("galleries.create") }}</Link>
                             </Button>
@@ -423,7 +473,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 <b class="font-semibold">{{ day(row.dueOn) }}</b>
                                 <div class="text-small text-ink-2">{{ euro(row.amount) }}</div>
                             </div>
-                            <span :class="['chip', chipOf[installmentChipClass(row)]]">{{ row.statusLabel }}</span>
+                            <Chip :tone="toneOf[installmentChipClass(row)]">{{ row.statusLabel }}</Chip>
                             <InstallmentPaidDialog
                                 v-if="header.canManagePaymentPlan && row === nextInstallment && !plan.settledOn"
                                 :installment-id="row.id"
@@ -442,7 +492,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             :more-href="`${base}/verlauf`"
                         >
                             <div class="py-1.5" :class="index === 0 && 'text-foreground'">
-                                <b class="block font-semibold">{{ entry.body }}</b>
+                                <b class="block font-semibold">{{ entry.count > 1 ? $t("project.historyCount", { body: entry.body, count: entry.count }) : entry.body }}</b>
                                 <span class="text-small text-ink-2">
                                     {{ [entry.at ? day(entry.at) : null, byline(entry.author)].filter(Boolean).join(" · ") }}
                                 </span>
@@ -457,7 +507,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             <div class="flex flex-1 items-center gap-2">
                                 <template v-if="quote">
                                     <span v-if="quote.number" class="text-small text-ink-2">{{ quote.number }}</span>
-                                    <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
+                                    <Chip :tone="quoteTone(quote.status)">{{ quote.statusLabel }}</Chip>
                                     <Link
                                         class="ml-auto inline-flex min-h-10 items-center text-ui font-medium text-ring no-underline hover:underline"
                                         :href="`/angebote/${quote.id}`"
@@ -492,7 +542,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 :key="person.id"
                                 class="flex items-end gap-3 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
                             >
-                                <span class="min-w-[148px] flex-1 pb-2.5 font-semibold">{{ people[index].name }}</span>
+                                <span class="min-w-[148px] flex-1 pb-2.5 font-semibold">{{ header.people[index].name }}</span>
                                 <Field v-slot="{ id }" dense class="w-[168px] flex-none" :label="$t('leads.role')">
                                     <Input :id="id" v-model="person.role" type="text" list="rollen" />
                                 </Field>
@@ -505,7 +555,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
 
                         <template v-else>
                         <div
-                            v-for="person in people"
+                            v-for="person in header.people"
                             :key="person.id"
                             class="flex min-h-12 flex-wrap items-center gap-x-3 gap-y-1 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
                         >

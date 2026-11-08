@@ -8,6 +8,7 @@ import Empty from '@/ui/page/Empty.vue'
 import ProjectSettings from '@/admin/components/crm/ProjectSettings.vue'
 import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
 import { Button } from '@/ui/button'
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/ui/context-menu'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Input } from '@/ui/input'
 import { isoDate } from '@/admin/lib/dates'
@@ -125,15 +126,8 @@ function onKey(event: KeyboardEvent, project: App.Crm.Data.CaseRowData, column: 
   }
 }
 
-const menu = ref<{ project: App.Crm.Data.CaseRowData; x: number; y: number } | null>(null)
-
-function openMenu(event: MouseEvent, project: App.Crm.Data.CaseRowData) {
-  event.preventDefault()
-  menu.value = { project, x: event.clientX, y: event.clientY }
-}
-
 function day(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
+  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 // The date passed and nobody has shot it: the one row on this screen that
@@ -165,7 +159,16 @@ function reset() {
     <!-- The first screen on the CRM sheet (C-01, #235). Its own theme root
          rather than the layout's, so the screens that have not been ported
          keep the stylesheet they were built on. -->
-    <Page data-tokens wide @click="menu = null">
+    <ProjectSettings
+      v-if="settingsSelection && stageSettings"
+      v-bind="stageSettings"
+      :selection="settingsSelection"
+      :return-to="returnTo"
+      :can-manage-tasks="workflowAllowed"
+      :workflow="workflow"
+      @close="router.visit(returnTo ?? '/projekte', { preserveState: true, preserveScroll: true })"
+    />
+    <Page v-else data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('projects.title')">
           <ChoiceGroup
@@ -200,7 +203,7 @@ function reset() {
                 v-for="option in pills"
                 :key="option.key"
                 class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] px-3 py-1.5 text-small"
-                :class="stage === option.key ? 'bg-foreground text-paper' : 'bg-sunk text-foreground'"
+                :class="stage === option.key ? 'bg-paper font-medium text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'bg-sunk text-foreground'"
                 type="button"
                 :aria-pressed="stage === option.key"
                 @click="pick(option.key)"
@@ -208,7 +211,7 @@ function reset() {
                 {{ option.name }}<span class="text-small tabular-nums opacity-60">{{ option.count }}</span>
               </button>
             </div>
-            <Input v-model="query" class="ml-auto h-8 w-60" type="search" :placeholder="$t('projects.searchPlaceholder')" />
+            <Input :aria-label="$t('projects.searchPlaceholder')" v-model="query" class="ml-auto h-8 w-64 shrink-0" type="search" :placeholder="$t('projects.searchPlaceholder')" />
           </div>
 
           <Table>
@@ -275,6 +278,8 @@ function reset() {
             <template v-for="(project, row) in column.cards" :key="project.id">
               <div v-if="target === index && insertAt === row" class="-mx-1.5 h-0.5 rounded-[1px] bg-ring" />
 
+              <ContextMenu>
+              <ContextMenuTrigger as-child>
               <Link
                 class="relative block cursor-grab rounded-[var(--r)] bg-paper p-3.5 text-inherit no-underline shadow-card transition-[background] duration-[120ms] ease-out hover:bg-accent"
                 :class="moving?.id === project.id && 'cursor-grabbing'"
@@ -284,7 +289,6 @@ function reset() {
                 @dragend="endDrag"
                 @dragover="onDragOver($event, index, row)"
                 @keydown="onKey($event, project, index)"
-                @contextmenu="openMenu($event, project)"
               >
                 <span class="block text-ui leading-[1.3] font-semibold tracking-[-0.014em]" :class="moving?.id === project.id && 'font-medium text-ink-2'">
                   {{ project.name }}
@@ -312,42 +316,28 @@ function reset() {
                   </span>
                 </span>
               </Link>
+              </ContextMenuTrigger>
+              <ContextMenuContent class="w-[208px]">
+                <ContextMenuItem
+                  v-for="option in columns"
+                  :key="option.key"
+                  :disabled="option.key === project.positionKey"
+                  @select="move(project.id, option.key)"
+                >
+                  {{ option.name }}
+                </ContextMenuItem>
+              </ContextMenuContent>
+              </ContextMenu>
             </template>
 
             <!-- An empty stage keeps its height, or there is no target there. -->
             <div :class="target === index && 'min-h-11'" />
           </section>
-
-          <div
-            v-if="menu"
-            class="fixed z-20 w-[208px] rounded-[12px] bg-paper p-[5px] shadow-[0_8px_24px_rgba(0,0,0,0.16)]"
-            :style="{ left: `${menu.x}px`, top: `${menu.y}px` }"
-            @click.stop
-          >
-            <div
-              v-for="column in columns"
-              :key="column.key"
-              class="rounded-lg px-[9px] py-1.5 text-small"
-              :class="column.key === menu.project.positionKey ? 'cursor-default text-mark' : 'cursor-pointer hover:bg-sunk'"
-              @click="column.key !== menu.project.positionKey && move(menu.project.id, column.key)"
-            >
-              {{ column.name }}
-            </div>
-          </div>
         </div>
 
-        <Empty v-else class="mx-8 mt-7" :text="$t('projects.empty')">
+        <Empty v-else :text="$t('projects.empty')">
           <Button :as="Link" variant="pill" href="/anfragen/neu">{{ $t('leads.createKicker') }}</Button>
         </Empty>
-        <ProjectSettings
-          v-if="settingsSelection && stageSettings"
-          v-bind="stageSettings"
-          :selection="settingsSelection"
-          :return-to="returnTo"
-          :can-manage-tasks="workflowAllowed"
-          :workflow="workflow"
-          @close="router.visit(returnTo ?? '/projekte', { preserveState: true, preserveScroll: true })"
-        />
       </div>
     </Page>
   </AdminLayout>

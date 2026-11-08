@@ -6,6 +6,8 @@ import ContactQueue from '@/admin/components/crm/ContactQueue.vue'
 import ContactPortalFields from '@/admin/components/crm/ContactPortalFields.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
+import SaveState from '@/ui/page/SaveState.vue'
+import { saveState } from '@/admin/lib/autosave'
 import Panel from '@/admin/components/crm/Panel.vue'
 import Metric from '@/admin/components/crm/Metric.vue'
 import { Button } from '@/ui/button'
@@ -52,6 +54,7 @@ function removeSuggestion(id: string) {
 
 const TABS = ['overview', 'bookings', 'correspondence', 'portal'] as const
 
+const openInquiries = computed(() => props.projects.filter((project) => project.open))
 const tab = ref<(typeof TABS)[number]>('overview')
 
 const props = defineProps<{
@@ -59,7 +62,7 @@ const props = defineProps<{
   contact: App.Crm.Data.ContactSuggestionData
   billingAddress: { street: string | null; postcode: string | null; city: string | null }
   correspondence: App.Engagement.Data.MessageData[]
-  projects: { id: string; name: string; role: string; date: string | null; value: number | null; booked: boolean }[]
+  projects: { id: string; name: string; role: string; date: string | null; value: number | null; booked: boolean; open: boolean; quote: { status: string; total: number } | null }[]
   galleries: {
     id: string
     title: string | null
@@ -147,7 +150,7 @@ function savePortal() {
 }
 
 function day(iso: string | null) {
-  return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'
+  return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
 }
 
 function time(iso: string) {
@@ -235,7 +238,7 @@ function eraseDsgvoData() {
         <PageHead :kicker="$t('contacts.title')" kicker-href="/kontakte" :title="contact.name">
           <div class="ml-auto flex items-center gap-2">
             <template v-if="editing">
-              <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
+              <SaveState :state="saveState([form])" />
               <Button variant="pill-muted" type="button" @click="cancelEdit">{{ $t('common.cancel') }}</Button>
               <Button v-if="form.isDirty" variant="pill" type="submit" form="contact-form" :disabled="form.processing">
                 {{ $t('common.save') }}
@@ -332,6 +335,26 @@ function eraseDsgvoData() {
                       {{ [billingAddress.street, [billingAddress.postcode, billingAddress.city].filter(Boolean).join(' ')].filter(Boolean).join(', ') }}
                     </div>
                     <div class="mt-px text-small text-ink-2">{{ $t('contacts.address') }}</div>
+                  </div>
+                </div>
+              </section>
+
+              <section v-if="!editing && openInquiries.length" class="mb-7">
+                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
+                  {{ $t('contacts.openInquiries') }}
+                </h2>
+                <div
+                  v-for="project in openInquiries"
+                  :key="project.id"
+                  class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+                >
+                  <div>
+                    <div class="text-body leading-none font-semibold tracking-[-0.012em] tabular-nums">
+                      <Link class="no-underline hover:underline" :href="`/anfragen/${project.id}`">{{ project.name }}</Link>
+                    </div>
+                    <div v-if="project.quote" class="mt-px text-small text-ink-2">
+                      {{ $t(`contacts.quoteStatus.${project.quote.status}`) }} · {{ formatEurosRounded(project.quote.total) }}
+                    </div>
                   </div>
                 </div>
               </section>

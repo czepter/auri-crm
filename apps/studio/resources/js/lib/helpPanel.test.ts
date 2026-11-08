@@ -9,15 +9,15 @@ beforeEach(() => {
 })
 
 describe('helpPanel', () => {
-  it('startet offen, solange niemand zugeklappt hat', () => {
-    expect(helpPanel.offen.value).toBe(true)
+  it('startet geschlossen', () => {
+    expect(helpPanel.offen.value).toBe(false)
   })
 
-  it('bleibt zu, nachdem einmal zugeklappt wurde', () => {
-    helpPanel.schliessen()
+  it('bleibt offen, nachdem einmal geöffnet wurde', () => {
+    helpPanel.umschalten()
     helpPanel.zuruecksetzen()
 
-    expect(helpPanel.offen.value).toBe(false)
+    expect(helpPanel.offen.value).toBe(true)
   })
 
   it('vergisst den überschriebenen Artikel bei Navigation', () => {
@@ -31,19 +31,6 @@ describe('helpPanel', () => {
     expect(helpPanel.ueberschrieben.value).toBeNull()
   })
 
-  it('startet offen, solange kein Wert gespeichert ist, sonst nach dem gespeicherten Wert', () => {
-    // Ein Key statt zwei: nur ein bewusster Klick auf oeffnen()/schliessen()
-    // schreibt `help.open`. Eine unsichtbare Spalte schreibt nie etwas und
-    // kann so die Erstöffnung nicht verbrauchen.
-    expect(localStorage.getItem('help.open')).toBeNull()
-    helpPanel.zuruecksetzen()
-    expect(helpPanel.offen.value).toBe(true)
-
-    localStorage.setItem('help.open', '0')
-    helpPanel.zuruecksetzen()
-
-    expect(helpPanel.offen.value).toBe(false)
-  })
 })
 
 describe('ohne Speicher', () => {
@@ -55,7 +42,7 @@ describe('ohne Speicher', () => {
   // Ein Browser mit blockierten Site-Daten wirft schon beim Getter. Page.vue
   // importiert dieses Modul und steht auf jedem Adminscreen — ein Wurf beim
   // Import nimmt das ganze Admin-Bundle mit.
-  it('lädt trotzdem und startet offen', async () => {
+  it('lädt trotzdem und startet geschlossen', async () => {
     vi.stubGlobal('localStorage', {
       getItem() {
         throw new DOMException('blocked', 'SecurityError')
@@ -68,9 +55,9 @@ describe('ohne Speicher', () => {
     vi.resetModules()
     const modul = await import('./helpPanel')
 
-    expect(modul.helpPanel.offen.value).toBe(true)
-    expect(() => modul.helpPanel.schliessen()).not.toThrow()
     expect(modul.helpPanel.offen.value).toBe(false)
+    expect(() => modul.helpPanel.oeffnen()).not.toThrow()
+    expect(modul.helpPanel.offen.value).toBe(true)
   })
 })
 

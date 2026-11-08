@@ -2,12 +2,15 @@
 
 namespace App\Http\Middleware;
 
+use App\Automation\Enums\AutomationRunStatus;
+use App\Automation\Models\AutomationRun;
 use App\Crm\Actions\OpenLeads;
 use App\Crm\Models\Stage;
 use App\Crm\Screens\OpenCases;
 use App\Data\StaffProfileData;
 use App\Documents\Support\DocumentBlockCatalog;
 use App\Documents\Support\MergeFieldVocabulary;
+use App\Enums\Capability;
 use App\Help\Support\HelpIndex;
 use App\Models\StudioSettings;
 use App\Models\User;
@@ -99,13 +102,19 @@ class HandleInertiaRequests extends Middleware
                 // The projects the rail and the list's "Laufend" show: booked,
                 // visible to this role, not delivered, completed or closed.
                 'projects' => fn () => app(OpenCases::class)->count($user),
+                // Client mails an automation drafted; the Posteingang row's badge.
+                'drafts' => fn () => $user->can(Capability::ManageMessages->value)
+                    ? (($user->can(Capability::ViewAllCases->value)
+                        ? AutomationRun::query()->where('status', AutomationRunStatus::AwaitingApproval)->count()
+                        : AutomationRun::awaitingFor($user)->count()) ?: null)
+                    : null,
             ],
             // Die laufende Version und ob release-log eine höhere kennt. Chrome
             // wie die Zähler darüber: die Zeile steht auf jedem Admin-Screen
             // über der Profilzeile. Nur dort — der Portal-Surface hat keine
             // Seitenleiste, in die sie gehörte.
             ...($user !== null && Surface::current() === Surface::ADMIN ? [
-                'release' => fn () => [
+                'release' => fn () => app(ReleaseLog::class)->base() === null ? null : [
                     'installed' => app(ReleaseLog::class)->installed(),
                     'updateAvailable' => app(ReleaseLog::class)->updateAvailable(),
                 ],
@@ -191,7 +200,7 @@ class HandleInertiaRequests extends Middleware
      * thread this contact has. A client has a handful; make it one aggregate
      * query if anybody ever has hundreds.
      *
-     * @return array{messaging: bool, unread: int}|null
+     * @return array{messaging: bool, unread: int, oneBooking: bool, booked: bool}|null
      */
     private function portalNav(Request $request): ?array
     {
@@ -214,6 +223,7 @@ class HandleInertiaRequests extends Middleware
             // The home of a client with one booking is that booking, so the
             // nav naming a list would name something they never see.
             'oneBooking' => $contact->visibleProjects()->count() === 1,
+            'booked' => $contact->visibleProjects()->whereNotNull('cases.booked_at')->exists(),
         ];
     }
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from "vue"
-import { ref, useId } from "vue"
+import { computed, ref, useId, watch } from "vue"
 import { useI18n } from "vue-i18n"
 import { Label } from "@/ui/label"
 import { cn } from "@/lib/utils"
@@ -60,6 +60,12 @@ function checkNative(event: Event) {
   native.value = key ? t(`common.invalid.${key}`) : control?.validationMessage ?? ""
 }
 
+// The text outlives the error for the length of the collapse; clearing it at
+// once would shrink the row while it is still closing.
+const message = computed(() => props.error || native.value)
+const shown = ref(message.value)
+watch(message, (next) => next && (shown.value = next))
+
 const fallback = useId()
 const id = () => props.id ?? fallback
 </script>
@@ -74,6 +80,18 @@ const id = () => props.id ?? fallback
     <Label v-if="label" :for="id()" :variant="dense ? 'micro' : 'field'">{{ label }}</Label>
     <slot :id="id()" />
     <span v-if="hint" class="text-small leading-[1.45] text-faint">{{ hint }}</span>
-    <p v-if="error || native" class="text-small leading-[1.45] text-destructive">{{ error || native }}</p>
+    <div
+      aria-live="polite"
+      class="grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none"
+      :class="[message ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]', dense ? '-mt-1' : '-mt-1.5']"
+    >
+      <div class="overflow-hidden">
+        <p
+          :id="`${id()}-error`"
+          class="text-small leading-[1.45] text-destructive transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none"
+          :class="[message ? 'translate-y-0 opacity-100' : '-translate-y-0.5 opacity-0', dense ? 'pt-1' : 'pt-1.5']"
+        >{{ shown }}</p>
+      </div>
+    </div>
   </div>
 </template>

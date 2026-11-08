@@ -65,7 +65,7 @@ it('reads the least advanced shoot, not the furthest', function () {
 
 it('changes when the underlying shoot status changes, with no field to keep in sync', function () {
     $project = ClientCase::factory()->booked()->create();
-    $shoot = Shoot::factory()->for($project, 'case')->atStatus(ShootStatus::Booked)->create();
+    $shoot = Shoot::factory()->for($project, 'case')->on(now()->subDay()->toDateString())->atStatus(ShootStatus::Booked)->create();
 
     expect(positionOf($project)->value)->toBe('booked');
 

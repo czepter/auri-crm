@@ -20,9 +20,10 @@ class LeadQueueRowData extends Data
         public ?string $text,
         public bool $open,
         public int $waitingDays,
+        public string $step,
     ) {}
 
-    public static function fromLead(Lead $lead, ?Lead $open = null): self
+    public static function fromLead(Lead $lead, ?Lead $open, string $step): self
     {
         return new self(
             id: $lead->case->public_id,
@@ -34,6 +35,7 @@ class LeadQueueRowData extends Data
             text: $lead->inquiry_text ?: null,
             open: $open !== null && $lead->is($open),
             waitingDays: (int) $lead->stage_entered_at->startOfDay()->diffInDays(now()->startOfDay()),
+            step: $step,
         );
     }
 }

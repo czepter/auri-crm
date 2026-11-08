@@ -16,7 +16,7 @@ withDefaults(defineProps<{
   href?: string | null
   /** Inertia visit for portal-internal paths; a plain <a> for downloads and files. */
   inertia?: boolean
-  state?: 'open' | 'done' | 'neutral'
+  state?: 'open' | 'due' | 'done' | 'neutral' | 'late'
   /** The line under the title. Carries the dot. */
   note?: string | null
   /** A second, quieter line — which booking a row came from. */
@@ -53,7 +53,7 @@ withDefaults(defineProps<{
     <span
       v-if="aside"
       class="col-start-2 row-start-1 text-[15px] leading-none font-semibold tracking-[-0.01em] tabular-nums whitespace-nowrap max-[820px]:col-start-1 max-[820px]:row-start-2 max-[820px]:text-[14px]"
-      :class="asideOpen ? 'text-action' : 'text-muted-foreground'"
+      :class="asideOpen ? 'text-foreground' : 'text-muted-foreground'"
     >{{ aside }}</span>
 
     <span

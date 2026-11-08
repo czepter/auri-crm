@@ -12,6 +12,7 @@ import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Label } from '@/ui/label'
 import { Switch } from '@/ui/switch'
+import Chip from '@/ui/page/Chip.vue'
 
 /*
  * G-14: über der Liste, die er einstellt — dieselbe Form, die Stufen und
@@ -188,9 +189,9 @@ const studioOffers = computed(() => ({
           </svg>
         </button>
         <span class="text-body leading-[1.3] font-semibold tracking-[-0.015em]">{{ $t('gallerySettings.roomTitle') }}</span>
-        <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold text-due">
+        <Chip v-if="form.isDirty" tone="warn">
           {{ $t('settings.unsaved') }}
-        </span>
+        </Chip>
         <Button class="ml-auto" type="button" :disabled="form.processing" @click="form.isDirty ? save() : emit('close')">
           {{ form.isDirty ? $t('common.save') : $t('stages.done') }}
         </Button>
@@ -293,9 +294,9 @@ const studioOffers = computed(() => ({
                 @click="chosen = row.id"
               >
                 <span class="min-w-0 flex-1 truncate">{{ row.name }}</span>
-                <span v-if="row.isDefault" class="flex-none rounded-[var(--r-sm)] bg-accent px-1.5 py-0.5 text-small leading-[1.4] font-semibold text-ring">
+                <Chip v-if="row.isDefault" tone="info">
                   {{ $t('gallerySettings.defaultMark') }}
-                </span>
+                </Chip>
               </button>
 
               <Button class="mt-1.5 ml-0" type="button" variant="ghost" @click="addPreset">

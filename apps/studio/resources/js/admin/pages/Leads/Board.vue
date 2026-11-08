@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref, useTemplateRef, watch } from "vue";
 import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import LeadQueue from "@/admin/components/crm/LeadQueue.vue";
@@ -24,9 +24,11 @@ import {
     AlertDialogTitle,
 } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/lib/money";
-import { relative, TYPE_DOT } from "@/admin/lib/boardCard";
+import { daysAgo, TYPE_DOT } from "@/admin/lib/boardCard";
 import { useLiveProps } from "@/admin/lib/liveReload";
 import { Button } from "@/ui/button";
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "@/ui/context-menu";
+import { QueueGroup, QueueItem } from "@/ui/queue";
 import { ChoiceGroup } from "@/ui/choice-group";
 import { Field } from "@/ui/field";
 import { Input } from "@/ui/input";
@@ -84,7 +86,7 @@ function shortDate(date: string | null) {
         ? new Date(date).toLocaleDateString("de-DE", {
               day: "2-digit",
               month: "2-digit",
-              year: "2-digit",
+              year: "numeric",
           })
         : null;
 }
@@ -188,15 +190,6 @@ function onKey(event: KeyboardEvent, card: Card, column: number) {
     }
 }
 
-// The same targets the arrows reach, for a pointer that has no keyboard
-// beside it.
-const menu = ref<{ card: Card; x: number; y: number } | null>(null);
-
-function openMenu(event: MouseEvent, card: Card) {
-    event.preventDefault();
-    menu.value = { card, x: event.clientX, y: event.clientY };
-}
-
 const query = ref("");
 const stage = ref<string | null>(null);
 const onlyStale = ref(false);
@@ -216,6 +209,11 @@ const pills = computed(() =>
         }))
         .filter((option) => option.count > 0),
 );
+
+const pillRow = useTemplateRef<HTMLElement>("pillRow");
+const showActivePill = () => pillRow.value?.querySelector("[aria-pressed=true]")?.scrollIntoView({ inline: "center", block: "nearest" });
+onMounted(showActivePill);
+watch(stage, showActivePill, { flush: "post" });
 
 function pick(key: string) {
     stage.value = stage.value === key ? null : key;
@@ -265,7 +263,16 @@ const workflowAllowed = computed(() =>
 
 <template>
     <AdminLayout active="anfragen">
-        <Page wide @click="menu = null">
+        <ProjectSettings
+            v-if="settingsSelection && stageSettings"
+            v-bind="stageSettings"
+            :selection="settingsSelection"
+            :return-to="returnTo"
+            :can-manage-tasks="workflowAllowed"
+            :workflow="workflow"
+            @close="router.visit(returnTo ?? '/anfragen', { preserveState: true, preserveScroll: true })"
+        />
+        <Page v-else wide>
             <div data-tokens class="min-w-0 flex-1">
                 <PageHead :title="$t('board.title')">
                     <ChoiceGroup
@@ -282,7 +289,7 @@ const workflowAllowed = computed(() =>
                     <Button
                         v-if="stageSettings"
                         :as="Link"
-                        class="ml-auto"
+                        class="ml-auto max-[640px]:hidden"
                         variant="pill-muted"
                         href="/anfragen/einstellungen/stufen"
                     >
@@ -291,7 +298,7 @@ const workflowAllowed = computed(() =>
 
                     <Button
                         :as="Link"
-                        :class="!stageSettings && 'ml-auto'"
+                        :class="[!stageSettings && 'ml-auto', 'max-[640px]:ml-auto']"
                         variant="pill"
                         href="/anfragen/neu"
                     >
@@ -304,12 +311,12 @@ const workflowAllowed = computed(() =>
              sichtbar wurde sie erst an ihrer Trennlinie. -->
                 <div
                     v-if="view === 'board'"
-                    class="flex items-stretch gap-6 overflow-x-auto px-6 pt-4 pb-6"
+                    class="flex snap-x snap-mandatory items-stretch gap-6 overflow-x-auto px-6 pt-4 pb-6 max-[640px]:scroll-px-4 max-[640px]:px-4 max-[640px]:pr-12"
                 >
                     <section
                         v-for="(column, index) in columns"
                         :key="column.stage"
-                        class="flex min-w-0 shrink-0 grow basis-[200px] flex-col gap-2.5 rounded-[var(--r)]"
+                        class="flex min-w-0 shrink-0 grow basis-[200px] snap-start max-[640px]:basis-[85vw] flex-col gap-2.5 rounded-[var(--r)]"
                         :class="target === index && 'bg-[var(--accent-bg)]'"
                         @dragover="onDragOver($event, index, null)"
                         @drop.prevent="onDrop(index)"
@@ -341,6 +348,8 @@ const workflowAllowed = computed(() =>
                                 class="-mx-1.5 h-0.5 rounded-[1px] bg-ring"
                             />
 
+                            <ContextMenu>
+                            <ContextMenuTrigger as-child>
                             <Link
                                 class="relative block cursor-grab rounded-[var(--r)] bg-paper p-3.5 text-inherit no-underline shadow-card transition-[background] duration-[120ms] ease-out hover:bg-accent"
                                 :class="
@@ -352,7 +361,6 @@ const workflowAllowed = computed(() =>
                                 @dragend="reset"
                                 @dragover="onDragOver($event, index, row)"
                                 @keydown="onKey($event, card, index)"
-                                @contextmenu="openMenu($event, card)"
                             >
                                 <span
                                     class="block text-ui leading-[1.3] tracking-[-0.014em]"
@@ -431,10 +439,26 @@ const workflowAllowed = computed(() =>
                                                 : 'pl-4 bg-[position:left_center] bg-icon-clock text-ink-2'
                                         "
                                     >
-                                        {{ relative(card.lastAt) }}
+                                        {{ daysAgo(card.daysInStage) }}
                                     </span>
                                 </span>
                             </Link>
+                            </ContextMenuTrigger>
+                            <ContextMenuContent class="w-[208px]">
+                                <ContextMenuItem
+                                    v-for="option in columns"
+                                    :key="option.stage"
+                                    :disabled="option.stage === card.stage"
+                                    @select="move(card.id, option.stage)"
+                                >
+                                    {{ option.label }}
+                                </ContextMenuItem>
+                                <ContextMenuSeparator />
+                                <ContextMenuItem @select="closing = card.id; confirmingClose = true">
+                                    {{ $t("board.close") }}
+                                </ContextMenuItem>
+                            </ContextMenuContent>
+                            </ContextMenu>
                         </template>
 
                         <!-- An empty stage keeps its height, or there is no target there. -->
@@ -446,12 +470,12 @@ const workflowAllowed = computed(() =>
              shows where something stands, a table shows what is next. -->
                 <template v-else>
                 <div class="flex flex-wrap items-center gap-4 px-6 pt-4.5">
-                    <div class="flex flex-wrap gap-1.5">
+                    <div ref="pillRow" class="flex flex-wrap gap-1.5 max-[640px]:w-full max-[640px]:snap-x max-[640px]:scroll-px-4 max-[640px]:flex-nowrap max-[640px]:overflow-x-auto max-[640px]:pr-8 max-[640px]:[mask-image:linear-gradient(to_right,#000_calc(100%-32px),transparent)] max-[640px]:[scrollbar-width:none]">
                         <button
                             v-for="option in pills"
                             :key="option.key"
-                            class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] px-3 py-1.5 text-small"
-                            :class="stage === option.key ? 'bg-foreground text-paper' : 'bg-sunk text-foreground'"
+                            class="flex shrink-0 cursor-pointer snap-start items-center gap-1.5 rounded-[var(--r-sm)] px-3 py-1.5 text-small max-[640px]:min-h-11"
+                            :class="stage === option.key ? 'bg-paper font-medium text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'bg-sunk text-foreground'"
                             type="button"
                             :aria-pressed="stage === option.key"
                             @click="pick(option.key)"
@@ -466,7 +490,7 @@ const workflowAllowed = computed(() =>
                             <span class="mx-1 self-center h-[18px] w-px bg-rule" />
 
                             <button
-                                class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] bg-no-repeat bg-[length:12px_12px] bg-[position:12px_center] py-1.5 pr-3 pl-[28px] text-small"
+                                class="flex shrink-0 cursor-pointer snap-start items-center gap-1.5 rounded-[var(--r-sm)] bg-no-repeat max-[640px]:min-h-11 bg-[length:12px_12px] bg-[position:12px_center] py-1.5 pr-3 pl-[28px] text-small"
                                 :class="
                                     onlyStale
                                         ? 'bg-due-bg bg-icon-clock-due font-medium text-due'
@@ -481,10 +505,30 @@ const workflowAllowed = computed(() =>
                             </button>
                         </template>
                     </div>
-                    <Input v-model="query" class="ml-auto h-8 w-60" type="search" :placeholder="$t('board.searchPlaceholder')" />
+                    <Input :aria-label="$t('board.searchPlaceholder')" v-model="query" class="ml-auto h-8 w-60 max-[640px]:ml-0 max-[640px]:h-11 max-[640px]:w-full" type="search" :placeholder="$t('board.searchPlaceholder')" />
                 </div>
 
-                <Table>
+                <div class="hidden px-3 pt-2 max-[640px]:block">
+                    <template v-for="group in groupRows" :key="group.key">
+                        <QueueGroup :title="$t(`lead.group.${group.key}`)" :count="group.rows.length" />
+                        <QueueItem
+                            v-for="card in group.rows"
+                            :key="card.id"
+                            class="min-h-14"
+                            :href="`/anfragen/${card.id}`"
+                            :name="card.names"
+                            :meta="daysAgo(card.daysInStage)"
+                            :alert="card.stale"
+                            :title="[
+                                shortDate(card.date) ?? $t('board.openDate'),
+                                columns.find((c) => c.stage === card.stage)?.label,
+                                card.value === null ? null : formatEurosRounded(card.value),
+                            ].filter(Boolean).join(' · ')"
+                        />
+                    </template>
+                </div>
+
+                <Table class="max-[640px]:hidden">
                     <thead>
                         <tr>
                             <TableHead>{{ $t("board.colInquiry") }}</TableHead>
@@ -567,10 +611,10 @@ const workflowAllowed = computed(() =>
                                         v-if="card.stale"
                                         class="inline-flex items-center h-[19px] rounded-md whitespace-nowrap bg-due-bg bg-no-repeat bg-[length:11px_11px] bg-[position:7px_center] bg-icon-clock-due pr-[7px] pl-[22px] text-small font-medium tabular-nums text-due"
                                     >
-                                        {{ relative(card.lastAt) }}
+                                        {{ daysAgo(card.daysInStage) }}
                                     </span>
                                     <template v-else>{{
-                                        relative(card.lastAt)
+                                        daysAgo(card.daysInStage)
                                     }}</template>
                                 </TableCell>
                             </TableRow>
@@ -578,37 +622,6 @@ const workflowAllowed = computed(() =>
                     </tbody>
                 </Table>
                 </template>
-
-                <div
-                    v-if="menu"
-                    class="fixed z-20 w-[208px] rounded-[12px] bg-paper p-[5px] shadow-[0_8px_24px_rgba(0,0,0,0.16)]"
-                    :style="{ left: `${menu.x}px`, top: `${menu.y}px` }"
-                    @click.stop
-                >
-                    <div
-                        v-for="column in columns"
-                        :key="column.stage"
-                        class="rounded-lg px-[9px] py-1.5 text-small"
-                        :class="
-                            column.stage === menu.card.stage
-                                ? 'cursor-default text-mark'
-                                : 'cursor-pointer hover:bg-sunk'
-                        "
-                        @click="
-                            column.stage !== menu.card.stage &&
-                            move(menu.card.id, column.stage)
-                        "
-                    >
-                        {{ column.label }}
-                    </div>
-
-                    <div
-                        class="mt-1 cursor-pointer rounded-lg border-t border-rule px-[9px] py-1.5 text-small hover:bg-sunk"
-                        @click="closing = menu!.card.id; confirmingClose = true; menu = null"
-                    >
-                        {{ $t("board.close") }}
-                    </div>
-                </div>
 
                 <AlertDialog v-model:open="confirmingClose">
                     <AlertDialogContent>
@@ -673,16 +686,6 @@ const workflowAllowed = computed(() =>
                     </AlertDialogContent>
                 </AlertDialog>
             </div>
-
-            <ProjectSettings
-                v-if="settingsSelection && stageSettings"
-                v-bind="stageSettings"
-                :selection="settingsSelection"
-                :return-to="returnTo"
-                :can-manage-tasks="workflowAllowed"
-                :workflow="workflow"
-                @close="router.visit(returnTo ?? '/anfragen', { preserveState: true, preserveScroll: true })"
-            />
         </Page>
     </AdminLayout>
 </template>

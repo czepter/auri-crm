@@ -5,6 +5,7 @@
  * in the slot and push themselves right, as they did when .hrow was a rule.
  */
 import { Link } from '@inertiajs/vue3'
+import HelpButton from './HelpButton.vue'
 
 defineProps<{ title: string; kicker?: string; kickerHref?: string }>()
 </script>
@@ -22,9 +23,10 @@ defineProps<{ title: string; kicker?: string; kickerHref?: string }>()
             <h1
                 class="m-0 text-[20px] leading-7 font-semibold tracking-[-0.02em] max-[640px]:w-full"
             >
-                {{ title }}
+                <slot name="title">{{ title }}</slot>
             </h1>
             <slot />
+            <HelpButton :class="$slots.default ? undefined : 'ml-auto'" />
         </div>
     </div>
 </template>

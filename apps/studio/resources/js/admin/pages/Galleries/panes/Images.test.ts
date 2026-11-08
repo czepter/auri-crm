@@ -46,7 +46,7 @@ describe('Images', () => {
     expect(html).toContain('Highlights')
     expect(html).not.toContain(de.gallery.all)
     expect(html).toContain(de.media.upload)
-    expect(html).toContain(de.galleryRecord.density.small)
+    expect(html).toContain('role="combobox"')
   })
 
   // useVirtualList only fills its window against a real element size, which
@@ -58,7 +58,7 @@ describe('Images', () => {
 
     expect(html).toContain(de.gallery.all)
     expect(html).toContain('>2<')
-    expect(html).not.toContain(de.galleryRecord.density.small)
+    expect(html).not.toContain('role="combobox"')
   })
 
   it('a single set: heads with its own name, count and the density control', async () => {
@@ -66,7 +66,7 @@ describe('Images', () => {
 
     expect(html).toContain('Highlights')
     expect(html).toContain('>1<')
-    expect(html).toContain(de.galleryRecord.density.small)
+    expect(html).toContain('role="combobox"')
   })
 
   it('leaves the selection bar out while nothing is selected', async () => {

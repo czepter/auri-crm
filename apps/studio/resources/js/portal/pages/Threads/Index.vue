@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, toRef, watch } from 'vue'
 import { Link, useForm, usePage } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalSubhead from '@/portal/components/PortalSubhead.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
+import { dayDate } from '@/portal/lib/dates'
+import { useLiveMessages } from '@/portal/lib/liveMessages'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
@@ -18,6 +20,7 @@ type Row = { id: string; subject: string; reference: string | null; snippet: str
 
 const props = defineProps<{
   contact: { name: string }
+  studioName: string | null
   showSwitcher: boolean
   threads: Row[]
   openThread: Thread | null
@@ -26,7 +29,10 @@ const props = defineProps<{
   preselected: string | null
   // P-09: with messaging limited to bookings, "Allgemein" is not on offer.
   generalAllowed: boolean
+  live: string | null
 }>()
+
+useLiveMessages(toRef(props, 'live'))
 
 // The compose form doubles as "new conversation" — the mailbox is empty on a
 // contact's first visit, so it opens in that state rather than behind a
@@ -73,27 +79,50 @@ function send() {
    document would — at the top, on the oldest line. Both openings need it:
    switching threads, and a reply arriving in the one already open. */
 const stream = ref<HTMLElement | null>(null)
+const unseen = ref(0)
+let atBottom = true
+
+function toBottom(behavior: ScrollBehavior = 'auto') {
+  stream.value?.scrollTo({ top: stream.value.scrollHeight, behavior })
+  unseen.value = 0
+}
+
+function onScroll() {
+  const el = stream.value
+  if (!el) return
+
+  atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 48
+  if (atBottom) unseen.value = 0
+}
+
+// A focus() after a smooth scrollTo cancels it.
+function jump() {
+  stream.value?.focus({ preventScroll: true })
+  toBottom(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth')
+}
 
 watch(
-  () => `${props.openThread?.id}:${props.openThread?.messages.length}`,
-  async () => {
-    await nextTick()
+  () => [props.openThread?.id, props.openThread?.messages.length] as const,
+  async ([id, count], previous) => {
+    const added = previous && id === previous[0] ? (count ?? 0) - (previous[1] ?? 0) : 0
+    const mine = props.openThread?.messages.at(-1)?.fromStaff === false
 
-    if (stream.value) {
-      stream.value.scrollTop = stream.value.scrollHeight
+    if (added > 0 && !atBottom && !mine) {
+      unseen.value += added
+
+      return
     }
+
+    await nextTick()
+    toBottom()
   },
-  { immediate: true },
+  { immediate: true, flush: 'post' },
 )
 
 function longDateTime(iso: string) {
   return new Date(iso).toLocaleString('de-DE', {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
   })
-}
-
-function shortDate(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 const form = computed(() => (props.openThread === null || composing.value ? started : reply))
@@ -123,7 +152,7 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
 
     <PortalWrap class="flex min-h-0 flex-col pb-12 min-[980px]:pb-8" :class="subscreen && 'max-[979px]:pb-0'">
       <section class="flex-none pt-10 pb-8" :class="subscreen && 'max-[979px]:hidden'">
-        <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(30px,3.4vw,38px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
+        <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
           {{ $t('portal.messagesTitle') }}
         </h1>
       </section>
@@ -147,21 +176,19 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
             <Link
               v-for="row in threads"
               :key="row.id"
-              class="-mx-3 block rounded-[var(--r-sm)] border-b border-border p-4 text-inherit no-underline transition-colors duration-200 hover:bg-sunk"
+              class="-mx-3 block rounded-[var(--r-sm)] border-b border-border px-3 py-4 text-inherit no-underline transition-colors duration-200 hover:bg-sunk"
               :class="openThread?.id === row.id && !composing && (chosen ? 'bg-sunk' : 'min-[980px]:bg-sunk')"
               :href="`/nachrichten?unterhaltung=${row.id}`"
               preserve-scroll
               @click="composing = false"
             >
               <span class="flex items-baseline gap-3">
-                <!-- Not read state, which nothing records — the studio wrote
-                     last, so the answer is owed here. -->
                 <i v-if="row.waiting" class="size-[7px] flex-none translate-y-[-1px] self-center rounded-full bg-action" />
                 <b
                   class="flex-1 text-[14.5px] leading-[1.35] tracking-[-0.008em]"
                   :class="row.waiting ? 'font-semibold' : 'font-medium text-muted-foreground'"
                 >{{ row.subject }}</b>
-                <span class="text-[12px] whitespace-nowrap tabular-nums text-muted-foreground">{{ shortDate(row.lastAt) }}</span>
+                <span class="text-[12px] whitespace-nowrap tabular-nums text-muted-foreground">{{ dayDate(row.lastAt) }}</span>
               </span>
               <span v-if="row.snippet" class="mt-[5px] line-clamp-1 block text-[13px] text-muted-foreground">{{ row.snippet }}</span>
               <span :class="[REF, openThread?.id === row.id && !composing && 'bg-background']">
@@ -181,13 +208,13 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
         >
           <template v-if="openThread && !composing">
             <div class="flex-none border-b border-border px-6 py-5 max-[979px]:hidden">
-              <h2 class="m-0 font-serif text-[26px] leading-[1.2] font-normal tracking-[-0.012em]">{{ openThread.subject }}</h2>
+              <h2 class="m-0 font-serif text-[22px] leading-[1.25] font-normal tracking-[-0.01em]">{{ openThread.subject }}</h2>
               <span :class="REF">{{ openReference ?? $t('portal.messagesNoBooking') }}</span>
             </div>
 
             <!-- One voice answering the other. Which is which is the side and
                  the ground, not a label on every line. -->
-            <div ref="stream" class="flex min-h-0 flex-1 flex-col overflow-y-auto">
+            <div ref="stream" tabindex="-1" class="relative flex min-h-0 flex-1 flex-col overflow-y-auto outline-none" @scroll.passive="onScroll">
               <!-- mt-auto, not justify-end: a short exchange sits down by the
                    composer where it was written, and a long one still scrolls
                    from its first line instead of being clipped at the top. -->
@@ -198,7 +225,7 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
                   class="max-w-[78%] max-[979px]:max-w-[85%]"
                   :class="!message.fromStaff && 'justify-self-end text-right'"
                 >
-                  <div class="mb-1.5 text-[12px] tabular-nums text-muted-foreground">{{ message.author }} · {{ longDateTime(message.sentAt) }}</div>
+                  <div class="mb-1.5 text-[12px] tabular-nums text-muted-foreground">{{ message.fromStaff ? (studioName ?? message.author) : message.author }} · {{ longDateTime(message.sentAt) }}</div>
                   <div
                     class="rounded-md px-6 py-4 text-left text-[14.5px] leading-[1.6] whitespace-pre-wrap"
                     :class="message.fromStaff ? 'rounded-tl-[4px] bg-sunk' : 'rounded-tr-[4px] bg-foreground text-background'"
@@ -206,6 +233,17 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
                     {{ message.body }}
                   </div>
                 </div>
+              </div>
+
+              <div v-if="unseen > 0" class="sticky bottom-4 z-10 h-0 flex-none text-center">
+                <button
+                  type="button"
+                  class="-translate-y-full cursor-pointer rounded-[var(--r-pill)] border border-border bg-background px-4 py-2 text-[13px] font-medium shadow-md motion-reduce:transition-none"
+                  @click="jump"
+                >
+                  {{ $t('portal.messagesUnseen', unseen) }} ↓
+                </button>
+                <span class="sr-only" role="status">{{ $t('portal.messagesUnseen', unseen) }}</span>
               </div>
             </div>
           </template>
@@ -215,13 +253,13 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
                reads as a step still to come. -->
           <form
             class="mt-auto flex-none border-t border-border bg-background first:border-t-0"
-            :class="[openThread && !composing ? 'px-6 py-5' : 'p-6', 'max-[979px]:px-0']"
+            :class="[openThread && !composing ? 'px-6 py-5' : 'p-6 max-[979px]:mt-0', 'max-[979px]:px-0']"
             @submit.prevent="send"
           >
             <template v-if="!openThread || composing">
               <Input
                 v-model="started.subject"
-                class="mb-3.5 rounded-[var(--r-sm)] border-line-hover px-[13px] py-[11px] text-[14.5px] leading-[1.5]"
+                class="mb-3.5 rounded-[var(--r-sm)] border-input px-[13px] py-[11px] text-[14.5px] leading-[1.5]"
                 type="text"
                 :placeholder="$t('portal.messagesSubjectPlaceholder')"
               />
@@ -247,7 +285,7 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
             <div class="relative">
               <Textarea
                 v-model="form.body"
-                class="max-h-[40vh] min-h-12 resize-none rounded-[20px] border-line-hover py-[13px] pr-14 pl-4 text-[14.5px] leading-[1.5] field-sizing-content"
+                class="max-h-[40vh] min-h-12 resize-none rounded-[20px] border-input py-[13px] pr-14 pl-4 text-[14.5px] leading-[1.5] field-sizing-content"
                 :placeholder="$t('portal.messagesBodyPlaceholder')"
               />
               <!-- The mark carries the whole button, so it carries the name
@@ -256,6 +294,7 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
                 class="absolute right-1.5 bottom-1.5 size-9 justify-center p-0"
                 variant="portal"
                 type="submit"
+                :state="form.processing ? 'loading' : 'idle'"
                 :disabled="form.processing || form.body.trim() === ''"
                 :aria-label="$t('portal.messagesSend')"
               >

@@ -1,7 +1,10 @@
 <?php
 
 use App\Crm\Models\ClientCase;
+use App\Engagement\Actions\PostMessage;
+use App\Engagement\Models\Thread;
 use App\Enums\Capability;
+use App\Enums\StaffRole;
 use App\Integration\Models\ApiToken;
 use App\Models\User;
 use App\Support\AuditLogger;
@@ -94,7 +97,7 @@ it('does not publish for an mcp read', function () {
 it('hands signed-in staff a subscriber cookie for the topic', function () {
     config(['session.secure' => true]);
 
-    $response = $this->actingAs(User::factory()->create(), 'staff')->get('/einrichtung/studio');
+    $response = $this->actingAs(User::factory()->create(), 'staff')->get('/');
 
     $response->assertOk();
     expect(liveUpdateClaims($response->getCookie('__Secure-mercure_access_token', false)->getValue(), 'subscriber-key'))
@@ -104,7 +107,21 @@ it('hands signed-in staff a subscriber cookie for the topic', function () {
 it('drops the cookie prefix on plain http', function () {
     config(['session.secure' => false]);
 
-    $this->actingAs(User::factory()->create(), 'staff')->get('/einrichtung/studio')
+    $this->actingAs(User::factory()->create(), 'staff')->get('/')
         ->assertCookie('mercure_access_token', encrypted: false)
         ->assertCookieMissing('__Secure-mercure_access_token');
+});
+
+it('publishes a staff reply to the contacts on the thread, on the portal hub', function () {
+    config(['services.mercure.portal_url' => 'http://portal-hub/.well-known/mercure']);
+    $project = bookedContactProject();
+    $contact = $project->contacts()->sole();
+    $thread = Thread::factory()->for($project, 'case')->create();
+    $thread->participants()->create(['contact_id' => $contact->id]);
+
+    app(PostMessage::class)($thread, staffMember(StaffRole::Admin), 'Bis Samstag.');
+
+    Http::assertSent(fn (Request $request) => $request->url() === 'http://portal-hub/.well-known/mercure'
+        && $request['topic'] === LiveUpdate::contactTopic($contact->public_id)
+        && liveUpdateClaims(substr($request->header('Authorization')[0], 7), 'publisher-key')[0]['topics'] === [['match' => $request['topic']]]);
 });

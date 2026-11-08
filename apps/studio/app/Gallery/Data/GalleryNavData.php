@@ -57,7 +57,7 @@ class GalleryNavData extends Data
                     // Ohne das ist ein Upload, der nie veröffentlicht wurde,
                     // in der Navigation unsichtbar.
                     'countTo' => $published !== null && $published !== $draft ? $draft : null,
-                    'children' => self::sets($gallery, $sets, $draft),
+                    'children' => self::sets($gallery, $sets),
                 ],
                 ['key' => 'gestaltung', 'label' => 'galleryRecord.tab.gestaltung', 'href' => "{$base}/gestaltung", 'count' => null, 'countTo' => null, 'children' => []],
                 ['key' => 'einstellungen', 'label' => 'galleryRecord.tab.einstellungen', 'href' => "{$base}/einstellungen/allgemein", 'count' => null, 'countTo' => null, 'children' => []],
@@ -82,7 +82,7 @@ class GalleryNavData extends Data
      * @param  Collection<int, GallerySet>  $sets
      * @return list<array{key: string, label: string, translate: bool, href: string, count: int|null, reorderable: bool}>
      */
-    private static function sets(Gallery $gallery, Collection $sets, int $draft): array
+    private static function sets(Gallery $gallery, Collection $sets): array
     {
         $base = "/galerien/{$gallery->public_id}/bilder";
 
@@ -93,7 +93,7 @@ class GalleryNavData extends Data
             'label' => $set->name,
             'translate' => false,
             'href' => "{$base}/{$set->public_id}",
-            'count' => (int) $set->assets_count,
+            'count' => null,
             'reorderable' => true,
         ])->all();
 
@@ -103,7 +103,7 @@ class GalleryNavData extends Data
         }
 
         return [
-            ['key' => 'alle', 'label' => 'gallery.all', 'translate' => true, 'href' => $base, 'count' => $draft, 'reorderable' => false],
+            ['key' => 'alle', 'label' => 'gallery.all', 'translate' => true, 'href' => $base, 'count' => null, 'reorderable' => false],
             ...$rows,
         ];
     }

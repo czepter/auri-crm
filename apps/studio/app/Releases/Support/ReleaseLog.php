@@ -25,6 +25,8 @@ class ReleaseLog
 
     private const LATEST = 'release-log.latest';
 
+    private const CHECKED = 'release-log.checked';
+
     private const RELEASE = 'release-log.release.';
 
     /** Every release in one page; the service caps per_page at 100. */
@@ -69,6 +71,7 @@ class ReleaseLog
 
         Cache::forever(self::FEED, $feed['releases'] ?? []);
         Cache::forever(self::LATEST, $versions['latest'] ?? null);
+        Cache::forever(self::CHECKED, now()->toIso8601String());
 
         return count($feed['releases'] ?? []);
     }
@@ -83,6 +86,11 @@ class ReleaseLog
     public function release(string $version): ?array
     {
         return Cache::get(self::RELEASE.$version);
+    }
+
+    public function checkedAt(): ?string
+    {
+        return Cache::get(self::CHECKED);
     }
 
     public function latest(): ?string

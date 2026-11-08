@@ -85,8 +85,27 @@ class StudioSettings extends Model
         'payments_stripe_live_publishable_key', 'payments_stripe_live_secret_key',
     ];
 
+    private static ?self $unsaved = null;
+
+    /** Runs $callback with unsaved values standing in for the stored settings, as a preview needs. */
+    public static function withUnsaved(array $attributes, \Closure $callback): mixed
+    {
+        $previous = self::$unsaved;
+        self::$unsaved = (clone static::current())->forceFill($attributes);
+
+        try {
+            return $callback();
+        } finally {
+            self::$unsaved = $previous;
+        }
+    }
+
     public static function current(): self
     {
+        if (self::$unsaved !== null) {
+            return self::$unsaved;
+        }
+
         $store = Cache::store('redis');
         $key = self::CACHE_KEY_PREFIX.config('tenancy.tenant_id');
         $cached = $store->get($key);

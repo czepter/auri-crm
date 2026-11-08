@@ -2,8 +2,12 @@
 
 namespace App\Settings\Http\Controllers;
 
+use App\Crm\Models\ClientCase;
+use App\Crm\Models\Contact;
 use App\Enums\StaffRole;
+use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
+use App\Media\Models\Asset;
 use App\Models\StudioSettings;
 use App\Privacy\Actions\StudioDeletionConfirmation;
 use App\Settings\Actions\UpdateStudioSetting;
@@ -25,6 +29,12 @@ class StudioDeletionController extends Controller
         return Inertia::render('Settings/StudioDeletion', [
             'codeSent' => $confirmation->pending(),
             'graceDays' => StudioSettings::DELETION_GRACE_DAYS,
+            'counts' => [
+                'projects' => ClientCase::query()->booked()->count(),
+                'contacts' => Contact::query()->count(),
+                'galleries' => Gallery::query()->count(),
+                'files' => Asset::query()->count(),
+            ],
         ]);
     }
 

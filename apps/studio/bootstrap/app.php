@@ -120,10 +120,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // #357: the Mercure hub reads these, not Laravel (LiveUpdate::subscribe()).
-        $middleware->encryptCookies(except: ['__Secure-mercure_access_token', 'mercure_access_token']);
+        $middleware->encryptCookies(except: ['__Secure-mercure_access_token', 'mercure_access_token', 'mercure_portal_access_token']);
 
         $middleware->redirectGuestsTo('/login');
-        $middleware->redirectUsersTo('/');
+        $middleware->redirectUsersTo(fn (\Illuminate\Http\Request $request) => match (true) {
+            ! $request->is('einrichtung') => '/',
+            ! \App\Models\StudioSettings::current()->onboardingCompleted() => '/einrichtung/studio',
+            default => '/',
+        });
 
         // N-04: the MCP client calls this directly, off-browser — it holds
         // no session and so no CSRF token to present. The authorization code
@@ -180,6 +184,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // so the root view this surface uses has to be named again here
             // rather than assumed to have been set.
             Inertia::setRootView('app-'.Surface::PORTAL);
+            Inertia::share(app(HandleInertiaRequests::class)->share($request));
 
             return Inertia::render('Error', ['status' => $response->getStatusCode()])
                 ->toResponse($request)

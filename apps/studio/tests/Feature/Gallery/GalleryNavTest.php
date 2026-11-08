@@ -70,14 +70,14 @@ it('hangs the sets under the pictures and hides Alle until the second', function
 
     $children = tab(nav($this->gallery), 'bilder')['children'];
     expect($children)->toHaveCount(1)
-        ->and($children[0])->toMatchArray(['label' => $this->highlights->name, 'translate' => false, 'count' => 1]);
+        ->and($children[0])->toMatchArray(['label' => $this->highlights->name, 'translate' => false, 'count' => null]);
 
     $trauung = GallerySet::factory()->for($this->gallery)->create(['name' => 'Trauung', 'position' => 1]);
     picture($this->gallery, $trauung, 'b.jpg');
 
     $children = tab(nav($this->gallery), 'bilder')['children'];
     expect($children)->toHaveCount(3)
-        ->and($children[0])->toMatchArray(['key' => 'alle', 'translate' => true, 'count' => 2, 'reorderable' => false]);
+        ->and($children[0])->toMatchArray(['key' => 'alle', 'translate' => true, 'count' => null, 'reorderable' => false]);
 });
 
 // Entscheidung 58: Markierungen und Kommentare, keine Aufrufe — ein Zähler

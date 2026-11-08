@@ -2,9 +2,9 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import Index from './Index.vue'
 
 const galleries: App.Gallery.Data.GalleryRowData[] = [
-  { id: 'g-rahn', title: 'Rahn — Auswahl', projectName: 'Hochzeit Rahn', assetCount: 412, version: 3, expiresAt: '2026-11-30' },
-  { id: 'g-rahn-trauung', title: 'Rahn — Trauung', projectName: 'Hochzeit Rahn', assetCount: 96, version: 1, expiresAt: '2026-11-30' },
-  { id: 'g-brandt', title: 'Brandt — Vorauswahl', projectName: 'Familie Brandt — Hochzeit', assetCount: 38, version: null, expiresAt: null },
+  { id: 'g-rahn', title: 'Rahn — Auswahl', projectName: 'Hochzeit Rahn', assetCount: 412, version: 3, expiresAt: '2026-11-30', cover: null },
+  { id: 'g-rahn-trauung', title: 'Rahn — Trauung', projectName: 'Hochzeit Rahn', assetCount: 96, version: 1, expiresAt: '2026-11-30', cover: null },
+  { id: 'g-brandt', title: 'Brandt — Vorauswahl', projectName: 'Familie Brandt — Hochzeit', assetCount: 38, version: null, expiresAt: null, cover: null },
 ]
 
 const settings: App.Settings.Data.GallerySettingsData = {

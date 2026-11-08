@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Check, Copy } from 'lucide-vue-next'
-import { Button } from '@/ui/button'
+import { CopyButton } from '@/ui/copy-button'
 import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from '@/ui/dialog'
 import { Label } from '@/ui/label'
 import { InputGroup, InputGroupInput } from '@/ui/input-group'
@@ -17,18 +16,6 @@ const fields = computed(() => [
   { id: 'password', label: t('galleries.passwordField'), value: props.gallery.viewPassword },
   { id: 'pin', label: t('gallery.pinLabel'), value: props.gallery.downloadPin },
 ].filter((field): field is { id: string; label: string; value: string } => field.value !== null))
-
-const copied = ref<string | null>(null)
-
-function copy(id: string, value: string) {
-  navigator.clipboard
-    ?.writeText(value)
-    .then(() => {
-      copied.value = id
-      setTimeout(() => copied.value === id && (copied.value = null), 1600)
-    })
-    .catch(() => (copied.value = null))
-}
 </script>
 
 <template>
@@ -43,16 +30,7 @@ function copy(id: string, value: string) {
           <Label :for="`share-${field.id}`">{{ field.label }}</Label>
           <InputGroup class="bg-sunk">
             <InputGroupInput :id="`share-${field.id}`" :model-value="field.value" readonly @focus="($event.target as HTMLInputElement).select()" />
-            <Button
-              type="button"
-              variant="ghost"
-              class="size-9 flex-none p-0"
-              :aria-label="$t('gallery.copy')"
-              @click="copy(field.id, field.value)"
-            >
-              <Check v-if="copied === field.id" class="size-[18px] text-ok" />
-              <Copy v-else class="size-[18px]" />
-            </Button>
+            <CopyButton :value="field.value" variant="ghost" class="flex-none px-3" />
           </InputGroup>
         </div>
       </DialogBody>

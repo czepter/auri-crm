@@ -268,3 +268,19 @@ it('404s an accept attempt when the project has no sent quote at all', function 
         ->post("/projekte/{$project->public_id}/angebot/annehmen")
         ->assertNotFound();
 });
+
+it('offers no acceptance once the studio has booked the project', function () {
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
+    sentQuote($project);
+    markBooked($project);
+    $contact = Contact::factory()->create();
+    $project->attachContact($contact, CaseContactRole::Primary);
+
+    $props = $this->actingAs($contact, 'portal')
+        ->get("/projekte/{$project->public_id}/angebot")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect($props['canAccept'])->toBeFalse()
+        ->and($props['quote']['acceptedAt'])->not->toBeNull();
+});

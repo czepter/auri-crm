@@ -271,6 +271,12 @@ class ClientCase extends Model
         return $this->hasOne(Thread::class)->latestOfMany();
     }
 
+    /** The one the studio works on: the newest version not yet replaced, drafts included. */
+    public function currentQuote(): HasOne
+    {
+        return $this->hasOne(Quote::class)->ofMany(['id' => 'max'], fn ($query) => $query->where('status', '!=', 'superseded'));
+    }
+
     /**
      * The one the portal shows: the most recently sent quote, whatever its
      * status now reads. Ordered on sent_at rather than created_at — a

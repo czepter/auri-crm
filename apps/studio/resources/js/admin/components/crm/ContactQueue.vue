@@ -34,7 +34,7 @@ function reach(contact: App.Crm.Data.ContactRowData) {
 <template>
     <Queue>
         <div class="px-3.5 pb-3">
-            <Input
+            <Input :aria-label="$t('common.search')"
                 v-model="term"
                 size="sm"
                 type="search"

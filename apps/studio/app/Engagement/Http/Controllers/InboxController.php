@@ -3,7 +3,6 @@
 namespace App\Engagement\Http\Controllers;
 
 use App\Automation\Actions\FireAutomationRule;
-use App\Automation\Enums\AutomationRunStatus;
 use App\Automation\Models\AutomationRun;
 use App\Crm\Models\ClientCase;
 use App\Engagement\Actions\AttachThreadToCase;
@@ -118,16 +117,8 @@ class InboxController extends Controller
                 ])
                 ->all(),
             // #438: client mails an automation drafted, waiting for the studio's send.
-            'drafts' => AutomationRun::query()
-                ->where('status', AutomationRunStatus::AwaitingApproval)
-                ->with('anchorable')
-                ->latest('fired_at')
-                ->limit(100)
-                ->get()
-                ->filter(fn (AutomationRun $run) => $run->anchorable === null
-                    ? $user->can(Capability::ViewAllCases->value)
-                    : ($project = FireAutomationRule::projectOf($run->anchorable)) === null
-                        || $user->can('view', $project))
+            'drafts' => AutomationRun::awaitingFor($user)
+                ->take(100)
                 ->map(fn (AutomationRun $run) => [
                     'id' => $run->public_id,
                     'subject' => $run->subject,

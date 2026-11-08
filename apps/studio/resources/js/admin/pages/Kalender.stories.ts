@@ -55,6 +55,7 @@ const shootRahn: App.Crm.Data.ShootData = {
     { id: 'c-2', userId: 'u2', name: 'Lena Krohn', initials: 'LK' },
   ],
   forwardStatuses: [{ value: 'shot', label: 'Fotografiert' }],
+  dueStatus: null,
   timeline: [],
   pdfUrl: '/auftraege/p-rahn/shootings/s-rahn-feier.pdf',
   icsUrl: '/auftraege/p-rahn/shootings/s-rahn-feier.ics',
@@ -80,6 +81,7 @@ const shootAhrens: App.Crm.Data.ShootData = {
     { id: 'c-3', userId: 'u1', name: 'Christian Zepter', initials: 'CZ' },
   ],
   forwardStatuses: [{ value: 'confirmed', label: 'Bestätigt' }],
+  dueStatus: null,
   timeline: [],
   pdfUrl: '/auftraege/p-ahrens/shootings/s-ahrens-standesamt.pdf',
   icsUrl: '/auftraege/p-ahrens/shootings/s-ahrens-standesamt.ics',
@@ -118,7 +120,6 @@ const meta = {
     },
     mine: ['s-rahn-feier'],
     workingDays: [1, 2, 3, 4, 5],
-    settingsOpen: false,
     season: {
       shoots: [
         ...samstage(2026, 18, 36, 'delivered', 'Ausgeliefert'),
@@ -161,4 +162,3 @@ export const SaisonFastLeer: Story = {
 export const ListeLeer: Story = { args: { view: 'liste', shoots: [] } }
 
 /** Arbeitstage über dem Monat. */
-export const Einstellungen: Story = { args: { settingsOpen: true } }

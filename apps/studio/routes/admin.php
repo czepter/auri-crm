@@ -367,9 +367,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/auswertungen', ReportController::class)->name('reports.index');
 
         Route::get('/kalender', [CalendarController::class, 'index'])->name('calendar.index');
-        Route::get('/kalender/einstellungen', [CalendarController::class, 'index'])
-            ->defaults('settings', true)
-            ->name('calendar.settings');
+        Route::redirect('/kalender/einstellungen', '/profil/kalender')->name('calendar.settings');
         Route::post('/kalender/abo', [CalendarController::class, 'regenerate'])
             ->name('calendar.regenerate');
 
@@ -399,6 +397,8 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/einstellungen/belege', [StudioSettingsController::class, 'updateReceipts'])->name('settings.receipts.update');
         Route::get('/einstellungen/belege/angebot-vorschau', [StudioSettingsController::class, 'previewQuoteLayout'])
             ->name('settings.receipts.quote-layout-preview');
+        Route::get('/einstellungen/zahlung/rechnung-vorschau', [StudioSettingsController::class, 'previewInvoice'])
+            ->name('settings.payment.invoice-preview');
         Route::get('/einstellungen/email/vorschau', [StudioSettingsController::class, 'previewMail'])->name('settings.mail.preview');
         Route::patch('/einstellungen/email', [StudioSettingsController::class, 'updateMail'])->name('settings.mail.update');
 
@@ -448,6 +448,10 @@ Route::middleware('audience:staff')->group(function () {
             ->name('automations.store');
         Route::get('/einstellungen/automationen/{automationRule}', [AutomationRuleController::class, 'edit'])
             ->name('automations.edit');
+        Route::get('/einstellungen/automationen/{automationRule}/vorschau', [AutomationRuleController::class, 'preview'])
+            ->name('automations.preview');
+        Route::post('/einstellungen/automationen/{automationRule}/testmail', [AutomationRuleController::class, 'testMail'])
+            ->name('automations.test-mail');
         Route::patch('/einstellungen/automationen/{automationRule}', [AutomationRuleController::class, 'update'])
             ->name('automations.update');
         Route::delete('/einstellungen/automationen/{automationRule}', [AutomationRuleController::class, 'destroy'])
@@ -589,6 +593,10 @@ Route::middleware('audience:staff')->group(function () {
             ->defaults('tab', 'messages')
             ->missing(fn (Request $request) => LeadCaseController::legacyRedirect($request))
             ->name('leads.messages');
+        Route::get('/anfragen/{case}/info', [LeadCaseController::class, 'show'])
+            ->defaults('tab', 'info')
+            ->missing(fn (Request $request) => LeadCaseController::legacyRedirect($request))
+            ->name('leads.info');
         Route::get('/anfragen/{case}/angebot', [LeadCaseController::class, 'show'])
             ->defaults('tab', 'quotes')
             ->missing(fn (Request $request) => LeadCaseController::legacyRedirect($request))
@@ -628,6 +636,8 @@ Route::middleware('audience:staff')->group(function () {
             ->name('projects.update');
         Route::post('/auftraege/{case}/stufe', [CaseController::class, 'stage'])
             ->name('projects.stage');
+        Route::get('/auftraege/{case}/info', [CaseController::class, 'info'])
+            ->name('projects.info');
         Route::get('/auftraege/{case}/shootings', [CaseController::class, 'shoots'])
             ->name('projects.shoots');
         Route::get('/auftraege/{case}/aufgaben', [CaseController::class, 'tasks'])

@@ -10,7 +10,6 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
 use App\Models\User;
-use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 
 /**
@@ -88,8 +87,7 @@ class OpenCases
 
         $stalled = $this->position->stalled($project->shoots);
         $late = $project->paymentPlan?->installments
-            ->filter(fn (PaymentInstallment $rate) => in_array($rate->status, [PaymentInstallmentStatus::Scheduled, PaymentInstallmentStatus::Invoiced], true)
-                && $rate->due_on->lt(today()))
+            ->filter(fn (PaymentInstallment $rate) => $rate->isLate())
             ->sortBy('due_on')
             ->first();
         $next = $project->shoots
@@ -105,15 +103,30 @@ class OpenCases
             default => ['spaeter', null, null],
         };
 
+        $stage = $shoot?->status->name ?? ($this->position)($project)->label;
+
         return ['group' => $group, 'row' => new CaseQueueRowData(
             id: $project->public_id,
             name: $project->contactNames(),
             date: ($stalled ?? $next ?? $project->primaryShoot)?->date?->format('Y-m-d'),
-            stage: $shoot?->status->name ?? ($this->position)($project)->label,
+            stage: $stage,
             reason: $reason,
             days: $since === null ? null : (int) $since->copy()->startOfDay()->diffInDays(today()),
             open: $open !== null && $project->is($open),
+            step: match (true) {
+                $stalled !== null => $this->stages->anchored(StagePipeline::Project, StageAnchor::Shot)?->name ?? $stage,
+                $group === 'woche' => ($shoot ? $this->forward($shoot) : null) ?? ($next->label ?: $stage),
+                $group === 'bearbeitung' => $this->forward($shoot) ?? $stage,
+                default => $stage,
+            },
         )];
+    }
+
+    private function forward(Shoot $shoot): ?string
+    {
+        return $this->stages->ordered(StagePipeline::Project)
+            ->first(fn ($status) => $status->is_active && $status->anchor !== StageAnchor::Archived && $shoot->status->canTransitionTo($status))
+            ?->name;
     }
 
     private function sortOf(StageAnchor $anchor): int

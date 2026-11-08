@@ -189,19 +189,19 @@ describe('Record', () => {
   })
 
   // The old head kept a password field and a six-column counter band in
-  // clear on every gallery, ~290px of cold data before anything you could
-  // act on. Both moved into the ⚙ pane (galerie-fundament layout fix).
-  it('the header renders no password field and no counter band', async () => {
-    const html = await render({
-      ...base,
-      gallery: { ...gallery, viewPassword: 'geheim' },
-      figures: { ...base.figures, marked: 3, downloaded: 2, viewed: 5 },
-    })
+  // clear on every gallery; both live in the ⚙ pane.
+  it('the header renders no password field', async () => {
+    const html = await render({ ...base, gallery: { ...gallery, viewPassword: 'geheim' } })
 
     expect(html).not.toContain('geheim')
-    expect(html).not.toContain(de.galleryRecord.marked)
-    expect(html).not.toContain(de.galleryRecord.downloaded)
-    expect(html).not.toContain(de.galleryRecord.viewed)
+  })
+
+  it('shows the figures in the rail beside the Bilder grid', async () => {
+    const html = await render({ ...base, figures: { ...base.figures, published: 1, assets: 2, marked: 3, downloaded: 2, viewed: 5 } })
+
+    expect(html).toMatch(new RegExp(`${de.galleryRecord.viewed}</dt>\\s*<dd[^>]*>5<`))
+    expect(html).toMatch(new RegExp(`${de.galleryRecord.marked}</dt>\\s*<dd[^>]*>3<`))
+    expect(html).toMatch(new RegExp(`${de.galleryRecord.downloaded}</dt>\\s*<dd[^>]*>2<`))
   })
 
   // R39/R32: the More menu's own entry point into pre-release, offered only
@@ -239,5 +239,18 @@ describe('Record', () => {
     // so the plain label alone would pass whether or not the chip rendered.
     expect(html).toContain('bg-due-bg')
     expect(html).toContain(de.galleryRecord.prereleaseStop)
+  })
+
+  it('shows the state word with the expiry date instead of the version chip', async () => {
+    const html = await render({ ...base, figures: { ...base.figures, published: 1, assets: 2, expiresAt: '2026-11-17' } })
+
+    expect(html).toContain('Online bis 17.11.2026')
+  })
+
+  it('keeps Zurücknehmen in the More menu, not among the head buttons', async () => {
+    const html = await render({ ...base, figures: { ...base.figures, published: 1, assets: 2 } })
+
+    expect(html).toContain(de.galleryRecord.withdraw)
+    expect(html).not.toMatch(new RegExp(`<button[^>]*>\\s*${de.galleryRecord.withdraw}`))
   })
 })

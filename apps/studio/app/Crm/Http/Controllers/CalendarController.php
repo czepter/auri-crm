@@ -8,14 +8,18 @@ use App\Crm\Data\ShootData;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\Task;
 use App\Crm\Support\CrmVocabulary;
 use App\Crm\Support\ShootCalendar;
 use App\Enums\Capability;
+use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
 use App\Models\Absence;
 use App\Models\StudioClosure;
 use App\Models\StudioSettings;
 use App\Models\User;
+use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Models\Quote;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -46,7 +50,6 @@ class CalendarController extends Controller
         $user = auth('staff')->user();
         $manages = $user->can(Capability::ManageSettings->value);
 
-        abort_if($request->route('settings') === true && ! $manages, 404);
         $month = $this->month($request);
         $view = in_array($request->query('ansicht'), ['monat', 'liste', 'saison'], true) ? $request->query('ansicht') : 'monat';
 
@@ -78,6 +81,21 @@ class CalendarController extends Controller
             ->whereDate('starts_on', '<=', $to->toDateString())
             ->get();
 
+        $visibleCases = ClientCase::query()->visibleTo($user)->select('cases.id');
+        $range = [$from->toDateString(), $to->toDateString()];
+
+        $tasks = Task::query()->with('case')->open()->visibleTo($user)
+            ->whereBetween('due_on', $range)->get();
+
+        $quotes = Quote::query()->with('case')
+            ->whereIn('case_id', $visibleCases)
+            ->where('status', QuoteStatus::Sent->value)
+            ->whereBetween('valid_until', $range)->get();
+
+        $galleries = Gallery::query()->with('case')
+            ->whereIn('case_id', $visibleCases)
+            ->whereBetween('expires_at', [$from->startOfDay(), $to->endOfDay()])->get();
+
         $days = [];
         $solo = User::soloStudio();
 
@@ -96,6 +114,30 @@ class CalendarController extends Controller
                             what: $shoot->case->name,
                             who: $solo ? null : ($shoot->crew->map(fn ($assignment) => $assignment->user->name)->join(', ') ?: null),
                             projectId: $shoot->case->public_id,
+                        ))->values()->all(),
+                    ...$tasks->filter(fn (Task $task) => $task->due_on->toDateString() === $date)
+                        ->map(fn (Task $task) => new CalendarEntryData(
+                            kind: 'task',
+                            time: null,
+                            what: $task->title,
+                            who: null,
+                            projectId: $task->case?->public_id,
+                        ))->values()->all(),
+                    ...$quotes->filter(fn (Quote $quote) => $quote->valid_until->toDateString() === $date)
+                        ->map(fn (Quote $quote) => new CalendarEntryData(
+                            kind: 'quote',
+                            time: null,
+                            what: $quote->case->name,
+                            who: null,
+                            projectId: $quote->case->public_id,
+                        ))->values()->all(),
+                    ...$galleries->filter(fn (Gallery $gallery) => $gallery->expires_at->toDateString() === $date)
+                        ->map(fn (Gallery $gallery) => new CalendarEntryData(
+                            kind: 'gallery',
+                            time: null,
+                            what: $gallery->case->name,
+                            who: null,
+                            projectId: $gallery->case->public_id,
                         ))->values()->all(),
                     ...$absences->filter(fn (Absence $absence) => $absence->coversDate($date))
                         ->map(fn (Absence $absence) => new CalendarEntryData(
@@ -137,7 +179,6 @@ class CalendarController extends Controller
                 ->values(),
             'season' => $view === 'saison' ? $this->season($user, $vocabulary) : null,
             'workingDays' => $manages ? StudioSettings::current()->workingDays() : null,
-            'settingsOpen' => $request->route('settings') === true,
         ]);
     }
 

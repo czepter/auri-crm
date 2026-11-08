@@ -19,6 +19,7 @@ import CreditNoteDialog from '@/admin/components/payments/CreditNoteDialog.vue'
 import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
 
 const props = defineProps<{ invoices: App.Payments.Data.InvoiceRowData[], exportYears: number[] }>()
 useLiveProps(['invoices', 'exportYears'])
@@ -26,18 +27,20 @@ useLiveProps(['invoices', 'exportYears'])
 const { t } = useI18n()
 
 const query = ref('')
-const filter = ref('open')
-
-const filters = computed(() => ['open', 'paid', 'cancelled', 'all'].map((value) => ({ value, label: t(`invoicesOverview.${value}`) })))
 
 const OPEN = ['open', 'partial', 'overdue']
-const CHIP: Record<string, string> = { open: 'now', partial: 'now', overdue: 'fail', paid: 'done', cancelled: 'off' }
+const matches = (value: string, status: string) => value === 'all' || (value === 'open' ? OPEN.includes(status) : status === value)
+const filter = ref('all')
+
+const filters = computed(() => ['all', 'open', 'paid', 'cancelled'].map((value) => ({ value, label: t(`invoicesOverview.${value}`) })))
+
+const CHIP: Record<string, ChipTone> = { open: 'warn', partial: 'warn', overdue: 'danger', paid: 'success', cancelled: 'neutral' }
 
 const shown = computed(() => {
   const needle = query.value.trim().toLocaleLowerCase('de')
 
   return props.invoices.filter((invoice) =>
-    (filter.value === 'all' || (filter.value === 'open' ? OPEN.includes(invoice.status) : invoice.status === filter.value))
+    matches(filter.value, invoice.status)
     && (!needle || `${invoice.number} ${invoice.projectName ?? ''} ${invoice.contact ?? ''}`.toLocaleLowerCase('de').includes(needle)))
 })
 </script>
@@ -58,13 +61,13 @@ const shown = computed(() => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button :as="Link" variant="pill" href="/rechnungen/neu">{{ $t('invoicesOverview.create') }}</Button>
+            <Button v-if="invoices.length" :as="Link" variant="pill" href="/rechnungen/neu">{{ $t('invoicesOverview.create') }}</Button>
           </div>
         </PageHead>
 
         <template v-if="invoices.length">
           <div class="flex flex-wrap items-center gap-3 px-6 pt-4.5">
-            <Input v-model="query" class="h-8 w-64" type="search" :placeholder="$t('invoicesOverview.searchPlaceholder')" />
+            <Input :aria-label="$t('invoicesOverview.searchPlaceholder')" v-model="query" class="h-8 min-w-60 w-64 shrink-0" type="search" :placeholder="$t('invoicesOverview.searchPlaceholder')" />
             <ChoiceGroup v-model="filter" variant="segmented" :options="filters" />
           </div>
 
@@ -102,7 +105,7 @@ const shown = computed(() => {
                     </span>
                   </TableCell>
                   <TableCell class="whitespace-nowrap">
-                    <span class="chip" :class="CHIP[invoice.status]">{{ invoice.statusLabel }}</span>
+                    <Chip :tone="CHIP[invoice.status]">{{ invoice.statusLabel }}</Chip>
                     <Popover v-if="invoice.views.length">
                       <PopoverTrigger class="ml-2 cursor-pointer border-0 bg-transparent p-0 text-small text-ink-2 underline decoration-dotted">
                         {{ $t(invoice.viewedOn ? 'invoicesOverview.viewed' : 'documentViews.title') }}
@@ -138,24 +141,12 @@ const shown = computed(() => {
                     </div>
                   </TableCell>
                 </TableRow>
-
-                <TableRow v-for="note in invoice.creditNotes" :key="note.id">
-                  <TableCell tone="muted" class="whitespace-nowrap">
-                    <a v-if="note.hasDocument" :href="`/rechnungen/${invoice.id}/gutschrift/${note.id}`" target="_blank">{{ note.number }}</a>
-                    <template v-else>{{ note.number }}</template>
-                  </TableCell>
-                  <TableCell tone="muted">{{ $t('payments.creditNote') }}</TableCell>
-                  <TableCell tone="muted" class="whitespace-nowrap">{{ dayWithWeekday(note.issuedOn) }}</TableCell>
-                  <TableCell />
-                  <TableCell align="right" tone="muted" class="whitespace-nowrap">−{{ formatEuros(note.amount) }}</TableCell>
-                  <TableCell colspan="2" />
-                </TableRow>
               </template>
             </tbody>
           </Table>
         </template>
 
-        <Empty v-else class="mx-8 mt-7" :text="$t('invoicesOverview.empty')">
+        <Empty v-else :text="$t('invoicesOverview.empty')">
           <Button :as="Link" variant="pill" href="/rechnungen/neu">{{ $t('invoicesOverview.create') }}</Button>
         </Empty>
       </div>

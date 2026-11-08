@@ -21,7 +21,7 @@ it('rendert Markdown zu HTML', function () {
     $entry = app(HelpIndex::class)->find('lead-anlegen', ['manage_leads']);
 
     expect(app(RenderHelpArticle::class)($entry)->html)
-        ->toContain('<h2>Von Hand erfassen</h2>');
+        ->toContain('<strong>Anfrage');
 });
 
 it('setzt die API-Domain ein', function () {
@@ -62,4 +62,14 @@ it('escaped einen Wert, der aus einer Eingabe des Inhabers stammt', function () 
 
     expect($html)->not->toContain('<script>')
         ->and($html)->toContain('&lt;script&gt;');
+});
+
+it('lässt einen Abschnitt mit leerem Platzhalter ganz weg', function () {
+    StudioSettings::current()->forceFill(['inbound_secret' => null])->save();
+
+    $entry = app(HelpIndex::class)->find('mail-weiterleitung', []);
+
+    expect(app(RenderHelpArticle::class)($entry)->html)
+        ->not->toContain('Adresse dieses Studios')
+        ->and(app(RenderHelpArticle::class)($entry)->html)->not->toContain('<pre>');
 });

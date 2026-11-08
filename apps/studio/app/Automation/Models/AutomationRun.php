@@ -2,10 +2,13 @@
 
 namespace App\Automation\Models;
 
+use App\Automation\Actions\FireAutomationRule;
 use App\Automation\Enums\AutomationRunStatus;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\Contact;
+use App\Enums\Capability;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -55,6 +58,26 @@ class AutomationRun extends Model
     public function contacts(): Collection
     {
         return Contact::query()->whereIn('id', $this->contact_ids ?? [])->get();
+    }
+
+    /**
+     * The client mails waiting for a send that this user may open; the
+     * Posteingang list and the sidebar badge both read it.
+     *
+     * @return Collection<int, AutomationRun>
+     */
+    public static function awaitingFor(User $user): Collection
+    {
+        return static::query()
+            ->where('status', AutomationRunStatus::AwaitingApproval)
+            ->with('anchorable')
+            ->latest('fired_at')
+            ->get()
+            ->filter(fn (AutomationRun $run) => $run->anchorable === null
+                ? $user->can(Capability::ViewAllCases->value)
+                : ($project = FireAutomationRule::projectOf($run->anchorable)) === null
+                    || $user->can('view', $project))
+            ->values();
     }
 
     public function rule(): BelongsTo

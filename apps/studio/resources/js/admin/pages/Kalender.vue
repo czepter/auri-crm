@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import CalendarSeason from '@/admin/components/crm/CalendarSeason.vue'
-import CalendarSettings from '@/admin/components/crm/CalendarSettings.vue'
 import Page from '@/ui/page/Page.vue'
 import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
 import PageHead from '@/ui/page/PageHead.vue'
 import Empty from '@/ui/page/Empty.vue'
+import { QueueGroup, QueueItem } from '@/ui/queue'
 import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
@@ -24,7 +24,6 @@ const props = defineProps<{
   mine: string[]
   season: InstanceType<typeof CalendarSeason>['$props']['season'] | null
   workingDays: number[] | null
-  settingsOpen: boolean
 }>()
 useLiveProps(['days', 'shoots', 'projects', 'mine', 'season', 'workingDays'])
 
@@ -35,6 +34,11 @@ const seasonLabel = ref('')
 // the month down a screen. The draft has no such day; this is the ruling for
 // when one turns up.
 const SHOWN = 3
+const chipKinds = ['task', 'quote', 'gallery']
+
+function entryLabel(entry: App.Crm.Data.CalendarDayData['entries'][number]) {
+  return [entry.time, entry.what, entry.who].filter(Boolean).join(' · ')
+}
 
 function entries(day: App.Crm.Data.CalendarDayData) {
   return day.entries.slice(0, SHOWN)
@@ -53,6 +57,13 @@ function dayNumber(date: string) {
 function go(month: string, view: string = props.view) {
   router.get('/kalender', { monat: month, ansicht: view }, { preserveScroll: true, preserveState: true })
 }
+
+// A phone opens on the list unless the URL names a view.
+onMounted(() => {
+  if (window.matchMedia('(max-width: 640px)').matches && !new URLSearchParams(location.search).has('ansicht')) {
+    router.get('/kalender', { monat: props.month, ansicht: 'liste' }, { replace: true, preserveState: true })
+  }
+})
 
 // The list answers "what is next", so it groups by nearness rather than by
 // the month the grid is showing.
@@ -87,7 +98,7 @@ function shortDate(date: string | null) {
         <PageHead :kicker="$t('calendar.title')" :title="view === 'saison' ? seasonLabel : label">
           <ChoiceGroup
             :model-value="view"
-            class="ml-auto"
+            class="ml-auto min-[641px]:order-2 max-[640px]:ml-0 max-[640px]:[&_span]:inline-flex max-[640px]:[&_span]:min-h-11 max-[640px]:[&_span]:items-center"
             :options="[
               { value: 'monat', label: $t('calendar.viewMonth') },
               { value: 'liste', label: $t('calendar.viewList') },
@@ -101,7 +112,8 @@ function shortDate(date: string | null) {
             v-if="workingDays"
             :as="Link"
             variant="pill-muted"
-            :href="`/kalender/einstellungen?monat=${month}&ansicht=${view}`"
+            class="max-[640px]:hidden min-[641px]:order-3"
+            :href="'/profil/kalender'"
           >
             {{ $t('stages.entry') }}
           </Button>
@@ -112,9 +124,23 @@ function shortDate(date: string | null) {
             :key="step[0]"
             type="button"
             variant="pill-muted"
+            class="min-[641px]:order-1 max-[640px]:min-h-11 max-[640px]:min-w-11"
+            :class="step[0] === '←' && 'max-[640px]:ml-auto'"
+            :aria-label="step[0] === '←' ? $t('calendar.previousMonth') : $t('calendar.nextMonth')"
+            :title="step[0] === '←' ? $t('calendar.previousMonth') : $t('calendar.nextMonth')"
             @click="go(step[1])"
           >
             {{ step[0] }}
+          </Button>
+
+          <Button
+            v-show="view !== 'saison'"
+            :as="Link"
+            variant="pill-muted"
+            class="min-[641px]:order-1 max-[640px]:min-h-11"
+            :href="`/kalender?ansicht=${view}`"
+          >
+            {{ $t('calendar.today') }}
           </Button>
         </PageHead>
 
@@ -145,17 +171,22 @@ function shortDate(date: string | null) {
               :is="entry.projectId ? Link : 'span'"
               v-for="(entry, index) in entries(day)"
               :key="index"
-              class="mt-[5px] block text-small no-underline"
+              class="mt-[5px] block text-small no-underline max-[640px]:mt-0 max-[640px]:inline-block max-[640px]:min-w-4 max-[640px]:py-2 max-[640px]:text-center"
+              :aria-label="entryLabel(entry)"
               :class="{ hold: 'text-ring', away: 'text-ink-2' }[entry.kind ?? ''] ?? 'text-inherit'"
               :href="entry.projectId ? `/auftraege/${entry.projectId}` : undefined"
             >
               <span
                 v-if="entry.time"
-                class="tabular-nums"
+                class="mr-1 tabular-nums max-[640px]:hidden"
                 :class="entry.kind === 'away' ? 'font-normal' : 'font-semibold'"
-              >{{ entry.time }} </span>
-              <!-- A phone cell is 50px wide: the time alone, or a dot; the entry still links to its project. -->
-              <span v-if="!entry.time" class="hidden max-[640px]:inline">•</span>
+              >{{ entry.time }}</span>
+              <!-- A phone cell is 50px wide: one dot per entry, still a link to its project. -->
+              <span class="hidden max-[640px]:inline">•</span>
+              <span
+                v-if="chipKinds.includes(entry.kind)"
+                class="mr-1 rounded-sm bg-rule px-1 text-small font-semibold text-ink-2 max-[640px]:hidden"
+              >{{ $t(`calendar.kind.${entry.kind}`) }}</span>
               <span class="max-[640px]:hidden">{{ entry.what }}</span>
               <!-- The measured values, not the ones crm.css .cal .e .who alone would
                    suggest: a second .who rule reaches this span as well. -->
@@ -175,7 +206,29 @@ function shortDate(date: string | null) {
           <CalendarSeason v-if="season" :season="season" @range="seasonLabel = $event" />
         </template>
 
-        <Table v-else>
+        <div v-if="view !== 'saison'" class="hidden px-3 pt-2 max-[640px]:block">
+          <Empty v-if="!groups.length" :text="$t('dashboard.weekEmpty')">
+            <div class="flex items-center gap-2">
+              <Button :as="Link" variant="pill" href="/anfragen/neu">{{ $t('leads.createKicker') }}</Button>
+              <Button :as="Link" variant="pill-muted" href="/projekte">{{ $t('calendar.toProjects') }}</Button>
+            </div>
+          </Empty>
+
+          <template v-for="[key, rows] in groups" :key="key">
+            <QueueGroup :title="$t(`calendar.group.${key}`)" :count="rows.length" />
+            <QueueItem
+              v-for="shoot in rows"
+              :key="shoot.id"
+              class="min-h-14"
+              :href="`/auftraege/${projects[shoot.id].id}`"
+              :name="projects[shoot.id].name"
+              :meta="shoot.statusLabel"
+              :title="[shortDate(shoot.date) + (shoot.callTime ? ` ${shoot.callTime}` : ''), shoot.venue].filter(Boolean).join(' · ')"
+            />
+          </template>
+        </div>
+
+        <Table v-if="view === 'liste'" class="max-[640px]:hidden">
           <thead>
             <tr>
               <TableHead>{{ $t('calendar.colDate') }}</TableHead>
@@ -214,11 +267,16 @@ function shortDate(date: string | null) {
           </tbody>
         </Table>
 
-        <CalendarSettings
-          v-if="settingsOpen && workingDays"
-          :working-days="workingDays"
-          @close="go(month)"
-        />
+        <Button
+          v-if="workingDays"
+          :as="Link"
+          variant="pill-muted"
+          class="mx-4 mt-4 hidden min-h-11 max-[640px]:inline-flex"
+          :href="'/profil/kalender'"
+        >
+          {{ $t('stages.entry') }}
+        </Button>
+
       </div>
     </Page>
   </AdminLayout>

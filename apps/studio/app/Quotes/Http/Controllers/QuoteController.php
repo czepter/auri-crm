@@ -494,6 +494,13 @@ class QuoteController extends Controller
 
         $quote->loadMissing(['items', 'paymentStages', 'recipientContact', 'case']);
 
+        if (request()->header('Sec-Fetch-Dest') === 'document') {
+            return response()->view('quotes.sheet-frame', [
+                'source' => request()->url(),
+                'back' => "/angebote/{$quote->public_id}",
+            ]);
+        }
+
         return response($render->html($quote), 200, ['Content-Type' => 'text/html']);
     }
 

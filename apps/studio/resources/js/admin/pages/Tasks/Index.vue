@@ -22,6 +22,7 @@ import PageHead from '@/ui/page/PageHead.vue'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { daysUntil, dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import Chip from '@/ui/page/Chip.vue'
 
 const props = defineProps<{
   tasks: App.Crm.Data.TaskRowData[]
@@ -32,14 +33,20 @@ useLiveProps(['tasks', 'staffOptions'])
 const solo = usePage().props.soloStudio
 const TABS = solo ? (['all', 'done'] as const) : (['mine', 'all', 'done'] as const)
 
-const tab = ref<'mine' | 'all' | 'done'>(solo ? 'all' : 'mine')
 const me = computed(() => (usePage().props.auth as { user: { id: string } | null }).user?.id ?? '')
+const tab = ref<'mine' | 'all' | 'done'>(!solo && props.tasks.some((task) => !task.isDone && task.assigneeId === me.value) ? 'mine' : 'all')
 
 const shown = computed(() =>
   props.tasks.filter((task) =>
     tab.value === 'done' ? task.isDone : !task.isDone && (tab.value === 'all' || task.assigneeId === me.value)
   )
 )
+
+function count(key: 'mine' | 'all' | 'done') {
+  return props.tasks.filter((task) =>
+    key === 'done' ? task.isDone : !task.isDone && (key === 'all' || task.assigneeId === me.value)
+  ).length
+}
 
 const selectedId = ref<string | null>(null)
 const selected = computed(() => props.tasks.find((task) => task.id === selectedId.value) ?? null)
@@ -94,7 +101,7 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('tasks.kicker')" :title="$t('tasks.title')">
-          <StudioTaskCreateDialog :staff-options="staffOptions" />
+          <StudioTaskCreateDialog :staff-options="staffOptions" :label="$t('tasks.create')" />
         </PageHead>
 
         <div class="px-6 pt-4 pb-8">
@@ -103,11 +110,12 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
               v-for="key in TABS"
               :key="key"
               class="cursor-pointer rounded-[var(--r-sm)] border-0 bg-transparent px-2.5 py-1 leading-[1.4]"
-              :class="tab === key ? 'bg-paper text-foreground shadow-[0_1px_2px_rgba(24,24,27,.08)]' : 'text-ink-2 hover:text-foreground'"
+              :class="tab === key ? 'bg-paper text-foreground shadow-[0_1px_2px_rgba(24,24,27,.08),inset_0_0_0_1px_var(--faint)]' : 'text-ink-2 hover:text-foreground'"
               type="button"
               @click="tab = key"
             >
               {{ $t(`tasks.tab.${key}`) }}
+              <span class="tabular-nums text-ink-2">{{ count(key) }}</span>
             </button>
           </div>
 
@@ -160,11 +168,12 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
 
               <span class="w-28 flex-none text-small text-ink-2">{{ due(task) }}</span>
 
-              <span v-if="task.isOverdue" class="chip fail w-[92px] text-center">{{ $t('tasks.overdue') }}</span>
-              <span
+              <Chip v-if="task.isOverdue" tone="danger" class="w-[92px] justify-center">{{ $t('tasks.overdue') }}</Chip>
+              <Chip
                 v-else-if="!task.isDone && task.dueOn !== null && daysUntil(task.dueOn) === 0"
-                class="chip now w-[92px] text-center"
-              >{{ $t('tasks.today') }}</span>
+                tone="warn"
+                class="w-[92px] justify-center"
+              >{{ $t('tasks.today') }}</Chip>
               <span v-else class="w-[92px] flex-none"></span>
             </div>
           </div>

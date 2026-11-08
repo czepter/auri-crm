@@ -2,7 +2,6 @@
 
 namespace App\Payments\Data;
 
-use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\CreditNote;
 use App\Payments\Models\PaymentInstallment;
 use Spatie\LaravelData\Data;
@@ -83,8 +82,7 @@ class PaymentInstallmentData extends Data
             paymentReference: $installment->payment_reference,
             paidAmount: (int) $installment->paid_amount,
             remaining: $installment->remaining(),
-            isLate: in_array($installment->status, PaymentInstallmentStatus::open(), true)
-                && $installment->due_on->lt(now('UTC')->startOfDay()),
+            isLate: $installment->isLate(),
             invoiceId: $installment->invoice?->public_id,
             invoiceNumber: $installment->invoice?->number,
             invoicedOn: $installment->invoice?->issued_at->format('Y-m-d'),

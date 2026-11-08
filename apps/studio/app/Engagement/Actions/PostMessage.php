@@ -9,6 +9,7 @@ use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Engagement\Notifications\Studio\ClientMessagePosted;
 use App\Models\User;
+use App\Support\LiveUpdate;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
@@ -42,6 +43,10 @@ class PostMessage
                 'scheduled_for' => $scheduledFor,
             ]);
         });
+
+        LiveUpdate::publishToContacts(Contact::query()
+            ->whereIn('id', $thread->participants()->whereNotNull('contact_id')->select('contact_id'))
+            ->pluck('public_id'));
 
         // E-11 / E-13. Outside the transaction on purpose: a mail that has
         // already left cannot be rolled back, so it must not be sent from

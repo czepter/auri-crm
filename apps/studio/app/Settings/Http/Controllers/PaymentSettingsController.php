@@ -4,6 +4,9 @@ namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
+use App\Payments\Enums\SettledVia;
+use App\Payments\Models\PaymentInstallment;
+use App\Payments\Models\StripeEvent;
 use App\Settings\Actions\UpdatePaymentSettings;
 use App\Settings\Data\PaymentSettingsData;
 use Illuminate\Http\RedirectResponse;
@@ -37,6 +40,10 @@ class PaymentSettingsController extends Controller
 
         return Inertia::render('Settings/Payments', [
             'settings' => PaymentSettingsData::current(),
+            'status' => [
+                'lastWebhookAt' => StripeEvent::query()->max('created_at'),
+                'lastPaidOn' => PaymentInstallment::query()->where('settled_via', SettledVia::Stripe)->max('paid_on'),
+            ],
         ]);
     }
 

@@ -59,7 +59,7 @@ function removeStage(index: number) {
           />
           <InputGroupAddon align="inline-end">%</InputGroupAddon>
         </InputGroup>
-        <Input v-model="stage.label" class="w-[220px]" type="text" :placeholder="$t('quotes.stageLabel')" @blur="emit('change')" />
+        <Input :aria-label="$t('quotes.stageLabel')" v-model="stage.label" class="w-[220px]" type="text" :placeholder="$t('quotes.stageLabel')" @blur="emit('change')" />
         <span class="text-small text-ink-2">{{ $t('quotes.stageAtLeast') }}</span>
         <InputGroup class="w-28">
           <InputGroupInput v-model="stage.minimum" class="text-right tabular-nums" type="text" inputmode="decimal" @blur="emit('change')" />

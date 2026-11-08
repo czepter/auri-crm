@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Link } from '@inertiajs/vue3'
+import PortalChip from '@/portal/components/PortalChip.vue'
 import PortalDot from '@/portal/components/PortalDot.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
@@ -11,6 +12,7 @@ import PortalPerson from '@/portal/components/PortalPerson.vue'
 import PortalRow from '@/portal/components/PortalRow.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
+import { dayDate, daysUntil } from '@/portal/lib/dates'
 import { reachable, type Studio } from '@/portal/lib/studio'
 import { formatEuros } from '@/lib/money'
 import { Button } from '@/ui/button'
@@ -49,6 +51,7 @@ const props = defineProps<{
   // T-08: the portal home's own welcome text (studio_settings.portal_welcome_text) —
   // null until a studio sets one, shown nowhere else.
   welcomeText: string | null
+  welcomeState: 'inquiry' | 'active' | 'done'
   pending: Pending[]
   bookings: Booking[]
   phaseCounts: Partial<Record<Phase, number>>
@@ -89,10 +92,6 @@ function folded(key: string, rows: Booking[]) {
   return rows.length > ROLLUP_FROM && !opened.value[key]
 }
 
-function shortDate(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
-}
-
 // The year already heads the group, so the tile names the day.
 function dayMonth(iso: string) {
   return new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })
@@ -113,8 +112,8 @@ function phaseState(phase: Phase) {
         <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(38px,14.3px+6.08vw,86px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
           {{ contact.name }}
         </h1>
-        <p v-if="welcomeText" class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-6 max-w-[52ch] text-[17px] leading-[1.55] text-muted-foreground">
-          {{ welcomeText }}
+        <p class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-6 max-w-[52ch] text-[17px] leading-[1.55] text-muted-foreground">
+          {{ welcomeText || $t(`portal.welcome.${welcomeState}`) }}
         </p>
       </section>
 
@@ -136,9 +135,9 @@ function phaseState(phase: Phase) {
                 :key="index"
                 :href="row.href"
                 :title="row.kind === 'message' ? (row.subject ?? $t('portal.pending.message')) : $t(`portal.pending.${row.kind}`)"
-                state="open"
+                :state="row.overdue ? 'late' : row.dueOn && daysUntil(row.dueOn) <= 14 ? 'due' : 'open'"
                 :note="row.dueOn
-                  ? $t(row.kind === 'quote' ? 'portal.validUntil' : 'portal.dueOn', { date: shortDate(row.dueOn) })
+                  ? $t(row.overdue ? 'portal.overdueSince' : row.kind === 'quote' ? 'portal.validUntil' : 'portal.dueOn', { date: dayDate(row.dueOn) })
                   : row.kind === 'message' ? $t('portal.pending.message') : null"
                 :where="row.booking"
                 :aside="row.amount ? formatEuros(row.amount) : null"
@@ -224,18 +223,16 @@ function phaseState(phase: Phase) {
 
                   <span class="min-w-0">
                     <span class="mb-1.5 block text-[10.5px] leading-none font-semibold tracking-[0.15em] uppercase text-muted-foreground">{{ booking.type }}</span>
-                    <span class="block font-serif text-[23px] leading-[1.2] tracking-[-0.012em] max-[700px]:text-[20px]">{{ booking.name }}</span>
+                    <span class="block font-serif text-[22px] leading-[1.25] tracking-[-0.01em]">{{ booking.name }}</span>
                     <span class="mt-[5px] block text-[13.5px] tabular-nums text-muted-foreground">
-                      {{ [booking.date ? shortDate(booking.date) : $t('portal.dateOpen'), booking.venue].filter(Boolean).join(' · ') }}
+                      {{ [booking.date ? dayDate(booking.date) : $t('portal.dateOpen'), booking.venue].filter(Boolean).join(' · ') }}
                     </span>
                   </span>
 
                   <span class="inline-flex items-center gap-2 text-[12.5px] whitespace-nowrap text-muted-foreground max-[700px]:col-start-2 max-[700px]:mt-1.5">
                     <PortalDot :state="phaseState(booking.phase)" />
                     {{ $t(`portal.phase.${booking.phase}`) }}
-                    <template v-if="booking.openAmount">
-                      · {{ $t('portal.paymentsOpen', { amount: formatEuros(booking.openAmount) }) }}
-                    </template>
+                    <PortalChip v-if="booking.openAmount">{{ $t('portal.paymentsOpen', { amount: formatEuros(booking.openAmount) }) }}</PortalChip>
                   </span>
 
                   <!-- A pointer affordance. On a phone the whole row is the
@@ -270,7 +267,7 @@ function phaseState(phase: Phase) {
                 <span class="block text-[13px] tabular-nums text-muted-foreground">
                   {{ $t('portal.imageCount', gallery.count) }}
                   <template v-if="gallery.expiresAt">
-                    · {{ $t('gallery.onlineUntil', { date: shortDate(gallery.expiresAt) }) }}
+                    · {{ $t('gallery.onlineUntil', { date: dayDate(gallery.expiresAt) }) }}
                   </template>
                 </span>
               </a>

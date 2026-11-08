@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Button } from '@/ui/button'
+import BackButton from '@/ui/page/BackButton.vue'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import DocumentEditor from '@/admin/components/templates/DocumentEditor.vue'
@@ -25,6 +26,7 @@ const props = withDefaults(
     mailHtml: string
     palette?: PaletteEntry[]
     mergeFields?: { path: string; sample: string }[]
+    processing?: boolean
   }>(),
   { palette: () => [], mergeFields: () => [] },
 )
@@ -55,11 +57,9 @@ function send() {
 <template>
   <div class="flex h-screen flex-col">
     <header class="flex h-16 flex-none items-center gap-3.5 px-7">
-      <Button variant="ghost" class="size-8 p-0" type="button" @click="emit('cancel')">
-        <svg class="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
-      </Button>
+      <BackButton @click="emit('cancel')" />
 
-      <h1 class="m-0 text-title leading-[1.2] font-bold tracking-[-0.02em]">{{ $t('sendMail.title') }}</h1>
+      <h1 class="m-0 text-[20px] leading-7 font-semibold tracking-[-0.02em]">{{ $t('sendMail.title') }}</h1>
     </header>
 
     <div class="flex min-h-0 flex-1">
@@ -91,7 +91,7 @@ function send() {
         </Field>
 
         <div class="flex justify-end border-t border-border pt-4">
-          <Button variant="pill" type="button" @click="send">{{ $t('sendMail.submit') }}</Button>
+          <Button variant="pill" type="button" :state="processing ? 'loading' : 'idle'" @click="send">{{ $t('sendMail.submit') }}</Button>
         </div>
       </div>
 

@@ -19,6 +19,7 @@ class AutomationRunData extends Data
         public string $anchorLabel,
         public string $status,
         public string $statusLabel,
+        public ?string $draftUrl,
     ) {}
 
     public static function fromModel(AutomationRun $run): self
@@ -39,6 +40,7 @@ class AutomationRunData extends Data
                 AutomationRunStatus::Failed => 'Fehlgeschlagen',
                 AutomationRunStatus::Pending => 'Offen',
             },
+            draftUrl: $run->status === AutomationRunStatus::AwaitingApproval ? "/posteingang/entwuerfe/{$run->public_id}/senden" : null,
         );
     }
 

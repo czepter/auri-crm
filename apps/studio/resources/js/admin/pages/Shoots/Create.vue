@@ -2,8 +2,8 @@
 import { ref, watch } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import Page from '@/ui/page/Page.vue'
-import PageHead from '@/ui/page/PageHead.vue'
+import FormShell from '@/ui/page/FormShell.vue'
+import CreateSummary from '@/admin/components/CreateSummary.vue'
 import ConflictNote from '@/admin/components/crm/ConflictNote.vue'
 import ProjectTypeahead from '@/admin/components/crm/ProjectTypeahead.vue'
 import { Button } from '@/ui/button'
@@ -57,57 +57,70 @@ function submit() {
 </script>
 
 <template>
-  <AdminLayout active="uebersicht">
-    <Page data-tokens wide>
-      <div class="min-w-0 flex-1">
-        <PageHead :kicker="$t('create.kicker')" :title="$t('project.addShoot')" />
+  <AdminLayout active="kalender">
+    <FormShell
+      :kicker="$t('create.kickerShoots')" :title="$t('project.addShoot')" wide
+    >
+      <form class="flex flex-col gap-4" @submit.prevent="submit">
+        <Field v-slot="{ id }" :label="$t('create.pick')">
+          <ProjectTypeahead :id="id" v-model="project" />
+        </Field>
 
-        <form class="flex max-w-[620px] flex-col gap-4 px-6 pt-7 pb-8" @submit.prevent="submit">
-          <Field v-slot="{ id }" :label="$t('create.pick')">
-            <ProjectTypeahead :id="id" v-model="project" />
+        <template v-if="project">
+          <Field v-slot="{ id }" :label="$t('project.shootKind')">
+            <Input :id="id" v-model="form.kind" type="text" maxlength="255" list="shoot-kinds" />
+            <datalist id="shoot-kinds">
+              <option v-for="kind in kinds" :key="kind" :value="kind" />
+            </datalist>
           </Field>
 
-          <template v-if="project">
-            <Field v-slot="{ id }" :label="$t('project.shootKind')">
-              <Input :id="id" v-model="form.kind" type="text" maxlength="255" list="shoot-kinds" />
-              <datalist id="shoot-kinds">
-                <option v-for="kind in kinds" :key="kind" :value="kind" />
-              </datalist>
+          <Field v-slot="{ id }" :label="$t('project.shootLabel')">
+            <Input :id="id" v-model="form.label" type="text" />
+          </Field>
+
+          <Field v-slot="{ id }" :label="$t('project.shootDate')">
+            <DatePicker :id="id" v-model="form.date" />
+            <ConflictNote :conflicts="conflicts" />
+          </Field>
+
+          <div class="grid grid-cols-2 gap-4">
+            <Field v-slot="{ id }" :label="$t('project.callTime')">
+              <TimePicker :id="id" v-model="form.call_time" />
             </Field>
-
-            <Field v-slot="{ id }" :label="$t('project.shootLabel')">
-              <Input :id="id" v-model="form.label" type="text" />
+            <Field v-slot="{ id }" :label="$t('project.endTime')" :error="form.errors.end_time">
+              <TimePicker :id="id" v-model="form.end_time" />
             </Field>
+          </div>
 
-            <Field v-slot="{ id }" :label="$t('project.shootDate')">
-              <DatePicker :id="id" v-model="form.date" />
-              <ConflictNote :conflicts="conflicts" />
+          <div class="grid grid-cols-2 gap-4">
+            <Field v-slot="{ id }" :label="$t('project.venueName')">
+              <Input :id="id" v-model="form.venue_name" type="text" />
             </Field>
+            <Field v-slot="{ id }" :label="$t('project.venueCity')">
+              <Input :id="id" v-model="form.venue_city" type="text" />
+            </Field>
+          </div>
+        </template>
 
-            <div class="grid grid-cols-2 gap-4">
-              <Field v-slot="{ id }" :label="$t('project.callTime')">
-                <TimePicker :id="id" v-model="form.call_time" />
-              </Field>
-              <Field v-slot="{ id }" :label="$t('project.endTime')" :error="form.errors.end_time">
-                <TimePicker :id="id" v-model="form.end_time" />
-              </Field>
-            </div>
+        <Button class="mt-2 ml-0 self-start" type="submit" :disabled="!project || form.processing">
+          {{ $t('project.addShoot') }}
+        </Button>
+      </form>
 
-            <div class="grid grid-cols-2 gap-4">
-              <Field v-slot="{ id }" :label="$t('project.venueName')">
-                <Input :id="id" v-model="form.venue_name" type="text" />
-              </Field>
-              <Field v-slot="{ id }" :label="$t('project.venueCity')">
-                <Input :id="id" v-model="form.venue_city" type="text" />
-              </Field>
-            </div>
-          </template>
-
-          <Button class="mt-2 ml-0 self-start" type="submit" :disabled="!project || form.processing">
-            {{ $t('project.addShoot') }}
-          </Button>
-        </form>
-      </div>
-    </Page>
+      <template #aside>
+        <CreateSummary
+          :title="$t('common.summary')"
+          :rows="[
+            { label: $t('create.pick'), value: project?.name },
+            { label: $t('project.shootKind'), value: form.kind },
+            { label: $t('project.shootLabel'), value: form.label },
+            { label: $t('project.shootDate'), value: form.date ? new Date(form.date).toLocaleDateString('de-DE') : null },
+            { label: $t('project.callTime'), value: form.call_time },
+            { label: $t('project.endTime'), value: form.end_time },
+            { label: $t('project.venueName'), value: [form.venue_name, form.venue_city].filter(Boolean).join(', ') },
+          ]"
+        />
+      </template>
+    </FormShell>
   </AdminLayout>
 </template>

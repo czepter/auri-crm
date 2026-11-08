@@ -25,7 +25,8 @@ const props = defineProps<{
   vatSettings?: VatSettings
 }>()
 
-const mode = ref<'pdf' | 'portal'>('portal')
+// A stored quote has no draft for the portal view to render.
+const mode = ref<'pdf' | 'portal'>(props.draft ? 'portal' : 'pdf')
 
 const html = ref('')
 const stale = ref(true)
@@ -91,9 +92,10 @@ if (props.draft) {
 <template>
   <section class="flex min-w-0 flex-col">
     <div class="flex items-center gap-2.5 border-b border-border pb-2.5">
-      <span class="mb-[5px] text-small leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('quotes.preview') }}</span>
+      <span class="mb-[5px] text-small leading-none font-semibold text-faint">{{ $t('quotes.preview') }}</span>
 
       <ChoiceGroup
+        v-if="draft"
         :model-value="mode"
         :options="[{ value: 'pdf', label: $t('quotes.previewPdf') }, { value: 'portal', label: $t('quotes.previewPortal') }]"
         variant="segmented"
@@ -106,7 +108,7 @@ if (props.draft) {
           v-for="option in [{ key: 'fit', on: true, label: 'quotes.zoomFit' }, { key: 'full', on: false, label: 'quotes.zoomFull' }]"
           :key="option.key"
           class="cursor-pointer rounded-lg border-0 px-2.5 py-[5px] text-small leading-[1.3]"
-          :class="fit === option.on ? 'bg-foreground text-background' : 'bg-sunk-2 text-foreground'"
+          :class="fit === option.on ? 'bg-paper font-medium text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'bg-sunk-2 text-foreground'"
           type="button"
           @click="fit = option.on"
         >{{ $t(option.label) }}</button>

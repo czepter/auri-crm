@@ -50,7 +50,7 @@ const unread = computed(() => props.notifications.filter((row) => row.readAt ===
           </Button>
         </PageHead>
 
-        <Empty v-if="!notifications.length" class="mx-8 mt-7" :text="$t('notifications.empty')" />
+        <Empty v-if="!notifications.length" :text="$t('notifications.empty')" />
 
         <Table v-else>
           <thead>

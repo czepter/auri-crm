@@ -58,8 +58,8 @@ it('rows an installment whose dunning has run out of road', function () {
 
     expect($rows)->toHaveCount(1)
         ->and($rows->first()->who)->toBe('Sievers–Brandt')
-        ->and($rows->first()->what)->toBe('Stripe mahnt')
-        ->and($rows->first()->emphasis)->toBe('seit 9 Tagen')
+        ->and($rows->first()->what)->toBe('Rate überfällig')
+        ->and($rows->first()->emphasis)->toBe('seit 20 Tagen')
         ->and($rows->first()->whatTail)->toContain('1.100')
         ->and($rows->first()->whatTail)->not->toContain('1.100,00')
         ->and($rows->first()->hot)->toBeTrue()

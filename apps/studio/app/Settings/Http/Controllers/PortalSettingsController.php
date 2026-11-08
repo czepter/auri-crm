@@ -5,6 +5,7 @@ namespace App\Settings\Http\Controllers;
 use App\Catalog\Data\PortalServiceData;
 use App\Catalog\Models\Package;
 use App\Concerns\AuthorizesStaffSettings;
+use App\Concerns\FramesPreview;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Http\Controllers\Controller;
@@ -40,6 +41,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class PortalSettingsController extends Controller
 {
     use AuthorizesStaffSettings;
+    use FramesPreview;
 
     public function edit(): Response
     {
@@ -65,9 +67,13 @@ class PortalSettingsController extends Controller
      * geteilten Props herein, die HandleInertiaRequests der Portal-Oberfläche
      * gibt — die Bauteile des Portals lesen sie dort.
      */
-    public function preview(Request $request): Response
+    public function preview(Request $request): Response|RedirectResponse
     {
         $this->authorizeSettings();
+
+        if ($page = $this->framed($request, '/einstellungen/portal')) {
+            return $page;
+        }
 
         $state = in_array($request->query('zustand'), ['inquiry', 'active', 'done'], true)
             ? $request->query('zustand')
@@ -109,6 +115,7 @@ class PortalSettingsController extends Controller
                 ->mapWithKeys(fn (string $text) => [$text.'Url' => LegalTexts::url($text)])
                 ->all(),
             'portalNav' => null,
+            'clientRegister' => in_array($request->query('anrede'), ['formal', 'informal'], true) ? $request->query('anrede') : StudioSettings::current()->client_register,
         ]);
     }
 

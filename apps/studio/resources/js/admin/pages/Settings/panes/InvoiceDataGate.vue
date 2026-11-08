@@ -1,15 +1,30 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ProfileForm from './ProfileForm.vue'
 import { Button } from '@/ui/button'
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 
-defineProps<{
+const props = defineProps<{
   open: boolean
+  first?: boolean
+  missing: string[]
   settings: App.Settings.Data.StudioSettingsData
 }>()
 
 const emit = defineEmits<{ done: []; cancel: [] }>()
+
+const { t } = useI18n()
+
+const LABELS: Record<string, string> = {
+  tax_number: 'settings.taxNumberOrVatId',
+  bank_account_holder: 'settings.bankAccountHolder',
+  bank_iban: 'settings.bankIban',
+  register_number: 'settings.registerNumber',
+  register_court: 'settings.registerCourt',
+}
+
+const missingLabels = computed(() => props.missing.map((key) => t(LABELS[key] ?? key)).join(', '))
 
 const profileRef = ref<InstanceType<typeof ProfileForm>>()
 </script>
@@ -18,9 +33,9 @@ const profileRef = ref<InstanceType<typeof ProfileForm>>()
   <Dialog :open="open" @update:open="(value) => value || emit('cancel')">
     <DialogContent hide-close class="max-w-[560px]">
       <DialogHeader>
-        <span class="text-small leading-none font-semibold text-muted-foreground">{{ $t('gates.beforeInvoice') }}</span>
-        <DialogTitle class="mt-3">{{ $t('gates.invoiceDataTitle') }}</DialogTitle>
-        <DialogDescription>{{ $t('gates.invoiceDataHint') }}</DialogDescription>
+        <span v-if="first" class="text-small leading-none font-semibold text-muted-foreground">{{ $t('gates.beforeInvoice') }}</span>
+        <DialogTitle :class="first && 'mt-3'">{{ $t('gates.invoiceDataTitle') }}</DialogTitle>
+        <DialogDescription>{{ missingLabels }}</DialogDescription>
       </DialogHeader>
 
       <DialogBody>

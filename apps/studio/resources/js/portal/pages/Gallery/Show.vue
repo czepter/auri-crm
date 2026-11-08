@@ -1,13 +1,20 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { router, useForm, usePage } from '@inertiajs/vue3'
 import GalleryLightbox from '@/portal/components/GalleryLightbox.vue'
-import { shortDate } from '@/portal/lib/dates'
+import PortalBack from '@/portal/components/PortalBack.vue'
+import PortalHeader from '@/portal/components/PortalHeader.vue'
+import { dayDate, daysUntil } from '@/portal/lib/dates'
 import { ALL, countOf, selections, visible } from '@/portal/lib/gallerySelections'
+import { longPress, hideOnScroll } from '@/portal/lib/gestures'
 import { GRID_WIDTHS, srcSet } from '@/portal/lib/images'
+import { favoriteSync } from '@/portal/lib/lightbox'
+import { tileStyle } from '@/portal/lib/tile'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
+import { CopyButton } from '@/ui/copy-button'
+import { HoldToConfirm } from '@/ui/hold-to-confirm'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 
@@ -31,6 +38,8 @@ const props = defineProps<{
     expiresAt: string | null
     url: string
   }
+  // Set for the couple only; it is what mounts the portal shell.
+  project: { id: string; name: string } | null
   unlocked: boolean
   offers: { downloads: boolean; lists: boolean; comments: boolean }
   assets: Asset[] | null
@@ -50,6 +59,84 @@ const actions = computed(() => `${base.value}/eure-auswahl`)
 
 // One open menu at a time, keyed by asset.
 const menu = ref<string | null>(null)
+
+function closeMenu(event: Event) {
+  if (menu.value && !(event.target as Element).closest('[data-list-menu]')) menu.value = null
+}
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') menu.value = null
+}
+
+// The click that ends a long press would open the lightbox on top of the menu.
+let swallowClick = false
+let pressKey: string | null = null
+
+const press = longPress(() => {
+  menu.value = pressKey
+  swallowClick = true
+})
+
+function pressStart(event: PointerEvent, key: string) {
+  if (event.pointerType !== 'touch' || !(props.offers.lists && hasNamedLists.value)) return
+
+  pressKey = key
+  press.start(event.clientX, event.clientY)
+}
+
+function pressMove(event: PointerEvent) {
+  press.move(event.clientX, event.clientY)
+}
+
+// The menu opens under the finger that is still down; its release must not tick a list.
+function menuClick(event: Event) {
+  if (!swallowClick) return
+
+  swallowClick = false
+  event.preventDefault()
+}
+
+function openTile(index: number) {
+  if (swallowClick) {
+    swallowClick = false
+
+    return
+  }
+
+  openAt.value = index
+}
+
+// Header: on a phone the filter bar leaves on the way down and returns on the way up.
+const barHidden = ref(false)
+const phone = typeof matchMedia === 'function' ? matchMedia('(max-width: 760px)') : null
+const scrolled = hideOnScroll()
+let frame = 0
+
+function onScroll() {
+  if (frame) return
+
+  frame = requestAnimationFrame(() => {
+    frame = 0
+    const hidden = scrolled(window.scrollY)
+    barHidden.value = !!phone?.matches && hidden
+  })
+}
+
+onMounted(() => {
+  document.addEventListener('pointerdown', closeMenu)
+  window.addEventListener('pageshow', resetDownload)
+  document.addEventListener('keydown', onKeydown)
+  window.addEventListener('scroll', onScroll, { passive: true })
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', closeMenu)
+  document.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('scroll', onScroll)
+  window.removeEventListener('pageshow', resetDownload)
+  cancelAnimationFrame(frame)
+  press.cancel()
+})
 
 // The lightbox, by index into `shown`. Null is closed.
 const openAt = ref<number | null>(null)
@@ -72,6 +159,45 @@ const shown = computed(() =>
   visible(props.assets ?? [], bar.value.find((s) => s.id === active.value)?.keys ?? null),
 )
 
+const tabs = ref<HTMLElement | null>(null)
+const tabEls = new Map<string, HTMLElement>()
+const indicator = ref<{ x: number; w: number } | null>(null)
+const slide = ref(false)
+
+function tabRef(id: string, el: unknown) {
+  const node = el && '$el' in (el as object) ? (el as { $el: HTMLElement }).$el : (el as HTMLElement | null)
+  node ? tabEls.set(id, node) : tabEls.delete(id)
+}
+
+watch(
+  [active, bar, tabs],
+  () => {
+    const el = tabEls.get(active.value)
+    indicator.value = el ? { x: el.offsetLeft, w: el.offsetWidth } : null
+    requestAnimationFrame(() => (slide.value = true))
+  },
+  { flush: 'post', immediate: true },
+)
+
+const loaded = ref(new Set<string>())
+
+function markLoaded(key: string) {
+  // A function ref runs on every render; re-adding would re-render forever.
+  if (loaded.value.has(key)) return
+
+  loaded.value = new Set(loaded.value).add(key)
+}
+
+function cachedImg(key: string, el: unknown) {
+  if (el instanceof HTMLImageElement && el.complete && el.naturalWidth) markLoaded(key)
+}
+
+const downloading = ref(false)
+
+function resetDownload() {
+  downloading.value = false
+}
+
 function openList(list: List, key: string) {
   active.value = list.listId
   openAt.value = visible(props.assets ?? [], list.keys).findIndex((a) => a.key === key)
@@ -80,7 +206,6 @@ function openList(list: List, key: string) {
 // ---- the couple's own half ----
 
 const openGate = ref<string | null>(null)
-const copied = ref(false)
 const gateForm = useForm({ secret: '' })
 const listForm = useForm({ name: '' })
 
@@ -123,31 +248,23 @@ function remove(list: List) {
   router.delete(`${actions.value}/listen/${list.listId}`, { preserveScroll: true })
 }
 
-// A browser may refuse the clipboard outright (permission, insecure origin).
-// The link is on screen either way; an unhandled rejection would be the only
-// thing that broke.
-function copyLink() {
-  navigator.clipboard
-    ?.writeText(props.gallery.url)
-    .then(() => (copied.value = true))
-    .catch(() => (copied.value = false))
-}
-
 function onList(list: List, key: string) {
   return list.keys.includes(key)
 }
 
-function toggle(list: List, key: string) {
+function toggle(list: Pick<List, 'id'>, key: string, onFinish?: () => void) {
   router.post(
     `${actions.value}/listen/${list.id}/bild`,
     { key },
-    { preserveScroll: true, preserveState: false },
+    { preserveScroll: true, preserveState: false, onFinish },
   )
 }
 
 // T-08's shared branding, the same wordmark PortalFooter reads — a gallery
 // guest sees the studio's name, never the internal project it belongs to.
 const studioName = computed(() => (usePage().props.portalBranding as Branding | undefined)?.displayName)
+
+const expiring = computed(() => (props.gallery.expiresAt ? daysUntil(props.gallery.expiresAt) <= 14 : false))
 
 const form = useForm({ password: '' })
 
@@ -156,7 +273,7 @@ function submit() {
 }
 
 const subtitle = computed(() => {
-  const parts = [props.gallery.date && shortDate(props.gallery.date), props.gallery.venue].filter(Boolean)
+  const parts = [props.gallery.date && dayDate(props.gallery.date), props.gallery.venue].filter(Boolean)
 
   if (props.assets?.length) {
     parts.push(`${props.assets.length} Bilder`)
@@ -168,28 +285,84 @@ const subtitle = computed(() => {
 // The grid deliberately stays under the proxy's allow-list.
 const SIZES = '(max-width: 760px) 50vw, (max-width: 1080px) 33vw, 25vw'
 
-const ROW_HEIGHT = 260
-
-function tileStyle(asset: { width: number | null; height: number | null }) {
-  const ratio = asset.width && asset.height ? asset.width / asset.height : 1.5
-
-  // 34vw caps the row on a phone, where one full-height row would fit a single landscape frame.
-  return { aspectRatio: String(ratio), flex: `${ratio * 100} 1 calc(${ratio} * min(${ROW_HEIGHT}px, 34vw))` }
-}
-
 // The first published asset carries the cover. Nothing in the schema names
 // one, so "the first" is the studio's own ordering rather than a guess.
 const cover = computed(() => props.assets?.[0] ?? null)
 
-function expiry(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+// A guest's hearts are this session's; a client's are the lists.
+const hearts = ref(new Set(props.favorited ?? []))
+
+// A tap shows at once; a client's override is dropped when the visit ends,
+// which is also the rollback when it failed.
+const pending = ref(new Map<string, boolean>())
+const bursting = ref<string | null>(null)
+
+// The menu only earns its place once there is a second list to choose.
+const hasNamedLists = computed(() => !!props.lists?.some((l) => l.name !== null))
+const hasFavourites = computed(() => !!props.lists?.some((l) => l.keys.length))
+
+function isHeart(key: string) {
+  if (pending.value.has(key)) return pending.value.get(key)!
+
+  return props.lists ? props.lists.some((l) => l.keys.includes(key)) : hearts.value.has(key)
+}
+
+function setHeart(key: string, on: boolean) {
+  const next = new Set(hearts.value)
+  on ? next.add(key) : next.delete(key)
+  hearts.value = next
+}
+
+const syncHeart = favoriteSync(async (key) => {
+  try {
+    const response = await fetch(`${base.value}/favorit`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
+      },
+      body: JSON.stringify({ key }),
+    })
+
+    return response.ok ? (await response.json()).favorited : null
+  } catch {
+    return null
+  }
+})
+
+async function heart(key: string) {
+  const server = isHeart(key)
+  const want = !server
+
+  if (want) {
+    bursting.value = key
+    setTimeout(() => (bursting.value = null), 180)
+  }
+
+  if (props.lists) {
+    pending.value = new Map(pending.value).set(key, want)
+    toggle({ id: 'herz' }, key, () => {
+      const next = new Map(pending.value)
+      next.delete(key)
+      pending.value = next
+    })
+
+    return
+  }
+
+  setHeart(key, want)
+
+  const settled = await syncHeart(key, want, server)
+
+  if (settled !== null) setHeart(key, settled)
 }
 
 /* gallery.css, inlined where the same shape recurs on this screen. The sheet
    scopes every rule under [data-theme="gallery"], so nothing here can be
    shared with the portal's own .field / .hint / .err of the same name. */
 const INPUT = [
-  '[&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-line-hover',
+  '[&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-input',
   '[&_input]:bg-muted [&_input]:px-3.5 [&_input]:py-[13px]',
   '[&_input]:text-[15px] [&_input]:leading-[1.2] [&_input]:font-normal [&_input]:text-foreground',
   '[&_input::placeholder]:text-faint',
@@ -197,7 +370,7 @@ const INPUT = [
 /* On a photograph a box is a foreign object, so the gate's own field is a line. */
 const COVER_INPUT = [
   '[&_input]:rounded-none [&_input]:border-0 [&_input]:border-b',
-  '[&_input]:border-[rgba(242,237,233,.5)] [&_input]:bg-transparent [&_input]:px-0.5 [&_input]:py-2.5',
+  '[&_input]:border-[rgba(242,237,233,.65)] [&_input]:bg-transparent [&_input]:px-0.5 [&_input]:py-2.5',
   '[&_input]:text-center [&_input]:text-[20px] [&_input]:tracking-[0.22em] [&_input]:text-white',
   '[&_input:focus]:border-action [&_input:focus]:outline-none',
 ].join(' ')
@@ -210,14 +383,16 @@ const COVER_INPUT = [
   <!-- data-theme stays: tokens.css declares the gallery palette under it,
        and this element is the theme root that has to paint its own
        background — the portal's <html> is themed "portal" (gallery.css). -->
-  <div data-theme="gallery" class="block min-h-screen bg-background text-foreground">
+  <div class="block min-h-screen bg-background text-foreground" :class="project && 'max-[760px]:pb-[calc(56px+env(safe-area-inset-bottom))]'">
     <header
-      class="relative grid min-h-[100svh] place-items-center overflow-hidden max-[760px]:min-h-[82svh] before:absolute before:inset-0 before:z-1 before:content-['']"
-      :class="
+      class="relative grid place-items-center overflow-hidden before:absolute before:inset-0 before:z-1 before:content-['']"
+      :class="[
+        cover ? 'text-white' : 'text-foreground',
+        unlocked ? 'min-h-[34svh]' : 'min-h-[100svh] max-[760px]:min-h-[82svh]',
         cover
-          ? 'before:bg-[radial-gradient(115%_85%_at_50%_46%,rgba(12,10,9,.58)_0%,rgba(12,10,9,.80)_62%,rgba(12,10,9,.93)_100%)]'
-          : 'before:bg-none'
-      "
+          ? 'before:bg-[linear-gradient(rgba(12,10,9,.55),rgba(12,10,9,.55)),radial-gradient(115%_85%_at_50%_46%,rgba(12,10,9,.58)_0%,rgba(12,10,9,.80)_62%,rgba(12,10,9,.93)_100%)]'
+          : 'before:bg-none',
+      ]"
     >
       <img
         v-if="cover"
@@ -226,19 +401,27 @@ const COVER_INPUT = [
         class="absolute inset-0 size-full object-cover object-[50%_38%]"
       />
 
+      <div v-if="project" data-tokens>
+        <PortalHeader over />
+      </div>
+
       <!-- data-tokens: the gate's title is a bare h1, and tokens.css sets one
            unlayered — 24px in the app's own sans, which beats any utility. -->
       <div data-tokens class="relative z-3 w-[min(560px,100%)] px-8 py-11 text-center">
-        <span class="text-[13px] leading-none font-bold tracking-[0.18em] whitespace-nowrap uppercase text-foreground no-underline">
+        <span v-if="!project" class="mb-5 inline-block text-[13px] leading-none font-bold tracking-[0.18em] whitespace-nowrap uppercase text-inherit no-underline" :class="cover && 'rounded-full bg-[rgba(12,10,9,.72)] px-3.5 py-2'">
           {{ studioName }}
         </span>
         <h1
-          class="mt-5 font-[family-name:var(--font-display)] text-[clamp(34px,6vw,56px)] leading-[1.2] font-semibold tracking-[var(--display-tracking)] text-white"
+          class="font-[family-name:var(--font-display)] text-[clamp(34px,6vw,56px)] leading-[1.2] font-semibold tracking-[var(--display-tracking)] text-inherit"
         >
           {{ gallery.title }}
         </h1>
-        <p v-if="subtitle" class="mt-5 text-[14px] leading-[1.6] font-normal text-foreground opacity-80">
+        <p v-if="subtitle" class="mt-5 text-[14px] leading-[1.6] font-normal text-inherit" :class="cover ? 'inline-block rounded-full bg-[rgba(12,10,9,.72)] px-3.5 py-1.5' : 'opacity-80'">
           {{ subtitle }}
+        </p>
+        <br v-if="subtitle && gallery.expiresAt && cover" />
+        <p v-if="gallery.expiresAt" class="mt-2 text-[14px] leading-[1.6] font-normal" :class="[cover || expiring ? 'inline-block rounded-full px-3.5 py-1.5' : '', expiring ? 'bg-due-bg font-semibold text-due' : cover ? 'bg-[rgba(12,10,9,.72)] text-inherit' : 'text-inherit opacity-80']">
+          {{ $t('gallery.onlineUntil', { date: dayDate(gallery.expiresAt) }) }}
         </p>
 
         <template v-if="!unlocked">
@@ -270,8 +453,8 @@ const COVER_INPUT = [
       </div>
 
       <a
-        v-if="assets?.length"
-        class="absolute bottom-8 left-1/2 z-2 flex -translate-x-1/2 flex-col items-center gap-2.5 text-[10.5px] leading-none font-semibold tracking-[0.2em] uppercase text-muted-foreground no-underline [&_svg]:size-4 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.4]"
+        v-if="assets?.length && !unlocked"
+        class="absolute bottom-8 left-1/2 z-2 flex -translate-x-1/2 flex-col items-center gap-2.5 rounded-full bg-[rgba(12,10,9,.72)] px-4 py-3 text-[14px] leading-none font-semibold tracking-[0.12em] uppercase text-white [text-shadow:0_1px_12px_rgba(0,0,0,.7)] no-underline [&_svg]:size-4 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.4]"
         href="#raster"
       >
         {{ $t('gallery.scrollCue') }}
@@ -281,23 +464,35 @@ const COVER_INPUT = [
 
     <template v-if="unlocked">
       <div
-        class="sticky top-0 z-10 mx-auto flex max-w-[1240px] items-center justify-between gap-8 border-b border-border bg-[rgba(14,12,11,.72)] px-8 py-5 backdrop-blur-[14px] backdrop-saturate-[1.4] max-[760px]:flex-wrap max-[760px]:gap-4 max-[760px]:px-4"
+        class="sticky top-0 z-10 mx-auto flex max-w-[1240px] items-center justify-between gap-8 border-b border-border bg-[var(--bg)] px-8 py-5 max-[760px]:flex-wrap max-[760px]:gap-4 max-[760px]:px-4 transition-transform duration-300 ease-[cubic-bezier(.23,1,.32,1)] motion-reduce:transition-none"
+        :class="barHidden && 'max-[760px]:-translate-y-full'"
       >
+        <PortalBack v-if="project" class="min-[761px]:hidden" :href="`/projekte/${project.id}`" />
         <!-- tokens.css .who decides everything but the size and the colour -->
         <span
-          class="m-0 pr-[18px] text-[13.5px] leading-[1.35] font-semibold tracking-[-0.015em] text-muted-foreground max-[760px]:hidden [&_b]:font-semibold [&_b]:text-foreground"
+          class="m-0 pr-[18px] text-[14px] leading-[1.35] font-semibold tracking-[-0.015em] text-muted-foreground max-[760px]:hidden [&_b]:font-semibold [&_b]:text-foreground"
         >
           <b>{{ gallery.title }}</b>
-          <template v-if="gallery.expiresAt"> · {{ $t('gallery.onlineUntil', { date: expiry(gallery.expiresAt) }) }}</template>
+          <template v-if="gallery.expiresAt"> · {{ $t('gallery.onlineUntil', { date: dayDate(gallery.expiresAt) }) }}</template>
         </span>
         <span
           v-if="bar.length > 1"
-          class="mx-auto flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          ref="tabs"
+          class="relative mx-auto flex min-w-0 items-center gap-1.5 overflow-x-auto [scrollbar-width:none] max-[760px]:order-last max-[760px]:mx-0 max-[760px]:w-full [&::-webkit-scrollbar]:hidden"
         >
+          <span
+            v-if="indicator"
+            aria-hidden="true"
+            class="pointer-events-none absolute inset-y-0 left-0 rounded-[var(--r-pill)] bg-foreground motion-reduce:transition-none"
+            :class="slide && 'transition-[transform,width] duration-300 ease-[cubic-bezier(.23,1,.32,1)]'"
+            :style="{ width: `${indicator.w}px`, transform: `translateX(${indicator.x}px)` }"
+          />
           <Button
             v-for="selection in bar"
             :key="selection.id"
+            :ref="(el: unknown) => tabRef(selection.id, el)"
             :data-active="active === selection.id"
+            class="relative min-h-11 data-[active=true]:bg-transparent"
             type="button"
             variant="portal-filter"
             @click="active = selection.id"
@@ -307,37 +502,65 @@ const COVER_INPUT = [
           </Button>
         </span>
 
-        <Button v-if="offers.downloads" as="a" :href="`/galerien/${gallery.id}/download`">{{ $t('gallery.downloadLink') }}</Button>
+        <Button v-if="offers.downloads" class="max-[760px]:ml-auto max-[760px]:shrink-0" as="a" variant="portal" :state="downloading ? 'loading' : undefined" :href="`/galerien/${gallery.id}/download`" @click="downloading = true">
+          <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
+          {{ $t('gallery.download') }}
+        </Button>
       </div>
 
       <!-- Justified rows: basis and grow follow the aspect ratio, so every row
            fills the width at one height. `columns` left ragged holes at the
-           column ends. The trailing spacer keeps the last row from stretching. -->
-      <main
+           column ends. tileStyle caps how far the last row may stretch. -->
+      <TransitionGroup
         v-if="shown.length"
         id="raster"
-        class="mx-auto flex max-w-[1240px] flex-wrap gap-3.5 px-8 pt-11 pb-16 max-[760px]:gap-2 max-[760px]:px-4"
+        data-tokens
+        tag="main"
+        name="tile"
+        class="mx-auto flex max-w-[1240px] flex-wrap justify-center gap-3.5 px-8 pt-11 pb-16 max-[760px]:grid max-[760px]:grid-cols-2 max-[760px]:gap-1 max-[760px]:px-4 max-[760px]:pt-4 max-[760px]:pb-8"
       >
         <span
           v-for="(asset, index) in shown"
           :key="asset.key"
-          class="relative block cursor-zoom-in overflow-hidden rounded-[10px] bg-muted [&_img]:block [&_img]:size-full [&_img]:object-cover [&_img]:transition-transform [&_img]:duration-[1.2s] [&_img]:ease-[cubic-bezier(.22,.61,.36,1)] hover:[&_img]:scale-[1.03]"
+          :data-loaded="loaded.has(asset.key)"
+          class="group relative block cursor-zoom-in select-none overflow-hidden [-webkit-touch-callout:none] rounded-[10px] bg-muted max-[760px]:rounded-md max-[760px]:[aspect-ratio:1!important] max-[760px]:[flex:none!important] max-[760px]:[max-width:none!important] [&_img]:block [&_img]:size-full [&_img]:object-cover"
           :style="tileStyle(asset)"
-          @click="openAt = index"
+          @click="openTile(index)"
+          @pointerdown="pressStart($event, asset.key)"
+          @pointermove="pressMove"
+          @pointerup="press.cancel"
+          @pointercancel="press.cancel"
+          @contextmenu="offers.lists && hasNamedLists && $event.preventDefault()"
         >
+          <span aria-hidden="true" class="pointer-events-none absolute inset-0 animate-pulse bg-foreground/5 transition-opacity duration-300 group-data-[loaded=true]:animate-none group-data-[loaded=true]:opacity-0 motion-reduce:animate-none" />
+
           <!-- The list menu replaces the single heart as soon as a client is
                signed in; a guest never sees it. -->
           <button
-            v-if="offers.lists && lists?.length"
-            class="absolute top-2.5 right-2.5 z-4 grid size-8 scale-90 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(12,10,9,.5)] text-white opacity-0 backdrop-blur-[8px] transition-[opacity,transform] duration-[.22s] ease-out group-hover:scale-100 group-hover:opacity-100 aria-expanded:scale-100 aria-expanded:opacity-100 [&_svg]:size-4 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.5]"
+            v-if="offers.lists && hasNamedLists"
+            class="absolute top-2.5 right-2.5 z-4 grid size-11 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(12,10,9,.55)] text-white backdrop-blur-[8px] [&_svg]:size-5 [&_svg]:stroke-current [&_svg]:stroke-[1.5]"
+            :class="isHeart(asset.key) ? '[&_svg]:fill-current' : '[&_svg]:fill-none'"
+            data-list-menu
             type="button"
+            :aria-label="$t('gallery.favorite')"
             :aria-expanded="menu === asset.key"
             @click.stop="menu = menu === asset.key ? null : asset.key"
           >
             <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
           </button>
 
-          <span v-if="menu === asset.key" class="absolute top-12 right-2.5 z-5 w-[216px] rounded-md border border-border bg-muted p-1.5 shadow-[0_20px_48px_-16px_rgba(0,0,0,.6)]" @click.stop>
+          <button
+            v-else-if="offers.lists"
+            class="absolute top-2.5 right-2.5 z-4 grid size-11 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(12,10,9,.55)] text-white backdrop-blur-[8px] [&_svg]:size-5 [&_svg]:stroke-current [&_svg]:stroke-[1.5] [&_svg]:transition-transform [&_svg]:duration-150 motion-reduce:[&_svg]:transition-none"
+            :class="[isHeart(asset.key) ? '[&_svg]:fill-current' : '[&_svg]:fill-none', bursting === asset.key && '[&_svg]:scale-125']"
+            type="button"
+            :aria-label="isHeart(asset.key) ? $t('gallery.unfavorite') : $t('gallery.favorite')"
+            @click.stop="heart(asset.key)"
+          >
+            <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
+          </button>
+
+          <span v-if="menu === asset.key" data-list-menu class="absolute top-12 right-2.5 z-5 w-[216px] rounded-md border border-border bg-muted p-1.5 shadow-[0_20px_48px_-16px_rgba(0,0,0,.6)]" @click.stop="menuClick">
             <label v-for="list in lists" :key="list.id" class="flex cursor-pointer items-center gap-2.5 rounded-[var(--r-sm)] px-2.5 py-[9px] text-[13px] leading-none font-medium text-foreground hover:bg-[rgba(255,255,255,.06)]">
               <Checkbox
                 :model-value="onList(list, asset.key)"
@@ -359,15 +582,18 @@ const COVER_INPUT = [
               :height="asset.height ?? undefined"
               alt=""
               loading="lazy"
+              class="tile-img opacity-0 group-data-[loaded=true]:opacity-100"
+              :ref="(el: unknown) => cachedImg(asset.key, el)"
+              @load="markLoaded(asset.key)"
+              @error="markLoaded(asset.key)"
             />
           </picture>
         </span>
-        <span class="grow-[999]" />
-      </main>
+      </TransitionGroup>
 
       <!-- Unlocked over a gallery nobody has published yet: a real state,
            and the studio's link is already out there, so it says so. -->
-      <p v-else class="text-[12.5px] leading-[1.55] font-normal text-muted-foreground mt-[9px] px-8 py-16">
+      <p v-if="!shown.length" class="text-[12.5px] leading-[1.55] font-normal text-muted-foreground mt-[9px] px-8 py-16">
         {{ assets?.length ? $t('gallery.listEmpty') : $t('gallery.notPublished') }}
       </p>
 
@@ -384,9 +610,9 @@ const COVER_INPUT = [
            guest never receives any of it. -->
       <section
         v-if="offers.lists && lists"
-        class="mx-auto grid max-w-[1240px] grid-cols-[minmax(0,1fr)] gap-16 border-t border-border px-8 py-16 max-[760px]:px-4 min-[900px]:grid-cols-[minmax(0,1fr)_320px] [&>div:not(:first-child)]:mt-11"
+        class="mx-auto grid max-w-[1240px] grid-cols-[minmax(0,1fr)] gap-16 border-t border-border px-8 py-16 max-[760px]:px-4 min-[1100px]:grid-cols-[minmax(0,1fr)_320px] [&>div:not(:first-child)]:mt-11"
       >
-        <div>
+        <div v-if="hasFavourites">
           <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.listsTitle') }}</p>
 
           <div v-for="(list, index) in lists" :key="list.listId" :class="index > 0 && 'mt-8'">
@@ -399,9 +625,9 @@ const COVER_INPUT = [
               </span>
               <template v-if="list.name !== null">
                 <button type="button" @click="rename(list)">{{ $t('gallery.renameList') }}</button>
-                <button type="button" class="hover:text-destructive!" @click="remove(list)">
+                <HoldToConfirm variant="ghost" class="hover:text-destructive!" @confirm="remove(list)">
                   {{ $t('common.remove') }}
-                </button>
+                </HoldToConfirm>
               </template>
             </div>
 
@@ -421,9 +647,12 @@ const COVER_INPUT = [
             <p v-else class="text-[12.5px] leading-[1.55] font-normal text-muted-foreground mt-[9px]">{{ $t('gallery.listEmpty') }}</p>
           </div>
 
-          <form class="mt-8 flex items-center gap-3.5" @submit.prevent="addList">
-            <Input v-model="listForm.name" class="flex-1" type="text" :placeholder="$t('gallery.newListName')" />
-            <Button type="submit" variant="ghost" :disabled="!listForm.name">{{ $t('gallery.newList') }}</Button>
+          <form class="mt-8 grid gap-3.5 min-[761px]:flex min-[761px]:items-end" @submit.prevent="addList">
+            <Label class="block flex-1">
+              <span class="mb-2 block text-[13px] leading-none text-foreground">{{ $t('gallery.newListName') }}</span>
+              <Input v-model="listForm.name" type="text" />
+            </Label>
+            <Button class="min-h-11 w-full justify-center disabled:opacity-60 min-[761px]:w-auto" type="submit" variant="portal-ghost" :disabled="!listForm.name">{{ $t('gallery.newList') }}</Button>
           </form>
         </div>
 
@@ -433,9 +662,7 @@ const COVER_INPUT = [
             class="flex items-center gap-3.5 rounded-md border border-border p-3.5 [&_button]:cursor-pointer [&_button]:border-0 [&_button]:bg-none [&_button]:p-0 [&_button]:text-[12.5px] [&_button]:leading-none [&_button]:font-medium [&_button]:text-action [&_code]:min-w-0 [&_code]:flex-1 [&_code]:overflow-hidden [&_code]:text-[12.5px] [&_code]:text-ellipsis [&_code]:whitespace-nowrap [&_code]:text-muted-foreground"
           >
             <code>{{ gallery.url }}</code>
-            <button type="button" @click="copyLink">
-              {{ copied ? $t('gallery.copied') : $t('gallery.copy') }}
-            </button>
+            <CopyButton :value="gallery.url" variant="ghost" />
           </div>
 
           <!-- What can be done about a link that travelled too far is to
@@ -456,14 +683,14 @@ const COVER_INPUT = [
             <button type="button" @click="openGate = openGate === gate.key ? null : gate.key">
               {{ gates?.[gate.on] ? $t('gallery.gateRotate') : $t('gallery.gateSet') }}
             </button>
-            <button
+            <HoldToConfirm
               v-if="gates?.[gate.on]"
-              type="button"
+              variant="ghost"
               class="hover:text-destructive!"
-              @click="clearGate(gate.key)"
+              @confirm="clearGate(gate.key)"
             >
               {{ $t('gallery.gateClear') }}
-            </button>
+            </HoldToConfirm>
           </div>
 
           <form v-if="openGate" @submit.prevent="rotate(openGate)">
@@ -483,17 +710,10 @@ const COVER_INPUT = [
           </form>
 
           <p v-if="freshSecret" class="text-[12.5px] leading-[1.55] font-normal text-muted-foreground mt-[9px]"><b>{{ freshSecret }}</b> — {{ $t('gallery.secretOnce') }}</p>
-        </div>
 
-        <div v-if="guests">
-          <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.guestsTitle') }}</p>
-          <dl
-            class="m-0 grid grid-cols-[1fr_auto] gap-x-5 gap-y-3.5 text-[13.5px] leading-none font-normal [&_dd]:m-0 [&_dd]:tabular-nums [&_dd]:text-foreground [&_dt]:text-muted-foreground"
-          >
-            <dt>{{ $t('gallery.views') }}</dt><dd>{{ guests.views }}</dd>
-            <dt>{{ $t('gallery.marks') }}</dt><dd>{{ guests.marks }}</dd>
-            <dt>{{ $t('gallery.comments') }}</dt><dd>{{ guests.comments }}</dd>
-          </dl>
+          <p v-if="guests" class="mt-5 text-[13.5px] leading-none tabular-nums text-muted-foreground">
+            {{ $t('gallery.guestsLine', { views: $t('gallery.views', guests.views), marks: $t('gallery.marks', guests.marks), comments: $t('gallery.comments', guests.comments) }) }}
+          </p>
         </div>
       </section>
 
@@ -506,3 +726,51 @@ const COVER_INPUT = [
     </template>
   </div>
 </template>
+
+<style scoped>
+.tile-img {
+  filter: blur(12px);
+  transform: scale(1.04);
+  transition:
+    opacity 650ms cubic-bezier(0.23, 1, 0.32, 1),
+    filter 650ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 1.2s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+[data-loaded='true'] .tile-img {
+  filter: none;
+  transform: none;
+}
+
+[data-loaded='true']:hover .tile-img {
+  transform: scale(1.03);
+}
+
+.tile-move {
+  transition: transform 400ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.tile-enter-active {
+  transition:
+    opacity 200ms cubic-bezier(0.23, 1, 0.32, 1),
+    scale 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.tile-enter-from {
+  opacity: 0;
+  scale: 0.97;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile-img,
+  .tile-move,
+  .tile-enter-active {
+    transition: none;
+  }
+
+  .tile-img {
+    filter: none;
+    transform: none;
+  }
+}
+</style>

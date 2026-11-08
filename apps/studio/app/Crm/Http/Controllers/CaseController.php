@@ -12,7 +12,6 @@ use App\Crm\Actions\CrewAvailability;
 use App\Crm\Actions\DeriveCasePosition;
 use App\Crm\Actions\WorkflowColumns;
 use App\Crm\Actions\WriteProjectFieldValues;
-use App\Crm\Data\CasePersonData;
 use App\Crm\Data\CaseRowData;
 use App\Crm\Data\FormInstanceData;
 use App\Crm\Data\ShootData;
@@ -173,9 +172,6 @@ class CaseController extends Controller
             // anyway.
             'scope' => $this->screen->scope($case),
             ...app(ReadCaseQuote::class)($case),
-            'people' => CasePersonData::collect(
-                $case->contacts->map(CasePersonData::fromContact(...))
-            ),
             // C-25: what this type asks of a project, and what this project
             // answers. Definitions and values apart, because a value under a
             // key the type no longer defines is kept but not shown.
@@ -347,6 +343,22 @@ class CaseController extends Controller
 
         $shoots->reject(fn (Shoot $shoot) => $shoot->status->is($status))
             ->each(fn (Shoot $shoot) => app(AdvanceShootStatus::class)($shoot, $status, auth('staff')->user()));
+    }
+
+    public function info(ClientCase $case): Response|RedirectResponse
+    {
+        $this->authorize('view', $case);
+
+        if ($case->lead !== null && ! $case->isBooked()) {
+            return redirect("/anfragen/{$case->public_id}/info");
+        }
+
+        RecordVisit::record($case->isBooked() ? 'projekt' : 'anfrage', $case->public_id, $case->name);
+
+        return Inertia::render('Projects/Info', [
+            'header' => $this->header($case),
+            'shoots' => ShootData::collect($this->shootsOf($case)),
+        ]);
     }
 
     public function shoots(ClientCase $case, CrewAvailability $crew): Response
@@ -583,16 +595,14 @@ class CaseController extends Controller
     private function stalled(ClientCase $case): ?array
     {
         $shoot = $case->isBooked() ? $this->position->stalled($case->shoots()->get()) : null;
-        $shot = app(CrmVocabulary::class)->anchored(StagePipeline::Project, StageAnchor::Shot);
 
-        return $shoot === null || $shot === null ? null : [
+        return $shoot === null ? null : [
             'shootId' => $shoot->public_id,
             'label' => $shoot->label ?? $case->name,
             'date' => $shoot->date->format('Y-m-d'),
             'days' => (int) $shoot->date->copy()->startOfDay()->diffInDays(today()),
             'status' => $shoot->status->name,
             'since' => $shoot->status_entered_at?->format('Y-m-d'),
-            'next' => ['key' => $shot->key, 'label' => $shot->name],
         ];
     }
 

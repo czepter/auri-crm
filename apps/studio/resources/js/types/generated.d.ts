@@ -11,6 +11,7 @@ condition: string | null,
 conditionLabel: string | null,
 isActive: boolean,
 lastRunLabel: string | null,
+lastRunFailed: boolean,
 subject: string,
 body: string,
 triggerType: string,
@@ -20,6 +21,9 @@ offsetDays: number | null,
 direction: string | null,
 projectType: string | null,
 action: string,
+drafts: number,
+group: string,
+order: number,
 };
 export type AutomationRunData = {
 id: string,
@@ -27,6 +31,7 @@ firedAt: string,
 anchorLabel: string,
 status: string,
 statusLabel: string,
+draftUrl: string | null,
 };
 }
 namespace Enums {
@@ -188,6 +193,7 @@ stage: string,
 reason: string | null,
 days: number | null,
 open: boolean,
+step: string,
 };
 export type CaseRowData = {
 id: string,
@@ -344,6 +350,7 @@ date: string | null,
 text: string | null,
 open: boolean,
 waitingDays: number,
+step: string,
 };
 export type NextShootData = {
 projectId: string,
@@ -385,6 +392,10 @@ forwardStatuses: {
 value: string,
 label: string,
 }[],
+dueStatus: {
+value: string,
+label: string,
+} | null,
 timeline: App.Crm.Data.TimelineEntryData[],
 pdfUrl: string,
 icsUrl: string,
@@ -532,6 +543,11 @@ title: string | null,
 expiresAt: string | null,
 }[],
 history: App.Crm.Data.ThreadEntryData[],
+nextAction: {
+label: string,
+href: string | null,
+post: string | null,
+} | null,
 };
 }
 }
@@ -653,6 +669,7 @@ projectName: string | null,
 assetCount: number,
 version: number | null,
 expiresAt: string | null,
+cover: string | null,
 };
 }
 }
@@ -968,6 +985,7 @@ text: string | null,
 outcome: string,
 outcomeLabel: string,
 idleMonths: number,
+idleSince: string,
 invoiced: boolean,
 leads: number,
 messages: number,
@@ -998,6 +1016,7 @@ currency: string,
 validUntil: string | null,
 number: string | null,
 sentAt: string | null,
+createdAt: string | null,
 sentChannel: string | null,
 total: number,
 discountType: string | null,

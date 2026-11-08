@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { topLines } from './quoteSummary'
+import { grossTotal, topLines } from './quoteSummary'
 
 const line = (title: string, netTotal: number) => ({ title, netTotal })
 
@@ -35,5 +35,12 @@ describe('topLines', () => {
     topLines(items)
 
     expect(items.map((item) => item.title)).toEqual(['a', 'b'])
+  })
+})
+
+describe('grossTotal', () => {
+  it('adds VAT only in standard mode', () => {
+    expect(grossTotal({ net: 1000, vatAmount: 190, vatMode: 'standard' })).toBe(1190)
+    expect(grossTotal({ net: 1000, vatAmount: 0, vatMode: 'small_business' })).toBe(1000)
   })
 })

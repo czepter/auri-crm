@@ -71,7 +71,7 @@ const ROW = [
   </div>
 
   <div v-else>
-    <Input v-model="term" type="search" :placeholder="$t('create.pickPlaceholder')" />
+    <Input :aria-label="$t('create.pickPlaceholder')" v-model="term" type="search" :placeholder="$t('create.pickPlaceholder')" />
 
     <div v-if="rows.length" class="mt-1.5">
       <Button

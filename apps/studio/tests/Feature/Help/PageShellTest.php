@@ -16,6 +16,7 @@ it('rendert jede Admin-Seite durch Page.vue', function () {
         ->map(fn ($file) => [$file->getRelativePathname(), $file->getContents()])
         ->filter(fn ($pair) => str_contains($pair[1], 'AdminLayout'))
         ->reject(fn ($pair) => str_contains($pair[1], 'ui/page/Page.vue')
+            || str_contains($pair[1], 'ui/page/FormShell.vue')
             || str_contains($pair[1], 'ProjectShell'))
         ->map(fn ($pair) => $pair[0])
         ->values();

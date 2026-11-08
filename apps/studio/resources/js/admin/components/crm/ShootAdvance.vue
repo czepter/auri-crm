@@ -17,7 +17,7 @@ function advance(status: string) {
 
 <template>
     <div v-if="onward.length" class="flex flex-none">
-        <Button variant="pill-muted" type="button" class="min-h-10 rounded-r-none" @click="advance(onward[0].value)">
+        <Button variant="pill-muted" type="button" class="min-h-10 rounded-r-none max-[640px]:min-h-11" @click="advance(onward[0].value)">
             {{ onward[0].label }}
         </Button>
         <DropdownMenu>
@@ -25,7 +25,7 @@ function advance(status: string) {
                 <Button
                     variant="pill-muted"
                     type="button"
-                    class="min-h-10 min-w-10 justify-center rounded-l-none border-l border-line px-2"
+                    class="min-h-10 min-w-10 justify-center rounded-l-none border-l border-line px-2 max-[640px]:min-h-11 max-[640px]:min-w-11"
                     :aria-label="$t('board.colStage')"
                 >
                     <ChevronDown class="size-3.5" />
@@ -41,7 +41,7 @@ function advance(status: string) {
     </div>
     <DropdownMenu v-else-if="archive">
         <DropdownMenuTrigger as-child>
-            <Button variant="ghost" type="button" class="min-h-10 min-w-10 justify-center px-2" :aria-label="$t('project.more')">
+            <Button variant="ghost" type="button" class="min-h-10 min-w-10 justify-center px-2 max-[640px]:min-h-11 max-[640px]:min-w-11" :aria-label="$t('project.more')">
                 <Ellipsis class="size-4" />
             </Button>
         </DropdownMenuTrigger>

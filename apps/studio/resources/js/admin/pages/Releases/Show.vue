@@ -106,7 +106,7 @@ function toggle(key: string, index: number) {
                 <div class="flex gap-2 px-6 pt-6 max-[640px]:px-5">
                     <Button
                         variant="outline"
-                        :class="filter === null && 'border-foreground bg-foreground text-background hover:border-foreground'"
+                        :class="filter === null && 'border-faint bg-paper font-medium text-foreground hover:border-faint'"
                         type="button"
                         @click="filter = null"
                     >
@@ -116,7 +116,7 @@ function toggle(key: string, index: number) {
                         v-for="section in release.sections"
                         :key="section.key"
                         variant="outline"
-                        :class="filter === section.key && 'border-foreground bg-foreground text-background hover:border-foreground'"
+                        :class="filter === section.key && 'border-faint bg-paper font-medium text-foreground hover:border-faint'"
                         type="button"
                         @click="filter = section.key"
                     >

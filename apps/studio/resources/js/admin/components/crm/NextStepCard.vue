@@ -16,7 +16,8 @@ defineEmits<{ done: [] }>()
             </span>
         </div>
         <Button
-            class="ml-0 min-h-10 self-start rounded-[var(--r)] bg-foreground px-4 text-background"
+            variant="pill-muted"
+            class="min-h-10 self-start px-4"
             type="button"
             :as-child="!!href"
             @click="!href && $emit('done')"

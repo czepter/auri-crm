@@ -18,6 +18,7 @@ import { Label } from '@/ui/label'
 import { Textarea } from '@/ui/textarea'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
 
 const props = defineProps<{
   header: App.Crm.Screens.CaseHeaderData
@@ -137,22 +138,16 @@ function unassign(member: App.Crm.Data.CrewMemberData) {
   router.delete(`/crew/${member.id}`, { preserveScroll: true })
 }
 
-/* tokens.css .chip's four tones. */
-const TONE: Record<string, string> = {
-  done: 'bg-ok-bg text-ok',
-  now: 'bg-due-bg text-due',
-  next: 'bg-muted text-muted-foreground',
-  off: 'bg-muted text-faint',
-}
+const STATIC_TONE: Record<string, ChipTone> = { done: 'success', now: 'warn', next: 'neutral', off: 'neutral' }
 </script>
 
 <template>
-  <AdminLayout active="anfragen">
+  <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
     <ProjectShell :header="header" active="shoots">
         <template v-if="header.canManageShoots" #actions>
           <Dialog v-model:open="adding">
             <DialogTrigger as-child>
-              <Button variant="pill" type="button">
+              <Button variant="outline" type="button">
                 + {{ $t('project.shootAdd') }}
               </Button>
             </DialogTrigger>
@@ -276,16 +271,16 @@ const TONE: Record<string, string> = {
                 <span v-if="shoot.isPrimary" class="text-small leading-[1.5] font-semibold text-foreground">
                   {{ $t('project.primary') }}
                 </span>
-                <span :class="['rounded-[var(--r-sm)] px-2 py-[3px] text-small leading-[1.5] font-semibold', TONE[chipClass(shoot, header.position.value)]]">
+                <Chip :tone="STATIC_TONE[chipClass(shoot, header.position.value)]">
                   {{ shoot.statusLabel }}
-                </span>
+                </Chip>
 
                 <template v-if="!shoot.isCancelled && header.canManageShoots">
                   <ShootAdvance :shoot="shoot" />
 
                   <DropdownMenu>
                     <DropdownMenuTrigger
-                      class="flex size-10 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2"
+                      class="flex size-10 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2 max-[640px]:size-11"
                       :aria-label="$t('project.more')"
                     >
                       <svg class="size-4 fill-current" viewBox="0 0 24 24">

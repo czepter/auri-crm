@@ -86,9 +86,9 @@ class QuoteSent extends Notification
             $message
                 ->line('Netto: '.Number::currency($this->quote->net / 100, in: 'EUR', locale: 'de'))
                 ->line("USt. {$rate} %: ".Number::currency(($this->quote->vat_amount ?? 0) / 100, in: 'EUR', locale: 'de'))
-                ->line('Gesamtbetrag: '.Number::currency(($this->quote->net + ($this->quote->vat_amount ?? 0)) / 100, in: 'EUR', locale: 'de'));
+                ->line('Gesamtbetrag: '.Number::currency($this->quote->gross() / 100, in: 'EUR', locale: 'de'));
         } else {
-            $message->line('Gesamtbetrag: '.Number::currency($this->quote->net / 100, in: 'EUR', locale: 'de'));
+            $message->line('Gesamtbetrag: '.Number::currency($this->quote->gross() / 100, in: 'EUR', locale: 'de'));
         }
 
         if ($this->quote->valid_until !== null) {

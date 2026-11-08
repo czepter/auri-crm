@@ -60,7 +60,7 @@ function cancel() {
                 <template v-if="editable && open">
                     <a
                         v-if="!editing"
-                        class="grid size-7 place-items-center rounded-[var(--r-sm)] text-ink-2 hover:bg-sunk hover:text-foreground"
+                        class="grid size-7 place-items-center max-[640px]:size-11 rounded-[var(--r-sm)] text-ink-2 hover:bg-sunk hover:text-foreground"
                         href="#"
                         :aria-label="$t('common.edit')"
                         :title="$t('common.edit')"

@@ -6,6 +6,7 @@ import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import Card from "@/ui/page/Card.vue";
 import ContactTypeahead from "@/admin/components/crm/ContactTypeahead.vue";
 import LeadQueue from "@/admin/components/crm/LeadQueue.vue";
+import LeadRail from "@/admin/components/crm/LeadRail.vue";
 import CappedList from "@/admin/components/crm/CappedList.vue";
 import Composer from "@/admin/components/crm/Composer.vue";
 import EmptyTiles from "@/admin/components/crm/EmptyTiles.vue";
@@ -28,7 +29,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/lib/money";
-import { quoteChipClass } from "@/admin/lib/quoteDisplay";
+import Chip from "@/ui/page/Chip.vue";
+import { quoteTone } from "@/admin/lib/quoteDisplay";
+import { groupEntries } from "@/admin/lib/groupEntries";
+import { sendQuoteHref } from "@/admin/lib/leadPrimary";
+import { stepOnArrow } from "@/admin/lib/queueStep";
 import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
 import { dayWithWeekday as day, daysUntil } from "@/admin/lib/dates";
 import { bandMetrics, isBare, leadNextStep } from "@/admin/lib/projectOverview";
@@ -59,7 +64,6 @@ const props = defineProps<{
     shoots: App.Crm.Data.ShootData[];
     quote: App.Quotes.Data.QuoteData | null;
     supersededQuotes: { id: string; number: string | null; net: number }[];
-    packages: { id: string; name: string; itemCount: number; total: number }[];
     tasks: App.Crm.Data.TaskRowData[];
     thread: App.Crm.Data.ThreadEntryData[];
     types: { value: string; label: string }[];
@@ -68,13 +72,13 @@ const props = defineProps<{
     week: { date: string; what: string; projectId: string }[];
     conflicts: App.Crm.Data.DateConflictData[];
     stages: { value: string; label: string; anchor: string | null }[];
-    tab: "overview" | "quotes" | "messages";
+    tab: "overview" | "quotes" | "messages" | "info";
     header: App.Crm.Screens.CaseHeaderData;
     conversation: App.Engagement.Data.ThreadData | null;
     quotes: App.Quotes.Data.QuoteData[];
     payments: { number: string | null; rows: { label: string; amount: number }[] } | null;
 }>();
-useLiveProps(["header", "conversation", "quotes", "payments", "queue", "lead", "people", "shoots", "quote", "supersededQuotes", "packages", "tasks", "thread", "week", "conflicts", "stages", "types"]);
+useLiveProps(["header", "conversation", "quotes", "payments", "queue", "lead", "people", "shoots", "quote", "supersededQuotes", "tasks", "thread", "week", "conflicts", "stages", "types"]);
 
 const quoteTab = computed(() => `/anfragen/${props.lead.id}/angebot`);
 const newQuote = computed(() => `/angebote/neu?projekt=${props.lead.projectId}`);
@@ -91,45 +95,10 @@ const inquiry = computed(() =>
           },
 );
 
-// ↑↓ walks the queue without leaving the screen. Response time is the lever:
-// eight days of silence happen when every step costs a page load. The pane
-// hands over what its filter left standing, so the arrows reach what is on
-// screen and nothing else.
 const reachable = ref<App.Crm.Data.LeadQueueRowData[]>([]);
 
-function step(by: number) {
-    const at = reachable.value.findIndex((row) => row.open);
-    const next = reachable.value[at + by];
-
-    if (next) {
-        router.get(
-            // The pane keeps q and wartet in the URL; carrying them means a
-            // step does not land on an unfiltered pane.
-            `/anfragen/${next.id}${window.location.search}`,
-            {},
-            { preserveScroll: true, preserveState: true },
-        );
-    }
-}
-
 function onKey(event: KeyboardEvent) {
-    if (event.key !== "ArrowUp" && event.key !== "ArrowDown") {
-        return;
-    }
-
-    // Not every keydown target is an element — one dispatched on the window
-    // has no matches() — and an arrow key inside a field belongs to the field.
-    const target = event.target as Element | null;
-
-    if (
-        typeof target?.matches === "function" &&
-        target.matches("input, textarea, select")
-    ) {
-        return;
-    }
-
-    event.preventDefault();
-    step(event.key === "ArrowDown" ? 1 : -1);
+    stepOnArrow(event, reachable.value, "/anfragen");
 }
 
 onMounted(() => addEventListener("keydown", onKey));
@@ -271,7 +240,7 @@ function removeShoot(id: string) {
 }
 
 const notes = computed(() => props.thread.filter((entry) => !entry.system).reverse());
-const events = computed(() => props.thread.filter((entry) => entry.system).reverse());
+const events = computed(() => groupEntries(props.thread.filter((entry) => entry.system).reverse()));
 
 // Same rule as the board: "booked" writes the booking, so it asks first.
 const booking = ref(false);
@@ -301,6 +270,7 @@ function addTask() {
 }
 
 const { t } = useI18n();
+const sendHref = computed(() => sendQuoteHref(props.quote, props.header.canManageQuotes));
 const page = usePage();
 const byline = (author: string | null) =>
     page.props.soloStudio && author === page.props.auth.user?.name ? null : author;
@@ -372,6 +342,9 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
             <template #rail><div /></template>
 
             <template v-if="!lead.outcomeLabel" #stage>
+                <Button v-if="sendHref" variant="pill" as-child class="max-[640px]:min-h-11">
+                    <Link :href="sendHref">{{ $t("lead.sendQuote") }}</Link>
+                </Button>
                 <PhaseButton :stages="stages" :current="lead.stage" @select="move" />
             </template>
 
@@ -586,7 +559,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                         <Panel v-if="events.length" :title="$t('project.history')" :count="events.length > 5 ? events.length : null">
                             <CappedList v-slot="{ item: entry, index }" :items="events" :limit="5" :more-href="`${base}/verlauf`">
                                 <div class="py-1.5" :class="index === 0 && 'text-foreground'">
-                                    <b class="block font-semibold">{{ entry.body }}</b>
+                                    <b class="block font-semibold">{{ entry.count > 1 ? $t("project.historyCount", { body: entry.body, count: entry.count }) : entry.body }}</b>
                                     <span class="text-small text-ink-2">
                                         {{ [entry.at ? day(entry.at) : null, byline(entry.author)].filter(Boolean).join(" · ") }}
                                     </span>
@@ -650,7 +623,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                                 <div class="flex flex-1 items-center gap-2">
                                     <template v-if="quote">
                                         <span v-if="quote.number" class="text-small text-ink-2">{{ quote.number }}</span>
-                                        <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
+                                        <Chip :tone="quoteTone(quote.status)">{{ quote.statusLabel }}</Chip>
                                         <Link
                                             class="ml-auto inline-flex min-h-10 items-center text-ui font-medium text-ring no-underline hover:underline"
                                             :href="`/angebote/${quote.id}`"
@@ -671,23 +644,6 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                                     {{ [$t("project.netAmount", { amount: euro(quote.net) }), quote.validUntil ? $t("lead.validUntil", { date: day(quote.validUntil) }) : null].filter(Boolean).join(" · ") }}
                                 </p>
                             </template>
-
-                            <!-- Ohne Angebot die aktiven Pakete: der nächste Zug ist, eines zu wählen. -->
-                            <div v-else-if="header.canManageQuotes" class="flex flex-wrap gap-2">
-                                <Link
-                                    v-for="pkg in packages"
-                                    :key="pkg.id"
-                                    class="min-h-10 cursor-pointer rounded-[var(--r-sm)] border-0 bg-sunk px-[11px] py-[5px] text-small leading-[1.4] font-normal text-ink-2 hover:bg-sunk-2 [&_b]:font-semibold [&_b]:text-foreground"
-                                    :href="`/auftraege/${lead.projectId}/angebote`"
-                                    method="post"
-                                    as="button"
-                                    :data="{ package: pkg.id }"
-                                >
-                                    <b>{{ pkg.name }}</b>
-                                    {{ $t("packages.itemCount", pkg.itemCount) }} ·
-                                    {{ formatEurosRounded(pkg.total) }}
-                                </Link>
-                            </div>
                         </Panel>
 
                         <Panel :title="$t('contacts.title')">
@@ -796,6 +752,16 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                 :can-manage-quotes="header.canManageQuotes"
                 :quotes="quotes"
                 :payments="payments"
+            />
+
+            <LeadRail
+                v-else-if="tab === 'info'"
+                :type-label="lead.typeLabel"
+                :source-label="lead.sourceLabel"
+                :dated="header.primaryDate !== null"
+                :week="week"
+                :conflicts="conflicts"
+                :thread="thread"
             />
 
             <Card v-else :title="$t('project.history')">

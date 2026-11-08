@@ -25,7 +25,30 @@ class LiveUpdate
 
     public static function publish(): void
     {
-        $url = config('services.mercure.url');
+        self::post(config('services.mercure.url'), self::topic());
+    }
+
+    /**
+     * A new line in a thread: tells each client on it to reload their
+     * mailbox. The portal has its own hub (it is another host, so the
+     * subscriber cookie could not reach the admin's), reached over
+     * MERCURE_PORTAL_URL.
+     *
+     * @param  iterable<string>  $contactIds  public ids
+     */
+    public static function publishToContacts(iterable $contactIds): void
+    {
+        if (config('services.mercure.portal_url') === null) {
+            return;
+        }
+
+        foreach ($contactIds as $contactId) {
+            self::post(config('services.mercure.portal_url'), self::contactTopic($contactId));
+        }
+    }
+
+    private static function post(?string $url, string $topic): void
+    {
         $key = config('services.mercure.publisher_key');
 
         // Unset in the test suite and on a stack without a hub. The image bakes
@@ -39,9 +62,9 @@ class LiveUpdate
         // happened, but it gets reported.
         DB::afterCommit(fn () => rescue(fn () => Http::connectTimeout(1)
             ->timeout(2)
-            ->withToken(self::token('publish', $key, now()->addMinute()->timestamp))
+            ->withToken(self::token('publish', $key, now()->addMinute()->timestamp, $topic))
             ->asForm()
-            ->post($url, ['topic' => self::topic(), 'data' => '{}'])
+            ->post($url, ['topic' => $topic, 'data' => '{}'])
             ->throw()));
     }
 
@@ -73,13 +96,43 @@ class LiveUpdate
         return config('services.mercure.public_url').'?match='.rawurlencode(self::topic());
     }
 
+    /** The signed-in portal contact's cookie, valid for their own topic only. */
+    public static function subscribePortal(string $contactId): ?string
+    {
+        $key = config('services.mercure.subscriber_key');
+
+        if ($key === null) {
+            return null;
+        }
+
+        $minutes = (int) config('session.lifetime');
+        $topic = self::contactTopic($contactId);
+
+        // The bare name is a local hub on plain HTTP; it must not collide with
+        // the admin hub's cookie there (docker-compose.yml, mercure-portal).
+        Cookie::queue(cookie(
+            config('session.secure') ? '__Secure-mercure_access_token' : 'mercure_portal_access_token',
+            self::token('subscribe', $key, now()->addMinutes($minutes)->timestamp, $topic),
+            $minutes,
+            '/.well-known/mercure',
+            sameSite: 'lax',
+        ));
+
+        return config('services.mercure.portal_public_url').'?match='.rawurlencode($topic);
+    }
+
+    public static function contactTopic(string $contactId): string
+    {
+        return 'portal/'.config('tenancy.tenant_id').'/'.$contactId;
+    }
+
     public static function topic(): string
     {
         return 'crm/'.config('tenancy.tenant_id');
     }
 
     /** HS256, the algorithm the hub is configured for. A handful of claims do not need a JWT library. */
-    private static function token(string $action, string $key, int $expiresAt): string
+    private static function token(string $action, string $key, int $expiresAt, ?string $topic = null): string
     {
         $claims = [
             'iss' => self::ISSUER,
@@ -88,7 +141,7 @@ class LiveUpdate
             'authorization_details' => [[
                 'type' => 'https://mercure.rocks/authorization-detail',
                 'actions' => [$action],
-                'topics' => [['match' => self::topic()]],
+                'topics' => [['match' => $topic ?? self::topic()]],
             ]],
         ];
 

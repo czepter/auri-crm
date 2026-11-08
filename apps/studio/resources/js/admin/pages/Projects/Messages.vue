@@ -22,9 +22,9 @@ const summary = computed(() => {
 </script>
 
 <template>
-  <AdminLayout active="anfragen">
+  <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
     <ProjectShell :header="header" active="messages">
-      <Card :title="$t('project.history')" :summary="summary">
+      <Card :title="$t('project.messages')" :summary="summary">
         <MessageThread
           :project-id="header.id"
           :thread="thread"

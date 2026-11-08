@@ -27,7 +27,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
          here blurs. -->
     <DialogOverlay
       data-slot="dialog-overlay"
-      class="fixed inset-0 z-50 bg-[rgb(20_16_14_/_0.30)]"
+      class="fixed inset-0 z-50 min-h-screen bg-[rgb(20_16_14_/_0.30)]"
     />
     <DialogContent
       data-slot="dialog-panel"

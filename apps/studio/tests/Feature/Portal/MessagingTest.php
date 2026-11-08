@@ -9,6 +9,7 @@ use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Models\StudioSettings;
 use App\Models\User;
+use App\Support\LiveUpdate;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -204,4 +205,15 @@ it('opens the conversation ?unterhaltung= names rather than the newest one', fun
         ->viewData('page')['props'];
 
     expect($props['openThread']['subject'])->toBe('Zum Ablauf');
+});
+
+it('hands the contact a subscriber cookie for their own topic only', function () {
+    config(['services.mercure.subscriber_key' => 'subscriber-key', 'session.secure' => true]);
+    [, $contact] = bookedContact();
+
+    $response = test()->actingAs($contact, 'portal')->get('/nachrichten')->assertOk();
+
+    expect($response->viewData('page')['props']['live'])
+        ->toContain(rawurlencode(LiveUpdate::contactTopic($contact->public_id)));
+    $response->assertCookie('__Secure-mercure_access_token', encrypted: false);
 });

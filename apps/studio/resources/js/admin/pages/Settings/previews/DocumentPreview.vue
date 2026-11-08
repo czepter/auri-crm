@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useElementSize } from '@vueuse/core'
+import { useDebounceFn, useElementSize } from '@vueuse/core'
 import PreviewFrame from './PreviewFrame.vue'
 
 /**
@@ -16,6 +16,8 @@ import PreviewFrame from './PreviewFrame.vue'
 const props = defineProps<{
   doc: {
     documentLayout: string
+    // Zahlung zeigt eine Rechnung mit den Werten aus dem Formular, Belege das Angebot.
+    invoice?: Record<string, string>
   }
 }>()
 
@@ -31,16 +33,21 @@ const { width: available } = useElementSize(frame)
 
 const scale = computed(() => (available.value > 0 ? Math.min(1, available.value / SHEET_WIDTH) : 1))
 
-async function load() {
-  const response = await fetch(
-    `/einstellungen/belege/angebot-vorschau?layout=${encodeURIComponent(props.doc.documentLayout ?? '')}`,
-    { headers: { Accept: 'text/html' } },
-  )
+const url = computed(() => {
+  const layout = props.doc.documentLayout ?? ''
+
+  if (!props.doc.invoice) return `/einstellungen/belege/angebot-vorschau?layout=${encodeURIComponent(layout)}`
+
+  return `/einstellungen/zahlung/rechnung-vorschau?${new URLSearchParams({ ...props.doc.invoice, layout })}`
+})
+
+const load = useDebounceFn(async () => {
+  const response = await fetch(url.value, { headers: { Accept: 'text/html' } })
 
   if (response.ok) html.value = await response.text()
-}
+}, 300)
 
-watch(() => props.doc.documentLayout, load, { immediate: true })
+watch(url, load, { immediate: true })
 </script>
 
 <template>
@@ -53,7 +60,7 @@ watch(() => props.doc.documentLayout, load, { immediate: true })
         class="block border-0 bg-white"
         :srcdoc="html"
         sandbox=""
-        title="Angebot-Vorschau"
+        :title="doc.invoice ? 'Rechnung-Vorschau' : 'Angebot-Vorschau'"
         :style="{ width: `${SHEET_WIDTH}px`, height: `${SHEET_HEIGHT}px`, transform: `scale(${scale})`, transformOrigin: 'top left' }"
       />
     </div>

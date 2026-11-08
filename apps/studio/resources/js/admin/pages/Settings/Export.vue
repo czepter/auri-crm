@@ -3,13 +3,14 @@ import { computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import Page from '@/ui/page/Page.vue'
-import PageHead from '@/ui/page/PageHead.vue'
+import FormSection from '@/ui/page/FormSection.vue'
+import FormShell from '@/ui/page/FormShell.vue'
 import SettingsNav from '@/admin/components/settings/SettingsNav.vue'
 import { Button } from '@/ui/button'
+import Empty from '@/ui/page/Empty.vue'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
-type Archive = { id: string; status: 'building' | 'ready' | 'failed'; size: number | null; expiresAt: string | null; url: string | null }
+type Archive = { id: string; status: 'building' | 'ready' | 'failed'; size: number | null; createdAt: string; expiresAt: string | null; url: string | null }
 
 const props = defineProps<{
   contacts: number
@@ -24,6 +25,8 @@ const rows = computed(() => [
   { gallery: null, title: t('settings.exportData'), size: props.archives?.daten?.size ?? null, archive: props.archives?.daten ?? null },
   ...(props.archives?.galleries ?? []).map((gallery) => ({ gallery: gallery.id, title: gallery.title, size: gallery.size, archive: gallery.archive })),
 ])
+
+const recent = computed(() => rows.value.filter((row) => row.archive?.url))
 
 function size(bytes: number) {
   const [value, unit] = bytes >= 1e9 ? [bytes / 1e9, 'GB'] : [bytes / 1e6, 'MB']
@@ -42,49 +45,68 @@ function create(gallery: string | null) {
 
 <template>
   <AdminLayout active="einstellungen">
-    <Page data-tokens wide>
-      <div class="min-w-0 flex-1">
-        <PageHead :kicker="$t('settings.kicker')" :title="$t('settings.navExport')" />
+    <FormShell
+      :kicker="$t('settings.kicker')" :title="$t('settings.navExport')"
+    >
+      <template #nav><SettingsNav active="export" /></template>
 
-        <div class="px-6 pt-7 pb-8">
-          <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
-            <SettingsNav active="export" />
+      <div class="min-w-0">
+        <FormSection title="CSV">
+        <div class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]">
+          <span class="flex-1 text-ui font-semibold">{{ $t('contacts.title') }}</span>
+          <span class="text-small tabular-nums text-ink-2">{{ contacts }}</span>
+          <Button as="a" variant="outline" href="/einstellungen/export/kontakte">CSV</Button>
+        </div>
+        <div class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]">
+          <span class="flex-1 text-ui font-semibold">{{ $t('projects.title') }}</span>
+          <span class="text-small tabular-nums text-ink-2">{{ projects }}</span>
+          <Button as="a" variant="outline" href="/einstellungen/export/projekte">CSV</Button>
+        </div>
 
-            <div class="max-w-[620px] min-w-0 flex-1">
-              <div class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]">
-                <span class="flex-1 text-ui font-semibold">{{ $t('contacts.title') }}</span>
-                <span class="text-small tabular-nums text-ink-2">{{ contacts }}</span>
-                <Button as="a" variant="outline" href="/einstellungen/export/kontakte">CSV</Button>
-              </div>
-              <div class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]">
-                <span class="flex-1 text-ui font-semibold">{{ $t('projects.title') }}</span>
-                <span class="text-small tabular-nums text-ink-2">{{ projects }}</span>
-                <Button as="a" variant="outline" href="/einstellungen/export/projekte">CSV</Button>
-              </div>
+        </FormSection>
 
-              <div v-if="archives" class="mt-8">
-                <div
-                  v-for="row in rows"
-                  :key="row.gallery ?? 'daten'"
-                  class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]"
-                >
-                  <span class="min-w-0 flex-1 truncate text-ui font-semibold">{{ row.title }}</span>
-                  <span v-if="row.size !== null" class="text-small tabular-nums text-ink-2">{{ size(row.size) }}</span>
-                  <span v-if="row.archive?.status === 'building'" class="text-small text-ink-2">{{ $t('settings.exportBuilding') }}</span>
-                  <template v-else-if="row.archive?.url">
-                    <span class="text-small text-ink-2">{{ $t('settings.exportUntil', { date: day(row.archive.expiresAt!) }) }}</span>
-                    <Button as="a" variant="outline" :href="row.archive.url">{{ $t('settings.exportDownload') }}</Button>
-                  </template>
-                  <template v-else>
-                    <span v-if="row.archive?.status === 'failed'" class="text-small text-ink-2">{{ $t('settings.exportFailed') }}</span>
-                    <Button variant="outline" @click="create(row.gallery)">{{ $t('settings.exportCreate') }}</Button>
-                  </template>
-                </div>
-              </div>
-            </div>
+        <FormSection v-if="archives" :title="$t('settings.exportArchives')">
+        <div>
+          <div
+            v-for="row in rows"
+            :key="row.gallery ?? 'daten'"
+            class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]"
+          >
+            <span class="min-w-0 flex-1 truncate text-ui font-semibold">{{ row.title }}</span>
+            <span v-if="row.size !== null" class="text-small tabular-nums text-ink-2">{{ size(row.size) }}</span>
+            <span v-if="row.archive?.status === 'building'" class="text-small text-ink-2">{{ $t('settings.exportBuilding') }}</span>
+            <template v-else-if="row.archive?.url">
+              <span class="text-small text-ink-2">{{ $t('settings.exportUntil', { date: day(row.archive.expiresAt!) }) }}</span>
+              <Button as="a" variant="outline" :href="row.archive.url">{{ $t('settings.exportDownload') }}</Button>
+            </template>
+            <template v-else>
+              <span v-if="row.archive?.status === 'failed'" class="text-small text-ink-2">{{ $t('settings.exportFailed') }}</span>
+              <Button variant="outline" @click="create(row.gallery)">{{ $t('settings.exportCreate') }}</Button>
+            </template>
           </div>
         </div>
+        </FormSection>
       </div>
-    </Page>
+
+      <template v-if="archives" #aside>
+        <div class="rounded-[var(--r)] bg-paper px-5 py-4 shadow-card">
+        <h2 class="mb-2 text-ui font-semibold">{{ $t('settings.exportRecent') }}</h2>
+        <div
+          v-for="row in recent"
+          :key="row.gallery ?? 'daten'"
+          class="flex items-center gap-3 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+        >
+          <span class="min-w-0 flex-1">
+            <span class="block truncate text-ui">{{ row.title }}</span>
+            <span class="block text-small tabular-nums text-ink-2">{{ day(row.archive!.createdAt) }}<template v-if="row.archive!.size !== null"> · {{ size(row.archive!.size) }}</template></span>
+          </span>
+          <Button as="a" variant="outline" :href="row.archive!.url!">{{ $t('settings.exportDownload') }}</Button>
+        </div>
+        <Empty v-if="!recent.length">
+          <Button variant="outline" @click="create(null)">{{ $t('settings.exportCreate') }}</Button>
+        </Empty>
+        </div>
+      </template>
+    </FormShell>
   </AdminLayout>
 </template>

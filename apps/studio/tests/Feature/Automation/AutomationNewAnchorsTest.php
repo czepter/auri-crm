@@ -5,6 +5,7 @@ use App\Automation\Enums\AutomationAnchor;
 use App\Automation\Enums\AutomationOffsetDirection;
 use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Models\AutomationRule;
+use App\Automation\Notifications\AutomationReminder;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\TaskAudience;
@@ -13,6 +14,7 @@ use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Gallery\Models\Gallery;
+use App\Models\User;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
@@ -124,4 +126,20 @@ it('follows up on a client task that is coming due', function () use ($today) {
     studioRule(AutomationAnchor::QuestionnaireDue);
 
     expect(sweep($today()))->toBe(1);
+});
+
+it('resolves an invoice field to nothing while the installment has no invoice', function () use ($today) {
+    staffMember();
+
+    $project = ClientCase::factory()->create();
+    $plan = PaymentPlan::factory()->for(markBooked($project), 'case')->create();
+    PaymentInstallment::factory()->create([
+        'payment_plan_id' => $plan->id,
+        'due_on' => $today()->addDays(3)->toDateString(),
+    ]);
+    studioRule(AutomationAnchor::InstallmentDue)->update(['notification_body' => 'Rechnung {{ invoice.number }}.']);
+
+    sweep($today());
+
+    Notification::assertSentTo(User::all(), AutomationReminder::class, fn ($n) => $n->body() === 'Rechnung .');
 });

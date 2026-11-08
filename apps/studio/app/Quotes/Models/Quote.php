@@ -130,6 +130,12 @@ class Quote extends Model
         });
     }
 
+    /** The one date a quote document and the admin list print. */
+    public function issuedAt(): ?\Carbon\CarbonInterface
+    {
+        return $this->sent_at ?? $this->created_at;
+    }
+
     public function case(): BelongsTo
     {
         return $this->belongsTo(ClientCase::class);
@@ -159,9 +165,17 @@ class Quote extends Model
      */
     public function paymentSplit(): array
     {
-        $base = $this->net + ($this->vat_mode === 'standard' ? ($this->vat_amount ?? 0) : 0);
+        return PaymentStageSplitter::split($this->gross(), $this->paymentStages);
+    }
 
-        return PaymentStageSplitter::split($base, $this->paymentStages);
+    public function gross(): int
+    {
+        // A draft has no frozen VAT yet; the tenant's current setting stands in, as QuoteData does.
+        $vat = $this->vat_mode !== null
+            ? ['vat_mode' => $this->vat_mode, 'vat_amount' => $this->vat_amount]
+            : self::computeVat($this->net, $this->items);
+
+        return $this->net + ($vat['vat_mode'] === 'standard' ? ($vat['vat_amount'] ?? 0) : 0);
     }
 
     /** The quote this one revises, if any — App\Quotes\Actions\ReviseQuote's own new row. */
