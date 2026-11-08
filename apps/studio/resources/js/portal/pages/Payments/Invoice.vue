@@ -60,6 +60,9 @@ function payNow() {
             <PortalDot :state="invoice.status === 'paid' ? 'done' : 'open'" />{{ invoice.statusLabel }}
           </span>
         </div>
+        <p v-if="invoice.summaryRows.length" class="mt-4 font-serif text-[clamp(32px,5vw,40px)] leading-[1.1] tabular-nums">
+          {{ invoice.summaryRows[invoice.summaryRows.length - 1][1] }}
+        </p>
 
         <InvoiceSheet :invoice="invoice" />
 
