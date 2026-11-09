@@ -1,38 +1,43 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
-import { Link, router, useForm } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
+import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import Card from "@/ui/page/Card.vue";
-import CaseAddLinks from "@/admin/components/crm/CaseAddLinks.vue";
 import ContactTypeahead from "@/admin/components/crm/ContactTypeahead.vue";
 import LeadQueue from "@/admin/components/crm/LeadQueue.vue";
-import NoteThread from "@/admin/components/crm/NoteThread.vue";
-import QuoteSummary from "@/admin/components/quote/QuoteSummary.vue";
-import { grossTotal } from "@/admin/lib/quoteSummary";
+import LeadRail from "@/admin/components/crm/LeadRail.vue";
+import CappedList from "@/admin/components/crm/CappedList.vue";
+import Composer from "@/admin/components/crm/Composer.vue";
+import EmptyTiles from "@/admin/components/crm/EmptyTiles.vue";
+import MetricBand from "@/admin/components/crm/MetricBand.vue";
+import type { BandMetric } from "@/admin/components/crm/MetricBand.vue";
+import NextStepCard from "@/admin/components/crm/NextStepCard.vue";
+import Panel from "@/admin/components/crm/Panel.vue";
+import PhaseButton from "@/admin/components/crm/PhaseButton.vue";
 import QuoteList from "@/admin/components/quote/QuoteList.vue";
+import NoteThread from "@/admin/components/crm/NoteThread.vue";
 import MessageThread from "@/admin/components/crm/MessageThread.vue";
 import ProjectShell from "@/admin/components/crm/ProjectShell.vue";
-import LeadRail from "@/admin/components/crm/LeadRail.vue";
 import ShootFields from "@/admin/components/crm/ShootFields.vue";
 import ShootRow from "@/admin/components/crm/ShootRow.vue";
 import { Button } from "@/ui/button";
 import { DatePicker } from "@/ui/date-picker";
 import { Field } from "@/ui/field";
 import { Input } from "@/ui/input";
-import Rail from "@/ui/page/Rail.vue";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
 import { Textarea } from "@/ui/textarea";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui/dropdown-menu";
-import { ChevronDown, Pencil } from "lucide-vue-next";
 import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/lib/money";
-import { quoteTone } from "@/admin/lib/quoteDisplay";
 import Chip from "@/ui/page/Chip.vue";
+import { quoteTone } from "@/admin/lib/quoteDisplay";
+import { groupEntries } from "@/admin/lib/groupEntries";
 import { sendQuoteHref } from "@/admin/lib/leadPrimary";
 import { stepOnArrow } from "@/admin/lib/queueStep";
 import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
-import { dayWithWeekday as day } from "@/admin/lib/dates";
+import { dayWithWeekday as day, daysUntil } from "@/admin/lib/dates";
+import { bandMetrics, isBare, leadNextStep } from "@/admin/lib/projectOverview";
+import { dayAndMonth } from "@/admin/lib/shoots";
 import { useLiveProps } from "@/admin/lib/liveReload";
 
 const props = defineProps<{
@@ -104,17 +109,31 @@ onUnmounted(() => removeEventListener("keydown", onKey));
  * eigenes Formular und schickt ihre eigene Teilmenge. Wer die Kontakte
  * speichert, hat den Anfragetext nicht in der Hand.
  */
-const anfrageEditing = ref(false);
+const textEditing = ref(false);
 const kontakteEditing = ref(false);
 const termineEditing = ref(false);
 
 const anfrage = useForm({
     inquiry_text: props.lead.inquiryText ?? "",
+});
+
+// Typ und Quelle stehen in der Seitenspalte und speichern bei jeder Änderung:
+// zwei Auswahlen brauchen keinen Bearbeiten-Modus.
+const details = useForm({
     type: props.lead.type,
     type_other: props.lead.typeOther ?? "",
     source: props.lead.source,
     source_other: props.lead.sourceOther ?? "",
 });
+
+function saveDetail(field: "type" | "source") {
+    details
+        .transform((data) => ({
+            [field]: data[field],
+            [`${field}_other`]: data[field] === "other" ? blank(data[`${field}_other`]) : null,
+        }))
+        .patch(`/anfragen/${props.lead.id}`, { preserveScroll: true });
+}
 
 const kontakte = useForm({
     people: props.people.map((person) => ({
@@ -141,15 +160,10 @@ const blank = (value: string) => (value === "" ? null : value);
 
 function saveAnfrage() {
     anfrage
-        .transform((data) => ({
-            ...data,
-            inquiry_text: blank(data.inquiry_text),
-            type_other: data.type === "other" ? blank(data.type_other) : null,
-            source_other: data.source === "other" ? blank(data.source_other) : null,
-        }))
+        .transform((data) => ({ ...data, inquiry_text: blank(data.inquiry_text) }))
         .patch(`/anfragen/${props.lead.id}`, {
             preserveScroll: true,
-            onSuccess: () => (anfrageEditing.value = false),
+            onSuccess: () => (textEditing.value = false),
         });
 }
 
@@ -225,45 +239,8 @@ function removeShoot(id: string) {
     router.delete(`/shootings/${id}`, { preserveScroll: true });
 }
 
-// Was eine Karte sagt, wenn sie zu ist.
-const anfrageSummary = computed(() =>
-    [props.lead.capturedVia, day(props.lead.capturedAt)].filter(Boolean).join(" · "),
-);
-
-const kontakteSummary = computed(() => props.people.map((person) => person.name).join(", "));
-
-const termineSummary = computed(() =>
-    props.shoots.length === 0 ? "" : props.shoots.map((shoot) => day(shoot.date)).join(", "),
-);
-
-const quoteSummary = computed(() =>
-    props.quote === null ? "" : formatEurosRounded(grossTotal(props.quote)),
-);
-
-const taskSummary = computed(() => {
-    const open = props.tasks.filter((row) => !row.isDone);
-    const late = open.filter((row) => row.isOverdue).length;
-
-    return [`${open.length}/${props.tasks.length}`, late === 0 ? null : `${late} überfällig`]
-        .filter(Boolean)
-        .join(" · ");
-});
-
-const notes = computed(() => props.thread.filter((entry) => !entry.system));
-
-const tasksAsked = ref(false);
-const notesAsked = ref(false);
-
-const addLinks = computed(() => [
-    !props.tasks.length && !tasksAsked.value && { key: "task", label: t("lead.taskAdd") },
-    !notes.value.length && !notesAsked.value && { key: "note", label: t("lead.noteAdd") },
-    props.header.canManageQuotes && !props.quote && { key: "quote", label: t("quotes.create"), href: newQuote.value },
-].filter((item) => item !== false));
-
-function askFor(key: string) {
-    if (key === "task") tasksAsked.value = true;
-    else notesAsked.value = true;
-}
+const notes = computed(() => props.thread.filter((entry) => !entry.system).reverse());
+const events = computed(() => groupEntries(props.thread.filter((entry) => entry.system).reverse()));
 
 // Same rule as the board: "booked" writes the booking, so it asks first.
 const booking = ref(false);
@@ -292,79 +269,83 @@ function addTask() {
     });
 }
 
-const nextStage = computed(
-    () => props.stages[props.stages.findIndex((stage) => stage.value === props.lead.stage) + 1] ?? null,
+const { t } = useI18n();
+const sendHref = computed(() => sendQuoteHref(props.quote, props.header.canManageQuotes));
+const page = usePage();
+const byline = (author: string | null) =>
+    page.props.soloStudio && author === page.props.auth.user?.name ? null : author;
+const base = computed(() => `/auftraege/${props.lead.id}`);
+
+const euro = (minor: string | number) => formatEurosRounded(Number(minor));
+const open = computed(() => props.tasks.filter((row) => !row.isDone));
+const done = computed(() => props.tasks.filter((row) => row.isDone));
+const showDone = ref(false);
+const next = computed(() => leadNextStep(props.tasks, props.quote));
+const taskRows = computed(() => (showDone.value ? done.value : open.value.filter((row) => row !== (next.value?.kind === "task" ? next.value.task : null))));
+const addingTask = ref(false);
+
+function complete(row: App.Crm.Data.TaskRowData) {
+    router.post(`/aufgaben/${row.id}/erledigt`, {}, { preserveScroll: true });
+}
+
+const primary = computed(() => props.shoots.find((shoot) => shoot.isPrimary));
+const days = computed(() => (props.header.primaryDate ? daysUntil(props.header.primaryDate) : Number.NaN));
+
+const metrics = computed<BandMetric[]>(() => [
+    {
+        label: t("project.primary"),
+        value: props.header.primaryDate ? (dayAndMonth(props.header.primaryDate) ?? null) : null,
+        sub: [
+            Number.isNaN(days.value) ? null : days.value >= 0 ? t("project.daysUntil", days.value) : t("project.daysAgo", -days.value),
+            primary.value?.venue,
+        ].filter(Boolean).join(" · "),
+    },
+    {
+        label: t("lead.quote"),
+        value: props.quote ? euro(props.quote.net) : null,
+        sub: props.quote ? t("project.netStatus", { status: props.quote.statusLabel.toLowerCase() }) : undefined,
+    },
+    {
+        label: t("lead.received"),
+        value: dayAndMonth(props.lead.capturedAt),
+        sub: props.lead.capturedVia ?? undefined,
+    },
+]);
+const hasBand = computed(() => bandMetrics(metrics.value).length > 0);
+
+const bare = computed(() =>
+    isBare({ shoots: props.shoots.length, quote: props.quote !== null, tasks: props.tasks.length + notes.value.length, payments: 0 }),
 );
 
-const { t } = useI18n();
+const tiles = computed(() => [
+    { key: "shoot" as const, label: t("lead.tile.date"), href: `${base.value}/shootings` },
+    { key: "quote" as const, label: t("lead.quote"), href: newQuote.value },
+    { key: "task" as const, label: t("lead.tile.task"), href: `${base.value}/aufgaben` },
+    { key: "note" as const, label: t("lead.tile.note"), href: `${base.value}/notizen` },
+]);
 
-const primary = computed(() => {
-    const sendHref = sendQuoteHref(props.quote, props.header.canManageQuotes);
+const weekHint = (shoot: App.Crm.Data.ShootData) => {
+    if (!shoot.isPrimary || !shoot.date) return null;
+    if (props.conflicts.length) return { warn: true, text: `${t("lead.conflicts")}: ${props.conflicts.map((c) => c.label ?? c.projectName).join(", ")}` };
 
-    if (sendHref) {
-        return { label: t("lead.sendQuote"), run: () => router.visit(sendHref) };
-    }
-
-    return nextStage.value && { label: nextStage.value.label, run: () => move(nextStage.value!.value) };
-});
+    return { warn: false, text: props.week.length ? t("lead.weekCount", props.week.length) : t("lead.weekClear") };
+};
 </script>
 
 <template>
     <AdminLayout active="anfragen">
-        <ProjectShell :header="header" :active="tab">
-            <!-- Grouped by working state, not by the six funnel stages: six stages
-                 are the view of the funnel, three groups the view of the day. -->
+        <ProjectShell :header="header" :active="tab" :people="false">
             <template #left>
                 <LeadQueue :groups="queue" @update:rows="reachable = $event" />
             </template>
 
-            <template #rail>
-                <Rail>
-                    <LeadRail
-                        :type-label="lead.typeLabel"
-                        :source-label="lead.sourceLabel"
-                        :dated="header.primaryDate !== null"
-                        :week="week"
-                        :conflicts="conflicts"
-                        :thread="thread"
-                    />
-                </Rail>
-            </template>
+            <template #rail><div /></template>
 
             <template v-if="!lead.outcomeLabel" #stage>
-                <Chip>{{ lead.stageLabel }}</Chip>
-                <div class="flex">
-                    <Button
-                        v-if="primary"
-                        variant="pill"
-                        type="button"
-                        class="rounded-r-none max-[640px]:min-h-11"
-                        @click="primary.run"
-                        >{{ primary.label }}</Button
-                    >
-                    <DropdownMenu>
-                        <DropdownMenuTrigger as-child>
-                            <Button
-                                variant="pill"
-                                type="button"
-                                :class="[primary ? 'rounded-l-none border-l border-white/30 px-2' : '', 'max-[640px]:min-h-11 max-[640px]:min-w-11']"
-                                :aria-label="$t('board.colStage')"
-                            >
-                                <ChevronDown class="size-3.5" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" class="w-[208px]">
-                            <DropdownMenuItem
-                                v-for="stage in stages"
-                                :key="stage.value"
-                                :disabled="stage.value === lead.stage"
-                                @select="move(stage.value)"
-                            >
-                                {{ stage.label }}
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
+                <Button v-if="sendHref" variant="pill" as-child class="max-[640px]:min-h-11">
+                    <Link :href="sendHref">{{ $t("lead.sendQuote") }}</Link>
+                </Button>
+                <PhaseButton :stages="stages" :current="lead.stage" @select="move" />
             </template>
 
             <AlertDialog v-model:open="booking">
@@ -382,323 +363,415 @@ const primary = computed(() => {
                 </AlertDialogContent>
             </AlertDialog>
 
-                <template v-if="tab === 'overview'">
-                <div class="flex flex-col gap-3">
-                    <Card
-                        v-model:editing="termineEditing"
-                        :title="$t('lead.dates')"
-                        :summary="termineSummary"
-                        editable
-                        @cancel="termine.reset()"
-                        @save="saveTermine"
-                    >
-                        <!-- Ein Termin verschiebt sich auch nach dem Buchen: das
-                             ist der häufigste Vorgang überhaupt. -->
-                        <ShootRow v-for="shoot in shoots" :key="shoot.id" :shoot="shoot" />
+            <template v-if="tab === 'overview'">
+                <div
+                    v-if="next || hasBand"
+                    class="grid gap-4 max-[900px]:grid-cols-1"
+                    :class="next && hasBand ? 'grid-cols-[minmax(0,5fr)_minmax(0,7fr)]' : 'grid-cols-1'"
+                >
+                    <NextStepCard
+                        v-if="next?.kind === 'task'"
+                        :title="next.task.title"
+                        :meta="[next.task.audienceLabel, next.task.shootLabel].filter(Boolean).join(' · ')"
+                        :late="next.task.dueOn ? $t('project.overdueSince', { date: day(next.task.dueOn) }) : null"
+                        :action="$t('project.markDone')"
+                        @done="complete(next.task)"
+                    />
+                    <NextStepCard
+                        v-else-if="next?.kind === 'quote' && quote"
+                        :title="$t('lead.sendQuote')"
+                        :meta="$t('lead.draftNet', { amount: euro(quote.net) })"
+                        :action="$t('project.view')"
+                        :href="`/angebote/${quote.id}`"
+                    />
+                    <MetricBand :metrics="metrics" :columns="next ? 2 : bandMetrics(metrics).length" />
+                </div>
 
-                        <template #edit>
-                            <div v-for="(shoot, index) in termine.shoots" :key="shoot.id" class="flex items-start gap-3">
-                                <div class="min-w-0 flex-1">
-                                    <ShootFields :shoot="shoot" />
-                                </div>
-                                <Button
-                                    v-if="index > 0"
-                                    variant="ghost"
-                                    class="mt-5 text-small"
-                                    type="button"
-                                    @click="removeShoot(shoot.id)"
-                                >
-                                    {{ $t("common.remove") }}
+                <EmptyTiles v-if="bare" class="mt-4" :tiles="tiles" />
+
+                <div class="mt-4 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start gap-4 max-[900px]:grid-cols-1">
+                    <div class="flex flex-col gap-4">
+                        <Panel :title="$t('project.lead')">
+                            <template v-if="header.canManageShoots && lead.inquiryText" #action>
+                                <Button class="ml-auto min-h-10 px-4" variant="pill-muted" type="button" @click="textEditing = !textEditing">
+                                    {{ $t("lead.edit") }}
                                 </Button>
-                            </div>
+                            </template>
 
-                            <Button class="mt-3" variant="outline" type="button" @click="addShoot">
-                                {{ $t("lead.dateAdd") }}
-                            </Button>
-                        </template>
-                    </Card>
+                            <p v-if="lead.inquiryText && !textEditing" class="m-0 max-w-[68ch] whitespace-pre-line">{{ lead.inquiryText }}</p>
+                            <Composer
+                                v-else
+                                v-model="anfrage.inquiry_text"
+                                :placeholder="$t('leads.inquiryText')"
+                                :label="$t('leads.inquiryText')"
+                                :send-label="$t('project.send')"
+                                :busy="anfrage.processing"
+                                :allow-empty="textEditing"
+                                @send="saveAnfrage"
+                            />
+                            <p v-if="anfrage.errors.inquiry_text" class="mt-1.5 mb-0 text-small text-destructive">{{ anfrage.errors.inquiry_text }}</p>
 
-                    <Card v-if="quote" :title="$t('lead.quote')" :summary="quoteSummary">
-                        <template v-if="quote" #meta>
-                            <span v-if="quote.number" class="text-ui leading-[1.2] tracking-[-0.015em] text-ink-2 tabular-nums">{{ quote.number }}</span>
-                            <Chip v-if="quote.status !== 'sent'" :tone="quoteTone(quote.status)">{{ quote.statusLabel }}</Chip>
-                        </template>
-                        <template v-if="header.canManageQuotes" #action>
-                            <Link
-                                v-if="quote"
-                                class="grid size-7 place-items-center rounded-[var(--r-sm)] text-ink-2 max-[640px]:size-11 hover:bg-sunk hover:text-foreground"
-                                :href="`/angebote/${quote.id}`"
-                                @click.stop
-                                :aria-label="$t('common.edit')"
-                                :title="$t('common.edit')"
-                            ><Pencil class="size-[15px]" /></Link>
-                        </template>
-
-                        <QuoteSummary
-                            v-if="quote"
-                            :quote="quote"
-                            :superseded="supersededQuotes"
-                            :valid-until-label="
-                                quote.validUntil
-                                    ? $t('lead.validUntil', { date: day(quote.validUntil) })
-                                    : null
-                            "
-                        />
-                    </Card>
-
-                    <Card v-if="tasks.length || tasksAsked" :title="$t('lead.tasks')" :summary="taskSummary" :default-open="tasksAsked">
-                        <!-- Eine Box: Titel oben, Fälligkeit und Zielgruppe in der
-                             Fußzeile darin, der Knopf unten rechts. -->
-                        <form
-                            class="flex flex-col rounded-md border border-rule focus-within:border-ring"
-                            @submit.prevent="addTask"
-                        >
-                            <input :aria-label="$t('lead.taskTitle')"
-                                v-model="task.title"
-                                class="border-0 bg-transparent px-3.5 pt-3 pb-1.5 text-small outline-none"
-                                type="text"
-                                :placeholder="$t('lead.taskTitle')"
-                            >
-                            <div class="flex items-center gap-4 px-3 pt-1 pb-2.5">
-                                <DatePicker v-model="task.due_on" class="w-[150px] [&_input]:h-8 [&_input]:border-0 [&_input]:bg-transparent [&_input]:px-0" />
-                                <Select v-model="task.audience">
-                                    <SelectTrigger class="h-8 w-[110px] border-0 bg-transparent px-0 text-ink-2"><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="internal">{{ $t("lead.audienceInternal") }}</SelectItem>
-                                        <SelectItem value="client">{{ $t("lead.audienceClient") }}</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <Button
-                                    class="ml-auto"
-                                    variant="outline"
-                                    type="submit"
-                                    :disabled="!task.title || task.processing"
-                                >
-                                    {{ $t("lead.addTask") }}
-                                </Button>
-                            </div>
-                        </form>
-
-                        <div class="mt-3">
-                            <div
-                                v-for="row in tasks"
-                                :key="row.id"
-                                class="flex items-center gap-3 py-[7px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap max-[640px]:gap-y-0.5"
-                            >
-                                <span
-                                    class="size-[15px] flex-none rounded-[5px]"
-                                    :class="row.isDone ? 'bg-foreground' : 'bg-sunk-2'"
-                                />
-                                <span class="min-w-0 flex-1 text-ui leading-[1.47]" :class="row.isDone && 'text-ink-2'">{{ row.title }}</span>
-                                <span class="flex items-baseline gap-3 max-[640px]:basis-full max-[640px]:pl-[27px]">
-                                    <span class="text-small leading-[1.47] text-ink-2">{{ row.audience }}</span>
-                                    <span
-                                        class="text-small leading-[1.47] whitespace-nowrap tabular-nums"
-                                        :class="row.isOverdue ? 'text-destructive' : 'text-ink-2'"
-                                    >{{ row.dueOn ? day(row.dueOn) : "" }}</span>
-                                </span>
-                            </div>
-                        </div>
-                    </Card>
-
-                    <Card
-                        v-model:editing="kontakteEditing"
-                        :title="$t('contacts.title')"
-                        :summary="kontakteSummary"
-                        editable
-                        @cancel="kontakte.reset()"
-                        @save="saveKontakte"
-                    >
-                        <div
-                            v-for="person in people"
-                            :key="person.id"
-                            class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
-                        >
-                            <Link
-                                class="w-[168px] flex-none text-small leading-[1.35] font-semibold tracking-[-0.012em] text-foreground no-underline underline-offset-[3px] hover:underline"
-                                :href="`/kontakte/${person.id}`"
-                            >
-                                {{ person.name }}
-                            </Link>
-                            <Chip>
-                                {{ roleLabel(person.role) }}
-                            </Chip>
-                            <a v-if="person.email" class="text-small text-ring no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
-                            <a v-if="person.phone" class="ml-auto whitespace-nowrap text-small tabular-nums text-ring no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
-                            <span v-if="!person.email && !person.phone" class="ml-auto text-small text-ink-2">{{ $t("lead.noReach") }}</span>
-                        </div>
-
-                        <template #edit>
-                            <!-- Die fünf bekannten Rollen als Vorschlag, jede
-                                 andere steht so da, wie sie getippt wurde. -->
-                            <datalist id="rollen">
-                                <option v-for="value in ROLE_SUGGESTIONS" :key="value" :value="value" />
-                            </datalist>
-
-                            <div
-                                v-for="(person, index) in kontakte.people"
-                                :key="person.id"
-                                class="flex items-end gap-3 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
-                            >
-                                <Field v-slot="{ id }" dense class="min-w-[148px] flex-1" :label="$t('leads.name')">
-                                    <Input :id="id" v-model="person.name" type="text" />
-                                </Field>
-                                <Field v-slot="{ id }" dense class="w-[148px] flex-none" :label="$t('leads.role')">
-                                    <Input :id="id" v-model="person.role" type="text" list="rollen" />
-                                </Field>
-                                <Field v-slot="{ id }" dense class="min-w-[148px] flex-1" :label="$t('leads.email')">
-                                    <Input :id="id" v-model="person.email" type="email" inputmode="email" />
-                                </Field>
-                                <Field v-slot="{ id }" dense class="w-[148px] flex-none" :label="$t('leads.phone')">
-                                    <Input :id="id" v-model="person.phone" type="tel" inputmode="tel" />
-                                </Field>
-                                <Button
-                                    v-if="index > 0"
-                                    variant="ghost"
-                                    class="pb-2 text-small"
-                                    type="button"
-                                    @click="removeContact(person.id)"
-                                >
-                                    {{ $t("common.remove") }}
-                                </Button>
-                            </div>
-
-                            <div v-if="adding" class="mt-3 flex flex-col gap-3 pt-3 shadow-[inset_0_1px_0_var(--rule)]">
-                                <ContactTypeahead :model-value="picked" @update:model-value="pick" @create-new="(term) => { pick(null); newContact.name = term }" />
-
-                                <div v-if="newContact.name && !picked" class="flex gap-3 max-[640px]:flex-wrap">
-                                    <Field v-slot="{ id }" dense class="min-w-[148px] flex-1" :label="$t('leads.name')">
-                                        <Input :id="id" v-model="newContact.name" type="text" />
-                                    </Field>
-                                    <Field v-slot="{ id }" dense class="min-w-[148px] flex-1" :label="$t('leads.email')">
-                                        <Input :id="id" v-model="newContact.email" type="email" />
-                                    </Field>
-                                    <Field v-slot="{ id }" dense class="w-[148px] flex-none" :label="$t('leads.phone')">
-                                        <Input :id="id" v-model="newContact.phone" type="tel" />
-                                    </Field>
-                                </div>
-
-                                <div class="flex items-end gap-3">
-                                    <Field v-slot="{ id }" dense class="w-[148px] flex-none" :label="$t('leads.role')">
-                                        <Input :id="id" v-model="newContact.role" type="text" list="rollen" />
-                                    </Field>
-                                    <Button
-                                        variant="pill-muted"
-                                        type="button"
-                                        :disabled="(!newContact.contact_id && !newContact.name) || newContact.processing"
-                                        @click="addContact"
+                            <div class="mt-4 grid grid-cols-2 gap-4 max-[640px]:grid-cols-1">
+                                <Field v-slot="{ id }" dense :label="$t('leads.type')" :error="details.errors.type">
+                                    <Select
+                                        v-model="details.type"
+                                        :disabled="!header.canManageShoots"
+                                        @update:model-value="saveDetail('type')"
                                     >
-                                        {{ $t("lead.contactAdd") }}
-                                    </Button>
-                                </div>
-                            </div>
-
-                            <Button v-else class="mt-3" variant="outline" type="button" @click="adding = true">
-                                {{ $t("lead.contactAdd") }}
-                            </Button>
-                        </template>
-                    </Card>
-
-                    <Card
-                        v-model:editing="anfrageEditing"
-                        :title="$t('project.lead')"
-                        :summary="anfrageSummary"
-                        editable
-                        @cancel="anfrage.reset()"
-                        @save="saveAnfrage"
-                    >
-                        <!-- Der Anfragetext. Die Personen stehen in ihrer
-                             eigenen Karte: eine Seitenspalte trägt keinen
-                             Zeileneditor. -->
-                        <p class="m-0 max-w-[58ch] text-ui leading-[1.5] tracking-[-0.008em] whitespace-pre-line">
-                            {{ lead.inquiryText ?? $t("lead.noText") }}
-                        </p>
-
-                        <template #edit>
-                            <Field v-slot="{ id }" :label="$t('leads.inquiryText')" :error="anfrage.errors.inquiry_text">
-                                <Textarea :id="id" v-model="anfrage.inquiry_text" rows="6" />
-                            </Field>
-
-                            <div class="mt-3 flex gap-3 max-[640px]:flex-wrap">
-                                <Field v-slot="{ id }" class="min-w-[148px] flex-1" :label="$t('leads.type')" :error="anfrage.errors.type">
-                                    <Select v-model="anfrage.type" :disabled="!header.canManageShoots">
-                                        <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
+                                        <SelectTrigger :id="id" class="min-h-10"><SelectValue /></SelectTrigger>
                                         <SelectContent>
                                             <SelectItem v-for="option in types" :key="option.value" :value="option.value">{{ option.label }}</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <Input
-                                        v-if="anfrage.type === 'other'"
-                                        v-model="anfrage.type_other"
-                                        class="mt-2"
+                                        v-if="details.type === 'other'"
+                                        v-model="details.type_other"
+                                        class="mt-2 min-h-10"
                                         type="text"
                                         list="type-presets"
+                                        :disabled="!header.canManageShoots"
+                                        @change="saveDetail('type')"
                                     />
                                     <datalist id="type-presets">
                                         <option v-for="value in presets.type" :key="value" :value="value" />
                                     </datalist>
                                 </Field>
 
-                                <Field v-slot="{ id }" class="min-w-[148px] flex-1" :label="$t('leads.source')" :error="anfrage.errors.source">
-                                    <Select v-model="anfrage.source" :disabled="!header.canManageShoots">
-                                        <SelectTrigger :id="id"><SelectValue placeholder="—" /></SelectTrigger>
+                                <Field v-slot="{ id }" dense :label="$t('leads.source')" :error="details.errors.source">
+                                    <Select
+                                        v-model="details.source"
+                                        :disabled="!header.canManageShoots"
+                                        @update:model-value="saveDetail('source')"
+                                    >
+                                        <SelectTrigger :id="id" class="min-h-10"><SelectValue placeholder="—" /></SelectTrigger>
                                         <SelectContent>
                                             <SelectItem v-for="option in sources" :key="option.value" :value="option.value">{{ option.label }}</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <Input
-                                        v-if="anfrage.source === 'other'"
-                                        v-model="anfrage.source_other"
-                                        class="mt-2"
+                                        v-if="details.source === 'other'"
+                                        v-model="details.source_other"
+                                        class="mt-2 min-h-10"
                                         type="text"
                                         list="source-presets"
+                                        :disabled="!header.canManageShoots"
+                                        @change="saveDetail('source')"
                                     />
                                     <datalist id="source-presets">
                                         <option v-for="value in presets.source" :key="value" :value="value" />
                                     </datalist>
                                 </Field>
                             </div>
-                        </template>
-                    </Card>
+                        </Panel>
 
-                    <Card v-if="notes.length || notesAsked" :title="$t('lead.notes')" :summary="`${notes.length}`" :default-open="notesAsked">
-                        <NoteThread
-                            :entries="notes"
-                            :action="`/auftraege/${lead.projectId}/notizen`"
-                        />
-                    </Card>
+                        <Panel v-if="!bare" id="aufgaben" :title="$t('lead.tasks')">
+                            <template v-if="header.canManageTasks" #action>
+                                <Button class="ml-auto min-h-10 px-4" variant="pill-muted" type="button" @click="addingTask = !addingTask">
+                                    {{ $t("lead.taskTitle") }}
+                                </Button>
+                            </template>
 
-                    <CaseAddLinks :items="addLinks" @pick="askFor" />
+                            <form
+                                v-if="addingTask"
+                                class="mb-3 flex flex-col rounded-md border border-rule focus-within:border-ring"
+                                @submit.prevent="addTask"
+                            >
+                                <input
+                                    v-model="task.title"
+                                    class="min-h-10 border-0 bg-transparent px-3.5 text-small outline-none"
+                                    type="text"
+                                    :placeholder="$t('lead.taskTitle')"
+                                    :aria-label="$t('lead.taskTitle')"
+                                >
+                                <div class="flex items-center gap-4 px-3 pb-2.5">
+                                    <DatePicker v-model="task.due_on" class="w-[150px] [&_input]:h-10 [&_input]:border-0 [&_input]:bg-transparent [&_input]:px-0" />
+                                    <Select v-model="task.audience">
+                                        <SelectTrigger class="h-10 w-[110px] border-0 bg-transparent px-0 text-ink-2"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="internal">{{ $t("lead.audienceInternal") }}</SelectItem>
+                                            <SelectItem value="client">{{ $t("lead.audienceClient") }}</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <Button class="ml-auto min-h-10" variant="pill" type="submit" :disabled="!task.title || task.processing">
+                                        {{ $t("lead.addTask") }}
+                                    </Button>
+                                </div>
+                            </form>
+
+                            <span class="mb-2 inline-flex gap-0.5 rounded-lg bg-sunk p-[3px]">
+                                <button
+                                    class="min-h-10 cursor-pointer rounded-[var(--r-sm)] px-3 text-small leading-none"
+                                    :class="showDone ? 'text-ink-2' : 'bg-paper font-semibold'"
+                                    type="button"
+                                    @click="showDone = false"
+                                >
+                                    {{ $t("project.tasksOpen", { count: open.length }) }}
+                                </button>
+                                <button
+                                    class="min-h-10 cursor-pointer rounded-[var(--r-sm)] px-3 text-small leading-none"
+                                    :class="showDone ? 'bg-paper font-semibold' : 'text-ink-2'"
+                                    type="button"
+                                    @click="showDone = true"
+                                >
+                                    {{ $t("project.tasksDone", { count: done.length }) }}
+                                </button>
+                            </span>
+
+                            <CappedList v-slot="{ item: row }" :items="taskRows" :limit="3" :more-href="`${base}/aufgaben`">
+                                <div class="flex min-h-11 items-center gap-3 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none">
+                                    <span
+                                        v-if="row.isDone"
+                                        class="grid size-6 flex-none place-items-center rounded-full bg-ok-bg text-ok"
+                                    >
+                                        <svg class="size-3 fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:3]" viewBox="0 0 24 24">
+                                            <path d="M4 12l5 5L20 6" />
+                                        </svg>
+                                    </span>
+                                    <button
+                                        v-else
+                                        class="-mx-2 grid size-10 flex-none cursor-pointer place-items-center"
+                                        type="button"
+                                        :aria-label="$t('project.taskComplete')"
+                                        @click="complete(row)"
+                                    >
+                                        <span class="size-6 rounded-full border-[1.5px] border-line-hover hover:border-ring hover:bg-[var(--accent-bg)]" />
+                                    </button>
+                                    <span class="min-w-0 flex-1 truncate" :class="row.isDone && 'text-ink-2'">{{ row.title }}</span>
+                                    <span
+                                        class="text-small tabular-nums"
+                                        :class="row.isOverdue && !row.isDone ? 'text-destructive' : 'text-ink-2'"
+                                    >{{ row.dueOn ? day(row.dueOn) : "" }}</span>
+                                </div>
+                            </CappedList>
+                        </Panel>
+
+                        <Panel v-if="!bare" :title="$t('lead.notes')" :count="notes.length > 3 ? notes.length : null">
+                            <NoteThread
+                                compact
+                                :entries="notes"
+                                :action="`${base}/notizen`"
+                                :limit="3"
+                                :more-href="`${base}/notizen`"
+                                :can-manage="header.canManageNotes"
+                            />
+                        </Panel>
+
+                        <Panel v-if="events.length" :title="$t('project.history')" :count="events.length > 5 ? events.length : null">
+                            <CappedList v-slot="{ item: entry, index }" :items="events" :limit="5" :more-href="`${base}/verlauf`">
+                                <div class="py-1.5" :class="index === 0 && 'text-foreground'">
+                                    <b class="block font-semibold">{{ entry.count > 1 ? $t("project.historyCount", { body: entry.body, count: entry.count }) : entry.body }}</b>
+                                    <span class="text-small text-ink-2">
+                                        {{ [entry.at ? day(entry.at) : null, byline(entry.author)].filter(Boolean).join(" · ") }}
+                                    </span>
+                                </div>
+                            </CappedList>
+                        </Panel>
+                    </div>
+
+                    <div class="flex flex-col gap-4">
+                        <Panel v-if="!bare" :title="$t('lead.dates')" :count="shoots.length > 3 ? shoots.length : null">
+                            <template v-if="header.canManageShoots" #action>
+                                <div class="ml-auto flex items-center gap-2">
+                                    <Button
+                                        v-if="shoots.length && !termineEditing"
+                                        class="min-h-10 px-4"
+                                        variant="ghost"
+                                        type="button"
+                                        @click="termineEditing = true"
+                                    >{{ $t("lead.edit") }}</Button>
+                                    <Button class="min-h-10 px-4" variant="pill-muted" type="button" @click="addShoot">
+                                        {{ $t("lead.dateAdd") }}
+                                    </Button>
+                                </div>
+                            </template>
+
+                            <template v-if="termineEditing">
+                                <div v-for="(shoot, index) in termine.shoots" :key="shoot.id" class="flex items-start gap-3">
+                                    <div class="min-w-0 flex-1">
+                                        <ShootFields :shoot="shoot" />
+                                    </div>
+                                    <Button v-if="index > 0" variant="ghost" class="mt-5 min-h-10 text-small" type="button" @click="removeShoot(shoot.id)">
+                                        {{ $t("common.remove") }}
+                                    </Button>
+                                </div>
+                                <div class="mt-3 flex gap-2">
+                                    <Button class="min-h-10" variant="pill" type="button" :disabled="termine.processing" @click="saveTermine">{{ $t("common.save") }}</Button>
+                                    <Button class="min-h-10" variant="outline" type="button" @click="termine.reset(); termineEditing = false">{{ $t("common.cancel") }}</Button>
+                                </div>
+                            </template>
+                            <CappedList v-else v-slot="{ item: shoot }" :items="shoots" :limit="3" :more-href="`${base}/shootings`">
+                                <div class="grid grid-cols-[140px_minmax(0,1fr)] gap-4 py-3 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:grid-cols-1 max-[640px]:gap-1">
+                                    <div>
+                                        <b class="font-semibold">{{ day(shoot.date) }}</b>
+                                        <div class="text-small text-ink-2">{{ shoot.statusLabel }}</div>
+                                    </div>
+                                    <div>
+                                        <div>{{ shoot.label ?? shoot.kind }}</div>
+                                        <div v-if="shoot.venue" class="text-small text-ink-2">{{ shoot.venue }}</div>
+                                        <div
+                                            v-if="weekHint(shoot)"
+                                            class="text-small"
+                                            :class="weekHint(shoot)?.warn ? 'text-due' : 'text-ok'"
+                                        >{{ weekHint(shoot)?.text }}</div>
+                                    </div>
+                                </div>
+                            </CappedList>
+                        </Panel>
+
+                        <Panel v-if="!bare" :title="$t('lead.quote')">
+                            <template #action>
+                                <div class="flex flex-1 items-center gap-2">
+                                    <template v-if="quote">
+                                        <span v-if="quote.number" class="text-small text-ink-2">{{ quote.number }}</span>
+                                        <Chip :tone="quoteTone(quote.status)">{{ quote.statusLabel }}</Chip>
+                                        <Link
+                                            class="ml-auto inline-flex min-h-10 items-center text-ui font-medium text-ring no-underline hover:underline"
+                                            :href="`/angebote/${quote.id}`"
+                                        >{{ $t("project.view") }}</Link>
+                                        <Button v-if="quote.status === 'accepted' && header.canManagePaymentPlan" variant="pill-muted" class="min-h-10 px-4" as-child>
+                                            <Link :href="`/rechnungen/neu?projekt=${lead.projectId}`">{{ $t("project.invoiceAdd") }}</Link>
+                                        </Button>
+                                    </template>
+                                    <Button v-else-if="header.canManageQuotes" variant="pill-muted" class="ml-auto min-h-10 px-4" as-child>
+                                        <Link :href="newQuote">{{ $t("lead.quote") }}</Link>
+                                    </Button>
+                                </div>
+                            </template>
+
+                            <template v-if="quote">
+                                <p class="m-0">{{ quote.items.map((item) => item.title).join(", ") }}</p>
+                                <p class="mt-1 mb-0 text-small text-ink-2">
+                                    {{ [$t("project.netAmount", { amount: euro(quote.net) }), quote.validUntil ? $t("lead.validUntil", { date: day(quote.validUntil) }) : null].filter(Boolean).join(" · ") }}
+                                </p>
+                            </template>
+                        </Panel>
+
+                        <Panel :title="$t('contacts.title')">
+                            <template v-if="header.canManageShoots && !kontakteEditing" #action>
+                                <Button class="ml-auto min-h-10 px-4" variant="ghost" type="button" @click="kontakteEditing = true">
+                                    {{ $t("lead.edit") }}
+                                </Button>
+                            </template>
+
+                            <template v-if="kontakteEditing">
+                                <datalist id="rollen">
+                                    <option v-for="value in ROLE_SUGGESTIONS" :key="value" :value="value" />
+                                </datalist>
+
+                                <div
+                                    v-for="(person, index) in kontakte.people"
+                                    :key="person.id"
+                                    class="flex items-end gap-3 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
+                                >
+                                    <Field v-slot="{ id }" dense class="min-w-[148px] flex-1" :label="$t('leads.name')">
+                                        <Input :id="id" v-model="person.name" type="text" />
+                                    </Field>
+                                    <Field v-slot="{ id }" dense class="w-[148px] flex-none" :label="$t('leads.role')">
+                                        <Input :id="id" v-model="person.role" type="text" list="rollen" />
+                                    </Field>
+                                    <Field v-slot="{ id }" dense class="min-w-[148px] flex-1" :label="$t('leads.email')">
+                                        <Input :id="id" v-model="person.email" type="email" inputmode="email" />
+                                    </Field>
+                                    <Field v-slot="{ id }" dense class="w-[148px] flex-none" :label="$t('leads.phone')">
+                                        <Input :id="id" v-model="person.phone" type="tel" inputmode="tel" />
+                                    </Field>
+                                    <Button v-if="index > 0" variant="ghost" class="min-h-10 text-small" type="button" @click="removeContact(person.id)">
+                                        {{ $t("common.remove") }}
+                                    </Button>
+                                </div>
+
+                                <div v-if="adding" class="mt-3 flex flex-col gap-3 pt-3 shadow-[inset_0_1px_0_var(--rule)]">
+                                    <ContactTypeahead :model-value="picked" @update:model-value="pick" @create-new="(term) => { pick(null); newContact.name = term }" />
+
+                                    <div v-if="newContact.name && !picked" class="flex gap-3 max-[640px]:flex-wrap">
+                                        <Field v-slot="{ id }" dense class="min-w-[148px] flex-1" :label="$t('leads.name')">
+                                            <Input :id="id" v-model="newContact.name" type="text" />
+                                        </Field>
+                                        <Field v-slot="{ id }" dense class="min-w-[148px] flex-1" :label="$t('leads.email')">
+                                            <Input :id="id" v-model="newContact.email" type="email" />
+                                        </Field>
+                                        <Field v-slot="{ id }" dense class="w-[148px] flex-none" :label="$t('leads.phone')">
+                                            <Input :id="id" v-model="newContact.phone" type="tel" />
+                                        </Field>
+                                    </div>
+
+                                    <div class="flex items-end gap-3">
+                                        <Field v-slot="{ id }" dense class="w-[148px] flex-none" :label="$t('leads.role')">
+                                            <Input :id="id" v-model="newContact.role" type="text" list="rollen" />
+                                        </Field>
+                                        <Button
+                                            variant="pill-muted"
+                                            class="min-h-10"
+                                            type="button"
+                                            :disabled="(!newContact.contact_id && !newContact.name) || newContact.processing"
+                                            @click="addContact"
+                                        >
+                                            {{ $t("lead.contactAdd") }}
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <Button v-else class="mt-3 min-h-10" variant="outline" type="button" @click="adding = true">
+                                    {{ $t("lead.contactAdd") }}
+                                </Button>
+
+                                <div class="mt-3 flex gap-2">
+                                    <Button class="min-h-10" variant="pill" type="button" :disabled="kontakte.processing" @click="saveKontakte">{{ $t("common.save") }}</Button>
+                                    <Button class="min-h-10" variant="outline" type="button" @click="kontakte.reset(); kontakteEditing = false">{{ $t("common.cancel") }}</Button>
+                                </div>
+                            </template>
+
+                            <template v-else>
+                                <div
+                                    v-for="person in people"
+                                    :key="person.id"
+                                    class="flex min-h-12 flex-wrap items-center gap-x-3 gap-y-1 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+                                >
+                                    <Link class="min-w-[200px] flex-1 font-semibold text-foreground no-underline hover:underline" :href="`/kontakte/${person.id}`">
+                                        {{ person.name }}
+                                    </Link>
+                                    <span class="rounded-full bg-sunk px-2.5 py-0.5 text-small">{{ roleLabel(person.role) }}</span>
+                                    <span v-if="person.email || person.phone" class="basis-full text-small">
+                                        <a v-if="person.email" class="text-ring no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
+                                        <template v-if="person.email && person.phone"> · </template>
+                                        <a v-if="person.phone" class="text-ring no-underline hover:underline" :href="`tel:${person.phone.replace(/ /g, '')}`">{{ person.phone }}</a>
+                                    </span>
+                                    <Button v-else variant="pill-muted" class="ml-auto min-h-10 px-4" as-child>
+                                        <Link :href="`/kontakte/${person.id}`">{{ $t("project.contactDetails") }}</Link>
+                                    </Button>
+                                </div>
+                            </template>
+                        </Panel>
+                    </div>
                 </div>
-                </template>
+            </template>
 
-                <QuoteList
-                    v-else-if="tab === 'quotes'"
+            <QuoteList
+                v-else-if="tab === 'quotes'"
+                :project-id="lead.projectId"
+                :can-manage-quotes="header.canManageQuotes"
+                :quotes="quotes"
+                :payments="payments"
+            />
+
+            <LeadRail
+                v-else-if="tab === 'info'"
+                :type-label="lead.typeLabel"
+                :source-label="lead.sourceLabel"
+                :dated="header.primaryDate !== null"
+                :week="week"
+                :conflicts="conflicts"
+                :thread="thread"
+            />
+
+            <Card v-else :title="$t('project.history')">
+                <MessageThread
                     :project-id="lead.projectId"
-                    :can-manage-quotes="header.canManageQuotes"
-                    :quotes="quotes"
-                    :payments="payments"
+                    :thread="conversation"
+                    :can-manage="header.canManageMessages"
+                    :inquiry="inquiry"
                 />
-
-                <div v-else-if="tab === 'info'" class="min-[1081px]:hidden">
-                    <LeadRail
-                        :type-label="lead.typeLabel"
-                        :source-label="lead.sourceLabel"
-                        :dated="header.primaryDate !== null"
-                        :week="week"
-                        :conflicts="conflicts"
-                        :thread="thread"
-                    />
-                </div>
-
-                <Card v-else :title="$t('project.history')">
-                    <MessageThread
-                        :project-id="lead.projectId"
-                        :thread="conversation"
-                        :can-manage="header.canManageMessages"
-                        :inquiry="inquiry"
-                    />
-                </Card>
+            </Card>
         </ProjectShell>
     </AdminLayout>
 </template>

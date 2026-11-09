@@ -65,3 +65,8 @@ export const Abgesagt: Story = {
 export const Keine: Story = {
     args: { shoots: [], crewAvailability: {} },
 }
+
+/** Zwei Termine am selben Tag teilen einen Block. */
+export const GleicherTag: Story = {
+    args: { shoots: [shoots[0], { ...engagement, id: 's-rahn-getting-ready', date: shoots[0].date, status: 'planned', statusLabel: 'Geplant' }] },
+}

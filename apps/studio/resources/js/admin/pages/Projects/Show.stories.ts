@@ -2,6 +2,40 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import Show from './Show.vue'
 import { header, presets, quote, shoots, sources, stages, tasks, thread } from '../__stories__/fixtures'
 
+const installment = (id: string, label: string, dueOn: string, amount: number, status: string, paidAmount: number): App.Payments.Data.PaymentInstallmentData => ({
+    id,
+    amount,
+    dueOn,
+    status,
+    statusLabel: status === 'paid' ? 'Bezahlt' : 'Offen',
+    sortOrder: 0,
+    label,
+    settledVia: null,
+    settledViaLabel: null,
+    paidOn: status === 'paid' ? dueOn : null,
+    paymentReference: null,
+    paidAmount,
+    remaining: amount - paidAmount,
+    isLate: false,
+    invoiceId: null,
+    invoiceNumber: null,
+    invoicedOn: null,
+    hasInvoiceDocument: false,
+    creditNotes: [],
+})
+
+const paymentPlan: App.Payments.Data.PaymentPlanData = {
+    id: 'pp-1',
+    total: 470100,
+    openTotal: 329100,
+    reference: null,
+    settledOn: null,
+    installments: [
+        installment('i-1', 'Anzahlung', '2026-03-02', 141000, 'paid', 141000),
+        installment('i-2', 'Restbetrag', '2026-09-06', 329100, 'scheduled', 0),
+    ],
+}
+
 const scopeItems = quote.items.map((item) => ({
     id: item.id,
     title: item.title,
@@ -43,7 +77,7 @@ const meta = {
     component: Show,
     parameters: { layout: 'fullscreen', url: `/auftraege/${header.id}` },
     args: {
-        header,
+        header: { ...header, paymentPlan },
         shoots,
         thread,
         tasks,
@@ -103,5 +137,38 @@ export const OhneAngebot: Story = {
     args: {
         quote: null,
         scope: { items: [], delta: 0, hasDraft: false },
+    },
+}
+
+const crowd = Array.from({ length: 13 }, (_, index) => ({
+    ...shoots[0],
+    id: `s-${index}`,
+    date: `2026-${String(9 + Math.floor(index / 5)).padStart(2, '0')}-${String(10 + (index % 5) * 4)}`,
+    label: `Termin ${index + 1} mit langem Namen für den Stresstest`,
+}))
+
+/** Dreizehn Termine und vierzehn Aufgaben: Fenster und Kappung greifen. */
+export const Voll: Story = {
+    args: {
+        shoots: crowd,
+        tasks: Array.from({ length: 14 }, (_, index) => ({
+            ...tasks[0],
+            id: `t-${index}`,
+            title: `Aufgabe ${index + 1}`,
+            isOverdue: index === 0,
+        })),
+    },
+}
+
+/** Nichts erfasst: Kachelreihe statt leerer Karten, kein Kennzahlenband. */
+export const Leer: Story = {
+    args: {
+        header: { ...header, paymentPlan: null, primaryDate: null },
+        shoots: [],
+        tasks: [],
+        thread: [],
+        quote: null,
+        scope: { items: [], delta: 0, hasDraft: false },
+        inquiry: { text: null, typeLabel: 'Hochzeit', sourceLabel: null, capturedVia: null, capturedAt: '2026-02-14T10:20:00+01:00' },
     },
 }

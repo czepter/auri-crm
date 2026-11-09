@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, useTemplateRef, watch } from 'vue'
-import { useMediaQuery } from '@vueuse/core'
+import { computed, onMounted, ref, useTemplateRef } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import Page from '@/ui/page/Page.vue'
 import ProjectQueue from '@/admin/components/crm/ProjectQueue.vue'
 import StageTrack from '@/admin/components/crm/StageTrack.vue'
-import CaseRail from '@/admin/components/crm/CaseRail.vue'
-import Rail from '@/ui/page/Rail.vue'
+import SettlePlanDialog from '@/admin/components/payments/SettlePlanDialog.vue'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
@@ -28,14 +26,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, Ale
  * lit, so the heading never has to say it twice.
  */
 const props = defineProps<{ header: App.Crm.Screens.CaseHeaderData; active: string; child?: string }>()
-
-const hasRail = computed(
-  () => props.header.people.length > 0 || props.header.paymentPlan !== null || props.header.galleries.length > 0 || props.header.history.some((entry) => entry.system),
-)
-
-// Info is the rail where there is no room for the rail.
-const wide = useMediaQuery('(min-width: 1081px)')
-watch(wide, (is) => is && props.active === 'info' && router.visit(props.header.tabs[0].href, { replace: true }), { immediate: true })
 
 const tabNav = useTemplateRef<HTMLElement>('tabNav')
 // Fonts change the tab widths; centering before they load clips the last tab.
@@ -92,14 +82,6 @@ function destroy() {
       </slot>
     </template>
 
-    <template #right>
-      <slot name="rail">
-        <Rail v-if="hasRail">
-          <CaseRail :header="header" />
-        </Rail>
-      </slot>
-    </template>
-
     <div class="min-w-0 flex-1 px-[26px] pt-5 pb-7 max-[640px]:px-4">
       <div class="text-small font-medium text-ink-2">
         <Link v-if="header.isBooked" href="/projekte">{{ $t('projects.title') }}</Link>
@@ -150,7 +132,7 @@ function destroy() {
 
             <DropdownMenu v-if="(header.canComplete && !header.isCompleted) || (header.canClose && !header.outcomeLabel) || header.canDelete || header.canManagePortalVisibility">
               <DropdownMenuTrigger
-                class="flex size-8 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2 max-[640px]:size-11"
+                class="flex size-10 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2 max-[640px]:size-11"
                 :aria-label="$t('project.more')"
               >
                 <svg class="size-4 fill-current" viewBox="0 0 24 24">
@@ -193,13 +175,12 @@ function destroy() {
             v-for="tab in header.tabs"
             :key="tab.key"
             :href="tab.href"
-            class="relative flex-none rounded-[var(--r-sm)] px-2.5 py-1 whitespace-nowrap no-underline"
-            :class="[
+            class="relative inline-flex min-h-10 flex-none items-center rounded-[var(--r-sm)] px-3 whitespace-nowrap no-underline"
+            :class="
               tab.key === active
                 ? ['font-semibold text-foreground', !tabRect && 'bg-paper shadow-[0_1px_2px_rgba(24,24,27,.08),inset_0_-2px_0_var(--ink)]']
-                : 'text-ink-2 hover:text-foreground',
-              tab.key === 'info' && 'min-[1081px]:hidden',
-            ]"
+                : 'text-ink-2 hover:text-foreground'
+            "
             :aria-current="tab.key === active ? 'page' : undefined"
           >
             {{ $t(tab.label) }}<span v-if="tab.count" class="ml-1 text-small">{{ tab.count }}</span>
@@ -243,6 +224,12 @@ function destroy() {
           {{ $t('lead.reopen') }}
         </Button>
       </div>
+
+      <SettlePlanDialog
+        v-if="header.paymentPlan && header.canManagePaymentPlan && header.primaryShootCancelled && !header.paymentPlan.settledOn"
+        class="mt-2.5"
+        :plan="header.paymentPlan"
+      />
 
       <AlertDialog v-model:open="closing">
         <AlertDialogContent>

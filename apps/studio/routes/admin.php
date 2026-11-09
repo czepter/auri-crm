@@ -642,6 +642,10 @@ Route::middleware('audience:staff')->group(function () {
             ->name('projects.shoots');
         Route::get('/auftraege/{case}/aufgaben', [CaseController::class, 'tasks'])
             ->name('projects.tasks');
+        Route::get('/auftraege/{case}/verlauf', [CaseController::class, 'history'])
+            ->name('projects.history');
+        Route::get('/auftraege/{case}/notizen', [CaseController::class, 'notes'])
+            ->name('projects.notes');
         Route::get('/auftraege/{case}/galerien', [CaseController::class, 'galleries'])
             ->name('projects.galleries');
         Route::delete('/auftraege/{case}', [CaseController::class, 'destroy'])
