@@ -3,21 +3,36 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Button } from '@/ui/button'
+import { copyText } from '@/ui/copy-button'
+import { HoldToConfirm } from '@/ui/hold-to-confirm'
+import { AlertDialog, AlertDialogBody, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/ui/alert-dialog'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
-import GalleryShareDialog from '@/admin/components/gallery/GalleryShareDialog.vue'
+import GalleryDesignFields from '@/admin/components/gallery/GalleryDesignFields.vue'
+import GalleryPreview from '@/admin/components/gallery/GalleryPreview.vue'
+import { complete } from '@/admin/lib/galleryDesign'
+import GalleryAssetPicker from '@/admin/components/gallery/GalleryAssetPicker.vue'
+import { copyCount, copyIds } from '@/admin/lib/galleryCopySelection'
+import { titleMatches } from '@/admin/lib/galleryDelete'
+import type { SelectionState } from '@/admin/lib/gallerySelection'
+import GalleryQrDialog from '@/admin/components/gallery/GalleryQrDialog.vue'
+import type { Permissions } from '@/admin/lib/galleryPermissions'
+import GallerySendDialog from '@/admin/components/gallery/GallerySendDialog.vue'
 import GalleryNav from '@/admin/components/gallery/GalleryNav.vue'
-import { publishLabelKey, showPublish as showPublishRule, showWithdraw as showWithdrawRule } from '@/admin/lib/galleryPublish'
+import { publishLabelKey, showPublish as showPublishRule, showWithdraw as showWithdrawRule, stateKey } from '@/admin/lib/galleryPublish'
 import { xsrfHeader } from '@/admin/lib/multipartUpload'
 import Images from '@/admin/pages/Galleries/panes/Images.vue'
+import Activity, { type ActivityData } from '@/admin/pages/Galleries/panes/Activity.vue'
 import Settings from '@/admin/pages/Galleries/panes/Settings.vue'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import Chip from '@/ui/page/Chip.vue'
 
 const { t } = useI18n()
 
@@ -36,7 +51,18 @@ const props = withDefaults(defineProps<{
     requiresVerifiedEmail: boolean
     expiresAt: string | null
     design: Record<string, string> | null
+    coverFocal: { x: number; y: number } | null
     offers: { downloads: boolean; lists: boolean; comments: boolean }
+    permissions: Permissions
+    introEnabled: boolean
+    studioName: string | null
+    viewMode: 'none' | 'text' | 'logo' | 'locked'
+    watermarkText: string | null
+    downloadRule: 'open' | 'after_payment' | 'off'
+    downloadInvoiceId: string | null
+    downloadSizes: ('original' | 'web')[]
+    expiryReminder: boolean
+    invoices: { id: string; number: string; status: string }[]
     deviates: boolean
     withdrawn: boolean
     prerelease: boolean
@@ -45,7 +71,11 @@ const props = withDefaults(defineProps<{
     externalPassword: string | null
     info: string | null
     canPublish: boolean
+    canDelete: boolean
+    copy: { done: number; total: number } | null
     canMail: boolean
+    recipient: { name: string; email: string } | null
+    mailMessage?: string | null
   }
   siblings?: { id: string; title: string | null; assetCount: number; open: boolean }[]
   presets: App.Gallery.Data.GalleryPresetData[]
@@ -57,17 +87,13 @@ const props = withDefaults(defineProps<{
     downloaded: number
     viewed: number
   }
-  sets: { id: string; name: string; count: number; sortKey: string; sortDir: string; density: string }[]
+  sets: { id: string; name: string; count: number; sortKey: string; sortDir: string; density: string; access: 'internal' | 'guests'; url: string }[]
   assets?: { id: string; key: string; setId: string; src: string; filename: string; width: number; height: number; isCover: boolean }[]
   versions?: { version: number; publishedAt: string | null; assetCount: number }[]
   builds?: { id: string; size: string; status: string; parts: number; bytes: number }[]
   lists?: { id: string; name: string | null; owner: string | null; count: number }[]
-  activity?: {
-    downloads: { who: string; what: string | null; size: string | null; on: string | null }[]
-    marks: { who: string | null; what: string; on: string }[]
-    comments: { who: string | null; what: string; on: string }[]
-    views: { who: string | null; on: string }[]
-  }
+  activity?: ActivityData
+  favoriteKeys?: string[] | null
   failedAssets?: { publicId: string; filename: string; error: string }[]
   pendingUploads?: { id: string; setId: string; filename: string; stage: 'transferring' | 'processing' }[]
   // Bereich, Set und Abschnitt kommen aus dem Pfad. Als ref() warf jedes
@@ -75,19 +101,20 @@ const props = withDefaults(defineProps<{
   nav: App.Gallery.Data.GalleryNavData
   area: 'bilder' | 'gestaltung' | 'einstellungen' | 'aktivitaet'
   activeSetId: string | null
-  settingsSection: 'allgemein' | 'zugang' | 'download' | 'listen' | 'kommentare'
+  settingsSection: 'allgemein' | 'zugang' | 'freigabe' | 'download' | 'listen'
 }>(), {
   siblings: () => [],
   assets: () => [],
   versions: () => [],
   builds: () => [],
   lists: () => [],
-  activity: () => ({ downloads: [], marks: [], comments: [], views: [] }),
+  activity: () => ({ counts: { favorites: 0, comments: 0, hidden: 0, downloads: 0 }, events: [], favorites: [], hidden: [], task: { available: false, url: null } }),
+  favoriteKeys: null,
   failedAssets: () => [],
   pendingUploads: () => [],
 })
 
-useLiveProps(['gallery', 'siblings', 'figures', 'sets', 'assets', 'versions', 'builds', 'lists', 'activity', 'failedAssets', 'pendingUploads'])
+useLiveProps(['gallery', 'siblings', 'figures', 'sets', 'assets', 'versions', 'builds', 'lists', 'activity', 'favoriteKeys', 'failedAssets', 'pendingUploads'])
 
 const tab = computed(() => props.area)
 
@@ -98,25 +125,29 @@ const tab = computed(() => props.area)
 const cover = computed(() => props.assets.find((asset) => asset.isCover) ?? props.assets[0])
 const beneath = computed(() => props.assets.filter((asset) => asset.id !== cover.value?.id).slice(0, 6))
 
-// C-20 (#257): three sheets, because the questions differ — who took
-// something, who marked something, who was here at all.
-const SHEETS = ['downloads', 'marks', 'views'] as const
-const sheet = ref<string>('downloads')
-
-
 const publishState = computed(() => ({
   deviates: props.gallery.deviates,
   withdrawn: props.gallery.withdrawn,
   published: props.figures.published,
   assets: props.figures.assets,
 }))
+const stateWord = computed(() => {
+  const key = stateKey(publishState.value)
+  if (key !== 'online') return t(key === 'draft' ? 'galleryRecord.stateDraft' : 'galleryRecord.stateWithdrawn')
+  return props.figures.expiresAt === null
+    ? t('galleryRecord.stateOnline')
+    : t('galleryRecord.stateOnlineUntil', { date: new Date(props.figures.expiresAt).toLocaleDateString('de-DE') })
+})
+const stateTone = computed(() => ({ online: 'text-ok', withdrawn: 'text-ink-2', draft: 'text-ink-2' })[stateKey(publishState.value)])
 const publishLabel = computed(() => publishLabelKey(publishState.value))
 const showPublish = computed(() => props.gallery.canPublish && showPublishRule(publishState.value))
 const showWithdraw = computed(() => props.gallery.canPublish && showWithdrawRule(publishState.value))
 
+const publishing = ref(false)
+
 function publish() {
   if (props.gallery.canMail) {
-    router.visit(`/galerien/${props.gallery.id}/veroeffentlichen`)
+    openSend('mail')
     return
   }
 
@@ -124,10 +155,32 @@ function publish() {
 }
 
 const sharing = ref(false)
+const sendTab = ref<'mail' | 'link'>('link')
+const showingQr = ref(false)
+
+function openSend(target: 'mail' | 'link') {
+  sendTab.value = target
+  sharing.value = true
+}
+
+const isFirstPublish = computed(() => showPublish.value && props.figures.published === null)
+const showResend = computed(() => props.gallery.canPublish && props.gallery.canMail && showWithdraw.value && !props.gallery.deviates)
+const previewForm = ref<HTMLFormElement | null>(null)
 
 function publishSilently() {
-  router.post(`/galerien/${props.gallery.id}/veroeffentlichen`, {}, { preserveScroll: true, onSuccess: () => (sharing.value = true) })
+  router.post(`/galerien/${props.gallery.id}/veroeffentlichen`, {}, {
+    preserveScroll: true,
+    onStart: () => (publishing.value = true),
+    onFinish: () => (publishing.value = false),
+    onSuccess: () => openSend('link'),
+  })
 }
+
+function duplicate() {
+  router.post(`/galerien/${props.gallery.id}/duplizieren`)
+}
+
+const withdrawing = ref(false)
 
 function withdraw() {
   router.delete(`/galerien/${props.gallery.id}/veroeffentlichung`, { preserveScroll: true })
@@ -138,8 +191,39 @@ function withdraw() {
 const showStartPrerelease = computed(() => props.gallery.canPublish && !props.gallery.isExternal && !props.gallery.prerelease && props.figures.published === null)
 const showStopPrerelease = computed(() => props.gallery.canPublish && props.gallery.prerelease)
 
+const choosingPrerelease = ref(false)
+const prereleaseMode = ref<'version' | 'own'>('version')
+
+const prereleaseSelection = ref<SelectionState>({ selected: new Set(), anchor: null })
+const allAssetIds = computed(() => props.assets.map((asset) => asset.id))
+
+// Die Bilder gehören nur zu zwei Bereichen; hier werden sie erst bei Bedarf nachgeladen.
+watch([choosingPrerelease, prereleaseMode], ([open, mode]) => {
+  if (open && mode === 'own' && props.assets.length === 0 && props.figures.assets > 0) router.reload({ only: ['assets'] })
+})
+
 function startPrerelease() {
-  router.post(`/galerien/${props.gallery.id}/pre-release`, {}, { preserveScroll: true })
+  const own = prereleaseMode.value === 'own'
+
+  router.post(`/galerien/${props.gallery.id}/pre-release`, { own, asset_ids: own ? copyIds(prereleaseSelection.value.selected, allAssetIds.value) : null }, {
+    preserveScroll: true,
+    onSuccess: () => (choosingPrerelease.value = false),
+  })
+}
+
+const deleting = ref(false)
+const typedTitle = ref('')
+
+function destroy() {
+  router.delete(`/galerien/${props.gallery.id}`, { data: { title: typedTitle.value } })
+}
+
+function resumeCopy() {
+  router.post(`/galerien/${props.gallery.id}/kopie-fortsetzen`, {}, { preserveScroll: true })
+}
+
+function requestArchive() {
+  router.post('/einstellungen/export/archiv', { gallery: props.gallery.id }, { preserveScroll: true })
 }
 
 function stopPrerelease() {
@@ -192,25 +276,13 @@ async function createPreviewLink() {
     return
   }
 
-  if (!navigator.clipboard) {
-    flashStatus(false, t('galleryRecord.actionFailed'), url)
-    return
-  }
-
-  try {
-    await navigator.clipboard.writeText(url)
-    flashStatus(true, t('gallery.copied'))
-  } catch {
-    // Permission denied, same as no API at all: the link still exists,
-    // still shown, still nothing lost.
-    flashStatus(false, t('galleryRecord.actionFailed'), url)
-  }
+  if (await copyText(url)) flashStatus(true, t('gallery.copied'))
+  else flashStatus(false, t('galleryRecord.actionFailed'), url)
 }
 
-function copyLink() {
-  navigator.clipboard?.writeText(props.gallery.url)
-    .then(() => flashStatus(true, t('gallery.copied')))
-    .catch(() => flashStatus(false, t('galleryRecord.actionFailed')))
+async function copyLink() {
+  if (await copyText(props.gallery.url)) flashStatus(true, t('gallery.copied'))
+  else flashStatus(false, t('galleryRecord.actionFailed'))
 }
 
 const savingPreset = ref(false)
@@ -282,41 +354,31 @@ function reorderSets(order: string[]) {
   router.patch(`/galerien/${props.gallery.id}/sets/reihenfolge`, { order }, { preserveScroll: true })
 }
 
-const design = useForm({ design: props.gallery.design ?? { cover: 'full', type: 'serif', colour: 'light', grid: 'wide' } })
+const design = useForm({ design: complete(props.gallery.design) })
 
 function saveDesign() {
   design.patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
 }
 
-const COVERS = ['full', 'split', 'plain']
-const COLOURS = ['light', 'dark', 'warm']
-const GRIDS = ['wide', 'dense', 'single']
-
-function day(iso: string | null) {
-  return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'
+function saveFocal(focal: { x: number; y: number }) {
+  router.patch(`/galerien/${props.gallery.id}/titelbild`, { asset_id: cover.value.id, focal_x: focal.x, focal_y: focal.y }, { preserveScroll: true })
 }
 
-function megabytes(bytes: number) {
-  return `${Math.round(bytes / 1_000_000)} MB`
-}
 </script>
 
 <template>
   <AdminLayout active="galerien">
-    <div data-tokens>
+    <Page wide>
+    <div data-tokens class="min-w-0 flex-1">
       <PageHead :title="gallery.title ?? '—'">
-        <!-- Stand, chip-styled: the same fact the old counter band spent a
-             whole column on, and the only one of the six worth a glance at
-             every tab (ProjectShell's isBooked chip is the pattern). -->
-        <span
-          v-if="figures.published !== null"
-          class="flex-none rounded-[var(--r-sm)] bg-ok-bg px-2 py-[3px] text-small leading-[1.5] font-semibold text-ok"
-        >{{ $t('galleryRecord.version', { version: figures.published }) }}</span>
-        <span
-          v-else-if="gallery.prerelease"
-          class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold text-due"
-        >{{ $t('galleryRecord.prerelease') }}</span>
-
+        <span class="flex flex-none items-center gap-1.5 text-small font-semibold" :class="stateTone">
+          <span class="size-1.5 rounded-full bg-current" />{{ stateWord }}
+        </span>
+        <Chip v-if="gallery.prerelease" tone="warn">{{ $t('galleryRecord.prerelease') }}</Chip>
+        <template v-if="gallery.copy">
+          <Chip tone="warn">{{ $t('galleryRecord.copying', gallery.copy) }}</Chip>
+          <Button type="button" variant="outline" @click="resumeCopy">{{ $t('galleryRecord.copyResume') }}</Button>
+        </template>
         <span v-if="actionStatus" class="ml-auto flex items-center gap-1.5">
           <span class="text-small" :class="actionStatus.ok ? 'text-ink-2' : 'text-destructive'">{{ actionStatus.message }}</span>
           <Input
@@ -347,33 +409,113 @@ function megabytes(bytes: number) {
                  gating the preview link, presets.length gating "Vorlage
                  anwenden") stay pinned by a test that can fail. -->
             <DropdownMenuContent force-mount class="data-[state=closed]:hidden">
-              <DropdownMenuItem v-if="showPublish || !showWithdraw" @select="sharing = true">{{ $t('galleryRecord.share') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="showPublish || !showWithdraw" @select="openSend('link')">{{ $t('galleryRecord.share') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="showResend" @select="openSend('mail')">{{ $t('galleryRecord.resend') }}</DropdownMenuItem>
               <DropdownMenuItem @select="copyLink">{{ $t('galleryRecord.copyLink') }}</DropdownMenuItem>
+              <DropdownMenuItem @select="showingQr = true">{{ $t('galleryRecord.qr') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="!gallery.isExternal" @select="duplicate">{{ $t('galleryRecord.duplicate') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="gallery.canPublish" @select="createPreviewLink">{{ $t('galleryRecord.createPreviewLink') }}</DropdownMenuItem>
               <DropdownMenuItem @select="savingPreset = true">{{ $t('galleryRecord.saveAsPreset') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="presets.length" @select="applyingPreset = true">{{ $t('galleryRecord.applyPreset') }}</DropdownMenuItem>
-              <DropdownMenuItem v-if="showStartPrerelease" @select="startPrerelease">{{ $t('galleryRecord.prerelease') }}</DropdownMenuItem>
+              <DropdownMenuItem class="min-[641px]:hidden" @select="previewForm?.submit()">{{ $t('galleryRecord.preview') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="showPublish && gallery.canMail" @select="publishSilently">{{ $t('galleryRecord.publishSilently') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="showWithdraw" @select="withdrawing = true">{{ $t('galleryRecord.withdraw') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="showStartPrerelease" @select="choosingPrerelease = true">{{ $t('galleryRecord.prerelease') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="showStopPrerelease" @select="stopPrerelease">{{ $t('galleryRecord.prereleaseStop') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="gallery.canDelete" class="text-destructive" @select="typedTitle = ''; deleting = true">{{ $t('common.delete') }}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
           <form
+            ref="previewForm"
             :action="`/galerien/${gallery.id}/vorschau`"
             method="post"
             target="_blank"
-            class="inline-flex"
+            class="inline-flex max-[640px]:hidden"
           >
             <input type="hidden" name="_token" :value="csrf">
             <Button type="submit" variant="pill-muted">{{ $t('galleryRecord.preview') }}</Button>
           </form>
-          <Button v-if="showWithdraw" type="button" variant="pill-muted" @click="withdraw">{{ $t('galleryRecord.withdraw') }}</Button>
-          <Button v-if="showPublish && gallery.canMail" type="button" variant="pill-muted" @click="publishSilently">{{ $t('galleryRecord.publishSilently') }}</Button>
-          <Button v-if="showPublish" type="button" @click="publish">{{ $t(publishLabel) }}</Button>
-          <Button v-else-if="showWithdraw" type="button" @click="sharing = true">{{ $t('galleryRecord.share') }}</Button>
+          <DropdownMenu v-if="isFirstPublish" :modal="false">
+            <DropdownMenuTrigger as-child>
+              <Button type="button" :state="publishing ? 'loading' : 'idle'">{{ $t(publishLabel) }}</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" force-mount class="data-[state=closed]:hidden">
+              <DropdownMenuItem v-if="gallery.canMail" @select="openSend('mail')">{{ $t('galleryRecord.publishAndSend') }}</DropdownMenuItem>
+              <DropdownMenuItem @select="publishSilently">{{ $t('galleryRecord.publishOnly') }}</DropdownMenuItem>
+              <DropdownMenuItem @select="openSend('link')">{{ $t('galleryRecord.copyLinkAndPassword') }}</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button v-else-if="showPublish" type="button" :state="publishing ? 'loading' : 'idle'" @click="publish">{{ $t(publishLabel) }}</Button>
+          <Button v-else-if="showWithdraw" type="button" @click="openSend('link')">{{ $t('galleryRecord.share') }}</Button>
         </span>
       </PageHead>
 
-      <GalleryShareDialog v-model:open="sharing" :gallery="gallery" />
+      <GallerySendDialog
+        v-model:open="sharing"
+        v-model:tab="sendTab"
+        :gallery="gallery"
+        :recipient="gallery.recipient"
+        :publishable="showPublish"
+      />
+      <GalleryQrDialog v-model:open="showingQr" :gallery="gallery" />
+
+      <AlertDialog v-model:open="withdrawing">
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{{ $t('galleryRecord.withdrawTitle') }}</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <HoldToConfirm tone="destructive" @confirm="withdrawing = false; withdraw()">{{ $t('galleryRecord.withdraw') }}</HoldToConfirm>
+            <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog v-model:open="deleting">
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{{ $t('galleryRecord.deleteTitle') }}</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogBody class="flex flex-col gap-3">
+            <Button type="button" variant="outline" class="self-start" @click="requestArchive">{{ $t('galleryRecord.deleteArchive') }}</Button>
+            <div v-if="gallery.title" class="flex flex-col gap-1.5">
+              <Label for="gallery-delete-title">{{ $t('galleryRecord.deleteConfirm', { title: gallery.title }) }}</Label>
+              <Input id="gallery-delete-title" v-model="typedTitle" type="text" autocomplete="off" />
+            </div>
+          </AlertDialogBody>
+          <AlertDialogFooter>
+            <HoldToConfirm tone="destructive" :disabled="!titleMatches(typedTitle, gallery.title)" @confirm="deleting = false; destroy()">{{ $t('common.delete') }}</HoldToConfirm>
+            <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog v-model:open="choosingPrerelease">
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{{ $t('galleryRecord.prerelease') }}</DialogTitle>
+          </DialogHeader>
+
+          <DialogBody>
+            <ChoiceGroup
+              v-model="prereleaseMode"
+              :options="(['version', 'own'] as const).map((value) => ({ value, label: $t(`galleryRecord.prereleaseMode.${value}`) }))"
+            />
+            <template v-if="prereleaseMode === 'own' && assets.length">
+              <p class="mt-3 text-small text-ink-2">{{ $t('galleryRecord.prereleasePick', { count: copyCount(prereleaseSelection.selected, allAssetIds) }) }}</p>
+              <GalleryAssetPicker v-model="prereleaseSelection" :assets="assets" class="mt-1.5" />
+            </template>
+          </DialogBody>
+
+          <DialogFooter>
+            <Button type="button" @click="startPrerelease">{{ $t('galleryRecord.prereleaseStart') }}</Button>
+            <DialogClose as-child>
+              <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog v-model:open="savingPreset">
         <DialogContent>
@@ -445,72 +587,63 @@ function megabytes(bytes: number) {
           @reorder="reorderSets"
         />
 
-        <!-- Bilder: the pane owns the grid and selection. Fassungen moved to
-             Einstellungen — the count sits beside the set name and Stand is
-             the header's own chip, so nothing here repeats them. -->
-        <div v-if="tab === 'bilder'" class="min-w-0 flex-1">
-          <Images
-            :gallery="gallery"
-            :sets="sets"
-            :assets="assets"
-            :active-set-id="activeSetId"
-            :failed-assets="failedAssets"
-            :pending-uploads="pendingUploads"
-          />
+        <div v-if="tab === 'bilder'" class="flex min-w-0 flex-1 flex-col min-[1280px]:flex-row">
+          <div class="min-w-0 flex-1">
+            <Images
+              :gallery="gallery"
+              :sets="sets"
+              :assets="assets"
+              :active-set-id="activeSetId"
+              :failed-assets="failedAssets"
+              :pending-uploads="pendingUploads"
+              :favorite-keys="favoriteKeys"
+            />
+          </div>
+          <aside class="flex-none px-6 pt-5 pb-7 min-[1280px]:sticky min-[1280px]:top-0 min-[1280px]:w-[280px] min-[1280px]:self-start min-[1280px]:pl-0">
+            <dl class="m-0 flex flex-col gap-2.5 text-small">
+              <div>
+                <dt class="text-ink-2">{{ $t('galleryRecord.published') }}</dt>
+                <dd class="m-0 mt-1 font-semibold" :class="stateTone">{{ stateWord }}</dd>
+                <dd v-if="figures.published !== null" class="m-0 mt-0.5 text-ink-2">{{ $t('galleryRecord.version', { version: figures.published }) }}</dd>
+              </div>
+              <div class="flex justify-between gap-3">
+                <dt class="text-ink-2">{{ $t('galleryRecord.viewed') }}</dt>
+                <dd class="m-0 tabular-nums">{{ figures.viewed }}</dd>
+              </div>
+              <div class="flex justify-between gap-3">
+                <dt class="text-ink-2">{{ $t('galleryRecord.marked') }}</dt>
+                <dd class="m-0 tabular-nums">{{ figures.marked }}</dd>
+              </div>
+              <div class="flex justify-between gap-3">
+                <dt class="text-ink-2">{{ $t('galleryRecord.downloaded') }}</dt>
+                <dd class="m-0 tabular-nums">{{ figures.downloaded }}</dd>
+              </div>
+            </dl>
+            <button type="button" class="mt-4 cursor-pointer border-0 bg-transparent p-0 text-small text-ring hover:underline" @click="openSend('link')">
+              {{ $t('galleryRecord.share') }}
+            </button>
+          </aside>
         </div>
-
         <!-- Gestaltung: choosing without seeing is guessing, so the choice is
              on the left and the result on the right. -->
         <div v-else-if="tab === 'gestaltung'" class="flex min-w-0 flex-1 max-[640px]:flex-col">
-          <div class="w-80 flex-none pt-5 pr-4 pb-7 pl-8 max-[640px]:w-auto max-[640px]:pl-4">
-            <div class="mb-4 flex flex-col gap-1">
-              <span class="pl-0.5 text-small leading-none font-normal text-ink-2">{{ $t('galleryRecord.cover') }}</span>
-              <ChoiceGroup
-                v-model="design.design.cover"
-                :options="COVERS.map((option) => ({ value: option, label: $t(`galleryRecord.cover_${option}`) }))"
-                @update:model-value="saveDesign"
-              />
-            </div>
-
-            <div class="mb-4 flex flex-col gap-1">
-              <span class="pl-0.5 text-small leading-none font-normal text-ink-2">{{ $t('galleryRecord.colour') }}</span>
-              <ChoiceGroup
-                v-model="design.design.colour"
-                :options="COLOURS.map((option) => ({ value: option, label: $t(`galleryRecord.colour_${option}`) }))"
-                @update:model-value="saveDesign"
-              />
-            </div>
-
-            <div class="flex flex-col gap-1">
-              <span class="pl-0.5 text-small leading-none font-normal text-ink-2">{{ $t('galleryRecord.grid') }}</span>
-              <ChoiceGroup
-                v-model="design.design.grid"
-                :options="GRIDS.map((option) => ({ value: option, label: $t(`galleryRecord.grid_${option}`) }))"
-                @update:model-value="saveDesign"
-              />
-            </div>
+          <div class="w-[360px] flex-none pt-5 pr-4 pb-7 pl-8 max-[640px]:w-auto max-[640px]:pl-4">
+            <GalleryDesignFields
+              v-model="design.design"
+              :cover="cover?.src ? { src: cover.src, focal: gallery.coverFocal } : null"
+              @focal="saveFocal"
+              @update:model-value="saveDesign"
+            />
           </div>
 
           <div class="min-w-0 flex-1 bg-sunk px-6 pt-5 pb-7">
-            <div class="overflow-hidden rounded-[12px] bg-paper">
-              <div class="relative">
-                <img v-if="cover?.src" class="block aspect-video w-full object-cover" :src="`${cover.src}?w=1200&fmt=jpeg`" alt="" />
-                <div class="absolute inset-x-0 bottom-0 bg-[linear-gradient(transparent,rgba(20,16,14,0.55))] px-5 py-[22px] text-center text-paper">
-                  <b class="block text-title leading-[1.2] font-semibold">{{ gallery.title }}</b>
-                  <span class="text-small opacity-85">{{ $t('contacts.assetCount', figures.assets) }}</span>
-                </div>
-              </div>
-              <div class="grid grid-cols-3 gap-1.5 p-2.5">
-                <img
-                  v-for="asset in beneath"
-                  :key="asset.id"
-                  class="block aspect-3/2 w-full rounded-[3px] object-cover"
-                  :src="`${asset.src}?w=400&fmt=jpeg`"
-                  alt=""
-                  loading="lazy"
-                />
-              </div>
-            </div>
+            <GalleryPreview
+              :design="design.design"
+              :offers="gallery.offers"
+              :photos="cover?.src ? { cover: `${cover.src}?w=1200&fmt=jpeg`, focal: gallery.coverFocal, rest: beneath.map((asset) => `${asset.src}?w=400&fmt=jpeg`) } : null"
+              :title="gallery.title ?? ''"
+              :url="gallery.url"
+            />
 
             <div class="mt-4 flex items-center gap-3">
               <a class="ml-auto text-small tracking-[-0.01em] whitespace-nowrap text-ring no-underline hover:underline" :href="gallery.url">{{ $t('galleryRecord.openLive') }}</a>
@@ -524,94 +657,11 @@ function megabytes(bytes: number) {
           <Settings :gallery="gallery" :siblings="siblings" :versions="versions" :lists="lists" :settings-section="settingsSection" />
         </div>
 
-        <div v-else class="min-w-0 flex-1 px-6 pt-7 pb-8">
-          <!-- Marked/downloaded/viewed: a look backwards, so they sit above
-               the sheets that spell the same facts out row by row. -->
-          <div class="mb-5 flex">
-            <div class="min-w-0 flex-1 px-[18px] shadow-[inset_1px_0_0_var(--rule)] first:pl-0 first:shadow-none">
-              <div class="text-small text-ink-2">{{ $t('galleryRecord.marked') }}</div>
-              <div class="mt-[5px] text-title leading-[1.2] font-semibold tracking-[-0.02em] tabular-nums">{{ figures.marked }}</div>
-            </div>
-            <div class="min-w-0 flex-1 px-[18px] shadow-[inset_1px_0_0_var(--rule)] first:pl-0 first:shadow-none">
-              <div class="text-small text-ink-2">{{ $t('galleryRecord.downloaded') }}</div>
-              <div class="mt-[5px] text-title leading-[1.2] font-semibold tracking-[-0.02em] tabular-nums">{{ figures.downloaded }}</div>
-            </div>
-            <div class="min-w-0 flex-1 px-[18px] shadow-[inset_1px_0_0_var(--rule)] first:pl-0 first:shadow-none">
-              <div class="text-small text-ink-2">{{ $t('galleryRecord.viewed') }}</div>
-              <div class="mt-[5px] text-title leading-[1.2] font-semibold tracking-[-0.02em] tabular-nums">{{ figures.viewed }}</div>
-            </div>
-          </div>
-
-          <ChoiceGroup
-            v-model="sheet"
-            :options="SHEETS.map((name) => ({ value: name, label: $t(`galleryRecord.sheet.${name}`) }))"
-            variant="segmented"
-          />
-
-          <table class="mt-4 w-full border-collapse max-[640px]:block max-[640px]:overflow-x-auto">
-            <thead>
-              <tr>
-                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.who') }}</th>
-                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.what') }}</th>
-                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2 text-right">{{ $t('galleryRecord.when') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <template v-if="sheet === 'downloads'">
-                <tr v-for="(row, index) in activity.downloads" :key="index">
-                  <td class="px-6 py-2.5 align-baseline text-ui font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_var(--rule)]">{{ row.who }}</td>
-                  <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-ink-2">{{ row.what ?? $t('gallery.everything') }} · {{ $t(`gallery.size.${row.size}`) }}</td>
-                  <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-right tabular-nums">{{ day(row.on) }}</td>
-                </tr>
-              </template>
-
-              <template v-else-if="sheet === 'marks'">
-                <tr v-for="(row, index) in activity.marks" :key="index">
-                  <td class="px-6 py-2.5 align-baseline text-ui font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_var(--rule)]">{{ row.who ?? $t('galleryRecord.guest') }}</td>
-                  <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-ink-2">{{ row.what }}</td>
-                  <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-right tabular-nums">{{ day(row.on) }}</td>
-                </tr>
-                <tr v-for="(row, index) in activity.comments" :key="`c${index}`">
-                  <td class="px-6 py-2.5 align-baseline text-ui font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_var(--rule)]">{{ row.who ?? $t('galleryRecord.guest') }}</td>
-                  <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-ink-2">{{ row.what }}</td>
-                  <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-right tabular-nums">{{ day(row.on) }}</td>
-                </tr>
-              </template>
-
-              <template v-else>
-                <tr v-for="(row, index) in activity.views" :key="index">
-                  <td class="px-6 py-2.5 align-baseline text-ui font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_var(--rule)]">{{ row.who ?? $t('galleryRecord.guest') }}</td>
-                  <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-ink-2">—</td>
-                  <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-right tabular-nums">{{ day(row.on) }}</td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-
-          <!-- Fertige ZIP-Archive: Tatsachen über Vergangenes, keine
-               Einstellung — verlässt deshalb den ⚙-Reiter. -->
-          <h2 class="mt-9">{{ $t('galleryRecord.downloadsHeading') }}</h2>
-          <table v-if="builds.length" class="w-full border-collapse max-[640px]:block max-[640px]:overflow-x-auto">
-            <thead>
-              <tr>
-                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('gallery.sizeLabel') }}</th>
-                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.parts') }}</th>
-                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2 text-right">{{ $t('galleryRecord.size') }}</th>
-                <th class="px-6 pb-2 text-left text-small leading-none font-semibold text-ink-2">{{ $t('galleryRecord.state') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="build in builds" :key="build.id">
-                <td class="px-6 py-2.5 align-baseline text-ui font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_var(--rule)]">{{ $t(`gallery.size.${build.size}`) }}</td>
-                <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-ink-2">{{ build.parts }}</td>
-                <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-right tabular-nums">{{ megabytes(build.bytes) }}</td>
-                <td class="px-6 py-2.5 align-baseline text-small shadow-[inset_0_1px_0_var(--rule)] text-ink-2">{{ build.status }}</td>
-              </tr>
-            </tbody>
-          </table>
-          <p v-else class="text-small leading-[1.45] text-faint">{{ $t('galleryRecord.noBuilds') }}</p>
+        <div v-else class="flex min-w-0 flex-1 px-6 pt-7 pb-8">
+          <Activity :gallery-id="gallery.id" :activity="activity" :builds="builds" />
         </div>
       </div>
     </div>
+    </Page>
   </AdminLayout>
 </template>

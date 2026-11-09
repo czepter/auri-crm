@@ -43,3 +43,10 @@ export function countOf(selection: Selection, total: number): number {
 export function visible<T extends { key: string }>(assets: T[], keys: string[] | null): T[] {
   return keys === null ? assets : assets.filter((asset) => keys.includes(asset.key))
 }
+
+export const HIDDEN = 'ausgeblendet'
+
+/** Ausgeblendetes verschwindet aus dem Raster und bleibt über einen eigenen Eintrag erreichbar. */
+export function withHidden(bar: Selection[], keys: string[], label: string): Selection[] {
+  return keys.length ? [...bar, { id: HIDDEN, label, keys }] : bar
+}

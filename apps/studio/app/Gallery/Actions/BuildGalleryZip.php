@@ -64,7 +64,7 @@ class BuildGalleryZip
         // cleared before this attempt writes its own.
         $zipBuild->parts()->delete();
 
-        $members = $this->resolveMembers($zipBuild->galleryVersion, $zipBuild->size, $zipBuild->galleryList);
+        $members = $this->resolveMembers($zipBuild->galleryVersion, $zipBuild->size, $zipBuild->galleryList, ! $zipBuild->guests);
         $volumes = ZipVolumePlanner::plan($members, $splitThresholdBytes);
 
         /** @var FilesystemAdapter $disk */
@@ -188,9 +188,9 @@ class BuildGalleryZip
      * measurements; a version written in the old string form still resolves,
      * since a bare string is its own key.
      */
-    private function resolveMembers(GalleryVersion $version, ZipBuildSize $size, ?GalleryList $list): array
+    private function resolveMembers(GalleryVersion $version, ZipBuildSize $size, ?GalleryList $list, bool $client): array
     {
-        $keys = collect($version->assets)
+        $keys = collect($version->assetsFor($client))
             ->map(fn (array|string $asset) => is_array($asset) ? ($asset['key'] ?? null) : $asset)
             ->filter()
             ->values();

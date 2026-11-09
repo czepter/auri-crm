@@ -78,7 +78,7 @@ class GalleryDownloadOfferController extends Controller
             'size' => ['required', Rule::enum(ZipBuildSize::class)],
         ])['size']);
 
-        $start($gallery->currentVersion, $size, null, $guest->email, GalleryDownloadController::PARTS_LIVE_HOURS);
+        $start($gallery->currentVersion, $size, null, $guest->email, GalleryDownloadController::PARTS_LIVE_HOURS, guests: true);
 
         return response()->json($this->state($gallery, $step, $guest));
     }
@@ -91,7 +91,7 @@ class GalleryDownloadOfferController extends Controller
 
         abort_if($version === null, 404);
 
-        $keys = collect($version->assets)
+        $keys = collect($version->assetsFor(false))
             ->map(fn (array|string $asset) => is_array($asset) ? ($asset['key'] ?? null) : $asset)
             ->filter()
             ->values();
@@ -115,6 +115,7 @@ class GalleryDownloadOfferController extends Controller
         $state['sizes'] = ZipSizes::for($gallery, $keys->all());
         $state['builds'] = ZipBuild::query()
             ->where('gallery_version_id', $version->id)
+            ->where('guests', true)
             ->whereNull('gallery_list_id')
             ->with('parts')
             ->get()

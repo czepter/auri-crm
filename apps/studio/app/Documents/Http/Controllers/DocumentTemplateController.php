@@ -11,12 +11,18 @@ use App\Documents\Support\DocumentBlockCatalog;
 use App\Documents\Support\DocumentMergeData;
 use App\Documents\Support\DocumentRenderer;
 use App\Documents\Support\InlineHtmlSanitizer;
+use App\Documents\Support\MailDefaults;
 use App\Documents\Support\MergeFieldResolver;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Documents\Support\SafeHtml;
 use App\Documents\Support\StarterTemplateCatalog;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
+use App\Payments\Models\Invoice;
+use App\Payments\Support\InvoiceMergeData;
+use App\Quotes\Models\Quote;
+use App\Quotes\Notifications\QuoteSent;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -67,6 +73,7 @@ class DocumentTemplateController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'subject' => ['nullable', 'string', 'max:255'],
             'body' => ['required', 'string', 'max:100000', function (string $attribute, mixed $value, \Closure $fail) {
                 if (SafeHtml::hasUnsafeHref((string) $value)) {
                     $fail('Links dürfen nur auf http, https oder mailto zeigen.');
@@ -101,6 +108,52 @@ class DocumentTemplateController extends Controller
         return redirect('/dokumentvorlagen');
     }
 
+    /** The text of a mail as it stands in the send window, saved as a template. Resolved values go back to fields. */
+    public function storeFromMail(Request $request): RedirectResponse
+    {
+        $this->authorize('create', DocumentTemplate::class);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'subject' => ['nullable', 'string', 'max:255'],
+            'message' => ['required', 'string', 'max:5000'],
+            'shoot_kind' => ['nullable', 'string', 'max:255'],
+            'occasion' => ['nullable', 'string', Rule::in(MailDefaults::OCCASIONS)],
+            'quote' => ['nullable', 'string'],
+            'invoice' => ['nullable', 'string'],
+        ]);
+
+        $data = match (true) {
+            filled($validated['quote'] ?? null) => QuoteSent::mergeData(Quote::query()->where('public_id', $validated['quote'])->firstOrFail()),
+            filled($validated['invoice'] ?? null) => app(InvoiceMergeData::class)->forInvoice(Invoice::query()->where('public_id', $validated['invoice'])->firstOrFail()),
+            default => [],
+        };
+
+        $paragraphs = array_values(array_filter(preg_split('/\n{2,}/', MergeFieldResolver::unresolve(trim($validated['message']), $data))));
+
+        $template = DocumentTemplate::createFirstVersion([
+            'type' => DocumentTemplateType::Mail->value,
+            'name' => $validated['name'],
+            'subject' => isset($validated['subject']) ? MergeFieldResolver::unresolve($validated['subject'], $data) : null,
+            'shoot_kind' => $validated['shoot_kind'] ?? null,
+            'body' => collect($paragraphs)->map(fn (string $text) => '<p>'.e($text).'</p>')->implode(''),
+            'blocks' => ['blocks' => collect($paragraphs)->map(fn (string $text) => ['type' => 'paragraph', 'data' => ['text' => e($text)]])->all()],
+        ]);
+
+        if (filled($validated['occasion'] ?? null)) {
+            app(UpdateStudioSetting::class)('mail_defaults', [...(StudioSettings::current()->mail_defaults ?? []), $validated['occasion'] => $template->family_id], auth('staff')->user());
+        }
+
+        AuditLogger::record(
+            event: 'document_template.created',
+            actor: auth('staff')->user(),
+            context: ['name' => $template->name, 'type' => $template->type->value],
+            subject: $template->public_id,
+        );
+
+        return back();
+    }
+
     public function edit(DocumentTemplate $documentTemplate): Response
     {
         $this->authorize('update', $documentTemplate);
@@ -129,6 +182,7 @@ class DocumentTemplateController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'subject' => ['nullable', 'string', 'max:255'],
             'body' => ['required', 'string', 'max:100000', function (string $attribute, mixed $value, \Closure $fail) {
                 if (SafeHtml::hasUnsafeHref((string) $value)) {
                     $fail('Links dürfen nur auf http, https oder mailto zeigen.');

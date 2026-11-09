@@ -45,6 +45,7 @@ const lead = (id: string, name: string, waitingDays: number): App.Crm.Data.LeadQ
   text: null,
   open: false,
   waitingDays,
+  step: 'reply',
 })
 
 const project = (id: string, name: string, date: string, stage: string, reason: string | null, days: number | null): App.Crm.Data.CaseQueueRowData => ({
@@ -55,6 +56,7 @@ const project = (id: string, name: string, date: string, stage: string, reason: 
   reason,
   days,
   open: false,
+  step: stage,
 })
 
 const meta = {

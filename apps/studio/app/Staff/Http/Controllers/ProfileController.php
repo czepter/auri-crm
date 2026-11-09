@@ -2,7 +2,9 @@
 
 namespace App\Staff\Http\Controllers;
 
+use App\Enums\Capability;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Models\User;
 use App\Models\UserEmailChange;
 use App\Notifications\Enums\NotificationMode;
@@ -10,6 +12,7 @@ use App\Notifications\Jobs\SendMailNotification;
 use App\Notifications\Support\NotificationPreferences;
 use App\Settings\Rules\ValidFormat;
 use App\Staff\Notifications\StaffEmailChangeConfirmation;
+use App\Staff\Support\DeviceLabel;
 use App\Staff\Support\StudioEvents;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
@@ -61,15 +64,10 @@ class ProfileController extends Controller
             'calendarFeedUrl' => $pane === 'kalender'
                 ? url('/kalender/'.$user->calendarToken().'/shootings.ics')
                 : null,
-            'sessions' => $pane === 'sicherheit'
-                ? $this->sessionRows($user)->map(fn (object $row) => [
-                    'id' => $row->id,
-                    'device' => Str::limit((string) $row->user_agent, 60),
-                    'ip' => $row->ip_address,
-                    'lastActiveAt' => Carbon::createFromTimestamp($row->last_activity)->toIso8601String(),
-                    'current' => $row->id === $request->session()->getId(),
-                ])->all()
-                : [],
+            'workingDays' => $pane === 'kalender' && $user->can(Capability::ManageSettings->value)
+                ? StudioSettings::current()->workingDays()
+                : null,
+            'sessions' => $pane === 'sicherheit' ? $this->sessionGroups($user, $request->session()->getId()) : [],
             'recoveryCodesLeft' => count($user->mfa_recovery_codes ?? []),
             'digestFrequency' => $user->digest_frequency,
             'events' => collect(StudioEvents::ALL)
@@ -179,10 +177,13 @@ class ProfileController extends Controller
     {
         $user = $request->user('staff');
 
-        abort_if($id === $request->session()->getId(), 404);
-        abort_unless($this->sessionRows($user)->contains('id', $id), 404);
+        $ids = $request->validate(['ids' => ['array'], 'ids.*' => ['string']])['ids'] ?? [$id];
+        $owned = $this->sessionRows($user)->pluck('id');
 
-        $this->revokeSessions($user, [$id]);
+        abort_if(in_array($request->session()->getId(), $ids, true), 404);
+        abort_unless(collect($ids)->every(fn (string $own) => $owned->contains($own)), 404);
+
+        $this->revokeSessions($user, $ids);
 
         return back();
     }
@@ -221,6 +222,30 @@ class ProfileController extends Controller
         }
 
         return back();
+    }
+
+    /**
+     * Other devices collapse by browser and system: a studio that signs in
+     * every morning otherwise lists fifty rows of the same user agent.
+     */
+    private function sessionGroups(User $user, string $currentId): array
+    {
+        $rows = $this->sessionRows($user)->map(fn (object $row) => [
+            'id' => $row->id,
+            'device' => DeviceLabel::fromUserAgent($row->user_agent),
+            'ip' => $row->ip_address,
+            'lastActiveAt' => Carbon::createFromTimestamp($row->last_activity)->toIso8601String(),
+            'current' => $row->id === $currentId,
+        ]);
+
+        return $rows->where('current', true)->map(fn (array $row) => [...$row, 'ids' => [$row['id']], 'count' => 1])
+            ->concat($rows->where('current', false)->groupBy('device')->map(fn (Collection $group) => [
+                ...$group->first(),
+                'ids' => $group->pluck('id')->all(),
+                'count' => $group->count(),
+            ]))
+            ->values()
+            ->all();
     }
 
     /**

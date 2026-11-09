@@ -3,6 +3,9 @@
 namespace App\Gallery\Http\Controllers;
 
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GallerySet;
+use App\Gallery\Support\GalleryDesign;
+use App\Gallery\Support\GalleryDownloadGate;
 use App\Gallery\Support\GalleryPreviewPass;
 use App\Gallery\Support\GalleryViewPass;
 use App\Gallery\Support\GuardsGalleryViewPassword;
@@ -105,13 +108,17 @@ class GalleryReadController extends Controller
                 'public_id' => $gallery->public_id,
                 'title' => $version->title,
                 'draft' => false,
+                'design' => GalleryDesign::resolve($version->design),
+                'cover' => $gallery->coverFor($version->cover_key),
+                ...$this->audience($gallery),
                 'version' => [
                     'public_id' => $version->public_id,
                     'version' => $version->version,
                     'published_at' => $version->published_at,
-                    'assets' => collect($version->assets)
+                    'assets' => collect($gallery->view_mode === 'locked' ? [] : $version->assetsFor(false))
                         ->map(fn (array $asset) => [
                             'key' => $asset['key'],
+                            'set' => $asset['set'] ?? null,
                             'width' => $asset['width'] ?? null,
                             'height' => $asset['height'] ?? null,
                         ])
@@ -119,6 +126,26 @@ class GalleryReadController extends Controller
                 ],
             ],
         ])->header('Cache-Control', 'no-store');
+    }
+
+    /**
+     * Was ein Gast hier darf und welche Sets er ansprechen kann. Der Link
+     * zu einem Set trägt dessen public_id.
+     *
+     * @return array<string, mixed>
+     */
+    private function audience(Gallery $gallery): array
+    {
+        return [
+            'permissions' => $gallery->permissionsFor(false),
+            'intro' => $gallery->intro_enabled,
+            'locked' => $gallery->view_mode === 'locked',
+            'downloads' => GalleryDownloadGate::allows($gallery),
+            'downloadAfterPayment' => $gallery->download_rule === 'after_payment' && ! GalleryDownloadGate::allows($gallery),
+            'sets' => $gallery->sets()->where('access', GallerySet::GUESTS)->get()
+                ->map(fn (GallerySet $set) => ['id' => $set->public_id, 'name' => $set->name])
+                ->values(),
+        ];
     }
 
     /**
@@ -165,6 +192,9 @@ class GalleryReadController extends Controller
                 'public_id' => $gallery->public_id,
                 'title' => $gallery->title,
                 'draft' => true,
+                'design' => GalleryDesign::resolve($gallery->design),
+                'cover' => $gallery->coverFor($gallery->coverAsset?->key),
+                ...$this->audience($gallery),
                 'version' => [
                     'public_id' => null,
                     'version' => null,
@@ -172,6 +202,7 @@ class GalleryReadController extends Controller
                     'assets' => $gallery->draftAssets()
                         ->map(fn (array $asset) => [
                             'key' => $asset['key'],
+                            'set' => $asset['set'],
                             'width' => $asset['width'],
                             'height' => $asset['height'],
                         ])

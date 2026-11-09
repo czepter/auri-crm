@@ -33,13 +33,13 @@ it('updates the gallery defaults without touching the portal switches', function
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen/galerien', [
             'gallery_default_expiry_days' => 90,
-            'gallery_default_design' => ['cover' => 'split', 'type' => 'serif', 'colour' => 'warm', 'grid' => 'dense'],
+            'gallery_default_design' => ['cover' => 'geteilt', 'type' => 'serif', 'colour' => 'sand', 'size' => 'klein', 'spacing' => 'eng', 'flow' => 'zeilen'],
         ])->assertRedirect('/galerien');
 
     $row = StudioSettings::query()->sole();
 
     expect($row->gallery_default_expiry_days)->toBe(90)
-        ->and($row->gallery_default_design['colour'])->toBe('warm')
+        ->and($row->gallery_default_design['colour'])->toBe('sand')
         ->and($row->portal_maintenance_enabled)->toBeTrue()
         ->and($row->portal_messaging_mode)->toBe('any');
 });
@@ -47,14 +47,14 @@ it('updates the gallery defaults without touching the portal switches', function
 it('takes the three gallery switches on the gallery route and lets a contact override them', function () {
     $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->patch('/einstellungen/galerien', [
-            'gallery_default_downloads_enabled' => false,
+            'gallery_default_download_rule' => 'off',
             'gallery_default_lists_enabled' => false,
             'gallery_default_comments_enabled' => true,
         ])->assertRedirect('/galerien');
 
     $row = StudioSettings::query()->sole();
 
-    expect($row->gallery_default_downloads_enabled)->toBeFalse()
+    expect($row->gallery_default_download_rule)->toBe('off')
         ->and($row->gallery_default_lists_enabled)->toBeFalse()
         ->and($row->gallery_default_comments_enabled)->toBeTrue();
 
@@ -92,7 +92,7 @@ it('gives every non-owner role the same response on the gallery settings write a
     $missing = $this->actingAs(staffMember($role), 'staff')->get('/this-route-does-not-exist-xyz');
 
     $response = $this->actingAs(staffMember($role), 'staff')->patch('/einstellungen/galerien', [
-        'gallery_default_downloads_enabled' => true,
+        'gallery_default_download_rule' => 'open',
         'gallery_default_lists_enabled' => true,
         'gallery_default_comments_enabled' => true,
     ]);

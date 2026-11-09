@@ -13,6 +13,7 @@ import { ChoiceGroup } from '@/ui/choice-group'
 import { formatEurosRounded } from '@/lib/money'
 import { barHeight, ratePoints as ratePointsFor } from '@/admin/lib/chart'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import Chip from '@/ui/page/Chip.vue'
 
 const props = defineProps<{
   window: { from: string; to: string }
@@ -81,6 +82,21 @@ function yearTick(month: string, index: number) {
   return index === 0 || ordinal === '01' ? year.slice(2) : ''
 }
 
+// Unter 640px passt nicht jedes Monatslabel neben das nächste: erster Monat,
+// dann Jan, Apr, Jul, Okt.
+function monthShown(month: string, index: number) {
+  return index === 0 || (Number(month.split('-')[1]) - 1) % 3 === 0
+}
+
+function monthLong(month: string) {
+  const [year, index] = month.split('-')
+  return new Date(Number(year), Number(index) - 1, 1).toLocaleDateString('de-DE', { month: 'short', year: 'numeric' })
+}
+
+// Trägt eine Reihe in weniger als drei Monaten einen Wert, sind zwölf
+// Balken Leere mit zwei Ausreißern: dann die Monate als Liste.
+const sparse = (values: number[]) => values.filter(Boolean).length < 3
+
 function initials(name: string) {
   return name
     .replace(/[^\p{L} ]/gu, ' ')
@@ -129,6 +145,12 @@ const cashMonths = computed(() =>
     : props.cashFlowPast.months.map((m) => ({ month: m.month, value: m.received, forecast: 0 })),
 )
 
+const funnelSparse = computed(() => sparse(props.funnelByMonth.map((m) => m.captured)))
+const cashRows = computed(() => cashMonths.value.filter((m) => m.value || m.forecast))
+const cashSparse = computed(() => sparse(cashMonths.value.map((m) => m.value + m.forecast)))
+const shootsSparse = computed(() => sparse(props.shootsByMonth.map((m) => m.shoots)))
+const hasSteps = computed(() => props.steps.slice(1).some((s) => s.leads > 0))
+
 const cashPeak = computed(() =>
   Math.max(1, ...cashMonths.value.map((m) => Math.max(m.value, m.forecast))),
 )
@@ -161,7 +183,7 @@ function barWidth(value: number, peak: number) {
 
 const windowLabel = computed(() => {
   const format = (date: string) =>
-    new Date(date).toLocaleDateString('de-DE', { month: 'short', year: '2-digit' })
+    new Date(date).toLocaleDateString('de-DE', { month: 'short', year: 'numeric' })
 
   return `${format(props.window.from)} – ${format(props.window.to)}`
 })
@@ -191,7 +213,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
         <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 pr-8 max-[640px]:pr-0">
           <PageHead :kicker="$t('reports.title')" :title="windowLabel" />
 
-          <div class="flex min-w-0 flex-wrap items-center gap-2.5 pb-1">
+          <div class="flex min-w-0 flex-wrap items-center gap-2.5 pb-1 max-[640px]:px-5">
             <Select
               :model-value="filters.type ?? 'all'"
               @update:model-value="(value) => filter({ typ: String(value) === 'all' ? null : String(value) })"
@@ -232,7 +254,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               v-if="bookingRate !== null"
               :label="$t('reports.bookingRate')"
               :value="`${bookingRate} %`"
-              :sub="$t('reports.ofCaptured', { count: capturedTotal })"
+              :sub="$t('reports.ofCaptured', capturedTotal)"
             />
             <ReportKpi
               v-if="acceptanceRate !== null"
@@ -263,13 +285,21 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
             <ReportCard
               v-if="capturedTotal"
               :title="$t('reports.funnelTitle')"
-              :sub="$t('reports.funnelSub', { captured: capturedTotal, booked: bookedTotal })"
+              :sub="$t('reports.funnelSub', { captured: $t('reports.capturedCount', capturedTotal), booked: bookedTotal })"
             >
+              <ul v-if="funnelSparse" class="m-0 flex list-none flex-col gap-1.5 p-0">
+                <li v-for="row in funnelByMonth.filter((m) => m.captured)" :key="row.month" class="flex items-baseline justify-between gap-3 text-ui">
+                  <span>{{ monthLong(row.month) }}</span>
+                  <span class="tabular-nums">{{ $t('reports.funnelSub', { captured: $t('reports.capturedCount', row.captured), booked: row.booked }) }}</span>
+                </li>
+              </ul>
+
+              <template v-else>
               <div class="flex items-center gap-4 text-small text-muted-foreground">
                 <span class="inline-flex items-center gap-1.5">
                   <span class="size-2.5 rounded-[3px] bg-[var(--accent-bg)]" />{{ $t('reports.captured') }}
                 </span>
-                <span class="inline-flex items-center gap-1.5">
+                <span v-if="!cashSparse" class="inline-flex items-center gap-1.5">
                   <span class="size-2.5 rounded-[3px] bg-action" />{{ $t('reports.booked') }}
                 </span>
                 <span class="inline-flex items-center gap-1.5">
@@ -306,7 +336,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                 <div class="absolute inset-0 flex items-end">
                   <div v-for="row in funnelByMonth" :key="row.month" class="flex min-w-0 flex-1 items-end justify-center gap-1.5 max-[640px]:gap-0.5">
                     <div class="flex flex-col items-center gap-1">
-                      <span class="text-small leading-none font-semibold tabular-nums text-faint">{{ row.captured || '' }}</span>
+                      <span class="text-small leading-none font-semibold tabular-nums text-muted-foreground">{{ row.captured || '' }}</span>
                       <div class="w-4 rounded-t-[4px] bg-[var(--accent-bg)] max-[640px]:w-2" :style="{ height: barHeight(row.captured, funnelPeak, 188) }" />
                     </div>
                     <div class="flex flex-col items-center gap-1">
@@ -318,11 +348,12 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               </div>
 
               <div class="flex">
-                <div v-for="(row, index) in funnelByMonth" :key="row.month" class="flex min-w-0 flex-1 flex-col items-center text-small leading-tight text-faint">
-                  <span>{{ monthShort(row.month) }}</span>
+                <div v-for="(row, index) in funnelByMonth" :key="row.month" class="flex min-w-0 flex-1 flex-col items-center text-small leading-tight text-muted-foreground">
+                  <span :class="!monthShown(row.month, index) && 'max-[640px]:invisible'">{{ monthShort(row.month) }}</span>
                   <span class="h-[13px]">{{ yearTick(row.month, index) }}</span>
                 </div>
               </div>
+              </template>
             </ReportCard>
 
             <!-- M-07. Its own panel on this screen rather than a screen of its
@@ -332,8 +363,8 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               v-if="cashFlow.months.length"
               :title="cashAhead ? $t('reports.cashFlowTitle') : $t('reports.cashFlowPastTitle')"
               :sub="cashAhead
-                ? $t('reports.cashFlowSub', { projects: cashFlow.projects, quotes: cashFlow.quotes })
-                : $t('reports.cashFlowPastSub', { projects: cashFlowPast.projects })"
+                ? $t('reports.cashFlowSub', { projects: $t('reports.cashProjects', cashFlow.projects), quotes: $t('reports.cashQuotes', cashFlow.quotes) })
+                : $t('reports.cashProjects', cashFlowPast.projects)"
             >
               <template #head>
                 <ChoiceGroup
@@ -351,17 +382,29 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                   <span class="size-2.5 rounded-[3px] bg-action" />
                   {{ cashAhead ? $t('reports.seriesDue') : $t('reports.seriesReceived') }}
                 </span>
-                <span v-if="cashAhead" class="inline-flex items-center gap-1.5">
+                <span v-if="cashAhead && !cashSparse" class="inline-flex items-center gap-1.5">
                   <span class="size-2.5 rounded-[3px]" :style="{ background: forecastFill }" />{{ $t('reports.seriesOpen') }}
                 </span>
-                <span
-                  v-if="cashAhead && cashFlow.overdue"
-                  class="ml-auto inline-flex items-center gap-1.5 rounded-[var(--r-sm)] bg-late-bg px-2.5 py-1 text-small leading-none font-semibold text-destructive"
-                >
+                <Chip v-if="cashAhead && cashFlow.overdue && cashRows.length" tone="danger" class="ml-auto">
                   {{ $t('reports.overdue', { amount: formatEurosRounded(cashFlow.overdue) }) }}
-                </span>
+                </Chip>
               </div>
 
+              <ul v-if="cashSparse" class="m-0 flex list-none flex-col gap-1.5 p-0">
+                <li v-if="cashAhead && cashFlow.overdue && !cashRows.length" class="text-ui font-semibold text-destructive">
+                  {{ $t('reports.overdue', { amount: formatEurosRounded(cashFlow.overdue) }) }}
+                </li>
+                <li v-for="row in cashRows" :key="row.month" class="flex items-baseline justify-between gap-3 text-ui">
+                  <span>{{ monthLong(row.month) }}</span>
+                  <span class="tabular-nums">
+                    <template v-if="row.value">{{ formatEurosRounded(row.value) }}</template>
+                    <template v-if="row.value && row.forecast"> · </template>
+                    <template v-if="row.forecast">{{ $t('reports.openInMonth', { amount: formatEurosRounded(row.forecast) }) }}</template>
+                  </span>
+                </li>
+              </ul>
+
+              <template v-else>
               <!-- Ein einzelner Monat zieht seine Spalte sonst ueber die ganze
                    Karte und behauptet eine Masse, die nicht da ist. -->
               <div class="relative mt-auto h-[216px]">
@@ -383,7 +426,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                       <div class="w-full rounded-t-[4px] bg-action" :style="{ height: barHeight(row.value, cashPeak, 194) }" />
                     </div>
                     <div v-if="cashAhead" class="flex h-full min-w-0 flex-[2] flex-col justify-end gap-1">
-                      <span class="text-center text-small leading-none font-semibold tabular-nums whitespace-nowrap text-faint max-[640px]:hidden">
+                      <span class="text-center text-small leading-none font-semibold tabular-nums whitespace-nowrap text-muted-foreground max-[640px]:hidden">
                         {{ row.forecast ? formatEurosRounded(row.forecast) : '' }}
                       </span>
                       <div v-if="row.forecast" class="w-full rounded-t-[4px]" :style="{ background: forecastFill, height: barHeight(row.forecast, cashPeak, 194) }" />
@@ -392,12 +435,13 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                 </div>
               </div>
 
-              <div class="flex justify-center gap-2.5">
-                <div v-for="(row, index) in cashMonths" :key="row.month" class="flex max-w-[64px] flex-1 flex-col items-center text-small leading-tight text-faint">
-                  <span>{{ monthShort(row.month) }}</span>
+              <div class="flex justify-center gap-2.5 max-[640px]:gap-1">
+                <div v-for="(row, index) in cashMonths" :key="row.month" class="flex max-w-[64px] flex-1 flex-col items-center text-small leading-tight text-muted-foreground">
+                  <span :class="!monthShown(row.month, index) && 'max-[640px]:invisible'">{{ monthShort(row.month) }}</span>
                   <span class="h-[13px]">{{ yearTick(row.month, index) }}</span>
                 </div>
               </div>
+              </template>
             </ReportCard>
           </div>
 
@@ -413,13 +457,13 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                     <div class="h-1.5 rounded-[3px] bg-action" :style="{ width: `${Math.round((row.revenue / sourcePeak) * 100)}%` }" />
                   </div>
                   <span class="text-small tabular-nums text-muted-foreground">
-                    {{ $t('reports.funnelSub', { captured: row.captured, booked: row.booked }) }}
+                    {{ $t('reports.funnelSub', { captured: $t('reports.capturedCount', row.captured), booked: row.booked }) }}
                   </span>
                 </div>
               </div>
 
               <div v-if="referrers.length" class="mt-auto flex flex-col gap-2 border-t border-border pt-3.5">
-                <span class="text-small leading-none font-semibold text-faint">{{ $t('reports.referrersTitle') }}</span>
+                <span class="text-small leading-none font-semibold text-muted-foreground">{{ $t('reports.referrersTitle') }}</span>
                 <ul class="m-0 flex list-none flex-col gap-1.5 p-0">
                   <li v-for="row in referrers" :key="row.name" class="flex items-baseline justify-between gap-3 text-small">
                     <span>{{ row.name }}</span>
@@ -454,9 +498,9 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               <table class="w-full border-collapse text-ui">
                 <thead>
                   <tr>
-                    <th class="pb-2 text-left text-small leading-none font-semibold text-faint">{{ $t('reports.contact') }}</th>
-                    <th class="pb-2 text-right text-small leading-none font-semibold text-faint">{{ $t('reports.projects') }}</th>
-                    <th class="pb-2 text-right text-small leading-none font-semibold text-faint">{{ $t('reports.revenue') }}</th>
+                    <th scope="col" class="pb-2 text-left text-small leading-none font-semibold text-muted-foreground">{{ $t('reports.contact') }}</th>
+                    <th scope="col" class="pb-2 pl-4 text-right text-small leading-none font-semibold text-muted-foreground">{{ $t('reports.projects') }}</th>
+                    <th scope="col" class="pb-2 pl-4 text-right text-small leading-none font-semibold text-muted-foreground">{{ $t('reports.revenue') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -469,8 +513,8 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                         {{ row.name }}
                       </span>
                     </td>
-                    <td class="border-t border-border py-2 text-right tabular-nums text-muted-foreground">{{ row.projects }}</td>
-                    <td class="border-t border-border py-2 text-right font-semibold tabular-nums">{{ formatEurosRounded(row.revenue) }}</td>
+                    <td class="border-t border-border py-2 pl-4 text-right tabular-nums text-muted-foreground">{{ row.projects }}</td>
+                    <td class="border-t border-border py-2 pl-4 text-right font-semibold tabular-nums">{{ formatEurosRounded(row.revenue) }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -479,7 +523,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
             <!-- Was der Trichter zwischen den Schritten verliert und wie lange
                  er dafür braucht. Aus demselben Fenster wie die Karten darüber,
                  nur aus dem Audit-Trail statt aus der Anfrage-Zeile. -->
-            <ReportCard class="mb-6 break-inside-avoid" v-if="steps.length" :title="$t('reports.stepsTitle')" :sub="$t('reports.stepsSub')">
+            <ReportCard class="mb-6 break-inside-avoid" v-if="hasSteps" :title="$t('reports.stepsTitle')" :sub="$t('reports.stepsSub')">
               <div class="flex flex-col gap-3">
                 <div v-for="step in steps" :key="step.key" class="flex flex-col gap-1.5">
                   <div class="flex items-baseline justify-between gap-3">
@@ -489,14 +533,14 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                   <div class="h-2 overflow-hidden rounded-[4px] bg-muted">
                     <div class="h-2 rounded-[4px] bg-action" :style="{ width: barWidth(step.leads, stepPeak) }" />
                   </div>
-                  <span v-if="step.drop === null || step.lost" class="text-small tabular-nums" :class="step.lost ? 'text-destructive' : 'text-faint'">
+                  <span v-if="step.drop === null || step.lost" class="text-small tabular-nums" :class="step.lost ? 'text-destructive' : 'text-muted-foreground'">
                     {{ step.drop === null ? $t('reports.stepEntry') : $t('reports.stepDrop', { lost: step.lost, percent: step.drop }) }}
                   </span>
                 </div>
               </div>
 
               <div v-if="biggestDrop" class="mt-auto border-t border-border pt-3 text-small text-muted-foreground">
-                {{ $t('reports.biggestDrop', { step: biggestDrop.label, count: biggestDrop.lost }) }}
+                {{ $t('reports.biggestDrop', { step: biggestDrop.label, lost: $t('reports.capturedCount', biggestDrop.lost) }) }}
               </div>
             </ReportCard>
 
@@ -535,9 +579,9 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               </div>
             </ReportCard>
 
-            <ReportCard class="mb-6 break-inside-avoid" v-if="steps.length" :title="$t('reports.leadTimeTitle')" :sub="$t('reports.leadTimeSub')">
+            <ReportCard class="mb-6 break-inside-avoid" v-if="leadTimes.median !== null" :title="$t('reports.leadTimeTitle')" :sub="$t('reports.leadTimeSub')">
               <template #head>
-                <span v-if="leadTimes.median !== null" class="rounded-[var(--r-sm)] bg-[var(--accent-bg)] px-2.5 py-1 text-small leading-none font-semibold text-ring">
+                <span class="rounded-[var(--r-sm)] bg-[var(--accent-bg)] px-2.5 py-1 text-small leading-none font-semibold text-ring">
                   {{ $t('reports.median', { value: leadTimes.median }) }}
                 </span>
               </template>
@@ -557,9 +601,9 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               </div>
             </ReportCard>
 
-            <ReportCard class="mb-6 break-inside-avoid" v-if="steps.length" :title="$t('reports.responseTitle')" :sub="$t('reports.responseSub')">
+            <ReportCard class="mb-6 break-inside-avoid" v-if="responseTimes.medianHours !== null" :title="$t('reports.responseTitle')" :sub="$t('reports.responseSub')">
               <template #head>
-                <span v-if="responseTimes.medianHours !== null" class="rounded-[var(--r-sm)] bg-[var(--accent-bg)] px-2.5 py-1 text-small leading-none font-semibold text-ring">
+                <span class="rounded-[var(--r-sm)] bg-[var(--accent-bg)] px-2.5 py-1 text-small leading-none font-semibold text-ring">
                   {{ $t('reports.medianHours', { hours: decimal.format(responseTimes.medianHours) }) }}
                 </span>
               </template>
@@ -584,18 +628,26 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
             </ReportCard>
 
             <ReportCard class="mb-6 break-inside-avoid" v-if="shootsTotal" :title="$t('reports.shootsTitle')" :sub="$t('reports.shootsSub', { count: shootsTotal })">
+              <ul v-if="shootsSparse" class="m-0 flex list-none flex-col gap-1.5 p-0">
+                <li v-for="row in shootsByMonth.filter((m) => m.shoots)" :key="row.month" class="flex items-baseline justify-between gap-3 text-ui">
+                  <span>{{ monthLong(row.month) }}</span>
+                  <span class="tabular-nums">{{ $t('reports.shootsSub', { count: row.shoots }) }}</span>
+                </li>
+              </ul>
+              <template v-else>
               <div class="flex h-[120px] items-end justify-center gap-1.5">
-                <div v-for="row in shootsByMonth" :key="row.month" class="flex h-full max-w-[40px] flex-1 flex-col justify-end gap-1">
-                  <span class="text-center text-small leading-none font-semibold tabular-nums text-faint">{{ row.shoots || '' }}</span>
+                <div v-for="row in shootsByMonth" :key="row.month" class="flex h-full max-w-[40px] min-w-0 flex-1 flex-col justify-end gap-1">
+                  <span class="text-center text-small leading-none font-semibold tabular-nums text-muted-foreground">{{ row.shoots || '' }}</span>
                   <div class="w-full rounded-t-[4px] bg-action" :style="{ height: barHeight(row.shoots, shootPeak, 92) }" />
                 </div>
               </div>
               <div class="flex justify-center gap-1.5">
-                <div v-for="(row, index) in shootsByMonth" :key="row.month" class="flex max-w-[40px] flex-1 flex-col items-center text-small leading-tight text-faint">
-                  <span>{{ monthShort(row.month) }}</span>
+                <div v-for="(row, index) in shootsByMonth" :key="row.month" class="flex max-w-[40px] min-w-0 flex-1 flex-col items-center text-small leading-tight text-muted-foreground">
+                  <span :class="!monthShown(row.month, index) && 'invisible'">{{ monthShort(row.month) }}</span>
                   <span class="h-[13px]">{{ yearTick(row.month, index) }}</span>
                 </div>
               </div>
+              </template>
             </ReportCard>
           </div>
         </div>

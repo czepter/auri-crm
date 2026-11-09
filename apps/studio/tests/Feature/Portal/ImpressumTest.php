@@ -61,3 +61,21 @@ it('never puts an integer identifier into the impressum response', function () {
 
     expect(integerIdPaths($props))->toBe([]);
 });
+
+it('wears the studio chrome on a path that does not exist', function () {
+    StudioSettings::query()->update(['display_name' => 'Atelier Nordlicht', 'client_register' => 'formal']);
+
+    $page = $this->get('/agb-gibts-nicht')->assertNotFound()->viewData('page');
+
+    expect($page['component'])->toBe('Error')
+        ->and($page['props']['portalBranding']['displayName'])->toBe('Atelier Nordlicht')
+        ->and($page['props']['clientRegister'])->toBe('formal');
+});
+
+it('lists the studio contact on the impressum', function () {
+    StudioSettings::query()->update(['portal_contact_email' => 'hallo@nordlicht.test', 'portal_contact_phone' => '+49 40 555']);
+
+    $props = $this->get('/impressum')->assertOk()->viewData('page')['props'];
+
+    expect($props['email'])->toBe('hallo@nordlicht.test')->and($props['phone'])->toBe('+49 40 555');
+});

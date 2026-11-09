@@ -10,6 +10,9 @@ import type { EditorBlock, EditorDocument, PaletteEntry } from '@/admin/document
 // aus diesem HTML, damit kein zweites Feld neben dem Text mitgeführt wird.
 const model = defineModel<string>({ required: true })
 
+// Ohne Empfänger gibt es keinen Namen, den ein Platzhalter zeigen könnte.
+const props = defineProps<{ bare?: boolean }>()
+
 type LetterEditor = { palette: PaletteEntry[]; mergeFields: { path: string; sample: string }[] }
 
 // Einmal gelesen: die geteilte Prop kommt mit jeder Antwort neu, und eine neue
@@ -19,7 +22,7 @@ const samples = Object.fromEntries(mergeFields.map((field) => [field.path, field
 
 function chips(html: string): string {
   return html.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_match, path: string) =>
-    `<span class="doc-mf" data-mf="${path}">${samples[path] ?? path}</span>`)
+    `<span class="doc-mf" data-mf="${path}">${props.bare && path === 'contact.name' ? 'Empfänger' : (samples[path] ?? path)}</span>`)
 }
 
 function toBlocks(html: string): EditorDocument {

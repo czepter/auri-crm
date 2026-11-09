@@ -7,7 +7,7 @@ const meta = {
   parameters: { layout: 'fullscreen', url: '/einstellungen/api-token' },
   args: {
     tokens: [
-      { id: 'tok_01', name: 'n8n', scopes: ['manage_leads', 'manage_contacts'], createdAt: '2026-09-01T10:00:00+02:00' },
+      { id: 'tok_01', name: 'n8n', scopes: ['manage_leads', 'manage_contacts'], createdAt: '2026-09-01T10:00:00+02:00', lastUsedAt: '2026-09-18T14:30:00+02:00' },
     ],
     capabilities: [
       { value: 'manage_leads', label: 'Anfragen verwalten' },

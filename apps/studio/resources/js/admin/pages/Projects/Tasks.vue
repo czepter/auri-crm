@@ -9,7 +9,6 @@ import { Button } from '@/ui/button'
  */
 import { computed, ref } from 'vue'
 import { router, useForm, usePage } from '@inertiajs/vue3'
-import TaskCreateDialog from '@/admin/components/crm/TaskCreateDialog.vue'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/crm/ProjectShell.vue'
@@ -18,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DatePicker } from '@/ui/date-picker'
 import { Label } from '@/ui/label'
 import { dayWithWeekday, isoDate } from '@/admin/lib/dates'
+import { taskGroupLabel, taskGroups } from '@/admin/lib/projectOverview'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
 const { t } = useI18n()
@@ -38,7 +38,6 @@ const assignee = ref('all')
 const me = computed(() => (usePage().props.auth as { user: { id: string } | null }).user?.id ?? '')
 
 const today = isoDate(new Date())
-const weekEnd = isoDate(new Date(Date.now() + 7 * 86_400_000))
 
 const shown = computed(() =>
   props.tasks.filter(
@@ -52,15 +51,7 @@ const shown = computed(() =>
 const open = computed(() => shown.value.filter((task) => !task.isDone))
 const done = computed(() => shown.value.filter((task) => task.isDone))
 
-const groups = computed(() => [
-  { key: 'project.tasksLate', rows: open.value.filter((task) => task.dueOn !== null && task.dueOn < today) },
-  {
-    key: 'project.tasksThisWeek',
-    rows: open.value.filter((task) => task.dueOn !== null && task.dueOn >= today && task.dueOn <= weekEnd),
-  },
-  { key: 'project.tasksLater', rows: open.value.filter((task) => task.dueOn !== null && task.dueOn > weekEnd) },
-  { key: 'project.tasksUndated', rows: open.value.filter((task) => task.dueOn === null) },
-])
+const groups = computed(() => taskGroups(open.value, today))
 
 const openSummary = computed(() => {
   const late = open.value.filter((task) => task.isOverdue).length
@@ -75,10 +66,10 @@ const openSummary = computed(() => {
 
 const doneSummary = computed(() => done.value.map((task) => task.title).join(', '))
 
-const form = useForm({ title: '', audience: 'internal', due_on: '' })
+const form = useForm({ title: '', audience: 'internal', due_on: '', assignee: 'none' })
 
 function add() {
-  form.post(`/auftraege/${props.header.id}/aufgaben`, {
+  form.transform((data) => ({ ...data, assignee: data.assignee === 'none' ? null : data.assignee })).post(`/auftraege/${props.header.id}/aufgaben`, {
     preserveScroll: true,
     onSuccess: () => form.reset(),
   })
@@ -103,7 +94,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
 </script>
 
 <template>
-  <AdminLayout active="anfragen">
+  <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
     <ProjectShell :header="header" active="tasks">
       <div class="flex flex-col gap-3">
         <Card :title="$t('project.tasks')" :summary="openSummary">
@@ -139,46 +130,32 @@ function reopen(row: App.Crm.Data.TaskRowData) {
             </Select>
           </div>
 
-          <!-- Eine Box: Titel oben, Fälligkeit und Zielgruppe in der Fußzeile
-               darin, der Knopf unten rechts. -->
-          <form
-            v-if="header.canManageTasks"
-            class="flex flex-col rounded-md border border-rule focus-within:border-ring"
-            @submit.prevent="add"
-          >
+          <form v-if="header.canManageTasks" class="flex flex-wrap items-center gap-2.5" @submit.prevent="add">
             <input
               v-model="form.title"
-              class="border-0 bg-transparent px-3.5 pt-3 pb-1.5 text-small outline-none"
-              type="text"
+              :aria-label="$t('lead.taskTitle')"
               :placeholder="$t('lead.taskTitle')"
+              class="h-9 min-w-[220px] flex-1 rounded-md border border-rule bg-transparent px-3 text-small outline-none focus:border-ring"
+              type="text"
             >
-            <div class="flex flex-wrap items-center gap-4 px-3 pt-1 pb-2.5 max-[640px]:gap-x-2">
-              <DatePicker v-model="form.due_on" class="w-[150px] [&_input]:h-8 [&_input]:border-0 [&_input]:bg-transparent [&_input]:px-0" />
-              <Select v-model="form.audience">
-                <SelectTrigger class="h-8 w-[110px] border-0 bg-transparent px-0 text-ink-2"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="internal">{{ $t('lead.audienceInternal') }}</SelectItem>
-                  <SelectItem value="client">{{ $t('lead.audienceClient') }}</SelectItem>
-                </SelectContent>
-              </Select>
-              <!-- Anker, Shooting und Zuständigkeit passen nicht in die
-                   Fußzeile und sind der seltenere Fall: sie bleiben im Dialog,
-                   der sie schon kann. -->
-              <TaskCreateDialog
-                :project-id="header.id"
-                :anchors="anchors"
-                :shoot-options="shootOptions"
-                :staff-options="staffOptions"
-              />
-              <Button class="ml-1 max-[640px]:ml-auto" variant="pill" type="submit" :disabled="!form.title || form.processing">
-                {{ $t('lead.addTask') }}
-              </Button>
-            </div>
+            <DatePicker v-model="form.due_on" class="w-[150px]" />
+            <Select v-if="!$page.props.soloStudio" v-model="form.assignee">
+              <SelectTrigger class="w-44" :aria-label="$t('project.taskAssignee')"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">{{ $t('project.taskUnassigned') }}</SelectItem>
+                <SelectItem v-for="option in staffOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="pill" type="submit" :disabled="!form.title || form.processing">
+              {{ $t('project.taskCreate') }}
+            </Button>
           </form>
 
           <template v-for="group in groups" :key="group.key">
-            <div v-if="group.rows.length" class="mt-[18px] mb-1 text-small font-semibold text-ink-2">
-              {{ $t(group.key) }}
+            <div class="mt-[18px] mb-1 text-small font-semibold text-ink-2">
+              {{ taskGroupLabel(group.key, $t) }}
             </div>
 
             <div v-for="row in group.rows" :key="row.id" class="flex items-center gap-3.5 py-[9px] max-[640px]:flex-wrap max-[640px]:gap-x-2.5 max-[640px]:gap-y-1">
@@ -207,7 +184,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
                 </SelectContent>
               </Select>
               <span
-                class="ml-auto text-small whitespace-nowrap tabular-nums"
+                class="text-small max-[640px]:ml-auto whitespace-nowrap tabular-nums"
                 :class="row.isOverdue ? 'text-destructive' : 'text-ink-2'"
               >{{ row.dueOn ? dayWithWeekday(row.dueOn) : row.dueAnchorLabel }}</span>
             </div>

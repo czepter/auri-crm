@@ -4,17 +4,22 @@ namespace App\Gallery\Http\Controllers;
 
 use App\Gallery\Models\AssetComment;
 use App\Gallery\Models\AssetFavorite;
+use App\Gallery\Models\AssetHide;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryList;
+use App\Gallery\Models\GallerySet;
 use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Models\GalleryView;
 use App\Gallery\Support\GalleryAccessSession;
+use App\Gallery\Support\GalleryDesign;
+use App\Gallery\Support\GalleryDownloadGate;
 use App\Gallery\Support\GallerySecretGate;
 use App\Gallery\Support\GalleryVisitor;
 use App\Http\Controllers\Controller;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -59,6 +64,17 @@ class GalleryPasswordController extends Controller
         }
 
         $isClient = $this->visitor->isClient($gallery);
+        $contact = $isClient ? $this->visitor->client($gallery) : null;
+
+        $hiddenKeys = $contact === null || $version === null ? collect() : AssetHide::query()
+            ->where('gallery_id', $gallery->id)
+            ->where('contact_id', $contact->id)
+            ->pluck('asset_key');
+
+        $set = $this->requestedSet($request, $gallery, $isClient);
+        $visible = collect($version?->assetsFor($isClient) ?? [])
+            ->when($set !== null, fn ($assets) => $assets->where('set', $set->name))
+            ->when($gallery->view_mode === 'locked', fn ($assets) => collect());
 
         return Inertia::render('Gallery/Show', [
             'gallery' => [
@@ -69,20 +85,34 @@ class GalleryPasswordController extends Controller
                 'expiresAt' => $gallery->expires_at?->toIso8601String(),
                 'url' => $gallery->publicUrl(),
             ],
+            // The portal shell (header, tabbar) stands on the couple's view
+            // only; a guest on a forwarded link has no booking to go back to.
+            'project' => $isClient ? ['id' => $gallery->case->public_id, 'name' => $gallery->case->name] : null,
             'unlocked' => $unlocked,
+            'design' => GalleryDesign::resolve($version?->design ?? $gallery->design),
+            'coverImage' => $gallery->coverFor($version?->cover_key),
             // A button for something the gallery does not offer is a 403 with
             // extra steps — the routes already refuse it (gallery.feature:),
             // this is so the screen never draws it.
             'offers' => [
-                'downloads' => $gallery->downloads_enabled,
-                'lists' => $gallery->lists_enabled,
-                'comments' => $gallery->comments_enabled,
+                'downloads' => GalleryDownloadGate::allows($gallery),
+                'lists' => $gallery->allows('favorites', $isClient),
+                'comments' => $gallery->allows('comments', $isClient),
+                'hide' => $gallery->allows('hide', $isClient),
+                'share' => $gallery->allows('share', $isClient),
             ],
+            'intro' => $gallery->intro_enabled,
+            'locked' => $gallery->view_mode === 'locked',
+            'downloadAfterPayment' => $gallery->download_rule === 'after_payment' && ! GalleryDownloadGate::allows($gallery),
+            'payUrl' => $isClient ? GalleryDownloadGate::payUrl($gallery) : null,
+            'setName' => $set?->name,
+            'shareUrl' => $gallery->publicUrl().($set?->isForGuests() ? '?set='.$set->public_id : ''),
             // Null while locked, and null for a gallery nobody has published
             // yet — an unlocked gate over an empty gallery is a real state,
             // not an error, so the screen says so rather than 404ing a link
             // the studio has already sent out.
-            'assets' => $version === null ? null : $this->assets($version),
+            'assets' => $version === null ? null : $this->assets($version, $visible->reject(fn ($asset) => $hiddenKeys->contains($asset['key']))),
+            'hiddenAssets' => $version === null ? [] : $this->assets($version, $visible->filter(fn ($asset) => $hiddenKeys->contains($asset['key']))),
             // P-06 (#225): on the tile, a list menu replaces the single
             // heart as soon as a client is signed in. A guest keeps the
             // heart — which is the same thing, a list without a name.
@@ -149,6 +179,21 @@ class GalleryPasswordController extends Controller
         $claims->grant($model, GalleryAccessSession::VIEW, $model->view_password_version);
 
         return redirect("/galerien/{$model->public_id}");
+    }
+
+    /** Der Link zu einem Set trägt dessen public_id; ein Set, das diese Zielgruppe nicht sieht, gibt es nicht. */
+    private function requestedSet(Request $request, Gallery $gallery, bool $isClient): ?GallerySet
+    {
+        $id = $request->query('set');
+
+        if (! is_string($id)) {
+            return null;
+        }
+
+        $set = $gallery->sets()->where('public_id', $id)->first();
+        abort_if($set === null || (! $isClient && ! $set->isForGuests()), 404);
+
+        return $set;
     }
 
     /**
@@ -223,9 +268,9 @@ class GalleryPasswordController extends Controller
      * this page lives in this session, and an <img> on another host would not
      * carry it.
      */
-    private function assets(GalleryVersion $version): array
+    private function assets(GalleryVersion $version, Collection $assets): array
     {
-        return collect($version->assets)
+        return $assets
             ->map(fn (array $asset) => [
                 'key' => $asset['key'],
                 'width' => $asset['width'] ?? null,

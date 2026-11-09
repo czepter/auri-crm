@@ -13,6 +13,7 @@ use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Support\InvoiceDocument;
 use App\Payments\Support\InvoiceMergeData;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -47,18 +48,27 @@ class PaymentController extends Controller
         Request $request,
         string $case,
         ConfirmInstallmentCheckoutSession $confirm,
-    ): Response {
+    ): Response|RedirectResponse {
         $contact = auth('portal')->user();
 
         $found = $contact->visibleProjects()
             ->where('cases.public_id', $case)
-            ->with('paymentPlan.installments.invoice.creditNotes')
+            ->with('paymentPlan.installments.invoice.creditNotes', 'latestQuote')
             ->firstOrFail();
 
         $plan = $found->paymentPlan;
 
+        if ($plan === null) {
+            return Inertia::render('Projects/Missing', [
+                'showSwitcher' => $contact->visibleProjects()->count() > 1,
+                'project' => ['id' => $found->public_id, 'name' => $found->name],
+                'kind' => 'payments',
+                'quote' => $found->latestQuote === null ? null : ['accepted' => $found->latestQuote->accepted_at !== null || $found->isBooked()],
+            ]);
+        }
+
         $sessionId = $request->query('session_id');
-        if ($plan !== null && is_string($sessionId) && (bool) StudioSettings::current()->payments_stripe_enabled) {
+        if (is_string($sessionId) && (bool) StudioSettings::current()->payments_stripe_enabled) {
             $installment = $plan->installments->firstWhere('stripe_checkout_session_id', $sessionId);
 
             if ($installment !== null) {
@@ -74,7 +84,8 @@ class PaymentController extends Controller
             'contact' => ['name' => $contact->name],
             'showSwitcher' => $contact->visibleProjects()->count() > 1,
             'project' => ['id' => $found->public_id, 'name' => $found->name],
-            'plan' => $plan === null ? null : PaymentPlanData::fromModel($plan->load('installments.invoice.creditNotes')),
+            'plan' => PaymentPlanData::forCase($found),
+            'quote' => $found->latestQuote === null ? null : ['number' => $found->latestQuote->number],
             'stripeEnabled' => (bool) StudioSettings::current()->payments_stripe_enabled,
             'paymentStatus' => in_array($status, ['success', 'cancelled'], true) ? $status : null,
             'bankDetails' => [

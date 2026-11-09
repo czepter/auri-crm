@@ -134,7 +134,7 @@ const PUBLIC_ROUTES = [
     // delivered, with the contact's own public_id as the whole credential,
     // same shape as zugang/{token}.
     'portal' => [
-        'anmelden', 'zugang/{token}', 'branding/logo', 'branding/kontakt', 'impressum', 'rechtstexte/{text}', 'abmelden/{contact}',
+        'anmelden', '{fallbackPlaceholder}', 'zugang/{token}', 'branding/logo', 'branding/kontakt', 'impressum', 'rechtstexte/{text}', 'abmelden/{contact}',
         // The quote share link — reusable, unlike zugang/{token} above, but
         // the same shape otherwise: share_token in the path is the whole
         // credential, checked by QuoteShareController's own lookup rather
@@ -163,7 +163,7 @@ const PUBLIC_ROUTES = [
         // behind `gallery.gate:view` — which does not read as `audience:` to
         // this test any more than the routes below do.
         'galerien/{gallery}/beteiligung', 'galerien/{gallery}/favorit',
-        'galerien/{gallery}/kommentar',
+        'galerien/{gallery}/kommentar', 'galerien/{gallery}/ausblenden',
         // P-08 (#227): the image bytes, bound on the version and gated by
         // its parent gallery's own `gallery.gate:view` — same story as the
         // routes below, and the reason they moved off the api surface at

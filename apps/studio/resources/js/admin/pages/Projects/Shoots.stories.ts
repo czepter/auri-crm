@@ -17,6 +17,7 @@ const engagement: App.Crm.Data.ShootData = {
     statusLabel: 'Übergeben',
     isPrimary: false,
     forwardStatuses: [],
+    dueStatus: null,
 }
 
 const cancelled: App.Crm.Data.ShootData = {
@@ -28,6 +29,7 @@ const cancelled: App.Crm.Data.ShootData = {
     isCancelled: true,
     cancelledReason: 'Termin vom Paar verschoben',
     forwardStatuses: [],
+    dueStatus: null,
 }
 
 const meta = {
@@ -62,4 +64,9 @@ export const Abgesagt: Story = {
 /** Auftrag ohne Termin. */
 export const Keine: Story = {
     args: { shoots: [], crewAvailability: {} },
+}
+
+/** Zwei Termine am selben Tag teilen einen Block. */
+export const GleicherTag: Story = {
+    args: { shoots: [shoots[0], { ...engagement, id: 's-rahn-getting-ready', date: shoots[0].date, status: 'planned', statusLabel: 'Geplant' }] },
 }

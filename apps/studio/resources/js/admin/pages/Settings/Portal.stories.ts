@@ -41,6 +41,10 @@ export const branding: App.Settings.Data.StudioSettingsData = {
   mailSignature: 'Christian Zepter\nAtelier Nordlicht',
   mailBcc: null,
   mailClientsEnabled: true,
+  mailDefaults: {},
+  mailHeaderName: true,
+  mailFooterLegal: true,
+  mailFooterExtra: null,
 }
 
 export const settings: App.Settings.Data.PortalSettingsData = {

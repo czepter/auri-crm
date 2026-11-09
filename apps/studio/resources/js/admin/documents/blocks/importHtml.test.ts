@@ -3,13 +3,19 @@ import { fillSamples, htmlToBlocks } from './importHtml'
 import { serialize } from './serialize'
 
 describe('htmlToBlocks', () => {
-  it('wraps a pre-editor body in a single raw-html block that serializes back to itself', () => {
-    const body = '<p>Vertrag mit {{ contact.name }}</p><ul><li>x</li></ul>'
-    const doc = htmlToBlocks(body)
+  it('turns a pre-editor body into blocks with merge-field chips and serializes back to itself', () => {
+    const body = '<h2>Vertrag</h2><p>Mit {{ contact.name }}</p><ul><li>x</li></ul>'
+    const doc = htmlToBlocks(body, { 'contact.name': 'Lena Meier' })
 
-    expect(doc.blocks).toHaveLength(1)
-    expect(doc.blocks[0].type).toBe('rawHtml')
-    expect(serialize(doc, 'print')).toBe(body)
+    expect(doc.blocks.map((block) => block.type)).toEqual(['header', 'paragraph', 'list'])
+    expect(doc.blocks[1].data.text).toContain('data-mf="contact.name"')
+    expect(serialize(doc, 'print')).toBe('<h2>Vertrag</h2>\n<p>Mit {{ contact.name }}</p>\n<ul><li>x</li></ul>')
+  })
+
+  it('keeps a body with a table as one raw-html block', () => {
+    const body = '<p>a</p><table><tr><td>x</td></tr></table>'
+
+    expect(htmlToBlocks(body).blocks).toEqual([{ type: 'rawHtml', data: { html: body } }])
   })
 
   it('gives an empty body an empty document rather than an empty block', () => {

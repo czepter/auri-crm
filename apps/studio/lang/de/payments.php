@@ -14,6 +14,7 @@ return [
     'invoiceOnePlan' => 'Raten eines Zahlungsplans wählen',
     'finalTakesNoPositions' => 'Endrechnung ohne weitere Positionen',
     'previewNumber' => 'Entwurf',
+    'previewRecipient' => 'Empfänger',
     'invoiceStatus' => [
         'open' => 'Offen',
         'partial' => 'Teilzahlung',

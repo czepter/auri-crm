@@ -2,6 +2,7 @@
 
 namespace App\Crm\Models;
 
+use App\Catalog\Models\Package;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Contracts\Models\Contract;
@@ -190,6 +191,17 @@ class ClientCase extends Model
         return $this->hasOne(Lead::class);
     }
 
+    /**
+     * Das Paket, das dieses Projekt gebucht hat. Allein die Anfrage hält die
+     * Verbindung: ein Angebot wird aus einem Paket nur kopiert (QuoteItem hat
+     * bewusst keine package_id), eine angenommene Position führt also nicht
+     * zurück.
+     */
+    public function bookedPackage(): ?Package
+    {
+        return $this->lead?->package;
+    }
+
     public function notes(): HasMany
     {
         return $this->hasMany(InternalNote::class)->latest();
@@ -269,6 +281,12 @@ class ClientCase extends Model
     public function latestThread(): HasOne
     {
         return $this->hasOne(Thread::class)->latestOfMany();
+    }
+
+    /** The one the studio works on: the newest version not yet replaced, drafts included. */
+    public function currentQuote(): HasOne
+    {
+        return $this->hasOne(Quote::class)->ofMany(['id' => 'max'], fn ($query) => $query->where('status', '!=', 'superseded'));
     }
 
     /**

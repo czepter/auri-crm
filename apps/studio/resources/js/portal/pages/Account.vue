@@ -69,15 +69,15 @@ const ROW = 'flex items-center gap-6 border-b border-border py-6'
            1100px wide is a form field nobody can scan. Under 900px the rail
            lies down over the block instead of eating half the column. -->
       <div class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 grid gap-8 min-[900px]:grid-cols-[168px_minmax(0,1fr)] min-[900px]:gap-16">
-        <nav class="flex gap-x-6 gap-y-2 border-b border-border pb-5 text-[13.5px] leading-none max-[899px]:flex-wrap min-[900px]:sticky min-[900px]:top-24 min-[900px]:flex-col min-[900px]:gap-3.5 min-[900px]:self-start min-[900px]:border-0 min-[900px]:pb-0">
-          <Button
+        <nav class="flex gap-6 overflow-x-auto border-b border-border min-[900px]:sticky min-[900px]:top-24 min-[900px]:flex-col min-[900px]:gap-0 min-[900px]:self-start min-[900px]:overflow-visible min-[900px]:border-b-0">
+          <button
             v-for="item in NAV"
             :key="item.key"
-            :data-active="pane === item.key"
+            :aria-current="pane === item.key"
+            class="-mb-px min-h-11 shrink-0 cursor-pointer border-b-2 border-transparent bg-transparent px-0 text-[14px] leading-none font-medium whitespace-nowrap text-muted-foreground hover:text-foreground aria-[current=true]:border-foreground aria-[current=true]:font-semibold aria-[current=true]:text-foreground min-[900px]:text-left"
             type="button"
-            variant="portal-nav"
             @click="pane = item.key"
-          >{{ $t(item.label) }}</Button>
+          >{{ $t(item.label) }}</button>
         </nav>
 
         <div class="min-w-0 max-w-[680px]">
@@ -117,7 +117,16 @@ const ROW = 'flex items-center gap-6 border-b border-border py-6'
               </PortalField>
             </div>
 
-            <Button class="mt-2 justify-self-start" variant="portal" type="submit" :disabled="form.processing">
+            <div
+              v-if="form.isDirty"
+              class="fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] z-30 border-t border-border bg-[var(--bg)] p-3 min-[761px]:bottom-0"
+            >
+              <Button class="min-h-12 w-full justify-center min-[761px]:mx-auto min-[761px]:flex min-[761px]:max-w-[680px]" variant="portal" type="submit" :state="form.processing ? 'loading' : 'idle'" :disabled="form.processing">
+                {{ $t('common.save') }}
+              </Button>
+            </div>
+
+            <Button class="min-h-12 justify-center justify-self-start max-[640px]:w-full" variant="portal" type="submit" :state="form.processing ? 'loading' : 'idle'" :disabled="!form.isDirty || form.processing">
               {{ $t('common.save') }}
             </Button>
           </form>
@@ -125,7 +134,7 @@ const ROW = 'flex items-center gap-6 border-b border-border py-6'
 
         <section v-else-if="pane === 'post'">
           <label class="flex cursor-pointer items-start gap-4">
-            <Switch class="mt-0.5" :model-value="subscribed" @update:model-value="setSubscription(!subscribed)" />
+            <Switch class="mt-0.5" :aria-label="$t('portal.postConsent')" :model-value="subscribed" @update:model-value="setSubscription(!subscribed)" />
             <span>
               <b class="block text-[14.5px] leading-[1.35] font-semibold tracking-[-0.008em]">{{ $t('portal.postConsent') }}</b>
               <span class="text-[13px] text-muted-foreground">{{ $t('portal.postConsentScope') }}</span>

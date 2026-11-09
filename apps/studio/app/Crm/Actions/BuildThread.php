@@ -7,6 +7,7 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Task;
 use App\Crm\Support\CaseActivity;
+use Carbon\CarbonImmutable;
 
 /**
  * C-11 (#247): notes and the audit trail are one trace, so they are also one
@@ -43,17 +44,17 @@ class BuildThread
 
         $done = $project->tasks->filter->isDone()->map(fn (Task $task) => new ThreadEntryData(
             key: "task-{$task->public_id}",
-            at: $task->due_on?->toDateString(),
+            at: ($task->completed_at ?? $task->due_on)?->toIso8601String(),
             body: $task->title,
             author: null,
             system: true,
         ));
 
-        // Oldest first, so the composer sits where the next line goes. A task
-        // carries a date and nothing else; it sorts to the head of its day,
-        // ahead of the events that day, which is the order the day happened in.
+        // Oldest first, so the composer sits where the next line goes. By
+        // instant, not by string: offsets differ between a stored occurred_at
+        // and a created_at, and strings sort them out of order.
         return $notes->concat($events)->concat($done)
-            ->sortBy(fn (ThreadEntryData $entry) => $entry->at ?? '9999')
+            ->sortBy(fn (ThreadEntryData $entry) => $entry->at === null ? PHP_INT_MAX : CarbonImmutable::parse($entry->at)->getTimestamp())
             ->values()
             ->all();
     }

@@ -24,7 +24,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { centsToEuros, eurosToCents } from '@/lib/money'
 
-const props = defineProps<{ installmentId: string; remaining: number }>()
+const props = defineProps<{ installmentId: string; remaining: number; primary?: boolean; triggerClass?: string }>()
 
 const open = ref(false)
 const form = useForm({
@@ -50,7 +50,7 @@ function submit() {
 <template>
   <Dialog v-model:open="open">
     <DialogTrigger as-child>
-      <Button variant="outline" type="button">{{ $t('payments.markPaid') }}</Button>
+      <Button :variant="primary ? 'pill' : 'outline'" type="button" :class="triggerClass">{{ $t('payments.markPaid') }}</Button>
     </DialogTrigger>
 
     <DialogContent>
@@ -98,7 +98,7 @@ function submit() {
       </DialogBody>
 
       <DialogFooter>
-        <Button type="submit" form="installment-paid-form" :disabled="form.processing">
+        <Button type="submit" form="installment-paid-form" :disabled="form.processing" :state="form.processing ? 'loading' : 'idle'">
           {{ $t('payments.markPaidSubmit') }}
         </Button>
         <DialogClose as-child>

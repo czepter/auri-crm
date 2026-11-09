@@ -19,8 +19,8 @@ it('ships the defaults and the presets with the list', function () {
     $this->get('/galerien')
         ->assertInertia(fn ($page) => $page
             ->component('Galleries/Index')
-            ->where('settings.downloadsEnabled', true)
-            ->where('settings.design.cover', 'full')
+            ->where('settings.downloadRule', 'open')
+            ->where('settings.design.cover', 'zentriert')
             ->where('presets.0.isDefault', true));
 });
 
@@ -34,22 +34,22 @@ it('keeps the defaults from a role that may not edit them', function () {
 it('writes the design the room chose', function () {
     $this->patch('/einstellungen/galerien', [
         'gallery_default_expiry_days' => 90,
-        'gallery_default_downloads_enabled' => true,
+        'gallery_default_download_rule' => 'after_payment',
         'gallery_default_lists_enabled' => true,
         'gallery_default_comments_enabled' => false,
-        'gallery_default_design' => ['cover' => 'plain', 'type' => 'serif', 'colour' => 'dark', 'grid' => 'dense'],
+        'gallery_default_design' => ['cover' => 'links', 'type' => 'serif', 'colour' => 'dunkel', 'size' => 'klein', 'spacing' => 'eng', 'flow' => 'zeilen'],
     ])->assertRedirect('/galerien');
 
     expect(GallerySettings::design())
-        ->toBe(['cover' => 'plain', 'type' => 'serif', 'colour' => 'dark', 'grid' => 'dense']);
+        ->toBe(['cover' => 'links', 'type' => 'serif', 'colour' => 'dunkel', 'size' => 'klein', 'spacing' => 'eng', 'flow' => 'zeilen']);
 });
 
 it('refuses a half design', function () {
     $this->patch('/einstellungen/galerien', [
-        'gallery_default_downloads_enabled' => true,
+        'gallery_default_download_rule' => 'after_payment',
         'gallery_default_lists_enabled' => true,
         'gallery_default_comments_enabled' => true,
-        'gallery_default_design' => ['colour' => 'dark'],
+        'gallery_default_design' => ['colour' => 'dunkel'],
     ])->assertSessionHasErrors('gallery_default_design.cover');
 });
 

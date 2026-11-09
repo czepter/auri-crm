@@ -27,20 +27,26 @@ it('lists every closure', function () {
         ->and($props['closures'][0]['endsOn'])->toBe('2026-12-31');
 });
 
-it('hands the working days to the calendar overlay', function () {
+it('hands the working days to the profile calendar pane', function () {
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
+        ->get('/profil/kalender')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('workingDays', [1, 2, 3, 4, 5, 6, 7]));
+});
+
+it('sends the old calendar settings address to the profile', function () {
     $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get('/kalender/einstellungen')
-        ->assertOk()
-        ->assertInertia(fn ($page) => $page->where('settingsOpen', true)->where('workingDays', [1, 2, 3, 4, 5, 6, 7]));
+        ->assertRedirect('/profil/kalender');
 });
 
 it('saves the working days and audits the owner', function () {
     $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
-        ->from('/kalender/einstellungen')
+        ->from('/profil/kalender')
         ->patch('/kalender/einstellungen/arbeitstage', ['working_days' => [1, 2, 3, 4, 5]])
-        ->assertRedirect('/kalender/einstellungen');
+        ->assertRedirect('/profil/kalender');
 
     expect(StudioSettings::query()->sole()->working_days)->toBe([1, 2, 3, 4, 5])
         ->and(AuditLog::where('context->key', 'working_days')->sole()->actor_id)->toBe($owner->id);
@@ -132,7 +138,7 @@ it('binds the closure route on the public id, not the primary key', function () 
 });
 
 it('gives every non-owner role the same 404 every other settings screen gives', function (StaffRole $role, int $status) {
-    foreach (['/schliesszeiten', '/kalender/einstellungen'] as $path) {
+    foreach (['/schliesszeiten'] as $path) {
         $this->actingAs(staffMember($role), 'staff')->get($path)->assertStatus($status);
     }
 })->with([
@@ -158,7 +164,7 @@ it('gives the plain calendar no overlay data to a role without ManageSettings', 
     $this->actingAs(staffMember(StaffRole::Manager), 'staff')
         ->get('/kalender')
         ->assertOk()
-        ->assertInertia(fn ($page) => $page->where('workingDays', null)->where('settingsOpen', false));
+        ->assertInertia(fn ($page) => $page->where('workingDays', null));
 });
 
 it('sends the old availability address to the closures page', function () {

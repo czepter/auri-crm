@@ -24,12 +24,14 @@ defineProps<{ items: T[] }>()
         <span v-if="item.description" class="text-small text-ink-2"> · {{ item.description }}</span>
         <slot name="note" :item="item" />
       </span>
-      <span class="w-14 flex-none text-right text-small leading-[1.47] tabular-nums text-ink-2">{{ item.quantity }}×</span>
+      <span class="flex-none text-right text-small leading-[1.47] whitespace-nowrap tabular-nums text-ink-2">{{
+        item.quantity > 1 && item.unitPrice !== null ? `${item.quantity} × ${formatEurosRounded(item.unitPrice)}` : ''
+      }}</span>
       <!-- A position without a price is an included service, not a zero:
            unit_price is nullable in both package_items and quote_items for
            exactly that. -->
       <span class="w-28 flex-none text-right text-small leading-[1.47] tabular-nums">
-        {{ item.unitPrice === null ? $t('packages.included') : formatEurosRounded(item.unitPrice) }}
+        {{ item.unitPrice === null ? $t('packages.included') : formatEurosRounded(item.unitPrice * item.quantity) }}
         <slot name="priceNote" :item="item" />
       </span>
     </div>

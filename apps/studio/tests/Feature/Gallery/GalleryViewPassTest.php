@@ -18,7 +18,7 @@ beforeEach(function () {
 
 function gatedGallery(string $password = 'basthorst2026'): Gallery
 {
-    $gallery = Gallery::factory()->create();
+    $gallery = Gallery::factory()->create(['permissions' => ['guest' => ['comments' => true]]]);
     $set = GallerySet::where('gallery_id', $gallery->id)->first();
     Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g1/a.jpg', 'width' => 4000, 'height' => 3000]);
     $gallery->fresh()->publish();

@@ -23,10 +23,11 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
     data-slot="checkbox"
     v-bind="forwarded"
     :class="cn(
-      'peer size-4 shrink-0 cursor-pointer rounded-[4px] border border-line-hover bg-background',
+      'peer relative size-6 shrink-0 cursor-pointer rounded-[5px] border border-input bg-background',
+      'after:absolute after:-inset-[10px]',
       'transition-colors duration-[120ms] ease-out',
-      'hover:border-faint',
-      'focus-visible:border-ring focus-visible:outline-none',
+      'hover:border-foreground',
+      'focus-visible:border-ring',
       'data-[state=checked]:border-foreground data-[state=checked]:bg-foreground data-[state=checked]:text-background',
       'data-[state=indeterminate]:border-foreground data-[state=indeterminate]:bg-foreground data-[state=indeterminate]:text-background',
       'disabled:cursor-not-allowed disabled:opacity-50',
@@ -35,8 +36,8 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
     v-slot="{ state }"
   >
     <CheckboxIndicator class="flex size-full items-center justify-center text-current">
-      <Minus v-if="state === 'indeterminate'" class="size-3" />
-      <Check v-else class="size-3" />
+      <Minus v-if="state === 'indeterminate'" class="size-4" />
+      <Check v-else class="size-4" />
     </CheckboxIndicator>
   </CheckboxRoot>
 </template>

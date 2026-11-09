@@ -39,6 +39,7 @@ class GallerySetController extends Controller
                 ->where('gallery_id', $gallery->id)->ignore($set->id)],
             'sort_key' => ['sometimes', Rule::in(['taken_at', 'filename'])],
             'sort_dir' => ['sometimes', Rule::in(['asc', 'desc'])],
+            'access' => ['sometimes', Rule::in([GallerySet::INTERNAL, GallerySet::GUESTS])],
         ]);
 
         $set->update($validated);

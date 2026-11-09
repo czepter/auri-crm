@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { publishLabelKey, showPublish, showWithdraw } from './galleryPublish'
+import { publishLabelKey, showPublish, showWithdraw, stateKey } from './galleryPublish'
 
 describe('publishLabelKey', () => {
   it('offers Veröffentlichen before a first version exists', () => {
@@ -54,5 +54,13 @@ describe('showWithdraw', () => {
 
   it('shows it for a live, published gallery', () => {
     expect(showWithdraw({ deviates: false, withdrawn: false, published: 1, assets: 3 })).toBe(true)
+  })
+})
+
+describe('stateKey', () => {
+  it('names the three states the head can show', () => {
+    expect(stateKey({ deviates: true, withdrawn: false, published: null, assets: 3 })).toBe('draft')
+    expect(stateKey({ deviates: true, withdrawn: false, published: 1, assets: 3 })).toBe('online')
+    expect(stateKey({ deviates: false, withdrawn: true, published: 1, assets: 3 })).toBe('withdrawn')
   })
 })

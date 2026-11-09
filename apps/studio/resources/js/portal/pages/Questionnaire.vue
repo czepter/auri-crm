@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { computed, reactive, ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import GroupPhotoField from '@/portal/components/GroupPhotoField.vue'
 import PortalField from '@/portal/components/PortalField.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
+import { steps, unanswered } from '@/portal/lib/questionnaire'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
@@ -24,6 +27,8 @@ const props = defineProps<{
 // not save eight of them. Prefilled with whatever was already answered —
 // by them or by the studio off a phone call — so revising is editing rather
 // than starting over.
+const { t } = useI18n()
+
 const form = useForm<{ answers: Record<string, string> }>({
   answers: Object.fromEntries(
     props.questionnaire.fields.filter((f) => f.type !== 'file').map((f) => [f.id, f.currentAnswer ?? '']),
@@ -50,8 +55,40 @@ function removeFile(fileId: string) {
   })
 }
 
+const pages = computed(() => steps(props.questionnaire.fields))
+const step = ref(0)
+const direction = ref(1)
+const last = computed(() => step.value === pages.value.length - 1)
+const touched = reactive(new Set<string>())
+
+function goTo(index: number) {
+  if (index === step.value) return
+
+  direction.value = index > step.value ? 1 : -1
+  step.value = index
+}
+
+function blocked(index: number) {
+  const missing = pages.value[index].filter((f) => unanswered(f, form.answers))
+  missing.forEach((f) => touched.add(f.id))
+
+  return missing.length > 0
+}
+
+function next() {
+  if (!blocked(step.value)) goTo(step.value + 1)
+}
+
 function submit() {
-  form.patch(`/projekte/${props.project.id}/fragebogen/${props.questionnaire.id}`, { preserveScroll: true })
+  if (!last.value) return next()
+
+  const open = pages.value.findIndex((_, index) => blocked(index))
+  if (open !== -1) return goTo(open)
+
+  form.patch(`/projekte/${props.project.id}/fragebogen/${props.questionnaire.id}`, {
+    preserveScroll: true,
+    onError: () => goTo(Math.max(0, pages.value.findIndex((page) => page.some((f) => serverError(f.id))))),
+  })
 }
 
 // FormFieldType's own cases (App\Crm\Enums\FormFieldType) — the builder's
@@ -64,8 +101,14 @@ function isChecked(id: string) {
 
 // Errors come back keyed "answers.<publicId>" — one per unanswered required
 // question, which is not a shape useForm's own typed errors can describe.
-function errorFor(id: string) {
+function serverError(id: string) {
   return (form.errors as Record<string, string | undefined>)[`answers.${id}`]
+}
+
+function errorFor(id: string) {
+  const field = props.questionnaire.fields.find((f) => f.id === id)!
+
+  return touched.has(id) ? (unanswered(field, form.answers) ? t('common.invalid.valueMissing') : undefined) : serverError(id)
 }
 </script>
 
@@ -81,8 +124,10 @@ function errorFor(id: string) {
         {{ questionnaire.name }}
       </h1>
 
-      <form class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 grid gap-6" @submit.prevent="submit">
-        <template v-for="field in questionnaire.fields" :key="field.id">
+      <form class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 grid gap-8" :data-direction="direction" @submit.prevent="submit">
+        <Transition name="step" mode="out-in">
+        <div :key="step" class="grid gap-8">
+        <template v-for="field in pages[step]" :key="field.id">
           <label
             v-if="field.type === 'boolean'"
             class="flex cursor-pointer items-start gap-3.5 text-[14.5px] leading-[1.5] [&_[data-slot=checkbox]]:mt-0.5 [&_[data-slot=checkbox]]:size-[17px] [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action"
@@ -96,9 +141,11 @@ function errorFor(id: string) {
 
           <PortalField
             v-else
+            class="relative"
             :label="field.label"
             :optional="field.required ? undefined : $t('settings.optional')"
             :hint="field.groupPhotos?.help ?? undefined"
+            @focusout="touched.add(field.id)"
           >
             <template v-if="field.type === 'file'">
               <div v-for="file in field.files" :key="file.id" class="flex items-center gap-3 text-[14.5px] leading-[1.5]">
@@ -150,16 +197,71 @@ function errorFor(id: string) {
               :type="field.type === 'date' ? 'date' : field.type === 'time' ? 'time' : 'text'"
             />
 
-            <span v-if="errorFor(field.id)" class="mt-[7px] block text-[12.5px] leading-[1.45] text-destructive">{{ errorFor(field.id) }}</span>
+            <Transition name="error">
+              <span v-if="errorFor(field.id)" role="status" class="absolute top-full left-0 pt-1.5 text-[12.5px] leading-[1.45] text-destructive">{{ errorFor(field.id) }}</span>
+            </Transition>
           </PortalField>
         </template>
+        </div>
+        </Transition>
 
-        <Button class="mt-2 justify-self-start" variant="portal" type="submit" :disabled="form.processing">
-          {{ $t('common.save') }}
-        </Button>
+        <div class="mt-2 flex items-center gap-3">
+          <Button v-if="step > 0" variant="portal-ghost" type="button" @click="goTo(step - 1)">{{ $t('common.back') }}</Button>
+          <Button v-if="!last" variant="portal" type="submit">{{ $t('portal.next') }}</Button>
+          <Button v-else variant="portal" type="submit" :state="form.processing ? 'loading' : 'idle'" :disabled="form.processing">
+            {{ $t('common.save') }}
+          </Button>
+          <span v-if="pages.length > 1" class="ml-auto text-[12.5px] tabular-nums text-muted-foreground">{{ step + 1 }} / {{ pages.length }}</span>
+        </div>
       </form>
     </main>
 
     <PortalFooter />
   </PortalShell>
 </template>
+
+<style scoped>
+.step-enter-active {
+  transition: opacity 280ms cubic-bezier(0.22, 0.61, 0.36, 1), transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.step-leave-active {
+  transition: opacity 140ms cubic-bezier(0.4, 0, 1, 1), transform 140ms cubic-bezier(0.4, 0, 1, 1);
+}
+.step-enter-from,
+.step-leave-to {
+  opacity: 0;
+}
+[data-direction='1'] .step-enter-from,
+[data-direction='-1'] .step-leave-to {
+  transform: translateX(22px);
+}
+[data-direction='-1'] .step-enter-from,
+[data-direction='1'] .step-leave-to {
+  transform: translateX(-22px);
+}
+
+.error-enter-active,
+.error-leave-active {
+  transition: opacity 150ms ease-out, transform 150ms ease-out;
+}
+.error-enter-from,
+.error-leave-to {
+  opacity: 0;
+  transform: translateY(-3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-enter-active,
+  .step-leave-active,
+  .error-enter-active,
+  .error-leave-active {
+    transition-property: opacity;
+  }
+  .step-enter-from,
+  .step-leave-to,
+  .error-enter-from,
+  .error-leave-to {
+    transform: none !important;
+  }
+}
+</style>

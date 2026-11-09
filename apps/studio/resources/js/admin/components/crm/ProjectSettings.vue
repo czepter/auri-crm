@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import FormShell from '@/ui/page/FormShell.vue'
 import { computed, ref, watchEffect } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import { useEventListener } from '@vueuse/core'
@@ -22,6 +23,7 @@ type Stage = {
   anchor: string | null
   anchorLabel: string | null
   isActive: boolean
+  count?: number
 }
 
 type Pipeline = {
@@ -304,37 +306,20 @@ function release(row: Stage | Field) {
 </script>
 
 <template>
-  <!-- Over the lists it configures, not a room of its own: the stages and the
-       types are read on the board, so they are edited on top of it. Fixed
-       rather than inline so the list keeps its scroll position underneath. -->
-  <div data-tokens class="fixed inset-0 z-40 overflow-y-auto bg-background">
-    <div class="mx-auto w-full max-w-[1000px] px-6 pb-16">
-      <!-- Bleibt stehen: die Liste ist so lang wie das Studio Felder hat, und
-           der Weg hier heraus darf nicht nach oben scrollen. -->
-      <div class="sticky top-0 z-10 flex items-center gap-4 bg-background py-[18px]">
-        <button
-          :aria-label="$t('stages.done')"
-          class="inline-flex cursor-pointer border-0 bg-transparent p-1 text-ink-2"
-          type="button"
-          @click="emit('close')"
-        >
-          <svg class="size-[18px] fill-none stroke-current stroke-[1.75] [stroke-linecap:round]" viewBox="0 0 24 24">
-            <path d="M6 6l12 12M18 6L6 18" />
-          </svg>
-        </button>
-        <span class="text-body leading-[1.3] font-semibold tracking-[-0.015em]">{{ $t('stages.title') }}</span>
-        <Button class="ml-auto" type="button" @click="emit('close')">{{ $t('stages.done') }}</Button>
-      </div>
+  <FormShell :title="$t('stages.title')">
+    <template #head>
+      <Button class="ml-auto" type="button" @click="emit('close')">{{ $t('stages.done') }}</Button>
+    </template>
 
-      <div class="flex gap-10 pt-6 max-[720px]:flex-col max-[720px]:gap-6">
-        <nav class="w-[168px] flex-none">
+    <template #nav>
+        <nav class="w-[196px] flex-none max-[640px]:w-full">
           <h3 class="m-0 mb-[7px] text-small leading-none font-semibold text-ink-2">
             {{ $t('stages.stagesNav') }}
           </h3>
           <button
             v-for="one in pipelines"
             :key="one.value"
-            class="block w-full cursor-pointer rounded-lg border-0 bg-transparent px-2.5 py-[7px] text-left text-small leading-[1.3]"
+            class="block w-full cursor-pointer rounded-[7px] border-0 bg-transparent px-2.5 py-[9px] text-left text-ui leading-none"
             :class="selected.kind === 'pipeline' && selected.key === one.value ? 'bg-sunk-2 font-semibold' : 'text-ink-2'"
             type="button"
             @click="choose({ kind: 'pipeline', key: one.value })"
@@ -348,10 +333,10 @@ function release(row: Stage | Field) {
           <button
             v-for="one in types"
             :key="one.id"
-            class="block w-full cursor-pointer rounded-lg border-0 bg-transparent px-2.5 py-[7px] text-left text-small leading-[1.3]"
+            class="block w-full cursor-pointer rounded-[7px] border-0 bg-transparent px-2.5 py-[9px] text-left text-ui leading-none"
             :class="[
               selected.kind === 'type' && selected.key === one.key ? 'bg-sunk-2 font-semibold' : 'text-ink-2',
-              one.isActive ? '' : 'text-faint',
+              one.isActive ? '' : 'text-ink-2',
             ]"
             type="button"
             @click="chooseType(one)"
@@ -364,19 +349,36 @@ function release(row: Stage | Field) {
             {{ $t('stages.typeShort') }}
           </Button>
         </nav>
+    </template>
+
+    <template v-if="pipeline" #preview>
+      <aside class="sticky top-6 w-[352px] flex-none max-[1100px]:hidden">
+          <div class="flex flex-col gap-2 rounded-xl bg-sunk p-3">
+            <div
+              v-for="stage in stageRows.filter((one) => one.isActive)"
+              :key="stage.id"
+              class="flex min-w-[140px] flex-1 items-center gap-2 border-b-2 bg-background px-3 py-2 text-small font-semibold"
+              :style="{ borderBottomColor: stage.css }"
+            >
+              <span class="flex-1">{{ stage.name }}</span>
+              <span class="flex-none font-normal tabular-nums text-ink-2">{{ stage.count ?? 0 }}</span>
+            </div>
+          </div>
+      </aside>
+    </template>
 
         <section v-if="pipeline" class="min-w-0 flex-1">
           <h2 class="m-0 text-title leading-[1.2] font-semibold tracking-[-0.02em]">
             {{ $t('stages.stagesSection', { pipeline: pipeline.label }) }}
           </h2>
 
-          <div class="mt-4 flex flex-wrap gap-2 rounded-xl bg-sunk p-3">
+          <div class="mt-4 flex flex-col gap-2 rounded-xl bg-sunk p-3">
             <button
               v-for="stage in stageRows"
               :key="stage.id"
-              class="inline-flex touch-none cursor-grab items-center gap-[7px] rounded-[var(--r-sm)] border border-border bg-background px-3 py-1.5 text-small leading-[1.4] font-semibold transition-[border-color,opacity] select-none hover:border-line-hover active:cursor-grabbing"
+              class="flex touch-none cursor-grab items-center gap-3 rounded-[var(--r-sm)] border border-border bg-background px-3 py-2 text-left text-small leading-[1.4] font-semibold transition-[border-color,opacity] select-none hover:border-line-hover active:cursor-grabbing"
               :class="[
-                stage.isActive ? 'text-ink-2' : 'text-faint',
+                stage.isActive ? 'text-foreground' : 'text-ink-2',
                 held?.id === stage.id && held?.moved ? 'opacity-40' : '',
               ]"
               :data-drag="stage.id"
@@ -386,8 +388,12 @@ function release(row: Stage | Field) {
               @pointermove="move"
               @pointerup="release(stage)"
             >
-              <span class="size-1.5 flex-none rounded-full" :style="{ background: stage.css }"></span>
-              {{ stage.name }}
+              <svg class="size-3.5 flex-none fill-ink-2" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="9" cy="6" r="1.6" /><circle cx="15" cy="6" r="1.6" /><circle cx="9" cy="12" r="1.6" /><circle cx="15" cy="12" r="1.6" /><circle cx="9" cy="18" r="1.6" /><circle cx="15" cy="18" r="1.6" />
+              </svg>
+              <span class="size-2 flex-none rounded-full" :style="{ background: stage.css }"></span>
+              <span class="flex-1">{{ stage.name }}</span>
+              <span class="flex-none font-normal tabular-nums text-ink-2">{{ stage.count ?? 0 }}</span>
             </button>
           </div>
 
@@ -506,8 +512,7 @@ function release(row: Stage | Field) {
 
           <WorkflowPanel v-else :workflow="workflow as never" />
         </section>
-      </div>
-    </div>
+  </FormShell>
 
     <Dialog :open="open === 'stage'" @update:open="open = null">
       <DialogContent>
@@ -740,5 +745,4 @@ function release(row: Stage | Field) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  </div>
 </template>

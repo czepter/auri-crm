@@ -24,7 +24,16 @@ final class RenderHelpArticle
         // selbst ist unserer und darf HTML sein.
         $html = Str::markdown($rumpf);
 
-        foreach ($this->platzhalter->werte() as $name => $wert) {
+        $werte = $this->platzhalter->werte();
+
+        // Ein Abschnitt mit leerem Platzhalter entfällt ganz.
+        $html = preg_replace_callback(
+            '/<!--wenn:(\w+)-->(.*?)<!--\/wenn-->/s',
+            fn (array $treffer) => ($werte[$treffer[1]] ?? '') === '' ? '' : $treffer[2],
+            $html,
+        );
+
+        foreach ($werte as $name => $wert) {
             $html = str_replace("%{$name}%", e($wert), $html);
         }
 

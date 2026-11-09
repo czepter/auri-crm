@@ -53,7 +53,7 @@ img { max-width: 100%; height: auto; }
 }
 .field input {
   width: 100%; background: transparent; border: 0;
-  border-bottom: 1px solid rgba(246,241,235,.5);
+  border-bottom: 1px solid rgba(246,241,235,.65);
   padding: 10px 2px; color: #fff; text-align: center;
   font: 400 20px/1.3 var(--sans); letter-spacing: .22em;
   outline: none; transition: border-color .25s var(--ease);
@@ -82,7 +82,7 @@ img { max-width: 100%; height: auto; }
   content: ''; position: absolute; inset: 0;
   background:
     linear-gradient(180deg, rgba(12,10,9,.45) 0%, rgba(12,10,9,0) 26%),
-    linear-gradient(0deg, var(--void) 0%, rgba(12,10,9,.35) 30%, rgba(12,10,9,0) 62%);
+    linear-gradient(0deg, var(--void) 0%, rgba(12,10,9,.62) 30%, rgba(12,10,9,0) 62%);
 }
 .covertext {
   position: absolute; z-index: 2; left: 0; right: 0; bottom: var(--s9);
@@ -95,8 +95,8 @@ img { max-width: 100%; height: auto; }
 .scrollcue {
   position: absolute; z-index: 2; left: 50%; bottom: var(--s5); transform: translateX(-50%);
   display: flex; flex-direction: column; align-items: center; gap: 10px;
-  font: 600 10.5px/1 var(--sans); letter-spacing: .2em; text-transform: uppercase;
-  color: rgba(246,241,235,.5); text-decoration: none;
+  font: 600 14px/1 var(--sans); letter-spacing: .12em; text-transform: uppercase;
+  color: rgba(246,241,235,.8); text-decoration: none;
 }
 .scrollcue svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.4; animation: nudge 2.6s var(--ease) infinite; }
 @keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
@@ -106,38 +106,33 @@ img { max-width: 100%; height: auto; }
   position: sticky; top: 0; z-index: 10;
   display: flex; align-items: center; justify-content: space-between; gap: var(--s5);
   max-width: var(--page); margin: 0 auto; padding: var(--s4) var(--s5);
-  background: rgba(12,10,9,.72); backdrop-filter: blur(14px) saturate(140%);
+  background: color-mix(in srgb, var(--void) 72%, transparent); backdrop-filter: blur(14px) saturate(140%);
   border-bottom: 1px solid var(--void-line);
 }
-.bar .who { font-size: 13.5px; color: var(--void-ink-2); }
+.bar .who { flex: 1; font-size: 14px; color: var(--void-ink-2); }
+.bar .txtbtn { min-height: 44px; font-size: 14px; }
 .bar .who b { color: var(--void-ink); font-weight: 600; }
 .barbtn {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 9px 16px; border-radius: var(--r-pill);
+  min-height: 44px; padding: 9px 16px; border-radius: var(--r-pill);
   border: 1px solid var(--void-line); background: transparent;
-  color: var(--void-ink); font: 500 13px/1 var(--sans); text-decoration: none; cursor: pointer;
+  color: var(--void-ink); font: 500 14px/1 var(--sans); text-decoration: none; cursor: pointer;
   transition: background .2s var(--ease), border-color .2s var(--ease);
 }
-.barbtn:hover { background: var(--void-2); border-color: #3A3128; }
-.barbtn.solid { background: #fff; color: var(--void); border-color: #fff; font-weight: 600; }
+.barbtn:hover { background: var(--void-2); border-color: var(--void-ink-2); }
+.barbtn.solid { background: var(--void-ink); color: var(--void); border-color: var(--void-ink); font-weight: 600; }
 .barbtn.solid:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
 .barbtn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.6; }
 
 /* ── the wall ─────────────────────────────────────────────────────────── */
-/* Columns rather than grid: a photo wall wants the original proportions, and
-   `columns` is the only layout method that keeps them without JS — which
-   matters more here than anywhere, since this page ships none.
-   
-   .wall, nicht .grid: seit Tailwind hier mitläuft, ist .grid dessen eigenes
-   `display: grid` — und auf einem Grid-Container zählt `columns` nicht mehr.
-   Aus dem Raster wurde eine einzige Spalte. */
-.wall { max-width: var(--page); margin: 0 auto; padding: var(--s7) var(--s5) var(--s10); columns: 4; column-gap: var(--s3); }
-.tile { position: relative; display: block; break-inside: avoid; margin-bottom: var(--s3); overflow: hidden; border-radius: 10px; background: var(--void-2); }
-.tile img { width: 100%; display: block; transition: transform 1.2s var(--ease); }
+.wall { max-width: var(--page); margin: 0 auto; padding: var(--s7) var(--s5) var(--s10); display: flex; flex-wrap: wrap; gap: var(--s3); }
+.lockednote { max-width: var(--page); margin: 0 auto; padding: var(--s7) var(--s5) 0; font-size: 14px; color: var(--void-ink-2); }
+.tile { position: relative; display: block; overflow: hidden; border-radius: 10px; background: var(--void-2); }
+.tile img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 1.2s var(--ease); }
 .tile:hover img { transform: scale(1.03); }
 
-/* The heart appears on hover — at rest nothing stands between the guest and
-   the picture. A guest gets exactly this: one heart, a list without a name.
+/* The heart appears on hover; touch has no hover, so it stays. At rest on a
+   pointer device nothing stands between the guest and the picture. A guest gets exactly this: one heart, a list without a name.
    Named lists belong to the couple and live in the portal, where a session
    can carry an account. */
 .fav {
@@ -153,19 +148,27 @@ img { max-width: 100%; height: auto; }
 .fav svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; }
 .fav.on { background: var(--accent); }
 .fav.on svg { fill: currentColor; }
+@media (max-width: 760px), (hover: none) { .fav { opacity: 1; transform: none; } }
 
-/* Die Anmeldung. Sie steht unter dem Raster und nicht davor: ansehen darf
-   jeder, und wer nur schaut, soll nicht erst ein Formular wegklicken. */
-.signin { max-width: var(--page); margin: 0 auto; padding: 0 var(--s5) var(--s7); }
+/* Die Anmeldung. Ein Blatt über dem Raster, das der Link in der Leiste öffnet:
+   ansehen darf jeder, und wer nur schaut, wegklicken muss er nichts. */
+.signin {
+  position: fixed; inset: auto 0 0; z-index: 20;
+  max-width: var(--page); margin: 0 auto; padding: var(--s5);
+  background: var(--void-2); border: 1px solid var(--void-line); border-bottom: 0;
+  border-radius: var(--r) var(--r) 0 0; box-shadow: 0 -20px 48px -16px rgba(0,0,0,.6);
+}
+.signin[hidden] { display: none; }
 .signin p { margin: 0 0 var(--s3); font-size: 13.5px; color: var(--void-ink-2); }
-.signin .row { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.signin .eyebrow { margin-bottom: var(--s3); }
+.signin .row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s2); }
+.signin label { flex: 1 1 200px; display: grid; gap: 6px; font: 500 13px/1 var(--sans); color: var(--void-ink-2); }
 .signin input {
   flex: 1 1 200px; min-width: 0; padding: 13px 15px;
-  border: 1px solid var(--void-line); border-radius: var(--r-sm);
+  border: 1px solid #6C625A; border-radius: var(--r-sm);
   background: var(--void-2); color: var(--void-ink);
   font: 400 14px/1.2 var(--sans);
 }
-.signin input::placeholder { color: #6C625A; }
 .signin input:focus { outline: none; border-color: var(--accent); }
 .signin input[name='code'] { flex: 0 0 140px; letter-spacing: .32em; font-variant-numeric: tabular-nums; }
 /* Sechs Felder statt einem: das Skript unter der Anmeldung baut sie aus dem
@@ -215,9 +218,9 @@ img { max-width: 100%; height: auto; }
 .arrow {
   position: absolute; top: 50%; transform: translateY(-50%);
   width: 40px; height: 40px; border-radius: 50%; border: 0; cursor: pointer;
-  display: grid; place-items: center; background: rgba(255,255,255,.08); color: var(--void-ink);
+  display: grid; place-items: center; background: color-mix(in srgb, var(--void-ink) 8%, transparent); color: var(--void-ink);
 }
-.arrow:hover { background: rgba(255,255,255,.16); }
+.arrow:hover { background: color-mix(in srgb, var(--void-ink) 16%, transparent); }
 .arrow svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.6; }
 .arrow.prev { left: 0; }
 .arrow.next { right: 0; }
@@ -256,7 +259,6 @@ img { max-width: 100%; height: auto; }
 .strip a.on { opacity: 1; }
 .strip img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-@media (max-width: 1080px) { .wall { columns: 3; } }
 @media (max-width: 860px) {
   /* The rail becomes a drawer under the picture: the actions stay in thumb
      reach without covering the photograph. */
@@ -264,7 +266,7 @@ img { max-width: 100%; height: auto; }
   .rail { max-height: 38svh; border-top: 1px solid var(--void-line); padding-top: var(--s4); }
 }
 @media (max-width: 760px) {
-  .wall { columns: 2; padding-top: var(--s6); }
+  .wall { padding-top: var(--s6); gap: var(--s2); }
   .cover { height: 82svh; }
   .covertext { bottom: var(--s8); }
   .bar .who { display: none; }
@@ -278,3 +280,77 @@ img { max-width: 100%; height: auto; }
 .dl-size, .dl-state { color: rgba(246,241,235,.66); font-size: 13px; }
 .dl-parts { display: flex; flex-wrap: wrap; gap: var(--s2); }
 .hint a { color: inherit; }
+
+
+/* ── Gestaltung ──────────────────────────────────────────────────────────
+   GalleryDesign::OPTIONS im Studio. <html> traegt je Schluessel ein
+   data-g*-Attribut (lib/design.ts); die Werte hier sind Schriftstapel des
+   Systems und Farben, keine Webfonts und keine fremden Anfragen. */
+html[data-gcolour='hell']       { --void:#FFFFFF; --void-ink:#151A22; --void-ink-2:#626B78; --void-line:#E2E7EB; }
+html[data-gcolour='gold']       { --void:#FBF6E9; --void-ink:#2A2412; --void-ink-2:#7A6E4A; --void-line:#E9DDB8; }
+html[data-gcolour='rose']       { --void:#FBF1F1; --void-ink:#2E1B1E; --void-ink-2:#836468; --void-line:#EBD3D5; }
+html[data-gcolour='terracotta'] { --void:#FAF0EA; --void-ink:#33190F; --void-ink-2:#8A5B49; --void-line:#EBCDBE; }
+html[data-gcolour='sand']       { --void:#FBF7F2; --void-ink:#2A211B; --void-ink-2:#7A6A5C; --void-line:#E6DBCC; }
+html[data-gcolour='olive']      { --void:#F3F4EA; --void-ink:#20240F; --void-ink-2:#646B45; --void-line:#D9DDBF; }
+html[data-gcolour='agave']      { --void:#EEF4F0; --void-ink:#14261D; --void-ink-2:#577264; --void-line:#CFE0D5; }
+html[data-gcolour='meer']       { --void:#EDF3F6; --void-ink:#10242E; --void-ink-2:#55707E; --void-line:#CBDDE5; }
+html[data-gcolour='dunkel']     { --void:#0C0A09; --void-ink:#F6F1EB; --void-ink-2:#A2968C; --void-line:#272019; }
+html[data-gcolour] { --void-2: color-mix(in srgb, var(--void-ink) 6%, var(--void)); }
+/* Der Titel steht weiss auf dem Foto, gleich welche Farbe die Seite traegt;
+   nur der unterste Rand geht in den Grund ueber. */
+html[data-gcolour] .cover::after {
+  background:
+    linear-gradient(0deg, var(--void) 0%, transparent 14%),
+    linear-gradient(rgba(12,10,9,.42), rgba(12,10,9,.42));
+}
+
+html[data-gtype='sans']     { --serif: var(--sans); --gweight: 400; }
+html[data-gtype='serif']    { --serif: Georgia, 'Times New Roman', serif; --gweight: 400; }
+html[data-gtype='modern']   { --serif: 'Avenir Next', Avenir, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; --gweight: 500; }
+html[data-gtype='zeitlos']  { --serif: 'Palatino Linotype', Palatino, 'Book Antiqua', 'URW Palladio L', serif; --gweight: 400; }
+html[data-gtype='kraeftig'] { --serif: 'Helvetica Neue', Arial, sans-serif; --gweight: 800; }
+html[data-gtype='dezent']   { --serif: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif; --gweight: 300; }
+.display { font-weight: var(--gweight, 400); }
+
+html[data-gsize='klein']  { --gallery-row: 120px; --gcols: 5; }
+html[data-gsize='mittel'] { --gallery-row: 180px; --gcols: 4; }
+html[data-gsize='gross']  { --gallery-row: 300px; --gcols: 2; }
+html[data-gspacing='eng'] { --ggap: 6px; }
+html[data-gspacing='weit'] { --ggap: 22px; }
+.wall { gap: var(--ggap, var(--s3)); }
+html[data-gflow='spalten'] .wall { display: block; columns: var(--gcols, 4); column-gap: var(--ggap, var(--s3)); }
+html[data-gflow='spalten'] .tile { margin-bottom: var(--ggap, var(--s3)); break-inside: avoid; max-width: none !important; }
+@media (max-width: 760px) {
+  html[data-gspacing='eng'] { --ggap: 4px; }
+  html[data-gspacing='weit'] { --ggap: 10px; }
+  html[data-gsize] { --gcols: 2; }
+  html[data-gsize='gross'] { --gcols: 1; }
+}
+
+/* Titelbild. zentriert: Titel mittig im Bild. links: Titel unten links.
+   rahmen: das Bild als Karte mit Rand. geteilt: Bild links, Titel rechts. */
+html[data-gcover='zentriert'] .covertext { bottom: auto; top: 50%; transform: translateY(-50%); text-align: center; }
+html[data-gcover='rahmen'] .cover { margin: var(--s5) var(--s5) 0; height: calc(100svh - var(--s5) * 2); border-radius: var(--r); }
+html[data-gcover='rahmen'] .covertext { bottom: var(--s7); text-align: center; }
+html[data-gcover='geteilt'] .cover { display: grid; grid-template-columns: 1fr 1fr; }
+html[data-gcover='geteilt'] .cover::after { display: none; }
+html[data-gcover='geteilt'] .covertext { position: static; align-self: center; padding: var(--s7) var(--s6); margin: 0; }
+html[data-gcover='geteilt'] .covertext .display { color: var(--void-ink); }
+html[data-gcover='geteilt'] .covertext .meta { color: var(--void-ink-2); }
+html[data-gcover='geteilt'] .scrollcue { color: var(--void-ink-2); }
+@media (max-width: 760px) {
+  html[data-gcover='rahmen'] .cover { margin: var(--s3) var(--s3) 0; height: calc(82svh - var(--s3) * 2); }
+  html[data-gcover='geteilt'] .cover { grid-template-columns: 1fr; grid-template-rows: 55svh auto; height: auto; }
+  html[data-gcover='geteilt'] .covertext { padding: var(--s5); }
+}
+
+.intro { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; background: rgba(12, 10, 9, .7); }
+.intro[hidden] { display: none; }
+.introbox { width: 100%; padding: var(--s6) var(--s5) calc(var(--s6) + env(safe-area-inset-bottom)); background: var(--void); color: var(--void-ink); border-radius: 16px 16px 0 0; }
+.introbox h2 { margin: 0 0 var(--s5); font-size: 18px; font-weight: 600; }
+.introbox ul { margin: 0 0 var(--s6); padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--s4); font-size: 15px; }
+.introbox .btn { width: 100%; padding: 14px 20px; border: 0; border-radius: 999px; background: #fff; color: var(--void); font: inherit; font-weight: 600; cursor: pointer; }
+@media (min-width: 761px) {
+  .intro { align-items: center; }
+  .introbox { max-width: 400px; border-radius: 16px; padding-bottom: var(--s6); }
+}

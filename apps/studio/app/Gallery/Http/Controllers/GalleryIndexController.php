@@ -4,12 +4,15 @@ namespace App\Gallery\Http\Controllers;
 
 use App\Crm\Data\CaseSuggestionData;
 use App\Crm\Models\ClientCase;
+use App\Documents\Enums\DocumentTemplateType;
+use App\Documents\Models\DocumentTemplate;
 use App\Enums\Capability;
 use App\Gallery\Actions\CreateGallery;
 use App\Gallery\Data\GalleryPresetData;
 use App\Gallery\Data\GalleryRowData;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryPreset;
+use App\Gallery\Support\GalleryDesign;
 use App\Gallery\Support\GallerySettings;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
@@ -41,7 +44,7 @@ class GalleryIndexController extends Controller
         $mayManage = auth('staff')->user()?->can(Capability::ManageSettings->value) ?? false;
 
         $galleries = Gallery::query()
-            ->with(['case', 'currentVersion'])
+            ->with(['case', 'currentVersion', 'coverAsset'])
             ->withCount(['assets as asset_count' => fn ($query) => $query->inDraft()])
             // Die eine Ausnahme von der Projektsichtbarkeit: eine Galerie ohne
             // Buchung hat nichts, woran ein Filter greifen könnte.
@@ -57,6 +60,7 @@ class GalleryIndexController extends Controller
             'presets' => $mayManage
                 ? GalleryPresetData::collect(GalleryPreset::query()->orderBy('name')->get())
                 : [],
+            'mailTemplates' => $mayManage ? self::mailTemplates() : [],
             // Die Adresszeile der Vorschau. Ohne Slug — welche Galerie das
             // spaeter wird, entscheidet sich beim Anlegen.
             'galleryHost' => preg_replace('#^https?://#', '', rtrim((string) config('services.gallery.url'), '/')),
@@ -74,7 +78,21 @@ class GalleryIndexController extends Controller
                 ->first()
             : null;
 
+        $siblings = $project
+            ? Gallery::query()
+                ->with(['case', 'currentVersion', 'coverAsset'])
+                ->withCount(['assets as asset_count' => fn ($query) => $query->inDraft()])
+                ->where('case_id', $project->id)
+                ->latest()
+                ->get()
+            : collect();
+
+        $host = preg_replace('#^https?://#', '', rtrim((string) config('services.gallery.url'), '/'));
+
         return Inertia::render('Galleries/Create', [
+            'siblings' => GalleryRowData::collect($siblings),
+            // Das Präfix teilen sich alle Galerien eines Projekts; den Slug vergibt erst das Anlegen.
+            'address' => $siblings->isEmpty() ? $host : $host.'/'.$siblings->first()->prefix,
             'mode' => $request->query('art') === 'extern' ? 'external' : 'internal',
             'project' => $project ? CaseSuggestionData::fromModel($project) : null,
             'shootId' => $project?->shoots()->where('public_id', $request->query('shooting'))->value('public_id'),
@@ -82,7 +100,7 @@ class GalleryIndexController extends Controller
             // Die unterste Stufe der Geburtskette; die beiden darüber reichen
             // Vorlage und Projektvorschlag nach.
             'studioDefaults' => [
-                'downloads' => (bool) StudioSettings::current()->gallery_default_downloads_enabled,
+                'downloadRule' => StudioSettings::current()->gallery_default_download_rule,
                 'lists' => (bool) StudioSettings::current()->gallery_default_lists_enabled,
                 'comments' => (bool) StudioSettings::current()->gallery_default_comments_enabled,
                 'expiryDays' => GallerySettings::defaults()['expiryDays'],
@@ -107,10 +125,12 @@ class GalleryIndexController extends Controller
             'info' => ['nullable', 'string', 'max:2000'],
             'external_password' => ['nullable', 'string', 'max:200'],
             'expires_at' => ['nullable', 'date'],
-            'downloads_enabled' => ['nullable', 'boolean'],
+            'download_rule' => ['nullable', Rule::in(['open', 'after_payment', 'off'])],
             'lists_enabled' => ['nullable', 'boolean'],
             'comments_enabled' => ['nullable', 'boolean'],
             'design' => ['nullable', 'array'],
+            ...GalleryDesign::rules('design'),
+            'gallery_preset_id' => ['nullable', 'string', Rule::exists('gallery_presets', 'public_id')],
         ]);
 
         $project = ($validated['case_id'] ?? null) === null
@@ -121,12 +141,23 @@ class GalleryIndexController extends Controller
                 ->firstOrFail();
 
         $gallery = $createGallery(
-            Arr::except($validated, ['case_id', 'shoot_id']),
+            Arr::except($validated, ['case_id', 'shoot_id', 'gallery_preset_id']),
             $project,
             $validated['shoot_id'] ?? null,
             auth('staff')->user(),
+            isset($validated['gallery_preset_id'])
+                ? GalleryPreset::query()->where('public_id', $validated['gallery_preset_id'])->firstOrFail()
+                : null,
         );
 
         return redirect("/galerien/{$gallery->public_id}");
+    }
+
+    /** @return list<array{id: string, name: string}> die Mail-Vorlagen, die eine Galerie-Vorlage wählen kann (nach Familie, nicht nach Fassung) */
+    public static function mailTemplates(): array
+    {
+        return DocumentTemplate::query()->current()->ofType(DocumentTemplateType::Mail)->orderBy('name')->get()
+            ->map(fn (DocumentTemplate $template) => ['id' => $template->family_id, 'name' => $template->name])
+            ->all();
     }
 }

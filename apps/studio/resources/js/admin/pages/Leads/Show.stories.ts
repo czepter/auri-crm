@@ -10,7 +10,6 @@ import {
     leadShoots,
     leadTasks,
     leadThread,
-    packages,
     presets,
     queue,
     sources,
@@ -32,7 +31,6 @@ const meta = {
         shoots: leadShoots,
         quote: leadQuote,
         supersededQuotes: [],
-        packages,
         tasks: leadTasks,
         thread: leadThread,
         types,
@@ -78,5 +76,45 @@ export const Verloren: Story = {
     args: {
         header: { ...leadHeader, outcomeLabel: 'Verloren', lostReason: 'Termin anderweitig vergeben' },
         lead: { ...lead, outcomeLabel: 'Verloren', lostReason: 'Termin anderweitig vergeben' },
+    },
+}
+
+const note = (index: number) => ({
+    key: `n-${index}`,
+    at: `2026-09-${String(10 + index).padStart(2, '0')}T11:00:00+02:00`,
+    body: `Notiz ${index + 1} zum Gespräch`,
+    author: 'Christian Zepter',
+    system: false,
+    note: `note-${index}`,
+})
+
+/** Vier Termine, sieben Aufgaben (eine überfällig, im Schritt-Feld), fünf Notizen: Kappung und "Alle ansehen" greifen. */
+export const Voll: Story = {
+    args: {
+        shoots: Array.from({ length: 4 }, (_, index) => ({
+            ...leadShoots[0],
+            id: `s-${index}`,
+            isPrimary: index === 0,
+            date: `2027-0${6 + index}-12`,
+        })),
+        tasks: Array.from({ length: 7 }, (_, index) => ({
+            ...leadTasks[0],
+            id: `t-${index}`,
+            title: `Aufgabe ${index + 1}`,
+            isOverdue: index === 0,
+        })),
+        thread: [...Array.from({ length: 4 }, (_, index) => note(index)), ...leadThread],
+    },
+}
+
+/** Nichts erfasst: Kachelreihe statt leerer Karten, Anfragetext als Eingabe. */
+export const Leer: Story = {
+    args: {
+        shoots: [],
+        quote: null,
+        tasks: [],
+        thread: [],
+        lead: { ...lead, inquiryText: null },
+        header: { ...leadHeader, primaryDate: null, shootCount: 0 },
     },
 }

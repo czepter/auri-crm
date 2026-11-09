@@ -296,6 +296,7 @@ class InvoiceMergeData implements MergeDataProvider
                 $figures = InvoiceFigures::forInvoice($earlier)->share($earlier->amount() - $earlier->creditedAmount());
 
                 return [
+                    'title' => $earlier->installments->map(fn ($row) => PaymentPlanData::labelForInstallment($row))->implode(', '),
                     'number' => $earlier->number,
                     'date' => $earlier->issued_at->format('d.m.Y'),
                     'net' => DocumentMergeData::money($figures->net),

@@ -2,6 +2,8 @@
 
 namespace App\Documents\Support;
 
+use App\Models\StudioSettings;
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 
 /**
@@ -39,6 +41,11 @@ class MergeFieldVocabulary
         // quote states about itself. Resolved from the project's primary
         // shoot and its latest sent quote — see CaseMergeData and QuoteMergeData.
         'shoot.date' => '14.06.2026',
+        'shoot.list' => '14.06.2026 (Gut Basthorst); 15.06.2026',
+        'payment.depositDue' => '01.03.2026',
+        'payment.plan' => 'Anzahlung 1.000,00 € bis 01.03.2026; Restzahlung 1.500,00 € bis 07.06.2026',
+        'quote.number' => 'AN-2026-12',
+        'quote.sentOn' => '04.09.2026',
         'quote.validUntil' => '30.09.2026',
         'quote.vatNote' => 'Alle Preise verstehen sich zzgl. 19 % Umsatzsteuer.',
         // C-17 (#253): the "Galerie online" letter carries link, password and
@@ -89,6 +96,9 @@ class MergeFieldVocabulary
         // § 31 Abs. 5 UStDV asks for — a Gutschrift must point "spezifisch
         // und eindeutig" at the invoice it corrects. No dueOn and no
         // paymentTerm: nothing is owed on a credit note, it is paid out.
+        'reminder.amount' => '1.500,00 €',
+        'reminder.dueOn' => '29.08.2026',
+        'reminder.invoiceNumber' => 'RE-2026-17',
         'creditNote.number' => 'GS-2026-3',
         'creditNote.date' => '20.08.2026',
         'creditNote.servicePeriod' => '14.06.2026',
@@ -118,13 +128,20 @@ class MergeFieldVocabulary
      * read time: a typo'd field does not shout, it silently deletes a
      * sentence. This is how a caller finds out before that happens.
      *
+     * @param  list<string>|null  $known  Narrower than paths() where a screen offers fewer fields.
      * @return list<string>
      */
-    public static function unknownPathsIn(string $body): array
+    public static function unknownPathsIn(string $body, ?array $known = null): array
+    {
+        return array_values(array_diff(self::pathsIn($body), $known ?? self::paths()));
+    }
+
+    /** @return list<string> Every distinct `{{ path }}` in $body, known or not. */
+    public static function pathsIn(string $body): array
     {
         preg_match_all('/\{\{\s*([a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)*)\s*\}\}/', $body, $matches);
 
-        return array_values(array_unique(array_diff($matches[1] ?? [], self::paths())));
+        return array_values(array_unique($matches[1] ?? []));
     }
 
     /**
@@ -136,7 +153,15 @@ class MergeFieldVocabulary
      */
     public static function samples(): array
     {
-        return self::SAMPLE;
+        $studio = [];
+
+        foreach (app(DocumentMergeData::class)->forStudio()['studio'] as $key => $value) {
+            if ($value !== '' && ! in_array($key, ['logoPath'], true)) {
+                $studio['studio.'.$key] = $value;
+            }
+        }
+
+        return [...self::SAMPLE, ...self::terms(), ...$studio];
     }
 
     /**
@@ -151,10 +176,28 @@ class MergeFieldVocabulary
     {
         $data = [];
 
-        foreach (self::SAMPLE as $path => $value) {
+        foreach ([...self::SAMPLE, ...self::terms()] as $path => $value) {
             Arr::set($data, $path, $value);
         }
 
         return $data;
+    }
+
+    /**
+     * The dates a studio sets by days, reckoned from the studio's own
+     * settings so a preview never shows 30 days next to a Zahlungsziel of 14.
+     *
+     * @return array<string, string>
+     */
+    private static function terms(): array
+    {
+        $settings = StudioSettings::current();
+        $due = Carbon::createFromFormat('d.m.Y', self::SAMPLE['invoice.date'])->addDays($settings->payment_term_days)->format('d.m.Y');
+
+        return [
+            'quote.validUntil' => now()->addDays($settings->quote_validity_days)->format('d.m.Y'),
+            'invoice.dueOn' => $due,
+            'invoice.paymentTerm' => "Zahlbar bis {$due} ohne Abzug.",
+        ];
     }
 }

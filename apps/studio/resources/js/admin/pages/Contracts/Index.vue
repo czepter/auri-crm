@@ -23,6 +23,8 @@ const shown = computed(() => {
     !needle
     || `${contract.projectName} ${contract.contact ?? ''}`.toLocaleLowerCase('de').includes(needle))
 })
+
+const signed = computed(() => shown.value.filter((contract) => contract.signedOn).length)
 </script>
 
 <template>
@@ -31,9 +33,11 @@ const shown = computed(() => {
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('contractsOverview.title')" />
 
-        <template v-if="contracts.length">
+        <div v-if="contracts.length" class="max-w-[1280px]">
           <div class="flex flex-wrap items-center gap-3 px-6 pt-4.5">
-            <Input v-model="query" class="h-8 w-64" type="search" :placeholder="$t('contractsOverview.searchPlaceholder')" />
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-sunk px-3 py-1 text-small text-ink-2">{{ $t('contractsOverview.signedOn') }} <b class="font-semibold tabular-nums text-foreground">{{ signed }}</b></span>
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-sunk px-3 py-1 text-small text-ink-2">{{ $t('contractsOverview.open') }} <b class="font-semibold tabular-nums text-foreground">{{ shown.length - signed }}</b></span>
+            <Input :aria-label="$t('contractsOverview.searchPlaceholder')" v-model="query" class="h-8 min-w-60 w-64 shrink-0" type="search" :placeholder="$t('contractsOverview.searchPlaceholder')" />
           </div>
 
           <Table>
@@ -68,9 +72,9 @@ const shown = computed(() => {
               </TableRow>
             </tbody>
           </Table>
-        </template>
+        </div>
 
-        <Empty v-else class="mx-8 mt-7" :text="$t('contractsOverview.empty')">
+        <Empty v-else :text="$t('contractsOverview.empty')">
           <Button :as="Link" variant="pill" href="/projekte">{{ $t('contractsOverview.toProjects') }}</Button>
         </Empty>
       </div>

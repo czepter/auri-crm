@@ -9,6 +9,7 @@ use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Notifications\AssetCommented;
 use App\Gallery\Support\IdentifiesGalleryGuest;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -42,7 +43,7 @@ class AssetCommentController extends Controller
             ->where('gallery_id', $galleryVersion->gallery_id)
             ->pluck('name', 'identifier');
 
-        $known = $key !== '' && collect($galleryVersion->assets)->contains(fn (array $asset) => $asset['key'] === $key);
+        $known = $key !== '' && $galleryVersion->sees($key, false);
 
         $comments = $known
             ? AssetComment::query()
@@ -52,7 +53,7 @@ class AssetCommentController extends Controller
                 ->get()
                 ->map(fn (AssetComment $comment) => [
                     'body' => $comment->body,
-                    'author' => $names[$comment->guest_identifier] ?? null,
+                    'author' => $comment->user_id !== null ? StudioSettings::current()->display_name : ($names[$comment->guest_identifier] ?? null),
                     'own' => $me !== null && $comment->guest_identifier === $me->identifier,
                     'created_at' => $comment->created_at->toIso8601String(),
                 ])
@@ -73,8 +74,7 @@ class AssetCommentController extends Controller
         $me = $this->guest($request, $galleryVersion);
         abort_if($me === null, 403);
 
-        $known = collect($galleryVersion->assets)->contains(fn (array $asset) => $asset['key'] === $validated['asset_key']);
-        abort_unless($known, 404);
+        abort_unless($galleryVersion->sees($validated['asset_key'], false), 404);
 
         $comment = AssetComment::create([
             'gallery_version_id' => $galleryVersion->id,

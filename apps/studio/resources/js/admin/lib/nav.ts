@@ -17,6 +17,7 @@ export type NavEntry = {
 
 export type NavCounts = {
     unread?: number
+    drafts?: number
     leads?: number
     projects?: number
 }
@@ -81,6 +82,7 @@ export function navItems(can: Capability[], counts: NavCounts = {}): NavEntry[] 
             label: 'Posteingang',
             href: '/posteingang',
             needs: 'manage_messages',
+            count: counts.drafts || undefined,
             icon: '<path d="M3 6.5h18v11H3z"/><path d="m3 7.5 9 6 9-6"/>',
         },
         {
@@ -246,4 +248,20 @@ export function navItems(can: Capability[], counts: NavCounts = {}): NavEntry[] 
 
             return allowed(item)
         })
+}
+
+/** Die Leiste unten auf dem Telefon, in dieser Reihenfolge; alles andere liegt unter "Mehr". */
+const PHONE_BAR = ['uebersicht', 'anfragen', 'kalender', 'projekte']
+
+export function phoneNav(items: NavEntry[]): { bar: NavEntry[]; more: NavEntry[] } {
+    const rows = items
+        .flatMap((item) => item.children?.map((child) => (child.key === 'kalender' ? { ...child, label: item.label } : child)) ?? [item])
+        .filter((item) => item.href && !item.studio)
+    const bar = PHONE_BAR.flatMap((key) => rows.filter((item) => item.key === key))
+    const rest = rows.filter((item) => !bar.includes(item))
+
+    return {
+        bar,
+        more: [...rest.filter((item) => item.key !== 'auswertungen'), ...rest.filter((item) => item.key === 'auswertungen')],
+    }
 }

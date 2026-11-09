@@ -11,8 +11,22 @@ const gallery = {
   downloadPin: '4417',
   requiresVerifiedEmail: false,
   expiresAt: '2026-11-30',
-  design: { cover: 'full', type: 'serif', colour: 'light', grid: 'wide' },
+  design: { cover: 'zentriert', type: 'serif', colour: 'hell', size: 'mittel', spacing: 'eng', flow: 'zeilen' },
+  coverFocal: null,
   offers: { downloads: true, lists: true, comments: false },
+  permissions: {
+    client: { favorites: true, comments: true, hide: true, share: true },
+    guest: { favorites: true, comments: false, hide: false, share: true },
+  },
+  introEnabled: false,
+  studioName: 'Atelier Nordlicht',
+  viewMode: 'none' as const,
+  watermarkText: null,
+  downloadRule: 'open' as const,
+  downloadInvoiceId: null,
+  downloadSizes: ['original', 'web'] as ('original' | 'web')[],
+  expiryReminder: false,
+  invoices: [{ id: 'inv1', number: 'R-2026-004', status: 'open' }],
   deviates: false,
   withdrawn: false,
   prerelease: false,
@@ -21,12 +35,15 @@ const gallery = {
   externalPassword: null,
   info: null,
   canPublish: true,
+  canDelete: true,
+  copy: null,
   canMail: true,
+  recipient: { name: 'Lena Brandt', email: 'lena@example.test' },
 }
 
 const sets = [
-  { id: 's-trauung', name: 'Trauung', count: 168, sortKey: 'taken_at', sortDir: 'asc', density: 'medium' },
-  { id: 's-feier', name: 'Feier', count: 244, sortKey: 'taken_at', sortDir: 'asc', density: 'medium' },
+  { id: 's-trauung', name: 'Trauung', count: 168, sortKey: 'taken_at', sortDir: 'asc', density: 'medium', access: 'guests' as const, url: 'https://example.test/bahlmann/hochzeit-bahlmann?set=s-trauung' },
+  { id: 's-feier', name: 'Feier', count: 244, sortKey: 'taken_at', sortDir: 'asc', density: 'medium', access: 'internal' as const, url: 'https://example.test/bahlmann/hochzeit-bahlmann?set=s-feier' },
 ]
 
 const assets = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7'].map((id, index) => ({
@@ -55,6 +72,7 @@ const nav: App.Gallery.Data.GalleryNavData = {
         translate: false,
         href: `/galerien/g-rahn/bilder/${set.id}`,
         count: set.count,
+        tag: set.access === 'guests' ? 'galleryRecord.guestsTag' : null,
         reorderable: true,
       })),
     },
@@ -83,10 +101,17 @@ const meta = {
     builds: [{ id: 'b-1', size: 'web', status: 'ready', parts: 1, bytes: 1_840_000_000 }],
     lists: [{ id: 'l-1', name: 'Eltern Rahn', owner: 'jana.rahn@posteo.de', count: 42 }],
     activity: {
-      downloads: [{ who: 'jana.rahn@posteo.de', what: 'Trauung', size: 'web', on: '2026-10-02' }],
-      marks: [{ who: 'jana.rahn@posteo.de', what: 'rahn-a3.jpg', on: '2026-10-01' }],
-      comments: [],
-      views: [{ who: 'michael.rahn@posteo.de', on: '2026-09-30' }],
+      counts: { favorites: 3, comments: 1, hidden: 1, downloads: 1 },
+      events: [
+        { type: 'comment', at: '2026-10-02T10:12:00+02:00', id: 'c1', studio: false, who: 'Jana Rahn', photo: { n: 12, src: '' }, text: 'Das hier bitte als Leinwand.' },
+        { type: 'views', at: '2026-10-02T00:00:00+02:00', count: 4 },
+        { type: 'favorites', at: '2026-10-01T18:40:00+02:00', who: 'Jana Rahn', photos: [{ n: 3, src: '' }, { n: 12, src: '' }, { n: 27, src: '' }] },
+        { type: 'hide', at: '2026-10-01T18:50:00+02:00', id: 'h-1', who: 'Michael Rahn', photo: { n: 8, src: '' } },
+        { type: 'download', at: '2026-09-30T00:00:00+02:00', what: null, size: 'web' },
+      ],
+      favorites: [{ n: 3, src: '' }, { n: 12, src: '' }, { n: 27, src: '' }],
+      hidden: [{ id: 'h-1', who: 'Michael Rahn', photo: { n: 8, src: '' } }],
+      task: { available: true, url: null },
     },
     failedAssets: [],
     pendingUploads: [],
@@ -109,11 +134,16 @@ export const BilderLeer: Story = {
   args: {
     gallery: { ...gallery, design: null, deviates: true },
     assets: [],
-    sets: [{ id: 's-trauung', name: 'Trauung', count: 0, sortKey: 'taken_at', sortDir: 'asc', density: 'medium' }],
+    sets: [{ id: 's-trauung', name: 'Trauung', count: 0, sortKey: 'taken_at', sortDir: 'asc', density: 'medium', access: 'internal' as const, url: 'https://example.test/bahlmann/hochzeit-bahlmann?set=s-trauung' }],
     versions: [],
     builds: [],
     figures: { published: null, assets: 0, expiresAt: null, marked: 0, downloaded: 0, viewed: 0 },
   },
+}
+
+/** Eine Kopie, deren Bilder noch eingereiht sind. */
+export const Kopie: Story = {
+  args: { gallery: { ...gallery, copy: { done: 12, total: 40 } } },
 }
 
 /** Der Bereich Gestaltung: links die Wahl, rechts das Titelbild darüber. */
@@ -134,7 +164,7 @@ export const EinstellungenZugang: Story = {
   parameters: { url: '/galerien/g-rahn/einstellungen/zugang' },
 }
 
-/** Der Bereich Aktivität mit den drei Blättern darunter. */
+/** Der Bereich Aktivität: Verlauf links, Favoriten und Ausgeblendetes rechts. */
 export const Aktivitaet: Story = {
   args: { area: 'aktivitaet' },
   parameters: { url: '/galerien/g-rahn/aktivitaet' },

@@ -65,7 +65,7 @@ class GalleryDownloadController extends Controller
             'gallery' => [
                 'id' => $gallery->public_id,
                 'title' => $gallery->title,
-                'count' => $version === null ? 0 : count($version->assets),
+                'count' => $version === null ? 0 : count($version->assetsFor($this->visitor->isClient($gallery))),
                 'expiresAt' => $gallery->expires_at?->format('Y-m-d'),
             ],
             'step' => $step,
@@ -119,6 +119,7 @@ class GalleryDownloadController extends Controller
             $list,
             $claims->verifiedEmail($gallery) ?? $this->clientEmail($gallery),
             self::PARTS_LIVE_HOURS,
+            ! $this->visitor->isClient($gallery),
         );
 
         return back();
@@ -223,7 +224,7 @@ class GalleryDownloadController extends Controller
      */
     private function selections(Gallery $gallery, GalleryVersion $version): array
     {
-        $keys = collect($version->assets)
+        $keys = collect($version->assetsFor($this->visitor->isClient($gallery)))
             ->map(fn (array|string $asset) => is_array($asset) ? ($asset['key'] ?? null) : $asset)
             ->filter();
 
@@ -272,6 +273,7 @@ class GalleryDownloadController extends Controller
 
         return ZipBuild::query()
             ->where('gallery_version_id', $version->id)
+            ->where('guests', ! $this->visitor->isClient($gallery))
             ->where(fn ($query) => $query
                 ->whereNull('gallery_list_id')
                 ->orWhereIn('gallery_list_id', $ownLists))

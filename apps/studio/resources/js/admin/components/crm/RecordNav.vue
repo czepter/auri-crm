@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
-import { ref } from 'vue'
+import { ref, useTemplateRef } from 'vue'
+import { SlidingIndicator, useSlidingIndicator } from '@/ui/sliding-indicator'
 
 /*
  * Die Spalte eines Datensatzes: die Bereiche als Wörter mit Zähler rechts,
@@ -24,6 +25,7 @@ export interface RecordNavChild {
   href: string
   count: number | null
   reorderable: boolean
+  tag?: string | null
 }
 
 export interface RecordNavTab {
@@ -47,6 +49,9 @@ const props = withDefaults(
 
 const emit = defineEmits<{ reorder: [string[]] }>()
 
+const nav = useTemplateRef<HTMLElement>('nav')
+const { rect, animate } = useSlidingIndicator(nav, () => props.active, { selector: ':scope > a[aria-current]', key: 'record-nav' })
+
 const dragging = ref<string | null>(null)
 
 function drop(targetKey: string) {
@@ -67,20 +72,24 @@ function drop(targetKey: string) {
 
 <template>
   <nav
+    ref="nav"
     class="sticky top-0 flex h-screen w-[var(--record-nav-width)] flex-none flex-col gap-0.5 overflow-y-auto border-r border-border px-2.5 py-4 max-[640px]:static max-[640px]:h-auto max-[640px]:w-full max-[640px]:overflow-visible max-[640px]:flex-row max-[640px]:flex-wrap max-[640px]:self-start max-[640px]:border-r-0 max-[640px]:border-b max-[640px]:px-5 max-[640px]:py-2.5"
     :style="{ '--record-nav-width': `${width}px` }"
   >
     <slot name="above" />
 
+    <SlidingIndicator :rect="rect" :animate="animate" class="rounded-[7px] bg-muted" />
+
     <template v-for="tab in tabs" :key="tab.key">
       <Link
-        class="flex items-center gap-2.5 rounded-[7px] px-2.5 py-[7px] text-small leading-none whitespace-nowrap no-underline transition-[background-color] duration-[.12s] ease-out hover:bg-muted"
+        class="relative flex items-center gap-2.5 rounded-[7px] px-2.5 py-[7px] text-small leading-none whitespace-nowrap no-underline transition-[background-color] duration-[.12s] ease-out hover:bg-muted"
         :class="
           tab.key === active
-            ? 'bg-muted font-semibold text-foreground'
+            ? ['font-semibold text-foreground', !rect && 'bg-muted']
             : 'font-normal text-muted-foreground'
         "
         :href="tab.href"
+        :aria-current="tab.key === active ? 'page' : undefined"
       >
         {{ $t(tab.label) }}
         <span v-if="tab.count" class="ml-auto text-small tabular-nums text-ink-2">
@@ -110,6 +119,7 @@ function drop(targetKey: string) {
             :href="child.href"
           >
             <span class="truncate">{{ child.translate ? $t(child.label) : child.label }}</span>
+            <span v-if="child.tag" class="text-small text-faint">{{ $t(child.tag) }}</span>
             <span v-if="child.count" class="ml-auto text-small tabular-nums text-ink-2">{{ child.count }}</span>
           </Link>
 

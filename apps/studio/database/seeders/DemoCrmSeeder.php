@@ -25,9 +25,7 @@ use App\Engagement\Actions\StartThread;
 use App\Enums\StaffRole;
 use App\Gallery\Models\Gallery;
 use App\Models\User;
-use App\Payments\Actions\DetectOverdueInstallments;
-use App\Payments\Models\PaymentInstallment;
-use App\Payments\Models\PaymentPlan;
+use App\Quotes\Actions\CreateQuote;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Settings\Actions\UpdateStudioSetting;
@@ -35,7 +33,6 @@ use App\Support\AuditLogger;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -60,11 +57,11 @@ class DemoCrmSeeder extends Seeder
         ['Charlotte Vehse', 'Paul Rieck', 'wedding', '2026-08-22', 'contacted', 8, 'website', 'Schloss Reinbek', 'Reinbek'],
         ['Mira Sundermann', null, 'portrait', null, 'contacted', 4, 'referral', null, null],
         ['Jasmin Petersen', 'Kolja Petersen', 'wedding', '2026-07-11', 'contacted', 2, 'referral', 'Landhaus Scherrer', 'Hamburg'],
-        ['Annika Reuter', 'Finn Sölter', 'wedding', '2026-05-30', 'quote_sent', 3, 'wedding_fair', 'Elbspeicher', 'Hamburg'],
+        ['Annika Reuter', 'Finn Sölter', 'wedding', '2027-05-29', 'quote_sent', 3, 'wedding_fair', 'Elbspeicher', 'Hamburg'],
         ['Lea Hoffmann', 'Jonas Behr', 'wedding', '2026-10-03', 'quote_sent', 6, 'instagram', 'Gut Wulksfelde', 'Tangstedt'],
         ['Marie Ahrens', 'David Kroll', 'wedding', '2026-07-25', 'quote_accepted', 1, 'referral', 'Kaispeicher', 'Hamburg'],
         ['Sophie Lang', 'Erik Voss', 'wedding', '2026-09-19', 'quote_accepted', 2, 'website', 'Gut Basthorst', 'Basthorst'],
-        ['Meier & Kowalski', null, 'wedding', '2026-06-14', 'booked', 12, 'referral', 'Gut Basthorst', 'Basthorst'],
+        ['Meier & Kowalski', null, 'wedding', '2027-06-12', 'booked', 12, 'referral', 'Gut Basthorst', 'Basthorst'],
     ];
 
     public function run(): void
@@ -147,6 +144,10 @@ class DemoCrmSeeder extends Seeder
 
             $projects[$name] = $project;
 
+            if (in_array($stage, ['quote_accepted', 'booked'], true)) {
+                $this->seedAcceptedQuote($project, $lead);
+            }
+
             // The one booked project gets mockup 04's full shape, so the
             // project screen has something to be held next to the screen it
             // was designed from.
@@ -201,6 +202,7 @@ class DemoCrmSeeder extends Seeder
             'postcode' => '22765',
             'city' => 'Hamburg',
             'country' => 'Deutschland',
+            'timezone' => 'Europe/Berlin',
             'vat_id' => 'DE123456789',
             'register_number' => 'HRB 123456',
             'register_court' => 'Amtsgericht Hamburg',
@@ -296,7 +298,7 @@ class DemoCrmSeeder extends Seeder
             'case_id' => $project->id,
             'kind' => 'Portrait',
             'label' => 'After-Wedding-Shooting',
-            'date' => now()->addDays(26)->format('Y-m-d'),
+            'date' => '2027-06-26',
             'sort_order' => 3,
         ]);
 
@@ -351,9 +353,20 @@ class DemoCrmSeeder extends Seeder
         Artisan::call('automation:seed-default-rules');
 
         $this->seedChasedQuote($projects['Annika Reuter']);
-        $this->seedOverdueInstallment($projects['Meier & Kowalski']);
+        $projects['Meier & Kowalski']->primaryContact()?->update(['phone' => '+49 40 5550103']);
         $this->seedReferralAndExpiringGallery($projects['Meier & Kowalski'], $projects['Familie Osterhoff']);
         $this->seedUnansweredThread($projects['Annika Reuter']);
+    }
+
+    /** The quote behind a lead already at Angebot angenommen, so the acceptance KPI has the same cohort as the funnel. */
+    private function seedAcceptedQuote(ClientCase $project, Lead $lead): void
+    {
+        $quote = app(CreateQuote::class)($project);
+        $quote->items()->create(['title' => 'Hochzeitsreportage Ganztag', 'description' => 'bis 10 Std. am Hochzeitstag, Bearbeitung, Online-Galerie', 'quantity' => 1, 'unit_price' => 350000]);
+        $quote->recalculateTotal();
+        $quote->snapshotVat();
+        $quote->update(['status' => QuoteStatus::Sent, 'sent_at' => $lead->stage_entered_at->copy()->subDay(), 'sent_channel' => 'mail']);
+        $quote->update(['status' => QuoteStatus::Accepted, 'accepted_at' => $lead->stage_entered_at]);
     }
 
     /**
@@ -370,9 +383,10 @@ class DemoCrmSeeder extends Seeder
         // Items first, on the still-mutable draft row: Quote::booted()'s guard
         // refuses total/discount_amount/net once status reads sent, and
         // recalculateTotal() writes all three.
-        $quote = Quote::factory()->for($project, 'case')->create();
+        $quote = app(CreateQuote::class)($project);
         $quote->items()->create(['title' => 'Hochzeitsreportage Ganztag', 'description' => 'bis 10 Std. am Hochzeitstag, Bearbeitung, Online-Galerie', 'quantity' => 1, 'unit_price' => 350000]);
         $quote->recalculateTotal();
+        $quote->snapshotVat();
         $quote->update(['status' => QuoteStatus::Sent, 'sent_at' => now()->subDays(9), 'valid_until' => now()->addDays(5)]);
 
         $rule = AutomationRule::query()->where('key', 'quote-follow-up')->firstOrFail();
@@ -383,35 +397,6 @@ class DemoCrmSeeder extends Seeder
         // separate weeks, which is exactly what "2×" means on the row.
         $fire($rule, $project, now()->subDays(9)->toDateString());
         $fire($rule, $project, now()->subDays(2)->toDateString());
-    }
-
-    /**
-     * The plan and its one overdue installment share a transaction: the
-     * sum-matches-total trigger is deferred to commit, but each Eloquent
-     * create() is its own transaction unless one is opened explicitly, and a
-     * plan committed alone with no installments yet would trip it.
-     *
-     * DetectOverdueInstallments always stamps overdue_notified_at with
-     * `now()`, so running it here would read "seit 0 Tagen" — the opposite of
-     * what this row demonstrates. It runs anyway, for the real guard and the
-     * InstallmentOverdue dispatch, and the timestamp is then moved back by
-     * hand to the nine days ReadPaymentColumn::DUNNING_EXHAUSTED_DAYS needs.
-     */
-    private function seedOverdueInstallment(ClientCase $project): void
-    {
-        $project->primaryContact()?->update(['phone' => '+49 40 5550103']);
-
-        $installment = DB::transaction(function () use ($project) {
-            $plan = PaymentPlan::factory()->for($project, 'case')->create(['total' => 150000]);
-
-            return PaymentInstallment::factory()->for($plan, 'plan')->create([
-                'amount' => 150000,
-                'due_on' => now()->subDays(20)->toDateString(),
-            ]);
-        });
-
-        app(DetectOverdueInstallments::class)->markOverdue($installment);
-        $installment->update(['overdue_notified_at' => now()->subDays(9)]);
     }
 
     /**
@@ -435,7 +420,7 @@ class DemoCrmSeeder extends Seeder
         $referrerProject->primaryContact()?->update(['phone' => '+49 40 5550104']);
 
         Gallery::factory()->for($project, 'case')->create([
-            'title' => 'Meier & Kowalski — Hochzeit',
+            'title' => 'Verlobungsshooting',
             'expires_at' => now()->addDays(12),
         ]);
     }

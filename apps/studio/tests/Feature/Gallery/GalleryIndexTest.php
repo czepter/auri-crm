@@ -23,6 +23,8 @@ it('lists a gallery with its booking, its count and its version', function () {
 
     expect($row['title'])->toBe('Trauung')
         ->and($row['projectName'])->toBe('Basthorst 2026')
+        ->and($row['projectType'])->toBe($project->type->key)
+        ->and($row['projectTypeLabel'])->toBe($project->type->name)
         ->and($row['assetCount'])->toBe(1)
         ->and($row['version'])->toBe(1);
 });
@@ -56,4 +58,20 @@ it('carries a gallery whose booking this role may see', function () {
 
     expect(collect(props('/galerien')['galleries'])->pluck('id'))
         ->toContain($gallery->public_id);
+});
+
+it('names the lifecycle of each gallery in the list', function () {
+    $draft = Gallery::factory()->create();
+    $published = Gallery::factory()->create();
+    Asset::factory()->create(['gallery_id' => $published->id, 'width' => 200, 'height' => 100]);
+    $published->publish();
+    $withdrawn = Gallery::factory()->create(['unpublished_at' => now()]);
+    $expired = Gallery::factory()->create(['expires_at' => now()->subDay()]);
+
+    $status = collect(props('/galerien')['galleries'])->pluck('status', 'id');
+
+    expect($status[$draft->public_id])->toBe('draft')
+        ->and($status[$published->public_id])->toBe('published')
+        ->and($status[$withdrawn->public_id])->toBe('withdrawn')
+        ->and($status[$expired->public_id])->toBe('expired');
 });

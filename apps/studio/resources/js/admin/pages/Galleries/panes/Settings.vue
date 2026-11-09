@@ -1,17 +1,19 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useForm } from '@inertiajs/vue3'
+import { computed } from 'vue'
+import { router, useForm } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
-import { Check, Copy } from 'lucide-vue-next'
+import { CopyButton } from '@/ui/copy-button'
 import { DatePicker } from '@/ui/date-picker'
-import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
 import { Textarea } from '@/ui/textarea'
 import { Link } from '@inertiajs/vue3'
 import GalleryAccess from '@/admin/components/gallery/GalleryAccess.vue'
 import { addressPrefix } from '@/admin/lib/galleryAddress'
 import { decideExpiryOnBlur } from '@/admin/lib/galleryExpiry'
+import GalleryReleaseFields, { type ReleasePatch, type ReleaseValues } from '@/admin/components/gallery/GalleryReleaseFields.vue'
+import { ACTIONS, AUDIENCES, type Audience, type Permissions } from '@/admin/lib/galleryPermissions'
+import { Switch } from '@/ui/switch'
 
 const props = defineProps<{
   gallery: {
@@ -29,23 +31,33 @@ const props = defineProps<{
     externalPassword: string | null
     info: string | null
     offers: { downloads: boolean; lists: boolean; comments: boolean }
+    permissions: Permissions
+    introEnabled: boolean
+    studioName: string | null
+    viewMode: 'none' | 'text' | 'logo' | 'locked'
+    watermarkText: string | null
+    downloadRule: 'open' | 'after_payment' | 'off'
+    downloadInvoiceId: string | null
+    downloadSizes: ('original' | 'web')[]
+    expiryReminder: boolean
+    invoices: { id: string; number: string; status: string }[]
   }
   siblings: { id: string; title: string | null; assetCount: number; open: boolean }[]
   versions: { version: number; publishedAt: string | null; assetCount: number }[]
   lists: { id: string; name: string | null; owner: string | null; count: number }[]
-  settingsSection: 'allgemein' | 'zugang' | 'download' | 'listen' | 'kommentare'
+  settingsSection: 'allgemein' | 'zugang' | 'freigabe' | 'download' | 'listen'
 }>()
 
-const SECTIONS = ['allgemein', 'zugang', 'download', 'listen', 'kommentare'] as const
+const SECTIONS = ['allgemein', 'zugang', 'freigabe', 'download', 'listen'] as const
 
-// Drei der fünf Abschnitte sind Schalter — ihr Zustand steht in der Zeile,
+// Zwei der fünf Abschnitte sind Schalter — ihr Zustand steht in der Zeile,
 // die zu ihnen führt, statt erst dahinter.
 const pill = computed<Record<string, boolean | null>>(() => ({
   allgemein: null,
   zugang: null,
-  download: props.gallery.offers.downloads,
+  download: props.gallery.downloadRule !== 'off',
+  freigabe: null,
   listen: props.gallery.offers.lists,
-  kommentare: props.gallery.offers.comments,
 }))
 
 // Allgemein: the address and the expiry, the two facts a studio actually
@@ -83,32 +95,7 @@ function saveExpiryOnBlur(text: string) {
 
 const addressPrefixText = computed(() => addressPrefix(props.gallery.url))
 
-// Was auf dem Schirm steht, nicht was gespeichert ist: der Knopf nimmt dem
-// Feld den Fokus, blur speichert, danach sind beide dasselbe.
-const copied = ref(false)
-// Über die id, nicht über einen Template-Ref: InputGroupInput ist eine
-// Komponente, ein Ref darauf gibt die Instanz und select() liefe ins Leere.
 const SLUG_FIELD = 'gallery-slug'
-
-// Verweigert der Browser die Zwischenablage, bleibt der Knopf sonst stumm
-// stehen und niemand merkt, dass nichts kopiert wurde. Dann markiert er
-// stattdessen das Feld — von Hand kopieren geht immer.
-function copyAddress() {
-  copied.value = false
-
-  const fallback = () => document.querySelector<HTMLInputElement>(`#${SLUG_FIELD}`)?.select()
-
-  if (!navigator.clipboard) {
-    fallback()
-
-    return
-  }
-
-  navigator.clipboard
-    .writeText(addressPrefixText.value + general.slug)
-    .then(() => (copied.value = true))
-    .catch(fallback)
-}
 
 // Download: the PIN belongs beside the switch that offers it, not in Zugang.
 const downloadPin = useForm({ download_pin: props.gallery.downloadPin ?? '' })
@@ -118,18 +105,57 @@ function saveDownloadPin() {
     .patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
 }
 
-const offers = useForm({
-  downloads_enabled: props.gallery.offers.downloads,
-  lists_enabled: props.gallery.offers.lists,
-  comments_enabled: props.gallery.offers.comments,
+const view = useForm({ view_mode: props.gallery.viewMode, watermark_text: props.gallery.watermarkText })
+
+const download = useForm({
+  download_rule: props.gallery.downloadRule,
+  download_invoice_id: props.gallery.downloadInvoiceId,
+  download_sizes: props.gallery.downloadSizes,
 })
 
-function saveOffers() {
-  offers.patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
+const release = useForm({ permissions: props.gallery.permissions, intro_enabled: props.gallery.introEnabled })
+
+const releaseValues = computed<ReleaseValues>(() => ({
+  view_mode: view.view_mode,
+  watermark_text: view.watermark_text,
+  download_rule: download.download_rule,
+  download_sizes: download.download_sizes,
+  permissions: release.permissions,
+  intro_enabled: release.intro_enabled,
+}))
+
+function applyRelease(patch: ReleasePatch) {
+  const { download_invoice_id: invoice, ...values } = patch
+  Object.assign(view, pick(values, ['view_mode', 'watermark_text']))
+  Object.assign(download, pick(values, ['download_rule', 'download_sizes']), invoice === undefined ? {} : { download_invoice_id: invoice })
+  Object.assign(release, pick(values, ['permissions', 'intro_enabled']))
+
+  router.patch(`/galerien/${props.gallery.id}`, { ...patch }, { preserveScroll: true })
 }
 
+function pick<T extends object, K extends keyof T>(source: T, keys: K[]): Partial<Pick<T, K>> {
+  return Object.fromEntries(keys.filter((key) => key in source).map((key) => [key, source[key]])) as Partial<Pick<T, K>>
+}
+
+const reminder = useForm({ expiry_reminder: props.gallery.expiryReminder })
+
+function setReminder(on: boolean) {
+  reminder.expiry_reminder = on
+  reminder.patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
+}
+
+const summary = computed(() => {
+  const allowed = (audience: Audience) => ACTIONS.filter((action) => release.permissions[audience][action]).map((action) => `galleryRecord.permission.${action}`)
+
+  return [
+    { label: 'galleryRecord.view', value: `galleryRecord.viewMode.${view.view_mode}`, list: false },
+    { label: 'galleryRecord.downloadsHeading', value: `galleries.download.${download.download_rule}`, list: false },
+    ...AUDIENCES.map((audience) => ({ label: `galleryRecord.permission.${audience}`, value: allowed(audience), list: true })),
+  ]
+})
+
 function day(iso: string | null) {
-  return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'
+  return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
 }
 </script>
 
@@ -183,16 +209,7 @@ function day(iso: string | null) {
       <InputGroup class="max-w-[440px]">
         <InputGroupAddon>{{ addressPrefixText }}</InputGroupAddon>
         <InputGroupInput :id="SLUG_FIELD" v-model="general.slug" type="text" maxlength="60" :aria-label="$t('galleryRecord.slugLabel')" @blur="saveGeneral" />
-        <button
-          class="flex cursor-pointer items-center border-0 bg-transparent pr-[11px] pl-1.5 text-ink-2 hover:text-foreground [&_svg]:size-[15px]"
-          type="button"
-          :aria-label="$t('gallery.copy')"
-          :title="$t('gallery.copy')"
-          @click="copyAddress"
-        >
-          <Check v-if="copied" class="text-ok" />
-          <Copy v-else />
-        </button>
+        <CopyButton :value="addressPrefixText + general.slug" variant="ghost" class="flex-none px-3" />
       </InputGroup>
       <p v-if="general.errors.slug" class="text-small leading-[1.45] text-destructive">{{ general.errors.slug }}</p>
       <!-- The one fact nobody could derive from a text field: there is no
@@ -216,6 +233,13 @@ function day(iso: string | null) {
              straight through as this gallery's new expiry. -->
         <DatePicker :model-value="general.expires_at" class="w-[150px]" @blur="saveExpiryOnBlur" />
       </div>
+
+      <div class="flex min-w-0 flex-col gap-2 self-end pb-1.5">
+        <div class="flex items-center gap-2.5">
+          <Switch id="sw-reminder" :model-value="reminder.expiry_reminder" @update:model-value="setReminder" />
+          <Label variant="inline" for="sw-reminder">{{ $t('galleryRecord.expiryReminder') }}</Label>
+        </div>
+      </div>
     </div>
 
     <h2 class="mt-9">{{ $t('galleryRecord.versions') }}</h2>
@@ -232,11 +256,6 @@ function day(iso: string | null) {
 
   <template v-else-if="settingsSection === 'download'">
     <h2 class="mt-0">{{ $t('galleryRecord.settingsNav.download') }}</h2>
-    <div class="mb-5 flex items-center gap-2.5">
-      <Checkbox id="cb-offer-downloads" v-model="offers.downloads_enabled" @update:model-value="saveOffers" />
-      <Label variant="inline" for="cb-offer-downloads">{{ $t('gallerySettings.downloadsLabel') }}</Label>
-    </div>
-
     <div class="flex flex-col gap-2">
       <div class="text-small text-ink-2">{{ $t('gallery.gateDownload') }}</div>
       <Input v-model="downloadPin.download_pin" class="w-[110px]" type="text" @blur="saveDownloadPin" />
@@ -245,10 +264,6 @@ function day(iso: string | null) {
 
   <template v-else-if="settingsSection === 'listen'">
     <h2 class="mt-0">{{ $t('galleryRecord.settingsNav.listen') }}</h2>
-    <div class="mb-5 flex items-center gap-2.5">
-      <Checkbox id="cb-offer-lists" v-model="offers.lists_enabled" @update:model-value="saveOffers" />
-      <Label variant="inline" for="cb-offer-lists">{{ $t('gallerySettings.listsLabel') }}</Label>
-    </div>
 
     <div>
       <div v-for="list in lists" :key="list.id" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none">
@@ -260,11 +275,29 @@ function day(iso: string | null) {
     </div>
   </template>
 
-  <template v-else>
-    <h2 class="mt-0">{{ $t('galleryRecord.settingsNav.kommentare') }}</h2>
-    <div class="flex items-center gap-2.5">
-      <Checkbox id="cb-offer-comments" v-model="offers.comments_enabled" @update:model-value="saveOffers" />
-      <Label variant="inline" for="cb-offer-comments">{{ $t('gallerySettings.commentsLabel') }}</Label>
+  <template v-else-if="settingsSection === 'freigabe'">
+    <h2 class="mt-0">{{ $t('galleryRecord.settingsNav.freigabe') }}</h2>
+
+    <div class="flex items-start gap-8 max-[1100px]:flex-col">
+    <div class="min-w-0 flex-1">
+    <GalleryReleaseFields
+      :model-value="releaseValues"
+      :placeholder="gallery.studioName"
+      :invoices="gallery.invoices"
+      :invoice-id="download.download_invoice_id"
+      @change="applyRelease"
+    />
+    </div>
+
+    <aside class="w-[220px] flex-none rounded-lg bg-sunk px-4 py-3.5 max-[1100px]:w-full">
+      <div class="mb-2 text-small font-semibold">{{ $t('galleryRecord.inPortal') }}</div>
+      <dl class="m-0 flex flex-col gap-2 text-small">
+        <div v-for="row in summary" :key="row.label" class="flex flex-col gap-0.5">
+          <dt class="text-ink-2">{{ $t(row.label) }}</dt>
+          <dd class="m-0 font-medium">{{ Array.isArray(row.value) ? row.value.map((key) => $t(key)).join(', ') || '—' : $t(row.value) }}</dd>
+        </div>
+      </dl>
+    </aside>
     </div>
   </template>
   </div>

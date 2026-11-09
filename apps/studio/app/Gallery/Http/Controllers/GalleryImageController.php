@@ -3,6 +3,8 @@
 namespace App\Gallery\Http\Controllers;
 
 use App\Gallery\Models\GalleryVersion;
+use App\Gallery\Support\GalleryVisitor;
+use App\Gallery\Support\GalleryWatermark;
 use App\Http\Controllers\Controller;
 use App\Media\Support\ImageVariant;
 use Illuminate\Http\Request;
@@ -31,16 +33,22 @@ class GalleryImageController extends Controller
 
         abort_unless(ImageVariant::isAllowed($width, $format), 422);
 
-        $known = collect($galleryVersion->assets)->contains(fn (array $asset) => $asset['key'] === $key);
-        abort_unless($known, 404);
+        // Die api-Fläche kennt nur Gäste; auf dem Portal entscheidet die Sitzung.
+        $client = ! $request->routeIs('api.*') && app(GalleryVisitor::class)->isClient($galleryVersion->gallery);
+        abort_unless($galleryVersion->sees($key, $client), 404);
 
-        return response(ImageVariant::deliver($key, $width, $format), 200, [
+        $gallery = $galleryVersion->gallery;
+        abort_if($gallery->view_mode === 'locked', 403);
+        $watermark = GalleryWatermark::for($gallery);
+
+        return response(ImageVariant::deliver($key, $width, $format, $watermark), 200, [
             'Content-Type' => ImageVariant::mimeType($format),
             // Never purged, never invalidated — publishing a new version
             // changes which GalleryVersion a gallery's currentVersion
             // points at (see GalleryReadController), it never rewrites this
             // one's contents.
-            'Cache-Control' => 'public, max-age=31536000, immutable',
+            // Das Wasserzeichen wechselt an der Galerie, nicht an der Fassung.
+            'Cache-Control' => $watermark === null ? 'public, max-age=31536000, immutable' : 'private, max-age=300',
         ]);
     }
 }

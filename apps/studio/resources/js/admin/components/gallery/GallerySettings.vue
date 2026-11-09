@@ -2,7 +2,12 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { router, useForm } from '@inertiajs/vue3'
+import GalleryDesignFields from '@/admin/components/gallery/GalleryDesignFields.vue'
 import GalleryPreview from '@/admin/components/gallery/GalleryPreview.vue'
+import GalleryReleaseFields, { type ReleasePatch } from '@/admin/components/gallery/GalleryReleaseFields.vue'
+import { X } from 'lucide-vue-next'
+import { addSet, releaseOf, withAccess, withoutSet, DEFAULT_RELEASE, type PresetRelease, type PresetSet } from '@/admin/lib/galleryPreset'
+import { complete, type GalleryDesign } from '@/admin/lib/galleryDesign'
 import { PreviewOverlay } from '@/ui/preview-overlay'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
@@ -11,7 +16,9 @@ import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Label } from '@/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Switch } from '@/ui/switch'
+import Chip from '@/ui/page/Chip.vue'
 
 /*
  * G-14: über der Liste, die er einstellt — dieselbe Form, die Stufen und
@@ -24,6 +31,8 @@ import { Switch } from '@/ui/switch'
 const props = defineProps<{
   settings: App.Settings.Data.GallerySettingsData
   presets: App.Gallery.Data.GalleryPresetData[]
+  mailTemplates: { id: string; name: string }[]
+  presetId?: string | null
   galleryHost: string
   previewTitle: string
   section: Section
@@ -37,40 +46,27 @@ type Section = 'standardwerte' | 'gestaltung' | 'vorlagen'
 
 const SECTIONS: Section[] = ['standardwerte', 'gestaltung', 'vorlagen']
 
-const DESIGN = [
-  { key: 'cover', label: 'galleryRecord.cover', options: ['full', 'split', 'plain'], prefix: 'cover' },
-  { key: 'colour', label: 'galleryRecord.colour', options: ['light', 'dark', 'warm'], prefix: 'colour' },
-  { key: 'grid', label: 'galleryRecord.grid', options: ['wide', 'dense', 'single'], prefix: 'grid' },
-] as const
-
 const MODES = ['inherit', 'days', 'never']
 
-const TRISTATE = [
-  { value: '', key: 'inherit' },
-  { value: '1', key: 'on' },
-  { value: '0', key: 'off' },
-]
+const SET_ACCESS = ['internal', 'guests'] as const
 
-const PRESET_GATES = [
-  { field: 'downloads_enabled', label: 'gallerySettings.downloadsLabel' },
-  { field: 'lists_enabled', label: 'gallerySettings.listsLabel' },
-  { field: 'comments_enabled', label: 'gallerySettings.commentsLabel' },
-] as const
+const HEADING = 'mt-6 mb-1 text-small leading-none font-semibold text-faint'
 
 const STUDIO_GATES = [
-  { field: 'gallery_default_downloads_enabled', label: 'gallerySettings.downloadsLabel' },
   { field: 'gallery_default_lists_enabled', label: 'gallerySettings.listsLabel' },
   { field: 'gallery_default_comments_enabled', label: 'gallerySettings.commentsLabel' },
 ] as const
+
+const RULES = ['open', 'after_payment', 'off'] as const
 
 const open = ref<Section>(props.section)
 
 const form = useForm({
   gallery_default_expiry_days: props.settings.expiryDays ?? ('' as string | number),
-  gallery_default_downloads_enabled: props.settings.downloadsEnabled,
+  gallery_default_download_rule: props.settings.downloadRule,
   gallery_default_lists_enabled: props.settings.listsEnabled,
   gallery_default_comments_enabled: props.settings.commentsEnabled,
-  gallery_default_design: { ...props.settings.design },
+  gallery_default_design: complete(props.settings.design),
 })
 
 function save() {
@@ -84,11 +80,16 @@ function save() {
 
 /* ---- Vorlagen ------------------------------------------------------ */
 
-const chosen = ref(props.presets[0]?.id ?? '')
+const chosen = ref(props.presets.find((row) => row.id === props.presetId)?.id ?? props.presets[0]?.id ?? '')
 const preset = computed(() => props.presets.find((row) => row.id === chosen.value) ?? props.presets[0] ?? null)
 
-function toTri(value: boolean | null) {
-  return value === null ? '' : value ? '1' : '0'
+const NO_MAIL = 'none'
+
+// Offen gelassen heißt null, wie bei der Gestaltung: die Vorlage sagt zur
+// Freigabe nichts, und die Galerie beginnt mit den Vorgaben.
+const OPEN_RELEASE = {
+  view_mode: null, download_rule: null, download_sizes: null, permissions: null, intro_enabled: null,
+  downloads_enabled: null, lists_enabled: null, comments_enabled: null,
 }
 
 function fields(row: App.Gallery.Data.GalleryPresetData) {
@@ -96,17 +97,18 @@ function fields(row: App.Gallery.Data.GalleryPresetData) {
     name: row.name,
     expiry_mode: row.expiryMode,
     expiry_days: (row.expiryDays ?? '') as string | number,
-    downloads_enabled: toTri(row.downloadsEnabled),
-    lists_enabled: toTri(row.listsEnabled),
-    comments_enabled: toTri(row.commentsEnabled),
-    design: row.design as Record<string, string> | null,
+    expiry_reminder: row.expiryReminder ?? false,
+    design: row.design as GalleryDesign | null,
+    sets: (row.sets ?? []) as PresetSet[],
+    release: releaseOf(row) as PresetRelease | null,
+    mail_template_family_id: row.mailTemplateFamilyId ?? NO_MAIL,
   }
 }
 
-const presetForm = useForm(fields(props.presets[0] ?? {
-  name: '', expiryMode: 'inherit', expiryDays: null, design: null,
-  downloadsEnabled: null, listsEnabled: null, commentsEnabled: null,
-} as App.Gallery.Data.GalleryPresetData))
+const presetForm = useForm(fields(preset.value ?? {
+  name: '', expiryMode: 'inherit', expiryDays: null, design: null, expiryReminder: null, sets: null,
+  viewMode: null, downloadRule: null, downloadSizes: null, permissions: null, introEnabled: null, mailTemplateFamilyId: null,
+} as unknown as App.Gallery.Data.GalleryPresetData))
 
 watch(preset, (row) => {
   if (row === null) return
@@ -117,13 +119,11 @@ watch(preset, (row) => {
 
 function savePreset() {
   presetForm
-    .transform((data) => ({
+    .transform(({ release, mail_template_family_id: mail, expiry_days: days, ...data }) => ({
       ...data,
-      expiry_days: data.expiry_days === '' ? null : data.expiry_days,
-      ...Object.fromEntries(PRESET_GATES.map((gate) => [
-        gate.field,
-        data[gate.field] === '' ? null : data[gate.field] === '1',
-      ])),
+      expiry_days: days === '' ? null : days,
+      mail_template_family_id: mail === NO_MAIL ? null : mail,
+      ...(release === null ? OPEN_RELEASE : release),
     }))
     .patch(`/einstellungen/galerie-vorlagen/${preset.value!.id}`, { preserveScroll: true })
 }
@@ -131,8 +131,30 @@ function savePreset() {
 // Ganz oder gar nicht, wie die Vorlage es speichert: erben heißt null, und
 // wer eine eigene Gestaltung anschaltet, fängt bei der Studio-Vorgabe an.
 function toggleDesign(on: boolean) {
-  presetForm.design = on ? { ...props.settings.design } : null
+  presetForm.design = on ? complete(props.settings.design) : null
   savePreset()
+}
+
+function toggleRelease(on: boolean) {
+  presetForm.release = on ? { ...DEFAULT_RELEASE } : null
+  savePreset()
+}
+
+function changeRelease(patch: ReleasePatch) {
+  presetForm.release = { ...presetForm.release!, ...patch }
+  savePreset()
+}
+
+const newSet = ref('')
+
+function changeSets(sets: PresetSet[]) {
+  presetForm.sets = sets
+  savePreset()
+}
+
+function appendSet() {
+  changeSets(addSet(presetForm.sets, newSet.value))
+  newSet.value = ''
 }
 
 function markDefault() {
@@ -155,17 +177,24 @@ function removePreset() {
 }
 
 // Was der Kunde sieht: die Vorlage, wo sie etwas sagt, sonst die Vorgabe.
-const presetPreview = computed(() => ({
-  design: presetForm.design ?? form.gallery_default_design,
-  offers: {
-    downloads: presetForm.downloads_enabled === '' ? props.settings.downloadsEnabled : presetForm.downloads_enabled === '1',
-    lists: presetForm.lists_enabled === '' ? props.settings.listsEnabled : presetForm.lists_enabled === '1',
-    comments: presetForm.comments_enabled === '' ? props.settings.commentsEnabled : presetForm.comments_enabled === '1',
-  },
-}))
+const presetPreview = computed(() => {
+  const release = presetForm.release
+  const any = (action: 'favorites' | 'comments') => release !== null && (release.permissions.client[action] || release.permissions.guest[action])
+
+  return {
+    design: presetForm.design ?? form.gallery_default_design,
+    offers: release
+      ? { downloads: release.download_rule !== 'off', lists: any('favorites'), comments: any('comments') }
+      : {
+          downloads: (preset.value?.downloadRule ?? props.settings.downloadRule) !== 'off',
+          lists: preset.value?.listsEnabled ?? props.settings.listsEnabled,
+          comments: preset.value?.commentsEnabled ?? props.settings.commentsEnabled,
+        },
+  }
+})
 
 const studioOffers = computed(() => ({
-  downloads: form.gallery_default_downloads_enabled,
+  downloads: form.gallery_default_download_rule !== 'off',
   lists: form.gallery_default_lists_enabled,
   comments: form.gallery_default_comments_enabled,
 }))
@@ -188,9 +217,9 @@ const studioOffers = computed(() => ({
           </svg>
         </button>
         <span class="text-body leading-[1.3] font-semibold tracking-[-0.015em]">{{ $t('gallerySettings.roomTitle') }}</span>
-        <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold text-due">
+        <Chip v-if="form.isDirty" tone="warn">
           {{ $t('settings.unsaved') }}
-        </span>
+        </Chip>
         <Button class="ml-auto" type="button" :disabled="form.processing" @click="form.isDirty ? save() : emit('close')">
           {{ form.isDirty ? $t('common.save') : $t('stages.done') }}
         </Button>
@@ -229,6 +258,14 @@ const studioOffers = computed(() => ({
               </Field>
             </div>
 
+            <ChoiceGroup
+              v-model="form.gallery_default_download_rule"
+              class="mb-4"
+              :label="$t('galleryRecord.downloadsHeading')"
+              :options="RULES.map((rule) => ({ value: rule, label: $t(`galleries.download.${rule}`) }))"
+              @update:model-value="save"
+            />
+
             <div v-for="gate in STUDIO_GATES" :key="gate.field" class="flex items-center gap-4 border-b border-border py-2.5">
               <Label class="flex-1" :for="gate.field" variant="inline">{{ $t(gate.label) }}</Label>
               <Switch :id="gate.field" v-model="form[gate.field]" @update:model-value="save" />
@@ -249,19 +286,12 @@ const studioOffers = computed(() => ({
         </section>
 
         <section v-else-if="open === 'gestaltung'" class="flex min-w-0 flex-1 gap-8 max-[1120px]:flex-col">
-          <div class="w-[260px] flex-none max-[1120px]:w-full">
+          <div class="w-[360px] flex-none max-[1120px]:w-full">
             <h2 class="m-0 mb-6 text-title leading-[1.2] font-semibold tracking-[-0.02em]">
               {{ $t('gallerySettings.nav_gestaltung') }}
             </h2>
 
-            <div v-for="group in DESIGN" :key="group.key" class="mb-4">
-              <ChoiceGroup
-                v-model="form.gallery_default_design[group.key]"
-                :label="$t(group.label)"
-                :options="group.options.map((option) => ({ value: option, label: $t(`galleryRecord.${group.prefix}_${option}`) }))"
-                @update:model-value="save"
-              />
-            </div>
+            <GalleryDesignFields v-model="form.gallery_default_design" @update:model-value="save" />
           </div>
 
           <PreviewOverlay :min="1121" :label="$t('common.preview')" wrapper-class="min-w-0 flex-1">
@@ -293,9 +323,9 @@ const studioOffers = computed(() => ({
                 @click="chosen = row.id"
               >
                 <span class="min-w-0 flex-1 truncate">{{ row.name }}</span>
-                <span v-if="row.isDefault" class="flex-none rounded-[var(--r-sm)] bg-accent px-1.5 py-0.5 text-small leading-[1.4] font-semibold text-ring">
+                <Chip v-if="row.isDefault" tone="info">
                   {{ $t('gallerySettings.defaultMark') }}
-                </span>
+                </Chip>
               </button>
 
               <Button class="mt-1.5 ml-0" type="button" variant="ghost" @click="addPreset">
@@ -304,7 +334,7 @@ const studioOffers = computed(() => ({
               </Button>
             </div>
 
-            <div v-if="preset" class="w-[300px] flex-none max-[1120px]:w-full">
+            <div v-if="preset" class="w-[340px] flex-none max-[1120px]:w-full">
               <div class="flex items-center gap-4 border-b border-border py-2.5">
                 <Label class="flex-1" for="preset-name" variant="inline">{{ $t('galleryPresets.nameField') }}</Label>
                 <Input id="preset-name" v-model="presetForm.name" class="max-w-[160px]" maxlength="120" type="text" @change="savePreset" />
@@ -315,8 +345,57 @@ const studioOffers = computed(() => ({
                 <Switch id="preset-default" :model-value="preset.isDefault" :disabled="preset.isDefault" @update:model-value="markDefault" />
               </div>
 
+              <h3 :class="HEADING">{{ $t('galleryPresets.structure') }}</h3>
+              <div v-for="(set, index) in presetForm.sets" :key="index" class="flex items-center gap-2 border-b border-border py-2">
+                <Input
+                  :model-value="set.name"
+                  :aria-label="$t('galleryPresets.nameField')"
+                  class="min-w-0 flex-1"
+                  maxlength="120"
+                  type="text"
+                  @change="(event: Event) => changeSets(presetForm.sets.map((one, at) => at === index ? { ...one, name: (event.target as HTMLInputElement).value.trim() || one.name } : one))"
+                />
+                <ChoiceGroup
+                  :model-value="set.access"
+                  :options="SET_ACCESS.map((option) => ({ value: option, label: $t(`galleryRecord.setAccess.${option}`) }))"
+                  @update:model-value="(access) => changeSets(withAccess(presetForm.sets, index, access as PresetSet['access']))"
+                />
+                <button
+                  :aria-label="$t('galleryPresets.removeSet')"
+                  class="inline-flex cursor-pointer border-0 bg-transparent p-1 text-ink-2"
+                  type="button"
+                  @click="changeSets(withoutSet(presetForm.sets, index))"
+                >
+                  <X class="size-4" />
+                </button>
+              </div>
+              <form class="flex items-center gap-2 py-2" @submit.prevent="appendSet">
+                <Input v-model="newSet" :aria-label="$t('galleryPresets.nameField')" class="min-w-0 flex-1" maxlength="120" type="text" />
+                <Button type="submit" variant="ghost" :disabled="newSet.trim() === ''">{{ $t('galleryPresets.addSet') }}</Button>
+              </form>
+
+              <h3 :class="HEADING">{{ $t('galleryPresets.design') }}</h3>
               <div class="flex items-center gap-4 border-b border-border py-2.5">
-                <span class="flex-1 text-small leading-[1.35]">{{ $t('galleryPresets.expiryField') }}</span>
+                <Label class="flex-1" for="preset-design" variant="inline">{{ $t('galleryPresets.designLabel') }}</Label>
+                <Switch id="preset-design" :model-value="presetForm.design !== null" @update:model-value="toggleDesign" />
+              </div>
+
+              <div v-if="presetForm.design" class="pt-3.5">
+                <GalleryDesignFields v-model="presetForm.design" @update:model-value="savePreset" />
+              </div>
+
+              <h3 :class="HEADING">{{ $t('galleryPresets.release') }}</h3>
+              <div class="flex items-center gap-4 border-b border-border py-2.5">
+                <Label class="flex-1" for="preset-release" variant="inline">{{ $t('galleryPresets.releaseLabel') }}</Label>
+                <Switch id="preset-release" :model-value="presetForm.release !== null" @update:model-value="toggleRelease" />
+              </div>
+
+              <div v-if="presetForm.release" class="pt-3.5">
+                <GalleryReleaseFields :model-value="presetForm.release" :watermark-field="false" @change="changeRelease" />
+              </div>
+
+              <h3 :class="HEADING">{{ $t('galleryPresets.expiryField') }}</h3>
+              <div class="flex items-center gap-4 border-b border-border py-2.5">
                 <ChoiceGroup
                   v-model="presetForm.expiry_mode"
                   :options="MODES.map((option) => ({ value: option, label: $t(`galleryPresets.mode_${option}`) }))"
@@ -332,29 +411,21 @@ const studioOffers = computed(() => ({
                 </InputGroup>
               </div>
 
-              <div v-for="gate in PRESET_GATES" :key="gate.field" class="flex items-center gap-4 border-b border-border py-2.5">
-                <span class="min-w-0 flex-1 text-small leading-[1.35]">{{ $t(gate.label) }}</span>
-                <ChoiceGroup
-                  v-model="presetForm[gate.field]"
-                  :options="TRISTATE.map((option) => ({ value: option.value, label: $t(`galleryPresets.${option.key}`) }))"
-                  @update:model-value="savePreset"
-                />
+              <div v-if="presetForm.expiry_mode !== 'never'" class="flex items-center gap-4 border-b border-border py-2.5">
+                <Label class="flex-1" for="preset-reminder" variant="inline">{{ $t('galleryRecord.expiryReminder') }}</Label>
+                <Switch id="preset-reminder" v-model="presetForm.expiry_reminder" @update:model-value="savePreset" />
               </div>
 
+              <h3 :class="HEADING">{{ $t('galleryPresets.send') }}</h3>
               <div class="flex items-center gap-4 border-b border-border py-2.5">
-                <Label class="flex-1" for="preset-design" variant="inline">{{ $t('galleryPresets.designLabel') }}</Label>
-                <Switch id="preset-design" :model-value="presetForm.design !== null" @update:model-value="toggleDesign" />
-              </div>
-
-              <div v-if="presetForm.design" class="pt-3.5">
-                <div v-for="group in DESIGN" :key="group.key" class="mb-3.5">
-                  <ChoiceGroup
-                    v-model="presetForm.design[group.key]"
-                    :label="$t(group.label)"
-                    :options="group.options.map((option) => ({ value: option, label: $t(`galleryRecord.${group.prefix}_${option}`) }))"
-                    @update:model-value="savePreset"
-                  />
-                </div>
+                <Label class="flex-1" for="preset-mail" variant="inline">{{ $t('galleryPresets.mailTemplate') }}</Label>
+                <Select v-model="presetForm.mail_template_family_id" @update:model-value="savePreset">
+                  <SelectTrigger id="preset-mail" class="max-w-[180px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem :value="NO_MAIL">{{ $t('galleryPresets.none') }}</SelectItem>
+                    <SelectItem v-for="template in mailTemplates" :key="template.id" :value="template.id">{{ template.name }}</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <Button class="mt-4 ml-0" type="button" variant="ghost" @click="removePreset">

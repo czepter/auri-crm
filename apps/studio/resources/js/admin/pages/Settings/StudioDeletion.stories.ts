@@ -5,7 +5,7 @@ const meta = {
   title: 'Bildschirme/Einstellungen/Studio löschen',
   component: StudioDeletion,
   parameters: { layout: 'fullscreen', url: '/einstellungen/studio-loeschen' },
-  args: { codeSent: false, graceDays: 30 },
+  args: { codeSent: false, graceDays: 30, counts: { projects: 38, contacts: 121, galleries: 24, files: 5120 } },
 } satisfies Meta<typeof StudioDeletion>
 
 export default meta

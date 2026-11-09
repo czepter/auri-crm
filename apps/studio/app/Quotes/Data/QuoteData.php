@@ -29,6 +29,7 @@ class QuoteData extends Data
         public ?string $validUntil,
         public ?string $number,
         public ?string $sentAt,
+        public ?string $createdAt,
         // §4.6: beide Wege enden im selben Zustand, die Kopfzeile sagt welcher.
         public ?string $sentChannel,
         public int $total,
@@ -70,7 +71,7 @@ class QuoteData extends Data
         // einen Bereich — berechnet, nie gespeichert.
         public ?int $rangeMin = null,
         public ?int $rangeMax = null,
-        /** @var list<array{id: string, percent: int, label: string, minimum: int}> */
+        /** @var list<array{id: string, percent: int, label: string, minimum: int, note: ?string, dueOn: ?string}> */
         public array $paymentStages = [],
         public ?string $recipientContact = null,
         public ?string $recipientStreet = null,
@@ -110,6 +111,7 @@ class QuoteData extends Data
             validUntil: $quote->valid_until?->format('Y-m-d'),
             number: $quote->number,
             sentAt: $quote->sent_at?->toIso8601String(),
+            createdAt: $quote->created_at?->toIso8601String(),
             sentChannel: $quote->sent_channel,
             total: $quote->total,
             discountType: $quote->discount_type?->value,
@@ -143,6 +145,8 @@ class QuoteData extends Data
                 'percent' => $stage->percent,
                 'label' => $stage->label,
                 'minimum' => $stage->minimum,
+                'note' => $stage->note,
+                'dueOn' => $stage->due_on?->toDateString(),
             ])->all(),
             recipientContact: $quote->recipientContact?->public_id,
             recipientStreet: $quote->recipient_street,

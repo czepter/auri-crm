@@ -36,6 +36,13 @@ return [
 
     'empty_draft' => 'Die Galerie hat noch keine Bilder.',
 
+    'copy_suffix' => 'Kopie',
+    'favorites_task' => 'Auswahl bearbeiten: :title',
+    'prerelease_suffix' => 'Vorabversion',
+    'deleted_note' => 'Galerie „:title“ gelöscht. Favoriten und Kommentare: :path',
+
+    'mail_password' => 'Passwort: :password',
+
     /*
     |--------------------------------------------------------------------------
     | Pre-release

@@ -2,8 +2,7 @@
 import { computed, ref } from 'vue'
 import { useObjectUrl } from '@vueuse/core'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import Page from '@/ui/page/Page.vue'
-import PageHead from '@/ui/page/PageHead.vue'
+import FormShell from '@/ui/page/FormShell.vue'
 import SettingsNav from '@/admin/components/settings/SettingsNav.vue'
 import ProfileForm from './panes/ProfileForm.vue'
 import VatForm from './panes/VatForm.vue'
@@ -16,14 +15,17 @@ import MailPreview from './previews/MailPreview.vue'
 import { Button } from '@/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import { saveState } from '@/admin/lib/autosave'
+import { basisPointsToPercent } from '@/lib/money'
 
 const props = defineProps<{
   pane: 'payment' | 'receipts' | 'email' | 'general'
   fontPairs: { value: string; label: string; description: string }[]
   mailSenderFromEnv: { name: boolean; address: boolean }
+  mailTemplates: { id: string; name: string }[]
   settings: App.Settings.Data.StudioSettingsData
 }>()
-useLiveProps(['settings', 'mailSenderFromEnv'])
+useLiveProps(['settings', 'mailSenderFromEnv', 'mailTemplates'])
 
 // Template refs onto the extracted panes — each exposes { form, submit }
 // (see panes/ProfileForm.vue and its siblings). Only the panes of the current
@@ -89,9 +91,23 @@ const paneTitle = computed(() => {
 // whatever the mounted form holds on top.
 const DOCUMENT_PANES = ['payment', 'receipts']
 
-const documentPreview = computed(() => ({
-  documentLayout: receiptsRef.value?.form.document_layout ?? props.settings.documentLayout,
-}))
+const documentPreview = computed(() => {
+  const bank = profileRef.value?.form
+  const terms = paymentRef.value?.form
+
+  return {
+    documentLayout: receiptsRef.value?.form.document_layout ?? props.settings.documentLayout,
+    invoice: props.pane === 'payment'
+      ? {
+          holder: bank?.bank_account_holder ?? props.settings.bankAccountHolder ?? '',
+          iban: bank?.bank_iban ?? props.settings.bankIban ?? '',
+          bic: bank?.bank_bic ?? props.settings.bankBic ?? '',
+          days: String(terms?.payment_term_days ?? props.settings.paymentTermDays),
+          deposit: String(terms?.deposit_percentage ?? basisPointsToPercent(props.settings.depositPercentage)).replace(',', '.'),
+        }
+      : undefined,
+  }
+})
 
 // Was das Portal an Marke zeigt, wie es im Formular steht.
 const logoPicked = useObjectUrl(computed(() => profileRef.value?.form.logo ?? undefined))
@@ -116,58 +132,47 @@ const mailPreview = computed(() => {
     replyTo: mail?.mail_reply_to ?? props.settings.mailReplyTo ?? '',
     bcc: mail?.mail_bcc ?? props.settings.mailBcc ?? '',
     signature: mail?.mail_signature ?? props.settings.mailSignature ?? '',
+    headerName: mail?.mail_header_name ?? props.settings.mailHeaderName,
+    footerLegal: mail?.mail_footer_legal ?? props.settings.mailFooterLegal,
+    footerExtra: mail?.mail_footer_extra ?? props.settings.mailFooterExtra ?? '',
   }
 })
 </script>
 
 <template>
   <AdminLayout active="einstellungen">
-    <Page data-tokens wide>
-      <div class="min-w-0 flex-1">
-        <PageHead :kicker="$t('settings.kicker')" :title="$t(paneTitle)">
-          <span v-if="dirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-small leading-[1.5] font-semibold text-due">{{ $t('settings.unsaved') }}</span>
-          <Button
-            v-if="dirty"
-            class="ml-auto"
-            variant="pill"
-            type="button"
-            :disabled="processing"
-            @click="save"
-          >
-            {{ $t('common.save') }}
-          </Button>
-        </PageHead>
+    <FormShell
+      :kicker="$t('settings.kicker')"
+      :title="$t(paneTitle)"
+      :state="saveState(activePanes.map((entry) => entry?.form))"
+    >
+      <template #head>
+        <Button v-if="dirty" variant="pill" type="button" :disabled="processing" @click="save">
+          {{ $t('common.save') }}
+        </Button>
+      </template>
 
-        <div class="px-6 pt-7 pb-8">
-          <div class="flex flex-wrap items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
-            <SettingsNav :active="pane" />
+      <template #nav><SettingsNav :active="pane" /></template>
 
-            <div class="max-w-[620px] min-w-0 flex-1">
-              <template v-if="pane === 'general'">
-                <ProfileForm ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="['brand', 'legal', 'general', 'tax']" />
-                <VatForm ref="vatRef" :settings="settings" />
-              </template>
+      <template v-if="pane === 'general'">
+        <ProfileForm ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="['brand', 'legal', 'general', 'tax']" />
+        <VatForm ref="vatRef" :settings="settings" />
+      </template>
 
-              <template v-else-if="pane === 'payment'">
-                <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.bank') }}</div>
-                <ProfileForm ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="['bank']" />
-                <div class="mt-8">
-                  <PaymentForm ref="paymentRef" :settings="settings" />
-                </div>
-              </template>
+      <template v-else-if="pane === 'payment'">
+        <ProfileForm ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="['bank']" />
+        <PaymentForm ref="paymentRef" :settings="settings" />
+      </template>
 
-              <ReceiptsForm v-else-if="pane === 'receipts'" ref="receiptsRef" :settings="settings" />
-              <EmailForm v-else-if="pane === 'email'" ref="emailRef" :settings="settings" :sender-from-env="mailSenderFromEnv" />
+      <ReceiptsForm v-else-if="pane === 'receipts'" ref="receiptsRef" :settings="settings" />
+      <EmailForm v-else-if="pane === 'email'" ref="emailRef" :settings="settings" :mail-templates="mailTemplates" :sender-from-env="mailSenderFromEnv" />
 
-            </div>
-
-            <PortalFrame v-if="pane === 'general' && profileRef" :query="brandQuery" />
-            <DocumentPreview v-else-if="DOCUMENT_PANES.includes(pane)" :doc="documentPreview" />
-            <MailPreview v-else-if="pane === 'email'" :mail="mailPreview" />
-          </div>
-        </div>
-      </div>
-    </Page>
+      <template #preview>
+        <PortalFrame v-if="pane === 'general' && profileRef" :query="brandQuery" />
+        <DocumentPreview v-else-if="DOCUMENT_PANES.includes(pane)" :doc="documentPreview" />
+        <MailPreview v-else-if="pane === 'email'" :mail="mailPreview" />
+      </template>
+    </FormShell>
 
     <Dialog :open="register !== null" @update:open="(value) => value || (register = null)">
       <DialogContent class="max-w-[440px]">

@@ -1,3 +1,5 @@
+import { groupBy } from '@/admin/lib/projectOverview'
+
 /**
  * Shoot presentation shared by the overview and the Shootings tab, so the two
  * cannot drift into showing the same shoot two different ways.
@@ -31,4 +33,25 @@ export function chipClass(
   }
 
   return shoot.status === position ? 'now' : 'next'
+}
+
+export type ShootFilter = 'all' | 'upcoming' | 'delivered'
+
+const DELIVERED = ['delivered', 'archived']
+
+export function filterShoots(shoots: App.Crm.Data.ShootData[], filter: ShootFilter, today: string): App.Crm.Data.ShootData[] {
+  if (filter === 'upcoming') {
+    return shoots.filter((shoot) => !shoot.isCancelled && !DELIVERED.includes(shoot.status) && (shoot.date === null || shoot.date >= today))
+  }
+
+  if (filter === 'delivered') {
+    return shoots.filter((shoot) => !shoot.isCancelled && DELIVERED.includes(shoot.status))
+  }
+
+  return shoots
+}
+
+/** Ein Block je Tag, aufsteigend; Termine ohne Datum (Schlüssel "") zuletzt. */
+export function shootDays(shoots: App.Crm.Data.ShootData[]): { key: string; items: App.Crm.Data.ShootData[] }[] {
+  return groupBy(shoots, (shoot) => shoot.date ?? '').sort((a, b) => (a.key === '' ? 1 : b.key === '' ? -1 : a.key.localeCompare(b.key)))
 }

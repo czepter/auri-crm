@@ -62,6 +62,11 @@ class StudioSettingsData extends Data
         public ?string $mailSignature,
         public ?string $mailBcc,
         public bool $mailClientsEnabled,
+        /** @var array<string, string|null> occasion => template family */
+        public array $mailDefaults,
+        public bool $mailHeaderName,
+        public bool $mailFooterLegal,
+        public ?string $mailFooterExtra,
     ) {}
 
     public static function current(): self
@@ -108,6 +113,10 @@ class StudioSettingsData extends Data
             mailSignature: StudioSettings::current()->mail_signature,
             mailBcc: StudioSettings::current()->mail_bcc,
             mailClientsEnabled: (bool) StudioSettings::current()->mail_clients_enabled,
+            mailDefaults: StudioSettings::current()->mail_defaults ?? [],
+            mailHeaderName: (bool) StudioSettings::current()->mail_header_name,
+            mailFooterLegal: (bool) StudioSettings::current()->mail_footer_legal,
+            mailFooterExtra: StudioSettings::current()->mail_footer_extra,
         );
     }
 }

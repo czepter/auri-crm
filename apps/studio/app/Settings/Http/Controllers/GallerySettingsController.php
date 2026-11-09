@@ -3,6 +3,7 @@
 namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
+use App\Gallery\Support\GalleryDesign;
 use App\Http\Controllers\Controller;
 use App\Settings\Actions\UpdateStudioSetting;
 use Illuminate\Http\RedirectResponse;
@@ -24,16 +25,13 @@ class GallerySettingsController extends Controller
 
         $validated = $request->validate([
             'gallery_default_expiry_days' => ['nullable', 'integer', 'min:1', 'max:3650'],
-            'gallery_default_downloads_enabled' => ['sometimes', 'required', 'boolean'],
+            'gallery_default_download_rule' => ['sometimes', 'required', Rule::in(['open', 'after_payment', 'off'])],
             'gallery_default_lists_enabled' => ['sometimes', 'required', 'boolean'],
             'gallery_default_comments_enabled' => ['sometimes', 'required', 'boolean'],
-            // Ganz oder gar nicht, wie auf der Vorlage: die vier Schluessel
+            // Ganz oder gar nicht, wie auf der Vorlage: die sechs Schluessel
             // stehen zusammen oder das Feld fehlt.
             'gallery_default_design' => ['nullable', 'array'],
-            'gallery_default_design.cover' => ['required_with:gallery_default_design', Rule::in(['full', 'split', 'plain'])],
-            'gallery_default_design.type' => ['required_with:gallery_default_design', 'string', 'max:32'],
-            'gallery_default_design.colour' => ['required_with:gallery_default_design', Rule::in(['light', 'dark', 'warm'])],
-            'gallery_default_design.grid' => ['required_with:gallery_default_design', Rule::in(['wide', 'dense', 'single'])],
+            ...GalleryDesign::rules('gallery_default_design', 'required_with:gallery_default_design'),
         ]);
 
         $actor = auth('staff')->user();

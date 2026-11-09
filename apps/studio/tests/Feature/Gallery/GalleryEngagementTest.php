@@ -14,7 +14,7 @@ beforeEach(fn () => useSurface(Surface::PORTAL));
 
 function engagedGallery(): Gallery
 {
-    $gallery = Gallery::factory()->create();
+    $gallery = Gallery::factory()->create(['permissions' => ['guest' => ['comments' => true]]]);
     $set = GallerySet::where('gallery_id', $gallery->id)->first();
     Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/a.jpg', 'filename' => 'a.jpg']);
     Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/b.jpg', 'filename' => 'b.jpg']);
@@ -88,7 +88,7 @@ it('signs a client\'s comment with their name and a guest\'s with Gast', functio
     $contact = App\Crm\Models\Contact::factory()->create(['name' => 'Viola Neumann']);
     $project->attachContact($contact, App\Crm\Enums\CaseContactRole::Primary);
 
-    $gallery = Gallery::factory()->for($project, 'case')->create();
+    $gallery = Gallery::factory()->for($project, 'case')->create(['permissions' => ['guest' => ['comments' => true]]]);
     $set = GallerySet::where('gallery_id', $gallery->id)->first();
     Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/a.jpg', 'filename' => 'a.jpg']);
     $gallery->fresh()->publish();

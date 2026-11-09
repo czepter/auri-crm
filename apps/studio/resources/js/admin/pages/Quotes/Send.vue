@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import SendByMailView from '@/admin/components/templates/SendByMailView.vue'
 import { toast } from 'vue-sonner'
@@ -12,11 +13,18 @@ const props = defineProps<{
   recipientName: string
   recipientEmail: string
   address: 'sie' | 'du' | 'ihr'
+  subject: string | null
+  message: string | null
   mailHtml: string
+  followUp?: boolean
+  mailTemplates?: App.Documents.Data.MailTemplateData[]
+  mergeFields?: { path: string; sample: string }[]
+  shootKinds?: string[]
+  occasion?: string
 }>()
 useLiveProps([])
 
-const message: EditorDocument = {
+const fallback: EditorDocument = {
   blocks: [
     { type: 'paragraph', data: { text: `Hallo ${props.recipientName},` } },
     {
@@ -32,16 +40,26 @@ const message: EditorDocument = {
   ],
 }
 
+const message: EditorDocument = props.message === null
+  ? fallback
+  : { blocks: props.message.split('\n\n').map((text) => ({ type: 'paragraph', data: { text } })) }
+
+const back = () => (props.followUp ? `/anfragen/${props.projectId}` : `/auftraege/${props.projectId}`)
+
 function cancel() {
-  router.visit(`/auftraege/${props.projectId}`)
+  router.visit(back())
 }
+
+const processing = ref(false)
 
 function send({ subject, message }: { subject: string; message: EditorDocument }) {
   router.post(
-    `/angebote/${props.quote.id}/versenden`,
+    `/angebote/${props.quote.id}/${props.followUp ? 'nachfassen' : 'versenden'}`,
     { subject, message: toPlainText(message) },
     {
-      onSuccess: () => router.visit(`/auftraege/${props.projectId}`),
+      onStart: () => (processing.value = true),
+      onFinish: () => (processing.value = false),
+      onSuccess: () => router.visit(back()),
       onError: (errors) => toast.error(errors.quote),
     },
   )
@@ -51,9 +69,14 @@ function send({ subject, message }: { subject: string; message: EditorDocument }
 <template>
   <SendByMailView
     :recipients="[{ name: recipientName, email: recipientEmail }]"
-    :subject="$t('quotes.title')"
+    :subject="subject ?? $t('quotes.title')"
     :message="message"
     :mail-html="mailHtml"
+    :templates="mailTemplates"
+    :merge-fields="mergeFields"
+    :shoot-kinds="shootKinds"
+    :save-as="occasion ? { occasion, quote: quote.id } : undefined"
+    :processing="processing"
     @cancel="cancel"
     @send="send"
   />

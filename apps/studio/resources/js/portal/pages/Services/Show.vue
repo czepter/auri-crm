@@ -172,7 +172,7 @@ function submit() {
             </PortalField>
           </div>
 
-          <Button class="mt-6 w-full justify-center" type="submit" :disabled="form.processing">
+          <Button class="mt-6 w-full justify-center" type="submit" :state="form.processing ? 'loading' : 'idle'" :disabled="form.processing">
             {{ service.requiresDate ? $t('portal.requestAppointment') : $t('portal.request') }}
           </Button>
         </form>

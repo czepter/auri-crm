@@ -10,6 +10,7 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Stage;
 use App\Crm\Support\CrmVocabulary;
+use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Engagement\Models\Thread;
 use App\Enums\StaffRole;
@@ -27,6 +28,7 @@ use App\Payments\Enums\SettledVia;
 use App\Payments\Models\PaymentInstallment;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Support\Surface;
 use Aws\MockHandler;
 use Aws\Result;
@@ -527,4 +529,17 @@ function assembledUpload(array $captured, string $uploadId): string
     ksort($captured[$uploadId]);
 
     return implode('', array_map(fn ($part) => $part['body'], $captured[$uploadId]));
+}
+
+/** A mail template, made the studio's standard for $occasion. */
+function mailDefault(string $occasion, ?string $subject, string $body): void
+{
+    $template = DocumentTemplate::createFirstVersion([
+        'type' => DocumentTemplateType::Mail->value,
+        'name' => $occasion,
+        'subject' => $subject,
+        'body' => '<p>'.$body.'</p>',
+    ]);
+
+    app(UpdateStudioSetting::class)('mail_defaults', [$occasion => $template->family_id], null);
 }

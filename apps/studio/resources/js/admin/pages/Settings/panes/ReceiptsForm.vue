@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import FormSection from '@/ui/page/FormSection.vue'
 import { useForm } from '@inertiajs/vue3'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group'
@@ -29,9 +30,8 @@ defineExpose({ form, submit })
 
 <template>
   <form id="receipts-form" @submit.prevent="submit">
-    <div class="mt-0">
-      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.documentsLayoutLabel') }}</div>
-      <div class="mb-6">
+    <FormSection :title="$t('settings.documentsLayoutLabel')">
+      <div>
         <RadioGroup
           name="documentlayout"
           class="grid grid-cols-2 gap-2.5"
@@ -53,11 +53,10 @@ defineExpose({ form, submit })
           </label>
         </RadioGroup>
       </div>
-    </div>
+    </FormSection>
 
-    <div class="mt-8 first-of-type:mt-6">
-      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.documentsQuoteLabel') }}</div>
-      <div class="mb-6">
+    <FormSection :title="$t('settings.documentsQuoteLabel')">
+      <div>
         <Field
           id="d-gueltigkeit"
           class="max-w-[160px]"
@@ -71,6 +70,6 @@ defineExpose({ form, submit })
           </InputGroup>
         </Field>
       </div>
-    </div>
+    </FormSection>
   </form>
 </template>

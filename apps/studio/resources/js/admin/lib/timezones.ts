@@ -9,15 +9,12 @@ export function timezoneLabel(zone: string): string {
   const now = new Date()
 
   try {
-    const name = new Intl.DateTimeFormat('de', { timeZone: zone, timeZoneName: 'long' })
+    const short = new Intl.DateTimeFormat('de', { timeZone: zone, timeZoneName: 'short' })
       .formatToParts(now)
       .find((part) => part.type === 'timeZoneName')?.value
-    const offset = new Intl.DateTimeFormat('en', { timeZone: zone, timeZoneName: 'longOffset' })
-      .formatToParts(now)
-      .find((part) => part.type === 'timeZoneName')?.value
-      .replace('GMT', 'UTC')
+    const city = (zone.split('/').pop() ?? zone).replaceAll('_', ' ')
 
-    return `${zone} · ${name} (${offset})`
+    return zone.includes('/') ? `${city} (${short})` : zone
   } catch {
     // Der Server nimmt jede PHP-Zone an, auch Aliasse, die Intl nicht kennt.
     return zone

@@ -26,8 +26,9 @@ const props = withDefaults(
     portal: Record<PortalKey, string>
     defaults: Record<string, string | boolean | null>
     group?: Group
+    choice?: boolean
   }>(),
-  { group: 'all' },
+  { group: 'all', choice: false },
 )
 
 const emit = defineEmits<{ change: [] }>()
@@ -61,6 +62,11 @@ function isOn(key: Switch) {
 
 function toggle(key: Switch) {
   props.portal[key] = isOn(key) ? '0' : '1'
+  emit('change')
+}
+
+function choose(key: Switch, value: unknown) {
+  props.portal[key] = value === 'standard' ? '' : String(value)
   emit('change')
 }
 
@@ -105,7 +111,7 @@ function defaultLabel(key: string) {
     <div class="min-w-0 flex-1 text-small">
       {{ $t(`contacts.portalKey.${key}`) }}
       <a
-        v-if="portal[key] !== ''"
+        v-if="!choice && portal[key] !== ''"
         class="text-small tracking-[-0.01em] whitespace-nowrap text-ink-2 no-underline hover:underline"
         href="#"
         @click.prevent="reset(key)"
@@ -113,7 +119,18 @@ function defaultLabel(key: string) {
         {{ $t('contacts.portalReset') }}
       </a>
     </div>
+    <Select v-if="choice" :model-value="portal[key] || 'standard'" @update:model-value="choose(key, $event)">
+      <SelectTrigger size="sm" class="w-[170px] flex-none" :aria-label="$t(`contacts.portalKey.${key}`)">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="standard">{{ $t('contacts.portalInherit', { value: defaultLabel(key) }) }}</SelectItem>
+        <SelectItem value="1">{{ $t('contacts.portalOn') }}</SelectItem>
+        <SelectItem value="0">{{ $t('contacts.portalOff') }}</SelectItem>
+      </SelectContent>
+    </Select>
     <span
+      v-else
       class="relative h-[22px] w-9 flex-none cursor-pointer rounded-full after:absolute after:top-[3px] after:left-[3px] after:size-4 after:rounded-full after:bg-paper after:transition-transform after:duration-[160ms] after:ease-out after:content-['']"
       :class="isOn(key) ? 'bg-action after:[transform:translateX(14px)]' : 'bg-sunk-2'"
       @click="toggle(key)"

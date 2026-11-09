@@ -8,8 +8,12 @@ use App\Catalog\Models\Package;
 use App\Crm\Actions\BookCase;
 use App\Crm\Data\CaseSuggestionData;
 use App\Crm\Models\ClientCase;
+use App\Crm\Models\Shoot;
 use App\Documents\Data\DocumentViewData;
+use App\Documents\Data\MailTemplateData;
 use App\Documents\Support\InlineHtmlSanitizer;
+use App\Documents\Support\MailDefaults;
+use App\Documents\Support\MergeFieldVocabulary;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
@@ -20,6 +24,7 @@ use App\Quotes\Actions\CreatePackageFromQuote;
 use App\Quotes\Actions\CreateQuote;
 use App\Quotes\Actions\DeleteQuote;
 use App\Quotes\Actions\DuplicateQuote;
+use App\Quotes\Actions\FollowUpQuote;
 use App\Quotes\Actions\MarkQuoteSent;
 use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Actions\SendQuote;
@@ -31,6 +36,7 @@ use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Quotes\Models\QuotePaymentStage;
+use App\Quotes\Notifications\QuoteFollowUp;
 use App\Quotes\Notifications\QuoteSent;
 use App\Quotes\Screens\ReadQuoteWorkspace;
 use App\Settings\Data\StudioSettingsData;
@@ -114,6 +120,7 @@ class QuoteController extends Controller
 
         $quote->loadMissing(['items', 'case']);
         $contact = $quote->case->primaryContact();
+        $default = MailDefaults::resolve('quote_sent', QuoteSent::mergeData($quote));
 
         return Inertia::render('Quotes/Send', [
             'projectId' => $quote->case->public_id,
@@ -121,8 +128,55 @@ class QuoteController extends Controller
             'recipientName' => $contact?->name ?? '',
             'recipientEmail' => $contact?->email ?? '',
             'address' => StudioSettings::current()->clientAddress($quote->case->contacts()->count()),
+            'subject' => $default['subject'] ?? null,
+            'message' => $default['message'] ?? null,
+            'mailTemplates' => MailTemplateData::forCompose($quote->case->primaryShoot?->kind, QuoteSent::mergeData($quote)),
+            'mergeFields' => $this->mergeFields(),
+            'shootKinds' => Shoot::kindSuggestions(),
+            'occasion' => 'quote_sent',
             'mailHtml' => MailPreview::html(new QuoteSent($quote, null, MailPreview::MESSAGE), $contact ?? (object) []),
         ]);
+    }
+
+    public function followUpForm(Quote $quote): InertiaResponse
+    {
+        $this->authorize('manageQuotes', $quote->case);
+        abort_unless($quote->status === QuoteStatus::Sent, 404);
+
+        $quote->loadMissing(['items', 'case']);
+        $contact = $quote->case->primaryContact();
+        $defaults = QuoteFollowUp::defaults($quote);
+
+        return Inertia::render('Quotes/Send', [
+            'projectId' => $quote->case->public_id,
+            'quote' => QuoteData::fromModel($quote),
+            'recipientName' => $contact?->name ?? '',
+            'recipientEmail' => $contact?->email ?? '',
+            'address' => StudioSettings::current()->clientAddress($quote->case->contacts()->count()),
+            'subject' => $defaults['subject'],
+            'message' => $defaults['message'],
+            'mailHtml' => MailPreview::html(new QuoteFollowUp($quote, $defaults['subject'], MailPreview::MESSAGE), $contact ?? (object) []),
+            'followUp' => true,
+            'mailTemplates' => MailTemplateData::forCompose($quote->case->primaryShoot?->kind, QuoteSent::mergeData($quote)),
+            'shootKinds' => Shoot::kindSuggestions(),
+            'occasion' => 'quote_follow_up',
+            'mergeFields' => $this->mergeFields(),
+        ]);
+    }
+
+    public function followUp(Request $request, Quote $quote, FollowUpQuote $followUp): RedirectResponse
+    {
+        $this->authorize('manageQuotes', $quote->case);
+        abort_unless($quote->status === QuoteStatus::Sent, 404);
+
+        $validated = $request->validate([
+            'subject' => ['required', 'string', 'max:255'],
+            'message' => ['required', 'string'],
+        ]);
+
+        $followUp($quote, auth('staff')->user(), $validated['subject'], $validated['message']);
+
+        return redirect("/anfragen/{$quote->case->public_id}");
     }
 
     /** The Übersicht's wizard: the project or inquiry first, then the workspace its Angebote tab shows. */
@@ -494,6 +548,13 @@ class QuoteController extends Controller
 
         $quote->loadMissing(['items', 'paymentStages', 'recipientContact', 'case']);
 
+        if (request()->header('Sec-Fetch-Dest') === 'document') {
+            return response()->view('quotes.sheet-frame', [
+                'source' => request()->url(),
+                'back' => "/angebote/{$quote->public_id}",
+            ]);
+        }
+
         return response($render->html($quote), 200, ['Content-Type' => 'text/html']);
     }
 
@@ -597,5 +658,14 @@ class QuoteController extends Controller
         $preview->fill(Quote::computeVat($preview->net, $items));
 
         return response($render->html($preview), 200, ['Content-Type' => 'text/html']);
+    }
+
+    /** @return list<array{path: string, sample: string}> */
+    private function mergeFields(): array
+    {
+        return collect(MergeFieldVocabulary::samples())
+            ->map(fn (string $sample, string $path) => ['path' => $path, 'sample' => $sample])
+            ->values()
+            ->all();
     }
 }

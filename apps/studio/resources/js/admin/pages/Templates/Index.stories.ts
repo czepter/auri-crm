@@ -12,12 +12,12 @@ const FRAGEBOEGEN: App.Crm.Data.FormTemplateData[] = [
 ]
 
 const DOKUMENTE: App.Documents.Data.DocumentTemplateData[] = [
-  { id: 'dt1', name: 'Angebot Hochzeit', body: '', blocks: null, version: 4, type: 'quote', typeLabel: 'Angebot', shootKind: 'Hochzeitstag' },
-  { id: 'dt2', name: 'Angebotsanschreiben', body: '', blocks: null, version: 2, type: 'mail', typeLabel: 'E-Mail', shootKind: null },
+  { id: 'dt1', name: 'Angebot Hochzeit', subject: null, body: '', blocks: null, version: 4, type: 'quote', typeLabel: 'Angebot', shootKind: 'Hochzeitstag' },
+  { id: 'dt2', name: 'Angebotsanschreiben', subject: null, body: '', blocks: null, version: 2, type: 'mail', typeLabel: 'E-Mail', shootKind: null },
 ]
 
 const GALERIEN: App.Gallery.Data.GalleryPresetData[] = [
-  { id: 'gp1', name: 'Hochzeit, sechs Monate', design: null, expiryMode: 'days', expiryDays: 180, downloadsEnabled: true, listsEnabled: true, commentsEnabled: false, isDefault: true },
+  { id: 'gp1', name: 'Hochzeit, sechs Monate', design: null, expiryMode: 'days', expiryDays: 180, downloadsEnabled: true, listsEnabled: true, commentsEnabled: false, isDefault: true, sets: null, viewMode: null, downloadRule: null, downloadSizes: null, permissions: null, introEnabled: null, expiryReminder: null, mailTemplateFamilyId: null, },
 ]
 
 const AUSWAHL = {

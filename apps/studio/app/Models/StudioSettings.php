@@ -58,6 +58,7 @@ class StudioSettings extends Model
         'payments_stripe_live_publishable_key', 'payments_stripe_live_secret_key',
         'payments_reminders_enabled',
         'mail_from_name', 'mail_from_address', 'mail_reply_to', 'mail_signature', 'mail_bcc', 'mail_clients_enabled',
+        'mail_defaults', 'mail_header_name', 'mail_footer_legal', 'mail_footer_extra',
         'portal_maintenance_enabled', 'portal_maintenance_message',
         'portal_legal_datenschutz_url', 'portal_legal_agb_url',
         'portal_legal_impressum_url', 'portal_legal_widerruf_url',
@@ -68,7 +69,7 @@ class StudioSettings extends Model
         'portal_payment_status_enabled', 'portal_messaging_mode', 'portal_offers_enabled',
         'portal_welcome_inquiry', 'portal_welcome_active', 'portal_welcome_done',
         'gallery_default_expiry_days',
-        'gallery_default_downloads_enabled', 'gallery_default_lists_enabled',
+        'gallery_default_download_rule', 'gallery_default_lists_enabled',
         'gallery_default_comments_enabled', 'gallery_default_design',
         'portal_contact_name', 'portal_contact_phone', 'portal_contact_email',
         'portal_contact_response_time', 'portal_contact_avatar_path',
@@ -85,8 +86,27 @@ class StudioSettings extends Model
         'payments_stripe_live_publishable_key', 'payments_stripe_live_secret_key',
     ];
 
+    private static ?self $unsaved = null;
+
+    /** Runs $callback with unsaved values standing in for the stored settings, as a preview needs. */
+    public static function withUnsaved(array $attributes, \Closure $callback): mixed
+    {
+        $previous = self::$unsaved;
+        self::$unsaved = (clone static::current())->forceFill($attributes);
+
+        try {
+            return $callback();
+        } finally {
+            self::$unsaved = $previous;
+        }
+    }
+
     public static function current(): self
     {
+        if (self::$unsaved !== null) {
+            return self::$unsaved;
+        }
+
         $store = Cache::store('redis');
         $key = self::CACHE_KEY_PREFIX.config('tenancy.tenant_id');
         $cached = $store->get($key);
@@ -235,12 +255,14 @@ class StudioSettings extends Model
             'payments_stripe_live_secret_key' => 'encrypted',
             'payments_reminders_enabled' => 'boolean',
             'mail_clients_enabled' => 'boolean',
+            'mail_defaults' => 'array',
+            'mail_header_name' => 'boolean',
+            'mail_footer_legal' => 'boolean',
             'portal_maintenance_enabled' => 'boolean',
             'portal_accept_quotes_enabled' => 'boolean',
             'portal_sign_contracts_enabled' => 'boolean',
             'portal_payment_status_enabled' => 'boolean',
             'portal_offers_enabled' => 'boolean',
-            'gallery_default_downloads_enabled' => 'boolean',
             'gallery_default_lists_enabled' => 'boolean',
             'gallery_default_comments_enabled' => 'boolean',
             'gallery_default_design' => 'array',

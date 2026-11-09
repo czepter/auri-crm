@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import FormSection from '@/ui/page/FormSection.vue'
 import { computed, ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import { useObjectUrl } from '@vueuse/core'
@@ -147,22 +148,21 @@ defineExpose({ form, submit, adaptExisting })
 
 <template>
   <form id="settings-form" @submit.prevent="submit">
-    <div v-if="shows('brand')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.brand') }}</div>
-      <div class="mb-6">
-        <div class="grid grid-cols-2 gap-4">
+    <FormSection v-if="shows('brand')" :title="$t('settings.brand')">
+      <div class="mt-4 first:mt-0">
+        <div class="grid grid-cols-1 gap-4">
           <Field :label="$t('settings.displayName')" id="p-anzeigename" :error="form.errors.display_name">
-            <Input id="p-anzeigename" v-model="form.display_name" type="text" />
+            <Input id="p-anzeigename" v-model="form.display_name" class="w-full min-w-0" type="text" />
           </Field>
           <Field :label="$t('settings.website')" id="p-web" :error="form.errors.website">
             <InputGroup>
               <InputGroupAddon>https://</InputGroupAddon>
-              <InputGroupInput id="p-web" v-model="websiteHost" type="text" />
+              <InputGroupInput id="p-web" v-model="websiteHost" class="w-full min-w-0" type="text" />
             </InputGroup>
           </Field>
         </div>
       </div>
-      <div class="mb-6">
+      <div class="mt-4 first:mt-0">
         <ChoiceGroup
           v-model="form.client_register"
           class="mb-6"
@@ -172,7 +172,7 @@ defineExpose({ form, submit, adaptExisting })
             { value: 'informal', label: $t('settings.clientRegisterInformal') },
           ]"
         />
-        <div :class="firstRun ? 'flex flex-col gap-6' : 'grid grid-cols-2 gap-4'">
+        <div :class="firstRun ? 'flex flex-col gap-6' : 'grid grid-cols-1 gap-6'">
           <Field :label="$t('settings.logo')" id="p-logo" :error="form.errors.logo" :hint="$t('settings.logoHint')">
             <DropArea id="p-logo" accept="image/png,image/jpeg,image/webp,image/svg+xml" @files="(files) => (form.logo = files[0])">
               <img v-if="logoPreview" :src="logoPreview" :alt="$t('settings.logo')" class="size-20 flex-none rounded-[6px] bg-muted object-contain p-1.5" />
@@ -182,7 +182,7 @@ defineExpose({ form, submit, adaptExisting })
           </Field>
 
           <Field :label="$t('settings.accentColor')" id="p-akzent" :error="form.errors.accent_color">
-            <ColorPicker id="p-akzent" v-model="form.accent_color" rule="color" placeholder="#1C6870" :aria-label="$t('settings.accentColor')" />
+            <ColorPicker id="p-akzent" v-model="form.accent_color" class="w-full min-w-0" rule="color" placeholder="#1C6870" :aria-label="$t('settings.accentColor')" />
           </Field>
         </div>
 
@@ -208,16 +208,15 @@ defineExpose({ form, submit, adaptExisting })
           </RadioGroup>
         </Field>
       </div>
-    </div>
+    </FormSection>
 
-    <div v-if="shows('legal')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.legalEntity') }}</div>
-      <div class="mb-6">
+    <FormSection v-if="shows('legal')" :title="$t('settings.legalEntity')">
+      <div class="mt-4 first:mt-0">
         <Field :label="$t('settings.legalName')" id="p-firma" wide :error="form.errors.legal_name">
           <Input id="p-firma" v-model="form.legal_name" type="text" />
         </Field>
       </div>
-      <div class="mb-6">
+      <div class="mt-4 first:mt-0">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.legalForm')" id="p-rechtsform" :error="form.errors.legal_form">
             <Select
@@ -240,12 +239,12 @@ defineExpose({ form, submit, adaptExisting })
           </Field>
         </div>
       </div>
-      <div class="mb-6">
+      <div class="mt-4 first:mt-0">
         <Field :label="$t('settings.street')" id="p-strasse" wide :error="form.errors.street">
           <Input id="p-strasse" v-model="form.street" type="text" />
         </Field>
       </div>
-      <div class="mb-6">
+      <div class="mt-4 first:mt-0">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.postcode')" id="p-plz" :error="form.errors.postcode">
             <Input id="p-plz" v-model="form.postcode" class="tabular-nums" type="text" />
@@ -255,7 +254,7 @@ defineExpose({ form, submit, adaptExisting })
           </Field>
         </div>
       </div>
-      <div class="mb-6">
+      <div class="mt-4 first:mt-0">
         <Field :label="$t('settings.country')" id="p-land" class="max-w-[260px]" :error="form.errors.country">
           <Select :model-value="form.country" @update:model-value="(value) => (form.country = String(value))">
             <SelectTrigger id="p-land">
@@ -269,12 +268,11 @@ defineExpose({ form, submit, adaptExisting })
           </Select>
         </Field>
       </div>
-    </div>
+    </FormSection>
 
-    <div v-if="shows('general')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.timezoneLabel') }}</div>
-      <div class="mb-6">
-        <div class="grid grid-cols-2 gap-4">
+    <FormSection v-if="shows('general')" :title="$t('settings.timezoneLabel')">
+      <div class="mt-4 first:mt-0">
+        <div class="grid max-w-[420px] gap-4">
           <Field :error="form.errors.timezone" v-slot="{ id }">
             <Label :for="id" class="sr-only">{{ $t('settings.timezoneLabel') }}</Label>
             <Combobox
@@ -309,11 +307,10 @@ defineExpose({ form, submit, adaptExisting })
           </Field>
         </div>
       </div>
-    </div>
+    </FormSection>
 
-    <div v-if="shows('tax')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.taxSection') }}</div>
-      <div class="mb-6">
+    <FormSection v-if="shows('tax')" :title="$t('settings.taxSection')">
+      <div class="mt-4 first:mt-0">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.taxNumber')" id="p-steuernr" :error="form.errors.tax_number">
             <Input id="p-steuernr" v-model="form.tax_number" class="tabular-nums" rule="taxNumber" type="text" />
@@ -337,25 +334,24 @@ defineExpose({ form, submit, adaptExisting })
           </Field>
         </div>
       </div>
-    </div>
+    </FormSection>
 
-    <div v-if="shows('bank')" class="mt-8 first:mt-0">
-      <div v-if="shownSections.length > 1" class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.bank') }}</div>
-      <div class="mb-6">
+    <FormSection v-if="shows('bank')" :title="$t('settings.bank')">
+      <div class="mt-4 first:mt-0">
         <Field :label="$t('settings.bankAccountHolder')" id="p-kontoinhaber" wide :error="form.errors.bank_account_holder">
           <Input id="p-kontoinhaber" v-model="form.bank_account_holder" type="text" />
         </Field>
       </div>
-      <div class="mb-6">
-        <div class="grid grid-cols-2 gap-4">
-          <Field :label="$t('settings.bankIban')" id="p-iban" :error="form.errors.bank_iban">
-            <Input id="p-iban" v-model="form.bank_iban" class="tabular-nums" rule="iban" type="text" @input="groupIbanInPlace" />
-          </Field>
-          <Field :label="$t('settings.bankBic')" id="p-bic" :error="form.errors.bank_bic">
-            <Input id="p-bic" v-model="form.bank_bic" class="tabular-nums" rule="bic" type="text" />
-          </Field>
-        </div>
+      <div class="mt-4 first:mt-0">
+        <Field :label="$t('settings.bankIban')" id="p-iban" wide :error="form.errors.bank_iban">
+          <Input id="p-iban" v-model="form.bank_iban" class="font-mono tabular-nums" rule="iban" type="text" @input="groupIbanInPlace" />
+        </Field>
       </div>
-    </div>
+      <div class="mt-4">
+        <Field :label="$t('settings.bankBic')" id="p-bic" wide :error="form.errors.bank_bic">
+          <Input id="p-bic" v-model="form.bank_bic" class="font-mono tabular-nums" rule="bic" type="text" />
+        </Field>
+      </div>
+    </FormSection>
   </form>
 </template>

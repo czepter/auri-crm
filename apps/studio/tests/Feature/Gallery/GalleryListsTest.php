@@ -43,7 +43,9 @@ it('gives the client their own half of the gallery screen', function () {
 
     expect($props['assets'])->toHaveCount(3)
         ->and($props['gates']['viewPassword'])->toBeFalse()
-        ->and($props['guests'])->not->toBeNull();
+        ->and($props['guests'])->not->toBeNull()
+        ->and($props['project'])->toBe(['id' => $gallery->case->public_id, 'name' => $gallery->case->name])
+        ->and($props['portalNav'])->not->toBeNull();
 });
 
 it('sends a guest the pictures and none of the couple\'s half', function () {
@@ -54,7 +56,8 @@ it('sends a guest the pictures and none of the couple\'s half', function () {
     expect($props['assets'])->toHaveCount(3)
         ->and($props['lists'])->toBeNull()
         ->and($props['gates'])->toBeNull()
-        ->and($props['guests'])->toBeNull();
+        ->and($props['guests'])->toBeNull()
+        ->and($props['project'])->toBeNull();
 });
 
 // Signed in to your own portal is not the same as being the client of THIS

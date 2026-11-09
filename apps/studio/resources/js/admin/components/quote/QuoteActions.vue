@@ -5,9 +5,11 @@ import { toast } from 'vue-sonner'
 import { useI18n } from 'vue-i18n'
 import { EllipsisVertical } from 'lucide-vue-next'
 import { Button } from '@/ui/button'
+import { copyText } from '@/ui/copy-button'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
-import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
+import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
+import { HoldToConfirm } from '@/ui/hold-to-confirm'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/ui/alert-dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 
@@ -53,21 +55,15 @@ function duplicate() {
 }
 
 const deleting = ref(false)
+const packaging = ref(false)
 
 function destroy() {
   router.delete(`/angebote/${props.quote.id}`)
 }
 
-function copyLink() {
-  if (!navigator.clipboard) {
-    toast.error(t('quotes.copyLinkFailed'))
-    return
-  }
-
-  navigator.clipboard.writeText(props.quote.portalUrl!).then(
-    () => toast.success(t('quotes.copied')),
-    () => toast.error(t('quotes.copyLinkFailed')),
-  )
+async function copyLink() {
+  if (await copyText(props.quote.portalUrl!)) toast.success(t('quotes.copied'))
+  else toast.error(t('quotes.copyLinkFailed'))
 }
 
 type ActionKey = 'download' | 'copy_link' | 'send_by_mail'
@@ -122,15 +118,14 @@ function run(key: ActionKey) {
 
 <template>
   <!-- .stop: in einer Card liegen die Knöpfe in der Kopfzeile, die selbst umschaltet. -->
-  <div class="ml-auto flex flex-wrap items-center justify-end gap-1.5">
-    <Button v-if="canManageQuotes && quote.status === 'accepted'" type="button" variant="outline" @click.stop="addendum">
+  <div class="ml-auto flex flex-wrap items-center justify-end gap-1.5 max-[640px]:flex-nowrap">
+    <Button v-if="canManageQuotes && quote.status === 'accepted'" type="button" variant="outline" class="max-[640px]:hidden" @click.stop="addendum">
       {{ $t('quotes.addendum') }}
     </Button>
 
-    <Dialog v-if="canManageQuotes">
-      <DialogTrigger as-child>
-        <Button variant="outline" type="button" @click.stop>{{ $t('quotes.saveAsPackage') }}</Button>
-      </DialogTrigger>
+    <Button v-if="canManageQuotes" variant="outline" type="button" class="max-[640px]:hidden" @click.stop="packaging = true">{{ $t('quotes.saveAsPackage') }}</Button>
+
+    <Dialog v-if="canManageQuotes" v-model:open="packaging">
 
       <DialogContent class="max-w-[420px]">
         <DialogHeader>
@@ -180,6 +175,7 @@ function run(key: ActionKey) {
         <DropdownMenuTrigger
           class="flex items-center rounded-r-[var(--r-sm)] border-l border-white/20 bg-action px-2 text-action-foreground"
           :aria-label="$t('quotes.moreActions')"
+          :title="$t('quotes.moreActions')"
           @click.stop
         >
           <svg class="size-3.5 fill-current" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
@@ -203,11 +199,13 @@ function run(key: ActionKey) {
 
     <DropdownMenu v-if="canManageQuotes">
       <DropdownMenuTrigger as-child>
-        <Button variant="ghost" type="button" class="rounded-[6px] px-2 hover:bg-sunk-2" :aria-label="$t('project.more')" @click.stop>
+        <Button variant="ghost" type="button" class="rounded-[6px] px-2 hover:bg-sunk-2" :aria-label="$t('project.more')" :title="$t('project.more')" @click.stop>
           <EllipsisVertical />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem v-if="quote.status === 'accepted'" class="min-[641px]:hidden" @select="addendum">{{ $t('quotes.addendum') }}</DropdownMenuItem>
+        <DropdownMenuItem class="min-[641px]:hidden" @select="packaging = true">{{ $t('quotes.saveAsPackage') }}</DropdownMenuItem>
         <DropdownMenuItem v-if="quote.status === 'sent'" @select="markAccepted">{{ $t('quotes.markAccepted') }}</DropdownMenuItem>
         <DropdownMenuItem @select="duplicate">{{ $t('quotes.duplicate') }}</DropdownMenuItem>
         <DropdownMenuItem v-if="quote.status === 'draft'" class="text-destructive" @select="deleting = true">
@@ -222,7 +220,7 @@ function run(key: ActionKey) {
           <AlertDialogTitle>{{ $t('quotes.deleteTitle') }}</AlertDialogTitle>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogAction tone="destructive" @click="destroy">{{ $t('common.delete') }}</AlertDialogAction>
+          <HoldToConfirm tone="destructive" @confirm="deleting = false; destroy()">{{ $t('common.delete') }}</HoldToConfirm>
           <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>

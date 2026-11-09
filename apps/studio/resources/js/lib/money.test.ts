@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatDiscount, formatPercent, parseDiscount } from './money'
+import { basisPointsToPercent, formatDiscount, formatPercent, parseDiscount, percentToBasisPoints } from './money'
 
 describe('parseDiscount', () => {
   it('reads a trailing percent sign as a percentage in basis points', () => {
@@ -40,5 +40,12 @@ describe('formatPercent', () => {
   it('drops trailing zeros and uses a decimal comma', () => {
     expect(formatPercent(1900)).toBe('19')
     expect(formatPercent(1250)).toBe('12,5')
+  })
+})
+
+describe('basisPointsToPercent', () => {
+  it('writes the German decimal comma and reads it back', () => {
+    expect(basisPointsToPercent(1900)).toBe('19,00')
+    expect(percentToBasisPoints(basisPointsToPercent(3050))).toBe(3050)
   })
 })

@@ -6,6 +6,7 @@ use App\Gallery\Jobs\BuildZip;
 use App\Gallery\Models\GalleryGuest;
 use App\Gallery\Models\GalleryList;
 use App\Gallery\Models\GalleryVersion;
+use App\Gallery\Support\GalleryDownloadGate;
 use App\Media\Enums\ZipBuildScope;
 use App\Media\Enums\ZipBuildSize;
 use App\Media\Enums\ZipBuildStatus;
@@ -26,12 +27,16 @@ class StartZipBuild
         ?GalleryList $list,
         ?string $waiterEmail,
         int $freshHours,
+        bool $guests = false,
     ): void {
+        abort_unless(GalleryDownloadGate::allowsSize($version->gallery, $size), 422);
+
         $build = ZipBuild::query()->firstOrNew([
             'gallery_version_id' => $version->id,
             'scope' => $list === null ? ZipBuildScope::All : ZipBuildScope::ListSelection,
             'size' => $size,
             'gallery_list_id' => $list?->id,
+            'guests' => $guests,
         ]);
 
         if ($build->exists && $build->status === ZipBuildStatus::Ready && $build->updated_at->gt(now()->subHours($freshHours))) {

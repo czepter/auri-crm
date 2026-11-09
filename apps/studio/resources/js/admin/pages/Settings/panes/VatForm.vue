@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import FormSection from '@/ui/page/FormSection.vue'
 import { useForm } from '@inertiajs/vue3'
 import { basisPointsToPercent, percentToBasisPoints } from '@/lib/money'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
@@ -31,9 +32,8 @@ defineExpose({ form, submit })
 
 <template>
   <form id="vat-form" @submit.prevent="submit">
-    <div class="mt-0">
-      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.vatModeLabel') }}</div>
-      <div class="mb-6">
+    <FormSection :title="$t('settings.vatModeLabel')">
+      <div>
         <RadioGroup
           name="vatmode"
           :model-value="form.vat_mode"
@@ -48,7 +48,6 @@ defineExpose({ form, submit })
             <Label variant="inline" for="vat-small-business">{{ $t('settings.vatModeSmallBusiness') }}</Label>
           </div>
         </RadioGroup>
-        <p class="mt-2.5 text-small leading-[1.45] text-destructive">{{ $t('settings.vatModeWarning') }}</p>
       </div>
       <div v-if="form.vat_mode === 'standard'" class="mb-6">
         <Field
@@ -64,21 +63,19 @@ defineExpose({ form, submit })
           </InputGroup>
         </Field>
       </div>
-    </div>
+    </FormSection>
 
     <template v-if="form.vat_mode === 'small_business'">
-    <div class="mt-8 first-of-type:mt-6">
-      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.vatNoteLabel') }}</div>
-      <div class="mb-6">
+    <FormSection :title="$t('settings.vatNoteLabel')">
+      <div>
         <Field :error="form.errors.vat_note" v-slot="{ id }">
           <Label :for="id">{{ $t('settings.vatNoteFieldLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
           <Textarea :id v-model="form.vat_note" rows="3" />
         </Field>
       </div>
-    </div>
+    </FormSection>
 
-    <div class="mt-8 first-of-type:mt-6">
-      <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('settings.vatPreviewLabel') }}</div>
+    <FormSection :title="$t('settings.vatPreviewLabel')">
       <div class="relative block cursor-default rounded-lg border border-border p-2.5">
         <div class="mb-4 flex items-center justify-between"><span class="mb-[5px] text-small leading-none font-semibold text-faint">{{ $t('settings.vatPreviewKicker') }}</span></div>
         <p v-if="form.vat_note" style="margin: 0; font: 400 13px/1.5 var(--font); color: var(--ink)">
@@ -86,7 +83,7 @@ defineExpose({ form, submit })
         </p>
         <p v-else class="m-0 text-small leading-[1.45] text-faint">{{ $t('settings.vatPreviewEmpty') }}</p>
       </div>
-    </div>
+    </FormSection>
     </template>
   </form>
 </template>

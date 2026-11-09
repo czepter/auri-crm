@@ -83,3 +83,20 @@ it('preserves a tenant edit to a seeded rule on re-seed', function () {
         ->and($rule->notification_body)->toBe('Custom body the studio wrote themselves.')
         ->and($rule->is_active)->toBeFalse();
 });
+
+it('ships plain-noun names without a dash', function () {
+    foreach (config('automation.rules') as $rule) {
+        expect($rule['name'])->not->toContain('—');
+    }
+});
+
+it('renames a seeded rule only while it still carries the old name', function () {
+    $migration = require database_path('migrations/2026_11_07_000100_rename_seeded_automation_rules.php');
+    AutomationRule::factory()->create(['key' => 'packing-list', 'name' => 'Packliste']);
+    AutomationRule::factory()->create(['key' => 'quote-follow-up', 'name' => 'Mein Angebotsnachfass']);
+
+    $migration->up();
+
+    expect(AutomationRule::query()->where('key', 'packing-list')->value('name'))->toBe('Ausrüstung packen')
+        ->and(AutomationRule::query()->where('key', 'quote-follow-up')->value('name'))->toBe('Mein Angebotsnachfass');
+});

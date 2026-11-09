@@ -10,6 +10,8 @@ import TemplateCreateDialog from '@/admin/components/templates/TemplateCreateDia
 import TaskTemplatePreview from '@/admin/components/templates/TaskTemplatePreview.vue'
 import { Input } from '@/ui/input'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import Chip from '@/ui/page/Chip.vue'
+import Empty from '@/ui/page/Empty.vue'
 
 type Kind = 'aufgaben' | 'fragebogen' | 'dokumente' | 'galerien'
 
@@ -55,8 +57,8 @@ function offset(days: number): string {
   if (days === 0) return t('templates.offsetSame')
 
   return days < 0
-    ? t('templates.offsetBefore', { count: Math.abs(days) })
-    : t('templates.offsetAfter', { count: days })
+    ? t('templates.offsetBefore', Math.abs(days))
+    : t('templates.offsetAfter', days)
 }
 
 const rows = computed<Record<Kind, Row[]>>(() => ({
@@ -135,7 +137,7 @@ function open(row: Row) {
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('templates.title')">
           <div class="ml-auto flex items-center gap-2.5">
-            <Input v-model="query" class="w-[220px]" type="search" :placeholder="$t('templates.search')" />
+            <Input :aria-label="$t('templates.search')" v-model="query" class="min-w-60 w-60" type="search" :placeholder="$t('templates.search')" />
             <TemplateCreateDialog
               :kinds="kinds"
               :kind="kind"
@@ -149,7 +151,7 @@ function open(row: Row) {
         <div class="flex flex-wrap items-center gap-2 px-6 pt-5">
           <Link
             class="rounded-lg px-2.5 py-[5px] text-small leading-[1.3] no-underline"
-            :class="kind === null ? 'bg-foreground text-background' : 'bg-sunk-2 text-foreground'"
+            :class="kind === null ? 'bg-paper font-medium text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'bg-sunk-2 text-foreground'"
             href="/vorlagen"
           >
             {{ $t('templates.all') }}
@@ -159,7 +161,7 @@ function open(row: Row) {
             v-for="entry in kinds"
             :key="entry"
             class="rounded-lg px-2.5 py-[5px] text-small leading-[1.3] no-underline"
-            :class="kind === entry ? 'bg-foreground text-background' : 'bg-sunk-2 text-foreground'"
+            :class="kind === entry ? 'bg-paper font-medium text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'bg-sunk-2 text-foreground'"
             :href="`/vorlagen?typ=${entry}`"
           >
             {{ $t(KIND_LABEL[entry]) }}
@@ -170,12 +172,12 @@ function open(row: Row) {
         <div class="px-6 pt-6 pb-8">
           <!-- Übersicht: jede Art als eigene Karte, in der Reihenfolge der Chips. -->
           <div v-if="kind === null" class="max-w-[980px]">
-            <section v-for="entry in kinds" :key="entry" class="mt-7 first:mt-0">
+            <section v-for="entry in kinds.filter((each) => matching(rows[each]).length)" :key="entry" class="mt-7 first:mt-0">
               <div class="mb-2.5 text-small leading-none font-semibold text-faint">
                 {{ $t(KIND_LABEL[entry]) }}
               </div>
 
-              <div v-if="matching(rows[entry]).length" class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
+              <div class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
                 <component
                   :is="row.href ? Link : 'button'"
                   v-for="row in matching(rows[entry]).slice(0, 4)"
@@ -188,10 +190,7 @@ function open(row: Row) {
                     <span class="mt-px block text-small leading-[1.3] text-muted-foreground">{{ row.meta }}</span>
                   </span>
                   <span v-if="row.note" class="flex-none text-small tabular-nums text-faint">{{ row.note }}</span>
-                  <span
-                    v-if="!row.active"
-                    class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-small leading-[1.5] font-semibold text-faint"
-                  >{{ $t('formTemplates.paused') }}</span>
+                  <Chip v-if="!row.active">{{ $t('formTemplates.paused') }}</Chip>
                 </component>
 
                 <Link
@@ -200,8 +199,6 @@ function open(row: Row) {
                   :href="`/vorlagen?typ=${entry}`"
                 >{{ $t('templates.more', { count: matching(rows[entry]).length - 4 }) }}</Link>
               </div>
-
-              <p v-else class="m-0 text-small leading-[1.45] text-faint">{{ $t('templates.empty') }}</p>
             </section>
           </div>
 
@@ -221,13 +218,10 @@ function open(row: Row) {
                   <span class="mt-px block text-small leading-[1.3] text-muted-foreground">{{ row.meta }}</span>
                 </span>
                 <span v-if="row.note" class="flex-none text-small tabular-nums text-faint">{{ row.note }}</span>
-                <span
-                  v-if="!row.active"
-                  class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-small leading-[1.5] font-semibold text-faint"
-                >{{ $t('formTemplates.paused') }}</span>
+                <Chip v-if="!row.active">{{ $t('formTemplates.paused') }}</Chip>
               </component>
 
-              <p v-if="!matching(rows[kind]).length" class="m-0 text-small leading-[1.45] text-faint">{{ $t('templates.empty') }}</p>
+              <Empty v-if="!matching(rows[kind]).length" :text="$t('templates.empty')" />
             </div>
 
             <div v-if="editable && current" class="min-w-0 max-w-[600px] flex-1">

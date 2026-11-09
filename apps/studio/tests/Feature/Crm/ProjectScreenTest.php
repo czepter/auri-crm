@@ -54,7 +54,14 @@ it('shows only the tabs whose feature exists', function () {
     // Fragebögen is E-02.
     $tabs = props("/auftraege/{$this->case->public_id}")['header']['tabs'];
 
-    expect(array_column($tabs, 'key'))->toBe(['overview', 'shoots', 'messages', 'galleries', 'documents']);
+    expect(array_column($tabs, 'key'))->toBe(['overview', 'shoots', 'tasks', 'messages', 'galleries', 'documents', 'info']);
+});
+
+it('serves the rail as the Info tab of a project', function () {
+    markBooked($this->case);
+
+    $this->get("/auftraege/{$this->case->public_id}/info")
+        ->assertInertia(fn ($page) => $page->component('Projects/Info')->where('header.id', $this->case->public_id));
 });
 
 it('names its tabs with keys the catalogue answers', function () {
@@ -76,8 +83,7 @@ it('carries the quote block the inquiry overview carries', function () {
 
     $props = props("/auftraege/{$this->case->public_id}");
 
-    expect($props['quote']['total'])->toBe(590000)
-        ->and($props['packages'])->toBe([]);
+    expect($props['quote']['total'])->toBe(590000);
 });
 
 it('counts the threads waiting for an answer', function () {
@@ -112,7 +118,7 @@ it('counts the questionnaires the client has not answered', function () {
     $documents = collect($tabs)->firstWhere('key', 'documents');
 
     expect(collect($documents['children'])->firstWhere('key', 'forms')['count'])->toBe(1)
-        ->and($documents['count'])->toBe(1);
+        ->and($documents['count'])->toBe(3);
 });
 
 it('counts the quotes the client has not answered', function () {
@@ -186,7 +192,7 @@ it('takes a second and a third shoot', function () {
 });
 
 it('advances a shoot from the screen', function () {
-    $shoot = Shoot::factory()->for($this->case, 'case')->atStatus(ShootStatus::Booked)->create();
+    $shoot = Shoot::factory()->for($this->case, 'case')->on(now()->subDay()->toDateString())->atStatus(ShootStatus::Booked)->create();
 
     $this->post("/shootings/{$shoot->public_id}/status", ['status' => 'shot'])
         ->assertRedirect();
@@ -511,4 +517,22 @@ it('saves the name, the stage and the shoot blocks from the project screen', fun
         ->and($lead->fresh()->stage->key)->toBe(LeadStage::Contacted->value)
         ->and($shoot->fresh()->date->format('Y-m-d'))->toBe('2026-06-20')
         ->and($shoot->fresh()->venue_name)->toBe('Gut Basthorst');
+});
+
+it('renders the full trace on its own screen', function () {
+    markBooked($this->case);
+
+    $page = $this->get("/auftraege/{$this->case->public_id}/verlauf")->assertOk()->viewData('page');
+
+    expect($page['component'])->toBe('Projects/History')
+        ->and($page['props']['header']['id'])->toBe($this->case->public_id)
+        ->and($page['props'])->toHaveKey('thread');
+});
+
+it('renders the notes on their own screen', function () {
+    $page = $this->get("/auftraege/{$this->case->public_id}/notizen")->assertOk()->viewData('page');
+
+    expect($page['component'])->toBe('Projects/Notes')
+        ->and($page['props']['header']['id'])->toBe($this->case->public_id)
+        ->and($page['props'])->toHaveKey('thread');
 });

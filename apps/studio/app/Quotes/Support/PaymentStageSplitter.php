@@ -24,8 +24,8 @@ final class PaymentStageSplitter
     private const ROUNDING = 100;
 
     /**
-     * @param  Collection<int, object{percent: int, minimum: int, label: string}>  $stages  in order
-     * @return list<array{label: string, amount: int}> stages that got nothing are absent
+     * @param  Collection<int, object{percent: int, minimum: int, label: string, note?: ?string, due_on?: mixed}>  $stages  in order
+     * @return list<array{label: string, amount: int, note: ?string, due_on: mixed}> stages that got nothing are absent
      */
     public static function split(int $total, Collection $stages): array
     {
@@ -44,7 +44,7 @@ final class PaymentStageSplitter
             $rest -= $amount;
 
             if ($amount > 0) {
-                $amounts[] = ['label' => $stage->label, 'amount' => $amount];
+                $amounts[] = ['label' => $stage->label, 'amount' => $amount, 'note' => $stage->note ?? null, 'due_on' => $stage->due_on ?? null];
             }
         }
 

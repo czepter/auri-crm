@@ -4,7 +4,7 @@
  * production side. OpenCases decides the groups; this only narrows them,
  * in the URL, so the pane a link opens is the pane the sender was looking at.
  */
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
 import { dayWithWeekday } from "@/admin/lib/dates"
 import { useQueueQuery } from "@/admin/lib/queueQuery"
 import { fold } from "@/admin/lib/search"
@@ -15,6 +15,8 @@ import { Switch } from "@/ui/switch"
 const props = defineProps<{
     groups: { key: string; rows: App.Crm.Data.CaseQueueRowData[] }[]
 }>()
+
+const emit = defineEmits<{ "update:rows": [App.Crm.Data.CaseQueueRowData[]] }>()
 
 const initial = new URLSearchParams(window.location.search)
 const term = ref(initial.get("q") ?? "")
@@ -36,10 +38,13 @@ const shown = computed(() => {
             rows: group.rows.filter((row) => !needle || fold(row.name).includes(needle)),
         }))
 })
+
+// What ↑↓ beside the pane may reach — the rows still standing, not all of them.
+watch(shown, (groups) => emit("update:rows", groups.flatMap((group) => group.rows)), { immediate: true })
 </script>
 
 <template>
-    <Queue>
+    <Queue class="max-[640px]:hidden">
         <div class="flex flex-col gap-2 px-3 pb-3">
             <div class="flex items-center gap-2">
                 <span
@@ -53,7 +58,7 @@ const shown = computed(() => {
                 <Switch v-model="due" aria-labelledby="queue-due" class="ml-auto" />
             </div>
 
-            <Input v-model="term" size="sm" type="search" :placeholder="$t('common.search')" />
+            <Input :aria-label="$t('common.search')" v-model="term" size="sm" type="search" :placeholder="$t('common.search')" />
         </div>
 
         <template v-for="group in shown" :key="group.key">
@@ -68,8 +73,8 @@ const shown = computed(() => {
                 :name="row.name"
                 :meta="row.days === null ? undefined : $t('projectQueue.days', row.days)"
                 :alert="row.days !== null"
+                :step="row.reason === 'payment' ? $t('projectQueue.reason.payment') : row.step"
                 :title="dayWithWeekday(row.date, null) ?? undefined"
-                :snippet="row.reason ? $t(`projectQueue.reason.${row.reason}`, { stage: row.stage }) : row.stage"
                 :active="row.open"
                 :href="`/auftraege/${row.id}${query}`"
             />

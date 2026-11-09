@@ -1,5 +1,6 @@
 <?php
 
+use App\Gallery\Http\Controllers\AssetHideController;
 use App\Gallery\Http\Controllers\DownloadZipPartController;
 use App\Gallery\Http\Controllers\GalleryDownloadController;
 use App\Gallery\Http\Controllers\GalleryEngagementController;
@@ -311,6 +312,9 @@ Route::prefix('galerien/{gallery}')->group(function () {
         Route::post('/kommentar', [GalleryEngagementController::class, 'storeComment'])
             ->middleware('gallery.feature:comments')
             ->name('gallery.comment.store');
+        Route::post('/ausblenden', [AssetHideController::class, 'toggle'])
+            ->middleware('gallery.feature:hide')
+            ->name('gallery.hide.toggle');
     });
 
     // The download gates (mockups 11, 12) — reachable only once the view
@@ -367,3 +371,6 @@ Route::prefix('galerien/{gallery}')->group(function () {
 // credential, same as every other token-in-the-path route this file names.
 Route::get('/abmelden/{contact}', [UnsubscribeController::class, 'show'])->name('portal.unsubscribe.show');
 Route::post('/abmelden/{contact}', [UnsubscribeController::class, 'store'])->name('portal.unsubscribe.store');
+
+// Unmatched paths meet the web group too, so the error page knows the session.
+Route::fallback(fn () => abort(404));

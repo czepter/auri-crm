@@ -20,5 +20,7 @@ test('the project screen shows its cards and an activity trace', async ({ page }
   // being empty by construction.
   await page.getByRole('switch', { name: 'Portal' }).click()
 
-  await expect(page.locator('aside').getByText(/Portal (freigegeben|verborgen)/)).toBeVisible()
+  await page.getByRole('link', { name: 'Info', exact: true }).click()
+
+  await expect(page.getByText(/Portal (freigegeben|verborgen)/)).toBeVisible()
 })

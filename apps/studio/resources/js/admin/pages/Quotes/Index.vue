@@ -9,24 +9,29 @@ import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
 import { Input } from '@/ui/input'
 import { Button } from '@/ui/button'
 import { formatEuros } from '@/lib/money'
+import { quoteTone } from '@/admin/lib/quoteDisplay'
+import Chip from '@/ui/page/Chip.vue'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{ quotes: App.Quotes.Data.QuoteRowData[] }>()
 useLiveProps(['quotes'])
 
 const query = ref('')
+const newestFirst = ref(true)
 
-const CHIP: Record<string, string> = { draft: 'next', sent: 'now', accepted: 'done', superseded: 'off', expired: 'fail' }
+const dateOf = (quote: App.Quotes.Data.QuoteRowData) => quote.sentAt ?? quote.createdAt ?? ''
 
 const shown = computed(() => {
   const needle = query.value.trim().toLocaleLowerCase('de')
 
-  return props.quotes.filter((quote) => !needle
-    || `${quote.projectName} ${quote.contact ?? ''} ${quote.number ?? ''}`.toLocaleLowerCase('de').includes(needle))
+  return props.quotes
+    .filter((quote) => !needle
+      || `${quote.projectName} ${quote.contact ?? ''} ${quote.number ?? ''}`.toLocaleLowerCase('de').includes(needle))
+    .sort((a, b) => dateOf(a).localeCompare(dateOf(b)) * (newestFirst.value ? -1 : 1))
 })
 
 function day(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
+  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 </script>
 
@@ -35,12 +40,12 @@ function day(iso: string) {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('quotesOverview.title')">
-          <Button :as="Link" variant="pill" class="ml-auto" href="/angebote/neu">{{ $t('quotesOverview.create') }}</Button>
+          <Button v-if="quotes.length" :as="Link" variant="pill" class="ml-auto" href="/angebote/neu">{{ $t('quotesOverview.create') }}</Button>
         </PageHead>
 
         <template v-if="quotes.length">
           <div class="flex px-6 pt-4.5">
-            <Input v-model="query" class="h-8 w-64" type="search" :placeholder="$t('quotesOverview.searchPlaceholder')" />
+            <Input :aria-label="$t('quotesOverview.searchPlaceholder')" v-model="query" class="h-8 min-w-60 w-64 shrink-0" type="search" :placeholder="$t('quotesOverview.searchPlaceholder')" />
           </div>
 
           <Table>
@@ -50,7 +55,11 @@ function day(iso: string) {
                 <TableHead>{{ $t('quotesOverview.number') }}</TableHead>
                 <TableHead align="right">{{ $t('quotesOverview.amount') }}</TableHead>
                 <TableHead>{{ $t('quotesOverview.status') }}</TableHead>
-                <TableHead align="right">{{ $t('quotesOverview.createdAt') }}</TableHead>
+                <TableHead align="right" :aria-sort="newestFirst ? 'descending' : 'ascending'">
+                  <button type="button" @click="newestFirst = !newestFirst">
+                    {{ $t('quotesOverview.createdAt') }} {{ newestFirst ? '↓' : '↑' }}
+                  </button>
+                </TableHead>
               </tr>
             </thead>
             <tbody>
@@ -60,14 +69,14 @@ function day(iso: string) {
                 </TableCell>
                 <TableCell tone="muted">{{ quote.number ?? '—' }}</TableCell>
                 <TableCell align="right">{{ formatEuros(quote.total) }}</TableCell>
-                <TableCell><span class="chip" :class="CHIP[quote.status]">{{ quote.statusLabel }}</span></TableCell>
-                <TableCell align="right" tone="muted">{{ quote.createdAt ? day(quote.createdAt) : '—' }}</TableCell>
+                <TableCell><Chip :tone="quoteTone(quote.status)">{{ quote.statusLabel }}</Chip></TableCell>
+                <TableCell align="right" tone="muted">{{ quote.sentAt ?? quote.createdAt ? day((quote.sentAt ?? quote.createdAt)!) : '—' }}</TableCell>
               </TableRow>
             </tbody>
           </Table>
         </template>
 
-        <Empty v-else class="mx-8 mt-7" :text="$t('quotesOverview.empty')">
+        <Empty v-else :text="$t('quotesOverview.empty')">
           <Button :as="Link" variant="pill" href="/angebote/neu">{{ $t('quotesOverview.create') }}</Button>
         </Empty>
       </div>

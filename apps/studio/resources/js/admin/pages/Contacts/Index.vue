@@ -18,7 +18,7 @@ useLiveProps(['contacts'])
 const groups = computed(() => groupContacts(props.contacts))
 
 function day(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
+  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 /* crm.css's own table, written out. The sheet styled td and th directly, and
@@ -38,7 +38,7 @@ function day(iso: string) {
           <Button :as="Link" class="ml-auto" variant="pill" href="/kontakte/neu">{{ $t('contacts.create') }}</Button>
         </PageHead>
 
-        <Empty v-if="!contacts.length" class="mx-8 mt-7" :text="$t('contacts.empty')">
+        <Empty v-if="!contacts.length" :text="$t('contacts.empty')">
           <Button :as="Link" variant="pill" href="/kontakte/neu">{{ $t('contacts.create') }}</Button>
         </Empty>
 

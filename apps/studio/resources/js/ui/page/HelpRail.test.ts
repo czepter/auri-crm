@@ -49,6 +49,8 @@ describe('HelpRail', () => {
   })
 
   it('renders the switcher and close control while open with entries', async () => {
+    helpPanel.oeffnen()
+
     const html = await render([{ slug: 'a', titel: 'A', art: 'aufgabe' }])
 
     expect(html).toContain(de.help.close)

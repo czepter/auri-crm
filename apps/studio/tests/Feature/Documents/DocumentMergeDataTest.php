@@ -89,7 +89,7 @@ it('prints the Vereinnahmungsdatum on an Anzahlung paid before it was issued', f
 it('gathers every block from the registered providers, even without a case', function () {
     $data = app(DocumentMergeData::class)->forCase(null);
 
-    expect(array_keys($data))->toBe(['project', 'contact', 'shoot', 'invoice', 'creditNote', 'quote', 'gallery', 'studio'])
+    expect(array_keys($data))->toBe(['project', 'contact', 'shoot', 'payment', 'invoice', 'creditNote', 'quote', 'gallery', 'studio'])
         ->and($data['gallery']['link'])->toBe('')
         ->and($data['invoice']['number'])->toBe('');
 });

@@ -30,6 +30,7 @@ const meta = {
     template: {
       id: 'dt1',
       name: 'Angebot Hochzeit',
+      subject: null,
       body: '',
       blocks: {
         blocks: [
@@ -57,6 +58,7 @@ export const AusAltemHtml: Story = {
     template: {
       id: 'dt3',
       name: 'Angebot Porträt',
+      subject: null,
       body: '<h1>Angebot</h1><p>Für {{ kunde.name }}.</p>',
       blocks: null,
       version: 1,

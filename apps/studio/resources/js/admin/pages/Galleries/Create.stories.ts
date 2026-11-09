@@ -5,24 +5,40 @@ const presets: App.Gallery.Data.GalleryPresetData[] = [
   {
     id: 'gp-hochzeit',
     name: 'Hochzeit',
-    design: { cover: 'full', type: 'serif', colour: 'light', grid: 'wide' },
+    design: { cover: 'zentriert', type: 'serif', colour: 'hell', size: 'mittel', spacing: 'eng', flow: 'zeilen' },
     expiryMode: 'days',
     expiryDays: 90,
     downloadsEnabled: true,
     listsEnabled: true,
     commentsEnabled: false,
     isDefault: true,
+    sets: null,
+    viewMode: null,
+    downloadRule: null,
+    downloadSizes: null,
+    permissions: null,
+    introEnabled: null,
+    expiryReminder: null,
+    mailTemplateFamilyId: null,
   },
   {
     id: 'gp-portraet',
     name: 'Porträt',
-    design: { cover: 'plain', type: 'grotesk', colour: 'dark', grid: 'dense' },
+    design: { cover: 'links', type: 'sans', colour: 'dunkel', size: 'klein', spacing: 'weit', flow: 'spalten' },
     expiryMode: 'none',
     expiryDays: null,
     downloadsEnabled: true,
     listsEnabled: false,
     commentsEnabled: false,
     isDefault: false,
+    sets: null,
+    viewMode: null,
+    downloadRule: null,
+    downloadSizes: null,
+    permissions: null,
+    introEnabled: null,
+    expiryReminder: null,
+    mailTemplateFamilyId: null,
   },
 ]
 
@@ -42,13 +58,15 @@ const meta = {
     mode: 'internal',
     project,
     shootId: 's-rahn',
+    siblings: [{ id: 'g-rahn', title: 'Getting Ready', projectName: 'Hochzeit Rahn', projectType: 'wedding', projectTypeLabel: 'Hochzeit', assetCount: 48, version: 1, expiresAt: '2027-02-01', cover: null, status: 'published', downloadRule: 'open' }],
+    address: 'galerie.example/hochzeit-rahn',
     presets,
     studioDefaults: {
-      downloads: true,
+      downloadRule: 'open',
       lists: true,
       comments: false,
       expiryDays: 90,
-      design: { cover: 'full', type: 'serif', colour: 'light', grid: 'wide' },
+      design: { cover: 'zentriert', type: 'serif', colour: 'hell', size: 'mittel', spacing: 'eng', flow: 'zeilen' },
     },
   },
 } satisfies Meta<typeof Create>
@@ -60,7 +78,7 @@ type Story = StoryObj<typeof meta>
 export const AusShooting: Story = {}
 
 /** Ohne Projekt und ohne Vorlagen bleiben nur die Studio-Standardwerte. */
-export const OhneProjekt: Story = { args: { project: null, shootId: null, presets: [] } }
+export const OhneProjekt: Story = { args: { project: null, shootId: null, siblings: [], address: 'galerie.example', presets: [] } }
 
 /** Eine Galerie, die anderswo liegt: nur Projekt, Titel und Adresse. */
 export const Extern: Story = { args: { mode: 'external' } }

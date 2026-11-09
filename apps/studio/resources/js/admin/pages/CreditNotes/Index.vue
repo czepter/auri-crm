@@ -26,6 +26,8 @@ const shown = computed(() => {
       .toLocaleLowerCase('de')
       .includes(needle))
 })
+
+const total = computed(() => shown.value.reduce((sum, note) => sum + note.amount, 0))
 </script>
 
 <template>
@@ -34,9 +36,11 @@ const shown = computed(() => {
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('creditNotesOverview.title')" />
 
-        <template v-if="creditNotes.length">
+        <div v-if="creditNotes.length" class="max-w-[1280px]">
           <div class="flex flex-wrap items-center gap-3 px-6 pt-4.5">
-            <Input v-model="query" class="h-8 w-64" type="search" :placeholder="$t('creditNotesOverview.searchPlaceholder')" />
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-sunk px-3 py-1 text-small text-ink-2">{{ $t('creditNotesOverview.title') }} <b class="font-semibold tabular-nums text-foreground">{{ shown.length }}</b></span>
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-sunk px-3 py-1 text-small text-ink-2">{{ $t('creditNotesOverview.amount') }} <b class="font-semibold tabular-nums text-foreground">−{{ formatEuros(total) }}</b></span>
+            <Input :aria-label="$t('creditNotesOverview.searchPlaceholder')" v-model="query" class="h-8 min-w-60 w-64 shrink-0" type="search" :placeholder="$t('creditNotesOverview.searchPlaceholder')" />
           </div>
 
           <Table class="max-[640px]:block max-[640px]:overflow-x-auto">
@@ -71,9 +75,9 @@ const shown = computed(() => {
               </TableRow>
             </tbody>
           </Table>
-        </template>
+        </div>
 
-        <Empty v-else class="mx-8 mt-7" :text="$t('creditNotesOverview.empty')">
+        <Empty v-else :text="$t('creditNotesOverview.empty')">
           <Button :as="Link" variant="pill" href="/rechnungen">{{ $t('creditNotesOverview.toInvoices') }}</Button>
         </Empty>
       </div>

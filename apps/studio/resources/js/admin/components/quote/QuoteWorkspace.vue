@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue'
-import { router, useForm } from '@inertiajs/vue3'
+import { Link, router, useForm } from '@inertiajs/vue3'
 import QuoteEditor from '@/admin/components/quote/QuoteEditor.vue'
 import QuotePreviewPane from '@/admin/components/quote/QuotePreviewPane.vue'
 import Card from '@/ui/page/Card.vue'
@@ -9,7 +9,8 @@ import { debounced } from '@/admin/lib/autosave'
 import { buildQuotePayload, type QuoteContact, type QuoteDraft, type VatSettings } from '@/admin/components/quote/quotePayload'
 import { centsToEuros, eurosToCents, formatDiscount, formatEuros, formatPercent } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
-import { quoteChipClass, quoteTitle } from '@/admin/lib/quoteDisplay'
+import { quoteTone, quoteTitle } from '@/admin/lib/quoteDisplay'
+import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { DatePicker } from '@/ui/date-picker'
@@ -17,9 +18,8 @@ import { Label } from '@/ui/label'
 import { useI18n } from 'vue-i18n'
 import QuoteActions from '@/admin/components/quote/QuoteActions.vue'
 import InstallmentPaidDialog from '@/admin/components/payments/InstallmentPaidDialog.vue'
-import InstallmentStornoDialog from '@/admin/components/payments/InstallmentStornoDialog.vue'
-import CreditNoteDialog from '@/admin/components/payments/CreditNoteDialog.vue'
 import PaymentPlanDialog from '@/admin/components/payments/PaymentPlanDialog.vue'
+import Empty from '@/ui/page/Empty.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -85,6 +85,9 @@ function draftOf(quote: App.Quotes.Data.QuoteData): QuoteDraft {
         percent: stage.percent,
         label: stage.label,
         minimum: centsToEuros(stage.minimum) || '',
+        note: stage.note ?? '',
+        dueOn: stage.dueOn ?? '',
+        fixed: stage.percent === 0 && stage.minimum > 0,
       })),
     },
   }
@@ -127,6 +130,8 @@ const save = debounced((quoteId: string) => {
 function create() {
   router.post(`/auftraege/${props.projectId}/angebote`, {}, { preserveScroll: true })
 }
+
+const RATE_CHIP: Record<string, ChipTone> = { scheduled: 'neutral', invoiced: 'warn', partial: 'warn', paid: 'success', cancelled: 'neutral' }
 
 const planForm = useForm({ total: '', installments: [{ due_on: '' }] })
 
@@ -194,7 +199,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
     <section v-if="canManageQuotes && quote.status === 'draft' && drafts[quote.id]" class="mt-3 first:mt-0">
       <header v-if="showHeader" class="mb-3 flex flex-wrap items-center gap-3">
         <h2 class="m-0 text-body leading-[1.2] font-semibold tracking-[-0.015em]">{{ quoteTitle(quote, t) }}</h2>
-        <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
+        <Chip :tone="quoteTone(quote.status)">{{ quote.statusLabel }}</Chip>
         <QuoteActions :project-id="projectId" :quote="quote" :can-manage-quotes="canManageQuotes" />
       </header>
 
@@ -213,15 +218,15 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
       <p v-if="saveErrors[quote.id]" class="mt-2 text-small text-destructive">{{ saveErrors[quote.id] }}</p>
     </section>
 
-  <div v-else class="mt-3 flex gap-6 first:mt-0">
+  <div v-else class="mt-3 flex items-start gap-6 first:mt-0">
     <Card
       class="w-[640px] max-w-full flex-none"
       :default-open="quote.status !== 'superseded'"
       :summary="totalOf(quote)"
       :title="quoteTitle(quote, t)"
     >
-      <template #action>
-        <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
+      <template v-if="showHeader" #action>
+        <Chip :tone="quoteTone(quote.status)">{{ quote.statusLabel }}</Chip>
         <span v-if="quote.sentChannel" class="text-small text-ink-2">
           {{ quote.sentChannel === 'mail' ? $t('quotes.sentByMail') : $t('quotes.sentBySelf') }}
         </span>
@@ -276,7 +281,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
       v-if="quote.status !== 'draft'"
       :min="1180"
       :label="$t('common.preview')"
-      wrapper-class="min-w-[420px] flex-1 rounded-[var(--r)] bg-paper shadow-card px-6 py-5"
+      wrapper-class="sticky top-6 h-fit min-w-[420px] flex-1 self-start rounded-[var(--r)] bg-paper shadow-card px-6 py-5"
     >
       <QuotePreviewPane :quote-id="quote.id" />
     </PreviewOverlay>
@@ -300,14 +305,8 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
     >
       <span class="w-[110px] flex-none text-ink-2">{{ dayWithWeekday(installment.dueOn) }}</span>
       <span class="flex-1">{{ installment.label }}</span>
-      <a
-        v-if="installment.invoiceId && installment.hasInvoiceDocument"
-        class="text-small text-ink-2"
-        :href="`/rechnungen/${installment.invoiceId}/pdf`"
-        target="_blank"
-      >{{ installment.invoiceNumber }}</a>
-      <span v-else-if="installment.invoiceNumber" class="text-small text-ink-2">{{ installment.invoiceNumber }}</span>
-      <span class="text-small text-ink-2">{{ installment.statusLabel }}</span>
+      <Link v-if="installment.invoiceId" class="text-small text-ink-2" :href="`/rechnungen/${installment.invoiceId}`">{{ installment.invoiceNumber }}</Link>
+      <Chip :tone="RATE_CHIP[installment.status] ?? 'neutral'">{{ installment.statusLabel }}</Chip>
       <span class="w-[110px] flex-none text-right font-semibold tabular-nums">{{ formatEuros(installment.amount) }}</span>
       <Button
         v-if="canManagePaymentPlan && !installment.invoiceId && installment.status !== 'cancelled'"
@@ -316,18 +315,9 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
         @click="router.post(`/raten/${installment.id}/rechnung`)"
       >{{ $t('payments.issueInvoice') }}</Button>
       <InstallmentPaidDialog
-        v-if="canManagePaymentPlan && installment.status !== 'cancelled' && installment.remaining > 0"
+        v-if="canManagePaymentPlan && !installment.invoiceId && installment.status !== 'cancelled' && installment.remaining > 0"
         :installment-id="installment.id"
         :remaining="installment.remaining"
-      />
-      <InstallmentStornoDialog
-        v-if="canManagePaymentPlan && installment.invoiceId && installment.status === 'invoiced'"
-        :invoice-id="installment.invoiceId"
-      />
-      <CreditNoteDialog
-        v-if="canManagePaymentPlan && installment.invoiceId && installment.status === 'paid'"
-        :invoice-id="installment.invoiceId"
-        :amount="installment.amount"
       />
     </div>
 
@@ -362,7 +352,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
         <Button type="button" variant="outline" @click="planForm.installments.push({ due_on: '' })">
           {{ $t('payments.addInstallment') }}
         </Button>
-        <Button type="submit" variant="pill" :disabled="planForm.processing">{{ $t('payments.create') }}</Button>
+        <Button type="submit" variant="outline" :disabled="planForm.processing">{{ $t('payments.create') }}</Button>
       </div>
 
       <p v-if="planForm.errors.installments" class="col-span-2 text-small text-destructive">
@@ -371,7 +361,5 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
     </form>
   </Card>
 
-  <p v-if="!quotes.length && !canManageQuotes" class="mt-3 text-small leading-[1.45] text-faint">
-    {{ $t('quotes.empty') }}
-  </p>
+  <Empty v-if="!quotes.length && !canManageQuotes" :text="$t('quotes.empty')" />
 </template>

@@ -154,10 +154,11 @@ it('resolves every conflict on the board in a bounded number of queries', functi
     $count = count(DB::getRawQueryLog());
     DB::disableQueryLog();
 
-    // A per-card conflict lookup would put this well above 25. The +2 over
+    // A per-card conflict lookup would put this well above 26. The +2 over
     // the old ceiling is the fixed, non-scaling cost of a permission check
-    // through spatie/laravel-permission (loading the user's roles once).
-    expect($count)->toBeLessThan(25);
+    // through spatie/laravel-permission (loading the user's roles once), the
+    // +1 the nav's draft count.
+    expect($count)->toBeLessThan(26);
 });
 
 it('flags a card whose date falls inside a studio closure, naming it', function () {
@@ -272,14 +273,14 @@ it('puts no integer identifier on the board', function () {
 
 // C-07 (#241): the column head carries the count and the sum — the question
 // staff otherwise go to Auswertungen for.
-it('sums each stage from the quotes actually sent', function () {
+it('sums each stage from the current quotes', function () {
     $lead = leadOn('2026-06-14', LeadStage::QuoteSent);
-    Quote::factory()->for($lead->case, 'case')->create(['total' => 590000, 'sent_at' => now()->subDay()]);
+    Quote::factory()->for($lead->case, 'case')->create(['net' => 590000, 'vat_mode' => 'small_business', 'sent_at' => now()->subDay()]);
 
     $other = leadOn('2026-07-11', LeadStage::QuoteSent, name: 'Petersen');
-    Quote::factory()->for($other->case, 'case')->create(['total' => 310000, 'sent_at' => now()->subDay()]);
+    Quote::factory()->for($other->case, 'case')->create(['net' => 310000, 'vat_mode' => 'small_business', 'sent_at' => now()->subDay()]);
 
-    // Nothing sent: not a zero in the sum, and a dash in the value column.
+    // No quote: not a zero in the sum, and a dash in the value column.
     leadOn('2026-08-02', LeadStage::New, name: 'Sundermann');
 
     $columns = collect(boardProps()['columns'])->keyBy('stage');
@@ -287,6 +288,13 @@ it('sums each stage from the quotes actually sent', function () {
     expect($columns['quote_sent']['total'])->toBe(900000)
         ->and($columns['new']['total'])->toBe(0)
         ->and(collect($columns['new']['cards'])->first()['value'])->toBeNull();
+});
+
+it('carries the value of a draft quote', function () {
+    $lead = leadOn('2026-06-14', LeadStage::Contacted);
+    Quote::factory()->for($lead->case, 'case')->create(['net' => 59000, 'vat_mode' => 'small_business']);
+
+    expect(boardProps()['columns'][1]['cards'][0]['value'])->toBe(59000);
 });
 
 // A board shows where something stands; a table shows what is next, so it

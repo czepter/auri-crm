@@ -33,7 +33,7 @@ class PaymentInstallment extends Model
     use HasPublicId;
 
     protected $fillable = [
-        'payment_plan_id', 'amount', 'due_on', 'status', 'sort_order', 'title',
+        'payment_plan_id', 'amount', 'due_on', 'status', 'sort_order', 'title', 'note',
         'settled_via', 'paid_on', 'payment_reference', 'paid_amount', 'overdue_notified_at',
         'overdue_reason', 'overdue_reminders_sent', 'client_reminders_sent',
         'before_due_reminder_sent_at',
@@ -137,6 +137,12 @@ class PaymentInstallment extends Model
     public function remaining(): int
     {
         return max(0, (int) $this->amount - (int) $this->paid_amount);
+    }
+
+    /** The one rule for "überfällig" in admin and portal: still owed, due before today. */
+    public function isLate(): bool
+    {
+        return in_array($this->status, PaymentInstallmentStatus::open(), true) && $this->due_on->lt(today());
     }
 
     public function isInvoiced(): bool

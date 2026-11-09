@@ -36,11 +36,11 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "ml-auto rounded-md border-0 bg-action px-[14px] py-[9px] text-ui font-semibold leading-none text-action-foreground [&_svg]:size-[15px]",
+          "ml-auto rounded-md border-0 bg-action px-[14px] py-[9px] text-ui font-semibold leading-none text-action-foreground disabled:bg-sunk-2 disabled:text-ink-2 disabled:opacity-100 [&_svg]:size-[15px]",
         outline:
-          "flex-none gap-1.5 rounded-[var(--r-control,var(--r-pill))] border border-line-hover bg-background px-3.5 py-[7px] text-small font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-colors duration-[.12s] ease-out hover:border-faint [&_svg]:size-[13px]",
+          "flex-none gap-1.5 rounded-[var(--r-control,var(--r-pill))] border border-line-hover bg-background px-3.5 py-[7px] text-small font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-colors duration-[.12s] ease-out hover:border-faint disabled:border-line-hover disabled:text-ink-2 disabled:opacity-100 [&_svg]:size-[13px]",
         ghost:
-          "border-0 bg-transparent px-0 py-[9px] text-ui font-medium leading-none text-muted-foreground hover:text-foreground [&_svg]:size-[15px] [&_svg]:opacity-80",
+          "border-0 bg-transparent px-0 py-[9px] text-ui font-medium leading-none text-muted-foreground hover:text-foreground disabled:text-ink-2 disabled:opacity-100 disabled:no-underline [&_svg]:size-[15px] [&_svg]:opacity-80",
         /*
          * crm.css .btn and .btn-2 — the admin's own pair. A fourth and fifth
          * variant rather than a second Button: the admin presses the same
@@ -80,7 +80,7 @@ export const buttonVariants = cva(
          */
         "portal-filter":
           "rounded-[var(--r-pill)] border border-line-hover px-[15px] py-2.5 text-[13px] leading-none font-medium text-muted-foreground transition-colors hover:border-foreground hover:text-foreground data-[active=true]:border-foreground! data-[active=true]:bg-foreground data-[active=true]:font-semibold data-[active=true]:text-background!",
-        pill: "gap-1.5 rounded-[var(--r-sm)] border-0 bg-action px-3.5 py-2 text-small font-medium tracking-[-0.01em] whitespace-nowrap text-action-foreground transition-[filter,background-color] duration-[.12s] ease-out hover:brightness-[1.08]",
+        pill: "gap-1.5 rounded-[var(--r-sm)] border-0 bg-action px-3.5 py-2 text-small font-medium tracking-[-0.01em] whitespace-nowrap text-action-foreground disabled:bg-sunk-2 disabled:text-ink-2 disabled:opacity-100 transition-[filter,background-color] duration-[.12s] ease-out hover:brightness-[1.08]",
         "pill-muted":
           "gap-1.5 rounded-[var(--r-sm)] border-0 bg-sunk-2 px-3.5 py-2 text-small font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-[filter,background-color] duration-[.12s] ease-out hover:bg-line-hover",
       },

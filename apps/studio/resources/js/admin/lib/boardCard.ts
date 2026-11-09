@@ -6,10 +6,12 @@ export const TYPE_DOT: Record<string, string> = {
     portrait: 'bg-ok',
 }
 
-export function relative(at: string) {
-    const days = Math.round((Date.now() - new Date(at).getTime()) / 86400000)
-
+export function daysAgo(days: number) {
     return days < 1
         ? 'heute'
         : new Intl.RelativeTimeFormat('de-DE', { numeric: 'auto' }).format(-days, 'day')
+}
+
+export function relative(at: string) {
+    return daysAgo(Math.round((Date.now() - new Date(at).getTime()) / 86400000))
 }

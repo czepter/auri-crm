@@ -27,4 +27,10 @@ enum AutomationCondition: string implements HasLabel
             self::GalleryUnopened => 'Galerie nicht geöffnet',
         };
     }
+
+    /** After "wenn ". */
+    public function clause(): string
+    {
+        return __("settings.condition_clauses.{$this->value}");
+    }
 }

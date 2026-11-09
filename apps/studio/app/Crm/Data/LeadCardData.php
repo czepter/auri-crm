@@ -12,10 +12,10 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * What a lead is triaged on, one fact per line, so a column scans down
  * consistent positions.
  *
- * The value is the latest sent quote's total, never an estimate: an
+ * The value is the current quote's total, draft or sent, never an estimate: an
  * estimated_value column would be a second money number to reconcile against
  * the real quote later, and a placeholder zero is a row nobody can act on. A
- * lead with nothing sent carries null and the column shows a dash.
+ * lead without a quote carries null and the column shows a dash.
  */
 #[TypeScript]
 class LeadCardData extends Data
@@ -42,7 +42,7 @@ class LeadCardData extends Data
         // C-07 (#241): the list view carries a value column and the board's
         // column heads carry the sum of one — the question staff otherwise
         // leave the screen for. Minor units, formatted once on the screen.
-        // Null where nothing has been sent: a quote that does not exist is
+        // Null where there is no quote: a quote that does not exist is
         // not a zero.
         public ?int $value,
         public string $lastAt,
@@ -69,7 +69,7 @@ class LeadCardData extends Data
             daysInStage: $daysInStage,
             stale: $lead->stage->anchor !== StageAnchor::Won
                 && $daysInStage >= FibonacciReminderSchedule::FIRST_RUNG,
-            value: $project->latestQuote?->total,
+            value: $project->currentQuote?->gross(),
             lastAt: $lead->stage_entered_at->toIso8601String(),
             conflicts: $conflicts,
         );

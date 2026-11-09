@@ -19,6 +19,7 @@ class GallerySetFactory extends Factory
             'gallery_id' => Gallery::factory(),
             'name' => fake()->unique()->word(),
             'position' => 0,
+            'access' => GallerySet::GUESTS,
         ];
     }
 }

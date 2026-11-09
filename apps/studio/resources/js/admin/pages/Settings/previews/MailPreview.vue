@@ -10,10 +10,13 @@ const props = defineProps<{
     replyTo: string
     bcc: string
     signature: string
+    headerName: boolean
+    footerLegal: boolean
+    footerExtra: string
   }
 }>()
 
-const source = computed(() => `/einstellungen/email/vorschau?${new URLSearchParams({ signatur: props.mail.signature })}`)
+const source = computed(() => `/einstellungen/email/vorschau?${new URLSearchParams({ signatur: props.mail.signature, kopf: props.mail.headerName ? '1' : '0', recht: props.mail.footerLegal ? '1' : '0', zeile: props.mail.footerExtra })}`)
 const src = refDebounced(source, 400)
 </script>
 

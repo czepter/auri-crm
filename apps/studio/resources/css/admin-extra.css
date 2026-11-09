@@ -244,3 +244,6 @@
         letter-spacing:var(--display-tracking); color:var(--ink); }
 .fontpairs .pv em { display:block; margin-top:8px; font:400 var(--text-small)/1.5 var(--font);
         font-style:normal; color:var(--muted); }
+/* sent is its own state: blue, so it never shares the amber of booked/open */
+.chip.sent { background:#E4EDF8; color:#1B4A80; }
+.chip.off { color:var(--muted); }

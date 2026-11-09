@@ -29,7 +29,7 @@ cleanup() {
 trap cleanup EXIT
 
 # rustfs-init creates the bucket; api is what the gallery viewer reads from.
-docker compose up -d postgres redis gotenberg rustfs rustfs-init api portal worker gallery --remove-orphans
+docker compose up -d postgres redis gotenberg rustfs rustfs-init api portal worker gallery mercure mercure-portal --remove-orphans
 
 docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
 # --no-reload keeps the compose environment reachable from a served request —

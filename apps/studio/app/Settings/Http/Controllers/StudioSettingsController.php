@@ -3,10 +3,15 @@
 namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
+use App\Concerns\FramesPreview;
+use App\Documents\Enums\DocumentTemplateType;
+use App\Documents\Models\DocumentTemplate;
+use App\Documents\Support\MailDefaults;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
 use App\Notifications\Support\MailPreview;
-use App\Notifications\Support\StudioMailFooter;
+use App\Payments\Actions\RenderInvoicePdf;
+use App\Payments\Support\SampleInvoiceData;
 use App\Portal\Notifications\PortalAccessInvitation;
 use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Enums\QuoteLayout;
@@ -43,6 +48,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class StudioSettingsController extends Controller
 {
     use AuthorizesStaffSettings;
+    use FramesPreview;
 
     public function edit(string $pane): Response
     {
@@ -68,6 +74,10 @@ class StudioSettingsController extends Controller
                 'address' => $row->mail_from_address === null,
             ],
             'settings' => StudioSettingsData::current(),
+            'mailTemplates' => $pane === 'email'
+                ? DocumentTemplate::query()->current()->ofType(DocumentTemplateType::Mail)->orderBy('name')->get()
+                    ->map(fn (DocumentTemplate $template) => ['id' => $template->family_id, 'name' => $template->name])->all()
+                : [],
         ]);
     }
 
@@ -150,18 +160,26 @@ class StudioSettingsController extends Controller
      * Anschrift im Fuß. Die Signatur kommt getippt statt gespeichert, damit
      * die Vorschau mitläuft.
      */
-    public function previewMail(Request $request): HttpResponse
+    public function previewMail(Request $request): HttpResponse|RedirectResponse
     {
         $this->authorizeSettings();
 
-        if ($request->has('signatur')) {
-            app()->instance(StudioMailFooter::class, new StudioMailFooter(Str::limit((string) $request->query('signatur'), 1000, '')));
+        if ($page = $this->framed($request, '/einstellungen/email')) {
+            return $page;
         }
 
-        $html = MailPreview::html(
+        // The frame as typed, before it is saved.
+        $unsaved = array_filter([
+            'mail_signature' => $request->has('signatur') ? Str::limit((string) $request->query('signatur'), 1000, '') : null,
+            'mail_header_name' => $request->has('kopf') ? $request->boolean('kopf') : null,
+            'mail_footer_legal' => $request->has('recht') ? $request->boolean('recht') : null,
+            'mail_footer_extra' => $request->has('zeile') ? Str::limit((string) $request->query('zeile'), 255, '') : null,
+        ], fn ($value) => $value !== null);
+
+        $html = StudioSettings::withUnsaved($unsaved, fn () => MailPreview::html(
             new PortalAccessInvitation(config('portal.url').'/zugang/…', '', 'Hallo Maxi Musterfrau,'),
             (object) [],
-        );
+        ));
 
         return response($html, 200, ['Content-Type' => 'text/html']);
     }
@@ -279,9 +297,13 @@ class StudioSettingsController extends Controller
      * pane's DocumentPreview.vue shows. App\Quotes\Support\SampleQuoteData
      * never touches the database, so this route needs no project or quote.
      */
-    public function previewQuoteLayout(Request $request, RenderQuotePdf $render): HttpResponse
+    public function previewQuoteLayout(Request $request, RenderQuotePdf $render): HttpResponse|RedirectResponse
     {
         $this->authorizeSettings();
+
+        if ($page = $this->framed($request, '/einstellungen/belege')) {
+            return $page;
+        }
 
         $validated = $request->validate([
             'layout' => ['nullable', Rule::enum(QuoteLayout::class)],
@@ -291,6 +313,40 @@ class StudioSettingsController extends Controller
         $sample = SampleQuoteData::build();
 
         return response($render->html($sample, $layout))->header('Content-Type', 'text/html; charset=utf-8');
+    }
+
+    /** The Zahlung pane's sheet: an Anzahlungsrechnung carrying the bank data and terms as typed, unsaved. */
+    public function previewInvoice(Request $request, RenderInvoicePdf $render): HttpResponse|RedirectResponse
+    {
+        $this->authorizeSettings();
+
+        if ($page = $this->framed($request, '/einstellungen/zahlung')) {
+            return $page;
+        }
+
+        $validated = $request->validate([
+            'holder' => ['nullable', 'string', 'max:255'],
+            'iban' => ['nullable', 'string', 'max:64'],
+            'bic' => ['nullable', 'string', 'max:32'],
+            'days' => ['nullable', 'integer', 'min:0', 'max:365'],
+            'deposit' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'layout' => ['nullable', Rule::enum(QuoteLayout::class)],
+        ]);
+
+        $settings = StudioSettings::current();
+        $days = (int) ($validated['days'] ?? $settings->payment_term_days);
+        $deposit = (float) ($validated['deposit'] ?? $settings->deposit_percentage / 100);
+
+        $html = StudioSettings::withUnsaved([
+            'bank_account_holder' => $validated['holder'] ?? $settings->bank_account_holder,
+            'bank_iban' => preg_replace('/\s+/', '', $validated['iban'] ?? $settings->bank_iban ?? ''),
+            'bank_bic' => $validated['bic'] ?? $settings->bank_bic,
+        ], fn () => $render->forInvoice(
+            SampleInvoiceData::build($days, $deposit),
+            isset($validated['layout']) ? QuoteLayout::from($validated['layout']) : null,
+        ));
+
+        return response($html)->header('Content-Type', 'text/html; charset=utf-8');
     }
 
     /**
@@ -311,6 +367,11 @@ class StudioSettingsController extends Controller
             'mail_bcc' => ['nullable', 'string', 'max:255', 'email'],
             'mail_signature' => ['nullable', 'string', 'max:1000'],
             'mail_clients_enabled' => ['sometimes', 'boolean'],
+            'mail_header_name' => ['sometimes', 'boolean'],
+            'mail_footer_legal' => ['sometimes', 'boolean'],
+            'mail_footer_extra' => ['nullable', 'string', 'max:255'],
+            'mail_defaults' => ['sometimes', 'array'],
+            'mail_defaults.*' => ['nullable', 'string', Rule::exists('document_templates', 'family_id')->where('type', 'mail')],
             'mail_sender_reset' => ['sometimes', 'boolean'],
         ]);
 
@@ -319,6 +380,10 @@ class StudioSettingsController extends Controller
         if (Arr::pull($validated, 'mail_sender_reset')) {
             app(UpdateStudioSetting::class)('mail_from_name', null, $actor);
             app(UpdateStudioSetting::class)('mail_from_address', null, $actor);
+        }
+
+        if (isset($validated['mail_defaults'])) {
+            $validated['mail_defaults'] = array_filter(Arr::only($validated['mail_defaults'], MailDefaults::OCCASIONS));
         }
 
         foreach ($validated as $key => $value) {

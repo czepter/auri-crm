@@ -5,6 +5,7 @@ namespace App\Automation\Notifications;
 use App\Concerns\AppliesStudioMailIdentity;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\HtmlString;
 
 /**
  * E-08's mail: a rule's subject and body, already resolved against the
@@ -33,7 +34,7 @@ class AutomationReminder extends Notification
         $message = (new MailMessage)->subject($this->subject);
 
         foreach (preg_split('/\n{2,}/', trim($this->body)) as $paragraph) {
-            $message->line($paragraph);
+            $message->line(new HtmlString(nl2br(e($paragraph))));
         }
 
         return $this->appendStudioMailIdentity($message);

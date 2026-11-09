@@ -102,14 +102,12 @@ trait RendersInvoiceParts
             return $rows;
         }
 
-        $rows .= $this->spanningRow($columns, 'Abzüglich Anzahlungen', '');
-
         foreach ($document->deposits as $deposit) {
             $rows .= $this->spanningRow(
                 $columns,
-                "Rechnung {$deposit['number']} vom {$deposit['date']}",
+                "Abzüglich {$deposit['title']}",
                 '−'.$deposit['gross'],
-                $document->smallBusiness ? '' : "netto {$deposit['net']} · USt {$deposit['vat']}",
+                "Rechnung {$deposit['number']} vom {$deposit['date']}".($document->smallBusiness ? '' : " · netto {$deposit['net']} · USt {$deposit['vat']}"),
             );
         }
 

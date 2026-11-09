@@ -56,4 +56,10 @@ class GalleryPolicy
             ? $user->can(Capability::ManagePortalAccess->value)
             : $this->projects->manageVisibility($user, $gallery->case);
     }
+
+    /** Inhaberexklusiv wie ManageStaff: ein zweiter Fotograf lädt hoch und veröffentlicht, löscht aber nicht. */
+    public function delete(User $user, Gallery $gallery): bool
+    {
+        return $user->can(Capability::ManageDsgvo->value);
+    }
 }

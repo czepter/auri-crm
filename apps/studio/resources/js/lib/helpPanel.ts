@@ -11,12 +11,6 @@ const geladen = new Map<string, Artikel>()
 const offen = ref(false)
 const ueberschrieben = ref<string | null>(null)
 
-// AdminLayout rendert den Sidebar-Knopf oberhalb von Page.vue und kennt die
-// Seiten-Rail nicht — nur Page.vue weiß, ob #right steht, und nur Page.vue
-// kennt die zwei Schwellen. Page.vue schreibt hier bei jedem Render, der
-// Knopf liest nur.
-const dockt = ref(false)
-
 // Ein Browser mit blockierten Site-Daten wirft schon beim Zugriff auf
 // `localStorage`. zuruecksetzen() läuft beim Import, Page.vue importiert das
 // hier und steht auf jedem Adminscreen — ein Wurf nimmt das ganze Bundle mit.
@@ -41,11 +35,7 @@ function speichern(wert: string) {
 function zuruecksetzen() {
   geladen.clear()
   ueberschrieben.value = null
-  dockt.value = false
-  // Kein gespeicherter Wert heißt offen. Geschrieben wird `help.open` nur
-  // durch oeffnen()/schliessen() — also nur durch einen bewussten Klick,
-  // nie durchs bloße Rendern.
-  offen.value = gespeichert() === null ? true : gespeichert() === '1'
+  offen.value = gespeichert() === '1'
 }
 
 zuruecksetzen()
@@ -64,7 +54,6 @@ export function linkZiel(event: Klick, href: string | null): 'artikel' | 'seite'
 export const helpPanel = {
   offen,
   ueberschrieben,
-  dockt,
 
   oeffnen(slug?: string) {
     offen.value = true
@@ -75,6 +64,11 @@ export const helpPanel = {
   schliessen() {
     offen.value = false
     speichern('0')
+  },
+
+  umschalten() {
+    if (offen.value) this.schliessen()
+    else this.oeffnen()
   },
 
   navigiert() {

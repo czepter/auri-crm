@@ -7,6 +7,7 @@ use App\Gallery\Actions\StopGalleryPrerelease;
 use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 /**
  * R32/R39: the More menu's "Pre-release" — shares a gallery's address
@@ -18,13 +19,16 @@ use Illuminate\Http\RedirectResponse;
  */
 class GalleryPrereleaseController extends Controller
 {
-    public function store(Gallery $gallery, StartGalleryPrerelease $start): RedirectResponse
+    public function store(Request $request, Gallery $gallery, StartGalleryPrerelease $start): RedirectResponse
     {
         $this->authorize('publish', $gallery);
 
-        $start($gallery, auth('staff')->user());
+        $validated = $request->validate(['asset_ids' => ['nullable', 'array'], 'asset_ids.*' => ['string']]);
 
-        return back();
+        $own = $request->boolean('own');
+        $started = $start($gallery, auth('staff')->user(), $own, $own ? ($validated['asset_ids'] ?? null) : null);
+
+        return $own ? redirect("/galerien/{$started->public_id}") : back();
     }
 
     public function destroy(Gallery $gallery, StopGalleryPrerelease $stop): RedirectResponse

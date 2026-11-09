@@ -63,6 +63,7 @@ class ReadInquiryColumn
                 ClientCase::query()->visibleTo($viewer)->select('cases.id'),
             ))
             ->with(['case', 'items'])
+            ->withExists(['views as opened' => fn ($views) => $views->where('counts', true)])
             ->orderBy('valid_until')
             ->get()
             ->map(function (Quote $quote) {
@@ -77,7 +78,7 @@ class ReadInquiryColumn
                     who: $quote->case->name,
                     what: $this->worth($quote).' still,',
                     emphasis: 'läuft '.$quote->valid_until->format('d.m.Y').' ab',
-                    whatTail: sprintf('· %d× erinnert, keine Reaktion', $nudges),
+                    whatTail: sprintf($quote->opened ? '· %d× erinnert, Angebot geöffnet, keine Antwort' : '· %d× erinnert, keine Reaktion', $nudges),
                     action: RowActionData::tel('Anrufen', $quote->case->primaryContact()?->phone),
                     hot: true,
                 );

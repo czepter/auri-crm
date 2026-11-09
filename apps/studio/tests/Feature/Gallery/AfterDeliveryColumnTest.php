@@ -3,7 +3,9 @@
 use App\Crm\Enums\LeadSource;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\Lead;
+use App\Crm\Models\Shoot;
 use App\Enums\StaffRole;
 use App\Gallery\Actions\ReadAfterDeliveryColumn;
 use App\Gallery\Models\Gallery;
@@ -21,6 +23,7 @@ it('rows a booked project whose lead names a referrer', function () {
     $referrer = Contact::factory()->create(['name' => 'Familie Osterhoff', 'phone' => '+49 40 999']);
     $project = ClientCase::factory()->create(['name' => 'Steffens & Falk']);
     markBooked($project);
+    Shoot::factory()->for($project, 'case')->atStatus(ShootStatus::Delivered)->create();
     Lead::factory()->for($project, 'case')->create([
         'source' => LeadSource::Referral,
         'referred_by_contact_id' => $referrer->id,
@@ -60,6 +63,8 @@ it('does not row a referral nobody wrote a referrer down for', function () {
 
 it('rows a gallery running out, pointing at the gallery', function () {
     $project = ClientCase::factory()->create(['name' => "Hensel Hochzeit '25"]);
+    markBooked($project);
+    Shoot::factory()->for($project, 'case')->atStatus(ShootStatus::Delivered)->create();
     $gallery = Gallery::factory()->for($project, 'case')->create([
         'expires_at' => now()->addDays(12),
     ]);

@@ -33,40 +33,19 @@ beforeEach(() => {
 })
 
 describe('HelpButton', () => {
-  it('verlinkt auf die Übersicht, wenn es für den Screen keinen Artikel gibt', async () => {
-    helpPanel.dockt.value = true
-
+  it('zeigt sich nicht ohne Artikel für den Screen', async () => {
     const html = await render([])
 
-    expect(html).toContain('href="/hilfe"')
-    expect(html).toContain(de.help.open)
+    expect(html).not.toContain(de.help.open)
   })
 
-  it('öffnet die Spalte per Button, wenn sie andocken würde', async () => {
-    helpPanel.dockt.value = true
+  it('zeigt sich mit Artikel, zu wie offen', async () => {
+    const eintrag = [{ slug: 'a', titel: 'A', art: 'aufgabe' }]
 
-    const html = await render([{ slug: 'a', titel: 'A', art: 'aufgabe' }])
+    expect(await render(eintrag)).toContain(de.help.open)
 
-    expect(html).toContain('<button')
-    expect(html).not.toContain('<a ')
-  })
+    helpPanel.oeffnen()
 
-  it('verlinkt auf den Artikel, wenn sie unterhalb der Schwelle nicht andocken würde', async () => {
-    helpPanel.dockt.value = false
-
-    const html = await render([{ slug: 'lead-anlegen', titel: 'A', art: 'aufgabe' }])
-
-    expect(html).toContain('href="/hilfe/lead-anlegen"')
-    expect(html).not.toContain('<button')
-  })
-
-  it.each([true, false])('bleibt sichtbar, wenn das Panel offen=%s ist', async (offenValue) => {
-    if (offenValue) helpPanel.oeffnen()
-    else helpPanel.schliessen()
-    helpPanel.dockt.value = true
-
-    const html = await render([{ slug: 'a', titel: 'A', art: 'aufgabe' }])
-
-    expect(html).toContain(de.help.open)
+    expect(await render(eintrag)).toContain('aria-expanded="true"')
   })
 })

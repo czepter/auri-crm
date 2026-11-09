@@ -16,7 +16,7 @@ beforeEach(fn () => useSurface(Surface::API));
 
 function publishedVersionWithCommentableAssets(array $keys = ['galleries/g1/a.jpg', 'galleries/g1/b.jpg'])
 {
-    $gallery = Gallery::factory()->create();
+    $gallery = Gallery::factory()->create(['permissions' => ['guest' => ['comments' => true]]]);
     $set = GallerySet::where('gallery_id', $gallery->id)->first();
     foreach ($keys as $key) {
         Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => $key, 'filename' => basename($key), 'width' => 200, 'height' => 100]);

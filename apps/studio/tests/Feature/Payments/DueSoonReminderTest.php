@@ -1,10 +1,13 @@
 <?php
 
 use App\Payments\Actions\DetectOverdueInstallments;
+use App\Payments\Actions\IssueInvoice;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
+use App\Payments\Notifications\PaymentReminder;
 use App\Payments\Notifications\Studio\InstallmentDueSoon;
+use App\Settings\Actions\UpdateStudioSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 
@@ -65,4 +68,18 @@ it('stays quiet for a rate nobody has issued', function () {
     app(DetectOverdueInstallments::class)();
 
     Notification::assertNotSentTo($staff, InstallmentDueSoon::class);
+});
+
+it('writes the reminder in the studio’s own wording, merge fields resolved', function () {
+    app(UpdateStudioSetting::class)('tax_number', '22/123/45678', null);
+    mailDefault('payment_reminder', 'Erinnerung {{ reminder.invoiceNumber }}', 'Hallo {{ contact.name }}, {{ reminder.amount }} sind seit {{ reminder.dueOn }} offen.');
+
+    $installment = invoiceablePlan();
+    $invoice = app(IssueInvoice::class)($installment);
+    $installment->refresh();
+
+    $message = (new PaymentReminder($installment))->toMail($installment->plan->case->primaryContact());
+
+    expect($message->subject)->toBe("Erinnerung {$invoice->number}")
+        ->and(implode(' ', $message->introLines))->toContain('sind seit '.$installment->due_on->format('d.m.Y').' offen');
 });

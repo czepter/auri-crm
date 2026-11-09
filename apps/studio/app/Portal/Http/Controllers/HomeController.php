@@ -7,8 +7,8 @@ use App\Crm\Models\Contact;
 use App\Engagement\Models\Thread;
 use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
+use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\PaymentInstallmentStatus;
-use App\Payments\Models\PaymentInstallment;
 use App\Portal\Support\PortalOffers;
 use App\Portal\Support\PortalSettings;
 use App\Quotes\Enums\QuoteStatus;
@@ -56,12 +56,13 @@ class HomeController extends Controller
         }
 
         $bookings = $projects->map(fn (ClientCase $project) => $this->booking($project))
-            ->sortByDesc(fn (array $booking) => [$booking['year'] ?? 0, $booking['date'] ?? ''])
+            ->sortBy(fn (array $booking) => [$booking['year'] ?? PHP_INT_MAX, $booking['date'] ?? ''])
             ->values();
 
         return Inertia::render('Home', [
             'contact' => ['name' => $contact->name],
             'welcomeText' => $settings->welcomeText($contact, $this->welcomeState($bookings->all())),
+            'welcomeState' => $this->welcomeState($bookings->all()),
             'pending' => $this->pending($contact, $projects, $settings),
             'bookings' => $bookings->all(),
             'phaseCounts' => $bookings->countBy('phase')->all(),
@@ -142,17 +143,9 @@ class HomeController extends Controller
 
     private function openAmount(ClientCase $project): ?int
     {
-        $installments = $project->paymentPlan?->installments;
+        $open = PaymentPlanData::forCase($project)?->openTotal ?? 0;
 
-        if ($installments === null) {
-            return null;
-        }
-
-        $open = $installments
-            ->reject(fn (PaymentInstallment $installment) => $installment->status === PaymentInstallmentStatus::Paid)
-            ->sum('amount');
-
-        return $open > 0 ? (int) $open : null;
+        return $open > 0 ? $open : null;
     }
 
     /**
@@ -169,16 +162,16 @@ class HomeController extends Controller
 
         foreach ($projects as $project) {
             if ($settings->paymentStatusEnabled($contact)) {
-                foreach ($project->paymentPlan?->installments ?? [] as $installment) {
-                    if ($installment->status === PaymentInstallmentStatus::Paid || $installment->due_on === null) {
+                foreach (PaymentPlanData::forCase($project)?->installments ?? [] as $installment) {
+                    if (! in_array($installment->status, array_column(PaymentInstallmentStatus::open(), 'value'), true)) {
                         continue;
                     }
 
                     $rows[] = [
                         'kind' => 'installment',
-                        'amount' => (int) $installment->amount,
-                        'dueOn' => $installment->due_on->format('Y-m-d'),
-                        'overdue' => $installment->due_on->isPast(),
+                        'amount' => $installment->remaining,
+                        'dueOn' => $installment->dueOn,
+                        'overdue' => $installment->isLate,
                         'booking' => $project->name,
                         'href' => "/projekte/{$project->public_id}/zahlungen",
                     ];
@@ -190,7 +183,7 @@ class HomeController extends Controller
             if ($quote?->status === QuoteStatus::Sent) {
                 $rows[] = [
                     'kind' => 'quote',
-                    'amount' => (int) $quote->total,
+                    'amount' => $quote->gross(),
                     'dueOn' => $quote->valid_until?->format('Y-m-d'),
                     'overdue' => false,
                     'booking' => $project->name,

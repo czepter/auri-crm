@@ -9,7 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 it('does not see a design re-emitted in a different key order as a deviation', function () {
-    $gallery = Gallery::factory()->create(['design' => ['cover' => 'full', 'type' => 'serif']]);
+    $gallery = Gallery::factory()->create(['design' => ['cover' => 'zentriert', 'type' => 'serif']]);
     $set = GallerySet::where('gallery_id', $gallery->id)->first();
     Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/a.jpg']);
     $gallery->fresh()->publish();
@@ -28,12 +28,12 @@ it('does not see a design re-emitted in a different key order as a deviation', f
 });
 
 it('still sees an actual design change as a deviation', function () {
-    $gallery = Gallery::factory()->create(['design' => ['cover' => 'full', 'type' => 'serif']]);
+    $gallery = Gallery::factory()->create(['design' => ['cover' => 'zentriert', 'type' => 'serif']]);
     $set = GallerySet::where('gallery_id', $gallery->id)->first();
     Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/a.jpg']);
     $gallery->fresh()->publish();
 
-    $gallery->forceFill(['design' => ['cover' => 'full', 'type' => 'sans']])->save();
+    $gallery->forceFill(['design' => ['cover' => 'zentriert', 'type' => 'sans']])->save();
 
     expect(DraftDeviation::of($gallery->fresh()))->toBeTrue();
 });

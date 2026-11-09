@@ -36,7 +36,10 @@ use App\Documents\Http\Controllers\DocumentTemplateController;
 use App\Documents\Http\Controllers\DocumentViewController;
 use App\Engagement\Http\Controllers\InboxController;
 use App\Engagement\Http\Controllers\ThreadController;
+use App\Gallery\Http\Controllers\AssetCommentReplyController;
+use App\Gallery\Http\Controllers\AssetHideController;
 use App\Gallery\Http\Controllers\GalleryAssetController;
+use App\Gallery\Http\Controllers\GalleryFavoritesTaskController;
 use App\Gallery\Http\Controllers\GalleryIndexController;
 use App\Gallery\Http\Controllers\GalleryLightroomExportController;
 use App\Gallery\Http\Controllers\GalleryPrereleaseController;
@@ -45,6 +48,7 @@ use App\Gallery\Http\Controllers\GalleryPreviewController;
 use App\Gallery\Http\Controllers\GalleryPublicationController;
 use App\Gallery\Http\Controllers\GalleryRecordController;
 use App\Gallery\Http\Controllers\GallerySetController;
+use App\Gallery\Http\Controllers\ProjectGalleryController;
 use App\Gallery\Models\Gallery;
 use App\Help\Http\Controllers\HelpController;
 use App\Integration\Http\Controllers\OAuthAuthorizationController;
@@ -278,6 +282,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::redirect('/dokumentvorlagen', '/vorlagen?typ=dokumente')->name('document-templates.index');
         Route::get('/dokumentvorlagen/neu', [DocumentTemplateController::class, 'create'])->name('document-templates.create');
         Route::post('/dokumentvorlagen', [DocumentTemplateController::class, 'store'])->name('document-templates.store');
+        Route::post('/dokumentvorlagen/email', [DocumentTemplateController::class, 'storeFromMail'])->name('document-templates.store-mail');
         Route::post('/dokumentvorlagen/vorschau', [DocumentTemplateController::class, 'preview'])
             ->name('document-templates.preview');
         Route::get('/dokumentvorlagen/{documentTemplate}', [DocumentTemplateController::class, 'edit'])
@@ -367,9 +372,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/auswertungen', ReportController::class)->name('reports.index');
 
         Route::get('/kalender', [CalendarController::class, 'index'])->name('calendar.index');
-        Route::get('/kalender/einstellungen', [CalendarController::class, 'index'])
-            ->defaults('settings', true)
-            ->name('calendar.settings');
+        Route::redirect('/kalender/einstellungen', '/profil/kalender')->name('calendar.settings');
         Route::post('/kalender/abo', [CalendarController::class, 'regenerate'])
             ->name('calendar.regenerate');
 
@@ -399,6 +402,8 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/einstellungen/belege', [StudioSettingsController::class, 'updateReceipts'])->name('settings.receipts.update');
         Route::get('/einstellungen/belege/angebot-vorschau', [StudioSettingsController::class, 'previewQuoteLayout'])
             ->name('settings.receipts.quote-layout-preview');
+        Route::get('/einstellungen/zahlung/rechnung-vorschau', [StudioSettingsController::class, 'previewInvoice'])
+            ->name('settings.payment.invoice-preview');
         Route::get('/einstellungen/email/vorschau', [StudioSettingsController::class, 'previewMail'])->name('settings.mail.preview');
         Route::patch('/einstellungen/email', [StudioSettingsController::class, 'updateMail'])->name('settings.mail.update');
 
@@ -448,6 +453,10 @@ Route::middleware('audience:staff')->group(function () {
             ->name('automations.store');
         Route::get('/einstellungen/automationen/{automationRule}', [AutomationRuleController::class, 'edit'])
             ->name('automations.edit');
+        Route::get('/einstellungen/automationen/{automationRule}/vorschau', [AutomationRuleController::class, 'preview'])
+            ->name('automations.preview');
+        Route::post('/einstellungen/automationen/{automationRule}/testmail', [AutomationRuleController::class, 'testMail'])
+            ->name('automations.test-mail');
         Route::patch('/einstellungen/automationen/{automationRule}', [AutomationRuleController::class, 'update'])
             ->name('automations.update');
         Route::delete('/einstellungen/automationen/{automationRule}', [AutomationRuleController::class, 'destroy'])
@@ -589,6 +598,10 @@ Route::middleware('audience:staff')->group(function () {
             ->defaults('tab', 'messages')
             ->missing(fn (Request $request) => LeadCaseController::legacyRedirect($request))
             ->name('leads.messages');
+        Route::get('/anfragen/{case}/info', [LeadCaseController::class, 'show'])
+            ->defaults('tab', 'info')
+            ->missing(fn (Request $request) => LeadCaseController::legacyRedirect($request))
+            ->name('leads.info');
         Route::get('/anfragen/{case}/angebot', [LeadCaseController::class, 'show'])
             ->defaults('tab', 'quotes')
             ->missing(fn (Request $request) => LeadCaseController::legacyRedirect($request))
@@ -628,12 +641,20 @@ Route::middleware('audience:staff')->group(function () {
             ->name('projects.update');
         Route::post('/auftraege/{case}/stufe', [CaseController::class, 'stage'])
             ->name('projects.stage');
+        Route::get('/auftraege/{case}/info', [CaseController::class, 'info'])
+            ->name('projects.info');
         Route::get('/auftraege/{case}/shootings', [CaseController::class, 'shoots'])
             ->name('projects.shoots');
         Route::get('/auftraege/{case}/aufgaben', [CaseController::class, 'tasks'])
             ->name('projects.tasks');
+        Route::get('/auftraege/{case}/verlauf', [CaseController::class, 'history'])
+            ->name('projects.history');
+        Route::get('/auftraege/{case}/notizen', [CaseController::class, 'notes'])
+            ->name('projects.notes');
         Route::get('/auftraege/{case}/galerien', [CaseController::class, 'galleries'])
             ->name('projects.galleries');
+        Route::post('/auftraege/{case}/galerien', [ProjectGalleryController::class, 'store'])
+            ->name('projects.galleries.store');
         Route::delete('/auftraege/{case}', [CaseController::class, 'destroy'])
             ->name('projects.destroy');
         Route::post('/auftraege/{case}/buchung', [CaseController::class, 'book'])
@@ -683,6 +704,8 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/angebote/{quote}/vorschau', [QuoteController::class, 'previewSheet'])->name('quotes.preview.sheet');
         Route::get('/angebote/{quote}/senden', [QuoteController::class, 'compose'])->name('quotes.compose');
         Route::post('/angebote/{quote}/versenden', [QuoteController::class, 'send'])->name('quotes.send');
+        Route::get('/angebote/{quote}/nachfassen', [QuoteController::class, 'followUpForm'])->name('quotes.follow-up.form');
+        Route::post('/angebote/{quote}/nachfassen', [QuoteController::class, 'followUp'])->name('quotes.follow-up');
         Route::post('/angebote/{quote}/versendet', [QuoteController::class, 'markSent'])->name('quotes.mark-sent');
         Route::post('/angebote/{quote}/angenommen', [QuoteController::class, 'markAccepted'])->name('quotes.mark-accepted');
         Route::post('/angebote/{quote}/empfaenger-uebernehmen', [QuoteController::class, 'adoptRecipient'])
@@ -795,6 +818,20 @@ Route::middleware('audience:staff')->group(function () {
             ->name('galleries.show');
         Route::patch('/galerien/{gallery}', [GalleryRecordController::class, 'update'])
             ->name('galleries.update');
+        Route::get('/galerien/{gallery}/ausgeblendet', [AssetHideController::class, 'index'])
+            ->name('galleries.hidden.index');
+        Route::delete('/galerien/{gallery}/ausgeblendet/{hide}', [AssetHideController::class, 'restore'])
+            ->name('galleries.hidden.restore');
+        Route::post('/galerien/{gallery}/kommentare/{comment}/antwort', [AssetCommentReplyController::class, 'store'])
+            ->name('galleries.comments.reply');
+        Route::post('/galerien/{gallery}/favoriten-aufgabe', [GalleryFavoritesTaskController::class, 'store'])
+            ->name('galleries.favorites-task');
+        Route::post('/galerien/{gallery}/duplizieren', [GalleryRecordController::class, 'duplicate'])
+            ->name('galleries.duplicate');
+        Route::post('/galerien/{gallery}/kopie-fortsetzen', [GalleryRecordController::class, 'resumeCopy'])
+            ->name('galleries.copy.resume');
+        Route::delete('/galerien/{gallery}', [GalleryRecordController::class, 'destroy'])
+            ->name('galleries.destroy');
         Route::post('/galerien/{gallery}/vorlage', [GalleryPresetController::class, 'storeFromGallery'])
             ->name('galleries.preset.store');
         Route::post('/galerien/{gallery}/vorlage-anwenden', [GalleryPresetController::class, 'applyToGallery'])
@@ -862,8 +899,6 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/galerien/{gallery}/uploads/pruefen', UploadPrecheckController::class)
             ->name('galleries.uploads.precheck');
 
-        Route::get('/galerien/{gallery}/veroeffentlichen', [GalleryPublicationController::class, 'compose'])
-            ->name('galleries.publish.compose');
         Route::post('/galerien/{gallery}/veroeffentlichen', [GalleryPublicationController::class, 'store'])
             ->name('galleries.publish');
         Route::delete('/galerien/{gallery}/veroeffentlichung', [GalleryPublicationController::class, 'destroy'])
@@ -903,6 +938,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/rechnungen/neu', [InvoiceController::class, 'create'])->name('invoices.create');
         Route::post('/rechnungen', [InvoiceController::class, 'store'])->name('invoices.store');
         Route::post('/rechnungen/vorschau', [InvoiceController::class, 'preview'])->name('invoices.preview');
+        Route::get('/rechnungen/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
         Route::get('/rechnungen/{invoice}/pdf', [InvoiceController::class, 'download'])->name('invoices.download');
 
         // #415: the compose screen and the send. Issuing redirects into the
@@ -920,6 +956,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/gutschriften', CreditNoteController::class)->name('credit-notes.index');
 
         Route::get('/vertraege', ContractIndexController::class)->name('contracts.index');
+        Route::get('/rechnungen/{invoice}/gutschrift/neu', [InvoiceController::class, 'creditNoteForm'])->name('invoices.credit-note-form');
         Route::get('/rechnungen/{invoice}/gutschrift/{creditNote}', [InvoiceController::class, 'downloadCreditNote'])
             ->name('invoices.credit-note.download');
 

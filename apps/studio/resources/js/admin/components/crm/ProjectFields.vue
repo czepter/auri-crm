@@ -138,7 +138,7 @@ function choose(field: Field, option: string) {
             v-else-if="field.type === 'date'"
             class="max-w-[280px]"
             :model-value="(values[field.key] as string) ?? ''"
-            type="date"
+            lang="de" type="date"
             @update:model-value="values[field.key] = $event"
           />
 
@@ -201,7 +201,7 @@ function choose(field: Field, option: string) {
                 @click="removeTag(field, tag)"
               >×</button>
             </span>
-            <input
+            <input :aria-label="$t('project.fieldTagAdd')"
               class="min-w-[120px] flex-1 border-0 bg-transparent text-small leading-[1.35] outline-none placeholder:text-faint"
               :list="`tags-${field.id}`"
               :placeholder="$t('project.fieldTagAdd')"

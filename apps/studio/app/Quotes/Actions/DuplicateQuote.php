@@ -62,7 +62,7 @@ class DuplicateQuote
             );
 
             $quote->paymentStages()->createMany(
-                $source->paymentStages->map(fn ($stage) => $stage->only(['percent', 'label', 'minimum', 'sort_order']))->all()
+                $source->paymentStages->map(fn ($stage) => $stage->only(['percent', 'label', 'minimum', 'sort_order', 'note', 'due_on']))->all()
             );
 
             $quote->recalculateTotal();

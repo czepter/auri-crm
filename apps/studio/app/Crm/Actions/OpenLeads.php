@@ -68,7 +68,18 @@ class OpenLeads
     /** @return list<array{key: string, rows: list<LeadQueueRowData>}> */
     public function queue(?Lead $open = null): array
     {
-        return $this->grouped(fn (Lead $lead) => LeadQueueRowData::fromLead($lead, $open));
+        return $this->grouped(fn (Lead $lead) => LeadQueueRowData::fromLead($lead, $open, $this->step($lead)));
+    }
+
+    private function step(Lead $lead): string
+    {
+        return match (true) {
+            $lead->case->primaryShoot?->date === null => 'date',
+            $this->group($lead->stage) === 'angenommen' => 'book',
+            $this->group($lead->stage) === 'angebot' => 'followUp',
+            $lead->case->currentQuote?->status->value === 'draft' => 'sendQuote',
+            default => 'reply',
+        };
     }
 
     /** The sidebar's badge, which needs the number and none of the rows. */
@@ -100,10 +111,11 @@ class OpenLeads
      * telling. A stage before the offer anchor is unanswered, one at or past
      * acceptance is accepted, the span between them is the offer.
      */
-    private function group(?Stage $stage): ?string
+    private function group(?Stage $stage): string
     {
+        // An inquiry no stage claims is still one the badge counts.
         if ($stage === null) {
-            return null;
+            return 'unbeantwortet';
         }
 
         $sent = $this->stages->anchored(StagePipeline::Lead, StageAnchor::QuoteSent)?->sort_order;
@@ -122,7 +134,7 @@ class OpenLeads
         return $this->leads ??= Lead::query()
             ->open()
             ->unbooked()
-            ->with(['case.contacts', 'case.shoots', 'case.primaryShoot', 'case.latestQuote'])
+            ->with(['case.contacts', 'case.shoots', 'case.primaryShoot', 'case.currentQuote'])
             ->orderByDesc('stage_entered_at')
             ->get();
     }

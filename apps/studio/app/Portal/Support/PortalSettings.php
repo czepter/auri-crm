@@ -87,7 +87,7 @@ class PortalSettings
 
     public function galleryDownloadsEnabled(?Contact $contact = null): bool
     {
-        return (bool) $this->resolve($contact, 'gallery_downloads', (bool) StudioSettings::current()->gallery_default_downloads_enabled);
+        return (bool) $this->resolve($contact, 'gallery_downloads', StudioSettings::current()->gallery_default_download_rule !== 'off');
     }
 
     public function galleryListsEnabled(?Contact $contact = null): bool
@@ -143,8 +143,9 @@ class PortalSettings
      * erreichbar bleibt. Die Adresse nicht: ein Login ist ein Zugangsdatum
      * und nichts, was ein Kundenbildschirm von sich aus zeigen darf.
      *
-     * Eine laufende oder bevorstehende Schließzeit mit Text ersetzt die
-     * Antwortzeit: solange das Studio zu ist, stimmt sie nicht.
+     * Eine laufende oder bevorstehende Schließzeit mit Text steht als
+     * `absence` und ersetzt die Antwortzeit: solange das Studio zu ist,
+     * stimmt sie nicht.
      */
     public function contactLine(): array
     {
@@ -153,27 +154,36 @@ class PortalSettings
             'avatarUrl' => StudioSettings::current()->portal_contact_avatar_path !== null ? '/branding/kontakt' : null,
             'phone' => StudioSettings::current()->portal_contact_phone ?? $this->ownerPhone(),
             'email' => StudioSettings::current()->portal_contact_email,
-            'responseTime' => $this->closureNotice() ?? StudioSettings::current()->portal_contact_response_time,
+            'responseTime' => $this->closure() === null ? StudioSettings::current()->portal_contact_response_time : null,
+            'absence' => $this->absence(),
         ];
     }
 
-    private function closureNotice(): ?string
+    private function closure(): ?StudioClosure
     {
-        $closure = StudioClosure::query()
+        return StudioClosure::query()
             ->whereNotNull('message')
             ->whereDate('ends_on', '>=', today())
+            ->whereDate('starts_on', '<=', today()->addDays(7))
             ->orderBy('starts_on')
             ->first();
+    }
+
+    /** @return array{range: string, message: string}|null */
+    private function absence(): ?array
+    {
+        $closure = $this->closure();
 
         if ($closure === null) {
             return null;
         }
 
-        $range = $closure->starts_on->isSameDay($closure->ends_on)
-            ? $closure->starts_on->format('d.m.')
-            : $closure->starts_on->format('d.m.').' bis '.$closure->ends_on->format('d.m.');
-
-        return "{$range}: {$closure->message}";
+        return [
+            'range' => $closure->starts_on->isSameDay($closure->ends_on)
+                ? $closure->starts_on->format('d.m.')
+                : $closure->starts_on->format('d.m.').' bis '.$closure->ends_on->format('d.m.'),
+            'message' => $closure->message,
+        ];
     }
 
     private function ownerPhone(): ?string

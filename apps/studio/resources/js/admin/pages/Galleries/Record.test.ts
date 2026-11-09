@@ -57,7 +57,21 @@ const gallery = {
   requiresVerifiedEmail: false,
   expiresAt: null,
   design: null,
+  coverFocal: null,
   offers: { downloads: true, lists: true, comments: true },
+  permissions: {
+    client: { favorites: true, comments: true, hide: true, share: true },
+    guest: { favorites: true, comments: false, hide: false, share: true },
+  },
+  introEnabled: false,
+  studioName: 'Atelier Nordlicht',
+  viewMode: 'none' as const,
+  watermarkText: null,
+  downloadRule: 'open' as const,
+  downloadInvoiceId: null,
+  downloadSizes: ['original', 'web'] as ('original' | 'web')[],
+  expiryReminder: false,
+  invoices: [{ id: 'inv1', number: 'R-2026-004', status: 'open' }],
   deviates: true,
   withdrawn: false,
   prerelease: false,
@@ -66,11 +80,14 @@ const gallery = {
   externalPassword: null,
   info: null,
   canPublish: true,
+  canDelete: true,
+  copy: null,
+  recipient: null,
 }
 
 // The shape every gallery actually starts in: one set, Gallery::booted()'s
 // own default, no pictures yet.
-const sets = [{ id: 'a', name: 'Highlights', count: 0, sortKey: 'taken_at', sortDir: 'asc', density: 'medium' }]
+const sets = [{ id: 'a', name: 'Highlights', count: 0, sortKey: 'taken_at', sortDir: 'asc', density: 'medium', access: 'internal', url: 'https://example.test/bahlmann/hochzeit-bahlmann?set=a' }]
 
 const base = {
   gallery,
@@ -81,7 +98,7 @@ const base = {
   versions: [],
   builds: [],
   lists: [],
-  activity: { downloads: [], marks: [], comments: [], views: [] },
+  activity: { counts: { favorites: 0, comments: 0, hidden: 0, downloads: 0 }, events: [], favorites: [], hidden: [], task: { available: false, url: null } },
   failedAssets: [],
   pendingUploads: [],
   figures: { published: null, assets: 0, expiresAt: null, marked: 0, downloaded: 0, viewed: 0 },
@@ -105,6 +122,46 @@ const picture = (id: string, isCover = false) => ({
 })
 
 describe('Record', () => {
+  const activity = {
+    counts: { favorites: 3, comments: 1, hidden: 1, downloads: 0 },
+    events: [
+      { type: 'hide', at: '2026-10-01T18:50:00+02:00', id: 'h1', who: 'Jana', photo: { n: 8, src: '/x' } },
+      { type: 'views', at: '2026-10-01T00:00:00+02:00', count: 4 },
+    ],
+    favorites: [{ n: 3, src: '/y' }],
+    hidden: [{ id: 'h1', who: 'Jana', photo: { n: 8, src: '/x' } }],
+    task: { available: true, url: null },
+  }
+
+  it('offers Antworten on a customer comment and names the studio reply', async () => {
+    const comments = [
+      { type: 'comment', at: '2026-10-01T18:50:00+02:00', id: 'c1', studio: false, who: 'Jana', photo: { n: 8, src: '/x' }, text: 'Schön' },
+      { type: 'comment', at: '2026-10-01T19:00:00+02:00', id: 'c2', studio: true, who: 'Christian', photo: { n: 8, src: '/x' }, text: 'Danke' },
+    ]
+    const html = await render({ ...base, area: 'aktivitaet', activity: { ...activity, events: comments } })
+
+    expect(html.match(new RegExp(`>${de.galleryRecord.activity.reply}<`, 'g'))).toHaveLength(1)
+    expect(html).toContain('Christian antwortet bei Foto 8')
+  })
+
+  it('shows the counted pills, the timeline with Zurückholen and the favourites card', async () => {
+    const html = await render({ ...base, area: 'aktivitaet', activity })
+
+    expect(html).toContain('Favoriten (3)')
+    expect(html).toContain('Jana blendet Foto 8 aus')
+    expect(html).toContain('4 Aufrufe')
+    expect(html).toContain(de.galleryRecord.activity.restore)
+    expect(html).toContain(de.galleryRecord.activity.createTask)
+    expect(html).toContain('/galerien/g1/bilder?favoriten=1')
+  })
+
+  it('links the open task instead of offering a second one', async () => {
+    const html = await render({ ...base, area: 'aktivitaet', activity: { ...activity, task: { available: true, url: '/auftraege/c1/aufgaben' } } })
+
+    expect(html).toContain('/auftraege/c1/aufgaben')
+    expect(html).not.toContain(de.galleryRecord.activity.createTask)
+  })
+
   // Die Vorschau zeigte assets[0] und log damit, sobald jemand ein anderes
   // Bild zum Titelbild machte.
   it('shows the chosen cover at the top of Gestaltung, not the first picture', async () => {
@@ -170,6 +227,39 @@ describe('Record', () => {
     expect(html).toContain(de.galleryRecord.more)
   })
 
+  it('offers the three ways out of a draft in the Veröffentlichen menu', async () => {
+    const html = await render({ ...base, gallery: { ...gallery, canMail: true }, figures: { ...base.figures, assets: 2 } })
+
+    expect(html).toContain(de.galleryRecord.publishAndSend)
+    expect(html).toContain(de.galleryRecord.publishOnly)
+    expect(html).toContain(de.galleryRecord.copyLinkAndPassword)
+  })
+
+  it('offers Erneut senden only for a standing, unchanged version', async () => {
+    const online = { ...base, gallery: { ...gallery, canMail: true, deviates: false }, figures: { ...base.figures, assets: 2, published: 1 } }
+
+    expect(await render(online)).toContain(de.galleryRecord.resend)
+    expect(await render({ ...online, gallery: { ...online.gallery, deviates: true } })).not.toContain(de.galleryRecord.resend)
+  })
+
+  it('does not offer Duplizieren for an external gallery', async () => {
+    expect(await render(base)).toContain(de.galleryRecord.duplicate)
+    expect(await render({ ...base, gallery: { ...gallery, isExternal: true } })).not.toContain(de.galleryRecord.duplicate)
+  })
+
+  it('offers Löschen only to those who may delete', async () => {
+    expect(await render(base)).toContain(de.common.delete)
+    expect(await render({ ...base, gallery: { ...gallery, canDelete: false } })).not.toContain(de.common.delete)
+  })
+
+  it('shows copy progress with a way to resume', async () => {
+    const html = await render({ ...base, gallery: { ...gallery, copy: { done: 12, total: 40 } } })
+
+    expect(html).toContain('Kopiert 12 von 40')
+    expect(html).toContain(de.galleryRecord.copyResume)
+    expect(await render(base)).not.toContain(de.galleryRecord.copyResume)
+  })
+
   it('hides Vorschaulink erzeugen without canPublish', async () => {
     const html = await render({ ...base, gallery: { ...gallery, canPublish: false } })
 
@@ -189,19 +279,19 @@ describe('Record', () => {
   })
 
   // The old head kept a password field and a six-column counter band in
-  // clear on every gallery, ~290px of cold data before anything you could
-  // act on. Both moved into the ⚙ pane (galerie-fundament layout fix).
-  it('the header renders no password field and no counter band', async () => {
-    const html = await render({
-      ...base,
-      gallery: { ...gallery, viewPassword: 'geheim' },
-      figures: { ...base.figures, marked: 3, downloaded: 2, viewed: 5 },
-    })
+  // clear on every gallery; both live in the ⚙ pane.
+  it('the header renders no password field', async () => {
+    const html = await render({ ...base, gallery: { ...gallery, viewPassword: 'geheim' } })
 
     expect(html).not.toContain('geheim')
-    expect(html).not.toContain(de.galleryRecord.marked)
-    expect(html).not.toContain(de.galleryRecord.downloaded)
-    expect(html).not.toContain(de.galleryRecord.viewed)
+  })
+
+  it('shows the figures in the rail beside the Bilder grid', async () => {
+    const html = await render({ ...base, figures: { ...base.figures, published: 1, assets: 2, marked: 3, downloaded: 2, viewed: 5 } })
+
+    expect(html).toMatch(new RegExp(`${de.galleryRecord.viewed}</dt>\\s*<dd[^>]*>5<`))
+    expect(html).toMatch(new RegExp(`${de.galleryRecord.marked}</dt>\\s*<dd[^>]*>3<`))
+    expect(html).toMatch(new RegExp(`${de.galleryRecord.downloaded}</dt>\\s*<dd[^>]*>2<`))
   })
 
   // R39/R32: the More menu's own entry point into pre-release, offered only
@@ -239,5 +329,18 @@ describe('Record', () => {
     // so the plain label alone would pass whether or not the chip rendered.
     expect(html).toContain('bg-due-bg')
     expect(html).toContain(de.galleryRecord.prereleaseStop)
+  })
+
+  it('shows the state word with the expiry date instead of the version chip', async () => {
+    const html = await render({ ...base, figures: { ...base.figures, published: 1, assets: 2, expiresAt: '2026-11-17' } })
+
+    expect(html).toContain('Online bis 17.11.2026')
+  })
+
+  it('keeps Zurücknehmen in the More menu, not among the head buttons', async () => {
+    const html = await render({ ...base, figures: { ...base.figures, published: 1, assets: 2 } })
+
+    expect(html).toContain(de.galleryRecord.withdraw)
+    expect(html).not.toMatch(new RegExp(`<button[^>]*>\\s*${de.galleryRecord.withdraw}`))
   })
 })
