@@ -9,7 +9,12 @@ use App\Crm\Actions\BookCase;
 use App\Crm\Data\CaseSuggestionData;
 use App\Crm\Models\ClientCase;
 use App\Documents\Data\DocumentViewData;
+use App\Documents\Data\MailTemplateData;
+use App\Documents\Enums\DocumentTemplateType;
+use App\Documents\Models\DocumentTemplate;
+use App\Documents\Support\DocumentMergeData;
 use App\Documents\Support\InlineHtmlSanitizer;
+use App\Documents\Support\MergeFieldVocabulary;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
@@ -129,7 +134,7 @@ class QuoteController extends Controller
         ]);
     }
 
-    public function followUpForm(Quote $quote): InertiaResponse
+    public function followUpForm(Quote $quote, DocumentMergeData $mergeData): InertiaResponse
     {
         $this->authorize('manageQuotes', $quote->case);
         abort_unless($quote->status === QuoteStatus::Sent, 404);
@@ -148,6 +153,20 @@ class QuoteController extends Controller
             'message' => $defaults['message'],
             'mailHtml' => MailPreview::html(new QuoteFollowUp($quote, $defaults['subject'], MailPreview::MESSAGE), $contact ?? (object) []),
             'followUp' => true,
+            'mailTemplates' => DocumentTemplate::query()
+                ->current()
+                ->ofType(DocumentTemplateType::Mail)
+                ->forShootKind($quote->case->primaryShoot?->kind)
+                ->orderBy('name')
+                ->get()
+                ->map(fn (DocumentTemplate $template) => MailTemplateData::fromModel($template, $mergeData->forCase($quote->case)))
+                ->filter(fn (MailTemplateData $template) => $template->unknownFields === [])
+                ->values()
+                ->all(),
+            'mergeFields' => collect(MergeFieldVocabulary::samples())
+                ->map(fn (string $sample, string $path) => ['path' => $path, 'sample' => $sample])
+                ->values()
+                ->all(),
         ]);
     }
 

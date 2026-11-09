@@ -4,6 +4,7 @@ import { Button } from '@/ui/button'
 import BackButton from '@/ui/page/BackButton.vue'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import DocumentEditor from '@/admin/components/templates/DocumentEditor.vue'
 import { Toaster } from '@/ui/sonner'
 import { toPlainText } from '@/admin/documents/blocks/serialize'
@@ -26,15 +27,26 @@ const props = withDefaults(
     mailHtml: string
     palette?: PaletteEntry[]
     mergeFields?: { path: string; sample: string }[]
+    templates?: { id: string; name: string; body: string }[]
     processing?: boolean
   }>(),
-  { palette: () => [], mergeFields: () => [] },
+  { palette: () => [], mergeFields: () => [], templates: () => [] },
 )
 
 const emit = defineEmits<{ cancel: []; send: [{ subject: string; message: EditorDocument }] }>()
 
 const subject = ref(props.subject)
 const message = ref<EditorDocument>(props.message)
+const editorKey = ref(0)
+
+// The template body arrives resolved against this case, as plain paragraphs.
+function useTemplate(id: string) {
+  const template = props.templates.find((entry) => entry.id === id)
+  if (!template) return
+
+  message.value = { blocks: template.body.split('\n\n').map((text) => ({ type: 'paragraph', data: { text } })) }
+  editorKey.value++
+}
 
 function escapeHtml(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -84,9 +96,18 @@ function send() {
           <Input :id="id" v-model="subject" type="text" />
         </Field>
 
+        <Field v-if="templates.length" v-slot="{ id }" :label="$t('sendMail.template')" dense>
+          <Select @update:model-value="(value) => useTemplate(String(value))">
+            <SelectTrigger :id="id"><SelectValue placeholder="—" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="template in templates" :key="template.id" :value="template.id">{{ template.name }}</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+
         <Field :label="$t('sendMail.message')" dense class="min-h-[160px] flex-1">
           <div class="flex-1 overflow-y-auto rounded-md border border-border px-3 py-2.5">
-            <DocumentEditor v-model="message" :palette="palette" :merge-fields="mergeFields" />
+            <DocumentEditor :key="editorKey" v-model="message" :palette="palette" :merge-fields="mergeFields" />
           </div>
         </Field>
 

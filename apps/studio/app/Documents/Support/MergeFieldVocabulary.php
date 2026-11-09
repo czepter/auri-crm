@@ -44,6 +44,8 @@ class MergeFieldVocabulary
         'shoot.list' => '14.06.2026 (Gut Basthorst); 15.06.2026',
         'payment.depositDue' => '01.03.2026',
         'payment.plan' => 'Anzahlung 1.000,00 € bis 01.03.2026; Restzahlung 1.500,00 € bis 07.06.2026',
+        'quote.number' => 'AN-2026-12',
+        'quote.sentOn' => '04.09.2026',
         'quote.validUntil' => '30.09.2026',
         'quote.vatNote' => 'Alle Preise verstehen sich zzgl. 19 % Umsatzsteuer.',
         // C-17 (#253): the "Galerie online" letter carries link, password and

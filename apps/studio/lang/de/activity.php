@@ -17,6 +17,7 @@ return [
     'lead.stage_changed' => 'Phase: :to',
     'lead.lost' => 'Anfrage verloren',
     'quote.sent' => 'Angebot gesendet',
+    'quote.followed_up' => 'Angebot nachgefasst',
     'quote.revised' => 'Angebot überarbeitet',
     'quote.accepted' => 'Angebot angenommen',
     'project.booked' => 'Projekt gebucht',

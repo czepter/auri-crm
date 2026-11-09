@@ -1090,6 +1090,7 @@
     "subject": "Betreff",
     "message": "Nachricht",
     "submit": "Senden",
+    "template": "Vorlage",
     "preview": "Vorschau"
   },
   "automations": {

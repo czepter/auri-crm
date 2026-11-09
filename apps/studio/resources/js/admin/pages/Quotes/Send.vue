@@ -17,6 +17,8 @@ const props = defineProps<{
   message: string | null
   mailHtml: string
   followUp?: boolean
+  mailTemplates?: App.Documents.Data.MailTemplateData[]
+  mergeFields?: { path: string; sample: string }[]
 }>()
 useLiveProps([])
 
@@ -68,6 +70,8 @@ function send({ subject, message }: { subject: string; message: EditorDocument }
     :subject="subject ?? $t('quotes.title')"
     :message="message"
     :mail-html="mailHtml"
+    :templates="mailTemplates"
+    :merge-fields="mergeFields"
     :processing="processing"
     @cancel="cancel"
     @send="send"

@@ -99,6 +99,7 @@ return [
     'quote.duplicated' => 'Angebot dupliziert',
     'quote.revised' => 'Angebot überarbeitet',
     'quote.sent' => 'Angebot gesendet',
+    'quote.followed_up' => 'Angebot nachgefasst',
     'quote.updated' => 'Angebot geändert',
     'retention.erased' => 'Abgelaufene Anfragen bearbeitet',
     'service_suggestion.removed' => 'Leistungsvorschlag entfernt',
