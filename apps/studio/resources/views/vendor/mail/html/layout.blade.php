@@ -110,7 +110,7 @@
                 </td>
               </tr>
             @endif
-            @if($showBrand ?? true)
+@if($showBrand ?? true)
               <tr>
                 <td
                    align="left" style="font-size:0px;padding:0 0 16px 0;word-break:break-word;"
@@ -123,7 +123,6 @@
                 </td>
               </tr>
             @endif
-            
         </tbody>
       </table>
     

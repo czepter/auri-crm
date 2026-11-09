@@ -28,6 +28,9 @@ class BuildMailTemplatesCommand extends Command
         '__LOGO_URL__' => '{{ $logoUrl ?? null }}',
         '__LOGO_IF__' => '@if(! empty($logoUrl))',
         '__LOGO_ENDIF__' => '@endif',
+        // MJML joins neighbouring raw blocks without a break, and `@endif@if` does not compile.
+        '__BRAND_IF__' => "\n@if(\$showBrand ?? true)",
+        '__BRAND_ENDIF__' => '@endif',
         // The footer zone is opt-in: without a mailFooter the whole section
         // is skipped, so a mail that sets none shows no empty ruled band.
         '__FOOTER__' => '{!! $mailFooter ?? \'\' !!}',
