@@ -229,3 +229,18 @@ it('renders the project quote tab once a Gutschrift exists', function () {
         ->get("/auftraege/{$installment->plan->case->public_id}/angebote")
         ->assertOk();
 });
+
+it('opens the Gutschrift builder on what was paid, and not once all of it is credited', function () {
+    $paid = creditableInstallment();
+    $viewer = $this->actingAs(staffMember(), 'staff');
+
+    $page = $viewer->get("/rechnungen/{$paid->invoice->public_id}/gutschrift/neu")->assertOk()->viewData('page');
+
+    expect($page['component'])->toBe('Invoices/CreditNote')
+        ->and($page['props']['creditable'])->toBe((int) $paid->amount)
+        ->and($page['props']['invoice']['items'][0]['gross'])->toBe((int) $paid->amount);
+
+    app(IssueCreditNote::class)($paid->invoice, (int) $paid->amount, 'Rückgabe', null);
+
+    $viewer->get("/rechnungen/{$paid->invoice->public_id}/gutschrift/neu")->assertNotFound();
+});

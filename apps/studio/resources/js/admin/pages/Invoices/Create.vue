@@ -4,18 +4,18 @@ import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormShell from '@/ui/page/FormShell.vue'
 import InvoiceTargetTypeahead from '@/admin/components/payments/InvoiceTargetTypeahead.vue'
-import InvoicePreviewPane from '@/admin/components/payments/InvoicePreviewPane.vue'
+import DocumentPaper from '@/admin/components/document/DocumentPaper.vue'
 import LetterField from '@/admin/components/quote/LetterField.vue'
 import QuotePositionsCard from '@/admin/components/quote/QuotePositionsCard.vue'
 import { buildQuotePayload, type QuoteDraft, type VatSettings } from '@/admin/components/quote/quotePayload'
 import InvoiceDataGate from '@/admin/pages/Settings/panes/InvoiceDataGate.vue'
-import { PreviewOverlay } from '@/ui/preview-overlay'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { centsToEuros, formatEuros } from '@/lib/money'
+import { dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Rate = { id: string; label: string; amount: number; dueOn: string }
@@ -154,8 +154,8 @@ function submit() {
     <FormShell
       :title="$t('invoicesCreate.title')" wide
     >
-      <div class="flex gap-6">
-        <form class="grid w-[720px] max-w-full flex-none content-start gap-4" @submit.prevent="submit">
+      <DocumentPaper :studio="studioSettings.displayName ?? ''" :kind="$t('invoicesCreate.paperKind')" :date="dayWithWeekday(inDays(0))">
+        <form class="grid content-start gap-5" @submit.prevent="submit">
           <Field :label="$t('invoicesCreate.recipient')" :error="errors['contact.name'] ?? errors.contact_id">
             <div v-if="newContact" class="grid grid-cols-2 gap-3">
               <Input :aria-label="$t('invoicesCreate.name')" v-model="newContact.name" :placeholder="$t('invoicesCreate.name')" required />
@@ -221,11 +221,7 @@ function submit() {
             </Button>
           </div>
         </form>
-
-        <PreviewOverlay :min="1180" :label="$t('common.preview')" wrapper-class="min-w-[420px] flex-1">
-          <InvoicePreviewPane :payload="payload" />
-        </PreviewOverlay>
-      </div>
+      </DocumentPaper>
     </FormShell>
 
     <InvoiceDataGate

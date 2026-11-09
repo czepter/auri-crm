@@ -519,6 +519,14 @@
     "kpiPaid": "Bezahlt {year}",
     "kpiCount": "1 Rechnung | {count} Rechnungen"
   },
+  "creditNoteBuilder": {
+    "title": "Neue Gutschrift",
+    "kind": "Gutschrift",
+    "gross": "Betrag",
+    "reason": "Grund",
+    "submit": "Gutschrift stellen",
+    "exceeds": "Höchstens {amount}"
+  },
   "invoiceDetail": {
     "title": "Rechnung {number}",
     "download": "PDF",
@@ -588,6 +596,7 @@
   },
   "invoicesCreate": {
     "termDays": "{days} Tage",
+    "paperKind": "Rechnung",
     "fromQuote": "1 Position aus dem Angebot | {count} Positionen aus dem Angebot",
     "title": "Neue Rechnung",
     "recipient": "Empfänger",

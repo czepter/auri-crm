@@ -15,7 +15,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 class InvoiceDetailData extends Data
 {
     /**
-     * @param  list<array{title: string, description: ?string, quantity: int, unitPrice: int, total: int}>  $items
+     * @param  list<array{title: string, description: ?string, quantity: int, unitPrice: int, total: int, gross: int}>  $items
      * @param  list<array{kind: string, on: string, amount: ?int}>  $events  newest first
      */
     public function __construct(
@@ -33,7 +33,7 @@ class InvoiceDetailData extends Data
 
     public static function fromModel(Invoice $invoice): self
     {
-        $invoice->loadMissing(['items', 'installments', 'creditNotes', 'contact', 'case', 'views']);
+        $invoice->loadMissing(['items.installment', 'installments', 'creditNotes', 'contact', 'case', 'views']);
 
         $figures = InvoiceFigures::forInvoice($invoice);
         $quote = $invoice->case === null ? null : Quote::query()
@@ -53,6 +53,10 @@ class InvoiceDetailData extends Data
                 'quantity' => (int) $item->quantity,
                 'unitPrice' => (int) $item->unit_price,
                 'total' => $item->asQuoteItem()->lineTotal(),
+                // What the line costs the client, for a Gutschrift that takes lines back.
+                'gross' => $item->installment !== null
+                    ? (int) $item->installment->amount
+                    : InvoiceFigures::forPositions(collect([$item]), null, null)->gross,
             ])->all(),
             net: $figures->net,
             vat: $figures->vat,

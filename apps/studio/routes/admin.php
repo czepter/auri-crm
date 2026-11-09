@@ -935,6 +935,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/gutschriften', CreditNoteController::class)->name('credit-notes.index');
 
         Route::get('/vertraege', ContractIndexController::class)->name('contracts.index');
+        Route::get('/rechnungen/{invoice}/gutschrift/neu', [InvoiceController::class, 'creditNoteForm'])->name('invoices.credit-note-form');
         Route::get('/rechnungen/{invoice}/gutschrift/{creditNote}', [InvoiceController::class, 'downloadCreditNote'])
             ->name('invoices.credit-note.download');
 

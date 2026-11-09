@@ -9,7 +9,6 @@ import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
 import { Button } from '@/ui/button'
 import InstallmentPaidDialog from '@/admin/components/payments/InstallmentPaidDialog.vue'
 import InstallmentStornoDialog from '@/admin/components/payments/InstallmentStornoDialog.vue'
-import CreditNoteDialog from '@/admin/components/payments/CreditNoteDialog.vue'
 import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
@@ -119,7 +118,7 @@ const sendFirst = computed(() => live.value && unpaid.value && !row.value.sentOn
 
           <section v-if="live && (row.paidAmount === 0 || row.paidAmount > row.credited)" class="flex flex-wrap gap-2">
             <InstallmentStornoDialog v-if="row.paidAmount === 0" :invoice-id="row.id" />
-            <CreditNoteDialog v-if="row.paidAmount > row.credited" :invoice-id="row.id" :amount="row.paidAmount - row.credited" />
+            <Button v-if="row.paidAmount > row.credited" :as="Link" variant="outline" :href="`/rechnungen/${row.id}/gutschrift/neu`">{{ $t('payments.creditNote') }}</Button>
           </section>
         </aside>
       </div>

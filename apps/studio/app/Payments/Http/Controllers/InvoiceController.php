@@ -482,6 +482,22 @@ class InvoiceController extends Controller
         return back();
     }
 
+    /** The Gutschrift written on the invoice's own positions; what it may take back is what was paid and not yet credited. */
+    public function creditNoteForm(Invoice $invoice): Response
+    {
+        self::authorizeProject($invoice->case);
+
+        $creditable = $invoice->paidAmount() - $invoice->creditedAmount();
+
+        abort_if($invoice->isCancelled() || $creditable <= 0, 404);
+
+        return Inertia::render('Invoices/CreditNote', [
+            'invoice' => InvoiceDetailData::fromModel($invoice),
+            'creditable' => $creditable,
+            'studioName' => StudioSettings::current()->display_name,
+        ]);
+    }
+
     public function creditNote(Request $request, Invoice $invoice, IssueCreditNote $issue): RedirectResponse
     {
         self::authorizeProject($invoice->case);
