@@ -36,9 +36,10 @@ describe('Projektübersicht', () => {
     it('leads with the overdue task and shows the shoot status one click away', async () => {
         const html = await render()
 
-        for (const title of ['Nächster Schritt', 'Termine', 'Aufgaben', 'Zahlungen', 'Kunde', 'Angebot']) {
+        for (const title of ['Termine', 'Aufgaben', 'Zahlungen', 'Kunde', 'Unterlagen']) {
             expect(html).toContain(title)
         }
+        expect(html).not.toContain('Nächster Schritt')
         expect(html).toMatch(/<button[^>]*>(<!--[^>]*-->)*Fotografiert(<!--[^>]*-->)*<\/button>/)
     })
 
@@ -48,6 +49,16 @@ describe('Projektübersicht', () => {
         const html = await render(meta.args, { header: { ...header, paymentPlan: plan } })
 
         expect(html).toMatch(/<a [^>]*href="tel:\d+"[^>]*>(<!--[^>]*-->)*Anrufen/)
+    })
+
+    it('offers to invoice the rate that is due, in the head', async () => {
+        const header = meta.args!.header!
+        const due = new Date(Date.now() - 3 * 86_400_000).toISOString().slice(0, 10)
+        const plan = { total: 100, openTotal: 100, settledOn: null, installments: [{ id: 'i1', label: 'Anzahlung', amount: 100, dueOn: due, status: 'scheduled', statusLabel: 'Geplant', invoiceId: null, invoiceNumber: null, isLate: true }] }
+        const html = await render(meta.args, { header: { ...header, canManagePaymentPlan: true, paymentPlan: plan } })
+
+        expect(html).toMatch(/<button[^>]*>(<!--[^>]*-->)*Rechnung stellen(<!--[^>]*-->)*<\/button>/)
+        expect(html).toContain('Keine Rechnung')
     })
 
     it('lists the contacts with tel and mailto links and draws no rail', async () => {
