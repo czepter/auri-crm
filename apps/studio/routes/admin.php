@@ -278,6 +278,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::redirect('/dokumentvorlagen', '/vorlagen?typ=dokumente')->name('document-templates.index');
         Route::get('/dokumentvorlagen/neu', [DocumentTemplateController::class, 'create'])->name('document-templates.create');
         Route::post('/dokumentvorlagen', [DocumentTemplateController::class, 'store'])->name('document-templates.store');
+        Route::post('/dokumentvorlagen/email', [DocumentTemplateController::class, 'storeFromMail'])->name('document-templates.store-mail');
         Route::post('/dokumentvorlagen/vorschau', [DocumentTemplateController::class, 'preview'])
             ->name('document-templates.preview');
         Route::get('/dokumentvorlagen/{documentTemplate}', [DocumentTemplateController::class, 'edit'])

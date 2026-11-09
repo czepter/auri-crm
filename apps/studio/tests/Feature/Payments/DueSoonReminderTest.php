@@ -2,12 +2,12 @@
 
 use App\Payments\Actions\DetectOverdueInstallments;
 use App\Payments\Actions\IssueInvoice;
-use App\Payments\Notifications\PaymentReminder;
-use App\Settings\Actions\UpdateStudioSetting;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
+use App\Payments\Notifications\PaymentReminder;
 use App\Payments\Notifications\Studio\InstallmentDueSoon;
+use App\Settings\Actions\UpdateStudioSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 
@@ -72,8 +72,7 @@ it('stays quiet for a rate nobody has issued', function () {
 
 it('writes the reminder in the studio’s own wording, merge fields resolved', function () {
     app(UpdateStudioSetting::class)('tax_number', '22/123/45678', null);
-    app(UpdateStudioSetting::class)('reminder_mail_subject', 'Erinnerung {{ reminder.invoiceNumber }}', null);
-    app(UpdateStudioSetting::class)('reminder_mail_body', 'Hallo {{ contact.name }}, {{ reminder.amount }} sind seit {{ reminder.dueOn }} offen.', null);
+    mailDefault('payment_reminder', 'Erinnerung {{ reminder.invoiceNumber }}', 'Hallo {{ contact.name }}, {{ reminder.amount }} sind seit {{ reminder.dueOn }} offen.');
 
     $installment = invoiceablePlan();
     $invoice = app(IssueInvoice::class)($installment);

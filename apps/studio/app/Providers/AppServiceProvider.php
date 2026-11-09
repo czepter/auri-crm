@@ -162,6 +162,7 @@ class AppServiceProvider extends ServiceProvider
 
             $view->with([
                 'brand' => StudioSettings::current()->display_name ?? config('app.name'),
+                'showBrand' => StudioSettings::current()->mail_header_name,
                 'logoUrl' => StudioSettings::current()->logo_path
                     ? rtrim((string) config('portal.url'), '/').'/branding/logo'
                     : null,

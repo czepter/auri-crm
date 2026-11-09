@@ -37,7 +37,7 @@ class DocumentTemplate extends Model
 
     protected $table = 'document_templates';
 
-    protected $fillable = ['family_id', 'version', 'type', 'shoot_kind', 'name', 'body', 'blocks', 'is_current'];
+    protected $fillable = ['family_id', 'version', 'type', 'shoot_kind', 'name', 'subject', 'body', 'blocks', 'is_current'];
 
     protected $attributes = ['version' => 1, 'is_current' => true];
 
@@ -101,6 +101,7 @@ class DocumentTemplate extends Model
                 'type' => $this->type,
                 'shoot_kind' => $this->shoot_kind,
                 'name' => $attributes['name'],
+                'subject' => array_key_exists('subject', $attributes) ? $attributes['subject'] : $this->subject,
                 'body' => $attributes['body'],
                 'blocks' => $attributes['blocks'] ?? $this->blocks,
                 'is_current' => true,
@@ -125,6 +126,7 @@ class DocumentTemplate extends Model
             'type' => $attributes['type'],
             'shoot_kind' => $attributes['shoot_kind'] ?? null,
             'name' => $attributes['name'],
+            'subject' => $attributes['subject'] ?? null,
             'body' => $attributes['body'],
             'blocks' => $attributes['blocks'] ?? null,
             'is_current' => true,

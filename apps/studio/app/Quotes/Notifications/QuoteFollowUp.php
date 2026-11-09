@@ -3,6 +3,7 @@
 namespace App\Quotes\Notifications;
 
 use App\Crm\Models\Contact;
+use App\Documents\Support\MailDefaults;
 use App\Models\StudioSettings;
 use App\Quotes\Models\Quote;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -37,7 +38,12 @@ class QuoteFollowUp extends Notification
             'ihr' => "das Angebot {$quote->number} liegt seit {$since} bei euch. Gibt es Fragen oder Änderungswünsche? Ich passe es gern an.",
         ][$address];
 
-        return ['subject' => $subject, 'message' => 'Hallo'.($name ? " {$name}" : '').",\n\n{$body}"];
+        $default = MailDefaults::resolve('quote_follow_up', QuoteSent::mergeData($quote));
+
+        return [
+            'subject' => $default['subject'] ?? $subject,
+            'message' => $default['message'] ?? 'Hallo'.($name ? " {$name}" : '').",\n\n{$body}",
+        ];
     }
 
     /** @return list<string> */

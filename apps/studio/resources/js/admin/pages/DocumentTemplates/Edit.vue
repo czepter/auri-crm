@@ -31,12 +31,12 @@ const samples = computed(() =>
 // only persisted if they save.
 const doc = ref<EditorDocument>((props.template.blocks as EditorDocument | null) ?? htmlToBlocks(props.template.body, samples.value))
 
-const form = useForm({ name: props.template.name, body: props.template.body, blocks: doc.value })
+const form = useForm({ name: props.template.name, subject: props.template.subject ?? '', body: props.template.body, blocks: doc.value })
 
 function submit() {
   form.body = serialize(doc.value, props.template.type === 'mail' ? 'mail' : 'print')
   form.blocks = doc.value
-  form.patch(`/dokumentvorlagen/${props.template.id}`)
+  form.transform((data) => ({ ...data, subject: data.subject || null })).patch(`/dokumentvorlagen/${props.template.id}`)
 }
 </script>
 
@@ -58,6 +58,11 @@ function submit() {
             <Label for="name">{{ $t('documentTemplates.name') }}</Label>
             <Input id="name" v-model="form.name" type="text" required />
             <p v-if="form.errors.name" class="text-small leading-[1.45] text-destructive">{{ form.errors.name }}</p>
+          </div>
+
+          <div v-if="template.type === 'mail'" class="mt-4 flex min-w-0 max-w-[420px] flex-col gap-1.5">
+            <Label for="subject">{{ $t('sendMail.subject') }}</Label>
+            <Input id="subject" v-model="form.subject" type="text" />
           </div>
 
           <div class="mt-6 grid min-h-0 grid-cols-[minmax(0,1fr)_7px_minmax(0,1fr)] gap-0 max-[1100px]:grid-cols-[minmax(0,1fr)]">

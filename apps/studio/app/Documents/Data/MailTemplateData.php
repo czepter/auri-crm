@@ -2,6 +2,7 @@
 
 namespace App\Documents\Data;
 
+use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\MergeFieldResolver;
 use App\Documents\Support\MergeFieldVocabulary;
@@ -32,6 +33,7 @@ class MailTemplateData extends Data
     public function __construct(
         public string $id,
         public string $name,
+        public ?string $subject,
         public string $body,
         public array $unknownFields,
     ) {}
@@ -44,10 +46,32 @@ class MailTemplateData extends Data
         return new self(
             id: $template->public_id,
             name: $template->name,
+            subject: filled($template->subject) ? MergeFieldResolver::resolve($template->subject, $mergeData) : null,
             body: PlainTextBody::fromHtml(
                 MergeFieldResolver::resolve($template->body, $mergeData),
             ),
             unknownFields: MergeFieldVocabulary::unknownPathsIn($template->body),
         );
+    }
+
+    /**
+     * The mail templates fit for a case, resolved against $mergeData and
+     * without those that name a field the vocabulary lacks.
+     *
+     * @param  array<string, mixed>  $mergeData
+     * @return list<self>
+     */
+    public static function forCompose(?string $shootKind, array $mergeData): array
+    {
+        return DocumentTemplate::query()
+            ->current()
+            ->ofType(DocumentTemplateType::Mail)
+            ->forShootKind($shootKind)
+            ->orderBy('name')
+            ->get()
+            ->map(fn (DocumentTemplate $template) => self::fromModel($template, $mergeData))
+            ->filter(fn (self $template) => $template->unknownFields === [])
+            ->values()
+            ->all();
     }
 }

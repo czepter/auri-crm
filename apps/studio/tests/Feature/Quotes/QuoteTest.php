@@ -865,8 +865,7 @@ describe('Q-06: sending a quote', function () {
     });
 
     it('starts the compose screen from the studio’s own wording, merge fields resolved', function () {
-        app(UpdateStudioSetting::class)('quote_mail_subject', 'Angebot {{ quote.number }}', null);
-        app(UpdateStudioSetting::class)('quote_mail_body', 'Hallo {{ contact.name }}, gültig bis {{ quote.validUntil }}.', null);
+        mailDefault('quote_sent', 'Angebot {{ quote.number }}', 'Hallo {{ contact.name }}, gültig bis {{ quote.validUntil }}.');
 
         $contact = Contact::factory()->create(['name' => 'Lena Brandt', 'email' => 'lena@example.test']);
         $project = ClientCase::factory()->create();

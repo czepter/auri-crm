@@ -8,12 +8,11 @@ use App\Catalog\Models\Package;
 use App\Crm\Actions\BookCase;
 use App\Crm\Data\CaseSuggestionData;
 use App\Crm\Models\ClientCase;
+use App\Crm\Models\Shoot;
 use App\Documents\Data\DocumentViewData;
 use App\Documents\Data\MailTemplateData;
-use App\Documents\Enums\DocumentTemplateType;
-use App\Documents\Models\DocumentTemplate;
-use App\Documents\Support\DocumentMergeData;
 use App\Documents\Support\InlineHtmlSanitizer;
+use App\Documents\Support\MailDefaults;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
@@ -121,6 +120,7 @@ class QuoteController extends Controller
 
         $quote->loadMissing(['items', 'case']);
         $contact = $quote->case->primaryContact();
+        $default = MailDefaults::resolve('quote_sent', QuoteSent::mergeData($quote));
 
         return Inertia::render('Quotes/Send', [
             'projectId' => $quote->case->public_id,
@@ -128,13 +128,17 @@ class QuoteController extends Controller
             'recipientName' => $contact?->name ?? '',
             'recipientEmail' => $contact?->email ?? '',
             'address' => StudioSettings::current()->clientAddress($quote->case->contacts()->count()),
-            'subject' => QuoteSent::templated($quote, 'quote_mail_subject'),
-            'message' => QuoteSent::templated($quote, 'quote_mail_body'),
+            'subject' => $default['subject'] ?? null,
+            'message' => $default['message'] ?? null,
+            'mailTemplates' => MailTemplateData::forCompose($quote->case->primaryShoot?->kind, QuoteSent::mergeData($quote)),
+            'mergeFields' => $this->mergeFields(),
+            'shootKinds' => Shoot::kindSuggestions(),
+            'occasion' => 'quote_sent',
             'mailHtml' => MailPreview::html(new QuoteSent($quote, null, MailPreview::MESSAGE), $contact ?? (object) []),
         ]);
     }
 
-    public function followUpForm(Quote $quote, DocumentMergeData $mergeData): InertiaResponse
+    public function followUpForm(Quote $quote): InertiaResponse
     {
         $this->authorize('manageQuotes', $quote->case);
         abort_unless($quote->status === QuoteStatus::Sent, 404);
@@ -153,20 +157,10 @@ class QuoteController extends Controller
             'message' => $defaults['message'],
             'mailHtml' => MailPreview::html(new QuoteFollowUp($quote, $defaults['subject'], MailPreview::MESSAGE), $contact ?? (object) []),
             'followUp' => true,
-            'mailTemplates' => DocumentTemplate::query()
-                ->current()
-                ->ofType(DocumentTemplateType::Mail)
-                ->forShootKind($quote->case->primaryShoot?->kind)
-                ->orderBy('name')
-                ->get()
-                ->map(fn (DocumentTemplate $template) => MailTemplateData::fromModel($template, $mergeData->forCase($quote->case)))
-                ->filter(fn (MailTemplateData $template) => $template->unknownFields === [])
-                ->values()
-                ->all(),
-            'mergeFields' => collect(MergeFieldVocabulary::samples())
-                ->map(fn (string $sample, string $path) => ['path' => $path, 'sample' => $sample])
-                ->values()
-                ->all(),
+            'mailTemplates' => MailTemplateData::forCompose($quote->case->primaryShoot?->kind, QuoteSent::mergeData($quote)),
+            'shootKinds' => Shoot::kindSuggestions(),
+            'occasion' => 'quote_follow_up',
+            'mergeFields' => $this->mergeFields(),
         ]);
     }
 
@@ -664,5 +658,14 @@ class QuoteController extends Controller
         $preview->fill(Quote::computeVat($preview->net, $items));
 
         return response($render->html($preview), 200, ['Content-Type' => 'text/html']);
+    }
+
+    /** @return list<array{path: string, sample: string}> */
+    private function mergeFields(): array
+    {
+        return collect(MergeFieldVocabulary::samples())
+            ->map(fn (string $sample, string $path) => ['path' => $path, 'sample' => $sample])
+            ->values()
+            ->all();
     }
 }

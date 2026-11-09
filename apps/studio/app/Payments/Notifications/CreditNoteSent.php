@@ -4,8 +4,7 @@ namespace App\Payments\Notifications;
 
 use App\Concerns\AppliesStudioMailIdentity;
 use App\Crm\Concerns\WritesComposedMail;
-use App\Documents\Support\MergeFieldResolver;
-use App\Models\StudioSettings;
+use App\Documents\Support\MailDefaults;
 use App\Payments\Models\CreditNote;
 use App\Payments\Support\InvoiceMergeData;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -32,14 +31,11 @@ class CreditNoteSent extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $data = app(InvoiceMergeData::class)->forInvoice($this->creditNote->invoice, $this->creditNote);
-        $settings = StudioSettings::current();
+        $default = MailDefaults::resolve('credit_note_sent', $data);
 
-        $subject = filled($settings->credit_note_mail_subject)
-            ? MergeFieldResolver::resolve($settings->credit_note_mail_subject, $data)
-            : "Gutschrift {$this->creditNote->number}";
-        $body = filled($settings->credit_note_mail_body)
-            ? MergeFieldResolver::resolve($settings->credit_note_mail_body, $data)
-            : "Hallo {$data['contact']['name']},\n\nanbei die Gutschrift {$this->creditNote->number} zur Rechnung {$this->creditNote->invoice->number}.";
+        $subject = $default['subject'] ?? "Gutschrift {$this->creditNote->number}";
+        $body = $default['message']
+            ?? "Hallo {$data['contact']['name']},\n\nanbei die Gutschrift {$this->creditNote->number} zur Rechnung {$this->creditNote->invoice->number}.";
 
         $message = $this->composedMail($subject, $body);
 

@@ -7,8 +7,7 @@ use App\Crm\Concerns\WritesComposedMail;
 use App\Crm\Models\Contact;
 use App\Crm\Support\CaseMergeData;
 use App\Documents\Support\DocumentMergeData;
-use App\Documents\Support\MergeFieldResolver;
-use App\Models\StudioSettings;
+use App\Documents\Support\MailDefaults;
 use App\Payments\Concerns\AttachesInvoicePdf;
 use App\Payments\Models\PaymentInstallment;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -45,7 +44,6 @@ class PaymentReminder extends Notification
 
         $amount = Number::currency($this->installment->remaining() / 100, in: 'EUR', locale: 'de');
         $dueOn = $this->installment->due_on->format('d.m.Y');
-        $settings = StudioSettings::current();
         $data = [
             ...app(DocumentMergeData::class)->forCase($project),
             'contact' => CaseMergeData::contact($notifiable instanceof Contact ? $notifiable : $project->primaryContact()),
@@ -58,13 +56,13 @@ class PaymentReminder extends Notification
             ],
         ];
 
-        $message = filled($settings->reminder_mail_body)
-            ? $this->composedMail(
-                MergeFieldResolver::resolve($settings->reminder_mail_subject ?: "Offene Rate zu {$project->name}", $data),
-                MergeFieldResolver::resolve($settings->reminder_mail_body, $data),
-            )
+        $default = MailDefaults::resolve('payment_reminder', $data);
+        $subject = $default['subject'] ?? "Offene Rate zu {$project->name}";
+
+        $message = $default !== null
+            ? $this->composedMail($subject, $default['message'])
             : (new MailMessage)
-                ->subject($settings->reminder_mail_subject ? MergeFieldResolver::resolve($settings->reminder_mail_subject, $data) : "Offene Rate zu {$project->name}")
+                ->subject($subject)
                 ->greeting('Hallo,')
                 ->line("Die Rate über {$amount} war am {$dueOn} fällig.");
 

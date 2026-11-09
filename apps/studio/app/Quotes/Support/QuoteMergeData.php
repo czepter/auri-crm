@@ -26,12 +26,10 @@ class QuoteMergeData implements MergeDataProvider
         $quote = $case?->latestQuote;
 
         if ($quote === null) {
-            return ['quote' => ['number' => '', 'sentOn' => '', 'validUntil' => '', 'vatNote' => '']];
+            return ['quote' => ['validUntil' => '', 'vatNote' => '']];
         }
 
         return ['quote' => [
-            'number' => (string) $quote->number,
-            'sentOn' => $quote->sent_at?->format('d.m.Y') ?? '',
             'validUntil' => $quote->valid_until?->format('d.m.Y') ?? '',
             // A standard-rate quote froze no note — there is nothing unusual
             // to say — so the sentence is composed from the frozen rate. Only

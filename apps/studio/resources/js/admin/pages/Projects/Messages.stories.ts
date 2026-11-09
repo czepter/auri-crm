@@ -49,12 +49,14 @@ const mailTemplates: App.Documents.Data.MailTemplateData[] = [
     {
         id: 'mt-ablauf',
         name: 'Ablauf zum Termin',
+        subject: null,
         body: '<p>Hallo Jana,</p><p>anbei der Ablauf für den 13.09.2026 auf Gut Basthorst.</p>',
         unknownFields: [],
     },
     {
         id: 'mt-galerie',
         name: 'Galerie online',
+        subject: null,
         body: '<p>Hallo Jana,</p><p>eure Galerie steht bereit: {{ gallery.link }}</p>',
         unknownFields: [],
     },
