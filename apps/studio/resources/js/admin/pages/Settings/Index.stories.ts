@@ -50,6 +50,8 @@ const settings: App.Settings.Data.StudioSettingsData = {
   mailClientsEnabled: true,
   invoiceMailSubject: null,
   invoiceMailBody: null,
+  quoteMailSubject: null,
+  quoteMailBody: null,
 }
 
 const meta = {

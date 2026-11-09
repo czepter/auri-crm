@@ -864,6 +864,23 @@ describe('Q-06: sending a quote', function () {
                 ->where('recipientEmail', 'lena@example.test'));
     });
 
+    it('starts the compose screen from the studio’s own wording, merge fields resolved', function () {
+        app(UpdateStudioSetting::class)('quote_mail_subject', 'Angebot {{ quote.number }}', null);
+        app(UpdateStudioSetting::class)('quote_mail_body', 'Hallo {{ contact.name }}, gültig bis {{ quote.validUntil }}.', null);
+
+        $contact = Contact::factory()->create(['name' => 'Lena Brandt', 'email' => 'lena@example.test']);
+        $project = ClientCase::factory()->create();
+        $project->attachContact($contact, CaseContactRole::Primary);
+        $quote = Quote::factory()->for($project, 'case')->create(['valid_until' => '2026-12-24']);
+        QuoteItem::factory()->for($quote)->create();
+
+        $this->actingAs(quoteOwner(), 'staff')
+            ->get("/angebote/{$quote->public_id}/senden")
+            ->assertInertia(fn ($page) => $page
+                ->where('subject', "Angebot {$quote->number}")
+                ->where('message', 'Hallo Lena Brandt, gültig bis 24.12.2026.'));
+    });
+
     it('refuses the compose screen once a quote is no longer a draft', function () {
         $quote = Quote::factory()->create(['status' => QuoteStatus::Sent]);
 

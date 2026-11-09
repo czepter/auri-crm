@@ -58,7 +58,7 @@ class StudioSettings extends Model
         'payments_stripe_live_publishable_key', 'payments_stripe_live_secret_key',
         'payments_reminders_enabled',
         'mail_from_name', 'mail_from_address', 'mail_reply_to', 'mail_signature', 'mail_bcc', 'mail_clients_enabled',
-        'invoice_mail_subject', 'invoice_mail_body',
+        'invoice_mail_subject', 'invoice_mail_body', 'quote_mail_subject', 'quote_mail_body',
         'portal_maintenance_enabled', 'portal_maintenance_message',
         'portal_legal_datenschutz_url', 'portal_legal_agb_url',
         'portal_legal_impressum_url', 'portal_legal_widerruf_url',

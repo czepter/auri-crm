@@ -13,11 +13,13 @@ const props = defineProps<{
   recipientName: string
   recipientEmail: string
   address: 'sie' | 'du' | 'ihr'
+  subject: string | null
+  message: string | null
   mailHtml: string
 }>()
 useLiveProps([])
 
-const message: EditorDocument = {
+const fallback: EditorDocument = {
   blocks: [
     { type: 'paragraph', data: { text: `Hallo ${props.recipientName},` } },
     {
@@ -32,6 +34,10 @@ const message: EditorDocument = {
     },
   ],
 }
+
+const message: EditorDocument = props.message === null
+  ? fallback
+  : { blocks: props.message.split('\n\n').map((text) => ({ type: 'paragraph', data: { text } })) }
 
 function cancel() {
   router.visit(`/auftraege/${props.projectId}`)
@@ -56,7 +62,7 @@ function send({ subject, message }: { subject: string; message: EditorDocument }
 <template>
   <SendByMailView
     :recipients="[{ name: recipientName, email: recipientEmail }]"
-    :subject="$t('quotes.title')"
+    :subject="subject ?? $t('quotes.title')"
     :message="message"
     :mail-html="mailHtml"
     :processing="processing"

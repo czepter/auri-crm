@@ -1228,6 +1228,8 @@ mailBcc: string | null,
 mailClientsEnabled: boolean,
 invoiceMailSubject: string | null,
 invoiceMailBody: string | null,
+quoteMailSubject: string | null,
+quoteMailBody: string | null,
 };
 }
 namespace Enums {

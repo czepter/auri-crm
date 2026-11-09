@@ -21,12 +21,17 @@ const form = useForm({
   mail_clients_enabled: props.settings.mailClientsEnabled,
   invoice_mail_subject: props.settings.invoiceMailSubject ?? '',
   invoice_mail_body: props.settings.invoiceMailBody ?? '',
+  quote_mail_subject: props.settings.quoteMailSubject ?? '',
+  quote_mail_body: props.settings.quoteMailBody ?? '',
 })
 
-const FIELDS = ['contact.name', 'invoice.number', 'invoice.gross', 'invoice.dueOn', 'studio.name']
+const MAILS = [
+  { key: 'invoice', fields: ['contact.name', 'invoice.number', 'invoice.gross', 'invoice.dueOn', 'studio.name'] },
+  { key: 'quote', fields: ['contact.name', 'quote.number', 'quote.validUntil', 'quote.total', 'studio.name'] },
+] as const
 
-function insert(field: string) {
-  form.invoice_mail_body = `${form.invoice_mail_body}{{ ${field} }}`
+function insert(key: 'invoice' | 'quote', field: string) {
+  form[`${key}_mail_body`] = `${form[`${key}_mail_body`]}{{ ${field} }}`
 }
 
 // Leert die beiden Spalten einer Bestandsinstallation, damit MAIL_FROM_*
@@ -44,6 +49,8 @@ function submit() {
       mail_clients_enabled: data.mail_clients_enabled,
       invoice_mail_subject: data.invoice_mail_subject || null,
       invoice_mail_body: data.invoice_mail_body || null,
+      quote_mail_subject: data.quote_mail_subject || null,
+      quote_mail_body: data.quote_mail_body || null,
     }))
     .patch('/einstellungen/email', { preserveScroll: true, onSuccess: () => emit('saved') })
 }
@@ -99,18 +106,18 @@ defineExpose({ form, submit })
       </div>
     </FormSection>
 
-    <FormSection :title="$t('settings.mailInvoiceLabel')">
+    <FormSection v-for="mail in MAILS" :key="mail.key" :title="$t(`settings.mail.${mail.key}`)">
       <div class="flex flex-col gap-4">
-        <Field :error="form.errors.invoice_mail_subject" v-slot="{ id }">
-          <Label :for="id">{{ $t('settings.mailInvoiceSubject') }} <em>{{ $t('settings.optional') }}</em></Label>
-          <Input :id v-model="form.invoice_mail_subject" type="text" />
+        <Field :error="form.errors[`${mail.key}_mail_subject`]" v-slot="{ id }">
+          <Label :for="id">{{ $t('settings.mailMailSubject') }} <em>{{ $t('settings.optional') }}</em></Label>
+          <Input :id v-model="form[`${mail.key}_mail_subject`]" type="text" />
         </Field>
-        <Field :error="form.errors.invoice_mail_body" v-slot="{ id }">
-          <Label :for="id">{{ $t('settings.mailInvoiceBody') }} <em>{{ $t('settings.optional') }}</em></Label>
-          <Textarea :id v-model="form.invoice_mail_body" rows="6" />
+        <Field :error="form.errors[`${mail.key}_mail_body`]" v-slot="{ id }">
+          <Label :for="id">{{ $t('settings.mailMailBody') }} <em>{{ $t('settings.optional') }}</em></Label>
+          <Textarea :id v-model="form[`${mail.key}_mail_body`]" rows="6" />
         </Field>
         <div class="flex flex-wrap gap-1.5">
-          <Button v-for="field in FIELDS" :key="field" variant="outline" type="button" @click="insert(field)">{{ $t(`settings.mailField.${field}`) }}</Button>
+          <Button v-for="field in mail.fields" :key="field" variant="outline" type="button" @click="insert(mail.key, field)">{{ $t(`settings.mailField.${field}`) }}</Button>
         </div>
       </div>
     </FormSection>

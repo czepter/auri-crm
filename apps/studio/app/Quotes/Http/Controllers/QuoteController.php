@@ -121,6 +121,8 @@ class QuoteController extends Controller
             'recipientName' => $contact?->name ?? '',
             'recipientEmail' => $contact?->email ?? '',
             'address' => StudioSettings::current()->clientAddress($quote->case->contacts()->count()),
+            'subject' => QuoteSent::templated($quote, 'quote_mail_subject'),
+            'message' => QuoteSent::templated($quote, 'quote_mail_body'),
             'mailHtml' => MailPreview::html(new QuoteSent($quote, null, MailPreview::MESSAGE), $contact ?? (object) []),
         ]);
     }

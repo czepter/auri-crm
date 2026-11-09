@@ -1387,14 +1387,20 @@
     "mailReplyToLabel": "Antwort-an",
     "mailBccLabel": "Blindkopie",
     "mailSignatureLabel": "Signatur",
-    "mailInvoiceLabel": "Rechnung",
-    "mailInvoiceSubject": "Betreff",
-    "mailInvoiceBody": "Nachricht",
+    "mail": {
+      "invoice": "Rechnung",
+      "quote": "Angebot"
+    },
+    "mailMailSubject": "Betreff",
+    "mailMailBody": "Nachricht",
     "mailField": {
       "contact.name": "Kundenname",
       "invoice.number": "Rechnungsnummer",
       "invoice.gross": "Betrag",
       "invoice.dueOn": "Fälligkeit",
+      "quote.number": "Angebotsnummer",
+      "quote.validUntil": "Gültig bis",
+      "quote.total": "Gesamtbetrag",
       "studio.name": "Studioname"
     },
     "mailSignatureFieldLabel": "Text",

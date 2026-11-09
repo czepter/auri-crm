@@ -43,6 +43,8 @@ export const branding: App.Settings.Data.StudioSettingsData = {
   mailClientsEnabled: true,
   invoiceMailSubject: null,
   invoiceMailBody: null,
+  quoteMailSubject: null,
+  quoteMailBody: null,
 }
 
 export const settings: App.Settings.Data.PortalSettingsData = {

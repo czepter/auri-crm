@@ -359,6 +359,8 @@ class StudioSettingsController extends Controller
             'mail_clients_enabled' => ['sometimes', 'boolean'],
             'invoice_mail_subject' => ['nullable', 'string', 'max:255'],
             'invoice_mail_body' => ['nullable', 'string', 'max:5000'],
+            'quote_mail_subject' => ['nullable', 'string', 'max:255'],
+            'quote_mail_body' => ['nullable', 'string', 'max:5000'],
             'mail_sender_reset' => ['sometimes', 'boolean'],
         ]);
 
