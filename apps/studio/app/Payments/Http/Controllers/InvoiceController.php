@@ -23,6 +23,7 @@ use App\Payments\Actions\CancelInvoice;
 use App\Payments\Actions\IssueCreditNote;
 use App\Payments\Actions\IssueInvoice;
 use App\Payments\Actions\RenderInvoicePdf;
+use App\Payments\Data\InvoiceDetailData;
 use App\Payments\Data\InvoiceRowData;
 use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\CancellationKind;
@@ -76,6 +77,13 @@ class InvoiceController extends Controller
                 ? Invoice::query()->pluck('issued_at')->map(fn ($at) => (int) $at->format('Y'))->unique()->sortDesc()->values()
                 : [],
         ]);
+    }
+
+    public function show(Invoice $invoice): Response
+    {
+        self::authorizeProject($invoice->case);
+
+        return Inertia::render('Invoices/Show', ['invoice' => InvoiceDetailData::fromModel($invoice)]);
     }
 
     public function create(

@@ -511,7 +511,36 @@
     "cancelled": "Storniert",
     "send": "Versenden",
     "sent": "Versendet",
-    "viewed": "Geöffnet"
+    "viewed": "Geöffnet",
+    "partial": "Teilzahlung",
+    "overdueDays": "1 Tag überfällig | {count} Tage überfällig",
+    "kpiOpen": "Offen",
+    "kpiOverdue": "Überfällig",
+    "kpiPaid": "Bezahlt {year}",
+    "kpiCount": "1 Rechnung | {count} Rechnungen"
+  },
+  "invoiceDetail": {
+    "title": "Rechnung {number}",
+    "download": "PDF",
+    "sendAgain": "Erneut senden",
+    "recipient": "Empfänger",
+    "description": "Beschreibung",
+    "quantity": "Menge",
+    "unitPrice": "Einzelpreis",
+    "net": "Netto",
+    "vat": "USt. {rate}",
+    "gross": "Gesamt",
+    "quote": "Angebot",
+    "quoteOpen": "Ansehen",
+    "history": "Verlauf",
+    "event": {
+      "created": "Erstellt",
+      "sent": "Gesendet",
+      "viewed": "Geöffnet",
+      "paid": "Bezahlt",
+      "credited": "Gutschrift",
+      "cancelled": "Storniert"
+    }
   },
   "documentViews": {
     "title": "Öffnungen",

@@ -32,6 +32,7 @@ class InvoiceRowData extends Data
         public ?string $dueOn,
         public string $status,
         public string $statusLabel,
+        public ?int $overdueDays,
         public ?string $sentOn,
         public ?string $viewedOn,
         public array $views,
@@ -39,6 +40,14 @@ class InvoiceRowData extends Data
         public array $openInstallments,
         public array $creditNotes,
     ) {}
+
+    /** Days since the earliest rate that is late; null while nothing is. */
+    private static function overdueDays(Invoice $invoice): ?int
+    {
+        $due = $invoice->installments->filter->isLate()->min('due_on');
+
+        return $due === null ? null : (int) abs($due->diffInDays(today()));
+    }
 
     public static function fromModel(Invoice $invoice): self
     {
@@ -55,6 +64,7 @@ class InvoiceRowData extends Data
             dueOn: $invoice->dueOn()?->format('Y-m-d'),
             status: $invoice->status(),
             statusLabel: __("payments.invoiceStatus.{$invoice->status()}"),
+            overdueDays: self::overdueDays($invoice),
             sentOn: $invoice->sent_at?->format('Y-m-d'),
             viewedOn: $invoice->views->where('counts', true)->min('viewed_at')?->format('Y-m-d'),
             views: $invoice->views->sortByDesc('viewed_at')->map(DocumentViewData::fromModel(...))->values()->all(),
