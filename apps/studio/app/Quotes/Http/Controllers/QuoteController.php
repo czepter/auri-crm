@@ -20,6 +20,7 @@ use App\Quotes\Actions\CreatePackageFromQuote;
 use App\Quotes\Actions\CreateQuote;
 use App\Quotes\Actions\DeleteQuote;
 use App\Quotes\Actions\DuplicateQuote;
+use App\Quotes\Actions\FollowUpQuote;
 use App\Quotes\Actions\MarkQuoteSent;
 use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Actions\SendQuote;
@@ -31,6 +32,7 @@ use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Quotes\Models\QuotePaymentStage;
+use App\Quotes\Notifications\QuoteFollowUp;
 use App\Quotes\Notifications\QuoteSent;
 use App\Quotes\Screens\ReadQuoteWorkspace;
 use App\Settings\Data\StudioSettingsData;
@@ -125,6 +127,43 @@ class QuoteController extends Controller
             'message' => QuoteSent::templated($quote, 'quote_mail_body'),
             'mailHtml' => MailPreview::html(new QuoteSent($quote, null, MailPreview::MESSAGE), $contact ?? (object) []),
         ]);
+    }
+
+    public function followUpForm(Quote $quote): InertiaResponse
+    {
+        $this->authorize('manageQuotes', $quote->case);
+        abort_unless($quote->status === QuoteStatus::Sent, 404);
+
+        $quote->loadMissing(['items', 'case']);
+        $contact = $quote->case->primaryContact();
+        $defaults = QuoteFollowUp::defaults($quote);
+
+        return Inertia::render('Quotes/Send', [
+            'projectId' => $quote->case->public_id,
+            'quote' => QuoteData::fromModel($quote),
+            'recipientName' => $contact?->name ?? '',
+            'recipientEmail' => $contact?->email ?? '',
+            'address' => StudioSettings::current()->clientAddress($quote->case->contacts()->count()),
+            'subject' => $defaults['subject'],
+            'message' => $defaults['message'],
+            'mailHtml' => MailPreview::html(new QuoteFollowUp($quote, $defaults['subject'], MailPreview::MESSAGE), $contact ?? (object) []),
+            'followUp' => true,
+        ]);
+    }
+
+    public function followUp(Request $request, Quote $quote, FollowUpQuote $followUp): RedirectResponse
+    {
+        $this->authorize('manageQuotes', $quote->case);
+        abort_unless($quote->status === QuoteStatus::Sent, 404);
+
+        $validated = $request->validate([
+            'subject' => ['required', 'string', 'max:255'],
+            'message' => ['required', 'string'],
+        ]);
+
+        $followUp($quote, auth('staff')->user(), $validated['subject'], $validated['message']);
+
+        return redirect("/anfragen/{$quote->case->public_id}");
     }
 
     /** The Übersicht's wizard: the project or inquiry first, then the workspace its Angebote tab shows. */

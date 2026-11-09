@@ -697,6 +697,8 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/angebote/{quote}/vorschau', [QuoteController::class, 'previewSheet'])->name('quotes.preview.sheet');
         Route::get('/angebote/{quote}/senden', [QuoteController::class, 'compose'])->name('quotes.compose');
         Route::post('/angebote/{quote}/versenden', [QuoteController::class, 'send'])->name('quotes.send');
+        Route::get('/angebote/{quote}/nachfassen', [QuoteController::class, 'followUpForm'])->name('quotes.follow-up.form');
+        Route::post('/angebote/{quote}/nachfassen', [QuoteController::class, 'followUp'])->name('quotes.follow-up');
         Route::post('/angebote/{quote}/versendet', [QuoteController::class, 'markSent'])->name('quotes.mark-sent');
         Route::post('/angebote/{quote}/angenommen', [QuoteController::class, 'markAccepted'])->name('quotes.mark-accepted');
         Route::post('/angebote/{quote}/empfaenger-uebernehmen', [QuoteController::class, 'adoptRecipient'])
