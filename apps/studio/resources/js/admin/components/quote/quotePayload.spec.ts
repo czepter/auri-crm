@@ -22,8 +22,8 @@ function baseDraft(pricingMode: QuoteDraft['pricingMode']): QuoteDraft {
       imagesPerHour: null,
       hours: null,
       stages: [
-        { percent: 30, label: 'Bei der Zusage', minimum: '500', note: 'wird mit Schlussrechnung verrechnet', dueOn: '2026-11-27' },
-        { percent: 70, label: 'Am Termin', minimum: '', note: '', dueOn: '' },
+        { percent: 30, label: 'Bei der Zusage', minimum: '500', note: 'wird mit Schlussrechnung verrechnet', dueOn: '2026-11-27', fixed: false },
+        { percent: 70, label: 'Am Termin', minimum: '', note: '', dueOn: '', fixed: false },
       ],
     },
     recipientContact: 'contact-1',

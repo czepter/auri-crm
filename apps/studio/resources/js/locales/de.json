@@ -973,6 +973,8 @@
     "preselected": "Vorausgewählt",
     "stageLabel": "Wann",
     "stageNote": "Hinweis auf der Rechnung",
+    "stageUnit": "Einheit",
+    "stageAmount": "Betrag",
     "stageDue": "Fällig am",
     "stageNameDeposit": "Anzahlung",
     "stageNameReservation": "Reservierungsgebühr",

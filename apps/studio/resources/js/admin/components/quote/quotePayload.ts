@@ -29,7 +29,8 @@ export type QuoteContact = { id: string; name: string; street: string | null; po
 /** ReadQuoteWorkspace's own vatSettings — was Quote::computeVat() aus den aktuellen Studio-Einstellungen macht. */
 export type VatSettings = { mode: string; rate: number; note: string | null }
 
-export type StageRow = { percent: number; label: string; minimum: string; note: string; dueOn: string }
+/** `fixed`: the rate is an amount, not a share — written as percent 0 with the amount as its minimum, which PaymentStageSplitter already pays out as it stands. */
+export type StageRow = { percent: number; label: string; minimum: string; note: string; dueOn: string; fixed: boolean }
 
 export type SliderDraft = {
   hourlyRate: string
@@ -130,7 +131,7 @@ export function buildQuotePayload(draft: QuoteDraft, options: QuotePayloadOption
     time_sort_order: draft.timeSortOrder,
     items,
     stages: draft.slider.stages.map((stage) => ({
-      percent: stage.percent,
+      percent: stage.fixed ? 0 : stage.percent,
       label: stage.label,
       minimum: eurosToCents(stage.minimum) ?? 0,
       note: stage.note || null,
@@ -242,7 +243,7 @@ export function buildPreviewQuote(draft: QuoteDraft, vat: VatSettings): App.Quot
     rangeMax: null,
     paymentStages: draft.slider.stages.map((stage, index) => ({
       id: `preview-${index}`,
-      percent: stage.percent,
+      percent: stage.fixed ? 0 : stage.percent,
       label: stage.label,
       minimum: eurosToCents(stage.minimum) ?? 0,
       note: stage.note || null,
