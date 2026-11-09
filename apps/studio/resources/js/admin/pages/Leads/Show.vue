@@ -31,7 +31,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, Ale
 import { formatEurosRounded } from "@/lib/money";
 import { DropdownMenuItem } from "@/ui/dropdown-menu";
 import { groupEntries } from "@/admin/lib/groupEntries";
-import { sendQuoteHref } from "@/admin/lib/leadPrimary";
 import { stepOnArrow } from "@/admin/lib/queueStep";
 import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
 import { dayWithWeekday as day, daysUntil } from "@/admin/lib/dates";
@@ -269,7 +268,6 @@ function addTask() {
 }
 
 const { t } = useI18n();
-const sendHref = computed(() => sendQuoteHref(props.quote, props.header.canManageQuotes));
 const page = usePage();
 const byline = (author: string | null) =>
     page.props.soloStudio && author === page.props.auth.user?.name ? null : author;
@@ -374,12 +372,6 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                 <DropdownMenuItem v-for="option in phaseItems" :key="option.value" @select="move(option.value)">
                     {{ $t("project.switchTo", { stage: option.label }) }}
                 </DropdownMenuItem>
-            </template>
-
-            <template v-if="!lead.outcomeLabel && (sendHref || createQuote)" #stage>
-                <Button variant="pill" as-child class="max-[640px]:min-h-11">
-                    <Link :href="(sendHref ?? createQuote)!">{{ $t(sendHref ? "lead.sendQuote" : "project.chainQuoteCreate") }}</Link>
-                </Button>
             </template>
 
             <AlertDialog v-model:open="booking">
