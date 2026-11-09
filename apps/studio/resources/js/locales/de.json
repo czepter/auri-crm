@@ -1157,7 +1157,7 @@
     "markPaidReference": "Referenz",
     "markPaidSubmit": "Bestätigen",
     "settledVia": "Bezahlt via {method}, am {date}",
-    "issueInvoice": "Fällig stellen",
+    "issueInvoice": "Rechnung stellen",
     "invoiceRendering": "{number} — wird erstellt",
     "storno": "Storno",
     "stornoTitle": "Rechnung stornieren",
