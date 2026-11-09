@@ -525,6 +525,7 @@
     "gross": "Betrag",
     "reason": "Grund",
     "submit": "Gutschrift stellen",
+    "send": "Per E-Mail senden",
     "exceeds": "Höchstens {amount}"
   },
   "invoiceDetail": {
@@ -1400,7 +1401,9 @@
     "mailSignatureLabel": "Signatur",
     "mail": {
       "invoice": "Rechnung",
-      "quote": "Angebot"
+      "quote": "Angebot",
+      "reminder": "Zahlungserinnerung",
+      "credit_note": "Gutschrift"
     },
     "mailMailSubject": "Betreff",
     "mailMailBody": "Nachricht",
@@ -1412,6 +1415,12 @@
       "quote.number": "Angebotsnummer",
       "quote.validUntil": "Gültig bis",
       "quote.total": "Gesamtbetrag",
+      "reminder.amount": "Offener Betrag",
+      "reminder.dueOn": "Fällig seit",
+      "reminder.invoiceNumber": "Rechnungsnummer",
+      "creditNote.number": "Gutschriftnummer",
+      "creditNote.gross": "Betrag",
+      "creditNote.invoiceNumber": "Rechnungsnummer",
       "studio.name": "Studioname"
     },
     "mailSignatureFieldLabel": "Text",

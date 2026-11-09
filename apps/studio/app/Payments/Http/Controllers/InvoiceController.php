@@ -36,6 +36,7 @@ use App\Payments\Models\PaymentPlan;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
+use App\Payments\Notifications\CreditNoteSent;
 use App\Payments\Notifications\InvoiceSent;
 use App\Payments\Support\InvoiceDocument;
 use App\Payments\Support\InvoiceFigures;
@@ -505,9 +506,16 @@ class InvoiceController extends Controller
         $validated = $request->validate([
             'amount' => ['required', 'integer', 'min:1'],
             'reason' => ['required', 'string', 'max:1000'],
+            'send' => ['sometimes', 'boolean'],
         ]);
 
-        $issue($invoice, $validated['amount'], $validated['reason'], auth('staff')->user());
+        $note = $issue($invoice, $validated['amount'], $validated['reason'], auth('staff')->user());
+
+        if ($request->boolean('send')) {
+            foreach ($this->recipients($invoice) as $contact) {
+                app(NotificationService::class)->send($contact, new CreditNoteSent($note));
+            }
+        }
 
         return back();
     }

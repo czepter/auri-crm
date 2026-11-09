@@ -1231,6 +1231,10 @@ invoiceMailSubject: string | null,
 invoiceMailBody: string | null,
 quoteMailSubject: string | null,
 quoteMailBody: string | null,
+reminderMailSubject: string | null,
+reminderMailBody: string | null,
+creditNoteMailSubject: string | null,
+creditNoteMailBody: string | null,
 };
 }
 namespace Enums {

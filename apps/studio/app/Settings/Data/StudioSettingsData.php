@@ -66,6 +66,10 @@ class StudioSettingsData extends Data
         public ?string $invoiceMailBody,
         public ?string $quoteMailSubject,
         public ?string $quoteMailBody,
+        public ?string $reminderMailSubject,
+        public ?string $reminderMailBody,
+        public ?string $creditNoteMailSubject,
+        public ?string $creditNoteMailBody,
     ) {}
 
     public static function current(): self
@@ -116,6 +120,10 @@ class StudioSettingsData extends Data
             invoiceMailBody: StudioSettings::current()->invoice_mail_body,
             quoteMailSubject: StudioSettings::current()->quote_mail_subject,
             quoteMailBody: StudioSettings::current()->quote_mail_body,
+            reminderMailSubject: StudioSettings::current()->reminder_mail_subject,
+            reminderMailBody: StudioSettings::current()->reminder_mail_body,
+            creditNoteMailSubject: StudioSettings::current()->credit_note_mail_subject,
+            creditNoteMailBody: StudioSettings::current()->credit_note_mail_body,
         );
     }
 }

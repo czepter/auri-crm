@@ -17,7 +17,7 @@ const row = computed(() => props.invoice.row)
 const taken = ref(props.invoice.items.map(() => true))
 const amount = computed(() => props.invoice.items.reduce((sum, item, index) => sum + (taken.value[index] ? item.gross : 0), 0))
 const over = computed(() => amount.value > props.creditable)
-const form = useForm({ amount: 0, reason: '' })
+const form = useForm({ amount: 0, reason: '', send: true })
 
 function submit() {
   form.transform((data) => ({ ...data, amount: amount.value })).post(`/rechnungen/${row.value.id}/gutschrift`)
@@ -65,6 +65,11 @@ function submit() {
           <Field :label="$t('creditNoteBuilder.reason')" :error="form.errors.reason ?? form.errors.amount">
             <Input v-model="form.reason" type="text" required />
           </Field>
+
+          <label class="flex items-center gap-2.5">
+            <Checkbox v-model="form.send" />
+            {{ $t('creditNoteBuilder.send') }}
+          </label>
 
           <div class="flex gap-2">
             <Button type="submit" :disabled="!amount || over || !form.reason || form.processing">{{ $t('creditNoteBuilder.submit') }}</Button>

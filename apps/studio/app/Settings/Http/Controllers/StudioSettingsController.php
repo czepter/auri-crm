@@ -361,6 +361,10 @@ class StudioSettingsController extends Controller
             'invoice_mail_body' => ['nullable', 'string', 'max:5000'],
             'quote_mail_subject' => ['nullable', 'string', 'max:255'],
             'quote_mail_body' => ['nullable', 'string', 'max:5000'],
+            'reminder_mail_subject' => ['nullable', 'string', 'max:255'],
+            'reminder_mail_body' => ['nullable', 'string', 'max:5000'],
+            'credit_note_mail_subject' => ['nullable', 'string', 'max:255'],
+            'credit_note_mail_body' => ['nullable', 'string', 'max:5000'],
             'mail_sender_reset' => ['sometimes', 'boolean'],
         ]);
 

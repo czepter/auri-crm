@@ -23,14 +23,20 @@ const form = useForm({
   invoice_mail_body: props.settings.invoiceMailBody ?? '',
   quote_mail_subject: props.settings.quoteMailSubject ?? '',
   quote_mail_body: props.settings.quoteMailBody ?? '',
+  reminder_mail_subject: props.settings.reminderMailSubject ?? '',
+  reminder_mail_body: props.settings.reminderMailBody ?? '',
+  credit_note_mail_subject: props.settings.creditNoteMailSubject ?? '',
+  credit_note_mail_body: props.settings.creditNoteMailBody ?? '',
 })
 
 const MAILS = [
   { key: 'invoice', fields: ['contact.name', 'invoice.number', 'invoice.gross', 'invoice.dueOn', 'studio.name'] },
   { key: 'quote', fields: ['contact.name', 'quote.number', 'quote.validUntil', 'quote.total', 'studio.name'] },
+  { key: 'reminder', fields: ['contact.name', 'reminder.amount', 'reminder.dueOn', 'reminder.invoiceNumber', 'studio.name'] },
+  { key: 'credit_note', fields: ['contact.name', 'creditNote.number', 'creditNote.gross', 'creditNote.invoiceNumber', 'studio.name'] },
 ] as const
 
-function insert(key: 'invoice' | 'quote', field: string) {
+function insert(key: typeof MAILS[number]['key'], field: string) {
   form[`${key}_mail_body`] = `${form[`${key}_mail_body`]}{{ ${field} }}`
 }
 
@@ -51,6 +57,10 @@ function submit() {
       invoice_mail_body: data.invoice_mail_body || null,
       quote_mail_subject: data.quote_mail_subject || null,
       quote_mail_body: data.quote_mail_body || null,
+      reminder_mail_subject: data.reminder_mail_subject || null,
+      reminder_mail_body: data.reminder_mail_body || null,
+      credit_note_mail_subject: data.credit_note_mail_subject || null,
+      credit_note_mail_body: data.credit_note_mail_body || null,
     }))
     .patch('/einstellungen/email', { preserveScroll: true, onSuccess: () => emit('saved') })
 }
