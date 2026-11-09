@@ -27,7 +27,7 @@ export type QuoteContact = { id: string; name: string; street: string | null; po
 /** ReadQuoteWorkspace's own vatSettings — was Quote::computeVat() aus den aktuellen Studio-Einstellungen macht. */
 export type VatSettings = { mode: string; rate: number; note: string | null }
 
-export type StageRow = { percent: number; label: string; minimum: string }
+export type StageRow = { percent: number; label: string; minimum: string; note: string; dueOn: string }
 
 export type SliderDraft = {
   hourlyRate: string
@@ -131,6 +131,8 @@ export function buildQuotePayload(draft: QuoteDraft, options: QuotePayloadOption
       percent: stage.percent,
       label: stage.label,
       minimum: eurosToCents(stage.minimum) ?? 0,
+      note: stage.note || null,
+      due_on: stage.dueOn || null,
     })),
   }
 }
@@ -241,6 +243,8 @@ export function buildPreviewQuote(draft: QuoteDraft, vat: VatSettings): App.Quot
       percent: stage.percent,
       label: stage.label,
       minimum: eurosToCents(stage.minimum) ?? 0,
+      note: stage.note || null,
+      dueOn: stage.dueOn || null,
     })),
     recipientContact: draft.recipientContact,
     recipientStreet: draft.recipientStreet,

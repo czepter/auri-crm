@@ -71,7 +71,7 @@ class QuoteData extends Data
         // einen Bereich — berechnet, nie gespeichert.
         public ?int $rangeMin = null,
         public ?int $rangeMax = null,
-        /** @var list<array{id: string, percent: int, label: string, minimum: int}> */
+        /** @var list<array{id: string, percent: int, label: string, minimum: int, note: ?string, dueOn: ?string}> */
         public array $paymentStages = [],
         public ?string $recipientContact = null,
         public ?string $recipientStreet = null,
@@ -145,6 +145,8 @@ class QuoteData extends Data
                 'percent' => $stage->percent,
                 'label' => $stage->label,
                 'minimum' => $stage->minimum,
+                'note' => $stage->note,
+                'dueOn' => $stage->due_on?->toDateString(),
             ])->all(),
             recipientContact: $quote->recipientContact?->public_id,
             recipientStreet: $quote->recipient_street,

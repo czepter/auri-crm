@@ -14,6 +14,8 @@ const validUntil = defineModel<string>('validUntil', { required: true })
 const stages = defineModel<StageRow[]>('stages', { required: true })
 const emit = defineEmits<{ change: [] }>()
 
+const nameSuggestions = [t('quotes.stageNameDeposit'), t('quotes.stageNameReservation'), t('quotes.stageNameInstallment')]
+
 const percentSum = computed(() => stages.value.reduce((sum, stage) => sum + (stage.percent || 0), 0))
 
 // Nie leer: eine Stufe mit 100 % ist die Zahlung "alles bei Zusage", nicht
@@ -21,20 +23,20 @@ const percentSum = computed(() => stages.value.reduce((sum, stage) => sum + (sta
 // bediente.
 onMounted(() => {
   if (stages.value.length === 0) {
-    stages.value = [{ percent: 100, label: t('quotes.stageDefaultLabel'), minimum: '' }]
+    stages.value = [{ percent: 100, label: t('quotes.stageDefaultLabel'), minimum: '', note: '', dueOn: '' }]
     emit('change')
   }
 })
 
 function addStage() {
-  stages.value = [...stages.value, { percent: 0, label: '', minimum: '' }]
+  stages.value = [...stages.value, { percent: 0, label: '', minimum: '', note: '', dueOn: '' }]
   emit('change')
 }
 
 function removeStage(index: number) {
   stages.value = stages.value.length > 1
     ? stages.value.filter((_, i) => i !== index)
-    : [{ percent: 100, label: t('quotes.stageDefaultLabel'), minimum: '' }]
+    : [{ percent: 100, label: t('quotes.stageDefaultLabel'), minimum: '', note: '', dueOn: '' }]
   emit('change')
 }
 </script>
@@ -45,6 +47,7 @@ function removeStage(index: number) {
 
     <div class="flex flex-col gap-2.5">
       <Label>{{ $t('quotes.payment') }}</Label>
+      <datalist id="stage-names"><option v-for="name in nameSuggestions" :key="name" :value="name" /></datalist>
 
       <div v-for="(stage, index) in stages" :key="index" class="flex flex-wrap items-center gap-3">
         <InputGroup class="w-24">
@@ -59,13 +62,15 @@ function removeStage(index: number) {
           />
           <InputGroupAddon align="inline-end">%</InputGroupAddon>
         </InputGroup>
-        <Input :aria-label="$t('quotes.stageLabel')" v-model="stage.label" class="w-[220px]" type="text" :placeholder="$t('quotes.stageLabel')" @blur="emit('change')" />
+        <Input :aria-label="$t('quotes.stageLabel')" v-model="stage.label" class="w-[220px]" type="text" list="stage-names" :placeholder="$t('quotes.stageLabel')" @blur="emit('change')" />
         <span class="text-small text-ink-2">{{ $t('quotes.stageAtLeast') }}</span>
         <InputGroup class="w-28">
           <InputGroupInput v-model="stage.minimum" class="text-right tabular-nums" type="text" inputmode="decimal" @blur="emit('change')" />
           <InputGroupAddon align="inline-end">€</InputGroupAddon>
         </InputGroup>
         <Button variant="ghost" tone="accent" type="button" class="ml-auto" @click="removeStage(index)">{{ $t('common.remove') }}</Button>
+        <Input :aria-label="$t('quotes.stageNote')" v-model="stage.note" class="min-w-[220px] flex-1" type="text" :placeholder="$t('quotes.stageNote')" @blur="emit('change')" />
+        <Input :aria-label="$t('quotes.stageDue')" v-model="stage.dueOn" class="w-40" type="date" @change="emit('change')" />
       </div>
 
       <div class="mt-1 flex items-center gap-3">

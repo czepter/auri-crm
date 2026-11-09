@@ -87,6 +87,8 @@ function draftOf(quote: App.Quotes.Data.QuoteData): QuoteDraft {
         percent: stage.percent,
         label: stage.label,
         minimum: centsToEuros(stage.minimum) || '',
+        note: stage.note ?? '',
+        dueOn: stage.dueOn ?? '',
       })),
     },
   }

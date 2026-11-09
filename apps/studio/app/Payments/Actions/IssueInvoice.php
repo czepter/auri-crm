@@ -135,7 +135,7 @@ class IssueInvoice
 
                     $invoice->items()->create([
                         'title' => $position['title'],
-                        'description' => $position['description'] ?? null,
+                        'description' => $position['description'] ?? $row?->note,
                         'quantity' => $row === null ? ($position['quantity'] ?? 1) : 1,
                         'unit_price' => $row === null
                             ? ($position['unit_price'] ?? 0)

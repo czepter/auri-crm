@@ -8,7 +8,7 @@ export type InvoicePage = {
   metaRows: [string, string][]
   description: string
   lines: { title: string; quantity: string; unitPrice: string; discount: string; total: string; vatRate: string }[]
-  deposits: { number: string; date: string; net: string; vat: string; gross: string }[]
+  deposits: { title: string; number: string; date: string; net: string; vat: string; gross: string }[]
   totalGross: string
   summaryRows: [string, string, boolean][]
   vatNote: string
@@ -52,11 +52,11 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
           <td>{{ invoice.totalGross }}</td>
         </tr>
         <template v-if="invoice.deposits.length">
-          <tr :class="[ROW, '[&>td]:py-1! [&>td]:text-muted-foreground']">
-            <td colspan="2">{{ $t('portal.invoiceDeposits') }}</td>
-          </tr>
           <tr v-for="deposit in invoice.deposits" :key="deposit.number" :class="[ROW, '[&>td]:py-1! [&>td]:text-muted-foreground']">
-            <td>{{ $t('portal.invoiceDeposit', { number: deposit.number, date: deposit.date }) }}</td>
+            <td>
+              {{ $t('portal.invoiceDeduction', { title: deposit.title }) }}
+              <span class="block text-[13px]">{{ $t('portal.invoiceDeposit', { number: deposit.number, date: deposit.date }) }}</span>
+            </td>
             <td>−{{ deposit.gross }}</td>
           </tr>
         </template>

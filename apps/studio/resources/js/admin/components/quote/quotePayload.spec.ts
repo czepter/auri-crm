@@ -22,8 +22,8 @@ function baseDraft(pricingMode: QuoteDraft['pricingMode']): QuoteDraft {
       imagesPerHour: null,
       hours: null,
       stages: [
-        { percent: 30, label: 'Bei der Zusage', minimum: '500' },
-        { percent: 70, label: 'Am Termin', minimum: '' },
+        { percent: 30, label: 'Bei der Zusage', minimum: '500', note: 'wird mit Schlussrechnung verrechnet', dueOn: '2026-11-27' },
+        { percent: 70, label: 'Am Termin', minimum: '', note: '', dueOn: '' },
       ],
     },
     recipientContact: 'contact-1',
@@ -141,8 +141,8 @@ describe('buildQuotePayload', () => {
     const payload = buildQuotePayload(draft, { canManageCatalog: false })
 
     expect(payload.stages).toHaveLength(2)
-    expect(payload.stages[0]).toMatchObject({ percent: 30, label: 'Bei der Zusage' })
-    expect(payload.stages[1]).toMatchObject({ percent: 70, label: 'Am Termin' })
+    expect(payload.stages[0]).toMatchObject({ percent: 30, label: 'Bei der Zusage', note: 'wird mit Schlussrechnung verrechnet', due_on: '2026-11-27' })
+    expect(payload.stages[1]).toMatchObject({ percent: 70, label: 'Am Termin', note: null, due_on: null })
   })
 
   it.each([

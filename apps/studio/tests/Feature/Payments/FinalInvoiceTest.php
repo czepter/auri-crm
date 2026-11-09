@@ -84,7 +84,7 @@ it('treats a single installment as the Endrechnung with nothing to deduct', func
     expect($only->isFinal())->toBeTrue()
         ->and($html)->toContain('Hochzeitsreportage')
         ->and($html)->toContain('Gesamtbetrag der Leistung')
-        ->and($html)->not->toContain('Abzüglich Anzahlungen');
+        ->and($html)->not->toContain('Abzüglich');
 });
 
 // --- The document ---------------------------------------------------------
@@ -100,7 +100,7 @@ it('lists the quote lines, deducts the Anzahlung and sums to the cent', function
 
     expect($html)->toContain('Hochzeitsreportage')
         ->and($html)->toContain('Fotobuch')
-        ->and($html)->toContain('Abzüglich Anzahlungen')
+        ->and($html)->toContain('Abzüglich Anzahlung')
         ->and($html)->toContain($depositInvoice->number)
         ->and($html)->toContain('Restbetrag')
         ->and($html)->not->toContain('{{');
@@ -171,7 +171,7 @@ it('keeps an Anzahlungsrechnung free of both blocks', function () {
     $html = app(RenderInvoicePdf::class)->forInvoice($invoice->fresh());
 
     expect($html)->not->toContain('Gesamtbetrag der Leistung')
-        ->and($html)->not->toContain('Abzüglich Anzahlungen')
+        ->and($html)->not->toContain('Abzüglich')
         ->and($html)->not->toContain('Hochzeitsreportage');
 });
 
@@ -224,4 +224,16 @@ it('deducts a credited Anzahlung net of its Gutschrift', function () {
     $gross = $mergeData['invoice']['deposits'][0]['gross'];
 
     expect($gross)->not->toContain((string) ((int) $deposit->fresh()->amount / 100));
+});
+
+it('prints the rate’s note under its position and deducts it under its own name', function () {
+    $plan = planBehindQuote(['2026-09-01', '2026-10-01']);
+    [$deposit, $final] = $plan->installments()->orderBy('sort_order')->get()->all();
+    $deposit->update(['title' => 'Reservierungsgebühr', 'note' => 'wird mit Schlussrechnung verrechnet']);
+
+    $depositInvoice = app(IssueInvoice::class)($deposit);
+    $finalInvoice = app(IssueInvoice::class)($final)->fresh();
+
+    expect($depositInvoice->items()->sole()->description)->toBe('wird mit Schlussrechnung verrechnet')
+        ->and(app(RenderInvoicePdf::class)->forInvoice($finalInvoice))->toContain('Abzüglich Reservierungsgebühr');
 });
