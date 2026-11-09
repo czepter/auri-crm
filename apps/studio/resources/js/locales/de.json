@@ -963,6 +963,7 @@
     "requestOpen": "Offen"
   },
   "quotes": {
+    "paperKind": "Angebot",
     "title": "Angebot",
     "create": "Neues Angebot",
     "validUntil": "Gültig bis",

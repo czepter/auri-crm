@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive } from 'vue'
+import { usePage } from '@inertiajs/vue3'
 import { useMediaQuery } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import type { PricingMode, QuoteContact, QuoteDraft, VatSettings } from './quotePayload'
@@ -12,6 +13,7 @@ import LetterField from '@/admin/components/quote/LetterField.vue'
 import { Label } from '@/ui/label'
 import { Button } from '@/ui/button'
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/ui/dialog'
+import DocumentPaper from '@/admin/components/document/DocumentPaper.vue'
 import QuoteCard from './QuoteCard.vue'
 import QuoteRecipientCard from './QuoteRecipientCard.vue'
 import QuoteTimeCard from './QuoteTimeCard.vue'
@@ -39,12 +41,18 @@ function setMode(value: string) {
   emit('change')
 }
 
+// The classic quote is written on the sheet itself, so the sheet is its
+// preview. The choice quote has a slider the client moves, which only the
+// portal preview beside the form shows.
+const paper = computed(() => draft.value.pricingMode === 'classic')
+const brand = computed(() => (usePage().props.brand as string | null) ?? '')
+
 const open = reactive({
   recipient: true,
   time: true,
   positions: true,
-  terms: false,
-  text: false,
+  terms: draft.value.pricingMode === 'classic',
+  text: draft.value.pricingMode === 'classic',
 })
 
 const showPreviewColumn = useMediaQuery('(min-width: 1180px)')
@@ -101,8 +109,11 @@ const textSummary = computed(() => new DOMParser().parseFromString(draft.value.i
 </script>
 
 <template>
-  <div class="flex w-fit max-w-full gap-6">
-    <div class="flex w-[720px] max-w-full flex-col gap-3">
+  <div :class="paper ? 'w-full' : 'flex w-fit max-w-full gap-6'">
+    <component
+      :is="paper ? DocumentPaper : 'div'"
+      v-bind="paper ? { studio: brand, kind: $t('quotes.paperKind'), number: quote.number } : { class: 'flex w-[720px] max-w-full flex-col gap-3' }"
+    >
       <div class="flex items-center gap-2.5">
         <ChoiceGroup
           :model-value="draft.pricingMode"
@@ -116,7 +127,7 @@ const textSummary = computed(() => new DOMParser().parseFromString(draft.value.i
 
         <Dialog>
           <DialogTrigger as-child>
-            <Button type="button" variant="outline" class="ml-auto min-[1180px]:hidden">{{ $t('quotes.preview') }}</Button>
+            <Button v-if="!paper" type="button" variant="outline" class="ml-auto min-[1180px]:hidden">{{ $t('quotes.preview') }}</Button>
           </DialogTrigger>
           <DialogContent class="max-w-[860px]">
             <DialogTitle class="sr-only">{{ $t('quotes.preview') }}</DialogTitle>
@@ -125,7 +136,7 @@ const textSummary = computed(() => new DOMParser().parseFromString(draft.value.i
         </Dialog>
       </div>
 
-      <QuoteCard v-model:open="open.recipient" :title="$t('quotes.recipient')" :summary="recipientSummary">
+      <QuoteCard v-model:open="open.recipient" :flat="paper" :title="$t('quotes.recipient')" :summary="recipientSummary">
         <QuoteRecipientCard
           :quote-id="quoteId"
           :contacts="contacts"
@@ -155,7 +166,7 @@ const textSummary = computed(() => new DOMParser().parseFromString(draft.value.i
         </div>
       </QuoteCard>
 
-      <QuoteCard v-model:open="open.positions" :title="$t('quotes.items')" :summary="positionsSummary">
+      <QuoteCard v-model:open="open.positions" :flat="paper" :title="$t('quotes.items')" :summary="positionsSummary">
         <QuotePositionsCard
           v-model="draft"
           :mode="draft.pricingMode"
@@ -168,7 +179,7 @@ const textSummary = computed(() => new DOMParser().parseFromString(draft.value.i
         />
       </QuoteCard>
 
-      <QuoteCard v-model:open="open.terms" :title="$t('quotes.terms')" :summary="termsSummary">
+      <QuoteCard v-model:open="open.terms" :flat="paper" :title="$t('quotes.terms')" :summary="termsSummary">
         <QuoteTermsCard
           :quote-id="quoteId"
           v-model:valid-until="draft.validUntil"
@@ -177,7 +188,7 @@ const textSummary = computed(() => new DOMParser().parseFromString(draft.value.i
         />
       </QuoteCard>
 
-      <QuoteCard v-model:open="open.text" :title="$t('quotes.text')" :summary="textSummary">
+      <QuoteCard v-model:open="open.text" :flat="paper" :title="$t('quotes.text')" :summary="textSummary">
         <div class="flex flex-col gap-4">
           <div class="flex min-w-0 flex-col gap-1.5">
             <Label>{{ $t('quotes.intro') }}</Label>
@@ -189,9 +200,9 @@ const textSummary = computed(() => new DOMParser().parseFromString(draft.value.i
           </div>
         </div>
       </QuoteCard>
-    </div>
+    </component>
 
-    <div class="hidden w-[420px] flex-none min-[1180px]:block min-[1440px]:w-[560px] min-[1700px]:w-[680px]">
+    <div v-if="!paper" class="hidden w-[420px] flex-none min-[1180px]:block min-[1440px]:w-[560px] min-[1700px]:w-[680px]">
       <QuotePreviewPane v-if="showPreviewColumn" :quote-id="quoteId" :draft="draft" :can-manage-catalog="canManageCatalog" :recipient-name="recipientName ?? ''" :vat-settings="vatSettings" />
     </div>
   </div>
