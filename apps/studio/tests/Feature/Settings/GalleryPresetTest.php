@@ -21,7 +21,7 @@ it('creates a preset', function () {
         'downloads_enabled' => true,
         'lists_enabled' => null,
         'comments_enabled' => false,
-        'design' => ['cover' => 'full', 'type' => 'serif', 'colour' => 'light', 'grid' => 'wide'],
+        'design' => ['cover' => 'zentriert', 'type' => 'serif', 'colour' => 'hell', 'size' => 'mittel', 'spacing' => 'eng', 'flow' => 'zeilen'],
     ])->assertRedirect();
 
     $preset = GalleryPreset::sole();
@@ -73,7 +73,7 @@ it('answers 404 for a role without ManageSettings', function () {
 // Galerie mitbekommen hat, ist der Abstand zwischen Anlage und Ablauf.
 it('saves a gallery as a named preset', function () {
     $gallery = Gallery::factory()->create([
-        'design' => ['cover' => 'split', 'type' => 'serif', 'colour' => 'dark', 'grid' => 'dense'],
+        'design' => ['cover' => 'geteilt', 'type' => 'serif', 'colour' => 'dunkel', 'size' => 'klein', 'spacing' => 'eng', 'flow' => 'zeilen'],
         'downloads_enabled' => false,
         'lists_enabled' => true,
         'comments_enabled' => false,
@@ -87,7 +87,7 @@ it('saves a gallery as a named preset', function () {
     $preset = GalleryPreset::sole();
 
     expect($preset->name)->toBe('Hochzeit')
-        ->and($preset->design['colour'])->toBe('dark')
+        ->and($preset->design['colour'])->toBe('dunkel')
         ->and($preset->downloads_enabled)->toBeFalse()
         ->and($preset->comments_enabled)->toBeFalse()
         ->and($preset->expiry_mode)->toBe('days')
@@ -120,10 +120,10 @@ it('keeps a preset design set and clearable', function () {
     $this->patch("/einstellungen/galerie-vorlagen/{$preset->public_id}", [
         'name' => 'Dunkel',
         'expiry_mode' => 'inherit',
-        'design' => ['cover' => 'split', 'type' => 'serif', 'colour' => 'dark', 'grid' => 'dense'],
+        'design' => ['cover' => 'geteilt', 'type' => 'serif', 'colour' => 'dunkel', 'size' => 'klein', 'spacing' => 'eng', 'flow' => 'zeilen'],
     ])->assertRedirect();
 
-    expect($preset->fresh()->design['colour'])->toBe('dark');
+    expect($preset->fresh()->design['colour'])->toBe('dunkel');
 
     $this->patch("/einstellungen/galerie-vorlagen/{$preset->public_id}", [
         'name' => 'Dunkel',
@@ -140,13 +140,13 @@ it('keeps a preset design set and clearable', function () {
 // falling back to a studio default that has no rung to fall through to here.
 it('applies a preset\'s design and offers to an existing gallery', function () {
     $gallery = Gallery::factory()->create([
-        'design' => ['cover' => 'full', 'type' => 'serif', 'colour' => 'light', 'grid' => 'wide'],
+        'design' => ['cover' => 'zentriert', 'type' => 'serif', 'colour' => 'hell', 'size' => 'mittel', 'spacing' => 'eng', 'flow' => 'zeilen'],
         'downloads_enabled' => true,
         'lists_enabled' => true,
         'comments_enabled' => true,
     ]);
     $preset = GalleryPreset::factory()->create([
-        'design' => ['cover' => 'split', 'type' => 'sans', 'colour' => 'dark', 'grid' => 'dense'],
+        'design' => ['cover' => 'geteilt', 'type' => 'sans', 'colour' => 'dunkel', 'size' => 'klein', 'spacing' => 'eng', 'flow' => 'zeilen'],
         'downloads_enabled' => false,
         'lists_enabled' => null,
         'comments_enabled' => null,
@@ -156,7 +156,7 @@ it('applies a preset\'s design and offers to an existing gallery', function () {
         ->assertRedirect();
 
     $fresh = $gallery->fresh();
-    expect($fresh->design['colour'])->toBe('dark')
+    expect($fresh->design['colour'])->toBe('dunkel')
         ->and($fresh->downloads_enabled)->toBeFalse()
         // Left null (inherit) on the preset — the gallery's own value survives.
         ->and($fresh->lists_enabled)->toBeTrue()

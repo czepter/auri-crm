@@ -193,7 +193,7 @@ it('offers only projects of the rule type, after the sample entry', function () 
 
 it('searches all projects of the type when the preview is asked for a term', function () {
     $rule = AutomationRule::factory()->create();
-    ClientCase::factory()->count(11)->create(['type' => 'wedding']);
+    ClientCase::factory()->count(11)->create(['type' => 'wedding', 'name' => 'Hochzeit Kern']);
     $old = ClientCase::factory()->create(['name' => 'Taufe Schulz', 'type' => 'wedding', 'created_at' => now()->subYear()]);
 
     $this->actingAs(staffMember(StaffRole::Admin), 'staff')
@@ -204,7 +204,7 @@ it('searches all projects of the type when the preview is asked for a term', fun
 
 it('keeps the picked project in the list when it is outside the latest ten', function () {
     $rule = AutomationRule::factory()->create();
-    ClientCase::factory()->count(11)->create(['type' => 'wedding']);
+    ClientCase::factory()->count(11)->create(['type' => 'wedding', 'name' => 'Hochzeit Kern']);
     $old = ClientCase::factory()->create(['name' => 'Taufe Schulz', 'type' => 'wedding', 'created_at' => now()->subYear()]);
     $other = ClientCase::factory()->create(['type' => 'family', 'created_at' => now()->subYear()]);
     $owner = staffMember(StaffRole::Admin);

@@ -451,6 +451,7 @@ it('hands back every part of a ready build with its own signed link', function (
         'scope' => ZipBuildScope::All,
         'size' => ZipBuildSize::Original,
         'status' => ZipBuildStatus::Ready,
+        'guests' => true,
     ]);
     $build->parts()->createMany([
         ['part_number' => 1, 'key' => 'zips/part-1.zip', 'byte_size' => 1_500_000_000],
@@ -490,6 +491,7 @@ it('never shows a guest the client\'s own archives or what they called them', fu
             'size' => ZipBuildSize::Original,
             'gallery_list_id' => $listId,
             'status' => ZipBuildStatus::Ready,
+            'guests' => $listId === null,
         ]);
     }
 
@@ -504,5 +506,5 @@ it('never shows a guest the client\'s own archives or what they called them', fu
         ->assertOk()->viewData('page')['props'];
 
     expect(collect($asClient['builds'])->pluck('listName')->all())
-        ->toEqualCanonicalizing([null, 'Für die Eltern']);
+        ->toEqualCanonicalizing(['Für die Eltern']);
 });

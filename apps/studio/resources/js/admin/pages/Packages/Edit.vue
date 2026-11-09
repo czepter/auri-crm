@@ -20,6 +20,7 @@ import { Field } from '@/ui/field'
 import { Label } from '@/ui/label'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Switch } from '@/ui/switch'
+import { Link } from '@inertiajs/vue3'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/ui/alert-dialog'
@@ -36,15 +37,18 @@ type Request = {
 const props = defineProps<{
   package: App.Catalog.Data.PackageData
   projectTypes: { key: string; name: string }[]
+  galleryPresets: { id: string; name: string }[]
   requests: Request[]
   catalogItems: App.Catalog.Data.CatalogItemData[]
   vatRate: number | null
 }>()
-useLiveProps(['package', 'projectTypes', 'requests', 'catalogItems', 'vatRate'])
+useLiveProps(['package', 'projectTypes', 'galleryPresets', 'requests', 'catalogItems', 'vatRate'])
 
 function day(iso: string) {
   return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
+
+const NO_PRESET = 'none'
 
 const form = useForm({
   name: props.package.name,
@@ -53,6 +57,7 @@ const form = useForm({
   portal_price_mode: props.package.portalPriceMode,
   portal_requires_date: props.package.portalRequiresDate,
   project_type_key: props.package.projectTypeKey ?? '',
+  gallery_preset_id: props.package.galleryPresetId ?? NO_PRESET,
   items: props.package.items.map(
     (item): PackageItemRow => ({
       id: item.id,
@@ -111,6 +116,7 @@ function save() {
     .transform((data) => ({
       ...data,
       project_type_key: data.project_type_key || null,
+      gallery_preset_id: data.gallery_preset_id === NO_PRESET ? null : data.gallery_preset_id,
       items: data.items.map((item) => ({
         title: item.title,
         description: item.description || null,
@@ -248,6 +254,23 @@ watch(() => form.data(), autosave, { deep: true })
               @update:model-value="(v) => (form.portal_requires_date = v === 'date')"
             />
           </div>
+        </div>
+
+        <div class="mt-8">
+          <div class="mb-2.5 text-small leading-none font-semibold text-faint">{{ $t('packages.gallerySection') }}</div>
+
+          <Field id="gallery-preset" :label="$t('packages.galleryPreset')" :error="form.errors.gallery_preset_id">
+            <Select v-model="form.gallery_preset_id">
+              <SelectTrigger id="gallery-preset"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="NO_PRESET">{{ $t('galleryPresets.none') }}</SelectItem>
+                <SelectItem v-for="preset in galleryPresets" :key="preset.id" :value="preset.id">{{ preset.name }}</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <Link v-if="form.gallery_preset_id !== NO_PRESET" class="mt-2 inline-block text-small" :href="`/galerien?einstellungen=vorlagen&vorlage=${form.gallery_preset_id}`">
+            {{ $t('packages.openPreset') }}
+          </Link>
         </div>
         </div>
 

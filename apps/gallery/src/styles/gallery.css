@@ -106,7 +106,7 @@ img { max-width: 100%; height: auto; }
   position: sticky; top: 0; z-index: 10;
   display: flex; align-items: center; justify-content: space-between; gap: var(--s5);
   max-width: var(--page); margin: 0 auto; padding: var(--s4) var(--s5);
-  background: rgba(12,10,9,.72); backdrop-filter: blur(14px) saturate(140%);
+  background: color-mix(in srgb, var(--void) 72%, transparent); backdrop-filter: blur(14px) saturate(140%);
   border-bottom: 1px solid var(--void-line);
 }
 .bar .who { flex: 1; font-size: 14px; color: var(--void-ink-2); }
@@ -119,13 +119,14 @@ img { max-width: 100%; height: auto; }
   color: var(--void-ink); font: 500 14px/1 var(--sans); text-decoration: none; cursor: pointer;
   transition: background .2s var(--ease), border-color .2s var(--ease);
 }
-.barbtn:hover { background: var(--void-2); border-color: #3A3128; }
-.barbtn.solid { background: #fff; color: var(--void); border-color: #fff; font-weight: 600; }
+.barbtn:hover { background: var(--void-2); border-color: var(--void-ink-2); }
+.barbtn.solid { background: var(--void-ink); color: var(--void); border-color: var(--void-ink); font-weight: 600; }
 .barbtn.solid:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
 .barbtn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.6; }
 
 /* ── the wall ─────────────────────────────────────────────────────────── */
 .wall { max-width: var(--page); margin: 0 auto; padding: var(--s7) var(--s5) var(--s10); display: flex; flex-wrap: wrap; gap: var(--s3); }
+.lockednote { max-width: var(--page); margin: 0 auto; padding: var(--s7) var(--s5) 0; font-size: 14px; color: var(--void-ink-2); }
 .tile { position: relative; display: block; overflow: hidden; border-radius: 10px; background: var(--void-2); }
 .tile img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 1.2s var(--ease); }
 .tile:hover img { transform: scale(1.03); }
@@ -217,9 +218,9 @@ img { max-width: 100%; height: auto; }
 .arrow {
   position: absolute; top: 50%; transform: translateY(-50%);
   width: 40px; height: 40px; border-radius: 50%; border: 0; cursor: pointer;
-  display: grid; place-items: center; background: rgba(255,255,255,.08); color: var(--void-ink);
+  display: grid; place-items: center; background: color-mix(in srgb, var(--void-ink) 8%, transparent); color: var(--void-ink);
 }
-.arrow:hover { background: rgba(255,255,255,.16); }
+.arrow:hover { background: color-mix(in srgb, var(--void-ink) 16%, transparent); }
 .arrow svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.6; }
 .arrow.prev { left: 0; }
 .arrow.next { right: 0; }
@@ -279,3 +280,77 @@ img { max-width: 100%; height: auto; }
 .dl-size, .dl-state { color: rgba(246,241,235,.66); font-size: 13px; }
 .dl-parts { display: flex; flex-wrap: wrap; gap: var(--s2); }
 .hint a { color: inherit; }
+
+
+/* ── Gestaltung ──────────────────────────────────────────────────────────
+   GalleryDesign::OPTIONS im Studio. <html> traegt je Schluessel ein
+   data-g*-Attribut (lib/design.ts); die Werte hier sind Schriftstapel des
+   Systems und Farben, keine Webfonts und keine fremden Anfragen. */
+html[data-gcolour='hell']       { --void:#FFFFFF; --void-ink:#151A22; --void-ink-2:#626B78; --void-line:#E2E7EB; }
+html[data-gcolour='gold']       { --void:#FBF6E9; --void-ink:#2A2412; --void-ink-2:#7A6E4A; --void-line:#E9DDB8; }
+html[data-gcolour='rose']       { --void:#FBF1F1; --void-ink:#2E1B1E; --void-ink-2:#836468; --void-line:#EBD3D5; }
+html[data-gcolour='terracotta'] { --void:#FAF0EA; --void-ink:#33190F; --void-ink-2:#8A5B49; --void-line:#EBCDBE; }
+html[data-gcolour='sand']       { --void:#FBF7F2; --void-ink:#2A211B; --void-ink-2:#7A6A5C; --void-line:#E6DBCC; }
+html[data-gcolour='olive']      { --void:#F3F4EA; --void-ink:#20240F; --void-ink-2:#646B45; --void-line:#D9DDBF; }
+html[data-gcolour='agave']      { --void:#EEF4F0; --void-ink:#14261D; --void-ink-2:#577264; --void-line:#CFE0D5; }
+html[data-gcolour='meer']       { --void:#EDF3F6; --void-ink:#10242E; --void-ink-2:#55707E; --void-line:#CBDDE5; }
+html[data-gcolour='dunkel']     { --void:#0C0A09; --void-ink:#F6F1EB; --void-ink-2:#A2968C; --void-line:#272019; }
+html[data-gcolour] { --void-2: color-mix(in srgb, var(--void-ink) 6%, var(--void)); }
+/* Der Titel steht weiss auf dem Foto, gleich welche Farbe die Seite traegt;
+   nur der unterste Rand geht in den Grund ueber. */
+html[data-gcolour] .cover::after {
+  background:
+    linear-gradient(0deg, var(--void) 0%, transparent 14%),
+    linear-gradient(rgba(12,10,9,.42), rgba(12,10,9,.42));
+}
+
+html[data-gtype='sans']     { --serif: var(--sans); --gweight: 400; }
+html[data-gtype='serif']    { --serif: Georgia, 'Times New Roman', serif; --gweight: 400; }
+html[data-gtype='modern']   { --serif: 'Avenir Next', Avenir, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; --gweight: 500; }
+html[data-gtype='zeitlos']  { --serif: 'Palatino Linotype', Palatino, 'Book Antiqua', 'URW Palladio L', serif; --gweight: 400; }
+html[data-gtype='kraeftig'] { --serif: 'Helvetica Neue', Arial, sans-serif; --gweight: 800; }
+html[data-gtype='dezent']   { --serif: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif; --gweight: 300; }
+.display { font-weight: var(--gweight, 400); }
+
+html[data-gsize='klein']  { --gallery-row: 120px; --gcols: 5; }
+html[data-gsize='mittel'] { --gallery-row: 180px; --gcols: 4; }
+html[data-gsize='gross']  { --gallery-row: 300px; --gcols: 2; }
+html[data-gspacing='eng'] { --ggap: 6px; }
+html[data-gspacing='weit'] { --ggap: 22px; }
+.wall { gap: var(--ggap, var(--s3)); }
+html[data-gflow='spalten'] .wall { display: block; columns: var(--gcols, 4); column-gap: var(--ggap, var(--s3)); }
+html[data-gflow='spalten'] .tile { margin-bottom: var(--ggap, var(--s3)); break-inside: avoid; max-width: none !important; }
+@media (max-width: 760px) {
+  html[data-gspacing='eng'] { --ggap: 4px; }
+  html[data-gspacing='weit'] { --ggap: 10px; }
+  html[data-gsize] { --gcols: 2; }
+  html[data-gsize='gross'] { --gcols: 1; }
+}
+
+/* Titelbild. zentriert: Titel mittig im Bild. links: Titel unten links.
+   rahmen: das Bild als Karte mit Rand. geteilt: Bild links, Titel rechts. */
+html[data-gcover='zentriert'] .covertext { bottom: auto; top: 50%; transform: translateY(-50%); text-align: center; }
+html[data-gcover='rahmen'] .cover { margin: var(--s5) var(--s5) 0; height: calc(100svh - var(--s5) * 2); border-radius: var(--r); }
+html[data-gcover='rahmen'] .covertext { bottom: var(--s7); text-align: center; }
+html[data-gcover='geteilt'] .cover { display: grid; grid-template-columns: 1fr 1fr; }
+html[data-gcover='geteilt'] .cover::after { display: none; }
+html[data-gcover='geteilt'] .covertext { position: static; align-self: center; padding: var(--s7) var(--s6); margin: 0; }
+html[data-gcover='geteilt'] .covertext .display { color: var(--void-ink); }
+html[data-gcover='geteilt'] .covertext .meta { color: var(--void-ink-2); }
+html[data-gcover='geteilt'] .scrollcue { color: var(--void-ink-2); }
+@media (max-width: 760px) {
+  html[data-gcover='rahmen'] .cover { margin: var(--s3) var(--s3) 0; height: calc(82svh - var(--s3) * 2); }
+  html[data-gcover='geteilt'] .cover { grid-template-columns: 1fr; grid-template-rows: 55svh auto; height: auto; }
+  html[data-gcover='geteilt'] .covertext { padding: var(--s5); }
+}
+
+.intro { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; background: rgba(12, 10, 9, .7); }
+.intro[hidden] { display: none; }
+.introbox { width: 100%; padding: var(--s6) var(--s5) calc(var(--s6) + env(safe-area-inset-bottom)); background: var(--void); color: var(--void-ink); border-radius: 16px 16px 0 0; }
+.introbox h2 { margin: 0 0 var(--s5); font-size: 18px; font-weight: 600; }
+.introbox ul { margin: 0 0 var(--s6); padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--s4); font-size: 15px; }
+.introbox .btn { width: 100%; padding: 14px 20px; border: 0; border-radius: 999px; background: #fff; color: var(--void); font: inherit; font-weight: 600; cursor: pointer; }
+@media (min-width: 761px) {
+  .intro { align-items: center; }
+  .introbox { max-width: 400px; border-radius: 16px; padding-bottom: var(--s6); }
+}

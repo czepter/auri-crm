@@ -2,6 +2,7 @@
 
 namespace App\Crm\Models;
 
+use App\Catalog\Models\Package;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Contracts\Models\Contract;
@@ -188,6 +189,17 @@ class ClientCase extends Model
     public function lead(): HasOne
     {
         return $this->hasOne(Lead::class);
+    }
+
+    /**
+     * Das Paket, das dieses Projekt gebucht hat. Allein die Anfrage hält die
+     * Verbindung: ein Angebot wird aus einem Paket nur kopiert (QuoteItem hat
+     * bewusst keine package_id), eine angenommene Position führt also nicht
+     * zurück.
+     */
+    public function bookedPackage(): ?Package
+    {
+        return $this->lead?->package;
     }
 
     public function notes(): HasMany

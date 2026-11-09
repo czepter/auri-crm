@@ -70,7 +70,7 @@ it('hands out a part link that downloads without any bearer', function () {
     $version = downloadableGallery();
     $gallery = $version->gallery;
     [$guest, $guestPass] = confirmedGuest($gallery);
-    $build = ZipBuild::factory()->for($version, 'galleryVersion')->create(['status' => ZipBuildStatus::Ready]);
+    $build = ZipBuild::factory()->for($version, 'galleryVersion')->create(['status' => ZipBuildStatus::Ready, 'guests' => true]);
     ZipBuildPart::factory()->for($build)->create(['part_number' => 1]);
 
     $path = $this->getJson("/api/galleries/{$gallery->public_id}/download", ['X-Guest-Pass' => $guestPass])
@@ -93,7 +93,7 @@ it('stops a part link once the pin was rotated', function () {
     $version = downloadableGallery('4711');
     $gallery = $version->gallery;
     [, $guestPass] = confirmedGuest($gallery);
-    $build = ZipBuild::factory()->for($version, 'galleryVersion')->create(['status' => ZipBuildStatus::Ready]);
+    $build = ZipBuild::factory()->for($version, 'galleryVersion')->create(['status' => ZipBuildStatus::Ready, 'guests' => true]);
     ZipBuildPart::factory()->for($build)->create(['part_number' => 1]);
     $pass = $this->postJson("/api/galleries/{$gallery->public_id}/download/pin", ['pin' => '4711'])->json('pass');
 
@@ -109,7 +109,7 @@ it('stops a part link once the view password was rotated', function () {
     $version = downloadableGallery();
     $gallery = $version->gallery;
     [, $guestPass] = confirmedGuest($gallery);
-    $build = ZipBuild::factory()->for($version, 'galleryVersion')->create(['status' => ZipBuildStatus::Ready]);
+    $build = ZipBuild::factory()->for($version, 'galleryVersion')->create(['status' => ZipBuildStatus::Ready, 'guests' => true]);
     ZipBuildPart::factory()->for($build)->create(['part_number' => 1]);
 
     $path = $this->getJson("/api/galleries/{$gallery->public_id}/download", ['X-Guest-Pass' => $guestPass])

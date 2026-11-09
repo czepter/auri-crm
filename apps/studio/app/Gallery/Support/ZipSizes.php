@@ -22,7 +22,7 @@ class ZipSizes
      * lists ever appears.
      *
      * @param  list<string>  $keys
-     * @return array<string, int>
+     * @return array<string, int> nur die Größen, die die Galerie anbietet
      */
     public static function for(Gallery $gallery, array $keys): array
     {
@@ -39,9 +39,9 @@ class ZipSizes
             ->groupBy('asset_id')
             ->map(fn ($derivatives) => (int) $derivatives->sortByDesc('width')->first()?->bytes);
 
-        return [
+        return array_intersect_key([
             ZipBuildSize::Original->value => (int) $assets->sum('byte_size'),
             ZipBuildSize::Web->value => (int) $web->sum(),
-        ];
+        ], array_flip(array_map(fn (ZipBuildSize $size) => $size->value, GalleryDownloadGate::sizes($gallery))));
     }
 }

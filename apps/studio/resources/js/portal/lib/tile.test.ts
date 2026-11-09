@@ -5,8 +5,8 @@ describe('tileStyle', () => {
   it('derives ratio, basis and a last-row cap from the asset size', () => {
     expect(tileStyle({ width: 2000, height: 1000 })).toEqual({
       aspectRatio: '2',
-      flex: '200 1 calc(2 * min(180px, 34vw))',
-      maxWidth: 'calc(3 * min(180px, 34vw))',
+      flex: '200 1 calc(2 * min(var(--gallery-row, 180px), 34vw))',
+      maxWidth: 'calc(3 * min(var(--gallery-row, 180px), 34vw))',
     })
   })
 

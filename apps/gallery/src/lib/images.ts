@@ -16,6 +16,7 @@ export type Format = (typeof FORMATS)[number]
 
 export interface GalleryAsset {
   key: string
+  set?: string | null
   width: number | null
   height: number | null
 }

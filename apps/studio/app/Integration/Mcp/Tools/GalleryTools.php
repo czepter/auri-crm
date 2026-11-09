@@ -171,7 +171,8 @@ final class GalleryTools
     private static function featureFields(JsonSchema $schema): array
     {
         return [
-            'downloads_enabled' => $schema->boolean(),
+            'download_rule' => $schema->string()->enum(['open', 'after_payment', 'off']),
+            'view_mode' => $schema->string()->enum(['none', 'text', 'logo', 'locked']),
             'lists_enabled' => $schema->boolean(),
             'comments_enabled' => $schema->boolean(),
         ];
@@ -206,6 +207,8 @@ final class GalleryTools
             'externalUrl' => $schema->string()->nullable(),
             'expiresAt' => $schema->string()->nullable(),
             'downloadsEnabled' => $schema->boolean(),
+            'downloadRule' => $schema->string()->enum(['open', 'after_payment', 'off']),
+            'viewMode' => $schema->string()->enum(['none', 'text', 'logo', 'locked']),
             'listsEnabled' => $schema->boolean(),
             'commentsEnabled' => $schema->boolean(),
             'favoriteCount' => $schema->integer(),

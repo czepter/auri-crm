@@ -25,7 +25,7 @@ it('creates a gallery and sends the user to its record', function () {
         'title' => 'Trauung',
         'is_external' => false,
         'expires_at' => '2027-01-31',
-        'downloads_enabled' => true,
+        'download_rule' => 'open',
         'lists_enabled' => false,
         'comments_enabled' => true,
     ]);
@@ -64,7 +64,7 @@ it('creates one without a project', function () {
         'case_id' => null,
         'title' => 'Studioportraits',
         'is_external' => false,
-        'downloads_enabled' => true,
+        'download_rule' => 'open',
         'lists_enabled' => true,
         'comments_enabled' => true,
     ])->assertRedirect();

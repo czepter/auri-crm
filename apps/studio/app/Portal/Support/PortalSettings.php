@@ -87,7 +87,7 @@ class PortalSettings
 
     public function galleryDownloadsEnabled(?Contact $contact = null): bool
     {
-        return (bool) $this->resolve($contact, 'gallery_downloads', (bool) StudioSettings::current()->gallery_default_downloads_enabled);
+        return (bool) $this->resolve($contact, 'gallery_downloads', StudioSettings::current()->gallery_default_download_rule !== 'off');
     }
 
     public function galleryListsEnabled(?Contact $contact = null): bool

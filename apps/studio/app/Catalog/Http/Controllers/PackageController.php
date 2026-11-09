@@ -10,6 +10,7 @@ use App\Catalog\Models\Package;
 use App\Catalog\Models\PackageItem;
 use App\Crm\Models\Lead;
 use App\Crm\Models\ProjectType;
+use App\Gallery\Models\GalleryPreset;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
 use App\Support\AuditLogger;
@@ -67,10 +68,12 @@ class PackageController extends Controller
     {
         $this->authorize('update', $package);
 
-        $package->loadCount(self::requestCounts());
+        $package->loadCount(self::requestCounts())->load('galleryPreset');
 
         return Inertia::render('Packages/Edit', [
             'package' => PackageData::fromModel($package),
+            'galleryPresets' => GalleryPreset::query()->orderBy('name')->get(['public_id', 'name'])
+                ->map(fn (GalleryPreset $preset) => ['id' => $preset->public_id, 'name' => $preset->name])->all(),
             'catalogItems' => self::catalogItems(),
             // Wie ServiceController::show(): ein Kleinunternehmer hat keinen
             // Satz, und dann steht unter dem Preis nichts.

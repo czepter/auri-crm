@@ -25,21 +25,13 @@ beforeEach(function () {
     ]);
 });
 
-it('opens the compose screen with the primary contact as recipient', function () {
-    $this->get("/galerien/{$this->gallery->public_id}/veroeffentlichen")
-        ->assertOk()
-        ->assertInertia(fn ($page) => $page
-            ->component('Galleries/Send')
-            ->where('recipients.0.email', 'lena@example.test'));
-});
-
-it('publishes and mails the compose screen\'s subject and message', function () {
+it('publishes and mails the dialog\'s subject and message', function () {
     Notification::fake();
 
     $this->post("/galerien/{$this->gallery->public_id}/veroeffentlichen", [
         'subject' => 'Eure Galerie',
         'message' => "Hallo Lena,\n\neure Bilder sind da.",
-    ])->assertRedirect("/galerien/{$this->gallery->public_id}");
+    ])->assertRedirect();
 
     expect($this->gallery->fresh()->currentVersion->version)->toBe(1);
 
@@ -60,3 +52,16 @@ it('publishes without a mail when posted without a subject', function () {
     expect($this->gallery->fresh()->currentVersion->version)->toBe(1);
     Notification::assertNothingSent();
 });
+
+it('puts the view password in the mail only when asked', function (bool $include, bool $expected) {
+    Notification::fake();
+    $this->gallery->rotateViewPassword('Wiese-4821');
+
+    $this->post("/galerien/{$this->gallery->public_id}/veroeffentlichen", [
+        'subject' => 'Eure Galerie',
+        'message' => 'Hallo Lena',
+        'include_password' => $include,
+    ]);
+
+    Notification::assertSentTo($this->contact, fn (GalleryPublished $notification) => str_contains((string) $notification->toMail($this->contact)->render(), 'Wiese-4821') === $expected);
+})->with([[true, true], [false, false]]);

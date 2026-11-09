@@ -163,7 +163,7 @@ const PUBLIC_ROUTES = [
         // behind `gallery.gate:view` — which does not read as `audience:` to
         // this test any more than the routes below do.
         'galerien/{gallery}/beteiligung', 'galerien/{gallery}/favorit',
-        'galerien/{gallery}/kommentar',
+        'galerien/{gallery}/kommentar', 'galerien/{gallery}/ausblenden',
         // P-08 (#227): the image bytes, bound on the version and gated by
         // its parent gallery's own `gallery.gate:view` — same story as the
         // routes below, and the reason they moved off the api surface at

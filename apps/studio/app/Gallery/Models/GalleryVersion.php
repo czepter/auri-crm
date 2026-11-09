@@ -41,6 +41,34 @@ class GalleryVersion extends Model
         return $this->belongsTo(Gallery::class);
     }
 
+    /**
+     * Die Bilder, die diese Zielgruppe sieht: Gäste nur aus Sets mit
+     * Zugang "guests". Ein Bild ohne bekanntes Set (ältere Fassung) bleibt
+     * sichtbar.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function assetsFor(bool $client): array
+    {
+        $assets = $this->assets ?? [];
+
+        if ($client) {
+            return $assets;
+        }
+
+        $internal = $this->gallery->sets()->where('access', GallerySet::INTERNAL)->pluck('name')->all();
+
+        return array_values(array_filter(
+            $assets,
+            fn (array $asset) => ! in_array($asset['set'] ?? null, $internal, true),
+        ));
+    }
+
+    public function sees(string $key, bool $client): bool
+    {
+        return collect($this->assetsFor($client))->contains(fn (array $asset) => $asset['key'] === $key);
+    }
+
     /** Every (scope, size) archive ever built for this version — G-10, deduped one row per triple. */
     public function zipBuilds(): HasMany
     {

@@ -25,6 +25,7 @@ export interface RecordNavChild {
   href: string
   count: number | null
   reorderable: boolean
+  tag?: string | null
 }
 
 export interface RecordNavTab {
@@ -118,6 +119,7 @@ function drop(targetKey: string) {
             :href="child.href"
           >
             <span class="truncate">{{ child.translate ? $t(child.label) : child.label }}</span>
+            <span v-if="child.tag" class="text-small text-faint">{{ $t(child.tag) }}</span>
             <span v-if="child.count" class="ml-auto text-small tabular-nums text-ink-2">{{ child.count }}</span>
           </Link>
 

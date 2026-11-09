@@ -62,7 +62,7 @@ class ContactController extends Controller
             'sign_contracts' => (bool) StudioSettings::current()->portal_sign_contracts_enabled,
             'payment_status' => (bool) StudioSettings::current()->portal_payment_status_enabled,
             'messaging_mode' => (string) StudioSettings::current()->portal_messaging_mode,
-            'gallery_downloads' => (bool) StudioSettings::current()->gallery_default_downloads_enabled,
+            'gallery_downloads' => StudioSettings::current()->gallery_default_download_rule !== 'off',
             'gallery_lists' => (bool) StudioSettings::current()->gallery_default_lists_enabled,
             'gallery_comments' => (bool) StudioSettings::current()->gallery_default_comments_enabled,
             'offers' => (bool) StudioSettings::current()->portal_offers_enabled,

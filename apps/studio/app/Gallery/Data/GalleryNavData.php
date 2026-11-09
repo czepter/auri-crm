@@ -25,7 +25,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 class GalleryNavData extends Data
 {
     /**
-     * @param  list<array{key: string, label: string, href: string, count: int|null, countTo: int|null, children: list<array{key: string, label: string, translate: bool, href: string, count: int|null, reorderable: bool}>}>  $tabs
+     * @param  list<array{key: string, label: string, href: string, count: int|null, countTo: int|null, children: list<array{key: string, label: string, translate: bool, href: string, count: int|null, reorderable: bool, tag: string|null}>}>  $tabs
      */
     public function __construct(
         public ?string $cover,
@@ -80,7 +80,7 @@ class GalleryNavData extends Data
 
     /**
      * @param  Collection<int, GallerySet>  $sets
-     * @return list<array{key: string, label: string, translate: bool, href: string, count: int|null, reorderable: bool}>
+     * @return list<array{key: string, label: string, translate: bool, href: string, count: int|null, reorderable: bool, tag: string|null}>
      */
     private static function sets(Gallery $gallery, Collection $sets): array
     {
@@ -95,6 +95,7 @@ class GalleryNavData extends Data
             'href' => "{$base}/{$set->public_id}",
             'count' => null,
             'reorderable' => true,
+            'tag' => $set->isForGuests() ? 'galleryRecord.guestsTag' : null,
         ])->all();
 
         // Erst ab dem zweiten Set: bei einem stünde dort dasselbe zweimal.
@@ -103,7 +104,7 @@ class GalleryNavData extends Data
         }
 
         return [
-            ['key' => 'alle', 'label' => 'gallery.all', 'translate' => true, 'href' => $base, 'count' => null, 'reorderable' => false],
+            ['key' => 'alle', 'label' => 'gallery.all', 'translate' => true, 'href' => $base, 'count' => null, 'reorderable' => false, 'tag' => null],
             ...$rows,
         ];
     }

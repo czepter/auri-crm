@@ -86,6 +86,7 @@ class PackageController extends Controller
     {
         return [
             ...$package->only(['name', 'description', 'is_active']),
+            'gallery_preset_id' => $package->galleryPreset?->public_id,
             'items' => $package->items->map(fn (PackageItem $item) => [
                 ...$item->only(['title', 'description', 'quantity', 'unit_price', 'selectable', 'selected', 'outcome']),
                 'id' => $item->public_id,
@@ -95,7 +96,7 @@ class PackageController extends Controller
 
     private function answer(Package $package, int $status = 200): JsonResponse
     {
-        return response()->json(['data' => PackageData::fromModel($package->fresh(['items']))], $status);
+        return response()->json(['data' => PackageData::fromModel($package->fresh(['items', 'galleryPreset']))], $status);
     }
 
     /** N-04: the consenting staff member behind an OAuth token, null for a machine one. */

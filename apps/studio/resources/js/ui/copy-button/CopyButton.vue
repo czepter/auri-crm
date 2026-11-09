@@ -8,13 +8,14 @@ import { copyText } from "./copyText"
 
 const props = withDefaults(defineProps<{
   value: string
+  label?: string
   variant?: ButtonVariants["variant"]
   class?: HTMLAttributes["class"]
 }>(), { variant: "pill-muted" })
 
 const { t } = useI18n()
 const labels = computed(() => [
-  { state: "idle", text: t("gallery.copy") },
+  { state: "idle", text: props.label ?? t("gallery.copy") },
   { state: "copied", text: t("gallery.copied") },
   { state: "failed", text: t("gallery.copyFailed") },
 ])

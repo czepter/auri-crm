@@ -24,7 +24,7 @@ class PublishGallery
     public function __construct(private readonly NotificationService $notifications) {}
 
     /** Publishes, records it and mails the project's primary contact when a subject is given. */
-    public function announce(Gallery $gallery, ?User $actor, ?string $subject = null, ?string $message = null): ?GalleryVersion
+    public function announce(Gallery $gallery, ?User $actor, ?string $subject = null, ?string $message = null, bool $withPassword = false): ?GalleryVersion
     {
         $version = $this($gallery);
 
@@ -38,7 +38,7 @@ class PublishGallery
         $contact = $gallery->case?->primaryContact();
 
         if (filled($subject) && filled($contact?->email)) {
-            $this->notifications->send($contact, new GalleryPublished($gallery, $subject, $message));
+            $this->notifications->send($contact, new GalleryPublished($gallery, $subject, $message, $withPassword ? $gallery->view_password : null));
         }
 
         return $version;

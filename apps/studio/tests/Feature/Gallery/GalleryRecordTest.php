@@ -208,18 +208,24 @@ it('keeps the look on the gallery, and leaves it null until somebody chooses', f
 
     expect(props("/galerien/{$gallery->public_id}")['gallery']['design'])->toBeNull();
 
-    test()->patch("/galerien/{$gallery->public_id}", ['design' => ['cover' => 'split', 'colour' => 'dark']])
+    test()->patch("/galerien/{$gallery->public_id}", ['design' => ['cover' => 'geteilt', 'colour' => 'dunkel']])
         ->assertRedirect();
 
-    expect($gallery->fresh()->design)->toBe(['cover' => 'split', 'colour' => 'dark']);
+    expect($gallery->fresh()->design)->toBe(['cover' => 'geteilt', 'colour' => 'dunkel']);
 });
 
-// C-20 (#257): three sheets, because the questions differ.
-it('carries the three activity sheets', function () {
+it('refuses design values outside the model', function (string $key, string $value) {
+    $gallery = managedGallery();
+
+    test()->patch("/galerien/{$gallery->public_id}", ['design' => [$key => $value]])
+        ->assertSessionHasErrors("design.{$key}");
+})->with([['cover', 'full'], ['colour', 'light'], ['flow', 'grid'], ['type', 'comic']]);
+
+it('carries the activity timeline with its counts', function () {
     $gallery = managedGallery();
 
     expect(props("/galerien/{$gallery->public_id}/aktivitaet")['activity'])
-        ->toHaveKeys(['downloads', 'marks', 'comments', 'views']);
+        ->toHaveKeys(['counts', 'events', 'favorites', 'hidden', 'task']);
 });
 
 // Critical 2: Record.vue's publish button follows this flag to choose

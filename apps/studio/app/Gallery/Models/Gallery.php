@@ -6,10 +6,12 @@ use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
+use App\Gallery\Support\GalleryPermissions;
 use App\Gallery\Support\GallerySettings;
 use App\Gallery\Support\GallerySlug;
 use App\Media\Models\Asset;
 use App\Media\Models\MultipartUpload;
+use App\Payments\Models\Invoice;
 use Carbon\CarbonImmutable;
 use Database\Factories\Gallery\GalleryFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -51,6 +53,9 @@ class Gallery extends Model
         'is_external', 'external_url', 'info', 'external_password', 'expires_at',
         'downloads_enabled', 'lists_enabled', 'comments_enabled',
         'event_date', 'cover_asset_id', 'cover_focal_x', 'cover_focal_y',
+        'permissions', 'intro_enabled',
+        'view_mode', 'watermark_text', 'download_rule', 'download_invoice_id', 'download_sizes', 'expiry_reminder',
+        'gallery_preset_id', 'copy_source_id', 'copy_total', 'copy_asset_ids',
     ];
 
     protected $attributes = [
@@ -59,6 +64,10 @@ class Gallery extends Model
         'lists_enabled' => true,
         'comments_enabled' => true,
         'requires_verified_email' => false,
+        'intro_enabled' => false,
+        'view_mode' => 'none',
+        'download_sizes' => '["original","web"]',
+        'expiry_reminder' => false,
         'view_password_version' => 1,
         'download_pin_version' => 1,
         'email_verification_version' => 1,
@@ -75,6 +84,12 @@ class Gallery extends Model
             'downloads_enabled' => 'boolean',
             'lists_enabled' => 'boolean',
             'comments_enabled' => 'boolean',
+            'permissions' => 'array',
+            'copy_asset_ids' => 'array',
+            'intro_enabled' => 'boolean',
+            'download_sizes' => 'array',
+            'expiry_reminder' => 'boolean',
+            'expiry_reminded_at' => 'immutable_datetime',
             'is_external' => 'boolean',
             // C-17 (#253): recoverable, because both values are handed to
             // guests anyway and a studio that cannot look one up locks out
@@ -93,6 +108,27 @@ class Gallery extends Model
     public function case(): BelongsTo
     {
         return $this->belongsTo(ClientCase::class);
+    }
+
+    /** @return array<string, bool> */
+    public function permissionsFor(bool $client): array
+    {
+        return GalleryPermissions::normalize($this->permissions)[$client ? 'client' : 'guest'];
+    }
+
+    public function allows(string $action, bool $client): bool
+    {
+        return $this->permissionsFor($client)[$action] ?? false;
+    }
+
+    public function preset(): BelongsTo
+    {
+        return $this->belongsTo(GalleryPreset::class, 'gallery_preset_id');
+    }
+
+    public function downloadInvoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class, 'download_invoice_id');
     }
 
     public function shoot(): BelongsTo
@@ -183,9 +219,41 @@ class Gallery extends Model
         return $this->hasMany(Asset::class);
     }
 
+    /** Kopierte Bilder gegen die Zahl, die die Kopie bekommen soll; null, wenn die Galerie keine Kopie ist oder fertig. */
+    public function copyProgress(): ?array
+    {
+        if ($this->copy_total === null) {
+            return null;
+        }
+
+        $done = $this->assets()->whereNotNull('copied_from_asset_id')->count();
+
+        return $done >= $this->copy_total ? null : ['done' => $done, 'total' => $this->copy_total];
+    }
+
+    public function copySource(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'copy_source_id');
+    }
+
     public function coverAsset(): BelongsTo
     {
         return $this->belongsTo(Asset::class, 'cover_asset_id');
+    }
+
+    /**
+     * Der Fokuspunkt gehoert zum Titelbild der Galerie; eine Fassung mit einem
+     * anderen Titelbild kennt ihn nicht.
+     *
+     * @return array{key: ?string, focal: ?array{x: int, y: int}}
+     */
+    public function coverFor(?string $key): array
+    {
+        $focal = $key !== null && $this->cover_focal_x !== null && $key === $this->coverAsset?->key
+            ? ['x' => $this->cover_focal_x, 'y' => $this->cover_focal_y]
+            : null;
+
+        return ['key' => $key, 'focal' => $focal];
     }
 
     /**
@@ -244,6 +312,24 @@ class Gallery extends Model
     public function isInPrerelease(): bool
     {
         return $this->prerelease_at !== null && $this->currentVersion === null && ! $this->is_external;
+    }
+
+    /**
+     * Das eine Wort der Liste: zurückgenommen schlägt abgelaufen, das schlägt
+     * veröffentlicht. Eine externe Galerie hat keine Fassung und steht mit
+     * ihrem Link, solange sie nicht zurückgenommen ist.
+     *
+     * @return 'withdrawn'|'expired'|'published'|'prerelease'|'draft'
+     */
+    public function lifecycle(): string
+    {
+        return match (true) {
+            $this->isWithdrawn() => 'withdrawn',
+            $this->expires_at?->isPast() === true => 'expired',
+            $this->is_external || $this->currentVersion !== null => 'published',
+            $this->isInPrerelease() => 'prerelease',
+            default => 'draft',
+        };
     }
 
     public function prereleaseSignups(): HasMany
@@ -388,6 +474,39 @@ class Gallery extends Model
     /** An external gallery (X-02) links to assets hosted elsewhere and owns no set to put them in. */
     protected static function booted(): void
     {
+        // lists_enabled und comments_enabled bleiben als Summe der Matrix
+        // stehen, damit jeder Leser der alten Spalten dasselbe sieht. Wer nur
+        // eine Spalte schreibt (Vorlagen, API, MCP), setzt die Aktion für
+        // beide Gruppen.
+        // downloads_enabled folgt download_rule; ein Schreiber der alten
+        // Spalte stellt die Regel nur um, wenn sie dadurch kippt.
+        static::saving(function (Gallery $gallery) {
+            if (! $gallery->isDirty('download_rule') && (! $gallery->exists || $gallery->isDirty('downloads_enabled'))) {
+                $current = $gallery->download_rule ?? 'open';
+                $gallery->download_rule = ! $gallery->downloads_enabled ? 'off' : ($current === 'off' ? 'open' : $current);
+            }
+
+            $gallery->downloads_enabled = $gallery->download_rule !== 'off';
+
+            if ($gallery->exists && $gallery->isDirty('expires_at')) {
+                $gallery->expiry_reminded_at = null;
+            }
+
+            $permissions = GalleryPermissions::normalize($gallery->permissions);
+
+            if (! $gallery->isDirty('permissions')) {
+                foreach (['lists_enabled' => 'favorites', 'comments_enabled' => 'comments'] as $column => $action) {
+                    if (! $gallery->exists || $gallery->isDirty($column)) {
+                        $permissions = GalleryPermissions::withLegacy($permissions, $action, (bool) $gallery->{$column});
+                    }
+                }
+            }
+
+            $gallery->permissions = $permissions;
+            $gallery->lists_enabled = $permissions['client']['favorites'] || $permissions['guest']['favorites'];
+            $gallery->comments_enabled = $permissions['client']['comments'] || $permissions['guest']['comments'];
+        });
+
         static::creating(function (Gallery $gallery) {
             $gallery->prefix ??= static::prefixFor($gallery->case_id);
             $gallery->slug ??= GallerySlug::unique(

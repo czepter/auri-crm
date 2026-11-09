@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ALL, countOf, selections, visible } from './gallerySelections'
+import { ALL, countOf, HIDDEN, selections, visible, withHidden } from './gallerySelections'
 
 const LABELS = { all: 'Alle', heart: 'Favoriten' }
 
@@ -47,5 +47,14 @@ describe('visible', () => {
   it('shows everything when nothing is selected, and nothing for an empty selection', () => {
     expect(visible(assets, null)).toHaveLength(3)
     expect(visible(assets, [])).toHaveLength(0)
+  })
+})
+
+describe('withHidden', () => {
+  const bar = selections(null, null, LABELS)
+
+  it('adds the hidden entry only once something is hidden', () => {
+    expect(withHidden(bar, [], 'Ausgeblendet')).toEqual(bar)
+    expect(withHidden(bar, ['a'], 'Ausgeblendet').at(-1)).toEqual({ id: HIDDEN, label: 'Ausgeblendet', keys: ['a'] })
   })
 })

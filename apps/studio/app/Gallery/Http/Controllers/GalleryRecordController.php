@@ -2,10 +2,14 @@
 
 namespace App\Gallery\Http\Controllers;
 
+use App\Documents\Data\MailTemplateData;
+use App\Documents\Support\DocumentMergeData;
+use App\Gallery\Actions\CopyGalleryAssets;
+use App\Gallery\Actions\DeleteGallery;
+use App\Gallery\Actions\DuplicateGallery;
 use App\Gallery\Actions\UpdateGallery;
 use App\Gallery\Data\GalleryNavData;
 use App\Gallery\Data\GalleryPresetData;
-use App\Gallery\Models\AssetComment;
 use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryGridPref;
@@ -15,15 +19,21 @@ use App\Gallery\Models\GallerySet;
 use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Models\GalleryView;
 use App\Gallery\Support\DraftDeviation;
+use App\Gallery\Support\GalleryActivity;
+use App\Gallery\Support\GalleryDesign;
+use App\Gallery\Support\GalleryPermissions;
 use App\Gallery\Support\GallerySlug;
 use App\Http\Controllers\Controller;
 use App\Media\Data\FailedAssetData;
 use App\Media\Enums\AssetStatus;
 use App\Media\Enums\MultipartUploadStatus;
+use App\Media\Enums\ZipBuildSize;
 use App\Media\Models\Asset;
 use App\Media\Models\DownloadEvent;
 use App\Media\Models\MultipartUpload;
 use App\Media\Models\ZipBuild;
+use App\Models\StudioSettings;
+use App\Payments\Models\Invoice;
 use App\Support\RecordVisit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -53,7 +63,9 @@ use Inertia\Response;
 class GalleryRecordController extends Controller
 {
     /** Die Abschnitte der Einstellungen. Kein Modell, nur fünf Wörter. */
-    private const SECTIONS = ['allgemein', 'zugang', 'download', 'listen', 'kommentare'];
+    private const SECTIONS = ['allgemein', 'zugang', 'freigabe', 'download', 'listen'];
+
+    public function __construct(private readonly DocumentMergeData $mergeData) {}
 
     /**
      * Drei Eingänge, eine Render-Methode. Ein einziger Eingang mit
@@ -81,6 +93,20 @@ class GalleryRecordController extends Controller
         }
 
         return $this->render($gallery, 'einstellungen', null, $abschnitt);
+    }
+
+    /** Der Text der Mail-Vorlage der Galerie-Vorlage; eine mit unbekanntem Feld wird nicht vorbelegt. */
+    private function mailMessage(Gallery $gallery): ?string
+    {
+        $template = $gallery->preset?->mailTemplate();
+
+        if ($template === null) {
+            return null;
+        }
+
+        $mail = MailTemplateData::fromModel($template, $this->mergeData->forCase($gallery->case));
+
+        return $mail->unknownFields === [] ? $mail->body : null;
     }
 
     private function render(Gallery $gallery, string $bereich, ?GallerySet $set, ?string $abschnitt): Response
@@ -129,6 +155,8 @@ class GalleryRecordController extends Controller
             ->oldest()
             ->get();
 
+        $primary = $gallery->case?->primaryContact();
+
         return Inertia::render('Galleries/Record', [
             // Bereich, Set und Abschnitt kommen aus dem Pfad, nicht aus einem
             // ref() — sonst wirft jedes Neuladen den Menschen zurück auf
@@ -154,6 +182,7 @@ class GalleryRecordController extends Controller
                 'requiresVerifiedEmail' => $gallery->requiresVerifiedEmail(),
                 'expiresAt' => $gallery->expires_at?->format('Y-m-d'),
                 'design' => $gallery->design,
+                'coverFocal' => $gallery->coverFor($gallery->coverAsset?->key)['focal'],
                 // Drives the publish button's label (Veröffentlichen ·
                 // Neu veröffentlichen · Wieder freigeben) — computed fresh
                 // rather than a stored flag a future action can forget to
@@ -170,13 +199,37 @@ class GalleryRecordController extends Controller
                 'externalPassword' => $gallery->external_password,
                 'info' => $gallery->info,
                 'canPublish' => auth('staff')->user()->can('publish', $gallery),
-                // Veröffentlichen opens the compose screen only when there is someone to mail.
-                'canMail' => filled($gallery->case?->primaryContact()?->email),
+                'canDelete' => auth('staff')->user()->can('delete', $gallery),
+                'copy' => $gallery->copyProgress(),
+                // Der Senden-Dialog zeigt den E-Mail-Reiter nur, wenn es einen Empfänger gibt.
+                'canMail' => filled($primary?->email),
+                'recipient' => $primary ? ['name' => $primary->name, 'email' => $primary->email] : null,
+                'mailMessage' => $this->mailMessage($gallery),
+                'studioName' => StudioSettings::current()->display_name,
+                'viewMode' => $gallery->view_mode,
+                'watermarkText' => $gallery->watermark_text,
+                'downloadRule' => $gallery->download_rule,
+                'downloadInvoiceId' => $gallery->downloadInvoice?->public_id,
+                'downloadSizes' => $gallery->download_sizes,
+                'expiryReminder' => $gallery->expiry_reminder,
+                'invoices' => $gallery->case_id === null ? [] : Invoice::query()
+                    ->where('case_id', $gallery->case_id)
+                    ->with('installments')
+                    ->orderBy('issued_at')
+                    ->get()
+                    ->map(fn (Invoice $invoice) => [
+                        'id' => $invoice->public_id,
+                        'number' => $invoice->number,
+                        'status' => $invoice->status(),
+                    ])
+                    ->all(),
                 'offers' => [
                     'downloads' => $gallery->downloads_enabled,
                     'lists' => $gallery->lists_enabled,
                     'comments' => $gallery->comments_enabled,
                 ],
+                'permissions' => GalleryPermissions::normalize($gallery->permissions),
+                'introEnabled' => $gallery->intro_enabled,
             ],
             // The other galleries of the same booking, as a tab row: they are
             // the ones one flips between.
@@ -213,6 +266,8 @@ class GalleryRecordController extends Controller
                 'sortKey' => $set->sort_key,
                 'sortDir' => $set->sort_dir,
                 'density' => $densities[$set->id] ?? GalleryGridPref::DEFAULT_DENSITY,
+                'access' => $set->access,
+                'url' => $gallery->publicUrl().'?set='.$set->public_id,
             ])->all(),
             'assets' => $this->inArea(['bilder', 'gestaltung'], $bereich, fn () => $assets()->map(fn (Asset $asset) => [
                 'id' => $asset->public_id,
@@ -259,7 +314,11 @@ class GalleryRecordController extends Controller
                     'owner' => $list->contact?->name,
                     'count' => $list->items->count(),
                 ])->all()),
-            'activity' => $this->inArea(['aktivitaet'], $bereich, fn () => $this->activity($gallery, $version)),
+            'activity' => $this->inArea(['aktivitaet'], $bereich, fn () => app(GalleryActivity::class)($gallery, $version)),
+            // Aus der Aktivität verlinkt: nur die Bilder, die jemand markiert hat.
+            'favoriteKeys' => $this->inArea(['bilder'], $bereich, fn () => request()->boolean('favoriten') && $version !== null
+                ? AssetFavorite::query()->where('gallery_version_id', $version->id)->distinct()->pluck('asset_key')->all()
+                : null),
             // G-04's "needs attention" tray, formerly the ingest screen's
             // own section — the pictures tab is the only place uploading
             // happens now, so this is where a failed upload gets noticed.
@@ -292,67 +351,6 @@ class GalleryRecordController extends Controller
         return in_array($current, $areas, true) ? $value() : Inertia::optional($value);
     }
 
-    /**
-     * C-20 (#257): three sheets, because the questions differ — who took
-     * something, who marked something, who was here at all. One table per
-     * sheet, so mail, scope and time stay comparable down the column.
-     *
-     * Every row states only what is recorded. A download knows its date, not
-     * its minute (download_events.request_date is a DATE); a mark knows its
-     * guest, not their name unless they signed in.
-     *
-     * @return array<string, list<array<string, mixed>>>
-     */
-    private function activity(Gallery $gallery, ?GalleryVersion $version): array
-    {
-        return [
-            'downloads' => $version === null ? [] : DownloadEvent::query()
-                ->whereIn('zip_build_id', ZipBuild::query()->where('gallery_version_id', $version->id)->select('id'))
-                ->with('zipBuild.galleryList')
-                ->latest('request_date')
-                ->limit(50)
-                ->get()
-                ->map(fn (DownloadEvent $event) => [
-                    'who' => $event->requester_identifier,
-                    'what' => $event->zipBuild?->galleryList?->name,
-                    'size' => $event->zipBuild?->size->value,
-                    'on' => $event->request_date?->format('Y-m-d'),
-                ])->all(),
-            'marks' => $version === null ? [] : AssetFavorite::query()
-                ->where('gallery_version_id', $version->id)
-                ->with('contact')
-                ->latest()
-                ->limit(50)
-                ->get()
-                ->map(fn (AssetFavorite $favorite) => [
-                    'who' => $favorite->contact?->name,
-                    'what' => $favorite->asset_key,
-                    'on' => $favorite->created_at->format('Y-m-d'),
-                ])->all(),
-            'comments' => $version === null ? [] : AssetComment::query()
-                ->where('gallery_version_id', $version->id)
-                ->with('contact')
-                ->latest()
-                ->limit(50)
-                ->get()
-                ->map(fn (AssetComment $comment) => [
-                    'who' => $comment->contact?->name,
-                    'what' => $comment->body,
-                    'on' => $comment->created_at->format('Y-m-d'),
-                ])->all(),
-            'views' => GalleryView::query()
-                ->where('gallery_id', $gallery->id)
-                ->with('contact')
-                ->latest('viewed_on')
-                ->limit(50)
-                ->get()
-                ->map(fn (GalleryView $view) => [
-                    'who' => $view->contact?->name,
-                    'on' => $view->viewed_on->format('Y-m-d'),
-                ])->all(),
-        ];
-    }
-
     /** The two secrets and the look, set where they are read. */
     public function update(Request $request, Gallery $gallery, UpdateGallery $updateGallery): RedirectResponse
     {
@@ -374,13 +372,19 @@ class GalleryRecordController extends Controller
             'external_password' => ['nullable', 'string', 'max:200'],
             'info' => ['nullable', 'string', 'max:2000'],
             'design' => ['nullable', 'array'],
-            'design.cover' => ['nullable', 'string', 'max:32'],
-            'design.type' => ['nullable', 'string', 'max:32'],
-            'design.colour' => ['nullable', 'string', 'max:32'],
-            'design.grid' => ['nullable', 'string', 'max:32'],
+            ...GalleryDesign::rules('design'),
             'downloads_enabled' => ['sometimes', 'boolean'],
+            'view_mode' => ['sometimes', Rule::in(['none', 'text', 'logo', 'locked'])],
+            'watermark_text' => ['nullable', 'string', 'max:80'],
+            'download_rule' => ['sometimes', Rule::in(['open', 'after_payment', 'off'])],
+            'download_invoice_id' => ['nullable', 'string', Rule::exists('invoices', 'public_id')->where('case_id', $gallery->case_id)],
+            'download_sizes' => ['sometimes', 'array', 'min:1'],
+            'download_sizes.*' => ['string', Rule::enum(ZipBuildSize::class)],
+            'expiry_reminder' => ['sometimes', 'boolean'],
             'lists_enabled' => ['sometimes', 'boolean'],
             'comments_enabled' => ['sometimes', 'boolean'],
+            ...GalleryPermissions::rules(),
+            'intro_enabled' => ['sometimes', 'boolean'],
         ], [
             'slug.regex' => __('galleryRecord.slugFormat'),
             'slug.unique' => __('galleryRecord.slugTaken'),
@@ -403,8 +407,22 @@ class GalleryRecordController extends Controller
         }
 
         $fields = array_intersect_key($validated, array_flip([
-            'slug', 'expires_at', 'external_url', 'external_password', 'info', 'downloads_enabled', 'lists_enabled', 'comments_enabled',
+            'slug', 'expires_at', 'external_url', 'external_password', 'info', 'downloads_enabled', 'lists_enabled', 'comments_enabled', 'intro_enabled',
+            'view_mode', 'watermark_text', 'download_rule', 'expiry_reminder',
         ]));
+
+        if ($request->has('download_sizes')) {
+            $fields['download_sizes'] = array_values(array_unique($validated['download_sizes']));
+        }
+
+        if ($request->has('download_invoice_id')) {
+            $fields['download_invoice_id'] = $validated['download_invoice_id'] === null ? null
+                : Invoice::query()->where('public_id', $validated['download_invoice_id'])->value('id');
+        }
+
+        if ($request->has('permissions')) {
+            $fields['permissions'] = array_replace_recursive(GalleryPermissions::normalize($gallery->permissions), $validated['permissions']);
+        }
 
         if ($request->has('design')) {
             $fields['design'] = $validated['design'] ?? null;
@@ -413,5 +431,35 @@ class GalleryRecordController extends Controller
         $updateGallery($gallery, $fields);
 
         return back();
+    }
+
+    public function duplicate(Gallery $gallery, DuplicateGallery $duplicate): RedirectResponse
+    {
+        $this->authorize('manageMedia', $gallery);
+        abort_if($gallery->is_external, 422);
+
+        $copy = $duplicate($gallery, auth('staff')->user());
+
+        return redirect()->route('galleries.show', $copy);
+    }
+
+    public function resumeCopy(Gallery $gallery, CopyGalleryAssets $copyAssets): RedirectResponse
+    {
+        $this->authorize('manageMedia', $gallery);
+
+        $copyAssets($gallery);
+
+        return back();
+    }
+
+    public function destroy(Request $request, Gallery $gallery, DeleteGallery $delete): RedirectResponse
+    {
+        $this->authorize('delete', $gallery);
+
+        $request->validate(['title' => filled($gallery->title) ? ['required', 'string', Rule::in([$gallery->title])] : ['nullable']]);
+
+        $delete($gallery, auth('staff')->user());
+
+        return redirect()->route('galleries.index');
     }
 }

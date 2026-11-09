@@ -4,6 +4,7 @@ use App\Automation\Console\Commands\SeedDefaultAutomationRulesCommand;
 use App\Automation\Console\Commands\SweepDateOffsetAutomationRulesCommand;
 use App\Engagement\Console\Commands\PollInboundMailbox;
 use App\Gallery\Console\Commands\ImportLegacyGalleriesCommand;
+use App\Gallery\Console\Commands\RemindGalleryExpiryCommand;
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureApiTokenScope;
 use App\Http\Middleware\EnsureAudience;
@@ -55,6 +56,7 @@ return Application::configure(basePath: dirname(__DIR__))
         DetectOverdueInstallmentsCommand::class,
         ReapIncompleteMultipartUploads::class,
         ImportLegacyGalleriesCommand::class,
+        RemindGalleryExpiryCommand::class,
         CutoverSnapshotCommand::class,
         CutoverRestoreCommand::class,
         SweepDateOffsetAutomationRulesCommand::class,

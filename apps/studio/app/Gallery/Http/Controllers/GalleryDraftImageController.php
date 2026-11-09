@@ -4,6 +4,7 @@ namespace App\Gallery\Http\Controllers;
 
 use App\Gallery\Models\Gallery;
 use App\Gallery\Support\GalleryPreviewPass;
+use App\Gallery\Support\GalleryWatermark;
 use App\Http\Controllers\Controller;
 use App\Media\Support\ImageVariant;
 use Illuminate\Http\Request;
@@ -47,7 +48,9 @@ class GalleryDraftImageController extends Controller
         $known = $gallery->assets()->inDraft()->where('key', $key)->exists();
         abort_unless($known, 404);
 
-        return response(ImageVariant::deliver($key, $width, $format), 200, [
+        abort_if($gallery->view_mode === 'locked', 403);
+
+        return response(ImageVariant::deliver($key, $width, $format, GalleryWatermark::for($gallery)), 200, [
             'Content-Type' => ImageVariant::mimeType($format),
             'Cache-Control' => 'private, no-store',
         ]);

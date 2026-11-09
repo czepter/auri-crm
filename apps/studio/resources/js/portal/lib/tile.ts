@@ -8,7 +8,7 @@ export function tileStyle(asset: { width: number | null; height: number | null }
   const ratio = asset.width && asset.height ? asset.width / asset.height : 1.5
 
   // 34vw caps the row on a phone, where one full-height row would fit a single landscape frame.
-  const row = `min(${ROW_HEIGHT}px, 34vw)`
+  const row = `min(var(--gallery-row, ${ROW_HEIGHT}px), 34vw)`
 
   return {
     aspectRatio: String(ratio),

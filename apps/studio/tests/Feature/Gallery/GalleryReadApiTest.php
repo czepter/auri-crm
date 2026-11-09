@@ -301,3 +301,19 @@ it('never answers pre-release for an external gallery, even with the flag set', 
 
     $this->getJson("/api/galleries/{$gallery->public_id}")->assertNotFound();
 });
+
+it('serves the frozen design and the cover focal point', function () {
+    $gallery = Gallery::factory()->create(['design' => ['colour' => 'meer', 'flow' => 'spalten']]);
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    $asset = Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g1/a.jpg']);
+    $gallery->update(['cover_asset_id' => $asset->id, 'cover_focal_x' => 20, 'cover_focal_y' => 70]);
+    $gallery->fresh()->publish();
+    $gallery->update(['design' => ['colour' => 'dunkel']]);
+
+    $this->getJson("/api/galleries/{$gallery->public_id}")
+        ->assertOk()
+        ->assertJsonPath('gallery.design.colour', 'meer')
+        ->assertJsonPath('gallery.design.flow', 'spalten')
+        ->assertJsonPath('gallery.design.cover', 'zentriert')
+        ->assertJsonPath('gallery.cover', ['key' => 'galleries/g1/a.jpg', 'focal' => ['x' => 20, 'y' => 70]]);
+});

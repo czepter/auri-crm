@@ -333,3 +333,60 @@
         margin:0; font:400 13.5px/1 var(--font); }
 [data-theme="gallery"] .stats dt { color:var(--muted); }
 [data-theme="gallery"] .stats dd { margin:0; font-variant-numeric:tabular-nums; color:var(--ink); }
+
+/* ---------- Gestaltung ----------
+   GalleryDesign::OPTIONS. Show.vue traegt je Schluessel ein data-g*-Attribut
+   (portal/lib/galleryDesign.ts). Schriftstapel des Systems und Farben, keine
+   Webfonts und keine fremden Anfragen. */
+[data-gcolour='hell']       { --bg:#FFFFFF; --ink:#151A22; --muted:#626B78; --line:#E2E7EB; }
+[data-gcolour='gold']       { --bg:#FBF6E9; --ink:#2A2412; --muted:#7A6E4A; --line:#E9DDB8; }
+[data-gcolour='rose']       { --bg:#FBF1F1; --ink:#2E1B1E; --muted:#836468; --line:#EBD3D5; }
+[data-gcolour='terracotta'] { --bg:#FAF0EA; --ink:#33190F; --muted:#8A5B49; --line:#EBCDBE; }
+[data-gcolour='sand']       { --bg:#FBF7F2; --ink:#2A211B; --muted:#7A6A5C; --line:#E6DBCC; }
+[data-gcolour='olive']      { --bg:#F3F4EA; --ink:#20240F; --muted:#646B45; --line:#D9DDBF; }
+[data-gcolour='agave']      { --bg:#EEF4F0; --ink:#14261D; --muted:#577264; --line:#CFE0D5; }
+[data-gcolour='meer']       { --bg:#EDF3F6; --ink:#10242E; --muted:#55707E; --line:#CBDDE5; }
+[data-gcolour='dunkel']     { --bg:#0E0C0B; --ink:#F2EDE9; --muted:#8B817B; --line:#241F1C; }
+[data-gcolour] {
+  --faint: color-mix(in srgb, var(--muted) 70%, var(--bg));
+  --hover: color-mix(in srgb, var(--ink) 6%, var(--bg));
+  --line-hover: color-mix(in srgb, var(--ink) 16%, var(--bg));
+}
+
+[data-gtype='sans']     { --font-display: var(--font); --gweight: 600; }
+[data-gtype='serif']    { --font-display: Georgia, 'Times New Roman', serif; --gweight: 600; }
+[data-gtype='modern']   { --font-display: 'Avenir Next', Avenir, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; --gweight: 500; }
+[data-gtype='zeitlos']  { --font-display: 'Palatino Linotype', Palatino, 'Book Antiqua', 'URW Palladio L', serif; --gweight: 500; }
+[data-gtype='kraeftig'] { --font-display: 'Helvetica Neue', Arial, sans-serif; --gweight: 800; }
+[data-gtype='dezent']   { --font-display: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif; --gweight: 300; }
+[data-gtype] h1 { font-weight: var(--gweight); }
+
+[data-gsize='klein']  { --gallery-row: 120px; --gcols: 5; }
+[data-gsize='mittel'] { --gallery-row: 180px; --gcols: 4; }
+[data-gsize='gross']  { --gallery-row: 300px; --gcols: 2; }
+[data-gspacing='eng']  { --ggap: 6px; }
+[data-gspacing='weit'] { --ggap: 22px; }
+[data-gspacing] #raster { gap: var(--ggap); }
+[data-gflow='spalten'] #raster { columns: var(--gcols); column-gap: var(--ggap); }
+[data-gflow='spalten'] #raster > * { margin-bottom: var(--ggap); break-inside: avoid; max-width: none !important; }
+@media (max-width: 760px) {
+  [data-gspacing='eng']  { --ggap: 4px; }
+  [data-gspacing='weit'] { --ggap: 10px; }
+  [data-gsize] { --gcols: 2; }
+  [data-gsize='gross'] { --gcols: 1; }
+}
+
+/* Titelbild. zentriert ist der Aufbau von Show.vue; links setzt den Titel
+   unten links, rahmen das Bild als Karte, geteilt Bild und Titel nebeneinander. */
+header[data-gcover='links'] { place-items: end start; }
+header[data-gcover='links'] > [data-tokens]:last-of-type { text-align: left; width: min(1180px, 100%); margin-inline: auto; align-self: end; }
+header[data-gcover='rahmen'] { margin: var(--s4) var(--s4) 0; border-radius: 18px; }
+header[data-gcover='geteilt'] { grid-template-columns: 1fr 1fr; place-items: stretch; color: var(--ink); }
+header[data-gcover='geteilt']::before { display: none; }
+header[data-gcover='geteilt'] > img { position: static; grid-column: 1; grid-row: 1; }
+header[data-gcover='geteilt'] > [data-tokens]:last-of-type { grid-column: 2; grid-row: 1; align-self: center; text-align: left; }
+@media (max-width: 760px) {
+  header[data-gcover='geteilt'] { grid-template-columns: 1fr; }
+  header[data-gcover='geteilt'] > img { height: 55svh; }
+  header[data-gcover='geteilt'] > [data-tokens]:last-of-type { grid-column: 1; grid-row: 2; }
+}

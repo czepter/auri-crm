@@ -39,7 +39,7 @@ class ImageVariant
     }
 
     /** Resizes to $width (never upscaled) and encodes as $format. */
-    public static function resizeAndEncode(string $bytes, int $width, string $format): string
+    public static function resizeAndEncode(string $bytes, int $width, string $format, ?Watermark $watermark = null): string
     {
         $source = @imagecreatefromstring($bytes);
         if ($source === false) {
@@ -61,6 +61,8 @@ class ImageVariant
         }
 
         imagecopyresampled($target, $source, 0, 0, 0, 0, $targetWidth, $targetHeight, $sourceWidth, $sourceHeight);
+
+        $watermark?->paint($target);
 
         // No imagedestroy() calls: a no-op since PHP 8.0 (GD images are
         // refcounted like any other value) and deprecated outright in 8.5.
@@ -88,10 +90,12 @@ class ImageVariant
      * No lock: two requests racing on the same variant both write the same
      * bytes to the same key.
      */
-    public static function deliver(string $key, int $width, string $format): string
+    public static function deliver(string $key, int $width, string $format, ?Watermark $watermark = null): string
     {
         $disk = Storage::disk('s3');
-        $cached = "variants/{$width}/{$format}/{$key}.{$format}";
+        $cached = $watermark === null
+            ? "variants/{$width}/{$format}/{$key}.{$format}"
+            : "variants/{$width}/{$format}/{$watermark->key()}/{$key}.{$format}";
 
         if ($disk->exists($cached)) {
             return $disk->get($cached);
@@ -99,7 +103,7 @@ class ImageVariant
 
         abort_unless($disk->exists($key), 404);
 
-        $variant = self::resizeAndEncode($disk->get($key), $width, $format);
+        $variant = self::resizeAndEncode($disk->get($key), $width, $format, $watermark);
         $disk->put($cached, $variant);
 
         return $variant;

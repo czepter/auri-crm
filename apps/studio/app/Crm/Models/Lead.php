@@ -2,6 +2,7 @@
 
 namespace App\Crm\Models;
 
+use App\Catalog\Models\Package;
 use App\Concerns\BelongsToTenant;
 use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadSource;
@@ -118,6 +119,11 @@ class Lead extends Model
     public function isLost(): bool
     {
         return $this->case->isClosed();
+    }
+
+    public function package(): BelongsTo
+    {
+        return $this->belongsTo(Package::class);
     }
 
     public function case(): BelongsTo

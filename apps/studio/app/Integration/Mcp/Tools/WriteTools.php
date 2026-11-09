@@ -515,6 +515,7 @@ final class WriteTools
             'portal_price_mode' => $schema->string()->enum(self::PORTAL_PRICE_MODES)->description('exact: fixed price. from: a starting price. on_request: no price shown.'),
             'portal_requires_date' => $schema->boolean(),
             'project_type_key' => $schema->string()->nullable()->description('The project type key — see list_project_types. Required once portal_offered is set.'),
+            'gallery_preset_id' => $schema->string()->nullable()->description('Gallery preset public id a project booked with this package starts its gallery from. Null clears it.'),
             'items' => $schema->array()->items($schema->object([
                 'id' => $schema->string()->nullable()->description('The existing line id, to keep its picture'),
                 'title' => $schema->string()->max(255)->required(),
