@@ -88,7 +88,7 @@ const positionsCount = computed(() => draft.value.rows.length)
 const positionsSummary = computed(() => `${t('quotes.positionCount', positionsCount.value)} · ${formatEuros(positionsTotal.value)}`)
 
 const termsSummary = computed(() => {
-  const parts = draft.value.slider.stages.map((stage) => `${stage.percent} % ${stage.label}`.trim())
+  const parts = draft.value.slider.stages.map((stage) => `${stage.fixed ? `${stage.minimum} €` : `${stage.percent} %`} ${stage.label}`.trim())
 
   if (draft.value.validUntil) {
     parts.push(t('quotes.validUntilInline', { date: shortDate(draft.value.validUntil) }))

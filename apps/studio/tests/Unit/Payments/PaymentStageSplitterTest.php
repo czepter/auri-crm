@@ -54,3 +54,13 @@ it('splits a small amount without rounding a share to ten euros', function () {
 
     expect(array_column($split, 'amount'))->toBe([4_500, 4_400]);
 });
+
+it('pays a stage written as an amount — share nothing, minimum the sum — as it stands', function () {
+    $stages = collect([
+        (object) ['percent' => 0, 'minimum' => 50_000, 'label' => 'Reservierungsgebühr'],
+        (object) ['percent' => 100, 'minimum' => 0, 'label' => 'Restbetrag'],
+    ]);
+
+    expect(collect(PaymentStageSplitter::split(400_000, $stages))->pluck('amount', 'label')->all())
+        ->toBe(['Reservierungsgebühr' => 50_000, 'Restbetrag' => 350_000]);
+});

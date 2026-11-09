@@ -32,3 +32,15 @@ describe('splitStages', () => {
     }
   })
 })
+
+describe('a stage written as an amount', () => {
+  it('pays its minimum as it stands and leaves the rest to the last stage', () => {
+    expect(splitStages(400_000, [
+      { label: 'Reservierungsgebühr', percent: 0, minimum: 50_000 },
+      { label: 'Restbetrag', percent: 100, minimum: 0 },
+    ])).toEqual([
+      { label: 'Reservierungsgebühr', amount: 50_000 },
+      { label: 'Restbetrag', amount: 350_000 },
+    ])
+  })
+})

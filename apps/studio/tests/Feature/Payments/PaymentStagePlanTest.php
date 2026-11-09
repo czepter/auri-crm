@@ -61,3 +61,21 @@ it('splits evenly where the project has no stages', function () {
     expect($plan->installments()->pluck('amount')->all())->toBe([60_000, 60_000])
         ->and($plan->installments()->pluck('title')->filter()->all())->toBe([]);
 });
+
+it('takes a stage’s own date and note over to the installment', function () {
+    $project = bookedProjectWithStages(215_000);
+    Quote::query()->sole()->paymentStages()->orderBy('sort_order')->first()
+        ->update(['note' => 'wird mit Schlussrechnung verrechnet', 'due_on' => '2026-11-27']);
+
+    $plan = app(CreatePaymentPlan::class)($project, 215_000, [
+        '2026-12-01',
+        '2027-01-01',
+        '2027-02-01',
+    ]);
+
+    $installments = $plan->installments()->orderBy('sort_order')->get();
+
+    expect($installments->first()->note)->toBe('wird mit Schlussrechnung verrechnet')
+        ->and($installments->pluck('due_on')->map->toDateString()->all())->toBe(['2026-11-27', '2027-01-01', '2027-02-01'])
+        ->and($installments->last()->note)->toBeNull();
+});

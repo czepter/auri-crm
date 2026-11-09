@@ -165,7 +165,10 @@ class Quote extends Model
      */
     public function paymentSplit(): array
     {
-        return PaymentStageSplitter::split($this->gross(), $this->paymentStages);
+        return array_map(
+            fn (array $row) => ['label' => $row['label'], 'amount' => $row['amount']],
+            PaymentStageSplitter::split($this->gross(), $this->paymentStages),
+        );
     }
 
     public function gross(): int

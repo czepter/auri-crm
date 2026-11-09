@@ -6475,6 +6475,20 @@
                                                                 "null"
                                                             ],
                                                             "minimum": 0
+                                                        },
+                                                        "note": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "maxLength": 255
+                                                        },
+                                                        "due_on": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "format": "date-time"
                                                         }
                                                     },
                                                     "required": [
@@ -6789,6 +6803,20 @@
                                                                 "null"
                                                             ],
                                                             "minimum": 0
+                                                        },
+                                                        "note": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "maxLength": 255
+                                                        },
+                                                        "due_on": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "format": "date-time"
                                                         }
                                                     },
                                                     "required": [
@@ -9701,6 +9729,20 @@
                                         "null"
                                     ],
                                     "minimum": 0
+                                },
+                                "note": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 255
+                                },
+                                "due_on": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "format": "date-time"
                                 }
                             },
                             "required": [

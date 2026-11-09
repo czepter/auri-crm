@@ -164,7 +164,7 @@ it('renders an invoice stored before the merge data was split unchanged', functi
         'net' => '1.000,00 €', 'vatRate' => '19 %', 'vat' => '190,00 €', 'gross' => '1.190,00 €', 'dueOn' => '17.02.2024', 'paymentTerm' => 'Zahlbar bis 17.02.2024 ohne Abzug.',
         'vatLines' => [['rate' => '19 %', 'net' => '1.000,00 €', 'vat' => '190,00 €']],
         'lines' => [['title' => 'Altes Paket', 'quantity' => '1', 'unitPrice' => '1.000,00 €', 'discount' => '', 'total' => '1.000,00 €', 'vatRate' => '19 %']],
-        'deposits' => [['number' => 'RE-2024-0041', 'date' => '01.01.2024', 'net' => '500,00 €', 'vat' => '95,00 €', 'gross' => '595,00 €', 'vatAmount' => 9500]],
+        'deposits' => [['title' => 'Anzahlung', 'number' => 'RE-2024-0041', 'date' => '01.01.2024', 'net' => '500,00 €', 'vat' => '95,00 €', 'gross' => '595,00 €', 'vatAmount' => 9500]],
         'totalNet' => '1.000,00 €', 'totalVat' => '190,00 €', 'totalGross' => '1.190,00 €',
     ] + $frozen['invoice'];
 

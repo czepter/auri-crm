@@ -62,6 +62,10 @@ class StudioSettingsData extends Data
         public ?string $mailSignature,
         public ?string $mailBcc,
         public bool $mailClientsEnabled,
+        public ?string $invoiceMailSubject,
+        public ?string $invoiceMailBody,
+        public ?string $quoteMailSubject,
+        public ?string $quoteMailBody,
     ) {}
 
     public static function current(): self
@@ -108,6 +112,10 @@ class StudioSettingsData extends Data
             mailSignature: StudioSettings::current()->mail_signature,
             mailBcc: StudioSettings::current()->mail_bcc,
             mailClientsEnabled: (bool) StudioSettings::current()->mail_clients_enabled,
+            invoiceMailSubject: StudioSettings::current()->invoice_mail_subject,
+            invoiceMailBody: StudioSettings::current()->invoice_mail_body,
+            quoteMailSubject: StudioSettings::current()->quote_mail_subject,
+            quoteMailBody: StudioSettings::current()->quote_mail_body,
         );
     }
 }

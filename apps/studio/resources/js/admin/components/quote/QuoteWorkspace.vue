@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue'
-import { router, useForm } from '@inertiajs/vue3'
+import { Link, router, useForm } from '@inertiajs/vue3'
 import QuoteEditor from '@/admin/components/quote/QuoteEditor.vue'
 import QuotePreviewPane from '@/admin/components/quote/QuotePreviewPane.vue'
 import Card from '@/ui/page/Card.vue'
@@ -10,7 +10,7 @@ import { buildQuotePayload, type QuoteContact, type QuoteDraft, type VatSettings
 import { centsToEuros, eurosToCents, formatDiscount, formatEuros, formatPercent } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { quoteTone, quoteTitle } from '@/admin/lib/quoteDisplay'
-import Chip from '@/ui/page/Chip.vue'
+import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { DatePicker } from '@/ui/date-picker'
@@ -18,8 +18,6 @@ import { Label } from '@/ui/label'
 import { useI18n } from 'vue-i18n'
 import QuoteActions from '@/admin/components/quote/QuoteActions.vue'
 import InstallmentPaidDialog from '@/admin/components/payments/InstallmentPaidDialog.vue'
-import InstallmentStornoDialog from '@/admin/components/payments/InstallmentStornoDialog.vue'
-import CreditNoteDialog from '@/admin/components/payments/CreditNoteDialog.vue'
 import PaymentPlanDialog from '@/admin/components/payments/PaymentPlanDialog.vue'
 import Empty from '@/ui/page/Empty.vue'
 
@@ -87,6 +85,9 @@ function draftOf(quote: App.Quotes.Data.QuoteData): QuoteDraft {
         percent: stage.percent,
         label: stage.label,
         minimum: centsToEuros(stage.minimum) || '',
+        note: stage.note ?? '',
+        dueOn: stage.dueOn ?? '',
+        fixed: stage.percent === 0 && stage.minimum > 0,
       })),
     },
   }
@@ -129,6 +130,8 @@ const save = debounced((quoteId: string) => {
 function create() {
   router.post(`/auftraege/${props.projectId}/angebote`, {}, { preserveScroll: true })
 }
+
+const RATE_CHIP: Record<string, ChipTone> = { scheduled: 'neutral', invoiced: 'warn', partial: 'warn', paid: 'success', cancelled: 'neutral' }
 
 const planForm = useForm({ total: '', installments: [{ due_on: '' }] })
 
@@ -302,14 +305,8 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
     >
       <span class="w-[110px] flex-none text-ink-2">{{ dayWithWeekday(installment.dueOn) }}</span>
       <span class="flex-1">{{ installment.label }}</span>
-      <a
-        v-if="installment.invoiceId && installment.hasInvoiceDocument"
-        class="text-small text-ink-2"
-        :href="`/rechnungen/${installment.invoiceId}/pdf`"
-        target="_blank"
-      >{{ installment.invoiceNumber }}</a>
-      <span v-else-if="installment.invoiceNumber" class="text-small text-ink-2">{{ installment.invoiceNumber }}</span>
-      <span class="text-small text-ink-2">{{ installment.statusLabel }}</span>
+      <Link v-if="installment.invoiceId" class="text-small text-ink-2" :href="`/rechnungen/${installment.invoiceId}`">{{ installment.invoiceNumber }}</Link>
+      <Chip :tone="RATE_CHIP[installment.status] ?? 'neutral'">{{ installment.statusLabel }}</Chip>
       <span class="w-[110px] flex-none text-right font-semibold tabular-nums">{{ formatEuros(installment.amount) }}</span>
       <Button
         v-if="canManagePaymentPlan && !installment.invoiceId && installment.status !== 'cancelled'"
@@ -318,18 +315,9 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
         @click="router.post(`/raten/${installment.id}/rechnung`)"
       >{{ $t('payments.issueInvoice') }}</Button>
       <InstallmentPaidDialog
-        v-if="canManagePaymentPlan && installment.status !== 'cancelled' && installment.remaining > 0"
+        v-if="canManagePaymentPlan && !installment.invoiceId && installment.status !== 'cancelled' && installment.remaining > 0"
         :installment-id="installment.id"
         :remaining="installment.remaining"
-      />
-      <InstallmentStornoDialog
-        v-if="canManagePaymentPlan && installment.invoiceId && installment.status === 'invoiced'"
-        :invoice-id="installment.invoiceId"
-      />
-      <CreditNoteDialog
-        v-if="canManagePaymentPlan && installment.invoiceId && installment.status === 'paid'"
-        :invoice-id="installment.invoiceId"
-        :amount="installment.amount"
       />
     </div>
 

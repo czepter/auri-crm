@@ -23,6 +23,7 @@ use App\Payments\Actions\CancelInvoice;
 use App\Payments\Actions\IssueCreditNote;
 use App\Payments\Actions\IssueInvoice;
 use App\Payments\Actions\RenderInvoicePdf;
+use App\Payments\Data\InvoiceDetailData;
 use App\Payments\Data\InvoiceRowData;
 use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\CancellationKind;
@@ -32,6 +33,9 @@ use App\Payments\Models\Invoice;
 use App\Payments\Models\InvoiceItem;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
+use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Models\Quote;
+use App\Quotes\Models\QuoteItem;
 use App\Payments\Notifications\InvoiceSent;
 use App\Payments\Support\InvoiceDocument;
 use App\Payments\Support\InvoiceFigures;
@@ -76,6 +80,13 @@ class InvoiceController extends Controller
                 ? Invoice::query()->pluck('issued_at')->map(fn ($at) => (int) $at->format('Y'))->unique()->sortDesc()->values()
                 : [],
         ]);
+    }
+
+    public function show(Invoice $invoice): Response
+    {
+        self::authorizeProject($invoice->case);
+
+        return Inertia::render('Invoices/Show', ['invoice' => InvoiceDetailData::fromModel($invoice)]);
     }
 
     public function create(
@@ -126,6 +137,7 @@ class InvoiceController extends Controller
 
         return Inertia::render('Invoices/Create', [
             'rates' => $rates,
+            'quoteLines' => $this->unbilledQuoteLines($viewer),
             'billable' => $billable,
             'project' => $project === null ? null : CaseSuggestionData::fromModel($project),
             'packages' => PackageData::collect(Package::active()->with('items')->orderBy('name')->get()),
@@ -144,6 +156,47 @@ class InvoiceController extends Controller
             'missingInvoiceData' => $readiness->missingForInvoice(),
             'firstInvoice' => ! Invoice::query()->exists(),
         ]);
+    }
+
+    /**
+     * The lines of each visible project's accepted quote that no standing
+     * invoice carries yet, keyed by project. ponytail: every visible project,
+     * not just the ones with an open rate — add a lookup when that list grows
+     * past what a form should be sent.
+     *
+     * @return Collection<string, Collection<int, array<string, mixed>>>
+     */
+    private function unbilledQuoteLines($viewer): Collection
+    {
+        $quotes = Quote::query()
+            ->where('status', QuoteStatus::Accepted)
+            ->whereHas('case', fn ($project) => $project->visibleTo($viewer))
+            ->with(['items', 'case'])
+            ->latest('accepted_at')
+            ->get()
+            ->unique('case_id');
+
+        $billed = InvoiceItem::query()
+            ->whereIn('quote_item_id', $quotes->pluck('items')->flatten()->pluck('id'))
+            ->whereHas('invoice', fn ($invoice) => $invoice->whereNull('cancelled_at'))
+            ->pluck('quote_item_id')
+            ->all();
+
+        return $quotes
+            ->mapWithKeys(fn (Quote $quote) => [
+                $quote->case->public_id => $quote->items
+                    ->reject(fn (QuoteItem $item) => in_array($item->id, $billed, true))
+                    ->map(fn (QuoteItem $item) => [
+                        'id' => $item->public_id,
+                        'title' => $item->title,
+                        'description' => $item->description,
+                        'quantity' => (int) $item->quantity,
+                        'unitPrice' => (int) $item->unit_price,
+                        'vatRate' => $item->vat_rate,
+                    ])
+                    ->values(),
+            ])
+            ->filter(fn (Collection $lines) => $lines->isNotEmpty());
     }
 
     public function store(Request $request, IssueInvoice $issue, CreateContact $createContact): RedirectResponse
@@ -234,6 +287,7 @@ class InvoiceController extends Controller
             'items.*.discount_value' => ['nullable', 'integer', 'min:1'],
             'items.*.vat_rate' => ['nullable', 'integer', 'min:0', 'max:10000'],
             'items.*.installment_id' => ['nullable', 'string'],
+            'items.*.quote_item_id' => ['nullable', 'string'],
         ];
     }
 
@@ -264,6 +318,18 @@ class InvoiceController extends Controller
 
         abort_if($strict && $rows->count() !== $ids->unique()->count(), 404);
 
+        // A position may only name a line of the accepted quote of the project it is billed to.
+        $lineIds = collect($validated['items'] ?? [])->pluck('quote_item_id')->filter();
+        $lines = QuoteItem::query()
+            ->whereIn('public_id', $lineIds)
+            ->whereHas('quote', fn ($quote) => $quote
+                ->where('status', QuoteStatus::Accepted)
+                ->whereHas('case', fn ($project) => $project->where('public_id', $validated['case_id'] ?? null)))
+            ->get()
+            ->keyBy('public_id');
+
+        abort_if($strict && $lines->count() !== $lineIds->unique()->count(), 404);
+
         return collect($validated['items'] ?? [])
             ->reject(fn (array $item) => isset($item['installment_id']) && ! $rows->has($item['installment_id']))
             ->map(fn (array $item) => [
@@ -275,6 +341,7 @@ class InvoiceController extends Controller
                 'discount_value' => $item['discount_value'] ?? null,
                 'vat_rate' => $item['vat_rate'] ?? null,
                 'installment' => isset($item['installment_id']) ? $rows[$item['installment_id']] : null,
+                'quote_item_id' => isset($item['quote_item_id']) ? $lines[$item['quote_item_id']]?->id : null,
             ])
             ->values()
             ->all();
@@ -367,6 +434,7 @@ class InvoiceController extends Controller
                 'statusLabel' => __("payments.invoiceStatus.{$invoice->status()}"),
             ],
             'recipients' => $recipients->map(fn (Contact $contact) => ['name' => $contact->name, 'email' => $contact->email])->values(),
+            'subject' => InvoiceSent::defaultSubject($invoice),
             'message' => InvoiceSent::defaultMessage($invoice),
             'mailHtml' => MailPreview::html(
                 new InvoiceSent($invoice, '', MailPreview::MESSAGE),
@@ -412,6 +480,22 @@ class InvoiceController extends Controller
         $cancel($invoice, CancellationKind::from($validated['kind']), $validated['reason'], auth('staff')->user());
 
         return back();
+    }
+
+    /** The Gutschrift written on the invoice's own positions; what it may take back is what was paid and not yet credited. */
+    public function creditNoteForm(Invoice $invoice): Response
+    {
+        self::authorizeProject($invoice->case);
+
+        $creditable = $invoice->paidAmount() - $invoice->creditedAmount();
+
+        abort_if($invoice->isCancelled() || $creditable <= 0, 404);
+
+        return Inertia::render('Invoices/CreditNote', [
+            'invoice' => InvoiceDetailData::fromModel($invoice),
+            'creditable' => $creditable,
+            'studioName' => StudioSettings::current()->display_name,
+        ]);
     }
 
     public function creditNote(Request $request, Invoice $invoice, IssueCreditNote $issue): RedirectResponse

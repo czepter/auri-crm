@@ -917,6 +917,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/rechnungen/neu', [InvoiceController::class, 'create'])->name('invoices.create');
         Route::post('/rechnungen', [InvoiceController::class, 'store'])->name('invoices.store');
         Route::post('/rechnungen/vorschau', [InvoiceController::class, 'preview'])->name('invoices.preview');
+        Route::get('/rechnungen/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
         Route::get('/rechnungen/{invoice}/pdf', [InvoiceController::class, 'download'])->name('invoices.download');
 
         // #415: the compose screen and the send. Issuing redirects into the
@@ -934,6 +935,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/gutschriften', CreditNoteController::class)->name('credit-notes.index');
 
         Route::get('/vertraege', ContractIndexController::class)->name('contracts.index');
+        Route::get('/rechnungen/{invoice}/gutschrift/neu', [InvoiceController::class, 'creditNoteForm'])->name('invoices.credit-note-form');
         Route::get('/rechnungen/{invoice}/gutschrift/{creditNote}', [InvoiceController::class, 'downloadCreditNote'])
             ->name('invoices.credit-note.download');
 

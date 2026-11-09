@@ -36,6 +36,12 @@ const filters = computed(() => ['all', 'open', 'paid', 'cancelled'].map((value) 
 
 const CHIP: Record<string, ChipTone> = { open: 'warn', partial: 'warn', overdue: 'danger', paid: 'success', cancelled: 'neutral' }
 
+const euros = (rows: App.Payments.Data.InvoiceRowData[]) => formatEuros(rows.reduce((sum, row) => sum + row.amount - row.paidAmount, 0))
+const openRows = computed(() => props.invoices.filter((invoice) => OPEN.includes(invoice.status)))
+const lateRows = computed(() => props.invoices.filter((invoice) => invoice.status === 'overdue'))
+const paidRows = computed(() => props.invoices.filter((invoice) => invoice.status === 'paid' && invoice.issuedOn.startsWith(String(new Date().getFullYear()))))
+const paidTotal = computed(() => formatEuros(paidRows.value.reduce((sum, row) => sum + row.paidAmount, 0)))
+
 const shown = computed(() => {
   const needle = query.value.trim().toLocaleLowerCase('de')
 
@@ -66,6 +72,23 @@ const shown = computed(() => {
         </PageHead>
 
         <template v-if="invoices.length">
+          <dl class="m-0 mx-6 mt-4.5 grid grid-cols-3 gap-px overflow-hidden rounded-lg bg-border max-[640px]:grid-cols-1">
+            <div class="bg-muted p-4">
+              <dt class="text-small text-ink-2">{{ $t('invoicesOverview.kpiOpen') }}</dt>
+              <dd class="m-0 text-[22px] font-semibold tabular-nums">{{ euros(openRows) }}</dd>
+              <dd class="m-0 text-small text-ink-2">{{ $t('invoicesOverview.kpiCount', openRows.length) }}</dd>
+            </div>
+            <div class="bg-muted p-4">
+              <dt class="text-small text-ink-2">{{ $t('invoicesOverview.kpiOverdue') }}</dt>
+              <dd class="m-0 text-[22px] font-semibold tabular-nums">{{ euros(lateRows) }}</dd>
+              <dd class="m-0 text-small text-ink-2">{{ $t('invoicesOverview.kpiCount', lateRows.length) }}</dd>
+            </div>
+            <div class="bg-muted p-4">
+              <dt class="text-small text-ink-2">{{ $t('invoicesOverview.kpiPaid', { year: new Date().getFullYear() }) }}</dt>
+              <dd class="m-0 text-[22px] font-semibold tabular-nums">{{ paidTotal }}</dd>
+              <dd class="m-0 text-small text-ink-2">{{ $t('invoicesOverview.kpiCount', paidRows.length) }}</dd>
+            </div>
+          </dl>
           <div class="flex flex-wrap items-center gap-3 px-6 pt-4.5">
             <Input :aria-label="$t('invoicesOverview.searchPlaceholder')" v-model="query" class="h-8 min-w-60 w-64 shrink-0" type="search" :placeholder="$t('invoicesOverview.searchPlaceholder')" />
             <ChoiceGroup v-model="filter" variant="segmented" :options="filters" />
@@ -87,8 +110,7 @@ const shown = computed(() => {
               <template v-for="invoice in shown" :key="invoice.id">
                 <TableRow>
                   <TableCell tone="name" class="whitespace-nowrap">
-                    <a v-if="invoice.hasDocument" :href="`/rechnungen/${invoice.id}/pdf`" target="_blank">{{ invoice.number }}</a>
-                    <template v-else>{{ invoice.number }}</template>
+                    <Link :href="`/rechnungen/${invoice.id}`">{{ invoice.number }}</Link>
                   </TableCell>
                   <TableCell>
                     {{ invoice.contact }}
@@ -105,7 +127,8 @@ const shown = computed(() => {
                     </span>
                   </TableCell>
                   <TableCell class="whitespace-nowrap">
-                    <Chip :tone="CHIP[invoice.status]">{{ invoice.statusLabel }}</Chip>
+                    <Chip :tone="CHIP[invoice.status]">{{ invoice.status === 'overdue' ? $t(invoice.paidAmount ? 'invoicesOverview.partial' : 'invoicesOverview.open') : invoice.statusLabel }}</Chip>
+                    <span v-if="invoice.overdueDays" class="ml-2 text-small text-destructive">{{ $t('invoicesOverview.overdueDays', invoice.overdueDays) }}</span>
                     <Popover v-if="invoice.views.length">
                       <PopoverTrigger class="ml-2 cursor-pointer border-0 bg-transparent p-0 text-small text-ink-2 underline decoration-dotted">
                         {{ $t(invoice.viewedOn ? 'invoicesOverview.viewed' : 'documentViews.title') }}

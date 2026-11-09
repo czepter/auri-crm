@@ -135,7 +135,7 @@ class IssueInvoice
 
                     $invoice->items()->create([
                         'title' => $position['title'],
-                        'description' => $position['description'] ?? null,
+                        'description' => $position['description'] ?? $row?->note,
                         'quantity' => $row === null ? ($position['quantity'] ?? 1) : 1,
                         'unit_price' => $row === null
                             ? ($position['unit_price'] ?? 0)
@@ -144,6 +144,7 @@ class IssueInvoice
                         'discount_value' => $row === null ? ($position['discount_value'] ?? null) : null,
                         'vat_rate' => $position['vat_rate'] ?? null,
                         'payment_installment_id' => $row?->id,
+                        'quote_item_id' => $position['quote_item_id'] ?? null,
                         'sort_order' => $index,
                     ]);
 

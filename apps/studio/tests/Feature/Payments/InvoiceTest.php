@@ -22,6 +22,8 @@ use App\Payments\Jobs\RenderInvoiceJob;
 use App\Payments\Models\Invoice;
 use App\Payments\Support\InvoiceFigures;
 use App\Payments\Support\InvoiceMergeData;
+use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Models\Quote;
 use App\Settings\Actions\UpdateStudioSetting;
 use App\Support\GotenbergClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -416,4 +418,41 @@ it('sends the invoice number to the client as the reference to transfer under', 
     expect($data->installments[0]->invoiceNumber)->toStartWith('RE-')
         ->and($data->installments[0]->hasInvoiceDocument)->toBeFalse()
         ->and($data->installments[1]->invoiceNumber)->toBeNull();
+});
+
+it('bills lines of the accepted quote and offers only those no invoice carries yet', function () {
+    Storage::fake('local');
+    Bus::fake();
+
+    $project = bookedContactProject();
+    $quote = Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Accepted, 'accepted_at' => now(), ...Quote::computeVat(0)]);
+    [$shoot, $album] = $quote->items()->createMany([
+        ['title' => 'Verlobungsshooting', 'quantity' => 1, 'unit_price' => 65_000, 'sort_order' => 0],
+        ['title' => 'Album', 'quantity' => 1, 'unit_price' => 39_000, 'sort_order' => 1],
+    ])->all();
+    $admin = $this->actingAs(staffMember(StaffRole::Admin), 'staff');
+
+    $lines = fn () => $admin->get('/rechnungen/neu')->assertOk()->viewData('page')['props']['quoteLines'][$project->public_id] ?? [];
+
+    expect(collect($lines())->pluck('title')->all())->toBe(['Verlobungsshooting', 'Album']);
+
+    $admin->post('/rechnungen', [
+        'case_id' => $project->public_id,
+        'contact_id' => $project->primaryContact()->public_id,
+        'due_on' => '2026-12-01',
+        'items' => [['title' => 'Verlobungsshooting', 'quantity' => 1, 'unit_price' => 65_000, 'vat_rate' => 1900, 'quote_item_id' => $shoot->public_id]],
+    ])->assertRedirect();
+
+    expect(collect($lines())->pluck('title')->all())->toBe(['Album']);
+
+    // A line of some other quote is not this project's to bill.
+    $other = Quote::factory()->create(['status' => QuoteStatus::Accepted, 'accepted_at' => now()]);
+    $stranger = $other->items()->create(['title' => 'Fremd', 'quantity' => 1, 'unit_price' => 100, 'sort_order' => 0]);
+
+    $admin->post('/rechnungen', [
+        'case_id' => $project->public_id,
+        'contact_id' => $project->primaryContact()->public_id,
+        'due_on' => '2026-12-01',
+        'items' => [['title' => 'Fremd', 'quantity' => 1, 'unit_price' => 100, 'vat_rate' => 1900, 'quote_item_id' => $stranger->public_id]],
+    ])->assertNotFound();
 });

@@ -48,6 +48,10 @@ const settings: App.Settings.Data.StudioSettingsData = {
   mailSignature: 'Christian Zepter\nAtelier Nordlicht',
   mailBcc: null,
   mailClientsEnabled: true,
+  invoiceMailSubject: null,
+  invoiceMailBody: null,
+  quoteMailSubject: null,
+  quoteMailBody: null,
 }
 
 const meta = {

@@ -94,7 +94,7 @@ class ReviseQuote
             );
 
             $revision->paymentStages()->createMany(
-                $predecessor->paymentStages->map(fn ($stage) => $stage->only(['percent', 'label', 'minimum', 'sort_order']))->all()
+                $predecessor->paymentStages->map(fn ($stage) => $stage->only(['percent', 'label', 'minimum', 'sort_order', 'note', 'due_on']))->all()
             );
 
             $revision->recalculateTotal();

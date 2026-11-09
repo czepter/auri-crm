@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link } from "@inertiajs/vue3"
+import { Link, router } from "@inertiajs/vue3"
 import RailHistory from "@/admin/components/crm/RailHistory.vue"
 import SettlePlanDialog from "@/admin/components/payments/SettlePlanDialog.vue"
 import { dayWithWeekday as day } from "@/admin/lib/dates"
@@ -30,11 +30,23 @@ const link = "block truncate text-small leading-[1.47] text-ring no-underline ho
     </RailSection>
 
     <RailSection v-if="header.paymentPlan" :title="$t('dashboard.payments')">
-        <div v-for="instalment in header.paymentPlan.installments" :key="instalment.id" class="flex gap-2.5 py-[5px] text-small leading-[1.47]">
-            <span class="w-24 flex-none text-ink-2">{{ instalment.status === 'paid' && instalment.paidOn ? day(instalment.paidOn) : day(instalment.dueOn) }}</span>
-            <span :class="instalment.status === 'paid' ? 'text-ink-2' : ''">{{ formatEurosRounded(Number(instalment.amount)) }}</span>
-            <span v-if="instalment.status === 'paid'" class="ml-auto text-ink-2">{{ instalment.statusLabel }}</span>
-            <span v-else-if="instalment.isLate" class="ml-auto text-destructive">{{ $t('dashboard.overdue') }}</span>
+        <div v-for="instalment in header.paymentPlan.installments" :key="instalment.id" class="py-[5px] text-small leading-[1.47]">
+            <div class="flex gap-2.5">
+                <span :class="['min-w-0 flex-1 truncate', instalment.status === 'paid' ? 'text-ink-2' : '']">{{ instalment.label }}</span>
+                <span class="tabular-nums" :class="instalment.status === 'paid' ? 'text-ink-2' : ''">{{ formatEurosRounded(Number(instalment.amount)) }}</span>
+            </div>
+            <div class="flex gap-2.5 text-ink-2">
+                <span>{{ instalment.status === 'paid' && instalment.paidOn ? day(instalment.paidOn) : day(instalment.dueOn) }}</span>
+                <span v-if="instalment.status === 'paid'">{{ instalment.statusLabel }}</span>
+                <span v-else-if="instalment.isLate" class="text-destructive">{{ $t('dashboard.overdue') }}</span>
+                <Link v-if="instalment.invoiceId" :href="`/rechnungen/${instalment.invoiceId}`" class="ml-auto text-ring no-underline hover:underline">{{ instalment.invoiceNumber }}</Link>
+                <button
+                    v-else-if="header.canManagePaymentPlan && instalment.status !== 'cancelled'"
+                    type="button"
+                    class="ml-auto cursor-pointer border-0 bg-transparent p-0 text-small text-ring hover:underline"
+                    @click="router.post(`/raten/${instalment.id}/rechnung`, {}, { preserveScroll: true })"
+                >{{ $t('payments.issueInvoice') }}</button>
+            </div>
         </div>
 
         <SettlePlanDialog

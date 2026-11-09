@@ -93,3 +93,16 @@ it('attaches the PDF to the mail and stamps sent_at once', function () {
 
     expect($invoice->fresh()->sent_at->equalTo($sentAt))->toBeTrue();
 });
+
+it('starts the compose screen from the studio’s own wording, merge fields resolved', function () {
+    app(UpdateStudioSetting::class)('invoice_mail_subject', 'Rechnung {{ invoice.number }} von {{ studio.name }}', null);
+    app(UpdateStudioSetting::class)('invoice_mail_body', 'Hallo {{ contact.name }}, anbei {{ invoice.gross }}, fällig am {{ invoice.dueOn }}.', null);
+
+    $invoice = app(IssueInvoice::class)(invoiceablePlan());
+
+    $props = $this->actingAs(staffMember(), 'staff')->get("/rechnungen/{$invoice->public_id}/versenden")
+        ->assertOk()->viewData('page')['props'];
+
+    expect($props['subject'])->toStartWith("Rechnung {$invoice->number} von ")
+        ->and($props['message'])->toContain('anbei 750,00', 'fällig am 01.09.2026');
+});
