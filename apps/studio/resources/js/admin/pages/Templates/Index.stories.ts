@@ -17,7 +17,7 @@ const DOKUMENTE: App.Documents.Data.DocumentTemplateData[] = [
 ]
 
 const GALERIEN: App.Gallery.Data.GalleryPresetData[] = [
-  { id: 'gp1', name: 'Hochzeit, sechs Monate', design: null, expiryMode: 'days', expiryDays: 180, downloadsEnabled: true, listsEnabled: true, commentsEnabled: false, isDefault: true },
+  { id: 'gp1', name: 'Hochzeit, sechs Monate', design: null, expiryMode: 'days', expiryDays: 180, downloadsEnabled: true, listsEnabled: true, commentsEnabled: false, isDefault: true, sets: null, viewMode: null, downloadRule: null, downloadSizes: null, permissions: null, introEnabled: null, expiryReminder: null, mailTemplateFamilyId: null, },
 ]
 
 const AUSWAHL = {

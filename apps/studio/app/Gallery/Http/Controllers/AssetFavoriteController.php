@@ -60,8 +60,7 @@ class AssetFavoriteController extends Controller
         $me = $this->guest($request, $galleryVersion);
         abort_if($me === null, 403);
 
-        $known = collect($galleryVersion->assets)->contains(fn (array $asset) => $asset['key'] === $key);
-        abort_unless($known, 404);
+        abort_unless($galleryVersion->sees($key, false), 404);
 
         $favorite = AssetFavorite::query()
             ->where('gallery_version_id', $galleryVersion->id)

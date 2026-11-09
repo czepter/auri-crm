@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/crm/ProjectShell.vue'
 import Card from '@/ui/page/Card.vue'
@@ -28,6 +28,10 @@ const withoutGallery = computed(() => {
   return props.shoots.filter((shoot) => !shoot.isCancelled && !taken.has(shoot.id))
 })
 
+function create(shootId?: string) {
+  router.post(`/auftraege/${props.header.id}/galerien`, shootId ? { shoot_id: shootId } : {})
+}
+
 const gallerySummary = computed(() => props.galleries.map((gallery) => gallery.title ?? '—').join(', '))
 
 const missingSummary = computed(() =>
@@ -40,7 +44,7 @@ const missingSummary = computed(() =>
   <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
     <ProjectShell :header="header" active="galleries">
       <template #actions>
-        <Button :as="Link" variant="outline" :href="`/galerien/neu?projekt=${header.id}`">{{ $t('galleries.create') }}</Button>
+        <Button v-if="header.canManageShoots" type="button" variant="outline" @click="create()">{{ $t('galleries.create') }}</Button>
       </template>
 
       <div class="flex flex-col gap-3">
@@ -86,7 +90,7 @@ const missingSummary = computed(() =>
               </em>
             </div>
             <span class="min-w-0 flex-1 text-small leading-[1.3] font-semibold tracking-[-0.01em]">{{ shoot.label ?? shoot.kind }}</span>
-            <Button :as="Link" variant="outline" :href="`/galerien/neu?projekt=${header.id}&shooting=${shoot.id}`">{{ $t('galleries.create') }}</Button>
+            <Button v-if="header.canManageShoots" type="button" variant="outline" @click="create(shoot.id)">{{ $t('galleries.create') }}</Button>
           </div>
         </Card>
       </div>

@@ -3,6 +3,7 @@
 namespace App\Gallery\Http\Controllers;
 
 use App\Gallery\Models\Gallery;
+use App\Gallery\Support\GalleryDownloadGate;
 use App\Http\Controllers\Controller;
 use App\Media\Actions\RecordDownloadEvent;
 use App\Media\Enums\ZipBuildStatus;
@@ -51,6 +52,7 @@ class DownloadZipPartController extends Controller
 
         abort_unless($zipBuild->galleryVersion->gallery_id === $gallery->id, 404);
         abort_unless($zipBuild->status === ZipBuildStatus::Ready, 404);
+        abort_unless(GalleryDownloadGate::allowsSize($gallery, $zipBuild->size), 404);
 
         try {
             $range = ByteRange::parse($request->header('Range'), $zipBuildPart->byte_size);

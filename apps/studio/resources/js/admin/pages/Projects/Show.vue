@@ -132,6 +132,10 @@ const completeNow = computed(
         (!plan.value || plan.value.openTotal === 0),
 );
 
+function createGallery() {
+    router.post(`${base.value}/galerien`);
+}
+
 function completeProject() {
     router.post(`${base.value}/abschluss`, {}, { preserveScroll: true });
 }
@@ -307,8 +311,8 @@ function complete(row: App.Crm.Data.TaskRowData) {
                 <Button v-else-if="createQuote" variant="pill" as-child class="max-[640px]:min-h-11">
                     <Link :href="`/angebote/neu?projekt=${header.id}`">{{ $t("quotes.create") }}</Link>
                 </Button>
-                <Button v-else-if="addGallery" variant="pill" as-child class="max-[640px]:min-h-11">
-                    <Link :href="galleriesHref!">{{ $t("galleries.create") }}</Link>
+                <Button v-else-if="addGallery" variant="pill" type="button" class="max-[640px]:min-h-11" @click="createGallery">
+                    {{ $t("galleries.create") }}
                 </Button>
                 <Button v-else-if="completeNow" variant="pill" type="button" class="max-[640px]:min-h-11" @click="completeProject">
                     {{ $t("project.completeMenu") }}
@@ -330,8 +334,8 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             </AlertDescription>
                         </div>
                         <div v-if="header.canManageShoots" class="ml-auto flex flex-none items-center gap-2">
-                            <Button v-if="galleriesHref" variant="outline" as-child>
-                                <Link :href="galleriesHref">{{ $t("galleries.create") }}</Link>
+                            <Button v-if="galleriesHref" variant="outline" type="button" @click="createGallery">
+                                {{ $t("galleries.create") }}
                             </Button>
                         </div>
                     </Alert>

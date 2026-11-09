@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { birthValues, expiryOn } from './galleryBirth'
 
-const STUDIO = { downloads: true, lists: true, comments: true }
+const STUDIO = { downloadRule: 'open' as const, lists: true, comments: true }
 
 describe('birthValues', () => {
   it('falls back to the studio default when nothing else says anything', () => {
@@ -11,23 +11,37 @@ describe('birthValues', () => {
   it('lets the contact override the studio', () => {
     const project = { galleryDefaults: { downloads: false, lists: null, comments: null } }
 
-    expect(birthValues(null, project, STUDIO)).toEqual({ downloads: false, lists: true, comments: true })
+    expect(birthValues(null, project, STUDIO)).toEqual({ downloadRule: 'off', lists: true, comments: true })
   })
 
   // Die Reihenfolge, die entschieden wurde: die Vorlage steht dem Fall näher
   // als der Kontakt und gewinnt gegen ihn.
   it('lets the preset override the contact', () => {
     const project = { galleryDefaults: { downloads: false, lists: null, comments: null } }
-    const preset = { downloadsEnabled: true, listsEnabled: null, commentsEnabled: false }
+    const preset = { downloadRule: null, downloadsEnabled: true, listsEnabled: null, commentsEnabled: false }
 
-    expect(birthValues(preset, project, STUDIO)).toEqual({ downloads: true, lists: true, comments: false })
+    expect(birthValues(preset, project, STUDIO)).toEqual({ downloadRule: 'open', lists: true, comments: false })
+  })
+
+  it('lets the preset rule win over the contact and the studio', () => {
+    const project = { galleryDefaults: { downloads: false, lists: null, comments: null } }
+    const preset = { downloadRule: 'after_payment' as const, downloadsEnabled: true, listsEnabled: null, commentsEnabled: null }
+
+    expect(birthValues(preset, project, STUDIO).downloadRule).toBe('after_payment')
+  })
+
+  it('keeps the studio rule when the contact allows downloads, and opens a closed studio', () => {
+    const allowed = { galleryDefaults: { downloads: true, lists: null, comments: null } }
+
+    expect(birthValues(null, allowed, { ...STUDIO, downloadRule: 'after_payment' }).downloadRule).toBe('after_payment')
+    expect(birthValues(null, allowed, { ...STUDIO, downloadRule: 'off' }).downloadRule).toBe('open')
   })
 
   it('leaves a value the preset does not speak to with the contact', () => {
     const project = { galleryDefaults: { downloads: false, lists: false, comments: null } }
-    const preset = { downloadsEnabled: null, listsEnabled: null, commentsEnabled: null }
+    const preset = { downloadRule: null, downloadsEnabled: null, listsEnabled: null, commentsEnabled: null }
 
-    expect(birthValues(preset, project, STUDIO)).toEqual({ downloads: false, lists: false, comments: true })
+    expect(birthValues(preset, project, STUDIO)).toEqual({ downloadRule: 'off', lists: false, comments: true })
   })
 })
 

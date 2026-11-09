@@ -3,6 +3,8 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { srcSet, STAGE_WIDTHS } from '@/portal/lib/images'
 import { favoriteSync, keyIntent, stepIndex, swipeIntent } from '@/portal/lib/lightbox'
+import { shareLink } from '@/portal/lib/share'
+import { useI18n } from 'vue-i18n'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
 
@@ -17,10 +19,15 @@ const props = defineProps<{
   // G-01 (#229): two roles, one screen. A guest gets the heart; a signed-in
   // client gets their lists — null is the guest.
   lists: List[] | null
-  offers: { downloads: boolean; lists: boolean; comments: boolean }
+  offers: { downloads: boolean; lists: boolean; comments: boolean; hide: boolean; share: boolean }
+  shareUrl: string
+  // Ausgeblendete Bilder zeigt nur der eigene Eintrag der Leiste; dort heißt die Aktion Einblenden.
+  unhiding: boolean
 }>()
 
 const open = defineModel<number | null>({ required: true })
+const { t } = useI18n()
+const shareNote = ref<string | null>(null)
 
 const favorited = ref(new Set<string>())
 const comments = ref<Comment[]>([])
@@ -135,6 +142,32 @@ async function sendComment() {
     sending.value = false
   }
 }
+
+async function hide() {
+  if (!asset.value) return
+
+  const response = await post('/ausblenden', { key: asset.value.key })
+
+  if (response.ok) router.reload({ only: ['assets', 'hiddenAssets'] })
+}
+
+async function share() {
+  const result = await shareLink(props.shareUrl, props.title)
+
+  shareNote.value = result === 'copied' ? t('gallery.copied') : result === 'failed' ? t('gallery.copyFailed') : null
+  setTimeout(() => (shareNote.value = null), 2000)
+}
+
+// Nach dem Ausblenden rückt die Liste zusammen; die Ansicht bleibt auf einem Bild.
+watch(
+  () => props.assets.length,
+  (length) => {
+    if (open.value === null) return
+
+    if (length === 0) open.value = null
+    else if (open.value >= length) open.value = length - 1
+  },
+)
 
 function step(by: number) {
   if (open.value === null) return
@@ -403,6 +436,26 @@ function time(iso: string) {
             <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
             {{ $t('gallery.download') }}
           </a>
+
+          <button
+            v-if="offers.hide"
+            type="button"
+            class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-4 [&_svg]:stroke-[1.5] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
+            @click="hide"
+          >
+            <svg viewBox="0 0 24 24"><path d="M4 4l16 16M10 6.2A9 9 0 0121 12a9 9 0 01-3 3.5M6.5 7.5A9 9 0 003 12c1.5 3.5 5 6 9 6 1.1 0 2.1-.2 3-.5" /></svg>
+            {{ unhiding ? $t('gallery.unhide') : $t('gallery.hide') }}
+          </button>
+
+          <button
+            v-if="offers.share"
+            type="button"
+            class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-4 [&_svg]:stroke-[1.5] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
+            @click="share"
+          >
+            <svg viewBox="0 0 24 24"><path d="M12 15V4M7 9l5-5 5 5M5 13v7h14v-7" /></svg>
+            {{ shareNote ?? $t('gallery.share') }}
+          </button>
         </div>
 
         <TransitionGroup

@@ -19,7 +19,7 @@ class GallerySettingsData extends Data
     public function __construct(
         public string $id,
         public ?int $expiryDays,
-        public bool $downloadsEnabled,
+        public string $downloadRule,
         public bool $listsEnabled,
         public bool $commentsEnabled,
         /** @var array<string, string> */
@@ -31,7 +31,7 @@ class GallerySettingsData extends Data
         return new self(
             id: StudioSettings::current()->public_id,
             expiryDays: GallerySettings::defaults()['expiryDays'],
-            downloadsEnabled: (bool) StudioSettings::current()->gallery_default_downloads_enabled,
+            downloadRule: StudioSettings::current()->gallery_default_download_rule,
             listsEnabled: (bool) StudioSettings::current()->gallery_default_lists_enabled,
             commentsEnabled: (bool) StudioSettings::current()->gallery_default_comments_enabled,
             design: GallerySettings::design(),

@@ -68,3 +68,16 @@ it('keeps starting pre-release away from a role that may not show things to clie
         ->post("/galerien/{$this->gallery->public_id}/pre-release")
         ->assertForbidden();
 });
+
+it('runs a pre-release in its own gallery and leaves the source alone', function () {
+    $this->gallery->update(['title' => 'Hochzeit']);
+
+    $response = $this->post("/galerien/{$this->gallery->public_id}/pre-release", ['own' => true]);
+
+    $copy = Gallery::query()->where('title', 'Hochzeit Vorabversion')->firstOrFail();
+    $response->assertRedirect("/galerien/{$copy->public_id}");
+
+    expect($copy->prerelease_at)->not->toBeNull()
+        ->and($copy->case_id)->toBe($this->gallery->case_id)
+        ->and($this->gallery->fresh()->prerelease_at)->toBeNull();
+});

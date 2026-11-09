@@ -50,6 +50,9 @@ Schedule::command('notifications:send-digests')->dailyAt('07:30')->timezone($stu
 // mail, not overnight.
 Schedule::command('notifications:remind-onboarding')->dailyAt('09:00')->timezone($studioTimezone);
 
+// Die Erinnerung vor Ablauf einer Galerie, mit der Morgenpost des Studios.
+Schedule::command('galleries:remind-expiry')->dailyAt('09:00')->timezone($studioTimezone);
+
 // Die Versionsliste aus release-log. Nachts, weil ein Release von Hand
 // geschnitten wird und der Punkt in der Seitenleiste ein paar Stunden später
 // früh genug steht. Der Screen liest nur den Cache, den dieser Lauf schreibt.

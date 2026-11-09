@@ -23,13 +23,23 @@ class GallerySet extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['gallery_id', 'name', 'position', 'sort_key', 'sort_dir'];
+    public const INTERNAL = 'internal';
+
+    public const GUESTS = 'guests';
+
+    protected $fillable = ['gallery_id', 'name', 'position', 'sort_key', 'sort_dir', 'access'];
 
     protected $attributes = [
         'position' => 0,
         'sort_key' => 'taken_at',
         'sort_dir' => 'asc',
+        'access' => self::INTERNAL,
     ];
+
+    public function isForGuests(): bool
+    {
+        return $this->access === self::GUESTS;
+    }
 
     public function gallery(): BelongsTo
     {

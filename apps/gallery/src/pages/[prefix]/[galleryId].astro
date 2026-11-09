@@ -6,6 +6,9 @@ import { buyPass, passCookieName, PASS_MAX_AGE_SECONDS } from '../../lib/viewPas
 import { isPrerelease, signUpForPrerelease, type PrereleaseSignupResult } from '../../lib/prerelease'
 import { confirm as confirmGuest, guestCookieName, GUEST_MAX_AGE_SECONDS, nameFromEmail, requestCode } from '../../lib/guest'
 import { tileStyle } from '../../lib/tile'
+import { INTRO_TEXT, introRows } from '../../lib/intro'
+import { assetsOf, pickSet, type GuestSet } from '../../lib/sets'
+import { designAttrs, GATE_DESIGN, objectPosition, type GalleryCover, type GalleryDesign } from '../../lib/design'
 import '../../styles/app.css'
 
 // G-08: never cached. Which GalleryVersion counts as "current" can change
@@ -52,6 +55,14 @@ interface PublishedGallery {
   // no GalleryVersion behind a draft, see the controller's own doc
   // comment on draft().
   draft: boolean
+  design: GalleryDesign
+  cover: GalleryCover
+  permissions: { favorites: boolean; comments: boolean; hide: boolean; share: boolean }
+  intro: boolean
+  locked: boolean
+  downloads: boolean
+  downloadAfterPayment: boolean
+  sets: GuestSet[]
   version: {
     public_id: string | null
     version: number | null
@@ -242,9 +253,22 @@ if (gallery === null && !locked && !prerelease) {
   Astro.response.status = 502
 }
 
+// Der Set-Link trägt die public_id; ein Set, das Gäste nicht sehen, gibt es hier nicht.
+const picked = gallery ? pickSet(gallery.sets, Astro.url.searchParams.get('set')) : { set: null, missing: false }
+const activeSet = picked.set
+const assets = gallery ? assetsOf(gallery.version.assets, activeSet) : []
+const can = gallery?.permissions ?? { favorites: false, comments: false, hide: false, share: false }
+const introLines = introRows(can)
+const shareUrl = `${Astro.url.origin}${basePath}${activeSet ? `?set=${activeSet.id}` : ''}`
+
+if (picked.missing) {
+  Astro.response.status = 404
+}
+
 const SIZES = '(max-width: 760px) 50vw, (max-width: 1080px) 33vw, 25vw'
 const FALLBACK_WIDTH = 800
-const cover = gallery?.version.assets[0] ?? null
+const cover = assets.find((asset) => asset.key === gallery?.cover.key) ?? assets[0] ?? null
+const design = gallery?.design ?? GATE_DESIGN
 
 // R31: the one branch point every image URL on this page goes through —
 // see images.ts's own doc comment on why `base`/`gate` are pre-built here
@@ -253,7 +277,7 @@ const imageBase = gallery === null ? '' : gallery.draft ? draftImageBase(gallery
 const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
 ---
 
-<html lang="de">
+<html lang="de" {...designAttrs(design)}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -339,18 +363,19 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
             </div>
           </div>
         </section>
-      ) : gallery ? (
+      ) : gallery && !picked.missing ? (
         <>
           <header class="cover">
             {cover && (
               <img
                 src={imageUrl(publicApi, imageBase, cover.key, 2400, 'jpeg', gate)}
+                style={`object-position:${objectPosition(gallery.cover.focal)}`}
                 alt=""
               />
             )}
             <div class="covertext">
               <h1 class="display">{gallery.title}</h1>
-              <p class="meta">{gallery.version.assets.length} Bilder</p>
+              <p class="meta">{activeSet ? `${activeSet.name} · ` : ''}{assets.length} Bilder</p>
             </div>
             <a class="scrollcue" href="#raster">
               Bilder ansehen
@@ -363,18 +388,23 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
             // studio's own preview is a look, not a delivery.
             !gallery.draft && (
               <div class="bar">
-                <span class="who"><b>{gallery.title}</b></span>
-                {guestPass === null && <button class="txtbtn" type="button" data-signin-open aria-controls="anmelden">Anmelden</button>}
-                <a class="barbtn solid" href={downloadUrl}>
-                  <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
-                  Herunterladen
-                </a>
+                <span class="who"><b>{gallery.title}</b>{gallery.downloadAfterPayment && ' · Download nach Zahlung'}</span>
+                {guestPass === null && (can.favorites || can.comments) && <button class="txtbtn" type="button" data-signin-open aria-controls="anmelden">Anmelden</button>}
+                {can.share && <button class="txtbtn" type="button" data-share><span data-share-label>Teilen</span></button>}
+                {gallery.downloads && (
+                  <a class="barbtn solid" href={downloadUrl}>
+                    <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
+                    Herunterladen
+                  </a>
+                )}
               </div>
             )
           }
 
+          {gallery.locked && <p class="lockednote">Gesperrt</p>}
+
           <main class="wall" id="raster">
-            {gallery.version.assets.map((asset, i) => (
+            {assets.map((asset, i) => (
               <a class="tile" href="#" data-lb-open data-index={i} style={tileStyle(asset)}>
                 <picture>
                   {FORMATS.filter((f) => f !== 'jpeg').map((format) => (
@@ -397,7 +427,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
                 {
                   // R31: no GalleryVersion means no AssetFavoriteController
                   // to toggle against — the draft grid is view-only.
-                  !gallery.draft && guestPass !== null && (
+                  !gallery.draft && can.favorites && guestPass !== null && (
                     <button class="fav" type="button" data-fav aria-label="Favorit">
                       <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
                     </button>
@@ -450,28 +480,43 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
                   !gallery.draft && (
                     <>
                       <div class="acts">
-                        <button type="button" class="act" data-lb-favorite>
-                          <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
-                          <span data-lb-favorite-label>Favorit</span>
-                        </button>
+                        {can.favorites && (
+                          <button type="button" class="act" data-lb-favorite>
+                            <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
+                            <span data-lb-favorite-label>Favorit</span>
+                          </button>
+                        )}
 
-                        <a class="act" href={downloadUrl}>
-                          <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
-                          Herunterladen
-                        </a>
+                        {gallery.downloads && (
+                          <a class="act" href={downloadUrl}>
+                            <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
+                            Herunterladen
+                          </a>
+                        )}
+
+                        {can.share && (
+                          <button type="button" class="act" data-share>
+                            <svg viewBox="0 0 24 24"><path d="M12 15V4M7 9l5-5 5 5M5 13v7h14v-7" /></svg>
+                            <span data-share-label>Teilen</span>
+                          </button>
+                        )}
                       </div>
 
-                      <div class="cmts" data-lb-comments />
+                      {can.comments && (
+                        <>
+                          <div class="cmts" data-lb-comments />
 
-                      <div class="write">
-                        {
-                          guestPass === null ? (
-                            <a href="#anmelden">Zum Kommentieren anmelden</a>
-                          ) : (
-                            <input type="text" data-lb-comment-input placeholder="Kommentar schreiben …" />
-                          )
-                        }
-                      </div>
+                          <div class="write">
+                            {
+                              guestPass === null ? (
+                                <a href="#anmelden">Zum Kommentieren anmelden</a>
+                              ) : (
+                                <input type="text" data-lb-comment-input placeholder="Kommentar schreiben …" />
+                              )
+                            }
+                          </div>
+                        </>
+                      )}
                     </>
                   )
                 }
@@ -479,7 +524,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
             </div>
 
             <nav class="strip">
-              {gallery.version.assets.map((asset, i) => (
+              {assets.map((asset, i) => (
                 <a href="#" data-lb-thumb data-index={i}>
                   <img
                     src={imageUrl(publicApi, imageBase, asset.key, 400, 'jpeg', gate)}
@@ -495,7 +540,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
             // Ohne bestätigte Adresse gibt es Herz und Kommentar nicht: eine
             // Markierung ohne Absender wäre auf dem nächsten Gerät verloren,
             // und unter jedem Kommentar stünde wieder „Gast".
-            !gallery.draft && guestPass === null && (
+            !gallery.draft && guestPass === null && (can.favorites || can.comments) && (
               <section class="signin" id="anmelden" hidden={!codeSent && !tooManyCodes}>
                 {
                   codeSent ? (
@@ -637,7 +682,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
             <span>{gallery.title}</span>
             {
               guestName === null ? (
-                <span>{gallery.version.assets.length} Bilder</span>
+                <span>{assets.length} Bilder</span>
               ) : (
                 <span class="who">
                   Angemeldet als <b>{guestName}</b>
@@ -659,22 +704,62 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
             // off `window` instead of being handed it directly.
           }
           <script is:inline define:vars={{
-            assets: gallery.version.assets,
+            assets,
             apiBase: publicApi,
             imageBase,
             gate,
             versionPublicId: gallery.draft ? null : gallery.version.public_id,
             pass,
             guestPass,
+            shareUrl,
+            title: gallery.title,
+            introRef: ref,
+            introOn: gallery.intro && !gallery.draft,
+            introLines,
           }}>
             window.__lightboxData = { assets, apiBase, imageBase, gate, versionPublicId, pass, guestPass }
+            window.__pageData = { shareUrl, title, introRef, introOn, introLines }
           </script>
           <script>
             import { initLightbox } from '../../lib/lightbox'
             import type { LightboxData } from '../../lib/lightbox'
+            import { browserStorage, introPending, markIntroSeen, type IntroRow } from '../../lib/intro'
+            import { initShare } from '../../lib/share'
 
             initLightbox((window as unknown as { __lightboxData: LightboxData }).__lightboxData)
+
+            const page = (window as unknown as { __pageData: { shareUrl: string; title: string; introRef: string; introOn: boolean; introLines: IntroRow[] } }).__pageData
+            initShare(page.shareUrl, page.title)
+
+            const intro = document.getElementById('intro')
+
+            if (intro && introPending(page.introRef, page.introOn, page.introLines, browserStorage())) {
+              intro.hidden = false
+              const done = () => {
+                intro.hidden = true
+                markIntroSeen(page.introRef, browserStorage())
+              }
+              intro.querySelector('[data-intro-done]')?.addEventListener('click', done)
+              intro.addEventListener('click', (event) => event.target === intro && done())
+              document.addEventListener('keydown', (event) => event.key === 'Escape' && !intro.hidden && done())
+              intro.querySelector<HTMLElement>('[data-intro-done]')?.focus()
+            }
           </script>
+
+          {
+            // Einmal pro Browser (intro.ts); ohne JavaScript bleibt sie zu.
+            introLines.length > 0 && (
+              <div class="intro" id="intro" role="dialog" aria-modal="true" aria-label="So geht's" hidden>
+                <div class="introbox">
+                  <h2>So geht's</h2>
+                  <ul>
+                    {introLines.map((line) => <li>{INTRO_TEXT[line]}</li>)}
+                  </ul>
+                  <button class="btn" type="button" data-intro-done>Verstanden</button>
+                </div>
+              </div>
+            )
+          }
         </>
       ) : (
         <div class="page" style="padding-block: var(--s10)">

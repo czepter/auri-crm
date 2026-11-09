@@ -29,6 +29,19 @@ const gallery = {
   requiresVerifiedEmail: false,
   expiresAt: null,
   offers: { downloads: true, lists: true, comments: true },
+  permissions: {
+    client: { favorites: true, comments: true, hide: true, share: true },
+    guest: { favorites: true, comments: false, hide: false, share: true },
+  },
+  introEnabled: false,
+  studioName: 'Atelier Nordlicht',
+  viewMode: 'none' as const,
+  watermarkText: null,
+  downloadRule: 'open' as const,
+  downloadInvoiceId: null,
+  downloadSizes: ['original', 'web'] as ('original' | 'web')[],
+  expiryReminder: false,
+  invoices: [{ id: 'inv1', number: 'R-2026-004', status: 'open' }],
 }
 
 const base = { gallery, siblings: [], versions: [], lists: [] }
@@ -49,25 +62,53 @@ describe('Settings', () => {
     expect(html).toContain(de.gallery.gateView)
   })
 
-  it('Download carries its switch and the download PIN — no longer in Zugang', async () => {
+  it('Download carries the download PIN — no longer in Zugang', async () => {
     const html = await render({ ...base, settingsSection: 'download' })
 
-    expect(html).toContain(de.gallerySettings.downloadsLabel)
     expect(html).toContain(de.gallery.gateDownload)
+    expect(html).not.toContain(de.gallerySettings.downloadsLabel)
   })
 
-  it('Listen carries its switch and the empty state once nobody has picked anything', async () => {
+  it('Allgemein carries the expiry reminder switch', async () => {
+    const html = await render({ ...base, settingsSection: 'allgemein' })
+
+    expect(html).toContain(de.galleryRecord.expiryReminder)
+  })
+
+  it('Listen carries the empty state once nobody has picked anything', async () => {
     const html = await render({ ...base, settingsSection: 'listen' })
 
-    expect(html).toContain(de.gallerySettings.listsLabel)
     expect(html).toContain(de.gallery.listEmpty)
   })
 
-  it('Kommentare carries its own switch, and none of the other sections’ controls', async () => {
-    const html = await render({ ...base, settingsSection: 'kommentare' })
+  it('Freigabe carries the matrix with a dash for guests hiding, and the intro switch', async () => {
+    const html = await render({ ...base, settingsSection: 'freigabe' })
 
-    expect(html).toContain(de.gallerySettings.commentsLabel)
+    expect(html).toContain(de.galleryRecord.permission.comments)
+    expect(html).toContain(de.galleryRecord.intro)
+    expect(html.match(/id="cb-perm-/g)).toHaveLength(7)
+    expect(html).not.toContain('cb-perm-guest-hide')
     expect(html).not.toContain(de.gallerySettings.downloadsLabel)
-    expect(html).not.toContain(de.galleryRecord.slugLabel)
+  })
+
+  it('Freigabe offers the view modes and download rules, and the portal summary', async () => {
+    const html = await render({ ...base, settingsSection: 'freigabe' })
+
+    for (const mode of Object.values(de.galleryRecord.viewMode)) expect(html).toContain(mode)
+    for (const rule of Object.values(de.galleries.download)) expect(html).toContain(rule)
+    expect(html).toContain(de.galleryRecord.inPortal)
+    expect(html).not.toContain('download-invoice')
+    expect(html).not.toContain('placeholder="Atelier Nordlicht"')
+  })
+
+  it('Freigabe asks for the invoice once downloads wait for payment, and for the text once it is a watermark', async () => {
+    const html = await render({
+      ...base,
+      settingsSection: 'freigabe',
+      gallery: { ...gallery, downloadRule: 'after_payment', viewMode: 'text' },
+    })
+
+    expect(html).toContain('id="download-invoice"')
+    expect(html).toContain('placeholder="Atelier Nordlicht"')
   })
 })

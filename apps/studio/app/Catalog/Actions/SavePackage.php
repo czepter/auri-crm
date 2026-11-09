@@ -32,6 +32,7 @@ class SavePackage
                 'required_if_accepted:portal_offered',
                 Rule::exists('project_types', 'key')->where('is_active', true),
             ],
+            'gallery_preset_id' => ['nullable', 'string', Rule::exists('gallery_presets', 'public_id')],
             'items' => ['array'],
             'items.*.title' => ['required', 'string', 'max:255'],
             'items.*.description' => ['nullable', 'string', 'max:2000'],
@@ -55,6 +56,10 @@ class SavePackage
     /** @param  array<string, mixed>  $validated  checked against rules() */
     public function __invoke(Package $package, array $validated): Package
     {
+        if (array_key_exists('gallery_preset_id', $validated)) {
+            $package->forGalleryPreset($validated['gallery_preset_id']);
+        }
+
         $package->fill([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,

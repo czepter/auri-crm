@@ -28,6 +28,7 @@ class PackageData extends Data
         public int $requestedCount = 0,
         public int $bookedCount = 0,
         public int $showcaseCount = 0,
+        public ?string $galleryPresetId = null,
     ) {}
 
     public static function fromModel(Package $package): self
@@ -59,6 +60,8 @@ class PackageData extends Data
             bookedCount: (int) ($package->booked_count ?? 0),
             // Q-10: der Startsatz fürs Reglerraster, den SeedQuoteFromPackage kopiert.
             showcaseCount: count($package->showcasePaths()),
+            // Nur wo geladen (Editor, Api): die Listen brauchen es nicht und lüden es pro Zeile nach.
+            galleryPresetId: $package->relationLoaded('galleryPreset') ? $package->galleryPreset?->public_id : null,
         );
     }
 }

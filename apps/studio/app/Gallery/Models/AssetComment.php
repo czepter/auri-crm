@@ -5,6 +5,7 @@ namespace App\Gallery\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\Contact;
+use App\Models\User;
 use Database\Factories\Gallery\AssetCommentFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -22,7 +23,7 @@ class AssetComment extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['gallery_version_id', 'asset_key', 'guest_identifier', 'body', 'contact_id'];
+    protected $fillable = ['gallery_version_id', 'asset_key', 'guest_identifier', 'body', 'contact_id', 'user_id'];
 
     /**
      * G-01 (#229): set when a signed-in client did this, so the studio reads
@@ -32,6 +33,12 @@ class AssetComment extends Model
     public function contact(): BelongsTo
     {
         return $this->belongsTo(Contact::class);
+    }
+
+    /** Gesetzt, wenn das Studio geantwortet hat; dann fehlt guest_identifier. */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function galleryVersion(): BelongsTo

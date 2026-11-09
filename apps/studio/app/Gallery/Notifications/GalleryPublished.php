@@ -22,6 +22,7 @@ class GalleryPublished extends Notification
         private readonly Gallery $gallery,
         private readonly string $subject,
         private readonly ?string $body,
+        private readonly ?string $password = null,
     ) {}
 
     /** @return list<string> */
@@ -32,8 +33,13 @@ class GalleryPublished extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $message = $this->composedMail($this->subject, $this->body)
-            ->action('Galerie ansehen', $this->gallery->publicUrl());
+        $message = $this->composedMail($this->subject, $this->body);
+
+        if (filled($this->password)) {
+            $message->line(__('gallery.mail_password', ['password' => $this->password]));
+        }
+
+        $message->action('Galerie ansehen', $this->gallery->publicUrl());
 
         return $this->appendStudioMailIdentity($this->appendUnsubscribe($message, $notifiable));
     }

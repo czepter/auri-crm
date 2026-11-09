@@ -5,7 +5,11 @@ namespace App\Gallery\Http\Controllers;
 use App\Concerns\AuthorizesStaffSettings;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryPreset;
+use App\Gallery\Models\GallerySet;
+use App\Gallery\Support\GalleryDesign;
+use App\Gallery\Support\GalleryPermissions;
 use App\Http\Controllers\Controller;
+use App\Media\Enums\ZipBuildSize;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -58,6 +62,9 @@ class GalleryPresetController extends Controller
             'downloads_enabled' => $gallery->downloads_enabled,
             'lists_enabled' => $gallery->lists_enabled,
             'comments_enabled' => $gallery->comments_enabled,
+            ...$gallery->only(['view_mode', 'download_rule', 'download_sizes', 'permissions', 'intro_enabled', 'expiry_reminder']),
+            'sets' => $gallery->sets()->orderBy('position')->get()->map->only(['name', 'access'])->all(),
+            'mail_template_family_id' => $gallery->preset?->mail_template_family_id,
             ...$this->expiryOf($gallery),
         ]);
 
@@ -180,10 +187,19 @@ class GalleryPresetController extends Controller
             'lists_enabled' => ['nullable', 'boolean'],
             'comments_enabled' => ['nullable', 'boolean'],
             'design' => ['nullable', 'array'],
-            'design.cover' => ['nullable', 'string', 'max:32'],
-            'design.type' => ['nullable', 'string', 'max:32'],
-            'design.colour' => ['nullable', 'string', 'max:32'],
-            'design.grid' => ['nullable', 'string', 'max:32'],
+            ...GalleryDesign::rules('design'),
+            'sets' => ['nullable', 'array', 'max:20'],
+            'sets.*.name' => ['required', 'string', 'max:120'],
+            'sets.*.access' => ['required', Rule::in([GallerySet::INTERNAL, GallerySet::GUESTS])],
+            'view_mode' => ['nullable', Rule::in(['none', 'text', 'logo', 'locked'])],
+            'download_rule' => ['nullable', Rule::in(['open', 'after_payment', 'off'])],
+            'download_sizes' => ['nullable', 'array', 'min:1'],
+            'download_sizes.*' => ['string', Rule::enum(ZipBuildSize::class)],
+            ...GalleryPermissions::rules(),
+            'permissions' => ['nullable', 'array'],
+            'intro_enabled' => ['nullable', 'boolean'],
+            'expiry_reminder' => ['nullable', 'boolean'],
+            'mail_template_family_id' => ['nullable', 'string', Rule::exists('document_templates', 'family_id')->where('type', 'mail')],
         ]);
     }
 }

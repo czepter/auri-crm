@@ -8,6 +8,7 @@ use App\Concerns\HasHourlyPricing;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\Lead;
 use App\Crm\Models\ProjectType;
+use App\Gallery\Models\GalleryPreset;
 use App\Media\Concerns\HasShowcaseImages;
 use Database\Factories\Catalog\PackageFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -37,7 +38,7 @@ class Package extends Model
 
     protected $fillable = [
         'name', 'description', 'is_active', 'hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours',
-        'portal_offered', 'portal_price_mode', 'portal_requires_date', 'project_type_key', 'showcase_paths',
+        'portal_offered', 'portal_price_mode', 'portal_requires_date', 'project_type_key', 'showcase_paths', 'gallery_preset_id',
     ];
 
     protected $attributes = ['is_active' => true, 'portal_offered' => false, 'portal_requires_date' => true];
@@ -109,6 +110,22 @@ class Package extends Model
     public function leads(): HasMany
     {
         return $this->hasMany(Lead::class);
+    }
+
+    /** Womit eine Galerie zu einem Projekt aus diesem Paket beginnt. */
+    public function galleryPreset(): BelongsTo
+    {
+        return $this->belongsTo(GalleryPreset::class);
+    }
+
+    /** Setzt die Vorlage nach ihrer öffentlichen Id; null löst sie. */
+    public function forGalleryPreset(?string $publicId): static
+    {
+        $this->gallery_preset_id = $publicId === null
+            ? null
+            : GalleryPreset::query()->where('public_id', $publicId)->value('id');
+
+        return $this;
     }
 
     /** Ohne Projekttyp hat eine Portalanfrage keinen Shoot-Kind und keine Felder. */

@@ -30,7 +30,7 @@ class ZipBuild extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['gallery_version_id', 'scope', 'size', 'status', 'error', 'gallery_list_id'];
+    protected $fillable = ['gallery_version_id', 'scope', 'size', 'status', 'error', 'gallery_list_id', 'guests'];
 
     protected function casts(): array
     {

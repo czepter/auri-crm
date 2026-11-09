@@ -355,7 +355,7 @@ export const catalogPackages: App.Catalog.Data.PackageData[] = [
         price: 300000,
         requestedCount: 0,
         bookedCount: 0,
-        showcaseCount: 0,
+        showcaseCount: 0, galleryPresetId: null,
     },
 ]
 

@@ -76,6 +76,8 @@ class GalleryController extends Controller
             'external_url' => ['nullable', 'url', 'max:2000', 'required_if:is_external,true'],
             'expires_at' => ['nullable', 'date'],
             'downloads_enabled' => ['nullable', 'boolean'],
+            'download_rule' => ['nullable', Rule::in(['open', 'after_payment', 'off'])],
+            'view_mode' => ['nullable', Rule::in(['none', 'text', 'logo', 'locked'])],
             'lists_enabled' => ['nullable', 'boolean'],
             'comments_enabled' => ['nullable', 'boolean'],
         ]);
@@ -91,7 +93,10 @@ class GalleryController extends Controller
             'is_external' => $validated['is_external'],
             'external_url' => $validated['external_url'] ?? null,
             'expires_at' => $validated['expires_at'] ?? null,
-            'downloads_enabled' => $validated['downloads_enabled'] ?? true,
+            ...array_filter([
+                'download_rule' => $validated['download_rule'] ?? (($validated['downloads_enabled'] ?? true) ? null : 'off'),
+                'view_mode' => $validated['view_mode'] ?? null,
+            ]),
             'lists_enabled' => $validated['lists_enabled'] ?? true,
             'comments_enabled' => $validated['comments_enabled'] ?? true,
         ], $project, $validated['shoot_id'] ?? null, $this->actor($request));
@@ -105,6 +110,8 @@ class GalleryController extends Controller
         $validated = $request->validate([
             'expires_at' => ['sometimes', 'nullable', 'date'],
             'downloads_enabled' => ['sometimes', 'boolean'],
+            'download_rule' => ['sometimes', Rule::in(['open', 'after_payment', 'off'])],
+            'view_mode' => ['sometimes', Rule::in(['none', 'text', 'logo', 'locked'])],
             'lists_enabled' => ['sometimes', 'boolean'],
             'comments_enabled' => ['sometimes', 'boolean'],
         ]);

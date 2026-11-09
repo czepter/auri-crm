@@ -36,7 +36,10 @@ use App\Documents\Http\Controllers\DocumentTemplateController;
 use App\Documents\Http\Controllers\DocumentViewController;
 use App\Engagement\Http\Controllers\InboxController;
 use App\Engagement\Http\Controllers\ThreadController;
+use App\Gallery\Http\Controllers\AssetCommentReplyController;
+use App\Gallery\Http\Controllers\AssetHideController;
 use App\Gallery\Http\Controllers\GalleryAssetController;
+use App\Gallery\Http\Controllers\GalleryFavoritesTaskController;
 use App\Gallery\Http\Controllers\GalleryIndexController;
 use App\Gallery\Http\Controllers\GalleryLightroomExportController;
 use App\Gallery\Http\Controllers\GalleryPrereleaseController;
@@ -45,6 +48,7 @@ use App\Gallery\Http\Controllers\GalleryPreviewController;
 use App\Gallery\Http\Controllers\GalleryPublicationController;
 use App\Gallery\Http\Controllers\GalleryRecordController;
 use App\Gallery\Http\Controllers\GallerySetController;
+use App\Gallery\Http\Controllers\ProjectGalleryController;
 use App\Gallery\Models\Gallery;
 use App\Help\Http\Controllers\HelpController;
 use App\Integration\Http\Controllers\OAuthAuthorizationController;
@@ -648,6 +652,8 @@ Route::middleware('audience:staff')->group(function () {
             ->name('projects.notes');
         Route::get('/auftraege/{case}/galerien', [CaseController::class, 'galleries'])
             ->name('projects.galleries');
+        Route::post('/auftraege/{case}/galerien', [ProjectGalleryController::class, 'store'])
+            ->name('projects.galleries.store');
         Route::delete('/auftraege/{case}', [CaseController::class, 'destroy'])
             ->name('projects.destroy');
         Route::post('/auftraege/{case}/buchung', [CaseController::class, 'book'])
@@ -809,6 +815,20 @@ Route::middleware('audience:staff')->group(function () {
             ->name('galleries.show');
         Route::patch('/galerien/{gallery}', [GalleryRecordController::class, 'update'])
             ->name('galleries.update');
+        Route::get('/galerien/{gallery}/ausgeblendet', [AssetHideController::class, 'index'])
+            ->name('galleries.hidden.index');
+        Route::delete('/galerien/{gallery}/ausgeblendet/{hide}', [AssetHideController::class, 'restore'])
+            ->name('galleries.hidden.restore');
+        Route::post('/galerien/{gallery}/kommentare/{comment}/antwort', [AssetCommentReplyController::class, 'store'])
+            ->name('galleries.comments.reply');
+        Route::post('/galerien/{gallery}/favoriten-aufgabe', [GalleryFavoritesTaskController::class, 'store'])
+            ->name('galleries.favorites-task');
+        Route::post('/galerien/{gallery}/duplizieren', [GalleryRecordController::class, 'duplicate'])
+            ->name('galleries.duplicate');
+        Route::post('/galerien/{gallery}/kopie-fortsetzen', [GalleryRecordController::class, 'resumeCopy'])
+            ->name('galleries.copy.resume');
+        Route::delete('/galerien/{gallery}', [GalleryRecordController::class, 'destroy'])
+            ->name('galleries.destroy');
         Route::post('/galerien/{gallery}/vorlage', [GalleryPresetController::class, 'storeFromGallery'])
             ->name('galleries.preset.store');
         Route::post('/galerien/{gallery}/vorlage-anwenden', [GalleryPresetController::class, 'applyToGallery'])
@@ -876,8 +896,6 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/galerien/{gallery}/uploads/pruefen', UploadPrecheckController::class)
             ->name('galleries.uploads.precheck');
 
-        Route::get('/galerien/{gallery}/veroeffentlichen', [GalleryPublicationController::class, 'compose'])
-            ->name('galleries.publish.compose');
         Route::post('/galerien/{gallery}/veroeffentlichen', [GalleryPublicationController::class, 'store'])
             ->name('galleries.publish');
         Route::delete('/galerien/{gallery}/veroeffentlichung', [GalleryPublicationController::class, 'destroy'])

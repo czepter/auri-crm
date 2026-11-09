@@ -37,7 +37,7 @@ class Asset extends Model
     protected $fillable = [
         'public_id', 'gallery_id', 'gallery_set_id', 'checksum', 'status', 'error',
         'removed_from_draft_at', 'key', 'filename', 'byte_size', 'width', 'height',
-        'taken_at', 'camera_make', 'camera_model', 'phash', 'blurhash',
+        'taken_at', 'camera_make', 'camera_model', 'phash', 'blurhash', 'copied_from_asset_id',
     ];
 
     protected function casts(): array

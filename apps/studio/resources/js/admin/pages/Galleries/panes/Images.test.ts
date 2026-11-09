@@ -17,8 +17,8 @@ function render(props: Record<string, unknown>) {
 }
 
 const sets = [
-  { id: 'a', name: 'Highlights', count: 1, density: 'medium' },
-  { id: 'b', name: 'Trauung', count: 1, density: 'large' },
+  { id: 'a', name: 'Highlights', count: 1, density: 'medium', access: 'guests', url: 'https://x.test/p/g?set=a' },
+  { id: 'b', name: 'Trauung', count: 1, density: 'large', access: 'internal', url: 'https://x.test/p/g?set=b' },
 ]
 
 const assets = [
@@ -26,13 +26,13 @@ const assets = [
   { id: '2', key: 'b.jpg', setId: 'b', filename: 'b.jpg', src: '/bild/b', isCover: false },
 ]
 
-const gallery = { id: 'g1' }
+const gallery = { id: 'g1', slug: 'g', viewPassword: null }
 const base = { gallery, sets, assets, failedAssets: [], pendingUploads: [] }
 
 // The shape every gallery actually starts in (Gallery::booted() creates
 // exactly one set) — R22 fixed Record.vue handing this pane activeSetId:
 // null here, which left no way to reach the sole set's own controls.
-const soloSet = [{ id: 'a', name: 'Highlights', count: 1, density: 'medium' }]
+const soloSet = [{ id: 'a', name: 'Highlights', count: 1, density: 'medium', access: 'guests', url: 'https://x.test/p/g?set=a' }]
 const soloAssets = [{ id: '1', key: 'a.jpg', setId: 'a', filename: 'a.jpg', src: '/bild/a', isCover: true }]
 const solo = { gallery, sets: soloSet, assets: soloAssets, failedAssets: [], pendingUploads: [] }
 
@@ -67,6 +67,24 @@ describe('Images', () => {
     expect(html).toContain('Highlights')
     expect(html).toContain('>1<')
     expect(html).toContain('role="combobox"')
+  })
+
+  it('Nur Favoriten: counts only the marked pictures and offers the way back', async () => {
+    const html = await render({ ...base, activeSetId: null, favoriteKeys: ['b.jpg'] })
+
+    expect(html).toContain('>1<')
+    expect(html).toContain(de.galleryRecord.activity.onlyFavorites)
+    expect(html).toContain('href="/galerien/g1/bilder"')
+  })
+
+  it('a set carries its access switch and QR button; Alle has neither', async () => {
+    const single = await render({ ...base, activeSetId: 'a' })
+    const all = await render({ ...base, activeSetId: null })
+
+    expect(single).toContain(de.galleryRecord.setAccess.internal)
+    expect(single).toContain(de.galleryRecord.setAccess.guests)
+    expect(single).toContain(de.galleryRecord.qr)
+    expect(all).not.toContain(de.galleryRecord.setAccess.guests)
   })
 
   it('leaves the selection bar out while nothing is selected', async () => {

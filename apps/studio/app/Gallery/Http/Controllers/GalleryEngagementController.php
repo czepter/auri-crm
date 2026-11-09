@@ -10,6 +10,7 @@ use App\Gallery\Notifications\AssetCommented;
 use App\Gallery\Notifications\AssetFavorited;
 use App\Gallery\Support\GalleryVisitor;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -46,14 +47,18 @@ class GalleryEngagementController extends Controller
 
         abort_if($version === null, 404);
 
+        $keys = collect($version->assetsFor($this->visitor->isClient($gallery)))->pluck('key');
+
         return response()->json([
             'favorited' => AssetFavorite::query()
                 ->where('gallery_version_id', $version->id)
+                ->whereIn('asset_key', $keys)
                 ->where('guest_identifier', $this->visitor->guestId())
                 ->pluck('asset_key')
                 ->values(),
             'comments' => AssetComment::query()
                 ->where('gallery_version_id', $version->id)
+                ->whereIn('asset_key', $keys)
                 ->with('contact')
                 ->orderBy('created_at')
                 ->get()
@@ -130,7 +135,9 @@ class GalleryEngagementController extends Controller
             'body' => $comment->body,
             // G-01 (#229): a client writes under their own name, a guest as
             // "Gast". One screen, one rule, no second row shape.
-            'author' => $comment->contact?->name ?? __('gallery.guest'),
+            'author' => $comment->user_id !== null
+                ? StudioSettings::current()->display_name
+                : ($comment->contact?->name ?? __('gallery.guest')),
             'own' => $comment->contact_id !== null && $comment->contact_id === auth('portal')->id(),
             'createdAt' => $comment->created_at->toIso8601String(),
         ];
@@ -148,7 +155,7 @@ class GalleryEngagementController extends Controller
 
         abort_if($version === null, 404);
         abort_unless(
-            collect($version->assets)->contains(fn (array $asset) => $asset['key'] === $key),
+            $version->sees($key, $this->visitor->isClient($gallery)),
             404,
         );
 

@@ -2,13 +2,17 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { router, useForm, usePage } from '@inertiajs/vue3'
+import GalleryIntro from '@/portal/components/GalleryIntro.vue'
 import GalleryLightbox from '@/portal/components/GalleryLightbox.vue'
 import PortalBack from '@/portal/components/PortalBack.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import { dayDate, daysUntil } from '@/portal/lib/dates'
-import { ALL, countOf, selections, visible } from '@/portal/lib/gallerySelections'
+import { introPending, introRows, markIntroSeen } from '@/portal/lib/galleryIntro'
+import { ALL, countOf, HIDDEN, selections, visible, withHidden } from '@/portal/lib/gallerySelections'
+import { shareLink } from '@/portal/lib/share'
 import { longPress, hideOnScroll } from '@/portal/lib/gestures'
 import { GRID_WIDTHS, srcSet } from '@/portal/lib/images'
+import { designAttrs, objectPosition, type GalleryDesign } from '@/portal/lib/galleryDesign'
 import { favoriteSync } from '@/portal/lib/lightbox'
 import { tileStyle } from '@/portal/lib/tile'
 import { Button } from '@/ui/button'
@@ -41,8 +45,19 @@ const props = defineProps<{
   // Set for the couple only; it is what mounts the portal shell.
   project: { id: string; name: string } | null
   unlocked: boolean
-  offers: { downloads: boolean; lists: boolean; comments: boolean }
+  design: GalleryDesign
+  coverImage: { key: string | null; focal: { x: number; y: number } | null }
+  offers: { downloads: boolean; lists: boolean; comments: boolean; hide: boolean; share: boolean }
+  intro: boolean
+  locked: boolean
+  downloadAfterPayment: boolean
+  // Nur für den Kunden: die Rechnung, die den Download freigibt.
+  payUrl: string | null
+  setName: string | null
+  shareUrl: string
   assets: Asset[] | null
+  // Was dieser Kunde für sich ausgeblendet hat; für Gäste immer leer.
+  hiddenAssets: Asset[]
   // Everything below is null for a guest. They keep the heart, which is the
   // same thing as an unnamed list; they have no link of their own to share
   // and no gates to rotate.
@@ -148,16 +163,49 @@ const { t } = useI18n()
 const active = ref(ALL)
 
 const bar = computed(() =>
-  selections(
-    props.lists?.map((l) => ({ listId: l.listId, name: l.name, keys: l.keys })) ?? null,
-    props.favorited,
-    { all: t('gallery.all'), heart: t('gallery.heart') },
+  withHidden(
+    selections(
+      props.lists?.map((l) => ({ listId: l.listId, name: l.name, keys: l.keys })) ?? null,
+      props.favorited,
+      { all: t('gallery.all'), heart: t('gallery.heart') },
+    ),
+    props.offers.hide ? props.hiddenAssets.map((a) => a.key) : [],
+    t('gallery.hidden'),
   ),
 )
 
 const shown = computed(() =>
-  visible(props.assets ?? [], bar.value.find((s) => s.id === active.value)?.keys ?? null),
+  visible(
+    active.value === HIDDEN ? props.hiddenAssets : (props.assets ?? []),
+    bar.value.find((s) => s.id === active.value)?.keys ?? null,
+  ),
 )
+
+// Der letzte ausgeblendete Eintrag verschwindet mit seinem Reiter.
+watch(bar, (entries) => {
+  if (!entries.some((s) => s.id === active.value)) active.value = ALL
+})
+
+const introLines = computed(() => introRows(props.offers))
+const introOpen = ref(false)
+
+onMounted(() => {
+  introOpen.value = props.unlocked && introPending(props.gallery.id, props.intro, introLines.value)
+})
+
+function introDone() {
+  introOpen.value = false
+  markIntroSeen(props.gallery.id)
+}
+
+const shareNote = ref<string | null>(null)
+
+async function shareGallery() {
+  const result = await shareLink(props.shareUrl, props.gallery.title)
+
+  shareNote.value = result === 'copied' ? t('gallery.copied') : result === 'failed' ? t('gallery.copyFailed') : null
+  setTimeout(() => (shareNote.value = null), 2000)
+}
 
 const tabs = ref<HTMLElement | null>(null)
 const tabEls = new Map<string, HTMLElement>()
@@ -273,7 +321,7 @@ function submit() {
 }
 
 const subtitle = computed(() => {
-  const parts = [props.gallery.date && dayDate(props.gallery.date), props.gallery.venue].filter(Boolean)
+  const parts = [props.setName, props.gallery.date && dayDate(props.gallery.date), props.gallery.venue].filter(Boolean)
 
   if (props.assets?.length) {
     parts.push(`${props.assets.length} Bilder`)
@@ -285,9 +333,12 @@ const subtitle = computed(() => {
 // The grid deliberately stays under the proxy's allow-list.
 const SIZES = '(max-width: 760px) 50vw, (max-width: 1080px) 33vw, 25vw'
 
-// The first published asset carries the cover. Nothing in the schema names
-// one, so "the first" is the studio's own ordering rather than a guess.
-const cover = computed(() => props.assets?.[0] ?? null)
+// The version names its cover; a gallery published before it did falls back to the first asset.
+const cover = computed(() => props.assets?.find((asset) => asset.key === props.coverImage.key) ?? props.assets?.[0] ?? null)
+
+// A split cover puts the title beside the picture, not on it.
+const overlaid = computed(() => cover.value !== null && (!props.unlocked || props.design.cover !== 'geteilt'))
+const rows = computed(() => props.design.flow === 'zeilen')
 
 // A guest's hearts are this session's; a client's are the lists.
 const hearts = ref(new Set(props.favorited ?? []))
@@ -383,13 +434,14 @@ const COVER_INPUT = [
   <!-- data-theme stays: tokens.css declares the gallery palette under it,
        and this element is the theme root that has to paint its own
        background — the portal's <html> is themed "portal" (gallery.css). -->
-  <div class="block min-h-screen bg-background text-foreground" :class="project && 'max-[760px]:pb-[calc(56px+env(safe-area-inset-bottom))]'">
+  <div class="block min-h-screen bg-background text-foreground" :class="project && 'max-[760px]:pb-[calc(56px+env(safe-area-inset-bottom))]'" v-bind="designAttrs(design)">
     <header
+      :data-gcover="unlocked ? design.cover : 'zentriert'"
       class="relative grid place-items-center overflow-hidden before:absolute before:inset-0 before:z-1 before:content-['']"
       :class="[
-        cover ? 'text-white' : 'text-foreground',
+        overlaid ? 'text-white' : 'text-foreground',
         unlocked ? 'min-h-[34svh]' : 'min-h-[100svh] max-[760px]:min-h-[82svh]',
-        cover
+        overlaid
           ? 'before:bg-[linear-gradient(rgba(12,10,9,.55),rgba(12,10,9,.55)),radial-gradient(115%_85%_at_50%_46%,rgba(12,10,9,.58)_0%,rgba(12,10,9,.80)_62%,rgba(12,10,9,.93)_100%)]'
           : 'before:bg-none',
       ]"
@@ -398,7 +450,8 @@ const COVER_INPUT = [
         v-if="cover"
         :src="`${cover.src}?w=2400&fmt=jpeg`"
         alt=""
-        class="absolute inset-0 size-full object-cover object-[50%_38%]"
+        class="absolute inset-0 size-full object-cover"
+        :style="{ objectPosition: objectPosition(coverImage.focal) }"
       />
 
       <div v-if="project" data-tokens>
@@ -408,7 +461,7 @@ const COVER_INPUT = [
       <!-- data-tokens: the gate's title is a bare h1, and tokens.css sets one
            unlayered — 24px in the app's own sans, which beats any utility. -->
       <div data-tokens class="relative z-3 w-[min(560px,100%)] px-8 py-11 text-center">
-        <span v-if="!project" class="mb-5 inline-block text-[13px] leading-none font-bold tracking-[0.18em] whitespace-nowrap uppercase text-inherit no-underline" :class="cover && 'rounded-full bg-[rgba(12,10,9,.72)] px-3.5 py-2'">
+        <span v-if="!project" class="mb-5 inline-block text-[13px] leading-none font-bold tracking-[0.18em] whitespace-nowrap uppercase text-inherit no-underline" :class="overlaid && 'rounded-full bg-[rgba(12,10,9,.72)] px-3.5 py-2'">
           {{ studioName }}
         </span>
         <h1
@@ -416,13 +469,14 @@ const COVER_INPUT = [
         >
           {{ gallery.title }}
         </h1>
-        <p v-if="subtitle" class="mt-5 text-[14px] leading-[1.6] font-normal text-inherit" :class="cover ? 'inline-block rounded-full bg-[rgba(12,10,9,.72)] px-3.5 py-1.5' : 'opacity-80'">
+        <p v-if="subtitle" class="mt-5 text-[14px] leading-[1.6] font-normal text-inherit" :class="overlaid ? 'inline-block rounded-full bg-[rgba(12,10,9,.72)] px-3.5 py-1.5' : 'opacity-80'">
           {{ subtitle }}
         </p>
-        <br v-if="subtitle && gallery.expiresAt && cover" />
-        <p v-if="gallery.expiresAt" class="mt-2 text-[14px] leading-[1.6] font-normal" :class="[cover || expiring ? 'inline-block rounded-full px-3.5 py-1.5' : '', expiring ? 'bg-due-bg font-semibold text-due' : cover ? 'bg-[rgba(12,10,9,.72)] text-inherit' : 'text-inherit opacity-80']">
+        <br v-if="subtitle && gallery.expiresAt && overlaid" />
+        <p v-if="gallery.expiresAt" class="mt-2 text-[14px] leading-[1.6] font-normal" :class="[overlaid || expiring ? 'inline-block rounded-full px-3.5 py-1.5' : '', expiring ? 'bg-due-bg font-semibold text-due' : overlaid ? 'bg-[rgba(12,10,9,.72)] text-inherit' : 'text-inherit opacity-80']">
           {{ $t('gallery.onlineUntil', { date: dayDate(gallery.expiresAt) }) }}
         </p>
+        <p v-if="downloadAfterPayment" class="mt-2 text-[14px] leading-[1.6] font-normal text-inherit opacity-80">{{ $t('gallery.downloadAfterPayment') }}</p>
 
         <template v-if="!unlocked">
           <div class="mx-auto mt-11 mb-8 h-px w-12 bg-[rgba(242,237,233,.45)]" />
@@ -502,9 +556,16 @@ const COVER_INPUT = [
           </Button>
         </span>
 
+        <Button v-if="offers.share" class="max-[760px]:ml-auto max-[760px]:shrink-0" variant="portal-ghost" type="button" @click="shareGallery">
+          {{ shareNote ?? $t('gallery.share') }}
+        </Button>
+
         <Button v-if="offers.downloads" class="max-[760px]:ml-auto max-[760px]:shrink-0" as="a" variant="portal" :state="downloading ? 'loading' : undefined" :href="`/galerien/${gallery.id}/download`" @click="downloading = true">
           <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
           {{ $t('gallery.download') }}
+        </Button>
+        <Button v-else-if="payUrl" class="max-[760px]:ml-auto max-[760px]:shrink-0" as="a" variant="portal" :href="payUrl">
+          {{ $t('gallery.payInvoice') }}
         </Button>
       </div>
 
@@ -517,13 +578,15 @@ const COVER_INPUT = [
         data-tokens
         tag="main"
         name="tile"
-        class="mx-auto flex max-w-[1240px] flex-wrap justify-center gap-3.5 px-8 pt-11 pb-16 max-[760px]:grid max-[760px]:grid-cols-2 max-[760px]:gap-1 max-[760px]:px-4 max-[760px]:pt-4 max-[760px]:pb-8"
+        class="mx-auto max-w-[1240px] px-8 pt-11 pb-16 max-[760px]:px-4 max-[760px]:pt-4 max-[760px]:pb-8"
+        :class="rows ? 'flex flex-wrap justify-center max-[760px]:grid max-[760px]:grid-cols-2' : 'block'"
       >
         <span
           v-for="(asset, index) in shown"
           :key="asset.key"
           :data-loaded="loaded.has(asset.key)"
-          class="group relative block cursor-zoom-in select-none overflow-hidden [-webkit-touch-callout:none] rounded-[10px] bg-muted max-[760px]:rounded-md max-[760px]:[aspect-ratio:1!important] max-[760px]:[flex:none!important] max-[760px]:[max-width:none!important] [&_img]:block [&_img]:size-full [&_img]:object-cover"
+          class="group relative block cursor-zoom-in select-none overflow-hidden [-webkit-touch-callout:none] rounded-[10px] bg-muted max-[760px]:rounded-md [&_img]:block [&_img]:size-full [&_img]:object-cover"
+          :class="rows && 'max-[760px]:[aspect-ratio:1!important] max-[760px]:[flex:none!important] max-[760px]:[max-width:none!important]'"
           :style="tileStyle(asset)"
           @click="openTile(index)"
           @pointerdown="pressStart($event, asset.key)"
@@ -594,7 +657,7 @@ const COVER_INPUT = [
       <!-- Unlocked over a gallery nobody has published yet: a real state,
            and the studio's link is already out there, so it says so. -->
       <p v-if="!shown.length" class="text-[12.5px] leading-[1.55] font-normal text-muted-foreground mt-[9px] px-8 py-16">
-        {{ assets?.length ? $t('gallery.listEmpty') : $t('gallery.notPublished') }}
+        {{ locked ? $t('gallery.locked') : assets?.length ? $t('gallery.listEmpty') : $t('gallery.notPublished') }}
       </p>
 
       <GalleryLightbox
@@ -604,7 +667,11 @@ const COVER_INPUT = [
         :assets="shown"
         :lists="lists"
         :offers="offers"
+        :share-url="shareUrl"
+        :unhiding="active === HIDDEN"
       />
+
+      <GalleryIntro v-if="introOpen" :rows="introLines" @done="introDone" />
 
       <!-- The couple's own half of their gallery, under the pictures. A
            guest never receives any of it. -->

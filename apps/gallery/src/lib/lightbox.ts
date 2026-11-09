@@ -144,6 +144,8 @@ export function initLightbox({ assets, apiBase, imageBase, gate, versionPublicId
   // that resolves after the guest has already stepped to a different image
   // never overwrites that image's own list with a stale one.
   const loadComments = (): void => {
+    if (!commentsList) return
+
     const key = assets[index].key
     void fetchComments(apiBase, versionPublicId as string, key, pass).then((comments) => {
       if (assets[index].key === key) renderComments(comments)
@@ -222,11 +224,13 @@ export function initLightbox({ assets, apiBase, imageBase, gate, versionPublicId
         })
     })
 
-    void fetchFavorites(apiBase, versionPublicId as string, pass, guestPass).then((keys) => {
-      favorited = keys
-      renderTileHearts()
-      if (root.classList.contains('open')) renderFavorite()
-    })
+    if (favBtn || tileHearts.size > 0) {
+      void fetchFavorites(apiBase, versionPublicId as string, pass, guestPass).then((keys) => {
+        favorited = keys
+        renderTileHearts()
+        if (root.classList.contains('open')) renderFavorite()
+      })
+    }
   }
 
   document.addEventListener('keydown', (event) => {

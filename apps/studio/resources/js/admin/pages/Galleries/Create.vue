@@ -7,7 +7,7 @@ import FormShell from '@/ui/page/FormShell.vue'
 import CreateSummary from '@/admin/components/CreateSummary.vue'
 import { ChoiceGroup } from '@/ui/choice-group'
 import ProjectTypeahead from '@/admin/components/crm/ProjectTypeahead.vue'
-import { birthValues, expiryOn } from '@/admin/lib/galleryBirth'
+import { birthValues, expiryOn, type DownloadRule } from '@/admin/lib/galleryBirth'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
@@ -25,7 +25,7 @@ const props = defineProps<{
   shootId: string | null
   presets: App.Gallery.Data.GalleryPresetData[]
   studioDefaults: {
-    downloads: boolean
+    downloadRule: DownloadRule
     lists: boolean
     comments: boolean
     expiryDays: number | null
@@ -41,6 +41,8 @@ function loadSiblings(id: string | undefined) {
 }
 
 const MODES = ['internal', 'external']
+
+const DOWNLOAD_RULES = ['open', 'after_payment', 'off']
 
 const page = usePage()
 
@@ -64,7 +66,7 @@ const form = useForm({
   info: '',
   external_password: '',
   expires_at: '' as string,
-  downloads_enabled: props.studioDefaults.downloads,
+  download_rule: props.studioDefaults.downloadRule,
   lists_enabled: props.studioDefaults.lists,
   comments_enabled: props.studioDefaults.comments,
   design: { ...props.studioDefaults.design } as Record<string, string> | null,
@@ -75,7 +77,7 @@ watch(project, (next, previous) => next?.id !== previous?.id && loadSiblings(nex
 watch([preset, project], () => {
   const born = birthValues(preset.value, project.value, props.studioDefaults)
 
-  form.downloads_enabled = born.downloads
+  form.download_rule = born.downloadRule
   form.lists_enabled = born.lists
   form.comments_enabled = born.comments
   form.design = preset.value?.design ?? { ...props.studioDefaults.design }
@@ -91,11 +93,12 @@ function submit() {
       case_id: project.value?.id ?? null,
       shoot_id: project.value?.id === props.project?.id ? props.shootId : null,
       is_external: props.mode === 'external',
+      gallery_preset_id: props.mode === 'external' ? null : presetId.value || null,
       ...(props.mode === 'external'
         ? {
             expires_at: '',
             design: null,
-            downloads_enabled: true,
+            download_rule: 'open',
             lists_enabled: true,
             comments_enabled: true,
           }
@@ -168,10 +171,11 @@ function submit() {
               <Input id="gallery-expiry" v-model="form.expires_at" type="date" lang="de" :title="$t('common.dateFormat')" :aria-label="$t('galleries.expiryField') + ' (' + $t('common.dateFormat') + ')'" />
             </div>
 
-            <div class="flex items-center gap-2.5">
-              <Checkbox id="cb-new-downloads" v-model="form.downloads_enabled" />
-              <Label variant="inline" for="cb-new-downloads">{{ $t('gallerySettings.downloadsLabel') }}</Label>
-            </div>
+            <ChoiceGroup
+              v-model="form.download_rule"
+              :label="$t('galleryRecord.downloadsHeading')"
+              :options="DOWNLOAD_RULES.map((rule) => ({ value: rule, label: $t(`galleries.download.${rule}`) }))"
+            />
 
             <div class="flex items-center gap-2.5">
               <Checkbox id="cb-new-lists" v-model="form.lists_enabled" />

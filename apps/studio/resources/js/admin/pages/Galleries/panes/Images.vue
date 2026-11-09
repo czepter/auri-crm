@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Button } from '@/ui/button'
 import { computed, onUnmounted, ref, watch } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { Link, router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import { useElementSize, useMediaQuery, useVirtualList } from '@vueuse/core'
 import { Upload } from 'lucide-vue-next'
@@ -12,6 +12,8 @@ import DropZone from '@/admin/components/gallery/DropZone.vue'
 import DuplicateDialog from '@/admin/components/gallery/DuplicateDialog.vue'
 import SetPickerDialog from '@/admin/components/gallery/SetPickerDialog.vue'
 import UploadTray, { type TrayRow } from '@/admin/components/gallery/UploadTray.vue'
+import GalleryQrDialog from '@/admin/components/gallery/GalleryQrDialog.vue'
+import { ChoiceGroup } from '@/ui/choice-group'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
@@ -29,6 +31,8 @@ interface SetRow {
   name: string
   count: number
   density: string
+  access: 'internal' | 'guests'
+  url: string
 }
 
 interface PendingUploadRow {
@@ -39,12 +43,13 @@ interface PendingUploadRow {
 }
 
 const props = defineProps<{
-  gallery: { id: string }
+  gallery: { id: string; slug: string; viewPassword: string | null }
   sets: SetRow[]
   assets: AssetRow[]
   activeSetId: string | null
   failedAssets: { publicId: string; filename: string; error: string }[]
   pendingUploads: PendingUploadRow[]
+  favoriteKeys?: string[] | null
 }>()
 
 const { t } = useI18n()
@@ -70,9 +75,11 @@ const columns = computed(() => {
 // The backend already orders `assets` the way Gallery::draftAssets() would
 // (sets by position, each set by its own rule) — filtering to one set keeps
 // that order, and Alle needs no re-sort of its own.
-const shown = computed(() =>
-  props.activeSetId === null ? props.assets : props.assets.filter((asset) => asset.setId === props.activeSetId),
-)
+const shown = computed(() => {
+  const inSet = props.activeSetId === null ? props.assets : props.assets.filter((asset) => asset.setId === props.activeSetId)
+
+  return props.favoriteKeys ? inSet.filter((asset) => props.favoriteKeys?.includes(asset.key)) : inSet
+})
 
 const setNames = computed(() => new Map(props.sets.map((row) => [row.id, row.name])))
 
@@ -146,6 +153,14 @@ function setDensity(value: string) {
   if (activeSet.value === null) return
 
   router.patch(`/galerien/${props.gallery.id}/sets/${activeSet.value.id}/dichte`, { density: value }, { preserveScroll: true })
+}
+
+const showingQr = ref(false)
+
+function setAccess(value: string) {
+  if (activeSet.value === null) return
+
+  router.patch(`/galerien/${props.gallery.id}/sets/${activeSet.value.id}`, { access: value }, { preserveScroll: true })
 }
 
 function step(by: number) {
@@ -304,9 +319,19 @@ onUnmounted(() => {
         {{ activeSet === null ? $t('gallery.all') : activeSet.name }}
       </h2>
       <span class="text-small text-ink-2">{{ shown.length }}</span>
+      <Link v-if="favoriteKeys" :href="`/galerien/${gallery.id}/bilder`" class="rounded-full bg-sunk px-2.5 py-0.5 text-small text-ink no-underline">
+        {{ $t('galleryRecord.activity.onlyFavorites') }} ×
+      </Link>
       <span v-if="pendingShown.length > 0" class="text-small text-ink-2">{{ $t('media.pendingCount', pendingShown.length) }}</span>
       <div class="ml-auto flex items-center gap-3 text-small text-ink-2">
         <template v-if="activeSet !== null">
+          <ChoiceGroup
+            variant="segmented"
+            :model-value="activeSet.access"
+            :options="['internal', 'guests'].map((value) => ({ value, label: $t(`galleryRecord.setAccess.${value}`) }))"
+            @update:model-value="setAccess"
+          />
+          <Button variant="outline" type="button" @click="showingQr = true">{{ $t('galleryRecord.qr') }}</Button>
           <Select :model-value="density" @update:model-value="(value) => setDensity(String(value))">
             <SelectTrigger class="h-7 w-auto"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -405,6 +430,11 @@ onUnmounted(() => {
       </div>
     </div>
 
+    <GalleryQrDialog
+      v-if="activeSet !== null"
+      v-model:open="showingQr"
+      :gallery="{ slug: `${gallery.slug}-${activeSet.id}`, url: activeSet.url, viewPassword: gallery.viewPassword }"
+    />
     <UploadTray :rows="tray" />
     <SetPickerDialog :open="awaitingSet.length > 0" :sets="sets" @choose="chooseSet" @cancel="awaitingSet = []" />
     <DuplicateDialog :open="duplicates.length > 0" :duplicates="duplicates" @skip="skipDuplicates" @replace="replaceDuplicates" />
