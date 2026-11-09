@@ -20,7 +20,7 @@ class InvoiceItem extends Model
 
     protected $fillable = [
         'invoice_id', 'title', 'description', 'quantity', 'unit_price',
-        'discount_type', 'discount_value', 'vat_rate', 'payment_installment_id', 'sort_order',
+        'discount_type', 'discount_value', 'vat_rate', 'payment_installment_id', 'quote_item_id', 'sort_order',
     ];
 
     protected function casts(): array

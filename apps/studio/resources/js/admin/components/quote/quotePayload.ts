@@ -19,6 +19,8 @@ export type QuoteRow = {
   hasImage: boolean
   /** #480: a rate picked into an invoice — billed at its own gross, whatever the price field says. */
   installmentId?: string
+  /** The line of the accepted quote this position bills, so the quote knows what is still open. */
+  quoteItemId?: string
 }
 
 /** Ein Kontakt des Projekts, wie ihn die Empfaengerkarte waehlt (§4.4). */

@@ -587,6 +587,8 @@
     "amount": "Betrag"
   },
   "invoicesCreate": {
+    "termDays": "{days} Tage",
+    "fromQuote": "1 Position aus dem Angebot | {count} Positionen aus dem Angebot",
     "title": "Neue Rechnung",
     "recipient": "Empfänger",
     "forPlaceholder": "Projekt, Anfrage oder Kontakt",

@@ -144,6 +144,7 @@ class IssueInvoice
                         'discount_value' => $row === null ? ($position['discount_value'] ?? null) : null,
                         'vat_rate' => $position['vat_rate'] ?? null,
                         'payment_installment_id' => $row?->id,
+                        'quote_item_id' => $position['quote_item_id'] ?? null,
                         'sort_order' => $index,
                     ]);
 
