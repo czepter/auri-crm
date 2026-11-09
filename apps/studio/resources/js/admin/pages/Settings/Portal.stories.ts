@@ -45,6 +45,10 @@ export const branding: App.Settings.Data.StudioSettingsData = {
   invoiceMailBody: null,
   quoteMailSubject: null,
   quoteMailBody: null,
+  reminderMailSubject: null,
+  reminderMailBody: null,
+  creditNoteMailSubject: null,
+  creditNoteMailBody: null,
 }
 
 export const settings: App.Settings.Data.PortalSettingsData = {

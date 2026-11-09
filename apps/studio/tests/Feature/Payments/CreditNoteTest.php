@@ -13,10 +13,12 @@ use App\Payments\Actions\IssueInvoice;
 use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\SettledVia;
 use App\Payments\Models\CreditNote;
+use App\Payments\Notifications\CreditNoteSent;
 use App\Settings\Actions\UpdateStudioSetting;
 use App\Support\GotenbergClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Stripe\ApiRequestor;
@@ -243,4 +245,23 @@ it('opens the Gutschrift builder on what was paid, and not once all of it is cre
     app(IssueCreditNote::class)($paid->invoice, (int) $paid->amount, 'Rückgabe', null);
 
     $viewer->get("/rechnungen/{$paid->invoice->public_id}/gutschrift/neu")->assertNotFound();
+});
+
+it('sends the Gutschrift in the studio’s own wording where the builder asks for it', function () {
+    Notification::fake();
+    app(UpdateStudioSetting::class)('credit_note_mail_subject', 'Gutschrift {{ creditNote.number }}', null);
+    app(UpdateStudioSetting::class)('credit_note_mail_body', 'Hallo {{ contact.name }}, {{ creditNote.gross }} gehen zurück.', null);
+
+    $paid = creditableInstallment();
+    $paid->invoice->contact->update(['email' => 'lena@example.test']);
+
+    $this->actingAs(staffMember(), 'staff')
+        ->post("/rechnungen/{$paid->invoice->public_id}/gutschrift", ['amount' => 10_000, 'reason' => 'Rückgabe', 'send' => true])
+        ->assertRedirect();
+
+    Notification::assertSentTo($paid->invoice->contact, CreditNoteSent::class, function (CreditNoteSent $mail) use ($paid) {
+        $message = $mail->toMail($paid->invoice->contact);
+
+        return str_starts_with($message->subject, 'Gutschrift GS-') && str_contains(implode(' ', $message->introLines), 'gehen zurück');
+    });
 });

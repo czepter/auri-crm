@@ -558,4 +558,8 @@ export const studioSettings: App.Settings.Data.StudioSettingsData = {
   invoiceMailBody: null,
   quoteMailSubject: null,
   quoteMailBody: null,
+  reminderMailSubject: null,
+  reminderMailBody: null,
+  creditNoteMailSubject: null,
+  creditNoteMailBody: null,
 }

@@ -3,7 +3,12 @@
 namespace App\Payments\Notifications;
 
 use App\Concerns\AppliesStudioMailIdentity;
+use App\Crm\Concerns\WritesComposedMail;
 use App\Crm\Models\Contact;
+use App\Crm\Support\CaseMergeData;
+use App\Documents\Support\DocumentMergeData;
+use App\Documents\Support\MergeFieldResolver;
+use App\Models\StudioSettings;
 use App\Payments\Concerns\AttachesInvoicePdf;
 use App\Payments\Models\PaymentInstallment;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -22,6 +27,7 @@ class PaymentReminder extends Notification
 {
     use AppliesStudioMailIdentity;
     use AttachesInvoicePdf;
+    use WritesComposedMail;
 
     public function __construct(
         private readonly PaymentInstallment $installment,
@@ -37,16 +43,32 @@ class PaymentReminder extends Notification
     {
         $project = $this->installment->plan->case;
 
-        $message = (new MailMessage)
-            ->subject("Offene Rate zu {$project->name}")
-            ->greeting('Hallo,')
+        $amount = Number::currency($this->installment->remaining() / 100, in: 'EUR', locale: 'de');
+        $dueOn = $this->installment->due_on->format('d.m.Y');
+        $settings = StudioSettings::current();
+        $data = [
+            ...app(DocumentMergeData::class)->forCase($project),
+            'contact' => CaseMergeData::contact($notifiable instanceof Contact ? $notifiable : $project->primaryContact()),
             // #414: der offene Rest, nicht der Ratenbetrag — eine angezahlte
             // Rate wird sonst über einen Betrag angemahnt, der schon kleiner ist.
-            ->line(sprintf(
-                'Die Rate über %s war am %s fällig.',
-                Number::currency($this->installment->remaining() / 100, in: 'EUR', locale: 'de'),
-                $this->installment->due_on->format('d.m.Y'),
-            ))
+            'reminder' => [
+                'amount' => $amount,
+                'dueOn' => $dueOn,
+                'invoiceNumber' => $this->installment->invoice?->number ?? '',
+            ],
+        ];
+
+        $message = filled($settings->reminder_mail_body)
+            ? $this->composedMail(
+                MergeFieldResolver::resolve($settings->reminder_mail_subject ?: "Offene Rate zu {$project->name}", $data),
+                MergeFieldResolver::resolve($settings->reminder_mail_body, $data),
+            )
+            : (new MailMessage)
+                ->subject($settings->reminder_mail_subject ? MergeFieldResolver::resolve($settings->reminder_mail_subject, $data) : "Offene Rate zu {$project->name}")
+                ->greeting('Hallo,')
+                ->line("Die Rate über {$amount} war am {$dueOn} fällig.");
+
+        $message
             // The portal is where "Jetzt zahlen" lives when Stripe is on, and
             // where the bank details stand when it is not — either way the
             // client lands on the one screen that closes this.

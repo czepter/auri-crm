@@ -59,6 +59,7 @@ class StudioSettings extends Model
         'payments_reminders_enabled',
         'mail_from_name', 'mail_from_address', 'mail_reply_to', 'mail_signature', 'mail_bcc', 'mail_clients_enabled',
         'invoice_mail_subject', 'invoice_mail_body', 'quote_mail_subject', 'quote_mail_body',
+        'reminder_mail_subject', 'reminder_mail_body', 'credit_note_mail_subject', 'credit_note_mail_body',
         'portal_maintenance_enabled', 'portal_maintenance_message',
         'portal_legal_datenschutz_url', 'portal_legal_agb_url',
         'portal_legal_impressum_url', 'portal_legal_widerruf_url',
