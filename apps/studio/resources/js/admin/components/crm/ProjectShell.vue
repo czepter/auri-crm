@@ -130,7 +130,7 @@ function destroy() {
               <Switch id="portal-visible" :model-value="header.portalVisible" @update:model-value="togglePortal" />
             </div>
 
-            <DropdownMenu v-if="(header.canComplete && !header.isCompleted) || (header.canClose && !header.outcomeLabel) || header.canDelete || header.canManagePortalVisibility">
+            <DropdownMenu v-if="$slots.menu || (header.canComplete && !header.isCompleted) || (header.canClose && !header.outcomeLabel) || header.canDelete || header.canManagePortalVisibility">
               <DropdownMenuTrigger
                 class="flex size-10 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2 max-[640px]:size-11"
                 :aria-label="$t('project.more')"
@@ -140,6 +140,7 @@ function destroy() {
                 </svg>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" class="w-[208px]">
+                <slot name="menu" />
                 <DropdownMenuItem v-if="header.canManagePortalVisibility" class="min-[641px]:hidden" @select="togglePortal">
                   {{ $t(header.portalVisible ? 'project.portalHide' : 'project.portalShow') }}
                 </DropdownMenuItem>

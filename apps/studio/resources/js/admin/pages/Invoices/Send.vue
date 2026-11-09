@@ -17,8 +17,13 @@ const props = defineProps<{
     statusLabel: string
   }
   recipients: { name: string; email: string }[]
+  subject: string
   message: string
   mailHtml: string
+  mailTemplates?: App.Documents.Data.MailTemplateData[]
+  mergeFields?: { path: string; sample: string }[]
+  shootKinds?: string[]
+  occasion?: string
 }>()
 useLiveProps([])
 
@@ -40,9 +45,13 @@ function send({ subject, message }: { subject: string; message: EditorDocument }
 <template>
   <SendByMailView
     :recipients="recipients"
-    :subject="`${$t('payments.invoice')} ${invoice.number}`"
+    :subject="subject"
     :message="message"
     :mail-html="mailHtml"
+    :templates="mailTemplates"
+    :merge-fields="mergeFields"
+    :shoot-kinds="shootKinds"
+    :save-as="occasion ? { occasion, invoice: invoiceId } : undefined"
     @cancel="cancel"
     @send="send"
   >

@@ -21,9 +21,9 @@ const draft = {
   recipientCity: 'Lübeck',
   intro: 'Liebe Katrin, lieber Sven, danke für eure Anfrage zur Trauung am 12.06.2027.',
   paymentStages: [
-    { id: 'ps-1', percent: 25, label: 'Bei der Zusage', minimum: 80000 },
-    { id: 'ps-2', percent: 50, label: 'Am Termin', minimum: 0 },
-    { id: 'ps-3', percent: 25, label: 'Bei der Galerie', minimum: 0 },
+    { id: 'ps-1', percent: 25, label: 'Bei der Zusage', minimum: 80000, note: null, dueOn: null },
+    { id: 'ps-2', percent: 50, label: 'Am Termin', minimum: 0, note: null, dueOn: null },
+    { id: 'ps-3', percent: 25, label: 'Bei der Galerie', minimum: 0, note: null, dueOn: null },
   ],
 }
 

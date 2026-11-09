@@ -30,7 +30,7 @@ class ReadNextAction
             return match (true) {
                 $quote === null => ['label' => 'quotes.create', 'href' => "/angebote/neu?projekt={$id}", 'post' => null],
                 $quote->status->value === 'draft' => ['label' => 'lead.sendQuote', 'href' => "/angebote/{$quote->public_id}/senden", 'post' => null],
-                $quote->status->value === 'sent' => ['label' => 'lead.step.followUp', 'href' => "/anfragen/{$id}/nachrichten", 'post' => null],
+                $quote->status->value === 'sent' => ['label' => 'lead.step.followUp', 'href' => "/angebote/{$quote->public_id}/nachfassen", 'post' => null],
                 default => null,
             };
         }

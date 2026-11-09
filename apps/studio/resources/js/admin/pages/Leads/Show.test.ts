@@ -50,12 +50,12 @@ async function render(over: object = {}) {
 }
 
 describe('Anfrageübersicht', () => {
-    it('names the next phase in the head and keeps the quote in its card', async () => {
+    it('keeps the quote in the document chain and moves phases into the menu', async () => {
         const html = await render({ lead: { ...lead, stage: 'new' } })
 
-        expect(html).toMatch(/Weiter: Kontaktiert/)
+        expect(html).not.toContain('Weiter:')
         expect(html).toContain('/angebote/q-brandt')
-        for (const title of ['Anfrage', 'Aufgaben', 'Notizen', 'Verlauf', 'Termine', 'Kontakte']) {
+        for (const title of ['Anfrage', 'Aufgaben', 'Notizen', 'Verlauf', 'Termine', 'Unterlagen']) {
             expect(html).toContain(`>${title}<`)
         }
     })
@@ -63,7 +63,7 @@ describe('Anfrageübersicht', () => {
     it('caps long lists and links to the full views', async () => {
         const html = await render(Voll.args)
 
-        expect(html).toContain('Alle 6 ansehen')
+        expect(html).toContain('Alle 7 ansehen')
         expect(html).toContain('Alle 5 ansehen')
         expect(html).toContain('Alle 4 ansehen')
         expect(html).toContain('href="/auftraege/p-brandt/notizen"')

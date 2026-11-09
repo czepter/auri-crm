@@ -47,16 +47,16 @@ class CreatePaymentPlan
         abort_if($quote === null, 422, 'A payment plan requires an accepted quote.');
 
         // Q-11: where the accepted quote carries stages, they decide the
-        // amounts and their wording; the dates stay this action's own, since
-        // a stage has a text and no date. An even split otherwise — that is
+        // amounts and their wording; a date the studio put on a stage wins
+        // over the one typed at booking. An even split otherwise — that is
         // every plan that exists today.
         $stages = $quote->paymentStages;
         $rows = $stages->isEmpty()
             ? collect(PaymentInstallmentSplitter::evenly($total, count($dueDates)))
-                ->map(fn (int $amount) => ['amount' => $amount, 'title' => null])
+                ->map(fn (int $amount) => ['amount' => $amount, 'title' => null, 'note' => null, 'due_on' => null])
                 ->all()
             : collect(PaymentStageSplitter::split($total, $stages))
-                ->map(fn (array $row) => ['amount' => $row['amount'], 'title' => $row['label']])
+                ->map(fn (array $row) => ['amount' => $row['amount'], 'title' => $row['label'], 'note' => $row['note'], 'due_on' => $row['due_on']])
                 ->all();
 
         return DB::transaction(function () use ($project, $total, $dueDates, $rows) {
@@ -65,14 +65,15 @@ class CreatePaymentPlan
             foreach (array_values($rows) as $index => $row) {
                 $plan->installments()->create([
                     'amount' => $row['amount'],
-                    // due_on is NOT NULL, and a stage carries no date of its
-                    // own — so a stage past the last date supplied falls back
-                    // to it rather than inventing one. ponytail: derive the
-                    // dates from the project's own shoots when a story asks the
+                    // due_on is NOT NULL: a stage without a date takes the one
+                    // typed at booking, and past the last of those the last one
+                    // rather than an invented one. ponytail: derive the dates
+                    // from the project's own shoots when a story asks the
                     // booking screen to stop typing them.
-                    'due_on' => array_values($dueDates)[$index] ?? end($dueDates),
+                    'due_on' => $row['due_on'] ?? array_values($dueDates)[$index] ?? end($dueDates),
                     'sort_order' => $index,
                     'title' => $row['title'],
+                    'note' => $row['note'],
                 ]);
             }
 

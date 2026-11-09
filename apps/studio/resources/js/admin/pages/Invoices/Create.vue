@@ -4,23 +4,26 @@ import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormShell from '@/ui/page/FormShell.vue'
 import InvoiceTargetTypeahead from '@/admin/components/payments/InvoiceTargetTypeahead.vue'
-import InvoicePreviewPane from '@/admin/components/payments/InvoicePreviewPane.vue'
+import DocumentPaper from '@/admin/components/document/DocumentPaper.vue'
 import LetterField from '@/admin/components/quote/LetterField.vue'
 import QuotePositionsCard from '@/admin/components/quote/QuotePositionsCard.vue'
 import { buildQuotePayload, type QuoteDraft, type VatSettings } from '@/admin/components/quote/quotePayload'
 import InvoiceDataGate from '@/admin/pages/Settings/panes/InvoiceDataGate.vue'
-import { PreviewOverlay } from '@/ui/preview-overlay'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
+import { ChoiceGroup } from '@/ui/choice-group'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { centsToEuros, formatEuros } from '@/lib/money'
+import { dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Rate = { id: string; label: string; amount: number; dueOn: string }
+type QuoteLine = { id: string; title: string; description: string | null; quantity: number; unitPrice: number; vatRate: number | null }
 
 const props = defineProps<{
   rates: Record<string, Rate[]>
+  quoteLines: Record<string, QuoteLine[]>
   billable: App.Crm.Data.CaseSuggestionData[]
   project: App.Crm.Data.CaseSuggestionData | null
   packages: App.Catalog.Data.PackageData[]
@@ -40,9 +43,18 @@ const gateOpen = ref(props.missingInvoiceData.length > 0)
 const project = ref(props.project)
 const contact = ref<App.Crm.Data.ContactSuggestionData | null>(null)
 const newContact = ref<{ name: string; email: string; street: string; postcode: string; city: string } | null>(null)
-const due = new Date()
-due.setDate(due.getDate() + props.studioSettings.paymentTermDays)
-const dueOn = ref(`${due.getFullYear()}-${String(due.getMonth() + 1).padStart(2, '0')}-${String(due.getDate()).padStart(2, '0')}`)
+const inDays = (days: number) => {
+  const date = new Date()
+  date.setDate(date.getDate() + days)
+
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+const dueOn = ref(inDays(props.studioSettings.paymentTermDays))
+const TERMS = [7, 14, 30]
+const term = computed({
+  get: () => String(TERMS.find((days) => inDays(days) === dueOn.value) ?? ''),
+  set: (days: string) => { dueOn.value = inDays(Number(days)) },
+})
 const texts = ref({ intro: props.intro, outro: '' })
 
 // The quote's own draft shape, so the quote's builder writes the positions;
@@ -69,6 +81,27 @@ const openRates = computed(() =>
   (project.value ? props.rates[project.value.id] ?? [] : [])
     .filter((rate) => !draft.value.rows.some((row) => row.installmentId === rate.id)),
 )
+
+const openLines = computed(() =>
+  (project.value ? props.quoteLines[project.value.id] ?? [] : [])
+    .filter((line) => !draft.value.rows.some((row) => row.quoteItemId === line.id)),
+)
+
+function takeLines() {
+  draft.value.rows = [...draft.value.rows, ...openLines.value.map((line) => ({
+    title: line.title,
+    description: line.description ?? '',
+    quantity: line.quantity,
+    unitPrice: centsToEuros(line.unitPrice),
+    discount: '',
+    vatRate: line.vatRate,
+    selectable: false,
+    selected: false,
+    outcome: '',
+    hasImage: false,
+    quoteItemId: line.id,
+  }))]
+}
 
 // The row shows the rate's net at the studio's rate; the server bills the gross itself.
 function pick(rate: Rate) {
@@ -101,7 +134,7 @@ const payload = computed(() => {
     due_on: dueOn.value || null,
     discount_type: quote.discount_type,
     discount_value: quote.discount_value,
-    items: quote.items.map((item, index) => ({ ...item, installment_id: draft.value.rows[index].installmentId })),
+    items: quote.items.map((item, index) => ({ ...item, installment_id: draft.value.rows[index].installmentId, quote_item_id: draft.value.rows[index].quoteItemId })),
     ...texts.value,
   }
 })
@@ -121,8 +154,8 @@ function submit() {
     <FormShell
       :title="$t('invoicesCreate.title')" wide
     >
-      <div class="flex gap-6">
-        <form class="grid w-[720px] max-w-full flex-none content-start gap-4" @submit.prevent="submit">
+      <DocumentPaper :studio="studioSettings.displayName ?? ''" :kind="$t('invoicesCreate.paperKind')" :date="dayWithWeekday(inDays(0))">
+        <form class="grid content-start gap-5" @submit.prevent="submit">
           <Field :label="$t('invoicesCreate.recipient')" :error="errors['contact.name'] ?? errors.contact_id">
             <div v-if="newContact" class="grid grid-cols-2 gap-3">
               <Input :aria-label="$t('invoicesCreate.name')" v-model="newContact.name" :placeholder="$t('invoicesCreate.name')" required />
@@ -152,6 +185,10 @@ function submit() {
             </div>
           </Field>
 
+          <Button v-if="openLines.length" class="self-start" variant="outline" type="button" @click="takeLines">
+            {{ $t('invoicesCreate.fromQuote', openLines.length) }}
+          </Button>
+
           <Field :label="$t('quotes.items')" :error="errors.items">
             <QuotePositionsCard
               v-model="draft"
@@ -167,6 +204,7 @@ function submit() {
           <Field v-if="hasFreeRows" v-slot="{ id }" class="max-w-[220px]" :label="$t('payments.dueOn')" :error="errors.due_on">
             <DatePicker :id="id" v-model="dueOn" required />
           </Field>
+          <ChoiceGroup v-if="hasFreeRows" v-model="term" :options="TERMS.map((days) => ({ value: String(days), label: $t('invoicesCreate.termDays', { days }) }))" />
 
           <Field :label="$t('quotes.intro')">
             <LetterField v-model="texts.intro" bare />
@@ -183,11 +221,7 @@ function submit() {
             </Button>
           </div>
         </form>
-
-        <PreviewOverlay :min="1180" :label="$t('common.preview')" wrapper-class="min-w-[420px] flex-1">
-          <InvoicePreviewPane :payload="payload" />
-        </PreviewOverlay>
-      </div>
+      </DocumentPaper>
     </FormShell>
 
     <InvoiceDataGate

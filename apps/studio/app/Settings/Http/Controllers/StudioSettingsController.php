@@ -4,13 +4,15 @@ namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Concerns\FramesPreview;
+use App\Documents\Enums\DocumentTemplateType;
+use App\Documents\Models\DocumentTemplate;
+use App\Documents\Support\MailDefaults;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
 use App\Notifications\Support\MailPreview;
-use App\Notifications\Support\StudioMailFooter;
-use App\Portal\Notifications\PortalAccessInvitation;
 use App\Payments\Actions\RenderInvoicePdf;
 use App\Payments\Support\SampleInvoiceData;
+use App\Portal\Notifications\PortalAccessInvitation;
 use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Enums\QuoteLayout;
 use App\Quotes\Support\SampleQuoteData;
@@ -72,6 +74,10 @@ class StudioSettingsController extends Controller
                 'address' => $row->mail_from_address === null,
             ],
             'settings' => StudioSettingsData::current(),
+            'mailTemplates' => $pane === 'email'
+                ? DocumentTemplate::query()->current()->ofType(DocumentTemplateType::Mail)->orderBy('name')->get()
+                    ->map(fn (DocumentTemplate $template) => ['id' => $template->family_id, 'name' => $template->name])->all()
+                : [],
         ]);
     }
 
@@ -162,14 +168,18 @@ class StudioSettingsController extends Controller
             return $page;
         }
 
-        if ($request->has('signatur')) {
-            app()->instance(StudioMailFooter::class, new StudioMailFooter(Str::limit((string) $request->query('signatur'), 1000, '')));
-        }
+        // The frame as typed, before it is saved.
+        $unsaved = array_filter([
+            'mail_signature' => $request->has('signatur') ? Str::limit((string) $request->query('signatur'), 1000, '') : null,
+            'mail_header_name' => $request->has('kopf') ? $request->boolean('kopf') : null,
+            'mail_footer_legal' => $request->has('recht') ? $request->boolean('recht') : null,
+            'mail_footer_extra' => $request->has('zeile') ? Str::limit((string) $request->query('zeile'), 255, '') : null,
+        ], fn ($value) => $value !== null);
 
-        $html = MailPreview::html(
+        $html = StudioSettings::withUnsaved($unsaved, fn () => MailPreview::html(
             new PortalAccessInvitation(config('portal.url').'/zugang/…', '', 'Hallo Maxi Musterfrau,'),
             (object) [],
-        );
+        ));
 
         return response($html, 200, ['Content-Type' => 'text/html']);
     }
@@ -357,6 +367,11 @@ class StudioSettingsController extends Controller
             'mail_bcc' => ['nullable', 'string', 'max:255', 'email'],
             'mail_signature' => ['nullable', 'string', 'max:1000'],
             'mail_clients_enabled' => ['sometimes', 'boolean'],
+            'mail_header_name' => ['sometimes', 'boolean'],
+            'mail_footer_legal' => ['sometimes', 'boolean'],
+            'mail_footer_extra' => ['nullable', 'string', 'max:255'],
+            'mail_defaults' => ['sometimes', 'array'],
+            'mail_defaults.*' => ['nullable', 'string', Rule::exists('document_templates', 'family_id')->where('type', 'mail')],
             'mail_sender_reset' => ['sometimes', 'boolean'],
         ]);
 
@@ -365,6 +380,10 @@ class StudioSettingsController extends Controller
         if (Arr::pull($validated, 'mail_sender_reset')) {
             app(UpdateStudioSetting::class)('mail_from_name', null, $actor);
             app(UpdateStudioSetting::class)('mail_from_address', null, $actor);
+        }
+
+        if (isset($validated['mail_defaults'])) {
+            $validated['mail_defaults'] = array_filter(Arr::only($validated['mail_defaults'], MailDefaults::OCCASIONS));
         }
 
         foreach ($validated as $key => $value) {

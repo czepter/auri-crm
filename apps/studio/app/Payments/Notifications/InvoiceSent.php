@@ -4,8 +4,10 @@ namespace App\Payments\Notifications;
 
 use App\Concerns\AppliesStudioMailIdentity;
 use App\Crm\Concerns\WritesComposedMail;
+use App\Documents\Support\MailDefaults;
 use App\Payments\Concerns\AttachesInvoicePdf;
 use App\Payments\Models\Invoice;
+use App\Payments\Support\InvoiceMergeData;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Number;
@@ -37,9 +39,22 @@ class InvoiceSent extends Notification
         return ['mail'];
     }
 
+    /** The studio's standard template where it chose one, else the plain text this class has always started from. */
+    public static function defaultSubject(Invoice $invoice): string
+    {
+        return MailDefaults::resolve('invoice_sent', app(InvoiceMergeData::class)->forInvoice($invoice))['subject']
+            ?? __('payments.invoice').' '.$invoice->number;
+    }
+
     /** The compose screen's starting text, and what the create screen's preview shows in its place. */
     public static function defaultMessage(Invoice $invoice): string
     {
+        $default = MailDefaults::resolve('invoice_sent', app(InvoiceMergeData::class)->forInvoice($invoice));
+
+        if ($default !== null) {
+            return $default['message'];
+        }
+
         $name = $invoice->contact?->name;
 
         return ($name === null ? 'Guten Tag,' : "Hallo {$name},")."\n\nanbei die Rechnung {$invoice->number}.";

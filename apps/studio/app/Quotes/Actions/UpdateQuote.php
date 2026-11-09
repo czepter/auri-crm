@@ -67,6 +67,8 @@ class UpdateQuote
             'stages.*.percent' => ['required', 'integer', 'min:0', 'max:100'],
             'stages.*.label' => ['required', 'string', 'max:255'],
             'stages.*.minimum' => ['nullable', 'integer', 'min:0'],
+            'stages.*.note' => ['nullable', 'string', 'max:255'],
+            'stages.*.due_on' => ['nullable', 'date'],
         ];
     }
 
@@ -166,6 +168,8 @@ class UpdateQuote
                     'percent' => $stage['percent'],
                     'label' => $stage['label'],
                     'minimum' => $stage['minimum'] ?? 0,
+                    'note' => $stage['note'] ?? null,
+                    'due_on' => $stage['due_on'] ?? null,
                     'sort_order' => $index,
                 ])
                 ->all()

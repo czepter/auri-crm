@@ -22,14 +22,12 @@ use Illuminate\Support\Collection;
  */
 final class StudioMailFooter
 {
-    /** The settings screen's preview passes the signature as typed, before it is saved. */
-    public function __construct(private readonly ?string $signature = null) {}
-
     public function __invoke(): ?string
     {
-        $studio = StudioSettings::current()->profile();
+        $settings = StudioSettings::current();
+        $studio = $settings->profile();
 
-        $legal = Collection::make([
+        $legal = ! $settings->mail_footer_legal ? null : Collection::make([
             $studio['legal_name'] ?: $studio['display_name'],
             Collection::make([$studio['street'], trim(($studio['postcode'] ?? '').' '.($studio['city'] ?? ''))])
                 ->filter()->implode(', '),
@@ -39,7 +37,7 @@ final class StudioMailFooter
             ])->filter()->implode(' · '),
         ])->filter()->implode(' · ');
 
-        $lines = Collection::make([$this->signature ?? StudioSettings::current()->mail_signature, $legal ?: null])
+        $lines = Collection::make([$settings->mail_signature, $legal ?: null, $settings->mail_footer_extra])
             ->filter()
             ->map(fn (string $line) => e($line));
 

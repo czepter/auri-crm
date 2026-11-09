@@ -336,6 +336,20 @@ class StarterTemplateCatalog
                 ]],
             ],
             [
+                'key' => 'mail-quote-follow-up',
+                'type' => DocumentTemplateType::Mail->value,
+                'name' => 'Angebot nachfassen',
+                'description' => 'Rückfrage zu einem Angebot ohne Antwort.',
+                'shootKind' => null,
+                'blocks' => ['blocks' => [
+                    $greeting,
+                    self::paragraph($du
+                        ? 'das Angebot {{ quote.number }} für {{ project.name }} liegt seit {{ quote.sentOn }} bei dir und gilt bis {{ quote.validUntil }}.'
+                        : 'das Angebot {{ quote.number }} für {{ project.name }} liegt seit {{ quote.sentOn }} bei Ihnen und gilt bis {{ quote.validUntil }}.'),
+                    self::paragraph('Gibt es Fragen oder Änderungswünsche?'),
+                ]],
+            ],
+            [
                 'key' => 'mail-booking-confirmed',
                 'type' => DocumentTemplateType::Mail->value,
                 'name' => 'Buchung bestätigt',

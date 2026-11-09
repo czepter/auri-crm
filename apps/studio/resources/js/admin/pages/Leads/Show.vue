@@ -12,9 +12,9 @@ import Composer from "@/admin/components/crm/Composer.vue";
 import EmptyTiles from "@/admin/components/crm/EmptyTiles.vue";
 import MetricBand from "@/admin/components/crm/MetricBand.vue";
 import type { BandMetric } from "@/admin/components/crm/MetricBand.vue";
-import NextStepCard from "@/admin/components/crm/NextStepCard.vue";
 import Panel from "@/admin/components/crm/Panel.vue";
-import PhaseButton from "@/admin/components/crm/PhaseButton.vue";
+import ProjectChain from "@/admin/components/crm/ProjectChain.vue";
+import type { ChainRow } from "@/admin/components/crm/ProjectChain.vue";
 import QuoteList from "@/admin/components/quote/QuoteList.vue";
 import NoteThread from "@/admin/components/crm/NoteThread.vue";
 import MessageThread from "@/admin/components/crm/MessageThread.vue";
@@ -29,14 +29,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/lib/money";
-import Chip from "@/ui/page/Chip.vue";
-import { quoteTone } from "@/admin/lib/quoteDisplay";
+import { DropdownMenuItem } from "@/ui/dropdown-menu";
 import { groupEntries } from "@/admin/lib/groupEntries";
-import { sendQuoteHref } from "@/admin/lib/leadPrimary";
 import { stepOnArrow } from "@/admin/lib/queueStep";
 import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
 import { dayWithWeekday as day, daysUntil } from "@/admin/lib/dates";
-import { bandMetrics, isBare, leadNextStep } from "@/admin/lib/projectOverview";
+import { bandMetrics, isBare } from "@/admin/lib/projectOverview";
 import { dayAndMonth } from "@/admin/lib/shoots";
 import { useLiveProps } from "@/admin/lib/liveReload";
 
@@ -270,7 +268,6 @@ function addTask() {
 }
 
 const { t } = useI18n();
-const sendHref = computed(() => sendQuoteHref(props.quote, props.header.canManageQuotes));
 const page = usePage();
 const byline = (author: string | null) =>
     page.props.soloStudio && author === page.props.auth.user?.name ? null : author;
@@ -280,8 +277,9 @@ const euro = (minor: string | number) => formatEurosRounded(Number(minor));
 const open = computed(() => props.tasks.filter((row) => !row.isDone));
 const done = computed(() => props.tasks.filter((row) => row.isDone));
 const showDone = ref(false);
-const next = computed(() => leadNextStep(props.tasks, props.quote));
-const taskRows = computed(() => (showDone.value ? done.value : open.value.filter((row) => row !== (next.value?.kind === "task" ? next.value.task : null))));
+const taskRows = computed(() => (showDone.value ? done.value : open.value));
+const phaseItems = computed(() => props.stages.filter((option) => option.value !== props.lead.stage));
+const createQuote = computed(() => (!props.quote && props.header.canManageQuotes ? newQuote.value : null));
 const addingTask = ref(false);
 
 function complete(row: App.Crm.Data.TaskRowData) {
@@ -306,12 +304,41 @@ const metrics = computed<BandMetric[]>(() => [
         sub: props.quote ? t("project.netStatus", { status: props.quote.statusLabel.toLowerCase() }) : undefined,
     },
     {
-        label: t("lead.received"),
-        value: dayAndMonth(props.lead.capturedAt),
-        sub: props.lead.capturedVia ?? undefined,
+        label: t("quotes.validUntil"),
+        value: props.quote?.validUntil ? (dayAndMonth(props.quote.validUntil) ?? null) : null,
+    },
+    {
+        label: t("project.openTasks"),
+        value: open.value.length ? String(open.value.length) : null,
     },
 ]);
 const hasBand = computed(() => bandMetrics(metrics.value).length > 0);
+
+const chain = computed<ChainRow[]>(() => [
+    {
+        key: "inquiry",
+        label: t("project.lead"),
+        title: props.lead.typeLabel,
+        meta: [day(props.lead.capturedAt), props.lead.sourceLabel].filter(Boolean).join(" · "),
+    },
+    props.quote
+        ? {
+              key: "quote",
+              label: t("lead.quote"),
+              title: props.quote.number ?? t("lead.quote"),
+              meta: [props.quote.statusLabel, props.quote.validUntil ? t("lead.validUntil", { date: day(props.quote.validUntil) }) : null].filter(Boolean).join(" · "),
+              amount: euro(props.quote.net),
+              href: `/angebote/${props.quote.id}`,
+              action: t("project.view"),
+          }
+        : {
+              key: "quote",
+              label: t("lead.quote"),
+              title: t("lead.quote"),
+              href: createQuote.value,
+              action: createQuote.value ? t("project.chainQuoteCreate") : null,
+          },
+]);
 
 const bare = computed(() =>
     isBare({ shoots: props.shoots.length, quote: props.quote !== null, tasks: props.tasks.length + notes.value.length, payments: 0 }),
@@ -341,11 +368,10 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
 
             <template #rail><div /></template>
 
-            <template v-if="!lead.outcomeLabel" #stage>
-                <Button v-if="sendHref" variant="pill" as-child class="max-[640px]:min-h-11">
-                    <Link :href="sendHref">{{ $t("lead.sendQuote") }}</Link>
-                </Button>
-                <PhaseButton :stages="stages" :current="lead.stage" @select="move" />
+            <template v-if="!lead.outcomeLabel && phaseItems.length" #menu>
+                <DropdownMenuItem v-for="option in phaseItems" :key="option.value" @select="move(option.value)">
+                    {{ $t("project.switchTo", { stage: option.label }) }}
+                </DropdownMenuItem>
             </template>
 
             <AlertDialog v-model:open="booking">
@@ -364,28 +390,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
             </AlertDialog>
 
             <template v-if="tab === 'overview'">
-                <div
-                    v-if="next || hasBand"
-                    class="grid gap-4 max-[900px]:grid-cols-1"
-                    :class="next && hasBand ? 'grid-cols-[minmax(0,5fr)_minmax(0,7fr)]' : 'grid-cols-1'"
-                >
-                    <NextStepCard
-                        v-if="next?.kind === 'task'"
-                        :title="next.task.title"
-                        :meta="[next.task.audienceLabel, next.task.shootLabel].filter(Boolean).join(' · ')"
-                        :late="next.task.dueOn ? $t('project.overdueSince', { date: day(next.task.dueOn) }) : null"
-                        :action="$t('project.markDone')"
-                        @done="complete(next.task)"
-                    />
-                    <NextStepCard
-                        v-else-if="next?.kind === 'quote' && quote"
-                        :title="$t('lead.sendQuote')"
-                        :meta="$t('lead.draftNet', { amount: euro(quote.net) })"
-                        :action="$t('project.view')"
-                        :href="`/angebote/${quote.id}`"
-                    />
-                    <MetricBand :metrics="metrics" :columns="next ? 2 : bandMetrics(metrics).length" />
-                </div>
+                <MetricBand v-if="hasBand" :metrics="metrics" :columns="bandMetrics(metrics).length" />
 
                 <EmptyTiles v-if="bare" class="mt-4" :tiles="tiles" />
 
@@ -545,30 +550,6 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                             </CappedList>
                         </Panel>
 
-                        <Panel v-if="!bare" :title="$t('lead.notes')" :count="notes.length > 3 ? notes.length : null">
-                            <NoteThread
-                                compact
-                                :entries="notes"
-                                :action="`${base}/notizen`"
-                                :limit="3"
-                                :more-href="`${base}/notizen`"
-                                :can-manage="header.canManageNotes"
-                            />
-                        </Panel>
-
-                        <Panel v-if="events.length" :title="$t('project.history')" :count="events.length > 5 ? events.length : null">
-                            <CappedList v-slot="{ item: entry, index }" :items="events" :limit="5" :more-href="`${base}/verlauf`">
-                                <div class="py-1.5" :class="index === 0 && 'text-foreground'">
-                                    <b class="block font-semibold">{{ entry.count > 1 ? $t("project.historyCount", { body: entry.body, count: entry.count }) : entry.body }}</b>
-                                    <span class="text-small text-ink-2">
-                                        {{ [entry.at ? day(entry.at) : null, byline(entry.author)].filter(Boolean).join(" · ") }}
-                                    </span>
-                                </div>
-                            </CappedList>
-                        </Panel>
-                    </div>
-
-                    <div class="flex flex-col gap-4">
                         <Panel v-if="!bare" :title="$t('lead.dates')" :count="shoots.length > 3 ? shoots.length : null">
                             <template v-if="header.canManageShoots" #action>
                                 <div class="ml-auto flex items-center gap-2">
@@ -618,34 +599,10 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                             </CappedList>
                         </Panel>
 
-                        <Panel v-if="!bare" :title="$t('lead.quote')">
-                            <template #action>
-                                <div class="flex flex-1 items-center gap-2">
-                                    <template v-if="quote">
-                                        <span v-if="quote.number" class="text-small text-ink-2">{{ quote.number }}</span>
-                                        <Chip :tone="quoteTone(quote.status)">{{ quote.statusLabel }}</Chip>
-                                        <Link
-                                            class="ml-auto inline-flex min-h-10 items-center text-ui font-medium text-ring no-underline hover:underline"
-                                            :href="`/angebote/${quote.id}`"
-                                        >{{ $t("project.view") }}</Link>
-                                        <Button v-if="quote.status === 'accepted' && header.canManagePaymentPlan" variant="pill-muted" class="min-h-10 px-4" as-child>
-                                            <Link :href="`/rechnungen/neu?projekt=${lead.projectId}`">{{ $t("project.invoiceAdd") }}</Link>
-                                        </Button>
-                                    </template>
-                                    <Button v-else-if="header.canManageQuotes" variant="pill-muted" class="ml-auto min-h-10 px-4" as-child>
-                                        <Link :href="newQuote">{{ $t("lead.quote") }}</Link>
-                                    </Button>
-                                </div>
-                            </template>
+                        <ProjectChain v-if="chain.length" :title="$t('project.chain')" :rows="chain" />
+                    </div>
 
-                            <template v-if="quote">
-                                <p class="m-0">{{ quote.items.map((item) => item.title).join(", ") }}</p>
-                                <p class="mt-1 mb-0 text-small text-ink-2">
-                                    {{ [$t("project.netAmount", { amount: euro(quote.net) }), quote.validUntil ? $t("lead.validUntil", { date: day(quote.validUntil) }) : null].filter(Boolean).join(" · ") }}
-                                </p>
-                            </template>
-                        </Panel>
-
+                    <div class="flex flex-col gap-4">
                         <Panel :title="$t('contacts.title')">
                             <template v-if="header.canManageShoots && !kontakteEditing" #action>
                                 <Button class="ml-auto min-h-10 px-4" variant="ghost" type="button" @click="kontakteEditing = true">
@@ -741,6 +698,28 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                                     </Button>
                                 </div>
                             </template>
+                        </Panel>
+
+                        <Panel v-if="!bare" :title="$t('lead.notes')" :count="notes.length > 3 ? notes.length : null">
+                            <NoteThread
+                                compact
+                                :entries="notes"
+                                :action="`${base}/notizen`"
+                                :limit="3"
+                                :more-href="`${base}/notizen`"
+                                :can-manage="header.canManageNotes"
+                            />
+                        </Panel>
+
+                        <Panel v-if="events.length" :title="$t('project.history')" :count="events.length > 5 ? events.length : null">
+                            <CappedList v-slot="{ item: entry, index }" :items="events" :limit="5" :more-href="`${base}/verlauf`">
+                                <div class="py-1.5" :class="index === 0 && 'text-foreground'">
+                                    <b class="block font-semibold">{{ entry.count > 1 ? $t("project.historyCount", { body: entry.body, count: entry.count }) : entry.body }}</b>
+                                    <span class="text-small text-ink-2">
+                                        {{ [entry.at ? day(entry.at) : null, byline(entry.author)].filter(Boolean).join(" · ") }}
+                                    </span>
+                                </div>
+                            </CappedList>
                         </Panel>
                     </div>
                 </div>

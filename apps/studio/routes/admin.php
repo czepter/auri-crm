@@ -282,6 +282,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::redirect('/dokumentvorlagen', '/vorlagen?typ=dokumente')->name('document-templates.index');
         Route::get('/dokumentvorlagen/neu', [DocumentTemplateController::class, 'create'])->name('document-templates.create');
         Route::post('/dokumentvorlagen', [DocumentTemplateController::class, 'store'])->name('document-templates.store');
+        Route::post('/dokumentvorlagen/email', [DocumentTemplateController::class, 'storeFromMail'])->name('document-templates.store-mail');
         Route::post('/dokumentvorlagen/vorschau', [DocumentTemplateController::class, 'preview'])
             ->name('document-templates.preview');
         Route::get('/dokumentvorlagen/{documentTemplate}', [DocumentTemplateController::class, 'edit'])
@@ -703,6 +704,8 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/angebote/{quote}/vorschau', [QuoteController::class, 'previewSheet'])->name('quotes.preview.sheet');
         Route::get('/angebote/{quote}/senden', [QuoteController::class, 'compose'])->name('quotes.compose');
         Route::post('/angebote/{quote}/versenden', [QuoteController::class, 'send'])->name('quotes.send');
+        Route::get('/angebote/{quote}/nachfassen', [QuoteController::class, 'followUpForm'])->name('quotes.follow-up.form');
+        Route::post('/angebote/{quote}/nachfassen', [QuoteController::class, 'followUp'])->name('quotes.follow-up');
         Route::post('/angebote/{quote}/versendet', [QuoteController::class, 'markSent'])->name('quotes.mark-sent');
         Route::post('/angebote/{quote}/angenommen', [QuoteController::class, 'markAccepted'])->name('quotes.mark-accepted');
         Route::post('/angebote/{quote}/empfaenger-uebernehmen', [QuoteController::class, 'adoptRecipient'])
@@ -935,6 +938,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/rechnungen/neu', [InvoiceController::class, 'create'])->name('invoices.create');
         Route::post('/rechnungen', [InvoiceController::class, 'store'])->name('invoices.store');
         Route::post('/rechnungen/vorschau', [InvoiceController::class, 'preview'])->name('invoices.preview');
+        Route::get('/rechnungen/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
         Route::get('/rechnungen/{invoice}/pdf', [InvoiceController::class, 'download'])->name('invoices.download');
 
         // #415: the compose screen and the send. Issuing redirects into the
@@ -952,6 +956,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/gutschriften', CreditNoteController::class)->name('credit-notes.index');
 
         Route::get('/vertraege', ContractIndexController::class)->name('contracts.index');
+        Route::get('/rechnungen/{invoice}/gutschrift/neu', [InvoiceController::class, 'creditNoteForm'])->name('invoices.credit-note-form');
         Route::get('/rechnungen/{invoice}/gutschrift/{creditNote}', [InvoiceController::class, 'downloadCreditNote'])
             ->name('invoices.credit-note.download');
 

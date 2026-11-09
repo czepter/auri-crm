@@ -315,8 +315,8 @@ export const quote: App.Quotes.Data.QuoteData = quoteOf({
     net: 426000,
     items: rahnItems,
     paymentStages: [
-        { id: 'ps-1', percent: 30, label: 'Anzahlung', minimum: 0 },
-        { id: 'ps-2', percent: 70, label: 'Restzahlung', minimum: 0 },
+        { id: 'ps-1', percent: 30, label: 'Anzahlung', minimum: 0, note: null, dueOn: null },
+        { id: 'ps-2', percent: 70, label: 'Restzahlung', minimum: 0, note: null, dueOn: null },
     ],
 })
 
@@ -554,4 +554,8 @@ export const studioSettings: App.Settings.Data.StudioSettingsData = {
   mailSignature: 'Christian Zepter\nAtelier Nordlicht',
   mailBcc: null,
   mailClientsEnabled: true,
+  mailDefaults: {},
+  mailHeaderName: true,
+  mailFooterLegal: true,
+  mailFooterExtra: null,
 }

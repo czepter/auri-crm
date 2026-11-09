@@ -212,3 +212,22 @@ it('keeps only letter markup and escapes what a merge field brings in', function
     expect($invoice->intro)->toBe('<h2>Hallo {{ contact.name }}</h2><p>Danke</p>')
         ->and($html)->toContain('<h2>Hallo &lt;b&gt;Jonas&lt;/b&gt;</h2>');
 });
+
+it('counts the days an invoice is overdue and opens one as a page of its own', function () {
+    $installment = invoiceablePlan();
+    $invoice = app(IssueInvoice::class)($installment);
+    $invoice->forceFill(['sent_at' => now()])->save();
+
+    $this->travelTo($installment->due_on->copy()->addDays(14)->setTime(10, 0));
+
+    $viewer = $this->actingAs(staffMember(), 'staff');
+    $row = $viewer->get('/rechnungen')->assertOk()->viewData('page')['props']['invoices'][0];
+    $page = $viewer->get("/rechnungen/{$invoice->public_id}")->assertOk()->viewData('page');
+
+    expect($row['overdueDays'])->toBe(14)
+        ->and($page['component'])->toBe('Invoices/Show')
+        ->and($page['props']['invoice']['row']['number'])->toBe($invoice->number)
+        ->and($page['props']['invoice']['items'])->toHaveCount(1)
+        ->and($page['props']['invoice']['quoteId'])->not->toBeNull()
+        ->and(collect($page['props']['invoice']['events'])->pluck('kind')->all())->toBe(['sent', 'created']);
+});

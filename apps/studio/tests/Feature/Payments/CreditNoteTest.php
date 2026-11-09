@@ -13,10 +13,12 @@ use App\Payments\Actions\IssueInvoice;
 use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\SettledVia;
 use App\Payments\Models\CreditNote;
+use App\Payments\Notifications\CreditNoteSent;
 use App\Settings\Actions\UpdateStudioSetting;
 use App\Support\GotenbergClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Stripe\ApiRequestor;
@@ -228,4 +230,37 @@ it('renders the project quote tab once a Gutschrift exists', function () {
     $this->actingAs(staffMember(StaffRole::Admin), 'staff')
         ->get("/auftraege/{$installment->plan->case->public_id}/angebote")
         ->assertOk();
+});
+
+it('opens the Gutschrift builder on what was paid, and not once all of it is credited', function () {
+    $paid = creditableInstallment();
+    $viewer = $this->actingAs(staffMember(), 'staff');
+
+    $page = $viewer->get("/rechnungen/{$paid->invoice->public_id}/gutschrift/neu")->assertOk()->viewData('page');
+
+    expect($page['component'])->toBe('Invoices/CreditNote')
+        ->and($page['props']['creditable'])->toBe((int) $paid->amount)
+        ->and($page['props']['invoice']['items'][0]['gross'])->toBe((int) $paid->amount);
+
+    app(IssueCreditNote::class)($paid->invoice, (int) $paid->amount, 'Rückgabe', null);
+
+    $viewer->get("/rechnungen/{$paid->invoice->public_id}/gutschrift/neu")->assertNotFound();
+});
+
+it('sends the Gutschrift in the studio’s own wording where the builder asks for it', function () {
+    Notification::fake();
+    mailDefault('credit_note_sent', 'Gutschrift {{ creditNote.number }}', 'Hallo {{ contact.name }}, {{ creditNote.gross }} gehen zurück.');
+
+    $paid = creditableInstallment();
+    $paid->invoice->contact->update(['email' => 'lena@example.test']);
+
+    $this->actingAs(staffMember(), 'staff')
+        ->post("/rechnungen/{$paid->invoice->public_id}/gutschrift", ['amount' => 10_000, 'reason' => 'Rückgabe', 'send' => true])
+        ->assertRedirect();
+
+    Notification::assertSentTo($paid->invoice->contact, CreditNoteSent::class, function (CreditNoteSent $mail) use ($paid) {
+        $message = $mail->toMail($paid->invoice->contact);
+
+        return str_starts_with($message->subject, 'Gutschrift GS-') && str_contains(implode(' ', $message->introLines), 'gehen zurück');
+    });
 });
