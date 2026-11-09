@@ -19,7 +19,15 @@ const form = useForm({
   mail_bcc: props.settings.mailBcc ?? '',
   mail_signature: props.settings.mailSignature ?? '',
   mail_clients_enabled: props.settings.mailClientsEnabled,
+  invoice_mail_subject: props.settings.invoiceMailSubject ?? '',
+  invoice_mail_body: props.settings.invoiceMailBody ?? '',
 })
+
+const FIELDS = ['contact.name', 'invoice.number', 'invoice.gross', 'invoice.dueOn', 'studio.name']
+
+function insert(field: string) {
+  form.invoice_mail_body = `${form.invoice_mail_body}{{ ${field} }}`
+}
 
 // Leert die beiden Spalten einer Bestandsinstallation, damit MAIL_FROM_*
 // wieder greift — ein eigener Weg, weil der Absender nicht im Formular steht.
@@ -34,6 +42,8 @@ function submit() {
       mail_bcc: data.mail_bcc || null,
       mail_signature: data.mail_signature || null,
       mail_clients_enabled: data.mail_clients_enabled,
+      invoice_mail_subject: data.invoice_mail_subject || null,
+      invoice_mail_body: data.invoice_mail_body || null,
     }))
     .patch('/einstellungen/email', { preserveScroll: true, onSuccess: () => emit('saved') })
 }
@@ -86,6 +96,22 @@ defineExpose({ form, submit })
           <Label :for="id">{{ $t('settings.mailSignatureFieldLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
           <Textarea :id v-model="form.mail_signature" rows="4" />
         </Field>
+      </div>
+    </FormSection>
+
+    <FormSection :title="$t('settings.mailInvoiceLabel')">
+      <div class="flex flex-col gap-4">
+        <Field :error="form.errors.invoice_mail_subject" v-slot="{ id }">
+          <Label :for="id">{{ $t('settings.mailInvoiceSubject') }} <em>{{ $t('settings.optional') }}</em></Label>
+          <Input :id v-model="form.invoice_mail_subject" type="text" />
+        </Field>
+        <Field :error="form.errors.invoice_mail_body" v-slot="{ id }">
+          <Label :for="id">{{ $t('settings.mailInvoiceBody') }} <em>{{ $t('settings.optional') }}</em></Label>
+          <Textarea :id v-model="form.invoice_mail_body" rows="6" />
+        </Field>
+        <div class="flex flex-wrap gap-1.5">
+          <Button v-for="field in FIELDS" :key="field" variant="outline" type="button" @click="insert(field)">{{ $t(`settings.mailField.${field}`) }}</Button>
+        </div>
       </div>
     </FormSection>
 

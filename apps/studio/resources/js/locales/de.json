@@ -1387,6 +1387,16 @@
     "mailReplyToLabel": "Antwort-an",
     "mailBccLabel": "Blindkopie",
     "mailSignatureLabel": "Signatur",
+    "mailInvoiceLabel": "Rechnung",
+    "mailInvoiceSubject": "Betreff",
+    "mailInvoiceBody": "Nachricht",
+    "mailField": {
+      "contact.name": "Kundenname",
+      "invoice.number": "Rechnungsnummer",
+      "invoice.gross": "Betrag",
+      "invoice.dueOn": "Fälligkeit",
+      "studio.name": "Studioname"
+    },
     "mailSignatureFieldLabel": "Text",
     "mailDeliveryLabel": "Versand",
     "mailClientsEnabledLabel": "E-Mails an Kunden",

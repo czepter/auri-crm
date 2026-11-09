@@ -17,6 +17,7 @@ const props = defineProps<{
     statusLabel: string
   }
   recipients: { name: string; email: string }[]
+  subject: string
   message: string
   mailHtml: string
 }>()
@@ -40,7 +41,7 @@ function send({ subject, message }: { subject: string; message: EditorDocument }
 <template>
   <SendByMailView
     :recipients="recipients"
-    :subject="`${$t('payments.invoice')} ${invoice.number}`"
+    :subject="subject"
     :message="message"
     :mail-html="mailHtml"
     @cancel="cancel"

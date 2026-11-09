@@ -434,6 +434,7 @@ class InvoiceController extends Controller
                 'statusLabel' => __("payments.invoiceStatus.{$invoice->status()}"),
             ],
             'recipients' => $recipients->map(fn (Contact $contact) => ['name' => $contact->name, 'email' => $contact->email])->values(),
+            'subject' => InvoiceSent::defaultSubject($invoice),
             'message' => InvoiceSent::defaultMessage($invoice),
             'mailHtml' => MailPreview::html(
                 new InvoiceSent($invoice, '', MailPreview::MESSAGE),
