@@ -5,7 +5,6 @@ namespace App\Quotes\Notifications;
 use App\Crm\Models\Contact;
 use App\Crm\Support\CaseMergeData;
 use App\Documents\Support\DocumentMergeData;
-use App\Documents\Support\MergeFieldResolver;
 use App\Models\StudioSettings;
 use App\Portal\Support\LegalTexts;
 use App\Quotes\Models\Quote;
@@ -47,26 +46,21 @@ class QuoteSent extends Notification
         private readonly ?string $customMessage = null,
     ) {}
 
-    /** The studio's own wording with its merge fields filled, or null where it wrote none. */
-    public static function templated(Quote $quote, string $column): ?string
+    /** @return array<string, mixed> */
+    public static function mergeData(Quote $quote): array
     {
-        $template = StudioSettings::current()->{$column};
-
-        if (blank($template)) {
-            return null;
-        }
-
         $case = $quote->case;
 
-        return MergeFieldResolver::resolve($template, [
+        return [
             ...app(DocumentMergeData::class)->forCase($case),
             'contact' => CaseMergeData::contact($case->primaryContact()),
             'quote' => [
                 'number' => $quote->number,
+                'sentOn' => $quote->sent_at?->format('d.m.Y') ?? '',
                 'validUntil' => $quote->valid_until?->format('d.m.Y') ?? '',
                 'total' => DocumentMergeData::money((int) $quote->gross()),
             ],
-        ]);
+        ];
     }
 
     /** @return list<string> */

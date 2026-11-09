@@ -278,6 +278,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::redirect('/dokumentvorlagen', '/vorlagen?typ=dokumente')->name('document-templates.index');
         Route::get('/dokumentvorlagen/neu', [DocumentTemplateController::class, 'create'])->name('document-templates.create');
         Route::post('/dokumentvorlagen', [DocumentTemplateController::class, 'store'])->name('document-templates.store');
+        Route::post('/dokumentvorlagen/email', [DocumentTemplateController::class, 'storeFromMail'])->name('document-templates.store-mail');
         Route::post('/dokumentvorlagen/vorschau', [DocumentTemplateController::class, 'preview'])
             ->name('document-templates.preview');
         Route::get('/dokumentvorlagen/{documentTemplate}', [DocumentTemplateController::class, 'edit'])
@@ -697,6 +698,8 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/angebote/{quote}/vorschau', [QuoteController::class, 'previewSheet'])->name('quotes.preview.sheet');
         Route::get('/angebote/{quote}/senden', [QuoteController::class, 'compose'])->name('quotes.compose');
         Route::post('/angebote/{quote}/versenden', [QuoteController::class, 'send'])->name('quotes.send');
+        Route::get('/angebote/{quote}/nachfassen', [QuoteController::class, 'followUpForm'])->name('quotes.follow-up.form');
+        Route::post('/angebote/{quote}/nachfassen', [QuoteController::class, 'followUp'])->name('quotes.follow-up');
         Route::post('/angebote/{quote}/versendet', [QuoteController::class, 'markSent'])->name('quotes.mark-sent');
         Route::post('/angebote/{quote}/angenommen', [QuoteController::class, 'markAccepted'])->name('quotes.mark-accepted');
         Route::post('/angebote/{quote}/empfaenger-uebernehmen', [QuoteController::class, 'adoptRecipient'])

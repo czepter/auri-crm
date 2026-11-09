@@ -95,8 +95,7 @@ it('attaches the PDF to the mail and stamps sent_at once', function () {
 });
 
 it('starts the compose screen from the studio’s own wording, merge fields resolved', function () {
-    app(UpdateStudioSetting::class)('invoice_mail_subject', 'Rechnung {{ invoice.number }} von {{ studio.name }}', null);
-    app(UpdateStudioSetting::class)('invoice_mail_body', 'Hallo {{ contact.name }}, anbei {{ invoice.gross }}, fällig am {{ invoice.dueOn }}.', null);
+    mailDefault('invoice_sent', 'Rechnung {{ invoice.number }} von {{ studio.name }}', 'Hallo {{ contact.name }}, anbei {{ invoice.gross }}, fällig am {{ invoice.dueOn }}.');
 
     $invoice = app(IssueInvoice::class)(invoiceablePlan());
 

@@ -22,9 +22,10 @@ const props = defineProps<{
   pane: 'payment' | 'receipts' | 'email' | 'general'
   fontPairs: { value: string; label: string; description: string }[]
   mailSenderFromEnv: { name: boolean; address: boolean }
+  mailTemplates: { id: string; name: string }[]
   settings: App.Settings.Data.StudioSettingsData
 }>()
-useLiveProps(['settings', 'mailSenderFromEnv'])
+useLiveProps(['settings', 'mailSenderFromEnv', 'mailTemplates'])
 
 // Template refs onto the extracted panes — each exposes { form, submit }
 // (see panes/ProfileForm.vue and its siblings). Only the panes of the current
@@ -131,6 +132,9 @@ const mailPreview = computed(() => {
     replyTo: mail?.mail_reply_to ?? props.settings.mailReplyTo ?? '',
     bcc: mail?.mail_bcc ?? props.settings.mailBcc ?? '',
     signature: mail?.mail_signature ?? props.settings.mailSignature ?? '',
+    headerName: mail?.mail_header_name ?? props.settings.mailHeaderName,
+    footerLegal: mail?.mail_footer_legal ?? props.settings.mailFooterLegal,
+    footerExtra: mail?.mail_footer_extra ?? props.settings.mailFooterExtra ?? '',
   }
 })
 </script>
@@ -161,7 +165,7 @@ const mailPreview = computed(() => {
       </template>
 
       <ReceiptsForm v-else-if="pane === 'receipts'" ref="receiptsRef" :settings="settings" />
-      <EmailForm v-else-if="pane === 'email'" ref="emailRef" :settings="settings" :sender-from-env="mailSenderFromEnv" />
+      <EmailForm v-else-if="pane === 'email'" ref="emailRef" :settings="settings" :mail-templates="mailTemplates" :sender-from-env="mailSenderFromEnv" />
 
       <template #preview>
         <PortalFrame v-if="pane === 'general' && profileRef" :query="brandQuery" />

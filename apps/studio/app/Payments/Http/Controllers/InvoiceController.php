@@ -10,9 +10,12 @@ use App\Crm\Actions\CreateContact;
 use App\Crm\Data\CaseSuggestionData;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Crm\Models\Shoot;
 use App\Documents\Actions\SeedStarterTemplates;
+use App\Documents\Data\MailTemplateData;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Support\InlineHtmlSanitizer;
+use App\Documents\Support\MergeFieldVocabulary;
 use App\Documents\Support\StarterTemplateCatalog;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
@@ -33,14 +36,14 @@ use App\Payments\Models\Invoice;
 use App\Payments\Models\InvoiceItem;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
-use App\Quotes\Enums\QuoteStatus;
-use App\Quotes\Models\Quote;
-use App\Quotes\Models\QuoteItem;
 use App\Payments\Notifications\CreditNoteSent;
 use App\Payments\Notifications\InvoiceSent;
 use App\Payments\Support\InvoiceDocument;
 use App\Payments\Support\InvoiceFigures;
 use App\Payments\Support\InvoiceMergeData;
+use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Models\Quote;
+use App\Quotes\Models\QuoteItem;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Support\StudioReadiness;
 use Illuminate\Http\JsonResponse;
@@ -437,6 +440,10 @@ class InvoiceController extends Controller
             'recipients' => $recipients->map(fn (Contact $contact) => ['name' => $contact->name, 'email' => $contact->email])->values(),
             'subject' => InvoiceSent::defaultSubject($invoice),
             'message' => InvoiceSent::defaultMessage($invoice),
+            'mailTemplates' => MailTemplateData::forCompose($invoice->case?->primaryShoot?->kind, app(InvoiceMergeData::class)->forInvoice($invoice)),
+            'mergeFields' => collect(MergeFieldVocabulary::samples())->map(fn (string $sample, string $path) => ['path' => $path, 'sample' => $sample])->values()->all(),
+            'shootKinds' => Shoot::kindSuggestions(),
+            'occasion' => 'invoice_sent',
             'mailHtml' => MailPreview::html(
                 new InvoiceSent($invoice, '', MailPreview::MESSAGE),
                 $recipients->first() ?? (object) [],

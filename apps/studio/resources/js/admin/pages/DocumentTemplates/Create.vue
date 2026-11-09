@@ -52,7 +52,7 @@ function scopeOf(starter: Starter) {
 }
 
 const doc = ref<EditorDocument>({ blocks: [] })
-const form = useForm({ name: '', body: '', blocks: doc.value, type: 'quote', shoot_kind: '' })
+const form = useForm({ name: '', subject: '', body: '', blocks: doc.value, type: 'quote', shoot_kind: '' })
 
 // T-16: the screen opens on a choice rather than on an empty canvas. A
 // starter is a starting point and not a link — choosing one copies its blocks
@@ -128,6 +128,10 @@ function submit() {
             <Label for="name">{{ $t('documentTemplates.name') }}</Label>
             <Input id="name" v-model="form.name" type="text" required />
             <p v-if="form.errors.name" class="text-small leading-[1.45] text-destructive">{{ form.errors.name }}</p>
+          </div>
+          <div v-if="chosen !== null && form.type === 'mail'" class="flex min-w-0 flex-col gap-1.5 max-w-[240px]">
+            <Label for="subject">{{ $t('sendMail.subject') }}</Label>
+            <Input id="subject" v-model="form.subject" type="text" />
           </div>
         </div>
 

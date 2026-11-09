@@ -16,6 +16,11 @@ const props = defineProps<{
   subject: string | null
   message: string | null
   mailHtml: string
+  followUp?: boolean
+  mailTemplates?: App.Documents.Data.MailTemplateData[]
+  mergeFields?: { path: string; sample: string }[]
+  shootKinds?: string[]
+  occasion?: string
 }>()
 useLiveProps([])
 
@@ -39,20 +44,22 @@ const message: EditorDocument = props.message === null
   ? fallback
   : { blocks: props.message.split('\n\n').map((text) => ({ type: 'paragraph', data: { text } })) }
 
+const back = () => (props.followUp ? `/anfragen/${props.projectId}` : `/auftraege/${props.projectId}`)
+
 function cancel() {
-  router.visit(`/auftraege/${props.projectId}`)
+  router.visit(back())
 }
 
 const processing = ref(false)
 
 function send({ subject, message }: { subject: string; message: EditorDocument }) {
   router.post(
-    `/angebote/${props.quote.id}/versenden`,
+    `/angebote/${props.quote.id}/${props.followUp ? 'nachfassen' : 'versenden'}`,
     { subject, message: toPlainText(message) },
     {
       onStart: () => (processing.value = true),
       onFinish: () => (processing.value = false),
-      onSuccess: () => router.visit(`/auftraege/${props.projectId}`),
+      onSuccess: () => router.visit(back()),
       onError: (errors) => toast.error(errors.quote),
     },
   )
@@ -65,6 +72,10 @@ function send({ subject, message }: { subject: string; message: EditorDocument }
     :subject="subject ?? $t('quotes.title')"
     :message="message"
     :mail-html="mailHtml"
+    :templates="mailTemplates"
+    :merge-fields="mergeFields"
+    :shoot-kinds="shootKinds"
+    :save-as="occasion ? { occasion, quote: quote.id } : undefined"
     :processing="processing"
     @cancel="cancel"
     @send="send"

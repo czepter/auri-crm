@@ -249,8 +249,7 @@ it('opens the Gutschrift builder on what was paid, and not once all of it is cre
 
 it('sends the Gutschrift in the studio’s own wording where the builder asks for it', function () {
     Notification::fake();
-    app(UpdateStudioSetting::class)('credit_note_mail_subject', 'Gutschrift {{ creditNote.number }}', null);
-    app(UpdateStudioSetting::class)('credit_note_mail_body', 'Hallo {{ contact.name }}, {{ creditNote.gross }} gehen zurück.', null);
+    mailDefault('credit_note_sent', 'Gutschrift {{ creditNote.number }}', 'Hallo {{ contact.name }}, {{ creditNote.gross }} gehen zurück.');
 
     $paid = creditableInstallment();
     $paid->invoice->contact->update(['email' => 'lena@example.test']);

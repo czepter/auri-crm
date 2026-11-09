@@ -30,4 +30,33 @@ class MergeFieldResolver
             $body,
         );
     }
+
+    /**
+     * The reverse of resolve(): puts a field back wherever its value stands in
+     * $text. Longest values first, so a number is not eaten by a shorter one
+     * inside it, and nothing under four characters, which would turn every
+     * "ab" into a field.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public static function unresolve(string $text, array $data): string
+    {
+        $values = [];
+
+        foreach (MergeFieldVocabulary::paths() as $path) {
+            $value = data_get($data, $path);
+
+            if (is_string($value) && mb_strlen($value) >= 4) {
+                $values[$path] = $value;
+            }
+        }
+
+        uasort($values, fn (string $a, string $b) => mb_strlen($b) <=> mb_strlen($a));
+
+        foreach ($values as $path => $value) {
+            $text = str_replace($value, "{{ {$path} }}", $text);
+        }
+
+        return $text;
+    }
 }

@@ -48,14 +48,10 @@ const settings: App.Settings.Data.StudioSettingsData = {
   mailSignature: 'Christian Zepter\nAtelier Nordlicht',
   mailBcc: null,
   mailClientsEnabled: true,
-  invoiceMailSubject: null,
-  invoiceMailBody: null,
-  quoteMailSubject: null,
-  quoteMailBody: null,
-  reminderMailSubject: null,
-  reminderMailBody: null,
-  creditNoteMailSubject: null,
-  creditNoteMailBody: null,
+  mailDefaults: {},
+  mailHeaderName: true,
+  mailFooterLegal: true,
+  mailFooterExtra: null,
 }
 
 const meta = {
@@ -66,6 +62,7 @@ const meta = {
     pane: 'general',
     fontPairs,
     mailSenderFromEnv: { name: false, address: false },
+    mailTemplates: [{ id: 'mt1', name: 'Angebot verschickt' }],
     settings,
   },
 } satisfies Meta<typeof Index>

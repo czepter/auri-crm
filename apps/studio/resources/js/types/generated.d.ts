@@ -576,6 +576,7 @@ namespace Data {
 export type DocumentTemplateData = {
 id: string,
 name: string,
+subject: string | null,
 body: string,
 blocks: Record<string, any> | null,
 version: number,
@@ -594,6 +595,7 @@ counts: boolean,
 export type MailTemplateData = {
 id: string,
 name: string,
+subject: string | null,
 body: string,
 unknownFields: string[],
 };
@@ -1227,14 +1229,10 @@ mailReplyTo: string | null,
 mailSignature: string | null,
 mailBcc: string | null,
 mailClientsEnabled: boolean,
-invoiceMailSubject: string | null,
-invoiceMailBody: string | null,
-quoteMailSubject: string | null,
-quoteMailBody: string | null,
-reminderMailSubject: string | null,
-reminderMailBody: string | null,
-creditNoteMailSubject: string | null,
-creditNoteMailBody: string | null,
+mailDefaults: Record<string, string | null>,
+mailHeaderName: boolean,
+mailFooterLegal: boolean,
+mailFooterExtra: string | null,
 };
 }
 namespace Enums {

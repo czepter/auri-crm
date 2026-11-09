@@ -12,6 +12,7 @@ class DocumentTemplateData extends Data
     public function __construct(
         public string $id,
         public string $name,
+        public ?string $subject,
         public string $body,
         /** @var array<string, mixed>|null */
         public ?array $blocks,
@@ -26,6 +27,7 @@ class DocumentTemplateData extends Data
         return new self(
             id: $template->public_id,
             name: $template->name,
+            subject: $template->subject,
             body: $template->body,
             blocks: $template->blocks,
             version: $template->version,

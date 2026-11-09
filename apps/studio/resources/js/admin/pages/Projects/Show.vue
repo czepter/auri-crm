@@ -10,12 +10,12 @@ import NoteThread from "@/admin/components/crm/NoteThread.vue";
 import CappedList from "@/admin/components/crm/CappedList.vue";
 import Composer from "@/admin/components/crm/Composer.vue";
 import EmptyTiles from "@/admin/components/crm/EmptyTiles.vue";
-import InstallmentPaidDialog from "@/admin/components/payments/InstallmentPaidDialog.vue";
 import MetricBand from "@/admin/components/crm/MetricBand.vue";
 import type { BandMetric } from "@/admin/components/crm/MetricBand.vue";
-import NextStepCard from "@/admin/components/crm/NextStepCard.vue";
 import Panel from "@/admin/components/crm/Panel.vue";
-import PhaseButton from "@/admin/components/crm/PhaseButton.vue";
+import ProjectChain from "@/admin/components/crm/ProjectChain.vue";
+import type { ChainRow } from "@/admin/components/crm/ProjectChain.vue";
+import { DropdownMenuItem } from "@/ui/dropdown-menu";
 import ProjectQueue from "@/admin/components/crm/ProjectQueue.vue";
 import ProjectStep from "@/admin/components/crm/ProjectStep.vue";
 import ShootAdvance from "@/admin/components/crm/ShootAdvance.vue";
@@ -31,10 +31,9 @@ import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
 import Section from "@/ui/page/Section.vue";
 import { formatEurosRounded } from "@/lib/money";
 import Chip from "@/ui/page/Chip.vue";
-import { quoteTone } from "@/admin/lib/quoteDisplay";
 import { dayWithWeekday as day, daysUntil } from "@/admin/lib/dates";
 import { installmentChipClass } from "@/admin/lib/payments";
-import { bandMetrics, isBare, splitNextStep, timelineWindow } from "@/admin/lib/projectOverview";
+import { bandMetrics, isBare, timelineWindow } from "@/admin/lib/projectOverview";
 import { chipClass, dayAndMonth } from "@/admin/lib/shoots";
 import { groupEntries } from "@/admin/lib/groupEntries";
 import { nextStep, paymentCall, stepRows } from "@/admin/lib/projectNextStep";
@@ -140,6 +139,12 @@ function euro(minor: string | number | null) {
     return minor === null ? "—" : formatEurosRounded(Number(minor));
 }
 
+const phaseItems = computed(() => props.stages.filter((option) => option.value !== props.stage));
+
+function issueRate(id: string) {
+    router.post(`/raten/${id}/rechnung`, {}, { preserveScroll: true });
+}
+
 function movePhase(stage: string) {
     router.post(`${base.value}/stufe`, { stage }, { preserveScroll: true });
 }
@@ -147,12 +152,15 @@ function movePhase(stage: string) {
 const open = computed(() => props.tasks.filter((task) => !task.isDone));
 const done = computed(() => props.tasks.filter((task) => task.isDone));
 const overdue = computed(() => open.value.filter((task) => task.isOverdue));
-const next = computed(() => splitNextStep(props.tasks));
 const showDone = ref(false);
 
 const plan = computed(() => props.header.paymentPlan);
+const canIssue = computed(() => props.header.canManagePaymentPlan && !plan.value?.settledOn);
 const installments = computed(() => plan.value?.installments.filter((row) => row.status !== "cancelled") ?? []);
-const nextInstallment = computed(() => installments.value.find((row) => row.status !== "paid"));
+// A rate that is due, or due within two weeks, and has no invoice yet is what the head offers.
+const dueRate = computed(() =>
+    canIssue.value ? installments.value.find((row) => !row.invoiceId && row.status !== "paid" && daysUntil(row.dueOn) <= 14) : undefined,
+);
 const paid = computed(() => (plan.value ? plan.value.total - plan.value.openTotal : 0));
 const paidShare = computed(() => (plan.value?.total ? Math.round((paid.value / plan.value.total) * 100) : 0));
 
@@ -213,7 +221,7 @@ const STATE = {
 };
 const stateOf = (shoot: App.Crm.Data.ShootData) => STATE[chipClass(shoot, props.header.position.value)];
 
-const taskRows = computed(() => (showDone.value ? done.value : next.value.rest));
+const taskRows = computed(() => (showDone.value ? done.value : open.value));
 
 const events = computed(() => groupEntries(props.thread.filter((entry) => entry.system).reverse()));
 const byline = (author: string | null) =>
@@ -243,7 +251,44 @@ function saveKontakte() {
     });
 }
 
-const quoteItems = computed(() => props.quote?.items.map((item) => item.title).join(", ") ?? "");
+const hasContract = computed(() => props.header.canManageContracts && !!contractTab.value);
+const contractTab = computed(() => props.header.tabs.find((tab) => tab.key === "documents")?.children.find((child) => child.key === "contract"));
+
+// What the case came from and became. The inquiry has no page of its own once
+// booked, so its row names it and links nowhere.
+const chain = computed<ChainRow[]>(() =>
+    ([
+        props.inquiry
+            ? {
+                  key: "inquiry",
+                  label: t("project.lead"),
+                  title: props.inquiry.typeLabel,
+                  meta: [props.inquiry.capturedAt ? day(props.inquiry.capturedAt) : null, props.inquiry.sourceLabel].filter(Boolean).join(" · "),
+              }
+            : null,
+        props.quote
+            ? {
+                  key: "quote",
+                  label: t("lead.quote"),
+                  title: props.quote.number ?? t("lead.quote"),
+                  meta: [props.quote.statusLabel, props.quote.validUntil ? t("lead.validUntil", { date: day(props.quote.validUntil) }) : null].filter(Boolean).join(" · "),
+                  amount: euro(props.quote.net),
+                  href: `/angebote/${props.quote.id}`,
+                  action: t("project.view"),
+              }
+            : null,
+        hasContract.value
+            ? {
+                  key: "contract",
+                  label: t("project.contract"),
+                  title: t("project.contract"),
+                  meta: contractTab.value?.count ? t("project.chainContract") : null,
+                  href: `${base.value}/vertrag`,
+                  action: t("project.view"),
+              }
+            : null,
+    ] as (ChainRow | null)[]).filter((row): row is ChainRow => row !== null),
+);
 
 const detailsEditing = ref(false);
 
@@ -294,10 +339,12 @@ function complete(row: App.Crm.Data.TaskRowData) {
             <template #left>
                 <ProjectQueue :groups="header.queue" @update:rows="reachable = $event" />
             </template>
-            <template #actions>
-                <PhaseButton :stages="stages" :current="stage" @select="movePhase" />
+            <template v-if="phaseItems.length" #menu>
+                <DropdownMenuItem v-for="option in phaseItems" :key="option.value" @select="movePhase(option.value)">
+                    {{ $t("project.switchTo", { stage: option.label }) }}
+                </DropdownMenuItem>
             </template>
-            <template v-if="sendHref || createQuote || step || callHref || addShoot || addGallery || completeNow" #stage>
+            <template v-if="sendHref || createQuote || dueRate || step || callHref || addShoot || addGallery || completeNow" #stage>
                 <Button v-if="callHref" variant="outline" as-child class="max-[640px]:min-h-11">
                     <a :href="callHref">{{ $t("contacts.call") }}</a>
                 </Button>
@@ -306,6 +353,9 @@ function complete(row: App.Crm.Data.TaskRowData) {
                 </Button>
                 <Button v-else-if="createQuote" variant="pill" as-child class="max-[640px]:min-h-11">
                     <Link :href="`/angebote/neu?projekt=${header.id}`">{{ $t("quotes.create") }}</Link>
+                </Button>
+                <Button v-else-if="dueRate" variant="pill" type="button" class="max-[640px]:min-h-11" @click="issueRate(dueRate.id)">
+                    {{ $t("payments.issueInvoice") }}
                 </Button>
                 <Button v-else-if="addGallery" variant="pill" as-child class="max-[640px]:min-h-11">
                     <Link :href="galleriesHref!">{{ $t("galleries.create") }}</Link>
@@ -336,21 +386,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         </div>
                     </Alert>
 
-            <div
-                v-if="next.step || hasBand"
-                class="mt-5 grid gap-4 max-[900px]:grid-cols-1"
-                :class="next.step && hasBand ? 'grid-cols-[minmax(0,5fr)_minmax(0,7fr)]' : 'grid-cols-1'"
-            >
-                <NextStepCard
-                    v-if="next.step"
-                    :title="next.step.title"
-                    :meta="[next.step.audienceLabel, next.step.shootLabel].filter(Boolean).join(' · ')"
-                    :late="next.step.dueOn ? $t('project.overdueSince', { date: day(next.step.dueOn) }) : null"
-                    :action="$t('project.markDone')"
-                    @done="complete(next.step)"
-                />
-                <MetricBand :metrics="metrics" :columns="next.step ? 2 : bandMetrics(metrics).length" />
-            </div>
+            <MetricBand v-if="hasBand" class="mt-5" :metrics="metrics" :columns="bandMetrics(metrics).length" />
 
             <EmptyTiles v-if="bare" class="mt-4" :tiles="tiles" />
             <Panel v-else class="mt-4" :title="$t('lead.dates')" :count="shoots.length > 4 ? shoots.length : null">
@@ -451,6 +487,8 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         </CappedList>
                     </Panel>
 
+                    <ProjectChain v-if="chain.length > 1" :title="$t('project.chain')" :rows="chain" />
+
                     <Panel v-if="installments.length && plan" :title="$t('dashboard.payments')">
                         <template v-if="header.canManagePaymentPlan && installments.some((row) => !row.invoiceNumber)" #action>
                             <Button variant="pill-muted" class="ml-auto min-h-10 px-4" as-child>
@@ -469,63 +507,27 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             :key="row.id"
                             class="grid min-h-16 grid-cols-[1fr_auto_auto] items-center gap-3 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
                         >
-                            <div>
-                                <b class="font-semibold">{{ day(row.dueOn) }}</b>
-                                <div class="text-small text-ink-2">{{ euro(row.amount) }}</div>
+                            <div class="min-w-0">
+                                <b class="block truncate font-semibold">{{ row.label }}</b>
+                                <div class="truncate text-small text-ink-2">
+                                    {{ [row.invoiceNumber, $t("project.dueOn", { date: day(row.dueOn) }), euro(row.amount)].filter(Boolean).join(" · ") }}
+                                </div>
                             </div>
-                            <Chip :tone="toneOf[installmentChipClass(row)]">{{ row.statusLabel }}</Chip>
-                            <InstallmentPaidDialog
-                                v-if="header.canManagePaymentPlan && row === nextInstallment && !plan.settledOn"
-                                :installment-id="row.id"
-                                :remaining="row.remaining"
-                                trigger-class="min-h-10"
-                            />
+                            <Chip v-if="row.invoiceId" :tone="toneOf[installmentChipClass(row)]">{{ row.statusLabel }}</Chip>
+                            <Chip v-else tone="neutral">{{ $t("project.noInvoice") }}</Chip>
+                            <Button v-if="row.invoiceId" variant="pill-muted" class="min-h-10 px-4" as-child>
+                                <Link :href="`/rechnungen/${row.invoiceId}`">{{ $t("project.toInvoice") }}</Link>
+                            </Button>
+                            <Button v-else-if="canIssue" variant="pill-muted" type="button" class="min-h-10 px-4" @click="issueRate(row.id)">
+                                {{ $t("payments.issueInvoice") }}
+                            </Button>
                             <span v-else />
                         </div>
                     </Panel>
 
-                    <Panel v-if="events.length" :title="$t('project.history')">
-                        <CappedList
-                            v-slot="{ item: entry, index }"
-                            :items="events"
-                            :limit="5"
-                            :more-href="`${base}/verlauf`"
-                        >
-                            <div class="py-1.5" :class="index === 0 && 'text-foreground'">
-                                <b class="block font-semibold">{{ entry.count > 1 ? $t("project.historyCount", { body: entry.body, count: entry.count }) : entry.body }}</b>
-                                <span class="text-small text-ink-2">
-                                    {{ [entry.at ? day(entry.at) : null, byline(entry.author)].filter(Boolean).join(" · ") }}
-                                </span>
-                            </div>
-                        </CappedList>
-                    </Panel>
                 </div>
 
                 <div class="flex flex-col gap-4">
-                    <Panel v-if="!bare" :title="$t('lead.quote')">
-                        <template #action>
-                            <div class="flex flex-1 items-center gap-2">
-                                <template v-if="quote">
-                                    <span v-if="quote.number" class="text-small text-ink-2">{{ quote.number }}</span>
-                                    <Chip :tone="quoteTone(quote.status)">{{ quote.statusLabel }}</Chip>
-                                    <Link
-                                        class="ml-auto inline-flex min-h-10 items-center text-ui font-medium text-ring no-underline hover:underline"
-                                        :href="`/angebote/${quote.id}`"
-                                    >{{ $t("project.view") }}</Link>
-                                </template>
-                                <Button v-else-if="header.canManageQuotes" variant="pill-muted" class="ml-auto min-h-10 px-4" as-child>
-                                    <Link :href="`/angebote/neu?projekt=${header.id}`">{{ $t("lead.quote") }}</Link>
-                                </Button>
-                            </div>
-                        </template>
-                        <template v-if="quote">
-                            <p class="m-0">{{ quoteItems }}</p>
-                            <p class="mt-1 mb-0 text-small text-ink-2">
-                                {{ [$t("project.netAmount", { amount: euro(quote.net) }), quote.validUntil ? $t("lead.validUntil", { date: day(quote.validUntil) }) : null].filter(Boolean).join(" · ") }}
-                            </p>
-                        </template>
-                    </Panel>
-
                     <Panel :title="$t('project.client')">
                         <template v-if="header.canManageShoots && !kontakteEditing" #action>
                             <Button class="ml-auto min-h-10 px-4" variant="ghost" type="button" @click="kontakteEditing = true">
@@ -603,6 +605,22 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             />
                             <p v-if="anfrage.errors.inquiry_text" class="mt-1.5 mb-0 text-small text-destructive">{{ anfrage.errors.inquiry_text }}</p>
                         </div>
+                    </Panel>
+
+                    <Panel v-if="events.length" :title="$t('project.history')">
+                        <CappedList
+                            v-slot="{ item: entry, index }"
+                            :items="events"
+                            :limit="5"
+                            :more-href="`${base}/verlauf`"
+                        >
+                            <div class="py-1.5" :class="index === 0 && 'text-foreground'">
+                                <b class="block font-semibold">{{ entry.count > 1 ? $t("project.historyCount", { body: entry.body, count: entry.count }) : entry.body }}</b>
+                                <span class="text-small text-ink-2">
+                                    {{ [entry.at ? day(entry.at) : null, byline(entry.author)].filter(Boolean).join(" · ") }}
+                                </span>
+                            </div>
+                        </CappedList>
                     </Panel>
                 </div>
             </div>
