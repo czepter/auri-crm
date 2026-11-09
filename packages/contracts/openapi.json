@@ -37,10 +37,47 @@
                                     "type": "object",
                                     "properties": {
                                         "comments": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            }
+                                            "anyOf": [
+                                                {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "body": {
+                                                                "type": "string"
+                                                            },
+                                                            "author": {
+                                                                "anyOf": [
+                                                                    {
+                                                                        "type": "string"
+                                                                    },
+                                                                    {
+                                                                        "type": "null"
+                                                                    }
+                                                                ]
+                                                            },
+                                                            "own": {
+                                                                "type": "string"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "body",
+                                                            "author",
+                                                            "own",
+                                                            "created_at"
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -2268,6 +2305,31 @@
                                             "null"
                                         ]
                                     },
+                                    "download_rule": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "enum": [
+                                            "open",
+                                            "after_payment",
+                                            "off",
+                                            null
+                                        ]
+                                    },
+                                    "view_mode": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "enum": [
+                                            "none",
+                                            "text",
+                                            "logo",
+                                            "locked",
+                                            null
+                                        ]
+                                    },
                                     "lists_enabled": {
                                         "type": [
                                             "boolean",
@@ -2409,6 +2471,23 @@
                                     },
                                     "downloads_enabled": {
                                         "type": "boolean"
+                                    },
+                                    "download_rule": {
+                                        "type": "string",
+                                        "enum": [
+                                            "open",
+                                            "after_payment",
+                                            "off"
+                                        ]
+                                    },
+                                    "view_mode": {
+                                        "type": "string",
+                                        "enum": [
+                                            "none",
+                                            "text",
+                                            "logo",
+                                            "locked"
+                                        ]
                                     },
                                     "lists_enabled": {
                                         "type": "boolean"
@@ -2864,17 +2943,7 @@
                                                 },
                                                 "sizes": {
                                                     "type": "array",
-                                                    "prefixItems": [
-                                                        {
-                                                            "type": "integer"
-                                                        },
-                                                        {
-                                                            "type": "integer"
-                                                        }
-                                                    ],
-                                                    "minItems": 2,
-                                                    "maxItems": 2,
-                                                    "additionalItems": false
+                                                    "items": {}
                                                 },
                                                 "builds": {
                                                     "type": "array",
@@ -2890,7 +2959,23 @@
                                                             "parts": {
                                                                 "type": "array",
                                                                 "items": {
-                                                                    "type": "string"
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "number": {
+                                                                            "type": "integer"
+                                                                        },
+                                                                        "bytes": {
+                                                                            "type": "integer"
+                                                                        },
+                                                                        "path": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    },
+                                                                    "required": [
+                                                                        "number",
+                                                                        "bytes",
+                                                                        "path"
+                                                                    ]
                                                                 }
                                                             }
                                                         },
@@ -3131,17 +3216,7 @@
                                                 },
                                                 "sizes": {
                                                     "type": "array",
-                                                    "prefixItems": [
-                                                        {
-                                                            "type": "integer"
-                                                        },
-                                                        {
-                                                            "type": "integer"
-                                                        }
-                                                    ],
-                                                    "minItems": 2,
-                                                    "maxItems": 2,
-                                                    "additionalItems": false
+                                                    "items": {}
                                                 },
                                                 "builds": {
                                                     "type": "array",
@@ -3157,7 +3232,23 @@
                                                             "parts": {
                                                                 "type": "array",
                                                                 "items": {
-                                                                    "type": "string"
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "number": {
+                                                                            "type": "integer"
+                                                                        },
+                                                                        "bytes": {
+                                                                            "type": "integer"
+                                                                        },
+                                                                        "path": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    },
+                                                                    "required": [
+                                                                        "number",
+                                                                        "bytes",
+                                                                        "path"
+                                                                    ]
                                                                 }
                                                             }
                                                         },
@@ -3310,6 +3401,28 @@
                         }
                     },
                     "422": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
                         "description": "An error",
                         "content": {
                             "application/json": {
@@ -3566,12 +3679,37 @@
                             "Cache-Control": {
                                 "schema": {
                                     "type": "string",
-                                    "const": "public, max-age=31536000, immutable"
+                                    "enum": [
+                                        "public, max-age=31536000, immutable",
+                                        "private, max-age=300"
+                                    ]
                                 }
                             }
                         }
                     },
                     "422": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
                         "description": "An error",
                         "content": {
                             "application/json": {
@@ -3804,6 +3942,87 @@
                                                         "draft": {
                                                             "type": "boolean"
                                                         },
+                                                        "design": {
+                                                            "type": "object",
+                                                            "additionalProperties": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "cover": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "key": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "focal": {
+                                                                    "type": [
+                                                                        "object",
+                                                                        "null"
+                                                                    ],
+                                                                    "properties": {
+                                                                        "x": {
+                                                                            "type": [
+                                                                                "integer",
+                                                                                "null"
+                                                                            ]
+                                                                        },
+                                                                        "y": {
+                                                                            "type": [
+                                                                                "integer",
+                                                                                "null"
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    "required": [
+                                                                        "x",
+                                                                        "y"
+                                                                    ]
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "key",
+                                                                "focal"
+                                                            ]
+                                                        },
+                                                        "permissions": {
+                                                            "type": "object",
+                                                            "additionalProperties": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "intro": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "locked": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "downloads": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "downloadAfterPayment": {
+                                                            "type": "string"
+                                                        },
+                                                        "sets": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "id",
+                                                                    "name"
+                                                                ]
+                                                            }
+                                                        },
                                                         "version": {
                                                             "type": "object",
                                                             "properties": {
@@ -3825,6 +4044,12 @@
                                                                             "key": {
                                                                                 "type": "string"
                                                                             },
+                                                                            "set": {
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
+                                                                            },
                                                                             "width": {
                                                                                 "type": [
                                                                                     "string",
@@ -3840,6 +4065,7 @@
                                                                         },
                                                                         "required": [
                                                                             "key",
+                                                                            "set",
                                                                             "width",
                                                                             "height"
                                                                         ]
@@ -3858,6 +4084,14 @@
                                                         "public_id",
                                                         "title",
                                                         "draft",
+                                                        "design",
+                                                        "cover",
+                                                        "permissions",
+                                                        "intro",
+                                                        "locked",
+                                                        "downloads",
+                                                        "downloadAfterPayment",
+                                                        "sets",
                                                         "version"
                                                     ]
                                                 }
@@ -3914,6 +4148,87 @@
                                                         "draft": {
                                                             "type": "boolean"
                                                         },
+                                                        "design": {
+                                                            "type": "object",
+                                                            "additionalProperties": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "cover": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "key": {
+                                                                    "type": [
+                                                                        "string",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "focal": {
+                                                                    "type": [
+                                                                        "object",
+                                                                        "null"
+                                                                    ],
+                                                                    "properties": {
+                                                                        "x": {
+                                                                            "type": [
+                                                                                "integer",
+                                                                                "null"
+                                                                            ]
+                                                                        },
+                                                                        "y": {
+                                                                            "type": [
+                                                                                "integer",
+                                                                                "null"
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    "required": [
+                                                                        "x",
+                                                                        "y"
+                                                                    ]
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "key",
+                                                                "focal"
+                                                            ]
+                                                        },
+                                                        "permissions": {
+                                                            "type": "object",
+                                                            "additionalProperties": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "intro": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "locked": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "downloads": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "downloadAfterPayment": {
+                                                            "type": "string"
+                                                        },
+                                                        "sets": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "id",
+                                                                    "name"
+                                                                ]
+                                                            }
+                                                        },
                                                         "version": {
                                                             "type": "object",
                                                             "properties": {
@@ -3929,7 +4244,36 @@
                                                                 "assets": {
                                                                     "type": "array",
                                                                     "items": {
-                                                                        "type": "string"
+                                                                        "type": "object",
+                                                                        "properties": {
+                                                                            "key": {
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
+                                                                            },
+                                                                            "set": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "width": {
+                                                                                "type": [
+                                                                                    "integer",
+                                                                                    "null"
+                                                                                ]
+                                                                            },
+                                                                            "height": {
+                                                                                "type": [
+                                                                                    "integer",
+                                                                                    "null"
+                                                                                ]
+                                                                            }
+                                                                        },
+                                                                        "required": [
+                                                                            "key",
+                                                                            "set",
+                                                                            "width",
+                                                                            "height"
+                                                                        ]
                                                                     }
                                                                 }
                                                             },
@@ -3945,6 +4289,14 @@
                                                         "public_id",
                                                         "title",
                                                         "draft",
+                                                        "design",
+                                                        "cover",
+                                                        "permissions",
+                                                        "intro",
+                                                        "locked",
+                                                        "downloads",
+                                                        "downloadAfterPayment",
+                                                        "sets",
                                                         "version"
                                                     ]
                                                 }
@@ -4180,7 +4532,68 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "type": "string"
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "projectId": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "projectName": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "subject": {
+                                                        "type": "string"
+                                                    },
+                                                    "who": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "snippet": {
+                                                        "type": "string"
+                                                    },
+                                                    "state": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "wartet",
+                                                            "unbeantwortet",
+                                                            "erledigt"
+                                                        ]
+                                                    },
+                                                    "waitingDays": {
+                                                        "type": [
+                                                            "integer",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "origin": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "mail",
+                                                            "portal"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "projectId",
+                                                    "projectName",
+                                                    "subject",
+                                                    "who",
+                                                    "snippet",
+                                                    "state",
+                                                    "waitingDays",
+                                                    "origin"
+                                                ]
                                             }
                                         }
                                     },
@@ -5304,6 +5717,12 @@
                                                     "null"
                                                 ]
                                             },
+                                            "gallery_preset_id": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
                                             "items": {
                                                 "type": "array",
                                                 "items": {
@@ -5454,6 +5873,12 @@
                                                 "type": "boolean"
                                             },
                                             "project_type_key": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "gallery_preset_id": {
                                                 "type": [
                                                     "string",
                                                     "null"
@@ -9365,6 +9790,12 @@
                         "type": "boolean"
                     },
                     "project_type_key": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "gallery_preset_id": {
                         "type": [
                             "string",
                             "null"
