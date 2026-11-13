@@ -208,6 +208,9 @@ jobs:
       - run: pnpm install --frozen-lockfile --filter @studio/app
       - working-directory: apps/studio
         run: composer install --no-interaction --prefer-dist
+      - name: Pint
+        working-directory: apps/studio
+        run: ./vendor/bin/pint --test
       - working-directory: apps/studio
         env:
           DB_CONNECTION: pgsql
