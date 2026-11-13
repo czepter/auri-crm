@@ -3,9 +3,12 @@
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Crm\Models\FormInstanceFile;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Task;
+use App\Engagement\Enums\InboundMessageState;
+use App\Engagement\Models\InboundMessage;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Enums\StaffRole;
@@ -240,4 +243,35 @@ it('rejects unauthenticated access', function () {
     $contact = Contact::factory()->create();
 
     $this->post("/kontakte/{$contact->public_id}/dsgvo/loeschen")->assertRedirect('/login');
+});
+
+it('erases inbound mail by contact and by sender address', function () {
+    $contact = Contact::factory()->create(['email' => 'lena@example.test']);
+    $row = fn (array $attributes) => InboundMessage::query()->create([
+        'to_address' => 'inbox@studio.test',
+        'body' => 'Hallo',
+        'state' => InboundMessageState::Triage,
+        ...$attributes,
+    ]);
+    $row(['from_address' => 'other@example.test', 'contact_id' => $contact->id]);
+    $row(['from_address' => 'Lena@Example.test']);
+    $kept = $row(['from_address' => 'someone@example.test']);
+
+    $this->actingAs($this->owner, 'staff')->post("/kontakte/{$contact->public_id}/dsgvo/loeschen");
+
+    expect(InboundMessage::query()->pluck('id')->all())->toBe([$kept->id]);
+});
+
+it('deletes uploaded form files from the disk', function () {
+    $contact = Contact::factory()->create();
+    $project = dsgvoErasableProject($contact);
+    $field = $project->formInstances()->create(['name' => 'Fragebogen'])
+        ->fields()->create(['label' => 'Vertrag', 'type' => 'file']);
+    $field->files()->create(['path' => 'form-files/x.pdf', 'name' => 'x.pdf', 'mime' => 'application/pdf', 'size' => 3]);
+    Storage::disk('local')->put('form-files/x.pdf', 'pdf');
+
+    $this->actingAs($this->owner, 'staff')->post("/kontakte/{$contact->public_id}/dsgvo/loeschen");
+
+    Storage::disk('local')->assertMissing('form-files/x.pdf');
+    expect(FormInstanceFile::query()->exists())->toBeFalse();
 });
