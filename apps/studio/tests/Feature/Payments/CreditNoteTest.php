@@ -176,6 +176,28 @@ it('renders the Gutschrift against the pinned template, with the reference line 
     Storage::disk('local')->assertExists($note->fresh()->pdf_path);
 });
 
+it('escapes merge-field values in the Gutschrift', function () {
+    Storage::fake('local');
+
+    DocumentTemplate::factory()->create([
+        'type' => DocumentTemplateType::CreditNote,
+        'body' => '<p>{{ creditNote.reason }}</p>',
+    ]);
+
+    $installment = creditableInstallment();
+
+    $this->mock(GotenbergClient::class)
+        ->shouldReceive('htmlToPdf')
+        ->once()
+        ->andReturnUsing(function (string $html) {
+            expect($html)->toContain('&lt;b&gt;x&lt;/b&gt;')->and($html)->not->toContain('<b>x</b>');
+
+            return '%PDF-1.4 fake';
+        });
+
+    app(IssueCreditNote::class)($installment->invoice, 25_000, '<b>x</b>');
+});
+
 it('documents every creditNote path with a sample that resolves', function () {
     $paths = collect(MergeFieldVocabulary::paths())->filter(fn (string $path) => str_starts_with($path, 'creditNote.'));
 

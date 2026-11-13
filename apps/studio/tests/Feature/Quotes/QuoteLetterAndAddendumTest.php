@@ -84,6 +84,17 @@ it('escapes what the letter carries rather than rendering it', function () {
     expect(renderedHtml())->not->toContain('<script>');
 });
 
+it('escapes merge-field values in the quote template', function () {
+    Http::fake(['*/forms/chromium/convert/html' => Http::response('%PDF-quote', 200)]);
+
+    DocumentTemplate::factory()->create(['type' => DocumentTemplateType::Quote, 'body' => '<p>{{ project.name }}</p>']);
+    $quote = Quote::factory()->for(ClientCase::factory()->create(['name' => '<b>x</b>']), 'case')->create();
+
+    $this->actingAs(letterOwner(), 'staff')->get("/angebote/{$quote->public_id}/pdf")->assertOk();
+
+    expect(renderedHtml())->toContain('&lt;b&gt;x&lt;/b&gt;');
+});
+
 // --- Nachtrag ---------------------------------------------------------
 
 it('creates an addendum as its own quote, leaving the accepted one accepted', function () {
