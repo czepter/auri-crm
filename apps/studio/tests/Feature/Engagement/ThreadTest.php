@@ -2,12 +2,16 @@
 
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Engagement\Actions\PostMessage;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Engagement\Models\ThreadParticipant;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Visus\Cuid2\Cuid2;
 
 uses(RefreshDatabase::class);
 
@@ -45,16 +49,16 @@ it('rejects a message with two authors even at the database, bypassing the model
     $contact = Contact::factory()->create();
     $user = User::factory()->create();
 
-    expect(fn () => \Illuminate\Support\Facades\DB::table('messages')->insert([
+    expect(fn () => DB::table('messages')->insert([
         'tenant_id' => config('tenancy.tenant_id'),
-        'public_id' => (string) new \Visus\Cuid2\Cuid2,
+        'public_id' => (string) new Cuid2,
         'thread_id' => $thread->id,
         'contact_id' => $contact->id,
         'author_id' => $user->id,
         'body' => 'x',
         'created_at' => now(),
         'updated_at' => now(),
-    ]))->toThrow(\Illuminate\Database\QueryException::class);
+    ]))->toThrow(QueryException::class);
 });
 
 it('lives in its own tables, with no visibility flag anywhere on a message', function () {
@@ -75,8 +79,8 @@ it('records a participant the first time each side posts, and only once', functi
     $thread = Thread::factory()->create();
     $contact = Contact::factory()->create();
 
-    app(App\Engagement\Actions\PostMessage::class)($thread, $contact, 'Erste Nachricht.');
-    app(App\Engagement\Actions\PostMessage::class)($thread, $contact, 'Zweite Nachricht.');
+    app(PostMessage::class)($thread, $contact, 'Erste Nachricht.');
+    app(PostMessage::class)($thread, $contact, 'Zweite Nachricht.');
 
     expect(ThreadParticipant::where('thread_id', $thread->id)->where('contact_id', $contact->id)->count())->toBe(1);
 });

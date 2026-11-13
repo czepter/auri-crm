@@ -41,5 +41,5 @@ it('does not offer the button on the login page outside local', function () {
 it('creates no account outside local', function () {
     $this->post('/dev-login')->assertNotFound();
 
-    expect(App\Models\User::where('email', 'dev@studio.test')->exists())->toBeFalse();
+    expect(User::where('email', 'dev@studio.test')->exists())->toBeFalse();
 });

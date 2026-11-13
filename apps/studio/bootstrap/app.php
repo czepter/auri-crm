@@ -125,9 +125,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['__Secure-mercure_access_token', 'mercure_access_token', 'mercure_portal_access_token']);
 
         $middleware->redirectGuestsTo('/login');
-        $middleware->redirectUsersTo(fn (\Illuminate\Http\Request $request) => match (true) {
+        $middleware->redirectUsersTo(fn (Request $request) => match (true) {
             ! $request->is('einrichtung') => '/',
-            ! \App\Models\StudioSettings::current()->onboardingCompleted() => '/einrichtung/studio',
+            ! StudioSettings::current()->onboardingCompleted() => '/einrichtung/studio',
             default => '/',
         });
 

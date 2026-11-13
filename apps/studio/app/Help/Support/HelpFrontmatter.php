@@ -7,7 +7,7 @@ use Symfony\Component\Yaml\Yaml;
 final class HelpFrontmatter
 {
     /**
-     * @return array{0: array<string, mixed>, 1: string}  Kopf und Rumpf.
+     * @return array{0: array<string, mixed>, 1: string} Kopf und Rumpf.
      */
     public static function parse(string $raw): array
     {
