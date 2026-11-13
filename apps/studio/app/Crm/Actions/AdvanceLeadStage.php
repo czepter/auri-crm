@@ -153,25 +153,27 @@ class AdvanceLeadStage
         // make every lost lead look identical in hindsight.
         $lostAt ??= now();
 
-        $lead->case->forceFill([
-            'closed_at' => $lostAt,
-            'close_outcome' => $outcome,
-            'close_reason' => $reason,
-        ])->save();
+        DB::transaction(function () use ($lead, $reason, $actor, $outcome, $lostAt) {
+            $lead->case->forceFill([
+                'closed_at' => $lostAt,
+                'close_outcome' => $outcome,
+                'close_reason' => $reason,
+            ])->save();
 
-        // A lost project shoots nothing, and a date left standing on it still
-        // reads as taken in the calendar and the range query.
-        $lead->case->shoots()->uncancelled()->get()
-            ->each(fn (Shoot $shoot) => $this->shoots->cancel($shoot, $reason, $actor, $lostAt));
+            // A lost project shoots nothing, and a date left standing on it still
+            // reads as taken in the calendar and the range query.
+            $lead->case->shoots()->uncancelled()->get()
+                ->each(fn (Shoot $shoot) => $this->shoots->cancel($shoot, $reason, $actor, $lostAt));
 
-        AuditLogger::record(
-            event: 'lead.lost',
-            actor: $actor ?? auth('staff')->user(),
-            context: ['stage' => $lead->stage->key, 'reason' => $reason, 'outcome' => $outcome->value],
-            subject: $lead->case->public_id,
-            projectId: $lead->case_id,
-            occurredAt: $lostAt,
-        );
+            AuditLogger::record(
+                event: 'lead.lost',
+                actor: $actor ?? auth('staff')->user(),
+                context: ['stage' => $lead->stage->key, 'reason' => $reason, 'outcome' => $outcome->value],
+                subject: $lead->case->public_id,
+                projectId: $lead->case_id,
+                occurredAt: $lostAt,
+            );
+        });
 
         LeadLost::dispatch($lead, $reason);
 
@@ -193,28 +195,30 @@ class AdvanceLeadStage
 
         $reason = $lead->case->close_reason;
 
-        // ponytail: the close's own absagen are told apart by moment and
-        // reason, so a shoot cancelled separately stays cancelled. Store the
-        // cause on the shoot if the two ever coincide.
-        $lead->case->shoots()
-            ->where('cancelled_at', $lead->case->closed_at)
-            ->where('cancelled_reason', $reason)
-            ->get()
-            ->each(fn (Shoot $shoot) => $this->shoots->uncancel($shoot, $actor));
+        DB::transaction(function () use ($lead, $reason, $actor) {
+            // ponytail: the close's own absagen are told apart by moment and
+            // reason, so a shoot cancelled separately stays cancelled. Store the
+            // cause on the shoot if the two ever coincide.
+            $lead->case->shoots()
+                ->where('cancelled_at', $lead->case->closed_at)
+                ->where('cancelled_reason', $reason)
+                ->get()
+                ->each(fn (Shoot $shoot) => $this->shoots->uncancel($shoot, $actor));
 
-        $lead->case->forceFill([
-            'closed_at' => null,
-            'close_outcome' => null,
-            'close_reason' => null,
-        ])->save();
+            $lead->case->forceFill([
+                'closed_at' => null,
+                'close_outcome' => null,
+                'close_reason' => null,
+            ])->save();
 
-        AuditLogger::record(
-            event: 'lead.reopened',
-            actor: $actor ?? auth('staff')->user(),
-            context: ['stage' => $lead->stage->key, 'reason' => $reason],
-            subject: $lead->case->public_id,
-            projectId: $lead->case_id,
-        );
+            AuditLogger::record(
+                event: 'lead.reopened',
+                actor: $actor ?? auth('staff')->user(),
+                context: ['stage' => $lead->stage->key, 'reason' => $reason],
+                subject: $lead->case->public_id,
+                projectId: $lead->case_id,
+            );
+        });
 
         return $lead;
     }

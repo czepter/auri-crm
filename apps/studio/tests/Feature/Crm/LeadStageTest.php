@@ -1,6 +1,7 @@
 <?php
 
 use App\Crm\Actions\AdvanceLeadStage;
+use App\Crm\Actions\AdvanceShootStatus;
 use App\Crm\Actions\BookCase;
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadStage;
@@ -271,6 +272,16 @@ it('cancels the open shoots of a lost project and leaves an earlier absage alone
 
     expect($open->fresh()->isCancelled())->toBeFalse()
         ->and($earlier->fresh()->isCancelled())->toBeTrue();
+});
+
+it('rolls the close back when a shoot cannot be cancelled', function () {
+    $this->mock(AdvanceShootStatus::class)->shouldReceive('cancel')->andThrow(new RuntimeException('boom'));
+    $lead = Lead::factory()->create();
+    Shoot::factory()->for($lead->case, 'case')->create();
+
+    expect(fn () => app(AdvanceLeadStage::class)->markLost($lead, 'Budget'))->toThrow(RuntimeException::class);
+
+    expect($lead->case->fresh()->closed_at)->toBeNull();
 });
 
 it('reopens a lead that was closed by mistake', function () {
