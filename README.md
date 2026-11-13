@@ -11,7 +11,7 @@ in the footer.
 What the product is for, and the rules every change is held to, is
 [docs/purpose.md](docs/purpose.md). The full reasoning lives in the
 [product vision](docs/superpowers/specs/2026-08-07-photography-client-management-vision-design.md);
-what is built and what is next lives in the [backlog](docs/backlog.md).
+what is built and what is next lives in the [issues](https://github.com/czepter/auri-crm/issues).
 
 ## The four surfaces
 
@@ -49,7 +49,7 @@ docker/
   php/           local development image
   app/           production image for the three Laravel surfaces
   gallery/       production image for the Astro gallery
-docs/            architecture, deployment, backlog, sprints, specs
+docs/            architecture, deployment, sprints, specs
 ```
 
 `apps/studio/app` is organised by domain rather than by Laravel artifact type
@@ -163,7 +163,7 @@ a docs-only change does not boot Postgres.
 | [architecture.md](docs/architecture.md) | Surfaces, modules, the cross-cutting seams — start here |
 | [deployment.md](docs/deployment.md) | Coolify, the GHCR image pipeline, what to configure by hand |
 | [branching.md](docs/branching.md) | The branching model and branch protection |
-| [backlog.md](docs/backlog.md) | Phases P1a–P6, epics, stories · [sprints](docs/sprints) |
+| [sprints](docs/sprints) | Sprint plans |
 | [studio/docs/queue.md](apps/studio/docs/queue.md) | Horizon supervisors, named queues, retrying a failed job |
 | [studio/docs/media.md](apps/studio/docs/media.md) | Object storage, ingest, derivatives, ZIP builds, delivery |
 | [documents.md](docs/documents.md) | Document templates, merge fields, the PDF render path |
