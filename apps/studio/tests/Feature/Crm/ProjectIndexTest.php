@@ -1,15 +1,18 @@
 <?php
 
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\ClientCase;
+use App\Crm\Models\Contact;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
 use App\Crm\Support\CrmVocabulary;
 use App\Enums\StaffRole;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
@@ -124,4 +127,32 @@ it('files a closed project under closed, not upcoming', function () {
     $project->forceFill(['closed_at' => now(), 'close_outcome' => LeadOutcome::Closed])->save();
 
     expect(projectRows()[0])->toMatchArray(['position' => 'Storniert', 'phase' => 'closed']);
+});
+
+it('costs the same queries for three projects as for nine', function () {
+    $add = function (int $count) {
+        foreach (range(1, $count) as $i) {
+            $project = bookedProject();
+            $project->attachContact(Contact::factory()->create(), CaseContactRole::Primary);
+            Shoot::factory()->for($project, 'case')->primary()->on('2026-06-14')->create();
+        }
+    };
+    $measure = function () {
+        DB::enableQueryLog();
+        projectRows();
+        $count = count(DB::getRawQueryLog());
+        DB::flushQueryLog();
+        DB::disableQueryLog();
+
+        return $count;
+    };
+
+    $add(3);
+    projectRows();
+    $three = $measure();
+
+    $add(6);
+    $nine = $measure();
+
+    expect($nine)->toBe($three);
 });

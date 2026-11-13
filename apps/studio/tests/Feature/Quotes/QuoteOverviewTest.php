@@ -1,9 +1,13 @@
 <?php
 
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
+use App\Quotes\Models\QuoteItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
@@ -58,4 +62,34 @@ it('renders the stored print sheet for a sent quote', function () {
     test()->actingAs($user, 'staff')->get("/angebote/{$quote->public_id}/vorschau")
         ->assertOk()
         ->assertHeader('Content-Type', 'text/html; charset=UTF-8');
+});
+
+it('costs the same queries for three quotes as for nine', function () {
+    [$user] = studioWithProject();
+    $add = function (int $count) {
+        foreach (range(1, $count) as $i) {
+            $project = ClientCase::factory()->create();
+            $project->attachContact(Contact::factory()->create(), CaseContactRole::Primary);
+            $quote = Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Draft]);
+            QuoteItem::factory()->for($quote)->create();
+        }
+    };
+    $measure = function () use ($user) {
+        DB::enableQueryLog();
+        test()->actingAs($user, 'staff')->get('/angebote')->assertOk();
+        $count = count(DB::getRawQueryLog());
+        DB::flushQueryLog();
+        DB::disableQueryLog();
+
+        return $count;
+    };
+
+    $add(3);
+    test()->actingAs($user, 'staff')->get('/angebote')->assertOk();
+    $three = $measure();
+
+    $add(6);
+    $nine = $measure();
+
+    expect($nine)->toBe($three);
 });
