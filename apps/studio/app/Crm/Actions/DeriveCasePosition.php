@@ -52,7 +52,8 @@ class DeriveCasePosition
         }
 
         if ($project->isBooked()) {
-            $shoot = $this->leastAdvanced($project->shoots()->uncancelled()->get());
+            $shoots = $project->relationLoaded('shoots') ? $project->shoots->whereNull('cancelled_at') : $project->shoots()->uncancelled()->get();
+            $shoot = $this->leastAdvanced($shoots);
 
             if ($shoot !== null) {
                 return new CasePositionData(

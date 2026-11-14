@@ -66,7 +66,7 @@ class QuoteController extends Controller
 
         $quotes = Quote::query()
             ->whereHas('case', fn ($query) => $query->visibleTo($viewer))
-            ->with(['case.contacts'])
+            ->with(['case.contacts', 'items'])
             ->latest()
             ->get();
 
