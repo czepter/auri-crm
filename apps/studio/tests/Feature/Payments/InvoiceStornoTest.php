@@ -109,6 +109,22 @@ it('refuses a paid rate — that is a Gutschrift, not a Storno', function () {
     expect($installment->fresh()->cancelled_at)->toBeNull();
 });
 
+it('refuses when a payment lands after the invoice was loaded', function () {
+    $installment = stornoableInstallment();
+    $invoice = $installment->invoice->load('installments');
+
+    PaymentInstallment::whereKey($installment->id)->update([
+        'status' => PaymentInstallmentStatus::Paid,
+        'paid_amount' => $installment->amount,
+    ]);
+
+    expect(fn () => app(CancelInvoice::class)($invoice, CancellationKind::Void, 'Zu viel berechnet'))
+        ->toThrow(ValidationException::class);
+
+    expect($invoice->fresh()->isCancelled())->toBeFalse()
+        ->and($installment->fresh()->status)->toBe(PaymentInstallmentStatus::Paid);
+});
+
 it('refuses an invoice that is already cancelled', function () {
     $installment = stornoableInstallment();
     app(CancelInvoice::class)($installment->invoice, CancellationKind::Void, 'Vertippt');
