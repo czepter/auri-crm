@@ -47,7 +47,7 @@ it('renders the missing artifact from the database when the client opens the con
     // for this project at the moment of the render, not from a stub.
     Http::assertSent(fn (HttpRequest $request) => str_contains(
         (string) $request->body(),
-        'Lena Meier — Hochzeit Meier & Kowalski',
+        'Lena Meier — Hochzeit Meier &amp; Kowalski',
     ));
 
     $contract->refresh();
@@ -56,6 +56,30 @@ it('renders the missing artifact from the database when the client opens the con
         ->and($contract->hasArtifact())->toBeTrue();
 
     Storage::disk('local')->assertExists($contract->artifact_path);
+});
+
+it('escapes merge-field values in the rendered contract', function () {
+    useSurface(Surface::PORTAL);
+    config(['inertia.ssr.enabled' => false]);
+    Storage::fake('local');
+    Http::fake(['*/forms/chromium/convert/html' => Http::response('%PDF-rendered-on-view', 200)]);
+
+    $template = DocumentTemplate::factory()->create(['body' => '<p>{{ contact.name }}</p>']);
+    $project = bookedContactProject();
+    $project->update(['portal_visible' => true]);
+    $project->contacts()->sole()->update(['name' => '<img src=x onerror=alert(1)>']);
+    Contract::factory()->for($project, 'case')->for($template, 'template')->create([
+        'status' => ContractStatus::Rendered,
+        'artifact_path' => 'contracts/gone/missing.pdf',
+        'rendered_at' => now(),
+    ]);
+
+    $this->actingAs($project->contacts()->sole(), 'portal')
+        ->get("/projekte/{$project->public_id}/vertrag")
+        ->assertOk();
+
+    Http::assertSent(fn (HttpRequest $request) => str_contains((string) $request->body(), '&lt;img')
+        && ! str_contains((string) $request->body(), '<img src=x'));
 });
 
 it('leaves a signed contract alone even when its bytes are gone', function () {

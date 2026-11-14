@@ -68,7 +68,7 @@ class RenderInvoicePdf
             DocumentTemplateType::CreditNote,
             InvoiceDocument::forCreditNote($creditNote, $data),
             $data,
-            MergeFieldResolver::resolve(($creditNote->template ?? $this->currentTemplate(DocumentTemplateType::CreditNote))?->body ?? '', $data),
+            MergeFieldResolver::resolve(($creditNote->template ?? $this->currentTemplate(DocumentTemplateType::CreditNote))?->body ?? '', $data, escape: true),
             $layoutOverride,
         );
     }
