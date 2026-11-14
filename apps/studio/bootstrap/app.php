@@ -10,6 +10,7 @@ use App\Http\Middleware\EnsureApiTokenScope;
 use App\Http\Middleware\EnsureAudience;
 use App\Http\Middleware\EnsureGalleryFeature;
 use App\Http\Middleware\EnsureGalleryGate;
+use App\Http\Middleware\EnsureGalleryImagePass;
 use App\Http\Middleware\EnsureGalleryPass;
 use App\Http\Middleware\EnsureIdempotentWrite;
 use App\Http\Middleware\EnsureNoStaffExists;
@@ -147,6 +148,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'portal.capability' => EnsurePortalCapability::class,
             'gallery.gate' => EnsureGalleryGate::class,
             'gallery.pass' => EnsureGalleryPass::class,
+            'gallery.image-pass' => EnsureGalleryImagePass::class,
             'gallery.feature' => EnsureGalleryFeature::class,
         ]);
     })

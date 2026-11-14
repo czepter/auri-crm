@@ -8,6 +8,7 @@ use App\Media\Models\Asset;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -195,4 +196,83 @@ it('counts address and public_id of one gallery against the same limit', functio
     }
 
     test()->postJson("/api/galleries/{$gallery->public_id}/passwort", ['password' => 'basthorst2026'])->assertStatus(422);
+});
+
+function gatedImageUrl(Gallery $gallery, string $query = ''): string
+{
+    Storage::fake('s3');
+    ob_start();
+    imagejpeg(imagecreatetruecolor(200, 100));
+    Storage::disk('s3')->put('galleries/g1/a.jpg', ob_get_clean());
+
+    return "/api/gallery-versions/{$gallery->currentVersion->public_id}/images/galleries/g1/a.jpg?w=400&fmt=jpeg".$query;
+}
+
+function boughtViewPass(Gallery $gallery): string
+{
+    return test()->postJson("/api/galleries/{$gallery->public_id}/passwort", ['password' => 'basthorst2026'])->json('pass');
+}
+
+function imagePassOf(Gallery $gallery, string $viewPass): ?string
+{
+    $imagePass = test()->withToken($viewPass)->getJson("/api/galleries/{$gallery->public_id}")->assertOk()->json('gallery.image_pass');
+    test()->flushHeaders();
+
+    return $imagePass;
+}
+
+it('hands the image pass out with the read, and none for an open gallery', function () {
+    $gallery = gatedGallery();
+
+    expect(imagePassOf($gallery, boughtViewPass($gallery)))->toBeString()->not->toBeEmpty();
+
+    $open = Gallery::factory()->create();
+    $open->publish();
+
+    test()->getJson("/api/galleries/{$open->public_id}")->assertOk()->assertJsonPath('gallery.image_pass', null);
+});
+
+it('serves an image to the image pass in the query', function () {
+    $gallery = gatedGallery();
+    $imagePass = imagePassOf($gallery, boughtViewPass($gallery));
+
+    test()->get(gatedImageUrl($gallery, '&pass='.urlencode($imagePass)))->assertOk();
+});
+
+it('refuses the view pass in an image URL', function () {
+    $gallery = gatedGallery();
+
+    test()->get(gatedImageUrl($gallery, '&pass='.urlencode(boughtViewPass($gallery))))->assertNotFound();
+});
+
+it('still serves an image to the view pass as a bearer', function () {
+    $gallery = gatedGallery();
+
+    test()->withToken(boughtViewPass($gallery))->get(gatedImageUrl($gallery))->assertOk();
+});
+
+it('refuses the image pass anywhere but the image route', function () {
+    $gallery = gatedGallery();
+    $imagePass = imagePassOf($gallery, boughtViewPass($gallery));
+
+    test()->withToken($imagePass)->getJson("/api/galleries/{$gallery->public_id}")->assertNotFound();
+    test()->getJson("/api/galleries/{$gallery->public_id}?pass=".urlencode($imagePass))->assertNotFound();
+});
+
+it('kills the image pass when the studio rotates', function () {
+    $gallery = gatedGallery();
+    $imagePass = imagePassOf($gallery, boughtViewPass($gallery));
+
+    $gallery->rotateViewPassword('etwas-anderes');
+
+    test()->get(gatedImageUrl($gallery->fresh(), '&pass='.urlencode($imagePass)))->assertNotFound();
+});
+
+it('issues the same image pass for every read within a window', function () {
+    $gallery = gatedGallery();
+    $viewPass = boughtViewPass($gallery);
+
+    test()->freezeTime();
+
+    expect(imagePassOf($gallery, $viewPass))->toBe(imagePassOf($gallery, $viewPass));
 });

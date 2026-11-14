@@ -110,6 +110,7 @@ class GalleryReadController extends Controller
                 'draft' => false,
                 'design' => GalleryDesign::resolve($version->design),
                 'cover' => $gallery->coverFor($version->cover_key),
+                'image_pass' => $gallery->requiresViewPassword() ? $viewPass->issueForImages($gallery) : null,
                 ...$this->audience($gallery),
                 'version' => [
                     'public_id' => $version->public_id,
