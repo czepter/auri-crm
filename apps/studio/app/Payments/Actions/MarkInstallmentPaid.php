@@ -44,12 +44,7 @@ class MarkInstallmentPaid
         }
 
         if ($installment->status === PaymentInstallmentStatus::Cancelled) {
-            report(new RuntimeException(sprintf(
-                'Zahlung für stornierte Rate %s eingegangen (Session %s, Betrag %s).',
-                $installment->public_id,
-                $installment->stripe_checkout_session_id ?? '-',
-                $amount ?? $installment->remaining(),
-            )));
+            $this->reportCancelled($installment, $amount);
 
             return $installment;
         }
@@ -65,6 +60,10 @@ class MarkInstallmentPaid
             $current = $installment->newQuery()->lockForUpdate()->find($installment->id);
 
             if ($current === null || $current->status !== $installment->status || (int) $current->paid_amount !== (int) $installment->paid_amount) {
+                if ($current?->status === PaymentInstallmentStatus::Cancelled) {
+                    $this->reportCancelled($installment, $booked);
+                }
+
                 return false;
             }
 
@@ -104,5 +103,15 @@ class MarkInstallmentPaid
         }
 
         return $installment;
+    }
+
+    private function reportCancelled(PaymentInstallment $installment, ?int $amount): void
+    {
+        report(new RuntimeException(sprintf(
+            'Zahlung für stornierte Rate %s eingegangen (Session %s, Betrag %s).',
+            $installment->public_id,
+            $installment->stripe_checkout_session_id ?? '-',
+            $amount ?? $installment->remaining(),
+        )));
     }
 }
