@@ -12,7 +12,9 @@ use InvalidArgumentException;
 class Surface
 {
     public const ADMIN = 'admin';
+
     public const API = 'api';
+
     public const PORTAL = 'portal';
 
     public const ALL = [self::ADMIN, self::API, self::PORTAL];

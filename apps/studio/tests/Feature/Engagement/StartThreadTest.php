@@ -2,6 +2,7 @@
 
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Engagement\Actions\AttachThreadToCase;
 use App\Engagement\Actions\PostMessage;
 use App\Engagement\Actions\StartThread;
 use App\Engagement\Models\Thread;
@@ -71,9 +72,9 @@ it('files a booking-less thread onto a project, once', function () {
     $thread = app(StartThread::class)(null, $contact, 'Thema', 'Nachricht.');
     $project = ClientCase::factory()->create();
 
-    app(App\Engagement\Actions\AttachThreadToCase::class)($thread, $project);
+    app(AttachThreadToCase::class)($thread, $project);
 
     expect($thread->fresh()->case->is($project))->toBeTrue();
 
-    app(App\Engagement\Actions\AttachThreadToCase::class)($thread->fresh(), ClientCase::factory()->create());
+    app(AttachThreadToCase::class)($thread->fresh(), ClientCase::factory()->create());
 })->throws(LogicException::class);

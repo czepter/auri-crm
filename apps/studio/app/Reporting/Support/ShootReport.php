@@ -6,6 +6,7 @@ use App\Crm\Enums\ProjectType;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Collection;
 
 /**
  * Die Termine selbst: wann gearbeitet wird, und wie weit sie der Anfrage
@@ -108,7 +109,7 @@ class ShootReport
      * zwei Wochen und zwei in einem halben Jahr sind eine Wochenachse, auf
      * der die Hälfte in der letzten Stufe klebt.
      *
-     * @param  \Illuminate\Support\Collection<int, float>  $days
+     * @param  Collection<int, float>  $days
      * @return array{steps: list<array{label: string, edge: float|null}>, median: callable(float): string}
      */
     private static function scaleFor($days): array

@@ -4,6 +4,7 @@ use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Models\StudioSettings;
+use App\Payments\Actions\IssueInvoice;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
@@ -149,7 +150,7 @@ it('counts a rate invoiced outside the plan, and calls only a past due date over
     [$project, $contact] = t07PortalProjectWithPlan();
     $project->paymentPlan->installments()->update(['due_on' => today()->toDateString()]);
 
-    $invoice = app(App\Payments\Actions\IssueInvoice::class)->positions($contact, $project, [
+    $invoice = app(IssueInvoice::class)->positions($contact, $project, [
         ['title' => 'Anzahlung', 'quantity' => 1, 'unit_price' => 50000],
     ], today()->subDay()->toDateString(), [], null);
     $invoice->installments()->update(['status' => PaymentInstallmentStatus::Paid, 'paid_amount' => $invoice->amount()]);

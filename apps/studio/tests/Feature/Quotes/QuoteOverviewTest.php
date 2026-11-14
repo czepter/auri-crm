@@ -15,7 +15,7 @@ uses(RefreshDatabase::class);
 // project's own tab.
 it('lists quotes from every project, newest first', function () {
     [$user, $projectA] = studioWithProject();
-    $projectB = App\Crm\Models\ClientCase::factory()->create();
+    $projectB = ClientCase::factory()->create();
 
     $older = Quote::factory()->for($projectA, 'case')->create(['status' => QuoteStatus::Draft, 'created_at' => now()->subDay()]);
     $newer = Quote::factory()->for($projectB, 'case')->create(['status' => QuoteStatus::Sent]);

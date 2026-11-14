@@ -92,9 +92,9 @@ it('aborts without restoring when the confirmation is declined', function () {
 it('rejects a non-pgsql connection for both commands', function () {
     $this->artisan('db:cutover-snapshot', ['--connection' => 'sqlite'])
         ->assertFailed()
-        ->expectsOutputToContain("is not pgsql");
+        ->expectsOutputToContain('is not pgsql');
 
     $this->artisan('db:cutover-restore', ['path' => base_path('composer.json'), '--connection' => 'sqlite'])
         ->assertFailed()
-        ->expectsOutputToContain("is not pgsql");
+        ->expectsOutputToContain('is not pgsql');
 });
