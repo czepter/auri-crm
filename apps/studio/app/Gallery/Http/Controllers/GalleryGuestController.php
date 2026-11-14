@@ -28,6 +28,9 @@ class GalleryGuestController extends Controller
     /** Drei Codes je Adresse und Stunde reichen für Vertipper und nicht für einen Angriff. */
     private const REQUESTS_PER_HOUR = 3;
 
+    /** Die ganze Gästeliste teilt sich eine Galerie; ohne Deckel verschickt ein Link beliebig viele Mails. */
+    private const REQUESTS_PER_GALLERY_HOUR = 200;
+
     public function request(Request $request, Gallery $gallery, RequestGalleryGuestCode $issue): JsonResponse
     {
         $validated = $request->validate([
@@ -41,7 +44,14 @@ class GalleryGuestController extends Controller
             return response()->json(['sent' => false, 'retryAfter' => RateLimiter::availableIn($key)], 429);
         }
 
+        $galleryKey = 'gallery-guest-gallery:'.$gallery->public_id;
+
+        if (RateLimiter::tooManyAttempts($galleryKey, self::REQUESTS_PER_GALLERY_HOUR)) {
+            return response()->json(['sent' => false, 'retryAfter' => RateLimiter::availableIn($galleryKey)], 429);
+        }
+
         RateLimiter::hit($key, 3600);
+        RateLimiter::hit($galleryKey, 3600);
         $issue($gallery, $validated['email'], $validated['name']);
 
         return response()->json(['sent' => true]);
