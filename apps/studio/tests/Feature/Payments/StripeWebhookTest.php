@@ -296,12 +296,29 @@ it('leaves the installment untouched on checkout.session.completed when payment_
     expect($installment->fresh()->status)->toBe(PaymentInstallmentStatus::Scheduled);
 });
 
-it('is a no-op for an event whose session id matches no installment', function () {
-    [$payload, $signature] = m05SignedEvent(m05CheckoutSessionEvent('cs_test_unknown'));
+it('fails a paid event whose session id matches no installment, so it can be retried', function (string $type) {
+    $job = new ProcessStripeWebhookEvent(m05CheckoutSessionEvent('cs_unknown', type: $type));
 
-    m05Post($payload, $signature)->assertSuccessful();
+    app()->call([$job, 'handle']);
+})->with([
+    'checkout.session.completed',
+    'checkout.session.async_payment_succeeded',
+    'checkout.session.async_payment_failed',
+])->throws(RuntimeException::class);
 
-    expect(StripeEvent::query()->count())->toBe(1);
+it('ignores an unhandled event type whose session id matches no installment', function () {
+    $job = new ProcessStripeWebhookEvent(m05CheckoutSessionEvent('cs_unknown', type: 'charge.refunded'));
+
+    app()->call([$job, 'handle']);
+
+    expect(StripeEvent::query()->count())->toBe(0);
+});
+
+it('declares five tries with a growing backoff', function () {
+    $job = new ProcessStripeWebhookEvent([]);
+
+    expect($job->tries)->toBe(5)
+        ->and($job->backoff())->toBe([10, 60, 300, 900]);
 });
 
 it('acknowledges an event type it does not handle, recording it but changing nothing', function () {
