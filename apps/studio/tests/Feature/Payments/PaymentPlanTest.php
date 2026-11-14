@@ -211,6 +211,25 @@ it('updates a named row in place, keeping the issued one whole', function () {
         ->and($plan->fresh()->total)->toBe(400);
 });
 
+it('keeps a part-paid installment part-paid when the plan is saved', function () {
+    $plan = PaymentPlan::factory()->create(['total' => 45000]);
+    $row = PaymentInstallment::factory()->for($plan, 'plan')->create([
+        'amount' => 45000,
+        'status' => PaymentInstallmentStatus::Partial,
+        'paid_amount' => 10000,
+    ]);
+
+    app(UpdatePaymentPlan::class)($plan, 45000, [
+        ['public_id' => $row->public_id, 'amount' => 45000, 'due_on' => '2026-10-01', 'status' => 'scheduled'],
+    ]);
+
+    $row->refresh();
+
+    expect($row->status)->toBe(PaymentInstallmentStatus::Partial)
+        ->and($row->paid_amount)->toBe(10000)
+        ->and($row->due_on->format('Y-m-d'))->toBe('2026-10-01');
+});
+
 it('refuses to change an issued installment\'s amount, whoever writes it', function () {
     $plan = PaymentPlan::factory()->create(['total' => 100]);
     $issued = issuedInstallment($plan, 100);
