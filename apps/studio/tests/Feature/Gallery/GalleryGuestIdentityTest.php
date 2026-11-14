@@ -117,6 +117,22 @@ it('counts per address, so one guest cannot lock out the next', function () {
         ->assertOk();
 });
 
+it('caps codes per gallery, across distinct addresses', function () {
+    $other = Gallery::factory()->create();
+    RateLimiter::clear('gallery-guest-gallery:'.$this->gallery->public_id);
+    RateLimiter::clear('gallery-guest-gallery:'.$other->public_id);
+
+    foreach (range(1, 200) as $i) {
+        askForCode($this->gallery, "guest{$i}@example.com");
+    }
+
+    $this->postJson("/api/galleries/{$this->gallery->public_id}/guest", ['email' => 'late@example.com', 'name' => 'Late'])
+        ->assertStatus(429)
+        ->assertJson(['sent' => false]);
+
+    askForCode($other, 'guest1@example.com');
+});
+
 // Entscheidung 11: eine Bestätigung gilt nur dort, wo sie erteilt wurde.
 //
 // Zwei Ebenen, beide geprüft. Die Route allein bewies es nicht: der Gast
