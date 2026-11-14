@@ -66,6 +66,15 @@ class IssueCreditNote
             ->first();
 
         $creditNote = DB::transaction(function () use ($invoice, $amount, $reason, $template, $actor) {
+            $locked = Invoice::query()->whereKey($invoice->id)->lockForUpdate()->firstOrFail();
+            $remaining = (int) $locked->installments()->sum('paid_amount') - (int) $locked->creditNotes()->sum('amount');
+
+            if ($amount > $remaining) {
+                throw ValidationException::withMessages([
+                    'amount' => __('payments.creditNoteTooLarge', ['amount' => $remaining / 100]),
+                ]);
+            }
+
             $number = ($this->allocate)(documentType: DocumentType::CreditNote)['number'];
 
             $creditNote = $invoice->creditNotes()->create([
