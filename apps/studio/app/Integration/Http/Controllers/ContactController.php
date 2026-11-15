@@ -5,6 +5,7 @@ namespace App\Integration\Http\Controllers;
 use App\Crm\Actions\CreateContact;
 use App\Crm\Actions\UpdateContact;
 use App\Crm\Models\Contact;
+use App\Crm\Support\SocialProfiles;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -30,7 +31,10 @@ class ContactController extends Controller
                 Rule::unique('contacts', 'email')->where('tenant_id', config('tenancy.tenant_id')),
             ],
             'phone' => ['nullable', 'string', 'max:64'],
+            ...SocialProfiles::rules(),
         ]);
+
+        $validated['social_profiles'] = SocialProfiles::normalize($validated['social_profiles'] ?? null);
 
         $contact = $createContact($validated);
 
@@ -39,6 +43,7 @@ class ContactController extends Controller
             'name' => $contact->name,
             'email' => $contact->email,
             'phone' => $contact->phone,
+            'social_profiles' => $contact->social_profiles,
         ], 201);
     }
 
@@ -62,7 +67,12 @@ class ContactController extends Controller
             'street' => ['sometimes', 'nullable', 'string', 'max:255'],
             'postcode' => ['sometimes', 'nullable', 'string', 'max:32'],
             'city' => ['sometimes', 'nullable', 'string', 'max:255'],
+            ...SocialProfiles::rules(),
         ]);
+
+        if (array_key_exists('social_profiles', $validated)) {
+            $validated['social_profiles'] = SocialProfiles::normalize($validated['social_profiles']);
+        }
 
         $updateContact($contact, $validated);
 
@@ -74,6 +84,7 @@ class ContactController extends Controller
             'street' => $contact->street,
             'postcode' => $contact->postcode,
             'city' => $contact->city,
+            'social_profiles' => $contact->social_profiles,
         ]);
     }
 }

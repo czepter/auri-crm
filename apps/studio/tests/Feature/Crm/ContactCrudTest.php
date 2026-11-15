@@ -122,6 +122,53 @@ it('updates a contact', function () {
     expect($contact->fresh()->name)->toBe('Annika Steffens');
 });
 
+it('saves social profiles trimmed and clears them when empty', function () {
+    $contact = Contact::factory()->create();
+    $payload = ['name' => $contact->name, 'email' => $contact->email];
+
+    $this->actingAs($this->staff, 'staff')
+        ->patch("/kontakte/{$contact->public_id}", $payload + ['social_profiles' => [['platform' => 'instagram', 'value' => ' @anna.und.ben ']]])
+        ->assertSessionHasNoErrors();
+
+    expect($contact->fresh()->social_profiles)->toEqual([['platform' => 'instagram', 'value' => '@anna.und.ben']]);
+
+    $this->actingAs($this->staff, 'staff')
+        ->patch("/kontakte/{$contact->public_id}", $payload + ['social_profiles' => []]);
+
+    expect($contact->fresh()->social_profiles)->toBeNull();
+});
+
+it('creates a contact with social profiles', function () {
+    $this->actingAs($this->staff, 'staff')
+        ->post('/kontakte', ['name' => 'Annika Steffens', 'social_profiles' => [['platform' => 'tiktok', 'value' => ' anna ']]])
+        ->assertSessionHasNoErrors();
+
+    expect(Contact::firstWhere('name', 'Annika Steffens')->social_profiles)->toEqual([['platform' => 'tiktok', 'value' => 'anna']]);
+});
+
+it('keeps social profiles when an update omits them', function () {
+    $profiles = [['platform' => 'instagram', 'value' => '@anna']];
+    $contact = Contact::factory()->create(['social_profiles' => $profiles]);
+
+    $this->actingAs($this->staff, 'staff')
+        ->patch("/kontakte/{$contact->public_id}", ['name' => 'Neuer Name', 'email' => $contact->email])
+        ->assertSessionHasNoErrors();
+
+    expect($contact->fresh()->social_profiles)->toEqual($profiles);
+});
+
+it('refuses an unknown social platform', function () {
+    $contact = Contact::factory()->create();
+
+    $this->actingAs($this->staff, 'staff')
+        ->patch("/kontakte/{$contact->public_id}", [
+            'name' => $contact->name,
+            'email' => $contact->email,
+            'social_profiles' => [['platform' => 'myspace', 'value' => 'anna']],
+        ])
+        ->assertSessionHasErrors('social_profiles.0.platform');
+});
+
 it('refuses an email that already belongs to someone else', function () {
     // Mirrors the partial unique index. Without the rule the database throws
     // where the form should show a field error.

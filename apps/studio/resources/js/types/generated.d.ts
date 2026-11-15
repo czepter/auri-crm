@@ -467,6 +467,7 @@ export type LeadStage = 'new' | 'contacted' | 'quote_sent' | 'quote_accepted' | 
 export type ProjectFieldType = 'text' | 'textarea' | 'number' | 'select' | 'tags' | 'date' | 'boolean';
 export type ProjectType = 'wedding' | 'portrait' | 'other';
 export type ShootStatus = 'requested' | 'booked' | 'prep' | 'shot' | 'culling' | 'editing' | 'ready' | 'delivered' | 'archived';
+export type SocialPlatform = 'instagram' | 'facebook' | 'tiktok' | 'pinterest' | 'linkedin' | 'website';
 export type StageAnchor = 'entry' | 'quote_sent' | 'quote_accepted' | 'won' | 'booked' | 'shot' | 'ready' | 'delivered' | 'archived';
 export type StageColor = 'grey' | 'red' | 'amber' | 'olive' | 'green' | 'teal' | 'blue' | 'violet';
 export type StagePipeline = 'lead' | 'project';
@@ -753,6 +754,10 @@ phone: string | null,
 street: string | null,
 postcode: string | null,
 city: string | null,
+socialProfiles: {
+platform: string,
+value: string,
+}[] | null,
 updatedAt: string,
 };
 export type CrewAssignmentReadData = {
