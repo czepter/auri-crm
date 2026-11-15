@@ -123,6 +123,8 @@ final class StudioOpsTools
                     'case' => $schema->string()->description('The case public id')->required(),
                 ],
                 annotations: ['readOnlyHint' => true, 'openWorldHint' => false],
+                structure: fn (array $body) => ['forms' => $body['data']],
+                outputSchema: fn (JsonSchema $schema) => ['forms' => $schema->array()->items(self::form($schema))],
             ),
 
             new ToolDefinition(
@@ -139,26 +141,32 @@ final class StudioOpsTools
                 // Omitted rather than null: "no template" is a blank form,
                 // and the route reads the key's absence, not its value.
                 payload: fn (array $arguments) => array_filter(['template' => $arguments['template'] ?? null], fn ($value) => $value !== null),
+                structure: fn (array $body) => ['form' => $body['data']],
+                outputSchema: fn (JsonSchema $schema) => ['form' => self::form($schema)],
             ),
 
             new ToolDefinition(
                 name: 'update_form',
                 title: 'Replace a form\'s fields',
-                description: 'Renames a form and replaces its fields wholesale — the same shape create_form seeds, personalised. There is no partial edit; send every field the form should keep.',
+                description: 'Renames a form and sets its fields, the same shape create_form seeds, personalised. Send every field the form should keep, each with its id from list_forms.',
                 method: 'PATCH',
                 path: '/forms/{form}',
                 schema: fn (JsonSchema $schema) => [
                     'form' => $schema->string()->description('The form instance public id')->required(),
                     'name' => $schema->string()->required(),
                     'fields' => $schema->array()->items($schema->object([
+                        'id' => $schema->string()->nullable()->description('The field public id from list_forms. Send it to keep the field and its answers; a field without one is created new, a field left out is deleted with its answers.'),
                         'label' => $schema->string()->required(),
                         'type' => $schema->string()->enum(self::FORM_FIELD_TYPES)->required(),
                         'required' => $schema->boolean()->required(),
+                        'help' => $schema->string()->nullable()->description('Shown with the question in the portal. Plain text, max 500 characters. Omitting it clears it.'),
                         'options' => $schema->array()->items($schema->string())->nullable()->description('Only "select" reads this, as a list of choices. Leave unset for every other type — "file" and "group_photos" answers are out of scope here.'),
                     ]))->required(),
                 ],
                 annotations: ['readOnlyHint' => false, 'destructiveHint' => true, 'idempotentHint' => false, 'openWorldHint' => false],
                 silent: false,
+                structure: fn (array $body) => ['form' => $body['data']],
+                outputSchema: fn (JsonSchema $schema) => ['form' => self::form($schema)],
             ),
 
             new ToolDefinition(
@@ -173,6 +181,8 @@ final class StudioOpsTools
                 ],
                 annotations: ['readOnlyHint' => false, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false],
                 silent: false,
+                structure: fn (array $body) => ['form' => $body['data']],
+                outputSchema: fn (JsonSchema $schema) => ['form' => self::form($schema)],
             ),
 
             new ToolDefinition(
@@ -187,6 +197,8 @@ final class StudioOpsTools
                 ],
                 silent: false,
                 payload: fn (array $arguments) => array_filter(['value' => $arguments['value'] ?? null], fn ($value) => $value !== null),
+                structure: fn (array $body) => ['form' => $body['data']],
+                outputSchema: fn (JsonSchema $schema) => ['form' => self::form($schema)],
             ),
 
             new ToolDefinition(
@@ -305,5 +317,40 @@ final class StudioOpsTools
                 silent: false,
             ),
         ];
+    }
+
+    private static function form(JsonSchema $schema): object
+    {
+        return $schema->object([
+            'id' => $schema->string(),
+            'name' => $schema->string(),
+            'sourceTemplateName' => $schema->string()->nullable(),
+            'updatedAt' => $schema->string(),
+            'sharedAt' => $schema->string()->nullable(),
+            'fields' => $schema->array()->items($schema->object([
+                'id' => $schema->string(),
+                'label' => $schema->string(),
+                'type' => $schema->string()->enum(self::FORM_FIELD_TYPES),
+                'typeLabel' => $schema->string(),
+                'required' => $schema->boolean(),
+                'help' => $schema->string()->nullable(),
+                'options' => $schema->array()->items($schema->string())->nullable(),
+                'currentAnswer' => $schema->string()->nullable(),
+                'answeredAt' => $schema->string()->nullable(),
+                'groupPhotos' => $schema->object([
+                    'suggestions' => $schema->array()->items($schema->string()),
+                    'minutesPerGroup' => $schema->integer(),
+                ])->nullable(),
+                'fileFormats' => $schema->array()->items($schema->string())->nullable(),
+                'fileMaxSize' => $schema->integer()->nullable(),
+                'fileMultiple' => $schema->boolean(),
+                'files' => $schema->array()->items($schema->object([
+                    'id' => $schema->string(),
+                    'name' => $schema->string(),
+                    'size' => $schema->integer(),
+                    'uploadedAt' => $schema->string(),
+                ])),
+            ])),
+        ]);
     }
 }

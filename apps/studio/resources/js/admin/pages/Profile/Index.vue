@@ -7,6 +7,7 @@ import FormSection from '@/ui/page/FormSection.vue'
 import FormShell from '@/ui/page/FormShell.vue'
 import CreateSummary from '@/admin/components/CreateSummary.vue'
 import { Button } from '@/ui/button'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
 import { CopyButton } from '@/ui/copy-button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Field } from '@/ui/field'
@@ -17,7 +18,7 @@ import ProfileNav from '@/admin/components/settings/ProfileNav.vue'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
-  pane: 'konto' | 'sicherheit' | 'benachrichtigungen' | 'kalender'
+  pane: 'konto' | 'sicherheit' | 'benachrichtigungen' | 'kalender' | 'adressbuch'
   user: { name: string; email: string; phone: string | null; role: string }
   pendingEmail: string | null
   mfaConfirmed: boolean
@@ -25,11 +26,12 @@ const props = defineProps<{
   recoveryCodesLeft: number
   digestFrequency: string | null
   calendarFeedUrl: string | null
+  carddav: { server: string; username: string; password: string } | null
   workingDays: number[] | null
   events: Record<string, Mode>
   briefable: Record<string, boolean>
 }>()
-useLiveProps(['user', 'pendingEmail', 'mfaConfirmed', 'sessions', 'recoveryCodesLeft', 'digestFrequency', 'calendarFeedUrl', 'events'])
+useLiveProps(['user', 'pendingEmail', 'mfaConfirmed', 'sessions', 'recoveryCodesLeft', 'digestFrequency', 'calendarFeedUrl', 'carddav', 'events'])
 
 const DAY_KEYS = ['settings.dayMon', 'settings.dayTue', 'settings.dayWed', 'settings.dayThu', 'settings.dayFri', 'settings.daySat', 'settings.daySun']
 
@@ -92,7 +94,7 @@ const eventsForm = useForm({
 const activeForm = computed(() => {
   if (props.pane === 'sicherheit') return passwordForm
   if (props.pane === 'benachrichtigungen') return eventsForm
-  if (props.pane === 'kalender') return undefined
+  if (props.pane === 'kalender' || props.pane === 'adressbuch') return undefined
   return accountForm
 })
 
@@ -102,6 +104,7 @@ const paneTitle = computed(() => {
   if (props.pane === 'sicherheit') return 'profile.securityTitle'
   if (props.pane === 'benachrichtigungen') return 'profile.notificationsTitle'
   if (props.pane === 'kalender') return 'calendar.subscribe'
+  if (props.pane === 'adressbuch') return 'profile.addressBook'
   return 'profile.accountTitle'
 })
 
@@ -125,6 +128,10 @@ function submitEvents() {
 
 function regenerateFeedUrl() {
   router.post('/kalender/abo', {}, { preserveScroll: true })
+}
+
+function regenerateCarddavSecret() {
+  router.post('/profil/adressbuch/passwort', {}, { preserveScroll: true })
 }
 </script>
 
@@ -304,6 +311,38 @@ function regenerateFeedUrl() {
           </Field>
         </FormSection>
       </form>
+
+      <template v-else-if="pane === 'adressbuch'">
+      <FormSection :title="$t('profile.davSection')">
+        <dl v-if="carddav" class="grid gap-4">
+          <div v-for="row in [
+            { label: 'profile.davServer', copy: 'profile.davCopyServer', value: carddav.server },
+            { label: 'profile.davUser', copy: 'profile.davCopyUser', value: carddav.username },
+            { label: 'profile.davPassword', copy: 'profile.davCopyPassword', value: carddav.password },
+          ]" :key="row.label" class="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-3">
+            <dt class="text-ui text-muted-foreground sm:w-32 sm:flex-none">{{ $t(row.label) }}</dt>
+            <div class="flex min-w-0 max-w-full flex-1 items-center gap-3">
+              <dd class="min-w-0 flex-1"><code class="text-small break-all">{{ row.value }}</code></dd>
+              <CopyButton :value="row.value" :label="$t(row.copy)" />
+            </div>
+          </div>
+        </dl>
+        <AlertDialog>
+          <AlertDialogTrigger as-child>
+            <Button class="mt-4" type="button" variant="pill-muted">{{ $t('profile.regenerate') }}</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{{ $t('profile.davRegenerateConfirm') }}</AlertDialogTitle>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction @click="regenerateCarddavSecret">{{ $t('profile.regenerate') }}</AlertDialogAction>
+              <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </FormSection>
+      </template>
 
       <!-- C-13 (#249): die Abo-Adresse ist ein Geheimnis pro Person,
            also steht sie neben dem Weg, sie zurückzuziehen. -->

@@ -38,6 +38,7 @@ const meta = {
     recoveryCodesLeft: 8,
     digestFrequency: 'weekly',
     calendarFeedUrl: 'https://atelier-nordlicht.de/kalender/8f3c1a9e27b4/shootings.ics',
+    carddav: null,
     events: { ...events },
     briefable: {
       tasksDue: true,

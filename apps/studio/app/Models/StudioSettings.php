@@ -71,6 +71,7 @@ class StudioSettings extends Model
         'gallery_default_expiry_days',
         'gallery_default_download_rule', 'gallery_default_lists_enabled',
         'gallery_default_comments_enabled', 'gallery_default_design',
+        'gallery_home_mode', 'gallery_home_redirect_url', 'gallery_home_noindex',
         'portal_contact_name', 'portal_contact_phone', 'portal_contact_email',
         'portal_contact_response_time', 'portal_contact_avatar_path',
         'onboarding_completed_at', 'onboarding_reminder_sent_at', 'deletion_requested_at',

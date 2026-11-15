@@ -330,6 +330,22 @@ jobs:
           --health-interval 2s
           --health-timeout 3s
           --health-retries 30
+      # The media disk: .env.example leaves AWS_ENDPOINT blank, which points
+      # the s3 disk at real AWS. The seeder's puts then failed and every
+      # gallery thumbnail request hung on S3 until it starved the PHP workers.
+      # Same image and credentials as docker-compose.yml's rustfs; the image
+      # serves RUSTFS_VOLUMES=/data without a command.
+      rustfs:
+        image: rustfs/rustfs:1.0.0-rc.1
+        env:
+          RUSTFS_ADDRESS: ":9000"
+          RUSTFS_ACCESS_KEY: studio
+          RUSTFS_SECRET_KEY: studio-media-secret
+        options: >-
+          --health-cmd "curl --fail http://localhost:9000/minio/health/live"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
     steps:
       - uses: actions/checkout@v7
       - working-directory: apps/studio
@@ -364,8 +380,17 @@ jobs:
           sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=studio/' .env
           sed -i 's/^REDIS_HOST=.*/REDIS_HOST=redis/' .env
           sed -i 's/^REDIS_PORT=.*/REDIS_PORT=6379/' .env
+          sed -i 's|^AWS_ENDPOINT=.*|AWS_ENDPOINT=http://rustfs:9000|' .env
+          sed -i 's/^AWS_USE_PATH_STYLE_ENDPOINT=.*/AWS_USE_PATH_STYLE_ENDPOINT=true/' .env
           php artisan key:generate
           php artisan migrate --force
+      # docker-compose.yml's rustfs-init does this with aws-cli; a service
+      # container cannot run a one-shot, and the job image has curl.
+      - run: >-
+          curl --fail --silent --show-error -X PUT
+          --aws-sigv4 aws:amz:us-east-1:s3
+          --user studio:studio-media-secret
+          http://rustfs:9000/media
       - working-directory: apps/studio
         env:
           APP_SURFACE: admin

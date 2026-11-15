@@ -9,9 +9,12 @@ use App\Contracts\Http\Controllers\ContractIndexController;
 use App\Contracts\Http\Controllers\ContractSignerController;
 use App\Crm\Http\Controllers\AvailabilityController;
 use App\Crm\Http\Controllers\CalendarController;
+use App\Crm\Http\Controllers\CardDavController;
 use App\Crm\Http\Controllers\CaseController;
 use App\Crm\Http\Controllers\CaseSearchController;
 use App\Crm\Http\Controllers\ContactController;
+use App\Crm\Http\Controllers\ContactImportController;
+use App\Crm\Http\Controllers\ContactMergeController;
 use App\Crm\Http\Controllers\ContactSearchController;
 use App\Crm\Http\Controllers\CrewController;
 use App\Crm\Http\Controllers\FormInstanceController;
@@ -32,6 +35,7 @@ use App\Crm\Http\Controllers\TaskBoardController;
 use App\Crm\Http\Controllers\TaskController;
 use App\Crm\Http\Controllers\TaskTemplateController;
 use App\Crm\Http\Controllers\TimelineController;
+use App\Crm\Models\Contact;
 use App\Documents\Http\Controllers\DocumentTemplateController;
 use App\Documents\Http\Controllers\DocumentViewController;
 use App\Engagement\Http\Controllers\InboxController;
@@ -112,6 +116,16 @@ if (app()->environment('local')) {
 // omission.
 Route::get('/kalender/{token}/shootings.ics', [CalendarController::class, 'feed'])
     ->name('calendar.feed');
+
+// The address book for a phone's CardDAV account. Public for the same reason —
+// a phone cannot hold a session — and authenticated by Basic credentials on
+// every request. Listed in the audience matrix's PUBLIC_ROUTES.
+Route::match(CardDavController::METHODS, '/.well-known/carddav', [CardDavController::class, 'wellKnown'])
+    ->withoutMiddleware('web');
+Route::match(CardDavController::METHODS, '/dav/{path?}', CardDavController::class)
+    ->where('path', '.*')
+    ->withoutMiddleware('web')
+    ->name('carddav');
 
 // N-04: the MCP HTTP transport's token exchange. Called by the MCP client
 // directly, off-browser — no staff cookie, so no `audience:staff`, and no
@@ -205,10 +219,17 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/kontakte/suche', ContactSearchController::class)->name('contacts.search');
         Route::get('/suche', PaletteSearchController::class)->name('palette.search');
         Route::get('/kontakte/neu', [ContactController::class, 'create'])->name('contacts.create');
+        Route::get('/kontakte/import', [ContactImportController::class, 'create'])->name('contacts.import');
+        Route::post('/kontakte/import/vorschau', [ContactImportController::class, 'preview'])->name('contacts.import.preview');
+        Route::post('/kontakte/import', [ContactImportController::class, 'store'])->name('contacts.import.store');
         Route::get('/kontakte', [ContactController::class, 'index'])->name('contacts.index');
         Route::post('/kontakte', [ContactController::class, 'store'])->name('contacts.store');
         Route::get('/kontakte/{contact}', [ContactController::class, 'edit'])->name('contacts.edit');
         Route::patch('/kontakte/{contact}', [ContactController::class, 'update'])->name('contacts.update');
+        Route::get('/kontakte/{contact}/zusammenfuehren/{other}', [ContactMergeController::class, 'show'])
+            ->name('contacts.merge.show');
+        Route::post('/kontakte/{contact}/zusammenfuehren', [ContactMergeController::class, 'store'])
+            ->name('contacts.merge.store');
         // P-09 (#228). This contact's departures from the studio's portal
         // defaults. Per contact, never per project: an event venue with forty
         // dates a year is set up once, not forty times.
@@ -311,6 +332,11 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/profil/sicherheit', [ProfileController::class, 'edit'])->defaults('pane', 'sicherheit');
         Route::get('/profil/benachrichtigungen', [ProfileController::class, 'edit'])->defaults('pane', 'benachrichtigungen');
         Route::get('/profil/kalender', [ProfileController::class, 'edit'])->defaults('pane', 'kalender');
+        Route::get('/profil/adressbuch', [ProfileController::class, 'edit'])->defaults('pane', 'adressbuch')
+            ->can('viewAny', Contact::class);
+        Route::post('/profil/adressbuch/passwort', [CardDavController::class, 'regenerate'])
+            ->can('viewAny', Contact::class)
+            ->name('carddav.regenerate');
         Route::patch('/profil', [ProfileController::class, 'update'])->name('profile.update');
         Route::put('/profil/passwort', [ProfileController::class, 'updatePassword'])
             ->name('profile.password');

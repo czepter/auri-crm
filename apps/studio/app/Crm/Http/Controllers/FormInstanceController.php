@@ -3,6 +3,7 @@
 namespace App\Crm\Http\Controllers;
 
 use App\Crm\Actions\SeedFormInstanceFromTemplate;
+use App\Crm\Actions\SyncFormInstanceFields;
 use App\Crm\Data\CaseSuggestionData;
 use App\Crm\Data\FormInstanceData;
 use App\Crm\Enums\FormFieldType;
@@ -25,9 +26,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /**
  * E-02: seeding and personalising a project's own questionnaires. Shaped
  * after App\Quotes\Http\Controllers\QuoteController — store() optionally
- * seeds from a template the same way it seeds a quote from a package,
- * update() wholesale-replaces the fields the same way FormTemplateController
- * does for a template's own.
+ * seeds from a template the same way it seeds a quote from a package.
  */
 class FormInstanceController extends Controller
 {
@@ -98,29 +97,24 @@ class FormInstanceController extends Controller
             : back();
     }
 
-    /**
-     * Wholesale replace rather than a diffed sync — the same shape
-     * FormTemplateController::update() uses, and for the same reason: no id
-     * anywhere else references a form instance field row, so there is no
-     * foreign key a delete-and-recreate could orphan.
-     */
-    public function update(Request $request, FormInstance $formInstance): RedirectResponse
+    public function update(Request $request, FormInstance $formInstance, SyncFormInstanceFields $sync): RedirectResponse
     {
         $this->authorize('manageForms', $formInstance->case);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'fields' => ['array'],
+            'fields.*.id' => ['nullable', 'string', 'distinct'],
             'fields.*.label' => ['required', 'string', 'max:255'],
             'fields.*.type' => ['required', Rule::enum(FormFieldType::class)],
             'fields.*.required' => ['required', 'boolean'],
+            'fields.*.help' => ['nullable', 'string', 'max:500'],
             ...$this->optionRules($request),
         ]);
 
         $formInstance->update(['name' => $validated['name']]);
 
-        $formInstance->fields()->delete();
-        $formInstance->fields()->createMany($this->fieldRows($validated['fields']));
+        $sync($formInstance, $validated['fields']);
 
         AuditLogger::record(
             event: 'form_instance.updated',
@@ -262,25 +256,5 @@ class FormInstanceController extends Controller
         );
 
         return back();
-    }
-
-    /**
-     * sort_order comes from list position — the same reason
-     * FormTemplateController::fieldRows() gives.
-     *
-     * @param  list<array<string, mixed>>  $fields
-     * @return list<array<string, mixed>>
-     */
-    private function fieldRows(array $fields): array
-    {
-        // sortKeys because validated() hands the rows back in rule order, not
-        // in list order, once a row carries its own type-dependent options rules.
-        return collect($fields)->sortKeys()->values()->map(fn (array $field, int $index) => [
-            'label' => $field['label'],
-            'type' => $field['type'],
-            'required' => $field['required'],
-            'options' => $field['options'] ?? null,
-            'sort_order' => $index,
-        ])->all();
     }
 }

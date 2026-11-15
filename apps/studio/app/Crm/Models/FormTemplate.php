@@ -76,7 +76,7 @@ class FormTemplate extends Model
      * is what would let editing this template afterwards move a question a
      * project already started answering.
      *
-     * @return list<array{label: string, type: string, required: bool, options: ?array}>
+     * @return list<array{label: string, type: string, required: bool, help: ?string, options: ?array}>
      */
     public function copyFields(): array
     {
@@ -84,6 +84,7 @@ class FormTemplate extends Model
             'label' => $field->label,
             'type' => $field->type->value,
             'required' => $field->required,
+            'help' => $field->help,
             'options' => $field->options,
         ])->all();
     }

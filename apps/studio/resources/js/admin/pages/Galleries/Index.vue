@@ -76,7 +76,7 @@ function day(iso: string | null) {
         </PageHead>
 
         <Empty v-if="!galleries.length" :text="$t('galleries.empty')">
-          <Button :as="Link" variant="pill" href="/galerien/neu">{{ $t('galleries.create') }}</Button>
+          <Button :as="Link" variant="pill-muted" href="/galerien/neu">{{ $t('galleries.create') }}</Button>
         </Empty>
 
         <div v-else class="px-6 pt-7 pb-8 max-[640px]:px-5">
@@ -145,7 +145,7 @@ function day(iso: string | null) {
           :mail-templates="mailTemplates"
           :preset-id="query.get('vorlage')"
           :preview-title="galleries[0]?.title ?? $page.props.brand"
-          :section="section === 'gestaltung' || section === 'vorlagen' ? section : 'standardwerte'"
+          :section="section === 'gestaltung' || section === 'vorlagen' || section === 'startseite' ? section : 'standardwerte'"
           :settings="settings"
           @close="close"
         />

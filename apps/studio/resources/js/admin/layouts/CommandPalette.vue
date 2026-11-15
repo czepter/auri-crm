@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import { Input } from '@/ui/input'
 import { helpPanel } from '@/lib/helpPanel'
 import { holeIndex, treffer, type HelpEintrag } from '@/lib/helpSearch'
-import { rank } from '@/admin/lib/paletteRank'
+import { initial, rank } from '@/admin/lib/paletteRank'
+import { createCommands, pageCommands } from '@/admin/lib/paletteCommands'
 
 /**
  * C-03 (#237): the search is a tool in the sidebar, not a field in a header.
@@ -13,12 +15,15 @@ import { rank } from '@/admin/lib/paletteRank'
  * inert background all come from the browser; the only key this listens for
  * is ⌘K, because that one has no native equivalent.
  *
- * It opens on what one has just been looking at rather than on an empty mask,
+ * It opens on what one can do here, then on what one has just been looking at,
  * mixed in visit order — grouped by kind it would be sorted by something
  * nobody is searching for. Below that, once there is a query, the help index
  * joins in as a second group.
  */
 type Recent = { kind: string; title: string; href: string; at: string }
+type Row = { id: string; kind: string; title: string; href?: string; run?: () => void; shortcut?: string; at?: string }
+
+const { t } = useI18n()
 
 const dialog = ref<HTMLDialogElement | null>(null)
 const recent = () => (usePage().props.recent as Recent[] | null) ?? []
@@ -26,7 +31,7 @@ const recent = () => (usePage().props.recent as Recent[] | null) ?? []
 const frage = ref('')
 const index = ref<HelpEintrag[]>([])
 
-const results = ref<Omit<Recent, 'at'>[]>([])
+const results = ref<Row[]>([])
 let timer: ReturnType<typeof setTimeout> | undefined
 
 watch(frage, (value) => {
@@ -42,11 +47,16 @@ watch(frage, (value) => {
     const response = await fetch(`/suche?q=${encodeURIComponent(value)}`, {
       headers: { Accept: 'application/json' },
     })
-    results.value = (await response.json()).results
+    results.value = (await response.json()).results.map((entry: Omit<Recent, 'at'>) => ({ ...entry, id: entry.href }))
   }, 250)
 })
 
-const rows = computed(() => rank<Omit<Recent, 'at'> & { at?: string }>(recent(), results.value, frage.value))
+const rows = computed(() => {
+  const commands = [...pageCommands.value, ...createCommands(usePage().props.auth.can ?? [], t)].map((command) => ({ ...command, kind: 'aktion' }))
+  const visited = recent().map((entry) => ({ ...entry, id: entry.href }))
+
+  return rank<Row>(commands, visited, results.value, frage.value)
+})
 
 // Follows the best match until the arrow keys or the pointer pick a row, then
 // tracks that row, not its position: a reorder under the cursor must not move
@@ -54,31 +64,37 @@ const rows = computed(() => rank<Omit<Recent, 'at'> & { at?: string }>(recent(),
 let steered = false
 const highlighted = ref<string | null>(null)
 watch(rows, (list) => {
-  if (!steered || !list.some((entry) => entry.href === highlighted.value)) highlighted.value = list[0]?.href ?? null
+  if (!steered || !list.some((entry) => entry.id === highlighted.value)) highlighted.value = initial(list)?.id ?? null
 })
 
 function step(event: KeyboardEvent) {
   const list = rows.value
-  const at = list.findIndex((entry) => entry.href === highlighted.value)
+  const at = list.findIndex((entry) => entry.id === highlighted.value)
 
   if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
     event.preventDefault()
     steered = true
-    const next = (at + (event.key === 'ArrowDown' ? 1 : -1) + list.length) % list.length
-    highlighted.value = list[next]?.href ?? null
+    const down = event.key === 'ArrowDown'
+    const next = at < 0 ? (down ? 0 : list.length - 1) : (at + (down ? 1 : -1) + list.length) % list.length
+    highlighted.value = list[next]?.id ?? null
     document.getElementById(`palette-${highlighted.value}`)?.scrollIntoView({ block: 'nearest' })
   }
   else if (event.key === 'Enter' && at >= 0) {
     event.preventDefault()
-    dialog.value?.close()
-    router.visit(list[at].href)
+    activate(list[at])
   }
+}
+
+function activate(row: Row) {
+  dialog.value?.close()
+  if (row.run) row.run()
+  else router.visit(row.href!)
 }
 
 async function open() {
   steered = false
   dialog.value?.showModal()
-  highlighted.value = rows.value[0]?.href ?? null
+  highlighted.value = initial(rows.value)?.id ?? null
   index.value = await holeIndex()
 }
 
@@ -148,26 +164,25 @@ function when(at: string) {
     />
 
     <div class="max-h-[52vh] overflow-auto pt-1.5 pb-2">
-      <div v-if="!frage && rows.length" class="px-5.5 pt-3 pb-1 text-small text-ink-2">
-        {{ $t('palette.recent') }}
-      </div>
       <TransitionGroup tag="div" role="listbox" move-class="transition-transform duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none">
         <a
           v-for="entry in rows"
-          :id="`palette-${entry.href}`"
-          :key="entry.href"
+          :id="`palette-${entry.id}`"
+          :key="entry.id"
           role="option"
-          :aria-selected="entry.href === highlighted"
+          :aria-selected="entry.id === highlighted"
           class="flex items-baseline gap-3 px-5.5 py-2 text-foreground no-underline hover:bg-sunk focus-visible:bg-sunk focus-visible:outline-0"
-          :class="entry.href === highlighted && 'bg-sunk'"
+          :class="entry.id === highlighted && 'bg-sunk'"
           :href="entry.href"
-          @pointermove="steered = true; highlighted = entry.href"
+          @click.prevent="activate(entry)"
+          @pointermove="steered = true; highlighted = entry.id"
         >
           <span class="w-[62px] flex-none text-small text-ink-2">
             {{ $t(`palette.kind.${entry.kind}`) }}
           </span>
           <span class="text-ui font-medium tracking-[-0.014em]">{{ entry.title }}</span>
           <span v-if="entry.at" class="ml-auto text-small whitespace-nowrap text-ink-2">{{ when(entry.at) }}</span>
+          <kbd v-else-if="entry.shortcut" class="ml-auto font-sans text-small leading-none font-medium text-ink-2">{{ entry.shortcut }}</kbd>
         </a>
       </TransitionGroup>
 

@@ -52,6 +52,17 @@ it('opens a shared questionnaire for the client', function () {
         ->and($props['questionnaire']['fields'])->toHaveCount(2);
 });
 
+it('hands the portal each question\'s help text', function () {
+    [$instance, $contact, $project] = sharedQuestionnaire();
+    $instance->fields()->where('label', 'Wünsche')->update(['help' => "Zeile eins\nZeile zwei"]);
+
+    $fields = test()->actingAs($contact, 'portal')
+        ->get("/projekte/{$project->public_id}/fragebogen/{$instance->public_id}")
+        ->viewData('page')['props']['questionnaire']['fields'];
+
+    expect(collect($fields)->pluck('help', 'label')->all())->toBe(['Erster Tanz' => null, 'Wünsche' => "Zeile eins\nZeile zwei"]);
+});
+
 // A studio's internal checklist lives on the same table.
 it('404s a questionnaire the studio has not shared', function () {
     [$instance, $contact, $project] = sharedQuestionnaire(shared: false);

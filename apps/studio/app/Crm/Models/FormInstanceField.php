@@ -20,9 +20,8 @@ use Visus\Cuid2\Cuid2;
 
 /**
  * One question on a FormInstance. Shaped after FormField on purpose — same
- * columns, same wholesale-replace-on-save relationship — but this is the
- * project's own copy: editing it never writes back to the FormField rows it
- * may have started as (see FormInstance's own doc comment).
+ * columns — but this is the project's own copy: editing it never writes back
+ * to the FormField rows it may have started as (see FormInstance's own doc comment).
  */
 class FormInstanceField extends Model
 {
@@ -30,7 +29,7 @@ class FormInstanceField extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['label', 'type', 'required', 'options', 'sort_order'];
+    protected $fillable = ['label', 'type', 'required', 'help', 'options', 'sort_order'];
 
     protected $attributes = ['required' => false, 'sort_order' => 0];
 
@@ -78,14 +77,13 @@ class FormInstanceField extends Model
      * A "Gruppenfotos" field's configuration, in the same options column
      * select keeps its choices in.
      *
-     * @return array{help: ?string, suggestions: list<string>, minutesPerGroup: int}
+     * @return array{suggestions: list<string>, minutesPerGroup: int}
      */
     public function groupPhotoOptions(): array
     {
         $suggestions = array_filter((array) ($this->options['suggestions'] ?? []), 'is_string');
 
         return [
-            'help' => $this->options['help'] ?? null,
             'suggestions' => array_values($suggestions),
             'minutesPerGroup' => (int) ($this->options['minutesPerGroup'] ?? 2),
         ];

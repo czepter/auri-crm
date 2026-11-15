@@ -37,6 +37,9 @@ return [
     'empty_draft' => 'Die Galerie hat noch keine Bilder.',
 
     'copy_suffix' => 'Kopie',
+    'home_redirect_required' => 'Pflichtfeld',
+    'home_redirect_scheme' => 'Nur http- und https-Adressen',
+    'home_redirect_self' => 'Zeigt auf :host selbst',
     'favorites_task' => 'Auswahl bearbeiten: :title',
     'prerelease_suffix' => 'Vorabversion',
     'deleted_note' => 'Galerie „:title“ gelöscht. Favoriten und Kommentare: :path',

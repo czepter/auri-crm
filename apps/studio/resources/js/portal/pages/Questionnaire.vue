@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { Fragment, computed, reactive, ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import GroupPhotoField from '@/portal/components/GroupPhotoField.vue'
@@ -105,6 +105,10 @@ function serverError(id: string) {
   return (form.errors as Record<string, string | undefined>)[`answers.${id}`]
 }
 
+function ids(describedBy: string | undefined, controlId: string, field: Field) {
+  return [describedBy, errorFor(field.id) ? `${controlId}-error` : undefined].filter(Boolean).join(' ') || undefined
+}
+
 function errorFor(id: string) {
   const field = props.questionnaire.fields.find((f) => f.id === id)!
 
@@ -128,24 +132,29 @@ function errorFor(id: string) {
         <Transition name="step" mode="out-in">
         <div :key="step" class="grid gap-8">
         <template v-for="field in pages[step]" :key="field.id">
+          <component :is="field.help ? 'div' : Fragment" v-if="field.type === 'boolean'">
           <label
-            v-if="field.type === 'boolean'"
             class="flex cursor-pointer items-start gap-3.5 text-[14.5px] leading-[1.5] [&_[data-slot=checkbox]]:mt-0.5 [&_[data-slot=checkbox]]:size-[17px] [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action"
           >
             <Checkbox
+              :aria-describedby="field.help ? `${field.id}-help` : undefined"
               :model-value="isChecked(field.id)"
               @update:model-value="form.answers[field.id] = isChecked(field.id) ? '' : 'ja'"
             />
             <span>{{ field.label }}</span>
           </label>
+          <p v-if="field.help" :id="`${field.id}-help`" class="mt-1 pl-[31px] whitespace-pre-line text-[12.5px] leading-[1.45] text-muted-foreground">{{ field.help }}</p>
+          </component>
 
           <PortalField
             v-else
-            class="relative"
+            class="relative [&_[data-slot=caption]]:text-[14.5px] [&_[data-slot=caption]]:leading-[1.35] [&_[data-slot=caption]]:font-medium [&_[data-slot=caption]]:text-foreground"
             :label="field.label"
             :optional="field.required ? undefined : $t('settings.optional')"
-            :hint="field.groupPhotos?.help ?? undefined"
+            :help="field.help ?? undefined"
+            :group="field.type === 'group_photos'"
             @focusout="touched.add(field.id)"
+            v-slot="{ controlId, captionId, describedBy }"
           >
             <template v-if="field.type === 'file'">
               <div v-for="file in field.files" :key="file.id" class="flex items-center gap-3 text-[14.5px] leading-[1.5]">
@@ -155,6 +164,8 @@ function errorFor(id: string) {
                 </button>
               </div>
               <input
+                :id="controlId"
+                :aria-describedby="ids(describedBy, controlId, field)"
                 class="block text-[13.5px] leading-[1.5]"
                 type="file"
                 :accept="(field.fileFormats ?? []).map((f) => `.${f}`).join(',')"
@@ -167,7 +178,7 @@ function errorFor(id: string) {
               :model-value="toOption(form.answers[field.id])"
               @update:model-value="(value) => form.answers[field.id] = fromOption(value)"
             >
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger :id="controlId" :aria-describedby="ids(describedBy, controlId, field)"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem :value="NONE">{{ $t('portal.none') }}</SelectItem>
                 <SelectItem v-for="option in field.options ?? []" :key="option" :value="option">{{ option }}</SelectItem>
@@ -179,6 +190,8 @@ function errorFor(id: string) {
             <GroupPhotoField
               v-else-if="field.type === 'group_photos'"
               v-model="form.answers[field.id]"
+              :aria-labelledby="captionId"
+              :aria-describedby="ids(describedBy, controlId, field)"
               :suggestions="field.groupPhotos?.suggestions ?? []"
               :minutes-per-group="field.groupPhotos?.minutesPerGroup ?? 2"
             />
@@ -188,17 +201,21 @@ function errorFor(id: string) {
             <Textarea
               v-else-if="field.type === 'text' || field.type === 'name_list'"
               v-model="form.answers[field.id]"
+              :id="controlId"
+              :aria-describedby="ids(describedBy, controlId, field)"
               rows="3"
             />
 
             <Input
               v-else
               v-model="form.answers[field.id]"
+              :id="controlId"
+              :aria-describedby="ids(describedBy, controlId, field)"
               :type="field.type === 'date' ? 'date' : field.type === 'time' ? 'time' : 'text'"
             />
 
             <Transition name="error">
-              <span v-if="errorFor(field.id)" role="status" class="absolute top-full left-0 pt-1.5 text-[12.5px] leading-[1.45] text-destructive">{{ errorFor(field.id) }}</span>
+              <span v-if="errorFor(field.id)" :id="`${controlId}-error`" role="status" class="absolute top-full left-0 pt-1.5 text-[12.5px] leading-[1.45] text-destructive">{{ errorFor(field.id) }}</span>
             </Transition>
           </PortalField>
         </template>

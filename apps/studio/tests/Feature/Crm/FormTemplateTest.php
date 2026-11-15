@@ -163,3 +163,23 @@ it('carries no integer identifier in the props', function () {
 
     expect(integerIdPaths($props))->toBe([]);
 });
+
+it('stores a help text per field, trimmed, and rejects one over 500 characters', function () {
+    $template = FormTemplate::factory()->create();
+    $url = "/einstellungen/fragebogen-vorlagen/{$template->public_id}";
+    $payload = fn (string $help) => [
+        'name' => $template->name,
+        'project_type' => 'wedding',
+        'is_active' => true,
+        'fields' => [
+            ['label' => 'Getting Ready', 'type' => 'text', 'required' => false, 'help' => $help, 'options' => null],
+            ['label' => 'Ohne', 'type' => 'text', 'required' => false, 'help' => '  ', 'options' => null],
+        ],
+    ];
+
+    $this->actingAs(staffMember(), 'staff')->patch($url, $payload("  Ab wann seid ihr beim Styling?\nUnd wer ist dabei?  "))->assertRedirect();
+
+    expect($template->fields()->get()->pluck('help')->all())->toBe(["Ab wann seid ihr beim Styling?\nUnd wer ist dabei?", null]);
+
+    $this->actingAs(staffMember(), 'staff')->patch($url, $payload(str_repeat('a', 501)))->assertInvalid(['fields.0.help']);
+});

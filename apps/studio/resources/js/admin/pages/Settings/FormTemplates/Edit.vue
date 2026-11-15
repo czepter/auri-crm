@@ -34,7 +34,7 @@ const form = useForm({
       type: field.type,
       required: field.required,
       optionsText: (field.type === 'group_photos' ? field.options?.suggestions ?? [] : field.options ?? []).join('\n'),
-      helpText: field.type === 'group_photos' ? field.options?.help ?? '' : '',
+      helpText: field.help ?? '',
       minutesPerGroup: field.type === 'group_photos' ? field.options?.minutesPerGroup ?? 2 : 2,
     }),
   ),
@@ -52,7 +52,7 @@ function fieldOptions(field: FormFieldRow) {
   const list = field.optionsText.split('\n').map((o) => o.trim()).filter(Boolean)
 
   if (field.type === 'group_photos') {
-    return { help: field.helpText?.trim() || null, suggestions: list, minutesPerGroup: field.minutesPerGroup ?? 2 }
+    return { suggestions: list, minutesPerGroup: field.minutesPerGroup ?? 2 }
   }
 
   return field.type === 'select' ? list : null
@@ -67,6 +67,7 @@ function submit() {
         label: field.label,
         type: field.type,
         required: field.required,
+        help: field.helpText.trim() || null,
         options: fieldOptions(field),
       })),
     }))

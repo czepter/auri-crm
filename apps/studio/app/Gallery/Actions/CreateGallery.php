@@ -28,6 +28,7 @@ class CreateGallery
         return DB::transaction(function () use ($attributes, $case, $shootPublicId, $actor, $preset, $internal) {
             $gallery = Gallery::create([
                 ...($internal ? $this->born($preset) : []),
+                'project_type_id' => $case?->type?->id,
                 ...$attributes,
                 'case_id' => $case?->id,
                 'shoot_id' => $shootPublicId !== null

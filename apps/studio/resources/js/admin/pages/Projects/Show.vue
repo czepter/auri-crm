@@ -40,6 +40,7 @@ import { nextStep, paymentCall, stepRows } from "@/admin/lib/projectNextStep";
 import { sendQuoteHref } from "@/admin/lib/leadPrimary";
 import { stepOnArrow } from "@/admin/lib/queueStep";
 import { useLiveProps } from "@/admin/lib/liveReload";
+import { usePageCommands } from "@/admin/lib/paletteCommands";
 
 type ProjectFieldDefinition = InstanceType<typeof ProjectFields>["$props"]["fields"][number];
 
@@ -134,6 +135,13 @@ const completeNow = computed(
 function createGallery() {
     router.post(`${base.value}/galerien`);
 }
+
+usePageCommands(() => [
+    ...(createQuote.value ? [{ id: "quote", title: t("quotes.create"), href: `/angebote/neu?projekt=${props.header.id}` }] : []),
+    ...(sendHref.value ? [{ id: "send-quote", title: t("lead.sendQuote"), href: sendHref.value }] : []),
+    ...(dueRate.value ? [{ id: "rate", title: t("payments.issueInvoice"), run: () => issueRate(dueRate.value!.id) }] : []),
+    ...(addGallery.value ? [{ id: "gallery", title: t("galleries.create"), run: createGallery }] : []),
+]);
 
 function completeProject() {
     router.post(`${base.value}/abschluss`, {}, { preserveScroll: true });

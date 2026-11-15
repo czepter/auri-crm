@@ -16,7 +16,7 @@ beforeEach(function () {
 });
 
 it('exports everything the studio holds about a contact as downloadable json', function () {
-    $contact = Contact::factory()->create(['name' => 'Lena Meier', 'email' => 'lena@example.test']);
+    $contact = Contact::factory()->create(['name' => 'Lena Meier', 'email' => 'lena@example.test', 'social_profiles' => [['platform' => 'instagram', 'value' => '@lena']]]);
     $project = ClientCase::factory()->create(['name' => 'Meier — Hochzeit']);
     $project->attachContact($contact, CaseContactRole::Primary);
 
@@ -36,6 +36,7 @@ it('exports everything the studio holds about a contact as downloadable json', f
     expect($data['contact']['id'])->toBe($contact->public_id)
         ->and($data['contact']['name'])->toBe('Lena Meier')
         ->and($data['contact']['email'])->toBe('lena@example.test')
+        ->and($data['contact']['social_profiles'])->toEqual([['platform' => 'instagram', 'value' => '@lena']])
         ->and($data['projects'])->toHaveCount(1);
 
     $exportedProject = $data['projects'][0];

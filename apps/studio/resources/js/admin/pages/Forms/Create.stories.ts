@@ -5,6 +5,7 @@ const feld = (
   row: Pick<App.Crm.Data.FormInstanceFieldData, 'id' | 'label' | 'type' | 'typeLabel'> & Partial<App.Crm.Data.FormInstanceFieldData>,
 ): App.Crm.Data.FormInstanceFieldData => ({
   required: false,
+  help: null,
   options: null,
   currentAnswer: null,
   answeredAt: null,
@@ -79,7 +80,7 @@ export const Anpassen: Story = {
           label: 'Gruppenfotos',
           type: 'group_photos',
           typeLabel: 'Gruppenfotos',
-          groupPhotos: { help: null, suggestions: ['Brautpaar mit Eltern', 'Geschwister', 'Trauzeugen'], minutesPerGroup: 2 },
+          groupPhotos: { suggestions: ['Brautpaar mit Eltern', 'Geschwister', 'Trauzeugen'], minutesPerGroup: 2 },
         }),
         feld({ id: 'f6', label: 'Dürfen wir Bilder im Portfolio zeigen?', type: 'boolean', typeLabel: 'Ja / Nein' }),
       ],

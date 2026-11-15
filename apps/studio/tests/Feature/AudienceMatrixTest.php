@@ -28,6 +28,10 @@ const PUBLIC_ROUTES = [
         'einrichtung',
         'auth/mfa',
         'kalender/{token}/shootings.ics',
+        // A phone's address book cannot hold a session either; Basic
+        // credentials on every request are the guard.
+        '.well-known/carddav',
+        'dav/{path?}',
         'einladung/{token}',
         'passwort/vergessen',
         'passwort/neu/{token}',
@@ -109,7 +113,7 @@ const PUBLIC_ROUTES = [
         // GalleryGuestController.
         'api/galleries/{gallery}/guest',
         'api/galleries/{gallery}/guest/bestaetigung',
-        'api/galleries/{gallery}', 'api/gallery-address/{reference}', 'api/gallery-versions/{galleryVersion}/images/{key}',
+        'api/galleries/{gallery}', 'api/gallery-address/{reference}', 'api/gallery-home', 'api/gallery-home/covers/{galleryVersion}', 'api/gallery-versions/{galleryVersion}/images/{key}',
         'api/gallery-versions/{galleryVersion}/favorites', 'api/gallery-versions/{galleryVersion}/favorites/{key}',
         'api/gallery-versions/{galleryVersion}/comments',
         // R31: the draft's own image route. Its credential is the

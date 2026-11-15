@@ -12,7 +12,7 @@ class FormInstanceFieldData extends Data
 {
     /**
      * @param  ?array<array-key, mixed>  $options
-     * @param  ?array{help: ?string, suggestions: list<string>, minutesPerGroup: int}  $groupPhotos
+     * @param  ?array{suggestions: list<string>, minutesPerGroup: int}  $groupPhotos
      * @param  ?list<string>  $fileFormats
      * @param  list<FormInstanceFileData>  $files
      */
@@ -22,6 +22,7 @@ class FormInstanceFieldData extends Data
         public string $type,
         public string $typeLabel,
         public bool $required,
+        public ?string $help,
         public ?array $options,
         public ?string $currentAnswer,
         public ?string $answeredAt,
@@ -49,6 +50,7 @@ class FormInstanceFieldData extends Data
             type: $field->type->value,
             typeLabel: $field->type->label(),
             required: $field->required,
+            help: $field->help,
             options: $isFile || $isGroupPhotos ? null : $field->options,
             currentAnswer: $field->currentAnswer?->value,
             // A file field is answered by having a file, so the progress the

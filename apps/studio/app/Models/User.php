@@ -90,6 +90,7 @@ class User extends Authenticatable
         'mfa_secret',
         'mfa_recovery_codes',
         'calendar_token',
+        'carddav_secret',
     ];
 
     protected function casts(): array
@@ -99,6 +100,7 @@ class User extends Authenticatable
             'role' => StaffRole::class,
             'mfa_secret' => 'encrypted',
             'mfa_recovery_codes' => 'encrypted:array',
+            'carddav_secret' => 'encrypted',
             'mfa_confirmed_at' => 'immutable_datetime',
             'digest_sent_at' => 'immutable_datetime',
             'email_verified_at' => 'immutable_datetime',
@@ -169,6 +171,24 @@ class User extends Authenticatable
         $this->forceFill(['calendar_token' => null])->save();
 
         return $this->calendarToken();
+    }
+
+    /** The address-book password, minted on first use like the calendar token. */
+    public function carddavSecret(): string
+    {
+        if ($this->carddav_secret === null) {
+            $this->forceFill(['carddav_secret' => Str::lower(implode('-', str_split(Str::random(20), 5)))])->save();
+        }
+
+        return $this->carddav_secret;
+    }
+
+    /** Revocation: every phone holding the old secret stops syncing at once. */
+    public function regenerateCarddavSecret(): string
+    {
+        $this->forceFill(['carddav_secret' => null])->save();
+
+        return $this->carddavSecret();
     }
 
     /**

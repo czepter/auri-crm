@@ -10,8 +10,10 @@ use App\Crm\Actions\CreateContact;
 use App\Crm\Actions\UpdateContact;
 use App\Crm\Data\ContactRowData;
 use App\Crm\Data\ContactSuggestionData;
+use App\Crm\Enums\SocialPlatform;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Crm\Support\SocialProfiles;
 use App\Engagement\Data\MessageData;
 use App\Engagement\Models\Message;
 use App\Enums\Capability;
@@ -122,7 +124,15 @@ class ContactController extends Controller
 
         return Inertia::render('Contacts/Create', [
             'portalDefaults' => $this->portalDefaults($portal),
+            'socialPlatforms' => $this->socialPlatforms(),
         ]);
+    }
+
+    /** @return list<array{value: string, label: string}> */
+    private function socialPlatforms(): array
+    {
+        return collect(SocialPlatform::cases())
+            ->map(fn (SocialPlatform $platform) => ['value' => $platform->value, 'label' => $platform->label()])->all();
     }
 
     public function edit(Contact $contact, PortalSettings $portal): Response
@@ -147,6 +157,8 @@ class ContactController extends Controller
                 'postcode' => $contact->postcode,
                 'city' => $contact->city,
             ],
+            'socialProfiles' => $contact->social_profiles ?? [],
+            'socialPlatforms' => $this->socialPlatforms(),
             // E-11: every thread this contact is on, across projects — the
             // question "what have we actually said to this person" has no
             // other place to be answered, because a thread only ever knows
@@ -287,9 +299,14 @@ class ContactController extends Controller
             'street' => ['nullable', 'string', 'max:255'],
             'postcode' => ['nullable', 'string', 'max:32'],
             'city' => ['nullable', 'string', 'max:255'],
+            ...SocialProfiles::rules(),
             'portal' => ['array'],
             ...collect(self::PORTAL_RULES)->mapWithKeys(fn ($rules, $key) => ["portal.{$key}" => $rules])->all(),
         ]);
+
+        if (array_key_exists('social_profiles', $validated)) {
+            $validated['social_profiles'] = SocialProfiles::normalize($validated['social_profiles']);
+        }
 
         $overrides = array_filter($validated['portal'] ?? [], fn ($value) => $value !== null && $value !== '');
 
@@ -303,9 +320,9 @@ class ContactController extends Controller
         $this->authorize('update', $contact);
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => [
-                'nullable', 'email', 'max:255',
+                'sometimes', 'nullable', 'email', 'max:255',
                 // Mirrors the partial unique index on (tenant_id, email).
                 // Without this rule the database throws where the form should
                 // show a field error.
@@ -313,17 +330,22 @@ class ContactController extends Controller
                     ->where('tenant_id', config('tenancy.tenant_id'))
                     ->ignore($contact->id),
             ],
-            'phone' => ['nullable', 'string', 'max:64', new ValidFormat('phone')],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:64', new ValidFormat('phone')],
             // M-06: the billing address §14 UStG wants on an invoice. All
             // three nullable — a lead that never becomes a paying client
             // never needs one, and demanding it at capture would slow down
             // the one screen C-04 built to be fast.
-            'street' => ['nullable', 'string', 'max:255'],
-            'postcode' => ['nullable', 'string', 'max:32'],
-            'city' => ['nullable', 'string', 'max:255'],
+            'street' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'postcode' => ['sometimes', 'nullable', 'string', 'max:32'],
+            'city' => ['sometimes', 'nullable', 'string', 'max:255'],
+            ...SocialProfiles::rules(),
         ]);
 
-        if ($validated['email'] !== $contact->email) {
+        if (array_key_exists('social_profiles', $validated)) {
+            $validated['social_profiles'] = SocialProfiles::normalize($validated['social_profiles']);
+        }
+
+        if (array_key_exists('email', $validated) && $validated['email'] !== $contact->email) {
             AuditLogger::record(
                 event: 'contact.email_changed',
                 actor: auth('staff')->user(),

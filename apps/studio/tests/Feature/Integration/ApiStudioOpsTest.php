@@ -114,6 +114,32 @@ it('creates a form from a template, updates it, shares it and records an answer'
         ->postJson("/api/form-fields/{$fieldId}/answer", ['value' => 'Oma und Opa'])
         ->assertOk()
         ->assertJsonPath('data.fields.0.currentAnswer', 'Oma und Opa');
+
+    $this->withHeader('Idempotency-Key', 'form-5')
+        ->patchJson("/api/forms/{$formId}", [
+            'name' => 'Familie',
+            'fields' => [['id' => $fieldId, 'label' => 'Wer kommt alles?', 'type' => 'text', 'required' => true]],
+        ])
+        ->assertOk()
+        ->assertJsonPath('data.fields.0.id', $fieldId)
+        ->assertJsonPath('data.fields.0.currentAnswer', 'Oma und Opa');
+
+    $this->withHeader('Idempotency-Key', 'form-6')
+        ->patchJson("/api/forms/{$formId}", [
+            'name' => 'Familie',
+            'fields' => [['id' => $fieldId, 'label' => 'Wer kommt alles?', 'type' => 'text', 'required' => true, 'help' => 'Auch Kinder.']],
+        ])
+        ->assertOk()
+        ->assertJsonPath('data.fields.0.help', 'Auch Kinder.');
+
+    $this->getJson("/api/cases/{$project->public_id}/forms")->assertJsonPath('data.0.fields.0.help', 'Auch Kinder.');
+
+    $this->withHeader('Idempotency-Key', 'form-7')
+        ->patchJson("/api/forms/{$formId}", [
+            'name' => 'Familie',
+            'fields' => [['id' => $fieldId, 'label' => 'Wer kommt alles?', 'type' => 'text', 'required' => true, 'help' => str_repeat('a', 501)]],
+        ])
+        ->assertUnprocessable();
 });
 
 it('adds and removes a shoot timeline entry', function () {

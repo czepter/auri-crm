@@ -6,6 +6,7 @@ import { buyPass, passCookieName, PASS_MAX_AGE_SECONDS } from '../../lib/viewPas
 import { isPrerelease, signUpForPrerelease, type PrereleaseSignupResult } from '../../lib/prerelease'
 import { confirm as confirmGuest, guestCookieName, GUEST_MAX_AGE_SECONDS, nameFromEmail, requestCode } from '../../lib/guest'
 import { tileStyle } from '../../lib/tile'
+import { gateTitle } from '../../lib/home'
 import { INTRO_TEXT, introRows } from '../../lib/intro'
 import { assetsOf, pickSet, type GuestSet } from '../../lib/sets'
 import { designAttrs, GATE_DESIGN, objectPosition, type GalleryCover, type GalleryDesign } from '../../lib/design'
@@ -250,6 +251,15 @@ const gallery = prerelease ? null : (result as PublishedGallery | null)
 // what this page can tell them apart by is only whether a pass ever worked.
 const locked = gallery === null && !prerelease && response.status === 404
 
+let gateHeading = 'Galerie'
+
+if (locked) {
+  const listed = await callApi(apiBase, `/api/gallery-home?adresse=${encodeURIComponent(`${prefix}/${slug}`)}`, requestId, {
+    headers: { Accept: 'application/json' },
+  })
+  gateHeading = gateTitle(listed.ok ? await listed.json() : null) ?? gateHeading
+}
+
 if (gallery === null && !locked && !prerelease) {
   Astro.response.status = 502
 }
@@ -283,7 +293,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(gallery?.imag
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
-    <title>{gallery?.title ?? prereleaseGallery?.title ?? 'Galerie'}</title>
+    <title>{gallery?.title ?? prereleaseGallery?.title ?? gateHeading}</title>
   </head>
   <body>
     {
@@ -293,7 +303,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(gallery?.imag
         // exactly what the gate withholds — so the field stands on the void.
         <section class="gate">
           <div class="lock">
-            <h1 class="display">Galerie</h1>
+            <h1 class="display">{gateHeading}</h1>
 
             <div>
               <div class="hair" />

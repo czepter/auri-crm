@@ -120,6 +120,7 @@ class FormTemplateController extends Controller
             'fields.*.label' => ['required', 'string', 'max:255'],
             'fields.*.type' => ['required', Rule::enum(FormFieldType::class)],
             'fields.*.required' => ['required', 'boolean'],
+            'fields.*.help' => ['nullable', 'string', 'max:500'],
             ...$this->optionRules($request),
         ]);
     }
@@ -160,6 +161,7 @@ class FormTemplateController extends Controller
             'label' => $field['label'],
             'type' => $field['type'],
             'required' => $field['required'],
+            'help' => filled($field['help'] ?? null) ? trim($field['help']) : null,
             'options' => $field['options'] ?? null,
             'sort_order' => $index,
         ])->all();

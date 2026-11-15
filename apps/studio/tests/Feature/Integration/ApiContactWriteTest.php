@@ -77,3 +77,57 @@ it('refuses to update a contact without the manage_contacts scope', function () 
 
     expect($contact->fresh()->name)->toBe('Lena Meier');
 });
+
+it('creates a contact with social profiles', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageContacts)->create();
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'contact-profiles-create')
+        ->postJson('/api/contacts', ['name' => 'Lena Meier', 'social_profiles' => [['platform' => 'instagram', 'value' => ' @lena ']]])
+        ->assertCreated()
+        ->assertJson(['social_profiles' => [['platform' => 'instagram', 'value' => '@lena']]]);
+
+    expect(Contact::firstWhere('name', 'Lena Meier')->social_profiles)->toEqual([['platform' => 'instagram', 'value' => '@lena']]);
+});
+
+it('replaces social profiles on update and clears them with an empty list', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageContacts)->create();
+    $contact = Contact::factory()->create(['social_profiles' => [['platform' => 'instagram', 'value' => '@alt']]]);
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'contact-profiles-update')
+        ->patchJson("/api/contacts/{$contact->public_id}", ['social_profiles' => [['platform' => 'website', 'value' => 'lena.de']]])
+        ->assertOk();
+
+    expect($contact->fresh()->social_profiles)->toEqual([['platform' => 'website', 'value' => 'lena.de']]);
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'contact-profiles-clear')
+        ->patchJson("/api/contacts/{$contact->public_id}", ['social_profiles' => []])
+        ->assertOk();
+
+    expect($contact->fresh()->social_profiles)->toBeNull();
+});
+
+it('keeps social profiles when an update omits them', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageContacts)->create();
+    $profiles = [['platform' => 'instagram', 'value' => '@lena']];
+    $contact = Contact::factory()->create(['social_profiles' => $profiles]);
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'contact-profiles-keep')
+        ->patchJson("/api/contacts/{$contact->public_id}", ['phone' => '0171 9999999'])
+        ->assertOk();
+
+    expect($contact->fresh()->social_profiles)->toEqual($profiles);
+});
+
+it('refuses an unknown social platform', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageContacts)->create();
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'contact-profiles-invalid')
+        ->postJson('/api/contacts', ['name' => 'Lena Meier', 'social_profiles' => [['platform' => 'myspace', 'value' => 'lena']]])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('social_profiles.0.platform');
+});

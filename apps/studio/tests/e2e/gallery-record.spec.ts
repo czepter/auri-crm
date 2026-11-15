@@ -34,7 +34,12 @@ test('reports a failed copy, and shows the link, when the Clipboard API is unava
   await page.goto('/galerien')
   await page.getByRole('link', { name: /E2E Galerie/ }).first().click()
   await page.getByRole('button', { name: 'Mehr' }).click()
+  // The mint POST queues behind the page's thumbnail requests on the single
+  // PHP pool, and on CI those reach for an S3 that is not there — so it can
+  // outlast expect's five seconds. Wait for the response, not the clock.
+  const minted = page.waitForResponse((response) => response.url().endsWith('/vorschau-link'))
   await page.getByRole('menuitem', { name: 'Vorschaulink erzeugen' }).click()
+  expect((await minted).status()).toBe(200)
 
   await expect(page.getByText('Fehlgeschlagen')).toBeVisible()
   await expect(page.locator('input[readonly]')).toHaveValue(/\/e2e-buchung\/e2e-galerie/)

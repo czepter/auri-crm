@@ -282,12 +282,12 @@ class DemoFillSeeder extends Seeder
         $template = FormTemplate::create(['name' => 'Hochzeitsfragebogen', 'project_type' => 'wedding']);
 
         foreach ([
-            ['Wer gehört zur engsten Familie?', 'text', true, null],
-            ['Gibt es Gäste, die nicht fotografiert werden möchten?', 'text', false, null],
-            ['Uhrzeit der Trauung', 'time', true, null],
-            ['Wie soll der Tag festgehalten werden?', 'select', false, ['Reportage', 'Gemischt', 'Gestellt']],
-        ] as $index => [$label, $type, $required, $options]) {
-            $template->fields()->create(['label' => $label, 'type' => $type, 'required' => $required, 'options' => $options, 'sort_order' => $index]);
+            ['Wer gehört zur engsten Familie?', 'text', true, null, 'Eltern, Geschwister und Großeltern genügen.'],
+            ['Gibt es Gäste, die nicht fotografiert werden möchten?', 'text', false, null, null],
+            ['Uhrzeit der Trauung', 'time', true, null, null],
+            ['Wie soll der Tag festgehalten werden?', 'select', false, ['Reportage', 'Gemischt', 'Gestellt'], null],
+        ] as $index => [$label, $type, $required, $options, $help]) {
+            $template->fields()->create(['label' => $label, 'type' => $type, 'required' => $required, 'help' => $help, 'options' => $options, 'sort_order' => $index]);
         }
 
         return $template;

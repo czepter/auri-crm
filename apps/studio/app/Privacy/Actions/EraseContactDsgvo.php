@@ -117,6 +117,7 @@ class EraseContactDsgvo
                 'postcode' => null,
                 'city' => null,
                 'portal_overrides' => null,
+                'social_profiles' => null,
                 'portal_access_revoked_at' => $contact->portal_access_revoked_at ?? now(),
                 'dsgvo_erased_at' => now(),
             ])->save();
