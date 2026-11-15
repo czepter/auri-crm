@@ -2208,6 +2208,69 @@
                 }
             }
         },
+        "/forms/{formInstance}/close": {
+            "post": {
+                "operationId": "forms.close",
+                "tags": [
+                    "FormInstance"
+                ],
+                "parameters": [
+                    {
+                        "name": "formInstance",
+                        "in": "path",
+                        "required": true,
+                        "description": "The form instance public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "closed": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "closed"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/FormInstanceData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
         "/form-fields/{formInstanceField}/answer": {
             "post": {
                 "operationId": "form-fields.answer",

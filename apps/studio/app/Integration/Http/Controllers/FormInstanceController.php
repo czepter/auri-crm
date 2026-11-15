@@ -82,6 +82,15 @@ class FormInstanceController extends Controller
         return response()->json(['data' => FormInstanceData::fromModel($formInstance->load('fields.currentAnswer'))]);
     }
 
+    public function close(Request $request, FormInstance $formInstance): JsonResponse
+    {
+        $closed = $request->validate(['closed' => ['required', 'boolean']])['closed'];
+
+        $formInstance->forceFill(['closed_at' => $closed ? now() : null])->save();
+
+        return response()->json(['data' => FormInstanceData::fromModel($formInstance->load('fields.currentAnswer'))]);
+    }
+
     public function answer(Request $request, FormInstanceField $formInstanceField): JsonResponse
     {
         abort_if($formInstanceField->type === FormFieldType::File, 422, 'A file field cannot be answered over the api.');

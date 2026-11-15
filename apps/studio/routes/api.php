@@ -561,6 +561,7 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageFormTemplates->val
     Route::post('/cases/{case:public_id}/forms', [FormInstanceController::class, 'store'])->name('api.cases.forms.store');
     Route::patch('/forms/{formInstance:public_id}', [FormInstanceController::class, 'update'])->name('api.forms.update');
     Route::post('/forms/{formInstance:public_id}/share', [FormInstanceController::class, 'share'])->name('api.forms.share');
+    Route::post('/forms/{formInstance:public_id}/close', [FormInstanceController::class, 'close'])->name('api.forms.close');
     Route::post('/form-fields/{formInstanceField:public_id}/answer', [FormInstanceController::class, 'answer'])->name('api.form-fields.answer');
 });
 
