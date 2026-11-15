@@ -38,6 +38,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 
 /**
  * Accounts used only by the Playwright suite. Never registered in
@@ -378,7 +379,9 @@ class E2eSeeder extends Seeder
         foreach (range(1, 6) as $index) {
             $key = "galleries/e2e/{$gallery->public_id}/{$index}.jpg";
             $bytes = self::flatJpeg($index);
-            $disk->put($key, $bytes);
+            // The disk is configured throw=false: a dead endpoint would
+            // otherwise seed rows with no bytes and surface as hung thumbnails.
+            throw_unless($disk->put($key, $bytes), RuntimeException::class, "Seeding {$key} to the s3 disk failed");
 
             Asset::create([
                 'gallery_id' => $gallery->id,
