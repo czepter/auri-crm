@@ -133,7 +133,7 @@ usePageCommands(() => {
             <!-- A page with a stage menu books through it. -->
             <AlertDialog v-if="!header.isBooked && header.canBook && !$slots.stage" v-model:open="booking">
               <AlertDialogTrigger as-child>
-                <Button :variant="$slots.actions || header.nextAction ? 'outline' : 'pill'" type="button">{{ $t('project.book') }}</Button>
+                <Button :variant="$slots.actions || header.nextAction || active !== 'overview' ? 'outline' : 'pill'" type="button">{{ $t('project.book') }}</Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>

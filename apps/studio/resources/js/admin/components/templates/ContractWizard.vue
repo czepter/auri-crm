@@ -72,7 +72,7 @@ function submit() {
 <template>
   <Dialog v-model:open="open">
     <DialogTrigger as-child>
-      <Button type="button">{{ $t('contractWizard.open') }}</Button>
+      <Button type="button" variant="outline">{{ $t('contractWizard.open') }}</Button>
     </DialogTrigger>
 
     <DialogContent class="max-w-[640px]">

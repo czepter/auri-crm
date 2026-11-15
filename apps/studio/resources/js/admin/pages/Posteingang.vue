@@ -238,7 +238,7 @@ function receivedAt(iso: string) {
             <div class="mt-[5px] line-clamp-3 max-w-[68ch] text-body whitespace-pre-line text-ink-2">{{ draft.body }}</div>
 
             <div class="mt-2.5 flex items-center gap-2">
-              <Button :as="Link" variant="pill" :href="`/posteingang/entwuerfe/${draft.id}/senden`">{{ $t('inbox.send') }}</Button>
+              <Button :as="Link" variant="pill-muted" :href="`/posteingang/entwuerfe/${draft.id}/senden`">{{ $t('inbox.send') }}</Button>
               <Button variant="ghost" type="button" @click="discard(draft.id)">{{ $t('inbox.discard') }}</Button>
             </div>
           </div>

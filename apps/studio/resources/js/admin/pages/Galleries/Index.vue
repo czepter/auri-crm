@@ -76,7 +76,7 @@ function day(iso: string | null) {
         </PageHead>
 
         <Empty v-if="!galleries.length" :text="$t('galleries.empty')">
-          <Button :as="Link" variant="pill" href="/galerien/neu">{{ $t('galleries.create') }}</Button>
+          <Button :as="Link" variant="pill-muted" href="/galerien/neu">{{ $t('galleries.create') }}</Button>
         </Empty>
 
         <div v-else class="px-6 pt-7 pb-8 max-[640px]:px-5">

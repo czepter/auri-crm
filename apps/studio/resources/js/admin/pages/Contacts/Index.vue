@@ -39,7 +39,7 @@ function day(iso: string) {
         </PageHead>
 
         <Empty v-if="!contacts.length" :text="$t('contacts.empty')">
-          <Button :as="Link" variant="pill" href="/kontakte/neu">{{ $t('contacts.create') }}</Button>
+          <Button :as="Link" variant="pill-muted" href="/kontakte/neu">{{ $t('contacts.create') }}</Button>
         </Empty>
 
         <Table v-else>

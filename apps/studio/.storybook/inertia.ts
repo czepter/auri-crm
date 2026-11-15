@@ -37,6 +37,7 @@ export const SHARED: PageProps = {
     errors: {},
     nav: { leads: 4, unread: 2, projects: 11 },
     release: { installed: '2026.9.1', updateAvailable: false },
+    letterEditor: { palette: [], mergeFields: [] },
 }
 
 /** Setzt die Seite, auf der die Story spielt. Aufgerufen vom Dekorator. */
@@ -83,7 +84,7 @@ export function useForm<T extends Record<string, unknown>>(data: T) {
         errors: { ...((page.props.errors ?? {}) as Record<string, string>) },
         processing: false,
         isDirty: false,
-        hasErrors: computed(() => Object.keys(form.errors).length > 0),
+        hasErrors: computed((): boolean => Object.keys(form.errors).length > 0),
         transform: () => form,
         reset: () => Object.assign(form, JSON.parse(JSON.stringify(initial))),
         clearErrors: () => {
@@ -102,7 +103,9 @@ export function useForm<T extends Record<string, unknown>>(data: T) {
         defaults: () => form,
     })
 
-    return form
+    return Object.assign(form, {
+        data: () => Object.fromEntries(Object.keys(initial).map((key) => [key, form[key as keyof typeof form]])),
+    })
 }
 
 /*
