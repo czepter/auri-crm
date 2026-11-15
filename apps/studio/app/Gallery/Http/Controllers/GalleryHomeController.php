@@ -58,7 +58,7 @@ class GalleryHomeController extends Controller
         $types = $this->categories();
         $slugs = $types->mapWithKeys(fn (array $c) => [$c['slug'] => $c['id']]);
         $requested = $request->query('kategorie');
-        $category = is_string($requested) && $slugs->has($requested) ? $requested : null;
+        $category = is_string($requested) && $slugs->has($requested) ? (string) $requested : null;
 
         $page = min(max(1, (int) $request->query('seite', 1)), self::MAX_PAGE);
         $limit = self::STEP * $page;
