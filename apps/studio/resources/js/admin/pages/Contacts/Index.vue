@@ -35,11 +35,13 @@ function day(iso: string) {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('contacts.title')">
-          <Button :as="Link" class="ml-auto" variant="pill" href="/kontakte/neu">{{ $t('contacts.create') }}</Button>
+          <Button :as="Link" class="ml-auto" variant="outline" href="/kontakte/import">{{ $t('contacts.import') }}</Button>
+          <Button :as="Link" variant="pill" href="/kontakte/neu">{{ $t('contacts.create') }}</Button>
         </PageHead>
 
         <Empty v-if="!contacts.length" :text="$t('contacts.empty')">
-          <Button :as="Link" variant="pill" href="/kontakte/neu">{{ $t('contacts.create') }}</Button>
+          <Button :as="Link" variant="outline" href="/kontakte/import">{{ $t('contacts.import') }}</Button>
+          <Button :as="Link" variant="pill-muted" href="/kontakte/neu">{{ $t('contacts.create') }}</Button>
         </Empty>
 
         <Table v-else>

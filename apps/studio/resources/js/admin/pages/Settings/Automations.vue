@@ -43,7 +43,7 @@ const create = () => router.post('/einstellungen/automationen')
 
       <div class="min-w-0">
         <Empty v-if="!rules.length" :text="$t('automations.empty')">
-          <Button variant="pill" type="button" @click="create">{{ $t('automations.add') }}</Button>
+          <Button variant="pill-muted" type="button" @click="create">{{ $t('automations.add') }}</Button>
         </Empty>
 
         <template v-else>

@@ -10,6 +10,7 @@ import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import { filledProfiles, withOpenRow } from '@/admin/lib/socialProfile'
 
 defineProps<{
   portalDefaults: Record<string, string | boolean | null>
@@ -21,7 +22,7 @@ useLiveProps([])
 // below drops it, so a contact is born with only the keys that depart.
 const form = useForm({
   name: '', email: '', phone: '', street: '', postcode: '', city: '',
-  social_profiles: [] as { platform: string; value: string }[],
+  social_profiles: withOpenRow([]),
   portal: {
     portal_visible: '', accept_quotes: '', sign_contracts: '', payment_status: '',
     messaging_mode: '', gallery_downloads: '', gallery_lists: '', gallery_comments: '',
@@ -34,6 +35,7 @@ function submit() {
   form
     .transform((data) => ({
       ...data,
+      social_profiles: filledProfiles(data.social_profiles),
       portal: Object.fromEntries(
         Object.entries(data.portal)
           .filter(([, value]) => value !== '')

@@ -13,6 +13,8 @@ use App\Crm\Http\Controllers\CardDavController;
 use App\Crm\Http\Controllers\CaseController;
 use App\Crm\Http\Controllers\CaseSearchController;
 use App\Crm\Http\Controllers\ContactController;
+use App\Crm\Http\Controllers\ContactImportController;
+use App\Crm\Http\Controllers\ContactMergeController;
 use App\Crm\Http\Controllers\ContactSearchController;
 use App\Crm\Http\Controllers\CrewController;
 use App\Crm\Http\Controllers\FormInstanceController;
@@ -217,10 +219,17 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/kontakte/suche', ContactSearchController::class)->name('contacts.search');
         Route::get('/suche', PaletteSearchController::class)->name('palette.search');
         Route::get('/kontakte/neu', [ContactController::class, 'create'])->name('contacts.create');
+        Route::get('/kontakte/import', [ContactImportController::class, 'create'])->name('contacts.import');
+        Route::post('/kontakte/import/vorschau', [ContactImportController::class, 'preview'])->name('contacts.import.preview');
+        Route::post('/kontakte/import', [ContactImportController::class, 'store'])->name('contacts.import.store');
         Route::get('/kontakte', [ContactController::class, 'index'])->name('contacts.index');
         Route::post('/kontakte', [ContactController::class, 'store'])->name('contacts.store');
         Route::get('/kontakte/{contact}', [ContactController::class, 'edit'])->name('contacts.edit');
         Route::patch('/kontakte/{contact}', [ContactController::class, 'update'])->name('contacts.update');
+        Route::get('/kontakte/{contact}/zusammenfuehren/{other}', [ContactMergeController::class, 'show'])
+            ->name('contacts.merge.show');
+        Route::post('/kontakte/{contact}/zusammenfuehren', [ContactMergeController::class, 'store'])
+            ->name('contacts.merge.store');
         // P-09 (#228). This contact's departures from the studio's portal
         // defaults. Per contact, never per project: an event venue with forty
         // dates a year is set up once, not forty times.

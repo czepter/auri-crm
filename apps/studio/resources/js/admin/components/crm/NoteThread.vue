@@ -1,20 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { router, useForm, usePage } from "@inertiajs/vue3";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/ui/alert-dialog";
+import { useForm, usePage } from "@inertiajs/vue3";
 import { DatePicker } from "@/ui/date-picker";
 import { Textarea } from "@/ui/textarea";
 import CappedList from "@/admin/components/crm/CappedList.vue";
 import Composer from "@/admin/components/crm/Composer.vue";
 import { dayWithWeekday } from "@/admin/lib/dates";
+import { deleteWithUndo, isHidden } from "@/admin/lib/deferredDelete";
+import { useI18n } from "vue-i18n";
 
 /*
  * The internal trace read as what it is: a conversation the studio has with
@@ -77,13 +70,12 @@ function save() {
     });
 }
 
-// Kept apart from the open state: AlertDialogAction closes the dialog before
-// its @click runs, so an id cleared on close is already null in destroy().
-const deleting = ref<string | null>(null);
-const confirmingDelete = ref(false);
+const { t } = useI18n();
 
-function destroy() {
-    router.delete(`/notizen/${deleting.value}`, { preserveScroll: true });
+const visible = computed(() => props.entries.filter((entry) => !entry.note || !isHidden(`/notizen/${entry.note}`)));
+
+function destroy(note: string) {
+    deleteWithUndo(`/notizen/${note}`, { deleted: t("common.deleted"), undo: t("common.undo"), failed: t("common.deleteFailed") });
 }
 </script>
 
@@ -119,12 +111,12 @@ function destroy() {
         <div class="mt-4 flex flex-col gap-1.5">
             <CappedList
                 v-slot="{ item: entry, index }"
-                :items="entries"
-                :limit="limit ?? entries.length"
+                :items="visible"
+                :limit="limit ?? visible.length"
                 :more-href="moreHref ?? ''"
             >
                 <div
-                    v-if="!compact && dayWithWeekday(entry.at, '') !== dayWithWeekday(entries[index - 1]?.at, '')"
+                    v-if="!compact && dayWithWeekday(entry.at, '') !== dayWithWeekday(visible[index - 1]?.at, '')"
                     class="mt-4 mb-1.5 flex items-center gap-3 first:mt-0"
                 >
                     <span class="h-px flex-1 bg-[var(--rule)]" />
@@ -212,7 +204,7 @@ function destroy() {
                             <button
                                 type="button"
                                 class="min-h-10 cursor-pointer border-0 bg-transparent p-0 font-medium text-ink-2 hover:text-foreground"
-                                @click="deleting = entry.note; confirmingDelete = true"
+                                @click="destroy(entry.note)"
                             >{{ $t('project.noteDelete') }}</button>
                         </template>
                     </span>
@@ -255,23 +247,11 @@ function destroy() {
                         <button
                             type="button"
                             class="cursor-pointer border-0 bg-transparent p-0 text-small leading-none font-medium text-ink-2 hover:text-foreground"
-                            @click="deleting = entry.note; confirmingDelete = true"
+                            @click="destroy(entry.note)"
                         >{{ $t('project.noteDelete') }}</button>
                     </div>
                 </div>
             </CappedList>
         </div>
-
-        <AlertDialog v-model:open="confirmingDelete">
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>{{ $t('project.noteDeleteTitle') }}</AlertDialogTitle>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogAction class="bg-destructive" @click="destroy">{{ $t('common.delete') }}</AlertDialogAction>
-                    <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
     </div>
 </template>

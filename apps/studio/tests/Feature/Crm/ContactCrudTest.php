@@ -122,6 +122,23 @@ it('updates a contact', function () {
     expect($contact->fresh()->name)->toBe('Annika Steffens');
 });
 
+it('updates a single field and leaves the others alone', function () {
+    $contact = Contact::factory()->create(['name' => 'Anika Steffens', 'email' => 'anika@example.test']);
+
+    $this->actingAs($this->staff, 'staff')
+        ->patch("/kontakte/{$contact->public_id}", ['city' => 'Jena'])
+        ->assertSessionHasNoErrors();
+
+    expect($contact->fresh())
+        ->city->toBe('Jena')
+        ->name->toBe('Anika Steffens')
+        ->email->toBe('anika@example.test');
+
+    $this->actingAs($this->staff, 'staff')
+        ->patch("/kontakte/{$contact->public_id}", ['name' => ''])
+        ->assertSessionHasErrors('name');
+});
+
 it('saves social profiles trimmed and clears them when empty', function () {
     $contact = Contact::factory()->create();
     $payload = ['name' => $contact->name, 'email' => $contact->email];
