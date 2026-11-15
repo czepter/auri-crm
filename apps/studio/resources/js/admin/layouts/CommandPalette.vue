@@ -5,8 +5,8 @@ import { useI18n } from 'vue-i18n'
 import { Input } from '@/ui/input'
 import { helpPanel } from '@/lib/helpPanel'
 import { holeIndex, treffer, type HelpEintrag } from '@/lib/helpSearch'
-import { rank } from '@/admin/lib/paletteRank'
-import { createCommands, type Command } from '@/admin/lib/paletteCommands'
+import { initial, rank } from '@/admin/lib/paletteRank'
+import { createCommands, pageCommands } from '@/admin/lib/paletteCommands'
 
 /**
  * C-03 (#237): the search is a tool in the sidebar, not a field in a header.
@@ -23,7 +23,6 @@ import { createCommands, type Command } from '@/admin/lib/paletteCommands'
 type Recent = { kind: string; title: string; href: string; at: string }
 type Row = { id: string; kind: string; title: string; href?: string; run?: () => void; shortcut?: string; at?: string }
 
-const props = defineProps<{ commands: Command[] }>()
 const { t } = useI18n()
 
 const dialog = ref<HTMLDialogElement | null>(null)
@@ -53,7 +52,7 @@ watch(frage, (value) => {
 })
 
 const rows = computed(() => {
-  const commands = [...props.commands, ...createCommands(usePage().props.auth.can ?? [], t)].map((command) => ({ ...command, kind: 'aktion' }))
+  const commands = [...pageCommands.value, ...createCommands(usePage().props.auth.can ?? [], t)].map((command) => ({ ...command, kind: 'aktion' }))
   const visited = recent().map((entry) => ({ ...entry, id: entry.href }))
 
   return rank<Row>(commands, visited, results.value, frage.value)
@@ -65,7 +64,7 @@ const rows = computed(() => {
 let steered = false
 const highlighted = ref<string | null>(null)
 watch(rows, (list) => {
-  if (!steered || !list.some((entry) => entry.id === highlighted.value)) highlighted.value = list[0]?.id ?? null
+  if (!steered || !list.some((entry) => entry.id === highlighted.value)) highlighted.value = initial(list)?.id ?? null
 })
 
 function step(event: KeyboardEvent) {
@@ -75,7 +74,8 @@ function step(event: KeyboardEvent) {
   if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
     event.preventDefault()
     steered = true
-    const next = (at + (event.key === 'ArrowDown' ? 1 : -1) + list.length) % list.length
+    const down = event.key === 'ArrowDown'
+    const next = at < 0 ? (down ? 0 : list.length - 1) : (at + (down ? 1 : -1) + list.length) % list.length
     highlighted.value = list[next]?.id ?? null
     document.getElementById(`palette-${highlighted.value}`)?.scrollIntoView({ block: 'nearest' })
   }
@@ -94,7 +94,7 @@ function activate(row: Row) {
 async function open() {
   steered = false
   dialog.value?.showModal()
-  highlighted.value = rows.value[0]?.id ?? null
+  highlighted.value = initial(rows.value)?.id ?? null
   index.value = await holeIndex()
 }
 

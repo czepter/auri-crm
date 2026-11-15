@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, useSlots, useTemplateRef } from 'vue'
+import { computed, onBeforeUpdate, onMounted, ref, useSlots, useTemplateRef } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import Page from '@/ui/page/Page.vue'
 import ProjectQueue from '@/admin/components/crm/ProjectQueue.vue'
@@ -79,16 +79,17 @@ function destroy() {
 
 const { t } = useI18n()
 const slots = useSlots()
+const staged = ref(!!slots.stage)
+onBeforeUpdate(() => (staged.value = !!slots.stage))
 
 usePageCommands(() => {
   const { nextAction, canBook, isBooked, canComplete, isCompleted } = props.header
-  const staged = !!slots.stage
 
   return [
-    ...(!staged && nextAction
+    ...(!staged.value && nextAction
       ? [{ id: 'next', title: t(nextAction.label), ...(nextAction.href ? { href: nextAction.href } : { run: () => router.post(nextAction.post!, {}, { preserveScroll: true }) }) }]
       : []),
-    ...(!staged && !isBooked && canBook ? [{ id: 'book', title: t('project.book'), run: () => (booking.value = true) }] : []),
+    ...(!staged.value && !isBooked && canBook ? [{ id: 'book', title: t('project.book'), run: () => (booking.value = true) }] : []),
     ...(canComplete && !isCompleted ? [{ id: 'complete', title: t('project.completeMenu'), run: complete }] : []),
   ]
 })

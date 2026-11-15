@@ -1,22 +1,20 @@
-import { computed, inject, provide, shallowReactive, type InjectionKey } from "vue"
+import { computed, onScopeDispose, shallowReactive } from "vue"
 
 type Capability = App.Enums.Capability
 
+// A command with `run` changes something; one with `href` only navigates.
 export type Command = { id: string; title: string; href?: string; run?: () => void; shortcut?: string }
 type Source = () => Command[]
 
-const sources: InjectionKey<Source[]> = Symbol("paletteCommands")
+// Module-level: a page renders AdminLayout inside its own template, so no
+// provide/inject path leads from the page to the palette.
+const sources = shallowReactive<Source[]>([])
 
-export function providePageCommands() {
-    const list = shallowReactive<Source[]>([])
-    provide(sources, list)
+export const pageCommands = computed(() => sources.flatMap((source) => source()))
 
-    return computed(() => list.flatMap((source) => source()))
-}
-
-// AdminLayout mounts anew with every navigation, so a source never outlives its page.
 export function usePageCommands(source: Source) {
-    inject(sources, null)?.push(source)
+    sources.push(source)
+    onScopeDispose(() => sources.splice(sources.indexOf(source), 1))
 }
 
 // Same capabilities as the nav rows that lead to the list each of these starts in.

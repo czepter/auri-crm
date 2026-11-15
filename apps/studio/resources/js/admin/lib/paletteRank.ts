@@ -1,4 +1,4 @@
-export type Entry = { id: string; title: string }
+export type Entry = { id: string; title: string; run?: () => void }
 
 // Subsequence match with bonuses for word starts and consecutive characters.
 export function score(title: string, query: string): number | null {
@@ -43,4 +43,10 @@ export function rank<T extends Entry>(commands: T[], recent: T[], found: T[], qu
   }
 
   return [...rows.values()].sort((a, b) => b.value - a.value).map((row) => row.entry)
+}
+
+// Enter right after opening must not change anything: only navigation rows
+// are a default, a row with `run` waits for the arrow keys or the pointer.
+export function initial<T extends Entry>(rows: T[]): T | undefined {
+  return rows.find((row) => !row.run)
 }

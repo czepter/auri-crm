@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { rank } from "./paletteRank"
+import { initial, rank } from "./paletteRank"
 
 const entry = (title: string, id = `/${title}`) => ({ id, title })
 
@@ -24,5 +24,13 @@ describe("rank", () => {
     const rows = rank([entry("Neues Angebot", "page"), entry("Neues Angebot", "global")], [], [], "")
 
     expect(rows.map((row) => row.id)).toEqual(["page"])
+  })
+
+  it("never defaults to a command that changes something", () => {
+    const rows = rank([{ ...entry("Abschließen"), run: () => {} }, entry("Neue Anfrage")], [entry("Hochzeit")], [], "")
+
+    expect(rows[0].title).toBe("Abschließen")
+    expect(initial(rows)?.title).toBe("Neue Anfrage")
+    expect(initial([{ ...entry("Abschließen"), run: () => {} }])).toBeUndefined()
   })
 })
