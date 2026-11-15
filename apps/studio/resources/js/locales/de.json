@@ -155,6 +155,8 @@
     "projectCount": "kein Projekt | 1 Projekt | {count} Projekte",
     "none": "—",
     "merge": "Zusammenführen",
+    "mergeConfirm": "{name} wird gelöscht",
+    "mergeLoadFailed": "Kontakt nicht geladen",
     "editTitle": "Kontakt bearbeiten",
     "empty": "Keine Kontakte.",
     "portalAccess": "Portal-Zugang",

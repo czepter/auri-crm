@@ -2,6 +2,7 @@
 
 namespace App\Crm\Actions;
 
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Support\SocialProfiles;
 use App\Models\User;
@@ -39,7 +40,7 @@ class MergeContacts
      * @var array<string, list<string>>
      */
     public const MOVED_UNIQUE = [
-        'case_contacts.contact_id' => ['case_id', 'role'],
+        'case_contacts.contact_id' => ['case_id'],
         'thread_participants.contact_id' => ['thread_id'],
         'contract_signers.contact_id' => ['contract_id'],
         'service_suggestions.contact_id' => ['package_id'],
@@ -79,6 +80,17 @@ class MergeContacts
 
             $attributes['social_profiles'] = SocialProfiles::union($survivor->social_profiles, $duplicate->social_profiles);
 
+            if (array_key_exists('email', $attributes) && $attributes['email'] !== $survivor->email) {
+                AuditLogger::record(
+                    event: 'contact.email_changed',
+                    actor: $actor,
+                    context: ['from' => $survivor->email, 'to' => $attributes['email']],
+                    subject: $survivor->public_id,
+                );
+            }
+
+            $this->promoteCaseRoles($survivor, $duplicate);
+
             foreach (self::MOVED_UNIQUE as $reference => $scope) {
                 [$table, $column] = explode('.', $reference);
                 $this->dropDuplicatesHeldBySurvivor($table, $column, $scope, $survivor, $duplicate);
@@ -113,6 +125,26 @@ class MergeContacts
 
             return $survivor;
         });
+    }
+
+    /** On a case both sit on, the survivor keeps one row, with the more significant role. */
+    private function promoteCaseRoles(Contact $survivor, Contact $duplicate): void
+    {
+        $rank = array_flip(array_column(CaseContactRole::cases(), 'value'));
+        $held = DB::table('case_contacts')->where('contact_id', $survivor->id)->get(['id', 'case_id', 'role'])->groupBy('case_id');
+
+        DB::table('case_contacts')
+            ->where('contact_id', $duplicate->id)
+            ->whereIn('case_id', $held->keys())
+            ->get(['id', 'case_id', 'role'])
+            ->each(function ($row) use ($held, $rank) {
+                $best = $held[$row->case_id]->sortBy(fn ($kept) => $rank[$kept->role])->first();
+
+                if ($rank[$row->role] < $rank[$best->role]) {
+                    DB::table('case_contacts')->where('id', $row->id)->delete();
+                    DB::table('case_contacts')->where('id', $best->id)->update(['role' => $row->role]);
+                }
+            });
     }
 
     /** @param list<string> $scope */

@@ -7,11 +7,13 @@ use Illuminate\Validation\Rule;
 
 class SocialProfiles
 {
+    public const MAX = 10;
+
     /** @return array<string, array<int, mixed>> */
     public static function rules(): array
     {
         return [
-            'social_profiles' => ['nullable', 'array', 'max:10'],
+            'social_profiles' => ['nullable', 'array', 'max:'.self::MAX],
             'social_profiles.*.platform' => ['required', Rule::enum(SocialPlatform::class)],
             'social_profiles.*.value' => ['required', 'string', 'max:255'],
         ];
@@ -37,6 +39,6 @@ class SocialProfiles
     {
         return collect([...($first ?? []), ...($second ?? [])])
             ->unique(fn (array $profile) => $profile['platform'].'|'.mb_strtolower($profile['value']))
-            ->values()->all() ?: null;
+            ->take(self::MAX)->values()->all() ?: null;
     }
 }

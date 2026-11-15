@@ -14,6 +14,7 @@ class ContactMergeController extends Controller
 {
     public function show(Contact $contact, Contact $other): JsonResponse
     {
+        $this->authorize('eraseDsgvoData', $contact);
         $this->authorize('update', $contact);
         $this->authorize('update', $other);
 
@@ -29,6 +30,7 @@ class ContactMergeController extends Controller
 
     public function store(Request $request, Contact $contact, MergeContacts $merge): RedirectResponse
     {
+        $this->authorize('eraseDsgvoData', $contact);
         $this->authorize('update', $contact);
 
         $validated = $request->validate([

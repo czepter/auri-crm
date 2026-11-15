@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
+import { toast } from 'vue-sonner'
+import { useI18n } from 'vue-i18n'
 import ContactTypeahead from '@/admin/components/crm/ContactTypeahead.vue'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/ui/alert-dialog'
 import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
@@ -17,6 +20,8 @@ const other = ref<App.Crm.Data.ContactSuggestionData | null>(null)
 const duplicate = ref<Sheet | null>(null)
 const choices = reactive<Record<string, 'survivor' | 'duplicate'>>({})
 const processing = ref(false)
+const confirming = ref(false)
+const { t } = useI18n()
 
 const differing = computed(() => (duplicate.value ? FIELDS.filter((field) => (duplicate.value![field] ?? '') !== (props.sheet[field] ?? '')) : []))
 
@@ -33,6 +38,13 @@ watch(other, async (contact) => {
   }
 
   const response = await fetch(`/kontakte/${props.id}/zusammenfuehren/${contact.id}`, { headers: { Accept: 'application/json' } })
+
+  if (!response.ok) {
+    toast.error(t('contacts.mergeLoadFailed'))
+    other.value = null
+    return
+  }
+
   const sheet: Sheet = await response.json()
 
   for (const field of FIELDS) {
@@ -83,9 +95,21 @@ function merge() {
         />
       </DialogBody>
       <DialogFooter>
-        <Button type="button" :disabled="!duplicate || processing" @click="merge">{{ $t('contacts.merge') }}</Button>
+        <Button type="button" :disabled="!duplicate || processing" @click="confirming = true">{{ $t('contacts.merge') }}</Button>
         <Button variant="ghost" type="button" @click="open = false">{{ $t('common.cancel') }}</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
+
+  <AlertDialog v-model:open="confirming">
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>{{ $t('contacts.mergeConfirm', { name: other?.name }) }}</AlertDialogTitle>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogAction tone="destructive" @click="merge">{{ $t('contacts.merge') }}</AlertDialogAction>
+        <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
 </template>

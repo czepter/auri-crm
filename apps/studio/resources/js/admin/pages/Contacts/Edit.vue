@@ -254,7 +254,7 @@ function eraseDsgvoData() {
               </Button>
             </template>
             <template v-else>
-              <Button variant="pill-muted" type="button" @click="merging = true">{{ $t('contacts.merge') }}</Button>
+              <Button v-if="canManageDsgvo" variant="pill-muted" type="button" @click="merging = true">{{ $t('contacts.merge') }}</Button>
               <Button variant="pill-muted" type="button" @click="editing = true">{{ $t('common.edit') }}</Button>
             </template>
           </div>

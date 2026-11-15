@@ -124,3 +124,44 @@ it('refuses a contributor, the same contact twice and an erased contact', functi
 
     expect(Contact::count())->toBe(3);
 });
+
+it('keeps one case row with the more significant role, audits the email and caps the profiles', function () {
+    $survivor = Contact::factory()->create([
+        'email' => 'a@example.test',
+        'social_profiles' => collect(range(1, 8))->map(fn (int $n) => ['platform' => 'instagram', 'value' => "@a{$n}"])->all(),
+    ]);
+    $duplicate = Contact::factory()->create([
+        'email' => 'b@example.test',
+        'social_profiles' => collect(range(1, 8))->map(fn (int $n) => ['platform' => 'tiktok', 'value' => "@b{$n}"])->all(),
+    ]);
+
+    $case = ClientCase::factory()->create();
+    $case->attachContact($survivor, CaseContactRole::Partner);
+    $case->attachContact($duplicate, CaseContactRole::Primary);
+
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Admin]), 'staff')
+        ->post("/kontakte/{$survivor->public_id}/zusammenfuehren", ['duplicate' => $duplicate->public_id, 'choices' => ['email' => 'duplicate']])
+        ->assertRedirect();
+
+    $rows = DB::table('case_contacts')->where('case_id', $case->id)->get();
+
+    expect($rows)->toHaveCount(1)
+        ->and($rows->sole()->contact_id)->toBe($survivor->id)
+        ->and($rows->sole()->role)->toBe('primary')
+        ->and($survivor->fresh()->social_profiles)->toHaveCount(10)
+        ->and($survivor->fresh()->social_profiles[0])->toEqual(['platform' => 'instagram', 'value' => '@a1'])
+        ->and(AuditLog::where('event', 'contact.email_changed')->sole()->context)->toEqual(['from' => 'a@example.test', 'to' => 'b@example.test']);
+});
+
+it('refuses a manager without the DSGVO capability', function () {
+    $survivor = Contact::factory()->create();
+    $duplicate = Contact::factory()->create();
+    $manager = User::factory()->withMfa()->create(['role' => StaffRole::Manager]);
+
+    $this->actingAs($manager, 'staff')
+        ->post("/kontakte/{$survivor->public_id}/zusammenfuehren", ['duplicate' => $duplicate->public_id])
+        ->assertForbidden();
+    $this->get("/kontakte/{$survivor->public_id}/zusammenfuehren/{$duplicate->public_id}")->assertForbidden();
+
+    expect(Contact::count())->toBe(2);
+});
