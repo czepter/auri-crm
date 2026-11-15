@@ -17,6 +17,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./resources/js', import.meta.url)),
+      '@inertiajs/vue3': fileURLToPath(new URL('./.storybook/inertia.ts', import.meta.url)),
     },
   },
   test: {
