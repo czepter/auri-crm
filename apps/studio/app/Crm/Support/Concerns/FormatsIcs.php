@@ -40,7 +40,7 @@ trait FormatsIcs
 
     /**
      * Backslash, semicolon, comma and newline carry meaning in a property
-     * value. Other control characters have no place in one: a public inquiry
+     * value. Other control characters and the code points XML forbids have no place in one: a public inquiry
      * can store them, and they would break the XML around a vCard or, as a
      * bare CR, start a line of their own.
      */
@@ -49,7 +49,7 @@ trait FormatsIcs
         return str_replace(
             ['\\', ';', ',', "\r\n", "\n", "\r"],
             ['\\\\', '\;', '\,', '\n', '\n', '\n'],
-            preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $value),
+            preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\x{FFFE}\x{FFFF}]/u', '', $value),
         );
     }
 

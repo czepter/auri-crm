@@ -179,6 +179,16 @@ it('returns vcards for an addressbook-multiget', function () {
         ->and($x->evaluate('string(//d:response[d:href="/dav/books/studio/nope.vcf"]/d:status)'))->toContain('404');
 });
 
+it('keeps the report well-formed for a contact with xml-illegal characters', function () {
+    $contact = Contact::factory()->create(['name' => "Anna\u{FFFF} Meier\x01", 'phone' => "0151\u{FFFE}"]);
+
+    $response = dav('REPORT', '/dav/books/studio/', davMultiget("/dav/books/studio/{$contact->public_id}.vcf"), [], staffMember())->assertStatus(207);
+
+    $doc = new DOMDocument;
+    expect($doc->loadXML($response->getContent()))->toBeTrue()
+        ->and(davXpath($response->getContent())->evaluate('string(//card:address-data)'))->toContain('FN:Anna Meier');
+});
+
 it('returns every card for an addressbook-query', function () {
     Contact::factory()->count(2)->create();
 
