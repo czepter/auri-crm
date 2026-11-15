@@ -28,6 +28,9 @@
       "phone": "Ungültige Telefonnummer"
     },
     "cancel": "Abbrechen",
+    "deleted": "Gelöscht",
+    "deleteFailed": "Nicht gelöscht",
+    "undo": "Rückgängig",
     "save": "Speichern",
     "edit": "Ändern",
     "signOut": "Abmelden",
@@ -347,7 +350,6 @@
     "uncancel": "Absage zurücknehmen",
     "noteEdit": "bearbeiten",
     "noteDelete": "löschen",
-    "noteDeleteTitle": "Notiz löschen?",
     "portalStatus": "Portal",
     "portalVisible": "Sichtbar",
     "portalHidden": "Ausgeblendet",
