@@ -7,6 +7,7 @@ import { Input } from '@/ui/input'
 import { Field } from '@/ui/field'
 import { Textarea } from '@/ui/textarea'
 import { Label } from '@/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
 // Shared by Create and Edit, so the two forms cannot drift into building a
 // form field two different ways. optionsText is a newline-separated string
@@ -16,6 +17,7 @@ import { Label } from '@/ui/label'
 // PackageItemsEditor's page transforms euros back to cents.
 export type FormFieldRow = {
   id?: string
+  answered?: boolean
   label: string
   type: string
   required: boolean
@@ -78,6 +80,16 @@ function optionsHint(type: string): string {
             <Field wide>
               <Label :for="`field-label-${index}`">{{ $t('formTemplates.labelField') }}</Label>
               <Input :id="`field-label-${index}`" v-model="field.label" type="text" maxlength="255" />
+            </Field>
+
+            <Field v-if="!field.answered">
+              <Label :for="`field-type-${index}`">{{ $t('formTemplates.typeField') }}</Label>
+              <Select v-model="field.type">
+                <SelectTrigger :id="`field-type-${index}`"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="type in fieldTypes" :key="type.value" :value="type.value">{{ type.label }}</SelectItem>
+                </SelectContent>
+              </Select>
             </Field>
 
             <div class="col-span-full flex min-w-0 flex-col gap-1.5">

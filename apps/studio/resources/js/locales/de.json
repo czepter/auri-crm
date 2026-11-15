@@ -1715,6 +1715,7 @@
     "questionsLabel": "Frage hinzufügen",
     "untitled": "Neue Frage",
     "labelField": "Frage",
+    "typeField": "Typ",
     "requiredField": "Pflichtfrage",
     "requiredChip": "Pflicht",
     "nameListHint": "Name + Beziehung je Zeile",

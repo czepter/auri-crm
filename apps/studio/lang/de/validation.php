@@ -78,6 +78,7 @@ return [
     ],
     'string' => 'Das Feld :attribute muss eine Zeichenkette sein.',
     'unique' => ':attribute ist bereits vergeben.',
+    'form_field_type_locked' => 'Die Frage ist beantwortet, der Typ bleibt.',
 
     /*
     |--------------------------------------------------------------------------

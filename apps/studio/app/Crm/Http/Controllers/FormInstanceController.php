@@ -112,9 +112,9 @@ class FormInstanceController extends Controller
             ...$this->optionRules($request),
         ]);
 
-        $formInstance->update(['name' => $validated['name']]);
-
         $sync($formInstance, $validated['fields']);
+
+        $formInstance->update(['name' => $validated['name']]);
 
         AuditLogger::record(
             event: 'form_instance.updated',
