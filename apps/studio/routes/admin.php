@@ -12,6 +12,7 @@ use App\Crm\Http\Controllers\CalendarController;
 use App\Crm\Http\Controllers\CaseController;
 use App\Crm\Http\Controllers\CaseSearchController;
 use App\Crm\Http\Controllers\ContactController;
+use App\Crm\Http\Controllers\ContactImportController;
 use App\Crm\Http\Controllers\ContactSearchController;
 use App\Crm\Http\Controllers\CrewController;
 use App\Crm\Http\Controllers\FormInstanceController;
@@ -205,6 +206,9 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/kontakte/suche', ContactSearchController::class)->name('contacts.search');
         Route::get('/suche', PaletteSearchController::class)->name('palette.search');
         Route::get('/kontakte/neu', [ContactController::class, 'create'])->name('contacts.create');
+        Route::get('/kontakte/import', [ContactImportController::class, 'create'])->name('contacts.import');
+        Route::post('/kontakte/import/vorschau', [ContactImportController::class, 'preview'])->name('contacts.import.preview');
+        Route::post('/kontakte/import', [ContactImportController::class, 'store'])->name('contacts.import.store');
         Route::get('/kontakte', [ContactController::class, 'index'])->name('contacts.index');
         Route::post('/kontakte', [ContactController::class, 'store'])->name('contacts.store');
         Route::get('/kontakte/{contact}', [ContactController::class, 'edit'])->name('contacts.edit');
