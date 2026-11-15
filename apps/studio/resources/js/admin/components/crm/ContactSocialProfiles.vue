@@ -1,15 +1,26 @@
 <script setup lang="ts">
-import { Button } from '@/ui/button'
+import { watch } from 'vue'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { withOpenRow, type SocialProfile } from '@/admin/lib/socialProfile'
 import { X } from 'lucide-vue-next'
 
-defineProps<{
-  profiles: { platform: string; value: string }[]
+const props = defineProps<{
+  profiles: SocialProfile[]
   platforms: { value: string; label: string }[]
   errors: Record<string, string | undefined>
 }>()
+
+watch(() => props.profiles.map((profile) => profile.value), () => {
+  const open = withOpenRow(props.profiles)
+
+  if (open !== props.profiles) {
+    props.profiles.push(open[open.length - 1])
+  }
+})
+
+const isOpenRow = (index: number) => index === props.profiles.length - 1 && props.profiles[index].value.trim() === ''
 </script>
 
 <template>
@@ -26,20 +37,12 @@ defineProps<{
     <button
       :aria-label="$t('common.remove')"
       class="inline-flex cursor-pointer border-0 bg-transparent p-2 text-ink-2"
+      :class="{ invisible: isOpenRow(index) }"
+      :tabindex="isOpenRow(index) ? -1 : undefined"
       type="button"
       @click="profiles.splice(index, 1)"
     >
       <X class="size-4" />
     </button>
-  </div>
-  <div>
-    <Button
-      variant="pill-muted"
-      type="button"
-      :disabled="profiles.length >= 10"
-      @click="profiles.push({ platform: 'instagram', value: '' })"
-    >
-      {{ $t('contacts.addProfile') }}
-    </Button>
   </div>
 </template>

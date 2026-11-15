@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ContactQueue from '@/admin/components/crm/ContactQueue.vue'
@@ -8,7 +8,7 @@ import ContactSocialProfiles from '@/admin/components/crm/ContactSocialProfiles.
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import SaveState from '@/ui/page/SaveState.vue'
-import { saveState } from '@/admin/lib/autosave'
+import { debounced, saveState } from '@/admin/lib/autosave'
 import Panel from '@/admin/components/crm/Panel.vue'
 import Metric from '@/admin/components/crm/Metric.vue'
 import { Button } from '@/ui/button'
@@ -21,7 +21,7 @@ import { formatEurosRounded } from '@/lib/money'
 import { useI18n } from 'vue-i18n'
 import { MAX_DOTS, type Tone } from '@/admin/lib/metricDots'
 import { useLiveProps } from '@/admin/lib/liveReload'
-import { profileHref, profileText } from '@/admin/lib/socialProfile'
+import { filledProfiles, withOpenRow } from '@/admin/lib/socialProfile'
 
 const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? ''
 
@@ -107,10 +107,8 @@ const form = useForm({
   street: props.billingAddress.street ?? '',
   postcode: props.billingAddress.postcode ?? '',
   city: props.billingAddress.city ?? '',
-  social_profiles: props.socialProfiles.map((profile) => ({ ...profile })),
+  social_profiles: withOpenRow(props.socialProfiles.map((profile) => ({ ...profile }))),
 })
-
-const platformLabel = (platform: string) => props.socialPlatforms.find((one) => one.value === platform)?.label ?? platform
 
 // The confirm is worded to the one thing this button changes: every project
 // this contact can reach in the portal, not one of them — the opposite scope
@@ -203,28 +201,21 @@ function priceLabel(one: { price: number | null; priceMode: string }) {
   return one.priceMode === 'from' ? t('packages.priceFromValue', { price }) : price
 }
 
-// C-18 (#254) wanted every row operable where it stands, without a
-// "Bearbeiten". A row that only becomes a field once clicked cannot say so,
-// and three unnamed boxes side by side cannot say which is which — so the
-// sheet reads, and the form edits.
-const editing = ref(false)
+const payload = () => ({ ...form.data(), social_profiles: filledProfiles(form.social_profiles) })
 
-function submit() {
-  form.patch(`/kontakte/${props.contact.id}`, {
+function save() {
+  form.transform(payload).patch(`/kontakte/${props.contact.id}`, {
     preserveScroll: true,
-    onSuccess: () => (editing.value = false),
+    preserveState: true,
+    only: ['contact', 'contacts', 'billingAddress', 'socialProfiles'],
+    onSuccess: () => form.defaults(),
   })
 }
 
-function cancelEdit() {
-  form.reset()
-  form.clearErrors()
-  editing.value = false
-}
+const autosave = debounced(save, 600)
 
-const hasAddress = computed(() =>
-  Boolean(props.billingAddress.street || props.billingAddress.postcode || props.billingAddress.city),
-)
+// Compared as text: the open row appearing under the last profile is not a change.
+watch(() => JSON.stringify(payload()), autosave)
 
 function eraseDsgvoData() {
   router.post(`/kontakte/${props.contact.id}/dsgvo/loeschen`)
@@ -233,9 +224,9 @@ function eraseDsgvoData() {
 
 <template>
   <AdminLayout active="kontakte">
-    <!-- C-18 (#254): built like a contact card, because a contact is opened
-         and read, not edited. The sheet holds what the person is; the trace
-         holds what the studio has switched on for them. -->
+    <!-- C-18 (#254): built like a contact card. The sheet holds what the
+         person is, each field saved where it stands; the trace holds what the
+         studio has switched on for them. -->
     <Page>
       <template #left>
         <ContactQueue :contacts="contacts" :active-id="contact.id" />
@@ -243,16 +234,7 @@ function eraseDsgvoData() {
 
       <main data-tokens class="min-w-0 flex-1 overflow-y-auto pb-8">
         <PageHead :kicker="$t('contacts.title')" kicker-href="/kontakte" :title="contact.name">
-          <div class="ml-auto flex items-center gap-2">
-            <template v-if="editing">
-              <SaveState :state="saveState([form])" />
-              <Button variant="pill-muted" type="button" @click="cancelEdit">{{ $t('common.cancel') }}</Button>
-              <Button v-if="form.isDirty" variant="pill" type="submit" form="contact-form" :disabled="form.processing">
-                {{ $t('common.save') }}
-              </Button>
-            </template>
-            <Button v-else variant="pill-muted" type="button" @click="editing = true">{{ $t('common.edit') }}</Button>
-          </div>
+          <SaveState class="ml-auto" :state="saveState([form])" />
         </PageHead>
 
         <!-- Dieselbe Reiterspur wie im Auftrag (ProjectShell). -->
@@ -274,7 +256,7 @@ function eraseDsgvoData() {
                volle Maß der Fallseite; die übrigen bleiben auf Lesebreite. -->
           <div :class="tab === 'portal' ? 'max-w-[1100px]' : 'max-w-[760px]'">
             <div v-if="tab === 'overview'">
-              <div v-if="!editing" class="mb-7 flex gap-2">
+              <div class="mb-7 flex gap-2">
                 <a
                   v-if="contact.phone"
                   class="inline-flex items-center gap-[7px] rounded-[var(--r-sm)] bg-action px-[15px] py-2 text-small text-action-foreground no-underline"
@@ -291,12 +273,9 @@ function eraseDsgvoData() {
                 </a>
               </div>
 
-              <!-- Every field the sheet holds, each one named. Empty ones live in
-                   the form, not here: a row reading "—" states nothing the form
-                   does not state better. -->
-              <form v-if="editing" id="contact-form" class="mb-7 flex flex-col gap-4" @submit.prevent="submit">
+              <form class="mb-7 flex flex-col gap-4" @submit.prevent="save">
                 <Field id="c-name" :label="$t('contacts.name')" :error="form.errors.name">
-                  <Input id="c-name" v-model="form.name" type="text" autofocus />
+                  <Input id="c-name" v-model="form.name" type="text" />
                 </Field>
                 <Field id="c-phone" :label="$t('contacts.phone')" :error="form.errors.phone">
                   <Input id="c-phone" v-model="form.phone" type="tel" autocomplete="tel" />
@@ -316,62 +295,7 @@ function eraseDsgvoData() {
                 <ContactSocialProfiles :profiles="form.social_profiles" :platforms="socialPlatforms" :errors="form.errors" />
               </form>
 
-              <section v-else-if="contact.phone || contact.email || hasAddress" class="mb-7">
-                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
-                  {{ $t('contacts.reach') }}
-                </h2>
-
-                <div v-if="contact.phone" class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
-                  <div>
-                    <div class="text-body leading-none font-semibold tracking-[-0.012em] tabular-nums">{{ contact.phone }}</div>
-                    <div class="mt-px text-small text-ink-2">{{ $t('contacts.phone') }}</div>
-                  </div>
-                </div>
-
-                <div v-if="contact.email" class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
-                  <div>
-                    <div class="text-body leading-none font-semibold tracking-[-0.012em] tabular-nums">{{ contact.email }}</div>
-                    <div class="mt-px text-small text-ink-2">{{ $t('contacts.email') }}</div>
-                  </div>
-                </div>
-
-                <!-- M-06: the address every invoice carries and this screen never
-                     showed. -->
-                <div v-if="hasAddress" class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
-                  <div>
-                    <div class="text-body leading-none font-semibold tracking-[-0.012em] tabular-nums">
-                      {{ [billingAddress.street, [billingAddress.postcode, billingAddress.city].filter(Boolean).join(' ')].filter(Boolean).join(', ') }}
-                    </div>
-                    <div class="mt-px text-small text-ink-2">{{ $t('contacts.address') }}</div>
-                  </div>
-                </div>
-              </section>
-
-              <section v-if="!editing && socialProfiles.length" class="mb-7">
-                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
-                  {{ $t('contacts.profiles') }}
-                </h2>
-
-                <div
-                  v-for="(profile, index) in socialProfiles"
-                  :key="index"
-                  class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
-                >
-                  <div>
-                    <div class="text-body leading-none font-semibold tracking-[-0.012em] tabular-nums">
-                      <a
-                        class="no-underline hover:underline"
-                        :href="profileHref(profile.platform, profile.value)"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >{{ profileText(profile.platform, profile.value) }}</a>
-                    </div>
-                    <div class="mt-px text-small text-ink-2">{{ platformLabel(profile.platform) }}</div>
-                  </div>
-                </div>
-              </section>
-
-              <section v-if="!editing && openInquiries.length" class="mb-7">
+              <section v-if="openInquiries.length" class="mb-7">
                 <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
                   {{ $t('contacts.openInquiries') }}
                 </h2>
