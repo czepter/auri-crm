@@ -156,7 +156,15 @@ it('pages cumulatively by 24', function () {
     expect($first['galleries'])->toHaveCount(24)->and($first['more'])->toBeTrue()
         ->and($second['galleries'])->toHaveCount(30)->and($second['more'])->toBeFalse()
         ->and(homeTitles('?seite=0'))->toHaveCount(24)
-        ->and(homeTitles('?seite=abc'))->toHaveCount(24);
+        ->and(homeTitles('?seite=abc'))->toHaveCount(24)
+        ->and(homeTitles('?seite=99999999999999999999'))->toHaveCount(30)
+        ->and(homeTitles('?seite[]=2'))->toHaveCount(24);
+});
+
+it('treats a non-string category as no filter', function () {
+    listedGallery('Ohne');
+
+    expect(homeTitles('?kategorie[]=x'))->toBe(['Ohne']);
 });
 
 it('answers the gate lookup only for a listed gallery in overview mode', function () {

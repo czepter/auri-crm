@@ -79,7 +79,7 @@ function save() {
     .transform((data) => ({
       ...data,
       gallery_default_expiry_days: data.gallery_default_expiry_days === '' ? null : data.gallery_default_expiry_days,
-      gallery_home_redirect_url: data.gallery_home_redirect_url === '' ? null : data.gallery_home_redirect_url,
+      gallery_home_redirect_url: data.gallery_home_mode !== 'redirect' || data.gallery_home_redirect_url === '' ? null : data.gallery_home_redirect_url,
     }))
     .patch('/einstellungen/galerien', { preserveScroll: true, preserveState: true })
 }

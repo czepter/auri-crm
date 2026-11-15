@@ -116,19 +116,25 @@ const SIZES = '(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw'
         event.preventDefault()
         const link = event.currentTarget
         const url = link.href
-        const grid = document.getElementById('tiles')
-        const html = await (await fetch(link.href)).text()
-        const doc = new DOMParser().parseFromString(html, 'text/html')
-        const fresh = [...doc.querySelectorAll('#tiles .tile')].slice(grid.children.length)
-        fresh.forEach((tile) => {
-          tile.querySelectorAll('img').forEach((img) => { img.loading = 'lazy'; img.decoding = 'async'; img.removeAttribute('fetchpriority') })
-          grid.append(document.importNode(tile, true))
-        })
-        const next = doc.querySelector('.more')
-        if (next) link.href = next.href
-        else link.parentElement.remove()
-        grid.children[grid.children.length - fresh.length]?.focus()
-        history.replaceState(null, '', url)
+        try {
+          const grid = document.getElementById('tiles')
+          const response = await fetch(url)
+          if (!response.ok) throw new Error()
+          const doc = new DOMParser().parseFromString(await response.text(), 'text/html')
+          const fresh = [...doc.querySelectorAll('#tiles .tile')].slice(grid.children.length)
+          if (fresh.length === 0) throw new Error()
+          fresh.forEach((tile) => {
+            tile.querySelectorAll('img').forEach((img) => { img.loading = 'lazy'; img.decoding = 'async'; img.removeAttribute('fetchpriority') })
+            grid.append(document.importNode(tile, true))
+          })
+          const next = doc.querySelector('.more')
+          if (next) link.href = next.href
+          else link.parentElement.remove()
+          grid.children[grid.children.length - fresh.length].focus()
+          history.replaceState(null, '', url)
+        } catch {
+          location.assign(url)
+        }
       })
     </script>
   </body>

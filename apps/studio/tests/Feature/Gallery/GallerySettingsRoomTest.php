@@ -91,7 +91,15 @@ it('stores a valid redirect and refuses a missing, foreign-scheme or own-host ur
     'missing' => [null, 'Pflichtfeld'],
     'scheme' => ['ftp://example.test', 'Nur http- und https-Adressen'],
     'own host' => ['http://gallery.test/x', 'Zeigt auf gallery.test selbst'],
+    'own host upper case' => ['http://GALLERY.test/x', 'Zeigt auf gallery.test selbst'],
 ]);
+
+it('saves another mode even when the stored url field holds garbage', function () {
+    $this->patch('/einstellungen/galerien', ['gallery_home_mode' => 'overview', 'gallery_home_redirect_url' => 'foo'])
+        ->assertSessionHasNoErrors();
+
+    expect(StudioSettings::current()->gallery_home_mode)->toBe('overview');
+});
 
 it('keeps the homepage mode from a role without ManageSettings', function () {
     $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Manager]), 'staff');

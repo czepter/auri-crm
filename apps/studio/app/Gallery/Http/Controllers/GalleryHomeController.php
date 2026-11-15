@@ -24,6 +24,8 @@ class GalleryHomeController extends Controller
 {
     private const STEP = 24;
 
+    private const MAX_PAGE = 10_000;
+
     public function __invoke(Request $request): JsonResponse
     {
         $settings = StudioSettings::current();
@@ -55,9 +57,10 @@ class GalleryHomeController extends Controller
 
         $types = $this->categories();
         $slugs = $types->mapWithKeys(fn (array $c) => [$c['slug'] => $c['id']]);
-        $category = $slugs->has((string) $request->query('kategorie')) ? (string) $request->query('kategorie') : null;
+        $requested = $request->query('kategorie');
+        $category = is_string($requested) && $slugs->has($requested) ? $requested : null;
 
-        $page = max(1, (int) $request->query('seite', 1));
+        $page = min(max(1, (int) $request->query('seite', 1)), self::MAX_PAGE);
         $limit = self::STEP * $page;
 
         $galleries = Gallery::query()->listedOnHome()

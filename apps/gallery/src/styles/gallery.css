@@ -367,7 +367,7 @@ html[data-gcover='geteilt'] .scrollcue { color: var(--void-ink-2); }
 .home .logo { margin: 0; display: inline-flex; align-items: center; min-height: 44px; font: 600 22px/1.2 var(--sans); letter-spacing: -.01em; }
 .home .logo img { display: block; height: 44px; width: auto; max-width: 230px; object-fit: contain; object-position: left; }
 .home .logo a { display: inline-flex; }
-.home .flt { display: flex; gap: 8px; padding-bottom: 40px; overflow-x: auto; scrollbar-width: none; scroll-padding-inline: 20px; }
+.home .flt { display: flex; gap: 8px; padding-block: 8px 40px; margin-top: -8px; overflow-x: auto; scrollbar-width: none; scroll-padding-inline: 20px; }
 .home .flt::-webkit-scrollbar { display: none; }
 .home .flt a { flex: none; display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border: 1px solid rgba(246,241,235,.2); border-radius: 999px; color: var(--void-ink-2); font: 500 14px/1 var(--sans); white-space: nowrap; }
 .home .flt a:hover { color: var(--void-ink); border-color: rgba(246,241,235,.45); }
@@ -384,8 +384,8 @@ html[data-gcover='geteilt'] .scrollcue { color: var(--void-ink-2); }
 .home .cv.none .lockmark { background: rgba(246,241,235,.1); box-shadow: inset 0 0 0 1px var(--void-line); }
 .home .lockmark svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .home .k { display: block; margin-top: 16px; color: var(--void-ink-2); font-size: 13px; line-height: 1.3; }
-.home .k + b { margin-top: 2px; }
 .home .tile b { display: block; margin-top: 16px; font: 600 18px/1.3 var(--sans); letter-spacing: -.005em; text-wrap: balance; }
+.home .tile .k + b { margin-top: 2px; }
 .home .d { display: block; margin-top: 2px; color: var(--void-ink-2); font-size: 14px; }
 .home .mo { display: flex; justify-content: center; padding-bottom: 96px; }
 .home .more { display: inline-flex; align-items: center; min-height: 48px; padding: 0 28px; border: 1px solid rgba(246,241,235,.4); border-radius: 999px; font: 600 14.5px/1 var(--sans); }
@@ -402,7 +402,7 @@ html[data-gcover='geteilt'] .scrollcue { color: var(--void-ink-2); }
   .home .ph { padding-block: 24px 28px; }
   .home .logo { font-size: 18px; }
   .home .logo img { height: 36px; }
-  .home .flt { padding-bottom: 28px; }
+  .home .flt { padding-block: 8px 28px; }
   .home .grid { grid-template-columns: 1fr; gap: 32px; padding-bottom: 48px; }
   .home .mo { padding-bottom: 56px; }
   .home .pf { flex-direction: column; align-items: flex-start; gap: 0; padding-block: 20px 28px; }

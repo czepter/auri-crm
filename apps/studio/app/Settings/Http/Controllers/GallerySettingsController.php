@@ -35,18 +35,18 @@ class GallerySettingsController extends Controller
             ...GalleryDesign::rules('gallery_default_design', 'required_with:gallery_default_design'),
             'gallery_home_mode' => ['sometimes', 'required', Rule::in(['none', 'redirect', 'overview'])],
             'gallery_home_redirect_url' => [
-                'nullable', 'required_if:gallery_home_mode,redirect', 'url:http,https', 'max:2000',
+                'exclude_unless:gallery_home_mode,redirect', 'required', 'url:http,https', 'max:2000',
                 function (string $attribute, mixed $value, Closure $fail) {
-                    $host = parse_url((string) config('services.gallery.url'), PHP_URL_HOST);
+                    $host = strtolower((string) parse_url((string) config('services.gallery.url'), PHP_URL_HOST));
 
-                    if (parse_url((string) $value, PHP_URL_HOST) === $host) {
+                    if (strtolower((string) parse_url((string) $value, PHP_URL_HOST)) === $host) {
                         $fail(__('gallery.home_redirect_self', ['host' => $host]));
                     }
                 },
             ],
             'gallery_home_noindex' => ['sometimes', 'required', 'boolean'],
         ], [
-            'gallery_home_redirect_url.required_if' => __('gallery.home_redirect_required'),
+            'gallery_home_redirect_url.required' => __('gallery.home_redirect_required'),
             'gallery_home_redirect_url.url' => __('gallery.home_redirect_scheme'),
         ]);
 
