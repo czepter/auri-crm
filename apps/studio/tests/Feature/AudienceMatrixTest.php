@@ -28,6 +28,10 @@ const PUBLIC_ROUTES = [
         'einrichtung',
         'auth/mfa',
         'kalender/{token}/shootings.ics',
+        // A phone's address book cannot hold a session either; Basic
+        // credentials on every request are the guard.
+        '.well-known/carddav',
+        'dav/{path?}',
         'einladung/{token}',
         'passwort/vergessen',
         'passwort/neu/{token}',

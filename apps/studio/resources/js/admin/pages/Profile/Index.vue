@@ -17,7 +17,7 @@ import ProfileNav from '@/admin/components/settings/ProfileNav.vue'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
-  pane: 'konto' | 'sicherheit' | 'benachrichtigungen' | 'kalender'
+  pane: 'konto' | 'sicherheit' | 'benachrichtigungen' | 'kalender' | 'adressbuch'
   user: { name: string; email: string; phone: string | null; role: string }
   pendingEmail: string | null
   mfaConfirmed: boolean
@@ -25,11 +25,12 @@ const props = defineProps<{
   recoveryCodesLeft: number
   digestFrequency: string | null
   calendarFeedUrl: string | null
+  carddav: { server: string; username: string; password: string } | null
   workingDays: number[] | null
   events: Record<string, Mode>
   briefable: Record<string, boolean>
 }>()
-useLiveProps(['user', 'pendingEmail', 'mfaConfirmed', 'sessions', 'recoveryCodesLeft', 'digestFrequency', 'calendarFeedUrl', 'events'])
+useLiveProps(['user', 'pendingEmail', 'mfaConfirmed', 'sessions', 'recoveryCodesLeft', 'digestFrequency', 'calendarFeedUrl', 'carddav', 'events'])
 
 const DAY_KEYS = ['settings.dayMon', 'settings.dayTue', 'settings.dayWed', 'settings.dayThu', 'settings.dayFri', 'settings.daySat', 'settings.daySun']
 
@@ -92,7 +93,7 @@ const eventsForm = useForm({
 const activeForm = computed(() => {
   if (props.pane === 'sicherheit') return passwordForm
   if (props.pane === 'benachrichtigungen') return eventsForm
-  if (props.pane === 'kalender') return undefined
+  if (props.pane === 'kalender' || props.pane === 'adressbuch') return undefined
   return accountForm
 })
 
@@ -102,6 +103,7 @@ const paneTitle = computed(() => {
   if (props.pane === 'sicherheit') return 'profile.securityTitle'
   if (props.pane === 'benachrichtigungen') return 'profile.notificationsTitle'
   if (props.pane === 'kalender') return 'calendar.subscribe'
+  if (props.pane === 'adressbuch') return 'profile.addressBook'
   return 'profile.accountTitle'
 })
 
@@ -125,6 +127,10 @@ function submitEvents() {
 
 function regenerateFeedUrl() {
   router.post('/kalender/abo', {}, { preserveScroll: true })
+}
+
+function regenerateCarddavSecret() {
+  router.post('/profil/adressbuch/passwort', {}, { preserveScroll: true })
 }
 </script>
 
@@ -304,6 +310,25 @@ function regenerateFeedUrl() {
           </Field>
         </FormSection>
       </form>
+
+      <template v-else-if="pane === 'adressbuch'">
+      <FormSection :title="$t('profile.davSection')">
+        <dl v-if="carddav" class="grid gap-4">
+          <div v-for="row in [
+            { label: 'profile.davServer', value: carddav.server },
+            { label: 'profile.davUser', value: carddav.username },
+            { label: 'profile.davPassword', value: carddav.password },
+          ]" :key="row.label" class="flex items-center gap-3">
+            <dt class="w-32 flex-none text-ui text-muted-foreground">{{ $t(row.label) }}</dt>
+            <dd class="min-w-0 flex-1"><code class="text-small break-all">{{ row.value }}</code></dd>
+            <CopyButton :value="row.value" />
+          </div>
+        </dl>
+        <Button class="mt-4" type="button" variant="pill-muted" @click="regenerateCarddavSecret()">
+          {{ $t('profile.regenerate') }}
+        </Button>
+      </FormSection>
+      </template>
 
       <!-- C-13 (#249): die Abo-Adresse ist ein Geheimnis pro Person,
            also steht sie neben dem Weg, sie zurückzuziehen. -->
