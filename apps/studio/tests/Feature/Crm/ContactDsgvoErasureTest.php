@@ -59,7 +59,7 @@ function dsgvoErasableProject(Contact $contact): ClientCase
 }
 
 it('erases a sole-contact project outright, including its storage objects', function () {
-    $contact = Contact::factory()->create(['name' => 'Lena Meier', 'email' => 'lena@example.test']);
+    $contact = Contact::factory()->create(['name' => 'Lena Meier', 'email' => 'lena@example.test', 'social_profiles' => [['platform' => 'instagram', 'value' => '@lena']]]);
     $project = dsgvoErasableProject($contact);
     $asset = Asset::query()->sole();
 
@@ -82,6 +82,7 @@ it('erases a sole-contact project outright, including its storage objects', func
     expect($contact->name)->not->toBe('Lena Meier')
         ->and($contact->email)->toBeNull()
         ->and($contact->phone)->toBeNull()
+        ->and($contact->social_profiles)->toBeNull()
         ->and($contact->dsgvo_erased_at)->not->toBeNull()
         // The row survives — never dropped outright, see EraseContactDsgvo's
         // own doc comment on why.

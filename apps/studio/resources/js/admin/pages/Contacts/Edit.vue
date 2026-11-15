@@ -20,6 +20,8 @@ import { formatEurosRounded } from '@/lib/money'
 import { useI18n } from 'vue-i18n'
 import { MAX_DOTS, type Tone } from '@/admin/lib/metricDots'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import { profileHref, profileText } from '@/admin/lib/socialProfile'
+import { X } from 'lucide-vue-next'
 
 const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? ''
 
@@ -61,6 +63,8 @@ const props = defineProps<{
   contacts: App.Crm.Data.ContactRowData[]
   contact: App.Crm.Data.ContactSuggestionData
   billingAddress: { street: string | null; postcode: string | null; city: string | null }
+  socialProfiles: { platform: string; value: string }[]
+  socialPlatforms: { value: string; label: string }[]
   correspondence: App.Engagement.Data.MessageData[]
   projects: { id: string; name: string; role: string; date: string | null; value: number | null; booked: boolean; open: boolean; quote: { status: string; total: number } | null }[]
   galleries: {
@@ -92,7 +96,7 @@ const props = defineProps<{
   offerablePackages: { id: string; name: string; price: number | null; priceMode: string; requiresDate: boolean }[]
   portalLogins: { count: number; firstAt: string | null; lastAt: string | null }
 }>()
-useLiveProps(['contacts', 'contact', 'billingAddress', 'correspondence', 'projects', 'galleries', 'connected', 'suggestions', 'offerablePackages', 'portalLogins', 'portalAccessRevokedAt', 'canRevokePortalAccess', 'canSendPortalAccess', 'dsgvoErasedAt', 'canManageDsgvo', 'portalDefaults', 'portalOverrides', 'canPreviewPortal', 'dsgvoRequests'])
+useLiveProps(['contacts', 'contact', 'billingAddress', 'socialProfiles', 'correspondence', 'projects', 'galleries', 'connected', 'suggestions', 'offerablePackages', 'portalLogins', 'portalAccessRevokedAt', 'canRevokePortalAccess', 'canSendPortalAccess', 'dsgvoErasedAt', 'canManageDsgvo', 'portalDefaults', 'portalOverrides', 'canPreviewPortal', 'dsgvoRequests'])
 
 const { t } = useI18n()
 
@@ -103,7 +107,10 @@ const form = useForm({
   street: props.billingAddress.street ?? '',
   postcode: props.billingAddress.postcode ?? '',
   city: props.billingAddress.city ?? '',
+  social_profiles: props.socialProfiles.map((profile) => ({ ...profile })),
 })
+
+const platformLabel = (platform: string) => props.socialPlatforms.find((one) => one.value === platform)?.label ?? platform
 
 // The confirm is worded to the one thing this button changes: every project
 // this contact can reach in the portal, not one of them — the opposite scope
@@ -306,6 +313,35 @@ function eraseDsgvoData() {
                 <Field id="c-city" :label="$t('contacts.city')" :error="form.errors.city">
                   <Input id="c-city" v-model="form.city" type="text" autocomplete="address-level2" />
                 </Field>
+                <div v-for="(profile, index) in form.social_profiles" :key="index" class="flex items-start gap-2">
+                  <Select v-model="profile.platform">
+                    <SelectTrigger class="w-40" :aria-label="$t('contacts.platform')"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem v-for="one in socialPlatforms" :key="one.value" :value="one.value">{{ one.label }}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Field :id="`c-profile-${index}`" class="flex-1" :error="form.errors[`social_profiles.${index}.value`]">
+                    <Input :id="`c-profile-${index}`" v-model="profile.value" type="text" :placeholder="$t('contacts.profileValue')" :aria-label="$t('contacts.profileValue')" />
+                  </Field>
+                  <button
+                    :aria-label="$t('common.remove')"
+                    class="inline-flex cursor-pointer border-0 bg-transparent p-2 text-ink-2"
+                    type="button"
+                    @click="form.social_profiles.splice(index, 1)"
+                  >
+                    <X class="size-4" />
+                  </button>
+                </div>
+                <div>
+                  <Button
+                    variant="pill-muted"
+                    type="button"
+                    :disabled="form.social_profiles.length >= 10"
+                    @click="form.social_profiles.push({ platform: 'instagram', value: '' })"
+                  >
+                    {{ $t('contacts.addProfile') }}
+                  </Button>
+                </div>
               </form>
 
               <section v-else-if="contact.phone || contact.email || hasAddress" class="mb-7">
@@ -335,6 +371,30 @@ function eraseDsgvoData() {
                       {{ [billingAddress.street, [billingAddress.postcode, billingAddress.city].filter(Boolean).join(' ')].filter(Boolean).join(', ') }}
                     </div>
                     <div class="mt-px text-small text-ink-2">{{ $t('contacts.address') }}</div>
+                  </div>
+                </div>
+              </section>
+
+              <section v-if="!editing && socialProfiles.length" class="mb-7">
+                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
+                  {{ $t('contacts.profiles') }}
+                </h2>
+
+                <div
+                  v-for="(profile, index) in socialProfiles"
+                  :key="index"
+                  class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+                >
+                  <div>
+                    <div class="text-body leading-none font-semibold tracking-[-0.012em] tabular-nums">
+                      <a
+                        class="no-underline hover:underline"
+                        :href="profileHref(profile.platform, profile.value)"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >{{ profileText(profile.platform, profile.value) }}</a>
+                    </div>
+                    <div class="mt-px text-small text-ink-2">{{ platformLabel(profile.platform) }}</div>
                   </div>
                 </div>
               </section>

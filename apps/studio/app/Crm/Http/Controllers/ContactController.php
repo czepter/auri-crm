@@ -10,6 +10,7 @@ use App\Crm\Actions\CreateContact;
 use App\Crm\Actions\UpdateContact;
 use App\Crm\Data\ContactRowData;
 use App\Crm\Data\ContactSuggestionData;
+use App\Crm\Enums\SocialPlatform;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Engagement\Data\MessageData;
@@ -147,6 +148,9 @@ class ContactController extends Controller
                 'postcode' => $contact->postcode,
                 'city' => $contact->city,
             ],
+            'socialProfiles' => $contact->social_profiles ?? [],
+            'socialPlatforms' => collect(SocialPlatform::cases())
+                ->map(fn (SocialPlatform $platform) => ['value' => $platform->value, 'label' => $platform->label()])->all(),
             // E-11: every thread this contact is on, across projects — the
             // question "what have we actually said to this person" has no
             // other place to be answered, because a thread only ever knows
@@ -321,7 +325,14 @@ class ContactController extends Controller
             'street' => ['nullable', 'string', 'max:255'],
             'postcode' => ['nullable', 'string', 'max:32'],
             'city' => ['nullable', 'string', 'max:255'],
+            'social_profiles' => ['nullable', 'array', 'max:10'],
+            'social_profiles.*.platform' => ['required', Rule::enum(SocialPlatform::class)],
+            'social_profiles.*.value' => ['required', 'string', 'max:255'],
         ]);
+
+        $validated['social_profiles'] = collect($validated['social_profiles'] ?? [])
+            ->map(fn (array $profile) => ['platform' => $profile['platform'], 'value' => trim($profile['value'])])
+            ->values()->all() ?: null;
 
         if ($validated['email'] !== $contact->email) {
             AuditLogger::record(
