@@ -36,3 +36,21 @@ export function profileText(platform: string, value: string) {
 
   return `@${bare(value)}`
 }
+
+export type SocialProfile = { platform: string; value: string }
+
+// Mirrors `max:10` in App\Crm\Support\SocialProfiles.
+const MAX_PROFILES = 10
+
+// The list always ends in one empty row to type into.
+export function withOpenRow(profiles: SocialProfile[]): SocialProfile[] {
+  const last = profiles.at(-1)
+
+  return profiles.length < MAX_PROFILES && (!last || last.value.trim() !== '')
+    ? [...profiles, { platform: last?.platform ?? 'instagram', value: '' }]
+    : profiles
+}
+
+export function filledProfiles(profiles: SocialProfile[]): SocialProfile[] {
+  return profiles.filter((profile) => profile.value.trim() !== '')
+}

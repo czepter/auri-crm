@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { profileHref, profileText } from './socialProfile'
+import { filledProfiles, profileHref, profileText, withOpenRow } from './socialProfile'
 
 describe('profileHref', () => {
   it('builds a handle with or without the at sign', () => {
@@ -35,5 +35,38 @@ describe('profileText', () => {
   it('shows a link without scheme, www and trailing slash', () => {
     expect(profileText('instagram', 'https://www.instagram.com/anna/')).toBe('instagram.com/anna')
     expect(profileText('website', 'annaundben.de')).toBe('annaundben.de')
+  })
+})
+
+describe('withOpenRow', () => {
+  it('opens one row on an empty list', () => {
+    expect(withOpenRow([])).toEqual([{ platform: 'instagram', value: '' }])
+  })
+
+  it('adds a row after a filled one and keeps its platform', () => {
+    expect(withOpenRow([{ platform: 'tiktok', value: 'anna' }])).toEqual([
+      { platform: 'tiktok', value: 'anna' },
+      { platform: 'tiktok', value: '' },
+    ])
+  })
+
+  it('does not stack a second open row', () => {
+    const rows = [{ platform: 'instagram', value: '@anna' }, { platform: 'instagram', value: ' ' }]
+
+    expect(withOpenRow(rows)).toBe(rows)
+  })
+
+  it('stops at ten', () => {
+    const rows = Array.from({ length: 10 }, () => ({ platform: 'instagram', value: 'x' }))
+
+    expect(withOpenRow(rows)).toBe(rows)
+  })
+})
+
+describe('filledProfiles', () => {
+  it('drops rows without a value', () => {
+    expect(filledProfiles([{ platform: 'instagram', value: '@anna' }, { platform: 'instagram', value: '  ' }])).toEqual([
+      { platform: 'instagram', value: '@anna' },
+    ])
   })
 })
