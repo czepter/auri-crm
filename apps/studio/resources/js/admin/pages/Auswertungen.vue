@@ -28,7 +28,7 @@ const props = defineProps<{
   acceptanceRatePrior: number | null
   revenue: { projects: number; revenue: number; averagePerProject: number | null }
   revenuePrior: { projects: number; revenue: number; averagePerProject: number | null }
-  perContact: { name: string; projects: number; revenue: number }[]
+  perContact: { id: number; name: string; projects: number; revenue: number }[]
   cashFlow: { overdue: number; projects: number; quotes: number; months: { month: string; due: number; received: number; open: number }[] }
   cashFlowPast: { projects: number; months: { month: string; received: number }[] }
   revenueByType: { type: string; label: string; projects: number; revenue: number; average: number }[]
@@ -504,14 +504,14 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="row in perContact" :key="row.name">
+                  <tr v-for="row in perContact" :key="row.id">
                     <td class="border-t border-border py-2">
-                      <span class="inline-flex items-center gap-2.5">
+                      <Link :href="`/kontakte/${row.id}`" class="inline-flex items-center gap-2.5 hover:underline">
                         <span class="inline-flex size-[26px] items-center justify-center rounded-full bg-[var(--accent-bg)] text-small font-semibold text-ring">
                           {{ initials(row.name) }}
                         </span>
                         {{ row.name }}
-                      </span>
+                      </Link>
                     </td>
                     <td class="border-t border-border py-2 pl-4 text-right tabular-nums text-muted-foreground">{{ row.projects }}</td>
                     <td class="border-t border-border py-2 pl-4 text-right font-semibold tabular-nums">{{ formatEurosRounded(row.revenue) }}</td>
