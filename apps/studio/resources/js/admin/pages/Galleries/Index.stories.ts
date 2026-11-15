@@ -14,6 +14,9 @@ const settings: App.Settings.Data.GallerySettingsData = {
   listsEnabled: true,
   commentsEnabled: false,
   design: { cover: 'zentriert', type: 'serif', colour: 'hell', size: 'mittel', spacing: 'eng', flow: 'zeilen' },
+  homeMode: 'none',
+  homeRedirectUrl: null,
+  homeNoindex: true,
 }
 
 const presets: App.Gallery.Data.GalleryPresetData[] = [

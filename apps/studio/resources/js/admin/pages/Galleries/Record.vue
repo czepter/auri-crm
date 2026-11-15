@@ -76,6 +76,12 @@ const props = withDefaults(defineProps<{
     canMail: boolean
     recipient: { name: string; email: string } | null
     mailMessage?: string | null
+    listedOnHome: boolean
+    homePinned: boolean
+    homeBlocker: 'locked' | 'draft' | 'withdrawn' | 'expired' | 'external' | null
+    homeMode: 'none' | 'redirect' | 'overview'
+    categoryId: string | null
+    categories: { id: string; name: string }[]
   }
   siblings?: { id: string; title: string | null; assetCount: number; open: boolean }[]
   presets: App.Gallery.Data.GalleryPresetData[]
