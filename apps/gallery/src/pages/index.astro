@@ -1,0 +1,135 @@
+---
+import { callApi } from '../lib/apiClient'
+import { designAttrs } from '../lib/design'
+import {
+  filterRow, homeCoverSrc, homeCoverSrcSet, homeResponse, moreHref, objectPositionOf, tileDate, tileLoading,
+  type HomeOverview, type HomePayload,
+} from '../lib/home'
+import '../styles/app.css'
+
+const apiBase = process.env.API_URL ?? 'http://localhost:8000'
+const publicApi = process.env.PUBLIC_API_URL ?? apiBase
+
+const query = new URLSearchParams()
+for (const key of ['kategorie', 'seite']) {
+  const value = Astro.url.searchParams.get(key)
+  if (value !== null) query.set(key, value)
+}
+
+const response = await callApi(apiBase, `/api/gallery-home?${query}`, Astro.locals.requestId, { headers: { Accept: 'application/json' } })
+const payload: HomePayload | null = response.ok ? await response.json() : null
+const result = homeResponse(payload)
+
+if (result.status !== 200) {
+  return new Response(null, { status: result.status, headers: result.headers })
+}
+
+for (const [name, value] of Object.entries(result.headers)) Astro.response.headers.set(name, value)
+
+const home = payload as HomeOverview
+const page = Math.max(1, Number.parseInt(Astro.url.searchParams.get('seite') ?? '1', 10) || 1)
+const filters = filterRow(home)
+const next = moreHref(home, page)
+const host = home.studio.website ? new URL(home.studio.website.includes('://') ? home.studio.website : `https://${home.studio.website}`).host : null
+const FORMATS = ['avif', 'webp'] as const
+const SIZES = '(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw'
+---
+
+<html lang="de" {...designAttrs(home.design)}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {home.noindex && <meta name="robots" content="noindex, nofollow" />}
+    <title>{home.studio.name}</title>
+  </head>
+  <body>
+    <div class="home">
+      <header class="ph">
+        <h1 class="logo">{home.studio.logo ? <img src={home.studio.logo} alt={home.studio.name} /> : home.studio.name}</h1>
+      </header>
+
+      {
+        filters && (
+          <nav class="flt" aria-label="Kategorie">
+            {filters.map((item) => <a href={item.href} aria-current={item.current ? 'page' : undefined}>{item.label}</a>)}
+          </nav>
+        )
+      }
+
+      <main class="grid" id="tiles">
+        {
+          home.galleries.map((tile, index) => {
+            const load = tileLoading(index)
+
+            return (
+              <a class="tile" href={`/${tile.path}`}>
+                {
+                  tile.cover ? (
+                    <picture class="cv">
+                      {FORMATS.map((format) => <source type={`image/${format}`} srcset={homeCoverSrcSet(publicApi, tile.version, format)} sizes={SIZES} />)}
+                      <img
+                        src={homeCoverSrc(publicApi, tile.version)}
+                        srcset={homeCoverSrcSet(publicApi, tile.version, 'jpeg')}
+                        sizes={SIZES}
+                        alt=""
+                        loading={load.loading}
+                        fetchpriority={load.fetchpriority}
+                        decoding={load.loading === 'lazy' ? 'async' : undefined}
+                        style={`object-position:${objectPositionOf(tile.focal)}`}
+                      />
+                      {tile.protected && <span class="lockmark" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg></span>}
+                    </picture>
+                  ) : (
+                    <span class="cv none">
+                      {tile.protected && <span class="lockmark" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg></span>}
+                    </span>
+                  )
+                }
+                {tile.category && <span class="k">{tile.category}</span>}
+                <b>{tile.title}</b>
+                {tile.date && <span class="d">{tileDate(tile)}</span>}
+                {tile.protected && <span class="sr-only">Passwortgeschützt</span>}
+              </a>
+            )
+          })
+        }
+      </main>
+
+      {next && <div class="mo"><a class="more" href={next}>Mehr laden</a></div>}
+
+      <footer class="pf">
+        <nav>
+          <a href={home.studio.impressum}>Impressum</a>
+          {home.studio.datenschutz && <a href={home.studio.datenschutz}>Datenschutz</a>}
+        </nav>
+        {host && <a href={home.studio.website!}>{host}</a>}
+      </footer>
+    </div>
+
+    {!filters ? null : (
+      <script is:inline>
+        if (!CSS.supports('scroll-initial-target', 'nearest')) document.querySelector('.flt [aria-current]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+      </script>
+    )}
+    <script is:inline>
+      document.querySelector('.more')?.addEventListener('click', async (event) => {
+        event.preventDefault()
+        const link = event.currentTarget
+        const url = link.href
+        const grid = document.getElementById('tiles')
+        const html = await (await fetch(link.href)).text()
+        const doc = new DOMParser().parseFromString(html, 'text/html')
+        const fresh = [...doc.querySelectorAll('#tiles .tile')].slice(grid.children.length)
+        fresh.forEach((tile) => {
+          tile.querySelectorAll('img').forEach((img) => { img.loading = 'lazy'; img.decoding = 'async'; img.removeAttribute('fetchpriority') })
+          grid.append(document.importNode(tile, true))
+        })
+        const next = doc.querySelector('.more')
+        if (next) link.href = next.href
+        else link.parentElement.remove()
+        grid.children[grid.children.length - fresh.length]?.focus()
+        history.replaceState(null, '', url)
+      })
+    </script>
+  </body>
+</html>
