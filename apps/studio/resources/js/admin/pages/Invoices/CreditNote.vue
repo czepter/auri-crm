@@ -72,7 +72,7 @@ function submit() {
           </label>
 
           <div class="flex gap-2">
-            <Button type="submit" :disabled="!amount || over || !form.reason || form.processing">{{ $t('creditNoteBuilder.submit') }}</Button>
+            <Button class="ml-auto" type="submit" :disabled="!amount || over || !form.reason || form.processing">{{ $t('creditNoteBuilder.submit') }}</Button>
             <Button :as="Link" variant="outline" :href="`/rechnungen/${row.id}`">{{ $t('common.cancel') }}</Button>
           </div>
         </DocumentPaper>

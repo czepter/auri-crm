@@ -85,13 +85,13 @@ function add() {
                 <div class="ml-auto flex items-center gap-2">
                   <Button
                     v-if="rowForms[absence.id].isDirty"
-                    variant="pill"
+                    variant="default"
                     type="submit"
                     :disabled="rowForms[absence.id].processing"
                   >
                     {{ $t('absences.save') }}
                   </Button>
-                  <Button variant="pill-muted" type="button" @click="destroy(absence.id)">
+                  <Button variant="secondary" type="button" @click="destroy(absence.id)">
                     {{ $t('absences.delete') }}
                   </Button>
                 </div>
@@ -133,7 +133,7 @@ function add() {
               <p v-if="newForm.errors.ends_on" class="text-small leading-[1.45] text-destructive">{{ newForm.errors.ends_on }}</p>
             </div>
             <div>
-              <Button type="submit" :disabled="newForm.processing">{{ $t('absences.add') }}</Button>
+              <Button class="ml-auto" type="submit" :disabled="newForm.processing">{{ $t('absences.add') }}</Button>
             </div>
           </form>
         </template>

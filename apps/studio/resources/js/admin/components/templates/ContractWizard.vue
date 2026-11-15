@@ -72,7 +72,7 @@ function submit() {
 <template>
   <Dialog v-model:open="open">
     <DialogTrigger as-child>
-      <Button type="button">{{ $t('contractWizard.open') }}</Button>
+      <Button class="ml-auto" type="button">{{ $t('contractWizard.open') }}</Button>
     </DialogTrigger>
 
     <DialogContent class="max-w-[640px]">
@@ -117,7 +117,7 @@ function submit() {
         <DialogClose as-child>
           <Button type="button" variant="outline">{{ $t('common.cancel') }}</Button>
         </DialogClose>
-        <Button type="submit" form="contract-wizard" :disabled="form.processing">
+        <Button class="ml-auto" type="submit" form="contract-wizard" :disabled="form.processing">
           {{ $t('contractWizard.submit') }}
         </Button>
       </DialogFooter>

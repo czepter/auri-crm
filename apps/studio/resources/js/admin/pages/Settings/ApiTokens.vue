@@ -113,7 +113,7 @@ function revoke() {
             </div>
             <p v-if="form.errors.scopes" class="text-small leading-[1.45] text-destructive">{{ form.errors.scopes }}</p>
           </div>
-          <Button type="submit" :disabled="form.processing">{{ $t('apiTokens.create') }}</Button>
+          <Button class="ml-auto" type="submit" :disabled="form.processing">{{ $t('apiTokens.create') }}</Button>
         </form>
         </FormSection>
       </div>

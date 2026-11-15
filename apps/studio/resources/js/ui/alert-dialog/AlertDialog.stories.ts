@@ -55,7 +55,7 @@ export const Buchen: Story = {
     template: `
       <AlertDialog v-bind="args">
         <AlertDialogTrigger as-child>
-          <Button variant="pill" type="button">Als gebucht markieren</Button>
+          <Button variant="default" type="button">Als gebucht markieren</Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>

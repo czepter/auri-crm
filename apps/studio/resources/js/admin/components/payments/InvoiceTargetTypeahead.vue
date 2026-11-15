@@ -116,7 +116,7 @@ const ROW = [
     <span v-if="project" class="flex-none text-small" :class="project.isBooked ? 'text-ink-2' : 'text-ring'">
       {{ project.isBooked ? $t('create.project') : $t('create.lead') }}
     </span>
-    <Button class="ml-auto" type="button" variant="pill-muted" @click="clear">{{ $t('common.edit') }}</Button>
+    <Button class="ml-auto" type="button" variant="secondary" @click="clear">{{ $t('common.edit') }}</Button>
   </div>
 
   <div v-else>

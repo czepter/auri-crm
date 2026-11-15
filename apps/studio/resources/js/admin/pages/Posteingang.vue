@@ -168,7 +168,7 @@ function receivedAt(iso: string) {
               <div class="text-small leading-[1.47] text-ink-2">{{ $t(`inbox.origin.${open.origin}`) }}</div>
               <h1 class="m-0 mt-0.5 text-[20px] leading-7 font-semibold tracking-[-0.02em]">{{ open.subject }}</h1>
             </div>
-            <Button class="ml-auto" variant="pill-muted" type="button" @click="close(open.id)">
+            <Button class="ml-auto" variant="secondary" type="button" @click="close(open.id)">
               {{ open.state === 'erledigt' ? $t('inbox.reopen') : $t('inbox.done') }}
             </Button>
           </div>
@@ -189,7 +189,7 @@ function receivedAt(iso: string) {
               <Textarea :id="id" v-model="reply.body" rows="3" class="mb-3" />
             </Field>
             <div class="mt-2.5 flex items-center gap-3">
-              <Button variant="pill" class="ml-auto" type="submit" :disabled="reply.processing || !reply.body" :state="reply.processing ? 'loading' : 'idle'">
+              <Button variant="default" class="ml-auto" type="submit" :disabled="reply.processing || !reply.body" :state="reply.processing ? 'loading' : 'idle'">
                 {{ $t('inbox.send') }}
               </Button>
             </div>
@@ -202,14 +202,14 @@ function receivedAt(iso: string) {
           <p v-if="!configured" class="m-0 text-small leading-[1.47] text-ink-2">{{ $t('inbox.notConfigured') }}</p>
           <template v-else>
             <p v-if="catchAll" class="m-0 text-ui leading-[1.47] tabular-nums"><code>{{ catchAll }}</code></p>
-            <Button v-else-if="canRotate" type="button" variant="pill-muted" @click="rotate">{{ $t('inbox.generate') }}</Button>
+            <Button v-else-if="canRotate" type="button" variant="secondary" @click="rotate">{{ $t('inbox.generate') }}</Button>
 
             <!-- Rotation is the Inhaber's alone, and the dialog says what it
                  costs: every address already handed out stops working, including
                  the Reply-To on mail sitting in clients' inboxes. -->
             <AlertDialog v-if="canRotate && catchAll">
               <AlertDialogTrigger as-child>
-                <Button class="mt-2.5" type="button" variant="pill-muted">{{ $t('inbox.rotate') }}</Button>
+                <Button class="mt-2.5" type="button" variant="secondary">{{ $t('inbox.rotate') }}</Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
@@ -238,7 +238,7 @@ function receivedAt(iso: string) {
             <div class="mt-[5px] line-clamp-3 max-w-[68ch] text-body whitespace-pre-line text-ink-2">{{ draft.body }}</div>
 
             <div class="mt-2.5 flex items-center gap-2">
-              <Button :as="Link" variant="pill" :href="`/posteingang/entwuerfe/${draft.id}/senden`">{{ $t('inbox.send') }}</Button>
+              <Button :as="Link" variant="default" :href="`/posteingang/entwuerfe/${draft.id}/senden`">{{ $t('inbox.send') }}</Button>
               <Button variant="ghost" type="button" @click="discard(draft.id)">{{ $t('inbox.discard') }}</Button>
             </div>
           </div>
@@ -267,12 +267,12 @@ function receivedAt(iso: string) {
                     </SelectItem>
                   </SelectContent>
                 </Select>
-                <Button variant="pill" type="button" :disabled="!chosenProject" @click="file(row.id)">
+                <Button variant="default" type="button" :disabled="!chosenProject" @click="file(row.id)">
                   {{ $t('inbox.file') }}
                 </Button>
                 <Button variant="ghost" type="button" @click="filing = null">{{ $t('common.cancel') }}</Button>
               </template>
-              <Button v-else variant="pill-muted" type="button" @click="filing = row.id">
+              <Button v-else variant="secondary" type="button" @click="filing = row.id">
                 {{ $t('inbox.file') }}
               </Button>
             </div>
@@ -307,12 +307,12 @@ function receivedAt(iso: string) {
                     </SelectItem>
                   </SelectContent>
                 </Select>
-                <Button variant="pill" type="button" :disabled="!chosenThread" @click="attach(row.id)">
+                <Button variant="default" type="button" :disabled="!chosenThread" @click="attach(row.id)">
                   {{ $t('inbox.attach') }}
                 </Button>
                 <Button variant="ghost" type="button" @click="attaching = null">{{ $t('common.cancel') }}</Button>
               </template>
-              <Button v-else variant="pill-muted" type="button" @click="attaching = row.id">
+              <Button v-else variant="secondary" type="button" @click="attaching = row.id">
                 {{ $t('inbox.attach') }}
               </Button>
             </div>

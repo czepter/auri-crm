@@ -166,6 +166,7 @@ function choose(field: Field, option: string) {
                 v-for="option in choices(field)"
                 :key="option"
                 :value="option"
+                :create="!field.options.includes(option)"
                 @select="choose(field, option)"
               >
                 {{ field.options.includes(option) ? option : $t('project.fieldNewOption', { term: option }) }}

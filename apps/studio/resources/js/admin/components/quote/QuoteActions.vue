@@ -141,7 +141,7 @@ function run(key: ActionKey) {
         </DialogBody>
 
         <DialogFooter>
-          <Button type="submit" :form="`as-package-${quote.id}`" :disabled="packageForm.processing">
+          <Button class="ml-auto" type="submit" :form="`as-package-${quote.id}`" :disabled="packageForm.processing">
             {{ $t('common.save') }}
           </Button>
           <DialogClose as-child>
@@ -157,7 +157,7 @@ function run(key: ActionKey) {
       <Button
         v-if="primaryKey === 'download'"
         as="a"
-        variant="pill"
+        variant="default"
         class="rounded-r-none"
         :href="`/angebote/${quote.id}/pdf`"
         target="_blank"
@@ -166,7 +166,7 @@ function run(key: ActionKey) {
       <Button
         v-else
         type="button"
-        variant="pill"
+        variant="default"
         class="rounded-r-none"
         @click.stop="run(primaryKey)"
       >{{ labels[primaryKey] }}</Button>
@@ -199,7 +199,7 @@ function run(key: ActionKey) {
 
     <DropdownMenu v-if="canManageQuotes">
       <DropdownMenuTrigger as-child>
-        <Button variant="ghost" type="button" class="rounded-[6px] px-2 hover:bg-sunk-2" :aria-label="$t('project.more')" :title="$t('project.more')" @click.stop>
+        <Button variant="ghost" size="icon" type="button" class="hover:bg-sunk-2" :aria-label="$t('project.more')" :title="$t('project.more')" @click.stop>
           <EllipsisVertical />
         </Button>
       </DropdownMenuTrigger>

@@ -100,7 +100,7 @@ function removeTimelineEntry(entry: App.Crm.Data.TimelineEntryData) {
                         <Label variant="inline" for="tl-edit-transit">{{ $t('project.timelineTransit') }}</Label>
                       </div>
                       <div class="flex items-center gap-3 [&_[data-slot=button][data-variant=default]]:ml-0">
-                        <Button type="submit" :disabled="editTimelineForm.processing">{{ $t('common.save') }}</Button>
+                        <Button class="ml-auto" type="submit" :disabled="editTimelineForm.processing">{{ $t('common.save') }}</Button>
                         <Button type="button" variant="ghost" @click="editingTimelineEntry = null">{{ $t('common.cancel') }}</Button>
                       </div>
                     </form>
@@ -133,7 +133,7 @@ function removeTimelineEntry(entry: App.Crm.Data.TimelineEntryData) {
                     <TimePicker :id="`tl-time-${shoot.id}`" v-model="timelineForm.time" class="w-[104px]" required />
                     <Label :for="`tl-title-${shoot.id}`" class="sr-only">{{ $t('project.timelineTitle') }}</Label>
                     <Input :id="`tl-title-${shoot.id}`" v-model="timelineForm.title" class="min-w-0 flex-1" type="text" :placeholder="$t('project.timelineTitle')" required />
-                    <Button type="submit" variant="outline" class="px-2.5 max-[640px]:min-h-11 max-[640px]:min-w-11" :disabled="timelineForm.processing" :aria-label="$t('common.save')">
+                    <Button type="submit" variant="outline" size="icon" class="max-[640px]:min-h-11 max-[640px]:min-w-11" :disabled="timelineForm.processing" :aria-label="$t('common.save')">
                       <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
                     </Button>
                   </div>

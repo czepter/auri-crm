@@ -10,7 +10,6 @@ const meta = {
   title: 'Zeit/TimePicker',
   component: TimePicker,
   argTypes: {
-    size: { control: 'inline-radio', options: ['default', 'lead'] },
   },
   args: { modelValue: '', size: 'default', disabled: false },
   render: ({ modelValue, ...rest }) => ({

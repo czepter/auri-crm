@@ -16,8 +16,8 @@ const forwarded = useForwardProps(delegatedProps)
     data-slot="radio-group-item"
     v-bind="forwarded"
     :class="cn(
-      'peer relative size-6 shrink-0 cursor-pointer rounded-full border border-input bg-background',
-      'after:absolute after:-inset-[10px]',
+      'peer relative size-4 shrink-0 cursor-pointer rounded-full border border-input bg-background',
+      'after:absolute after:-inset-3',
       'transition-colors duration-[120ms] ease-out',
       'hover:border-foreground',
       'focus-visible:border-ring',
@@ -27,7 +27,7 @@ const forwarded = useForwardProps(delegatedProps)
     )"
   >
     <RadioGroupIndicator class="flex size-full items-center justify-center">
-      <span class="block size-3 rounded-full bg-foreground" />
+      <span class="block size-2 rounded-full bg-foreground" />
     </RadioGroupIndicator>
   </RadioGroupItem>
 </template>

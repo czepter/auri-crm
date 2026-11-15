@@ -179,10 +179,9 @@ function reset() {
               { value: 'liste', label: $t('projects.viewList') },
               { value: 'board', label: $t('projects.viewBoard') },
             ]"
-            variant="segmented"
             @update:model-value="(ansicht) => router.get('/projekte', { ansicht }, { preserveScroll: true, preserveState: true })"
           />
-          <Button v-if="stageSettings" :as="Link" class="ml-auto" variant="pill-muted" href="/auftraege/einstellungen/stufen">
+          <Button v-if="stageSettings" :as="Link" class="ml-auto" variant="secondary" href="/auftraege/einstellungen/stufen">
             {{ $t('stages.entry') }}
           </Button>
         </PageHead>
@@ -195,14 +194,13 @@ function reset() {
                 { value: 'running', label: $t('projects.running') },
                 { value: 'all', label: $t('projects.all') },
               ]"
-              variant="segmented"
               @update:model-value="stage = null"
             />
             <div class="flex flex-wrap gap-1.5">
               <button
                 v-for="option in pills"
                 :key="option.key"
-                class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] px-3 py-1.5 text-small"
+                class="flex h-8 cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] px-3 text-small font-medium"
                 :class="stage === option.key ? 'bg-paper font-medium text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'bg-sunk text-foreground'"
                 type="button"
                 :aria-pressed="stage === option.key"
@@ -254,7 +252,7 @@ function reset() {
             </tbody>
           </Table>
 
-          <Button v-if="!groups.length" class="mx-8 mt-5" type="button" variant="pill-muted" @click="reset">
+          <Button v-if="!groups.length" class="mx-8 mt-5" type="button" variant="secondary" @click="reset">
             {{ $t('projects.reset') }}
           </Button>
         </template>
@@ -336,7 +334,7 @@ function reset() {
         </div>
 
         <Empty v-else :text="$t('projects.empty')">
-          <Button :as="Link" variant="pill" href="/anfragen/neu">{{ $t('leads.createKicker') }}</Button>
+          <Button :as="Link" variant="default" href="/anfragen/neu">{{ $t('leads.createKicker') }}</Button>
         </Empty>
       </div>
     </Page>

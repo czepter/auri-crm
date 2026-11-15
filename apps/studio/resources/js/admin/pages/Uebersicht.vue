@@ -285,7 +285,7 @@ const CHIP = {
                 <PageHead :kicker="heading" :title="$t('dashboard.title')">
                     <DropdownMenu>
                         <DropdownMenuTrigger as-child>
-                            <Button class="ml-auto" type="button" variant="pill">
+                            <Button class="ml-auto" type="button" variant="default">
                                 <svg class="size-3.5 fill-none stroke-current stroke-2 [stroke-linecap:round]" viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M12 5v14M5 12h14" />
                                 </svg>
@@ -306,7 +306,7 @@ const CHIP = {
                     <span class="rounded-[var(--r-sm)] bg-late-bg px-2.5 py-1 text-small font-medium text-destructive">
                         {{ $t("dashboard.waited", urgent.waitingDays) }}
                     </span>
-                    <Button :as="Link" class="bg-background text-foreground" variant="pill" :href="`/anfragen/${urgent.id}`">
+                    <Button :as="Link" class="bg-background text-foreground" variant="default" :href="`/anfragen/${urgent.id}`">
                         {{ $t("dashboard.reply") }}
                     </Button>
                 </div>
@@ -381,7 +381,7 @@ const CHIP = {
                                     <template v-if="row.whatTail">{{ row.whatTail }}</template>
                                 </span>
                             </div>
-                            <Button v-if="row.action" :as="Link" :variant="index === 0 ? 'pill' : 'pill-muted'" :href="row.action.target">
+                            <Button v-if="row.action" :as="Link" :variant="index === 0 ? 'default' : 'secondary'" :href="row.action.target">
                                 {{ row.action.label }}
                             </Button>
                         </div>
@@ -464,7 +464,7 @@ const CHIP = {
                             <span v-if="row.chip" class="flex-none rounded-full px-2.5 py-1 text-small font-medium tabular-nums" :class="CHIP[row.chip.tone]">
                                 {{ row.chip.text }}
                             </span>
-                            <Button v-if="row.action" :as="Link" :variant="index === 0 ? 'pill' : 'pill-muted'" :href="row.action.target">
+                            <Button v-if="row.action" :as="Link" :variant="index === 0 ? 'default' : 'secondary'" :href="row.action.target">
                                 {{ row.action.label }}
                             </Button>
                         </div>

@@ -92,7 +92,7 @@ const width = computed(() => {
       <template #head>
         <Button
           v-if="formRef?.form.isDirty"
-          variant="pill"
+          variant="default"
           type="submit"
           form="portal-settings-form"
           :disabled="formRef?.form.processing"
@@ -109,9 +109,9 @@ const width = computed(() => {
             <aside class="sticky top-6 w-[420px] flex-none max-[1440px]:hidden">
               <div class="mb-2.5 flex flex-wrap items-center gap-2">
                 <span class="mr-auto text-small leading-none font-semibold text-faint">{{ $t('settings.previewPortal') }}</span>
-                <ChoiceGroup v-model="register" :label="$t('settings.clientRegister')" variant="segmented" :options="registerOptions" />
-                <ChoiceGroup v-model="state" variant="segmented" :options="stateOptions" />
-                <ChoiceGroup v-model="device" icon variant="segmented" :options="deviceOptions">
+                <ChoiceGroup v-model="register" :label="$t('settings.clientRegister')" :options="registerOptions" />
+                <ChoiceGroup v-model="state" :options="stateOptions" />
+                <ChoiceGroup v-model="device" icon :options="deviceOptions">
                   <template #option="{ option }">
                     <component :is="deviceOptions.find((row) => row.value === option.value)!.icon" />
                   </template>
@@ -138,7 +138,7 @@ const width = computed(() => {
 
             <Button
               class="fixed right-6 bottom-6 z-40 shadow-[0_8px_24px_rgb(20_16_14_/_0.16)] min-[1441px]:hidden"
-              variant="pill"
+              variant="default"
               type="button"
               @click="expanded = true"
             >
@@ -151,8 +151,8 @@ const width = computed(() => {
                  aufmacht. -->
             <div v-if="expanded" class="fixed inset-0 z-50 overflow-y-auto bg-background/95 p-6 backdrop-blur-[12px]">
               <div class="mx-auto flex max-w-[1180px] flex-wrap items-center gap-2 pb-3">
-                <ChoiceGroup v-model="state" variant="segmented" :options="stateOptions" />
-                <ChoiceGroup v-model="device" icon variant="segmented" :options="deviceOptions">
+                <ChoiceGroup v-model="state" :options="stateOptions" />
+                <ChoiceGroup v-model="device" icon :options="deviceOptions">
                   <template #option="{ option }">
                     <component :is="deviceOptions.find((row) => row.value === option.value)!.icon" />
                   </template>

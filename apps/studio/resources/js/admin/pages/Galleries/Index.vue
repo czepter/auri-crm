@@ -69,14 +69,14 @@ function day(iso: string | null) {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('galleries.title')">
-          <Button v-if="settings" class="ml-auto" type="button" variant="pill-muted" @click="settingsOpen = true">
+          <Button v-if="settings" class="ml-auto" type="button" variant="secondary" @click="settingsOpen = true">
             {{ $t('stages.entry') }}
           </Button>
-          <Button :as="Link" variant="pill" :class="settings ? undefined : 'ml-auto'" href="/galerien/neu">{{ $t('galleries.create') }}</Button>
+          <Button :as="Link" variant="default" :class="settings ? undefined : 'ml-auto'" href="/galerien/neu">{{ $t('galleries.create') }}</Button>
         </PageHead>
 
         <Empty v-if="!galleries.length" :text="$t('galleries.empty')">
-          <Button :as="Link" variant="pill" href="/galerien/neu">{{ $t('galleries.create') }}</Button>
+          <Button :as="Link" variant="default" href="/galerien/neu">{{ $t('galleries.create') }}</Button>
         </Empty>
 
         <div v-else class="px-6 pt-7 pb-8 max-[640px]:px-5">
@@ -89,7 +89,7 @@ function day(iso: string | null) {
                 <SelectItem v-for="[key, label] in projectTypes" :key="key" :value="key">{{ label }}</SelectItem>
               </SelectContent>
             </Select>
-            <ChoiceGroup v-model="view" class="ml-auto" variant="segmented" :options="views" />
+            <ChoiceGroup v-model="view" class="ml-auto" :options="views" />
           </div>
 
           <div v-if="view === 'list'">

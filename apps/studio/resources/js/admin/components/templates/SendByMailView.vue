@@ -146,7 +146,7 @@ function send() {
         </Field>
 
         <div class="flex justify-end border-t border-border pt-4">
-          <Button variant="pill" type="button" :state="processing ? 'loading' : 'idle'" @click="send">{{ $t('sendMail.submit') }}</Button>
+          <Button variant="default" type="button" :state="processing ? 'loading' : 'idle'" @click="send">{{ $t('sendMail.submit') }}</Button>
         </div>
       </div>
 
@@ -181,7 +181,7 @@ function send() {
           </form>
         </DialogBody>
         <DialogFooter>
-          <Button variant="pill" type="submit" form="save-template-form" :disabled="save.processing">{{ $t('common.save') }}</Button>
+          <Button variant="default" type="submit" form="save-template-form" :disabled="save.processing">{{ $t('common.save') }}</Button>
           <Button variant="outline" type="button" @click="saving = false">{{ $t('common.cancel') }}</Button>
         </DialogFooter>
       </DialogContent>

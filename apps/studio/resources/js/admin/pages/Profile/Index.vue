@@ -134,7 +134,7 @@ function regenerateFeedUrl() {
       <template #head>
         <Button
           v-if="activeForm?.isDirty && pane !== 'sicherheit'"
-          variant="pill"
+          variant="default"
           type="submit"
           :form="formId"
           :disabled="activeForm?.processing"
@@ -208,7 +208,7 @@ function regenerateFeedUrl() {
               </Field>
             </div>
           </div>
-          <Button type="submit" :disabled="passwordForm.processing || !passwordForm.isDirty">{{ $t('profile.changePassword') }}</Button>
+          <Button class="ml-auto" type="submit" :disabled="passwordForm.processing || !passwordForm.isDirty">{{ $t('profile.changePassword') }}</Button>
         </FormSection>
 
         <FormSection :title="$t('profile.mfaSection')">
@@ -312,7 +312,7 @@ function regenerateFeedUrl() {
         <code class="block text-small leading-[1.5] break-all">{{ calendarFeedUrl }}</code>
         <div class="mt-4 flex items-center gap-2">
           <CopyButton :value="calendarFeedUrl!" />
-          <Button type="button" variant="pill-muted" @click="regenerateFeedUrl()">
+          <Button type="button" variant="secondary" @click="regenerateFeedUrl()">
             {{ $t('calendar.revoke') }}
           </Button>
         </div>

@@ -38,7 +38,7 @@ const sendFirst = computed(() => live.value && unpaid.value && !row.value.sentOn
         <span v-if="row.overdueDays" class="text-small text-destructive">{{ $t('invoicesOverview.overdueDays', row.overdueDays) }}</span>
         <div class="ml-auto flex flex-wrap items-center gap-2">
           <Button v-if="row.hasDocument" as="a" variant="outline" :href="`/rechnungen/${row.id}/pdf`" target="_blank">{{ $t('invoiceDetail.download') }}</Button>
-          <Button v-if="live && unpaid" :as="Link" :variant="sendFirst ? 'pill' : 'outline'" :href="`/rechnungen/${row.id}/versenden`">
+          <Button v-if="live && unpaid" :as="Link" :variant="sendFirst ? 'default' : 'outline'" :href="`/rechnungen/${row.id}/versenden`">
             {{ $t(row.sentOn ? 'invoiceDetail.sendAgain' : 'invoicesOverview.send') }}
           </Button>
           <InstallmentPaidDialog

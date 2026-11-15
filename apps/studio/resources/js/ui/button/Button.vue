@@ -9,6 +9,7 @@ import { buttonVariants } from "."
 
 interface Props extends PrimitiveProps {
   variant?: ButtonVariants["variant"]
+  size?: ButtonVariants["size"]
   tone?: ButtonVariants["tone"]
   state?: "idle" | "loading" | "success" | "error"
   class?: HTMLAttributes["class"]
@@ -22,6 +23,7 @@ interface Props extends PrimitiveProps {
 const props = withDefaults(defineProps<Props>(), {
   as: "button",
   variant: "default",
+  size: "default",
   tone: "default",
 })
 </script>
@@ -33,7 +35,7 @@ const props = withDefaults(defineProps<Props>(), {
     :data-tone="tone"
     :as="as"
     :as-child="asChild"
-    :class="cn(buttonVariants({ variant, tone }), state === 'loading' && 'pointer-events-none', props.class)"
+    :class="cn(buttonVariants({ variant, size, tone }), state === 'loading' && 'pointer-events-none', props.class)"
     :aria-busy="state === 'loading' || undefined"
   >
     <slot v-if="!state" />

@@ -22,20 +22,21 @@ const addShoot = computed(() => props.header.isBooked && props.header.canManageS
 
 <template>
     <template v-if="!step && addShoot">
-        <Button variant="pill" as-child class="max-[640px]:min-h-11">
+        <Button variant="default" as-child class="max-[640px]:min-h-11">
             <Link :href="`/auftraege/${header.id}/shootings`">{{ $t("project.shootCreate") }}</Link>
         </Button>
     </template>
-    <div v-else-if="step" class="flex">
-        <Button variant="pill" type="button" class="rounded-r-none max-[640px]:min-h-11" @click="advance(step.shootId, step.status.value)">
+    <div v-else-if="step" class="flex gap-px">
+        <Button variant="default" type="button" class="rounded-r-none max-[640px]:min-h-11" @click="advance(step.shootId, step.status.value)">
             {{ step.status.label }}
         </Button>
         <DropdownMenu v-if="stepMenu.length">
             <DropdownMenuTrigger as-child>
                 <Button
-                    variant="pill"
+                    variant="default"
+                    size="icon"
                     type="button"
-                    class="w-8 justify-center rounded-l-none border-l border-white/30 px-0 max-[640px]:min-h-11 max-[640px]:min-w-11"
+                    class="rounded-l-none max-[640px]:min-h-11 max-[640px]:min-w-11"
                     :aria-label="$t('project.advance')"
                 >
                     <ChevronDown class="size-3.5" />

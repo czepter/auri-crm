@@ -189,7 +189,7 @@ function submit() {
           </div>
         </FormSection>
 
-        <Button class="mt-6" type="submit" :disabled="form.processing || form.title === ''">
+        <Button class="ml-auto mt-6" type="submit" :disabled="form.processing || form.title === ''">
           {{ $t('galleries.create') }}
         </Button>
       </form>

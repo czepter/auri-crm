@@ -121,7 +121,6 @@ const textSummary = computed(() => new DOMParser().parseFromString(draft.value.i
             { value: 'classic', label: $t('quotes.modeClassic') },
             { value: 'choice', label: $t('quotes.modeChoice') },
           ]"
-          variant="segmented"
           @update:model-value="setMode"
         />
 

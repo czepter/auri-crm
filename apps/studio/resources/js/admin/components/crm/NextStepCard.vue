@@ -16,7 +16,7 @@ defineEmits<{ done: [] }>()
             </span>
         </div>
         <Button
-            variant="pill-muted"
+            variant="secondary"
             class="self-start"
             type="button"
             :as-child="!!href"

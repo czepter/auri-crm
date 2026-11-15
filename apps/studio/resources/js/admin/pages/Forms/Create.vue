@@ -116,7 +116,7 @@ const LONG = ['text', 'name_list', 'group_photos']
               </div>
             </Card>
 
-            <Button type="submit" :disabled="form.processing">{{ $t('common.save') }}</Button>
+            <Button class="ml-auto" type="submit" :disabled="form.processing">{{ $t('common.save') }}</Button>
           </form>
 
           <!-- Was der Kunde im Portal sieht, aus dem Formular statt vom Server:

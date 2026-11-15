@@ -155,7 +155,6 @@ function saveAsPackage() {
         :label="$t('quotes.inPortal')"
         :model-value="portalStatus"
         :options="Object.entries(portalLabels).map(([value, label]) => ({ value, label: $t(label) }))"
-        variant="segmented"
         class="self-start"
         @update:model-value="setPortalStatus"
       />
@@ -178,7 +177,7 @@ function saveAsPackage() {
 
           <DropdownMenu v-if="canManageCatalog">
             <DropdownMenuTrigger as-child>
-              <Button variant="ghost" type="button" class="rounded-[6px] px-2 hover:bg-sunk-2" :aria-label="$t('project.more')">
+              <Button variant="ghost" size="icon" type="button" class="hover:bg-sunk-2" :aria-label="$t('project.more')">
                 <Ellipsis />
               </Button>
             </DropdownMenuTrigger>
@@ -207,7 +206,7 @@ function saveAsPackage() {
       </DialogBody>
 
       <DialogFooter>
-        <Button type="submit" :form="`item-package-${quoteId}`" :disabled="packageForm.processing">{{ $t('common.save') }}</Button>
+        <Button class="ml-auto" type="submit" :form="`item-package-${quoteId}`" :disabled="packageForm.processing">{{ $t('common.save') }}</Button>
         <DialogClose as-child>
           <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
         </DialogClose>

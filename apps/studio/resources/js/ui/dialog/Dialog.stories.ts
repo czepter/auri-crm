@@ -55,7 +55,7 @@ export const AufgabeAnlegen: Story = {
     template: `
       <Dialog v-bind="args">
         <DialogTrigger as-child>
-          <Button variant="pill-muted" type="button">Aufgabe</Button>
+          <Button variant="secondary" type="button">Aufgabe</Button>
         </DialogTrigger>
 
         <DialogContent>

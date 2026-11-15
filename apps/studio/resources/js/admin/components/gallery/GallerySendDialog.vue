@@ -68,7 +68,6 @@ function rotatePassword() {
         <ChoiceGroup
           v-if="recipient"
           v-model="tab"
-          variant="segmented"
           :options="[{ value: 'mail', label: $t('galleryRecord.tabMail') }, { value: 'link', label: $t('galleryRecord.tabLink') }]"
         />
 
@@ -114,14 +113,14 @@ function rotatePassword() {
 
       <DialogFooter>
         <template v-if="recipient && tab === 'mail'">
-          <Button type="button" :state="processing ? 'loading' : 'idle'" @click="sendMail">
+          <Button class="ml-auto" type="button" :state="processing ? 'loading' : 'idle'" @click="sendMail">
             {{ publishable ? $t('galleryRecord.sendAndPublish') : $t('sendMail.submit') }}
           </Button>
-          <Button v-if="publishable" type="button" variant="pill-muted" :disabled="processing" @click="post({})">{{ $t('galleryRecord.publishOnly') }}</Button>
+          <Button v-if="publishable" type="button" variant="secondary" :disabled="processing" @click="post({})">{{ $t('galleryRecord.publishOnly') }}</Button>
         </template>
         <template v-else>
-          <CopyButton :value="pasteText" :label="$t('galleryRecord.copyAll')" variant="pill" />
-          <Button v-if="publishable" type="button" variant="pill-muted" :disabled="processing" @click="post({})">{{ $t('galleryRecord.publish') }}</Button>
+          <CopyButton :value="pasteText" :label="$t('galleryRecord.copyAll')" variant="default" />
+          <Button v-if="publishable" type="button" variant="secondary" :disabled="processing" @click="post({})">{{ $t('galleryRecord.publish') }}</Button>
         </template>
         <DialogClose as-child>
           <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>

@@ -95,7 +95,7 @@ function submit() {
             class="text-small tracking-[-0.01em] whitespace-nowrap text-ring no-underline hover:underline"
             href="/kontakte"
           >{{ $t('common.cancel') }}</Link>
-          <Button variant="pill" type="submit" :disabled="form.processing">{{ $t('contacts.submit') }}</Button>
+          <Button variant="default" type="submit" :disabled="form.processing">{{ $t('contacts.submit') }}</Button>
         </div>
       </form>
 

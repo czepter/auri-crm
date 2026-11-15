@@ -63,7 +63,7 @@ const CHIP: Record<string, ChipTone> = { open: 'warn', partial: 'warn', overdue:
       </Table>
 
       <Empty v-else>
-        <Button :as="Link" variant="pill" :href="`/rechnungen/neu?projekt=${header.id}`">{{ $t('invoicesOverview.create') }}</Button>
+        <Button :as="Link" variant="default" :href="`/rechnungen/neu?projekt=${header.id}`">{{ $t('invoicesOverview.create') }}</Button>
       </Empty>
     </ProjectShell>
   </AdminLayout>

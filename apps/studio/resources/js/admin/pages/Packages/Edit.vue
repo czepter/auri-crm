@@ -150,11 +150,11 @@ watch(() => form.data(), autosave, { deep: true })
     >
       <template #head>
         <div class="flex items-center gap-2">
-          <Button as="a" variant="pill-muted" href="/pakete">{{ $t('common.cancel') }}</Button>
+          <Button as="a" variant="secondary" href="/pakete">{{ $t('common.cancel') }}</Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger as-child>
-              <Button variant="ghost" type="button" class="rounded-[6px] px-2 hover:bg-sunk-2" :aria-label="$t('project.more')">
+              <Button variant="ghost" size="icon" type="button" class="hover:bg-sunk-2" :aria-label="$t('project.more')">
                 <EllipsisVertical />
               </Button>
             </DropdownMenuTrigger>

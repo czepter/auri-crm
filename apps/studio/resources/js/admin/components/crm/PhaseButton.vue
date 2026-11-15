@@ -12,10 +12,10 @@ const next = computed(() => laterStages(props.stages, props.current)[0])
 </script>
 
 <template>
-    <div v-if="stages.length" class="flex">
+    <div v-if="stages.length" class="flex gap-px">
         <Button
             v-if="next"
-            variant="pill-muted"
+            variant="secondary"
             type="button"
             class="rounded-r-none"
             @click="emit('select', next.value)"
@@ -25,10 +25,10 @@ const next = computed(() => laterStages(props.stages, props.current)[0])
         <DropdownMenu>
             <DropdownMenuTrigger as-child>
                 <Button
-                    variant="pill-muted"
+                    variant="secondary"
+                    size="icon"
                     type="button"
-                    class="w-8 justify-center px-0"
-                    :class="next && 'rounded-l-none border-l border-line-hover'"
+                    :class="next && 'rounded-l-none'"
                     :aria-label="$t('board.colStage')"
                 >
                     <ChevronDown class="size-3.5" />

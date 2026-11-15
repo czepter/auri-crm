@@ -99,7 +99,7 @@ function classes(entry: ReturnType<typeof cell>, height: string) {
 
 <template>
   <div class="px-6 pt-6.5 pb-8">
-    <Button class="mb-6" type="button" variant="pill-muted" :disabled="from <= bounds.first" @click="from--">
+    <Button class="mb-6" type="button" variant="secondary" :disabled="from <= bounds.first" @click="from--">
       <svg class="size-3.5 fill-none stroke-current stroke-[1.75] [stroke-linecap:round] [stroke-linejoin:round]" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6" /></svg>
       {{ $t('calendar.earlier') }}
     </Button>
@@ -164,7 +164,7 @@ function classes(entry: ReturnType<typeof cell>, height: string) {
       </div>
     </section>
 
-    <Button class="mb-6" type="button" variant="pill-muted" :disabled="to >= bounds.last" @click="to++">
+    <Button class="mb-6" type="button" variant="secondary" :disabled="to >= bounds.last" @click="to++">
       <svg class="size-3.5 fill-none stroke-current stroke-[1.75] [stroke-linecap:round] [stroke-linejoin:round]" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
       {{ $t('calendar.later') }}
     </Button>

@@ -282,7 +282,6 @@ const workflowAllowed = computed(() =>
                             { value: 'liste', label: $t('board.viewList') },
                             { value: 'board', label: $t('board.viewBoard') },
                         ]"
-                        variant="segmented"
                         @update:model-value="choose"
                     />
 
@@ -290,7 +289,7 @@ const workflowAllowed = computed(() =>
                         v-if="stageSettings"
                         :as="Link"
                         class="ml-auto max-[640px]:hidden"
-                        variant="pill-muted"
+                        variant="secondary"
                         href="/anfragen/einstellungen/stufen"
                     >
                         {{ $t("stages.entry") }}
@@ -299,7 +298,7 @@ const workflowAllowed = computed(() =>
                     <Button
                         :as="Link"
                         :class="[!stageSettings && 'ml-auto', 'max-[640px]:ml-auto']"
-                        variant="pill"
+                        variant="default"
                         href="/anfragen/neu"
                     >
                         {{ $t("board.create") }}
@@ -474,7 +473,7 @@ const workflowAllowed = computed(() =>
                         <button
                             v-for="option in pills"
                             :key="option.key"
-                            class="flex shrink-0 cursor-pointer snap-start items-center gap-1.5 rounded-[var(--r-sm)] px-3 py-1.5 text-small max-[640px]:min-h-11"
+                            class="flex shrink-0 cursor-pointer snap-start items-center gap-1.5 h-8 rounded-[var(--r-sm)] px-3 text-small font-medium max-[640px]:min-h-11"
                             :class="stage === option.key ? 'bg-paper font-medium text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'bg-sunk text-foreground'"
                             type="button"
                             :aria-pressed="stage === option.key"
@@ -490,7 +489,7 @@ const workflowAllowed = computed(() =>
                             <span class="mx-1 self-center h-[18px] w-px bg-rule" />
 
                             <button
-                                class="flex shrink-0 cursor-pointer snap-start items-center gap-1.5 rounded-[var(--r-sm)] bg-no-repeat max-[640px]:min-h-11 bg-[length:12px_12px] bg-[position:12px_center] py-1.5 pr-3 pl-[28px] text-small"
+                                class="flex shrink-0 cursor-pointer snap-start items-center gap-1.5 rounded-[var(--r-sm)] bg-no-repeat max-[640px]:min-h-11 bg-[length:12px_12px] bg-[position:12px_center] h-8 pr-3 pl-[28px] text-small font-medium"
                                 :class="
                                     onlyStale
                                         ? 'bg-due-bg bg-icon-clock-due font-medium text-due'

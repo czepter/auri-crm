@@ -72,7 +72,7 @@ function submit() {
       :state="saveState([form])"
     >
       <template #head>
-        <Button v-if="form.isDirty" variant="pill" type="submit" form="portal-contact-form" :disabled="form.processing">
+        <Button v-if="form.isDirty" variant="default" type="submit" form="portal-contact-form" :disabled="form.processing">
           {{ $t('common.save') }}
         </Button>
       </template>

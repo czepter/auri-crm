@@ -11,7 +11,7 @@ const props = withDefaults(defineProps<{
   label?: string
   variant?: ButtonVariants["variant"]
   class?: HTMLAttributes["class"]
-}>(), { variant: "pill-muted" })
+}>(), { variant: "secondary" })
 
 const { t } = useI18n()
 const labels = computed(() => [

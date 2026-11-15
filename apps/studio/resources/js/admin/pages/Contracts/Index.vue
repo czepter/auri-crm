@@ -75,7 +75,7 @@ const signed = computed(() => shown.value.filter((contract) => contract.signedOn
         </div>
 
         <Empty v-else :text="$t('contractsOverview.empty')">
-          <Button :as="Link" variant="pill" href="/projekte">{{ $t('contractsOverview.toProjects') }}</Button>
+          <Button :as="Link" variant="default" href="/projekte">{{ $t('contractsOverview.toProjects') }}</Button>
         </Empty>
       </div>
     </Page>

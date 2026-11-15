@@ -33,7 +33,7 @@ const create = () => router.post('/einstellungen/automationen')
       :kicker="$t('settings.kicker')" :title="$t('automations.title')" wide
     >
       <template #head>
-        <Button type="button" @click="create">
+        <Button class="ml-auto" type="button" @click="create">
           <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
           {{ $t('automations.add') }}
         </Button>
@@ -43,7 +43,7 @@ const create = () => router.post('/einstellungen/automationen')
 
       <div class="min-w-0">
         <Empty v-if="!rules.length" :text="$t('automations.empty')">
-          <Button variant="pill" type="button" @click="create">{{ $t('automations.add') }}</Button>
+          <Button variant="default" type="button" @click="create">{{ $t('automations.add') }}</Button>
         </Empty>
 
         <template v-else>

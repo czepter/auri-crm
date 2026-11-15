@@ -78,7 +78,6 @@ function saveToContact() {
     <div v-if="contacts.length" class="flex items-center gap-2.5">
       <ChoiceGroup
         :model-value="contact"
-        variant="segmented"
         :options="contacts.map((entry) => ({ value: entry.id, label: entry.name }))"
         @update:model-value="pick"
       />

@@ -26,7 +26,7 @@ const total = computed(() => props.payments?.rows.reduce((sum, row) => sum + row
 <template>
   <div class="flex flex-col gap-3">
     <div v-if="canManageQuotes" class="flex">
-      <Button :as="Link" class="ml-auto" :variant="hasAccepted ? 'outline' : 'pill'" :href="`/angebote/neu?projekt=${projectId}`">
+      <Button :as="Link" class="ml-auto" :variant="hasAccepted ? 'outline' : 'default'" :href="`/angebote/neu?projekt=${projectId}`">
         <svg class="size-3" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         {{ $t('quotes.create') }}
       </Button>

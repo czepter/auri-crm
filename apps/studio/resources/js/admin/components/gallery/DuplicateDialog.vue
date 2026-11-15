@@ -23,7 +23,7 @@ function megabytes(bytes: number) {
         </div>
       </DialogBody>
       <DialogFooter>
-        <Button type="button" @click="emit('replace')">{{ $t('media.replace') }}</Button>
+        <Button class="ml-auto" type="button" @click="emit('replace')">{{ $t('media.replace') }}</Button>
         <Button variant="ghost" type="button" @click="emit('skip')">{{ $t('media.skipDuplicates') }}</Button>
       </DialogFooter>
     </DialogContent>

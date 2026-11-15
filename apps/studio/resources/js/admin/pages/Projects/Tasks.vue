@@ -148,7 +148,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
                 </SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="pill" type="submit" :disabled="!form.title || form.processing">
+            <Button variant="default" type="submit" :disabled="!form.title || form.processing">
               {{ $t('project.taskCreate') }}
             </Button>
           </form>

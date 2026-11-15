@@ -41,7 +41,7 @@ function submit() {
             <PinInputSlot v-for="index in LENGTH" :key="index" :id="index === 1 ? 'ob-code' : undefined" :index="index - 1" />
           </PinInputGroup>
         </PinInput>
-        <Button type="submit" :disabled="form.processing">{{ $t('onboarding.emailConfirm') }}</Button>
+        <Button class="ml-auto" type="submit" :disabled="form.processing">{{ $t('onboarding.emailConfirm') }}</Button>
       </div>
     </Field>
   </form>

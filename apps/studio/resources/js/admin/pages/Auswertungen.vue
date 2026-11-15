@@ -218,9 +218,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               :model-value="filters.type ?? 'all'"
               @update:model-value="(value) => filter({ typ: String(value) === 'all' ? null : String(value) })"
             >
-              <!-- sm ist die Variante für Schalter in einer Zeile statt in einem
-                   Formular; die 30px sind die Höhe der Segmentleiste daneben. -->
-              <SelectTrigger id="report-type" size="sm" class="h-[30px] w-[190px]">
+              <SelectTrigger id="report-type" size="sm" class="w-[190px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -231,7 +229,6 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
 
             <ChoiceGroup
               :model-value="filters.period"
-              variant="segmented"
               :options="periods"
               @update:model-value="(value) => filter({ zeitraum: value })"
             />
@@ -243,7 +240,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                the funnel, so a studio without history gets the funnel's own
                control rather than nine cards reporting no data. -->
           <Empty v-if="bare" :text="$t('reports.empty')">
-            <Button :as="Link" href="/anfragen/neu" variant="pill">{{ $t('leads.createKicker') }}</Button>
+            <Button :as="Link" href="/anfragen/neu" variant="default">{{ $t('leads.createKicker') }}</Button>
           </Empty>
 
           <!-- Same rule as the Übersicht's tiles: a figure with nothing behind it
@@ -369,7 +366,6 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               <template #head>
                 <ChoiceGroup
                   v-model="cashMode"
-                  variant="segmented"
                   :options="[
                     { value: 'expected', label: $t('reports.cashAhead') },
                     { value: 'past', label: $t('reports.cashPast') },
