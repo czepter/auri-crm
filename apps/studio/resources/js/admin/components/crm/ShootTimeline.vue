@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { router, useForm } from '@inertiajs/vue3'
+import { useForm } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
+import { deleteWithUndo, isHidden } from '@/admin/lib/deferredDelete'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
@@ -8,6 +10,8 @@ import { Label } from '@/ui/label'
 import { TimePicker } from '@/ui/time-picker'
 
 defineProps<{ shoot: App.Crm.Data.ShootData; manageable: boolean }>()
+
+const { t } = useI18n()
 
 // Der Ablauf wächst zeilenweise: Uhrzeit und Titel reichen für den Regelfall,
 // Ort/Hinweis/Fahrt stehen hinter "…ergänzen" statt bei jeder Zeile mit.
@@ -65,7 +69,7 @@ function saveTimelineEntry(entry: App.Crm.Data.TimelineEntryData) {
 }
 
 function removeTimelineEntry(entry: App.Crm.Data.TimelineEntryData) {
-  router.delete(`/ablauf/${entry.id}`, { preserveScroll: true })
+  deleteWithUndo(`/ablauf/${entry.id}`, { deleted: t('common.deleted'), undo: t('common.undo') })
 }
 </script>
 
@@ -77,7 +81,7 @@ function removeTimelineEntry(entry: App.Crm.Data.TimelineEntryData) {
                      Punkte, ein Fahrt/Übergang-Eintrag steht gedimmt und
                      kursiv dazwischen statt wie ein echter Programmpunkt. -->
                 <div class="mt-1.5 ml-[3px] flex flex-col border-l border-rule pl-3.5">
-                  <div v-for="entry in shoot.timeline" :key="entry.id" class="py-1.5">
+                  <div v-for="entry in shoot.timeline.filter((e) => !isHidden(`/ablauf/${e.id}`))" :key="entry.id" class="py-1.5">
                     <form
                       v-if="editingTimelineEntry === entry.id"
                       class="flex flex-col gap-2 rounded-md bg-sunk p-2.5"

@@ -9,6 +9,8 @@
  */
 import { computed, ref, watch } from 'vue'
 import { Link, router, useForm, usePage } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
+import { deleteWithUndo, isHidden } from '@/admin/lib/deferredDelete'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import StudioTaskCreateDialog from '@/admin/components/crm/StudioTaskCreateDialog.vue'
 import { Button } from '@/ui/button'
@@ -34,22 +36,25 @@ const solo = usePage().props.soloStudio
 const TABS = solo ? (['all', 'done'] as const) : (['mine', 'all', 'done'] as const)
 
 const me = computed(() => (usePage().props.auth as { user: { id: string } | null }).user?.id ?? '')
+const { t } = useI18n()
+const listed = computed(() => props.tasks.filter((task) => !isHidden(`/aufgaben/${task.id}`)))
+
 const tab = ref<'mine' | 'all' | 'done'>(!solo && props.tasks.some((task) => !task.isDone && task.assigneeId === me.value) ? 'mine' : 'all')
 
 const shown = computed(() =>
-  props.tasks.filter((task) =>
+  listed.value.filter((task) =>
     tab.value === 'done' ? task.isDone : !task.isDone && (tab.value === 'all' || task.assigneeId === me.value)
   )
 )
 
 function count(key: 'mine' | 'all' | 'done') {
-  return props.tasks.filter((task) =>
+  return listed.value.filter((task) =>
     key === 'done' ? task.isDone : !task.isDone && (key === 'all' || task.assigneeId === me.value)
   ).length
 }
 
 const selectedId = ref<string | null>(null)
-const selected = computed(() => props.tasks.find((task) => task.id === selectedId.value) ?? null)
+const selected = computed(() => listed.value.find((task) => task.id === selectedId.value) ?? null)
 
 const form = useForm({ title: '', due_on: '' })
 
@@ -62,7 +67,8 @@ function save(task: App.Crm.Data.TaskRowData) {
 }
 
 function remove(task: App.Crm.Data.TaskRowData) {
-  router.delete(`/aufgaben/${task.id}`, { preserveScroll: true, onSuccess: () => (selectedId.value = null) })
+  selectedId.value = null
+  deleteWithUndo(`/aufgaben/${task.id}`, { deleted: t('common.deleted'), undo: t('common.undo') })
 }
 
 function due(task: App.Crm.Data.TaskRowData) {
