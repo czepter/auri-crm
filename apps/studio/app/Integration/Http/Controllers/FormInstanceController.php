@@ -3,6 +3,7 @@
 namespace App\Integration\Http\Controllers;
 
 use App\Crm\Actions\SeedFormInstanceFromTemplate;
+use App\Crm\Actions\SyncFormInstanceFields;
 use App\Crm\Data\FormInstanceData;
 use App\Crm\Enums\FormFieldType;
 use App\Crm\Models\ClientCase;
@@ -17,7 +18,7 @@ use Illuminate\Validation\Rule;
 /**
  * Mirrors App\Crm\Http\Controllers\FormInstanceController's store, update,
  * share and answer — the same SeedFormInstanceFromTemplate, the same
- * wholesale-replace on update. No upload() here: an api-surface caller has
+ * SyncFormInstanceFields on update. No upload() here: an api-surface caller has
  * no way to attach bytes to the request, so a "Datei" field's answer stays
  * out of scope, as it is on every other api-surface write.
  */
@@ -52,11 +53,12 @@ class FormInstanceController extends Controller
         return response()->json(['data' => FormInstanceData::fromModel($instance->load('fields.currentAnswer'))], 201);
     }
 
-    public function update(Request $request, FormInstance $formInstance): JsonResponse
+    public function update(Request $request, FormInstance $formInstance, SyncFormInstanceFields $sync): JsonResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'fields' => ['array'],
+            'fields.*.id' => ['nullable', 'string', 'distinct'],
             'fields.*.label' => ['required', 'string', 'max:255'],
             'fields.*.type' => ['required', Rule::enum(FormFieldType::class)],
             'fields.*.required' => ['required', 'boolean'],
@@ -65,8 +67,7 @@ class FormInstanceController extends Controller
 
         $formInstance->update(['name' => $validated['name']]);
 
-        $formInstance->fields()->delete();
-        $formInstance->fields()->createMany($this->fieldRows($validated['fields']));
+        $sync($formInstance, $validated['fields']);
 
         return response()->json(['data' => FormInstanceData::fromModel($formInstance->load('fields.currentAnswer'))]);
     }
@@ -108,17 +109,5 @@ class FormInstanceController extends Controller
                     ->optionRules("fields.{$index}");
             })
             ->all();
-    }
-
-    /** @return list<array<string, mixed>> */
-    private function fieldRows(array $fields): array
-    {
-        return collect($fields)->sortKeys()->values()->map(fn (array $field, int $index) => [
-            'label' => $field['label'],
-            'type' => $field['type'],
-            'required' => $field['required'],
-            'options' => $field['options'] ?? null,
-            'sort_order' => $index,
-        ])->all();
     }
 }

@@ -2077,6 +2077,12 @@
                                         "items": {
                                             "type": "object",
                                             "properties": {
+                                                "id": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
                                                 "label": {
                                                     "type": "string",
                                                     "maxLength": 255
@@ -2093,7 +2099,8 @@
                                                 "type",
                                                 "required"
                                             ]
-                                        }
+                                        },
+                                        "uniqueItems": true
                                     }
                                 },
                                 "required": [

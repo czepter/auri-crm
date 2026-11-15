@@ -4,6 +4,7 @@ import type { FormFieldRow } from '@/admin/components/templates/FormFieldsEditor
 // instance field turns into an editor row, and back, one way only.
 export function toRow(field: App.Crm.Data.FormInstanceFieldData): FormFieldRow {
   return {
+    id: field.id,
     label: field.label,
     type: field.type,
     required: field.required,
@@ -16,7 +17,7 @@ export function toRow(field: App.Crm.Data.FormInstanceFieldData): FormFieldRow {
 }
 
 export function toPayload(field: FormFieldRow) {
-  return { label: field.label, type: field.type, required: field.required, options: options(field) }
+  return { id: field.id ?? null, label: field.label, type: field.type, required: field.required, options: options(field) }
 }
 
 function optionsText(field: App.Crm.Data.FormInstanceFieldData): string {

@@ -20,9 +20,8 @@ use Visus\Cuid2\Cuid2;
 
 /**
  * One question on a FormInstance. Shaped after FormField on purpose — same
- * columns, same wholesale-replace-on-save relationship — but this is the
- * project's own copy: editing it never writes back to the FormField rows it
- * may have started as (see FormInstance's own doc comment).
+ * columns — but this is the project's own copy: editing it never writes back
+ * to the FormField rows it may have started as (see FormInstance's own doc comment).
  */
 class FormInstanceField extends Model
 {
