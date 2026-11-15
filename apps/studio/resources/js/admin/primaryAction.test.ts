@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { setPage, usePage } from '../../../.storybook/inertia'
 import de from '../locales/de.json'
 
+vi.mock('@inertiajs/vue3', () => import('../../../.storybook/inertia'))
+
 // Editor.js touches Element at import time and only runs on mount.
 vi.mock('@editorjs/editorjs', () => ({ default: class { isReady = Promise.resolve(); destroy() {} } }))
 vi.mock('@editorjs/header', () => ({ default: class {} }))

@@ -285,7 +285,7 @@ const CHIP = {
                 <PageHead :kicker="heading" :title="$t('dashboard.title')">
                     <DropdownMenu>
                         <DropdownMenuTrigger as-child>
-                            <Button class="ml-auto" type="button" variant="outline">
+                            <Button class="ml-auto" type="button" :variant="urgent ? 'outline' : 'default'">
                                 <svg class="size-3.5 fill-none stroke-current stroke-2 [stroke-linecap:round]" viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M12 5v14M5 12h14" />
                                 </svg>
