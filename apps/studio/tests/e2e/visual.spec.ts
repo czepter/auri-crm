@@ -56,14 +56,13 @@ test('Portal-Startseite', async ({ page }) => {
 
 test('Fragebogen: Hilfetext hängt per aria-describedby an der Frage', async ({ page }) => {
   await page.goto('/kontakte')
-  await page.getByRole('link', { name: /E2E Kundin/ }).first().click()
+  await page.getByRole('link', { name: /^Meier & Kowalski$/ }).first().click()
   await page.getByRole('button', { name: 'Portal', exact: true }).click()
   const [portal] = await Promise.all([
     page.context().waitForEvent('page'),
     page.getByRole('button', { name: 'Vorschau als Kunde' }).click(),
   ])
-  await portal.waitForURL(`${PORTAL}/`)
-  await portal.getByRole('link', { name: /Meier & Kowalski/ }).first().click()
+  await portal.waitForURL(/\/projekte\//)
   await portal.getByRole('link', { name: /E2E Fragebogen/ }).first().click()
 
   const control = portal.getByLabel('Wer gehört zur engsten Familie?')
