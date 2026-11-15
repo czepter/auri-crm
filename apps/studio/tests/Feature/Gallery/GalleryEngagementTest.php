@@ -1,5 +1,8 @@
 <?php
 
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
+use App\Crm\Models\Contact;
 use App\Gallery\Models\AssetComment;
 use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
@@ -84,9 +87,9 @@ it('takes a comment and hands it back to everyone', function () {
 // G-01 (#229): two roles, one screen. Without this the couple appear to the
 // studio as anonymous strangers on their own gallery.
 it('signs a client\'s comment with their name and a guest\'s with Gast', function () {
-    $project = App\Crm\Models\ClientCase::factory()->create(['portal_visible' => true]);
-    $contact = App\Crm\Models\Contact::factory()->create(['name' => 'Viola Neumann']);
-    $project->attachContact($contact, App\Crm\Enums\CaseContactRole::Primary);
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
+    $contact = Contact::factory()->create(['name' => 'Viola Neumann']);
+    $project->attachContact($contact, CaseContactRole::Primary);
 
     $gallery = Gallery::factory()->for($project, 'case')->create(['permissions' => ['guest' => ['comments' => true]]]);
     $set = GallerySet::where('gallery_id', $gallery->id)->first();
@@ -113,7 +116,7 @@ it('signs a client\'s comment with their name and a guest\'s with Gast', functio
 it('treats a signed-in client as a guest on a gallery that is not theirs', function () {
     $gallery = engagedGallery();
 
-    test()->actingAs(App\Crm\Models\Contact::factory()->create(), 'portal')
+    test()->actingAs(Contact::factory()->create(), 'portal')
         ->postJson("/galerien/{$gallery->public_id}/kommentar", [
             'key' => 'galleries/g/a.jpg', 'body' => 'Hallo.',
         ])->assertCreated();

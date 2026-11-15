@@ -18,6 +18,7 @@ use App\Settings\Actions\UpdateStudioSetting;
 use App\Support\GotenbergClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -66,6 +67,31 @@ it('credits a part, and caps the next one at what is left', function () {
 
     expect(fn () => $issue($installment->fresh()->invoice, $remaining + 1, 'Zu viel'))
         ->toThrow(ValidationException::class);
+});
+
+it('refuses a credit that a parallel request used up after the first cap check', function () {
+    $installment = creditableInstallment();
+    $invoice = $installment->invoice;
+    $raced = false;
+
+    DB::listen(function ($query) use ($invoice, &$raced) {
+        if ($raced || ! str_contains($query->sql, 'document_templates')) {
+            return;
+        }
+
+        $raced = true;
+        $invoice->creditNotes()->create([
+            'number' => 'GS-RACE',
+            'issued_at' => now(),
+            'amount' => $invoice->paidAmount(),
+            'reason' => 'Parallel',
+        ]);
+    });
+
+    expect(fn () => app(IssueCreditNote::class)($invoice, $invoice->paidAmount(), 'Doppelt'))
+        ->toThrow(ValidationException::class);
+
+    expect(CreditNote::count())->toBe(1);
 });
 
 it('refuses more than was paid', function () {
@@ -174,6 +200,28 @@ it('renders the Gutschrift against the pinned template, with the reference line 
 
     expect($note->fresh()->pdf_path)->toBe("credit-notes/{$note->tenant_id}/{$note->public_id}.pdf");
     Storage::disk('local')->assertExists($note->fresh()->pdf_path);
+});
+
+it('escapes merge-field values in the Gutschrift', function () {
+    Storage::fake('local');
+
+    DocumentTemplate::factory()->create([
+        'type' => DocumentTemplateType::CreditNote,
+        'body' => '<p>{{ creditNote.reason }}</p>',
+    ]);
+
+    $installment = creditableInstallment();
+
+    $this->mock(GotenbergClient::class)
+        ->shouldReceive('htmlToPdf')
+        ->once()
+        ->andReturnUsing(function (string $html) {
+            expect($html)->toContain('&lt;b&gt;x&lt;/b&gt;')->and($html)->not->toContain('<b>x</b>');
+
+            return '%PDF-1.4 fake';
+        });
+
+    app(IssueCreditNote::class)($installment->invoice, 25_000, '<b>x</b>');
 });
 
 it('documents every creditNote path with a sample that resolves', function () {

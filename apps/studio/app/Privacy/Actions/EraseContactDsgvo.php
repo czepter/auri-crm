@@ -6,10 +6,13 @@ use App\Automation\Models\AutomationRun;
 use App\Catalog\Models\ServiceSuggestion;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Crm\Models\FormInstanceField;
+use App\Crm\Models\FormInstanceFile;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
+use App\Engagement\Models\InboundMessage;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Engagement\Models\ThreadParticipant;
@@ -71,6 +74,10 @@ class EraseContactDsgvo
                 Task::where('contact_id', $contact->id)->update(['contact_id' => null]);
                 Message::where('contact_id', $contact->id)->delete();
                 ThreadParticipant::where('contact_id', $contact->id)->delete();
+                InboundMessage::query()
+                    ->where(fn ($q) => $q->where('contact_id', $contact->id)
+                        ->when($contact->email, fn ($q, $email) => $q->orWhereRaw('lower(from_address) = ?', [mb_strtolower($email)])))
+                    ->delete();
             }
 
             if (! $policy->name) {
@@ -154,6 +161,7 @@ class EraseContactDsgvo
         Quote::where('case_id', $project->id)->delete();
         Thread::where('case_id', $project->id)->delete();
         Gallery::where('case_id', $project->id)->delete();
+        $this->purgeFormFiles($project);
         $project->formInstances()->delete();
         Task::where('case_id', $project->id)->delete();
         InternalNote::where('case_id', $project->id)->delete();
@@ -187,6 +195,7 @@ class EraseContactDsgvo
 
         if ($policy->offers) {
             Quote::where('case_id', $project->id)->delete();
+            $this->purgeFormFiles($project);
             $project->formInstances()->delete();
         }
 
@@ -196,6 +205,16 @@ class EraseContactDsgvo
         }
 
         $policy->name && $project->forceFill(['name' => '[gelöscht]', 'type_other' => null, 'field_values' => null])->save();
+    }
+
+    private function purgeFormFiles(ClientCase $project): void
+    {
+        FormInstanceFile::query()
+            ->whereIn('form_instance_field_id', FormInstanceField::query()
+                ->whereIn('form_instance_id', $project->formInstances()->select('form_instances.id'))
+                ->select('id'))
+            ->get()
+            ->each->purge();
     }
 
     private function purgeStorageObjects(ClientCase $project): void

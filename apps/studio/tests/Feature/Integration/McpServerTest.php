@@ -1,18 +1,32 @@
 <?php
 
+use App\Catalog\Models\Package;
+use App\Catalog\Models\PackageItem;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Models\ClientCase;
+use App\Crm\Models\Contact;
+use App\Crm\Models\InternalNote;
 use App\Crm\Models\Lead;
+use App\Crm\Models\ProjectField;
+use App\Crm\Models\Shoot;
 use App\Crm\Notifications\Studio\InquiryReceived;
 use App\Enums\Capability;
+use App\Gallery\Models\AssetFavorite;
+use App\Gallery\Models\Gallery;
 use App\Integration\Mcp\ApiTool;
 use App\Integration\Mcp\CrmServer;
 use App\Integration\Models\ApiToken;
 use App\Models\User;
+use App\Payments\Models\PaymentInstallment;
+use App\Payments\Models\PaymentPlan;
+use App\Quotes\Models\Quote;
+use App\Quotes\Models\QuoteItem;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Laravel\Mcp\Request as McpRequest;
+use Opis\JsonSchema\Validator;
 
 uses(RefreshDatabase::class);
 
@@ -168,3 +182,63 @@ function captureArguments(): array
         'captured_via' => 'other',
     ];
 }
+
+it('returns an empty field map as an object', function () {
+    mcpBearer(Capability::ViewAllCases);
+    $case = ClientCase::factory()->booked()->create(['field_values' => []]);
+
+    $detail = app()->call([mcpTool('get_case'), 'handle'], ['request' => new McpRequest(['case' => $case->public_id])]);
+    $projects = app()->call([mcpTool('list_projects'), 'handle'], ['request' => new McpRequest([])]);
+
+    expect(mcpTool('get_case')->toArray()['outputSchema']['properties']['case']['properties']['fields']['type'])->toBe('object')
+        ->and(json_decode(json_encode($detail->getStructuredContent()))->case->fields)->toBeInstanceOf(stdClass::class)
+        ->and(json_decode(json_encode($projects->getStructuredContent()))->projects[0]->fields)->toBeInstanceOf(stdClass::class);
+});
+
+/** What the client sees: the structured content after the wire, against the schema the tool declared. */
+function validateAgainstOutputSchema(string $tool, array $arguments = []): void
+{
+    $response = app()->call([mcpTool($tool), 'handle'], ['request' => new McpRequest($arguments)]);
+
+    $schema = json_decode(json_encode(mcpTool($tool)->toArray()['outputSchema']));
+    $result = (new Validator)->validate(json_decode(json_encode($response->getStructuredContent())), $schema);
+
+    expect($result->isValid())->toBeTrue(json_encode($result->error()?->message()));
+}
+
+function seedFullCase(): ClientCase
+{
+    $case = ClientCase::factory()->booked()->create(['field_values' => ['gaeste' => 80]]);
+    ProjectField::factory()->create();
+    $case->attachContact(Contact::factory()->create(), CaseContactRole::Primary);
+    Lead::factory()->for($case, 'case')->create();
+    Shoot::factory()->for($case, 'case')->create();
+    QuoteItem::factory()->for(Quote::factory()->for($case, 'case')->create(), 'quote')->create();
+    InternalNote::factory()->for($case, 'case')->create();
+    PaymentInstallment::factory()->for(PaymentPlan::factory()->for($case, 'case')->create(['total' => 100000]), 'plan')->create();
+    PackageItem::factory()->for(Package::factory()->create(), 'package')->create();
+
+    $gallery = Gallery::factory()->create();
+    $gallery->sets()->first()->assets()->create(['gallery_id' => $gallery->id, 'key' => 'originals/a/one.jpg', 'filename' => 'one.jpg', 'status' => 'ready']);
+    AssetFavorite::query()->create(['gallery_version_id' => $gallery->publish()->id, 'asset_key' => 'originals/a/one.jpg', 'guest_identifier' => 'guest-1']);
+
+    return $case;
+}
+
+it('validates get_case against its output schema with and without field values', function () {
+    mcpBearer(Capability::ViewAllCases);
+
+    validateAgainstOutputSchema('get_case', ['case' => ClientCase::factory()->booked()->create(['field_values' => []])->public_id]);
+    validateAgainstOutputSchema('get_case', ['case' => seedFullCase()->public_id]);
+});
+
+it('validates every tool with an output schema against it', function (string $tool) {
+    mcpBearer(
+        Capability::ViewAllCases, Capability::ManageLeads, Capability::ManageContacts, Capability::ManageNotes,
+        Capability::ManageContracts, Capability::ManagePackages, Capability::ManageQuotes, Capability::ManageShoots,
+        Capability::ManagePortalAccess,
+    );
+    $case = seedFullCase();
+
+    validateAgainstOutputSchema($tool, ['case' => $case->public_id, 'gallery' => Gallery::query()->value('public_id')]);
+})->with(fn () => collect(CrmServer::definitions())->filter(fn ($definition) => $definition->outputSchema !== null)->pluck('name')->all());

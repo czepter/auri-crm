@@ -1,5 +1,8 @@
 <?php
 
+use App\Crm\Data\ContactRowData;
+use App\Crm\Enums\CaseContactRole;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -50,15 +53,15 @@ it('allows the same email under a different tenant', function () {
 
 it('files a contact with only an inquiry under Nur Anfragen', function () {
     $contact = Contact::factory()->create();
-    $inquiry = \App\Crm\Models\ClientCase::factory()->wedding()->create(['booked_at' => null]);
-    $inquiry->attachContact($contact, \App\Crm\Enums\CaseContactRole::Primary);
+    $inquiry = ClientCase::factory()->wedding()->create(['booked_at' => null]);
+    $inquiry->attachContact($contact, CaseContactRole::Primary);
 
-    $row = \App\Crm\Data\ContactRowData::fromContact($contact->load('cases.primaryShoot'));
+    $row = ContactRowData::fromContact($contact->load('cases.primaryShoot'));
 
     expect($row->standing)->toBe('none');
 
-    \App\Crm\Models\ClientCase::factory()->wedding()->booked()->create()
-        ->attachContact($contact, \App\Crm\Enums\CaseContactRole::Primary);
+    ClientCase::factory()->wedding()->booked()->create()
+        ->attachContact($contact, CaseContactRole::Primary);
 
-    expect(\App\Crm\Data\ContactRowData::fromContact($contact->fresh()->load('cases.primaryShoot'))->standing)->toBe('past');
+    expect(ContactRowData::fromContact($contact->fresh()->load('cases.primaryShoot'))->standing)->toBe('past');
 });

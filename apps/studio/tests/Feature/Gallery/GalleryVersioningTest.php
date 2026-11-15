@@ -142,7 +142,6 @@ it('snapshots the rows, the design and the cover', function () {
         ->and($version->design['colour'])->toBe('dark');
 });
 
-
 it('excludes a Failed asset from the published snapshot', function () {
     $gallery = Gallery::factory()->create();
     $set = GallerySet::where('gallery_id', $gallery->id)->first();

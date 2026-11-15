@@ -11,6 +11,7 @@ use App\Models\StudioClosure;
 use App\Payments\Models\CreditNote;
 use App\Payments\Models\Invoice;
 use App\Quotes\Models\Quote;
+use App\Reporting\Support\QuoteAcceptanceRate;
 use Database\Seeders\DemoCrmSeeder;
 use Database\Seeders\DemoFillSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -43,7 +44,7 @@ it('seeds no sent quote without a number or a frozen total, and one accepted quo
     $this->seed(DemoFillSeeder::class);
 
     $sent = Quote::whereNotNull('sent_at')->get();
-    $counts = App\Reporting\Support\QuoteAcceptanceRate::counts(now()->subYear(), now());
+    $counts = QuoteAcceptanceRate::counts(now()->subYear(), now());
 
     expect($sent->whereNull('number'))->toBeEmpty()
         ->and($sent->whereNull('vat_amount'))->toBeEmpty()

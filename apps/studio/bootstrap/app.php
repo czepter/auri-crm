@@ -10,6 +10,7 @@ use App\Http\Middleware\EnsureApiTokenScope;
 use App\Http\Middleware\EnsureAudience;
 use App\Http\Middleware\EnsureGalleryFeature;
 use App\Http\Middleware\EnsureGalleryGate;
+use App\Http\Middleware\EnsureGalleryImagePass;
 use App\Http\Middleware\EnsureGalleryPass;
 use App\Http\Middleware\EnsureIdempotentWrite;
 use App\Http\Middleware\EnsureNoStaffExists;
@@ -125,9 +126,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['__Secure-mercure_access_token', 'mercure_access_token', 'mercure_portal_access_token']);
 
         $middleware->redirectGuestsTo('/login');
-        $middleware->redirectUsersTo(fn (\Illuminate\Http\Request $request) => match (true) {
+        $middleware->redirectUsersTo(fn (Request $request) => match (true) {
             ! $request->is('einrichtung') => '/',
-            ! \App\Models\StudioSettings::current()->onboardingCompleted() => '/einrichtung/studio',
+            ! StudioSettings::current()->onboardingCompleted() => '/einrichtung/studio',
             default => '/',
         });
 
@@ -147,6 +148,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'portal.capability' => EnsurePortalCapability::class,
             'gallery.gate' => EnsureGalleryGate::class,
             'gallery.pass' => EnsureGalleryPass::class,
+            'gallery.image-pass' => EnsureGalleryImagePass::class,
             'gallery.feature' => EnsureGalleryFeature::class,
         ]);
     })

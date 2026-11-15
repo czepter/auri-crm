@@ -57,8 +57,16 @@ class ProcessStripeWebhookEvent implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public int $tries = 5;
+
     /** @param array<string, mixed> $event */
     public function __construct(public readonly array $event) {}
+
+    /** @return list<int> */
+    public function backoff(): array
+    {
+        return [10, 60, 300, 900];
+    }
 
     public function handle(MarkInstallmentPaid $markPaid, DetectOverdueInstallments $overdue): void
     {
@@ -75,6 +83,10 @@ class ProcessStripeWebhookEvent implements ShouldQueue
             ->first();
 
         if ($installment === null) {
+            if (in_array($type, ['checkout.session.completed', 'checkout.session.async_payment_succeeded', 'checkout.session.async_payment_failed'], true)) {
+                throw new RuntimeException('Stripe-Event '.($this->event['id'] ?? '-')." ohne Rate zur Session {$sessionId}.");
+            }
+
             return;
         }
 

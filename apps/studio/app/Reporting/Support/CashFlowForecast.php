@@ -10,6 +10,7 @@ use App\Payments\Models\PaymentPlan;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * M-07's Liquiditätsplanung: what is coming in, by month, out of rows that
@@ -60,7 +61,7 @@ class CashFlowForecast
      * Raten ist ein Projekt, nicht sechs — gezählt wird über die Rate zum
      * Plan und von dort zum Projekt.
      *
-     * @param  callable(\Illuminate\Database\Eloquent\Builder): mixed  $scope
+     * @param  callable(Builder): mixed  $scope
      */
     private static function projectsBehind(?ProjectType $type, callable $scope): int
     {

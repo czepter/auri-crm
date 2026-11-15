@@ -17,6 +17,7 @@ use App\Quotes\Support\DiscountCalculator;
 use App\Quotes\Support\PaymentStageSplitter;
 use App\Quotes\Support\QuoteRange;
 use App\Quotes\Support\VatLines;
+use Carbon\CarbonInterface;
 use Database\Factories\Quotes\QuoteFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -131,7 +132,7 @@ class Quote extends Model
     }
 
     /** The one date a quote document and the admin list print. */
-    public function issuedAt(): ?\Carbon\CarbonInterface
+    public function issuedAt(): ?CarbonInterface
     {
         return $this->sent_at ?? $this->created_at;
     }

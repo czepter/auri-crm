@@ -41,14 +41,20 @@ class GalleryViewPass
 
     public function issue(Gallery $gallery): string
     {
-        $payload = implode('.', [
-            'view',
-            $gallery->public_id,
-            $gallery->view_password_version,
-            now()->addHours(self::VALID_FOR_HOURS)->timestamp,
-        ]);
+        return $this->signed('view', $gallery, now()->addHours(self::VALID_FOR_HOURS)->timestamp);
+    }
 
-        return $payload.'.'.$this->sign($payload);
+    /**
+     * The pass an <img src> may carry in its URL: it opens image bytes and
+     * nothing else, so a URL that lands in a log or a copied address does not
+     * hand out the view pass. The expiry is quantised so every render inside
+     * one window gets the same string and the browser keeps its cached images.
+     */
+    public function issueForImages(Gallery $gallery): string
+    {
+        $window = self::VALID_FOR_HOURS * 3600;
+
+        return $this->signed('img', $gallery, (intdiv(now()->timestamp, $window) + 2) * $window);
     }
 
     /**
@@ -60,21 +66,38 @@ class GalleryViewPass
      */
     public function opens(Gallery $gallery, ?string $token): bool
     {
+        return $this->verifies('view', $gallery, $token);
+    }
+
+    public function opensImages(Gallery $gallery, ?string $token): bool
+    {
+        return $this->verifies('img', $gallery, $token);
+    }
+
+    private function signed(string $type, Gallery $gallery, int $expires): string
+    {
+        $payload = implode('.', [$type, $gallery->public_id, $gallery->view_password_version, $expires]);
+
+        return $payload.'.'.$this->sign($payload);
+    }
+
+    private function verifies(string $type, Gallery $gallery, ?string $token): bool
+    {
         if ($token === null) {
             return false;
         }
 
         $parts = explode('.', $token);
 
-        // Der Typ-Literal trennt den Pass vom Gast-Pass (gleicher Schlüssel, sonst gleiche Form).
-        if (count($parts) !== 5 || $parts[0] !== 'view') {
+        // Der Typ-Literal trennt die Pässe voneinander (gleicher Schlüssel, sonst gleiche Form).
+        if (count($parts) !== 5 || $parts[0] !== $type) {
             return false;
         }
 
         [, $galleryId, $version, $expires, $signature] = $parts;
 
         // Constant time, so the comparison leaks nothing about the key.
-        if (! hash_equals($this->sign("view.{$galleryId}.{$version}.{$expires}"), $signature)) {
+        if (! hash_equals($this->sign("{$type}.{$galleryId}.{$version}.{$expires}"), $signature)) {
             return false;
         }
 

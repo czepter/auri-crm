@@ -8,10 +8,10 @@ use App\Catalog\Models\Package;
 use App\Contracts\Enums\ContractState;
 use App\Contracts\Models\Contract;
 use App\Crm\Actions\SeedFormInstanceFromTemplate;
+use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\ClientCase;
-use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Support\CrmVocabulary;
@@ -33,13 +33,14 @@ use App\Payments\Actions\MarkInstallmentPaid;
 use App\Payments\Enums\SettledVia;
 use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentPlan;
-use Carbon\Carbon;
+use App\Quotes\Actions\AcceptQuote;
 use App\Quotes\Actions\CreateQuote;
 use App\Quotes\Actions\MarkQuoteSent;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Settings\Actions\UpdateStudioSetting;
 use App\Support\AuditLogger;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -355,7 +356,7 @@ class DemoFillSeeder extends Seeder
         $quote->refresh();
 
         if ($quote->status === QuoteStatus::Sent && $project->booked_at !== null) {
-            app(\App\Quotes\Actions\AcceptQuote::class)($quote, $project->primaryContact(), null, at: Carbon::parse(self::MEIER_ACCEPTED));
+            app(AcceptQuote::class)($quote, $project->primaryContact(), null, at: Carbon::parse(self::MEIER_ACCEPTED));
             $quote->refresh();
         }
 
@@ -472,7 +473,7 @@ class DemoFillSeeder extends Seeder
             }
 
             if ($accepted && $quote->status === QuoteStatus::Sent) {
-                app(\App\Quotes\Actions\AcceptQuote::class)($quote, $project->primaryContact(), null, at: $stamp);
+                app(AcceptQuote::class)($quote, $project->primaryContact(), null, at: $stamp);
             }
         }
     }

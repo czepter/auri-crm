@@ -1,9 +1,11 @@
 <?php
 
 use App\Crm\Models\Contact;
+use App\Models\AuditLog;
 use App\Portal\Actions\ConsumeClientAccess;
 use App\Portal\Models\ClientAccess;
 use App\Portal\Notifications\ClientAccessLink;
+use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
@@ -13,7 +15,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     // These specs exercise the client surface, so the process has to be the
     // one that serves it — route table, guard and cookie together.
-    useSurface(App\Support\Surface::PORTAL);
+    useSurface(Surface::PORTAL);
     RateLimiter::clear('portal-link-email:lena@example.test');
 });
 
@@ -186,13 +188,13 @@ it('writes one audit row per issue and one per consumption', function () {
         return true;
     });
 
-    expect(App\Models\AuditLog::where('event', 'portal.link_issued')->count())->toBe(1);
+    expect(AuditLog::where('event', 'portal.link_issued')->count())->toBe(1);
 
     $contact = Contact::where('email', 'lena@example.test')->sole();
     [$raw] = magicLink($contact);
     $this->get("/zugang/{$raw}");
 
-    expect(App\Models\AuditLog::where('event', 'portal.link_consumed')->count())->toBe(1);
+    expect(AuditLog::where('event', 'portal.link_consumed')->count())->toBe(1);
 });
 
 it('keeps the token out of every audit row', function () {
@@ -201,7 +203,7 @@ it('keeps the token out of every audit row', function () {
 
     $this->post('/anmelden', ['email' => 'lena@example.test']);
 
-    $rows = App\Models\AuditLog::all()->pluck('context')->toJson();
+    $rows = AuditLog::all()->pluck('context')->toJson();
 
     expect($rows)->not->toContain('token');
 });

@@ -3,6 +3,7 @@
 use App\Crm\Models\ClientCase;
 use App\Enums\Capability;
 use App\Enums\StaffRole;
+use App\Integration\Models\ApiToken;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -339,7 +340,7 @@ it('attributes a lead captured through a staff member\'s own OAuth token to that
 });
 
 it('an ApiToken caller still carries no captured_by_id, unchanged from I-03', function () {
-    $token = App\Integration\Models\ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
+    $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
 
     useSurface(Surface::API);
 

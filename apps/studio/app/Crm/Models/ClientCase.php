@@ -184,6 +184,7 @@ class ClientCase extends Model
             'tenant_id' => config('tenancy.tenant_id'),
             'public_id' => (string) new Cuid2,
         ]);
+        $this->unsetRelation('contacts');
     }
 
     public function lead(): HasOne
@@ -372,6 +373,10 @@ class ClientCase extends Model
 
     public function primaryContact(): ?Contact
     {
+        if ($this->relationLoaded('contacts')) {
+            return $this->contacts->first(fn (Contact $contact) => $contact->pivot->role === CaseContactRole::Primary->value);
+        }
+
         return $this->contacts()
             ->wherePivot('role', CaseContactRole::Primary->value)
             ->first();

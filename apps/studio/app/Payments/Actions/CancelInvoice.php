@@ -45,13 +45,24 @@ class CancelInvoice
         }
 
         return DB::transaction(function () use ($invoice, $kind, $reason, $actor) {
+            $installments = PaymentInstallment::query()
+                ->where('invoice_id', $invoice->id)
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get();
+
+            if ($installments->sum('paid_amount') > 0) {
+                throw ValidationException::withMessages(['kind' => __('payments.cancelPaidRefused')]);
+            }
+
             $invoice->update([
                 'cancelled_at' => now(),
                 'cancellation_kind' => $kind,
                 'cancellation_reason' => $reason,
             ]);
 
-            foreach ($invoice->installments as $installment) {
+            foreach ($installments as $installment) {
                 $this->retire($installment, $kind);
             }
 

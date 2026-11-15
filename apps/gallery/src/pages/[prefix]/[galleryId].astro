@@ -57,6 +57,7 @@ interface PublishedGallery {
   draft: boolean
   design: GalleryDesign
   cover: GalleryCover
+  image_pass?: string | null
   permissions: { favorites: boolean; comments: boolean; hide: boolean; share: boolean }
   intro: boolean
   locked: boolean
@@ -274,7 +275,7 @@ const design = gallery?.design ?? GATE_DESIGN
 // see images.ts's own doc comment on why `base`/`gate` are pre-built here
 // rather than every call site re-deciding "draft or not".
 const imageBase = gallery === null ? '' : gallery.draft ? draftImageBase(gallery.public_id) : versionImageBase(gallery.version.public_id!)
-const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
+const gate = gallery?.draft ? previewGate(previewToken) : passGate(gallery?.image_pass)
 ---
 
 <html lang="de" {...designAttrs(design)}>

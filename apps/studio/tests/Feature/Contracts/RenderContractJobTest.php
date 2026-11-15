@@ -53,7 +53,7 @@ it('resolves merge fields from the project at render time and stores the artifac
         $body = (string) $request->body();
 
         return str_contains($body, 'Lena Meier')
-            && str_contains($body, 'Hochzeit Meier & Kowalski')
+            && str_contains($body, 'Hochzeit Meier &amp; Kowalski')
             && str_contains($body, '14.06.2026')
             && ! str_contains($body, '{{');
     });

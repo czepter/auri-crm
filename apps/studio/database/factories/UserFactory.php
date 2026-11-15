@@ -2,10 +2,12 @@
 
 namespace Database\Factories;
 
+use App\Enums\StaffRole;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
+ * @extends Factory<User>
  */
 class UserFactory extends Factory
 {
@@ -15,7 +17,7 @@ class UserFactory extends Factory
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'password' => 'password',
-            'role' => \App\Enums\StaffRole::Admin,
+            'role' => StaffRole::Admin,
         ];
     }
 

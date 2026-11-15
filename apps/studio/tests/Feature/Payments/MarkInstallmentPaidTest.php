@@ -10,6 +10,7 @@ use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Exceptions;
 
 uses(RefreshDatabase::class);
 
@@ -57,6 +58,21 @@ it('is idempotent: marking an already-paid installment paid again writes nothing
         ->and($again->payment_reference)->toBe('RE-2026-1');
 
     Event::assertDispatchedTimes(InstallmentPaid::class, 1);
+});
+
+it('reports a payment for a rate cancelled after the snapshot was taken', function () {
+    Exceptions::fake();
+    Event::fake([InstallmentPaid::class]);
+
+    $installment = PaymentInstallment::factory()->create();
+    PaymentInstallment::whereKey($installment->id)->update(['status' => PaymentInstallmentStatus::Cancelled, 'cancelled_at' => now()]);
+
+    app(MarkInstallmentPaid::class)($installment, SettledVia::Stripe, '2026-09-01', 'cs_test_1');
+
+    expect($installment->fresh()->status)->toBe(PaymentInstallmentStatus::Cancelled)
+        ->and($installment->fresh()->paid_amount)->toBe(0);
+    Exceptions::assertReported(fn (RuntimeException $e) => str_contains($e->getMessage(), 'stornierte Rate'));
+    Event::assertNotDispatched(InstallmentPaid::class);
 });
 
 it('leaves an audit row naming the method, date and reference', function () {

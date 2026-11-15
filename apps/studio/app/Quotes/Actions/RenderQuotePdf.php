@@ -79,7 +79,7 @@ class RenderQuotePdf
             ->orderBy('id')
             ->first();
 
-        $templateBody = MergeFieldResolver::resolve($template?->body ?? '', $data)
+        $templateBody = MergeFieldResolver::resolve($template?->body ?? '', $data, escape: true)
             .$this->letter($quote->intro, $data);
 
         $body = $quote->hasSlider()

@@ -9,6 +9,7 @@ use App\Crm\Models\Contact;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 uses(RefreshDatabase::class);
 
@@ -93,7 +94,7 @@ it('refuses to sign a contract with no rendered artifact', function () {
     $contact = Contact::factory()->create();
 
     app(SignContract::class)($contract, $contact, 'Lena Meier', '203.0.113.5', 'Mozilla/5.0');
-})->throws(Symfony\Component\HttpKernel\Exception\HttpException::class);
+})->throws(HttpException::class);
 
 it('is append-only: a signature can never be updated or deleted', function () {
     Storage::fake('local');

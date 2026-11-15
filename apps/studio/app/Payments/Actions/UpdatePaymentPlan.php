@@ -63,7 +63,9 @@ class UpdatePaymentPlan
                     : [
                         'amount' => $payload['amount'],
                         'due_on' => $payload['due_on'],
-                        'status' => $payload['status'] ?? $row->status->value,
+                        'status' => $row->status === PaymentInstallmentStatus::Partial
+                            ? $row->status->value
+                            : ($payload['status'] ?? $row->status->value),
                         'sort_order' => $index,
                     ]);
             }

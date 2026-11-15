@@ -135,11 +135,13 @@ Route::middleware(['gallery.feature:downloads', 'signed:relative'])
     ->where('guestId', '[^/]{1,64}')
     ->name('api.galleries.download.part');
 
-Route::middleware('gallery.pass')->group(function () {
+Route::middleware('gallery.image-pass')->group(function () {
     Route::get('/gallery-versions/{galleryVersion:public_id}/images/{key}', GalleryImageController::class)
         ->where('key', '.*')
         ->name('api.gallery-versions.images.show');
+});
 
+Route::middleware('gallery.pass')->group(function () {
     // The first browser-originated calls this surface serves (the route
     // above is only ever hit server-side, by Astro's own SSR fetch, or from
     // a bare <img> src), so they are also what config/cors.php exists for.

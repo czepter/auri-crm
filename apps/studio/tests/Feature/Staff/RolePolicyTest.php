@@ -152,7 +152,7 @@ it('lets a contributor move a shoot they are crewed on, but never reassign the c
     $nina = staff(StaffRole::Contributor);
     $project = crewedProject($nina);
     $shoot = $project->shoots()->sole()->fresh();
-    $shoot->update(['status' => \App\Crm\Enums\ShootStatus::Culling]);
+    $shoot->update(['status' => ShootStatus::Culling]);
 
     $this->actingAs($nina, 'staff')
         ->post("/shootings/{$shoot->public_id}/status", ['status' => 'editing'])

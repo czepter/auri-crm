@@ -1,6 +1,7 @@
 <?php
 
 use App\Crm\Models\ClientCase;
+use App\Documents\Models\DocumentTemplate;
 use App\Enums\StaffRole;
 use App\Support\AuditLogger;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -119,7 +120,7 @@ it('shows old and new value of a settings change', function () {
 
 it('leaves portal link events out unless asked for, and names a legal text instead of its id', function () {
     $owner = staffMember(StaffRole::Admin);
-    $template = App\Documents\Models\DocumentTemplate::factory()->create(['name' => 'Widerrufsbelehrung']);
+    $template = DocumentTemplate::factory()->create(['name' => 'Widerrufsbelehrung']);
 
     AuditLogger::record('portal.link_issued', null);
     AuditLogger::record('portal.link_consumed', null);

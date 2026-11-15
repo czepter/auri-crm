@@ -1,12 +1,14 @@
 <?php
 
+use Symfony\Component\Finder\Finder;
+
 // Die Hilfespalte lebt im vierten Slot von Page.vue. Ein Screen, der
 // AdminLayout ohne Page rendert, hat den Slot nicht — und bekommt still
 // keine Hilfe. Das ist der Test, der die Migration erzwingt und sie
 // erzwungen hält.
 it('rendert jede Admin-Seite durch Page.vue', function () {
     $pages = collect(
-        \Symfony\Component\Finder\Finder::create()
+        Finder::create()
             ->files()
             ->in(resource_path('js/admin/pages'))
             ->name('*.vue')

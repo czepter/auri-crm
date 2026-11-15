@@ -60,6 +60,7 @@ class EnsureContractArtifact
         $resolved = MergeFieldResolver::resolve(
             $contract->resolvedBody(),
             $this->mergeData->forCase($contract->case),
+            escape: true,
         );
 
         $html = $this->renderer->wrap(DocumentTemplateType::Contract, $resolved);

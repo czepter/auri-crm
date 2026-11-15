@@ -270,7 +270,6 @@ means a rule was crossed, not that a behaviour regressed:
 [benachrichtigungen-anwendungsfaelle.svg](benachrichtigungen-anwendungsfaelle.svg) ·
 [deployment.md](deployment.md) ·
 [branching.md](branching.md) ·
-[backlog.md](backlog.md) ·
 [documents.md](documents.md) ·
 [queue.md](../apps/studio/docs/queue.md) ·
 [media.md](../apps/studio/docs/media.md) ·

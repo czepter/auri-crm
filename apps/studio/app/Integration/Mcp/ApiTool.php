@@ -125,9 +125,21 @@ class ApiTool extends Tool
         }
 
         /** @var array<string, mixed> $decoded */
-        $decoded = json_decode($body, true) ?? [];
+        $decoded = $this->keepEmptyObjects(json_decode($body)) ?? [];
 
         return Response::structured(($this->definition->structure)($decoded));
+    }
+
+    /** An assoc decode cannot tell `{}` from `[]`, so empty objects are kept as stdClass. */
+    private function keepEmptyObjects(mixed $value): mixed
+    {
+        if ($value instanceof \stdClass) {
+            return get_object_vars($value) === []
+                ? $value
+                : array_map($this->keepEmptyObjects(...), get_object_vars($value));
+        }
+
+        return is_array($value) ? array_map($this->keepEmptyObjects(...), $value) : $value;
     }
 
     private function errorMessage(string $body): string

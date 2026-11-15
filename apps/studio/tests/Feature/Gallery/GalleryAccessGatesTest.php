@@ -1,6 +1,7 @@
 <?php
 
 use App\Gallery\Models\Gallery;
+use Illuminate\Database\Eloquent\MassAssignmentException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -92,7 +93,7 @@ it('keeps the gate columns out of mass assignment', function () {
     $gallery = Gallery::factory()->create();
 
     $gallery->update(['view_password' => 'whatever-i-want', 'requires_verified_email' => true]);
-})->throws(\Illuminate\Database\Eloquent\MassAssignmentException::class);
+})->throws(MassAssignmentException::class);
 
 // C-17 (#253): recoverable, because both values are handed to guests anyway
 // and a studio that cannot look one up locks out everybody with the old one.
