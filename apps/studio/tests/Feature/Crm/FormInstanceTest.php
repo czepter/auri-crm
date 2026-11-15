@@ -6,6 +6,7 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\FormField;
 use App\Crm\Models\FormInstance;
 use App\Crm\Models\FormInstanceField;
+use App\Crm\Models\FormInstanceFile;
 use App\Crm\Models\FormTemplate;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
@@ -167,6 +168,89 @@ it('personalises an instance\'s fields and name, wholesale replacing what was th
 
     $row = AuditLog::where('event', 'form_instance.updated')->sole();
     expect($row->subject)->toBe($instance->public_id);
+});
+
+it('keeps answers and files of fields that survive a save', function () {
+    Storage::fake('local');
+    $instance = FormInstance::factory()->for(ClientCase::factory()->create(), 'case')->create();
+    $text = FormInstanceField::factory()->for($instance, 'formInstance')->create(['label' => 'Wer kommt?', 'type' => FormFieldType::ShortText, 'sort_order' => 0]);
+    $text->answer('Oma');
+    $upload = FormInstanceField::factory()->for($instance, 'formInstance')->create([
+        'label' => 'Plan', 'type' => FormFieldType::File, 'options' => ['formats' => ['pdf'], 'maxSize' => 5, 'multiple' => false], 'sort_order' => 1,
+    ]);
+    $file = $upload->attachFile(UploadedFile::fake()->create('ablauf.pdf', 10, 'application/pdf'));
+
+    $this->actingAs(staffMember(), 'staff')->patch("/frageboegen/{$instance->public_id}", [
+        'name' => $instance->name,
+        'fields' => [
+            ['id' => $text->public_id, 'label' => 'Wer kommt alles?', 'type' => 'short_text', 'required' => false, 'options' => null],
+            ['id' => $upload->public_id, 'label' => 'Plan', 'type' => 'file', 'required' => false, 'options' => ['formats' => ['pdf'], 'maxSize' => 5, 'multiple' => false]],
+        ],
+    ])->assertRedirect();
+
+    expect($text->fresh()->label)->toBe('Wer kommt alles?')
+        ->and($text->fresh()->currentAnswer->value)->toBe('Oma')
+        ->and($upload->fresh()->public_id)->toBe($upload->public_id)
+        ->and($file->fresh())->not->toBeNull()
+        ->and(Storage::disk('local')->exists($file->path))->toBeTrue();
+});
+
+it('purges the files of a field removed by a save', function () {
+    Storage::fake('local');
+    $instance = FormInstance::factory()->for(ClientCase::factory()->create(), 'case')->create();
+    $text = FormInstanceField::factory()->for($instance, 'formInstance')->create(['type' => FormFieldType::ShortText, 'sort_order' => 0]);
+    $upload = FormInstanceField::factory()->for($instance, 'formInstance')->create([
+        'type' => FormFieldType::File, 'options' => ['formats' => ['pdf'], 'maxSize' => 5, 'multiple' => false], 'sort_order' => 1,
+    ]);
+    $upload->attachFile(UploadedFile::fake()->create('ablauf.pdf', 10, 'application/pdf'));
+
+    $this->actingAs(staffMember(), 'staff')->patch("/frageboegen/{$instance->public_id}", [
+        'name' => $instance->name,
+        'fields' => [['id' => $text->public_id, 'label' => $text->label, 'type' => 'short_text', 'required' => false, 'options' => null]],
+    ])->assertRedirect();
+
+    expect(FormInstanceField::find($upload->id))->toBeNull()
+        ->and(FormInstanceFile::count())->toBe(0)
+        ->and(Storage::disk('local')->allFiles())->toBeEmpty();
+});
+
+it('starts a field fresh when its type changes', function () {
+    $instance = FormInstance::factory()->for(ClientCase::factory()->create(), 'case')->create();
+    $field = FormInstanceField::factory()->for($instance, 'formInstance')->create(['type' => FormFieldType::ShortText]);
+    $field->answer('Oma');
+
+    $this->actingAs(staffMember(), 'staff')->patch("/frageboegen/{$instance->public_id}", [
+        'name' => $instance->name,
+        'fields' => [['id' => $field->public_id, 'label' => 'Frage', 'type' => 'text', 'required' => false, 'options' => null]],
+    ])->assertRedirect();
+
+    $fresh = $instance->fresh()->fields->sole();
+
+    expect($fresh->public_id)->not->toBe($field->public_id)
+        ->and($fresh->currentAnswer)->toBeNull();
+});
+
+it('rejects two rows with the same field id', function () {
+    $instance = FormInstance::factory()->for(ClientCase::factory()->create(), 'case')->create();
+    $field = FormInstanceField::factory()->for($instance, 'formInstance')->create(['type' => FormFieldType::ShortText]);
+    $row = ['id' => $field->public_id, 'label' => 'Frage', 'type' => 'short_text', 'required' => false, 'options' => null];
+
+    $this->actingAs(staffMember(), 'staff')
+        ->patch("/frageboegen/{$instance->public_id}", ['name' => $instance->name, 'fields' => [$row, $row]])
+        ->assertInvalid(['fields.0.id']);
+});
+
+it('never lets a field id of another instance modify this one', function () {
+    $instance = FormInstance::factory()->for(ClientCase::factory()->create(), 'case')->create();
+    $foreign = FormInstanceField::factory()->for(FormInstance::factory()->for(ClientCase::factory()->create(), 'case')->create(), 'formInstance')->create(['label' => 'Fremd', 'type' => FormFieldType::ShortText]);
+
+    $this->actingAs(staffMember(), 'staff')->patch("/frageboegen/{$instance->public_id}", [
+        'name' => $instance->name,
+        'fields' => [['id' => $foreign->public_id, 'label' => 'Eigen', 'type' => 'short_text', 'required' => false, 'options' => null]],
+    ])->assertRedirect();
+
+    expect($foreign->fresh()->label)->toBe('Fremd')
+        ->and($instance->fresh()->fields->sole()->label)->toBe('Eigen');
 });
 
 it('opens the project forms screen to whoever can view the project, regardless of ManageFormTemplates', function (StaffRole $role, int $status) {

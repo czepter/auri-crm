@@ -15,6 +15,7 @@ import { Label } from '@/ui/label'
 // formats. The page transforms it back on submit, the same shape
 // PackageItemsEditor's page transforms euros back to cents.
 export type FormFieldRow = {
+  id?: string
   label: string
   type: string
   required: boolean

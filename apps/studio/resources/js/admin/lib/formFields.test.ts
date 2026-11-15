@@ -29,4 +29,8 @@ describe('formFields', () => {
     expect(toPayload(toRow(groups)).options).toEqual({ help: 'Kurz', suggestions: ['Eltern'], minutesPerGroup: 3 })
     expect(toPayload(toRow(field({}))).options).toBeNull()
   })
+
+  it('carries the field id through the editor row', () => {
+    expect(toPayload(toRow(field({ id: 'abc' }))).id).toBe('abc')
+  })
 })

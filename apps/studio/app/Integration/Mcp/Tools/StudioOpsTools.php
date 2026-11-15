@@ -144,13 +144,14 @@ final class StudioOpsTools
             new ToolDefinition(
                 name: 'update_form',
                 title: 'Replace a form\'s fields',
-                description: 'Renames a form and replaces its fields wholesale — the same shape create_form seeds, personalised. There is no partial edit; send every field the form should keep.',
+                description: 'Renames a form and sets its fields, the same shape create_form seeds, personalised. Send every field the form should keep, each with its id from list_forms.',
                 method: 'PATCH',
                 path: '/forms/{form}',
                 schema: fn (JsonSchema $schema) => [
                     'form' => $schema->string()->description('The form instance public id')->required(),
                     'name' => $schema->string()->required(),
                     'fields' => $schema->array()->items($schema->object([
+                        'id' => $schema->string()->nullable()->description('The field public id from list_forms. Send it to keep the field and its answers; a field without one is created new, a field left out is deleted with its answers.'),
                         'label' => $schema->string()->required(),
                         'type' => $schema->string()->enum(self::FORM_FIELD_TYPES)->required(),
                         'required' => $schema->boolean()->required(),

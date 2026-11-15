@@ -114,6 +114,15 @@ it('creates a form from a template, updates it, shares it and records an answer'
         ->postJson("/api/form-fields/{$fieldId}/answer", ['value' => 'Oma und Opa'])
         ->assertOk()
         ->assertJsonPath('data.fields.0.currentAnswer', 'Oma und Opa');
+
+    $this->withHeader('Idempotency-Key', 'form-5')
+        ->patchJson("/api/forms/{$formId}", [
+            'name' => 'Familie',
+            'fields' => [['id' => $fieldId, 'label' => 'Wer kommt alles?', 'type' => 'text', 'required' => true]],
+        ])
+        ->assertOk()
+        ->assertJsonPath('data.fields.0.id', $fieldId)
+        ->assertJsonPath('data.fields.0.currentAnswer', 'Oma und Opa');
 });
 
 it('adds and removes a shoot timeline entry', function () {
