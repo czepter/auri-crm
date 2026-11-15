@@ -21,6 +21,8 @@ class ContactReadData extends Data
         public ?string $street,
         public ?string $postcode,
         public ?string $city,
+        /** @var list<array{platform: string, value: string}>|null */
+        public ?array $socialProfiles,
         public string $updatedAt,
     ) {}
 
@@ -34,6 +36,7 @@ class ContactReadData extends Data
             street: $contact->street,
             postcode: $contact->postcode,
             city: $contact->city,
+            socialProfiles: $contact->social_profiles,
             updatedAt: $contact->updated_at->toIso8601String(),
         );
     }

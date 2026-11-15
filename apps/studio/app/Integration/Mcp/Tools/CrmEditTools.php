@@ -2,6 +2,7 @@
 
 namespace App\Integration\Mcp\Tools;
 
+use App\Crm\Enums\SocialPlatform;
 use App\Integration\Mcp\ToolDefinition;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 
@@ -19,13 +20,17 @@ final class CrmEditTools
             new ToolDefinition(
                 name: 'create_contact',
                 title: 'Create a contact',
-                description: 'Add a person to the address book on their own, without a project. An email already on file is refused — search_contacts finds them instead.',
+                description: 'Add a person to the address book on their own, without a project. Social profiles can be given too. An email already on file is refused — search_contacts finds them instead.',
                 method: 'POST',
                 path: '/contacts',
                 schema: fn (JsonSchema $schema) => [
                     'name' => $schema->string()->max(255)->required(),
                     'email' => $schema->string()->format('email')->max(255)->nullable(),
                     'phone' => $schema->string()->max(64)->nullable(),
+                    'social_profiles' => $schema->array()->items($schema->object([
+                        'platform' => $schema->string()->enum(array_column(SocialPlatform::cases(), 'value'))->required(),
+                        'value' => $schema->string()->max(255)->required(),
+                    ]))->max(10)->nullable(),
                 ],
                 silent: false,
             ),
@@ -33,7 +38,7 @@ final class CrmEditTools
             new ToolDefinition(
                 name: 'update_contact',
                 title: 'Update a contact',
-                description: 'Change a contact\'s name, e-mail, phone or billing address. Only the fields given change. search_contacts shows the current values.',
+                description: 'Change a contact\'s name, e-mail, phone, billing address or social profiles. Only the fields given change; social_profiles replaces the whole list. search_contacts shows the current values.',
                 method: 'PATCH',
                 path: '/contacts/{contact}',
                 schema: fn (JsonSchema $schema) => [
@@ -44,6 +49,10 @@ final class CrmEditTools
                     'street' => $schema->string()->max(255)->nullable(),
                     'postcode' => $schema->string()->max(32)->nullable(),
                     'city' => $schema->string()->max(255)->nullable(),
+                    'social_profiles' => $schema->array()->items($schema->object([
+                        'platform' => $schema->string()->enum(array_column(SocialPlatform::cases(), 'value'))->required(),
+                        'value' => $schema->string()->max(255)->required(),
+                    ]))->max(10)->nullable(),
                 ],
                 annotations: ToolDefinition::OVERWRITES,
                 silent: false,

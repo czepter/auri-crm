@@ -754,6 +754,10 @@ phone: string | null,
 street: string | null,
 postcode: string | null,
 city: string | null,
+socialProfiles: {
+platform: string,
+value: string,
+}[] | null,
 updatedAt: string,
 };
 export type CrewAssignmentReadData = {

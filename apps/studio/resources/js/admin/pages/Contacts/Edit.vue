@@ -4,6 +4,7 @@ import { Link, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ContactQueue from '@/admin/components/crm/ContactQueue.vue'
 import ContactPortalFields from '@/admin/components/crm/ContactPortalFields.vue'
+import ContactSocialProfiles from '@/admin/components/crm/ContactSocialProfiles.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import SaveState from '@/ui/page/SaveState.vue'
@@ -21,7 +22,6 @@ import { useI18n } from 'vue-i18n'
 import { MAX_DOTS, type Tone } from '@/admin/lib/metricDots'
 import { useLiveProps } from '@/admin/lib/liveReload'
 import { profileHref, profileText } from '@/admin/lib/socialProfile'
-import { X } from 'lucide-vue-next'
 
 const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? ''
 
@@ -313,35 +313,7 @@ function eraseDsgvoData() {
                 <Field id="c-city" :label="$t('contacts.city')" :error="form.errors.city">
                   <Input id="c-city" v-model="form.city" type="text" autocomplete="address-level2" />
                 </Field>
-                <div v-for="(profile, index) in form.social_profiles" :key="index" class="flex items-start gap-2">
-                  <Select v-model="profile.platform">
-                    <SelectTrigger class="w-40" :aria-label="$t('contacts.platform')"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem v-for="one in socialPlatforms" :key="one.value" :value="one.value">{{ one.label }}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Field :id="`c-profile-${index}`" class="flex-1" :error="form.errors[`social_profiles.${index}.value`]">
-                    <Input :id="`c-profile-${index}`" v-model="profile.value" type="text" :placeholder="$t('contacts.profileValue')" :aria-label="$t('contacts.profileValue')" />
-                  </Field>
-                  <button
-                    :aria-label="$t('common.remove')"
-                    class="inline-flex cursor-pointer border-0 bg-transparent p-2 text-ink-2"
-                    type="button"
-                    @click="form.social_profiles.splice(index, 1)"
-                  >
-                    <X class="size-4" />
-                  </button>
-                </div>
-                <div>
-                  <Button
-                    variant="pill-muted"
-                    type="button"
-                    :disabled="form.social_profiles.length >= 10"
-                    @click="form.social_profiles.push({ platform: 'instagram', value: '' })"
-                  >
-                    {{ $t('contacts.addProfile') }}
-                  </Button>
-                </div>
+                <ContactSocialProfiles :profiles="form.social_profiles" :platforms="socialPlatforms" :errors="form.errors" />
               </form>
 
               <section v-else-if="contact.phone || contact.email || hasAddress" class="mb-7">

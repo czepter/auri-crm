@@ -138,6 +138,25 @@ it('saves social profiles trimmed and clears them when empty', function () {
     expect($contact->fresh()->social_profiles)->toBeNull();
 });
 
+it('creates a contact with social profiles', function () {
+    $this->actingAs($this->staff, 'staff')
+        ->post('/kontakte', ['name' => 'Annika Steffens', 'social_profiles' => [['platform' => 'tiktok', 'value' => ' anna ']]])
+        ->assertSessionHasNoErrors();
+
+    expect(Contact::firstWhere('name', 'Annika Steffens')->social_profiles)->toEqual([['platform' => 'tiktok', 'value' => 'anna']]);
+});
+
+it('keeps social profiles when an update omits them', function () {
+    $profiles = [['platform' => 'instagram', 'value' => '@anna']];
+    $contact = Contact::factory()->create(['social_profiles' => $profiles]);
+
+    $this->actingAs($this->staff, 'staff')
+        ->patch("/kontakte/{$contact->public_id}", ['name' => 'Neuer Name', 'email' => $contact->email])
+        ->assertSessionHasNoErrors();
+
+    expect($contact->fresh()->social_profiles)->toEqual($profiles);
+});
+
 it('refuses an unknown social platform', function () {
     $contact = Contact::factory()->create();
 
