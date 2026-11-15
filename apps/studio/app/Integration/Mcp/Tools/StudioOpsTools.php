@@ -123,6 +123,8 @@ final class StudioOpsTools
                     'case' => $schema->string()->description('The case public id')->required(),
                 ],
                 annotations: ['readOnlyHint' => true, 'openWorldHint' => false],
+                structure: fn (array $body) => ['forms' => $body['data']],
+                outputSchema: fn (JsonSchema $schema) => ['forms' => $schema->array()->items(self::form($schema))],
             ),
 
             new ToolDefinition(
@@ -139,6 +141,8 @@ final class StudioOpsTools
                 // Omitted rather than null: "no template" is a blank form,
                 // and the route reads the key's absence, not its value.
                 payload: fn (array $arguments) => array_filter(['template' => $arguments['template'] ?? null], fn ($value) => $value !== null),
+                structure: fn (array $body) => ['form' => $body['data']],
+                outputSchema: fn (JsonSchema $schema) => ['form' => self::form($schema)],
             ),
 
             new ToolDefinition(
@@ -161,6 +165,8 @@ final class StudioOpsTools
                 ],
                 annotations: ['readOnlyHint' => false, 'destructiveHint' => true, 'idempotentHint' => false, 'openWorldHint' => false],
                 silent: false,
+                structure: fn (array $body) => ['form' => $body['data']],
+                outputSchema: fn (JsonSchema $schema) => ['form' => self::form($schema)],
             ),
 
             new ToolDefinition(
@@ -175,6 +181,8 @@ final class StudioOpsTools
                 ],
                 annotations: ['readOnlyHint' => false, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false],
                 silent: false,
+                structure: fn (array $body) => ['form' => $body['data']],
+                outputSchema: fn (JsonSchema $schema) => ['form' => self::form($schema)],
             ),
 
             new ToolDefinition(
@@ -189,6 +197,8 @@ final class StudioOpsTools
                 ],
                 silent: false,
                 payload: fn (array $arguments) => array_filter(['value' => $arguments['value'] ?? null], fn ($value) => $value !== null),
+                structure: fn (array $body) => ['form' => $body['data']],
+                outputSchema: fn (JsonSchema $schema) => ['form' => self::form($schema)],
             ),
 
             new ToolDefinition(
@@ -307,5 +317,40 @@ final class StudioOpsTools
                 silent: false,
             ),
         ];
+    }
+
+    private static function form(JsonSchema $schema): object
+    {
+        return $schema->object([
+            'id' => $schema->string(),
+            'name' => $schema->string(),
+            'sourceTemplateName' => $schema->string()->nullable(),
+            'updatedAt' => $schema->string(),
+            'sharedAt' => $schema->string()->nullable(),
+            'fields' => $schema->array()->items($schema->object([
+                'id' => $schema->string(),
+                'label' => $schema->string(),
+                'type' => $schema->string()->enum(self::FORM_FIELD_TYPES),
+                'typeLabel' => $schema->string(),
+                'required' => $schema->boolean(),
+                'help' => $schema->string()->nullable(),
+                'options' => $schema->array()->items($schema->string())->nullable(),
+                'currentAnswer' => $schema->string()->nullable(),
+                'answeredAt' => $schema->string()->nullable(),
+                'groupPhotos' => $schema->object([
+                    'suggestions' => $schema->array()->items($schema->string()),
+                    'minutesPerGroup' => $schema->integer(),
+                ])->nullable(),
+                'fileFormats' => $schema->array()->items($schema->string())->nullable(),
+                'fileMaxSize' => $schema->integer()->nullable(),
+                'fileMultiple' => $schema->boolean(),
+                'files' => $schema->array()->items($schema->object([
+                    'id' => $schema->string(),
+                    'name' => $schema->string(),
+                    'size' => $schema->integer(),
+                    'uploadedAt' => $schema->string(),
+                ])),
+            ])),
+        ]);
     }
 }
