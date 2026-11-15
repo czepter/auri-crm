@@ -1757,6 +1757,7 @@
     "shared": "Freigegeben",
     "notShared": "Nicht freigegeben",
     "unshare": "Freigabe zurücknehmen",
+    "closed": "Abgeschlossen",
     "sharedAt": "Seit {date} für Kunden freigegeben",
     "progress": "{answered} von {total} beantwortet",
     "complete": "Vollständig",

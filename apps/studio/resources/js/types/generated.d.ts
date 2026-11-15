@@ -286,6 +286,7 @@ name: string,
 sourceTemplateName: string | null,
 updatedAt: string,
 sharedAt: string | null,
+closedAt: string | null,
 fields: App.Crm.Data.FormInstanceFieldData[],
 };
 export type FormInstanceFieldData = {

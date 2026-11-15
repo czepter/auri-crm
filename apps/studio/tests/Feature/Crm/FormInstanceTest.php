@@ -578,3 +578,19 @@ it('refuses a question without a title and names the field', function () {
         ])
         ->assertSessionHasErrors('fields.0.label');
 });
+
+it('closes and reopens a questionnaire and audit-logs both', function () {
+    $instance = FormInstance::factory()->for(ClientCase::factory()->create(), 'case')->create();
+
+    $this->actingAs(staffMember(), 'staff')
+        ->post("/frageboegen/{$instance->public_id}/abschliessen", ['closed' => true])
+        ->assertRedirect();
+
+    expect($instance->fresh()->isClosed())->toBeTrue()
+        ->and(AuditLog::where('event', 'form_instance.closed')->count())->toBe(1);
+
+    $this->post("/frageboegen/{$instance->public_id}/abschliessen", ['closed' => false]);
+
+    expect($instance->fresh()->closed_at)->toBeNull()
+        ->and(AuditLog::where('event', 'form_instance.reopened')->count())->toBe(1);
+});

@@ -34,7 +34,7 @@ class FormInstance extends Model
 
     protected function casts(): array
     {
-        return ['shared_at' => 'immutable_datetime'];
+        return ['shared_at' => 'immutable_datetime', 'closed_at' => 'immutable_datetime'];
     }
 
     /**
@@ -45,6 +45,12 @@ class FormInstance extends Model
     public function isShared(): bool
     {
         return $this->shared_at !== null;
+    }
+
+    /** Shared and finished: the client reads the answers, the studio may still correct them. */
+    public function isClosed(): bool
+    {
+        return $this->closed_at !== null;
     }
 
     public function scopeShared(Builder $query): void

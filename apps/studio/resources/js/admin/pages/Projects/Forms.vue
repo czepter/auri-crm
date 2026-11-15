@@ -44,6 +44,10 @@ function share(id: string, shared: boolean) {
   router.post(`/frageboegen/${id}/freigeben`, { shared }, { preserveScroll: true })
 }
 
+function close(id: string, closed: boolean) {
+  router.post(`/frageboegen/${id}/abschliessen`, { closed }, { preserveScroll: true })
+}
+
 const editing = reactive<Record<string, boolean>>({})
 
 // One edit form per instance, keyed by its id — the same reason Quotes.vue
@@ -163,6 +167,7 @@ function summary(instance: App.Crm.Data.FormInstanceData): string {
             <Chip :tone="instance.sharedAt ? 'success' : 'neutral'">
               {{ instance.sharedAt ? $t('formInstances.shared') : $t('formInstances.notShared') }}
             </Chip>
+            <Chip v-if="instance.closedAt" tone="info">{{ $t('formInstances.closed') }}</Chip>
           </template>
 
           <!-- E-03 gilt auch am Telefon: ein unbeantwortetes Feld steht hier
@@ -251,6 +256,14 @@ function summary(instance: App.Crm.Data.FormInstanceData): string {
                 @update:model-value="share(instance.id, $event)"
               />
               <Label variant="inline" :for="`share-${instance.id}`">{{ $t('formInstances.share') }}</Label>
+            </div>
+            <div class="mt-3 flex items-center gap-2.5">
+              <Switch
+                :id="`close-${instance.id}`"
+                :model-value="Boolean(instance.closedAt)"
+                @update:model-value="close(instance.id, $event)"
+              />
+              <Label variant="inline" :for="`close-${instance.id}`">{{ $t('formInstances.closed') }}</Label>
             </div>
 
             <!-- Eine Frage ohne Titel weist der Server ab. Ohne diese Zeile

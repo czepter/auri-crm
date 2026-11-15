@@ -153,6 +153,25 @@ class FormInstanceController extends Controller
         return back();
     }
 
+    /** Closing locks the portal screen only; staff can still correct answers. */
+    public function close(Request $request, FormInstance $formInstance): RedirectResponse
+    {
+        $this->authorize('manageForms', $formInstance->case);
+
+        $closed = $request->validate(['closed' => ['required', 'boolean']])['closed'];
+
+        $formInstance->forceFill(['closed_at' => $closed ? now() : null])->save();
+
+        AuditLogger::record(
+            event: $closed ? 'form_instance.closed' : 'form_instance.reopened',
+            actor: auth('staff')->user(),
+            subject: $formInstance->public_id,
+            projectId: $formInstance->case_id,
+        );
+
+        return back();
+    }
+
     /**
      * E-03: staff recording (or correcting) the answer to one question on an
      * already-seeded instance. Never updates a FormAnswer in place — always

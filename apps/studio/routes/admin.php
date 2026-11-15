@@ -761,6 +761,8 @@ Route::middleware('audience:staff')->group(function () {
         // checklist on the same table should.
         Route::post('/frageboegen/{formInstance}/freigeben', [FormInstanceController::class, 'share'])
             ->name('form-instances.share');
+        Route::post('/frageboegen/{formInstance}/abschliessen', [FormInstanceController::class, 'close'])
+            ->name('form-instances.close');
 
         Route::patch('/frageboegen-felder/{formInstanceField}/antwort', [FormInstanceController::class, 'answer'])
             ->name('form-instance-fields.answer');

@@ -25,6 +25,7 @@ const ablauf: App.Crm.Data.FormInstanceData = {
     sourceTemplateName: 'Hochzeit — Ablauf',
     updatedAt: '2026-08-20T17:40:00+02:00',
     sharedAt: '2026-08-12T09:00:00+02:00',
+    closedAt: null,
     fields: [
         feld({
             id: 'ff-1',
@@ -58,6 +59,7 @@ const buch: App.Crm.Data.FormInstanceData = {
     sourceTemplateName: null,
     updatedAt: '2026-09-01T11:05:00+02:00',
     sharedAt: null,
+    closedAt: null,
     fields: [
         feld({ id: 'ff-4', label: 'Einbandfarbe', type: 'short_text', typeLabel: 'Kurzantwort' }),
         feld({ id: 'ff-5', label: 'Widmung auf Seite 1', type: 'text', typeLabel: 'Freitext' }),
