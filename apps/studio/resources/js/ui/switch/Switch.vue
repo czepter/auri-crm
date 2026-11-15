@@ -21,8 +21,8 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
     data-slot="switch"
     v-bind="forwarded"
     :class="cn(
-      'peer relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-0 bg-input p-[2px]',
-      'after:absolute after:-inset-y-[10px] after:inset-x-0',
+      'peer relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-0 bg-input p-[2px]',
+      'after:absolute after:-inset-y-3 after:inset-x-0',
       'transition-colors duration-[120ms] ease-out',
       'data-[state=checked]:bg-foreground',
       'disabled:cursor-not-allowed disabled:opacity-50',
@@ -30,7 +30,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
     )"
   >
     <SwitchThumb
-      class="pointer-events-none block size-5 rounded-full bg-background shadow-sm transition-transform duration-[120ms] ease-out data-[state=checked]:translate-x-5"
+      class="pointer-events-none block size-4 rounded-full bg-background shadow-sm transition-transform duration-[120ms] ease-out data-[state=checked]:translate-x-4"
     />
   </SwitchRoot>
 </template>

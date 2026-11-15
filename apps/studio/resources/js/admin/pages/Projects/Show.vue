@@ -401,7 +401,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             class="inline-flex min-h-10 items-center text-ui font-medium text-ring no-underline hover:underline"
                             :href="`${base}/shootings`"
                         >{{ $t("project.showAll") }}</Link>
-                        <Button v-if="header.canManageShoots" variant="pill-muted" class="min-h-10 px-4" as-child>
+                        <Button v-if="header.canManageShoots" variant="pill-muted" as-child>
                             <Link :href="`${base}/shootings`">+ {{ $t("project.shootAdd") }}</Link>
                         </Button>
                     </div>
@@ -495,7 +495,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
 
                     <Panel v-if="installments.length && plan" :title="$t('dashboard.payments')">
                         <template v-if="header.canManagePaymentPlan && installments.some((row) => !row.invoiceNumber)" #action>
-                            <Button variant="pill-muted" class="ml-auto min-h-10 px-4" as-child>
+                            <Button variant="pill-muted" class="ml-auto" as-child>
                                 <Link :href="`/rechnungen/neu?projekt=${header.id}`">{{ $t("project.invoiceAdd") }}</Link>
                             </Button>
                         </template>
@@ -519,10 +519,10 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             </div>
                             <Chip v-if="row.invoiceId" :tone="toneOf[installmentChipClass(row)]">{{ row.statusLabel }}</Chip>
                             <Chip v-else tone="neutral">{{ $t("project.noInvoice") }}</Chip>
-                            <Button v-if="row.invoiceId" variant="pill-muted" class="min-h-10 px-4" as-child>
+                            <Button v-if="row.invoiceId" variant="pill-muted" as-child>
                                 <Link :href="`/rechnungen/${row.invoiceId}`">{{ $t("project.toInvoice") }}</Link>
                             </Button>
-                            <Button v-else-if="canIssue" variant="pill-muted" type="button" class="min-h-10 px-4" @click="issueRate(row.id)">
+                            <Button v-else-if="canIssue" variant="pill-muted" type="button" @click="issueRate(row.id)">
                                 {{ $t("payments.issueInvoice") }}
                             </Button>
                             <span v-else />
@@ -554,8 +554,8 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 </Field>
                             </div>
                             <div class="mt-3 flex gap-2">
-                                <Button class="min-h-10" variant="pill" type="button" :disabled="kontakte.processing" @click="saveKontakte">{{ $t("common.save") }}</Button>
-                                <Button class="min-h-10" variant="outline" type="button" @click="kontakte.reset(); kontakteEditing = false">{{ $t("common.cancel") }}</Button>
+                                <Button variant="pill" type="button" :disabled="kontakte.processing" @click="saveKontakte">{{ $t("common.save") }}</Button>
+                                <Button variant="outline" type="button" @click="kontakte.reset(); kontakteEditing = false">{{ $t("common.cancel") }}</Button>
                             </div>
                         </template>
 
@@ -574,7 +574,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 <template v-if="person.email && person.phone"> · </template>
                                 <a v-if="person.phone" class="text-ring no-underline hover:underline" :href="`tel:${person.phone.replace(/ /g, '')}`">{{ person.phone }}</a>
                             </span>
-                            <Button v-else variant="pill-muted" class="ml-auto min-h-10 px-4" as-child>
+                            <Button v-else variant="pill-muted" class="ml-auto" as-child>
                                 <Link :href="`/kontakte/${person.id}`">{{ $t("project.contactDetails") }}</Link>
                             </Button>
                         </div>

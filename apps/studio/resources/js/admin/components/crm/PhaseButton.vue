@@ -17,7 +17,7 @@ const next = computed(() => laterStages(props.stages, props.current)[0])
             v-if="next"
             variant="pill-muted"
             type="button"
-            class="min-h-10 rounded-r-none px-4"
+            class="rounded-r-none"
             @click="emit('select', next.value)"
         >
             {{ $t('project.nextPhase', { stage: next.label }) }}
@@ -27,7 +27,7 @@ const next = computed(() => laterStages(props.stages, props.current)[0])
                 <Button
                     variant="pill-muted"
                     type="button"
-                    class="min-h-10 px-3"
+                    class="w-8 justify-center px-0"
                     :class="next && 'rounded-l-none border-l border-line-hover'"
                     :aria-label="$t('board.colStage')"
                 >

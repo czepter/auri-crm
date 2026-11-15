@@ -5,6 +5,7 @@ import Page from '@/ui/page/Page.vue'
 import ProjectQueue from '@/admin/components/crm/ProjectQueue.vue'
 import StageTrack from '@/admin/components/crm/StageTrack.vue'
 import SettlePlanDialog from '@/admin/components/payments/SettlePlanDialog.vue'
+import { Ellipsis } from 'lucide-vue-next'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
@@ -131,13 +132,10 @@ function destroy() {
             </div>
 
             <DropdownMenu v-if="$slots.menu || (header.canComplete && !header.isCompleted) || (header.canClose && !header.outcomeLabel) || header.canDelete || header.canManagePortalVisibility">
-              <DropdownMenuTrigger
-                class="flex size-10 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2 max-[640px]:size-11"
-                :aria-label="$t('project.more')"
-              >
-                <svg class="size-4 fill-current" viewBox="0 0 24 24">
-                  <circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" />
-                </svg>
+              <DropdownMenuTrigger as-child>
+                <Button variant="pill-muted" type="button" class="w-8 justify-center px-0 max-[640px]:min-h-11 max-[640px]:min-w-11" :aria-label="$t('project.more')">
+                  <Ellipsis class="size-4" />
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" class="w-[208px]">
                 <slot name="menu" />

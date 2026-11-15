@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
-import { ChevronDown } from 'lucide-vue-next'
+import { ChevronDown, Ellipsis } from 'lucide-vue-next'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/crm/ProjectShell.vue'
 import ShootAdvance from '@/admin/components/crm/ShootAdvance.vue'
@@ -279,13 +279,10 @@ const STATIC_TONE: Record<string, ChipTone> = { done: 'success', now: 'warn', ne
                   <ShootAdvance :shoot="shoot" />
 
                   <DropdownMenu>
-                    <DropdownMenuTrigger
-                      class="flex size-10 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2 max-[640px]:size-11"
-                      :aria-label="$t('project.more')"
-                    >
-                      <svg class="size-4 fill-current" viewBox="0 0 24 24">
-                        <circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" />
-                      </svg>
+                    <DropdownMenuTrigger as-child>
+                      <Button variant="pill-muted" type="button" class="w-8 justify-center px-0 max-[640px]:min-h-11 max-[640px]:min-w-11" :aria-label="$t('project.more')">
+                        <Ellipsis class="size-4" />
+                      </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" class="w-[208px]">
                       <DropdownMenuItem v-if="!shoot.isPrimary" @select="designatePrimary(shoot)">

@@ -35,7 +35,7 @@ const addShoot = computed(() => props.header.isBooked && props.header.canManageS
                 <Button
                     variant="pill"
                     type="button"
-                    class="rounded-l-none border-l border-white/30 px-2 max-[640px]:min-h-11 max-[640px]:min-w-11"
+                    class="w-8 justify-center rounded-l-none border-l border-white/30 px-0 max-[640px]:min-h-11 max-[640px]:min-w-11"
                     :aria-label="$t('project.advance')"
                 >
                     <ChevronDown class="size-3.5" />
