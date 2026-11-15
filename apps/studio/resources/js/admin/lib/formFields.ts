@@ -11,13 +11,13 @@ export function toRow(field: App.Crm.Data.FormInstanceFieldData): FormFieldRow {
     optionsText: optionsText(field),
     fileMaxSize: field.fileMaxSize ?? 10,
     fileMultiple: field.fileMultiple,
-    helpText: field.groupPhotos?.help ?? '',
+    helpText: field.help ?? '',
     minutesPerGroup: field.groupPhotos?.minutesPerGroup ?? 2,
   }
 }
 
 export function toPayload(field: FormFieldRow) {
-  return { id: field.id ?? null, label: field.label, type: field.type, required: field.required, options: options(field) }
+  return { id: field.id ?? null, label: field.label, type: field.type, required: field.required, help: field.helpText.trim() || null, options: options(field) }
 }
 
 function optionsText(field: App.Crm.Data.FormInstanceFieldData): string {
@@ -38,7 +38,7 @@ function options(field: FormFieldRow) {
   }
 
   if (field.type === 'group_photos') {
-    return { help: field.helpText?.trim() || null, suggestions: list, minutesPerGroup: field.minutesPerGroup ?? 2 }
+    return { suggestions: list, minutesPerGroup: field.minutesPerGroup ?? 2 }
   }
 
   return field.type === 'select' ? list : null

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useId } from "vue"
 import type { HTMLAttributes } from "vue"
 import { cn } from "@/lib/utils"
 
@@ -18,6 +19,10 @@ const props = defineProps<{
   /** The mark a caption carries when its field may stay empty. */
   optional?: string
   hint?: string
+  /** Shown between caption and control. The root stops being a label, so the control must bind the slot's controlId and describedBy. */
+  help?: string
+  /** The slot holds a composite control rather than one labelable element. */
+  group?: boolean
   class?: HTMLAttributes["class"]
 }>()
 
@@ -35,6 +40,11 @@ const CONTROL = [
   // the room the calendar button needs, claimed at the same level as above
   '[&_[data-slot=date-picker]_input]:pr-9',
 ].join(' ')
+
+const base = useId()
+const controlId = base
+const captionId = `${base}-caption`
+const helpId = `${base}-help`
 </script>
 
 <template>
@@ -42,12 +52,19 @@ const CONTROL = [
        inline-level, so the label's own strut is part of the line box it sits
        in. At the inherited 15px/1.6 a textarea gains 5px of descender space
        it never had. -->
-  <label :class="cn('block text-[13px] leading-none', CONTROL, props.class)">
-    <span class="mb-[7px] block text-[13px] leading-none font-normal text-muted-foreground">
+  <component :is="help || group ? 'div' : 'label'" :class="cn('block text-[13px] leading-none', CONTROL, props.class)">
+    <component
+      :is="group ? 'span' : help ? 'label' : 'span'"
+      :id="group ? captionId : undefined"
+      :for="help && !group ? controlId : undefined"
+      data-slot="caption"
+      class="mb-[7px] block text-[13px] leading-none font-normal text-muted-foreground"
+    >
       {{ label }}
-      <em v-if="optional" class="font-normal not-italic">· {{ optional }}</em>
-    </span>
-    <slot />
+      <em v-if="optional" class="font-normal not-italic whitespace-nowrap text-muted-foreground">· {{ optional }}</em>
+    </component>
+    <p v-if="help" :id="helpId" class="-mt-[3px] mb-2.5 whitespace-pre-line text-[12.5px] leading-[1.45] text-muted-foreground">{{ help }}</p>
+    <slot :control-id="controlId" :caption-id="captionId" :described-by="help ? helpId : undefined" />
     <em v-if="hint" class="mt-[7px] block text-[12.5px] leading-[1.45] font-normal not-italic text-muted-foreground">{{ hint }}</em>
-  </label>
+  </component>
 </template>

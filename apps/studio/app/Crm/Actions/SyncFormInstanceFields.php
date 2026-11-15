@@ -29,6 +29,7 @@ class SyncFormInstanceFields
                     'label' => $row['label'],
                     'type' => $row['type'],
                     'required' => $row['required'],
+                    'help' => filled($row['help'] ?? null) ? trim($row['help']) : null,
                     'options' => $row['options'] ?? null,
                     'sort_order' => $index,
                 ];

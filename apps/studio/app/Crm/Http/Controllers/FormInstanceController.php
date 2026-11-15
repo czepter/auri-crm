@@ -108,6 +108,7 @@ class FormInstanceController extends Controller
             'fields.*.label' => ['required', 'string', 'max:255'],
             'fields.*.type' => ['required', Rule::enum(FormFieldType::class)],
             'fields.*.required' => ['required', 'boolean'],
+            'fields.*.help' => ['nullable', 'string', 'max:500'],
             ...$this->optionRules($request),
         ]);
 

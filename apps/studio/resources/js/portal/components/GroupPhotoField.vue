@@ -120,7 +120,7 @@ const open = computed(() => props.suggestions.filter((name) => !shots.value.some
 </script>
 
 <template>
-  <div class="flex flex-col gap-7">
+  <div role="group" class="flex flex-col gap-7">
     <div>
       <div class="mb-2.5 flex items-baseline justify-between gap-4">
         <span class="text-[12px] leading-none font-semibold tracking-[0.14em] uppercase text-muted-foreground">

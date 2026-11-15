@@ -2092,6 +2092,13 @@
                                                 },
                                                 "required": {
                                                     "type": "boolean"
+                                                },
+                                                "help": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "maxLength": 500
                                                 }
                                             },
                                             "required": [

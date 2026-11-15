@@ -53,3 +53,20 @@ test('Portal-Startseite', async ({ page }) => {
   await portal.waitForURL(`${PORTAL}/`)
   await screen(portal, 'portal-startseite')
 })
+
+test('Fragebogen: Hilfetext hängt per aria-describedby an der Frage', async ({ page }) => {
+  await page.goto('/kontakte')
+  await page.getByRole('link', { name: /^Meier & Kowalski$/ }).first().click()
+  await page.getByRole('button', { name: 'Portal', exact: true }).click()
+  const [portal] = await Promise.all([
+    page.context().waitForEvent('page'),
+    page.getByRole('button', { name: 'Vorschau als Kunde' }).click(),
+  ])
+  await portal.waitForURL(/\/projekte\//)
+  await portal.getByRole('link', { name: /E2E Fragebogen/ }).first().click()
+
+  const control = portal.getByLabel('Wer gehört zur engsten Familie?')
+  const helpId = await control.getAttribute('aria-describedby')
+
+  await expect(portal.locator(`#${helpId?.split(' ')[0]}`)).toHaveText('Eltern, Geschwister und Großeltern genügen.')
+})

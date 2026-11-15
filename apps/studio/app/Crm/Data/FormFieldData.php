@@ -16,6 +16,7 @@ class FormFieldData extends Data
         public string $type,
         public string $typeLabel,
         public bool $required,
+        public ?string $help,
         public ?array $options,
     ) {}
 
@@ -27,6 +28,7 @@ class FormFieldData extends Data
             type: $field->type->value,
             typeLabel: $field->type->label(),
             required: $field->required,
+            help: $field->help,
             options: $field->options,
         );
     }

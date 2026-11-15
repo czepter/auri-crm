@@ -6,6 +6,8 @@ use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Crm\Models\FormInstance;
+use App\Crm\Models\FormInstanceField;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Lead;
 use App\Crm\Models\ProjectField;
@@ -24,7 +26,9 @@ use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Mcp\Request as McpRequest;
 use Opis\JsonSchema\Validator;
 
@@ -208,6 +212,7 @@ function validateAgainstOutputSchema(string $tool, array $arguments = []): void
 
 function seedFullCase(): ClientCase
 {
+    Storage::fake('local');
     $case = ClientCase::factory()->booked()->create(['field_values' => ['gaeste' => 80]]);
     ProjectField::factory()->create();
     $case->attachContact(Contact::factory()->create(), CaseContactRole::Primary);
@@ -217,6 +222,16 @@ function seedFullCase(): ClientCase
     InternalNote::factory()->for($case, 'case')->create();
     PaymentInstallment::factory()->for(PaymentPlan::factory()->for($case, 'case')->create(['total' => 100000]), 'plan')->create();
     PackageItem::factory()->for(Package::factory()->create(), 'package')->create();
+
+    $form = FormInstance::factory()->for($case, 'case')->create();
+    FormInstanceField::factory()->for($form, 'formInstance')->create(['label' => 'Wer kommt?', 'help' => 'Auch Kinder.', 'sort_order' => 0])->answer('Oma');
+    FormInstanceField::factory()->for($form, 'formInstance')->select(['Ja', 'Nein'])->create(['label' => 'Fotos?', 'sort_order' => 1]);
+    FormInstanceField::factory()->for($form, 'formInstance')->create([
+        'label' => 'Gruppen', 'type' => 'group_photos', 'help' => 'Wählt die Gruppen.', 'options' => ['suggestions' => ['Eltern'], 'minutesPerGroup' => 2], 'sort_order' => 2,
+    ]);
+    FormInstanceField::factory()->for($form, 'formInstance')->create([
+        'label' => 'Plan', 'type' => 'file', 'options' => ['formats' => ['pdf'], 'maxSize' => 5, 'multiple' => false], 'sort_order' => 3,
+    ])->attachFile(UploadedFile::fake()->create('ablauf.pdf', 10, 'application/pdf'));
 
     $gallery = Gallery::factory()->create();
     $gallery->sets()->first()->assets()->create(['gallery_id' => $gallery->id, 'key' => 'originals/a/one.jpg', 'filename' => 'one.jpg', 'status' => 'ready']);
@@ -232,13 +247,30 @@ it('validates get_case against its output schema with and without field values',
     validateAgainstOutputSchema('get_case', ['case' => seedFullCase()->public_id]);
 });
 
+/** @return array<string, mixed> */
+function formArguments(string $tool): array
+{
+    $form = FormInstance::query()->with('fields')->first();
+    $fields = $form->fields->map(fn (FormInstanceField $field) => [
+        'id' => $field->public_id, 'label' => $field->label, 'type' => $field->type->value, 'required' => false, 'help' => $field->help,
+        'options' => $field->type->value === 'select' ? $field->options : null,
+    ])->all();
+
+    return match ($tool) {
+        'update_form' => ['form' => $form->public_id, 'name' => $form->name, 'fields' => $fields],
+        'share_form' => ['form' => $form->public_id, 'shared' => true],
+        'answer_form_field' => ['field' => $form->fields->first()->public_id, 'value' => 'Oma und Opa'],
+        default => [],
+    };
+}
+
 it('validates every tool with an output schema against it', function (string $tool) {
     mcpBearer(
         Capability::ViewAllCases, Capability::ManageLeads, Capability::ManageContacts, Capability::ManageNotes,
         Capability::ManageContracts, Capability::ManagePackages, Capability::ManageQuotes, Capability::ManageShoots,
-        Capability::ManagePortalAccess,
+        Capability::ManagePortalAccess, Capability::ManageFormTemplates,
     );
     $case = seedFullCase();
 
-    validateAgainstOutputSchema($tool, ['case' => $case->public_id, 'gallery' => Gallery::query()->value('public_id')]);
+    validateAgainstOutputSchema($tool, ['case' => $case->public_id, 'gallery' => Gallery::query()->value('public_id'), ...formArguments($tool)]);
 })->with(fn () => collect(CrmServer::definitions())->filter(fn ($definition) => $definition->outputSchema !== null)->pluck('name')->all());

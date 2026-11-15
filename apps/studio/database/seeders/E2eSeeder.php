@@ -255,7 +255,7 @@ class E2eSeeder extends Seeder
         }
 
         if ($instance->wasRecentlyCreated) {
-            FormInstanceField::factory()->for($instance)->create();
+            FormInstanceField::factory()->for($instance)->create(['help' => 'Eltern, Geschwister und Großeltern genügen.']);
         }
 
         $quote = Quote::firstOrCreate(
