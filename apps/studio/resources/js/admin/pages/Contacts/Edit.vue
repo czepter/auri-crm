@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onUnmounted, reactive, ref, watch } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ContactQueue from '@/admin/components/crm/ContactQueue.vue'
@@ -8,7 +8,7 @@ import ContactSocialProfiles from '@/admin/components/crm/ContactSocialProfiles.
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import SaveState from '@/ui/page/SaveState.vue'
-import { debounced, saveState } from '@/admin/lib/autosave'
+import { changedKeys, debounced, saveState } from '@/admin/lib/autosave'
 import Panel from '@/admin/components/crm/Panel.vue'
 import Metric from '@/admin/components/crm/Metric.vue'
 import { Button } from '@/ui/button'
@@ -22,6 +22,7 @@ import { useI18n } from 'vue-i18n'
 import { MAX_DOTS, type Tone } from '@/admin/lib/metricDots'
 import { useLiveProps } from '@/admin/lib/liveReload'
 import { filledProfiles, withOpenRow } from '@/admin/lib/socialProfile'
+import { Mail, Phone } from 'lucide-vue-next'
 
 const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? ''
 
@@ -100,13 +101,20 @@ useLiveProps(['contacts', 'contact', 'billingAddress', 'socialProfiles', 'corres
 
 const { t } = useI18n()
 
-const form = useForm({
+const serverValues = (): Record<string, unknown> => ({
   name: props.contact.name,
   email: props.contact.email ?? '',
   phone: props.contact.phone ?? '',
   street: props.billingAddress.street ?? '',
   postcode: props.billingAddress.postcode ?? '',
   city: props.billingAddress.city ?? '',
+  social_profiles: props.socialProfiles.map((profile) => ({ ...profile })),
+})
+
+const saved = reactive(serverValues())
+
+const form = useForm({
+  ...(serverValues() as { name: string; email: string; phone: string; street: string; postcode: string; city: string }),
   social_profiles: withOpenRow(props.socialProfiles.map((profile) => ({ ...profile }))),
 })
 
@@ -201,21 +209,109 @@ function priceLabel(one: { price: number | null; priceMode: string }) {
   return one.priceMode === 'from' ? t('packages.priceFromValue', { price }) : price
 }
 
-const payload = () => ({ ...form.data(), social_profiles: filledProfiles(form.social_profiles) })
+const fields = form as unknown as Record<string, unknown>
+const payload = (): Record<string, unknown> => ({ ...form.data(), social_profiles: filledProfiles(form.social_profiles) })
 
-function save() {
-  form.transform(payload).patch(`/kontakte/${props.contact.id}`, {
+// Keys the person edited since they were last sent. A key that failed
+// validation drops out, so it cannot block the next field's save.
+const edited = new Set<string>()
+let focused: string | null = null
+
+const state = computed(() => saveState([{
+  processing: form.processing,
+  hasErrors: form.hasErrors,
+  isDirty: changedKeys(saved, payload()).length > 0,
+}]))
+
+function take(withEmail: boolean) {
+  const now = payload()
+  const keys = changedKeys(saved, now).filter((key) => edited.has(key) && (withEmail || key !== 'email'))
+  keys.forEach((key) => edited.delete(key))
+
+  return Object.fromEntries(keys.map((key) => [key, now[key]]))
+}
+
+// Email waits for blur or Enter: every prefix of an address would otherwise
+// write an audit row and can hit the unique index.
+function save(withEmail = false) {
+  autosave.cancel()
+  const data = take(withEmail)
+
+  if (Object.keys(data).length === 0) return
+
+  form.transform(() => data).patch(`/kontakte/${props.contact.id}`, {
     preserveScroll: true,
     preserveState: true,
     only: ['contact', 'contacts', 'billingAddress', 'socialProfiles'],
-    onSuccess: () => form.defaults(),
   })
 }
 
 const autosave = debounced(save, 600)
 
-// Compared as text: the open row appearing under the last profile is not a change.
-watch(() => JSON.stringify(payload()), autosave)
+// An Inertia visit would be cancelled by the navigation it precedes.
+function leave() {
+  autosave.cancel()
+  const data = take(true)
+
+  if (Object.keys(data).length === 0) return
+
+  fetch(`/kontakte/${props.contact.id}`, {
+    method: 'PATCH',
+    keepalive: true,
+    redirect: 'manual',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': csrf },
+    body: JSON.stringify(data),
+  })
+}
+
+const stopBefore = router.on('before', (event) => {
+  if (event.detail.visit.url.pathname !== window.location.pathname) leave()
+})
+window.addEventListener('pagehide', leave)
+onUnmounted(() => {
+  stopBefore()
+  window.removeEventListener('pagehide', leave)
+})
+
+for (const key of Object.keys(saved)) {
+  watch(() => JSON.stringify(payload()[key]), () => {
+    if (!changedKeys(saved, payload()).includes(key)) return
+
+    edited.add(key)
+
+    if (key !== 'email') autosave()
+  })
+}
+
+// Concurrent changes reach the form through the live props; a field with
+// unsent edits or focus keeps what the person sees.
+watch(() => [props.contact, props.billingAddress, props.socialProfiles], () => {
+  const next = serverValues()
+  const dirty = changedKeys(saved, payload())
+
+  for (const key of Object.keys(next)) {
+    if (key === focused) continue
+
+    if (!dirty.includes(key)) {
+      fields[key] = key === 'social_profiles' ? withOpenRow(next[key] as { platform: string; value: string }[]) : next[key]
+    }
+
+    saved[key] = next[key]
+  }
+})
+
+function focusIn(event: FocusEvent) {
+  const id = (event.target as HTMLElement).id
+
+  focused = id.startsWith('c-profile') ? 'social_profiles' : id.slice(2)
+}
+
+function focusOut(event: FocusEvent) {
+  focused = null
+
+  if ((event.target as HTMLElement).id === 'c-email') save(true)
+}
 
 function eraseDsgvoData() {
   router.post(`/kontakte/${props.contact.id}/dsgvo/loeschen`)
@@ -234,7 +330,7 @@ function eraseDsgvoData() {
 
       <main data-tokens class="min-w-0 flex-1 overflow-y-auto pb-8">
         <PageHead :kicker="$t('contacts.title')" kicker-href="/kontakte" :title="contact.name">
-          <SaveState class="ml-auto" :state="saveState([form])" />
+          <SaveState class="ml-auto" :state="state" />
         </PageHead>
 
         <!-- Dieselbe Reiterspur wie im Auftrag (ProjectShell). -->
@@ -273,15 +369,21 @@ function eraseDsgvoData() {
                 </a>
               </div>
 
-              <form class="mb-7 flex flex-col gap-4" @submit.prevent="save">
+              <form class="mb-7 flex flex-col gap-4" @focusin="focusIn" @focusout="focusOut" @submit.prevent="save(true)">
                 <Field id="c-name" :label="$t('contacts.name')" :error="form.errors.name">
                   <Input id="c-name" v-model="form.name" type="text" />
                 </Field>
                 <Field id="c-phone" :label="$t('contacts.phone')" :error="form.errors.phone">
-                  <Input id="c-phone" v-model="form.phone" type="tel" autocomplete="tel" />
+                  <div class="flex items-center gap-2">
+                    <Input id="c-phone" v-model="form.phone" class="flex-1" type="tel" autocomplete="tel" />
+                    <a v-if="saved.phone" class="inline-flex p-2 text-ink-2 hover:text-foreground" :href="`tel:${saved.phone}`" :aria-label="$t('contacts.call')"><Phone class="size-4" /></a>
+                  </div>
                 </Field>
                 <Field id="c-email" :label="$t('contacts.email')" :error="form.errors.email">
-                  <Input id="c-email" v-model="form.email" type="email" autocomplete="email" />
+                  <div class="flex items-center gap-2">
+                    <Input id="c-email" v-model="form.email" class="flex-1" type="email" autocomplete="email" />
+                    <a v-if="saved.email" class="inline-flex p-2 text-ink-2 hover:text-foreground" :href="`mailto:${saved.email}`" :aria-label="$t('contacts.email')"><Mail class="size-4" /></a>
+                  </div>
                 </Field>
                 <Field id="c-street" :label="$t('contacts.street')" :error="form.errors.street">
                   <Input id="c-street" v-model="form.street" type="text" autocomplete="street-address" />

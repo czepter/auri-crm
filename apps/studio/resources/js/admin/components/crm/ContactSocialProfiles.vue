@@ -3,8 +3,8 @@ import { watch } from 'vue'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
-import { withOpenRow, type SocialProfile } from '@/admin/lib/socialProfile'
-import { X } from 'lucide-vue-next'
+import { profileHref, profileText, withOpenRow, type SocialProfile } from '@/admin/lib/socialProfile'
+import { ExternalLink, X } from 'lucide-vue-next'
 
 const props = defineProps<{
   profiles: SocialProfile[]
@@ -34,6 +34,16 @@ const isOpenRow = (index: number) => index === props.profiles.length - 1 && prop
     <Field :id="`c-profile-${index}`" class="flex-1" :error="errors[`social_profiles.${index}.value`]">
       <Input :id="`c-profile-${index}`" v-model="profile.value" type="text" :placeholder="$t('contacts.profileValue')" :aria-label="$t('contacts.profileValue')" />
     </Field>
+    <a
+      v-if="!isOpenRow(index)"
+      class="inline-flex p-2 text-ink-2 hover:text-foreground"
+      :href="profileHref(profile.platform, profile.value)"
+      :aria-label="profileText(profile.platform, profile.value)"
+      rel="noopener noreferrer"
+      target="_blank"
+    >
+      <ExternalLink class="size-4" />
+    </a>
     <button
       :aria-label="$t('common.remove')"
       class="inline-flex cursor-pointer border-0 bg-transparent p-2 text-ink-2"
