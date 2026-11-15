@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ContactQueue from '@/admin/components/crm/ContactQueue.vue'
+import ContactMergeDialog from '@/admin/components/crm/ContactMergeDialog.vue'
 import ContactPortalFields from '@/admin/components/crm/ContactPortalFields.vue'
 import ContactSocialProfiles from '@/admin/components/crm/ContactSocialProfiles.vue'
 import Page from '@/ui/page/Page.vue'
@@ -208,6 +209,7 @@ function priceLabel(one: { price: number | null; priceMode: string }) {
 // and three unnamed boxes side by side cannot say which is which — so the
 // sheet reads, and the form edits.
 const editing = ref(false)
+const merging = ref(false)
 
 function submit() {
   form.patch(`/kontakte/${props.contact.id}`, {
@@ -251,9 +253,18 @@ function eraseDsgvoData() {
                 {{ $t('common.save') }}
               </Button>
             </template>
-            <Button v-else variant="pill-muted" type="button" @click="editing = true">{{ $t('common.edit') }}</Button>
+            <template v-else>
+              <Button variant="pill-muted" type="button" @click="merging = true">{{ $t('contacts.merge') }}</Button>
+              <Button variant="pill-muted" type="button" @click="editing = true">{{ $t('common.edit') }}</Button>
+            </template>
           </div>
         </PageHead>
+
+        <ContactMergeDialog
+          v-model:open="merging"
+          :id="contact.id"
+          :sheet="{ name: contact.name, email: contact.email, phone: contact.phone, ...billingAddress }"
+        />
 
         <!-- Dieselbe Reiterspur wie im Auftrag (ProjectShell). -->
         <div class="mx-6 mt-4 inline-flex max-w-full gap-0.5 overflow-x-auto rounded-lg bg-sunk p-[3px] text-small font-medium">

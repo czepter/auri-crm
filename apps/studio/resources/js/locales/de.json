@@ -154,6 +154,7 @@
     },
     "projectCount": "kein Projekt | 1 Projekt | {count} Projekte",
     "none": "—",
+    "merge": "Zusammenführen",
     "editTitle": "Kontakt bearbeiten",
     "empty": "Keine Kontakte.",
     "portalAccess": "Portal-Zugang",
