@@ -148,7 +148,7 @@ function errorFor(id: string) {
 
           <PortalField
             v-else
-            class="relative [&_[data-slot=caption]]:text-[14.5px] [&_[data-slot=caption]]:font-medium [&_[data-slot=caption]]:text-foreground"
+            class="relative [&_[data-slot=caption]]:text-[14.5px] [&_[data-slot=caption]]:leading-[1.35] [&_[data-slot=caption]]:font-medium [&_[data-slot=caption]]:text-foreground"
             :label="field.label"
             :optional="field.required ? undefined : $t('settings.optional')"
             :help="field.help ?? undefined"
