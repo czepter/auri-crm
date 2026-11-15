@@ -76,7 +76,6 @@ enum FormFieldType: string implements HasLabel
             ],
             self::GroupPhotos => [
                 "{$prefix}.options" => ['nullable', 'array'],
-                "{$prefix}.options.help" => ['nullable', 'string', 'max:500'],
                 "{$prefix}.options.suggestions" => ['nullable', 'array', 'max:'.self::GROUP_SHOTS_MAX],
                 "{$prefix}.options.suggestions.*" => ['string', 'max:255'],
                 "{$prefix}.options.minutesPerGroup" => ['nullable', 'integer', 'min:1', 'max:'.self::GROUP_MINUTES_MAX],

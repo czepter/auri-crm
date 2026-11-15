@@ -22,7 +22,7 @@ class FormField extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['label', 'type', 'required', 'options', 'sort_order'];
+    protected $fillable = ['label', 'type', 'required', 'help', 'options', 'sort_order'];
 
     protected $attributes = ['required' => false, 'sort_order' => 0];
 

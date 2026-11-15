@@ -155,6 +155,7 @@ final class StudioOpsTools
                         'label' => $schema->string()->required(),
                         'type' => $schema->string()->enum(self::FORM_FIELD_TYPES)->required(),
                         'required' => $schema->boolean()->required(),
+                        'help' => $schema->string()->nullable()->description('Shown with the question in the portal. Plain text, max 500 characters. Omitting it clears it.'),
                         'options' => $schema->array()->items($schema->string())->nullable()->description('Only "select" reads this, as a list of choices. Leave unset for every other type — "file" and "group_photos" answers are out of scope here.'),
                     ]))->required(),
                 ],

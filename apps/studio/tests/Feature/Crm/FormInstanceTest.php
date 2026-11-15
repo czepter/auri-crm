@@ -136,6 +136,43 @@ it('rejects an inactive template as a seed source', function () {
     expect($project->formInstances()->count())->toBe(0);
 });
 
+it('copies a field\'s help text and keeps it independent of the template afterwards', function () {
+    $template = FormTemplate::factory()->create();
+    $templateField = FormField::factory()->for($template, 'formTemplate')->create(['help' => 'Gemeint ist die Zeit vor der Trauung.']);
+    $instance = FormInstance::factory()->for(ClientCase::factory()->create(), 'case')->create();
+
+    app(SeedFormInstanceFromTemplate::class)($instance, $template);
+    $field = $instance->fields()->sole();
+
+    expect($field->help)->toBe('Gemeint ist die Zeit vor der Trauung.');
+
+    $this->actingAs(staffMember(), 'staff')->patch("/frageboegen/{$instance->public_id}", [
+        'name' => $instance->name,
+        'fields' => [['id' => $field->public_id, 'label' => $field->label, 'type' => 'text', 'required' => false, 'help' => 'Nur für dieses Paar.', 'options' => null]],
+    ])->assertRedirect();
+
+    expect($field->fresh()->help)->toBe('Nur für dieses Paar.')
+        ->and($templateField->fresh()->help)->toBe('Gemeint ist die Zeit vor der Trauung.');
+
+    $templateField->update(['help' => 'Geändert in der Vorlage.']);
+
+    expect($field->fresh()->help)->toBe('Nur für dieses Paar.');
+});
+
+it('keeps the answer when only the help text of an answered field changes', function () {
+    $instance = FormInstance::factory()->for(ClientCase::factory()->create(), 'case')->create();
+    $field = FormInstanceField::factory()->for($instance, 'formInstance')->create(['label' => 'Wer kommt?']);
+    $field->answer('Oma');
+
+    $this->actingAs(staffMember(), 'staff')->patch("/frageboegen/{$instance->public_id}", [
+        'name' => $instance->name,
+        'fields' => [['id' => $field->public_id, 'label' => 'Wer kommt?', 'type' => 'text', 'required' => false, 'help' => 'Auch Kinder.', 'options' => null]],
+    ])->assertRedirect();
+
+    expect($field->fresh()->help)->toBe('Auch Kinder.')
+        ->and($field->fresh()->currentAnswer->value)->toBe('Oma');
+});
+
 it('personalises an instance\'s fields and name, wholesale replacing what was there, without touching its source template', function () {
     $user = staffMember();
     $project = ClientCase::factory()->create();

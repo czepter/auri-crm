@@ -27,7 +27,7 @@ function groupPhotoQuestion(bool $required = false): array
         'label' => 'Welche Gruppenfotos wünscht ihr euch?',
         'type' => FormFieldType::GroupPhotos,
         'required' => $required,
-        'options' => ['help' => null, 'suggestions' => ['Großeltern'], 'minutesPerGroup' => 2],
+        'options' => ['suggestions' => ['Großeltern'], 'minutesPerGroup' => 2],
     ]);
 
     return [$field, $contact, "/projekte/{$project->public_id}/fragebogen/{$instance->public_id}"];
