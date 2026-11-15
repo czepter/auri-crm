@@ -168,3 +168,15 @@ function captureArguments(): array
         'captured_via' => 'other',
     ];
 }
+
+it('returns an empty field map as an object', function () {
+    mcpBearer(Capability::ViewAllCases);
+    $case = ClientCase::factory()->booked()->create(['field_values' => []]);
+
+    $detail = app()->call([mcpTool('get_case'), 'handle'], ['request' => new McpRequest(['case' => $case->public_id])]);
+    $projects = app()->call([mcpTool('list_projects'), 'handle'], ['request' => new McpRequest([])]);
+
+    expect(mcpTool('get_case')->toArray()['outputSchema']['properties']['case']['properties']['fields']['type'])->toBe('object')
+        ->and(json_decode(json_encode($detail->getStructuredContent()))->case->fields)->toBeInstanceOf(stdClass::class)
+        ->and(json_decode(json_encode($projects->getStructuredContent()))->projects[0]->fields)->toBeInstanceOf(stdClass::class);
+});
