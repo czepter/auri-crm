@@ -12,6 +12,7 @@ import { Link, router, useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import StudioTaskCreateDialog from '@/admin/components/crm/StudioTaskCreateDialog.vue'
 import { Button } from '@/ui/button'
+import { Checkbox } from '@/ui/checkbox'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { DatePicker } from '@/ui/date-picker'
 import { Field } from '@/ui/field'
@@ -120,12 +121,10 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
               :key="task.id"
               class="flex items-center gap-4 border-b border-rule px-5 py-3.5 last:border-b-0"
             >
-              <button
-                class="size-[15px] flex-none rounded-[5px]"
-                :class="task.isDone ? 'bg-ok-bg' : 'bg-sunk-2'"
-                type="button"
+              <Checkbox
+                :model-value="task.isDone"
                 :aria-label="$t('project.taskComplete')"
-                @click="complete(task)"
+                @update:model-value="complete(task)"
               />
 
               <span class="min-w-0 flex-1">

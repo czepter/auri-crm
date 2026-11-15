@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 
 /*
@@ -130,20 +131,18 @@ const open = computed(() => props.suggestions.filter((name) => !shots.value.some
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
-        <button
+        <Button
           v-for="name in people"
           :key="name"
           type="button"
-          :class="[
-            'flex items-center gap-2 rounded-[var(--r-pill,999px)] border px-3.5 py-2 text-[13.5px] leading-tight',
-            inActive(name) ? 'border-foreground bg-foreground text-background' : 'border-line-hover bg-background',
-          ]"
+          variant="portal-filter"
+          :data-active="inActive(name)"
           :disabled="!shots.length"
           @click="toggle(name)"
         >
           <span>{{ name }}</span>
           <span :class="inActive(name) ? 'text-background/60' : 'text-faint'">{{ inActive(name) ? '−' : '+' }}</span>
-        </button>
+        </Button>
 
         <Input
           v-model="personDraft"
@@ -183,30 +182,30 @@ const open = computed(() => props.suggestions.filter((name) => !shots.value.some
           </div>
 
           <div v-if="shot.members.length" class="mt-3 flex flex-wrap gap-1.5">
-            <button
+            <Button
               v-for="member in shot.members"
               :key="member"
               type="button"
-              class="flex items-center gap-1.5 rounded-[var(--r-pill,999px)] border border-border bg-sunk py-1.5 pr-2.5 pl-3 text-[13px] leading-tight"
+              variant="portal-chip"
               @click.stop="active = index, toggle(member)"
             >
               <span>{{ member }}</span>
               <span class="text-faint">&times;</span>
-            </button>
+            </Button>
           </div>
         </div>
       </div>
 
       <div class="mt-4 flex flex-wrap items-center gap-2">
-        <button
+        <Button
           v-for="name in open"
           :key="name"
           type="button"
-          class="rounded-[var(--r-pill,999px)] border border-line-hover bg-background px-3.5 py-2 text-[13px] leading-tight text-muted-foreground"
+          variant="portal-chip"
           @click="addShot(name)"
         >
           + {{ name }}
-        </button>
+        </Button>
 
         <Input
           v-model="shotDraft"

@@ -526,7 +526,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                 <div class="flex flex-col gap-4">
                     <Panel :title="$t('project.client')">
                         <template v-if="header.canManageShoots && !kontakteEditing" #action>
-                            <Button class="ml-auto min-h-10 px-4" variant="ghost" type="button" @click="kontakteEditing = true">
+                            <Button class="ml-auto px-4" variant="ghost" type="button" @click="kontakteEditing = true">
                                 {{ $t("lead.edit") }}
                             </Button>
                         </template>
@@ -577,7 +577,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 <b class="font-semibold">{{ $t("project.lead") }}</b>
                                 <Button
                                     v-if="header.canManageShoots && inquiry.text"
-                                    class="ml-auto min-h-10 px-4"
+                                    class="ml-auto px-4"
                                     variant="ghost"
                                     type="button"
                                     @click="textEditing = !textEditing"

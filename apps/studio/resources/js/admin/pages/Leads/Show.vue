@@ -482,13 +482,13 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                                 class="mb-3 flex flex-col rounded-md border border-rule focus-within:border-ring"
                                 @submit.prevent="addTask"
                             >
-                                <input
+                                <Input
                                     v-model="task.title"
-                                    class="min-h-10 border-0 bg-transparent px-3.5 text-small outline-none"
+                                    class="min-h-10 border-0 bg-transparent px-3.5 text-small"
                                     type="text"
                                     :placeholder="$t('lead.taskTitle')"
                                     :aria-label="$t('lead.taskTitle')"
-                                >
+                                />
                                 <div class="flex items-center gap-4 px-3 pb-2.5">
                                     <DatePicker v-model="task.due_on" class="w-[150px] [&_input]:h-10 [&_input]:border-0 [&_input]:bg-transparent [&_input]:px-0" />
                                     <Select v-model="task.audience">
@@ -547,7 +547,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                                 <div class="ml-auto flex items-center gap-2">
                                     <Button
                                         v-if="shoots.length && !termineEditing"
-                                        class="min-h-10 px-4"
+                                        class="px-4"
                                         variant="ghost"
                                         type="button"
                                         @click="termineEditing = true"
@@ -563,7 +563,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                                     <div class="min-w-0 flex-1">
                                         <ShootFields :shoot="shoot" />
                                     </div>
-                                    <Button v-if="index > 0" variant="ghost" class="mt-5 min-h-10 text-small" type="button" @click="removeShoot(shoot.id)">
+                                    <Button v-if="index > 0" variant="ghost" class="mt-5 text-small" type="button" @click="removeShoot(shoot.id)">
                                         {{ $t("common.remove") }}
                                     </Button>
                                 </div>
@@ -597,7 +597,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                     <div class="flex flex-col gap-4">
                         <Panel :title="$t('contacts.title')">
                             <template v-if="header.canManageShoots && !kontakteEditing" #action>
-                                <Button class="ml-auto min-h-10 px-4" variant="ghost" type="button" @click="kontakteEditing = true">
+                                <Button class="ml-auto px-4" variant="ghost" type="button" @click="kontakteEditing = true">
                                     {{ $t("lead.edit") }}
                                 </Button>
                             </template>
@@ -624,7 +624,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                                     <Field v-slot="{ id }" dense class="w-[148px] flex-none" :label="$t('leads.phone')">
                                         <Input :id="id" v-model="person.phone" type="tel" inputmode="tel" />
                                     </Field>
-                                    <Button v-if="index > 0" variant="ghost" class="min-h-10 text-small" type="button" @click="removeContact(person.id)">
+                                    <Button v-if="index > 0" variant="ghost" class="text-small" type="button" @click="removeContact(person.id)">
                                         {{ $t("common.remove") }}
                                     </Button>
                                 </div>

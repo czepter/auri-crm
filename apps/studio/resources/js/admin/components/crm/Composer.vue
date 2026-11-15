@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ArrowUp } from 'lucide-vue-next'
+import { Button } from '@/ui/button'
 
 defineProps<{ placeholder: string; label: string; sendLabel: string; busy?: boolean; allowEmpty?: boolean }>()
 
@@ -20,15 +21,15 @@ const emit = defineEmits<{ send: [] }>()
             @keydown.ctrl.enter="emit('send')"
         />
         <div class="flex justify-end">
-            <button
+            <Button
                 type="button"
-                class="grid size-10 cursor-pointer place-items-center rounded-full bg-action text-action-foreground disabled:cursor-default disabled:opacity-50"
+                size="icon"
                 :aria-label="sendLabel"
                 :disabled="busy || (!allowEmpty && !model.trim())"
                 @click="emit('send')"
             >
-                <ArrowUp class="size-5" />
-            </button>
+                <ArrowUp />
+            </Button>
         </div>
     </div>
 </template>
