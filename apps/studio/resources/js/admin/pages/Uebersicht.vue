@@ -285,7 +285,7 @@ const CHIP = {
                 <PageHead :kicker="heading" :title="$t('dashboard.title')">
                     <DropdownMenu>
                         <DropdownMenuTrigger as-child>
-                            <Button class="ml-auto" type="button" variant="pill">
+                            <Button class="ml-auto" type="button" variant="outline">
                                 <svg class="size-3.5 fill-none stroke-current stroke-2 [stroke-linecap:round]" viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M12 5v14M5 12h14" />
                                 </svg>
@@ -371,7 +371,7 @@ const CHIP = {
                     </section>
 
                     <Panel v-if="dunning.length" :title="$t('dashboard.payments')" :count="dunning.length">
-                        <div v-for="(row, index) in dunning" :key="row.key" class="flex items-center gap-3 py-2" :class="ROW">
+                        <div v-for="row in dunning" :key="row.key" class="flex items-center gap-3 py-2" :class="ROW">
                             <div class="min-w-0 flex-1">
                                 <Link class="block truncate text-ui font-semibold tracking-[-0.015em] text-foreground no-underline" :href="row.href">
                                     {{ row.who }}
@@ -381,7 +381,7 @@ const CHIP = {
                                     <template v-if="row.whatTail">{{ row.whatTail }}</template>
                                 </span>
                             </div>
-                            <Button v-if="row.action" :as="Link" :variant="index === 0 ? 'pill' : 'pill-muted'" :href="row.action.target">
+                            <Button v-if="row.action" :as="Link" variant="pill-muted" :href="row.action.target">
                                 {{ row.action.label }}
                             </Button>
                         </div>
@@ -444,7 +444,7 @@ const CHIP = {
                             <Link class="ml-auto text-small text-ink-2 no-underline" href="/aufgaben">{{ $t("dashboard.allTasks") }}</Link>
                         </template>
 
-                        <div v-for="(row, index) in todo" :key="row.key" class="flex items-center gap-3 py-2.5" :class="ROW">
+                        <div v-for="row in todo" :key="row.key" class="flex items-center gap-3 py-2.5" :class="ROW">
                             <button
                                 v-if="row.task"
                                 type="button"
@@ -464,7 +464,7 @@ const CHIP = {
                             <span v-if="row.chip" class="flex-none rounded-full px-2.5 py-1 text-small font-medium tabular-nums" :class="CHIP[row.chip.tone]">
                                 {{ row.chip.text }}
                             </span>
-                            <Button v-if="row.action" :as="Link" :variant="index === 0 ? 'pill' : 'pill-muted'" :href="row.action.target">
+                            <Button v-if="row.action" :as="Link" variant="pill-muted" :href="row.action.target">
                                 {{ row.action.label }}
                             </Button>
                         </div>
