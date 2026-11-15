@@ -1,15 +1,22 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3'
+import { computed } from 'vue'
+import { Link, usePage } from '@inertiajs/vue3'
 
 defineProps<{ active: string }>()
 
-const NAV = [
+const ALL = [
   { key: 'konto', href: '/profil', label: 'profile.navAccount' },
   { key: 'sicherheit', href: '/profil/sicherheit', label: 'profile.navSecurity' },
   { key: 'benachrichtigungen', href: '/profil/benachrichtigungen', label: 'profile.navNotifications' },
   { key: 'kalender', href: '/profil/kalender', label: 'calendar.subscribe' },
+  { key: 'adressbuch', href: '/profil/adressbuch', label: 'profile.addressBook' },
   { key: 'abwesenheiten', href: '/abwesenheiten', label: 'profile.navAbsences' },
 ]
+
+const page = usePage()
+const NAV = computed(() =>
+  ALL.filter((item) => item.key !== 'adressbuch' || (page.props.auth.can ?? []).includes('manage_contacts')),
+)
 </script>
 
 <template>

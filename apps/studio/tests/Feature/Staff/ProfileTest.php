@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\StaffRole;
 use App\Gallery\Notifications\AssetCommented;
 use App\Gallery\Notifications\AssetFavorited;
 use App\Models\UserEmailChange;
@@ -149,4 +150,46 @@ it('suppresses a gallery notification the staff member turned off', function () 
 
     expect($preferences->enabled($user, AssetCommented::class, 'in_app'))->toBeFalse()
         ->and($preferences->enabled($user, AssetFavorited::class, 'in_app'))->toBeTrue();
+});
+
+it('shows carddav access on the address book pane', function () {
+    $user = staffMember();
+
+    $this->actingAs($user, 'staff')
+        ->get('/profil/adressbuch')
+        ->assertInertia(fn ($page) => $page
+            ->where('carddav.username', $user->email)
+            ->where('carddav.server', fn ($server) => str_ends_with($server, '/dav'))
+            ->where('carddav.password', fn ($password) => preg_match('/^[a-z0-9]{5}(-[a-z0-9]{5}){3}$/', $password) === 1));
+});
+
+it('mints no carddav secret on other panes', function () {
+    $user = staffMember();
+
+    $this->actingAs($user, 'staff')->get('/profil')->assertInertia(fn ($page) => $page->where('carddav', null));
+
+    expect($user->fresh()->carddav_secret)->toBeNull();
+});
+
+it('keeps the address book pane from roles without contacts', function () {
+    $this->actingAs(staffMember(StaffRole::Contributor), 'staff');
+
+    $this->get('/profil/adressbuch')->assertForbidden();
+    $this->post('/profil/adressbuch/passwort')->assertForbidden();
+});
+
+it('regenerates the carddav secret', function () {
+    $user = staffMember();
+    $before = $user->carddavSecret();
+
+    $this->actingAs($user, 'staff')->post('/profil/adressbuch/passwort')->assertRedirect();
+
+    expect($user->fresh()->carddavSecret())->not->toBe($before);
+});
+
+it('never serialises the carddav secret', function () {
+    $user = staffMember();
+    $user->carddavSecret();
+
+    expect($user->fresh()->toArray())->not->toHaveKey('carddav_secret');
 });

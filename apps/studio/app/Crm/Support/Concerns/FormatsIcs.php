@@ -38,13 +38,18 @@ trait FormatsIcs
         return $publicId.'@'.(parse_url((string) config('app.url'), PHP_URL_HOST) ?: 'studio');
     }
 
-    /** Backslash, semicolon, comma and newline carry meaning in a property value. */
+    /**
+     * Backslash, semicolon, comma and newline carry meaning in a property
+     * value. Other control characters and the code points XML forbids have no place in one: a public inquiry
+     * can store them, and they would break the XML around a vCard or, as a
+     * bare CR, start a line of their own.
+     */
     private function escape(string $value): string
     {
         return str_replace(
-            ['\\', ';', ',', "\r\n", "\n"],
-            ['\\\\', '\;', '\,', '\n', '\n'],
-            $value,
+            ['\\', ';', ',', "\r\n", "\n", "\r"],
+            ['\\\\', '\;', '\,', '\n', '\n', '\n'],
+            preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\x{FFFE}\x{FFFF}]/u', '', $value),
         );
     }
 

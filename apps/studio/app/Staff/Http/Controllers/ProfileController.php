@@ -64,6 +64,10 @@ class ProfileController extends Controller
             'calendarFeedUrl' => $pane === 'kalender'
                 ? url('/kalender/'.$user->calendarToken().'/shootings.ics')
                 : null,
+            // Ebenso nur auf der Adressbuch-Seite: carddavSecret() prägt das Geheimnis.
+            'carddav' => $pane === 'adressbuch'
+                ? ['server' => url('/dav'), 'username' => $user->email, 'password' => $user->carddavSecret()]
+                : null,
             'workingDays' => $pane === 'kalender' && $user->can(Capability::ManageSettings->value)
                 ? StudioSettings::current()->workingDays()
                 : null,

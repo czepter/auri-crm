@@ -128,6 +128,7 @@ return [
     'staff.mfa.failed' => 'Zweiter Faktor fehlgeschlagen',
     'staff.mfa.recovery_code_used' => 'Wiederherstellungscode verwendet',
     'staff.mfa.recovery_codes_regenerated' => 'Wiederherstellungscodes erneuert',
+    'staff.carddav.secret_regenerated' => 'Adressbuch-Passwort erneuert',
     'staff.mfa.throttled' => 'Zweiter Faktor gesperrt',
     'staff.ownership_transferred' => 'Inhaber übertragen',
     'staff.password_reset' => 'Passwort zurückgesetzt',
