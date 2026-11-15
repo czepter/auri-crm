@@ -1,6 +1,7 @@
 <?php
 
 use App\Crm\Models\ClientCase;
+use App\Crm\Models\ProjectType;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GallerySet;
 use App\Media\Enums\AssetStatus;
@@ -282,4 +283,15 @@ it('sets the three offers from the permissions tab', function () {
     expect($gallery->fresh()->downloads_enabled)->toBeFalse()
         // Untouched keys stay untouched: the tab saves one row at a time.
         ->and($gallery->fresh()->lists_enabled)->toBeTrue();
+});
+
+it('lets a media manager set the home flags and category and refuses an unknown type', function () {
+    $gallery = Gallery::factory()->create();
+    $type = ProjectType::query()->where('key', 'wedding')->firstOrFail();
+
+    test()->patch("/galerien/{$gallery->public_id}", ['listed_on_home' => true, 'home_pinned' => true, 'project_type_id' => $type->public_id])
+        ->assertSessionHasNoErrors();
+    expect($gallery->fresh())->listed_on_home->toBeTrue()->home_pinned->toBeTrue()->project_type_id->toBe($type->id);
+
+    test()->patch("/galerien/{$gallery->public_id}", ['project_type_id' => 'gibtsnicht'])->assertSessionHasErrors('project_type_id');
 });

@@ -42,9 +42,11 @@ const emit = defineEmits<{ close: [] }>()
 
 const { t } = useI18n()
 
-type Section = 'standardwerte' | 'gestaltung' | 'vorlagen'
+type Section = 'standardwerte' | 'gestaltung' | 'vorlagen' | 'startseite'
 
-const SECTIONS: Section[] = ['standardwerte', 'gestaltung', 'vorlagen']
+const SECTIONS: Section[] = ['standardwerte', 'gestaltung', 'vorlagen', 'startseite']
+
+const HOME_MODES = ['none', 'redirect', 'overview'] as const
 
 const MODES = ['inherit', 'days', 'never']
 
@@ -67,6 +69,9 @@ const form = useForm({
   gallery_default_lists_enabled: props.settings.listsEnabled,
   gallery_default_comments_enabled: props.settings.commentsEnabled,
   gallery_default_design: complete(props.settings.design),
+  gallery_home_mode: props.settings.homeMode,
+  gallery_home_redirect_url: props.settings.homeRedirectUrl ?? '',
+  gallery_home_noindex: props.settings.homeNoindex,
 })
 
 function save() {
@@ -74,6 +79,7 @@ function save() {
     .transform((data) => ({
       ...data,
       gallery_default_expiry_days: data.gallery_default_expiry_days === '' ? null : data.gallery_default_expiry_days,
+      gallery_home_redirect_url: data.gallery_home_mode !== 'redirect' || data.gallery_home_redirect_url === '' ? null : data.gallery_home_redirect_url,
     }))
     .patch('/einstellungen/galerien', { preserveScroll: true, preserveState: true })
 }
@@ -305,6 +311,33 @@ const studioOffers = computed(() => ({
               :url="galleryHost"
             />
           </PreviewOverlay>
+        </section>
+
+        <section v-else-if="open === 'startseite'" class="min-w-0 flex-1">
+          <h2 class="m-0 mb-6 text-title leading-[1.2] font-semibold tracking-[-0.02em]">
+            {{ $t('gallerySettings.nav_startseite') }}
+            <a v-if="form.gallery_home_mode !== 'none'" class="ml-2 text-small font-normal text-ring no-underline hover:underline" :href="`https://${galleryHost}`">{{ galleryHost }}</a>
+          </h2>
+
+          <div class="w-[300px] max-[720px]:w-full">
+            <ChoiceGroup
+              v-model="form.gallery_home_mode"
+              class="mb-4"
+              :label="$t('gallerySettings.homeMode')"
+              :options="HOME_MODES.map((mode) => ({ value: mode, label: $t(`gallerySettings.homeMode_${mode}`) }))"
+              @update:model-value="save"
+            />
+
+            <Field v-if="form.gallery_home_mode === 'redirect'" v-slot="{ id }" :error="form.errors.gallery_home_redirect_url">
+              <Label :for="id">{{ $t('gallerySettings.homeRedirectUrl') }}</Label>
+              <Input :id v-model="form.gallery_home_redirect_url" type="url" @blur="save" />
+            </Field>
+
+            <div v-if="form.gallery_home_mode === 'overview'" class="flex items-center gap-4 border-b border-border py-2.5">
+              <Label class="flex-1" for="home-noindex" variant="inline">{{ $t('gallerySettings.homeNoindex') }}</Label>
+              <Switch id="home-noindex" v-model="form.gallery_home_noindex" @update:model-value="save" />
+            </div>
+          </div>
         </section>
 
         <section v-else class="min-w-0 flex-1">

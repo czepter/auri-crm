@@ -2,6 +2,7 @@
 
 namespace App\Gallery\Http\Controllers;
 
+use App\Crm\Models\ProjectType;
 use App\Documents\Data\MailTemplateData;
 use App\Documents\Support\DocumentMergeData;
 use App\Gallery\Actions\CopyGalleryAssets;
@@ -230,6 +231,15 @@ class GalleryRecordController extends Controller
                 ],
                 'permissions' => GalleryPermissions::normalize($gallery->permissions),
                 'introEnabled' => $gallery->intro_enabled,
+                'listedOnHome' => $gallery->listed_on_home,
+                'homePinned' => $gallery->home_pinned,
+                'homeBlocker' => $gallery->homeBlocker(),
+                'homeMode' => StudioSettings::current()->gallery_home_mode,
+                'categoryId' => $gallery->projectType?->public_id,
+                'categories' => ProjectType::query()
+                    ->where(fn ($query) => $query->where('is_active', true)->orWhere('id', $gallery->project_type_id))
+                    ->orderBy('sort_order')->orderBy('id')->get()
+                    ->map(fn (ProjectType $type) => ['id' => $type->public_id, 'name' => $type->name])->all(),
             ],
             // The other galleries of the same booking, as a tab row: they are
             // the ones one flips between.
@@ -385,6 +395,9 @@ class GalleryRecordController extends Controller
             'comments_enabled' => ['sometimes', 'boolean'],
             ...GalleryPermissions::rules(),
             'intro_enabled' => ['sometimes', 'boolean'],
+            'listed_on_home' => ['sometimes', 'boolean'],
+            'home_pinned' => ['sometimes', 'boolean'],
+            'project_type_id' => ['nullable', 'string', Rule::exists('project_types', 'public_id')->where('tenant_id', config('tenancy.tenant_id'))],
         ], [
             'slug.regex' => __('galleryRecord.slugFormat'),
             'slug.unique' => __('galleryRecord.slugTaken'),
@@ -408,8 +421,13 @@ class GalleryRecordController extends Controller
 
         $fields = array_intersect_key($validated, array_flip([
             'slug', 'expires_at', 'external_url', 'external_password', 'info', 'downloads_enabled', 'lists_enabled', 'comments_enabled', 'intro_enabled',
-            'view_mode', 'watermark_text', 'download_rule', 'expiry_reminder',
+            'view_mode', 'watermark_text', 'download_rule', 'expiry_reminder', 'listed_on_home', 'home_pinned',
         ]));
+
+        if ($request->has('project_type_id')) {
+            $fields['project_type_id'] = $validated['project_type_id'] === null ? null
+                : ProjectType::query()->where('public_id', $validated['project_type_id'])->value('id');
+        }
 
         if ($request->has('download_sizes')) {
             $fields['download_sizes'] = array_values(array_unique($validated['download_sizes']));

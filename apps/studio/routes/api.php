@@ -10,6 +10,8 @@ use App\Gallery\Http\Controllers\GalleryAddressController;
 use App\Gallery\Http\Controllers\GalleryDownloadOfferController;
 use App\Gallery\Http\Controllers\GalleryDraftImageController;
 use App\Gallery\Http\Controllers\GalleryGuestController;
+use App\Gallery\Http\Controllers\GalleryHomeController;
+use App\Gallery\Http\Controllers\GalleryHomeCoverController;
 use App\Gallery\Http\Controllers\GalleryImageController;
 use App\Gallery\Http\Controllers\GalleryPassController;
 use App\Gallery\Http\Controllers\GalleryPrereleaseSignupController;
@@ -105,6 +107,10 @@ Route::get('/galleries/{gallery}/entwurf-bilder/{key}', GalleryDraftImageControl
 Route::get('/galleries/{gallery}', GalleryReadController::class)->name('api.galleries.show');
 
 Route::get('/gallery-address/{reference}', GalleryAddressController::class)->name('api.gallery-address.show');
+
+Route::get('/gallery-home', GalleryHomeController::class)->name('api.gallery-home.show');
+Route::get('/gallery-home/covers/{galleryVersion:public_id}', GalleryHomeCoverController::class)
+    ->name('api.gallery-home.covers.show');
 
 // Die Anmeldung des Gastes. Hinter dem Ansichtspass, weil sie nur etwas ist,
 // das man in einer offenen Galerie tut — aber vor jedem Herz und jedem
