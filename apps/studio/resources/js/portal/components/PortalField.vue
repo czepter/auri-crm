@@ -61,7 +61,7 @@ const helpId = `${base}-help`
       class="mb-[7px] block text-[13px] leading-none font-normal text-muted-foreground"
     >
       {{ label }}
-      <em v-if="optional" class="font-normal not-italic whitespace-nowrap">· {{ optional }}</em>
+      <em v-if="optional" class="font-normal not-italic whitespace-nowrap text-muted-foreground">· {{ optional }}</em>
     </component>
     <p v-if="help" :id="helpId" class="-mt-[3px] mb-2.5 whitespace-pre-line text-[12.5px] leading-[1.45] text-muted-foreground">{{ help }}</p>
     <slot :control-id="controlId" :caption-id="captionId" :described-by="help ? helpId : undefined" />

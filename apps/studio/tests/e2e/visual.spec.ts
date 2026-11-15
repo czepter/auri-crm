@@ -66,7 +66,7 @@ test('Fragebogen: Hilfetext hängt per aria-describedby an der Frage', async ({ 
   await portal.getByRole('link', { name: /Meier & Kowalski/ }).first().click()
   await portal.getByRole('link', { name: /E2E Fragebogen/ }).first().click()
 
-  const control = portal.getByLabel('Wer gehört zur engsten Familie?', { exact: true })
+  const control = portal.getByLabel('Wer gehört zur engsten Familie?')
   const helpId = await control.getAttribute('aria-describedby')
 
   await expect(portal.locator(`#${helpId?.split(' ')[0]}`)).toHaveText('Eltern, Geschwister und Großeltern genügen.')
