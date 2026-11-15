@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { debounced } from './autosave'
+import { changedKeys, debounced } from './autosave'
+import { filledProfiles } from './socialProfile'
 
 beforeEach(() => vi.useFakeTimers())
 afterEach(() => vi.useRealTimers())
@@ -37,5 +38,31 @@ describe('debounced', () => {
     vi.advanceTimersByTime(599)
 
     expect(spy).not.toHaveBeenCalled()
+  })
+})
+
+describe('debounced.cancel', () => {
+  it('drops the pending call', () => {
+    const spy = vi.fn()
+    const save = debounced(spy, 600)
+
+    save('a')
+    save.cancel()
+    vi.advanceTimersByTime(600)
+
+    expect(spy).not.toHaveBeenCalled()
+  })
+})
+
+describe('changedKeys', () => {
+  it('names only the keys that differ', () => {
+    expect(changedKeys({ name: 'Anna', city: 'Jena' }, { name: 'Anna', city: 'Erfurt' })).toEqual(['city'])
+  })
+
+  it('ignores the platform of the empty open row', () => {
+    const saved = { social_profiles: [{ platform: 'instagram', value: '@anna' }] }
+    const open = [...saved.social_profiles, { platform: 'tiktok', value: '' }]
+
+    expect(changedKeys(saved, { social_profiles: filledProfiles(open) })).toEqual([])
   })
 })

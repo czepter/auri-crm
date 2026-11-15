@@ -2,13 +2,24 @@
  * Der Autosave feuert beim Verlassen jeder Zelle. Ohne Bündelung wäre das ein
  * Request je Tastaturwechsel — mit ihr einer je Denkpause.
  */
-export function debounced<T extends unknown[]>(fn: (...args: T) => void, delay: number): (...args: T) => void {
+export function debounced<T extends unknown[]>(fn: (...args: T) => void, delay: number) {
   let timer: ReturnType<typeof setTimeout> | undefined
 
-  return (...args: T) => {
+  const call = (...args: T) => {
     clearTimeout(timer)
     timer = setTimeout(() => fn(...args), delay)
   }
+
+  call.cancel = () => clearTimeout(timer)
+
+  return call
+}
+
+/** Keys whose current value differs from the last saved one. */
+export function changedKeys<T extends object>(saved: T, current: T): (keyof T)[] {
+  return (Object.keys(current) as (keyof T)[]).filter(
+    (key) => JSON.stringify(saved[key]) !== JSON.stringify(current[key]),
+  )
 }
 
 export type SaveState = 'saved' | 'saving' | 'dirty' | 'error'
