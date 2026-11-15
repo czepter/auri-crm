@@ -2226,8 +2226,8 @@
   "palette": {
     "search": "Suchen",
     "placeholder": "Kontakt, Anfrage, Projekt oder Galerie",
-    "recent": "Zuletzt",
     "kind": {
+      "aktion": "Aktion",
       "kontakt": "Kontakt",
       "anfrage": "Anfrage",
       "projekt": "Projekt",
