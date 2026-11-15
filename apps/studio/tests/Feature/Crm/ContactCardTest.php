@@ -40,3 +40,12 @@ it('folds long lines with crlf', function () {
     expect($body)->toContain("\r\n ")
         ->and(collect(explode("\r\n", $body))->every(fn ($line) => strlen($line) <= 75))->toBeTrue();
 });
+
+it('drops control characters and turns a bare carriage return into a newline escape', function () {
+    $body = vcardFor(['name' => "Anna\x01 Meier\rEND:VCARD\rBEGIN:VCARD"]);
+
+    expect($body)->not->toMatch('/[\x00-\x08\x0B\x0C\x0E-\x1F]/')
+        ->and($body)->not->toMatch('/\r(?!\n)/')
+        ->and($body)->toContain('FN:Anna Meier\nEND:VCARD\nBEGIN:VCARD')
+        ->and(preg_match_all('/^BEGIN:VCARD/m', $body))->toBe(1);
+});

@@ -11,7 +11,7 @@ const DAV_NAMESPACES = ['d' => 'DAV:', 'card' => 'urn:ietf:params:xml:ns:carddav
 
 function dav(string $method, string $uri, ?string $body = null, array $headers = [], ?User $user = null, ?string $secret = null)
 {
-    $server = ['HTTP_DEPTH' => $headers['Depth'] ?? null, 'CONTENT_TYPE' => 'application/xml'];
+    $server = ['HTTP_DEPTH' => $headers['Depth'] ?? null, 'CONTENT_TYPE' => 'application/xml', 'REMOTE_ADDR' => $headers['Ip'] ?? null];
 
     if ($user !== null) {
         $server['HTTP_AUTHORIZATION'] = 'Basic '.base64_encode($user->email.':'.($secret ?? $user->carddavSecret()));
@@ -83,15 +83,27 @@ it('matches the user name case-insensitively', function () {
     ])->assertStatus(207);
 });
 
-it('throttles repeated failures per user name', function () {
+it('throttles repeated failures per address', function () {
     $user = staffMember();
     $secret = $user->carddavSecret();
 
     for ($i = 0; $i < 20; $i++) {
-        dav('PROPFIND', '/dav/', null, [], $user, 'wrong')->assertStatus(401);
+        dav('PROPFIND', '/dav/', null, [], $user, 'wrong')->assertStatus($i < 19 ? 401 : 429);
     }
 
     expect(dav('PROPFIND', '/dav/', null, [], $user, $secret)->assertStatus(429)->headers->get('Retry-After'))->not->toBeNull();
+});
+
+it('lets the right secret through while strangers guess the user name', function () {
+    $user = staffMember();
+    $secret = $user->carddavSecret();
+
+    for ($i = 0; $i < 20; $i++) {
+        dav('PROPFIND', '/dav/', null, ['Ip' => "10.0.0.{$i}"], $user, 'wrong')->assertStatus($i < 19 ? 401 : 429);
+    }
+
+    dav('PROPFIND', '/dav/', null, ['Ip' => '10.0.1.1', 'Depth' => '0'], $user, $secret)->assertStatus(207);
+    dav('PROPFIND', '/dav/', null, ['Ip' => '10.0.1.2'], $user, 'wrong')->assertStatus(429);
 });
 
 it('refuses a role without manage_contacts', function () {

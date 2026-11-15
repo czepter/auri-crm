@@ -7,6 +7,7 @@ import FormSection from '@/ui/page/FormSection.vue'
 import FormShell from '@/ui/page/FormShell.vue'
 import CreateSummary from '@/admin/components/CreateSummary.vue'
 import { Button } from '@/ui/button'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
 import { CopyButton } from '@/ui/copy-button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Field } from '@/ui/field'
@@ -315,18 +316,31 @@ function regenerateCarddavSecret() {
       <FormSection :title="$t('profile.davSection')">
         <dl v-if="carddav" class="grid gap-4">
           <div v-for="row in [
-            { label: 'profile.davServer', value: carddav.server },
-            { label: 'profile.davUser', value: carddav.username },
-            { label: 'profile.davPassword', value: carddav.password },
-          ]" :key="row.label" class="flex items-center gap-3">
-            <dt class="w-32 flex-none text-ui text-muted-foreground">{{ $t(row.label) }}</dt>
-            <dd class="min-w-0 flex-1"><code class="text-small break-all">{{ row.value }}</code></dd>
-            <CopyButton :value="row.value" />
+            { label: 'profile.davServer', copy: 'profile.davCopyServer', value: carddav.server },
+            { label: 'profile.davUser', copy: 'profile.davCopyUser', value: carddav.username },
+            { label: 'profile.davPassword', copy: 'profile.davCopyPassword', value: carddav.password },
+          ]" :key="row.label" class="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-3">
+            <dt class="text-ui text-muted-foreground sm:w-32 sm:flex-none">{{ $t(row.label) }}</dt>
+            <div class="flex min-w-0 max-w-full flex-1 items-center gap-3">
+              <dd class="min-w-0 flex-1"><code class="text-small break-all">{{ row.value }}</code></dd>
+              <CopyButton :value="row.value" :label="$t(row.copy)" />
+            </div>
           </div>
         </dl>
-        <Button class="mt-4" type="button" variant="pill-muted" @click="regenerateCarddavSecret()">
-          {{ $t('profile.regenerate') }}
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger as-child>
+            <Button class="mt-4" type="button" variant="pill-muted">{{ $t('profile.regenerate') }}</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{{ $t('profile.davRegenerateConfirm') }}</AlertDialogTitle>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction @click="regenerateCarddavSecret">{{ $t('profile.regenerate') }}</AlertDialogAction>
+              <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </FormSection>
       </template>
 

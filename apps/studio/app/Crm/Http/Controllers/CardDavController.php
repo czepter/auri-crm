@@ -117,24 +117,26 @@ class CardDavController extends Controller
             return null;
         }
 
-        $keys = ['carddav-ip:'.$request->ip(), 'carddav-user:'.mb_strtolower(trim($username))];
+        $ip = 'carddav-ip:'.$request->ip();
+        $named = 'carddav-user:'.mb_strtolower(trim($username));
 
-        foreach ($keys as $key) {
-            if (RateLimiter::tooManyAttempts($key, self::MAX_ATTEMPTS)) {
-                $denied = new Response('', 429, ['Retry-After' => (string) RateLimiter::availableIn($key)]);
+        if (RateLimiter::tooManyAttempts($ip, self::MAX_ATTEMPTS)) {
+            $denied = new Response('', 429, ['Retry-After' => (string) RateLimiter::availableIn($ip)]);
 
-                return null;
-            }
+            return null;
         }
 
         $user = User::query()->whereRaw('lower(email) = ?', [mb_strtolower(trim($username))])->first();
 
         if ($user === null || $user->carddav_secret === null || ! hash_equals($user->carddav_secret, (string) $request->getPassword())) {
-            foreach ($keys as $key) {
-                RateLimiter::hit($key, self::DECAY_SECONDS);
-            }
+            RateLimiter::hit($ip, self::DECAY_SECONDS);
+            RateLimiter::hit($named, self::DECAY_SECONDS);
 
-            $denied = $challenge;
+            // The user key only slows guessing; a correct secret passes it, so
+            // a stranger who knows an address cannot lock that phone out.
+            $denied = RateLimiter::tooManyAttempts($named, self::MAX_ATTEMPTS)
+                ? new Response('', 429, ['Retry-After' => (string) RateLimiter::availableIn($named)])
+                : $challenge;
 
             return null;
         }
