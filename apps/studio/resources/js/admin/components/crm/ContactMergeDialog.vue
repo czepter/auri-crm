@@ -95,7 +95,7 @@ function merge() {
         />
       </DialogBody>
       <DialogFooter>
-        <Button type="button" :disabled="!duplicate || processing" @click="confirming = true">{{ $t('contacts.merge') }}</Button>
+        <Button class="ml-auto" type="button" :disabled="!duplicate || processing" @click="confirming = true">{{ $t('contacts.merge') }}</Button>
         <Button variant="ghost" type="button" @click="open = false">{{ $t('common.cancel') }}</Button>
       </DialogFooter>
     </DialogContent>

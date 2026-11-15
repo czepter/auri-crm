@@ -3,7 +3,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { useDebounceFn, useElementSize } from '@vueuse/core'
 import { Link, router, useForm, usePage } from '@inertiajs/vue3'
-import { ChevronDown, Plus, X } from 'lucide-vue-next'
+import { Plus, X } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
@@ -306,7 +306,7 @@ function chipTone(status: string): ChipTone {
             <Button class="max-w-full min-w-0" :class="{ 'animate-pulse': sending }" variant="outline" type="button" :disabled="sending" :aria-busy="sending" @click="sendTest">
               <span class="truncate">{{ $t('automations.testMailTo', { email: testRecipient }) }}</span>
             </Button>
-            <Button type="button" :disabled="form.processing" @click="save">
+            <Button class="ml-auto" type="button" :disabled="form.processing" @click="save">
               {{ $t('common.save') }}
             </Button>
           </div>
@@ -457,7 +457,6 @@ function chipTone(status: string): ChipTone {
               <span class="text-small leading-none font-semibold text-foreground">{{ $t('automations.preview') }}</span>
               <ChoiceGroup
                 v-model="device"
-                variant="segmented"
                 :options="[
                   { value: 'desktop', label: $t('portalSettings.device.desktop') },
                   { value: 'mobile', label: $t('portalSettings.device.mobile') },
@@ -468,15 +467,13 @@ function chipTone(status: string): ChipTone {
             <div class="mt-2 rounded-[10px] bg-sunk-2 p-3">
               <Field v-if="projects.length > 1 || search" v-slot="{ id }" class="mb-3" :label="$t('automations.previewWith')">
                 <Combobox ignore-filter open-on-focus :model-value="project || EXAMPLE" @update:model-value="pick">
-                  <ComboboxAnchor class="relative">
+                  <ComboboxAnchor>
                     <ComboboxInput
                       :id="id"
-                      class="pr-8"
                       :display-value="() => chosen"
                       @focus="($event.target as HTMLInputElement).select()"
                       @input="search = ($event.target as HTMLInputElement).value"
                     />
-                    <ChevronDown class="pointer-events-none absolute top-1/2 right-[11px] size-[13px] -translate-y-1/2 text-muted-foreground" />
                   </ComboboxAnchor>
                   <ComboboxContent>
                     <ComboboxItem v-for="option in projects" :key="option.value" :value="option.value || EXAMPLE">

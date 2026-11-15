@@ -58,7 +58,7 @@ function removeStage(index: number) {
       <datalist id="stage-names"><option v-for="name in nameSuggestions" :key="name" :value="name" /></datalist>
 
       <div v-for="(stage, index) in stages" :key="index" class="flex flex-wrap items-center gap-3">
-        <ChoiceGroup :model-value="stage.fixed ? '€' : '%'" variant="segmented" :options="UNITS" :aria-label="$t('quotes.stageUnit')" @update:model-value="(unit) => setUnit(stage, unit)" />
+        <ChoiceGroup :model-value="stage.fixed ? '€' : '%'" :options="UNITS" :aria-label="$t('quotes.stageUnit')" @update:model-value="(unit) => setUnit(stage, unit)" />
         <InputGroup v-if="!stage.fixed" class="w-24">
           <InputGroupInput
             class="text-right tabular-nums"

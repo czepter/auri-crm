@@ -83,7 +83,7 @@ function initials(name: string) {
                are adding to, and it should still be there when you look up. -->
           <Dialog v-model:open="inviting">
             <DialogTrigger as-child>
-              <Button class="ml-auto" variant="pill" type="button">{{ $t('team.invite') }}</Button>
+              <Button class="ml-auto" variant="default" type="button">{{ $t('team.invite') }}</Button>
             </DialogTrigger>
 
             <DialogContent>
@@ -113,7 +113,7 @@ function initials(name: string) {
               </DialogBody>
 
               <DialogFooter>
-                <Button type="submit" form="team-invite-form" :disabled="form.processing">{{ $t('team.send') }}</Button>
+                <Button class="ml-auto" type="submit" form="team-invite-form" :disabled="form.processing">{{ $t('team.send') }}</Button>
                 <DialogClose as-child>
                   <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
                 </DialogClose>
@@ -193,7 +193,7 @@ function initials(name: string) {
               </DialogBody>
 
               <DialogFooter>
-                <Button type="submit" form="team-transfer-form" :disabled="transferForm.processing">{{ $t('team.transferConfirm') }}</Button>
+                <Button class="ml-auto" type="submit" form="team-transfer-form" :disabled="transferForm.processing">{{ $t('team.transferConfirm') }}</Button>
                 <DialogClose as-child>
                   <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
                 </DialogClose>

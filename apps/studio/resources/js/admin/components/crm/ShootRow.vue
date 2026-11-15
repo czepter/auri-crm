@@ -37,7 +37,7 @@ function advance(status: string) {
         }}</span>
         <DropdownMenu v-if="manageable && shoot.forwardStatuses.length">
             <DropdownMenuTrigger as-child>
-                <Button variant="ghost" type="button" class="px-2 max-[640px]:absolute max-[640px]:top-0 max-[640px]:right-0 max-[640px]:min-h-11 max-[640px]:min-w-11" :aria-label="$t('project.more')">
+                <Button variant="secondary" size="icon" type="button" class="max-[640px]:absolute max-[640px]:top-0 max-[640px]:right-0 max-[640px]:min-h-11 max-[640px]:min-w-11" :aria-label="$t('project.more')">
                     <Ellipsis class="size-4" />
                 </Button>
             </DropdownMenuTrigger>

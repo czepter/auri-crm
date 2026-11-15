@@ -80,7 +80,7 @@ function submit() {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('formTemplates.kicker')" kicker-href="/vorlagen?typ=fragebogen" :title="form.name || $t('formTemplates.untitled')">
-          <Button class="ml-auto" type="submit" form="form-template-form" :disabled="form.processing" variant="pill">
+          <Button class="ml-auto" type="submit" form="form-template-form" :disabled="form.processing" variant="default">
             {{ $t('formTemplates.save') }}
           </Button>
         </PageHead>

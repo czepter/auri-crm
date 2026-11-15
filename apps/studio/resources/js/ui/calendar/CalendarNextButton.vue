@@ -19,7 +19,7 @@ const forwardedProps = useForwardProps(delegatedProps)
     data-slot="calendar-next-button"
     :class="cn(
       buttonVariants({ variant: 'ghost' }),
-      'size-7 justify-center rounded-md p-0 hover:bg-muted',
+      'size-8 justify-center rounded-[var(--r-sm)] p-0 hover:bg-muted',
       props.class,
     )"
     v-bind="forwardedProps"

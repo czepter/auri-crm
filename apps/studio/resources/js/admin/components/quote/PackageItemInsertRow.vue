@@ -46,6 +46,7 @@ function choose(kind: string, id: string) {
           v-for="option in group.options"
           :key="`${option.kind}-${option.id}`"
           :value="`${option.kind}:${option.id}`"
+          :create="option.kind === 'new'"
           @select="choose(option.kind, option.id)"
         >
           <span class="min-w-0 flex-1 truncate">

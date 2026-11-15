@@ -14,10 +14,9 @@ const meta = {
       control: 'select',
       options: [
         'default',
+        'secondary',
         'outline',
         'ghost',
-        'pill',
-        'pill-muted',
         'portal',
         'portal-ghost',
         'portal-chip',
@@ -40,10 +39,10 @@ type Story = StoryObj<typeof meta>
 
 export const Standard: Story = {}
 
-/** Die gefüllte Pille: eine pro Bildschirm, oben rechts neben dem Titel. */
-export const Pille: Story = { args: { variant: 'pill' } }
+/** Gedämpft neben der gefüllten Aktion. */
+export const Secondary: Story = { args: { variant: 'secondary' } }
 
-/** Alles, was neben der Pille steht — und jedes „+ Zeile" unten in einer Karte. */
+/** Alles, was neben der Aktion steht — und jedes „+ Zeile" unten in einer Karte. */
 export const Outline: Story = { args: { variant: 'outline' } }
 
 /** Zeilenaktion: trägt keine Fläche, weil die Zeile schon eine ist. */
@@ -57,7 +56,7 @@ export const AlleVarianten: Story = {
   render: () => ({
     components: { Button },
     setup: () => ({
-      admin: ['default', 'outline', 'ghost', 'pill', 'pill-muted'] as const,
+      admin: ['default', 'secondary', 'outline', 'ghost'] as const,
       portal: ['portal', 'portal-ghost', 'portal-chip', 'portal-nav', 'portal-filter'] as const,
     }),
     template: `

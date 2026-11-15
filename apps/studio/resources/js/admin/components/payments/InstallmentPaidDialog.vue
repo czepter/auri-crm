@@ -50,7 +50,7 @@ function submit() {
 <template>
   <Dialog v-model:open="open">
     <DialogTrigger as-child>
-      <Button :variant="primary ? 'pill' : 'outline'" type="button" :class="triggerClass">{{ $t('payments.markPaid') }}</Button>
+      <Button :variant="primary ? 'default' : 'outline'" type="button" :class="triggerClass">{{ $t('payments.markPaid') }}</Button>
     </DialogTrigger>
 
     <DialogContent>
@@ -98,7 +98,7 @@ function submit() {
       </DialogBody>
 
       <DialogFooter>
-        <Button type="submit" form="installment-paid-form" :disabled="form.processing" :state="form.processing ? 'loading' : 'idle'">
+        <Button class="ml-auto" type="submit" form="installment-paid-form" :disabled="form.processing" :state="form.processing ? 'loading' : 'idle'">
           {{ $t('payments.markPaidSubmit') }}
         </Button>
         <DialogClose as-child>

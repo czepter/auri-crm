@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, useTemplateRef, watch } from "vue";
 import { Link, router, useForm, usePage } from "@inertiajs/vue3";
+import { Clock } from "lucide-vue-next";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import LeadQueue from "@/admin/components/crm/LeadQueue.vue";
 import Page from "@/ui/page/Page.vue";
@@ -210,14 +211,15 @@ const pills = computed(() =>
         .filter((option) => option.count > 0),
 );
 
+const total = computed(() => props.groups.flatMap((group) => group.rows).length);
+const stageOptions = computed(() =>
+    pills.value.map((option) => ({ value: option.key, label: `${option.name} ${option.count}` })),
+);
+
 const pillRow = useTemplateRef<HTMLElement>("pillRow");
-const showActivePill = () => pillRow.value?.querySelector("[aria-pressed=true]")?.scrollIntoView({ inline: "center", block: "nearest" });
+const showActivePill = () => pillRow.value?.querySelector("label:has(:checked)")?.scrollIntoView({ inline: "center", block: "nearest" });
 onMounted(showActivePill);
 watch(stage, showActivePill, { flush: "post" });
-
-function pick(key: string) {
-    stage.value = stage.value === key ? null : key;
-}
 
 const collapsed = ref<string[]>([]);
 
@@ -282,7 +284,6 @@ const workflowAllowed = computed(() =>
                             { value: 'liste', label: $t('board.viewList') },
                             { value: 'board', label: $t('board.viewBoard') },
                         ]"
-                        variant="segmented"
                         @update:model-value="choose"
                     />
 
@@ -290,7 +291,7 @@ const workflowAllowed = computed(() =>
                         v-if="stageSettings"
                         :as="Link"
                         class="ml-auto max-[640px]:hidden"
-                        variant="pill-muted"
+                        variant="secondary"
                         href="/anfragen/einstellungen/stufen"
                     >
                         {{ $t("stages.entry") }}
@@ -299,7 +300,7 @@ const workflowAllowed = computed(() =>
                     <Button
                         :as="Link"
                         :class="[!stageSettings && 'ml-auto', 'max-[640px]:ml-auto']"
-                        variant="pill"
+                        variant="default"
                         href="/anfragen/neu"
                     >
                         {{ $t("board.create") }}
@@ -470,18 +471,12 @@ const workflowAllowed = computed(() =>
              shows where something stands, a table shows what is next. -->
                 <template v-else>
                 <div class="flex flex-wrap items-center gap-4 px-6 pt-4.5">
-                    <div ref="pillRow" class="flex flex-wrap gap-1.5 max-[640px]:w-full max-[640px]:snap-x max-[640px]:scroll-px-4 max-[640px]:flex-nowrap max-[640px]:overflow-x-auto max-[640px]:pr-8 max-[640px]:[mask-image:linear-gradient(to_right,#000_calc(100%-32px),transparent)] max-[640px]:[scrollbar-width:none]">
-                        <button
-                            v-for="option in pills"
-                            :key="option.key"
-                            class="flex shrink-0 cursor-pointer snap-start items-center gap-1.5 rounded-[var(--r-sm)] px-3 py-1.5 text-small max-[640px]:min-h-11"
-                            :class="stage === option.key ? 'bg-paper font-medium text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'bg-sunk text-foreground'"
-                            type="button"
-                            :aria-pressed="stage === option.key"
-                            @click="pick(option.key)"
-                        >
-                            {{ option.name }}<span class="text-small tabular-nums opacity-60">{{ option.count }}</span>
-                        </button>
+                    <div ref="pillRow" class="flex flex-wrap gap-1.5 max-[640px]:w-full">
+                        <ChoiceGroup
+                            :model-value="stage ?? ''"
+                            :options="[{ value: '', label: `${$t('project.filterAll')} ${total}` }, ...stageOptions]"
+                            @update:model-value="(value) => (stage = value || null)"
+                        />
 
                         <!-- Quer zu den Stufen, deshalb hinter dem Strich: der
                  Filter schneidet dieselbe Menge nach einer anderen
@@ -489,20 +484,17 @@ const workflowAllowed = computed(() =>
                         <template v-if="staleCount">
                             <span class="mx-1 self-center h-[18px] w-px bg-rule" />
 
-                            <button
-                                class="flex shrink-0 cursor-pointer snap-start items-center gap-1.5 rounded-[var(--r-sm)] bg-no-repeat max-[640px]:min-h-11 bg-[length:12px_12px] bg-[position:12px_center] py-1.5 pr-3 pl-[28px] text-small"
-                                :class="
-                                    onlyStale
-                                        ? 'bg-due-bg bg-icon-clock-due font-medium text-due'
-                                        : 'bg-sunk bg-icon-clock text-foreground'
-                                "
+                            <Button
+                                variant="secondary"
+                                class="shrink-0 max-[640px]:min-h-11"
+                                :class="onlyStale && 'bg-due-bg text-due'"
                                 type="button"
                                 :aria-pressed="onlyStale"
                                 @click="onlyStale = !onlyStale"
                             >
-                                {{ $t("board.stale")
+                                <Clock />{{ $t("board.stale")
                                 }}<span class="text-small tabular-nums opacity-60">{{ staleCount }}</span>
-                            </button>
+                            </Button>
                         </template>
                     </div>
                     <Input :aria-label="$t('board.searchPlaceholder')" v-model="query" class="ml-auto h-8 w-60 max-[640px]:ml-0 max-[640px]:h-11 max-[640px]:w-full" type="search" :placeholder="$t('board.searchPlaceholder')" />

@@ -71,7 +71,7 @@ function finish() {
           <ProfileForm ref="paneRef" :settings="settings" first-run @saved="finish" />
 
           <div class="flex justify-end">
-            <Button type="button" :disabled="paneRef?.form.processing" @click="paneRef?.submit()">
+            <Button class="ml-auto" type="button" :disabled="paneRef?.form.processing" @click="paneRef?.submit()">
               {{ $t('onboarding.finish') }}
             </Button>
           </div>

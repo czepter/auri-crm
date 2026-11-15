@@ -54,10 +54,10 @@ export const Stufenwahl: Story = {
     template: `
       <div style="height: 220px;">
         <div class="flex">
-          <Button variant="pill" type="button" class="rounded-r-none">Angebot</Button>
+          <Button variant="default" type="button" class="rounded-r-none">Angebot</Button>
           <DropdownMenu v-bind="args">
             <DropdownMenuTrigger as-child>
-              <Button variant="pill" type="button" class="rounded-l-none border-l border-white/30 px-2" aria-label="Stufe">
+              <Button variant="default" type="button" class="rounded-l-none border-l border-white/30 px-2" aria-label="Stufe">
                 <ChevronDown class="size-3.5" />
               </Button>
             </DropdownMenuTrigger>

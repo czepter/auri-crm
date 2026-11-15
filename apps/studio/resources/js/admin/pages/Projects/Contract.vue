@@ -71,7 +71,7 @@ const statusChip = { draft: 'neutral', sent: 'warn', signed: 'success' } as cons
 
 const editing = ref(false)
 // The editor's save is the one dark button while it is open.
-const lead = computed(() => (editing.value ? 'outline' : 'pill'))
+const lead = computed(() => (editing.value ? 'outline' : 'default'))
 const saving = ref(false)
 
 function save() {
@@ -235,7 +235,7 @@ function day(value: string | null): string {
 
         <div class="flex min-w-0 flex-col gap-3">
           <div v-if="header.canManageContracts" class="flex items-center justify-end gap-2">
-            <Button v-if="editing" variant="pill" type="button" :disabled="saving" @click="save">
+            <Button v-if="editing" variant="default" type="button" :disabled="saving" @click="save">
               {{ $t('project.contractSave') }}
             </Button>
             <Button variant="outline" type="button" @click="editing = !editing">
@@ -295,11 +295,11 @@ function day(value: string | null): string {
               </SelectContent>
             </Select>
           </div>
-          <Button type="submit" :disabled="generate.processing">
+          <Button class="ml-auto" type="submit" :disabled="generate.processing">
             {{ $t('project.contractGenerate') }}
           </Button>
         </form>
-        <Button v-else-if="header.canManageContracts" :as="Link" href="/dokumentvorlagen/neu">
+        <Button class="ml-auto" v-else-if="header.canManageContracts" :as="Link" href="/dokumentvorlagen/neu">
           {{ $t('project.contractTemplateCreate') }}
         </Button>
       </Section>

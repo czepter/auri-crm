@@ -36,7 +36,7 @@ const vatRef = ref<InstanceType<typeof VatForm>>()
 
       <DialogFooter class="justify-end">
         <Button variant="outline" type="button" @click="emit('cancel')">{{ $t('common.cancel') }}</Button>
-        <Button type="button" :disabled="profileRef?.form.processing || vatRef?.form.processing" @click="profileRef?.submit()">
+        <Button class="ml-auto" type="button" :disabled="profileRef?.form.processing || vatRef?.form.processing" @click="profileRef?.submit()">
           {{ $t('gates.saveAndContinue') }}
         </Button>
       </DialogFooter>

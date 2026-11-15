@@ -87,7 +87,7 @@ function submit() {
 <template>
   <Dialog v-model:open="open">
     <DialogTrigger as-child>
-      <Button type="button" variant="pill">{{ $t('templates.create') }}</Button>
+      <Button type="button" variant="default">{{ $t('templates.create') }}</Button>
     </DialogTrigger>
 
     <DialogContent>
@@ -180,13 +180,13 @@ function submit() {
           v-if="HREF[chosen]"
           :as="Link"
           :href="HREF[chosen]!"
-          variant="pill"
+          variant="default"
         >{{ $t('templates.create') }}</Button>
         <Button
           v-else
           type="submit"
           :form="chosen === 'aufgaben' ? 'template-create-task' : 'template-create-preset'"
-          variant="pill"
+          variant="default"
           :disabled="task.processing || preset.processing"
         >{{ $t('templates.create') }}</Button>
       </DialogFooter>

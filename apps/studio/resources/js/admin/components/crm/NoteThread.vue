@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useForm, usePage } from "@inertiajs/vue3";
+import { Check, X } from "lucide-vue-next";
+import { Button } from "@/ui/button";
 import { DatePicker } from "@/ui/date-picker";
 import { Textarea } from "@/ui/textarea";
 import CappedList from "@/admin/components/crm/CappedList.vue";
@@ -146,42 +148,25 @@ function destroy(note: string) {
                             @keydown.enter.exact.prevent="save"
                             @keydown.esc="editing = null"
                         />
-                        <button
+                        <Button
                             type="button"
+                            variant="secondary"
+                            size="icon"
                             :aria-label="$t('common.cancel')"
-                            class="grid size-[30px] flex-none cursor-pointer place-items-center rounded-full border-0 bg-paper text-ink-2 transition-colors duration-[120ms] ease-out hover:text-foreground"
                             @click="editing = null"
                         >
-                            <svg
-                                viewBox="0 0 16 16"
-                                class="size-[15px]"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.7"
-                                stroke-linecap="round"
-                            >
-                                <path d="M4 4l8 8M12 4l-8 8" />
-                            </svg>
-                        </button>
-                        <button
+                            <X />
+                        </Button>
+                        <Button
                             type="button"
+                            variant="secondary"
+                            size="icon"
                             :aria-label="$t('common.save')"
                             :disabled="!edit.body.trim() || edit.processing"
-                            class="grid size-[30px] flex-none cursor-pointer place-items-center rounded-full border-0 bg-action text-action-foreground transition-[filter,opacity] duration-[120ms] ease-out hover:brightness-[1.08] disabled:cursor-default disabled:opacity-35"
                             @click="save"
                         >
-                            <svg
-                                viewBox="0 0 16 16"
-                                class="size-[15px]"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.7"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <path d="M3 8.5l3.2 3L13 4.5" />
-                            </svg>
-                        </button>
+                            <Check />
+                        </Button>
                     </div>
                     <p
                         v-if="edit.errors.body"

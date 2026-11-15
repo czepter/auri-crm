@@ -32,11 +32,11 @@ const inPortal = computed(() => props.packages.filter((pkg) => pkg.portalOffered
           :kicker="$t('packages.kicker', { total: packages.length, portal: inPortal })"
           :title="$t('packages.title')"
         >
-          <Button v-if="packages.length" :as="Link" variant="pill" class="ml-auto" href="/pakete/neu">{{ $t('packages.create') }}</Button>
+          <Button v-if="packages.length" :as="Link" variant="default" class="ml-auto" href="/pakete/neu">{{ $t('packages.create') }}</Button>
         </PageHead>
 
         <Empty v-if="!packages.length" :text="$t('packages.empty')">
-          <Button :as="Link" variant="pill" href="/pakete/neu">{{ $t('packages.create') }}</Button>
+          <Button :as="Link" variant="default" href="/pakete/neu">{{ $t('packages.create') }}</Button>
         </Empty>
 
         <Table v-else>

@@ -47,7 +47,7 @@ function submit() {
 <template>
   <Dialog v-model:open="open">
     <DialogTrigger as-child>
-      <Button class="ml-auto" variant="pill" type="button">
+      <Button class="ml-auto" variant="default" type="button">
         <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         {{ label ?? $t('project.taskAdd') }}
       </Button>
@@ -91,7 +91,7 @@ function submit() {
       </DialogBody>
 
       <DialogFooter>
-        <Button type="submit" form="studio-task-create-form" :disabled="!form.title || form.processing">
+        <Button class="ml-auto" type="submit" form="studio-task-create-form" :disabled="!form.title || form.processing">
           {{ $t('common.save') }}
         </Button>
         <DialogClose as-child>

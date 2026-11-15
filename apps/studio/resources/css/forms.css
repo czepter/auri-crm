@@ -27,7 +27,7 @@
    now resources/js/ui/input's inputVariants, carrying the same values: the
    field became a component so a <select> could stop being an OS-drawn menu,
    and one control cannot be a class on one surface and a component on the
-   next. .fld.lead .inp went the same way, as the `lead` size.
+   next.
    The layout above (.fgrid, .fld, its label) stays CSS — it is the form's
    shape, not the control's. */
 

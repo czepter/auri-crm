@@ -89,7 +89,7 @@ function submit() {
        das Formular die Liste bei jedem Öffnen weg. -->
   <Dialog v-model:open="open">
     <DialogTrigger as-child>
-      <Button class="ml-auto" variant="pill-muted" type="button">
+      <Button class="ml-auto" variant="secondary" type="button">
         <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         {{ $t('project.taskAdd') }}
       </Button>
@@ -147,7 +147,6 @@ function submit() {
           <Field wide :label="$t('project.taskDue')" :error="form.errors.anchor ?? form.errors.due_on">
             <ChoiceGroup
               v-model="mode"
-              variant="segmented"
               class="w-fit"
               :options="[{ value: 'fixed', label: $t('project.taskDueFixed') }, { value: 'anchor', label: $t('project.taskDueAnchored') }]"
             />
@@ -184,7 +183,7 @@ function submit() {
       </DialogBody>
 
       <DialogFooter>
-        <Button
+        <Button class="ml-auto"
           type="submit"
           form="task-create-form"
           :disabled="!form.title || form.processing || (mode === 'anchor' && !form.anchor)"

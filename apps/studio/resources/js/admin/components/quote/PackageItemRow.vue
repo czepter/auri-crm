@@ -99,7 +99,6 @@ function upload(event: Event) {
         :label="$t('packages.itemPortalStatus')"
         :model-value="portalStatus"
         :options="Object.entries(portalLabels).map(([value, label]) => ({ value, label: $t(label) }))"
-        variant="segmented"
         class="self-start"
         @update:model-value="setPortalStatus"
       />

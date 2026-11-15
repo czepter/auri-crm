@@ -163,7 +163,7 @@ function submit() {
               <Input :aria-label="$t('invoicesCreate.street')" v-model="newContact.street" class="col-span-2" :placeholder="$t('invoicesCreate.street')" />
               <Input :aria-label="$t('invoicesCreate.postcode')" v-model="newContact.postcode" :placeholder="$t('invoicesCreate.postcode')" />
               <Input :aria-label="$t('invoicesCreate.city')" v-model="newContact.city" :placeholder="$t('invoicesCreate.city')" />
-              <Button class="col-span-2 justify-self-start" type="button" variant="pill-muted" @click="newContact = null">
+              <Button class="col-span-2 justify-self-start" type="button" variant="secondary" @click="newContact = null">
                 {{ $t('common.edit') }}
               </Button>
             </div>
@@ -216,7 +216,7 @@ function submit() {
           <p v-if="errors.invoice" class="text-small text-destructive">{{ errors.invoice }}</p>
 
           <div>
-            <Button type="submit" :disabled="!draft.rows.length || (!contact && !newContact && !project) || form.processing">
+            <Button class="ml-auto" type="submit" :disabled="!draft.rows.length || (!contact && !newContact && !project) || form.processing">
               {{ $t('invoicesCreate.submit') }}
             </Button>
           </div>

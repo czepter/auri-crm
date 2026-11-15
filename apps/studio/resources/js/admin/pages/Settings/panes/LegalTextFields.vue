@@ -82,7 +82,6 @@ function chooseSource(text: LegalText, source: Source) {
 
         <ChoiceGroup
           class="flex-none"
-          variant="segmented"
           :model-value="sourceOf(text)"
           :options="sourceOptions(text)"
           @update:model-value="(value) => chooseSource(text, value as Source)"
