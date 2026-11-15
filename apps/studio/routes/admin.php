@@ -723,6 +723,8 @@ Route::middleware('audience:staff')->group(function () {
         // own doc comment.
         Route::get('/auftraege/{case}/frageboegen', [CaseController::class, 'forms'])
             ->name('projects.forms');
+        Route::get('/auftraege/{case}/rechnungen', [CaseController::class, 'invoices'])
+            ->name('projects.invoices');
         Route::post('/auftraege/{case}/frageboegen', [FormInstanceController::class, 'store'])
             ->name('form-instances.store');
         Route::patch('/frageboegen/{formInstance}', [FormInstanceController::class, 'update'])

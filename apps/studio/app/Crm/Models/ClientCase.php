@@ -16,6 +16,7 @@ use App\Engagement\Models\Thread;
 use App\Enums\Capability;
 use App\Gallery\Models\Gallery;
 use App\Models\User;
+use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentPlan;
 use App\Quotes\Models\Quote;
 use BackedEnum;
@@ -260,6 +261,11 @@ class ClientCase extends Model
             'contract' => $this->contracts()->exists(),
             'gallery' => $this->galleries()->exists(),
         ])->filter()->keys();
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class)->latest('issued_at');
     }
 
     /** Every questionnaire personalised for this project (E-02), newest first. */

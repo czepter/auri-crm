@@ -40,6 +40,7 @@ use App\Documents\Support\DocumentMergeData;
 use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Payments\Data\InvoiceRowData;
 use App\Quotes\Actions\ReadCaseQuote;
 use App\Quotes\Screens\ReadQuoteList;
 use App\Support\AuditLogger;
@@ -479,6 +480,19 @@ class CaseController extends Controller
             'fieldTypes' => collect(FormFieldType::cases())
                 ->map(fn (FormFieldType $type) => ['value' => $type->value, 'label' => $type->label()])
                 ->all(),
+        ]);
+    }
+
+    public function invoices(ClientCase $case): Response
+    {
+        $this->authorize('managePaymentPlan', $case);
+
+        return Inertia::render('Projects/Invoices', [
+            'header' => $this->header($case),
+            'invoices' => InvoiceRowData::collect(
+                $case->invoices()->with(['installments', 'creditNotes', 'contact', 'case', 'views'])->get()
+                    ->map(InvoiceRowData::fromModel(...))
+            ),
         ]);
     }
 

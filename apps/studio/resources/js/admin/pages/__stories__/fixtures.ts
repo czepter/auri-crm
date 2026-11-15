@@ -449,6 +449,7 @@ export const header: App.Crm.Screens.CaseHeaderData = {
                 { key: 'quotes', label: 'project.quotes', translate: true, href: `/auftraege/${RAHN}/angebote`, count: 0, reorderable: false },
                 { key: 'contract', label: 'project.contract', translate: true, href: `/auftraege/${RAHN}/vertrag`, count: 0, reorderable: false },
                 { key: 'forms', label: 'project.forms', translate: true, href: `/auftraege/${RAHN}/frageboegen`, count: 1, reorderable: false },
+                { key: 'invoices', label: 'project.invoices', translate: true, href: `/auftraege/${RAHN}/rechnungen`, count: 1, reorderable: false },
             ],
         },
     ],
