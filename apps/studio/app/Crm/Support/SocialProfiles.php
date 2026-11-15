@@ -27,4 +27,16 @@ class SocialProfiles
             ->map(fn (array $profile) => ['platform' => $profile['platform'], 'value' => trim($profile['value'])])
             ->values()->all() ?: null;
     }
+
+    /**
+     * @param  array<int, array{platform: string, value: string}>|null  $first
+     * @param  array<int, array{platform: string, value: string}>|null  $second
+     * @return list<array{platform: string, value: string}>|null
+     */
+    public static function union(?array $first, ?array $second): ?array
+    {
+        return collect([...($first ?? []), ...($second ?? [])])
+            ->unique(fn (array $profile) => $profile['platform'].'|'.mb_strtolower($profile['value']))
+            ->values()->all() ?: null;
+    }
 }
