@@ -170,7 +170,7 @@ function destroy() {
           <SlidingIndicator
             :rect="tabRect"
             :animate="tabAnimate"
-            class="rounded-[var(--r-sm)] bg-paper shadow-[0_1px_2px_rgba(24,24,27,.08),inset_0_-2px_0_var(--ink)]"
+            class="rounded-[var(--r-sm)] shadow-[0_1px_2px_rgba(24,24,27,.08)] [background:linear-gradient(var(--ink),var(--ink))_bottom/calc(100%-2*var(--r-sm))_2px_no-repeat,var(--paper)]"
           />
           <Link
             v-for="tab in header.tabs"
@@ -179,7 +179,7 @@ function destroy() {
             class="relative inline-flex min-h-10 flex-none items-center rounded-[var(--r-sm)] px-3 whitespace-nowrap no-underline"
             :class="
               tab.key === active
-                ? ['font-semibold text-foreground', !tabRect && 'bg-paper shadow-[0_1px_2px_rgba(24,24,27,.08),inset_0_-2px_0_var(--ink)]']
+                ? ['font-semibold text-foreground', !tabRect && 'shadow-[0_1px_2px_rgba(24,24,27,.08)] [background:linear-gradient(var(--ink),var(--ink))_bottom/calc(100%-2*var(--r-sm))_2px_no-repeat,var(--paper)]']
                 : 'text-ink-2 hover:text-foreground'
             "
             :aria-current="tab.key === active ? 'page' : undefined"
@@ -191,17 +191,17 @@ function destroy() {
 
         <nav
           v-if="subTabs.length"
-          class="flex gap-[18px] pt-3 text-small"
+          class="mt-2.5 flex gap-0.5 pl-[3px] text-small font-medium shadow-[inset_0_-1px_0_var(--rule)]"
         >
           <Link
             v-for="entry in subTabs"
             :key="entry.key"
             :href="entry.href"
-            class="whitespace-nowrap no-underline"
-            :class="entry.key === child ? 'font-semibold text-foreground underline underline-offset-4' : 'text-ink-2 hover:text-foreground'"
+            class="inline-flex min-h-10 items-center px-3 whitespace-nowrap no-underline"
+            :class="entry.key === child ? 'font-semibold text-foreground [background:linear-gradient(var(--ink),var(--ink))_bottom/calc(100%-24px)_2px_no-repeat]' : 'text-ink-2 hover:text-foreground'"
             :aria-current="entry.key === child ? 'page' : undefined"
           >
-            {{ $t(entry.label) }}<span v-if="entry.count" class="ml-1 text-small">{{ entry.count }}</span>
+            {{ $t(entry.label) }}<span v-if="entry.count" class="ml-1 font-medium text-faint">{{ entry.count }}</span>
           </Link>
         </nav>
       </div>
