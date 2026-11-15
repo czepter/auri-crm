@@ -17,7 +17,7 @@ class ImportContacts
      * Each row is created, skipped because its address is already a contact
      * ('existing') or appears earlier in the file ('repeated'), or invalid.
      *
-     * @param  list<list<string>>  $rows
+     * @param  array<int, list<string>>  $rows  keyed by line in the file
      * @param  list<string>  $mapping
      * @param  array<string, mixed>  $rules  what a contact must satisfy, as ContactController states it
      * @return list<array{line: int, name: string, email: ?string, status: 'create'|'existing'|'repeated'|'invalid', reason: ?string, attributes: array<string, mixed>}>
@@ -27,7 +27,7 @@ class ImportContacts
         $seen = Contact::query()->whereNotNull('email')->pluck('email')
             ->mapWithKeys(fn (string $email) => [mb_strtolower($email) => 'existing'])->all();
 
-        return collect($rows)->map(function (array $row, int $index) use ($mapping, $rules, &$seen) {
+        return collect($rows)->map(function (array $row, int $line) use ($mapping, $rules, &$seen) {
             $attributes = ContactCsv::attributes($row, $mapping);
             $validator = Validator::make($attributes, $rules);
 
@@ -43,27 +43,35 @@ class ImportContacts
             }
 
             return [
-                'line' => $index + 2,
+                'line' => $line,
                 'name' => $attributes['name'],
                 'email' => $attributes['email'],
                 'status' => $status,
                 'reason' => $status === 'invalid' ? $validator->errors()->first() : null,
                 'attributes' => $attributes,
             ];
-        })->all();
+        })->values()->all();
     }
 
     /**
-     * @param  list<list<string>>  $rows
+     * @param  array<int, list<string>>  $rows
      * @param  list<string>  $mapping
      * @param  array<string, mixed>  $rules
      */
     public function __invoke(array $rows, array $mapping, array $rules, User $actor): int
     {
-        $plan = collect($this->plan($rows, $mapping, $rules));
-        $create = $plan->where('status', 'create');
+        $plan = collect(DB::transaction(function () use ($rows, $mapping, $rules) {
+            $plan = $this->plan($rows, $mapping, $rules);
 
-        DB::transaction(fn () => $create->each(fn (array $row) => ($this->createContact)($row['attributes'])));
+            foreach ($plan as $row) {
+                if ($row['status'] === 'create') {
+                    ($this->createContact)($row['attributes']);
+                }
+            }
+
+            return $plan;
+        }));
+        $create = $plan->where('status', 'create');
 
         AuditLogger::record(
             event: 'contact.imported',

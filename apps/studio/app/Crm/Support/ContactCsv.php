@@ -4,7 +4,7 @@ namespace App\Crm\Support;
 
 use App\Crm\Enums\SocialPlatform;
 
-/** A client list as another tool exports it: any delimiter, any encoding Excel writes. */
+/** A client list as another tool exports it: semicolon or comma separated, UTF-8 or Windows-1252. */
 class ContactCsv
 {
     private const HEADERS = [
@@ -30,7 +30,7 @@ class ContactCsv
         return array_keys(self::HEADERS);
     }
 
-    /** @return array{headers: list<string>, rows: list<list<string>>} */
+    /** @return array{headers: list<string>, rows: array<int, list<string>>} rows keyed by their line in the file */
     public static function read(string $path): array
     {
         $text = preg_replace('/^\xEF\xBB\xBF/', '', (string) file_get_contents($path));
@@ -48,18 +48,25 @@ class ContactCsv
         rewind($stream);
 
         $records = [];
+        $line = 1;
 
-        while (($record = fgetcsv($stream, separator: $delimiter, escape: '')) !== false) {
+        while (($start = ftell($stream)) !== false && ($record = fgetcsv($stream, separator: $delimiter, escape: '')) !== false) {
             $record = array_map(fn (?string $cell) => trim((string) $cell), $record);
 
             if (array_filter($record) !== []) {
-                $records[] = $record;
+                $records[$line] = $record;
             }
+
+            $line += substr_count(substr($text, $start, ftell($stream) - $start), "\n");
         }
 
         fclose($stream);
 
-        return ['headers' => array_shift($records) ?? [], 'rows' => $records];
+        $headerLine = array_key_first($records);
+        $headers = $records[$headerLine] ?? [];
+        unset($records[$headerLine]);
+
+        return ['headers' => $headers, 'rows' => $records];
     }
 
     /**

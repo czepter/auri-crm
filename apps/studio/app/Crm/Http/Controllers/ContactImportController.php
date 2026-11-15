@@ -75,7 +75,7 @@ class ContactImportController extends Controller
         ];
     }
 
-    /** @return array{headers: list<string>, rows: list<list<string>>} */
+    /** @return array{headers: list<string>, rows: array<int, list<string>>} */
     private function read(Request $request): array
     {
         $request->validate([

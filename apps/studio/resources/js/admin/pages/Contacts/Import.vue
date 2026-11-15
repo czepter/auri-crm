@@ -62,10 +62,11 @@ async function analyze(withMapping: boolean) {
 
   if (id !== requestId) return
 
-  const data = await response.json()
+  const json = response.headers.get('content-type')?.includes('json')
+  const data = json ? await response.json() : null
 
-  if (!response.ok) {
-    error.value = data.errors?.file?.[0] ?? data.message
+  if (!response.ok || !data) {
+    error.value = data?.errors?.file?.[0] ?? data?.message ?? t('contacts.importFailed')
     rows.value = []
     return
   }

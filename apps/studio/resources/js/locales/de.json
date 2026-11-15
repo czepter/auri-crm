@@ -137,6 +137,7 @@
     "import": "Import",
     "importFile": "CSV-Datei",
     "importChoose": "Datei wählen",
+    "importFailed": "Datei nicht lesbar",
     "importColumns": "Spalten",
     "importIgnore": "Ignorieren",
     "importRows": "Zeilen",

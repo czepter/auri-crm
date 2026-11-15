@@ -33,6 +33,15 @@ it('reads semicolon files with a byte order mark and suggests the mapping from t
         ->and($response->json('rows.0'))->toMatchArray(['line' => 2, 'name' => 'Anna Brandt', 'status' => 'create']);
 });
 
+it('reports the line in the file after blank lines and multi-line cells', function () {
+    $content = "Name;E-Mail\nAnna;anna@example.test\n\n\"Bert\nBrandt\";bert@example.test\n\nCora;cora@example.test\n";
+
+    $rows = previewImport($content)->assertOk()->json('rows');
+
+    expect(array_column($rows, 'line'))->toBe([2, 4, 7])
+        ->and($rows[1]['name'])->toBe("Bert\nBrandt");
+});
+
 it('reads comma files and Windows-1252 umlauts', function () {
     $content = mb_convert_encoding("Name,Straße,Ort\nJürgen Müller,Königstraße 1,Köln\n", 'Windows-1252', 'UTF-8');
 
