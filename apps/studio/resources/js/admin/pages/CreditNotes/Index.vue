@@ -78,7 +78,7 @@ const total = computed(() => shown.value.reduce((sum, note) => sum + note.amount
         </div>
 
         <Empty v-else :text="$t('creditNotesOverview.empty')">
-          <Button :as="Link" variant="pill" href="/rechnungen">{{ $t('creditNotesOverview.toInvoices') }}</Button>
+          <Button :as="Link" variant="default" href="/rechnungen">{{ $t('creditNotesOverview.toInvoices') }}</Button>
         </Empty>
       </div>
     </Page>

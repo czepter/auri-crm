@@ -101,7 +101,7 @@ function submit() {
         <Button v-if="chosen !== null" type="button" variant="ghost" @click="chosen = null">
           {{ $t('documentTemplates.starterBack') }}
         </Button>
-        <Button v-if="chosen !== null" class="ml-auto" variant="pill" type="button" :disabled="form.processing" @click="submit">
+        <Button v-if="chosen !== null" class="ml-auto" variant="default" type="button" :disabled="form.processing" @click="submit">
           {{ $t('common.save') }}
         </Button>
       </template>

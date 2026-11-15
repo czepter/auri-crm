@@ -236,13 +236,14 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
               </div>
 
               <div v-if="unseen > 0" class="sticky bottom-4 z-10 h-0 flex-none text-center">
-                <button
+                <Button
                   type="button"
-                  class="-translate-y-full cursor-pointer rounded-[var(--r-pill)] border border-border bg-background px-4 py-2 text-[13px] font-medium shadow-md motion-reduce:transition-none"
+                  variant="portal-chip"
+                  class="-translate-y-full bg-background shadow-md motion-reduce:transition-none"
                   @click="jump"
                 >
                   {{ $t('portal.messagesUnseen', unseen) }} ↓
-                </button>
+                </Button>
                 <span class="sr-only" role="status">{{ $t('portal.messagesUnseen', unseen) }}</span>
               </div>
             </div>

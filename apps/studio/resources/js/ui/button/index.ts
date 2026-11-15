@@ -4,23 +4,10 @@ import { cva } from "class-variance-authority"
 export { default as Button } from "./Button.vue"
 
 /*
- * The three buttons the system actually has, ported from their rules rather
- * than redesigned:
- *
- *   default → tokens.css .btn      the filled, warm-accent button
- *   outline → the stroked sibling of `pill`, same size so the two can share a row
- *   ghost   → tokens.css .txtbtn   the quiet inline action
- *
- * `tone` is the modifier those rules already carried as a second class —
- * .abtn.hot — kept as a compound so the base styling is not written out a
- * second time. `destructive` has no rule of its own to port: default is
- * already warm, and this tone only swaps that fill for --late, for the one
- * kind of press that cannot be undone.
- *
- * The `ml-auto` on default is .btn's own, and it is a layout rule living in a
- * component class: 45 call sites lean on the button pushing itself to the
- * right of its row. Dropping it here would move every one of them, so it
- * stays, and the places that opted out (.formfoot, .btn.wide) still opt out.
+ * Admin: default (filled action), secondary, outline, ghost (text action),
+ * all 32px high with --r-sm; `size="icon"` makes any of them a 32px square.
+ * `tone` is a modifier on top: `destructive` swaps the fill for --late.
+ * The portal-* variants are the client portal's own and stay as they are.
  */
 /*
  * The icon rules are on the base rather than on tokens.css's element reset:
@@ -36,26 +23,19 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "ml-auto rounded-md border-0 bg-action px-[14px] py-[9px] text-ui font-semibold leading-none text-action-foreground disabled:bg-sunk-2 disabled:text-ink-2 disabled:opacity-100 [&_svg]:size-[15px]",
+          "h-8 gap-1.5 rounded-[var(--r-sm)] border-0 bg-action px-3.5 text-small font-medium whitespace-nowrap text-action-foreground transition-[filter,background-color] duration-[.12s] ease-out hover:brightness-[1.08] disabled:bg-sunk-2 disabled:text-ink-2 disabled:opacity-100 [&_svg]:size-[15px]",
+        secondary:
+          "h-8 gap-1.5 rounded-[var(--r-sm)] border-0 bg-sunk-2 px-3.5 text-small font-medium whitespace-nowrap text-foreground transition-[filter,background-color] duration-[.12s] ease-out hover:bg-line-hover disabled:text-ink-2 disabled:opacity-100 [&_svg]:size-[15px]",
         outline:
-          "flex-none gap-1.5 rounded-[var(--r-control,var(--r-pill))] border border-line-hover bg-background px-3.5 py-[7px] text-small font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-colors duration-[.12s] ease-out hover:border-faint disabled:border-line-hover disabled:text-ink-2 disabled:opacity-100 [&_svg]:size-[13px]",
+          "h-8 gap-1.5 rounded-[var(--r-sm)] border border-line-hover bg-background px-3.5 text-small font-medium whitespace-nowrap text-foreground transition-colors duration-[.12s] ease-out hover:border-faint disabled:border-line-hover disabled:text-ink-2 disabled:opacity-100 [&_svg]:size-[15px]",
         ghost:
-          "border-0 bg-transparent px-0 py-[9px] text-ui font-medium leading-none text-muted-foreground hover:text-foreground disabled:text-ink-2 disabled:opacity-100 disabled:no-underline [&_svg]:size-[15px] [&_svg]:opacity-80",
-        /*
-         * crm.css .btn and .btn-2 — the admin's own pair. A fourth and fifth
-         * variant rather than a second Button: the admin presses the same
-         * kind of button as the portal, it is only drawn denser and rounder
-         * on a surface that stands open all day.
-         */
+          "h-8 rounded-[var(--r-sm)] border-0 bg-transparent px-0 text-small font-medium leading-none text-muted-foreground hover:text-foreground disabled:text-ink-2 disabled:opacity-100 disabled:no-underline [&_svg]:size-[15px] [&_svg]:opacity-80",
         /*
          * mockups/redesign/tokens.css .btn and .btn.ghost — the portal's own
          * pair. Ink, not the warm accent: on that surface the accent is a
          * signal that something is open, and a button wearing it would read
          * as one more thing waiting. The warm fill is what it turns into
          * under the pointer, which is the one moment it is about to act.
-         *
-         * No ml-auto, unlike `default`: these sit where their layout puts
-         * them.
          */
         portal: `${PORTAL} bg-foreground tracking-[-0.005em] text-background transition-[transform,background-color] hover:-translate-y-px hover:bg-action active:translate-y-0`,
         "portal-ghost": `${PORTAL} bg-transparent text-foreground shadow-[inset_0_0_0_1px_var(--line-hover)] transition-colors hover:bg-foreground hover:text-background hover:shadow-none`,
@@ -80,9 +60,10 @@ export const buttonVariants = cva(
          */
         "portal-filter":
           "rounded-[var(--r-pill)] border border-line-hover px-[15px] py-2.5 text-[13px] leading-none font-medium text-muted-foreground transition-colors hover:border-foreground hover:text-foreground data-[active=true]:border-foreground! data-[active=true]:bg-foreground data-[active=true]:font-semibold data-[active=true]:text-background!",
-        pill: "gap-1.5 rounded-[var(--r-sm)] border-0 bg-action px-3.5 py-2 text-small font-medium tracking-[-0.01em] whitespace-nowrap text-action-foreground disabled:bg-sunk-2 disabled:text-ink-2 disabled:opacity-100 transition-[filter,background-color] duration-[.12s] ease-out hover:brightness-[1.08]",
-        "pill-muted":
-          "gap-1.5 rounded-[var(--r-sm)] border-0 bg-sunk-2 px-3.5 py-2 text-small font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-[filter,background-color] duration-[.12s] ease-out hover:bg-line-hover",
+      },
+      size: {
+        default: "",
+        icon: "size-8 justify-center px-0 [&_svg]:size-4",
       },
       tone: {
         default: "",
@@ -106,6 +87,7 @@ export const buttonVariants = cva(
     ],
     defaultVariants: {
       variant: "default",
+      size: "default",
       tone: "default",
     },
   },

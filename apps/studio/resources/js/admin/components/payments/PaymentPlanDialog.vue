@@ -91,7 +91,7 @@ function submit() {
       </DialogBody>
 
       <DialogFooter>
-        <Button type="submit" form="payment-plan-form" :disabled="form.processing">{{ $t('common.save') }}</Button>
+        <Button class="ml-auto" type="submit" form="payment-plan-form" :disabled="form.processing">{{ $t('common.save') }}</Button>
         <DialogClose as-child>
           <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
         </DialogClose>

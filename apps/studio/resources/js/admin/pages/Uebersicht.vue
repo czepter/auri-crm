@@ -7,6 +7,7 @@ import Page from "@/ui/page/Page.vue";
 import PageHead from "@/ui/page/PageHead.vue";
 import Panel from "@/admin/components/crm/Panel.vue";
 import { Button } from "@/ui/button";
+import { Checkbox } from "@/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui/dropdown-menu";
 import { formatEurosRounded } from "@/lib/money";
 import { groupEntries } from "@/admin/lib/groupEntries";
@@ -306,7 +307,7 @@ const CHIP = {
                     <span class="rounded-[var(--r-sm)] bg-late-bg px-2.5 py-1 text-small font-medium text-destructive">
                         {{ $t("dashboard.waited", urgent.waitingDays) }}
                     </span>
-                    <Button :as="Link" class="bg-background text-foreground" variant="pill" :href="`/anfragen/${urgent.id}`">
+                    <Button :as="Link" class="bg-background text-foreground" variant="default" :href="`/anfragen/${urgent.id}`">
                         {{ $t("dashboard.reply") }}
                     </Button>
                 </div>
@@ -381,7 +382,7 @@ const CHIP = {
                                     <template v-if="row.whatTail">{{ row.whatTail }}</template>
                                 </span>
                             </div>
-                            <Button v-if="row.action" :as="Link" variant="pill-muted" :href="row.action.target">
+                            <Button v-if="row.action" :as="Link" variant="secondary" :href="row.action.target">
                                 {{ row.action.label }}
                             </Button>
                         </div>
@@ -445,12 +446,11 @@ const CHIP = {
                         </template>
 
                         <div v-for="row in todo" :key="row.key" class="flex items-center gap-3 py-2.5" :class="ROW">
-                            <button
+                            <Checkbox
                                 v-if="row.task"
-                                type="button"
-                                class="size-6 flex-none rounded-full border-[1.5px] border-line-hover bg-background hover:border-ring hover:bg-[var(--accent-bg)]"
+                                :model-value="false"
                                 :aria-label="$t('dashboard.done')"
-                                @click="complete(row.task)"
+                                @update:model-value="complete(row.task)"
                             />
                             <div class="min-w-0 flex-1">
                                 <Link class="block truncate text-ui font-semibold tracking-[-0.015em] text-foreground no-underline" :href="row.href">
@@ -464,7 +464,7 @@ const CHIP = {
                             <span v-if="row.chip" class="flex-none rounded-full px-2.5 py-1 text-small font-medium tabular-nums" :class="CHIP[row.chip.tone]">
                                 {{ row.chip.text }}
                             </span>
-                            <Button v-if="row.action" :as="Link" variant="pill-muted" :href="row.action.target">
+                            <Button v-if="row.action" :as="Link" variant="secondary" :href="row.action.target">
                                 {{ row.action.label }}
                             </Button>
                         </div>

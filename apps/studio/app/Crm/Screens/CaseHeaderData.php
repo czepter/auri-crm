@@ -154,13 +154,20 @@ class CaseHeaderData extends Data
             ['key' => 'forms', 'label' => 'project.forms', 'translate' => true, 'href' => "{$base}/frageboegen", 'count' => self::unansweredForms($project), 'reorderable' => false],
         ];
 
+        $invoices = collect();
+        if (auth('staff')->user()?->can('managePaymentPlan', $project)) {
+            $invoices = $project->invoices()->with('installments')->get();
+            $children[] = ['key' => 'invoices', 'label' => 'project.invoices', 'translate' => true, 'href' => "{$base}/rechnungen", 'count' => $invoices->filter(fn ($invoice) => in_array($invoice->status(), ['open', 'partial', 'overdue'], true))->count(), 'reorderable' => false];
+        }
+
         return [
             'key' => 'documents',
             'label' => 'project.documents',
             'href' => $children[0]['href'],
             'count' => ($project->quotes()->count()
                 + $project->contracts()->where('state', '!=', ContractState::Superseded)->count()
-                + $project->formInstances()->count()) ?: null,
+                + $project->formInstances()->count()
+                + $invoices->count()) ?: null,
             'countTo' => null,
             'children' => $children,
         ];

@@ -70,6 +70,7 @@ export const Anpassen: Story = {
       sourceTemplateName: 'Ablaufplan',
       updatedAt: '2026-09-22T10:00:00+02:00',
       sharedAt: '2026-09-22T10:05:00+02:00',
+      closedAt: null,
       fields: [
         feld({ id: 'f1', label: 'Wann beginnt die Trauung?', type: 'time', typeLabel: 'Uhrzeit', required: true }),
         feld({ id: 'f2', label: 'Wo findet die Trauung statt?', type: 'short_text', typeLabel: 'Kurzantwort', required: true }),

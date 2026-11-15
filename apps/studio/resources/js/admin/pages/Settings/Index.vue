@@ -147,7 +147,7 @@ const mailPreview = computed(() => {
       :state="saveState(activePanes.map((entry) => entry?.form))"
     >
       <template #head>
-        <Button v-if="dirty" variant="pill" type="button" :disabled="processing" @click="save">
+        <Button v-if="dirty" variant="default" type="button" :disabled="processing" @click="save">
           {{ $t('common.save') }}
         </Button>
       </template>
@@ -185,7 +185,7 @@ const mailPreview = computed(() => {
         </DialogHeader>
         <DialogFooter class="justify-end">
           <Button variant="outline" type="button" @click="saveWithRegister(false)">{{ $t('settings.registerAdaptNo') }}</Button>
-          <Button type="button" @click="saveWithRegister(true)">{{ $t('settings.registerAdaptYes') }}</Button>
+          <Button class="ml-auto" type="button" @click="saveWithRegister(true)">{{ $t('settings.registerAdaptYes') }}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

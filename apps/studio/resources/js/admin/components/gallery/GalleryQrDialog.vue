@@ -43,7 +43,7 @@ watchEffect(async () => {
           </InputGroup>
         </div>
 
-        <Button as="a" :href="png" :download="`${gallery.slug}.png`" variant="pill">{{ $t('galleryRecord.qrDownload') }}</Button>
+        <Button as="a" :href="png" :download="`${gallery.slug}.png`" variant="default">{{ $t('galleryRecord.qrDownload') }}</Button>
       </DialogBody>
     </DialogContent>
   </Dialog>

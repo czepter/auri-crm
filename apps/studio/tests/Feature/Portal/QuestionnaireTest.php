@@ -180,6 +180,21 @@ it('keeps the answers when the studio un-shares', function () {
         ->and(FormAnswer::count())->toBe(1);
 });
 
+it('shows a closed questionnaire but takes no more answers', function () {
+    [$instance, $contact, $project] = sharedQuestionnaire();
+    $field = $instance->fields->first();
+    $field->answer('Perfect von Ed Sheeran');
+    $instance->forceFill(['closed_at' => now()])->save();
+    $url = "/projekte/{$project->public_id}/fragebogen/{$instance->public_id}";
+
+    $props = test()->actingAs($contact, 'portal')->get($url)->assertOk()->viewData('page')['props'];
+    expect($props['questionnaire']['closed'])->toBeTrue();
+
+    test()->patch($url, ['answers' => [$field->public_id => 'Doch etwas anderes']])->assertForbidden();
+
+    expect($field->fresh()->currentAnswer->value)->toBe('Perfect von Ed Sheeran');
+});
+
 // --- "Datei" fields: the client attaches, and may take back ------------
 
 /** @return array{0: FormInstance, 1: Contact, 2: FormInstanceField} */

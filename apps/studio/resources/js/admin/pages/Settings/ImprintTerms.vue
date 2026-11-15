@@ -53,7 +53,7 @@ function submit() {
       <template #head>
         <Button
           v-if="form.isDirty"
-          variant="pill"
+          variant="default"
           type="submit"
           form="imprint-terms-form"
           :disabled="form.processing"

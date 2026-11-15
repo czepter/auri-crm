@@ -37,7 +37,7 @@ function pick(event: MouseEvent) {
       </DialogBody>
 
       <DialogFooter>
-        <Button type="button" @click="emit('save', point); open = false">{{ $t('common.save') }}</Button>
+        <Button class="ml-auto" type="button" @click="emit('save', point); open = false">{{ $t('common.save') }}</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>

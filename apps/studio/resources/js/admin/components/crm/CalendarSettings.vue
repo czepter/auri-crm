@@ -44,7 +44,7 @@ function saveWorkingDays() {
         </div>
       </div>
       <p v-if="workingDaysForm.errors.working_days" class="mt-2 text-small leading-[1.45] text-destructive">{{ workingDaysForm.errors.working_days }}</p>
-      <Button v-if="workingDaysForm.isDirty" class="mt-4" variant="pill" type="submit" :disabled="workingDaysForm.processing">
+      <Button v-if="workingDaysForm.isDirty" class="mt-4" variant="default" type="submit" :disabled="workingDaysForm.processing">
         {{ $t('settings.numberingSave') }}
       </Button>
     </FormSection>

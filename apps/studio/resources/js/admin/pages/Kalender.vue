@@ -104,14 +104,13 @@ function shortDate(date: string | null) {
               { value: 'liste', label: $t('calendar.viewList') },
               { value: 'saison', label: $t('calendar.viewSeason') },
             ]"
-            variant="segmented"
             @update:model-value="(next) => go(month, next)"
           />
 
           <Button
             v-if="workingDays"
             :as="Link"
-            variant="pill-muted"
+            variant="secondary"
             class="max-[640px]:hidden min-[641px]:order-3"
             :href="'/profil/kalender'"
           >
@@ -123,7 +122,7 @@ function shortDate(date: string | null) {
             v-show="view !== 'saison'"
             :key="step[0]"
             type="button"
-            variant="pill-muted"
+            variant="secondary"
             class="min-[641px]:order-1 max-[640px]:min-h-11 max-[640px]:min-w-11"
             :class="step[0] === '←' && 'max-[640px]:ml-auto'"
             :aria-label="step[0] === '←' ? $t('calendar.previousMonth') : $t('calendar.nextMonth')"
@@ -136,7 +135,7 @@ function shortDate(date: string | null) {
           <Button
             v-show="view !== 'saison'"
             :as="Link"
-            variant="pill-muted"
+            variant="secondary"
             class="min-[641px]:order-1 max-[640px]:min-h-11"
             :href="`/kalender?ansicht=${view}`"
           >
@@ -209,8 +208,8 @@ function shortDate(date: string | null) {
         <div v-if="view !== 'saison'" class="hidden px-3 pt-2 max-[640px]:block">
           <Empty v-if="!groups.length" :text="$t('dashboard.weekEmpty')">
             <div class="flex items-center gap-2">
-              <Button :as="Link" variant="pill" href="/anfragen/neu">{{ $t('leads.createKicker') }}</Button>
-              <Button :as="Link" variant="pill-muted" href="/projekte">{{ $t('calendar.toProjects') }}</Button>
+              <Button :as="Link" variant="default" href="/anfragen/neu">{{ $t('leads.createKicker') }}</Button>
+              <Button :as="Link" variant="secondary" href="/projekte">{{ $t('calendar.toProjects') }}</Button>
             </div>
           </Empty>
 
@@ -243,8 +242,8 @@ function shortDate(date: string | null) {
               <TableCell :colspan="5">
                 <Empty :text="$t('dashboard.weekEmpty')">
                   <div class="flex items-center gap-2">
-                    <Button :as="Link" variant="pill" href="/anfragen/neu">{{ $t('leads.createKicker') }}</Button>
-                    <Button :as="Link" variant="pill-muted" href="/projekte">{{ $t('calendar.toProjects') }}</Button>
+                    <Button :as="Link" variant="default" href="/anfragen/neu">{{ $t('leads.createKicker') }}</Button>
+                    <Button :as="Link" variant="secondary" href="/projekte">{{ $t('calendar.toProjects') }}</Button>
                   </div>
                 </Empty>
               </TableCell>
@@ -270,7 +269,7 @@ function shortDate(date: string | null) {
         <Button
           v-if="workingDays"
           :as="Link"
-          variant="pill-muted"
+          variant="secondary"
           class="mx-4 mt-4 hidden min-h-11 max-[640px]:inline-flex"
           :href="'/profil/kalender'"
         >

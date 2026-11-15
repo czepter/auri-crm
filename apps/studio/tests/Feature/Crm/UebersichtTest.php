@@ -41,7 +41,7 @@ function bookedForDashboard(string $name = 'Meier & Kowalski'): ClientCase
 
 it('lists upcoming shooting days in time order, with no week window', function () {
     $project = bookedForDashboard();
-    Shoot::factory()->for($project, 'case')->on(now()->addDays(20)->format('Y-m-d'))->create(['call_time' => '14:00', 'venue_name' => 'Gut Basthorst']);
+    Shoot::factory()->for($project, 'case')->on(now()->addDays(20)->format('Y-m-d'))->create(['call_time' => '14:00', 'venue_name' => 'Gut Basthorst', 'label' => 'Preshoot']);
     Shoot::factory()->for($project, 'case')->on(now()->addDays(2)->format('Y-m-d'))->create(['call_time' => '09:00']);
 
     $entries = props('/')['entries'];
@@ -51,6 +51,7 @@ it('lists upcoming shooting days in time order, with no week window', function (
         now()->addDays(20)->format('Y-m-d').' 14:00',
     ])
         ->and($entries[1]['where'])->toBe('Gut Basthorst')
+        ->and($entries[1]['what'])->toBe('Preshoot · Meier & Kowalski')
         ->and($entries[0]['href'])->toBe('/auftraege/'.$project->public_id.'/shootings');
 });
 

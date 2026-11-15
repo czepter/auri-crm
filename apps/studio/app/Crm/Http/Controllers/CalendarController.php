@@ -111,7 +111,7 @@ class CalendarController extends Controller
                         ->map(fn (Shoot $shoot) => new CalendarEntryData(
                             kind: $shoot->status?->anchor === StageAnchor::Entry ? 'hold' : 'shoot',
                             time: $shoot->call_time === null ? null : substr((string) $shoot->call_time, 0, 5),
-                            what: $shoot->case->name,
+                            what: $shoot->title(),
                             who: $solo ? null : ($shoot->crew->map(fn ($assignment) => $assignment->user->name)->join(', ') ?: null),
                             projectId: $shoot->case->public_id,
                         ))->values()->all(),

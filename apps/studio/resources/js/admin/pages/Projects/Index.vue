@@ -52,6 +52,8 @@ const pills = computed(() => props.stages
   .map((option) => ({ ...option, count: inScope.value.filter((project) => project.positionKey === option.key).length }))
   .filter((option) => option.count > 0))
 
+const stageOptions = computed(() => pills.value.map((option) => ({ value: option.key, label: `${option.name} ${option.count}` })))
+
 const shown = computed(() => {
   const needle = query.value.trim().toLocaleLowerCase('de')
 
@@ -143,10 +145,6 @@ function dots(project: App.Crm.Data.CaseRowData) {
   return props.stages.map((_, index) => index > upTo ? 'bg-mark' : project.phase === 'delivered' ? 'bg-ok' : 'bg-foreground')
 }
 
-function pick(key: string) {
-  stage.value = stage.value === key ? null : key
-}
-
 function reset() {
   scope.value = 'all'
   stage.value = null
@@ -179,10 +177,9 @@ function reset() {
               { value: 'liste', label: $t('projects.viewList') },
               { value: 'board', label: $t('projects.viewBoard') },
             ]"
-            variant="segmented"
             @update:model-value="(ansicht) => router.get('/projekte', { ansicht }, { preserveScroll: true, preserveState: true })"
           />
-          <Button v-if="stageSettings" :as="Link" class="ml-auto" variant="pill-muted" href="/auftraege/einstellungen/stufen">
+          <Button v-if="stageSettings" :as="Link" class="ml-auto" variant="secondary" href="/auftraege/einstellungen/stufen">
             {{ $t('stages.entry') }}
           </Button>
         </PageHead>
@@ -195,22 +192,13 @@ function reset() {
                 { value: 'running', label: $t('projects.running') },
                 { value: 'all', label: $t('projects.all') },
               ]"
-              variant="segmented"
               @update:model-value="stage = null"
             />
-            <div class="flex flex-wrap gap-1.5">
-              <button
-                v-for="option in pills"
-                :key="option.key"
-                class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] px-3 py-1.5 text-small"
-                :class="stage === option.key ? 'bg-paper font-medium text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'bg-sunk text-foreground'"
-                type="button"
-                :aria-pressed="stage === option.key"
-                @click="pick(option.key)"
-              >
-                {{ option.name }}<span class="text-small tabular-nums opacity-60">{{ option.count }}</span>
-              </button>
-            </div>
+            <ChoiceGroup
+              :model-value="stage ?? ''"
+              :options="[{ value: '', label: `${$t('projects.all')} ${inScope.length}` }, ...stageOptions]"
+              @update:model-value="(value) => (stage = value || null)"
+            />
             <Input :aria-label="$t('projects.searchPlaceholder')" v-model="query" class="ml-auto h-8 w-64 shrink-0" type="search" :placeholder="$t('projects.searchPlaceholder')" />
           </div>
 
@@ -254,7 +242,7 @@ function reset() {
             </tbody>
           </Table>
 
-          <Button v-if="!groups.length" class="mx-8 mt-5" type="button" variant="pill-muted" @click="reset">
+          <Button v-if="!groups.length" class="mx-8 mt-5" type="button" variant="secondary" @click="reset">
             {{ $t('projects.reset') }}
           </Button>
         </template>
@@ -336,7 +324,7 @@ function reset() {
         </div>
 
         <Empty v-else :text="$t('projects.empty')">
-          <Button :as="Link" variant="pill" href="/anfragen/neu">{{ $t('leads.createKicker') }}</Button>
+          <Button :as="Link" variant="default" href="/anfragen/neu">{{ $t('leads.createKicker') }}</Button>
         </Empty>
       </div>
     </Page>

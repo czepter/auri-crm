@@ -74,7 +74,7 @@ function cancel() {
                     <PinInputSlot v-for="index in LENGTH" :key="index" :id="index === 1 ? 'deletion-code' : undefined" :index="index - 1" />
                   </PinInputGroup>
                 </PinInput>
-                <Button type="submit" :disabled="form.processing">{{ $t('settings.deletionConfirm') }}</Button>
+                <Button class="ml-auto" type="submit" :disabled="form.processing">{{ $t('settings.deletionConfirm') }}</Button>
               </div>
             </Field>
           </form>

@@ -65,7 +65,6 @@ const titleStyle = computed(() => ({ fontFamily: font.value.family, fontWeight: 
     <ChoiceGroup
       v-model="device"
       class="mb-2.5"
-      variant="segmented"
       :options="[{ value: 'phone', label: $t('galleryDesign.phone') }, { value: 'desktop', label: $t('galleryDesign.desktop') }]"
     />
 

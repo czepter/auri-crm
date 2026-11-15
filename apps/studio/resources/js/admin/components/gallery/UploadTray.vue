@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { Maximize2, Minimize2 } from 'lucide-vue-next'
+import { Button } from '@/ui/button'
 
 export interface TrayRow {
   key: string
@@ -106,14 +107,15 @@ const STATUS_KEY: Record<Exclude<TrayRow['status'], 'uploading'>, string> = {
           {{ bytes(uploaded) }} / {{ bytes(total) }}<template v-if="transferring && speed > 0"> · {{ bytes(speed) }}/s</template>
         </span>
       </div>
-      <button
+      <Button
         type="button"
-        class="rounded p-1 text-ink-2 hover:bg-muted hover:text-foreground"
+        variant="ghost"
+        size="icon"
         :aria-label="$t(expanded ? 'media.collapse' : 'media.expand')"
         @click="expanded = !expanded"
       >
-        <component :is="expanded ? Minimize2 : Maximize2" class="size-4" />
-      </button>
+        <component :is="expanded ? Minimize2 : Maximize2" />
+      </Button>
     </div>
     <span class="block h-[3px] shrink-0 bg-muted"><i class="block h-full bg-foreground" :style="{ width: `${percent}%` }" /></span>
     <div class="min-h-0 overflow-y-auto">

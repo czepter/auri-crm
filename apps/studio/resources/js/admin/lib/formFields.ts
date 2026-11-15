@@ -5,6 +5,7 @@ import type { FormFieldRow } from '@/admin/components/templates/FormFieldsEditor
 export function toRow(field: App.Crm.Data.FormInstanceFieldData): FormFieldRow {
   return {
     id: field.id,
+    answered: field.answeredAt !== null,
     label: field.label,
     type: field.type,
     required: field.required,

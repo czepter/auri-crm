@@ -153,6 +153,11 @@ class Shoot extends Model
         return $this->hasMany(ShotListItem::class);
     }
 
+    public function title(): string
+    {
+        return trim(($this->label ?? $this->kind).' · '.$this->case->name);
+    }
+
     /** Null rather than an empty string, so a caller can test it directly. */
     public function venue(): ?string
     {

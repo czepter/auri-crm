@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ChoiceGroup } from '@/ui/choice-group'
 import { computed, ref, watch } from 'vue'
 import { useDebounceFn, useElementSize } from '@vueuse/core'
 import { serialize } from '@/admin/documents/blocks/serialize'
@@ -135,16 +136,13 @@ watch(
     <div class="flex flex-nowrap items-center gap-2.5 border-b border-border pb-2.5">
       <span class="mb-[5px] shrink-0 text-small leading-none font-semibold tracking-[0.09em] whitespace-nowrap uppercase text-faint">{{ $t(project ? 'documentTemplates.previewLabelProject' : 'documentTemplates.previewLabel') }}</span>
       <div class="w-[200px] min-w-[200px] shrink-0 empty:hidden"><slot /></div>
-      <div v-if="paper" class="ml-auto flex shrink-0 items-center gap-1.5">
-        <button
-          v-for="option in [{ key: 'fit', on: true }, { key: 'full', on: false }]"
-          :key="option.key"
-          class="cursor-pointer rounded-lg border-0 px-2.5 py-[5px] text-small leading-[1.3] whitespace-nowrap"
-          :class="fit === option.on ? 'bg-paper font-medium text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'bg-sunk-2 text-foreground'"
-          type="button"
-          @click="fit = option.on"
-        >{{ $t(`documentTemplates.zoom_${option.key}`) }}</button>
-      </div>
+      <ChoiceGroup
+        v-if="paper"
+        :model-value="fit ? 'fit' : 'full'"
+        :options="[{ value: 'fit', label: $t('documentTemplates.zoom_fit') }, { value: 'full', label: $t('documentTemplates.zoom_full') }]"
+        class="ml-auto"
+        @update:model-value="(value) => (fit = value === 'fit')"
+      />
       <span class="shrink-0 text-right text-small leading-none whitespace-nowrap" :class="[stale ? 'text-due' : 'text-faint', paper ? 'ml-2.5' : 'ml-auto']">{{
         stale ? $t('documentTemplates.previewStale') : $t('documentTemplates.previewFresh')
       }}</span>

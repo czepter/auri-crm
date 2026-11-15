@@ -10,7 +10,7 @@ const meta = {
   title: 'Formular/Input',
   component: Input,
   argTypes: {
-    size: { control: 'inline-radio', options: ['default', 'sm', 'lead'] },
+    size: { control: 'inline-radio', options: ['default', 'sm'] },
     modelValue: { control: 'text' },
     defaultValue: { control: 'text' },
   },
@@ -41,9 +41,6 @@ export const Platzhalter: Story = {
 /** Das Feld, das in einer Zeile steht statt in einem Formular. */
 export const Klein: Story = { args: { size: 'sm', modelValue: '4.260 €' } }
 
-/** Der Haupttermin, an dem die ganze Erfassung hängt. */
-export const Haupttermin: Story = { args: { size: 'lead', modelValue: '2026-07-18' } }
-
 /** Wert steht fest, solange etwas anderes ihn hält. */
 export const Deaktiviert: Story = {
   render: (args) => ({
@@ -71,7 +68,6 @@ export const AlleGroessen: Story = {
       groessen: [
         { size: 'default', value: 'Hochzeit Rahn' },
         { size: 'sm', value: '4.260 €' },
-        { size: 'lead', value: '2026-07-18' },
       ] as const,
     }),
     template: `

@@ -44,7 +44,7 @@ const profileRef = ref<InstanceType<typeof ProfileForm>>()
 
       <DialogFooter class="justify-end">
         <Button variant="outline" type="button" @click="emit('cancel')">{{ $t('common.cancel') }}</Button>
-        <Button type="button" :disabled="profileRef?.form.processing" @click="profileRef?.submit()">
+        <Button class="ml-auto" type="button" :disabled="profileRef?.form.processing" @click="profileRef?.submit()">
           {{ $t('gates.saveAndContinue') }}
         </Button>
       </DialogFooter>

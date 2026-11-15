@@ -3,6 +3,7 @@ import { Fragment, computed, reactive, ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import GroupPhotoField from '@/portal/components/GroupPhotoField.vue'
+import PortalChip from '@/portal/components/PortalChip.vue'
 import PortalField from '@/portal/components/PortalField.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
@@ -20,7 +21,7 @@ type Field = App.Crm.Data.FormInstanceFieldData
 const props = defineProps<{
   contact: { name: string }
   project: { id: string; name: string }
-  questionnaire: { id: string; name: string; fields: Field[] }
+  questionnaire: { id: string; name: string; closed: boolean; fields: Field[] }
 }>()
 
 // One submit for the whole thing: a client answers a questionnaire, they do
@@ -53,6 +54,14 @@ function removeFile(fileId: string) {
   router.delete(`/projekte/${props.project.id}/fragebogen/${props.questionnaire.id}/datei/${fileId}`, {
     preserveScroll: true,
   })
+}
+
+function shotNames(field: Field): string {
+  try {
+    return JSON.parse(field.currentAnswer ?? '').groups.map((g: { name: string }) => g.name).join(', ')
+  } catch {
+    return ''
+  }
 }
 
 const pages = computed(() => steps(props.questionnaire.fields))
@@ -127,8 +136,24 @@ function errorFor(id: string) {
       <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
         {{ questionnaire.name }}
       </h1>
+      <PortalChip v-if="questionnaire.closed" class="mt-4">{{ $t('formInstances.closed') }}</PortalChip>
 
-      <form class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 grid gap-8" :data-direction="direction" @submit.prevent="submit">
+      <dl v-if="questionnaire.closed" class="mt-12 grid gap-6">
+        <div v-for="field in questionnaire.fields" :key="field.id">
+          <dt class="text-[14.5px] leading-[1.35] font-medium">{{ field.label }}</dt>
+          <dd v-if="field.type === 'file'" class="mt-1 grid gap-1 text-[14.5px] leading-[1.5]">
+            <a
+              v-for="file in field.files"
+              :key="file.id"
+              class="underline underline-offset-2"
+              :href="`/projekte/${project.id}/fragebogen/${questionnaire.id}/datei/${file.id}`"
+            >{{ file.name }}</a>
+          </dd>
+          <dd v-else class="mt-1 whitespace-pre-line text-[14.5px] leading-[1.5]">{{ field.type === 'group_photos' ? shotNames(field) : field.currentAnswer || $t('portal.none') }}</dd>
+        </div>
+      </dl>
+
+      <form v-else class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 grid gap-8" :data-direction="direction" @submit.prevent="submit">
         <Transition name="step" mode="out-in">
         <div :key="step" class="grid gap-8">
         <template v-for="field in pages[step]" :key="field.id">

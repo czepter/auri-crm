@@ -53,7 +53,7 @@ class RevenueReport
      * second paying client, and counting them as one would double the
      * studio's revenue.
      *
-     * @return list<array{name: string, projects: int, revenue: int}>
+     * @return list<array{id: int, name: string, projects: int, revenue: int}>
      */
     public static function perContact(CarbonInterface $from, CarbonInterface $to, ?ProjectType $type = null, int $limit = 10): array
     {
@@ -64,7 +64,7 @@ class RevenueReport
             ->where('case_contacts.role', CaseContactRole::Primary->value)
             ->whereBetween('cases.booked_at', [$from, $to])
             ->groupBy('contacts.id', 'contacts.name')
-            ->selectRaw('contacts.name, count(distinct cases.id) as projects, coalesce(sum(payment_plans.total), 0) as revenue')
+            ->selectRaw('contacts.id, contacts.name, count(distinct cases.id) as projects, coalesce(sum(payment_plans.total), 0) as revenue')
             ->orderByDesc('revenue')
             ->limit($limit);
 
@@ -72,6 +72,7 @@ class RevenueReport
 
         return $query->get()
             ->map(fn ($row) => [
+                'id' => (int) $row->id,
                 'name' => $row->name,
                 'projects' => (int) $row->projects,
                 'revenue' => (int) $row->revenue,

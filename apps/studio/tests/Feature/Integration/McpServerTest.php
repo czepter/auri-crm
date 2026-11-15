@@ -259,6 +259,7 @@ function formArguments(string $tool): array
     return match ($tool) {
         'update_form' => ['form' => $form->public_id, 'name' => $form->name, 'fields' => $fields],
         'share_form' => ['form' => $form->public_id, 'shared' => true],
+        'close_form' => ['form' => $form->public_id, 'closed' => true],
         'answer_form_field' => ['field' => $form->fields->first()->public_id, 'value' => 'Oma und Opa'],
         default => [],
     };

@@ -22,10 +22,7 @@ const QUELLEN = [
 const meta = {
   title: 'Auswahl/ChoiceGroup',
   component: ChoiceGroup,
-  argTypes: {
-    variant: { control: 'inline-radio', options: ['default', 'segmented'] },
-  },
-  args: { variant: 'default', options: TYPEN, modelValue: 'hochzeit', label: 'Typ' },
+  args: { options: TYPEN, modelValue: 'hochzeit', label: 'Typ' },
   render: (args) => ({
     components: { ChoiceGroup },
     setup: () => ({ args }),
@@ -36,11 +33,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-/** Pillen: die freistehende Reihe, etwa als Filter über einer Liste. */
 export const Standard: Story = {}
-
-/** Die Schiene: ein Umschalter, bei dem immer genau eine Ansicht gilt. */
-export const Segmented: Story = { args: { variant: 'segmented' } }
 
 /** Ohne Beschriftung, wenn die Reihe in einer Zeile neben anderem steht. */
 export const OhneBeschriftung: Story = { args: { label: undefined } }
@@ -53,23 +46,18 @@ export const AlleVarianten: Story = {
     template: `
       <div style="display: flex; flex-direction: column; gap: 28px;">
         <div style="display: flex; flex-direction: column; gap: 6px;">
-          <ChoiceGroup :options="typen" model-value="hochzeit" label="Typ" />
-          <code style="font-size: 11px; color: var(--muted);">default</code>
+          <ChoiceGroup :options="typen" model-value="portrait" label="Typ" />
+          <code style="font-size: 11px; color: var(--muted);">drei Werte</code>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 6px;">
-          <ChoiceGroup :options="typen" model-value="portrait" label="Typ" variant="segmented" />
-          <code style="font-size: 11px; color: var(--muted);">segmented</code>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-          <ChoiceGroup :options="quellen" model-value="empfehlung" label="Quelle" variant="segmented" />
-          <code style="font-size: 11px; color: var(--muted);">segmented, vier Werte</code>
+          <ChoiceGroup :options="quellen" model-value="empfehlung" label="Quelle" />
+          <code style="font-size: 11px; color: var(--muted);">vier Werte</code>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 6px;">
           <ChoiceGroup :options="quellen" model-value="instagram" />
-          <code style="font-size: 11px; color: var(--muted);">default, ohne Beschriftung</code>
+          <code style="font-size: 11px; color: var(--muted);">ohne Beschriftung</code>
         </div>
       </div>
     `,

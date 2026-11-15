@@ -94,7 +94,7 @@ function save(rangeId: string) {
               v-if="forms[range.id].isDirty"
               class="mt-6 flex items-center gap-4 [&_[data-slot=button][data-variant=default]]:ml-0"
             >
-              <Button type="submit" :disabled="forms[range.id].processing">
+              <Button class="ml-auto" type="submit" :disabled="forms[range.id].processing">
                 <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" /></svg>
                 {{ $t('settings.numberingSave') }}
               </Button>

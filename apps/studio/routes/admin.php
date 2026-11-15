@@ -749,6 +749,8 @@ Route::middleware('audience:staff')->group(function () {
         // own doc comment.
         Route::get('/auftraege/{case}/frageboegen', [CaseController::class, 'forms'])
             ->name('projects.forms');
+        Route::get('/auftraege/{case}/rechnungen', [CaseController::class, 'invoices'])
+            ->name('projects.invoices');
         Route::post('/auftraege/{case}/frageboegen', [FormInstanceController::class, 'store'])
             ->name('form-instances.store');
         Route::patch('/frageboegen/{formInstance}', [FormInstanceController::class, 'update'])
@@ -761,6 +763,8 @@ Route::middleware('audience:staff')->group(function () {
         // checklist on the same table should.
         Route::post('/frageboegen/{formInstance}/freigeben', [FormInstanceController::class, 'share'])
             ->name('form-instances.share');
+        Route::post('/frageboegen/{formInstance}/abschliessen', [FormInstanceController::class, 'close'])
+            ->name('form-instances.close');
 
         Route::patch('/frageboegen-felder/{formInstanceField}/antwort', [FormInstanceController::class, 'answer'])
             ->name('form-instance-fields.answer');

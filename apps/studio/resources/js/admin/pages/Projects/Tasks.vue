@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { Button } from '@/ui/button'
+import { Checkbox } from '@/ui/checkbox'
+import { Input } from '@/ui/input'
 /*
  * Alle Aufgaben eines Auftrags, nach Fälligkeit gruppiert: was überfällig ist,
  * was diese Woche dran ist, was später kommt, und was an einem Ereignis hängt,
@@ -131,13 +133,14 @@ function reopen(row: App.Crm.Data.TaskRowData) {
           </div>
 
           <form v-if="header.canManageTasks" class="flex flex-wrap items-center gap-2.5" @submit.prevent="add">
-            <input
+            <Input
               v-model="form.title"
+              size="sm"
               :aria-label="$t('lead.taskTitle')"
               :placeholder="$t('lead.taskTitle')"
-              class="h-9 min-w-[220px] flex-1 rounded-md border border-rule bg-transparent px-3 text-small outline-none focus:border-ring"
+              class="min-w-[220px] flex-1"
               type="text"
-            >
+            />
             <DatePicker v-model="form.due_on" class="w-[150px]" />
             <Select v-if="!$page.props.soloStudio" v-model="form.assignee">
               <SelectTrigger class="w-44" :aria-label="$t('project.taskAssignee')"><SelectValue /></SelectTrigger>
@@ -148,7 +151,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
                 </SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="pill" type="submit" :disabled="!form.title || form.processing">
+            <Button variant="default" type="submit" :disabled="!form.title || form.processing">
               {{ $t('project.taskCreate') }}
             </Button>
           </form>
@@ -159,11 +162,10 @@ function reopen(row: App.Crm.Data.TaskRowData) {
             </div>
 
             <div v-for="row in group.rows" :key="row.id" class="flex items-center gap-3.5 py-[9px] max-[640px]:flex-wrap max-[640px]:gap-x-2.5 max-[640px]:gap-y-1">
-              <button
-                class="size-[15px] flex-none rounded-[5px] bg-sunk-2"
-                type="button"
+              <Checkbox
+                :model-value="false"
                 :aria-label="$t('project.taskComplete')"
-                @click="complete(row)"
+                @update:model-value="complete(row)"
               />
               <span class="text-ui leading-[1.47]">{{ row.title }}</span>
               <span class="text-small text-ink-2">{{ row.audienceLabel }}</span>

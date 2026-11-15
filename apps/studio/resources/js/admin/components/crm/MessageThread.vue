@@ -113,7 +113,7 @@ function cancelScheduled(messageId: string) {
         <div v-if="usableTemplates.length" class="mb-2.5 flex flex-wrap items-center gap-1.5">
           <Button
             v-for="template in usableTemplates" :key="template.id"
-            type="button" variant="pill-muted"
+            type="button" variant="secondary"
             @click="insertTemplate(template.id)"
           >
             {{ template.name }}
@@ -133,7 +133,7 @@ function cancelScheduled(messageId: string) {
         </Field>
         <div class="mt-2.5 flex items-center gap-2.5">
           <DateTimeField v-model="reply.scheduled_for" :label="$t('project.messagesScheduleLabel')" />
-          <Button variant="pill" class="ml-auto" type="submit" :disabled="reply.processing" :state="reply.processing ? 'loading' : 'idle'">
+          <Button variant="default" class="ml-auto" type="submit" :disabled="reply.processing" :state="reply.processing ? 'loading' : 'idle'">
             {{ reply.scheduled_for ? $t('project.messagesSchedule') : $t('project.messagesSend') }}
           </Button>
         </div>
@@ -146,7 +146,7 @@ function cancelScheduled(messageId: string) {
         </Field>
         <div class="mt-2.5 flex items-center gap-2.5">
           <DateTimeField v-model="record.sent_at" :label="$t('project.messagesSentAt')" />
-          <Button variant="pill" class="ml-auto" type="submit" :disabled="!record.body.trim() || record.processing">
+          <Button variant="default" class="ml-auto" type="submit" :disabled="!record.body.trim() || record.processing">
             {{ $t('project.messagesRecordSave') }}
           </Button>
         </div>

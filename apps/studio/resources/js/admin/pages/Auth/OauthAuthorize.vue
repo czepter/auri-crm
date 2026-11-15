@@ -48,7 +48,7 @@ function submit(decision: 'approve' | 'deny') {
       <div class="flex gap-2.5">
         <Button
           type="button"
-          class="flex-1 justify-center"
+          class="ml-auto flex-1 justify-center"
           :disabled="form.processing"
           @click="submit('approve')"
         >

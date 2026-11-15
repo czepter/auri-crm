@@ -122,7 +122,7 @@ class DashboardController extends Controller
             'date' => $shoot->date->format('Y-m-d'),
             // call_time is a plain time column, not a cast — same trimming NextShootData does.
             'time' => $shoot->call_time === null ? null : substr((string) $shoot->call_time, 0, 5),
-            'what' => $shoot->case->name,
+            'what' => $shoot->title(),
             'where' => $shoot->venue_name,
             'away' => false,
             'href' => '/auftraege/'.$shoot->case->public_id.'/shootings',

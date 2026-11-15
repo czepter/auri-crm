@@ -186,6 +186,22 @@ final class StudioOpsTools
             ),
 
             new ToolDefinition(
+                name: 'close_form',
+                title: 'Close or reopen a form',
+                description: 'Locks a questionnaire on the portal so the client can no longer edit it, or reopens it. Staff can still correct answers; nothing already answered is deleted.',
+                method: 'POST',
+                path: '/forms/{form}/close',
+                schema: fn (JsonSchema $schema) => [
+                    'form' => $schema->string()->description('The form instance public id')->required(),
+                    'closed' => $schema->boolean()->required(),
+                ],
+                annotations: ['readOnlyHint' => false, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false],
+                silent: false,
+                structure: fn (array $body) => ['form' => $body['data']],
+                outputSchema: fn (JsonSchema $schema) => ['form' => self::form($schema)],
+            ),
+
+            new ToolDefinition(
                 name: 'answer_form_field',
                 title: 'Record an answer',
                 description: 'Records (or corrects) the answer to one question on a form already seeded. Appends the next answer version; every earlier one stays. A "file" field cannot be answered here — there is no way to attach bytes through this tool.',
@@ -327,6 +343,7 @@ final class StudioOpsTools
             'sourceTemplateName' => $schema->string()->nullable(),
             'updatedAt' => $schema->string(),
             'sharedAt' => $schema->string()->nullable(),
+            'closedAt' => $schema->string()->nullable(),
             'fields' => $schema->array()->items($schema->object([
                 'id' => $schema->string(),
                 'label' => $schema->string(),
