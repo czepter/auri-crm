@@ -82,6 +82,7 @@ class ImportLegacyGallery
             'title' => $title,
             'is_external' => true,
             'external_url' => $externalUrl,
+            'project_type_id' => $project->type?->id,
         ]);
 
         return $this->result('linked', "linked to {$externalUrl}.", $gallery);
@@ -113,6 +114,7 @@ class ImportLegacyGallery
             'case_id' => $project->id,
             'shoot_id' => $shoot?->id,
             'title' => $title,
+            'project_type_id' => $project->type?->id,
         ]);
 
         // publish() snapshots real Asset rows (Gallery::draftAssets()), not

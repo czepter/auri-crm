@@ -11,11 +11,20 @@ const PORTAL_DEFAULTS: Record<string, string | boolean | null> = {
   messaging_mode: 'booking',
 }
 
+const SOCIAL_PLATFORMS = [
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'facebook', label: 'Facebook' },
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'pinterest', label: 'Pinterest' },
+  { value: 'linkedin', label: 'LinkedIn' },
+  { value: 'website', label: 'Website' },
+]
+
 const meta = {
   title: 'Bildschirme/Kontakte/Neu',
   component: Create,
   parameters: { layout: 'fullscreen', url: '/kontakte/neu' },
-  args: { portalDefaults: PORTAL_DEFAULTS },
+  args: { portalDefaults: PORTAL_DEFAULTS, socialPlatforms: SOCIAL_PLATFORMS },
 } satisfies Meta<typeof Create>
 
 export default meta

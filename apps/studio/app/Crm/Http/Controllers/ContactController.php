@@ -10,8 +10,10 @@ use App\Crm\Actions\CreateContact;
 use App\Crm\Actions\UpdateContact;
 use App\Crm\Data\ContactRowData;
 use App\Crm\Data\ContactSuggestionData;
+use App\Crm\Enums\SocialPlatform;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Crm\Support\SocialProfiles;
 use App\Engagement\Data\MessageData;
 use App\Engagement\Models\Message;
 use App\Enums\Capability;
@@ -122,7 +124,15 @@ class ContactController extends Controller
 
         return Inertia::render('Contacts/Create', [
             'portalDefaults' => $this->portalDefaults($portal),
+            'socialPlatforms' => $this->socialPlatforms(),
         ]);
+    }
+
+    /** @return list<array{value: string, label: string}> */
+    private function socialPlatforms(): array
+    {
+        return collect(SocialPlatform::cases())
+            ->map(fn (SocialPlatform $platform) => ['value' => $platform->value, 'label' => $platform->label()])->all();
     }
 
     public function edit(Contact $contact, PortalSettings $portal): Response
@@ -147,6 +157,8 @@ class ContactController extends Controller
                 'postcode' => $contact->postcode,
                 'city' => $contact->city,
             ],
+            'socialProfiles' => $contact->social_profiles ?? [],
+            'socialPlatforms' => $this->socialPlatforms(),
             // E-11: every thread this contact is on, across projects — the
             // question "what have we actually said to this person" has no
             // other place to be answered, because a thread only ever knows
@@ -287,9 +299,14 @@ class ContactController extends Controller
             'street' => ['nullable', 'string', 'max:255'],
             'postcode' => ['nullable', 'string', 'max:32'],
             'city' => ['nullable', 'string', 'max:255'],
+            ...SocialProfiles::rules(),
             'portal' => ['array'],
             ...collect(self::PORTAL_RULES)->mapWithKeys(fn ($rules, $key) => ["portal.{$key}" => $rules])->all(),
         ]);
+
+        if (array_key_exists('social_profiles', $validated)) {
+            $validated['social_profiles'] = SocialProfiles::normalize($validated['social_profiles']);
+        }
 
         $overrides = array_filter($validated['portal'] ?? [], fn ($value) => $value !== null && $value !== '');
 
@@ -321,7 +338,12 @@ class ContactController extends Controller
             'street' => ['nullable', 'string', 'max:255'],
             'postcode' => ['nullable', 'string', 'max:32'],
             'city' => ['nullable', 'string', 'max:255'],
+            ...SocialProfiles::rules(),
         ]);
+
+        if (array_key_exists('social_profiles', $validated)) {
+            $validated['social_profiles'] = SocialProfiles::normalize($validated['social_profiles']);
+        }
 
         if ($validated['email'] !== $contact->email) {
             AuditLogger::record(

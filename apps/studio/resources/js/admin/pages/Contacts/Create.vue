@@ -2,6 +2,7 @@
 import { Link, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ContactPortalFields from '@/admin/components/crm/ContactPortalFields.vue'
+import ContactSocialProfiles from '@/admin/components/crm/ContactSocialProfiles.vue'
 import FormShell from '@/ui/page/FormShell.vue'
 import CreateSummary from '@/admin/components/CreateSummary.vue'
 import Card from '@/ui/page/Card.vue'
@@ -10,13 +11,17 @@ import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
-defineProps<{ portalDefaults: Record<string, string | boolean | null> }>()
+defineProps<{
+  portalDefaults: Record<string, string | boolean | null>
+  socialPlatforms: { value: string; label: string }[]
+}>()
 useLiveProps([])
 
 // P-09 (#228): '' is Standard, and the sheet's own encoding — the transform
 // below drops it, so a contact is born with only the keys that depart.
 const form = useForm({
   name: '', email: '', phone: '', street: '', postcode: '', city: '',
+  social_profiles: [] as { platform: string; value: string }[],
   portal: {
     portal_visible: '', accept_quotes: '', sign_contracts: '', payment_status: '',
     messaging_mode: '', gallery_downloads: '', gallery_lists: '', gallery_comments: '',
@@ -70,6 +75,12 @@ function submit() {
             <Field v-slot="{ id }" class="flex-1" :label="$t('contacts.city')" :error="form.errors.city">
               <Input :id="id" v-model="form.city" type="text" autocomplete="address-level2" />
             </Field>
+          </div>
+        </Card>
+
+        <Card :title="$t('contacts.profiles')">
+          <div class="flex flex-col gap-3">
+            <ContactSocialProfiles :profiles="form.social_profiles" :platforms="socialPlatforms" :errors="form.errors" />
           </div>
         </Card>
 

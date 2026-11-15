@@ -14,6 +14,7 @@ import { decideExpiryOnBlur } from '@/admin/lib/galleryExpiry'
 import GalleryReleaseFields, { type ReleasePatch, type ReleaseValues } from '@/admin/components/gallery/GalleryReleaseFields.vue'
 import { ACTIONS, AUDIENCES, type Audience, type Permissions } from '@/admin/lib/galleryPermissions'
 import { Switch } from '@/ui/switch'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
 const props = defineProps<{
   gallery: {
@@ -41,6 +42,12 @@ const props = defineProps<{
     downloadSizes: ('original' | 'web')[]
     expiryReminder: boolean
     invoices: { id: string; number: string; status: string }[]
+    listedOnHome: boolean
+    homePinned: boolean
+    homeBlocker: 'locked' | 'draft' | 'withdrawn' | 'expired' | 'external' | null
+    homeMode: 'none' | 'redirect' | 'overview'
+    categoryId: string | null
+    categories: { id: string; name: string }[]
   }
   siblings: { id: string; title: string | null; assetCount: number; open: boolean }[]
   versions: { version: number; publishedAt: string | null; assetCount: number }[]
@@ -91,6 +98,15 @@ function saveExpiryOnBlur(text: string) {
 
   general.expires_at = decision.value ?? ''
   saveGeneral()
+}
+
+const NO_CATEGORY = 'none'
+
+const category = useForm({ project_type_id: props.gallery.categoryId ?? NO_CATEGORY })
+
+function saveCategory() {
+  category.transform((data) => ({ project_type_id: data.project_type_id === NO_CATEGORY ? null : data.project_type_id }))
+    .patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
 }
 
 const addressPrefixText = computed(() => addressPrefix(props.gallery.url))
@@ -240,6 +256,17 @@ function day(iso: string | null) {
           <Label variant="inline" for="sw-reminder">{{ $t('galleryRecord.expiryReminder') }}</Label>
         </div>
       </div>
+    </div>
+
+    <div v-if="!gallery.isExternal" class="mb-5 flex flex-col gap-2 pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
+      <Label for="gallery-category">{{ $t('galleryRecord.category') }}</Label>
+      <Select v-model="category.project_type_id" @update:model-value="saveCategory">
+        <SelectTrigger id="gallery-category" class="w-[220px]"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          <SelectItem :value="NO_CATEGORY">{{ $t('galleryRecord.categoryNone') }}</SelectItem>
+          <SelectItem v-for="type in gallery.categories" :key="type.id" :value="type.id">{{ type.name }}</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
 
     <h2 class="mt-9">{{ $t('galleryRecord.versions') }}</h2>

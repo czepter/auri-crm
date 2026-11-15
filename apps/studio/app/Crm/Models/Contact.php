@@ -49,7 +49,7 @@ class Contact extends Model implements Authenticatable
     use HasPublicId;
     use Notifiable;
 
-    protected $fillable = ['name', 'email', 'phone', 'street', 'postcode', 'city'];
+    protected $fillable = ['name', 'email', 'phone', 'street', 'postcode', 'city', 'social_profiles'];
 
     /**
      * Neuanlage: the studio's greeting is written onto the contact as their
@@ -88,6 +88,7 @@ class Contact extends Model implements Authenticatable
             // P-09 (#228): this contact's departures from the studio's portal
             // defaults. An absent key means inherit — see PortalSettings.
             'portal_overrides' => 'array',
+            'social_profiles' => 'array',
         ];
     }
 

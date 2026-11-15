@@ -46,6 +46,7 @@ class ExportContactDsgvoData
                 'name' => $contact->name,
                 'email' => $contact->email,
                 'phone' => $contact->phone,
+                'social_profiles' => $contact->social_profiles,
                 'street' => $contact->street,
                 'postcode' => $contact->postcode,
                 'city' => $contact->city,

@@ -145,7 +145,7 @@ function day(iso: string | null) {
           :mail-templates="mailTemplates"
           :preset-id="query.get('vorlage')"
           :preview-title="galleries[0]?.title ?? $page.props.brand"
-          :section="section === 'gestaltung' || section === 'vorlagen' ? section : 'standardwerte'"
+          :section="section === 'gestaltung' || section === 'vorlagen' || section === 'startseite' ? section : 'standardwerte'"
           :settings="settings"
           @close="close"
         />

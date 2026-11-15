@@ -7,6 +7,15 @@ const QUEUE: App.Crm.Data.ContactRowData[] = [
   { id: 'c3', name: 'Kerstin Voß', email: 'k.voss@nordwerk.de', phone: '040 559012', projectCount: 1, standing: 'past', nextDate: null, latestProject: 'Businessporträts Nordwerk' },
 ]
 
+const SOCIAL_PLATFORMS = [
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'facebook', label: 'Facebook' },
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'pinterest', label: 'Pinterest' },
+  { value: 'linkedin', label: 'LinkedIn' },
+  { value: 'website', label: 'Website' },
+]
+
 const PORTAL_DEFAULTS: Record<string, string | boolean | null> = {
   portal_visible: true,
   accept_quotes: true,
@@ -25,6 +34,8 @@ const meta = {
     contacts: QUEUE,
     contact: { id: 'c1', name: 'Lena Brandt', email: 'lena.brandt@posteo.de', phone: '0176 2244881', projectCount: 2 },
     billingAddress: { street: 'Eppendorfer Weg 214', postcode: '20251', city: 'Hamburg' },
+    socialProfiles: [{ platform: 'instagram', value: '@lena.brandt' }],
+    socialPlatforms: SOCIAL_PLATFORMS,
     correspondence: [
       { id: 'm1', author: 'Lena Brandt', fromStaff: false, body: 'Den Termin am 11.06. halten wir. Können wir den Zweitfotografen noch dazunehmen?', sentAt: '2026-08-28T09:12:00+02:00', deliveryState: null, projectName: 'Hochzeit Brandt', projectId: 'p1', scheduledFor: null },
       { id: 'm2', author: 'Christian Zepter', fromStaff: true, body: 'Ja, ich lege den Zweitfotografen ins Angebot und schicke es heute.', sentAt: '2026-08-28T11:40:00+02:00', deliveryState: 'delivered', projectName: 'Hochzeit Brandt', projectId: 'p1', scheduledFor: null },
@@ -76,6 +87,8 @@ export const NurName: Story = {
   args: {
     contact: { id: 'c3', name: 'Kerstin Voß', email: null, phone: null, projectCount: 0 },
     billingAddress: { street: null, postcode: null, city: null },
+    socialProfiles: [],
+    socialPlatforms: SOCIAL_PLATFORMS,
     correspondence: [],
     projects: [],
     galleries: [],

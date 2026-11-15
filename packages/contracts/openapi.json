@@ -921,6 +921,29 @@
                                             "null"
                                         ],
                                         "maxLength": 64
+                                    },
+                                    "social_profiles": {
+                                        "type": [
+                                            "array",
+                                            "null"
+                                        ],
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "platform": {
+                                                    "$ref": "#/components/schemas/SocialPlatform"
+                                                },
+                                                "value": {
+                                                    "type": "string",
+                                                    "maxLength": 255
+                                                }
+                                            },
+                                            "required": [
+                                                "platform",
+                                                "value"
+                                            ]
+                                        },
+                                        "maxItems": 10
                                     }
                                 },
                                 "required": [
@@ -955,13 +978,21 @@
                                                 "string",
                                                 "null"
                                             ]
+                                        },
+                                        "social_profiles": {
+                                            "type": [
+                                                "array",
+                                                "null"
+                                            ],
+                                            "items": {}
                                         }
                                     },
                                     "required": [
                                         "id",
                                         "name",
                                         "email",
-                                        "phone"
+                                        "phone",
+                                        "social_profiles"
                                     ]
                                 }
                             }
@@ -1125,6 +1156,29 @@
                                             "null"
                                         ],
                                         "maxLength": 255
+                                    },
+                                    "social_profiles": {
+                                        "type": [
+                                            "array",
+                                            "null"
+                                        ],
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "platform": {
+                                                    "$ref": "#/components/schemas/SocialPlatform"
+                                                },
+                                                "value": {
+                                                    "type": "string",
+                                                    "maxLength": 255
+                                                }
+                                            },
+                                            "required": [
+                                                "platform",
+                                                "value"
+                                            ]
+                                        },
+                                        "maxItems": 10
                                     }
                                 }
                             }
@@ -1174,6 +1228,13 @@
                                                 "string",
                                                 "null"
                                             ]
+                                        },
+                                        "social_profiles": {
+                                            "type": [
+                                                "array",
+                                                "null"
+                                            ],
+                                            "items": {}
                                         }
                                     },
                                     "required": [
@@ -1183,7 +1244,8 @@
                                         "phone",
                                         "street",
                                         "postcode",
-                                        "city"
+                                        "city",
+                                        "social_profiles"
                                     ]
                                 }
                             }
@@ -3647,6 +3709,391 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/gallery-home": {
+            "get": {
+                "operationId": "gallery-home.show",
+                "tags": [
+                    "GalleryHome"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "mode": {
+                                                    "type": "string",
+                                                    "const": "redirect"
+                                                },
+                                                "url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "mode",
+                                                "url"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "mode": {
+                                                    "type": "string",
+                                                    "const": "overview"
+                                                },
+                                                "noindex": {
+                                                    "type": "boolean"
+                                                },
+                                                "studio": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "logo": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "website": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "impressum": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "datenschutz": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "name",
+                                                        "logo",
+                                                        "website",
+                                                        "impressum",
+                                                        "datenschutz"
+                                                    ]
+                                                },
+                                                "design": {
+                                                    "type": "object",
+                                                    "additionalProperties": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "categories": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "slug": {
+                                                                "type": "string"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "slug",
+                                                            "name"
+                                                        ]
+                                                    }
+                                                },
+                                                "category": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "more": {
+                                                    "type": "boolean"
+                                                },
+                                                "galleries": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "title": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "date": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "category": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "path": {
+                                                                "type": "string"
+                                                            },
+                                                            "version": {
+                                                                "type": "string"
+                                                            },
+                                                            "cover": {
+                                                                "type": "boolean"
+                                                            },
+                                                            "protected": {
+                                                                "type": "boolean"
+                                                            },
+                                                            "focal": {
+                                                                "type": [
+                                                                    "object",
+                                                                    "null"
+                                                                ],
+                                                                "properties": {
+                                                                    "x": {
+                                                                        "type": [
+                                                                            "integer",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "y": {
+                                                                        "type": [
+                                                                            "integer",
+                                                                            "null"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "x",
+                                                                    "y"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "title",
+                                                            "date",
+                                                            "category",
+                                                            "path",
+                                                            "version",
+                                                            "cover",
+                                                            "protected",
+                                                            "focal"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "mode",
+                                                "noindex",
+                                                "studio",
+                                                "design",
+                                                "categories",
+                                                "category",
+                                                "more",
+                                                "galleries"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "mode": {
+                                                    "type": "string",
+                                                    "const": "overview"
+                                                },
+                                                "galleries": {
+                                                    "anyOf": [
+                                                        {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            },
+                                                            "minItems": 0,
+                                                            "maxItems": 0,
+                                                            "additionalItems": false
+                                                        },
+                                                        {
+                                                            "type": "array",
+                                                            "prefixItems": [
+                                                                {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "title": {
+                                                                            "type": [
+                                                                                "string",
+                                                                                "null"
+                                                                            ]
+                                                                        },
+                                                                        "date": {
+                                                                            "type": [
+                                                                                "string",
+                                                                                "null"
+                                                                            ]
+                                                                        },
+                                                                        "category": {
+                                                                            "type": [
+                                                                                "string",
+                                                                                "null"
+                                                                            ]
+                                                                        },
+                                                                        "path": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "version": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "cover": {
+                                                                            "type": "boolean"
+                                                                        },
+                                                                        "protected": {
+                                                                            "type": "boolean"
+                                                                        },
+                                                                        "focal": {
+                                                                            "type": [
+                                                                                "object",
+                                                                                "null"
+                                                                            ],
+                                                                            "properties": {
+                                                                                "x": {
+                                                                                    "type": [
+                                                                                        "integer",
+                                                                                        "null"
+                                                                                    ]
+                                                                                },
+                                                                                "y": {
+                                                                                    "type": [
+                                                                                        "integer",
+                                                                                        "null"
+                                                                                    ]
+                                                                                }
+                                                                            },
+                                                                            "required": [
+                                                                                "x",
+                                                                                "y"
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    "required": [
+                                                                        "title",
+                                                                        "date",
+                                                                        "category",
+                                                                        "path",
+                                                                        "version",
+                                                                        "cover",
+                                                                        "protected",
+                                                                        "focal"
+                                                                    ]
+                                                                }
+                                                            ],
+                                                            "minItems": 1,
+                                                            "maxItems": 1,
+                                                            "additionalItems": false
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "mode",
+                                                "galleries"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "mode": {
+                                                    "type": "string",
+                                                    "const": "none"
+                                                }
+                                            },
+                                            "required": [
+                                                "mode"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/gallery-home/covers/{galleryVersion}": {
+            "get": {
+                "operationId": "gallery-home.covers.show",
+                "tags": [
+                    "GalleryHomeCover"
+                ],
+                "parameters": [
+                    {
+                        "name": "galleryVersion",
+                        "in": "path",
+                        "required": true,
+                        "description": "The gallery version public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Cache-Control": {
+                                "schema": {
+                                    "type": "string",
+                                    "const": "public, max-age=300"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
@@ -9915,6 +10362,18 @@
                 "type": "object",
                 "additionalProperties": {},
                 "title": "ShotListItemReadData"
+            },
+            "SocialPlatform": {
+                "type": "string",
+                "enum": [
+                    "instagram",
+                    "facebook",
+                    "tiktok",
+                    "pinterest",
+                    "linkedin",
+                    "website"
+                ],
+                "title": "SocialPlatform"
             },
             "StudioSettingsReadData": {
                 "type": "object",
