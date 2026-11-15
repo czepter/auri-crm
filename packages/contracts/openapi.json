@@ -921,6 +921,29 @@
                                             "null"
                                         ],
                                         "maxLength": 64
+                                    },
+                                    "social_profiles": {
+                                        "type": [
+                                            "array",
+                                            "null"
+                                        ],
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "platform": {
+                                                    "$ref": "#/components/schemas/SocialPlatform"
+                                                },
+                                                "value": {
+                                                    "type": "string",
+                                                    "maxLength": 255
+                                                }
+                                            },
+                                            "required": [
+                                                "platform",
+                                                "value"
+                                            ]
+                                        },
+                                        "maxItems": 10
                                     }
                                 },
                                 "required": [
@@ -955,13 +978,17 @@
                                                 "string",
                                                 "null"
                                             ]
+                                        },
+                                        "social_profiles": {
+                                            "type": "string"
                                         }
                                     },
                                     "required": [
                                         "id",
                                         "name",
                                         "email",
-                                        "phone"
+                                        "phone",
+                                        "social_profiles"
                                     ]
                                 }
                             }
@@ -1125,6 +1152,29 @@
                                             "null"
                                         ],
                                         "maxLength": 255
+                                    },
+                                    "social_profiles": {
+                                        "type": [
+                                            "array",
+                                            "null"
+                                        ],
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "platform": {
+                                                    "$ref": "#/components/schemas/SocialPlatform"
+                                                },
+                                                "value": {
+                                                    "type": "string",
+                                                    "maxLength": 255
+                                                }
+                                            },
+                                            "required": [
+                                                "platform",
+                                                "value"
+                                            ]
+                                        },
+                                        "maxItems": 10
                                     }
                                 }
                             }
@@ -1174,6 +1224,9 @@
                                                 "string",
                                                 "null"
                                             ]
+                                        },
+                                        "social_profiles": {
+                                            "type": "string"
                                         }
                                     },
                                     "required": [
@@ -1183,7 +1236,8 @@
                                         "phone",
                                         "street",
                                         "postcode",
-                                        "city"
+                                        "city",
+                                        "social_profiles"
                                     ]
                                 }
                             }
@@ -9901,6 +9955,18 @@
                 "type": "object",
                 "additionalProperties": {},
                 "title": "ShotListItemReadData"
+            },
+            "SocialPlatform": {
+                "type": "string",
+                "enum": [
+                    "instagram",
+                    "facebook",
+                    "tiktok",
+                    "pinterest",
+                    "linkedin",
+                    "website"
+                ],
+                "title": "SocialPlatform"
             },
             "StudioSettingsReadData": {
                 "type": "object",
