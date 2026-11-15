@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, useTemplateRef } from 'vue'
+import { computed, onMounted, ref, useSlots, useTemplateRef } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import Page from '@/ui/page/Page.vue'
 import ProjectQueue from '@/admin/components/crm/ProjectQueue.vue'
+import { usePageCommands } from '@/admin/lib/paletteCommands'
+import { useI18n } from 'vue-i18n'
 import StageTrack from '@/admin/components/crm/StageTrack.vue'
 import SettlePlanDialog from '@/admin/components/payments/SettlePlanDialog.vue'
 import { Button } from '@/ui/button'
@@ -34,6 +36,8 @@ onMounted(() => document.fonts.ready.then(() => tabNav.value?.querySelector('[ar
 const { rect: tabRect, animate: tabAnimate } = useSlidingIndicator(tabNav, () => props.active, { selector: '[aria-current]', key: 'project-tabs' })
 
 const subTabs = computed(() => props.header.tabs.find((tab) => tab.key === props.active)?.children ?? [])
+
+const booking = ref(false)
 
 function book() {
   router.post(`/auftraege/${props.header.id}/buchung`, {}, { preserveScroll: true })
@@ -72,6 +76,22 @@ function reopenProject() {
 function destroy() {
   router.delete(`/auftraege/${props.header.id}`)
 }
+
+const { t } = useI18n()
+const slots = useSlots()
+
+usePageCommands(() => {
+  const { nextAction, canBook, isBooked, canComplete, isCompleted } = props.header
+  const staged = !!slots.stage
+
+  return [
+    ...(!staged && nextAction
+      ? [{ id: 'next', title: t(nextAction.label), ...(nextAction.href ? { href: nextAction.href } : { run: () => router.post(nextAction.post!, {}, { preserveScroll: true }) }) }]
+      : []),
+    ...(!staged && !isBooked && canBook ? [{ id: 'book', title: t('project.book'), run: () => (booking.value = true) }] : []),
+    ...(canComplete && !isCompleted ? [{ id: 'complete', title: t('project.completeMenu'), run: complete }] : []),
+  ]
+})
 </script>
 
 <template>
@@ -110,7 +130,7 @@ function destroy() {
             </template>
 
             <!-- A page with a stage menu books through it. -->
-            <AlertDialog v-if="!header.isBooked && header.canBook && !$slots.stage">
+            <AlertDialog v-if="!header.isBooked && header.canBook && !$slots.stage" v-model:open="booking">
               <AlertDialogTrigger as-child>
                 <Button :variant="$slots.actions || header.nextAction ? 'outline' : 'pill'" type="button">{{ $t('project.book') }}</Button>
               </AlertDialogTrigger>

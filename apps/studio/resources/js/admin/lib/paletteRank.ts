@@ -1,4 +1,4 @@
-export type Entry = { kind: string; title: string; href: string }
+export type Entry = { id: string; title: string }
 
 // Subsequence match with bonuses for word starts and consecutive characters.
 export function score(title: string, query: string): number | null {
@@ -23,19 +23,23 @@ export function score(title: string, query: string): number | null {
 }
 
 // Rows the server matched on something other than the title (an e-mail
-// address) stay, ranked below every title match.
-export function rank<T extends Entry>(recent: T[], found: T[], query: string): T[] {
-  if (!query.trim()) return recent
+// address) stay, ranked below every title match. Commands come first when
+// there is no query; a command whose title another command already took
+// (the page's own "Neues Angebot" beside the global one) is dropped.
+export function rank<T extends Entry>(commands: T[], recent: T[], found: T[], query: string): T[] {
+  const unique = commands.filter((command, at) => commands.findIndex((other) => other.title === command.title) === at)
+
+  if (!query.trim()) return [...unique, ...recent]
 
   const rows = new Map<string, { entry: T; value: number }>()
 
-  for (const entry of recent) {
+  for (const entry of [...unique, ...recent]) {
     const value = score(entry.title, query)
-    if (value !== null) rows.set(entry.href, { entry, value })
+    if (value !== null) rows.set(entry.id, { entry, value })
   }
 
   for (const entry of found) {
-    rows.set(entry.href, { entry, value: score(entry.title, query) ?? -1000 })
+    rows.set(entry.id, { entry, value: score(entry.title, query) ?? -1000 })
   }
 
   return [...rows.values()].sort((a, b) => b.value - a.value).map((row) => row.entry)

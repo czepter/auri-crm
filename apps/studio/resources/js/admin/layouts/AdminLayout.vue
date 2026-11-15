@@ -12,6 +12,7 @@ import {
 import { Toaster } from "@/ui/sonner";
 import { SkeletonSwap } from "@/ui/skeleton-swap";
 import CommandPalette from "@/admin/layouts/CommandPalette.vue";
+import { providePageCommands } from "@/admin/lib/paletteCommands";
 import { Alert } from "@/ui/alert";
 import { Button } from "@/ui/button";
 import { navItems, phoneNav, studioKeys } from "@/admin/lib/nav";
@@ -20,6 +21,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/ui/dialog";
 const props = defineProps<{ active: string }>();
 
 const palette = ref<InstanceType<typeof CommandPalette> | null>(null);
+const pageCommands = providePageCommands();
 
 // Only a full navigation to a list: a form post or a partial reload keeps the
 // page it is on, and a detail screen has no list shape to stand in for.
@@ -325,7 +327,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                 </DropdownMenu>
             </nav>
 
-            <CommandPalette ref="palette" />
+            <CommandPalette ref="palette" :commands="pageCommands" />
         </div>
 
         <header class="hidden items-center justify-between pl-6 pr-2 pt-2 max-[640px]:flex">
