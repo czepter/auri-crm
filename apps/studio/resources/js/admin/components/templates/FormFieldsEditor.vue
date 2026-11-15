@@ -22,7 +22,7 @@ export type FormFieldRow = {
   optionsText: string
   fileMaxSize?: number
   fileMultiple?: boolean
-  helpText?: string
+  helpText: string
   minutesPerGroup?: number
 }
 
@@ -80,9 +80,9 @@ function optionsHint(type: string): string {
               <Input :id="`field-label-${index}`" v-model="field.label" type="text" maxlength="255" />
             </Field>
 
-            <div v-if="field.type === 'group_photos'" class="col-span-full flex min-w-0 flex-col gap-1.5">
+            <div class="col-span-full flex min-w-0 flex-col gap-1.5">
               <Label :for="`field-help-${index}`">{{ $t('formTemplates.helpField') }}</Label>
-              <Input :id="`field-help-${index}`" v-model="field.helpText" type="text" maxlength="500" />
+              <Textarea :id="`field-help-${index}`" v-model="field.helpText" rows="2" maxlength="500" />
             </div>
 
             <div v-if="field.type === 'select' || field.type === 'file' || field.type === 'group_photos'" class="col-span-full flex min-w-0 flex-col gap-1.5">
@@ -133,6 +133,7 @@ function optionsHint(type: string): string {
               <span v-if="(field.type === 'select' || field.type === 'file' || field.type === 'group_photos') && field.optionsText" class="text-small leading-[1.5] text-faint">{{ field.optionsText.split('\n').filter(Boolean).join(', ') }}</span>
               <span v-if="field.type === 'name_list'" class="text-small leading-[1.5] text-faint">{{ $t('formTemplates.nameListHint') }}</span>
             </div>
+            <div v-if="field.helpText" class="mt-1 truncate text-small leading-[1.5] text-faint">{{ field.helpText }}</div>
           </div>
           <Button as="a" variant="outline" href="#" @click.prevent="editingIndex = index">{{ $t('formTemplates.edit') }}</Button>
         </template>

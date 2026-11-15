@@ -7,6 +7,7 @@ const feld = (
         Partial<App.Crm.Data.FormInstanceFieldData>,
 ): App.Crm.Data.FormInstanceFieldData => ({
     required: false,
+    help: null,
     options: null,
     currentAnswer: null,
     answeredAt: null,
