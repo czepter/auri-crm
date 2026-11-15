@@ -5,6 +5,7 @@ namespace App\Gallery\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\ClientCase;
+use App\Crm\Models\ProjectType;
 use App\Crm\Models\Shoot;
 use App\Gallery\Support\GalleryPermissions;
 use App\Gallery\Support\GallerySettings;
@@ -14,6 +15,7 @@ use App\Media\Models\MultipartUpload;
 use App\Payments\Models\Invoice;
 use Carbon\CarbonImmutable;
 use Database\Factories\Gallery\GalleryFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -56,10 +58,13 @@ class Gallery extends Model
         'permissions', 'intro_enabled',
         'view_mode', 'watermark_text', 'download_rule', 'download_invoice_id', 'download_sizes', 'expiry_reminder',
         'gallery_preset_id', 'copy_source_id', 'copy_total', 'copy_asset_ids',
+        'listed_on_home', 'home_pinned', 'project_type_id',
     ];
 
     protected $attributes = [
         'is_external' => false,
+        'listed_on_home' => false,
+        'home_pinned' => false,
         'downloads_enabled' => true,
         'lists_enabled' => true,
         'comments_enabled' => true,
@@ -91,6 +96,8 @@ class Gallery extends Model
             'expiry_reminder' => 'boolean',
             'expiry_reminded_at' => 'immutable_datetime',
             'is_external' => 'boolean',
+            'listed_on_home' => 'boolean',
+            'home_pinned' => 'boolean',
             // C-17 (#253): recoverable, because both values are handed to
             // guests anyway and a studio that cannot look one up locks out
             // everybody holding the old one.
@@ -108,6 +115,11 @@ class Gallery extends Model
     public function case(): BelongsTo
     {
         return $this->belongsTo(ClientCase::class);
+    }
+
+    public function projectType(): BelongsTo
+    {
+        return $this->belongsTo(ProjectType::class);
     }
 
     /** @return array<string, bool> */
@@ -330,6 +342,52 @@ class Gallery extends Model
             $this->isInPrerelease() => 'prerelease',
             default => 'draft',
         };
+    }
+
+    /** Die Übersicht der Startseite: eingetragen, veröffentlicht, nicht zurückgezogen oder abgelaufen, nicht gesperrt, nicht extern. */
+    public function scopeListedOnHome(Builder $query): void
+    {
+        $query->where('galleries.listed_on_home', true)
+            ->whereHas('versions')
+            ->whereNull('galleries.unpublished_at')
+            ->where(fn (Builder $q) => $q->whereNull('galleries.expires_at')->orWhere('galleries.expires_at', '>', now()))
+            ->where('galleries.view_mode', '<>', 'locked')
+            ->where('galleries.is_external', false);
+    }
+
+    /** Angeheftete zuerst, dann nach Datum der Karte (Shooting vor Galerie), zuletzt veröffentlicht. */
+    public function scopeOrderedForHome(Builder $query): void
+    {
+        $query->select('galleries.*')
+            ->leftJoin('shoots', 'shoots.id', '=', 'galleries.shoot_id')
+            ->orderByDesc('galleries.home_pinned')
+            ->orderByRaw('coalesce(shoots.date, galleries.event_date) desc nulls last')
+            ->orderByDesc(
+                GalleryVersion::query()->withoutGlobalScopes()->select('published_at')
+                    ->whereColumn('gallery_versions.gallery_id', 'galleries.id')->orderByDesc('version')->limit(1)
+            )
+            ->orderByDesc('galleries.id');
+    }
+
+    /** Warum die Galerie nicht auf der Startseite steht, oder null. Dieselben Prüfungen wie scopeListedOnHome(). */
+    public function homeBlocker(): ?string
+    {
+        return match (true) {
+            $this->is_external => 'external',
+            $this->view_mode === 'locked' => 'locked',
+            $this->currentVersion === null => 'draft',
+            $this->isWithdrawn() => 'withdrawn',
+            $this->expires_at !== null && ! $this->expires_at->isFuture() => 'expired',
+            default => null,
+        };
+    }
+
+    /** Das Titelbild der Startseite: das gewählte, wenn Gäste es sehen, sonst das erste Gästebild. */
+    public function homeCoverKey(GalleryVersion $version): ?string
+    {
+        return $version->cover_key !== null && $version->sees($version->cover_key, false)
+            ? $version->cover_key
+            : ($version->assetsFor(false)[0]['key'] ?? null);
     }
 
     public function prereleaseSignups(): HasMany

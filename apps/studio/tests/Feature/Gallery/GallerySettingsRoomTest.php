@@ -3,6 +3,7 @@
 use App\Enums\StaffRole;
 use App\Gallery\Models\GalleryPreset;
 use App\Gallery\Support\GallerySettings;
+use App\Models\StudioSettings;
 use App\Models\User;
 use App\Settings\Actions\UpdateStudioSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -74,4 +75,26 @@ it('ships the studio design to the create screen', function () {
 
     $this->get('/galerien/neu')
         ->assertInertia(fn ($page) => $page->where('studioDefaults.design.colour', 'warm'));
+});
+
+it('stores a valid redirect and refuses a missing, foreign-scheme or own-host url', function (?string $url, ?string $error) {
+    config(['services.gallery.url' => 'http://gallery.test']);
+    $response = $this->patch('/einstellungen/galerien', ['gallery_home_mode' => 'redirect', 'gallery_home_redirect_url' => $url]);
+
+    $error === null
+        ? $response->assertSessionHasNoErrors()
+        : $response->assertSessionHasErrors(['gallery_home_redirect_url' => $error]);
+
+    expect(StudioSettings::current()->gallery_home_mode)->toBe($error === null ? 'redirect' : 'none');
+})->with([
+    'valid' => ['https://example.test/galerien', null],
+    'missing' => [null, 'Pflichtfeld'],
+    'scheme' => ['ftp://example.test', 'Nur http- und https-Adressen'],
+    'own host' => ['http://gallery.test/x', 'Zeigt auf gallery.test selbst'],
+]);
+
+it('keeps the homepage mode from a role without ManageSettings', function () {
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Manager]), 'staff');
+
+    $this->patch('/einstellungen/galerien', ['gallery_home_mode' => 'overview'])->assertNotFound();
 });

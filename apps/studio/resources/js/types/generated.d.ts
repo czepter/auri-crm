@@ -1157,6 +1157,9 @@ downloadRule: string,
 listsEnabled: boolean,
 commentsEnabled: boolean,
 design: Record<string, string>,
+homeMode: string,
+homeRedirectUrl: string | null,
+homeNoindex: boolean,
 };
 export type NumberRangeData = {
 id: string,

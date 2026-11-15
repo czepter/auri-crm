@@ -24,6 +24,9 @@ class GallerySettingsData extends Data
         public bool $commentsEnabled,
         /** @var array<string, string> */
         public array $design,
+        public string $homeMode,
+        public ?string $homeRedirectUrl,
+        public bool $homeNoindex,
     ) {}
 
     public static function current(): self
@@ -35,6 +38,9 @@ class GallerySettingsData extends Data
             listsEnabled: (bool) StudioSettings::current()->gallery_default_lists_enabled,
             commentsEnabled: (bool) StudioSettings::current()->gallery_default_comments_enabled,
             design: GallerySettings::design(),
+            homeMode: StudioSettings::current()->gallery_home_mode,
+            homeRedirectUrl: StudioSettings::current()->gallery_home_redirect_url,
+            homeNoindex: (bool) StudioSettings::current()->gallery_home_noindex,
         );
     }
 }

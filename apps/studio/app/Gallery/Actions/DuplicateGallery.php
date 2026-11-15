@@ -25,7 +25,7 @@ class DuplicateGallery
                 ...$source->only([
                     'case_id', 'shoot_id', 'design', 'info', 'event_date',
                     'download_rule', 'download_invoice_id', 'download_sizes', 'view_mode', 'watermark_text', 'expiry_reminder',
-                    'lists_enabled', 'comments_enabled', 'permissions', 'intro_enabled', 'gallery_preset_id',
+                    'lists_enabled', 'comments_enabled', 'permissions', 'intro_enabled', 'gallery_preset_id', 'project_type_id',
                 ]),
                 'title' => trim(($source->title ?? '').' '.($suffix ?? __('gallery.copy_suffix'))),
                 'copy_source_id' => $source->id,
