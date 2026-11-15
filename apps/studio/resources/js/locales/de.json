@@ -29,6 +29,7 @@
     },
     "cancel": "Abbrechen",
     "deleted": "Gelöscht",
+    "deleteFailed": "Nicht gelöscht",
     "undo": "Rückgängig",
     "save": "Speichern",
     "edit": "Ändern",

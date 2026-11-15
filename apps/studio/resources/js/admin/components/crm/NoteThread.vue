@@ -75,7 +75,7 @@ const { t } = useI18n();
 const visible = computed(() => props.entries.filter((entry) => !entry.note || !isHidden(`/notizen/${entry.note}`)));
 
 function destroy(note: string) {
-    deleteWithUndo(`/notizen/${note}`, { deleted: t("common.deleted"), undo: t("common.undo") });
+    deleteWithUndo(`/notizen/${note}`, { deleted: t("common.deleted"), undo: t("common.undo"), failed: t("common.deleteFailed") });
 }
 </script>
 

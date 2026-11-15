@@ -69,7 +69,7 @@ function saveTimelineEntry(entry: App.Crm.Data.TimelineEntryData) {
 }
 
 function removeTimelineEntry(entry: App.Crm.Data.TimelineEntryData) {
-  deleteWithUndo(`/ablauf/${entry.id}`, { deleted: t('common.deleted'), undo: t('common.undo') })
+  deleteWithUndo(`/ablauf/${entry.id}`, { deleted: t('common.deleted'), undo: t('common.undo'), failed: t('common.deleteFailed') })
 }
 </script>
 

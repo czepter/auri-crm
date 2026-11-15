@@ -68,7 +68,7 @@ function save(task: App.Crm.Data.TaskRowData) {
 
 function remove(task: App.Crm.Data.TaskRowData) {
   selectedId.value = null
-  deleteWithUndo(`/aufgaben/${task.id}`, { deleted: t('common.deleted'), undo: t('common.undo') })
+  deleteWithUndo(`/aufgaben/${task.id}`, { deleted: t('common.deleted'), undo: t('common.undo'), failed: t('common.deleteFailed') })
 }
 
 function due(task: App.Crm.Data.TaskRowData) {
