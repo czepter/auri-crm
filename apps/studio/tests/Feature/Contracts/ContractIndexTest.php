@@ -6,19 +6,22 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('lists the contracts that went out and leaves the drafts at the project', function () {
+it('lists sent contracts and drafts with the date a draft is sorted by', function () {
     $project = bookedContactProject();
 
     $sent = Contract::factory()->for($project, 'case')->create();
-    Contract::factory()->draft()->for($project, 'case')->create(['version' => 2]);
+    $draft = Contract::factory()->draft()->for($project, 'case')->create(['version' => 2]);
 
     $this->actingAs(staffMember(StaffRole::Admin), 'staff');
 
-    $rows = props('/vertraege')['contracts'];
+    $rows = collect(props('/vertraege')['contracts'])->keyBy('id');
 
-    expect($rows)->toHaveCount(1)
-        ->and($rows[0]['id'])->toBe($sent->public_id)
-        ->and($rows[0]['projectName'])->toBe($project->name);
+    expect($rows)->toHaveCount(2)
+        ->and($rows[$sent->public_id]['state'])->toBe('valid')
+        ->and($rows[$draft->public_id]['state'])->toBe('draft')
+        ->and($rows[$draft->public_id]['sentOn'])->toBeNull()
+        ->and($rows[$draft->public_id]['createdOn'])->toBe($draft->created_at->format('Y-m-d'))
+        ->and($rows[$sent->public_id]['projectName'])->toBe($project->name);
 });
 
 it('refuses the screen to a role without ManageContracts', function () {

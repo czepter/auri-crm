@@ -12,8 +12,7 @@ use Inertia\Response;
 
 /**
  * Die Verträge des ganzen Buchs, neben Angeboten, Rechnungen und
- * Gutschriften. Entwürfe bleiben draußen: was niemand bekommen hat, steht
- * am Projekt, nicht in den Unterlagen.
+ * Gutschriften.
  */
 class ContractIndexController extends Controller
 {
@@ -24,10 +23,8 @@ class ContractIndexController extends Controller
         abort_unless($viewer?->can(Capability::ManageContracts->value), 403);
 
         $contracts = Contract::query()
-            ->whereNotNull('sent_at')
             ->whereHas('case', fn ($project) => $project->visibleTo($viewer))
             ->with(['case.contacts', 'signature'])
-            ->orderByDesc('sent_at')
             ->get();
 
         return Inertia::render('Contracts/Index', [
