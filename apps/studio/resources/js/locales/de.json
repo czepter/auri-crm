@@ -532,6 +532,9 @@
     "exportYear": "CSV {year}",
     "searchPlaceholder": "Suchen",
     "empty": "Keine Rechnungen.",
+    "drafts": "Entwürfe",
+    "draft": "Entwurf",
+    "updatedOn": "Geändert",
     "number": "Nummer",
     "recipient": "Empfänger",
     "issuedOn": "Datum",
@@ -647,6 +650,7 @@
     "city": "Ort",
     "rates": "Raten",
     "previewMail": "E-Mail",
+    "saveDraft": "Entwurf speichern",
     "submit": "Rechnung stellen"
   },
   "projects": {

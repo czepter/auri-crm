@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildPreviewQuote, buildQuotePayload, quoteRowToLine, type QuoteDraft, type VatSettings } from './quotePayload'
+import { buildPreviewQuote, buildQuotePayload, quoteRowToLine, rowsFromInvoiceItems, type QuoteDraft, type VatSettings } from './quotePayload'
 
 const STANDARD: VatSettings = { mode: 'standard', rate: 1900, note: null }
 // effectiveVatRate() always zeroes the rate under small_business (see
@@ -219,5 +219,21 @@ describe('buildPreviewQuote', () => {
     expect(smallBusiness.vatMode).toBe('small_business')
     expect(smallBusiness.vatAmount).toBe(0)
     expect(smallBusiness.vatNote).toBe('Kleinunternehmer nach § 19 UStG')
+  })
+})
+
+describe('rowsFromInvoiceItems', () => {
+  it('restores the rows buildQuotePayload wrote', () => {
+    const draft = classicDraft()
+    draft.rows = [
+      { ...draft.rows[0], title: 'Abzüge', description: 'Format A4', quantity: 2, unitPrice: '20.00', discount: '10%', vatRate: 1900, installmentId: 'ra-1', quoteItemId: 'qi-1' },
+    ]
+
+    const { items } = buildQuotePayload(draft, { canManageCatalog: false })
+    const restored = rowsFromInvoiceItems(items.map((item) => ({ ...item, installment_id: 'ra-1', quote_item_id: 'qi-1' })))
+
+    expect(restored).toEqual([expect.objectContaining({
+      title: 'Abzüge', description: 'Format A4', quantity: 2, unitPrice: '20.00', discount: '10,00 %', vatRate: 1900, installmentId: 'ra-1', quoteItemId: 'qi-1',
+    })])
   })
 })

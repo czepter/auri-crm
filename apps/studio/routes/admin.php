@@ -968,6 +968,10 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/rechnungen/neu', [InvoiceController::class, 'create'])->name('invoices.create');
         Route::post('/rechnungen', [InvoiceController::class, 'store'])->name('invoices.store');
         Route::post('/rechnungen/vorschau', [InvoiceController::class, 'preview'])->name('invoices.preview');
+        Route::post('/rechnungen/entwuerfe', [InvoiceController::class, 'storeDraft'])->name('invoice-drafts.store');
+        Route::get('/rechnungen/entwuerfe/{draft}', [InvoiceController::class, 'showDraft'])->name('invoice-drafts.show');
+        Route::put('/rechnungen/entwuerfe/{draft}', [InvoiceController::class, 'updateDraft'])->name('invoice-drafts.update');
+        Route::delete('/rechnungen/entwuerfe/{draft}', [InvoiceController::class, 'destroyDraft'])->name('invoice-drafts.destroy');
         Route::get('/rechnungen/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
         Route::get('/rechnungen/{invoice}/pdf', [InvoiceController::class, 'download'])->name('invoices.download');
 

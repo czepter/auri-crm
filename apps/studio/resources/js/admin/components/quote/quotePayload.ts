@@ -1,4 +1,4 @@
-import { eurosToCents, parseDiscount } from '@/lib/money'
+import { centsToEuros, eurosToCents, formatDiscount, parseDiscount } from '@/lib/money'
 import { applyDiscount, lineAmount, spread, subtotal, vatLines } from '@/lib/quoteTotals'
 
 export type PricingMode = 'classic' | 'choice'
@@ -138,6 +138,36 @@ export function buildQuotePayload(draft: QuoteDraft, options: QuotePayloadOption
       due_on: stage.dueOn || null,
     })),
   }
+}
+
+export type InvoiceItemPayload = {
+  title?: string
+  description?: string | null
+  quantity?: number
+  unit_price?: number | null
+  discount_type?: string | null
+  discount_value?: number | null
+  vat_rate?: number | null
+  installment_id?: string | null
+  quote_item_id?: string | null
+}
+
+/** The inverse of the `items` buildQuotePayload writes, for an invoice draft posted earlier. */
+export function rowsFromInvoiceItems(items: InvoiceItemPayload[]): QuoteRow[] {
+  return items.map((item) => ({
+    title: item.title ?? '',
+    description: item.description ?? '',
+    quantity: item.quantity ?? 1,
+    unitPrice: centsToEuros(item.unit_price ?? null),
+    discount: formatDiscount(item.discount_type ?? null, item.discount_value ?? null),
+    vatRate: item.vat_rate ?? null,
+    selectable: false,
+    selected: false,
+    outcome: '',
+    hasImage: false,
+    installmentId: item.installment_id ?? undefined,
+    quoteItemId: item.quote_item_id ?? undefined,
+  }))
 }
 
 /**

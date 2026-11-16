@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { Link, router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
@@ -21,8 +21,10 @@ import { dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
 import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
 
-const props = defineProps<{ invoices: App.Payments.Data.InvoiceRowData[], exportYears: number[] }>()
-useLiveProps(['invoices', 'exportYears'])
+type Draft = { id: string; recipient: string | null; projectName: string | null; updatedOn: string }
+
+const props = defineProps<{ invoices: App.Payments.Data.InvoiceRowData[], drafts: Draft[], exportYears: number[] }>()
+useLiveProps(['invoices', 'drafts', 'exportYears'])
 
 const { t } = useI18n()
 
@@ -67,9 +69,31 @@ const shown = computed(() => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button v-if="invoices.length" :as="Link" variant="default" href="/rechnungen/neu">{{ $t('invoicesOverview.create') }}</Button>
+            <Button v-if="invoices.length || drafts.length" :as="Link" variant="default" href="/rechnungen/neu">{{ $t('invoicesOverview.create') }}</Button>
           </div>
         </PageHead>
+
+        <Table v-if="drafts.length" class="max-[640px]:block max-[640px]:overflow-x-auto">
+          <thead>
+            <tr>
+              <TableHead>{{ $t('invoicesOverview.drafts') }}</TableHead>
+              <TableHead class="max-[640px]:hidden">{{ $t('invoicesOverview.updatedOn') }}</TableHead>
+              <TableHead />
+            </tr>
+          </thead>
+          <tbody>
+            <TableRow v-for="draft in drafts" :key="draft.id">
+              <TableCell tone="name">
+                <Link :href="`/rechnungen/entwuerfe/${draft.id}`">{{ draft.recipient ?? draft.projectName ?? $t('invoicesOverview.draft') }}</Link>
+                <span v-if="draft.recipient && draft.projectName" class="block text-small text-ink-2">{{ draft.projectName }}</span>
+              </TableCell>
+              <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ dayWithWeekday(draft.updatedOn) }}</TableCell>
+              <TableCell align="right">
+                <Button variant="outline" type="button" @click="router.delete(`/rechnungen/entwuerfe/${draft.id}`, { preserveScroll: true })">{{ $t('common.delete') }}</Button>
+              </TableCell>
+            </TableRow>
+          </tbody>
+        </Table>
 
         <template v-if="invoices.length">
           <dl class="m-0 mx-6 mt-4.5 grid grid-cols-3 gap-px overflow-hidden rounded-lg bg-border max-[640px]:grid-cols-1">
@@ -169,7 +193,7 @@ const shown = computed(() => {
           </Table>
         </template>
 
-        <Empty v-else :text="$t('invoicesOverview.empty')">
+        <Empty v-else-if="!drafts.length" :text="$t('invoicesOverview.empty')">
           <Button :as="Link" variant="default" href="/rechnungen/neu">{{ $t('invoicesOverview.create') }}</Button>
         </Empty>
       </div>

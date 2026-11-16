@@ -60,6 +60,7 @@ const meta = {
     studioSettings: { ...studioSettings, displayName: '50mm freunde' },
     missingInvoiceData: [],
     firstInvoice: false,
+    draft: null,
   },
 } satisfies Meta<typeof Create>
 
@@ -71,3 +72,24 @@ export const Leer: Story = {}
 
 /** Aus dem Projekt geöffnet, die offene Rate steht zum Übernehmen bereit. */
 export const MitProjekt: Story = { args: { project: fuhrmann } }
+
+/** Gespeicherter Entwurf: Projekt, Datum und Positionen kommen aus dem Payload. */
+export const Entwurf: Story = {
+  args: {
+    project: fuhrmann,
+    draft: {
+      id: 'dr-1',
+      contact: null,
+      payload: {
+        issued_on: '2026-11-12',
+        due_on: '2026-11-26',
+        intro: '<p>Leistung</p>',
+        outro: '',
+        items: [
+          { title: 'Restzahlung', quantity: 1, unit_price: 29_500, installment_id: 'ra-1' },
+          { title: 'Album', quantity: 1, unit_price: 39_000, discount_type: 'percentage', discount_value: 1000 },
+        ],
+      },
+    },
+  },
+}

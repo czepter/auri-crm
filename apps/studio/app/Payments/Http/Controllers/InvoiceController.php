@@ -8,6 +8,7 @@ use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
 use App\Crm\Actions\CreateContact;
 use App\Crm\Data\CaseSuggestionData;
+use App\Crm\Data\ContactSuggestionData;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Shoot;
@@ -33,6 +34,7 @@ use App\Payments\Enums\CancellationKind;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\CreditNote;
 use App\Payments\Models\Invoice;
+use App\Payments\Models\InvoiceDraft;
 use App\Payments\Models\InvoiceItem;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
@@ -78,8 +80,21 @@ class InvoiceController extends Controller
             ->orderByDesc('id')
             ->get();
 
+        $drafts = InvoiceDraft::query()
+            ->where(fn ($query) => $query->whereNull('case_id')->orWhereHas('case', fn ($project) => $project->visibleTo($viewer)))
+            ->with(['case', 'contact'])
+            ->latest('updated_at')
+            ->get()
+            ->map(fn (InvoiceDraft $draft) => [
+                'id' => $draft->public_id,
+                'recipient' => $draft->contact?->name ?? $draft->payload['contact']['name'] ?? null,
+                'projectName' => $draft->case?->name,
+                'updatedOn' => $draft->updated_at->toDateString(),
+            ]);
+
         return Inertia::render('Invoices/Index', [
             'invoices' => InvoiceRowData::collect($invoices->map(InvoiceRowData::fromModel(...))),
+            'drafts' => $drafts,
             // The export route is gated by ManageSettings, so the years appear only for roles it lets in.
             'exportYears' => $viewer->can(Capability::ManageSettings->value)
                 ? Invoice::query()->pluck('issued_at')->map(fn ($at) => (int) $at->format('Y'))->unique()->sortDesc()->values()
@@ -99,6 +114,7 @@ class InvoiceController extends Controller
         RenderInvoicePdf $render,
         SeedStarterTemplates $seed,
         StudioReadiness $readiness,
+        ?InvoiceDraft $draft = null,
     ): Response {
         self::authorizeProject(null);
 
@@ -136,9 +152,10 @@ class InvoiceController extends Controller
             ->map(fn (PaymentPlan $plan) => CaseSuggestionData::fromModel($plan->case))
             ->values();
 
-        $project = $request->query('projekt') === null
+        $projectId = $draft === null ? $request->query('projekt') : $draft->case?->public_id;
+        $project = $projectId === null
             ? null
-            : ClientCase::query()->visibleTo($viewer)->where('public_id', $request->query('projekt'))->first();
+            : ClientCase::query()->visibleTo($viewer)->where('public_id', $projectId)->first();
 
         return Inertia::render('Invoices/Create', [
             'rates' => $rates,
@@ -160,7 +177,63 @@ class InvoiceController extends Controller
             // vor dem Formular statt hinter dem Absenden.
             'missingInvoiceData' => $readiness->missingForInvoice(),
             'firstInvoice' => ! Invoice::query()->exists(),
+            'draft' => $draft === null ? null : [
+                'id' => $draft->public_id,
+                'payload' => $draft->payload,
+                'contact' => $draft->contact === null ? null : ContactSuggestionData::fromModel($draft->contact->loadCount('cases')),
+            ],
         ]);
+    }
+
+    public function showDraft(
+        Request $request,
+        InvoiceDraft $draft,
+        RenderInvoicePdf $render,
+        SeedStarterTemplates $seed,
+        StudioReadiness $readiness,
+    ): Response {
+        return $this->create($request, $render, $seed, $readiness, $draft);
+    }
+
+    public function storeDraft(Request $request): RedirectResponse
+    {
+        self::authorizeProject(null);
+
+        $draft = InvoiceDraft::create([...$this->draftAttributes($request), 'created_by' => $request->user('staff')->id]);
+
+        return redirect("/rechnungen/entwuerfe/{$draft->public_id}");
+    }
+
+    public function updateDraft(Request $request, InvoiceDraft $draft): RedirectResponse
+    {
+        self::authorizeProject(null);
+
+        $draft->update($this->draftAttributes($request));
+
+        return back();
+    }
+
+    public function destroyDraft(InvoiceDraft $draft): RedirectResponse
+    {
+        self::authorizeProject(null);
+
+        $draft->delete();
+
+        return redirect('/rechnungen');
+    }
+
+    /** @return array{payload: array<string, mixed>, case_id: ?int, contact_id: ?int} */
+    private function draftAttributes(Request $request): array
+    {
+        $validated = $request->validate($this->rules());
+
+        return [
+            'payload' => $validated,
+            'case_id' => $this->case($validated)?->id,
+            'contact_id' => isset($validated['contact_id'])
+                ? Contact::query()->where('public_id', $validated['contact_id'])->firstOrFail()->id
+                : null,
+        ];
     }
 
     /**
@@ -211,6 +284,7 @@ class InvoiceController extends Controller
         $validated = $request->validate([
             ...$this->rules(),
             'issued_on' => [...$this->rules()['issued_on'], $this->notBeforeLatestInvoice(...)],
+            'draft_id' => ['nullable', 'string'],
             'contact.name' => ['required_without_all:contact_id,case_id', 'nullable', 'string', 'max:255'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.title' => ['required', 'string', 'max:255'],
@@ -237,6 +311,10 @@ class InvoiceController extends Controller
             ],
             $request->user('staff'),
         );
+
+        if (isset($validated['draft_id'])) {
+            InvoiceDraft::query()->where('public_id', $validated['draft_id'])->delete();
+        }
 
         return redirect("/rechnungen/{$invoice->public_id}/versenden");
     }

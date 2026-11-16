@@ -8,18 +8,28 @@ import InvoicePreviewPane from '@/admin/components/payments/InvoicePreviewPane.v
 import DocumentPaper from '@/admin/components/document/DocumentPaper.vue'
 import LetterField from '@/admin/components/quote/LetterField.vue'
 import QuotePositionsCard from '@/admin/components/quote/QuotePositionsCard.vue'
-import { buildQuotePayload, type QuoteDraft, type VatSettings } from '@/admin/components/quote/quotePayload'
+import { buildQuotePayload, rowsFromInvoiceItems, type InvoiceItemPayload, type QuoteDraft, type VatSettings } from '@/admin/components/quote/quotePayload'
 import InvoiceDataGate from '@/admin/pages/Settings/panes/InvoiceDataGate.vue'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
-import { centsToEuros, formatEuros } from '@/lib/money'
+import { centsToEuros, formatDiscount, formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Rate = { id: string; label: string; amount: number; dueOn: string }
+type DraftPayload = {
+  contact?: { name: string; email: string; street: string; postcode: string; city: string }
+  issued_on?: string | null
+  due_on?: string | null
+  discount_type?: string | null
+  discount_value?: number | null
+  items?: InvoiceItemPayload[]
+  intro?: string | null
+  outro?: string | null
+}
 type QuoteLine = { id: string; title: string; description: string | null; quantity: number; unitPrice: number; vatRate: number | null }
 
 const props = defineProps<{
@@ -34,6 +44,7 @@ const props = defineProps<{
   studioSettings: App.Settings.Data.StudioSettingsData
   missingInvoiceData: string[]
   firstInvoice: boolean
+  draft: { id: string; payload: DraftPayload; contact: App.Crm.Data.ContactSuggestionData | null } | null
 }>()
 useLiveProps([])
 
@@ -42,17 +53,18 @@ useLiveProps([])
 const gateOpen = ref(props.missingInvoiceData.length > 0)
 
 const project = ref(props.project)
-const contact = ref<App.Crm.Data.ContactSuggestionData | null>(null)
-const newContact = ref<{ name: string; email: string; street: string; postcode: string; city: string } | null>(null)
+const saved = props.draft?.payload
+const contact = ref(props.draft?.contact ?? null)
+const newContact = ref(saved?.contact ?? null)
 const isoDate = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-const issuedOn = ref(isoDate(new Date()))
+const issuedOn = ref(saved?.issued_on ?? isoDate(new Date()))
 const inDays = (days: number, from = issuedOn.value) => {
   const date = new Date(`${from || isoDate(new Date())}T00:00`)
   date.setDate(date.getDate() + days)
 
   return isoDate(date)
 }
-const dueOn = ref(inDays(props.studioSettings.paymentTermDays))
+const dueOn = ref(saved ? saved.due_on ?? '' : inDays(props.studioSettings.paymentTermDays))
 const TERMS = [7, 14, 30]
 const term = computed({
   get: () => String(TERMS.find((days) => inDays(days) === dueOn.value) ?? ''),
@@ -65,7 +77,7 @@ watch(issuedOn, (value, previous) => {
   const days = Math.round((Date.parse(dueOn.value) - Date.parse(previous)) / 86_400_000)
   dueOn.value = inDays(days, value)
 })
-const texts = ref({ intro: props.intro, outro: '' })
+const texts = ref({ intro: saved ? saved.intro ?? '' : props.intro, outro: saved?.outro ?? '' })
 const previewing = ref(false)
 
 // The quote's own draft shape, so the quote's builder writes the positions;
@@ -73,11 +85,11 @@ const previewing = ref(false)
 const draft = ref<QuoteDraft>({
   pricingMode: 'classic',
   validUntil: '',
-  discount: '',
+  discount: formatDiscount(saved?.discount_type ?? null, saved?.discount_value ?? null),
   discountHidden: false,
   intro: '',
   outro: '',
-  rows: [],
+  rows: rowsFromInvoiceItems(saved?.items ?? []),
   slider: { hourlyRate: '', minHours: null, maxHours: null, imagesPerHour: null, hours: null, stages: [] },
   recipientContact: null,
   recipientStreet: null,
@@ -156,7 +168,14 @@ const errors = computed(() => form.errors as Record<string, string | undefined>)
 const hasFreeRows = computed(() => draft.value.rows.some((row) => !row.installmentId))
 
 function submit() {
-  form.transform(() => payload.value).post('/rechnungen')
+  form.transform(() => ({ ...payload.value, draft_id: props.draft?.id })).post('/rechnungen')
+}
+
+function saveDraft() {
+  const request = form.transform(() => payload.value)
+
+  if (props.draft) request.put(`/rechnungen/entwuerfe/${props.draft.id}`)
+  else request.post('/rechnungen/entwuerfe')
 }
 
 </script>
@@ -171,6 +190,9 @@ function submit() {
           :options="[{ value: 'edit', label: $t('common.edit') }, { value: 'preview', label: $t('common.preview') }]"
           @update:model-value="(value) => (previewing = value === 'preview')"
         />
+        <Button type="button" variant="outline" :disabled="form.processing" @click="saveDraft">
+          {{ $t('invoicesCreate.saveDraft') }}
+        </Button>
         <Button type="submit" form="invoice" :disabled="!draft.rows.length || (!contact && !newContact && !project) || form.processing">
           {{ $t('invoicesCreate.submit') }}
         </Button>
