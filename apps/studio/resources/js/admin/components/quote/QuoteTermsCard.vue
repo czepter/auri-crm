@@ -3,6 +3,7 @@ import { computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { StageRow } from './quotePayload'
 import { Button } from '@/ui/button'
+import { DatePicker } from '@/ui/date-picker'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
@@ -77,7 +78,7 @@ function removeStage(index: number) {
       </template>
       <Button variant="ghost" tone="accent" type="button" class="ml-auto" @click="removeStage(index)">{{ $t('common.remove') }}</Button>
       <Input :aria-label="$t('quotes.stageNote')" v-model="stage.note" class="min-w-[220px] flex-1" type="text" :placeholder="$t('quotes.stageNote')" @blur="emit('change')" />
-      <Input :aria-label="$t('quotes.stageDue')" v-model="stage.dueOn" class="w-40" type="date" @change="emit('change')" />
+      <DatePicker :aria-label="$t('quotes.stageDue')" v-model="stage.dueOn" class="w-40" @blur="emit('change')" />
     </div>
 
     <div class="mt-1 flex items-center gap-3">
