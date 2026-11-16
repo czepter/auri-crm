@@ -31,6 +31,9 @@ const props = defineProps<{
   palette: PaletteEntry[]
   mergeFields: { path: string; sample: string }[]
   minHeight?: number
+  // Editor.js picks its narrow layout (handle right of the text) only when the
+  // holder is narrower than 650px, once at construction.
+  narrow?: boolean
 }>()
 
 const model = defineModel<EditorDocument>({ required: true })
@@ -65,7 +68,7 @@ const registry = {
 // one way — the tool set is only ever set at construction (see the watcher
 // below for why).
 function create(data: EditorDocument): EditorJS {
-  return new EditorJS({
+  const instance = new EditorJS({
     holder: holder.value!,
     data,
     minHeight: props.minHeight ?? 240,
@@ -84,6 +87,12 @@ function create(data: EditorDocument): EditorJS {
       model.value = (await editor!.save()) as EditorDocument
     },
   })
+
+  if (props.narrow) {
+    instance.isReady.then(() => holder.value?.querySelector('.codex-editor')?.classList.add('codex-editor--narrow'))
+  }
+
+  return instance
 }
 
 onMounted(() => {
@@ -119,5 +128,5 @@ watch(
 </script>
 
 <template>
-  <div ref="holder"></div>
+  <div ref="holder" :class="{ 'doc-editor-narrow': narrow }"></div>
 </template>
