@@ -6,6 +6,7 @@ import List from '@editorjs/list'
 import Quote from '@editorjs/quote'
 import Delimiter from '@editorjs/delimiter'
 import Table from '@editorjs/table'
+import { messages } from '@/admin/documents/blocks/editorI18n'
 import { buildTools } from '@/admin/documents/blocks/tools'
 import { createMergeFieldBlock, createMergeFieldTool } from '@/admin/documents/blocks/mergeFieldTool'
 import { CalloutTool, ColumnsTool, ImageTool, RawHtmlTool, SpacerTool } from '@/admin/documents/blocks/customTools'
@@ -73,6 +74,7 @@ function create(data: EditorDocument): EditorJS {
     data,
     minHeight: props.minHeight ?? 240,
     placeholder: 'Text schreiben oder / für Bausteine',
+    i18n: { messages },
     tools: {
       ...buildTools(props.palette, registry),
       // Never in the palette, always registered: this is the block every
