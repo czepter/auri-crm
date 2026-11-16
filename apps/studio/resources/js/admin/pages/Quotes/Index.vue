@@ -36,7 +36,7 @@ const euros = (rows: Row[]) => formatEuros(rows.reduce((sum, row) => sum + row.t
 
 const draftRows = computed(() => props.quotes.filter((quote) => quote.status === 'draft'))
 const sentRows = computed(() => props.quotes.filter((quote) => quote.status === 'sent'))
-const acceptedRows = computed(() => props.quotes.filter((quote) => quote.status === 'accepted' && dateOf(quote).startsWith(String(new Date().getFullYear()))))
+const acceptedRows = computed(() => props.quotes.filter((quote) => quote.status === 'accepted' && (quote.acceptedAt ?? dateOf(quote)).startsWith(String(new Date().getFullYear()))))
 
 const shown = computed(() => {
   const needle = query.value.trim().toLocaleLowerCase('de')
@@ -129,7 +129,7 @@ const post = (url: string, data: Record<string, string> = {}) => router.post(url
                         <DropdownMenuItem as-child>
                           <a :href="`/angebote/${quote.id}/pdf`" target="_blank">{{ $t('quotes.download') }}</a>
                         </DropdownMenuItem>
-                        <DropdownMenuItem v-if="quote.status === 'draft'" class="text-destructive" @select="router.delete(`/angebote/${quote.id}`, { preserveScroll: true })">{{ $t('common.delete') }}</DropdownMenuItem>
+                        <DropdownMenuItem v-if="quote.status === 'draft'" class="text-destructive" @select="router.delete(`/angebote/${quote.id}?back=list`, { preserveScroll: true })">{{ $t('common.delete') }}</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>

@@ -22,6 +22,7 @@ class QuoteRowData extends Data
         public ?string $sentAt,
         public ?string $createdAt,
         public ?string $validUntil,
+        public ?string $acceptedAt,
     ) {}
 
     public static function fromModel(Quote $quote): self
@@ -38,6 +39,7 @@ class QuoteRowData extends Data
             sentAt: $quote->sent_at?->toIso8601String(),
             createdAt: $quote->created_at?->toIso8601String(),
             validUntil: $quote->valid_until?->toDateString(),
+            acceptedAt: $quote->accepted_at?->toIso8601String(),
         );
     }
 }

@@ -95,3 +95,16 @@ it('costs the same queries for three quotes as for nine', function () {
 
     expect($nine)->toBe($three);
 });
+
+it('lists the accepted date and returns to the list after a delete from it', function () {
+    [$user, $project] = studioWithProject();
+    $accepted = Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Sent]);
+    $accepted->update(['status' => QuoteStatus::Accepted, 'accepted_at' => '2026-03-04 10:00:00']);
+    $draft = Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Draft]);
+
+    $rows = test()->actingAs($user, 'staff')->get('/angebote')->viewData('page')['props']['quotes'];
+
+    expect(collect($rows)->firstWhere('id', $accepted->public_id)['acceptedAt'])->toStartWith('2026-03-04');
+
+    test()->actingAs($user, 'staff')->delete("/angebote/{$draft->public_id}?back=list")->assertRedirect('/angebote');
+});

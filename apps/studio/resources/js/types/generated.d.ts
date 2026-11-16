@@ -1143,6 +1143,7 @@ total: number,
 sentAt: string | null,
 createdAt: string | null,
 validUntil: string | null,
+acceptedAt: string | null,
 };
 }
 namespace Enums {
