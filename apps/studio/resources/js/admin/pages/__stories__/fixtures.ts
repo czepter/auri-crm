@@ -275,6 +275,7 @@ export function quoteOf(
         currency: 'EUR',
         validUntil: null,
         sentAt: null,
+        acceptedAt: null,
         total: row.net,
         discountType: null,
         discountValue: null,

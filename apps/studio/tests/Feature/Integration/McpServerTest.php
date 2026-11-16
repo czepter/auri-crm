@@ -23,10 +23,12 @@ use App\Models\User;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Quotes\Models\Quote;
+use App\Settings\Actions\UpdateStudioSetting;
 use App\Quotes\Models\QuoteItem;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Mcp\Request as McpRequest;
@@ -275,3 +277,33 @@ it('validates every tool with an output schema against it', function (string $to
 
     validateAgainstOutputSchema($tool, ['case' => $case->public_id, 'gallery' => Gallery::query()->value('public_id'), ...formArguments($tool)]);
 })->with(fn () => collect(CrmServer::definitions())->filter(fn ($definition) => $definition->outputSchema !== null)->pluck('name')->all());
+
+it('issues an invoice from positions and a credit note through the invoice tools', function () {
+    Bus::fake();
+    app(UpdateStudioSetting::class)('tax_number', '22/123/45678', null);
+    mcpBearer(Capability::ManageContracts);
+
+    $contact = Contact::factory()->create();
+
+    CrmServer::tool(mcpTool('issue_invoice_from_items'), [
+        'contact_id' => $contact->public_id,
+        'due_on' => '2026-12-01',
+        'items' => [['title' => 'Abzüge', 'quantity' => 1, 'unit_price' => 2_000]],
+    ])->assertOk()->assertSee('Abzüge');
+
+    CrmServer::tool(mcpTool('list_invoices'))->assertOk()->assertSee('RE-');
+
+    $invoice = creditableInstallment()->invoice;
+
+    CrmServer::tool(mcpTool('issue_credit_note'), ['invoice' => $invoice->public_id, 'amount' => 5_000, 'reason' => 'Nachlass'])
+        ->assertOk()
+        ->assertSee('5000');
+
+    CrmServer::tool(mcpTool('list_credit_notes'))->assertOk()->assertSee($invoice->number);
+});
+
+it('refuses the invoice tools to a token without the contracts scope', function () {
+    mcpBearer(Capability::ManageQuotes);
+
+    CrmServer::tool(mcpTool('list_invoices'))->assertSee('403');
+});

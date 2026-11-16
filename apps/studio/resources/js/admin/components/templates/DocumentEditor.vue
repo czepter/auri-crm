@@ -6,8 +6,9 @@ import List from '@editorjs/list'
 import Quote from '@editorjs/quote'
 import Delimiter from '@editorjs/delimiter'
 import Table from '@editorjs/table'
+import { messages } from '@/admin/documents/blocks/editorI18n'
 import { buildTools } from '@/admin/documents/blocks/tools'
-import { createMergeFieldTool } from '@/admin/documents/blocks/mergeFieldTool'
+import { createMergeFieldBlock, createMergeFieldTool } from '@/admin/documents/blocks/mergeFieldTool'
 import { CalloutTool, ColumnsTool, ImageTool, RawHtmlTool, SpacerTool } from '@/admin/documents/blocks/customTools'
 import {
   ChecklistTool,
@@ -31,6 +32,9 @@ const props = defineProps<{
   palette: PaletteEntry[]
   mergeFields: { path: string; sample: string }[]
   minHeight?: number
+  // Editor.js picks its narrow layout (handle right of the text) only when the
+  // holder is narrower than 650px, once at construction.
+  narrow?: boolean
 }>()
 
 const model = defineModel<EditorDocument>({ required: true })
@@ -65,17 +69,19 @@ const registry = {
 // one way — the tool set is only ever set at construction (see the watcher
 // below for why).
 function create(data: EditorDocument): EditorJS {
-  return new EditorJS({
+  const instance = new EditorJS({
     holder: holder.value!,
     data,
     minHeight: props.minHeight ?? 240,
     placeholder: 'Text schreiben oder / für Bausteine',
+    i18n: { messages },
     tools: {
       ...buildTools(props.palette, registry),
       // Never in the palette, always registered: this is the block every
       // pre-editor template imports into, and without a tool Editor.js drops it.
       rawHtml: RawHtmlTool,
       mergeField: { class: createMergeFieldTool(props.mergeFields) },
+      mergeFieldBlock: createMergeFieldBlock(props.mergeFields),
     },
     // Editor.js fires onChange on every keystroke; save() is cheap (it walks
     // the block list) and the preview pane is what debounces the round trip.
@@ -83,6 +89,12 @@ function create(data: EditorDocument): EditorJS {
       model.value = (await editor!.save()) as EditorDocument
     },
   })
+
+  if (props.narrow) {
+    instance.isReady.then(() => holder.value?.querySelector('.codex-editor')?.classList.add('codex-editor--narrow'))
+  }
+
+  return instance
 }
 
 onMounted(() => {
@@ -118,5 +130,5 @@ watch(
 </script>
 
 <template>
-  <div ref="holder"></div>
+  <div ref="holder" :class="{ 'doc-editor-narrow': narrow }"></div>
 </template>

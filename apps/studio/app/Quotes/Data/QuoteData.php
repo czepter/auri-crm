@@ -29,6 +29,7 @@ class QuoteData extends Data
         public ?string $validUntil,
         public ?string $number,
         public ?string $sentAt,
+        public ?string $acceptedAt,
         public ?string $createdAt,
         // §4.6: beide Wege enden im selben Zustand, die Kopfzeile sagt welcher.
         public ?string $sentChannel,
@@ -111,6 +112,7 @@ class QuoteData extends Data
             validUntil: $quote->valid_until?->format('Y-m-d'),
             number: $quote->number,
             sentAt: $quote->sent_at?->toIso8601String(),
+            acceptedAt: $quote->accepted_at?->toIso8601String(),
             createdAt: $quote->created_at?->toIso8601String(),
             sentChannel: $quote->sent_channel,
             total: $quote->total,

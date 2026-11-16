@@ -15,6 +15,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * #480. The document: number, date, recipient, PDF. What the client owes
@@ -65,6 +66,11 @@ class Invoice extends Model
     public function creditNotes(): HasMany
     {
         return $this->hasMany(CreditNote::class)->orderBy('id');
+    }
+
+    public function creditNoteDraft(): HasOne
+    {
+        return $this->hasOne(CreditNoteDraft::class);
     }
 
     public function contact(): BelongsTo

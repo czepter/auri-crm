@@ -19,6 +19,10 @@ const meta = {
   parameters: { layout: 'fullscreen', url: '/rechnungen', page },
   args: {
     exportYears: [2026, 2025],
+    drafts: [
+      { id: 'dr-1', recipient: 'Marie Fuhrmann', projectName: 'Hochzeit Marie & Adrian', updatedOn: '2026-11-14', dueOn: '2026-11-28', amount: 120_000 },
+      { id: 'dr-2', recipient: 'Jonas Gast', projectName: null, updatedOn: '2026-11-12', dueOn: null, amount: 2_000 },
+    ],
     invoices: [
       {
         id: 'in-14',
@@ -102,5 +106,5 @@ type Story = StoryObj<typeof meta>
 export const Liste: Story = {}
 
 export const Leer: Story = {
-  args: { invoices: [], exportYears: [] },
+  args: { invoices: [], drafts: [], exportYears: [] },
 }

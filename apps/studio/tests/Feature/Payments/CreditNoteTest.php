@@ -3,6 +3,7 @@
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\MergeFieldVocabulary;
+use App\Enums\Capability;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Models\StudioSettings;
@@ -10,13 +11,16 @@ use App\Numbering\Enums\DocumentType;
 use App\Numbering\Models\NumberCounter;
 use App\Payments\Actions\IssueCreditNote;
 use App\Payments\Actions\IssueInvoice;
+use App\Payments\Actions\RenderInvoicePdf;
 use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\SettledVia;
 use App\Payments\Models\CreditNote;
+use App\Payments\Models\CreditNoteDraft;
 use App\Payments\Notifications\CreditNoteSent;
 use App\Settings\Actions\UpdateStudioSetting;
 use App\Support\GotenbergClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -191,6 +195,7 @@ it('renders the Gutschrift against the pinned template, with the reference line 
             expect($html)->toContain('Gutschrift GS-')
                 ->and($html)->toContain('Zu Rechnung '.$installment->invoice->number)
                 ->and($html)->toContain('Nachlass')
+                ->and($html)->toContain('<p>Grund: Nachlass</p>')
                 ->and($html)->not->toContain('{{');
 
             return '%PDF-1.4 fake';
@@ -311,4 +316,97 @@ it('sends the Gutschrift in the studio’s own wording where the builder asks fo
 
         return str_starts_with($message->subject, 'Gutschrift GS-') && str_contains(implode(' ', $message->introLines), 'gehen zurück');
     });
+});
+
+it('takes a Gutschrift date no earlier than the latest Gutschrift and not in the future', function () {
+    $this->mock(GotenbergClient::class)->shouldReceive('htmlToPdf')->andReturn('%PDF-1.4 fake');
+
+    $this->travelTo('2026-11-10 09:00:00');
+    $paid = creditableInstallment();
+    $admin = $this->actingAs(staffMember(StaffRole::Admin), 'staff');
+    $url = "/rechnungen/{$paid->invoice->public_id}/gutschrift";
+    $body = fn (string $issuedOn) => ['amount' => 5_000, 'reason' => 'Nachlass', 'issued_on' => $issuedOn];
+
+    $admin->post($url, $body('2026-11-10'))->assertRedirect();
+
+    $this->travelTo('2026-11-16 12:00:00');
+    $admin->post($url, $body('2026-11-09'))->assertSessionHasErrors('issued_on');
+    $admin->post($url, $body('2026-11-17'))->assertSessionHasErrors('issued_on');
+    expect(CreditNote::count())->toBe(1);
+
+    $admin->post($url, $body('2026-11-12'))->assertSessionHasNoErrors();
+
+    expect(CreditNote::orderByDesc('id')->first()->issued_at->format('Y-m-d H:i'))->toBe('2026-11-12 12:00');
+});
+
+it('stores the Gutschrift texts sanitized and prints them', function () {
+    $paid = creditableInstallment();
+
+    $note = app(IssueCreditNote::class)(
+        $paid->invoice,
+        5_000,
+        'Nachlass',
+        intro: '<p>Einleitung <script>x</script></p>',
+        outro: '<p>Schluss</p>',
+    );
+    $note = $note->fresh();
+
+    $html = app(RenderInvoicePdf::class)->forCreditNote($note->load('invoice'));
+
+    expect($html)->toContain('Einleitung')->toContain('Schluss')->not->toContain('<script>');
+});
+
+it('previews a Gutschrift without drawing a number or writing a row', function () {
+    $paid = creditableInstallment();
+    $admin = $this->actingAs(staffMember(StaffRole::Admin), 'staff');
+    $url = "/rechnungen/{$paid->invoice->public_id}/gutschrift/vorschau";
+    $body = ['amount' => 5_000, 'reason' => 'Nachlass', 'intro' => '<p>Vorab</p>'];
+
+    $admin->post($url, $body)->assertOk()->assertSee('Entwurf')->assertSee('Vorab', false);
+    $admin->post($url, [...$body, 'format' => 'mail'])->assertOk();
+
+    expect(CreditNote::count())->toBe(0)
+        ->and(NumberCounter::where('document_type', DocumentType::CreditNote->value)->count())->toBe(0);
+});
+
+it('keeps one credit-note draft per invoice without a number, restores it, and drops it once issued', function () {
+    Bus::fake();
+    $invoice = creditableInstallment()->invoice;
+    $admin = $this->actingAs(staffMember(StaffRole::Admin), 'staff');
+    $url = "/rechnungen/{$invoice->public_id}/gutschrift";
+
+    $admin->put("{$url}/entwurf", ['taken' => [false], 'reason' => 'Halb'])->assertRedirect();
+    $admin->put("{$url}/entwurf", ['taken' => [true], 'reason' => 'Grund'])->assertRedirect();
+
+    expect(CreditNoteDraft::count())->toBe(1)->and(CreditNote::count())->toBe(0);
+
+    $props = $admin->get("{$url}/neu")->viewData('page')['props'];
+    expect($props['draft']['reason'])->toBe('Grund');
+
+    $admin->post($url, ['amount' => $invoice->paidAmount(), 'reason' => 'Grund', 'send' => false])->assertRedirect();
+
+    expect(CreditNote::count())->toBe(1)->and(CreditNoteDraft::count())->toBe(0);
+});
+
+it('keeps a staff member out of a credit-note draft whose project they cannot see', function () {
+    $invoice = creditableInstallment()->invoice;
+    $crew = staffMember(StaffRole::Contributor);
+    $crew->givePermissionTo(Capability::ManageContracts->value);
+
+    $this->actingAs($crew, 'staff')
+        ->put("/rechnungen/{$invoice->public_id}/gutschrift/entwurf", ['reason' => 'x'])
+        ->assertForbidden();
+});
+
+it('takes no Gutschrift date before its invoice', function () {
+    $this->mock(GotenbergClient::class)->shouldReceive('htmlToPdf')->andReturn('%PDF-1.4 fake');
+
+    $this->travelTo('2026-11-10 09:00:00');
+    $paid = creditableInstallment();
+    $paid->invoice->update(['issued_at' => '2026-11-10 09:00:00']);
+    $url = "/rechnungen/{$paid->invoice->public_id}/gutschrift";
+    $admin = $this->actingAs(staffMember(StaffRole::Admin), 'staff');
+
+    $admin->post($url, ['amount' => 5_000, 'reason' => 'Nachlass', 'issued_on' => '2026-11-09'])->assertSessionHasErrors('issued_on');
+    $admin->post($url, ['amount' => 5_000, 'reason' => 'Nachlass', 'issued_on' => '2026-11-10'])->assertSessionHasNoErrors();
 });

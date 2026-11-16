@@ -68,6 +68,19 @@ const meta = {
   title: 'Bildschirme/Angebote/Neu',
   component: Create,
   parameters: { layout: 'fullscreen', url: '/angebote/neu' },
+  // Die Projektsuche lädt beim Öffnen die letzten Projekte; im Katalog antwortet sie leer.
+  beforeEach: () => {
+    const original = window.fetch
+
+    window.fetch = ((input: RequestInfo | URL, init?: RequestInit) =>
+      String(input).startsWith('/projekte/suche')
+        ? Promise.resolve(new Response(JSON.stringify({ projects: [] })))
+        : original(input, init)) as typeof window.fetch
+
+    return () => {
+      window.fetch = original
+    }
+  },
   args: {
     project: brandt,
     quotes: [auswahl],

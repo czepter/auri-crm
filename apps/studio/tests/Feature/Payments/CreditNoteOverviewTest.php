@@ -3,6 +3,7 @@
 use App\Enums\Capability;
 use App\Enums\StaffRole;
 use App\Payments\Actions\IssueCreditNote;
+use App\Payments\Models\CreditNoteDraft;
 use App\Settings\Actions\UpdateStudioSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
@@ -38,4 +39,16 @@ it('refuses a role that may not manage payment plans', function () {
     $role = collect(StaffRole::cases())->first(fn (StaffRole $role) => ! $role->allows(Capability::ManageContracts));
 
     $this->actingAs(staffMember($role), 'staff')->get('/gutschriften')->assertForbidden();
+});
+
+it('lists a Gutschrift draft with the gross of its ticked lines', function () {
+    $invoice = creditableInstallment()->invoice;
+    $line = (int) $invoice->items->first()->installment->amount;
+
+    CreditNoteDraft::create(['invoice_id' => $invoice->id, 'payload' => ['taken' => [true]]]);
+
+    $drafts = $this->actingAs(staffMember(), 'staff')->get('/gutschriften')
+        ->assertOk()->viewData('page')['props']['drafts'];
+
+    expect($drafts)->toHaveCount(1)->and($drafts[0]['amount'])->toBe($line);
 });

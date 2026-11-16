@@ -18,12 +18,14 @@ it('lists quotes from every project, newest first', function () {
     $projectB = ClientCase::factory()->create();
 
     $older = Quote::factory()->for($projectA, 'case')->create(['status' => QuoteStatus::Draft, 'created_at' => now()->subDay()]);
-    $newer = Quote::factory()->for($projectB, 'case')->create(['status' => QuoteStatus::Sent]);
+    $newer = Quote::factory()->for($projectB, 'case')->create(['status' => QuoteStatus::Sent, 'valid_until' => '2026-12-24']);
 
     $rows = test()->actingAs($user, 'staff')->get('/angebote')->assertOk()->viewData('page')['props']['quotes'];
 
     expect(collect($rows)->pluck('id')->all())->toBe([$newer->public_id, $older->public_id])
         ->and($rows[0]['statusLabel'])->toBe('Versendet')
+        ->and($rows[0]['validUntil'])->toBe('2026-12-24')
+        ->and($rows[0]['projectId'])->toBe($projectB->public_id)
         ->and($rows[1]['statusLabel'])->toBe('Entwurf');
 });
 
@@ -92,4 +94,17 @@ it('costs the same queries for three quotes as for nine', function () {
     $nine = $measure();
 
     expect($nine)->toBe($three);
+});
+
+it('lists the accepted date and returns to the list after a delete from it', function () {
+    [$user, $project] = studioWithProject();
+    $accepted = Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Sent]);
+    $accepted->update(['status' => QuoteStatus::Accepted, 'accepted_at' => '2026-03-04 10:00:00']);
+    $draft = Quote::factory()->for($project, 'case')->create(['status' => QuoteStatus::Draft]);
+
+    $rows = test()->actingAs($user, 'staff')->get('/angebote')->viewData('page')['props']['quotes'];
+
+    expect(collect($rows)->firstWhere('id', $accepted->public_id)['acceptedAt'])->toStartWith('2026-03-04');
+
+    test()->actingAs($user, 'staff')->delete("/angebote/{$draft->public_id}?back=list")->assertRedirect('/angebote');
 });

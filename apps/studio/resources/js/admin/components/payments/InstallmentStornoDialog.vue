@@ -4,7 +4,6 @@
  * ihn als neue Rate zurück, Wegfall senkt die Plansumme. Beides ist nicht
  * rückholbar, deshalb ein Dialog und kein Knopf allein.
  */
-import { ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { Button } from '@/ui/button'
 import {
@@ -21,9 +20,9 @@ import { Field } from '@/ui/field'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Textarea } from '@/ui/textarea'
 
-const props = defineProps<{ invoiceId: string }>()
+const props = defineProps<{ invoiceId: string; bare?: boolean }>()
 
-const open = ref(false)
+const open = defineModel<boolean>('open', { default: false })
 const form = useForm({ kind: 'correction', reason: '' })
 
 function submit() {
@@ -39,7 +38,7 @@ function submit() {
 
 <template>
   <Dialog v-model:open="open">
-    <DialogTrigger as-child>
+    <DialogTrigger v-if="!bare" as-child>
       <Button variant="outline" tone="accent" type="button">{{ $t('payments.storno') }}</Button>
     </DialogTrigger>
 

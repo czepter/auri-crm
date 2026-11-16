@@ -8,7 +8,7 @@ import { ChoiceGroup } from '@/ui/choice-group'
 
 // #480: the three things a client gets from one invoice — the PDF, the portal
 // page and the mail — each rendered by the server from the same draft.
-const props = defineProps<{ payload: Record<string, unknown> }>()
+const props = withDefaults(defineProps<{ payload: Record<string, unknown>; url?: string; portal?: boolean }>(), { url: '/rechnungen/vorschau', portal: true })
 
 type Mode = 'pdf' | 'portal' | 'mail'
 
@@ -26,7 +26,7 @@ const refresh = useDebounceFn(async () => {
   const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
 
   try {
-    const response = await fetch('/rechnungen/vorschau', {
+    const response = await fetch(props.url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token, Accept: mode.value === 'portal' ? 'application/json' : 'text/html' },
       body: JSON.stringify({ ...props.payload, format: mode.value }),
@@ -70,7 +70,7 @@ watch(
         :model-value="mode"
         :options="[
           { value: 'pdf', label: $t('quotes.previewPdf') },
-          { value: 'portal', label: $t('quotes.previewPortal') },
+          ...(portal ? [{ value: 'portal', label: $t('quotes.previewPortal') }] : []),
           { value: 'mail', label: $t('invoicesCreate.previewMail') },
         ]"
         class="ml-2.5"

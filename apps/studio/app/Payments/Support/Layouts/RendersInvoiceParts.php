@@ -24,7 +24,8 @@ trait RendersInvoiceParts
 
     private function reference(InvoiceDocument $document): string
     {
-        return $document->reference === null ? '' : '<p>'.e($document->reference).'</p>';
+        return ($document->reference === null ? '' : '<p>'.e($document->reference).'</p>')
+            .($document->reason === '' ? '' : '<p>Grund: '.e($document->reason).'</p>');
     }
 
     /** #480: sanitised at save, merge fields escaped by InvoiceDocument. */

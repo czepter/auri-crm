@@ -46,6 +46,9 @@ class IssueCreditNote
         int $amount,
         string $reason,
         ?User $actor = null,
+        ?string $issuedOn = null,
+        ?string $intro = null,
+        ?string $outro = null,
     ): CreditNote {
         if ($invoice->isCancelled() || $invoice->paidAmount() === 0) {
             throw ValidationException::withMessages(['amount' => __('payments.creditNoteNotPaid')]);
@@ -65,7 +68,7 @@ class IssueCreditNote
             ->orderBy('id')
             ->first();
 
-        $creditNote = DB::transaction(function () use ($invoice, $amount, $reason, $template, $actor) {
+        $creditNote = DB::transaction(function () use ($invoice, $amount, $reason, $issuedOn, $intro, $outro, $template, $actor) {
             $locked = Invoice::query()->whereKey($invoice->id)->lockForUpdate()->firstOrFail();
             $remaining = (int) $locked->installments()->sum('paid_amount') - (int) $locked->creditNotes()->sum('amount');
 
@@ -79,9 +82,11 @@ class IssueCreditNote
 
             $creditNote = $invoice->creditNotes()->create([
                 'number' => $number,
-                'issued_at' => now(),
+                'issued_at' => $issuedOn === null ? now() : now()->setDateFrom($issuedOn),
                 'amount' => $amount,
                 'reason' => $reason,
+                'intro' => $intro,
+                'outro' => $outro,
                 'template_id' => $template?->id,
             ]);
 

@@ -4,7 +4,6 @@
  * ein Überweisungseingang fast immer auslöst. Bleibt er darunter, geht die
  * Rate auf `partial` und der Rest steht beim nächsten Mal hier.
  */
-import { ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { Button } from '@/ui/button'
 import {
@@ -24,9 +23,9 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { centsToEuros, eurosToCents } from '@/lib/money'
 
-const props = defineProps<{ installmentId: string; remaining: number; primary?: boolean; triggerClass?: string }>()
+const props = defineProps<{ installmentId: string; remaining: number; primary?: boolean; triggerClass?: string; bare?: boolean }>()
 
-const open = ref(false)
+const open = defineModel<boolean>('open', { default: false })
 const form = useForm({
   amount: centsToEuros(props.remaining),
   paid_on: new Date().toISOString().slice(0, 10),
@@ -49,7 +48,7 @@ function submit() {
 
 <template>
   <Dialog v-model:open="open">
-    <DialogTrigger as-child>
+    <DialogTrigger v-if="!bare" as-child>
       <Button :variant="primary ? 'default' : 'outline'" type="button" :class="triggerClass">{{ $t('payments.markPaid') }}</Button>
     </DialogTrigger>
 
