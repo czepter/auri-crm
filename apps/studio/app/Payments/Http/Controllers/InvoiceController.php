@@ -305,6 +305,11 @@ class InvoiceController extends Controller
             default => $project?->primaryContact() ?? new Contact(['name' => __('payments.previewRecipient')]),
         };
 
+        $draft = isset($validated['draft_id'])
+            ? InvoiceDraft::query()->where('public_id', $validated['draft_id'])->first()
+            : null;
+        self::authorizeProject($draft?->case);
+
         $invoice = $issue->positions(
             $contact,
             $project,
@@ -320,9 +325,7 @@ class InvoiceController extends Controller
             $request->user('staff'),
         );
 
-        if (isset($validated['draft_id'])) {
-            InvoiceDraft::query()->where('public_id', $validated['draft_id'])->delete();
-        }
+        $draft?->delete();
 
         return redirect("/rechnungen/{$invoice->public_id}/versenden");
     }

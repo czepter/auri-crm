@@ -63,3 +63,19 @@ it('keeps a staff member out of a draft whose project they cannot see', function
 
     expect(InvoiceDraft::count())->toBe(1);
 });
+
+it('keeps a staff member from issuing with a draft of a project they cannot see', function () {
+    $project = ClientCase::factory()->create();
+    $draft = InvoiceDraft::create(['case_id' => $project->id, 'payload' => []]);
+    $crew = staffMember(StaffRole::Contributor);
+    $crew->givePermissionTo(Capability::ManageContracts->value);
+
+    $this->actingAs($crew, 'staff')->post('/rechnungen', [
+        'draft_id' => $draft->public_id,
+        'contact' => ['name' => 'Jonas Gast'],
+        'due_on' => '2026-12-01',
+        'items' => [['title' => 'Abzüge', 'quantity' => 1, 'unit_price' => 2_000]],
+    ])->assertForbidden();
+
+    expect(InvoiceDraft::count())->toBe(1)->and(Invoice::count())->toBe(0);
+});
